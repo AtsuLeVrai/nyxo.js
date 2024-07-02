@@ -1,10 +1,10 @@
 import type { ApplicationStructure, ISO8601Timestamp, Oauth2Scopes, UserStructure } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
  */
-export function getCurrentBotApplicationInformation(): RestMakeRequestOptions<ApplicationStructure> {
+export function getCurrentBotApplicationInformation(): RestRequestOptions<ApplicationStructure> {
 	return {
 		method: "GET",
 		path: "/oauth2/applications/@me",
@@ -36,7 +36,7 @@ export type CurrentAuthorizationInformationStructure = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
  */
-export function getCurrentAuthorizationInformation(): RestMakeRequestOptions<CurrentAuthorizationInformationStructure> {
+export function getCurrentAuthorizationInformation(): RestRequestOptions<CurrentAuthorizationInformationStructure> {
 	return {
 		method: "GET",
 		path: "/oauth2/@me",

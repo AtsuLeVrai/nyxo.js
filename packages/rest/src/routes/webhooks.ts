@@ -11,7 +11,7 @@ import type {
 	WebhookStructure,
 } from "@lunajs/core";
 import { FormData } from "undici";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook-json-params}
@@ -30,7 +30,7 @@ export type CreateWebhookJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook}
  */
-export function createWebhook(channelId: Snowflake, json: CreateWebhookJSON): RestMakeRequestOptions<WebhookStructure> {
+export function createWebhook(channelId: Snowflake, json: CreateWebhookJSON): RestRequestOptions<WebhookStructure> {
 	return {
 		method: "POST",
 		path: `/channels/${channelId}/webhooks`,
@@ -41,7 +41,7 @@ export function createWebhook(channelId: Snowflake, json: CreateWebhookJSON): Re
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
  */
-export function getChannelWebhooks(channelId: Snowflake): RestMakeRequestOptions<WebhookStructure[]> {
+export function getChannelWebhooks(channelId: Snowflake): RestRequestOptions<WebhookStructure[]> {
 	return {
 		method: "GET",
 		path: `/channels/${channelId}/webhooks`,
@@ -51,7 +51,7 @@ export function getChannelWebhooks(channelId: Snowflake): RestMakeRequestOptions
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
  */
-export function getGuildWebhooks(guildId: Snowflake): RestMakeRequestOptions<WebhookStructure[]> {
+export function getGuildWebhooks(guildId: Snowflake): RestRequestOptions<WebhookStructure[]> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/webhooks`,
@@ -61,7 +61,7 @@ export function getGuildWebhooks(guildId: Snowflake): RestMakeRequestOptions<Web
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
  */
-export function getWebhook(webhookId: Snowflake): RestMakeRequestOptions<WebhookStructure> {
+export function getWebhook(webhookId: Snowflake): RestRequestOptions<WebhookStructure> {
 	return {
 		method: "GET",
 		path: `/webhooks/${webhookId}`,
@@ -71,7 +71,7 @@ export function getWebhook(webhookId: Snowflake): RestMakeRequestOptions<Webhook
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-with-token}
  */
-export function getWebhookWithToken(webhookId: Snowflake, token: string): RestMakeRequestOptions<WebhookStructure> {
+export function getWebhookWithToken(webhookId: Snowflake, token: string): RestRequestOptions<WebhookStructure> {
 	return {
 		method: "GET",
 		path: `/webhooks/${webhookId}/${token}`,
@@ -99,7 +99,7 @@ export type ModifyWebhookJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook}
  */
-export function modifyWebhook(webhookId: Snowflake, reason: string, json: ModifyWebhookJSON): RestMakeRequestOptions<WebhookStructure> {
+export function modifyWebhook(webhookId: Snowflake, reason: string, json: ModifyWebhookJSON): RestRequestOptions<WebhookStructure> {
 	return {
 		method: "PATCH",
 		path: `/webhooks/${webhookId}`,
@@ -111,7 +111,7 @@ export function modifyWebhook(webhookId: Snowflake, reason: string, json: Modify
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token}
  */
-export function modifyWebhookWithToken(webhookId: Snowflake, token: string, reason: string, json: Omit<ModifyWebhookJSON, "channel_id">): RestMakeRequestOptions<Omit<WebhookStructure, "user">> {
+export function modifyWebhookWithToken(webhookId: Snowflake, token: string, reason: string, json: Omit<ModifyWebhookJSON, "channel_id">): RestRequestOptions<Omit<WebhookStructure, "user">> {
 	return {
 		method: "PATCH",
 		path: `/webhooks/${webhookId}/${token}`,
@@ -123,7 +123,7 @@ export function modifyWebhookWithToken(webhookId: Snowflake, token: string, reas
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
  */
-export function deleteWebhook(webhookId: Snowflake, reason: string): RestMakeRequestOptions<void> {
+export function deleteWebhook(webhookId: Snowflake, reason: string): RestRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/webhooks/${webhookId}`,
@@ -134,7 +134,7 @@ export function deleteWebhook(webhookId: Snowflake, reason: string): RestMakeReq
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token}
  */
-export function deleteWebhookWithToken(webhookId: Snowflake, token: string, reason: string): RestMakeRequestOptions<void> {
+export function deleteWebhookWithToken(webhookId: Snowflake, token: string, reason: string): RestRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/webhooks/${webhookId}/${token}`,
@@ -221,7 +221,7 @@ export type ExecuteWebhookJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook}
  */
-export function executeWebhook(webhookId: Snowflake, token: string, json: Omit<ExecuteWebhookJSON, "payload_json">, query?: ExecuteWebhookQuery): RestMakeRequestOptions<void> {
+export function executeWebhook(webhookId: Snowflake, token: string, json: Omit<ExecuteWebhookJSON, "payload_json">, query?: ExecuteWebhookQuery): RestRequestOptions<void> {
 	const form = new FormData();
 	form.append("payload_json", JSON.stringify(json));
 
@@ -247,7 +247,7 @@ export type GetWebhookMessageQuery = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-message}
  */
-export function getWebhookMessage(webhookId: Snowflake, token: string, messageId: Snowflake, query?: GetWebhookMessageQuery): RestMakeRequestOptions<MessageStructure> {
+export function getWebhookMessage(webhookId: Snowflake, token: string, messageId: Snowflake, query?: GetWebhookMessageQuery): RestRequestOptions<MessageStructure> {
 	return {
 		method: "GET",
 		path: `/webhooks/${webhookId}/${token}/messages/${messageId}`,

@@ -7,12 +7,12 @@ import type {
 	InstallParamsStructure,
 	Snowflake,
 } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records}
  */
-export function getApplicationRoleConnectionMetadataRecords(applicationId: Snowflake): RestMakeRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
+export function getApplicationRoleConnectionMetadataRecords(applicationId: Snowflake): RestRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/role-connections/metadata`,
@@ -22,7 +22,7 @@ export function getApplicationRoleConnectionMetadataRecords(applicationId: Snowf
 /**
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records}
  */
-export function updateApplicationRoleConnectionMetadataRecords(applicationId: Snowflake, metadata: ApplicationRoleConnectionMetadataStructure[]): RestMakeRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
+export function updateApplicationRoleConnectionMetadataRecords(applicationId: Snowflake, metadata: ApplicationRoleConnectionMetadataStructure[]): RestRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
 	return {
 		method: "PUT",
 		path: `/applications/${applicationId}/role-connections/metadata`,
@@ -33,7 +33,7 @@ export function updateApplicationRoleConnectionMetadataRecords(applicationId: Sn
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
  */
-export function getCurrentApplication(): RestMakeRequestOptions<ApplicationStructure> {
+export function getCurrentApplication(): RestRequestOptions<ApplicationStructure> {
 	return {
 		method: "GET",
 		path: "/applications/@me",
@@ -89,7 +89,7 @@ export type EditCurrentApplicationJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
  */
-export function editCurrentApplication(json: EditCurrentApplicationJSON): RestMakeRequestOptions<ApplicationStructure> {
+export function editCurrentApplication(json: EditCurrentApplicationJSON): RestRequestOptions<ApplicationStructure> {
 	return {
 		method: "PATCH",
 		path: "/applications/@me",

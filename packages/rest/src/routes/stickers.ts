@@ -1,12 +1,12 @@
 import type { Buffer } from "node:buffer";
 import type { Snowflake, StickerPackStructure, StickerStructure } from "@lunajs/core";
 import { FormData } from "undici";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
  */
-export function getSticker(stickerId: Snowflake): RestMakeRequestOptions<StickerStructure> {
+export function getSticker(stickerId: Snowflake): RestRequestOptions<StickerStructure> {
 	return {
 		method: "GET",
 		path: `/stickers/${stickerId}`,
@@ -26,7 +26,7 @@ export type ListStickerPacksResponse = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
  */
-export function listStickerPacks(): RestMakeRequestOptions<ListStickerPacksResponse> {
+export function listStickerPacks(): RestRequestOptions<ListStickerPacksResponse> {
 	return {
 		method: "GET",
 		path: "/sticker-packs",
@@ -36,7 +36,7 @@ export function listStickerPacks(): RestMakeRequestOptions<ListStickerPacksRespo
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
  */
-export function listGuildStickers(guildId: Snowflake): RestMakeRequestOptions<StickerStructure[]> {
+export function listGuildStickers(guildId: Snowflake): RestRequestOptions<StickerStructure[]> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/stickers`,
@@ -46,7 +46,7 @@ export function listGuildStickers(guildId: Snowflake): RestMakeRequestOptions<St
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker}
  */
-export function getGuildSticker(guildId: Snowflake, stickerId: Snowflake): RestMakeRequestOptions<StickerStructure> {
+export function getGuildSticker(guildId: Snowflake, stickerId: Snowflake): RestRequestOptions<StickerStructure> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/stickers/${stickerId}`,
@@ -78,7 +78,7 @@ export type CreateGuildStickerForm = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
  */
-export function createGuildSticker(guildId: Snowflake, reason: string, json: CreateGuildStickerForm): RestMakeRequestOptions<StickerStructure> {
+export function createGuildSticker(guildId: Snowflake, reason: string, json: CreateGuildStickerForm): RestRequestOptions<StickerStructure> {
 	const form = new FormData();
 	form.append("description", json.description);
 	form.append("name", json.name);
@@ -117,7 +117,7 @@ export type ModifyGuildStickerJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker}
  */
-export function modifyGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason: string, json: ModifyGuildStickerJSON): RestMakeRequestOptions<StickerStructure> {
+export function modifyGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason: string, json: ModifyGuildStickerJSON): RestRequestOptions<StickerStructure> {
 	return {
 		method: "PATCH",
 		path: `/guilds/${guildId}/stickers/${stickerId}`,
@@ -129,7 +129,7 @@ export function modifyGuildSticker(guildId: Snowflake, stickerId: Snowflake, rea
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker}
  */
-export function deleteGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason: string): RestMakeRequestOptions<void> {
+export function deleteGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason: string): RestRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/guilds/${guildId}/stickers/${stickerId}`,

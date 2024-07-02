@@ -6,12 +6,12 @@ import type {
 	AutoModerationRuleTriggerTypes,
 	Snowflake,
 } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#list-auto-moderation-rules-for-guild}
  */
-export function listAutoModerationRules(guildId: Snowflake): RestMakeRequestOptions<AutoModerationRuleStructure[]> {
+export function listAutoModerationRules(guildId: Snowflake): RestRequestOptions<AutoModerationRuleStructure[]> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/auto-moderation/rules`,
@@ -21,7 +21,7 @@ export function listAutoModerationRules(guildId: Snowflake): RestMakeRequestOpti
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#get-auto-moderation-rule}
  */
-export function getAutoModerationRule(guildId: Snowflake, ruleId: Snowflake): RestMakeRequestOptions<AutoModerationRuleStructure> {
+export function getAutoModerationRule(guildId: Snowflake, ruleId: Snowflake): RestRequestOptions<AutoModerationRuleStructure> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/auto-moderation/rules/${ruleId}`,
@@ -69,7 +69,7 @@ export type CreateAutoModerationRuleJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule}
  */
-export function createAutoModerationRule(guildId: Snowflake, reason: string, json: CreateAutoModerationRuleJSON): RestMakeRequestOptions<AutoModerationRuleStructure> {
+export function createAutoModerationRule(guildId: Snowflake, reason: string, json: CreateAutoModerationRuleJSON): RestRequestOptions<AutoModerationRuleStructure> {
 	return {
 		method: "POST",
 		path: `/guilds/${guildId}/auto-moderation/rules`,
@@ -115,7 +115,7 @@ export type ModifyAutoModerationRuleJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule}
  */
-export function modifyAutoModerationRule(guildId: Snowflake, ruleId: Snowflake, reason: string, json: ModifyAutoModerationRuleJSON): RestMakeRequestOptions<AutoModerationRuleStructure> {
+export function modifyAutoModerationRule(guildId: Snowflake, ruleId: Snowflake, reason: string, json: ModifyAutoModerationRuleJSON): RestRequestOptions<AutoModerationRuleStructure> {
 	return {
 		method: "PATCH",
 		path: `/guilds/${guildId}/auto-moderation/rules/${ruleId}`,
@@ -127,7 +127,7 @@ export function modifyAutoModerationRule(guildId: Snowflake, ruleId: Snowflake, 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule}
  */
-export function deleteAutoModerationRule(guildId: Snowflake, ruleId: Snowflake, reason: string): RestMakeRequestOptions<void> {
+export function deleteAutoModerationRule(guildId: Snowflake, ruleId: Snowflake, reason: string): RestRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/guilds/${guildId}/auto-moderation/rules/${ruleId}`,

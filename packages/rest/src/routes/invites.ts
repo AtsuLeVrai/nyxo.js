@@ -1,5 +1,5 @@
 import type { Boolean, InviteStructure, Snowflake } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}
@@ -22,7 +22,7 @@ export type GetInviteQuery = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
  */
-export function getInvite(code: string, query?: GetInviteQuery): RestMakeRequestOptions<InviteStructure> {
+export function getInvite(code: string, query?: GetInviteQuery): RestRequestOptions<InviteStructure> {
 	return {
 		method: "GET",
 		path: `/invites/${code}`,
@@ -33,7 +33,7 @@ export function getInvite(code: string, query?: GetInviteQuery): RestMakeRequest
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
  */
-export function deleteInvite(code: string, reason: string): RestMakeRequestOptions<InviteStructure> {
+export function deleteInvite(code: string, reason: string): RestRequestOptions<InviteStructure> {
 	return {
 		method: "DELETE",
 		path: `/invites/${code}`,

@@ -1,10 +1,10 @@
 import type { EmojiStructure, Snowflake } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
  */
-export function listGuildEmojis(guildId: Snowflake): RestMakeRequestOptions<EmojiStructure[]> {
+export function listGuildEmojis(guildId: Snowflake): RestRequestOptions<EmojiStructure[]> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/emojis`,
@@ -14,7 +14,7 @@ export function listGuildEmojis(guildId: Snowflake): RestMakeRequestOptions<Emoj
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji}
  */
-export function getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): RestMakeRequestOptions<EmojiStructure> {
+export function getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): RestRequestOptions<EmojiStructure> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/emojis/${emojiId}`,
@@ -42,7 +42,7 @@ export type CreateGuildEmojiJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji}
  */
-export function createGuildEmoji(guildId: Snowflake, reason: string, json: CreateGuildEmojiJSON): RestMakeRequestOptions<EmojiStructure> {
+export function createGuildEmoji(guildId: Snowflake, reason: string, json: CreateGuildEmojiJSON): RestRequestOptions<EmojiStructure> {
 	return {
 		method: "POST",
 		path: `/guilds/${guildId}/emojis`,
@@ -68,7 +68,7 @@ export type ModifyGuildEmojiJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji}
  */
-export function modifyGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason: string, json: ModifyGuildEmojiJSON): RestMakeRequestOptions<EmojiStructure> {
+export function modifyGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason: string, json: ModifyGuildEmojiJSON): RestRequestOptions<EmojiStructure> {
 	return {
 		method: "PATCH",
 		path: `/guilds/${guildId}/emojis/${emojiId}`,
@@ -80,7 +80,7 @@ export function modifyGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason:
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#delete-guild-emoji}
  */
-export function deleteGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason: string): RestMakeRequestOptions<void> {
+export function deleteGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason: string): RestRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/guilds/${guildId}/emojis/${emojiId}`,

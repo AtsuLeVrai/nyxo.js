@@ -1,5 +1,5 @@
 import type { AuditLogEvents, AuditLogStructure, Integer, Snowflake } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params}
@@ -30,7 +30,7 @@ export type GetGuildAuditLogQueryString = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log}
  */
-export function getGuildAuditLog(guildId: Snowflake, query?: GetGuildAuditLogQueryString): RestMakeRequestOptions<AuditLogStructure> {
+export function getGuildAuditLog(guildId: Snowflake, query?: GetGuildAuditLogQueryString): RestRequestOptions<AuditLogStructure> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/audit-logs`,

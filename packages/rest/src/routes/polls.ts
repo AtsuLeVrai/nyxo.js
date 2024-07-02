@@ -1,5 +1,5 @@
 import type { Integer, MessageStructure, Snowflake, UserStructure } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-query-string-params}
@@ -28,7 +28,7 @@ export type GetAnswerVotersResponse = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
  */
-export function getAnswerVoters(channelId: Snowflake, messageId: Snowflake, answerId: Snowflake, query?: GetAnswerVotersQuery): RestMakeRequestOptions<GetAnswerVotersResponse> {
+export function getAnswerVoters(channelId: Snowflake, messageId: Snowflake, answerId: Snowflake, query?: GetAnswerVotersQuery): RestRequestOptions<GetAnswerVotersResponse> {
 	return {
 		method: "GET",
 		path: `/channels/${channelId}/polls/${messageId}/answers/${answerId}`,
@@ -39,7 +39,7 @@ export function getAnswerVoters(channelId: Snowflake, messageId: Snowflake, answ
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
  */
-export function endPoll(channelId: Snowflake, messageId: Snowflake): RestMakeRequestOptions<MessageStructure> {
+export function endPoll(channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> {
 	return {
 		method: "POST",
 		path: `/channels/${channelId}/polls/${messageId}/expire`,

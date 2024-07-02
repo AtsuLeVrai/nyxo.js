@@ -1,10 +1,10 @@
 import type { SkuStructure, Snowflake } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/monetization/skus#list-skus}
  */
-export function listSkus(applicationId: Snowflake): RestMakeRequestOptions<SkuStructure[]> {
+export function listSkus(applicationId: Snowflake): RestRequestOptions<SkuStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/skus`,

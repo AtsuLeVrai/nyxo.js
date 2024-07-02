@@ -8,12 +8,12 @@ import type {
 	Snowflake,
 	UserStructure,
 } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
  */
-export function getCurrentUser(): RestMakeRequestOptions<UserStructure> {
+export function getCurrentUser(): RestRequestOptions<UserStructure> {
 	return {
 		method: "GET",
 		path: "/users/@me",
@@ -23,7 +23,7 @@ export function getCurrentUser(): RestMakeRequestOptions<UserStructure> {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-user}
  */
-export function getUser(userId: Snowflake): RestMakeRequestOptions<UserStructure> {
+export function getUser(userId: Snowflake): RestRequestOptions<UserStructure> {
 	return {
 		method: "GET",
 		path: `/users/${userId}`,
@@ -51,7 +51,7 @@ export type ModifyCurrentUserJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
  */
-export function modifyCurrentUser(json: ModifyCurrentUserJSON): RestMakeRequestOptions<UserStructure> {
+export function modifyCurrentUser(json: ModifyCurrentUserJSON): RestRequestOptions<UserStructure> {
 	return {
 		method: "PATCH",
 		path: "/users/@me",
@@ -84,7 +84,7 @@ export type GetCurrentUserGuildsQuery = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
  */
-export function getCurrentUserGuilds(query?: GetCurrentUserGuildsQuery): RestMakeRequestOptions<Pick<GuildStructure, "approximate_member_count" | "approximate_presence_count" | "icon" | "id" | "name" | "owner" | "permissions">[]> {
+export function getCurrentUserGuilds(query?: GetCurrentUserGuildsQuery): RestRequestOptions<Pick<GuildStructure, "approximate_member_count" | "approximate_presence_count" | "icon" | "id" | "name" | "owner" | "permissions">[]> {
 	return {
 		method: "GET",
 		path: "/users/@me/guilds",
@@ -95,7 +95,7 @@ export function getCurrentUserGuilds(query?: GetCurrentUserGuildsQuery): RestMak
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
  */
-export function getCurrentUserGuildMember(guildId: Snowflake): RestMakeRequestOptions<GuildMemberStructure> {
+export function getCurrentUserGuildMember(guildId: Snowflake): RestRequestOptions<GuildMemberStructure> {
 	return {
 		method: "GET",
 		path: `/users/@me/guilds/${guildId}/member`,
@@ -105,7 +105,7 @@ export function getCurrentUserGuildMember(guildId: Snowflake): RestMakeRequestOp
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
  */
-export function leaveGuild(guildId: Snowflake): RestMakeRequestOptions<void> {
+export function leaveGuild(guildId: Snowflake): RestRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/users/@me/guilds/${guildId}`,
@@ -125,7 +125,7 @@ export type CreateDMJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
  */
-export function createDM(json: CreateDMJSON): RestMakeRequestOptions<ChannelStructure> {
+export function createDM(json: CreateDMJSON): RestRequestOptions<ChannelStructure> {
 	return {
 		method: "POST",
 		path: "/users/@me/channels",
@@ -150,7 +150,7 @@ export type CreateGroupDMJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
  */
-export function createGroupDM(json: CreateGroupDMJSON): RestMakeRequestOptions<ChannelStructure> {
+export function createGroupDM(json: CreateGroupDMJSON): RestRequestOptions<ChannelStructure> {
 	return {
 		method: "POST",
 		path: "/users/@me/channels",
@@ -161,7 +161,7 @@ export function createGroupDM(json: CreateGroupDMJSON): RestMakeRequestOptions<C
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
  */
-export function getCurrentUserConnections(): RestMakeRequestOptions<ConnectionStructure[]> {
+export function getCurrentUserConnections(): RestRequestOptions<ConnectionStructure[]> {
 	return {
 		method: "GET",
 		path: "/users/@me/connections",
@@ -171,7 +171,7 @@ export function getCurrentUserConnections(): RestMakeRequestOptions<ConnectionSt
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection}
  */
-export function getCurrentUserApplicationRoleConnection(applicationId: Snowflake): RestMakeRequestOptions<ApplicationRoleConnectionStructure> {
+export function getCurrentUserApplicationRoleConnection(applicationId: Snowflake): RestRequestOptions<ApplicationRoleConnectionStructure> {
 	return {
 		method: "GET",
 		path: `/users/@me/applications/${applicationId}/role-connection`,
@@ -199,7 +199,7 @@ export type UpdateCurrentUserApplicationRoleConnectionJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection}
  */
-export function updateCurrentUserApplicationRoleConnection(applicationId: Snowflake, json: UpdateCurrentUserApplicationRoleConnectionJSON): RestMakeRequestOptions<ApplicationRoleConnectionStructure> {
+export function updateCurrentUserApplicationRoleConnection(applicationId: Snowflake, json: UpdateCurrentUserApplicationRoleConnectionJSON): RestRequestOptions<ApplicationRoleConnectionStructure> {
 	return {
 		method: "PUT",
 		path: `/users/@me/applications/${applicationId}/role-connection`,

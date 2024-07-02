@@ -1,10 +1,10 @@
 import type { Integer } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
  */
-export function getGateway(): RestMakeRequestOptions<{ url: string; }> {
+export function getGateway(): RestRequestOptions<{ url: string; }> {
 	return {
 		method: "GET",
 		path: "/gateway",
@@ -54,7 +54,7 @@ export type GatewayBotResponse = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
  */
-export function getGatewayBot(): RestMakeRequestOptions<GatewayBotResponse> {
+export function getGatewayBot(): RestRequestOptions<GatewayBotResponse> {
 	return {
 		method: "GET",
 		path: "/gateway/bot",

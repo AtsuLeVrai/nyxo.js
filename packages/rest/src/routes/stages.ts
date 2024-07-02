@@ -1,5 +1,5 @@
 import type { Snowflake, StageInstanceStructure, StagePrivacyLevel } from "@lunajs/core";
-import type { RestMakeRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params}
@@ -30,7 +30,7 @@ export type CreateStageInstanceJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
  */
-export function createStageInstance(reason: string, json: CreateStageInstanceJSON): RestMakeRequestOptions<StageInstanceStructure> {
+export function createStageInstance(reason: string, json: CreateStageInstanceJSON): RestRequestOptions<StageInstanceStructure> {
 	return {
 		method: "POST",
 		path: "/stage-instances",
@@ -42,7 +42,7 @@ export function createStageInstance(reason: string, json: CreateStageInstanceJSO
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
  */
-export function getStageInstance(channelId: Snowflake): RestMakeRequestOptions<StageInstanceStructure> {
+export function getStageInstance(channelId: Snowflake): RestRequestOptions<StageInstanceStructure> {
 	return {
 		method: "GET",
 		path: `/stage-instances/${channelId}`,
@@ -66,7 +66,7 @@ export type ModifyStageInstanceJSON = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance}
  */
-export function modifyStageInstance(channelId: Snowflake, reason: string, json: ModifyStageInstanceJSON): RestMakeRequestOptions<StageInstanceStructure> {
+export function modifyStageInstance(channelId: Snowflake, reason: string, json: ModifyStageInstanceJSON): RestRequestOptions<StageInstanceStructure> {
 	return {
 		method: "PATCH",
 		path: `/stage-instances/${channelId}`,
@@ -78,7 +78,7 @@ export function modifyStageInstance(channelId: Snowflake, reason: string, json: 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
  */
-export function deleteStageInstance(channelId: Snowflake, reason: string): RestMakeRequestOptions<void> {
+export function deleteStageInstance(channelId: Snowflake, reason: string): RestRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/stage-instances/${channelId}`,
