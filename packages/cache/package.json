@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@lunajs/rest",
+  "name": "@lunajs/cache",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -10,10 +10,9 @@
     "test": "jest"
   },
   "dependencies": {
-    "@lunajs/core": "workspace:*",
     "eventemitter3": "^5.0.1",
     "tslib": "^2.6.3",
-    "undici": "^6.19.2"
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@jest/types": "^29.6.3",
@@ -21,6 +20,7 @@
     "@lunajs/ts-config": "workspace:*",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.9",
+    "@types/uuid": "^10.0.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.5",
     "typescript": "^5.5.2"
