@@ -14,7 +14,7 @@
     "eventemitter3": "^5.0.1",
     "tslib": "^2.6.3",
     "undici": "^6.19.2",
-    "user-agents": "^1.1.252"
+    "user-agents": "^1.1.253"
   },
   "devDependencies": {
     "@jest/types": "^29.6.3",

@@ -122,8 +122,8 @@ importers:
         specifier: ^6.19.2
         version: 6.19.2
       user-agents:
-        specifier: ^1.1.252
-        version: 1.1.252
+        specifier: ^1.1.253
+        version: 1.1.253
     devDependencies:
       '@jest/types':
         specifier: ^29.6.3
@@ -3360,8 +3360,8 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
-  user-agents@1.1.252:
-    resolution: {integrity: sha512-sLIRpRga2mp9Uh/yEULcxsp20yJtvITwXqBfv3lsxNZ0aw0L16gw2Br1MHB79dzxaa6k7vYCOqpOuzgTkA7lzQ==}
+  user-agents@1.1.253:
+    resolution: {integrity: sha512-AfeCRSv0KmhLdjBrSRrME/uxHjQQ17UIp+LhEsI06JFMJRZLZcTfDO8sYV1/WV0kEVE86zcjgVIKckByqgtejg==}
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
@@ -7637,7 +7637,7 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  user-agents@1.1.252:
+  user-agents@1.1.253:
     dependencies:
       lodash.clonedeep: 4.5.0
 
