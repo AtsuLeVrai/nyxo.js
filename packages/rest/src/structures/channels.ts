@@ -1,5 +1,5 @@
 import type { Integer, ISO8601, Snowflake } from "@lunajs/core";
-import type { DiscordHeaders } from "../globals/headers";
+import type { DiscordHeaders } from "../globals/api";
 import type { ApplicationIntegrationTypes, ApplicationStructure } from "./applications";
 import type { EmojiStructure } from "./emojis";
 import type { GuildMemberStructure } from "./guilds";

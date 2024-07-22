@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../config/typescript/node.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts"
+  ]
+}

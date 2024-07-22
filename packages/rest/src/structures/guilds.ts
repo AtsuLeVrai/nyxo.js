@@ -473,6 +473,20 @@ export type GuildPreviewStructure = {
 };
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object}
+ */
+export type UnavailableGuildStructure = {
+	/**
+	 * Guild id
+	 */
+	id: Snowflake;
+	/**
+	 * Is the guild unavailable
+	 */
+	unavailable: boolean;
+};
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
  */
 export enum GuildFeatures {

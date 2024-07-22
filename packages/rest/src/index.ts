@@ -1,7 +1,7 @@
 /**
  * ./globals/*
  */
-export * from "./globals/headers";
+export * from "./globals/api";
 
 /**
  * ./structures/*

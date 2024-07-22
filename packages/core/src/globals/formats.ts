@@ -51,6 +51,7 @@ export function formatSlashCommand(commandName: string, commandId: Snowflake, su
 }
 
 export function formatStandardEmoji(text: string): string {
+	// TODO: Verify that this is the correct way to parse standard emojis
 	return twemoji.parse(text);
 }
 

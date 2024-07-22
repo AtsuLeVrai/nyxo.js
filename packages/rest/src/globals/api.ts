@@ -1,3 +1,35 @@
+/**
+ * @see {@link https://discord.com/developers/docs/reference#api-versioning-api-versions}
+ */
+export enum ApiVersions {
+	/**
+	 * @deprecated
+	 */
+	V3 = 3,
+	/**
+	 * @deprecated
+	 */
+	V4 = 4,
+	/**
+	 * @deprecated
+	 */
+	V5 = 5,
+	/**
+	 * @deprecated
+	 */
+	V6 = 6,
+	/**
+	 * @deprecated
+	 */
+	V7 = 7,
+	/**
+	 * @deprecated
+	 */
+	V8 = 8,
+	V9 = 9,
+	V10 = 10,
+}
+
 export type AuthTypes = "Bearer" | "Bot";
 
 export type DiscordHeaders = {
