@@ -1,4 +1,5 @@
 import type { Integer, ISO8601, Locales, Oauth2Scopes, Snowflake } from "@lunajs/core";
+import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";
 import type { StickerStructure } from "./stickers";
@@ -382,9 +383,9 @@ export type GuildMemberStructure = {
  */
 export type GuildWidgetStructure = {
 	/**
-	 * TODO: Voice and stage channels which are accessible by @everyone
+	 * Voice and stage channels which are accessible by @everyone
 	 */
-	channels: Pick<unknown, "id" | "name" | "position">[];
+	channels: Pick<ChannelStructure, "id" | "name" | "position">[];
 	/**
 	 * Guild id
 	 */
@@ -864,4 +865,181 @@ export type GuildStructure = {
 	 * true if the server widget is enabled
 	 */
 	widget_enabled?: boolean;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-user-object-guild-scheduled-event-user-structure}
+ */
+export type GuildScheduledEventUserStructure = {
+	/**
+	 * The scheduled event id which the user subscribed to
+	 */
+	guild_scheduled_event_id: Snowflake;
+	/**
+	 * Guild member data for this user for the guild which this event belongs to, if any
+	 */
+	member?: GuildMemberStructure;
+	/**
+	 * User which subscribed to an event
+	 */
+	user: UserStructure;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-metadata}
+ */
+export type GuildScheduledEventEntityMetadata = {
+	/**
+	 * Location of the event (1-100 characters)
+	 */
+	location?: string;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status}
+ */
+export enum GuildScheduledEventStatus {
+	Scheduled = 1,
+	Active = 2,
+	Completed = 3,
+	Canceled = 4,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
+ */
+export enum GuildScheduledEventEntityTypes {
+	StageInstance = 1,
+	Voice = 2,
+	External = 3,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level}
+ */
+export enum GuildScheduledEventPrivacyLevels {
+	/**
+	 * The scheduled event is only accessible to guild members
+	 */
+	GuildOnly = 2,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-structure}
+ */
+export type GuildScheduledEventStructure = {
+	/**
+	 * The channel id in which the scheduled event will be hosted, or null if scheduled entity type is EXTERNAL
+	 */
+	channel_id: Snowflake | null;
+	/**
+	 * The user that created the scheduled event
+	 */
+	creator?: UserStructure;
+	/**
+	 * The id of the user that created the scheduled event
+	 */
+	creator_id?: Snowflake | null;
+	/**
+	 * The description of the scheduled event (1-1000 characters)
+	 */
+	description?: string | null;
+	/**
+	 * The id of an entity associated with a guild scheduled event
+	 */
+	entity_id: Snowflake | null;
+	/**
+	 * Additional metadata for the guild scheduled event
+	 */
+	entity_metadata: GuildScheduledEventEntityMetadata | null;
+	/**
+	 * The type of the scheduled event
+	 */
+	entity_type: GuildScheduledEventEntityTypes;
+	/**
+	 * The guild id which the scheduled event belongs to
+	 */
+	guild_id: Snowflake;
+	/**
+	 * The id of the scheduled event
+	 */
+	id: Snowflake;
+	/**
+	 * The cover image hash of the scheduled event
+	 */
+	image?: string | null;
+	/**
+	 * The name of the scheduled event (1-100 characters)
+	 */
+	name: string;
+	/**
+	 * The privacy level of the scheduled event
+	 */
+	privacy_level: GuildScheduledEventPrivacyLevels;
+	/**
+	 * The time the scheduled event will end, required if entity_type is EXTERNAL
+	 */
+	scheduled_end_time: ISO8601 | null;
+	/**
+	 * The time the scheduled event will start
+	 */
+	scheduled_start_time: ISO8601;
+	/**
+	 * The status of the scheduled event
+	 */
+	status: GuildScheduledEventStatus;
+	/**
+	 * The number of users subscribed to the scheduled event
+	 */
+	user_count?: Integer;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-template#guild-template-object-guild-template-structure}
+ */
+export type GuildTemplateStructure = {
+	/**
+	 * The template code (unique ID)
+	 */
+	code: string;
+	/**
+	 * When this template was created
+	 */
+	created_at: ISO8601;
+	/**
+	 * The user who created the template
+	 */
+	creator: UserStructure;
+	/**
+	 * The ID of the user who created the template
+	 */
+	creator_id: Snowflake;
+	/**
+	 * The description for the template
+	 */
+	description: string | null;
+	/**
+	 * Whether the template has unsynced changes
+	 */
+	is_dirty: boolean | null;
+	/**
+	 * The name of the template
+	 */
+	name: string;
+	/**
+	 * The guild snapshot this template contains
+	 */
+	serialized_source_guild: Pick<GuildStructure, "afk_channel_id" | "afk_timeout" | "default_message_notifications" | "description" | "explicit_content_filter" | "icon_hash" | "name" | "preferred_locale" | "region" | "roles" | "system_channel_flags" | "system_channel_id" | "verification_level">;
+	/**
+	 * The ID of the guild this template is based on
+	 */
+	source_guild_id: Snowflake;
+	/**
+	 * When this template was last synced to the source guild
+	 */
+	updated_at: ISO8601;
+	/**
+	 * Number of times this template has been used
+	 */
+	usage_count: Integer;
 };

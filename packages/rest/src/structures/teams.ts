@@ -34,7 +34,7 @@ export type TeamMemberObject = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-object}
  */
-export type TeamStructure = {
+export type TeamObject = {
 	/**
 	 * Hash of the image of the team's icon
 	 */
