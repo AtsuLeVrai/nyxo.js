@@ -1,5 +1,5 @@
-import type { Integer, ISO8601, Snowflake } from "@lunajs/core";
-import type { ApplicationStructure, InviteTargetTypes, UserStructure } from "@lunajs/rest";
+import type { Integer, ISO8601, Snowflake } from "@nyxjs/core";
+import type { ApplicationStructure, InviteTargetTypes, UserStructure } from "@nyxjs/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#invite-delete-invite-delete-event-fields}

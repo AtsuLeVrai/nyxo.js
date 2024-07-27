@@ -1,4 +1,4 @@
-# Security Policy - luna.js
+# Security Policy - nyx.js
 
 ## Supported Versions
 

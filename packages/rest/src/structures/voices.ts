@@ -1,4 +1,4 @@
-import type { ISO8601, Snowflake } from "@lunajs/core";
+import type { ISO8601, Snowflake } from "@nyxjs/core";
 import type { GuildMemberStructure } from "./guilds";
 
 /**

@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "@lunajs/core";
+import type { Integer, Snowflake } from "@nyxjs/core";
 import type { UserStructure } from "./users";
 
 /**

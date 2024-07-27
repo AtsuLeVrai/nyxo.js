@@ -1,9 +1,9 @@
 import { Buffer } from "node:buffer";
 import { clearInterval, setInterval } from "node:timers";
 import { URL } from "node:url";
-import type { GatewayCloseCodes, Integer } from "@lunajs/core";
-import { GatewayOpcodes } from "@lunajs/core";
-import type { ApiVersions } from "@lunajs/rest";
+import type { GatewayCloseCodes, Integer } from "@nyxjs/core";
+import { GatewayOpcodes } from "@nyxjs/core";
+import type { ApiVersions } from "@nyxjs/rest";
 import erlpack from "erlpack";
 import EventEmitter from "eventemitter3";
 import WebSocket from "ws";

@@ -1,4 +1,4 @@
-import type { ISO8601, Oauth2Scopes } from "@lunajs/core";
+import type { ISO8601, Oauth2Scopes } from "@nyxjs/core";
 import type { ApplicationStructure } from "../structures/applications";
 import type { UserStructure } from "../structures/users";
 

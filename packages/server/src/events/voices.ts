@@ -1,4 +1,4 @@
-import type { Snowflake } from "@lunajs/core";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#voice-server-update-voice-server-update-event-fields}

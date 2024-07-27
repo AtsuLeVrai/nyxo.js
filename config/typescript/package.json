@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@lunajs/ts-config",
+  "name": "@nyxjs/ts-config",
   "private": true,
   "files": [
     "next.json",

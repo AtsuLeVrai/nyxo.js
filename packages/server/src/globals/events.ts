@@ -1,4 +1,4 @@
-import type { GatewayOpcodes, Integer } from "@lunajs/core";
+import type { GatewayOpcodes, Integer } from "@nyxjs/core";
 import type {
 	AuditLogEntryStructure,
 	AutoModerationRuleStructure,
@@ -17,7 +17,7 @@ import type {
 	UserStructure,
 	VoiceStateStructure,
 	WebhookStructure,
-} from "@lunajs/rest";
+} from "@nyxjs/rest";
 import type {
 	AutoModerationActionExecutionEventFields,
 	ChannelPinsUpdateEventFields,

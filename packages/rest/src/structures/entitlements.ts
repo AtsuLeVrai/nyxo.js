@@ -1,4 +1,4 @@
-import type { ISO8601, Snowflake } from "@lunajs/core";
+import type { ISO8601, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#entitlement-object-entitlement-types}

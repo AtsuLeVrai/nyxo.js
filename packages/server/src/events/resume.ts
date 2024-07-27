@@ -1,4 +1,4 @@
-import type { Integer } from "@lunajs/core";
+import type { Integer } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#resume-resume-structure}

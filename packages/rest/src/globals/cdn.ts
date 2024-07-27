@@ -1,5 +1,5 @@
 import { URL } from "node:url";
-import type { Integer, Snowflake } from "@lunajs/core";
+import type { Integer, Snowflake } from "@nyxjs/core";
 import EventEmitter from "eventemitter3";
 import type { UserStructure } from "../structures/users";
 

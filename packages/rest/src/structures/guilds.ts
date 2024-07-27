@@ -1,4 +1,4 @@
-import type { Integer, ISO8601, Locales, Oauth2Scopes, Snowflake } from "@lunajs/core";
+import type { Integer, ISO8601, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
 import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";

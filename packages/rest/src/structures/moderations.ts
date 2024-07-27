@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "@lunajs/core";
+import type { Integer, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-metadata}

@@ -1,4 +1,4 @@
-import type { Boolean, Integer, Snowflake } from "@lunajs/core";
+import type { Boolean, Integer, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#create-test-entitlement-json-params}

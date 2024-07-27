@@ -1,4 +1,4 @@
-import type { Integer, ISO8601 } from "@lunajs/core";
+import type { Integer, ISO8601 } from "@nyxjs/core";
 import type { EmojiStructure } from "./emojis";
 
 /**

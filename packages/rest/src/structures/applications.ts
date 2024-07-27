@@ -1,4 +1,4 @@
-import type { Integer, Locales, Oauth2Scopes, Snowflake } from "@lunajs/core";
+import type { Integer, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
 import type { GuildStructure } from "./guilds";
 import type { TeamObject } from "./teams";
 import type { UserStructure } from "./users";

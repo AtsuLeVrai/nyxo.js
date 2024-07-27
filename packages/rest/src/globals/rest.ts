@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import { URL } from "node:url";
-import type { DataURIScheme, RESTJSONErrorCodes } from "@lunajs/core";
+import type { DataURIScheme, RESTJSONErrorCodes } from "@nyxjs/core";
 import EventEmitter from "eventemitter3";
 import type { Dispatcher } from "undici";
 import type { DiscordHeaders } from "./api";

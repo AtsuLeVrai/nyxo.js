@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "@lunajs/core";
+import type { Integer, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-flags}

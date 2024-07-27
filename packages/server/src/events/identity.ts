@@ -1,4 +1,4 @@
-import type { Integer } from "@lunajs/core";
+import type { Integer } from "@nyxjs/core";
 import type { PresenceUpdateEventFields } from "./presences";
 
 /**

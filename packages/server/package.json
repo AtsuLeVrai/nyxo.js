@@ -1,8 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@lunajs/server",
+  "name": "@nyxjs/server",
+  "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint . --ext .ts"
@@ -11,9 +15,9 @@
     "dist"
   ],
   "dependencies": {
-    "@lunajs/cache": "workspace:*",
-    "@lunajs/core": "workspace:*",
-    "@lunajs/rest": "workspace:*",
+    "@nyxjs/cache": "workspace:*",
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
     "bufferutil": "^4.0.8",
     "erlpack": "^0.1.4",
     "eventemitter3": "^5.0.1",

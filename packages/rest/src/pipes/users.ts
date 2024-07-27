@@ -1,4 +1,4 @@
-import type { Boolean, DataURIScheme, Integer, Snowflake } from "@lunajs/core";
+import type { Boolean, DataURIScheme, Integer, Snowflake } from "@nyxjs/core";
 import type { ApplicationRoleConnectionStructure } from "../structures/users";
 
 /**

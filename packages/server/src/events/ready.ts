@@ -1,5 +1,5 @@
-import type { Integer } from "@lunajs/core";
-import type { ApiVersions, ApplicationStructure, UnavailableGuildStructure, UserStructure } from "@lunajs/rest";
+import type { Integer } from "@nyxjs/core";
+import type { ApiVersions, ApplicationStructure, UnavailableGuildStructure, UserStructure } from "@nyxjs/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#ready-ready-event-fields}

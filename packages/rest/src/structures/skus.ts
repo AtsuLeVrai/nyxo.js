@@ -1,4 +1,4 @@
-import type { Snowflake } from "@lunajs/core";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/monetization/skus#sku-object-sku-flags}

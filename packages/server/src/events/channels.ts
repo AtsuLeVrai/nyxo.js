@@ -1,10 +1,10 @@
-import type { Integer, ISO8601, Snowflake } from "@lunajs/core";
+import type { Integer, ISO8601, Snowflake } from "@nyxjs/core";
 import type {
 	AutoModerationActionStructure,
 	AutoModerationRuleTriggerTypes,
 	ChannelStructure,
 	ThreadMemberStructure,
-} from "@lunajs/rest";
+} from "@nyxjs/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#channel-pins-update-channel-pins-update-event-fields}
@@ -127,7 +127,7 @@ export type AutoModerationActionExecutionEventFields = {
 	 */
 	rule_trigger_type: AutoModerationRuleTriggerTypes;
 	/**
-     * ID of the user which generated the content which triggered the rule
-     */
+	 * ID of the user which generated the content which triggered the rule
+	 */
 	user_id: Snowflake;
 };

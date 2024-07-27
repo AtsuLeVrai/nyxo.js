@@ -1,4 +1,4 @@
-import type { Integer, ISO8601, Snowflake } from "@lunajs/core";
+import type { Integer, ISO8601, Snowflake } from "@nyxjs/core";
 import type {
 	AvatarDecorationDataStructure,
 	ChannelStructure,
@@ -11,7 +11,7 @@ import type {
 	StickerStructure,
 	UserStructure,
 	VoiceStateStructure,
-} from "@lunajs/rest";
+} from "@nyxjs/rest";
 import type { PresenceUpdateEventFields } from "./presences";
 
 /**

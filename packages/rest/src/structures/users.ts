@@ -1,4 +1,4 @@
-import type { Integer, Locales, Snowflake } from "@lunajs/core";
+import type { Integer, Locales, Snowflake } from "@nyxjs/core";
 import type { IntegrationStructure } from "./guilds";
 
 /**

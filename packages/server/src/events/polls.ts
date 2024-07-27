@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "@lunajs/core";
+import type { Integer, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-poll-vote-remove-message-poll-vote-remove-fields}

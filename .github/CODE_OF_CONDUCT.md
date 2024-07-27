@@ -1,4 +1,4 @@
-# Contributor Covenant Code of Conduct - luna.js
+# Contributor Covenant Code of Conduct - nyx.js
 
 ## Our Pledge
 
