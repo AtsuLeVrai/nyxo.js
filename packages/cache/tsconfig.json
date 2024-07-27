@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@lunajs/ts-config/node.json",
+  "extends": "../../config/typescript/node.json",
   "compilerOptions": {
     "types": [
       "jest"

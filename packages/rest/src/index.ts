@@ -2,6 +2,26 @@
  * ./globals/*
  */
 export * from "./globals/api";
+export * from "./globals/cdn";
+export * from "./globals/rest";
+
+/**
+ * ./pipes/*
+ */
+export * from "./pipes/entitlements";
+export * from "./pipes/gateway";
+export * from "./pipes/oauth2";
+export * from "./pipes/users";
+
+/**
+ * ./routes/*
+ */
+export * from "./routes/entitlements";
+export * from "./routes/gateway";
+export * from "./routes/oauth2";
+export * from "./routes/skus";
+export * from "./routes/users";
+export * from "./routes/voices";
 
 /**
  * ./structures/*

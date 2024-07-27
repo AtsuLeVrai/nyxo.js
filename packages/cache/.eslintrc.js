@@ -1,1 +1,1 @@
-module.exports = { extends: "@lunajs/eslint-config/node.js" };
+module.exports = { extends: "../../config/eslint/node.js" };

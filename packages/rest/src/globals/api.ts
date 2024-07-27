@@ -30,6 +30,9 @@ export enum ApiVersions {
 	V10 = 10,
 }
 
+/**
+ * @see {@link https://discord.com/developers/docs/reference#authentication}
+ */
 export type AuthTypes = "Bearer" | "Bot";
 
 export type DiscordHeaders = {

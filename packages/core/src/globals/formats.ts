@@ -3,6 +3,8 @@ import twemoji from "twemoji";
 export type Snowflake = string;
 export type Integer = number;
 export type ISO8601 = string;
+export type Boolean = "False" | "True" | 0 | 1 | false | true;
+export type DataURIScheme = string;
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#message-formatting-timestamp-styles}

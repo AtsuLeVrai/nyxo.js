@@ -163,7 +163,7 @@ export enum VoiceOpcodes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes}
  */
-export enum RESTJSONErrorCodes {
+export enum RESTHTTPResponseCodes {
 	/**
 	 * The request completed successfully.
 	 */

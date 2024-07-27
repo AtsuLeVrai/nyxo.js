@@ -19,4 +19,3 @@ gateway.connect();
 gateway.on("DEBUG", console.log);
 gateway.on("ERROR", console.log);
 gateway.on("CLOSE", console.log);
-g;

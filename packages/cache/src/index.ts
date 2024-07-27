@@ -125,15 +125,24 @@ export class Cache<K, V> extends EventEmitter<CacheEvents> {
 
 	private evict(): void {
 		if (this.tail) {
-			this.emit("debug", `[CACHE: ${this.uuid}] Evicting key: ${this.tail.key}`);
+			this.emit(
+				"debug",
+				`[CACHE: ${this.uuid}] Evicting key: ${this.tail.key}`,
+			);
 			this.map.delete(this.tail.key);
 			this.remove(this.tail);
 		} else {
-			this.emit("error", new Error(`[CACHE: ${this.uuid}] Cannot evict item, cache is empty`));
+			this.emit(
+				"error",
+				new Error(`[CACHE: ${this.uuid}] Cannot evict item, cache is empty`),
+			);
 		}
 	}
 
 	private isExpired(item: Node<K, V>): boolean {
-		return this.options?.ttl !== undefined && Date.now() - item.timestamp > this.options.ttl;
+		return (
+			this.options?.ttl !== undefined &&
+            Date.now() - item.timestamp > this.options.ttl
+		);
 	}
 }
