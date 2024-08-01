@@ -27,7 +27,7 @@
     "zlib-sync": "^0.1.9"
   },
   "devDependencies": {
-    "@types/node": "^20.14.12",
+    "@types/node": "^22.0.2",
     "@types/ws": "^8.5.11",
     "typescript": "^5.5.4"
   }
