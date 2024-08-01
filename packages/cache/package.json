@@ -18,8 +18,8 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.11",
+    "@types/node": "^20.14.12",
     "@types/uuid": "^10.0.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.4"
   }
 }

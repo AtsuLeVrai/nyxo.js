@@ -11,9 +11,9 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "husky": "^9.1.1",
+    "husky": "^9.1.3",
     "turbo": "^2.0.9",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.4"
   },
   "engines": {
     "node": ">=18"
