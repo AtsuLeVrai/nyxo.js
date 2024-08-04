@@ -22,7 +22,7 @@
 		"@biomejs/biome": "1.8.3",
 		"@types/node": "^22.1.0",
 		"@types/uuid": "^10.0.0",
-		"eslint": "^8.57.0",
+		"eslint": "^9.8.0",
 		"typescript": "^5.5.4"
 	}
 }
