@@ -2,11 +2,21 @@ import EventEmitter from "eventemitter3";
 import { v4 } from "uuid";
 
 class Node<K, V> {
+	public key: K;
+
+	public value: V;
+
+	public timestamp: number;
+
 	public next: Node<K, V> | null = null;
 
 	public prev: Node<K, V> | null = null;
 
-	public constructor(public key: K, public value: V, public timestamp: number) {}
+	public constructor(key: K, value: V, timestamp: number) {
+		this.key = key;
+		this.value = value;
+		this.timestamp = timestamp;
+	}
 }
 
 export type CacheOptions = {
@@ -23,27 +33,39 @@ export type CacheEvents = {
 export class Cache<K, V> extends EventEmitter<CacheEvents> {
 	public uuid = v4();
 
+	private options?: CacheOptions;
+
 	private map: Map<K, Node<K, V>> = new Map();
 
 	private head: Node<K, V> | null = null;
 
 	private tail: Node<K, V> | null = null;
 
-	public constructor(private readonly options?: CacheOptions) {
+	public constructor(options?: CacheOptions) {
 		super();
+		this.options = options;
 	}
 
 	public set(key: K, value: V): void {
 		const now = Date.now();
-		this.emit("debug", `[CACHE: ${this.uuid}] Setting key: ${key} with value: ${value}`);
+		this.emit(
+			"debug",
+			`[CACHE: ${this.uuid}] Setting key: ${key} with value: ${value}`,
+		);
 
 		if (this.map.has(key)) {
-			this.emit("debug", `[CACHE: ${this.uuid}] Key: ${key} already exists in cache`);
+			this.emit(
+				"debug",
+				`[CACHE: ${this.uuid}] Key: ${key} already exists in cache`,
+			);
 			const existingItem = this.map.get(key);
 			if (existingItem) {
 				this.remove(existingItem);
 			}
-		} else if (this.options?.capacity !== undefined && this.map.size >= this.options.capacity) {
+		} else if (
+			this.options?.capacity !== undefined &&
+			this.map.size >= this.options.capacity
+		) {
 			this.emit("warn", `[CACHE: ${this.uuid}] Cache is full, evicting item`);
 			this.evict();
 		}
@@ -62,14 +84,12 @@ export class Cache<K, V> extends EventEmitter<CacheEvents> {
 				this.remove(item);
 				this.map.delete(key);
 				return undefined;
-			} else {
-				this.remove(item);
-				this.setHead(item);
-				return item.value;
 			}
-		} else {
-			this.emit("debug", `[CACHE: ${this.uuid}] Key: ${key} not found in cache`);
+			this.remove(item);
+			this.setHead(item);
+			return item.value;
 		}
+		this.emit("debug", `[CACHE: ${this.uuid}] Key: ${key} not found in cache`);
 
 		return undefined;
 	}
@@ -142,7 +162,7 @@ export class Cache<K, V> extends EventEmitter<CacheEvents> {
 	private isExpired(item: Node<K, V>): boolean {
 		return (
 			this.options?.ttl !== undefined &&
-            Date.now() - item.timestamp > this.options.ttl
+			Date.now() - item.timestamp > this.options.ttl
 		);
 	}
 }

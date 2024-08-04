@@ -151,7 +151,12 @@ export type SelectMenuStructure = {
 	/**
 	 * Type of select menu component (text: 3, user: 5, role: 6, mentionable: 7, channels: 8)
 	 */
-	type: ComponentTypes.ChannelSelect | ComponentTypes.MentionableSelect | ComponentTypes.RoleSelect | ComponentTypes.Select | ComponentTypes.UserSelect;
+	type:
+		| ComponentTypes.ChannelSelect
+		| ComponentTypes.MentionableSelect
+		| ComponentTypes.RoleSelect
+		| ComponentTypes.Select
+		| ComponentTypes.UserSelect;
 };
 
 /**
@@ -245,7 +250,9 @@ export enum ComponentTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#action-rows}
  */
-export type ActionRowStructure<T = ButtonStructure | SelectMenuStructure | TextInputStructure> = {
+export type ActionRowStructure<
+	T = ButtonStructure | SelectMenuStructure | TextInputStructure,
+> = {
 	/**
 	 * Components in the action row
 	 */
@@ -675,11 +682,20 @@ export type ResolvedDataStructure = {
 	/**
 	 * Map of Snowflakes to partial channel objects
 	 */
-	channels?: Map<Snowflake, Pick<ChannelStructure, "id" | "name" | "parent_id" | "permissions" | "thread_metadata" | "type">>;
+	channels?: Map<
+		Snowflake,
+		Pick<
+			ChannelStructure,
+			"id" | "name" | "parent_id" | "permissions" | "thread_metadata" | "type"
+		>
+	>;
 	/**
 	 * Map of Snowflakes to partial member objects
 	 */
-	members?: Map<Snowflake, Omit<GuildMemberStructure, "deaf" | "mute" | "user">>;
+	members?: Map<
+		Snowflake,
+		Omit<GuildMemberStructure, "deaf" | "mute" | "user">
+	>;
 	/**
 	 * Map of Snowflakes to partial messages objects
 	 */
@@ -808,7 +824,10 @@ export type InteractionStructure = {
 	/**
 	 * Mapping of installation contexts that the interaction was authorized for to related user or guild IDs
 	 */
-	authorizing_integration_owners?: Record<Snowflake, ApplicationIntegrationTypes[]>;
+	authorizing_integration_owners?: Record<
+		Snowflake,
+		ApplicationIntegrationTypes[]
+	>;
 	/**
 	 * Channel that the interaction was sent from
 	 */
@@ -824,7 +843,12 @@ export type InteractionStructure = {
 	/**
 	 * Interaction data payload
 	 */
-	data?: ApplicationCommandInteractionDataOptionStructure | ApplicationCommandInteractionDataStructure | MessageComponentDataStructure | ModalSubmitDataStructure | ResolvedDataStructure;
+	data?:
+		| ApplicationCommandInteractionDataOptionStructure
+		| ApplicationCommandInteractionDataStructure
+		| MessageComponentDataStructure
+		| ModalSubmitDataStructure
+		| ResolvedDataStructure;
 	/**
 	 * For monetized apps, any entitlements for the invoking user, representing access to premium SKUs
 	 */

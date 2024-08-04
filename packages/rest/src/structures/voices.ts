@@ -1,4 +1,4 @@
-import type { ISO8601, Snowflake } from "@nyxjs/core";
+import type { Iso8601, Snowflake } from "@nyxjs/core";
 import type { GuildMemberStructure } from "./guilds";
 
 /**
@@ -54,7 +54,7 @@ export type VoiceStateStructure = {
 	/**
 	 * The time at which the user requested to speak
 	 */
-	request_to_speak_timestamp: ISO8601 | null;
+	request_to_speak_timestamp: Iso8601 | null;
 	/**
 	 * Whether this user is locally deafened
 	 */

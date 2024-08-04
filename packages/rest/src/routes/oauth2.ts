@@ -1,4 +1,4 @@
-import type { ISO8601, Oauth2Scopes } from "@nyxjs/core";
+import type { Iso8601, Oauth2Scopes } from "@nyxjs/core";
 import type { RESTMakeRequestOptions } from "../globals/rest";
 import type { ApplicationStructure } from "../structures/applications";
 import type { UserStructure } from "../structures/users";
@@ -10,11 +10,20 @@ export type GetCurrentAuthorizationInformationResponse = {
 	/**
 	 * The current application
 	 */
-	application: Pick<ApplicationStructure, "bot_public" | "bot_require_code_grant" | "description" | "icon" | "id" | "name" | "verify_key">;
+	application: Pick<
+		ApplicationStructure,
+		| "bot_public"
+		| "bot_require_code_grant"
+		| "description"
+		| "icon"
+		| "id"
+		| "name"
+		| "verify_key"
+	>;
 	/**
 	 * When the access token expires
 	 */
-	expires: ISO8601;
+	expires: Iso8601;
 	/**
 	 * The scopes the user has authorized the application for
 	 */

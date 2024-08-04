@@ -1,6 +1,9 @@
-import type { Integer, ISO8601, Snowflake } from "@nyxjs/core";
+import type { Integer, Iso8601, Snowflake } from "@nyxjs/core";
 import type { DiscordHeaders } from "../globals/api";
-import type { ApplicationIntegrationTypes, ApplicationStructure } from "./applications";
+import type {
+	ApplicationIntegrationTypes,
+	ApplicationStructure,
+} from "./applications";
 import type { EmojiStructure } from "./emojis";
 import type { GuildMemberStructure } from "./guilds";
 import type {
@@ -349,7 +352,7 @@ export type EmbedStructure = {
 	/**
 	 * Timestamp of embed content
 	 */
-	timestamp?: ISO8601;
+	timestamp?: Iso8601;
 	/**
 	 * Title of the embed
 	 */
@@ -423,7 +426,7 @@ export type ThreadMemberStructure = {
 	/**
 	 * Time the user last joined the thread
 	 */
-	join_timestamp: ISO8601;
+	join_timestamp: Iso8601;
 	/**
 	 * Additional information about the user
 	 */
@@ -441,7 +444,7 @@ export type ThreadMetadataStructure = {
 	/**
 	 * Timestamp when the thread's archive status was last changed, used for calculating recent activity
 	 */
-	archive_timestamp: ISO8601;
+	archive_timestamp: Iso8601;
 	/**
 	 * Whether the thread is archived
 	 */
@@ -453,7 +456,7 @@ export type ThreadMetadataStructure = {
 	/**
 	 * Timestamp when the thread was created; only populated for threads created after 2022-01-09
 	 */
-	create_timestamp?: ISO8601 | null;
+	create_timestamp?: Iso8601 | null;
 	/**
 	 * Whether non-moderators can add other non-moderators to a thread; only available on private threads
 	 */
@@ -551,7 +554,18 @@ export type MessageSnapshotStructure = {
 	/**
 	 * Minimal subset of fields in the forwarded message
 	 */
-	message: Pick<MessageStructure, "attachments" | "content" | "edited_timestamp" | "embeds" | "flags" | "mention_roles" | "mentions" | "timestamp" | "type">;
+	message: Pick<
+		MessageStructure,
+		| "attachments"
+		| "content"
+		| "edited_timestamp"
+		| "embeds"
+		| "flags"
+		| "mention_roles"
+		| "mentions"
+		| "timestamp"
+		| "type"
+	>;
 };
 
 /**
@@ -601,7 +615,7 @@ export type MessageCallStructure = {
 	/**
 	 * Time when call ended
 	 */
-	ended_timestamp?: ISO8601 | null;
+	ended_timestamp?: Iso8601 | null;
 	/**
 	 * Array of user object ids that participated in the call
 	 */
@@ -615,7 +629,10 @@ export type MessageInteractionMetadataStructure = {
 	/**
 	 * IDs for installation context(s) related to an interaction
 	 */
-	authorizing_integration_owners: Record<Snowflake, ApplicationIntegrationTypes>;
+	authorizing_integration_owners: Record<
+		Snowflake,
+		ApplicationIntegrationTypes
+	>;
 	/**
 	 * ID of the interaction
 	 */
@@ -801,7 +818,7 @@ export type MessageStructure = {
 	/**
 	 * When this message was edited (or null if never)
 	 */
-	edited_timestamp: ISO8601 | null;
+	edited_timestamp: Iso8601 | null;
 	/**
 	 * Any embedded content
 	 */
@@ -875,7 +892,10 @@ export type MessageStructure = {
 	/**
 	 * Data for users, members, channels, and roles in the message's auto-populated select menus
 	 */
-	resolved?: Pick<ResolvedDataStructure, "channels" | "members" | "roles" | "users">;
+	resolved?: Pick<
+		ResolvedDataStructure,
+		"channels" | "members" | "roles" | "users"
+	>;
 	/**
 	 * Data of the role subscription purchase or renewal that prompted this ROLE_SUBSCRIPTION_PURCHASE message
 	 */
@@ -897,7 +917,7 @@ export type MessageStructure = {
 	/**
 	 * When this message was sent
 	 */
-	timestamp: ISO8601;
+	timestamp: Iso8601;
 	/**
 	 * Whether this was a TTS message
 	 */
@@ -1091,7 +1111,7 @@ export type ChannelStructure = {
 	/**
 	 * When the last pinned message was pinned. This may be null in events such as GUILD_CREATE when a message is not pinned.
 	 */
-	last_pin_timestamp?: ISO8601 | null;
+	last_pin_timestamp?: Iso8601 | null;
 	/**
 	 * For group DM channels: whether the channel is managed by an application via the gdm.join OAuth2 scope
 	 */

@@ -1,6 +1,9 @@
 import type { Snowflake } from "@nyxjs/core";
 import type { ChannelStructure } from "./channels";
-import type { GuildScheduledEventStructure, IntegrationStructure } from "./guilds";
+import type {
+	GuildScheduledEventStructure,
+	IntegrationStructure,
+} from "./guilds";
 import type { ApplicationCommandStructure } from "./interactions";
 import type { AutoModerationRuleStructure } from "./moderations";
 import type { UserStructure } from "./users";
@@ -17,11 +20,11 @@ export type AuditLogChangeStructure = {
 	/**
 	 * New value of the key
 	 */
-	new_value?: any;
+	new_value?: unknown;
 	/**
 	 * Old value of the key
 	 */
-	old_value?: any;
+	old_value?: unknown;
 };
 
 /**

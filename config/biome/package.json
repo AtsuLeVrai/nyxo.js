@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/biome-config",
+  "private": true,
+  "files": [
+    "node.json"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "1.8.3"
+  }
+}

@@ -1,25 +1,25 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/core",
-  "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "tsc",
-    "lint": "eslint --fix . --ext .ts"
-  },
-  "files": [
-    "dist"
-  ],
-  "dependencies": {
-    "tslib": "^2.6.3",
-    "twemoji": "^14.0.2"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.12",
-    "typescript": "^5.5.4"
-  }
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "@nyxjs/core",
+	"version": "1.0.0",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "tsc",
+		"lint": "eslint --fix . --ext .ts",
+		"check": "biome check --write --unsafe --error-on-warnings --verbose --log-level=debug --colors=force ./src"
+	},
+	"files": ["dist"],
+	"dependencies": {
+		"tslib": "^2.6.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"@types/node": "^20.14.14",
+		"eslint": "^8.57.0",
+		"typescript": "^5.5.4"
+	}
 }

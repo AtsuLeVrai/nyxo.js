@@ -1,4 +1,4 @@
-import type { ISO8601, Snowflake } from "@nyxjs/core";
+import type { Iso8601, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#entitlement-object-entitlement-types}
@@ -57,7 +57,7 @@ export type EntitlementStructure = {
 	/**
 	 * Date at which the entitlement is no longer valid. Not present when using test entitlements.
 	 */
-	ends_at?: ISO8601;
+	ends_at?: Iso8601;
 	/**
 	 * ID of the guild that is granted access to the entitlement's SKU
 	 */
@@ -73,7 +73,7 @@ export type EntitlementStructure = {
 	/**
 	 * Start date at which the entitlement is valid. Not present when using test entitlements.
 	 */
-	starts_at?: ISO8601;
+	starts_at?: Iso8601;
 	/**
 	 * Type of entitlement
 	 */

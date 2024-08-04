@@ -54,7 +54,7 @@ export function getGatewayBot(): RESTMakeRequestOptions<GetGatewayBotResponse> {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
  */
-export function getGateway(): RESTMakeRequestOptions<{ url: string; }> {
+export function getGateway(): RESTMakeRequestOptions<{ url: string }> {
 	return {
 		method: "GET",
 		path: "/gateway",

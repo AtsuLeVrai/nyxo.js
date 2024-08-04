@@ -1,0 +1,46 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+  "organizeImports": {
+    "enabled": true
+  },
+  "formatter": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "a11y": {
+        "all": true
+      },
+      "complexity": {
+        "all": true
+      },
+      "correctness": {
+        "all": true
+      },
+      "nursery": {
+        "all": true,
+        "useImportExtensions": "off",
+        "useImportRestrictions": "off"
+      },
+      "performance": {
+        "all": true,
+        "noBarrelFile": "off"
+      },
+      "security": {
+        "all": true
+      },
+      "style": {
+        "all": true,
+        "useNamingConvention": "off"
+      },
+      "suspicious": {
+        "all": true
+      }
+    },
+    "ignore": [
+      "**/dist/*",
+      "**/node_modules/*"
+    ]
+  }
+}

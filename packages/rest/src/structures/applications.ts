@@ -214,7 +214,10 @@ export type ApplicationStructure = {
 	/**
 	 * In preview. Default scopes and permissions for each supported installation context. Value for each key is an integration type configuration object
 	 */
-	integration_types_config?: Record<ApplicationIntegrationTypes, ApplicationIntegrationTypeConfigurationStructure>;
+	integration_types_config?: Record<
+		ApplicationIntegrationTypes,
+		ApplicationIntegrationTypeConfigurationStructure
+	>;
 	/**
 	 * Interactions endpoint URL for the app
 	 */

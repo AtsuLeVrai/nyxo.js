@@ -1,7 +1,11 @@
-import type { Integer, ISO8601 } from "@nyxjs/core";
+import type { Integer, Iso8601 } from "@nyxjs/core";
 import type { ApplicationStructure } from "./applications";
 import type { ChannelStructure } from "./channels";
-import type { GuildMemberStructure, GuildScheduledEventStructure, GuildStructure } from "./guilds";
+import type {
+	GuildMemberStructure,
+	GuildScheduledEventStructure,
+	GuildStructure,
+} from "./guilds";
 import type { UserStructure } from "./users";
 
 /**
@@ -33,7 +37,7 @@ export type InviteMetadataStructure = {
 	/**
 	 * When this invite was created
 	 */
-	created_at: ISO8601;
+	created_at: Iso8601;
 	/**
 	 * The duration (in seconds) after which the invite expires
 	 */
@@ -92,11 +96,24 @@ export type InviteStructure = {
 	/**
 	 * The expiration date of this invite, returned from the GET /invites/<code> endpoint when with_expiration is true
 	 */
-	expires_at?: ISO8601 | null;
+	expires_at?: Iso8601 | null;
 	/**
 	 * The guild this invite is for
 	 */
-	guild?: Pick<GuildStructure, "banner" | "description" | "features" | "icon" | "id" | "name" | "nsfw_level" | "premium_subscription_count" | "splash" | "vanity_url_code" | "verification_level">;
+	guild?: Pick<
+		GuildStructure,
+		| "banner"
+		| "description"
+		| "features"
+		| "icon"
+		| "id"
+		| "name"
+		| "nsfw_level"
+		| "premium_subscription_count"
+		| "splash"
+		| "vanity_url_code"
+		| "verification_level"
+	>;
 	/**
 	 * Guild scheduled event data, only included if guild_scheduled_event_id contains a valid guild scheduled event id
 	 */

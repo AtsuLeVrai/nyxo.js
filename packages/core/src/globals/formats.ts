@@ -1,10 +1,9 @@
-import twemoji from "twemoji";
-
 export type Snowflake = string;
+export type Iso8601 = string;
+export type DataUriScheme = string;
 export type Integer = number;
-export type ISO8601 = string;
+export type Float = number;
 export type Boolean = "False" | "True" | 0 | 1 | false | true;
-export type DataURIScheme = string;
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#message-formatting-timestamp-styles}
@@ -39,45 +38,75 @@ export function formatRole(roleId: Snowflake): `<@&${Snowflake}>` {
 	return `<@&${roleId}>`;
 }
 
-export function formatSlashCommand(commandName: string, commandId: Snowflake): `</${string}:${Snowflake}>`;
-export function formatSlashCommand(commandName: string, commandId: Snowflake, subCommandName: string): `</${string} ${string}:${Snowflake}>`;
-export function formatSlashCommand(commandName: string, commandId: Snowflake, subCommandGroupName: string, subCommandName: string): `</${string} ${string} ${string}:${Snowflake}>`;
-export function formatSlashCommand(commandName: string, commandId: Snowflake, subCommandGroupName?: string, subCommandName?: string): string {
+export function formatSlashCommand(
+	commandName: string,
+	commandId: Snowflake,
+): `</${string}:${Snowflake}>`;
+export function formatSlashCommand(
+	commandName: string,
+	commandId: Snowflake,
+	subCommandName: string,
+): `</${string} ${string}:${Snowflake}>`;
+export function formatSlashCommand(
+	commandName: string,
+	commandId: Snowflake,
+	subCommandGroupName: string,
+	subCommandName: string,
+): `</${string} ${string} ${string}:${Snowflake}>`;
+export function formatSlashCommand(
+	commandName: string,
+	commandId: Snowflake,
+	subCommandGroupName?: string,
+	subCommandName?: string,
+): string {
 	if (subCommandGroupName && subCommandName) {
 		return `</${commandName} ${subCommandGroupName} ${subCommandName}:${commandId}>`;
-	} else if (subCommandName) {
-		return `</${commandName} ${subCommandName}:${commandId}>`;
-	} else {
-		return `</${commandName}:${commandId}>`;
 	}
+	if (subCommandName) {
+		return `</${commandName} ${subCommandName}:${commandId}>`;
+	}
+	return `</${commandName}:${commandId}>`;
 }
 
-export function formatStandardEmoji(text: string): string {
-	// TODO: Verify that this is the correct way to parse standard emojis
-	return twemoji.parse(text);
-}
-
-export function formatCustomEmoji(emojiName: string, emojiId: Snowflake): `<:${string}:${Snowflake}>`;
-export function formatCustomEmoji(emojiName: string, emojiId: Snowflake, animated: true): `<a:${string}:${Snowflake}>`;
-export function formatCustomEmoji(emojiName: string, emojiId: Snowflake, animated?: boolean): string {
+export function formatCustomEmoji(
+	emojiName: string,
+	emojiId: Snowflake,
+): `<:${string}:${Snowflake}>`;
+export function formatCustomEmoji(
+	emojiName: string,
+	emojiId: Snowflake,
+	animated: true,
+): `<a:${string}:${Snowflake}>`;
+export function formatCustomEmoji(
+	emojiName: string,
+	emojiId: Snowflake,
+	animated?: boolean,
+): string {
 	if (animated) {
 		return `<a:${emojiName}:${emojiId}>`;
-	} else {
-		return `<:${emojiName}:${emojiId}>`;
 	}
+	return `<:${emojiName}:${emojiId}>`;
 }
 
 export function formatUnixTimestamp(timestamp: number): `<t:${number}>`;
-export function formatUnixTimestamp(timestamp: number, style: TimestampStyles): `<t:${number}:${TimestampStyles}>`;
-export function formatUnixTimestamp(timestamp: number, style?: TimestampStyles): string {
+export function formatUnixTimestamp(
+	timestamp: number,
+	style: TimestampStyles,
+): `<t:${number}:${TimestampStyles}>`;
+export function formatUnixTimestamp(
+	timestamp: number,
+	style?: TimestampStyles,
+): string {
 	if (style) {
 		return `<t:${timestamp}:${style}>`;
-	} else {
-		return `<t:${timestamp}>`;
 	}
+	return `<t:${timestamp}>`;
 }
 
-export function formatGuildNavigation(guildId: Snowflake, guildType: GuildNavigationTypes): `<${Snowflake}:${GuildNavigationTypes}>` {
+export function formatGuildNavigation(
+	guildId: Snowflake,
+	guildType: GuildNavigationTypes,
+): `<${Snowflake}:${GuildNavigationTypes}>` {
 	return `<${guildId}:${guildType}>`;
 }
 
@@ -101,7 +130,10 @@ export function code(text: string): `\`${string}\`` {
 	return `\`${text}\``;
 }
 
-export function codeBlock(language: string, text: string): `\`\`\`${string}\n${string}\n\`\`\`` {
+export function codeBlock(
+	language: string,
+	text: string,
+): `\`\`\`${string}\n${string}\n\`\`\`` {
 	return `\`\`\`${language}\n${text}\n\`\`\``;
 }
 

@@ -14,7 +14,12 @@ export type DeleteWebhookMessageQueryStringParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-message}
  */
-export function deleteWebhookMessage(webhookId: Snowflake, webhookToken: string, messageId: Snowflake, query?: DeleteWebhookMessageQueryStringParams): RESTMakeRequestOptions<void> {
+export function deleteWebhookMessage(
+	webhookId: Snowflake,
+	webhookToken: string,
+	messageId: Snowflake,
+	query?: DeleteWebhookMessageQueryStringParams,
+): RESTMakeRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`,

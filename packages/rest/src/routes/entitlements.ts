@@ -5,7 +5,10 @@ import type { EntitlementStructure } from "../structures/entitlements";
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#delete-test-entitlement}
  */
-export function deleteTestEntitlement(applicationId: Snowflake, skuId: Snowflake): RESTMakeRequestOptions<void> {
+export function deleteTestEntitlement(
+	applicationId: Snowflake,
+	skuId: Snowflake,
+): RESTMakeRequestOptions<void> {
 	return {
 		method: "DELETE",
 		path: `/applications/${applicationId}/entitlements/${skuId}`,
@@ -33,7 +36,10 @@ export type CreateTestEntitlementJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#create-test-entitlement}
  */
-export function createTestEntitlement(applicationId: Snowflake, params: CreateTestEntitlementJSONParams): RESTMakeRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
+export function createTestEntitlement(
+	applicationId: Snowflake,
+	params: CreateTestEntitlementJSONParams,
+): RESTMakeRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
 	return {
 		method: "POST",
 		path: `/applications/${applicationId}/entitlements`,
@@ -44,7 +50,10 @@ export function createTestEntitlement(applicationId: Snowflake, params: CreateTe
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#consume-an-entitlement}
  */
-export function consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RESTMakeRequestOptions<void> {
+export function consumeEntitlement(
+	applicationId: Snowflake,
+	entitlementId: Snowflake,
+): RESTMakeRequestOptions<void> {
 	return {
 		method: "POST",
 		path: `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
@@ -66,7 +75,7 @@ export type ListEntitlementsQueryStringParams = {
 	/**
 	 * Whether or not ended entitlements should be omitted
 	 */
-	exclude_ended?: Boolean;
+	exclude_ended?: boolean;
 	/**
 	 * Guild ID to look up entitlements for
 	 */
@@ -88,7 +97,10 @@ export type ListEntitlementsQueryStringParams = {
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#list-entitlements}
  */
-export function listEntitlements(applicationId: Snowflake, query?: ListEntitlementsQueryStringParams): RESTMakeRequestOptions<EntitlementStructure[]> {
+export function listEntitlements(
+	applicationId: Snowflake,
+	query?: ListEntitlementsQueryStringParams,
+): RESTMakeRequestOptions<EntitlementStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/entitlements`,

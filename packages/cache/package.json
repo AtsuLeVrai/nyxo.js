@@ -1,25 +1,28 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/cache",
-  "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "tsc",
-    "lint": "eslint . --ext .ts --fix",
-    "test": "jest"
-  },
-  "dependencies": {
-    "eventemitter3": "^5.0.1",
-    "tslib": "^2.6.3",
-    "uuid": "^10.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.12",
-    "@types/uuid": "^10.0.0",
-    "typescript": "^5.5.4"
-  }
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "@nyxjs/cache",
+	"version": "1.0.0",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "tsc",
+		"lint": "eslint . --ext .ts --fix",
+		"test": "jest",
+		"check": "biome check --write --unsafe --error-on-warnings --verbose --log-level=debug --colors=force ./src"
+	},
+	"dependencies": {
+		"eventemitter3": "^5.0.1",
+		"tslib": "^2.6.3",
+		"uuid": "^10.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"@types/node": "^20.14.14",
+		"@types/uuid": "^10.0.0",
+		"eslint": "^8.57.0",
+		"typescript": "^5.5.4"
+	}
 }

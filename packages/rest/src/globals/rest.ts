@@ -1,6 +1,4 @@
-import { Buffer } from "node:buffer";
-import { URL } from "node:url";
-import type { DataURIScheme, RESTJSONErrorCodes } from "@nyxjs/core";
+import type { DataUriScheme, RESTJSONErrorCodes } from "@nyxjs/core";
 import EventEmitter from "eventemitter3";
 import type { Dispatcher } from "undici";
 import type { DiscordHeaders } from "./api";
@@ -53,27 +51,22 @@ export type RESTMakeRequestOptions<T> = Dispatcher.DispatchOptions & {
 export class REST extends EventEmitter {
 	private baseUrl = new URL("https://discord.com/api/");
 
-	public constructor() {
-		super();
-	}
-
-	public async makeRequest<T>(options: RESTMakeRequestOptions<T>): Promise<T> {
-		// TODO: Implement
-		return new Promise((_value, reject) => {
-			reject(new Error("Not Found"));
-		});
-	}
+	public async makeRequest<T>(
+		_options: RESTMakeRequestOptions<T>,
+	): Promise<T> {}
 
 	/**
 	 * @see {@link https://discord.com/developers/docs/reference#image-data}
 	 */
-	public imageData(hash: string, type: "image/gif" | "image/jpeg" | "image/png"): DataURIScheme {
+	public imageData(
+		hash: string,
+		type: "image/gif" | "image/jpeg" | "image/png",
+	): DataUriScheme {
 		if (this.isBase64(hash)) {
 			return `data:${type};base64,${hash}`;
-		} else {
-			const buffer = Buffer.from(hash, "utf8");
-			return `data:${type};base64,${buffer.toString("base64")}`;
 		}
+		const buffer = Buffer.from(hash, "utf8");
+		return `data:${type};base64,${buffer.toString("base64")}`;
 	}
 
 	private isBase64(str: string): boolean {

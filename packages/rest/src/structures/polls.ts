@@ -1,4 +1,4 @@
-import type { Integer, ISO8601 } from "@nyxjs/core";
+import type { Integer, Iso8601 } from "@nyxjs/core";
 import type { EmojiStructure } from "./emojis";
 
 /**
@@ -112,7 +112,7 @@ export type PollStructure = {
 	/**
 	 * The time when the poll ends
 	 */
-	expiry: ISO8601 | null;
+	expiry: Iso8601 | null;
 	/**
 	 * The layout type of the poll
 	 */

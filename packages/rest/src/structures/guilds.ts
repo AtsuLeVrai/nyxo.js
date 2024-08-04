@@ -1,4 +1,10 @@
-import type { Integer, ISO8601, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
+import type {
+	Integer,
+	Iso8601,
+	Locales,
+	Oauth2Scopes,
+	Snowflake,
+} from "@nyxjs/core";
 import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";
@@ -283,7 +289,7 @@ export type IntegrationStructure = {
 	/**
 	 * When this integration was last synced
 	 */
-	synced_at?: ISO8601;
+	synced_at?: Iso8601;
 	/**
 	 * Is this integration syncing
 	 */
@@ -335,7 +341,7 @@ export type GuildMemberStructure = {
 	/**
 	 * When the user's timeout will expire and the user will be able to communicate in the guild again, null or a time in the past if the user is not timed out
 	 */
-	communication_disabled_until?: ISO8601 | null;
+	communication_disabled_until?: Iso8601 | null;
 	/**
 	 * Whether the user is deafened in voice channels
 	 */
@@ -347,7 +353,7 @@ export type GuildMemberStructure = {
 	/**
 	 * When the user joined the guild
 	 */
-	joined_at: ISO8601;
+	joined_at: Iso8601;
 	/**
 	 * Whether the user is muted in voice channels
 	 */
@@ -367,7 +373,7 @@ export type GuildMemberStructure = {
 	/**
 	 * When the user started boosting the guild
 	 */
-	premium_since?: ISO8601 | null;
+	premium_since?: Iso8601 | null;
 	/**
 	 * Array of role object ids
 	 */
@@ -397,7 +403,10 @@ export type GuildWidgetStructure = {
 	/**
 	 * Special widget user objects that includes users presence (Limit 100)
 	 */
-	members: Pick<UserStructure, "avatar" | "discriminator" | "id" | "username">[];
+	members: Pick<
+		UserStructure,
+		"avatar" | "discriminator" | "id" | "username"
+	>[];
 	/**
 	 * Guild name (2-100 characters)
 	 */
@@ -993,11 +1002,11 @@ export type GuildScheduledEventStructure = {
 	/**
 	 * The time the scheduled event will end, required if entity_type is EXTERNAL
 	 */
-	scheduled_end_time: ISO8601 | null;
+	scheduled_end_time: Iso8601 | null;
 	/**
 	 * The time the scheduled event will start
 	 */
-	scheduled_start_time: ISO8601;
+	scheduled_start_time: Iso8601;
 	/**
 	 * The status of the scheduled event
 	 */
@@ -1019,7 +1028,7 @@ export type GuildTemplateStructure = {
 	/**
 	 * When this template was created
 	 */
-	created_at: ISO8601;
+	created_at: Iso8601;
 	/**
 	 * The user who created the template
 	 */
@@ -1043,7 +1052,22 @@ export type GuildTemplateStructure = {
 	/**
 	 * The guild snapshot this template contains
 	 */
-	serialized_source_guild: Pick<GuildStructure, "afk_channel_id" | "afk_timeout" | "default_message_notifications" | "description" | "explicit_content_filter" | "icon_hash" | "name" | "preferred_locale" | "region" | "roles" | "system_channel_flags" | "system_channel_id" | "verification_level">;
+	serialized_source_guild: Pick<
+		GuildStructure,
+		| "afk_channel_id"
+		| "afk_timeout"
+		| "default_message_notifications"
+		| "description"
+		| "explicit_content_filter"
+		| "icon_hash"
+		| "name"
+		| "preferred_locale"
+		| "region"
+		| "roles"
+		| "system_channel_flags"
+		| "system_channel_id"
+		| "verification_level"
+	>;
 	/**
 	 * The ID of the guild this template is based on
 	 */
@@ -1051,7 +1075,7 @@ export type GuildTemplateStructure = {
 	/**
 	 * When this template was last synced to the source guild
 	 */
-	updated_at: ISO8601;
+	updated_at: Iso8601;
 	/**
 	 * Number of times this template has been used
 	 */

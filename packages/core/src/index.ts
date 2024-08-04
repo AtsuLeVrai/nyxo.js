@@ -9,15 +9,15 @@ export {
 	type Boolean,
 	boldHeader,
 	codeBlock,
-	type DataURIScheme,
+	type DataUriScheme,
+	type Float,
 	formatChannel,
 	formatCustomEmoji,
 	formatRole,
 	formatGuildNavigation,
 	formatSlashCommand,
-	formatStandardEmoji,
 	type Integer,
-	type ISO8601,
+	type Iso8601,
 	italics,
 	quote,
 	formatUser,
@@ -31,7 +31,11 @@ export {
 	TimestampStyles,
 } from "./globals/formats";
 export { Locales } from "./globals/locales";
-export { type BotAuthParameters, Oauth2Scopes, Oauth2Urls } from "./globals/oauth2";
+export {
+	type BotAuthParameters,
+	Oauth2Scopes,
+	Oauth2Urls,
+} from "./globals/oauth2";
 export {
 	GatewayCloseCodes,
 	RPCCloseCodes,

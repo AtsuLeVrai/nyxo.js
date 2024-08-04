@@ -1,9 +1,18 @@
 /**
  * ./globals/*
  */
-export { type AuthTypes, ApiVersions, type DiscordHeaders } from "./globals/api";
+export {
+	type AuthTypes,
+	ApiVersions,
+	type DiscordHeaders,
+} from "./globals/api";
 export { CDN, type CDNEvents, type ImageFormats } from "./globals/cdn";
-export { type RESTMakeRequestOptions, REST, type AttachmentCDNUrlParameters, type RateLimitResponse } from "./globals/rest";
+export {
+	type RESTMakeRequestOptions,
+	REST,
+	type AttachmentCDNUrlParameters,
+	type RateLimitResponse,
+} from "./globals/rest";
 
 /**
  * ./routes/*
@@ -16,7 +25,12 @@ export {
 	listEntitlements,
 	consumeEntitlement,
 } from "./routes/entitlements";
-export { type GetGatewayBotResponse, getGateway, getGatewayBot, type SessionStartLimitStructure } from "./routes/gateway";
+export {
+	type GetGatewayBotResponse,
+	getGateway,
+	getGatewayBot,
+	type SessionStartLimitStructure,
+} from "./routes/gateway";
 export {
 	type GetCurrentAuthorizationInformationResponse,
 	getCurrentAuthorizationInformation,
@@ -103,7 +117,10 @@ export {
 	VideoQualityModes,
 } from "./structures/channels";
 export type { EmojiStructure } from "./structures/emojis";
-export { type EntitlementStructure, EntitlementTypes } from "./structures/entitlements";
+export {
+	type EntitlementStructure,
+	EntitlementTypes,
+} from "./structures/entitlements";
 export {
 	type BanStructure,
 	type GuildStructure,
@@ -199,11 +216,28 @@ export {
 	PollLayoutTypes,
 	type PollStructure,
 } from "./structures/polls";
-export { RoleFlags, type RoleStructure, type RoleTagsStructure } from "./structures/roles";
+export {
+	RoleFlags,
+	type RoleStructure,
+	type RoleTagsStructure,
+} from "./structures/roles";
 export { SkuFlags, type SkuStructure, SkuTypes } from "./structures/skus";
-export { type StageInstanceStructure, StagePrivacyLevels } from "./structures/stages";
-export { type StickerItemStructure, type StickerPackStructure, StickersFormatTypes, StickerTypes, type StickerStructure } from "./structures/stickers";
-export { MembershipStates, type TeamMemberObject, type TeamObject } from "./structures/teams";
+export {
+	type StageInstanceStructure,
+	StagePrivacyLevels,
+} from "./structures/stages";
+export {
+	type StickerItemStructure,
+	type StickerPackStructure,
+	StickersFormatTypes,
+	StickerTypes,
+	type StickerStructure,
+} from "./structures/stickers";
+export {
+	MembershipStates,
+	type TeamMemberObject,
+	type TeamObject,
+} from "./structures/teams";
 export {
 	type ApplicationRoleConnectionStructure,
 	type ConnectionStructure,
@@ -214,5 +248,8 @@ export {
 	ConnectionVisibilityTypes,
 	PremiumTypes,
 } from "./structures/users";
-export type { VoiceRegionStructure, VoiceStateStructure } from "./structures/voices";
+export type {
+	VoiceRegionStructure,
+	VoiceStateStructure,
+} from "./structures/voices";
 export { type WebhookStructure, WebhookTypes } from "./structures/webhooks";
