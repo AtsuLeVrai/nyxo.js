@@ -9,9 +9,13 @@
     "lint": "turbo run lint",
     "check": "turbo run check",
     "test": "turbo run test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.7",
     "husky": "^9.1.4",
     "turbo": "^2.0.11",
     "typescript": "^5.5.4"

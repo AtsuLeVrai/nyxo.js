@@ -21,7 +21,9 @@
       "nursery": {
         "all": true,
         "useImportExtensions": "off",
-        "useImportRestrictions": "off"
+        "useImportRestrictions": "off",
+        "noUndeclaredDependencies": "off",
+        "noReactSpecificProps": "off"
       },
       "performance": {
         "all": true,
