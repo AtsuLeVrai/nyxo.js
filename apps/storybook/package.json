@@ -17,7 +17,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3",
 		"@chromatic-com/storybook": "1.6.1",
-		"@storybook/addon-essentials": "^8.2.7",
+		"@storybook/addon-essentials": "^8.2.8",
 		"@storybook/addon-interactions": "^8.2.7",
 		"@storybook/addon-links": "^8.2.7",
 		"@storybook/addon-onboarding": "^8.2.7",
