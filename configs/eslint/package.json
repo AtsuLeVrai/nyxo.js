@@ -3,11 +3,13 @@
   "name": "@nyxjs/eslint-config",
   "private": true,
   "files": [
+    "next.js",
     "node.js"
   ],
   "devDependencies": {
     "@types/eslint": "^9.6.0",
     "eslint": "^8.57.0",
-    "eslint-config-neon": "^0.1.62"
+    "eslint-config-neon": "^0.1.62",
+    "rimraf": "^6.0.1"
   }
 }

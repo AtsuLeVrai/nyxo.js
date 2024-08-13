@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/core",
-  "version": "1.0.1",
-  "description": "Core package for Nyx.js",
+  "name": "@nyxjs/rest",
+  "version": "1.0.0",
+  "description": "Rest package for Nyx.js",
   "type": "commonjs",
   "readme": "README.md",
   "main": "./dist/index.js",
@@ -28,7 +28,10 @@
     "dist"
   ],
   "dependencies": {
-    "tslib": "^2.6.3"
+    "@nyxjs/core": "workspace:*",
+    "eventemitter3": "^5.0.1",
+    "tslib": "^2.6.3",
+    "undici": "^6.19.7"
   },
   "devDependencies": {
     "@types/node": "^22.2.0",
