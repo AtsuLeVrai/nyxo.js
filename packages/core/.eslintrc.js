@@ -1,1 +1,4 @@
-module.exports = { extends: "../../config/eslint/node.js" };
+/**
+ * @type {import('eslint').Linter.Config}
+ */
+module.exports = { extends: "../../configs/eslint/node.js" };

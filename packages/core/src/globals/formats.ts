@@ -1,9 +1,27 @@
 export type Snowflake = string;
-export type Iso8601 = string;
-export type DataUriScheme = string;
 export type Integer = number;
 export type Float = number;
-export type Boolean = "False" | "True" | 0 | 1 | false | true;
+export type IsoO8601Timestamp = string;
+export type DataUriSchema = string;
+
+/**
+ * @see {@link https://discord.com/developers/docs/reference#message-formatting-guild-navigation-types}
+ */
+export type GuildNavigationTypes = "browse" | "customize" | "guide";
+
+/**
+ * @see {@link https://discord.com/developers/docs/reference#api-versioning-api-versions}
+ */
+export enum ApiVersions {
+	V3 = 3,
+	V4 = 4,
+	V5 = 5,
+	V6 = 6,
+	V7 = 7,
+	V8 = 8,
+	V9 = 9,
+	V10 = 10,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#message-formatting-timestamp-styles}
@@ -19,41 +37,44 @@ export enum TimestampStyles {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/reference#message-formatting-guild-navigation-types}
+ * @see {@link https://discord.com/developers/docs/reference#image-formatting-image-formats}
  */
-export type GuildNavigationTypes = "browse" | "customize" | "guide";
+export enum ImageFormats {
+	GIF = "gif",
+	JPEG = "jpeg",
+	Lottie = "json",
+	PNG = "png",
+	WebP = "webp",
+}
 
-/**
- * @see {@link https://discord.com/developers/docs/reference#message-formatting}
- */
-export function formatUser(userId: Snowflake): `<@${Snowflake}>` {
+export function userFormat(userId: Snowflake): `<@${Snowflake}>` {
 	return `<@${userId}>`;
 }
 
-export function formatChannel(channelId: Snowflake): `<#${Snowflake}>` {
+export function channelFormat(channelId: Snowflake): `<#${Snowflake}>` {
 	return `<#${channelId}>`;
 }
 
-export function formatRole(roleId: Snowflake): `<@&${Snowflake}>` {
+export function roleFormat(roleId: Snowflake): `<@&${Snowflake}>` {
 	return `<@&${roleId}>`;
 }
 
-export function formatSlashCommand(
+export function slashCommandFormat(
 	commandName: string,
 	commandId: Snowflake,
 ): `</${string}:${Snowflake}>`;
-export function formatSlashCommand(
+export function slashCommandFormat(
 	commandName: string,
 	commandId: Snowflake,
 	subCommandName: string,
 ): `</${string} ${string}:${Snowflake}>`;
-export function formatSlashCommand(
+export function slashCommandFormat(
 	commandName: string,
 	commandId: Snowflake,
 	subCommandGroupName: string,
 	subCommandName: string,
 ): `</${string} ${string} ${string}:${Snowflake}>`;
-export function formatSlashCommand(
+export function slashCommandFormat(
 	commandName: string,
 	commandId: Snowflake,
 	subCommandGroupName?: string,
@@ -62,22 +83,24 @@ export function formatSlashCommand(
 	if (subCommandGroupName && subCommandName) {
 		return `</${commandName} ${subCommandGroupName} ${subCommandName}:${commandId}>`;
 	}
+
 	if (subCommandName) {
 		return `</${commandName} ${subCommandName}:${commandId}>`;
 	}
+
 	return `</${commandName}:${commandId}>`;
 }
 
-export function formatCustomEmoji(
+export function customEmojiFormat(
 	emojiName: string,
 	emojiId: Snowflake,
 ): `<:${string}:${Snowflake}>`;
-export function formatCustomEmoji(
+export function customEmojiFormat(
 	emojiName: string,
 	emojiId: Snowflake,
 	animated: true,
 ): `<a:${string}:${Snowflake}>`;
-export function formatCustomEmoji(
+export function customEmojiFormat(
 	emojiName: string,
 	emojiId: Snowflake,
 	animated?: boolean,
@@ -85,32 +108,31 @@ export function formatCustomEmoji(
 	if (animated) {
 		return `<a:${emojiName}:${emojiId}>`;
 	}
+
 	return `<:${emojiName}:${emojiId}>`;
 }
 
-export function formatUnixTimestamp(timestamp: number): `<t:${number}>`;
-export function formatUnixTimestamp(
+export function unixTimestampFormat(timestamp: number): `<t:${number}>`;
+export function unixTimestampFormat(
 	timestamp: number,
 	style: TimestampStyles,
 ): `<t:${number}:${TimestampStyles}>`;
-export function formatUnixTimestamp(
+export function unixTimestampFormat(
 	timestamp: number,
 	style?: TimestampStyles,
 ): string {
 	if (style) {
 		return `<t:${timestamp}:${style}>`;
 	}
+
 	return `<t:${timestamp}>`;
 }
 
-export function formatGuildNavigation(
-	guildId: Snowflake,
-	guildType: GuildNavigationTypes,
-): `<${Snowflake}:${GuildNavigationTypes}>` {
-	return `<${guildId}:${guildType}>`;
+export function guildNavigationFormat(id: Snowflake, type: GuildNavigationTypes): `<${Snowflake}:${GuildNavigationTypes}>` {
+	return `<${id}:${type}>`;
 }
 
-export function italics(text: string): `_${string}_` {
+export function italic(text: string): `_${string}_` {
 	return `_${text}_`;
 }
 
@@ -122,31 +144,12 @@ export function underline(text: string): `__${string}__` {
 	return `__${text}__`;
 }
 
-export function strikethrough(text: string): `~~${string}~~` {
+export function strikeThrough(text: string): `~~${string}~~` {
 	return `~~${text}~~`;
-}
-
-export function code(text: string): `\`${string}\`` {
-	return `\`${text}\``;
-}
-
-export function codeBlock(
-	language: string,
-	text: string,
-): `\`\`\`${string}\n${string}\n\`\`\`` {
-	return `\`\`\`${language}\n${text}\n\`\`\``;
 }
 
 export function spoiler(text: string): `||${string}||` {
 	return `||${text}||`;
-}
-
-export function quote(text: string): `> ${string}` {
-	return `> ${text}`;
-}
-
-export function quoteBlock(text: string): `>>> ${string}` {
-	return `>>> ${text}`;
 }
 
 export function bigHeader(text: string): `# ${string}` {
@@ -157,6 +160,30 @@ export function smallHeader(text: string): `## ${string}` {
 	return `## ${text}`;
 }
 
-export function boldHeader(text: string): `### ${string}` {
+export function evenSmallerHeader(text: string): `### ${string}` {
 	return `### ${text}`;
+}
+
+export function subText(text: string): `-# ${string}` {
+	return `-# ${text}`;
+}
+
+export function link(url: string, text: string): `[${string}](${string})` {
+	return `[${text}](${url})`;
+}
+
+export function code(text: string): `\`${string}\`` {
+	return `\`${text}\``;
+}
+
+export function codeBlock(language: string, text: string): `\`\`\`${string}\n${string}\n\`\`\`` {
+	return `\`\`\`${language}\n${text}\n\`\`\``;
+}
+
+export function quote(text: string): `> ${string}` {
+	return `> ${text}`;
+}
+
+export function blockQuote(text: string): `>>> ${string}` {
+	return `>>> ${text}`;
 }
