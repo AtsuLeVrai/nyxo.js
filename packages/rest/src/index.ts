@@ -6,9 +6,52 @@ export type { AuthTypes, DiscordHeaders } from "./globals/headers";
 /**
  * ./structures
  */
-export type { ApplicationRoleConnectionMetadataStructure } from "./structures/applications";
+export type {
+	ApplicationRoleConnectionMetadataStructure,
+	ApplicationInstallParams,
+	ApplicationIntegrationTypeConfiguration,
+	ApplicationStructure,
+} from "./structures/applications";
+export type {
+	ChannelStructure,
+	FollowedChannelStructure,
+	OverwriteStructure,
+	ThreadMetadataStructure,
+	DefaultReactionStructure,
+	ThreadMemberStructure,
+	ForumTagStructure,
+} from "./structures/channels";
 export type { EmojiStructure } from "./structures/emojis";
 export type { EntitlementStructure } from "./structures/entitlements";
+export type {
+	IntegrationStructure,
+	IntegrationApplicationStructure,
+	BanStructure,
+	IntegrationAccountStructure,
+	GuildMemberStructure,
+	GuildOnboardingStructure,
+	GuildPreviewStructure,
+	GuildStructure,
+	GuildWidgetStructure,
+	GuildWidgetSettingsStructure,
+	OnboardingPromptStructure,
+	PromptOptionStructure,
+	WelcomeScreenChannelStructure,
+	WelcomeScreenStructure,
+	GuildTemplateStructure,
+	RecurrenceRuleNweekdayStructure,
+	RecurrenceRuleStructure,
+	GuildScheduledEventUserStructure,
+	GuildScheduledEventStructure,
+	GuildScheduledEventEntityMetadata,
+} from "./structures/guilds";
+export type { InviteMetadataStructure, InviteStageInstanceStructure, InviteStructure } from "./structures/invites";
+export type {
+	AutoModerationActionMetadataStructure,
+	AutoModerationActionStructure,
+	AutoModerationRuleStructure,
+	AutoModerationTriggerMetadataStructure,
+} from "./structures/moderations";
 export type {
 	PollAnswerCountStructure,
 	PollAnswerStructure,
@@ -27,10 +70,40 @@ export type {
 	ConnectionStructure,
 	ConnectionServices,
 	UserStructure,
-	AvatarDecorationData,
+	AvatarDecorationDataStructure,
 } from "./structures/users";
-export { ApplicationRoleConnectionMetadataTypes } from "./structures/applications";
+export type { VoiceRegionStructure, VoiceStateStructure } from "./structures/voices";
+export type { WebhookStructure } from "./structures/webhooks";
+export { ApplicationRoleConnectionMetadataTypes, IntegrationTypes, ApplicationFlags } from "./structures/applications";
+export { ChannelFlags, ChannelTypes, ForumLayoutTypes, OverwriteTypes, SortOrderTypes, VideoQualityModes } from "./structures/channels";
 export { EntitlementTypes } from "./structures/entitlements";
+export {
+	RecurrenceRuleWeekdays,
+	RecurrenceRuleMonths,
+	RecurrenceRuleFrequencies,
+	GuildScheduledEventStatus,
+	GuildScheduledEventPrivacyLevels,
+	GuildScheduledEventEntityTypes,
+	VerificationLevels,
+	SystemChannelFlags,
+	PromptTypes,
+	PremiumTiers,
+	OnboardingMode,
+	NsfwLevels,
+	MfaLevels,
+	IntegrationExpireBehaviors,
+	ExplicitContentFilterLevels,
+	GuildFeatures,
+	DefaultMessageNotificationLevels,
+	GuildMemberFlags,
+} from "./structures/guilds";
+export { InviteTypes, InviteTargetTypes } from "./structures/invites";
+export {
+	AutoModerationActionTypes,
+	AutoModerationEventTypes,
+	AutoModerationKeywordPresetTypes,
+	AutoModerationTriggerTypes,
+} from "./structures/moderations";
 export { LayoutTypes } from "./structures/polls";
 export { RoleFlags } from "./structures/roles";
 export { SkuFlags, SkuTypes } from "./structures/skus";
@@ -38,4 +111,4 @@ export { StagePrivacyLevels } from "./structures/stages";
 export { StickerFormatTypes, StickerTypes } from "./structures/stickers";
 export { MembershipState } from "./structures/teams";
 export { ConnectionVisibilityTypes, PremiumTypes, UserFlags } from "./structures/users";
-
+export { WebhookTypes } from "./structures/webhooks";

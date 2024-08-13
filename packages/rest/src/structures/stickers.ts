@@ -32,7 +32,7 @@ export type StickerStructure = {
 	/**
 	 * Deprecated previously the sticker asset hash, now an empty string
 	 *
-	 * @deprecated
+	 * @deprecated This field is deprecated and will be removed in a future API version
 	 */
 	asset?: string;
 	/**

@@ -7,7 +7,7 @@ export enum StagePrivacyLevels {
 	/**
 	 * The Stage instance is visible publicly. (deprecated)
 	 *
-	 * @deprecated
+	 * @deprecated Stage Discovery is deprecated and will be removed in the future.
 	 */
 	Public = 1,
 	/**

@@ -1,4 +1,6 @@
 import type { Integer, Locales, Snowflake } from "@nyxjs/core";
+import type { ApplicationRoleConnectionMetadataStructure } from "./applications";
+import type { IntegrationStructure } from "./guilds";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure}
@@ -7,13 +9,13 @@ export type ApplicationRoleConnectionStructure = {
 	/**
 	 * Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected
 	 */
-	metadata: Record<string, string>;
+	metadata: Record<string, ApplicationRoleConnectionMetadataStructure>;
 	/**
 	 * The vanity name of the platform a bot has connected (max 50 characters)
 	 */
 	platform_name: string | null;
 	/**
-	 * TODO: The username on the platform a bot has connected (max 100 characters)
+	 * The username on the platform a bot has connected (max 100 characters)
 	 */
 	platform_username: string | null;
 };
@@ -72,9 +74,9 @@ export type ConnectionStructure = {
 	 */
 	id: string;
 	/**
-	 * TODO: An array of partial server integrations
+	 * An array of partial server integrations
 	 */
-	integrations?: unknown[];
+	integrations?: Partial<IntegrationStructure>[];
 	/**
 	 * The username of the connection account
 	 */
@@ -108,7 +110,7 @@ export type ConnectionStructure = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure}
  */
-export type AvatarDecorationData = {
+export type AvatarDecorationDataStructure = {
 	/**
 	 * The avatar decoration hash
 	 */
@@ -210,7 +212,7 @@ export type UserStructure = {
 	/**
 	 * Data for the user's avatar decoration
 	 */
-	avatar_decoration_data?: AvatarDecorationData | null;
+	avatar_decoration_data?: AvatarDecorationDataStructure | null;
 	/**
 	 * The user's banner hash
 	 */
