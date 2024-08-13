@@ -1,36 +1,31 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/core",
-  "version": "1.0.1",
-  "description": "Core package for Nyx.js",
-  "type": "commonjs",
-  "readme": "README.md",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "license": "AGPL-3.0-only",
-  "author": {
-    "name": "3tatsu",
-    "url": "https://github.com/3tatsu"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/3tatsu/nyxjs.git"
-  },
-  "scripts": {
-    "build": "tsc",
-    "lint": "eslint . --ext .ts"
-  },
-  "files": [
-    "dist"
-  ],
-  "dependencies": {
-    "tslib": "^2.6.3"
-  },
-  "devDependencies": {
-    "@types/node": "^22.2.0",
-    "typescript": "^5.4.5"
-  }
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "@nyxjs/core",
+	"version": "1.0.0",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "tsc",
+		"lint": "eslint --fix . --ext .ts",
+		"check": "biome check --write --unsafe --error-on-warnings --verbose --log-level=debug --colors=force ./src"
+	},
+	"files": [
+		"dist"
+	],
+	"dependencies": {
+		"tslib": "^2.6.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"@jest/types": "^29.6.3",
+		"@types/jest": "^29.5.12",
+		"@types/node": "^22.1.0",
+		"eslint": "^9.8.0",
+		"jest": "^29.7.0",
+		"ts-jest": "^29.2.4",
+		"typescript": "^5.5.4"
+	}
 }
