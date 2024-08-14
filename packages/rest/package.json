@@ -34,7 +34,7 @@
     "undici": "^6.19.7"
   },
   "devDependencies": {
-    "@types/node": "^22.2.0",
+    "@types/node": "^22.3.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.5.4"
   }

@@ -45,7 +45,55 @@ export type {
 	GuildScheduledEventStructure,
 	GuildScheduledEventEntityMetadata,
 } from "./structures/guilds";
+export type {
+	ActionRowStructure,
+	AutocompleteStructure,
+	ApplicationCommandInteractionDataOptionStructure,
+	MessageComponentDataStructure,
+	ApplicationCommandDataStructure,
+	ApplicationCommandOptionChoiceStructure,
+	ApplicationCommandPermissionsStructure,
+	ApplicationCommandOptionStructure,
+	GuildApplicationCommandPermissionsStructure,
+	ResolvedDataStructure,
+	InteractionStructure,
+	MessageResponseStructure,
+	InteractionResponseStructure,
+	MessageInteractionStructure,
+	SelectOptionStructure,
+	SelectMenuStructure,
+	ApplicationCommandStructure,
+	ButtonStructure,
+	ModalSubmitDataStructure,
+	ModalStructure,
+	SelectDefaultValueStructure,
+	TextInputStructure,
+} from "./structures/interactions";
 export type { InviteMetadataStructure, InviteStageInstanceStructure, InviteStructure } from "./structures/invites";
+export type {
+	AllowedMentionsStructure,
+	MessageStructure,
+	AllowedMentionTypes,
+	AttachmentStructure,
+	ChannelMentionStructure,
+	EmbedAuthorStructure,
+	ReactionStructure,
+	RoleSubscriptionDataStructure,
+	ReactionCountDetailsStructure,
+	MessageSnapshotStructure,
+	MessageReferenceStructure,
+	MessageInteractionMetadataStructure,
+	MessageCallStructure,
+	MessageActivityStructure,
+	EmbedVideoStructure,
+	EmbedTypes,
+	EmbedThumbnailStructure,
+	EmbedStructure,
+	EmbedProviderStructure,
+	EmbedImageStructure,
+	EmbedFooterStructure,
+	EmbedFieldStructure,
+} from "./structures/messages";
 export type {
 	AutoModerationActionMetadataStructure,
 	AutoModerationActionStructure,
@@ -97,7 +145,19 @@ export {
 	DefaultMessageNotificationLevels,
 	GuildMemberFlags,
 } from "./structures/guilds";
+export {
+	TextInputStyles,
+	InteractionTypes,
+	InteractionContextTypes,
+	InteractionCallbackTypes,
+	ButtonStyles,
+	ApplicationCommandTypes,
+	ApplicationCommandPermissionTypes,
+	ApplicationCommandOptionTypes,
+	ComponentTypes,
+} from "./structures/interactions";
 export { InviteTypes, InviteTargetTypes } from "./structures/invites";
+export { AttachmentFlags, MessageFlags, MessageActivityTypes, MessageReferenceTypes, MessageTypes } from "./structures/messages";
 export {
 	AutoModerationActionTypes,
 	AutoModerationEventTypes,

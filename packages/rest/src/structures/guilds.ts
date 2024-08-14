@@ -382,7 +382,7 @@ export type GuildMemberStructure = {
 };
 
 /**
- * @eee {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure}
  */
 export type GuildWidgetStructure = {
 	/**
