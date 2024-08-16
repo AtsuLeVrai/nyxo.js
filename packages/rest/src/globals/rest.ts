@@ -1,7 +1,7 @@
 import { setTimeout } from "node:timers";
 import type { Float, RESTJSONErrorCodes } from "@nyxjs/core";
 import { ApiVersions, RESTHTTPResponseCodes } from "@nyxjs/core";
-import Emittery from "emittery";
+import EventEmitter from "eventemitter3";
 import type { Dispatcher } from "undici";
 import { request } from "undici";
 import type { AuthTypes, DiscordHeaders } from "./headers";
@@ -35,10 +35,10 @@ export type RestOptions = {
 };
 
 export type RestEvents = {
-	debug: string;
-	error: Error;
-	globalRateLimit: Float;
-	rateLimit: Float;
+	debug: [message: string];
+	error: [error: Error];
+	globalRateLimit: [retryAfter: Float];
+	rateLimit: [retryAfter: Float];
 };
 
 export type RestRequestOptions<T> = Dispatcher.DispatchOptions & {
@@ -46,7 +46,7 @@ export type RestRequestOptions<T> = Dispatcher.DispatchOptions & {
 	headers?: DiscordHeaders;
 };
 
-export class Rest extends Emittery<RestEvents> {
+export class Rest extends EventEmitter<RestEvents> {
 	public constructor(public token: string, public options?: RestOptions) {
 		super();
 	}
@@ -86,9 +86,9 @@ export class Rest extends Emittery<RestEvents> {
 
 	private async handleRateLimit(response: RateLimitResponseStructure): Promise<void> {
 		if (response.global) {
-			await this.emit("globalRateLimit", response.retry_after);
+			this.emit("globalRateLimit", response.retry_after);
 		} else {
-			await this.emit("rateLimit", response.retry_after);
+			this.emit("rateLimit", response.retry_after);
 		}
 
 		await new Promise((resolve) => {
