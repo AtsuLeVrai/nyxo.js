@@ -2,6 +2,9 @@
  * ./globals
  */
 export type { AuthTypes, DiscordHeaders } from "./globals/headers";
+export type { RateLimitResponseStructure, RestOptions, RestRequestOptions, RestEvents } from "./globals/rest";
+export { Cdn } from "./globals/cdn";
+export { Rest } from "./globals/rest";
 
 /**
  * ./structures

@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/3tatsu/nyxjs.git"
+    "url": "https://github.com/3tatsu/nyx.js.git"
   },
   "scripts": {
     "build": "tsc",
@@ -29,7 +29,7 @@
   ],
   "dependencies": {
     "@nyxjs/core": "workspace:*",
-    "eventemitter3": "^5.0.1",
+    "emittery": "^1.0.3",
     "tslib": "^2.6.3",
     "undici": "^6.19.7"
   },
