@@ -1,13 +1,43 @@
 /**
- * ./globals
+ * ./globals - Types
  */
 export type { AuthTypes, DiscordHeaders } from "./globals/headers";
-export type { RateLimitResponseStructure, RestOptions, RestRequestOptions, RestEvents } from "./globals/rest";
+export type { RateLimitResponseStructure, RestOptions, RestEvents, RestRequestOptions } from "./globals/rest";
+
+/**
+ * ./globals - Globals
+ */
 export { Cdn } from "./globals/cdn";
 export { Rest } from "./globals/rest";
 
 /**
- * ./structures
+ * ./routes - Types
+ */
+export type {
+	CreateDMJSONParams,
+	CreateGroupDMJSONParams,
+	GetCurrentUserGuildsQueryStringParams,
+	ModifyCurrentUserJSONParams,
+	UpdateUserApplicationRoleConnectionJSONParams,
+} from "./routes/users";
+
+/**
+ * ./routes - Globals
+ */
+export {
+	createDM,
+	getCurrentUserApplicationRoleConnection,
+	getCurrentUserGuildMember,
+	getCurrentUserConnections,
+	getCurrentUserGuilds,
+	getUser,
+	leaveGuild,
+	modifyCurrentUser,
+	updateUserApplicationRoleConnection,
+} from "./routes/users";
+
+/**
+ * ./structures - Types
  */
 export type {
 	ApplicationRoleConnectionMetadataStructure,
@@ -125,6 +155,10 @@ export type {
 } from "./structures/users";
 export type { VoiceRegionStructure, VoiceStateStructure } from "./structures/voices";
 export type { WebhookStructure } from "./structures/webhooks";
+
+/**
+ * ./structures - Globals
+ */
 export { ApplicationRoleConnectionMetadataTypes, IntegrationTypes, ApplicationFlags } from "./structures/applications";
 export { ChannelFlags, ChannelTypes, ForumLayoutTypes, OverwriteTypes, SortOrderTypes, VideoQualityModes } from "./structures/channels";
 export { EntitlementTypes } from "./structures/entitlements";

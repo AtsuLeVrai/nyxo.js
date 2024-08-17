@@ -41,17 +41,16 @@ export type RestEvents = {
 	rateLimit: [retryAfter: Float];
 };
 
-export type RestRequestOptions<T> = Dispatcher.DispatchOptions & {
-	T?: T;
+export type RestRequestOptions<T> = Omit<Dispatcher.DispatchOptions, "headers"> & {
 	headers?: DiscordHeaders;
 };
 
 export class Rest extends EventEmitter<RestEvents> {
-	public constructor(public token: string, public options?: RestOptions) {
+	public constructor(private token: string, private readonly options?: RestOptions) {
 		super();
 	}
 
-	public get url(): string {
+	private get url(): string {
 		const version = this.options?.version ?? ApiVersions.V10;
 		return `https://discord.com/api/v${version}`;
 	}
@@ -63,17 +62,16 @@ export class Rest extends EventEmitter<RestEvents> {
 			"User-Agent": this.options?.userAgent ?? "DiscordBot ()",
 		};
 
-		const finalOptions: Dispatcher.DispatchOptions = {
+		const finalPath = `${this.url}${options.path}`;
+		const response = await request(finalPath, {
 			method: options.method,
-			path: `${this.url}${options.path}`,
+			body: options.body,
+			query: options.query,
 			headers: {
 				...headers,
 				...options.headers,
 			},
-			...Object.fromEntries(Object.entries(options).filter(([key]) => !["method", "path", "headers"].includes(key))),
-		};
-
-		const response = await request(finalOptions);
+		});
 		const data = await response.body.json();
 
 		if (response.statusCode === RESTHTTPResponseCodes.TooManyRequests) {
@@ -82,6 +80,28 @@ export class Rest extends EventEmitter<RestEvents> {
 		}
 
 		return data as T;
+	}
+
+	public setToken(token: string): void {
+		this.token = token;
+	}
+
+	public setVersion(version: ApiVersions): void {
+		if (this.options) {
+			this.options.version = version;
+		}
+	}
+
+	public setUserAgent(userAgent: string): void {
+		if (this.options) {
+			this.options.userAgent = userAgent;
+		}
+	}
+
+	public setAuthType(authType: AuthTypes): void {
+		if (this.options) {
+			this.options.authType = authType;
+		}
 	}
 
 	private async handleRateLimit(response: RateLimitResponseStructure): Promise<void> {
@@ -96,3 +116,5 @@ export class Rest extends EventEmitter<RestEvents> {
 		});
 	}
 }
+
+const test = new Rest("token");

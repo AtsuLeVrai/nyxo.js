@@ -1,8 +1,12 @@
 /**
- * ./globals
+ * ./globals - Types
  */
-export type { Snowflake, IsoO8601Timestamp, DataUriSchema, Float, Integer, GuildNavigationTypes } from "./globals/formats";
+export type { Snowflake, IsoO8601Timestamp, DataUriSchema, Float, Integer, GuildNavigationTypes, Boolean } from "./globals/formats";
 export type { BotAuthParameters } from "./globals/oauth2";
+
+/**
+ * ./globals - Globals
+ */
 export { ApiVersions, TimestampStyles, ImageFormats } from "./globals/formats";
 export { Locales } from "./globals/locales";
 export { Oauth2Scopes, Oauth2Urls } from "./globals/oauth2";

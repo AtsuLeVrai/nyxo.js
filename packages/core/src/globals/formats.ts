@@ -1,6 +1,7 @@
 export type Snowflake = string;
 export type Integer = number;
 export type Float = number;
+export type Boolean = "False" | "True" | 0 | 1 | false | true;
 export type IsoO8601Timestamp = string;
 export type DataUriSchema = string;
 
