@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/core",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Core package for Nyx.js",
   "type": "commonjs",
   "readme": "README.md",
@@ -31,7 +31,7 @@
     "tslib": "^2.6.3"
   },
   "devDependencies": {
-    "@types/node": "^22.3.0",
+    "@types/node": "^22.4.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.5.4"
   }
