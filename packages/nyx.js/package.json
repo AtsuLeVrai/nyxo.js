@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/rest",
+  "name": "nyx.js",
   "version": "1.0.0",
-  "description": "Rest package for Nyx.js",
+  "description": "Nyx.js is a framework for building discord bots",
   "type": "commonjs",
   "readme": "README.md",
   "main": "./dist/index.js",
@@ -23,29 +23,17 @@
     "build": "tsc",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
-    "clean": "rimraf dist",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "clean": "rimraf dist"
   },
   "files": [
     "dist"
   ],
   "dependencies": {
-    "@nyxjs/core": "workspace:*",
-    "eventemitter3": "^5.0.1",
-    "tslib": "^2.6.3",
-    "undici": "^6.19.7"
+    "tslib": "^2.6.3"
   },
   "devDependencies": {
     "@types/node": "^22.4.1",
-    "@vitest/coverage-v8": "^2.0.5",
-    "@vitest/snapshot": "^2.0.5",
-    "@vitest/ui": "^2.0.5",
-    "c8": "^10.1.2",
     "rimraf": "^6.0.1",
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "typescript": "^5.5.4"
   }
 }
