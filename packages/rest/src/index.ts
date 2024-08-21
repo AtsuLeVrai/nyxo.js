@@ -13,6 +13,21 @@ export { Rest } from "./globals/rest";
 /**
  * ./routes - Types
  */
+export type { EditCurrentApplicationJSONParams } from "./routes/applications";
+export type { GetGuildAuditLogQueryStringParams } from "./routes/audits";
+export type {
+	CreateApplicationEmojiJsonParams,
+	CreateGuildEmojiJsonParams,
+	ModifyApplicationEmojiJsonParams,
+	ModifyGuildEmojiJsonParams,
+} from "./routes/emojis";
+export type { CreateTestEntitlementJsonParams, ListEntitlementsQueryParams } from "./routes/entitlements";
+export type { GetGatewayBotResponse, SessionStartLimitStructure } from "./routes/gateway";
+export type { GetInviteQueryStringParams } from "./routes/invites";
+export type { CreateAutoModerationRuleJSONParams, ModifyAutoModerationRuleJSONParams } from "./routes/moderations";
+export type { GetCurrentAuthorizationInformationResponse } from "./routes/oauth2";
+export type { GetAnswerVotersQueryStringParams, GetAnswerVotersResponseBody } from "./routes/polls";
+export type { CreateStageInstanceJSONParams, ModifyStageInstanceJSONParams } from "./routes/stages";
 export type {
 	CreateDMJSONParams,
 	CreateGroupDMJSONParams,
@@ -20,10 +35,38 @@ export type {
 	ModifyCurrentUserJSONParams,
 	UpdateUserApplicationRoleConnectionJSONParams,
 } from "./routes/users";
+export type { ModifyCurrentUserVoiceStateJSONParams, ModifyUserVoiceStateJSONParams } from "./routes/voices";
 
 /**
  * ./routes - Globals
  */
+export {
+	editCurrentApplication,
+	getCurrentApplication,
+	getApplicationRoleConnectionMetadataRecords,
+	updateApplicationRoleConnectionMetadataRecords,
+} from "./routes/applications";
+export { getGuildAuditLog } from "./routes/audits";
+export {
+	modifyGuildEmoji,
+	listGuildEmojis,
+	modifyApplicationEmoji,
+	listApplicationEmojis,
+	getGuildEmoji,
+	getApplicationEmoji,
+	deleteGuildEmoji,
+	deleteApplicationEmoji,
+	createGuildEmoji,
+	createApplicationEmoji,
+} from "./routes/emojis";
+export { EntitlementOwnerTypes, consumeEntitlement, createTestEntitlement, deleteTestEntitlement, listEntitlements } from "./routes/entitlements";
+export { getGateway, getGatewayBot } from "./routes/gateway";
+export { deleteInvite, getInvite } from "./routes/invites";
+export { createAutoModerationRule, deleteAutoModerationRule, modifyAutoModerationRule, getAutoModerationRule } from "./routes/moderations";
+export { getCurrentAuthorizationInformation, getCurrentBotApplicationInformation } from "./routes/oauth2";
+export { endPoll, getAnswerVoters } from "./routes/polls";
+export { listSkus } from "./routes/skus";
+export { createStageInstance, deleteStageInstance, modifyStageInstance, getStageInstance } from "./routes/stages";
 export {
 	createDM,
 	getCurrentUserApplicationRoleConnection,
@@ -35,6 +78,7 @@ export {
 	modifyCurrentUser,
 	updateUserApplicationRoleConnection,
 } from "./routes/users";
+export { getUserVoiceState, listVoiceRegions, modifyUserVoiceState } from "./routes/voices";
 
 /**
  * ./structures - Types
@@ -45,6 +89,7 @@ export type {
 	ApplicationIntegrationTypeConfiguration,
 	ApplicationStructure,
 } from "./structures/applications";
+export type { AuditLogEntryStructure, AuditLogChangeStructure, OptionalAuditEntryInfo, AuditLogStructure } from "./structures/audits";
 export type {
 	ChannelStructure,
 	FollowedChannelStructure,
@@ -160,6 +205,7 @@ export type { WebhookStructure } from "./structures/webhooks";
  * ./structures - Globals
  */
 export { ApplicationRoleConnectionMetadataTypes, IntegrationTypes, ApplicationFlags } from "./structures/applications";
+export { AuditLogEvents } from "./structures/audits";
 export { ChannelFlags, ChannelTypes, ForumLayoutTypes, OverwriteTypes, SortOrderTypes, VideoQualityModes } from "./structures/channels";
 export { EntitlementTypes } from "./structures/entitlements";
 export {

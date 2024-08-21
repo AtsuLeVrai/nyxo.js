@@ -1,4 +1,4 @@
-import type { Boolean, DataUriSchema, Integer, RESTHTTPResponseCodes, Snowflake } from "@nyxjs/core";
+import type { Boolean, DataUriSchema, Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
 import type { RestRequestOptions } from "../globals/rest";
 import type { ChannelStructure } from "../structures/channels";
 import type { GuildMemberStructure, GuildStructure } from "../structures/guilds";
@@ -91,7 +91,7 @@ export function createDM(json: CreateDMJSONParams | CreateGroupDMJSONParams): Re
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
  */
-export function leaveGuild(guildId: Snowflake): RestRequestOptions<RESTHTTPResponseCodes.NoContent> {
+export function leaveGuild(guildId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "DELETE",
 		path: `/users/@me/guilds/${guildId}`,

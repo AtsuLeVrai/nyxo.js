@@ -163,7 +163,7 @@ export enum VoiceOpcodes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes}
  */
-export enum RESTHTTPResponseCodes {
+export enum RestHttpResponseCodes {
 	/**
 	 * The request completed successfully.
 	 */
@@ -213,7 +213,7 @@ export enum RESTHTTPResponseCodes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-json-error-codes}
  */
-export enum RESTJSONErrorCodes {
+export enum RestJsonErrorCodes {
 	GeneralError = 0,
 	UnknownAccount = 10_001,
 	UnknownApplication = 10_002,
@@ -430,7 +430,7 @@ export enum RESTJSONErrorCodes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-error-codes}
  */
-export enum RPCErrorCodes {
+export enum RpcErrorCodes {
 	/**
 	 * An unknown error occurred.
 	 */
@@ -500,7 +500,7 @@ export enum RPCErrorCodes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-close-event-codes}
  */
-export enum RPCCloseCodes {
+export enum RpcCloseCodes {
 	/**
 	 * You connected to the RPC server with an invalid client ID.
 	 */

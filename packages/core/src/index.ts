@@ -13,10 +13,10 @@ export { Oauth2Scopes, Oauth2Urls } from "./globals/oauth2";
 export {
 	GatewayCloseCodes,
 	GatewayOpcodes,
-	RPCCloseCodes,
-	RPCErrorCodes,
-	RESTJSONErrorCodes,
-	RESTHTTPResponseCodes,
+	RestJsonErrorCodes,
+	RpcCloseCodes,
+	RpcErrorCodes,
+	RestHttpResponseCodes,
 	VoiceOpcodes,
 } from "./globals/opcodes";
 export {

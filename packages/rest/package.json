@@ -36,14 +36,15 @@
     "@nyxjs/core": "workspace:*",
     "eventemitter3": "^5.0.1",
     "tslib": "^2.6.3",
-    "undici": "^6.19.7"
+    "undici": "^6.19.8"
   },
   "devDependencies": {
-    "@types/node": "^22.4.1",
+    "@types/node": "^22.5.0",
     "@vitest/coverage-v8": "^2.0.5",
     "@vitest/snapshot": "^2.0.5",
     "@vitest/ui": "^2.0.5",
     "c8": "^10.1.2",
+    "eslint": "^8.57.0",
     "rimraf": "^6.0.1",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
