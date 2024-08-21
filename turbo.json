@@ -1,33 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "ui": "stream",
+  "ui": "tui",
   "tasks": {
-    "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**"
-      ]
-    },
-    "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "clean": {
-      "dependsOn": [
-        "^clean"
-      ]
-    }
+    "build": {},
+    "lint": {},
+    "lint:fix": {},
+    "clean": {},
+    "test": {},
+    "test:watch": {},
+    "test:ui": {},
+    "test:coverage": {}
   }
 }
