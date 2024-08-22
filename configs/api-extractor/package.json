@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/api-extractor-config",
+  "private": true,
+  "files": [
+    "api-extractor.json"
+  ],
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.47.7"
+  }
+}

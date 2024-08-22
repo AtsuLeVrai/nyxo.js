@@ -1,7 +1,7 @@
 const process = require("node:process");
 const path = require("path");
 
-const tsconfig = path.resolve(process.cwd(), "tsconfig.json");
+const tsconfig = path.resolve(process.cwd(), "tsconfig.eslint.json");
 
 /**
  * @type {import('eslint').Linter.Config}

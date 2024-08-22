@@ -1,18 +1,4 @@
-import {defineConfig} from 'vitest/config';
+import { mergeConfig } from "vitest/config";
+import { createVitestConfig } from "../../configs/vitest/vitest.config";
 
-export default defineConfig({
-    test: {
-        globals: true,
-        environment: 'node',
-        coverage: {
-            reporter: ['text', 'json', 'html'],
-            reportsDirectory: './coverage',
-            include: ['src/**/*.ts'],
-            exclude: ['tests/**', 'node_modules/**', 'dist/**'],
-            provider: "v8"
-        },
-        reporters: ['default', 'html'],
-        silent: false,
-        watch: false,
-    },
-});
+export default mergeConfig(createVitestConfig(), {});
