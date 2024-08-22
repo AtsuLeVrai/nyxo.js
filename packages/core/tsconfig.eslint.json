@@ -4,7 +4,7 @@
   "include": [
     "vitest.config.ts",
     "tsup.config.ts",
-    "tests",
-    "src"
+    "tests/**/*.ts",
+    "src/**/*.ts"
   ]
 }

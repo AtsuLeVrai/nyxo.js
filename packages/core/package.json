@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Core package for Nyx.js",
   "type": "commonjs",
   "readme": "README.md",
@@ -22,7 +22,7 @@
     "url": "https://github.com/3tatsu/nyx.js.git"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup --experimental-dts",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "clean": "rimraf dist",
@@ -38,6 +38,7 @@
     "tslib": "^2.6.3"
   },
   "devDependencies": {
+    "@favware/cliff-jumper": "^4.0.3",
     "@microsoft/api-extractor": "^7.47.7",
     "@swc/core": "^1.7.14",
     "@types/eslint": "^9.6.0",

@@ -22,7 +22,7 @@
     "url": "https://github.com/3tatsu/nyx.js.git"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup --experimental-dts",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "clean": "rimraf dist",
@@ -41,6 +41,7 @@
     "undici": "^6.19.8"
   },
   "devDependencies": {
+    "@favware/cliff-jumper": "^4.0.3",
     "@microsoft/api-extractor": "^7.47.7",
     "@swc/core": "^1.7.14",
     "@types/eslint": "^9.6.0",

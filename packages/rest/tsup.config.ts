@@ -1,3 +1,3 @@
 import { createTsupConfig } from "../../configs/tsup/tsup.config";
 
-export default [createTsupConfig()];
+export default [createTsupConfig({ name: "rest" })];

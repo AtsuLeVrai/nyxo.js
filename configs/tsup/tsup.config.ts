@@ -1,7 +1,7 @@
-import {defineConfig} from 'tsup'
+import {defineConfig, Options} from 'tsup'
 import {esbuildPluginVersionInjector} from "esbuild-plugin-version-injector";
 
-export function createTsupConfig() {
+export function createTsupConfig(options?: Options) {
     return defineConfig({
         plugins: [esbuildPluginVersionInjector()],
         entry: ['src/index.ts'],
@@ -15,6 +15,15 @@ export function createTsupConfig() {
         clean: true,
         legacyOutput: true,
         cjsInterop: true,
-        minify: true,
+        minify: false,
+        skipNodeModulesBundle: true,
+        splitting: false,
+        treeshake: false,
+        terserOptions: {
+            mangle: false,
+            keep_classnames: true,
+            keep_fnames: true,
+        },
+        ...options,
     })
 }
