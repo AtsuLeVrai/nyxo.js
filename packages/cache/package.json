@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/core",
+  "name": "@nyxjs/cache",
   "version": "1.0.0",
-  "description": "Core package for Nyx.js",
+  "description": "Cache package for Nyx.js",
   "type": "commonjs",
   "readme": "README.md",
   "main": "./dist/index.js",
@@ -33,9 +33,6 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "tslib": "^2.7.0"
-  },
   "devDependencies": {
     "@types/eslint": "^8.56.11",
     "@types/node": "^22.5.0",

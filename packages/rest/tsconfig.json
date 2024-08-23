@@ -4,17 +4,13 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "rootDir": "./src",
-    "outDir": "./dist",
-    "types": [
-      "vitest/globals"
-    ]
+    "outDir": "./dist"
   },
   "include": [
     "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "tests"
+    "dist"
   ]
 }
