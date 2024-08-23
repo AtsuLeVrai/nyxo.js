@@ -38,7 +38,7 @@ export type ModifyCurrentUserVoiceStateJSONParams = {
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state}
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state}
  */
-export function modifyUserVoiceState(guildId: Snowflake, userId: Snowflake | "@me", json: ModifyCurrentUserVoiceStateJSONParams | ModifyUserVoiceStateJSONParams): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+function modifyUserVoiceState(guildId: Snowflake, userId: Snowflake | "@me", json: ModifyCurrentUserVoiceStateJSONParams | ModifyUserVoiceStateJSONParams): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "PATCH",
 		path: `/guilds/${guildId}/voice-states/${userId}`,
@@ -50,7 +50,7 @@ export function modifyUserVoiceState(guildId: Snowflake, userId: Snowflake | "@m
  * @see {@link https://discord.com/developers/docs/resources/voice#get-user-voice-state}
  * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
  */
-export function getUserVoiceState(guildId: Snowflake, userId: Snowflake | "@me"): RestRequestOptions<VoiceStateStructure> {
+function getUserVoiceState(guildId: Snowflake, userId: Snowflake | "@me"): RestRequestOptions<VoiceStateStructure> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/voice-states/${userId}`,
@@ -60,9 +60,15 @@ export function getUserVoiceState(guildId: Snowflake, userId: Snowflake | "@me")
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
  */
-export function listVoiceRegions(): RestRequestOptions<VoiceRegionStructure[]> {
+function listVoiceRegions(): RestRequestOptions<VoiceRegionStructure[]> {
 	return {
 		method: "GET",
 		path: "/voice/regions",
 	};
 }
+
+export const VoiceRoutes = {
+	modifyUserVoiceState,
+	getUserVoiceState,
+	listVoiceRegions,
+};

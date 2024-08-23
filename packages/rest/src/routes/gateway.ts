@@ -44,7 +44,7 @@ export type GetGatewayBotResponse = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot}
  */
-export function getGatewayBot(): RestRequestOptions<GetGatewayBotResponse> {
+function getGatewayBot(): RestRequestOptions<GetGatewayBotResponse> {
 	return {
 		method: "GET",
 		path: "/gateway/bot",
@@ -54,9 +54,14 @@ export function getGatewayBot(): RestRequestOptions<GetGatewayBotResponse> {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
  */
-export function getGateway(): RestRequestOptions<{ url: string; }> {
+function getGateway(): RestRequestOptions<{ url: string; }> {
 	return {
 		method: "GET",
 		path: "/gateway",
 	};
 }
+
+export const GatewayRoutes = {
+	getGatewayBot,
+	getGateway,
+};

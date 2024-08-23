@@ -12,7 +12,7 @@ import type {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records}
  */
-export function updateApplicationRoleConnectionMetadataRecords(applicationId: Snowflake, json: ApplicationRoleConnectionMetadataStructure): RestRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
+function updateApplicationRoleConnectionMetadataRecords(applicationId: Snowflake, json: ApplicationRoleConnectionMetadataStructure): RestRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
 	return {
 		method: "PATCH",
 		path: `/applications/${applicationId}/role-connections/metadata`,
@@ -23,7 +23,7 @@ export function updateApplicationRoleConnectionMetadataRecords(applicationId: Sn
 /**
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records}
  */
-export function getApplicationRoleConnectionMetadataRecords(applicationId: Snowflake): RestRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
+function getApplicationRoleConnectionMetadataRecords(applicationId: Snowflake): RestRequestOptions<ApplicationRoleConnectionMetadataStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/role-connections/metadata`,
@@ -79,7 +79,7 @@ export type EditCurrentApplicationJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
  */
-export function editCurrentApplication(json: EditCurrentApplicationJSONParams): RestRequestOptions<ApplicationStructure> {
+function editCurrentApplication(json: EditCurrentApplicationJSONParams): RestRequestOptions<ApplicationStructure> {
 	return {
 		method: "PATCH",
 		path: "/applications/@me",
@@ -90,9 +90,16 @@ export function editCurrentApplication(json: EditCurrentApplicationJSONParams): 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
  */
-export function getCurrentApplication(): RestRequestOptions<ApplicationStructure> {
+function getCurrentApplication(): RestRequestOptions<ApplicationStructure> {
 	return {
 		method: "GET",
 		path: "/applications/@me",
 	};
 }
+
+export const ApplicationsRoutes = {
+	editCurrentApplication,
+	getCurrentApplication,
+	getApplicationRoleConnectionMetadataRecords,
+	updateApplicationRoleConnectionMetadataRecords,
+};

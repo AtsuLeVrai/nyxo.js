@@ -11,7 +11,7 @@ import type {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule}
  */
-export function deleteAutoModerationRule(guildId: Snowflake, autoModerationRuleId: Snowflake, reason?: string): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+function deleteAutoModerationRule(guildId: Snowflake, autoModerationRuleId: Snowflake, reason?: string): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "DELETE",
 		path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
@@ -56,7 +56,7 @@ export type ModifyAutoModerationRuleJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule}
  */
-export function modifyAutoModerationRule(guildId: Snowflake, autoModerationRuleId: Snowflake, json: ModifyAutoModerationRuleJSONParams, reason?: string): RestRequestOptions<AutoModerationRuleStructure> {
+function modifyAutoModerationRule(guildId: Snowflake, autoModerationRuleId: Snowflake, json: ModifyAutoModerationRuleJSONParams, reason?: string): RestRequestOptions<AutoModerationRuleStructure> {
 	return {
 		method: "PATCH",
 		path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
@@ -106,7 +106,7 @@ export type CreateAutoModerationRuleJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule}
  */
-export function createAutoModerationRule(guildId: Snowflake, json: CreateAutoModerationRuleJSONParams, reason?: string): RestRequestOptions<AutoModerationRuleStructure> {
+function createAutoModerationRule(guildId: Snowflake, json: CreateAutoModerationRuleJSONParams, reason?: string): RestRequestOptions<AutoModerationRuleStructure> {
 	return {
 		method: "POST",
 		path: `/guilds/${guildId}/auto-moderation/rules`,
@@ -118,9 +118,16 @@ export function createAutoModerationRule(guildId: Snowflake, json: CreateAutoMod
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#get-auto-moderation-rule}
  */
-export function getAutoModerationRule(guildId: Snowflake, autoModerationRuleId: Snowflake): RestRequestOptions<AutoModerationRuleStructure> {
+function getAutoModerationRule(guildId: Snowflake, autoModerationRuleId: Snowflake): RestRequestOptions<AutoModerationRuleStructure> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
 	};
 }
+
+export const ModerationRoutes = {
+	deleteAutoModerationRule,
+	modifyAutoModerationRule,
+	createAutoModerationRule,
+	getAutoModerationRule,
+};

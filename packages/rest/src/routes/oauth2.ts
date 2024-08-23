@@ -28,7 +28,7 @@ export type GetCurrentAuthorizationInformationResponse = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
  */
-export function getCurrentAuthorizationInformation(): RestRequestOptions<GetCurrentAuthorizationInformationResponse> {
+function getCurrentAuthorizationInformation(): RestRequestOptions<GetCurrentAuthorizationInformationResponse> {
 	return {
 		method: "GET",
 		path: "/oauth2/@me",
@@ -38,9 +38,14 @@ export function getCurrentAuthorizationInformation(): RestRequestOptions<GetCurr
 /**
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
  */
-export function getCurrentBotApplicationInformation(): RestRequestOptions<ApplicationStructure> {
+function getCurrentBotApplicationInformation(): RestRequestOptions<ApplicationStructure> {
 	return {
 		method: "GET",
 		path: "/oauth2/applications/@me",
 	};
 }
+
+export const Oauth2Routes = {
+	getCurrentAuthorizationInformation,
+	getCurrentBotApplicationInformation,
+};

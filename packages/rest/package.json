@@ -6,9 +6,7 @@
   "type": "commonjs",
   "readme": "README.md",
   "main": "./dist/index.js",
-  "module": "./dist/esm/index.js",
-  "browser": "./dist/iife/index.js",
-  "types": "./dist/src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "license": "AGPL-3.0-only",
   "author": {
     "name": "3tatsu",
@@ -22,9 +20,10 @@
     "url": "https://github.com/3tatsu/nyx.js.git"
   },
   "scripts": {
-    "build": "tsup --experimental-dts",
+    "build": "tsc -p tsconfig.json",
+    "tsup": "tsup --experimental-dts",
     "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
+    "lint:fix": "eslint .",
     "clean": "rimraf dist",
     "test": "vitest run",
     "test:watch": "vitest",

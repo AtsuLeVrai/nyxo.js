@@ -5,7 +5,7 @@ import type { EntitlementStructure } from "../structures/entitlements";
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#delete-test-entitlement}
  */
-export function deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+function deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "DELETE",
 		path: `/applications/${applicationId}/entitlements/${entitlementId}`,
@@ -44,7 +44,7 @@ export type CreateTestEntitlementJsonParams = {
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#create-test-entitlement}
  */
-export function createTestEntitlement(applicationId: Snowflake, json: CreateTestEntitlementJsonParams): RestRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
+function createTestEntitlement(applicationId: Snowflake, json: CreateTestEntitlementJsonParams): RestRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
 	return {
 		method: "POST",
 		path: `/applications/${applicationId}/entitlements`,
@@ -55,7 +55,7 @@ export function createTestEntitlement(applicationId: Snowflake, json: CreateTest
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#consume-an-entitlement}
  */
-export function consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+function consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "POST",
 		path: `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
@@ -99,10 +99,17 @@ export type ListEntitlementsQueryParams = {
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#list-entitlements}
  */
-export function listEntitlements(applicationId: Snowflake, query?: ListEntitlementsQueryParams): RestRequestOptions<EntitlementStructure[]> {
+function listEntitlements(applicationId: Snowflake, query?: ListEntitlementsQueryParams): RestRequestOptions<EntitlementStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/entitlements`,
 		query,
 	};
 }
+
+export const EntitlementRoutes = {
+	deleteTestEntitlement,
+	createTestEntitlement,
+	consumeEntitlement,
+	listEntitlements,
+};

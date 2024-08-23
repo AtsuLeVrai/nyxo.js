@@ -3,7 +3,7 @@ import type { Float } from "@nyxjs/core";
 import { ApiVersions, RestHttpResponseCodes } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
-import { request } from "undici";
+import { Client } from "undici";
 import { getRandomUserAgent } from "./agents";
 import type { AuthTypes, DiscordHeaders } from "./headers";
 
@@ -51,9 +51,9 @@ export class Rest extends EventEmitter<RestEvents> {
 		super();
 	}
 
-	private get url(): string {
+	private get client(): Client {
 		const version = this.options?.version ?? ApiVersions.V10;
-		return `https://discord.com/api/v${version}`;
+		return new Client(`https://discord.com/api/v${version}`);
 	}
 
 	public async request<T>(options: RestRequestOptions<T>): Promise<T> {
@@ -63,8 +63,8 @@ export class Rest extends EventEmitter<RestEvents> {
 			"User-Agent": this.options?.userAgent ?? getRandomUserAgent(),
 		};
 
-		const finalPath = `${this.url}${options.path}`;
-		const response = await request(finalPath, {
+		const response = await this.client.request({
+			path: options.path,
 			method: options.method,
 			body: options.body,
 			query: options.query,

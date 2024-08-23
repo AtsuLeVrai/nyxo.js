@@ -31,10 +31,12 @@ export type GetGuildAuditLogQueryStringParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log}
  */
-export function getGuildAuditLog(guildId: Snowflake, query?: GetGuildAuditLogQueryStringParams): RestRequestOptions<AuditLogStructure> {
+function getGuildAuditLog(guildId: Snowflake, query?: GetGuildAuditLogQueryStringParams): RestRequestOptions<AuditLogStructure> {
 	return {
 		method: "GET",
 		path: `/guilds/${guildId}/audit-logs`,
 		query,
 	};
 }
+
+export const AuditRoutes = { getGuildAuditLog };

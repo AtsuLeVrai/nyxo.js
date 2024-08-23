@@ -6,7 +6,7 @@ import type { StageInstanceStructure, StagePrivacyLevels } from "../structures/s
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
  */
-export function deleteStageInstance(stageId: Snowflake, reason?: string): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+function deleteStageInstance(stageId: Snowflake, reason?: string): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "DELETE",
 		path: `/stage-instances/${stageId}`,
@@ -31,7 +31,7 @@ export type ModifyStageInstanceJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance}
  */
-export function modifyStageInstance(stageId: Snowflake, json: ModifyStageInstanceJSONParams, reason?: string): RestRequestOptions<StageInstanceStructure> {
+function modifyStageInstance(stageId: Snowflake, json: ModifyStageInstanceJSONParams, reason?: string): RestRequestOptions<StageInstanceStructure> {
 	return {
 		method: "PATCH",
 		path: `/stage-instances/${stageId}`,
@@ -44,7 +44,7 @@ export function modifyStageInstance(stageId: Snowflake, json: ModifyStageInstanc
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
  */
 
-export function getStageInstance(stageId: Snowflake): RestRequestOptions<Partial<ChannelStructure> & StageInstanceStructure> {
+function getStageInstance(stageId: Snowflake): RestRequestOptions<Partial<ChannelStructure> & StageInstanceStructure> {
 	return {
 		method: "GET",
 		path: `/stage-instances/${stageId}`,
@@ -80,7 +80,7 @@ export type CreateStageInstanceJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
  */
-export function createStageInstance(json: CreateStageInstanceJSONParams, reason?: string): RestRequestOptions<StageInstanceStructure> {
+function createStageInstance(json: CreateStageInstanceJSONParams, reason?: string): RestRequestOptions<StageInstanceStructure> {
 	return {
 		method: "POST",
 		path: "/stage-instances",
@@ -88,3 +88,10 @@ export function createStageInstance(json: CreateStageInstanceJSONParams, reason?
 		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
 	};
 }
+
+export const StageRoutes = {
+	deleteStageInstance,
+	modifyStageInstance,
+	getStageInstance,
+	createStageInstance,
+};

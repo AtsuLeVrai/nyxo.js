@@ -6,7 +6,7 @@ import type { UserStructure } from "../structures/users";
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
  */
-export function endPoll(channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> {
+function endPoll(channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> {
 	return {
 		method: "DELETE",
 		path: `/channels/${channelId}/polls/${messageId}/expire`,
@@ -40,10 +40,15 @@ export type GetAnswerVotersQueryStringParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
  */
-export function getAnswerVoters(channelId: Snowflake, messageId: Snowflake, answerId: Snowflake, query?: GetAnswerVotersQueryStringParams): RestRequestOptions<GetAnswerVotersResponseBody> {
+function getAnswerVoters(channelId: Snowflake, messageId: Snowflake, answerId: Snowflake, query?: GetAnswerVotersQueryStringParams): RestRequestOptions<GetAnswerVotersResponseBody> {
 	return {
 		method: "GET",
 		path: `/channels/${channelId}/polls/${messageId}/answers/${answerId}`,
 		query,
 	};
 }
+
+export const PollRoutes = {
+	endPoll,
+	getAnswerVoters,
+};

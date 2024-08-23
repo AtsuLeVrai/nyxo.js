@@ -1,11 +1,9 @@
 import {defineConfig, Options} from 'tsup'
-import {esbuildPluginVersionInjector} from "esbuild-plugin-version-injector";
 
 export function createTsupConfig(options?: Options) {
     return defineConfig({
-        plugins: [esbuildPluginVersionInjector()],
         entry: ['src/index.ts'],
-        format: ['cjs', 'esm', 'iife'],
+        format: ['cjs', 'esm'],
         platform: 'node',
         target: "esnext",
         outDir: 'dist',

@@ -3,12 +3,13 @@
   "name": "@nyxjs/eslint-config",
   "private": true,
   "files": [
-    "next.js",
-    "node.js"
+    "next.eslint.config.mjs",
+    "node.eslint.config.mjs"
   ],
   "devDependencies": {
-    "@types/eslint": "^9.6.0",
+    "@typescript-eslint/utils": "^8.2.0",
     "eslint": "^8.57.0",
-    "eslint-config-neon": "^0.1.62"
+    "eslint-config-neon": "^0.2.0",
+    "lodash.merge": "^4.6.2"
   }
 }

@@ -28,6 +28,7 @@ export type { CreateAutoModerationRuleJSONParams, ModifyAutoModerationRuleJSONPa
 export type { GetCurrentAuthorizationInformationResponse } from "./routes/oauth2";
 export type { GetAnswerVotersQueryStringParams, GetAnswerVotersResponseBody } from "./routes/polls";
 export type { CreateStageInstanceJSONParams, ModifyStageInstanceJSONParams } from "./routes/stages";
+export type { CreateGuildStickerFormParams, ListStickerPacksResponse, ModifyGuildStickerJsonParams } from "./routes/stickers";
 export type {
 	CreateDMJSONParams,
 	CreateGroupDMJSONParams,
@@ -40,45 +41,20 @@ export type { ModifyCurrentUserVoiceStateJSONParams, ModifyUserVoiceStateJSONPar
 /**
  * ./routes - Globals
  */
-export {
-	editCurrentApplication,
-	getCurrentApplication,
-	getApplicationRoleConnectionMetadataRecords,
-	updateApplicationRoleConnectionMetadataRecords,
-} from "./routes/applications";
-export { getGuildAuditLog } from "./routes/audits";
-export {
-	modifyGuildEmoji,
-	listGuildEmojis,
-	modifyApplicationEmoji,
-	listApplicationEmojis,
-	getGuildEmoji,
-	getApplicationEmoji,
-	deleteGuildEmoji,
-	deleteApplicationEmoji,
-	createGuildEmoji,
-	createApplicationEmoji,
-} from "./routes/emojis";
-export { EntitlementOwnerTypes, consumeEntitlement, createTestEntitlement, deleteTestEntitlement, listEntitlements } from "./routes/entitlements";
-export { getGateway, getGatewayBot } from "./routes/gateway";
-export { deleteInvite, getInvite } from "./routes/invites";
-export { createAutoModerationRule, deleteAutoModerationRule, modifyAutoModerationRule, getAutoModerationRule } from "./routes/moderations";
-export { getCurrentAuthorizationInformation, getCurrentBotApplicationInformation } from "./routes/oauth2";
-export { endPoll, getAnswerVoters } from "./routes/polls";
-export { listSkus } from "./routes/skus";
-export { createStageInstance, deleteStageInstance, modifyStageInstance, getStageInstance } from "./routes/stages";
-export {
-	createDM,
-	getCurrentUserApplicationRoleConnection,
-	getCurrentUserGuildMember,
-	getCurrentUserConnections,
-	getCurrentUserGuilds,
-	getUser,
-	leaveGuild,
-	modifyCurrentUser,
-	updateUserApplicationRoleConnection,
-} from "./routes/users";
-export { getUserVoiceState, listVoiceRegions, modifyUserVoiceState } from "./routes/voices";
+export { ApplicationsRoutes } from "./routes/applications";
+export { AuditRoutes } from "./routes/audits";
+export { EmojiRoutes } from "./routes/emojis";
+export { EntitlementOwnerTypes, EntitlementRoutes } from "./routes/entitlements";
+export { GatewayRoutes } from "./routes/gateway";
+export { InviteRoutes } from "./routes/invites";
+export { ModerationRoutes } from "./routes/moderations";
+export { Oauth2Routes } from "./routes/oauth2";
+export { PollRoutes } from "./routes/polls";
+export { SkuRoutes } from "./routes/skus";
+export { StageRoutes } from "./routes/stages";
+export { StickerRoutes } from "./routes/stickers";
+export { UserRoutes } from "./routes/users";
+export { VoiceRoutes } from "./routes/voices";
 
 /**
  * ./structures - Types

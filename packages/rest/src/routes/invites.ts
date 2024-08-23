@@ -5,7 +5,7 @@ import type { InviteStructure } from "../structures/invites";
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
  */
-export function deleteInvite(code: string, reason?: string): RestRequestOptions<InviteStructure> {
+function deleteInvite(code: string, reason?: string): RestRequestOptions<InviteStructure> {
 	return {
 		method: "DELETE",
 		path: `/invites/${code}`,
@@ -34,10 +34,15 @@ export type GetInviteQueryStringParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
  */
-export function getInvite(code: string, query?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> {
+function getInvite(code: string, query?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> {
 	return {
 		method: "GET",
 		path: `/invites/${code}`,
 		query,
 	};
 }
+
+export const InviteRoutes = {
+	deleteInvite,
+	getInvite,
+};
