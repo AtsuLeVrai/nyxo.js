@@ -2,7 +2,11 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
-    "build": {},
+    "build": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
     "lint": {},
     "lint:fix": {},
     "clean": {},
