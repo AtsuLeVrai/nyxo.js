@@ -9,7 +9,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
 	private readonly connection: GatewayConnection;
 
-	constructor(private readonly token: string, private readonly options: GatewayOptions) {
+	public constructor(private readonly token: string, private readonly options: GatewayOptions) {
 		super();
 		this.connection = new GatewayConnection(this, this.token, this.options);
 		this.shardManager = new ShardManager(this, this.token, this.options);

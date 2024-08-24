@@ -1,3 +1,4 @@
+import { setTimeout } from "node:timers";
 import type { Integer, Snowflake } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
 import { GatewayRoutes, Rest, UserRoutes } from "@nyxjs/rest";
@@ -19,7 +20,7 @@ export class ShardManager {
 
 	private rateLimitQueue = new Map<Integer, ShardInfo[]>();
 
-	constructor(private readonly gateway: Gateway, private readonly token: string, private readonly options: GatewayOptions) {
+	public constructor(private readonly gateway: Gateway, private readonly token: string, private readonly options: GatewayOptions) {
 		this.rest = new Rest(this.token);
 	}
 
@@ -61,10 +62,12 @@ export class ShardManager {
 	}
 
 	private async processRateLimitQueue(rateLimitKey: number): Promise<void> {
-		const queue = this.rateLimitQueue.get(rateLimitKey) || [];
+		const queue = this.rateLimitQueue.get(rateLimitKey) ?? [];
 		for (const shardInfo of queue) {
 			await this.connectShard(shardInfo);
-			await new Promise((resolve) => setTimeout(resolve, 5_000)); // Wait 5 seconds between shard connections
+			await new Promise((resolve) => {
+				setTimeout(resolve, 5_000);
+			});
 		}
 	}
 

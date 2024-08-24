@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { clearInterval, clearTimeout, setInterval } from "node:timers";
+import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timers";
 import { URL } from "node:url";
 import { TextDecoder } from "node:util";
 import type { GatewayCloseCodes, Integer } from "@nyxjs/core";
@@ -198,6 +198,11 @@ export class GatewayConnection {
 				const ready = payload.d as ReadyEventFields;
 				this.sessionId = ready.session_id;
 				this.resumeGatewayUrl = ready.resume_gateway_url;
+				break;
+			}
+
+			default: {
+				this.gateway.emit("warn", `[WS] Received an unhandled gateway event: ${payload.t}...`);
 				break;
 			}
 		}
