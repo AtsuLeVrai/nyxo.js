@@ -88,6 +88,10 @@ export type RestRequestOptions<T> = Omit<Dispatcher.DispatchOptions, "headers"> 
 	 * Headers to include in the request.
 	 */
 	headers?: DiscordHeaders;
+	/**
+	 * The type of the response data.
+	 */
+	readonly type?: T;
 };
 
 export class Rest extends EventEmitter<RestEvents> {
