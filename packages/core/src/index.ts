@@ -8,6 +8,7 @@ export type { BotAuthParameters } from "./globals/oauth2";
  * ./globals - Globals
  */
 export { ApiVersions, TimestampStyles, ImageFormats } from "./globals/formats";
+export { GatewayIntents } from "./globals/intents";
 export { Locales } from "./globals/locales";
 export { Oauth2Scopes, Oauth2Urls } from "./globals/oauth2";
 export {
@@ -42,3 +43,4 @@ export {
 	unixTimestampFormat,
 	userFormat,
 } from "./globals/formats";
+export { BitwisePermissions } from "./globals/permissions";

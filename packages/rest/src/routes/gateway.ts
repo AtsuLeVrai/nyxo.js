@@ -47,7 +47,7 @@ export type GetGatewayBotResponse = {
 function getGatewayBot(): RestRequestOptions<GetGatewayBotResponse> {
 	return {
 		method: "GET",
-		path: "/gateway/bot",
+		path: "/globals/bot",
 	};
 }
 
@@ -57,7 +57,7 @@ function getGatewayBot(): RestRequestOptions<GetGatewayBotResponse> {
 function getGateway(): RestRequestOptions<{ url: string; }> {
 	return {
 		method: "GET",
-		path: "/gateway",
+		path: "/globals",
 	};
 }
 

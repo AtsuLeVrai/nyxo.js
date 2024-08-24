@@ -24,10 +24,9 @@ export type {
 	GuildScheduledEventUserAddEventFields,
 	GuildScheduledEventUserRemoveEventFields,
 	GuildStickersUpdateEventFields,
-	UnavailableGuildFields,
 	RequestGuildMembersRequestStructure,
 } from "./events/guilds";
-export type { HelloEventFields } from "./events/hello";
+export type { HelloStructure } from "./events/hello";
 export type { IdentifyConnectionProperties, IdentifyStructure } from "./events/identity";
 export type {
 	IntegrationCreateEventAdditionalFields,
@@ -76,13 +75,20 @@ export { ActivityTypes, ActivityFlags } from "./events/presences";
 export { VoiceChannelEffectSendAnimationTypes } from "./events/voices";
 
 /**
- * ./globals - Types
- */
-export type { GatewaySendEvents } from "./globals/events";
-export type { GatewayEvents, GatewayUrlQuery, GatewayPayload } from "./globals/gateway";
-
-/**
  * ./globals - Globals
  */
-export { Gateway } from "./globals/gateway";
-export { GatewayIntents } from "./globals/intents";
+export { Gateway } from "./globals/Gateway";
+export { GatewayConnection } from "./globals/GatewayConnection";
+export { ShardManager } from "./globals/ShardManager";
+
+/**
+ * ./types - Types
+ */
+export type { GatewaySendEvents } from "./types/events";
+export type { GatewayEvents, GatewayOptions, GatewayPayload } from "./types/gateway";
+
+/**
+ * ./utils - Globals
+ */
+export { decompressZlib, decompressZstd } from "./utils/compression";
+export { decodeRawData, encodeMessage, decodeMessage } from "./utils/encoding";

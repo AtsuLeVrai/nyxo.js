@@ -98,6 +98,7 @@ export type {
 	GuildScheduledEventUserStructure,
 	GuildScheduledEventStructure,
 	GuildScheduledEventEntityMetadata,
+	UnavailableGuildStructure,
 } from "./structures/guilds";
 export type {
 	ActionRowStructure,

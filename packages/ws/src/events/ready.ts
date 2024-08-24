@@ -1,6 +1,5 @@
 import type { ApiVersions, Integer } from "@nyxjs/core";
-import type { ApplicationStructure, UserStructure } from "@nyxjs/rest";
-import type { UnavailableGuildFields } from "./guilds";
+import type { ApplicationStructure, UnavailableGuildStructure, UserStructure } from "@nyxjs/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#ready-ready-event-fields}
@@ -13,7 +12,7 @@ export type ReadyEventFields = {
 	/**
 	 * Guilds the user is in
 	 */
-	guilds: UnavailableGuildFields[];
+	guilds: UnavailableGuildStructure[];
 	/**
 	 * Gateway URL for resuming connections
 	 */

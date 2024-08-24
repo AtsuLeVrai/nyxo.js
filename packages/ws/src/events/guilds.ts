@@ -334,17 +334,6 @@ export type GuildCreateExtraFields = {
 	voice_states: Partial<VoiceStateStructure>[];
 };
 
-export type UnavailableGuildFields = {
-	/**
-	 * ID of the guild
-	 */
-	id: Snowflake;
-	/**
-	 * When this guild became unavailable
-	 */
-	unavailable: boolean;
-};
-
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#request-guild-members-request-guild-members-structure}
  */

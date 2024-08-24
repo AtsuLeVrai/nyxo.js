@@ -97,7 +97,7 @@ export enum GatewayCloseCodes {
 	 */
 	ShardingRequired = 4_011,
 	/**
-	 * You sent an invalid version for the gateway.
+	 * You sent an invalid version for the globals.
 	 */
 	InvalidAPIVersion = 4_012,
 	/**
@@ -205,7 +205,7 @@ export enum RestHttpResponseCodes {
 	 */
 	TooManyRequests = 429,
 	/**
-	 * There was not a gateway available to process your request. Wait a bit and retry.
+	 * There was not a globals available to process your request. Wait a bit and retry.
 	 */
 	GatewayUnavailable = 502,
 }
