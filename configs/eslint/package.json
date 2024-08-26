@@ -6,7 +6,7 @@
     "node.ts"
   ],
   "devDependencies": {
-    "@types/eslint": "^8.56.11",
+    "@types/eslint": "^8.56.12",
     "eslint": "^8.57.0",
     "eslint-config-neon": "0.1.62"
   }

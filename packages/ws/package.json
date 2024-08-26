@@ -6,7 +6,8 @@
   "type": "commonjs",
   "readme": "README.md",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/src/index.d.ts",
   "license": "AGPL-3.0-only",
   "author": {
     "name": "3tatsu",
@@ -20,7 +21,7 @@
     "url": "https://github.com/3tatsu/nyx.js.git"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "pnpm run clean && tsup --experimental-dts --config tsup.config.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "clean": "rimraf dist",
@@ -33,7 +34,6 @@
     "dist"
   ],
   "dependencies": {
-    "@nyxjs/cache": "workspace:*",
     "@nyxjs/core": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@skhaz/zstd": "^1.0.21",
@@ -46,13 +46,15 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/eslint": "^8.56.11",
+    "@microsoft/api-extractor": "^7.47.7",
+    "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.0",
     "@types/ws": "^8.5.12",
     "@vitest/coverage-v8": "^2.0.5",
     "@vitest/ui": "^2.0.5",
     "eslint": "^8.57.0",
     "rimraf": "^6.0.1",
+    "tsup": "^8.2.4",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
   }
