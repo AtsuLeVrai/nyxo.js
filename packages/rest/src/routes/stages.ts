@@ -1,5 +1,5 @@
 import type { Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/types";
 import type { ChannelStructure } from "../structures/channels";
 import type { StageInstanceStructure, StagePrivacyLevels } from "../structures/stages";
 

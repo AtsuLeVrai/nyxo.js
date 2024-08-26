@@ -1,5 +1,5 @@
 import type { Integer, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/types";
 import type { MessageStructure } from "../structures/messages";
 import type { UserStructure } from "../structures/users";
 

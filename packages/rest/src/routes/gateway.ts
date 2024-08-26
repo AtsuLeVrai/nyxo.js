@@ -1,5 +1,5 @@
 import type { Integer } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/types";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#session-start-limit-object-session-start-limit-structure}

@@ -1,94 +1,36 @@
 /**
- * ./events - Types
+ * ./events
  */
-export type {
-	ChannelPinsUpdateEventFields,
-	ThreadListSyncEventFields,
-	ThreadMembersUpdateEventFields,
-	ThreadMemberUpdateEventExtraFields,
-} from "./events/channels";
-export type {
-	GuildBanAddEventFields,
-	GuildBanRemoveEventFields,
-	GuildCreateExtraFields,
-	GuildEmojisUpdateEventFields,
-	GuildIntegrationsUpdateEventFields,
-	GuildMemberAddEventFields,
-	GuildMemberRemoveEventFields,
-	GuildMembersChunkEventFields,
-	GuildAuditLogEntryCreateEventExtraFields,
-	GuildMemberUpdateEventFields,
-	GuildRoleCreateEventFields,
-	GuildRoleDeleteEventFields,
-	GuildRoleUpdateEventFields,
-	GuildScheduledEventUserAddEventFields,
-	GuildScheduledEventUserRemoveEventFields,
-	GuildStickersUpdateEventFields,
-	RequestGuildMembersRequestStructure,
-} from "./events/guilds";
-export type { HelloStructure } from "./events/hello";
-export type { IdentifyConnectionProperties, IdentifyStructure } from "./events/identity";
-export type {
-	IntegrationCreateEventAdditionalFields,
-	IntegrationDeleteEventFields,
-	IntegrationUpdateEventAdditionalFields,
-} from "./events/integrations";
-export type { InviteCreateEventFields, InviteDeleteEventFields } from "./events/invites";
-export type {
-	MessageReactionRemoveEventFields,
-	MessageDeleteEventFields,
-	MessageDeleteBulkEventFields,
-	MessageReactionAddEventFields,
-	MessageReactionRemoveAllEventFields,
-	MessageReactionRemoveEmojiEventFields,
-	MessageCreateExtraFields,
-} from "./events/messages";
-export type { AutoModerationActionExecutionEventFields } from "./events/moderations";
-export type { MessagePollVoteAddFields, MessagePollVoteRemoveFields } from "./events/polls";
-export type {
-	ActivityParty,
-	ActivityAssets,
-	ActivityButton,
-	ActivityEmoji,
-	ClientStatus,
-	ActivitySecrets,
-	ActivityStructure,
-	ActivityTimestamps,
-	PresenceUpdateEventFields,
-	TypingStartEventFields,
-	UpdatePresenceStatusTypes,
-	UpdatePresenceGatewayPresenceUpdateStructure,
-} from "./events/presences";
-export type { ReadyEventFields } from "./events/ready";
-export type { ResumeStructure } from "./events/resume";
-export type {
-	VoiceChannelEffectSendEventFields,
-	VoiceServerUpdateEventFields,
-	UpdateVoiceStateGatewayVoiceStateUpdateStructure,
-} from "./events/voices";
-export type { WebhooksUpdateEventFields } from "./events/webhooks";
+export * from "./events/channels";
+export * from "./events/guilds";
+export * from "./events/hello";
+export * from "./events/identity";
+export * from "./events/integrations";
+export * from "./events/invites";
+export * from "./events/messages";
+export * from "./events/moderations";
+export * from "./events/polls";
+export * from "./events/presences";
+export * from "./events/ready";
+export * from "./events/resume";
+export * from "./events/voices";
+export * from "./events/webhooks";
 
 /**
- * ./events - Globals
+ * ./globals
  */
-export { ActivityTypes, ActivityFlags } from "./events/presences";
-export { VoiceChannelEffectSendAnimationTypes } from "./events/voices";
+export * from "./globals/Gateway";
+export * from "./globals/GatewayConnection";
+export * from "./globals/ShardManager";
 
 /**
- * ./globals - Globals
+ * ./types
  */
-export { Gateway } from "./globals/Gateway";
-export { GatewayConnection } from "./globals/GatewayConnection";
-export { ShardManager } from "./globals/ShardManager";
+export * from "./types/events";
+export * from "./types/gateway";
 
 /**
- * ./types - Types
+ * ./utils
  */
-export type { GatewaySendEvents } from "./types/events";
-export type { GatewayEvents, GatewayOptions, GatewayPayload } from "./types/gateway";
-
-/**
- * ./utils - Globals
- */
-export { decompressZlib, decompressZstd } from "./utils/compression";
-export { decodeRawData, encodeMessage, decodeMessage } from "./utils/encoding";
+export * from "./utils/compression";
+export * from "./utils/encoding";

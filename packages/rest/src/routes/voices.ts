@@ -1,5 +1,5 @@
 import type { IsoO8601Timestamp, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/types";
 import type { VoiceRegionStructure, VoiceStateStructure } from "../structures/voices";
 
 /**

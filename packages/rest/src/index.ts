@@ -1,234 +1,54 @@
 /**
- * ./globals - Types
+ * ./globals
  */
-export type { AuthTypes, DiscordHeaders } from "./globals/headers";
-export type { RateLimitResponseStructure, RestOptions, RestEvents, RestRequestOptions } from "./globals/rest";
+export * from "./globals/Cdn";
+export * from "./globals/RateLimiter";
+export * from "./globals/Rest";
+export * from "./globals/RestRequestHandler";
+export * from "./globals/types";
+export * from "./globals/utils";
 
 /**
- * ./globals - Globals
+ * ./routes
  */
-export { Cdn } from "./globals/cdn";
-export { Rest } from "./globals/rest";
+export * from "./routes/applications";
+export * from "./routes/audits";
+export * from "./routes/emojis";
+export * from "./routes/entitlements";
+export * from "./routes/gateway";
+// export * from "./routes/guilds";
+// export * from "./routes/interactions";
+export * from "./routes/invites";
+// export * from "./routes/messages";
+export * from "./routes/moderations";
+export * from "./routes/oauth2";
+export * from "./routes/polls";
+export * from "./routes/skus";
+export * from "./routes/stages";
+export * from "./routes/stickers";
+export * from "./routes/users";
+export * from "./routes/voices";
+// export * from "./routes/webhooks";
 
 /**
- * ./routes - Types
+ * ./structures
  */
-export type { EditCurrentApplicationJSONParams } from "./routes/applications";
-export type { GetGuildAuditLogQueryStringParams } from "./routes/audits";
-export type {
-	CreateApplicationEmojiJsonParams,
-	CreateGuildEmojiJsonParams,
-	ModifyApplicationEmojiJsonParams,
-	ModifyGuildEmojiJsonParams,
-} from "./routes/emojis";
-export type { CreateTestEntitlementJsonParams, ListEntitlementsQueryParams } from "./routes/entitlements";
-export type { GetGatewayBotResponse, SessionStartLimitStructure } from "./routes/gateway";
-export type { GetInviteQueryStringParams } from "./routes/invites";
-export type { CreateAutoModerationRuleJSONParams, ModifyAutoModerationRuleJSONParams } from "./routes/moderations";
-export type { GetCurrentAuthorizationInformationResponse } from "./routes/oauth2";
-export type { GetAnswerVotersQueryStringParams, GetAnswerVotersResponseBody } from "./routes/polls";
-export type { CreateStageInstanceJSONParams, ModifyStageInstanceJSONParams } from "./routes/stages";
-export type { CreateGuildStickerFormParams, ListStickerPacksResponse, ModifyGuildStickerJsonParams } from "./routes/stickers";
-export type {
-	CreateDMJSONParams,
-	CreateGroupDMJSONParams,
-	GetCurrentUserGuildsQueryStringParams,
-	ModifyCurrentUserJSONParams,
-	UpdateUserApplicationRoleConnectionJSONParams,
-} from "./routes/users";
-export type { ModifyCurrentUserVoiceStateJSONParams, ModifyUserVoiceStateJSONParams } from "./routes/voices";
-
-/**
- * ./routes - Globals
- */
-export { ApplicationsRoutes } from "./routes/applications";
-export { AuditRoutes } from "./routes/audits";
-export { EmojiRoutes } from "./routes/emojis";
-export { EntitlementOwnerTypes, EntitlementRoutes } from "./routes/entitlements";
-export { GatewayRoutes } from "./routes/gateway";
-export { InviteRoutes } from "./routes/invites";
-export { ModerationRoutes } from "./routes/moderations";
-export { Oauth2Routes } from "./routes/oauth2";
-export { PollRoutes } from "./routes/polls";
-export { SkuRoutes } from "./routes/skus";
-export { StageRoutes } from "./routes/stages";
-export { StickerRoutes } from "./routes/stickers";
-export { UserRoutes } from "./routes/users";
-export { VoiceRoutes } from "./routes/voices";
-
-/**
- * ./structures - Types
- */
-export type {
-	ApplicationRoleConnectionMetadataStructure,
-	ApplicationInstallParams,
-	ApplicationIntegrationTypeConfiguration,
-	ApplicationStructure,
-} from "./structures/applications";
-export type { AuditLogEntryStructure, AuditLogChangeStructure, OptionalAuditEntryInfo, AuditLogStructure } from "./structures/audits";
-export type {
-	ChannelStructure,
-	FollowedChannelStructure,
-	OverwriteStructure,
-	ThreadMetadataStructure,
-	DefaultReactionStructure,
-	ThreadMemberStructure,
-	ForumTagStructure,
-} from "./structures/channels";
-export type { EmojiStructure } from "./structures/emojis";
-export type { EntitlementStructure } from "./structures/entitlements";
-export type {
-	IntegrationStructure,
-	IntegrationApplicationStructure,
-	BanStructure,
-	IntegrationAccountStructure,
-	GuildMemberStructure,
-	GuildOnboardingStructure,
-	GuildPreviewStructure,
-	GuildStructure,
-	GuildWidgetStructure,
-	GuildWidgetSettingsStructure,
-	OnboardingPromptStructure,
-	PromptOptionStructure,
-	WelcomeScreenChannelStructure,
-	WelcomeScreenStructure,
-	GuildTemplateStructure,
-	RecurrenceRuleNweekdayStructure,
-	RecurrenceRuleStructure,
-	GuildScheduledEventUserStructure,
-	GuildScheduledEventStructure,
-	GuildScheduledEventEntityMetadata,
-	UnavailableGuildStructure,
-} from "./structures/guilds";
-export type {
-	ActionRowStructure,
-	AutocompleteStructure,
-	ApplicationCommandInteractionDataOptionStructure,
-	MessageComponentDataStructure,
-	ApplicationCommandDataStructure,
-	ApplicationCommandOptionChoiceStructure,
-	ApplicationCommandPermissionsStructure,
-	ApplicationCommandOptionStructure,
-	GuildApplicationCommandPermissionsStructure,
-	ResolvedDataStructure,
-	InteractionStructure,
-	MessageResponseStructure,
-	InteractionResponseStructure,
-	MessageInteractionStructure,
-	SelectOptionStructure,
-	SelectMenuStructure,
-	ApplicationCommandStructure,
-	ButtonStructure,
-	ModalSubmitDataStructure,
-	ModalStructure,
-	SelectDefaultValueStructure,
-	TextInputStructure,
-} from "./structures/interactions";
-export type { InviteMetadataStructure, InviteStageInstanceStructure, InviteStructure } from "./structures/invites";
-export type {
-	AllowedMentionsStructure,
-	MessageStructure,
-	AllowedMentionTypes,
-	AttachmentStructure,
-	ChannelMentionStructure,
-	EmbedAuthorStructure,
-	ReactionStructure,
-	RoleSubscriptionDataStructure,
-	ReactionCountDetailsStructure,
-	MessageSnapshotStructure,
-	MessageReferenceStructure,
-	MessageInteractionMetadataStructure,
-	MessageCallStructure,
-	MessageActivityStructure,
-	EmbedVideoStructure,
-	EmbedTypes,
-	EmbedThumbnailStructure,
-	EmbedStructure,
-	EmbedProviderStructure,
-	EmbedImageStructure,
-	EmbedFooterStructure,
-	EmbedFieldStructure,
-} from "./structures/messages";
-export type {
-	AutoModerationActionMetadataStructure,
-	AutoModerationActionStructure,
-	AutoModerationRuleStructure,
-	AutoModerationTriggerMetadataStructure,
-} from "./structures/moderations";
-export type {
-	PollAnswerCountStructure,
-	PollAnswerStructure,
-	PollMediaStructure,
-	PollResultsStructure,
-	PollStructure,
-	PollCreateRequestStructure,
-} from "./structures/polls";
-export type { RoleTags, RoleStructure } from "./structures/roles";
-export type { SkuStructure } from "./structures/skus";
-export type { StageInstanceStructure } from "./structures/stages";
-export type { StickerItemStructure, StickerPackStructure, StickerStructure } from "./structures/stickers";
-export type { TeamMemberRoles, TeamMemberStructure, TeamStructure } from "./structures/teams";
-export type {
-	ApplicationRoleConnectionStructure,
-	ConnectionStructure,
-	ConnectionServices,
-	UserStructure,
-	AvatarDecorationDataStructure,
-} from "./structures/users";
-export type { VoiceRegionStructure, VoiceStateStructure } from "./structures/voices";
-export type { WebhookStructure } from "./structures/webhooks";
-
-/**
- * ./structures - Globals
- */
-export { ApplicationRoleConnectionMetadataTypes, IntegrationTypes, ApplicationFlags } from "./structures/applications";
-export { AuditLogEvents } from "./structures/audits";
-export { ChannelFlags, ChannelTypes, ForumLayoutTypes, OverwriteTypes, SortOrderTypes, VideoQualityModes } from "./structures/channels";
-export { EntitlementTypes } from "./structures/entitlements";
-export {
-	RecurrenceRuleWeekdays,
-	RecurrenceRuleMonths,
-	RecurrenceRuleFrequencies,
-	GuildScheduledEventStatus,
-	GuildScheduledEventPrivacyLevels,
-	GuildScheduledEventEntityTypes,
-	VerificationLevels,
-	SystemChannelFlags,
-	PromptTypes,
-	PremiumTiers,
-	OnboardingMode,
-	NsfwLevels,
-	MfaLevels,
-	IntegrationExpireBehaviors,
-	ExplicitContentFilterLevels,
-	GuildFeatures,
-	DefaultMessageNotificationLevels,
-	GuildMemberFlags,
-} from "./structures/guilds";
-export {
-	TextInputStyles,
-	InteractionTypes,
-	InteractionContextTypes,
-	InteractionCallbackTypes,
-	ButtonStyles,
-	ApplicationCommandTypes,
-	ApplicationCommandPermissionTypes,
-	ApplicationCommandOptionTypes,
-	ComponentTypes,
-} from "./structures/interactions";
-export { InviteTypes, InviteTargetTypes } from "./structures/invites";
-export { AttachmentFlags, MessageFlags, MessageActivityTypes, MessageReferenceTypes, MessageTypes } from "./structures/messages";
-export {
-	AutoModerationActionTypes,
-	AutoModerationEventTypes,
-	AutoModerationKeywordPresetTypes,
-	AutoModerationTriggerTypes,
-} from "./structures/moderations";
-export { LayoutTypes } from "./structures/polls";
-export { RoleFlags } from "./structures/roles";
-export { SkuFlags, SkuTypes } from "./structures/skus";
-export { StagePrivacyLevels } from "./structures/stages";
-export { StickerFormatTypes, StickerTypes } from "./structures/stickers";
-export { MembershipState } from "./structures/teams";
-export { ConnectionVisibilityTypes, PremiumTypes, UserFlags } from "./structures/users";
-export { WebhookTypes } from "./structures/webhooks";
+export * from "./structures/applications";
+export * from "./structures/audits";
+export * from "./structures/channels";
+export * from "./structures/emojis";
+export * from "./structures/entitlements";
+export * from "./structures/guilds";
+export * from "./structures/interactions";
+export * from "./structures/invites";
+export * from "./structures/messages";
+export * from "./structures/moderations";
+export * from "./structures/polls";
+export * from "./structures/roles";
+export * from "./structures/skus";
+export * from "./structures/stages";
+export * from "./structures/stickers";
+export * from "./structures/teams";
+export * from "./structures/users";
+export * from "./structures/voices";
+export * from "./structures/webhooks";

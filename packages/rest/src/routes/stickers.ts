@@ -1,9 +1,9 @@
 import { Buffer } from "node:buffer";
 import { createReadStream } from "node:fs";
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
 import { FormData } from "undici";
-import type { RestRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/types";
 import type { StickerPackStructure, StickerStructure } from "../structures/stickers";
 
 /**
@@ -82,7 +82,7 @@ function createGuildSticker(guildId: Snowflake, form: CreateGuildStickerFormPara
 		formData.append("file", createReadStream(form.file));
 	} else if (Buffer.isBuffer(form.file)) {
 		formData.append("file", new Blob([form.file]));
-	} else if (form.file instanceof Readable) {
+	} else {
 		formData.append("file", form.file);
 	}
 

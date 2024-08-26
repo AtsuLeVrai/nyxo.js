@@ -1,5 +1,5 @@
 import type { Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/rest";
+import type { RestRequestOptions } from "../globals/types";
 import type { SkuStructure } from "../structures/skus";
 
 /**

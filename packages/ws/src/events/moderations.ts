@@ -46,7 +46,7 @@ export type AutoModerationActionExecutionEventFields = {
 	 */
 	rule_trigger_type: AutoModerationTriggerTypes;
 	/**
-     * ID of the user which generated the content which triggered the rule
-     */
+	 * ID of the user who triggered the rule
+	 */
 	user_id: Snowflake;
 };
