@@ -59,7 +59,7 @@ export type GatewayOptions = {
 	v: ApiVersions;
 };
 
-export type GatewayEvents = {
+export type GatewayEvents = GatewayReceiveEvents & {
 	close: [code: GatewayCloseCodes, reason: string];
 	debug: [message: string];
 	error: [error: Error];

@@ -1,7 +1,7 @@
 import type { Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type { ChannelStructure } from "../structures/channels";
 import type { StageInstanceStructure, StagePrivacyLevels } from "../structures/stages";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}

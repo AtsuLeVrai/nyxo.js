@@ -2,9 +2,9 @@ import type { Cache } from "@nyxjs/cache";
 import type { Integer } from "@nyxjs/core";
 import { RestHttpResponseCodes } from "@nyxjs/core";
 import type { RetryAgent } from "undici";
+import type { RateLimitResponseStructure, RestOptions, RestRequestOptions } from "../types/globals";
+import { getRandomUserAgent } from "../utils/agents";
 import { RateLimiter } from "./RateLimiter";
-import type { RateLimitResponseStructure, RestOptions, RestRequestOptions } from "./types";
-import { getRandomUserAgent } from "./utils";
 
 export class RestRequestHandler {
 	private readonly defaultHeaders = this.createDefaultHeaders();

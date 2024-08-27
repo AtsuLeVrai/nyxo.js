@@ -1,5 +1,4 @@
 import type { DataUriSchema, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type {
 	ApplicationFlags,
 	ApplicationInstallParams,
@@ -8,6 +7,7 @@ import type {
 	ApplicationStructure,
 	IntegrationTypes,
 } from "../structures/applications";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records}

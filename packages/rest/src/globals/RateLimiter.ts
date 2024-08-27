@@ -1,6 +1,6 @@
 import { setTimeout } from "node:timers";
 import type { Integer } from "@nyxjs/core";
-import type { DiscordHeaders, RateLimitResponseStructure } from "./types";
+import type { DiscordHeaders, RateLimitResponseStructure } from "../types/globals";
 
 type RateLimitInfo = {
 	bucket: string;

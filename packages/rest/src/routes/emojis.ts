@@ -1,6 +1,6 @@
 import type { DataUriSchema, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type { EmojiStructure } from "../structures/emojis";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#delete-application-emoji}

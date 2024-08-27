@@ -1,6 +1,6 @@
 import type { Integer, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type { AuditLogEvents, AuditLogStructure } from "../structures/audits";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params}

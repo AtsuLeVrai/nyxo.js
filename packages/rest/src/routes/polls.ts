@@ -1,7 +1,7 @@
 import type { Integer, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type { MessageStructure } from "../structures/messages";
 import type { UserStructure } from "../structures/users";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}

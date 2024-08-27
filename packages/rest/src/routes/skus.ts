@@ -1,6 +1,6 @@
 import type { Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type { SkuStructure } from "../structures/skus";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/monetization/skus#list-skus}

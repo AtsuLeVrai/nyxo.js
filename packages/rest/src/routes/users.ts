@@ -1,8 +1,8 @@
 import type { Boolean, DataUriSchema, Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type { ChannelStructure } from "../structures/channels";
 import type { GuildMemberStructure, GuildStructure } from "../structures/guilds";
 import type { ApplicationRoleConnectionStructure, ConnectionStructure, UserStructure } from "../structures/users";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params}

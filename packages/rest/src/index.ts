@@ -5,8 +5,6 @@ export * from "./globals/Cdn";
 export * from "./globals/RateLimiter";
 export * from "./globals/Rest";
 export * from "./globals/RestRequestHandler";
-export * from "./globals/types";
-export * from "./globals/utils";
 
 /**
  * ./routes
@@ -52,3 +50,14 @@ export * from "./structures/teams";
 export * from "./structures/users";
 export * from "./structures/voices";
 export * from "./structures/webhooks";
+
+/**
+ * ./types
+ */
+export * from "./types/globals";
+
+/**
+ * ./utils
+ */
+export * from "./utils/agents";
+export * from "./utils/constants";

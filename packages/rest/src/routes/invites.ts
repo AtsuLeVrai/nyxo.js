@@ -1,6 +1,6 @@
 import type { Boolean, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../globals/types";
 import type { InviteStructure } from "../structures/invites";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}

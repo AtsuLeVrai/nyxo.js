@@ -1,5 +1,5 @@
 import type { Float, Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
-import type { DiscordHeaders } from "../globals/types";
+import type { DiscordHeaders } from "../types/globals";
 import type { ApplicationStructure } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
 import type { EmojiStructure } from "./emojis";

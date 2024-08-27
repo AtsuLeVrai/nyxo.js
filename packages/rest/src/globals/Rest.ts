@@ -2,10 +2,10 @@ import { Cache } from "@nyxjs/cache";
 import { RestHttpResponseCodes } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool, RetryAgent } from "undici";
+import type { RestEvents, RestOptions, RestRequestOptions } from "../types/globals";
+import { API_BASE_URL, DEFAULT_REST_OPTIONS } from "../utils/constants";
 import { RateLimiter } from "./RateLimiter";
 import { RestRequestHandler } from "./RestRequestHandler";
-import { API_BASE_URL, DEFAULT_REST_OPTIONS } from "./constants";
-import type { RestEvents, RestOptions, RestRequestOptions } from "./types";
 
 export class Rest extends EventEmitter<RestEvents> {
 	private readonly pool = this.createPool();

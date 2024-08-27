@@ -3,8 +3,8 @@ import { createReadStream } from "node:fs";
 import type { Readable } from "node:stream";
 import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
 import { FormData } from "undici";
-import type { RestRequestOptions } from "../globals/types";
 import type { StickerPackStructure, StickerStructure } from "../structures/stickers";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker}

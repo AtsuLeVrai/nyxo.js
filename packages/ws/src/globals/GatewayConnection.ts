@@ -187,22 +187,35 @@ export class GatewayConnection {
 				break;
 			}
 
+			case GatewayOpcodes.Dispatch: {
+				this.handleDispatchEvent(payload);
+				break;
+			}
+
 			default: {
 				this.gateway.emit("warn", `[WS] Received an unhandled gateway event: ${payload.op}...`);
 				break;
 			}
 		}
+	}
 
+	private handleDispatchEvent(payload: GatewayPayload): void {
 		switch (payload.t) {
 			case "READY": {
 				const ready = payload.d as ReadyEventFields;
 				this.sessionId = ready.session_id;
 				this.resumeGatewayUrl = ready.resume_gateway_url;
+				this.gateway.emit("READY", ready);
 				break;
 			}
 
 			default: {
-				this.gateway.emit("warn", `[WS] Received an unhandled gateway event: ${payload.t}...`);
+				if (!payload.t) {
+					this.gateway.emit("warn", "[WS] Received a dispatch event without a name...");
+					break;
+				}
+
+				this.gateway.emit(payload.t, payload.d as never);
 				break;
 			}
 		}
