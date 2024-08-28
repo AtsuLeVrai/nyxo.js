@@ -4,31 +4,66 @@ import { SkuRoutes } from "@nyxjs/rest";
 import type { Client } from "./client";
 
 export class Sku {
-	public readonly applicationId: Snowflake;
+	public applicationId!: Snowflake;
 
-	public readonly id: Snowflake;
+	public id!: Snowflake;
 
-	public readonly name: string;
+	public name!: string;
 
-	public readonly slug: string;
+	public slug!: string;
 
-	public readonly type: SkuTypes;
+	public type!: SkuTypes;
 
-	public readonly flags: SkuFlags;
+	public flags!: SkuFlags;
 
 	public constructor(private readonly client: Client, data: SkuStructure) {
-		this.applicationId = data.application_id;
-		this.id = data.id;
-		this.name = data.name;
-		this.slug = data.slug;
-		this.type = data.type;
-		this.flags = data.flags;
-		Object.freeze(this);
+		this.patch(data);
+	}
+
+	public static from(client: Client, data: SkuStructure): Sku {
+		return new Sku(client, data);
+	}
+
+	public toJSON(): SkuStructure {
+		return {
+			application_id: this.applicationId,
+			id: this.id,
+			name: this.name,
+			slug: this.slug,
+			type: this.type,
+			flags: this.flags,
+		};
 	}
 
 	public async list(): Promise<readonly Sku[]> {
 		const skus = await this.client.rest.request(SkuRoutes.listSkus(this.applicationId));
-		return Object.freeze(skus.map((sku) => new Sku(this.client, sku)));
+		return skus.map((sku) => new Sku(this.client, sku));
+	}
+
+	private patch(data: SkuStructure): void {
+		if (data.application_id !== undefined) {
+			this.applicationId = data.application_id;
+		}
+
+		if (data.id !== undefined) {
+			this.id = data.id;
+		}
+
+		if (data.name !== undefined) {
+			this.name = data.name;
+		}
+
+		if (data.slug !== undefined) {
+			this.slug = data.slug;
+		}
+
+		if (data.type !== undefined) {
+			this.type = data.type;
+		}
+
+		if (data.flags !== undefined) {
+			this.flags = data.flags;
+		}
 	}
 }
 

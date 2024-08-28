@@ -13,7 +13,7 @@ export enum RoleFlags {
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-tags-structure}
  */
-export type RoleTags = {
+export type RoleTagStructure = {
 	/**
 	 * Whether this role is available for purchase
 	 */
@@ -87,7 +87,7 @@ export type RoleStructure = {
 	/**
 	 * The role's tags
 	 */
-	tags?: RoleTags;
+	tags?: RoleTagStructure;
 	/**
 	 * The role's unicode emoji
 	 */

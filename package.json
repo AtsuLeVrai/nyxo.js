@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/monorepo",
-  "packageManager": "pnpm@9.8.0",
+  "packageManager": "pnpm@9.9.0",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -19,7 +19,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.27.7",
     "husky": "^9.1.5",
-    "turbo": "^2.0.14",
+    "turbo": "^2.1.0",
     "typescript": "^5.5.4"
   },
   "engines": {
