@@ -230,7 +230,7 @@ export type ApplicationStructure = {
 	/**
 	 * Partial user object for the owner of the app
 	 */
-	owner?: Pick<UserStructure, "avatar" | "discriminator" | "flags" | "id" | "username">;
+	owner?: Pick<UserStructure, "accent_color" | "avatar_decoration_data" | "avatar" | "banner" | "discriminator" | "flags" | "global_name" | "id" | "public_flags">;
 	/**
 	 * If this app is a game sold on Discord, this field will be the id of the "Game SKU" that is created, if exists
 	 */

@@ -9,8 +9,9 @@ import type {
 	UserFlags,
 	UserStructure,
 } from "@nyxjs/rest";
+import { Base } from "./base";
 
-export class ApplicationRoleConnection {
+export class ApplicationRoleConnection extends Base<ApplicationRoleConnectionStructure> {
 	// TODO: Implement ApplicationRoleConnectionMetadata
 	public metadata!: Record<string, any>;
 
@@ -18,12 +19,8 @@ export class ApplicationRoleConnection {
 
 	public platformUsername!: string | null;
 
-	public constructor(data: ApplicationRoleConnectionStructure) {
-		this.patch(data);
-	}
-
-	public static from(data: ApplicationRoleConnectionStructure): ApplicationRoleConnection {
-		return new ApplicationRoleConnection(data);
+	public constructor(data: Partial<ApplicationRoleConnectionStructure>) {
+		super(data);
 	}
 
 	public toJSON(): ApplicationRoleConnectionStructure {
@@ -34,7 +31,7 @@ export class ApplicationRoleConnection {
 		};
 	}
 
-	private patch(data: ApplicationRoleConnectionStructure): void {
+	protected patch(data: Partial<ApplicationRoleConnectionStructure>): void {
 		if (data.metadata !== undefined) {
 			this.metadata = data.metadata;
 		}
@@ -49,7 +46,7 @@ export class ApplicationRoleConnection {
 	}
 }
 
-export class Connection {
+export class Connection extends Base<ConnectionStructure> {
 	public friendSync!: boolean;
 
 	public id!: string;
@@ -71,12 +68,8 @@ export class Connection {
 
 	public visibility!: ConnectionVisibilityTypes;
 
-	public constructor(data: ConnectionStructure) {
-		this.patch(data);
-	}
-
-	public static from(data: ConnectionStructure): Connection {
-		return new Connection(data);
+	public constructor(data: Partial<ConnectionStructure>) {
+		super(data);
 	}
 
 	public toJSON(): ConnectionStructure {
@@ -94,7 +87,7 @@ export class Connection {
 		};
 	}
 
-	private patch(data: ConnectionStructure): void {
+	protected patch(data: Partial<ConnectionStructure>): void {
 		if (data.friend_sync !== undefined) {
 			this.friendSync = data.friend_sync;
 		}
@@ -137,17 +130,13 @@ export class Connection {
 	}
 }
 
-export class AvatarDecoration {
+export class AvatarDecorationData extends Base<AvatarDecorationDataStructure> {
 	public asset!: string;
 
 	public skuId!: Snowflake;
 
-	public constructor(data: AvatarDecorationDataStructure) {
-		this.patch(data);
-	}
-
-	public static from(data: AvatarDecorationDataStructure): AvatarDecoration {
-		return new AvatarDecoration(data);
+	public constructor(data: Partial<AvatarDecorationDataStructure>) {
+		super(data);
 	}
 
 	public toJSON(): AvatarDecorationDataStructure {
@@ -157,7 +146,7 @@ export class AvatarDecoration {
 		};
 	}
 
-	private patch(data: AvatarDecorationDataStructure): void {
+	protected patch(data: Partial<AvatarDecorationDataStructure>): void {
 		if (data.asset !== undefined) {
 			this.asset = data.asset;
 		}
@@ -168,7 +157,7 @@ export class AvatarDecoration {
 	}
 }
 
-export class User {
+export class User extends Base<UserStructure> {
 	public accentColor?: Integer | null;
 
 	public avatar!: string | null;
@@ -203,12 +192,8 @@ export class User {
 
 	public verified?: boolean;
 
-	public constructor(data: UserStructure) {
-		this.patch(data);
-	}
-
-	public static from(data: UserStructure): User {
-		return new User(data);
+	public constructor(data: Partial<UserStructure>) {
+		super(data);
 	}
 
 	public toJSON(): UserStructure {
@@ -233,7 +218,7 @@ export class User {
 		};
 	}
 
-	private patch(data: UserStructure): void {
+	protected patch(data: Partial<UserStructure>): void {
 		if (data.accent_color !== undefined) {
 			this.accentColor = data.accent_color;
 		}

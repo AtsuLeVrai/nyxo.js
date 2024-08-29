@@ -1,9 +1,10 @@
 import type { Snowflake } from "@nyxjs/core";
 import type { SkuFlags, SkuStructure, SkuTypes } from "@nyxjs/rest";
 import { SkuRoutes } from "@nyxjs/rest";
+import { Base } from "./base";
 import type { Client } from "./client";
 
-export class Sku {
+export class Sku extends Base<SkuStructure> {
 	public applicationId!: Snowflake;
 
 	public id!: Snowflake;
@@ -16,12 +17,8 @@ export class Sku {
 
 	public flags!: SkuFlags;
 
-	public constructor(private readonly client: Client, data: SkuStructure) {
-		this.patch(data);
-	}
-
-	public static from(client: Client, data: SkuStructure): Sku {
-		return new Sku(client, data);
+	public constructor(private readonly client: Client, data: Partial<SkuStructure>) {
+		super(data);
 	}
 
 	public toJSON(): SkuStructure {
@@ -40,7 +37,7 @@ export class Sku {
 		return skus.map((sku) => new Sku(this.client, sku));
 	}
 
-	private patch(data: SkuStructure): void {
+	protected patch(data: Partial<SkuStructure>): void {
 		if (data.application_id !== undefined) {
 			this.applicationId = data.application_id;
 		}

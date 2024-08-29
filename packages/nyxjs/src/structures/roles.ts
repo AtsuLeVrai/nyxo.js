@@ -1,7 +1,8 @@
 import type { Integer, Snowflake } from "@nyxjs/core";
 import type { RoleFlags, RoleStructure, RoleTagStructure } from "@nyxjs/rest";
+import { Base } from "./base";
 
-export class RoleTags {
+export class RoleTags extends Base<RoleTagStructure> {
 	public availableForPurchase?: null;
 
 	public botId?: Snowflake;
@@ -14,12 +15,8 @@ export class RoleTags {
 
 	public subscriptionListingId?: Snowflake;
 
-	public constructor(data: RoleTagStructure) {
-		this.patch(data);
-	}
-
-	public static from(data: RoleTagStructure): RoleTags {
-		return new RoleTags(data);
+	public constructor(data: Partial<RoleTagStructure>) {
+		super(data);
 	}
 
 	public toJSON(): RoleTagStructure {
@@ -33,7 +30,7 @@ export class RoleTags {
 		};
 	}
 
-	private patch(data: RoleTagStructure): void {
+	protected patch(data: Partial<RoleTagStructure>): void {
 		if (data.available_for_purchase !== undefined) {
 			this.availableForPurchase = data.available_for_purchase;
 		}
@@ -60,7 +57,7 @@ export class RoleTags {
 	}
 }
 
-export class Role {
+export class Role extends Base<RoleStructure> {
 	public color!: Integer;
 
 	public flags!: RoleFlags;
@@ -85,12 +82,8 @@ export class Role {
 
 	public unicodeEmoji?: string | null;
 
-	public constructor(data: RoleStructure) {
-		this.patch(data);
-	}
-
-	public static from(data: RoleStructure): Role {
-		return new Role(data);
+	public constructor(data: Partial<RoleStructure>) {
+		super(data);
 	}
 
 	public toJSON(): RoleStructure {
@@ -110,7 +103,7 @@ export class Role {
 		};
 	}
 
-	private patch(data: RoleStructure): void {
+	protected patch(data: Partial<RoleStructure>): void {
 		if (data.color !== undefined) {
 			this.color = data.color;
 		}
@@ -152,7 +145,7 @@ export class Role {
 		}
 
 		if (data.tags !== undefined) {
-			this.tags = new RoleTags(data.tags);
+			this.tags = RoleTags.from(data.tags);
 		}
 
 		if (data.unicode_emoji !== undefined) {
