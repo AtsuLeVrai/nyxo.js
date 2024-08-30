@@ -1,9 +1,13 @@
 /**
- * ./globals
+ * ./constants
  */
-export * from "./globals/formats";
-export * from "./globals/intents";
-export * from "./globals/locales";
-export * from "./globals/oauth2";
-export * from "./globals/opcodes";
-export * from "./globals/permissions";
+export * from "./constants/intents";
+export * from "./constants/locales";
+export * from "./constants/oauth2";
+export * from "./constants/opcodes";
+export * from "./constants/permissions";
+
+/**
+ * ./utils
+ */
+export * from "./utils/formats";

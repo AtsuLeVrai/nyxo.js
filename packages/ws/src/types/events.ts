@@ -12,6 +12,7 @@ import type {
 	InteractionStructure,
 	MessageStructure,
 	StageInstanceStructure,
+	SubscriptionStructure,
 	ThreadMemberStructure,
 	UnavailableGuildStructure,
 	UserStructure,
@@ -137,6 +138,9 @@ export type GatewayReceiveEvents = {
 	"STAGE_INSTANCE_CREATE": [stageInstanceCreate: StageInstanceStructure];
 	"STAGE_INSTANCE_DELETE": [stageInstanceDelete: StageInstanceStructure];
 	"STAGE_INSTANCE_UPDATE": [stageInstanceUpdate: StageInstanceStructure];
+	"SUBSCRIPTION_CREATE": [subscriptionCreate: SubscriptionStructure];
+	"SUBSCRIPTION_DELETE": [subscriptionDelete: SubscriptionStructure];
+	"SUBSCRIPTION_UPDATE": [subscriptionUpdate: SubscriptionStructure];
 	"THREAD_CREATE": [threadCreate: ChannelStructure & {
 		newly_created: boolean;
 	} | ChannelStructure & ThreadMemberStructure | ChannelStructure & ThreadMemberStructure & {

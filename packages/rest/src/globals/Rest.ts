@@ -51,7 +51,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
 	public setOption<K extends keyof RestOptions>(key: K, value: RestOptions[K]): void {
 		this.options[key] = value;
-		if (key === "authType" || key === "userAgent") {
+		if (key === "auth_type" || key === "user_agent") {
 			this.options[key] = value;
 		}
 	}

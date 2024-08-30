@@ -52,7 +52,7 @@ export type GatewayOptions = {
 	 * The shard information for the globals connection.
 	 * Can be an array with shard ID and shard count, or "auto".
 	 */
-	shard?: "auto" | [shardId: number, shardCount: number];
+	shard?: "auto" | [shardId: Integer, shardCount: Integer];
 	/**
 	 * API version
 	 */

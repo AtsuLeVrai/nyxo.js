@@ -51,15 +51,15 @@ export type RestOptions = {
 	/**
 	 * The type of authentication to use (e.g., Bot, Bearer).
 	 */
-	authType?: AuthTypes;
+	auth_type?: AuthTypes;
 	/**
 	 * The cache lifetime in seconds.
 	 */
-	cacheLifetime?: Integer;
+	cache_life_time?: Integer;
 	/**
 	 * The User-Agent string to use for requests.
 	 */
-	userAgent?: string;
+	user_agent?: string;
 	/**
 	 * The API version to use for requests.
 	 */

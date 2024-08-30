@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.47.7",
+    "@swc/core": "^1.7.22",
     "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.1",
     "@types/ws": "^8.5.12",

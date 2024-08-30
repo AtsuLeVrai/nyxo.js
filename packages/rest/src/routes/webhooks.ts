@@ -1,12 +1,6 @@
 import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { FormData } from "undici";
 import type { ActionRowStructure } from "../structures/interactions";
-import type {
-	AllowedMentionsStructure,
-	AttachmentStructure,
-	EmbedStructure,
-	MessageStructure,
-} from "../structures/messages";
+import type { AllowedMentionsStructure, AttachmentStructure, EmbedStructure } from "../structures/messages";
 import type { RestRequestOptions } from "../types/globals";
 
 /**
@@ -76,46 +70,5 @@ export type EditWebhookMessageQueryStringParams = {
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message}
+ * TODO: Implement file support
  */
-function editWebhookMessage(webhookId: Snowflake, webhookToken: string, messageId: Snowflake, json: EditWebhookMessageJSONFormParams, query?: EditWebhookMessageQueryStringParams): RestRequestOptions<MessageStructure> {
-	const body: EditWebhookMessageJSONFormParams = {};
-	if (json.content !== undefined) {
-		body.content = json.content;
-	}
-
-	if (json.embeds !== undefined) {
-		body.embeds = json.embeds;
-	}
-
-	if (json.allowed_mentions !== undefined) {
-		body.allowed_mentions = json.allowed_mentions;
-	}
-
-	if (json.components !== undefined) {
-		body.components = json.components;
-	}
-
-	if (json.attachments !== undefined) {
-		body.attachments = json.attachments;
-	}
-
-	const bodyStringify: FormData | string = JSON.stringify(body);
-
-	/*	if (json.files) {
-            const formData = new FormData();
-            formData.append("payload_json", JSON.stringify(body));
-            for (const [index, [filename, content]] of Object.entries(json.files).entries()) {
-                formData.append(`files[${index}]`, new Blob([content]), filename);
-            }
-
-            bodyStringify = formData;
-        }*/
-
-	return {
-		method: "PATCH",
-		path: `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`,
-		body: bodyStringify,
-		headers: { "Content-Type": "multipart/form-data" },
-		query,
-	};
-}

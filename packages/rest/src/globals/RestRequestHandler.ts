@@ -50,7 +50,7 @@ export class RestRequestHandler {
 			if (response.statusCode >= 200 && response.statusCode < 300 && !options.disableCache) {
 				this.cache.set(cacheKey, {
 					data,
-					expiry: Date.now() + (this.options.cacheLifetime ?? 60_000),
+					expiry: Date.now() + (this.options.cache_life_time ?? 60_000),
 				});
 			}
 
@@ -66,9 +66,9 @@ export class RestRequestHandler {
 
 	private createDefaultHeaders(): Record<string, string> {
 		return {
-			Authorization: `${this.options.authType ?? "Bot"} ${this.token}`,
+			Authorization: `${this.options.auth_type ?? "Bot"} ${this.token}`,
 			"Content-Type": "application/json",
-			"User-Agent": this.options.userAgent ?? getRandomUserAgent(),
+			"User-Agent": this.options.user_agent ?? getRandomUserAgent(),
 			"Accept-Encoding": "gzip, deflate",
 		};
 	}
