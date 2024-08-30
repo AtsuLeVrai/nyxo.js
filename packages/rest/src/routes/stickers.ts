@@ -90,7 +90,10 @@ function createGuildSticker(guildId: Snowflake, form: CreateGuildStickerFormPara
 		method: "POST",
 		path: `/guilds/${guildId}/stickers`,
 		body: formData,
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: {
+			"Content-Type": "multipart/form-data",
+			...reason && { "X-Audit-Log-Reason": reason },
+		},
 	};
 }
 
