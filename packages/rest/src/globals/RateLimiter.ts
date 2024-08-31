@@ -11,9 +11,14 @@ type RateLimitInfo = {
 };
 
 export class RateLimiter {
-	private globalRateLimit: number | null = null;
+	private globalRateLimit: number | null;
 
-	private routeRateLimits: Map<string, RateLimitInfo> = new Map();
+	private readonly routeRateLimits: Map<string, RateLimitInfo>;
+
+	public constructor() {
+		this.globalRateLimit = null;
+		this.routeRateLimits = new Map();
+	}
 
 	public async wait(path: string): Promise<void> {
 		try {

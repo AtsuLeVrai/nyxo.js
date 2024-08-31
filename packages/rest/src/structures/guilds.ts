@@ -400,10 +400,13 @@ export type GuildWidgetStructure = {
 	/**
 	 * Special widget user objects that includes users presence (Limit 100)
 	 */
-	members: Pick<UserStructure & {
+	members: Pick<
+	UserStructure & {
 		avatar_url: string;
 		status: string;
-	}, "avatar_url" | "avatar" | "discriminator" | "id" | "status" | "username">[];
+	},
+	"avatar_url" | "avatar" | "discriminator" | "id" | "status" | "username"
+	>[];
 	/**
 	 * The guild name
 	 */
@@ -1187,7 +1190,22 @@ export type GuildTemplateStructure = {
 	/**
 	 * The guild snapshot this template contains
 	 */
-	serialized_source_guild: Pick<GuildStructure, "afk_channel_id" | "afk_timeout" | "default_message_notifications" | "description" | "explicit_content_filter" | "icon_hash" | "name" | "preferred_locale" | "region" | "roles" | "system_channel_flags" | "system_channel_id" | "verification_level">;
+	serialized_source_guild: Pick<
+	GuildStructure,
+	| "afk_channel_id"
+	| "afk_timeout"
+	| "default_message_notifications"
+	| "description"
+	| "explicit_content_filter"
+	| "icon_hash"
+	| "name"
+	| "preferred_locale"
+	| "region"
+	| "roles"
+	| "system_channel_flags"
+	| "system_channel_id"
+	| "verification_level"
+	>;
 	/**
 	 * The ID of the guild this template is based on
 	 */

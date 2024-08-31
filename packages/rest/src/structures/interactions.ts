@@ -150,7 +150,12 @@ export type SelectMenuStructure = {
 	/**
 	 * Type of select menu component (text: 3, user: 5, role: 6, mentionable: 7, channels: 8)
 	 */
-	type: ComponentTypes.ChannelSelect | ComponentTypes.MentionableSelect | ComponentTypes.RoleSelect | ComponentTypes.StringSelect | ComponentTypes.UserSelect;
+	type:
+	| ComponentTypes.ChannelSelect
+	| ComponentTypes.MentionableSelect
+	| ComponentTypes.RoleSelect
+	| ComponentTypes.StringSelect
+	| ComponentTypes.UserSelect;
 };
 
 /**
@@ -477,7 +482,12 @@ export type ApplicationCommandStructure = {
 	version: Snowflake;
 };
 
-export type ActionRowStructure<T extends ButtonStructure | SelectMenuStructure | TextInputStructure = ButtonStructure | SelectMenuStructure | TextInputStructure> = {
+export type ActionRowStructure<
+	T extends ButtonStructure | SelectMenuStructure | TextInputStructure =
+	| ButtonStructure
+	| SelectMenuStructure
+	| TextInputStructure
+> = {
 	/**
 	 * Components in the action row; max 5
 	 */
@@ -669,7 +679,10 @@ export type ResolvedDataStructure = {
 	/**
 	 * The ids and partial Channel objects
 	 */
-	channels?: Map<Snowflake, Pick<ChannelStructure, "id" | "name" | "parent_id" | "permissions" | "thread_metadata" | "type">>;
+	channels?: Map<
+	Snowflake,
+	Pick<ChannelStructure, "id" | "name" | "parent_id" | "permissions" | "thread_metadata" | "type">
+	>;
 	/**
 	 * The ids and partial Member objects
 	 */
@@ -818,7 +831,12 @@ export type InteractionStructure = {
 	/**
 	 * Interaction data payload
 	 */
-	data?: ApplicationCommandDataStructure | ApplicationCommandInteractionDataOptionStructure | MessageComponentDataStructure | ModalSubmitDataStructure | ResolvedDataStructure;
+	data?:
+	| ApplicationCommandDataStructure
+	| ApplicationCommandInteractionDataOptionStructure
+	| MessageComponentDataStructure
+	| ModalSubmitDataStructure
+	| ResolvedDataStructure;
 	/**
 	 * For monetized apps, any entitlements for the invoking user, representing access to premium SKUs
 	 */

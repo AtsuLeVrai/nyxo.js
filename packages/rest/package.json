@@ -37,6 +37,7 @@
     "@nyxjs/cache": "workspace:*",
     "@nyxjs/core": "workspace:*",
     "eventemitter3": "^5.0.1",
+    "minizlib": "^3.0.1",
     "tslib": "^2.7.0",
     "undici": "^6.19.8"
   },

@@ -3,17 +3,6 @@ import type { InviteStructure } from "../structures/invites";
 import type { RestRequestOptions } from "../types/globals";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
- */
-function deleteInvite(code: string, reason?: string): RestRequestOptions<InviteStructure> {
-	return {
-		method: "DELETE",
-		path: `/invites/${code}`,
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
-	};
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}
  */
 export type GetInviteQueryStringParams = {
@@ -31,18 +20,21 @@ export type GetInviteQueryStringParams = {
 	with_expiration?: Boolean;
 };
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
- */
-function getInvite(code: string, query?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> {
-	return {
+export const InviteRoutes = {
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
+	 */
+	deleteInvite: (code: string, reason?: string): RestRequestOptions<InviteStructure> => ({
+		method: "DELETE",
+		path: `/invites/${code}`,
+		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
+	 */
+	getInvite: (code: string, query?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> => ({
 		method: "GET",
 		path: `/invites/${code}`,
 		query,
-	};
-}
-
-export const InviteRoutes = {
-	deleteInvite,
-	getInvite,
+	}),
 };

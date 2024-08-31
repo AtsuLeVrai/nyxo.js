@@ -41,27 +41,19 @@ export type GetGatewayBotResponse = {
 	url: string;
 };
 
-/**
- * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot}
- */
-function getGatewayBot(): RestRequestOptions<GetGatewayBotResponse> {
-	return {
+export const GatewayRoutes = {
+	/**
+	 * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot}
+	 */
+	getGatewayBot: (): RestRequestOptions<GetGatewayBotResponse> => ({
 		method: "GET",
 		path: "/globals/bot",
-	};
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
- */
-function getGateway(): RestRequestOptions<{ url: string; }> {
-	return {
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
+	 */
+	getGateway: (): RestRequestOptions<{ url: string; }> => ({
 		method: "GET",
 		path: "/globals",
-	};
-}
-
-export const GatewayRoutes = {
-	getGatewayBot,
-	getGateway,
+	}),
 };

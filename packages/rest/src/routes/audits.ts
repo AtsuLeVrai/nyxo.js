@@ -28,15 +28,16 @@ export type GetGuildAuditLogQueryStringParams = {
 	user_id?: Snowflake;
 };
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log}
- */
-function getGuildAuditLog(guildId: Snowflake, query?: GetGuildAuditLogQueryStringParams): RestRequestOptions<AuditLogStructure> {
-	return {
+export const AuditRoutes = {
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log}
+	 */
+	getGuildAuditLog: (
+		guildId: Snowflake,
+		query?: GetGuildAuditLogQueryStringParams,
+	): RestRequestOptions<AuditLogStructure> => ({
 		method: "GET",
 		path: `/guilds/${guildId}/audit-logs`,
 		query,
-	};
-}
-
-export const AuditRoutes = { getGuildAuditLog };
+	}),
+};

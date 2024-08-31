@@ -3,16 +3,6 @@ import type { SubscriptionStructure } from "../structures/subscriptions";
 import type { RestRequestOptions } from "../types/globals";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/subscription#get-sku-subscription}
- */
-function getSkuSubscription(skuId: Snowflake, subscriptionId: Snowflake): RestRequestOptions<SubscriptionStructure> {
-	return {
-		method: "GET",
-		path: `/skus/${skuId}/subscriptions/${subscriptionId}`,
-	};
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/subscription#query-string-params}
  */
 export type ListSkuSubscriptionsQuery = {
@@ -34,18 +24,23 @@ export type ListSkuSubscriptionsQuery = {
 	user_id?: Snowflake;
 };
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions}
- */
-function listSkuSubscriptions(skuId: Snowflake, query?: ListSkuSubscriptionsQuery): RestRequestOptions<SubscriptionStructure[]> {
-	return {
+export const SubscriptionRoutes = {
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/subscription#get-sku-subscription}
+	 */
+	getSkuSubscription: (skuId: Snowflake, subscriptionId: Snowflake): RestRequestOptions<SubscriptionStructure> => ({
+		method: "GET",
+		path: `/skus/${skuId}/subscriptions/${subscriptionId}`,
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions}
+	 */
+	listSkuSubscriptions: (
+		skuId: Snowflake,
+		query?: ListSkuSubscriptionsQuery,
+	): RestRequestOptions<SubscriptionStructure[]> => ({
 		method: "GET",
 		path: `/skus/${skuId}/subscriptions`,
 		query,
-	};
-}
-
-export const SubscriptionRoutes = {
-	getSkuSubscription,
-	listSkuSubscriptions,
+	}),
 };

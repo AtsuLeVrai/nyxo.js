@@ -7,72 +7,28 @@ import type { StickerPackStructure, StickerStructure } from "../structures/stick
 import type { RestRequestOptions } from "../types/globals";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker}
- */
-function deleteGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason?: string): RestRequestOptions<RestHttpResponseCodes.NoContent> {
-	return {
-		method: "DELETE",
-		path: `/guilds/${guildId}/stickers/${stickerId}`,
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
-	};
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params}
  */
-export type ModifyGuildStickerJsonParams = {
-	/**
-	 * Description of the sticker
-	 */
-	description?: string;
-	/**
-	 * Name of the sticker
-	 */
-	name?: string;
-	/**
-	 * Autocomplete/suggestion tags for the sticker
-	 */
-	tags?: string;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker}
- */
-function modifyGuildSticker(guildId: Snowflake, stickerId: Snowflake, json: ModifyGuildStickerJsonParams, reason?: string): RestRequestOptions<StickerStructure> {
-	return {
-		method: "PATCH",
-		path: `/guilds/${guildId}/stickers/${stickerId}`,
-		body: JSON.stringify(json),
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
-	};
-}
+export type ModifyGuildStickerJsonParams = Partial<Pick<StickerStructure, "description" | "name" | "tags">>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker-form-params}
  */
-export type CreateGuildStickerFormParams = {
-	/**
-	 * Description of the sticker
-	 */
-	description: string;
+export type CreateGuildStickerFormParams = Pick<StickerStructure, "description" | "name" | "tags"> & {
 	/**
 	 * The sticker file to upload, must be a PNG, APNG, GIF, or Lottie JSON file, max 512 KiB
 	 */
 	file: Buffer | Readable | string;
-	/**
-	 * Name of the sticker
-	 */
-	name: string;
-	/**
-	 * Autocomplete/suggestion tags for the sticker
-	 */
-	tags: string;
 };
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
  */
-function createGuildSticker(guildId: Snowflake, form: CreateGuildStickerFormParams, reason?: string): RestRequestOptions<StickerStructure> {
+function createGuildSticker(
+	guildId: Snowflake,
+	form: CreateGuildStickerFormParams,
+	reason?: string,
+): RestRequestOptions<StickerStructure> {
 	const formData = new FormData();
 	formData.append("name", form.name);
 	formData.append("description", form.description);
@@ -98,36 +54,6 @@ function createGuildSticker(guildId: Snowflake, form: CreateGuildStickerFormPara
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker}
- */
-function getGuildSticker(guildId: Snowflake, stickerId: string): RestRequestOptions<StickerStructure> {
-	return {
-		method: "GET",
-		path: `/guilds/${guildId}/stickers/${stickerId}`,
-	};
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
- */
-function listGuildStickers(guildId: Snowflake): RestRequestOptions<StickerStructure[]> {
-	return {
-		method: "GET",
-		path: `/guilds/${guildId}/stickers`,
-	};
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
- */
-function getStickerPack(stickerPackId: Snowflake): RestRequestOptions<StickerPackStructure> {
-	return {
-		method: "GET",
-		path: `/sticker-packs/${stickerPackId}`,
-	};
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs-response-structure}
  */
 export type ListStickerPacksResponse = {
@@ -137,33 +63,67 @@ export type ListStickerPacksResponse = {
 	sticker_packs: StickerPackStructure[];
 };
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
- */
-function listStickerPacks(): RestRequestOptions<ListStickerPacksResponse> {
-	return {
+export const StickerRoutes = {
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker}
+	 */
+	deleteGuildSticker: (
+		guildId: Snowflake,
+		stickerId: Snowflake,
+		reason?: string,
+	): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
+		method: "DELETE",
+		path: `/guilds/${guildId}/stickers/${stickerId}`,
+		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker}
+	 */
+	modifyGuildSticker: (
+		guildId: Snowflake,
+		stickerId: Snowflake,
+		json: ModifyGuildStickerJsonParams,
+		reason?: string,
+	): RestRequestOptions<StickerStructure> => ({
+		method: "PATCH",
+		path: `/guilds/${guildId}/stickers/${stickerId}`,
+		body: JSON.stringify(json),
+		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+	}),
+	createGuildSticker,
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker}
+	 */
+	getGuildSticker: (guildId: Snowflake, stickerId: string): RestRequestOptions<StickerStructure> => ({
+		method: "GET",
+		path: `/guilds/${guildId}/stickers/${stickerId}`,
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
+	 */
+	listGuildStickers: (guildId: Snowflake): RestRequestOptions<StickerStructure[]> => ({
+		method: "GET",
+		path: `/guilds/${guildId}/stickers`,
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
+	 */
+	getStickerPack: (stickerPackId: Snowflake): RestRequestOptions<StickerPackStructure> => ({
+		method: "GET",
+		path: `/sticker-packs/${stickerPackId}`,
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
+	 */
+	listStickerPacks: (): RestRequestOptions<ListStickerPacksResponse> => ({
 		method: "GET",
 		path: "/sticker-packs",
-	};
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
- */
-function getSticker(stickerId: Snowflake): RestRequestOptions<StickerStructure> {
-	return {
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
+	 */
+	getSticker: (stickerId: Snowflake): RestRequestOptions<StickerStructure> => ({
 		method: "GET",
 		path: `/stickers/${stickerId}`,
-	};
-}
-
-export const StickerRoutes = {
-	deleteGuildSticker,
-	modifyGuildSticker,
-	createGuildSticker,
-	getGuildSticker,
-	listGuildStickers,
-	getStickerPack,
-	listStickerPacks,
-	getSticker,
+	}),
 };

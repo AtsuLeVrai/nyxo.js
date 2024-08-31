@@ -4,16 +4,6 @@ import type { UserStructure } from "../structures/users";
 import type { RestRequestOptions } from "../types/globals";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
- */
-function endPoll(channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> {
-	return {
-		method: "DELETE",
-		path: `/channels/${channelId}/polls/${messageId}/expire`,
-	};
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body}
  */
 export type GetAnswerVotersResponseBody = {
@@ -37,18 +27,25 @@ export type GetAnswerVotersQueryStringParams = {
 	limit?: Integer;
 };
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
- */
-function getAnswerVoters(channelId: Snowflake, messageId: Snowflake, answerId: Snowflake, query?: GetAnswerVotersQueryStringParams): RestRequestOptions<GetAnswerVotersResponseBody> {
-	return {
+export const PollRoutes = {
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
+	 */
+	endPoll: (channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> => ({
+		method: "DELETE",
+		path: `/channels/${channelId}/polls/${messageId}/expire`,
+	}),
+	/**
+	 * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
+	 */
+	getAnswerVoters: (
+		channelId: Snowflake,
+		messageId: Snowflake,
+		answerId: Snowflake,
+		query?: GetAnswerVotersQueryStringParams,
+	): RestRequestOptions<GetAnswerVotersResponseBody> => ({
 		method: "GET",
 		path: `/channels/${channelId}/polls/${messageId}/answers/${answerId}`,
 		query,
-	};
-}
-
-export const PollRoutes = {
-	endPoll,
-	getAnswerVoters,
+	}),
 };

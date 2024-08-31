@@ -23,7 +23,12 @@ export type EditApplicationCommandPermissionsJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions}
  */
-function editApplicationCommandPermissions(applicationId: Snowflake, guildId: Snowflake, commandId: Snowflake, json: EditApplicationCommandPermissionsJSONParams): RestRequestOptions<GuildApplicationCommandPermissionsStructure> {
+function editApplicationCommandPermissions(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	commandId: Snowflake,
+	json: EditApplicationCommandPermissionsJSONParams,
+): RestRequestOptions<GuildApplicationCommandPermissionsStructure> {
 	return {
 		method: "PUT",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions`,
@@ -34,7 +39,11 @@ function editApplicationCommandPermissions(applicationId: Snowflake, guildId: Sn
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-application-command-permissions}
  */
-function getApplicationCommandPermissions(applicationId: Snowflake, guildId: Snowflake, commandId: Snowflake): RestRequestOptions<GuildApplicationCommandPermissionsStructure> {
+function getApplicationCommandPermissions(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	commandId: Snowflake,
+): RestRequestOptions<GuildApplicationCommandPermissionsStructure> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions`,
@@ -44,7 +53,10 @@ function getApplicationCommandPermissions(applicationId: Snowflake, guildId: Sno
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command-permissions}
  */
-function getGuildApplicationCommandPermissions(applicationId: Snowflake, guildId: Snowflake): RestRequestOptions<GuildApplicationCommandPermissionsStructure[]> {
+function getGuildApplicationCommandPermissions(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+): RestRequestOptions<GuildApplicationCommandPermissionsStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands/permissions`,
@@ -114,7 +126,11 @@ export type BulkOverwriteGuildApplicationCommandsJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-guild-application-commands}
  */
-function bulkOverwriteGuildApplicationCommands(applicationId: Snowflake, guildId: Snowflake, json: BulkOverwriteGuildApplicationCommandsJSONParams): RestRequestOptions<ApplicationCommandStructure[]> {
+function bulkOverwriteGuildApplicationCommands(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	json: BulkOverwriteGuildApplicationCommandsJSONParams,
+): RestRequestOptions<ApplicationCommandStructure[]> {
 	return {
 		method: "PUT",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands`,
@@ -125,7 +141,11 @@ function bulkOverwriteGuildApplicationCommands(applicationId: Snowflake, guildId
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-guild-application-command}
  */
-function deleteGuildApplicationCommand(applicationId: Snowflake, guildId: Snowflake, commandId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+function deleteGuildApplicationCommand(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	commandId: Snowflake,
+): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "DELETE",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}`,
@@ -173,7 +193,12 @@ export type ModifyGuildApplicationCommandJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command}
  */
-function modifyGuildApplicationCommand(applicationId: Snowflake, guildId: Snowflake, commandId: Snowflake, json: ModifyGuildApplicationCommandJSONParams): RestRequestOptions<ApplicationCommandStructure> {
+function modifyGuildApplicationCommand(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	commandId: Snowflake,
+	json: ModifyGuildApplicationCommandJSONParams,
+): RestRequestOptions<ApplicationCommandStructure> {
 	return {
 		method: "PATCH",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}`,
@@ -184,7 +209,11 @@ function modifyGuildApplicationCommand(applicationId: Snowflake, guildId: Snowfl
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command}
  */
-function getGuildApplicationCommand(applicationId: Snowflake, guildId: Snowflake, commandId: Snowflake): RestRequestOptions<ApplicationCommandStructure> {
+function getGuildApplicationCommand(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	commandId: Snowflake,
+): RestRequestOptions<ApplicationCommandStructure> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}`,
@@ -237,7 +266,11 @@ export type CreateGuildApplicationCommandJSONParams = {
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command}
  */
 
-function createGuildApplicationCommand(applicationId: Snowflake, guildId: Snowflake, json: CreateGuildApplicationCommandJSONParams): RestRequestOptions<ApplicationCommandStructure> {
+function createGuildApplicationCommand(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	json: CreateGuildApplicationCommandJSONParams,
+): RestRequestOptions<ApplicationCommandStructure> {
 	return {
 		method: "POST",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands`,
@@ -258,7 +291,11 @@ export type GetGuildApplicationCommandsQuery = {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-commands}
  */
-function getGuildApplicationCommands(applicationId: Snowflake, guildId: Snowflake, query?: GetGuildApplicationCommandsQuery): RestRequestOptions<ApplicationCommandStructure[]> {
+function getGuildApplicationCommands(
+	applicationId: Snowflake,
+	guildId: Snowflake,
+	query?: GetGuildApplicationCommandsQuery,
+): RestRequestOptions<ApplicationCommandStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/guilds/${guildId}/commands`,
@@ -269,7 +306,10 @@ function getGuildApplicationCommands(applicationId: Snowflake, guildId: Snowflak
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands}
  */
-function bulkOverwriteGlobalApplicationCommands(applicationId: Snowflake, json: BulkOverwriteGuildApplicationCommandsJSONParams): RestRequestOptions<ApplicationCommandStructure[]> {
+function bulkOverwriteGlobalApplicationCommands(
+	applicationId: Snowflake,
+	json: BulkOverwriteGuildApplicationCommandsJSONParams,
+): RestRequestOptions<ApplicationCommandStructure[]> {
 	return {
 		method: "PUT",
 		path: `/applications/${applicationId}/commands`,
@@ -280,7 +320,10 @@ function bulkOverwriteGlobalApplicationCommands(applicationId: Snowflake, json: 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-global-application-command}
  */
-function deleteGlobalApplicationCommand(applicationId: Snowflake, commandId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+function deleteGlobalApplicationCommand(
+	applicationId: Snowflake,
+	commandId: Snowflake,
+): RestRequestOptions<RestHttpResponseCodes.NoContent> {
 	return {
 		method: "DELETE",
 		path: `/applications/${applicationId}/commands/${commandId}`,
@@ -342,7 +385,11 @@ export type ModifyGlobalApplicationCommandJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command}
  */
-function modifyGlobalApplicationCommand(applicationId: Snowflake, commandId: Snowflake, json: ModifyGlobalApplicationCommandJSONParams): RestRequestOptions<ApplicationCommandStructure> {
+function modifyGlobalApplicationCommand(
+	applicationId: Snowflake,
+	commandId: Snowflake,
+	json: ModifyGlobalApplicationCommandJSONParams,
+): RestRequestOptions<ApplicationCommandStructure> {
 	return {
 		method: "PATCH",
 		path: `/applications/${applicationId}/commands/${commandId}`,
@@ -353,7 +400,10 @@ function modifyGlobalApplicationCommand(applicationId: Snowflake, commandId: Sno
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-command}
  */
-function getGlobalApplicationCommand(applicationId: Snowflake, commandId: Snowflake): RestRequestOptions<ApplicationCommandStructure> {
+function getGlobalApplicationCommand(
+	applicationId: Snowflake,
+	commandId: Snowflake,
+): RestRequestOptions<ApplicationCommandStructure> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/commands/${commandId}`,
@@ -419,7 +469,10 @@ export type CreateGlobalApplicationCommandJSONParams = {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command}
  */
-function createGlobalApplicationCommand(applicationId: Snowflake, json: CreateGlobalApplicationCommandJSONParams): RestRequestOptions<ApplicationCommandStructure> {
+function createGlobalApplicationCommand(
+	applicationId: Snowflake,
+	json: CreateGlobalApplicationCommandJSONParams,
+): RestRequestOptions<ApplicationCommandStructure> {
 	return {
 		method: "POST",
 		path: `/applications/${applicationId}/commands`,
@@ -440,7 +493,10 @@ export type GetGlobalApplicationCommandsQuery = {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-commands}
  */
-function getGlobalApplicationCommands(applicationId: Snowflake, query?: GetGlobalApplicationCommandsQuery): RestRequestOptions<ApplicationCommandStructure[]> {
+function getGlobalApplicationCommands(
+	applicationId: Snowflake,
+	query?: GetGlobalApplicationCommandsQuery,
+): RestRequestOptions<ApplicationCommandStructure[]> {
 	return {
 		method: "GET",
 		path: `/applications/${applicationId}/commands`,

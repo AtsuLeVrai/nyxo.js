@@ -408,7 +408,18 @@ export type MessageSnapshotStructure = {
 	/**
 	 * Minimum subset of fields in the forwarded message
 	 */
-	message: Pick<MessageStructure, "attachments" | "content" | "edited_timestamp" | "embeds" | "flags" | "mention_roles" | "mentions" | "timestamp" | "type">;
+	message: Pick<
+	MessageStructure,
+	| "attachments"
+	| "content"
+	| "edited_timestamp"
+	| "embeds"
+	| "flags"
+	| "mention_roles"
+	| "mentions"
+	| "timestamp"
+	| "type"
+	>;
 };
 
 /**

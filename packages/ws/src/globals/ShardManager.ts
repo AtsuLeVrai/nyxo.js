@@ -14,14 +14,17 @@ type ShardInfo = {
 export class ShardManager {
 	private readonly rest: Rest;
 
-	private shards = new Map<Integer, ShardInfo>();
+	private readonly shards: Map<Integer, ShardInfo>;
 
-	private maxConcurrency: number = 1;
+	private maxConcurrency: number;
 
-	private rateLimitQueue = new Map<Integer, ShardInfo[]>();
+	private readonly rateLimitQueue: Map<Integer, ShardInfo[]>;
 
 	public constructor(private readonly gateway: Gateway, private readonly token: string, private readonly options: GatewayOptions) {
 		this.rest = new Rest(this.token);
+		this.shards = new Map<Integer, ShardInfo>();
+		this.maxConcurrency = 1;
+		this.rateLimitQueue = new Map<Integer, ShardInfo[]>();
 	}
 
 	public async initialize(): Promise<void> {

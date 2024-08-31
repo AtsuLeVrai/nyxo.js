@@ -11,7 +11,10 @@ export type InviteStageInstanceStructure = {
 	/**
 	 * The members speaking in the Stage
 	 */
-	members: Pick<GuildMemberStructure, "avatar" | "joined_at" | "nick" | "pending" | "premium_since" | "roles" | "user">[];
+	members: Pick<
+	GuildMemberStructure,
+	"avatar" | "joined_at" | "nick" | "pending" | "premium_since" | "roles" | "user"
+	>[];
 	/**
 	 * The number of users in the Stage
 	 */
@@ -96,7 +99,20 @@ export type InviteStructure = {
 	/**
 	 * The guild this invite is for
 	 */
-	guild?: Pick<GuildStructure, "banner" | "description" | "features" | "icon" | "id" | "name" | "nsfw_level" | "premium_subscription_count" | "splash" | "vanity_url_code" | "verification_level">;
+	guild?: Pick<
+	GuildStructure,
+	| "banner"
+	| "description"
+	| "features"
+	| "icon"
+	| "id"
+	| "name"
+	| "nsfw_level"
+	| "premium_subscription_count"
+	| "splash"
+	| "vanity_url_code"
+	| "verification_level"
+	>;
 	/**
 	 * Guild scheduled event data, only included if guild_scheduled_event_id contains a valid guild scheduled event id
 	 */

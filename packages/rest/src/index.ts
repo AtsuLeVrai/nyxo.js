@@ -2,6 +2,7 @@
  * ./globals
  */
 export * from "./globals/Cdn";
+export * from "./globals/FileHandler";
 export * from "./globals/RateLimiter";
 export * from "./globals/Rest";
 export * from "./globals/RestRequestHandler";
@@ -11,6 +12,7 @@ export * from "./globals/RestRequestHandler";
  */
 export * from "./routes/applications";
 export * from "./routes/audits";
+// export * from "./routes/channels";
 export * from "./routes/emojis";
 export * from "./routes/entitlements";
 export * from "./routes/gateway";

@@ -23,23 +23,32 @@ const ZlibInflateOptions: ZlibOptions = {
 };
 
 export class GatewayConnection {
-	private ws: WebSocket | null = null;
+	private ws: WebSocket | null;
 
-	private heartbeatInterval: NodeJS.Timeout | null = null;
+	private heartbeatInterval: NodeJS.Timeout | null;
 
-	private sequence: Integer | null = null;
+	private sequence: Integer | null;
 
-	private reconnectTimeout: NodeJS.Timeout | null = null;
+	private readonly reconnectTimeout: NodeJS.Timeout | null;
 
-	private sessionId: string | null = null;
+	private sessionId: string | null;
 
-	private resumeGatewayUrl: string | null = null;
+	private resumeGatewayUrl: string | null;
 
-	private zlibInflate = new Inflate(ZlibInflateOptions);
+	private readonly zlibInflate: Inflate;
 
-	private textDecoder = new TextDecoder();
+	private readonly textDecoder: TextDecoder;
 
-	public constructor(private readonly gateway: Gateway, private readonly token: string, private readonly options: GatewayOptions) {}
+	public constructor(private readonly gateway: Gateway, private readonly token: string, private readonly options: GatewayOptions) {
+		this.ws = null;
+		this.heartbeatInterval = null;
+		this.sequence = null;
+		this.reconnectTimeout = null;
+		this.sessionId = null;
+		this.resumeGatewayUrl = null;
+		this.zlibInflate = new Inflate(ZlibInflateOptions);
+		this.textDecoder = new TextDecoder();
+	}
 
 	private get wsUrl(): string {
 		const query = new URL("wss://globals.discord.gg/");
