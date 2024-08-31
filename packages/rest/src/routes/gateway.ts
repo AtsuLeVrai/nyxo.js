@@ -47,13 +47,13 @@ export const GatewayRoutes = {
 	 */
 	getGatewayBot: (): RestRequestOptions<GetGatewayBotResponse> => ({
 		method: "GET",
-		path: "/globals/bot",
+		path: "/gateway/bot",
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
 	 */
 	getGateway: (): RestRequestOptions<{ url: string }> => ({
 		method: "GET",
-		path: "/globals",
+		path: "/gateway",
 	}),
 };

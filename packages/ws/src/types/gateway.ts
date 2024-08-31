@@ -1,7 +1,6 @@
 import type {
 	ApiVersions,
 	GatewayCloseCodes,
-	GatewayIntents,
 	GatewayOpcodes,
 	Integer,
 } from "@nyxjs/core";
@@ -37,7 +36,7 @@ export type GatewayOptions = {
 	/**
 	 * The optional transport compression of globals packets zlib-stream or zstd-stream
 	 */
-	compress?: "zlib-stream" | "zstd-stream";
+	compress?: "zlib-stream" | /** @deprecated */ "zstd-stream";
 	/**
 	 * The encoding of received globals packets json or etf
 	 */
@@ -45,7 +44,7 @@ export type GatewayOptions = {
 	/**
 	 * The intents for the globals connection.
 	 */
-	intents: GatewayIntents;
+	intents: Integer;
 	/**
 	 * The large threshold for the globals connection.
 	 */

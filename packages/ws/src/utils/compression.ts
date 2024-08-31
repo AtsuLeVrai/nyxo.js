@@ -1,49 +1,51 @@
-import { Buffer } from "node:buffer";
-import type { TextDecoder } from "node:util";
-import { decompress } from "@skhaz/zstd";
-import type { Inflate } from "minizlib";
+import type { Buffer } from "node:buffer";
+import { decompress } from "@mongodb-js/zstd";
+import { type Inflate, Z_SYNC_FLUSH } from "zlib-sync";
+import type { GatewayOptions } from "../types/gateway";
+import { decodeMessage } from "./encoding";
 
 export async function decompressZlib(
-	zlibInflate: Inflate,
-	textDecoder: TextDecoder,
 	data: Buffer,
+	encoding: GatewayOptions["encoding"],
+	zlibInflate: Inflate,
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
-		let decompressedData = Buffer.alloc(0);
+		try {
+			zlibInflate.push(data, Z_SYNC_FLUSH);
 
-		zlibInflate.on("data", (chunk) => {
-			decompressedData = Buffer.concat([decompressedData, chunk]);
-		});
-
-		zlibInflate.on("end", () => {
-			resolve(textDecoder.decode(decompressedData));
-		});
-
-		zlibInflate.on("error", (error) => {
-			if (error instanceof Error) {
-				reject(error);
-			} else {
-				reject(new Error(`An unknown error occurred: ${error}`));
+			if (zlibInflate.err) {
+				reject(new Error(`Zlib decompression error: ${zlibInflate.msg}`));
+				return;
 			}
-		});
 
-		if (Buffer.isBuffer(data)) {
-			zlibInflate.write(data);
-			zlibInflate.flush();
-		} else {
-			reject(new Error("Invalid input: data must be a Buffer"));
+			const result = zlibInflate.result;
+			if (!result) {
+				reject(new Error("Zlib decompression resulted in empty data"));
+				return;
+			}
+
+			const decompressed = decodeMessage(result, encoding);
+			resolve(decompressed);
+		} catch (error) {
+			reject(
+				new Error(
+					`Unexpected error during Zlib decompression: ${error instanceof Error ? error.message : String(error)}`,
+				),
+			);
 		}
 	});
 }
 
 export async function decompressZstd(
-	textDecoder: TextDecoder,
 	data: Buffer,
+	encoding: GatewayOptions["encoding"],
 ): Promise<string> {
 	try {
-		const decompressedBuffer = await decompress(data);
-		return textDecoder.decode(decompressedBuffer);
-	} catch {
-		throw new Error("Failed to decompress Zstd data");
+		const result = await decompress(data);
+		return decodeMessage(result, encoding);
+	} catch (error) {
+		throw new Error(
+			`Unexpected error during Zstd decompression: ${error instanceof Error ? error.message : String(error)}`,
+		);
 	}
 }

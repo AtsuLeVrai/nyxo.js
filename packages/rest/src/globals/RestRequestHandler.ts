@@ -9,7 +9,6 @@ import type {
 	RestOptions,
 	RestRequestOptions,
 } from "../types/globals";
-import { getRandomUserAgent } from "../utils/agents";
 import { RateLimiter } from "./RateLimiter";
 import type { Rest } from "./Rest";
 
@@ -180,8 +179,8 @@ export class RestRequestHandler {
 		return {
 			Authorization: `${this.options.auth_type ?? "Bot"} ${this.token}`,
 			"Content-Type": "application/json",
-			"User-Agent": this.options.user_agent ?? getRandomUserAgent(),
 			"Accept-Encoding": "gzip, deflate",
+			...(this.options.user_agent && { "User-Agent": this.options.user_agent }),
 		};
 	}
 }

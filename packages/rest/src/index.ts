@@ -63,5 +63,4 @@ export * from "./types/globals";
 /**
  * ./utils
  */
-export * from "./utils/agents";
 export * from "./utils/constants";

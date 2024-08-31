@@ -9,22 +9,19 @@ import { URL } from "node:url";
 import { TextDecoder } from "node:util";
 import type { GatewayCloseCodes, Integer } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
-import { Inflate, type ZlibOptions } from "minizlib";
 import WebSocket from "ws";
+import { Inflate, type InflateOptions } from "zlib-sync";
 import type { HelloStructure } from "../events/hello";
 import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
 import type { GatewaySendEvents } from "../types/events";
 import type { GatewayOptions, GatewayPayload } from "../types/gateway";
 import { decompressZlib, decompressZstd } from "../utils/compression";
-import { decodeMessage, decodeRawData, encodeMessage } from "../utils/encoding";
+import { decodeMessage, encodeMessage } from "../utils/encoding";
 import type { Gateway } from "./Gateway";
 
-const ZlibInflateOptions: ZlibOptions = {
-	level: 9,
-	encoding: "utf8",
-	flush: 2,
-	finishFlush: 2,
+const ZlibInflateOptions: InflateOptions = {
+	chunkSize: 1024 * 1024,
 };
 
 export class GatewayConnection {
@@ -60,7 +57,7 @@ export class GatewayConnection {
 	}
 
 	private get wsUrl(): string {
-		const query = new URL("wss://globals.discord.gg/");
+		const query = new URL("wss://gateway.discord.gg/");
 		query.searchParams.set("v", this.options.v.toString());
 		query.searchParams.set("encoding", this.options.encoding);
 		if (this.options.compress) {
@@ -132,7 +129,6 @@ export class GatewayConnection {
 			clearTimeout(this.reconnectTimeout);
 		}
 
-		this.zlibInflate.close();
 		this.ws = null;
 		this.heartbeatInterval = null;
 		this.sequence = null;
@@ -142,32 +138,38 @@ export class GatewayConnection {
 		this.gateway.emit("debug", "[WS] Connected to the globals...");
 	}
 
-	private async onMessage(data: WebSocket.RawData): Promise<void> {
-		let decompressedData: string;
+	private async onMessage(data: Buffer): Promise<void> {
+		let decompressedData: string | Buffer = data;
 
 		try {
 			if (this.options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
 				decompressedData = await decompressZlib(
-					this.zlibInflate,
-					this.textDecoder,
 					data,
+					this.options.encoding,
+					this.zlibInflate,
 				);
-			} else if (
-				this.options.compress === "zstd-stream" &&
-				Buffer.isBuffer(data)
-			) {
-				decompressedData = await decompressZstd(this.textDecoder, data);
+			} else if (this.options.compress === "zstd-stream") {
+				decompressedData = await decompressZstd(data, this.options.encoding);
 			} else {
-				decompressedData = decodeRawData(this.textDecoder, data);
+				decompressedData = decodeMessage(
+					decompressedData,
+					this.options.encoding,
+				);
 			}
 
-			const decoded = decodeMessage(decompressedData, this.options.encoding);
+			const decoded = JSON.stringify(decompressedData);
 			this.handleMessage(decoded);
-		} catch {
-			this.gateway.emit(
-				"error",
-				new Error("Failed to process WebSocket message"),
-			);
+		} catch (error) {
+			if (error instanceof Error) {
+				this.gateway.emit(
+					"error",
+					new Error(
+						`[WS] Failed to process WebSocket message: ${error.message}`,
+					),
+				);
+			}
+
+			this.disconnect();
 		}
 	}
 
@@ -203,7 +205,6 @@ export class GatewayConnection {
 				} else {
 					void this.gateway.shardManager.initialize();
 				}
-
 				break;
 			}
 
@@ -216,7 +217,6 @@ export class GatewayConnection {
 					this.sequence = null;
 					void this.gateway.shardManager.initialize();
 				}
-
 				break;
 			}
 
@@ -235,10 +235,15 @@ export class GatewayConnection {
 				break;
 			}
 
+			case GatewayOpcodes.HeartbeatAck: {
+				this.gateway.emit("debug", "[WS] Received a heartbeat ack...");
+				break;
+			}
+
 			default: {
 				this.gateway.emit(
 					"warn",
-					`[WS] Received an unhandled gateway event: ${payload.op}...`,
+					`[WS] Received an unhandled gateway event: ${GatewayOpcodes[payload.op]}...`,
 				);
 				break;
 			}

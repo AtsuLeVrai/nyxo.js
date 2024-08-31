@@ -110,7 +110,7 @@ importers:
         version: 6.0.1
       tsup:
         specifier: ^8.2.4
-        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.41)(typescript@5.5.4)(yaml@2.5.0)
+        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.42)(typescript@5.5.4)(yaml@2.5.0)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -153,53 +153,7 @@ importers:
         version: 6.0.1
       tsup:
         specifier: ^8.2.4
-        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.41)(typescript@5.5.4)(yaml@2.5.0)
-      typescript:
-        specifier: ^5.5.4
-        version: 5.5.4
-      vitest:
-        specifier: ^2.0.5
-        version: 2.0.5(@types/node@22.5.1)(@vitest/ui@2.0.5)
-
-  packages/event:
-    dependencies:
-      tslib:
-        specifier: ^2.7.0
-        version: 2.7.0
-    devDependencies:
-      '@biomejs/biome':
-        specifier: 1.8.3
-        version: 1.8.3
-      '@microsoft/api-extractor':
-        specifier: ^7.47.7
-        version: 7.47.7(@types/node@22.5.1)
-      '@swc/core':
-        specifier: ^1.7.22
-        version: 1.7.22
-      '@types/eslint':
-        specifier: ^8.56.12
-        version: 8.56.12
-      '@types/node':
-        specifier: ^22.5.1
-        version: 22.5.1
-      '@types/ws':
-        specifier: ^8.5.12
-        version: 8.5.12
-      '@vitest/coverage-v8':
-        specifier: ^2.0.5
-        version: 2.0.5(vitest@2.0.5(@types/node@22.5.1)(@vitest/ui@2.0.5))
-      '@vitest/ui':
-        specifier: ^2.0.5
-        version: 2.0.5(vitest@2.0.5)
-      eslint:
-        specifier: ^8.57.0
-        version: 8.57.0
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
-      tsup:
-        specifier: ^8.2.4
-        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.41)(typescript@5.5.4)(yaml@2.5.0)
+        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.42)(typescript@5.5.4)(yaml@2.5.0)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -260,7 +214,7 @@ importers:
         version: 6.0.1
       tsup:
         specifier: ^8.2.4
-        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.41)(typescript@5.5.4)(yaml@2.5.0)
+        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.42)(typescript@5.5.4)(yaml@2.5.0)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -318,7 +272,7 @@ importers:
         version: 6.0.1
       tsup:
         specifier: ^8.2.4
-        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.41)(typescript@5.5.4)(yaml@2.5.0)
+        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.42)(typescript@5.5.4)(yaml@2.5.0)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -328,15 +282,15 @@ importers:
 
   packages/ws:
     dependencies:
+      '@mongodb-js/zstd':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@nyxjs/core':
         specifier: workspace:*
         version: link:../core
       '@nyxjs/rest':
         specifier: workspace:*
         version: link:../rest
-      '@skhaz/zstd':
-        specifier: ^1.0.21
-        version: 1.0.21
       bufferutil:
         specifier: ^4.0.8
         version: 4.0.8
@@ -346,9 +300,6 @@ importers:
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
-      minizlib:
-        specifier: ^3.0.1
-        version: 3.0.1
       tslib:
         specifier: ^2.7.0
         version: 2.7.0
@@ -358,6 +309,9 @@ importers:
       ws:
         specifier: ^8.18.0
         version: 8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+      zlib-sync:
+        specifier: ^0.1.9
+        version: 0.1.9
     devDependencies:
       '@biomejs/biome':
         specifier: 1.8.3
@@ -391,7 +345,7 @@ importers:
         version: 6.0.1
       tsup:
         specifier: ^8.2.4
-        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.41)(typescript@5.5.4)(yaml@2.5.0)
+        version: 8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.42)(typescript@5.5.4)(yaml@2.5.0)
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -962,6 +916,52 @@ packages:
   '@microsoft/tsdoc@0.15.0':
     resolution: {integrity: sha512-HZpPoABogPvjeJOdzCOSJsXeL/SMCBgBZMVC3X3d7YYp2gf31MfxhUoYUNwf1ERPJOnQc0wkFn9trqI6ZEdZuA==}
 
+  '@mongodb-js/zstd-darwin-arm64@1.2.0':
+    resolution: {integrity: sha512-QWgW6IkWp3ErBXOvlOj9lw3lwMfey7eXh/p/Srb/7sEiu1e0yEO+LQ8IctmDWh8bfznKXmwUC0h7LKDbYR30yw==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@mongodb-js/zstd-darwin-x64@1.2.0':
+    resolution: {integrity: sha512-VnxYO8P2SWubdnydGId5+6veO6Ki6nxCr/pTaDZd8s4Urn6bDdXSX6YsZ0r42dO3Fa0FVYzrlcVAuNB67e2b6w==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@mongodb-js/zstd-linux-arm64-gnu@1.2.0':
+    resolution: {integrity: sha512-TYF0XgNJW6UrvtY2u4Uuo5HiVWNgWNZ/ae2BhVp8hNsDhwFqb/YNoyiZqBei6whUwr8hecMy0UaHAXm3h+O2+Q==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@mongodb-js/zstd-linux-arm64-musl@1.2.0':
+    resolution: {integrity: sha512-e2ClmJI1BvJq23VSLH14hgjjjcMOad3R/Ap7Q7dTa1uiVSJG4xKd2CmrWQgX1Az4/EfUMWEI7pb4yuanbdd2AQ==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@mongodb-js/zstd-linux-x64-gnu@1.2.0':
+    resolution: {integrity: sha512-JuoK8lxUlkFPDBfsBUJKnLxpXA5ar+v7G43lIUlBKgjOp5aEWO/qQp5sNgCRnYA7x6PItYqIkEJjsays4N6JOA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@mongodb-js/zstd-linux-x64-musl@1.2.0':
+    resolution: {integrity: sha512-pSb1iUF3Gc/qrJuP/Mi5ry4YFAUdUVFKNRZh1KTDDhSWyRCLd9gKcNdRnXqJjIdeGGEKf4bhtZAbYw4i/g0foA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@mongodb-js/zstd-win32-x64-msvc@1.2.0':
+    resolution: {integrity: sha512-iz4Yl+WK3yr/4Yg6F4tKz3X9+yMZDK6pyBMA0CdXydSDZs6o2XQ2I0ZSu3oSk/ACfaZX3SNfRi3XTGgAM1eKZA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@mongodb-js/zstd@1.2.0':
+    resolution: {integrity: sha512-sKHsJU2MXsp822IFXOHw/4mpFulScNHpZzVy1Zi5k5wBsdiAPx1QramyOXZkpacla+2QPEC/s7TxPlEhG/HuNQ==}
+    engines: {node: '>= 10'}
+
   '@next/eslint-plugin-next@14.2.7':
     resolution: {integrity: sha512-+7xh142AdhZGjY9/L0iFo7mqRBMJHe+q+uOL+hto1Lfo9DeWCGcR6no4StlFbVSVcA6fQLKEX6y6qhMsSKbgNQ==}
 
@@ -1120,10 +1120,6 @@ packages:
 
   '@rushstack/ts-command-line@4.22.6':
     resolution: {integrity: sha512-QSRqHT/IfoC5nk9zn6+fgyqOPXHME0BfchII9EUPR19pocsNp/xSbeBCbD3PIR2Lg+Q5qk7OFqk1VhWPMdKHJg==}
-
-  '@skhaz/zstd@1.0.21':
-    resolution: {integrity: sha512-4J1wGSWWdycC8dAiBOVeinVOJrjrgPRGQFA8Dwxig2c4QsPLVUKsS0XbOKyoyYGmpboPXZZE0AkC1B/hKGZxJQ==}
-    engines: {node: '>=16'}
 
   '@swc/core-darwin-arm64@1.7.22':
     resolution: {integrity: sha512-B2Bh2W+C7ALdGwDxRWAJ+UtNExfozvwyayGiNkbR3wmDKXXeQfhGM5MK+QYUWKu7UQ6ATq69OyZrxofDobKUug==}
@@ -3326,10 +3322,6 @@ packages:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
     engines: {node: '>=4'}
 
-  pond@2.1.2:
-    resolution: {integrity: sha512-tFHqQ0A+KZ5EDI8C6erkxgeCji2+Z0kZ9yqa1GH29/9TKkbvFdvR+sCwMYeqOQCrm+jWJ8lrlCsqvsa7VVUHDg==}
-    engines: {node: '>= 10'}
-
   possible-typed-array-names@1.0.0:
     resolution: {integrity: sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==}
     engines: {node: '>= 0.4'}
@@ -3356,8 +3348,8 @@ packages:
     resolution: {integrity: sha512-Q8qQfPiZ+THO/3ZrOrO0cJJKfpYCagtMUkXbnEfmgUjwXg6z/WBeOyS9APBBPCTSiDV+s4SwQGu8yFsiMRIudg==}
     engines: {node: '>=4'}
 
-  postcss@8.4.41:
-    resolution: {integrity: sha512-TesUflQ0WKZqAvg52PWL6kHgLKP6xB6heTOdoYM0Wt2UHyxNa4K25EZZMgKns3BH1RLVbZCREPpLY0rhnNoHVQ==}
+  postcss@8.4.42:
+    resolution: {integrity: sha512-hywKUQB9Ra4dR1mGhldy5Aj1X3MWDSIA1cEi+Uy0CjheLvP6Ual5RlwMCh8i/X121yEDLDIKBsrCQ8ba3FDMfQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   preferred-pm@3.1.4:
@@ -4288,6 +4280,9 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
+  zlib-sync@0.1.9:
+    resolution: {integrity: sha512-DinB43xCjVwIBDpaIvQqHbmDsnYnSt6HJ/yiB2MZQGTqgPcwBSZqLkimXwK8BvdjQ/MaZysb5uEenImncqvCqQ==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -4868,6 +4863,37 @@ snapshots:
 
   '@microsoft/tsdoc@0.15.0': {}
 
+  '@mongodb-js/zstd-darwin-arm64@1.2.0':
+    optional: true
+
+  '@mongodb-js/zstd-darwin-x64@1.2.0':
+    optional: true
+
+  '@mongodb-js/zstd-linux-arm64-gnu@1.2.0':
+    optional: true
+
+  '@mongodb-js/zstd-linux-arm64-musl@1.2.0':
+    optional: true
+
+  '@mongodb-js/zstd-linux-x64-gnu@1.2.0':
+    optional: true
+
+  '@mongodb-js/zstd-linux-x64-musl@1.2.0':
+    optional: true
+
+  '@mongodb-js/zstd-win32-x64-msvc@1.2.0':
+    optional: true
+
+  '@mongodb-js/zstd@1.2.0':
+    optionalDependencies:
+      '@mongodb-js/zstd-darwin-arm64': 1.2.0
+      '@mongodb-js/zstd-darwin-x64': 1.2.0
+      '@mongodb-js/zstd-linux-arm64-gnu': 1.2.0
+      '@mongodb-js/zstd-linux-arm64-musl': 1.2.0
+      '@mongodb-js/zstd-linux-x64-gnu': 1.2.0
+      '@mongodb-js/zstd-linux-x64-musl': 1.2.0
+      '@mongodb-js/zstd-win32-x64-msvc': 1.2.0
+
   '@next/eslint-plugin-next@14.2.7':
     dependencies:
       glob: 10.3.10
@@ -5028,14 +5054,6 @@ snapshots:
       string-argv: 0.3.2
     transitivePeerDependencies:
       - '@types/node'
-
-  '@skhaz/zstd@1.0.21':
-    dependencies:
-      nan: 2.20.0
-      node-gyp-build: 4.8.2
-      pond: 2.1.2
-    transitivePeerDependencies:
-      - supports-color
 
   '@swc/core-darwin-arm64@1.7.22':
     optional: true
@@ -6218,7 +6236,7 @@ snapshots:
       eslint: 8.57.0
       eslint-compat-utils: 0.5.1(eslint@8.57.0)
       globals: 13.24.0
-      postcss: 8.4.41
+      postcss: 8.4.42
       postcss-selector-parser: 6.1.2
     transitivePeerDependencies:
       - supports-color
@@ -7806,19 +7824,13 @@ snapshots:
 
   pluralize@8.0.0: {}
 
-  pond@2.1.2:
-    dependencies:
-      debug: 3.2.7
-    transitivePeerDependencies:
-      - supports-color
-
   possible-typed-array-names@1.0.0: {}
 
-  postcss-load-config@6.0.1(postcss@8.4.41)(yaml@2.5.0):
+  postcss-load-config@6.0.1(postcss@8.4.42)(yaml@2.5.0):
     dependencies:
       lilconfig: 3.1.2
     optionalDependencies:
-      postcss: 8.4.41
+      postcss: 8.4.42
       yaml: 2.5.0
 
   postcss-selector-parser@6.1.2:
@@ -7826,7 +7838,7 @@ snapshots:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
 
-  postcss@8.4.41:
+  postcss@8.4.42:
     dependencies:
       nanoid: 3.3.7
       picocolors: 1.0.1
@@ -8411,7 +8423,7 @@ snapshots:
 
   tslib@2.7.0: {}
 
-  tsup@8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.41)(typescript@5.5.4)(yaml@2.5.0):
+  tsup@8.2.4(@microsoft/api-extractor@7.47.7(@types/node@22.5.1))(@swc/core@1.7.22)(postcss@8.4.42)(typescript@5.5.4)(yaml@2.5.0):
     dependencies:
       bundle-require: 5.0.0(esbuild@0.23.1)
       cac: 6.7.14
@@ -8423,7 +8435,7 @@ snapshots:
       globby: 11.1.0
       joycon: 3.1.1
       picocolors: 1.0.1
-      postcss-load-config: 6.0.1(postcss@8.4.41)(yaml@2.5.0)
+      postcss-load-config: 6.0.1(postcss@8.4.42)(yaml@2.5.0)
       resolve-from: 5.0.0
       rollup: 4.21.2
       source-map: 0.8.0-beta.0
@@ -8432,7 +8444,7 @@ snapshots:
     optionalDependencies:
       '@microsoft/api-extractor': 7.47.7(@types/node@22.5.1)
       '@swc/core': 1.7.22
-      postcss: 8.4.41
+      postcss: 8.4.42
       typescript: 5.5.4
     transitivePeerDependencies:
       - jiti
@@ -8707,7 +8719,7 @@ snapshots:
   vite@5.4.2(@types/node@22.5.1):
     dependencies:
       esbuild: 0.21.5
-      postcss: 8.4.41
+      postcss: 8.4.42
       rollup: 4.21.2
     optionalDependencies:
       '@types/node': 22.5.1
@@ -8878,5 +8890,9 @@ snapshots:
   yn@3.1.1: {}
 
   yocto-queue@0.1.0: {}
+
+  zlib-sync@0.1.9:
+    dependencies:
+      nan: 2.20.0
 
   zwitch@2.0.4: {}
