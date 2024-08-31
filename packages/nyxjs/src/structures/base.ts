@@ -3,7 +3,12 @@ export abstract class Base<T> {
 		this.patch(data);
 	}
 
-	public static from<U, V extends Base<U>>(this: new (data: Partial<U>) => V, data: Partial<U>): V {
+	public static from<U, V extends Base<U>>(
+		this: new (
+			data: Partial<U>,
+		) => V,
+		data: Partial<U>,
+	): V {
 		return new this(data);
 	}
 

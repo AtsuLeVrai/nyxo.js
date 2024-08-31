@@ -22,7 +22,11 @@ class Node<K, V> {
 	 * @param value - The value associated with the node.
 	 * @param timestamp - The timestamp when the node was created.
 	 */
-	public constructor(public key: K, public value: V, public timestamp: number) {}
+	public constructor(
+		public key: K,
+		public value: V,
+		public timestamp: number,
+	) {}
 }
 
 /**
@@ -103,7 +107,10 @@ export class Cache<K, V> {
 			if (existingItem) {
 				this.remove(existingItem);
 			}
-		} else if (this.options?.capacity !== undefined && this.map.size >= this.options.capacity) {
+		} else if (
+			this.options?.capacity !== undefined &&
+			this.map.size >= this.options.capacity
+		) {
 			this.evict();
 		}
 
@@ -217,7 +224,7 @@ export class Cache<K, V> {
 	private isExpired(item: Node<K, V>): boolean {
 		return (
 			this.options?.ttl !== undefined &&
-            Date.now() - item.timestamp > this.options.ttl
+			Date.now() - item.timestamp > this.options.ttl
 		);
 	}
 }

@@ -4,7 +4,11 @@ import type { Integer } from "@nyxjs/core";
 import { RestHttpResponseCodes } from "@nyxjs/core";
 import { Gunzip } from "minizlib";
 import type { RetryAgent } from "undici";
-import type { RateLimitResponseStructure, RestOptions, RestRequestOptions } from "../types/globals";
+import type {
+	RateLimitResponseStructure,
+	RestOptions,
+	RestRequestOptions,
+} from "../types/globals";
 import { getRandomUserAgent } from "../utils/agents";
 import { RateLimiter } from "./RateLimiter";
 import type { Rest } from "./Rest";
@@ -19,17 +23,20 @@ export class RestRequestHandler {
 		private readonly rest: Rest,
 		private readonly retryAgent: RetryAgent,
 		private readonly cache: Cache<
-		string,
-		{
-			data: any;
-			expiry: Integer;
-		}
+			string,
+			{
+				data: any;
+				expiry: Integer;
+			}
 		>,
 		private readonly options: RestOptions = {},
 	) {
 		this.defaultHeaders = this.createDefaultHeaders();
 		this.rateLimiter = new RateLimiter();
-		this.rest.emit("debug", `[REST] RestRequestHandler initialized with options: ${JSON.stringify(this.options)}`);
+		this.rest.emit(
+			"debug",
+			`[REST] RestRequestHandler initialized with options: ${JSON.stringify(this.options)}`,
+		);
 	}
 
 	public async handle<T>(options: RestRequestOptions<T>): Promise<T> {
@@ -39,7 +46,10 @@ export class RestRequestHandler {
 			if (!options.disableCache) {
 				const cachedResponse = this.cache.get(cacheKey);
 				if (cachedResponse && cachedResponse.expiry > Date.now()) {
-					this.rest.emit("debug", `[REST] Returning cached response for: ${cacheKey}`);
+					this.rest.emit(
+						"debug",
+						`[REST] Returning cached response for: ${cacheKey}`,
+					);
 					return cachedResponse.data as T;
 				}
 			}
@@ -53,7 +63,10 @@ export class RestRequestHandler {
 			};
 
 			this.rest.emit("debug", `[REST] Making request to: ${path}`);
-			this.rest.emit("debug", `[REST] Request headers: ${JSON.stringify(headers)}`);
+			this.rest.emit(
+				"debug",
+				`[REST] Request headers: ${JSON.stringify(headers)}`,
+			);
 
 			const response = await this.retryAgent.request({
 				path,
@@ -64,7 +77,10 @@ export class RestRequestHandler {
 			});
 
 			this.rest.emit("debug", `[REST] Response status: ${response.statusCode}`);
-			this.rest.emit("debug", `[REST] Response headers: ${JSON.stringify(response.headers)}`);
+			this.rest.emit(
+				"debug",
+				`[REST] Response headers: ${JSON.stringify(response.headers)}`,
+			);
 
 			this.rateLimiter.handleRateLimit(options.path, response.headers);
 
@@ -72,7 +88,10 @@ export class RestRequestHandler {
 			this.rest.emit("debug", `[REST] Raw response: ${responseText}`);
 
 			const data = this.parseResponse(responseText);
-			this.rest.emit("debug", `[REST] Parsed response data: ${JSON.stringify(data)}`);
+			this.rest.emit(
+				"debug",
+				`[REST] Parsed response data: ${JSON.stringify(data)}`,
+			);
 
 			if (response.statusCode === RestHttpResponseCodes.TooManyRequests) {
 				const rateLimitData = data as RateLimitResponseStructure;
@@ -80,7 +99,11 @@ export class RestRequestHandler {
 				return await this.handle(options);
 			}
 
-			if (response.statusCode >= 200 && response.statusCode < 300 && !options.disableCache) {
+			if (
+				response.statusCode >= 200 &&
+				response.statusCode < 300 &&
+				!options.disableCache
+			) {
 				this.cache.set(cacheKey, {
 					data,
 					expiry: Date.now() + (this.options.cache_life_time ?? 60_000),
@@ -88,7 +111,9 @@ export class RestRequestHandler {
 			}
 
 			if (response.statusCode >= 400) {
-				throw new Error(`[REST] HTTP error! status: ${response.statusCode}, body: ${JSON.stringify(data)}`);
+				throw new Error(
+					`[REST] HTTP error! status: ${response.statusCode}, body: ${JSON.stringify(data)}`,
+				);
 			}
 
 			return data as T;
@@ -109,7 +134,10 @@ export class RestRequestHandler {
 
 	public updateHeaders(): void {
 		this.defaultHeaders = this.createDefaultHeaders();
-		this.rest.emit("debug", "[REST] Default headers updated in RestRequestHandler");
+		this.rest.emit(
+			"debug",
+			"[REST] Default headers updated in RestRequestHandler",
+		);
 	}
 
 	private async decompressResponse(response: any): Promise<string> {
@@ -138,7 +166,10 @@ export class RestRequestHandler {
 			return responseText ? JSON.parse(responseText) : null;
 		} catch (error) {
 			if (error instanceof Error) {
-				this.rest.emit("error", new Error(`[REST] Error parsing JSON: ${error.message}`));
+				this.rest.emit(
+					"error",
+					new Error(`[REST] Error parsing JSON: ${error.message}`),
+				);
 			}
 
 			throw error;

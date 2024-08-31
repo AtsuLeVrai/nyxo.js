@@ -17,7 +17,10 @@ export class Sku extends Base<SkuStructure> {
 
 	public flags!: SkuFlags;
 
-	public constructor(private readonly client: Client, data: Partial<SkuStructure>) {
+	public constructor(
+		private readonly client: Client,
+		data: Partial<SkuStructure>,
+	) {
 		super(data);
 	}
 
@@ -33,7 +36,9 @@ export class Sku extends Base<SkuStructure> {
 	}
 
 	public async list(): Promise<readonly Sku[]> {
-		const skus = await this.client.rest.request(SkuRoutes.listSkus(this.applicationId));
+		const skus = await this.client.rest.request(
+			SkuRoutes.listSkus(this.applicationId),
+		);
 		return skus.map((sku) => new Sku(this.client, sku));
 	}
 

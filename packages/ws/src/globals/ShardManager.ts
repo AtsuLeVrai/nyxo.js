@@ -20,7 +20,11 @@ export class ShardManager {
 
 	private readonly rateLimitQueue: Map<Integer, ShardInfo[]>;
 
-	public constructor(private readonly gateway: Gateway, private readonly token: string, private readonly options: GatewayOptions) {
+	public constructor(
+		private readonly gateway: Gateway,
+		private readonly token: string,
+		private readonly options: GatewayOptions,
+	) {
 		this.rest = new Rest(this.token);
 		this.shards = new Map<Integer, ShardInfo>();
 		this.maxConcurrency = 1;
@@ -38,7 +42,10 @@ export class ShardManager {
 				totalShards: maxShardId,
 			};
 			this.shards.set(shardId, shardInfo);
-			const rateLimitKey = this.calculateRateLimitKey(shardId, this.maxConcurrency);
+			const rateLimitKey = this.calculateRateLimitKey(
+				shardId,
+				this.maxConcurrency,
+			);
 			if (!this.rateLimitQueue.has(rateLimitKey)) {
 				this.rateLimitQueue.set(rateLimitKey, []);
 			}
@@ -128,7 +135,10 @@ export class ShardManager {
 	/**
 	 * @see {@link https://discord.com/developers/docs/topics/gateway#sharding-max-concurrency}
 	 */
-	private calculateRateLimitKey(shardId: Integer, maxConcurrency: Integer): Integer {
+	private calculateRateLimitKey(
+		shardId: Integer,
+		maxConcurrency: Integer,
+	): Integer {
 		return shardId % maxConcurrency;
 	}
 }

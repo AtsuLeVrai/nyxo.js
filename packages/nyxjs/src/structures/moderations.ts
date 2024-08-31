@@ -172,7 +172,9 @@ export class AutoModerationRule extends Base<AutoModerationRuleStructure> {
 
 	protected patch(data: Partial<AutoModerationRuleStructure>): void {
 		if (data.actions !== undefined) {
-			this.actions = data.actions.map((action) => AutoModerationAction.from(action));
+			this.actions = data.actions.map((action) =>
+				AutoModerationAction.from(action),
+			);
 		}
 
 		if (data.creator_id !== undefined) {

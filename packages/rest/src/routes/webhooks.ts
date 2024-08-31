@@ -1,6 +1,10 @@
 import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
 import type { ActionRowStructure } from "../structures/interactions";
-import type { AllowedMentionsStructure, AttachmentStructure, EmbedStructure } from "../structures/messages";
+import type {
+	AllowedMentionsStructure,
+	AttachmentStructure,
+	EmbedStructure,
+} from "../structures/messages";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

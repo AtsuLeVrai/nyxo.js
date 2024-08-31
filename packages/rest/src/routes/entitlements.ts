@@ -1,4 +1,9 @@
-import type { Boolean, Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+import type {
+	Boolean,
+	Integer,
+	RestHttpResponseCodes,
+	Snowflake,
+} from "@nyxjs/core";
 import type { EntitlementStructure } from "../structures/entitlements";
 import type { RestRequestOptions } from "../types/globals";
 
@@ -82,7 +87,9 @@ export const EntitlementRoutes = {
 	createTestEntitlement: (
 		applicationId: Snowflake,
 		json: CreateTestEntitlementJsonParams,
-	): RestRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> => ({
+	): RestRequestOptions<
+		Omit<EntitlementStructure, "ends_at" | "starts_at">
+	> => ({
 		method: "POST",
 		path: `/applications/${applicationId}/entitlements`,
 		body: JSON.stringify(json),

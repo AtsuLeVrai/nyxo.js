@@ -1,4 +1,10 @@
-import type { Integer, IsoO8601Timestamp, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
+import type {
+	Integer,
+	IsoO8601Timestamp,
+	Locales,
+	Oauth2Scopes,
+	Snowflake,
+} from "@nyxjs/core";
 import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";
@@ -401,11 +407,11 @@ export type GuildWidgetStructure = {
 	 * Special widget user objects that includes users presence (Limit 100)
 	 */
 	members: Pick<
-	UserStructure & {
-		avatar_url: string;
-		status: string;
-	},
-	"avatar_url" | "avatar" | "discriminator" | "id" | "status" | "username"
+		UserStructure & {
+			avatar_url: string;
+			status: string;
+		},
+		"avatar_url" | "avatar" | "discriminator" | "id" | "status" | "username"
 	>[];
 	/**
 	 * The guild name
@@ -1191,20 +1197,20 @@ export type GuildTemplateStructure = {
 	 * The guild snapshot this template contains
 	 */
 	serialized_source_guild: Pick<
-	GuildStructure,
-	| "afk_channel_id"
-	| "afk_timeout"
-	| "default_message_notifications"
-	| "description"
-	| "explicit_content_filter"
-	| "icon_hash"
-	| "name"
-	| "preferred_locale"
-	| "region"
-	| "roles"
-	| "system_channel_flags"
-	| "system_channel_id"
-	| "verification_level"
+		GuildStructure,
+		| "afk_channel_id"
+		| "afk_timeout"
+		| "default_message_notifications"
+		| "description"
+		| "explicit_content_filter"
+		| "icon_hash"
+		| "name"
+		| "preferred_locale"
+		| "region"
+		| "roles"
+		| "system_channel_flags"
+		| "system_channel_id"
+		| "verification_level"
 	>;
 	/**
 	 * The ID of the guild this template is based on

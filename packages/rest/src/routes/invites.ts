@@ -24,15 +24,21 @@ export const InviteRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
 	 */
-	deleteInvite: (code: string, reason?: string): RestRequestOptions<InviteStructure> => ({
+	deleteInvite: (
+		code: string,
+		reason?: string,
+	): RestRequestOptions<InviteStructure> => ({
 		method: "DELETE",
 		path: `/invites/${code}`,
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
 	 */
-	getInvite: (code: string, query?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> => ({
+	getInvite: (
+		code: string,
+		query?: GetInviteQueryStringParams,
+	): RestRequestOptions<InviteStructure> => ({
 		method: "GET",
 		path: `/invites/${code}`,
 		query,

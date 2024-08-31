@@ -1,4 +1,10 @@
-import type { ApiVersions, GatewayCloseCodes, GatewayIntents, GatewayOpcodes, Integer } from "@nyxjs/core";
+import type {
+	ApiVersions,
+	GatewayCloseCodes,
+	GatewayIntents,
+	GatewayOpcodes,
+	Integer,
+} from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/presences";
 import type { GatewayReceiveEvents } from "./events";
 

@@ -18,7 +18,11 @@ export class FileHandler {
 
 	public constructor(private maxSize: number = 25 * 1_024 * 1_024) {}
 
-	public addFile(file: Buffer | Readable | string, filename: string, description?: string): number {
+	public addFile(
+		file: Buffer | Readable | string,
+		filename: string,
+		description?: string,
+	): number {
 		const id = this.files.length;
 		this.files.push({
 			id,
@@ -52,7 +56,9 @@ export class FileHandler {
 		}
 
 		if (totalSize > this.maxSize) {
-			throw new Error(`Total file size exceeds the limit of ${this.maxSize} bytes`);
+			throw new Error(
+				`Total file size exceeds the limit of ${this.maxSize} bytes`,
+			);
 		}
 
 		if (Object.keys(this.payloadJson).length > 0) {

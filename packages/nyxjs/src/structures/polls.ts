@@ -56,14 +56,18 @@ export class PollResults extends Base<PollResultsStructure> {
 
 	public toJSON(): PollResultsStructure {
 		return {
-			answer_counts: this.answerCounts.map((answerCount) => answerCount.toJSON()),
+			answer_counts: this.answerCounts.map((answerCount) =>
+				answerCount.toJSON(),
+			),
 			is_finalized: this.isFinalized,
 		};
 	}
 
 	protected patch(data: Partial<PollResultsStructure>): void {
 		if (data.answer_counts !== undefined) {
-			this.answerCounts = data.answer_counts.map((answerCount) => new PollAnswerCount(answerCount));
+			this.answerCounts = data.answer_counts.map(
+				(answerCount) => new PollAnswerCount(answerCount),
+			);
 		}
 
 		if (data.is_finalized !== undefined) {

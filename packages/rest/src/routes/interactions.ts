@@ -1,4 +1,9 @@
-import type { Boolean, Locales, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+import type {
+	Boolean,
+	Locales,
+	RestHttpResponseCodes,
+	Snowflake,
+} from "@nyxjs/core";
 import type { IntegrationTypes } from "../structures/applications";
 import type {
 	ApplicationCommandOptionStructure,

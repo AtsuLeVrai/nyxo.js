@@ -279,7 +279,12 @@ export type PresenceUpdateEventFields = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence-status-types}
  */
-export type UpdatePresenceStatusTypes = "dnd" | "idle" | "invisible" | "offline" | "online";
+export type UpdatePresenceStatusTypes =
+	| "dnd"
+	| "idle"
+	| "invisible"
+	| "offline"
+	| "online";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence-gateway-presence-update-structure}

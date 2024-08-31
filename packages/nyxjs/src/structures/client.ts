@@ -126,7 +126,10 @@ export type ClientOptions = {
 };
 
 export class Client extends EventEmitter<typeof ClientEvents> {
-	public constructor(public token: string, private readonly options: ClientOptions) {
+	public constructor(
+		public token: string,
+		private readonly options: ClientOptions,
+	) {
 		super();
 	}
 
@@ -164,6 +167,9 @@ export class Client extends EventEmitter<typeof ClientEvents> {
 	}
 
 	private calculateIntents(): Integer {
-		return this.options.intents.reduce<Integer>((acc, intent) => acc | intent, 0);
+		return this.options.intents.reduce<Integer>(
+			(acc, intent) => acc | intent,
+			0,
+		);
 	}
 }

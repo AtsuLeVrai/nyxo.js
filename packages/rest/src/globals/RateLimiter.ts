@@ -1,6 +1,9 @@
 import { setTimeout } from "node:timers";
 import type { Integer } from "@nyxjs/core";
-import type { DiscordHeaders, RateLimitResponseStructure } from "../types/globals";
+import type {
+	DiscordHeaders,
+	RateLimitResponseStructure,
+} from "../types/globals";
 
 type RateLimitInfo = {
 	bucket: string;
@@ -28,7 +31,11 @@ export class RateLimiter {
 			}
 
 			const routeLimit = this.routeRateLimits.get(path);
-			if (routeLimit && routeLimit.remaining <= 0 && routeLimit.reset > Date.now()) {
+			if (
+				routeLimit &&
+				routeLimit.remaining <= 0 &&
+				routeLimit.reset > Date.now()
+			) {
 				const delay = routeLimit.reset - Date.now();
 				await this.sleep(delay);
 			}
@@ -41,9 +48,14 @@ export class RateLimiter {
 
 	public handleRateLimit(path: string, headers: DiscordHeaders): void {
 		const limit = Number.parseInt(headers["X-RateLimit-Limit"] ?? "0", 10);
-		const remaining = Number.parseInt(headers["X-RateLimit-Remaining"] ?? "0", 10);
-		const reset = Number.parseInt(headers["X-RateLimit-Reset"] ?? "0", 10) * 1_000;
-		const resetAfter = Number.parseFloat(headers["X-RateLimit-Reset-After"] ?? "0") * 1_000;
+		const remaining = Number.parseInt(
+			headers["X-RateLimit-Remaining"] ?? "0",
+			10,
+		);
+		const reset =
+			Number.parseInt(headers["X-RateLimit-Reset"] ?? "0", 10) * 1_000;
+		const resetAfter =
+			Number.parseFloat(headers["X-RateLimit-Reset-After"] ?? "0") * 1_000;
 		const bucket = headers["X-RateLimit-Bucket"] ?? "";
 
 		this.routeRateLimits.set(path, {
@@ -59,7 +71,9 @@ export class RateLimiter {
 		}
 	}
 
-	public async handleRateLimitResponse(response: RateLimitResponseStructure): Promise<void> {
+	public async handleRateLimitResponse(
+		response: RateLimitResponseStructure,
+	): Promise<void> {
 		if (response.global) {
 			this.globalRateLimit = Date.now() + response.retry_after * 1_000;
 		}

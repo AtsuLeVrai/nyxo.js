@@ -6,23 +6,29 @@ import type { RestRequestOptions } from "../types/globals";
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule-json-params}
  */
 export type ModifyAutoModerationRuleJSONParams = Pick<
-AutoModerationRuleStructure,
-"actions" | "enabled" | "event_type" | "exempt_channels" | "exempt_roles" | "name" | "trigger_metadata"
+	AutoModerationRuleStructure,
+	| "actions"
+	| "enabled"
+	| "event_type"
+	| "exempt_channels"
+	| "exempt_roles"
+	| "name"
+	| "trigger_metadata"
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule-json-params}
  */
 export type CreateAutoModerationRuleJSONParams = Pick<
-AutoModerationRuleStructure,
-| "actions"
-| "enabled"
-| "event_type"
-| "exempt_channels"
-| "exempt_roles"
-| "name"
-| "trigger_metadata"
-| "trigger_type"
+	AutoModerationRuleStructure,
+	| "actions"
+	| "enabled"
+	| "event_type"
+	| "exempt_channels"
+	| "exempt_roles"
+	| "name"
+	| "trigger_metadata"
+	| "trigger_type"
 >;
 
 export const ModerationRoutes = {
@@ -36,7 +42,7 @@ export const ModerationRoutes = {
 	): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
 		method: "DELETE",
 		path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule}
@@ -50,7 +56,7 @@ export const ModerationRoutes = {
 		method: "PATCH",
 		path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
 		body: JSON.stringify(json),
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule}
@@ -63,7 +69,7 @@ export const ModerationRoutes = {
 		method: "POST",
 		path: `/guilds/${guildId}/auto-moderation/rules`,
 		body: JSON.stringify(json),
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/auto-moderation#get-auto-moderation-rule}

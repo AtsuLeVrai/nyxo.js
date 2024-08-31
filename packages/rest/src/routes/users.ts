@@ -1,13 +1,26 @@
-import type { Boolean, Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+import type {
+	Boolean,
+	Integer,
+	RestHttpResponseCodes,
+	Snowflake,
+} from "@nyxjs/core";
 import type { ChannelStructure } from "../structures/channels";
-import type { GuildMemberStructure, GuildStructure } from "../structures/guilds";
-import type { ApplicationRoleConnectionStructure, ConnectionStructure, UserStructure } from "../structures/users";
+import type {
+	GuildMemberStructure,
+	GuildStructure,
+} from "../structures/guilds";
+import type {
+	ApplicationRoleConnectionStructure,
+	ConnectionStructure,
+	UserStructure,
+} from "../structures/users";
 import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params}
  */
-export type UpdateUserApplicationRoleConnectionJSONParams = Partial<ApplicationRoleConnectionStructure>;
+export type UpdateUserApplicationRoleConnectionJSONParams =
+	Partial<ApplicationRoleConnectionStructure>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params}
@@ -58,7 +71,9 @@ export type GetCurrentUserGuildsQueryStringParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
  */
-export type ModifyCurrentUserJSONParams = Partial<Pick<UserStructure, "avatar" | "banner" | "username">>;
+export type ModifyCurrentUserJSONParams = Partial<
+	Pick<UserStructure, "avatar" | "banner" | "username">
+>;
 
 export const UserRoutes = {
 	/**
@@ -92,7 +107,9 @@ export const UserRoutes = {
 	 * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
 	 * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
 	 */
-	createDM: (json: CreateDMJSONParams | CreateGroupDMJSONParams): RestRequestOptions<ChannelStructure> => ({
+	createDM: (
+		json: CreateDMJSONParams | CreateGroupDMJSONParams,
+	): RestRequestOptions<ChannelStructure> => ({
 		method: "POST",
 		path: "/users/@me/channels",
 		body: JSON.stringify(json),
@@ -100,14 +117,18 @@ export const UserRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
 	 */
-	leaveGuild: (guildId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
+	leaveGuild: (
+		guildId: Snowflake,
+	): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
 		method: "DELETE",
 		path: `/users/@me/guilds/${guildId}`,
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
 	 */
-	getCurrentUserGuildMember: (guildId: Snowflake): RestRequestOptions<GuildMemberStructure> => ({
+	getCurrentUserGuildMember: (
+		guildId: Snowflake,
+	): RestRequestOptions<GuildMemberStructure> => ({
 		method: "GET",
 		path: `/users/@me/guilds/${guildId}/member`,
 	}),
@@ -117,18 +138,18 @@ export const UserRoutes = {
 	getCurrentUserGuilds: (
 		query?: GetCurrentUserGuildsQueryStringParams,
 	): RestRequestOptions<
-	Pick<
-	GuildStructure,
-	| "approximate_member_count"
-	| "approximate_presence_count"
-	| "banner"
-	| "features"
-	| "icon"
-	| "id"
-	| "name"
-	| "owner"
-	| "permissions"
-	>[]
+		Pick<
+			GuildStructure,
+			| "approximate_member_count"
+			| "approximate_presence_count"
+			| "banner"
+			| "features"
+			| "icon"
+			| "id"
+			| "name"
+			| "owner"
+			| "permissions"
+		>[]
 	> => ({
 		method: "GET",
 		path: "/users/@me/guilds",
@@ -137,7 +158,9 @@ export const UserRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
 	 */
-	modifyCurrentUser: (json: ModifyCurrentUserJSONParams): RestRequestOptions<UserStructure> => ({
+	modifyCurrentUser: (
+		json: ModifyCurrentUserJSONParams,
+	): RestRequestOptions<UserStructure> => ({
 		method: "PATCH",
 		path: "/users/@me",
 		body: JSON.stringify(json),

@@ -297,7 +297,13 @@ export type EmbedThumbnailStructure = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-types}
  */
-export type EmbedTypes = "article" | "gifv" | "image" | "link" | "rich" | "video";
+export type EmbedTypes =
+	| "article"
+	| "gifv"
+	| "image"
+	| "link"
+	| "rich"
+	| "video";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-structure}
@@ -409,16 +415,16 @@ export type MessageSnapshotStructure = {
 	 * Minimum subset of fields in the forwarded message
 	 */
 	message: Pick<
-	MessageStructure,
-	| "attachments"
-	| "content"
-	| "edited_timestamp"
-	| "embeds"
-	| "flags"
-	| "mention_roles"
-	| "mentions"
-	| "timestamp"
-	| "type"
+		MessageStructure,
+		| "attachments"
+		| "content"
+		| "edited_timestamp"
+		| "embeds"
+		| "flags"
+		| "mention_roles"
+		| "mentions"
+		| "timestamp"
+		| "type"
 	>;
 };
 

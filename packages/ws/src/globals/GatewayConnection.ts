@@ -1,5 +1,10 @@
 import { Buffer } from "node:buffer";
-import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timers";
+import {
+	clearInterval,
+	clearTimeout,
+	setInterval,
+	setTimeout,
+} from "node:timers";
 import { URL } from "node:url";
 import { TextDecoder } from "node:util";
 import type { GatewayCloseCodes, Integer } from "@nyxjs/core";
@@ -39,7 +44,11 @@ export class GatewayConnection {
 
 	private readonly textDecoder: TextDecoder;
 
-	public constructor(private readonly gateway: Gateway, private readonly token: string, private readonly options: GatewayOptions) {
+	public constructor(
+		private readonly gateway: Gateway,
+		private readonly token: string,
+		private readonly options: GatewayOptions,
+	) {
 		this.ws = null;
 		this.heartbeatInterval = null;
 		this.sequence = null;
@@ -67,7 +76,10 @@ export class GatewayConnection {
 		}
 
 		try {
-			const url = resumeAttempt && this.resumeGatewayUrl ? this.resumeGatewayUrl : this.wsUrl;
+			const url =
+				resumeAttempt && this.resumeGatewayUrl
+					? this.resumeGatewayUrl
+					: this.wsUrl;
 			this.ws = new WebSocket(url);
 
 			this.ws.on("open", this.onOpen.bind(this));
@@ -75,11 +87,17 @@ export class GatewayConnection {
 			this.ws.on("close", this.onClose.bind(this));
 			this.ws.on("error", this.onError.bind(this));
 		} catch {
-			this.gateway.emit("error", new Error("Failed to establish a WebSocket connection"));
+			this.gateway.emit(
+				"error",
+				new Error("Failed to establish a WebSocket connection"),
+			);
 		}
 	}
 
-	public send<T extends keyof GatewaySendEvents>(op: T, data: GatewaySendEvents[T]): void {
+	public send<T extends keyof GatewaySendEvents>(
+		op: T,
+		data: GatewaySendEvents[T],
+	): void {
 		if (!this.ws) {
 			return;
 		}
@@ -129,8 +147,15 @@ export class GatewayConnection {
 
 		try {
 			if (this.options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
-				decompressedData = await decompressZlib(this.zlibInflate, this.textDecoder, data);
-			} else if (this.options.compress === "zstd-stream" && Buffer.isBuffer(data)) {
+				decompressedData = await decompressZlib(
+					this.zlibInflate,
+					this.textDecoder,
+					data,
+				);
+			} else if (
+				this.options.compress === "zstd-stream" &&
+				Buffer.isBuffer(data)
+			) {
 				decompressedData = await decompressZstd(this.textDecoder, data);
 			} else {
 				decompressedData = decodeRawData(this.textDecoder, data);
@@ -139,7 +164,10 @@ export class GatewayConnection {
 			const decoded = decodeMessage(decompressedData, this.options.encoding);
 			this.handleMessage(decoded);
 		} catch {
-			this.gateway.emit("error", new Error("Failed to process WebSocket message"));
+			this.gateway.emit(
+				"error",
+				new Error("Failed to process WebSocket message"),
+			);
 		}
 	}
 
@@ -157,7 +185,10 @@ export class GatewayConnection {
 		try {
 			payload = JSON.parse(message);
 		} catch {
-			this.gateway.emit("error", new Error("[WS] Failed to parse globals payload..."));
+			this.gateway.emit(
+				"error",
+				new Error("[WS] Failed to parse globals payload..."),
+			);
 			return;
 		}
 
@@ -190,7 +221,10 @@ export class GatewayConnection {
 			}
 
 			case GatewayOpcodes.Reconnect: {
-				this.gateway.emit("debug", "[WS] Received Reconnect opcode, attempting to resume");
+				this.gateway.emit(
+					"debug",
+					"[WS] Received Reconnect opcode, attempting to resume",
+				);
 				this.disconnect();
 				void this.connect(true);
 				break;
@@ -202,7 +236,10 @@ export class GatewayConnection {
 			}
 
 			default: {
-				this.gateway.emit("warn", `[WS] Received an unhandled gateway event: ${payload.op}...`);
+				this.gateway.emit(
+					"warn",
+					`[WS] Received an unhandled gateway event: ${payload.op}...`,
+				);
 				break;
 			}
 		}
@@ -220,7 +257,10 @@ export class GatewayConnection {
 
 			default: {
 				if (!payload.t) {
-					this.gateway.emit("warn", "[WS] Received a dispatch event without a name...");
+					this.gateway.emit(
+						"warn",
+						"[WS] Received a dispatch event without a name...",
+					);
 					break;
 				}
 
@@ -231,7 +271,10 @@ export class GatewayConnection {
 	}
 
 	private setupHeartbeat(interval: number): void {
-		this.gateway.emit("debug", `[WS] Setting up heartbeat with interval: ${interval}ms...`);
+		this.gateway.emit(
+			"debug",
+			`[WS] Setting up heartbeat with interval: ${interval}ms...`,
+		);
 		if (this.heartbeatInterval) {
 			clearInterval(this.heartbeatInterval);
 		}
@@ -243,7 +286,10 @@ export class GatewayConnection {
 
 	private sendResume(): void {
 		if (!this.sessionId || this.sequence === null) {
-			this.gateway.emit("warn", "[WS] Attempted to resume without a valid session, re-identifying");
+			this.gateway.emit(
+				"warn",
+				"[WS] Attempted to resume without a valid session, re-identifying",
+			);
 			void this.gateway.shardManager.initialize();
 			return;
 		}

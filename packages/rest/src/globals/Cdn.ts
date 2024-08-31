@@ -2,12 +2,21 @@ import { URL } from "node:url";
 import type { Integer, Snowflake } from "@nyxjs/core";
 import { ImageFormats } from "@nyxjs/core";
 
-type ImageFormat = ImageFormats.GIF | ImageFormats.JPEG | ImageFormats.Lottie | ImageFormats.PNG | ImageFormats.WebP;
+type ImageFormat =
+	| ImageFormats.GIF
+	| ImageFormats.JPEG
+	| ImageFormats.Lottie
+	| ImageFormats.PNG
+	| ImageFormats.WebP;
 
 export class Cdn {
 	private static baseUrl = new URL("https://cdn.discordapp.com/");
 
-	public static customEmoji(emojiId: Snowflake, size?: Integer, format: ImageFormat = ImageFormats.PNG): string {
+	public static customEmoji(
+		emojiId: Snowflake,
+		size?: Integer,
+		format: ImageFormat = ImageFormats.PNG,
+	): string {
 		return this.createUrl(`emojis/${emojiId}`, format, size);
 	}
 
@@ -35,7 +44,11 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`discovery-splashes/${guildId}/${splash}`, format, size);
+		return this.createUrl(
+			`discovery-splashes/${guildId}/${splash}`,
+			format,
+			size,
+		);
 	}
 
 	public static guildBanner(
@@ -77,11 +90,18 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`guilds/${guildId}/users/${userId}/avatars/${avatar}`, format, size);
+		return this.createUrl(
+			`guilds/${guildId}/users/${userId}/avatars/${avatar}`,
+			format,
+			size,
+		);
 	}
 
 	public static avatarDecoration(avatarDecorationDataAsset: string): string {
-		return this.createUrl(`avatar-decoration-presets/${avatarDecorationDataAsset}`, ImageFormats.PNG);
+		return this.createUrl(
+			`avatar-decoration-presets/${avatarDecorationDataAsset}`,
+			ImageFormats.PNG,
+		);
 	}
 
 	public static applicationIcon(
@@ -99,7 +119,11 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`app-icons/${applicationId}/${coverImage}`, format, size);
+		return this.createUrl(
+			`app-icons/${applicationId}/${coverImage}`,
+			format,
+			size,
+		);
 	}
 
 	public static applicationAsset(
@@ -108,7 +132,11 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`app-assets/${applicationId}/${assetId}`, format, size);
+		return this.createUrl(
+			`app-assets/${applicationId}/${assetId}`,
+			format,
+			size,
+		);
 	}
 
 	public static achievementIcon(
@@ -118,7 +146,11 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`app-assets/${applicationId}/achievements/${achievementId}/icons/${iconHash}`, format, size);
+		return this.createUrl(
+			`app-assets/${applicationId}/achievements/${achievementId}/icons/${iconHash}`,
+			format,
+			size,
+		);
 	}
 
 	public static storePageAsset(
@@ -127,7 +159,11 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`app-assets/${applicationId}/store/${assetId}`, format, size);
+		return this.createUrl(
+			`app-assets/${applicationId}/store/${assetId}`,
+			format,
+			size,
+		);
 	}
 
 	public static stickerPackBanner(
@@ -136,7 +172,11 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`app-assets/${applicationId}/store/${stickerPackBannerAssetId}`, format, size);
+		return this.createUrl(
+			`app-assets/${applicationId}/store/${stickerPackBannerAssetId}`,
+			format,
+			size,
+		);
 	}
 
 	public static teamIcon(
@@ -148,8 +188,16 @@ export class Cdn {
 		return this.createUrl(`team-icons/${teamId}/${teamIcon}`, format, size);
 	}
 
-	public static sticker(stickerId: Snowflake, format: ImageFormat = ImageFormats.PNG): string {
-		return this.createUrl(`stickers/${stickerId}`, format, undefined, "media.discordapp.net");
+	public static sticker(
+		stickerId: Snowflake,
+		format: ImageFormat = ImageFormats.PNG,
+	): string {
+		return this.createUrl(
+			`stickers/${stickerId}`,
+			format,
+			undefined,
+			"media.discordapp.net",
+		);
 	}
 
 	public static roleIcon(
@@ -168,7 +216,11 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`guild-events/${guildId}/${scheduledEventId}/${scheduledEventCoverImage}`, format, size);
+		return this.createUrl(
+			`guild-events/${guildId}/${scheduledEventId}/${scheduledEventCoverImage}`,
+			format,
+			size,
+		);
 	}
 
 	public static guildMemberBanner(
@@ -178,14 +230,18 @@ export class Cdn {
 		size?: Integer,
 		format: ImageFormat = ImageFormats.PNG,
 	): string {
-		return this.createUrl(`guilds/${guildId}/users/${userId}/banners/${banner}`, format, size);
+		return this.createUrl(
+			`guilds/${guildId}/users/${userId}/banners/${banner}`,
+			format,
+			size,
+		);
 	}
 
 	private static createUrl(
 		path: string,
 		format: ImageFormat,
 		size?: Integer,
-		hostname: string = "cdn.discordapp.com",
+		hostname = "cdn.discordapp.com",
 	): string {
 		this.validateSize(size);
 		this.validateGifFormat(path, format, size);
@@ -207,8 +263,15 @@ export class Cdn {
 		}
 	}
 
-	private static validateGifFormat(path: string, format: ImageFormat, size?: Integer): void {
-		if (format === ImageFormats.GIF && !this.isHashGif(path.split("/").pop() ?? "")) {
+	private static validateGifFormat(
+		path: string,
+		format: ImageFormat,
+		size?: Integer,
+	): void {
+		if (
+			format === ImageFormats.GIF &&
+			!this.isHashGif(path.split("/").pop() ?? "")
+		) {
 			throw new Error("The asset is not a gif.");
 		}
 

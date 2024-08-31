@@ -129,7 +129,10 @@ export function unixTimestampFormat(
 	return `<t:${timestamp}>`;
 }
 
-export function guildNavigationFormat(id: Snowflake, type: GuildNavigationTypes): `<${Snowflake}:${GuildNavigationTypes}>` {
+export function guildNavigationFormat(
+	id: Snowflake,
+	type: GuildNavigationTypes,
+): `<${Snowflake}:${GuildNavigationTypes}>` {
 	return `<${id}:${type}>`;
 }
 
@@ -177,7 +180,10 @@ export function code(text: string): `\`${string}\`` {
 	return `\`${text}\``;
 }
 
-export function codeBlock(language: string, text: string): `\`\`\`${string}\n${string}\n\`\`\`` {
+export function codeBlock(
+	language: string,
+	text: string,
+): `\`\`\`${string}\n${string}\n\`\`\`` {
 	return `\`\`\`${language}\n${text}\n\`\`\``;
 }
 

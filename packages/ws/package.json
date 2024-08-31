@@ -24,6 +24,7 @@
     "build": "pnpm run clean && tsup --experimental-dts --config tsup.config.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
+    "biome:write": "biome format --write src",
     "clean": "rimraf dist",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -46,6 +47,7 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.8.3",
     "@microsoft/api-extractor": "^7.47.7",
     "@swc/core": "^1.7.22",
     "@types/eslint": "^8.56.12",

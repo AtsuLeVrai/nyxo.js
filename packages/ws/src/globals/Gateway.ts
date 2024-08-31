@@ -9,7 +9,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
 	private readonly connection: GatewayConnection;
 
-	public constructor(private readonly token: string, private readonly options: GatewayOptions) {
+	public constructor(
+		private readonly token: string,
+		private readonly options: GatewayOptions,
+	) {
 		super();
 		this.connection = new GatewayConnection(this, this.token, this.options);
 		this.shardManager = new ShardManager(this, this.token, this.options);
@@ -20,7 +23,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 		await this.shardManager.initialize();
 	}
 
-	public send<T extends keyof GatewaySendEvents>(op: T, data: GatewaySendEvents[T]): void {
+	public send<T extends keyof GatewaySendEvents>(
+		op: T,
+		data: GatewaySendEvents[T],
+	): void {
 		this.connection.send(op, data);
 	}
 

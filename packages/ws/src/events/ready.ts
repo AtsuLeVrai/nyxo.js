@@ -1,5 +1,9 @@
 import type { ApiVersions, Integer } from "@nyxjs/core";
-import type { ApplicationStructure, UnavailableGuildStructure, UserStructure } from "@nyxjs/rest";
+import type {
+	ApplicationStructure,
+	UnavailableGuildStructure,
+	UserStructure,
+} from "@nyxjs/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#ready-ready-event-fields}

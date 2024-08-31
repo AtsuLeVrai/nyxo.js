@@ -9,6 +9,7 @@
     },
     "lint": {},
     "lint:fix": {},
+    "biome:write": {},
     "clean": {},
     "test": {},
     "test:watch": {},

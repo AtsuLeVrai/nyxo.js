@@ -171,18 +171,18 @@ export type ApplicationStructure = {
 	 * Partial user object for the bot user associated with the app
 	 */
 	bot?: Pick<
-	UserStructure,
-	| "accent_color"
-	| "avatar_decoration_data"
-	| "avatar"
-	| "banner"
-	| "bot"
-	| "discriminator"
-	| "flags"
-	| "global_name"
-	| "id"
-	| "public_flags"
-	| "username"
+		UserStructure,
+		| "accent_color"
+		| "avatar_decoration_data"
+		| "avatar"
+		| "banner"
+		| "bot"
+		| "discriminator"
+		| "flags"
+		| "global_name"
+		| "id"
+		| "public_flags"
+		| "username"
 	>;
 	/**
 	 * When false, only the app owner can add the app to guilds
@@ -231,7 +231,10 @@ export type ApplicationStructure = {
 	/**
 	 * Default scopes and permissions for each supported installation context. Value for each key is an integration type configuration object
 	 */
-	integration_types_config?: Record<IntegrationTypes, ApplicationIntegrationTypeConfigurationStructure>;
+	integration_types_config?: Record<
+		IntegrationTypes,
+		ApplicationIntegrationTypeConfigurationStructure
+	>;
 	/**
 	 * Interactions endpoint URL for the app
 	 */
@@ -244,16 +247,16 @@ export type ApplicationStructure = {
 	 * Partial user object for the owner of the app
 	 */
 	owner?: Pick<
-	UserStructure,
-	| "accent_color"
-	| "avatar_decoration_data"
-	| "avatar"
-	| "banner"
-	| "discriminator"
-	| "flags"
-	| "global_name"
-	| "id"
-	| "public_flags"
+		UserStructure,
+		| "accent_color"
+		| "avatar_decoration_data"
+		| "avatar"
+		| "banner"
+		| "discriminator"
+		| "flags"
+		| "global_name"
+		| "id"
+		| "public_flags"
 	>;
 	/**
 	 * If this app is a game sold on Discord, this field will be the id of the "Game SKU" that is created, if exists

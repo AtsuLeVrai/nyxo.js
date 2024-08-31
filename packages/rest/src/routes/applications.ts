@@ -1,22 +1,25 @@
 import type { Snowflake } from "@nyxjs/core";
-import type { ApplicationRoleConnectionMetadataStructure, ApplicationStructure } from "../structures/applications";
+import type {
+	ApplicationRoleConnectionMetadataStructure,
+	ApplicationStructure,
+} from "../structures/applications";
 import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
  */
 export type EditCurrentApplicationJSONParams = Pick<
-ApplicationStructure,
-| "cover_image"
-| "custom_install_url"
-| "description"
-| "flags"
-| "icon"
-| "install_params"
-| "integration_types_config"
-| "interactions_endpoint_url"
-| "role_connections_verification_url"
-| "tags"
+	ApplicationStructure,
+	| "cover_image"
+	| "custom_install_url"
+	| "description"
+	| "flags"
+	| "icon"
+	| "install_params"
+	| "integration_types_config"
+	| "interactions_endpoint_url"
+	| "role_connections_verification_url"
+	| "tags"
 >;
 
 export const ApplicationsRoutes = {
@@ -43,7 +46,9 @@ export const ApplicationsRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
 	 */
-	editCurrentApplication: (json: EditCurrentApplicationJSONParams): RestRequestOptions<ApplicationStructure> => ({
+	editCurrentApplication: (
+		json: EditCurrentApplicationJSONParams,
+	): RestRequestOptions<ApplicationStructure> => ({
 		method: "PATCH",
 		path: "/applications/@me",
 		body: JSON.stringify(json),

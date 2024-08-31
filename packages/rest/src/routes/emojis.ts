@@ -1,4 +1,8 @@
-import type { DataUriSchema, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+import type {
+	DataUriSchema,
+	RestHttpResponseCodes,
+	Snowflake,
+} from "@nyxjs/core";
 import type { EmojiStructure } from "../structures/emojis";
 import type { RestRequestOptions } from "../types/globals";
 
@@ -95,14 +99,19 @@ export const EmojiRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/emoji#get-application-emoji}
 	 */
-	getApplicationEmoji: (applicationId: Snowflake, emojiId: Snowflake): RestRequestOptions<EmojiStructure> => ({
+	getApplicationEmoji: (
+		applicationId: Snowflake,
+		emojiId: Snowflake,
+	): RestRequestOptions<EmojiStructure> => ({
 		method: "GET",
 		path: `/applications/${applicationId}/emojis/${emojiId}`,
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/emoji#list-application-emojis}
 	 */
-	listApplicationEmojis: (applicationId: Snowflake): RestRequestOptions<{ items: EmojiStructure[]; }> => ({
+	listApplicationEmojis: (
+		applicationId: Snowflake,
+	): RestRequestOptions<{ items: EmojiStructure[] }> => ({
 		method: "GET",
 		path: `/applications/${applicationId}/emojis`,
 	}),
@@ -116,7 +125,7 @@ export const EmojiRoutes = {
 	): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
 		method: "DELETE",
 		path: `/guilds/${guildId}/emojis/${emojiId}`,
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji}
@@ -130,7 +139,7 @@ export const EmojiRoutes = {
 		method: "PATCH",
 		path: `/guilds/${guildId}/emojis/${emojiId}`,
 		body: JSON.stringify(json),
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji}
@@ -143,19 +152,24 @@ export const EmojiRoutes = {
 		method: "POST",
 		path: `/guilds/${guildId}/emojis`,
 		body: JSON.stringify(json),
-		headers: { ...reason && { "X-Audit-Log-Reason": reason } },
+		headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji}
 	 */
-	getGuildEmoji: (guildId: Snowflake, emojiId: Snowflake): RestRequestOptions<EmojiStructure> => ({
+	getGuildEmoji: (
+		guildId: Snowflake,
+		emojiId: Snowflake,
+	): RestRequestOptions<EmojiStructure> => ({
 		method: "GET",
 		path: `/guilds/${guildId}/emojis/${emojiId}`,
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
 	 */
-	listGuildEmojis: (guildId: Snowflake): RestRequestOptions<EmojiStructure[]> => ({
+	listGuildEmojis: (
+		guildId: Snowflake,
+	): RestRequestOptions<EmojiStructure[]> => ({
 		method: "GET",
 		path: `/guilds/${guildId}/emojis`,
 	}),

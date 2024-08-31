@@ -52,7 +52,7 @@ export const GatewayRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
 	 */
-	getGateway: (): RestRequestOptions<{ url: string; }> => ({
+	getGateway: (): RestRequestOptions<{ url: string }> => ({
 		method: "GET",
 		path: "/globals",
 	}),

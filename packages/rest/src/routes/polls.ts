@@ -31,7 +31,10 @@ export const PollRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
 	 */
-	endPoll: (channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> => ({
+	endPoll: (
+		channelId: Snowflake,
+		messageId: Snowflake,
+	): RestRequestOptions<MessageStructure> => ({
 		method: "DELETE",
 		path: `/channels/${channelId}/polls/${messageId}/expire`,
 	}),

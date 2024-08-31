@@ -1,5 +1,9 @@
 import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
-import type { ListSkuSubscriptionsQuery, SubscriptionStatus, SubscriptionStructure } from "@nyxjs/rest";
+import type {
+	ListSkuSubscriptionsQuery,
+	SubscriptionStatus,
+	SubscriptionStructure,
+} from "@nyxjs/rest";
 import { SubscriptionRoutes } from "@nyxjs/rest";
 import { Base } from "./base";
 import type { Client } from "./client";
@@ -23,18 +27,33 @@ export class Subscription extends Base<SubscriptionStructure> {
 
 	public userId!: Snowflake;
 
-	public constructor(private readonly client: Client, data: Partial<SubscriptionStructure>) {
+	public constructor(
+		private readonly client: Client,
+		data: Partial<SubscriptionStructure>,
+	) {
 		super(data);
 	}
 
-	public async get(skuId: Snowflake, subscriptionId: Snowflake): Promise<Subscription> {
-		const response = await this.client.rest.request(SubscriptionRoutes.getSkuSubscription(skuId, subscriptionId));
+	public async get(
+		skuId: Snowflake,
+		subscriptionId: Snowflake,
+	): Promise<Subscription> {
+		const response = await this.client.rest.request(
+			SubscriptionRoutes.getSkuSubscription(skuId, subscriptionId),
+		);
 		return new Subscription(this.client, response);
 	}
 
-	public async list(skuId: Snowflake, query?: ListSkuSubscriptionsQuery): Promise<Subscription[]> {
-		const response = await this.client.rest.request(SubscriptionRoutes.listSkuSubscriptions(skuId, query));
-		return response.map((subscription) => new Subscription(this.client, subscription));
+	public async list(
+		skuId: Snowflake,
+		query?: ListSkuSubscriptionsQuery,
+	): Promise<Subscription[]> {
+		const response = await this.client.rest.request(
+			SubscriptionRoutes.listSkuSubscriptions(skuId, query),
+		);
+		return response.map(
+			(subscription) => new Subscription(this.client, subscription),
+		);
 	}
 
 	public toJSON(): SubscriptionStructure {

@@ -151,11 +151,11 @@ export type SelectMenuStructure = {
 	 * Type of select menu component (text: 3, user: 5, role: 6, mentionable: 7, channels: 8)
 	 */
 	type:
-	| ComponentTypes.ChannelSelect
-	| ComponentTypes.MentionableSelect
-	| ComponentTypes.RoleSelect
-	| ComponentTypes.StringSelect
-	| ComponentTypes.UserSelect;
+		| ComponentTypes.ChannelSelect
+		| ComponentTypes.MentionableSelect
+		| ComponentTypes.RoleSelect
+		| ComponentTypes.StringSelect
+		| ComponentTypes.UserSelect;
 };
 
 /**
@@ -484,9 +484,9 @@ export type ApplicationCommandStructure = {
 
 export type ActionRowStructure<
 	T extends ButtonStructure | SelectMenuStructure | TextInputStructure =
-	| ButtonStructure
-	| SelectMenuStructure
-	| TextInputStructure
+		| ButtonStructure
+		| SelectMenuStructure
+		| TextInputStructure,
 > = {
 	/**
 	 * Components in the action row; max 5
@@ -680,13 +680,19 @@ export type ResolvedDataStructure = {
 	 * The ids and partial Channel objects
 	 */
 	channels?: Map<
-	Snowflake,
-	Pick<ChannelStructure, "id" | "name" | "parent_id" | "permissions" | "thread_metadata" | "type">
+		Snowflake,
+		Pick<
+			ChannelStructure,
+			"id" | "name" | "parent_id" | "permissions" | "thread_metadata" | "type"
+		>
 	>;
 	/**
 	 * The ids and partial Member objects
 	 */
-	members?: Map<Snowflake, Omit<GuildMemberStructure, "deaf" | "mute" | "user">>;
+	members?: Map<
+		Snowflake,
+		Omit<GuildMemberStructure, "deaf" | "mute" | "user">
+	>;
 	/**
 	 * The ids and partial Message objects
 	 */
@@ -832,11 +838,11 @@ export type InteractionStructure = {
 	 * Interaction data payload
 	 */
 	data?:
-	| ApplicationCommandDataStructure
-	| ApplicationCommandInteractionDataOptionStructure
-	| MessageComponentDataStructure
-	| ModalSubmitDataStructure
-	| ResolvedDataStructure;
+		| ApplicationCommandDataStructure
+		| ApplicationCommandInteractionDataOptionStructure
+		| MessageComponentDataStructure
+		| ModalSubmitDataStructure
+		| ResolvedDataStructure;
 	/**
 	 * For monetized apps, any entitlements for the invoking user, representing access to premium SKUs
 	 */

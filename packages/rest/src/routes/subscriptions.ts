@@ -28,7 +28,10 @@ export const SubscriptionRoutes = {
 	/**
 	 * @see {@link https://discord.com/developers/docs/resources/subscription#get-sku-subscription}
 	 */
-	getSkuSubscription: (skuId: Snowflake, subscriptionId: Snowflake): RestRequestOptions<SubscriptionStructure> => ({
+	getSkuSubscription: (
+		skuId: Snowflake,
+		subscriptionId: Snowflake,
+	): RestRequestOptions<SubscriptionStructure> => ({
 		method: "GET",
 		path: `/skus/${skuId}/subscriptions/${subscriptionId}`,
 	}),

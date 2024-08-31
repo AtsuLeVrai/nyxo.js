@@ -1,7 +1,10 @@
 import type { Snowflake } from "@nyxjs/core";
 import type { IntegrationTypes } from "./applications";
 import type { ChannelStructure } from "./channels";
-import type { GuildScheduledEventStructure, IntegrationStructure } from "./guilds";
+import type {
+	GuildScheduledEventStructure,
+	IntegrationStructure,
+} from "./guilds";
 import type { ApplicationCommandStructure } from "./interactions";
 import type { AutoModerationRuleStructure } from "./moderations";
 import type { UserStructure } from "./users";

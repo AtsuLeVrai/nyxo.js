@@ -1,5 +1,10 @@
 import type { Snowflake } from "@nyxjs/core";
-import type { MembershipState, TeamMemberRoles, TeamMemberStructure, TeamStructure } from "@nyxjs/rest";
+import type {
+	MembershipState,
+	TeamMemberRoles,
+	TeamMemberStructure,
+	TeamStructure,
+} from "@nyxjs/rest";
 import { Base } from "./base";
 import { User } from "./users";
 
@@ -10,7 +15,10 @@ export class TeamMember extends Base<TeamMemberStructure> {
 
 	public teamId!: Snowflake;
 
-	public user!: Pick<User, "avatar" | "discriminator" | "id" | "toJSON" | "username">;
+	public user!: Pick<
+		User,
+		"avatar" | "discriminator" | "id" | "toJSON" | "username"
+	>;
 
 	public constructor(data: Partial<TeamMemberStructure>) {
 		super(data);

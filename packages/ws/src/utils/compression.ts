@@ -3,7 +3,11 @@ import type { TextDecoder } from "node:util";
 import { decompress } from "@skhaz/zstd";
 import type { Inflate } from "minizlib";
 
-export async function decompressZlib(zlibInflate: Inflate, textDecoder: TextDecoder, data: Buffer): Promise<string> {
+export async function decompressZlib(
+	zlibInflate: Inflate,
+	textDecoder: TextDecoder,
+	data: Buffer,
+): Promise<string> {
 	return new Promise((resolve, reject) => {
 		let decompressedData = Buffer.alloc(0);
 
@@ -32,7 +36,10 @@ export async function decompressZlib(zlibInflate: Inflate, textDecoder: TextDeco
 	});
 }
 
-export async function decompressZstd(textDecoder: TextDecoder, data: Buffer): Promise<string> {
+export async function decompressZstd(
+	textDecoder: TextDecoder,
+	data: Buffer,
+): Promise<string> {
 	try {
 		const decompressedBuffer = await decompress(data);
 		return textDecoder.decode(decompressedBuffer);
