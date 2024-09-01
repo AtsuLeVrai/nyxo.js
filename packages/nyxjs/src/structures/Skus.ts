@@ -1,8 +1,8 @@
 import type { Snowflake } from "@nyxjs/core";
 import type { SkuFlags, SkuStructure, SkuTypes } from "@nyxjs/rest";
 import { SkuRoutes } from "@nyxjs/rest";
-import { Base } from "./base";
-import type { Client } from "./client";
+import { Base } from "./Base";
+import type { Client } from "./Client";
 
 export class Sku extends Base<SkuStructure> {
 	public applicationId!: Snowflake;

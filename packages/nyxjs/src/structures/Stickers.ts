@@ -6,8 +6,8 @@ import type {
 	StickerStructure,
 	StickerTypes,
 } from "@nyxjs/rest";
-import { Base } from "./base";
-import { User } from "./users";
+import { Base } from "./Base";
+import { User } from "./Users";
 
 export class Sticker extends Base<StickerStructure> {
 	public asset?: string;

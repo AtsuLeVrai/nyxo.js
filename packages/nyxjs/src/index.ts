@@ -1,15 +1,19 @@
 /**
  * ./structures
  */
-export * from "./structures/base";
-export * from "./structures/client";
-export * from "./structures/emojis";
-export * from "./structures/moderations";
-export * from "./structures/polls";
-export * from "./structures/roles";
-export * from "./structures/skus";
-export * from "./structures/stages";
-export * from "./structures/stickers";
-export * from "./structures/subscriptions";
-export * from "./structures/teams";
-export * from "./structures/users";
+export * from "./structures/guilds/GuildBan";
+export * from "./structures/guilds/GuildIntegration";
+export * from "./structures/guilds/GuildOnboarding";
+export * from "./structures/guilds/GuildWelcomeScreen";
+export * from "./structures/Base";
+export * from "./structures/Client";
+export * from "./structures/Emojis";
+export * from "./structures/Moderations";
+export * from "./structures/Polls";
+export * from "./structures/Roles";
+export * from "./structures/Skus";
+export * from "./structures/Stages";
+export * from "./structures/Stickers";
+export * from "./structures/Subscriptions";
+export * from "./structures/Teams";
+export * from "./structures/Users";

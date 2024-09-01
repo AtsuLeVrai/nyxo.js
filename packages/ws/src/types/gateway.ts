@@ -29,6 +29,29 @@ export type GatewayPayload = {
 	t: keyof GatewayReceiveEvents | null;
 };
 
+export enum CompressTypes {
+	/**
+	 * Transport compression using zlib-stream
+	 */
+	ZlibStream = "zlib-stream",
+	/**
+	 * Transport compression using zstd-stream
+	 * @deprecated Use `CompressTypes.ZlibStream` instead
+	 */
+	ZstdStream = "zstd-stream",
+}
+
+export enum EncodingTypes {
+	/**
+	 * Encoding type for Erlang Term Format (ETF)
+	 */
+	Etf = "etf",
+	/**
+	 * Encoding type for JSON
+	 */
+	Json = "json",
+}
+
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#connecting-gateway-url-query-string-params}
  */
@@ -36,11 +59,11 @@ export type GatewayOptions = {
 	/**
 	 * The optional transport compression of globals packets zlib-stream or zstd-stream
 	 */
-	compress?: "zlib-stream" | /** @deprecated */ "zstd-stream";
+	compress?: CompressTypes;
 	/**
 	 * The encoding of received globals packets json or etf
 	 */
-	encoding: "etf" | "json";
+	encoding: EncodingTypes;
 	/**
 	 * The intents for the globals connection.
 	 */
@@ -65,8 +88,25 @@ export type GatewayOptions = {
 };
 
 export type GatewayEvents = GatewayReceiveEvents & {
+	/**
+	 * Event triggered when the connection is closed.
+	 * @param code - The close code.
+	 * @param reason - The reason for the closure.
+	 */
 	close: [code: GatewayCloseCodes, reason: string];
+	/**
+	 * Event triggered for debugging messages.
+	 * @param message - The debug message.
+	 */
 	debug: [message: string];
+	/**
+	 * Event triggered when an error occurs.
+	 * @param error - The error object.
+	 */
 	error: [error: Error];
+	/**
+	 * Event triggered for warnings.
+	 * @param warning - The warning message.
+	 */
 	warn: [warning: string];
 };

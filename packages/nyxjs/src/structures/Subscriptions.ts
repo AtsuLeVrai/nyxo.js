@@ -5,8 +5,8 @@ import type {
 	SubscriptionStructure,
 } from "@nyxjs/rest";
 import { SubscriptionRoutes } from "@nyxjs/rest";
-import { Base } from "./base";
-import type { Client } from "./client";
+import { Base } from "./Base";
+import type { Client } from "./Client";
 
 export class Subscription extends Base<SubscriptionStructure> {
 	public canceledAt!: IsoO8601Timestamp | null;

@@ -2,8 +2,7 @@ import { EventEmitter } from "node:events";
 import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
-import type { GatewayOptions } from "@nyxjs/ws";
-import { Gateway } from "@nyxjs/ws";
+import { EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/ws";
 
 export const ClientEvents = {
 	applicationCommandPermissionsUpdate: [],
@@ -126,44 +125,30 @@ export type ClientOptions = {
 };
 
 export class Client extends EventEmitter<typeof ClientEvents> {
+	public ws: Gateway;
+	public rest: Rest;
+
 	public constructor(
 		public token: string,
 		private readonly options: ClientOptions,
 	) {
 		super();
-	}
-
-	private _ws?: Gateway;
-
-	public get ws(): Gateway {
-		if (!this._ws) {
-			this._ws = new Gateway(this.token, {
-				intents: this.calculateIntents(),
-				presence: this.options.presence,
-				shard: this.options.shard,
-				v: this.options.version,
-				compress: this.options.ws?.compress,
-				encoding: this.options.ws?.encoding ?? "etf",
-				large_threshold: this.options.ws?.large_threshold,
-			});
-		}
-
-		return this._ws;
-	}
-
-	private _rest?: Rest;
-
-	public get rest(): Rest {
-		if (!this._rest) {
-			this._rest = new Rest(this.token, {
-				version: this.options.version,
-				cache_life_time: this.options.rest?.cache_life_time,
-				user_agent: this.options.rest?.user_agent,
-				auth_type: this.options.rest?.auth_type,
-			});
-		}
-
-		return this._rest;
+		this.ws = new Gateway(this.token, {
+			intents: this.calculateIntents(),
+			presence: this.options.presence,
+			shard: this.options.shard,
+			v: this.options.version,
+			compress: this.options.ws?.compress,
+			encoding: this.options.ws?.encoding ?? EncodingTypes.Etf,
+			large_threshold: this.options.ws?.large_threshold,
+		});
+		this.rest = new Rest(this.token, {
+			version: this.options.version,
+			cache_life_time: this.options.rest?.cache_life_time,
+			user_agent: this.options.rest?.user_agent,
+			auth_type: this.options.rest?.auth_type,
+		});
+		void this.ws.connect();
 	}
 
 	private calculateIntents(): Integer {

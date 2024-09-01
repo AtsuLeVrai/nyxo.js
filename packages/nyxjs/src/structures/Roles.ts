@@ -1,6 +1,6 @@
 import type { Integer, Snowflake } from "@nyxjs/core";
 import type { RoleFlags, RoleStructure, RoleTagStructure } from "@nyxjs/rest";
-import { Base } from "./base";
+import { Base } from "./Base";
 
 export class RoleTags extends Base<RoleTagStructure> {
 	public availableForPurchase?: null;

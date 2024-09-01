@@ -1,60 +1,54 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "nyx.js",
-  "version": "1.0.0",
-  "description": "A powerful and easy-to-use Discord API wrapper for Node.js.",
-  "type": "commonjs",
-  "readme": "README.md",
-  "main": "./dist/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/src/index.d.ts",
-  "license": "AGPL-3.0-only",
-  "author": {
-    "name": "3tatsu",
-    "url": "https://github.com/3tatsu"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/3tatsu/nyx.js.git"
-  },
-  "scripts": {
-    "build": "pnpm run clean && tsup --experimental-dts --config tsup.config.ts",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "biome:write": "biome format --write src",
-    "clean": "rimraf dist",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
-  },
-  "files": [
-    "dist"
-  ],
-  "dependencies": {
-    "@nyxjs/cache": "workspace:*",
-    "@nyxjs/core": "workspace:*",
-    "@nyxjs/rest": "workspace:*",
-    "@nyxjs/ws": "workspace:*",
-    "eventemitter3": "^5.0.1",
-    "tslib": "^2.7.0"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.8.3",
-    "@microsoft/api-extractor": "^7.47.7",
-    "@swc/core": "^1.7.22",
-    "@types/eslint": "^8.56.12",
-    "@types/node": "^22.5.1",
-    "@types/ws": "^8.5.12",
-    "@vitest/coverage-v8": "^2.0.5",
-    "@vitest/ui": "^2.0.5",
-    "eslint": "^8.57.0",
-    "rimraf": "^6.0.1",
-    "tsup": "^8.2.4",
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
-  }
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "nyx.js",
+	"version": "1.0.0",
+	"description": "A powerful and easy-to-use Discord API wrapper for Node.js.",
+	"type": "commonjs",
+	"readme": "README.md",
+	"main": "./dist/index.js",
+	"module": "./dist/esm/index.js",
+	"types": "./dist/src/index.d.ts",
+	"license": "AGPL-3.0-only",
+	"author": {
+		"name": "3tatsu",
+		"url": "https://github.com/3tatsu"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/3tatsu/nyx.js.git"
+	},
+	"scripts": {
+		"build": "pnpm run clean && tsup --experimental-dts --config tsup.config.ts",
+		"biome:write": "biome format --write src",
+		"clean": "rimraf dist",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:ui": "vitest --ui",
+		"test:coverage": "vitest run --coverage"
+	},
+	"files": ["dist"],
+	"dependencies": {
+		"@nyxjs/cache": "workspace:*",
+		"@nyxjs/core": "workspace:*",
+		"@nyxjs/rest": "workspace:*",
+		"@nyxjs/ws": "workspace:*",
+		"eventemitter3": "^5.0.1",
+		"tslib": "^2.7.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"@microsoft/api-extractor": "^7.47.7",
+		"@swc/core": "^1.7.22",
+		"@types/node": "^22.5.1",
+		"@types/ws": "^8.5.12",
+		"@vitest/coverage-v8": "^2.0.5",
+		"@vitest/ui": "^2.0.5",
+		"rimraf": "^6.0.1",
+		"tsup": "^8.2.4",
+		"typescript": "^5.5.4",
+		"vitest": "^2.0.5"
+	}
 }

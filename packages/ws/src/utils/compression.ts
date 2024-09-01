@@ -1,12 +1,11 @@
 import type { Buffer } from "node:buffer";
-import { decompress } from "@mongodb-js/zstd";
 import { type Inflate, Z_SYNC_FLUSH } from "zlib-sync";
-import type { GatewayOptions } from "../types/gateway";
+import type { EncodingTypes } from "../types/gateway";
 import { decodeMessage } from "./encoding";
 
 export async function decompressZlib(
 	data: Buffer,
-	encoding: GatewayOptions["encoding"],
+	encoding: EncodingTypes,
 	zlibInflate: Inflate,
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -34,18 +33,4 @@ export async function decompressZlib(
 			);
 		}
 	});
-}
-
-export async function decompressZstd(
-	data: Buffer,
-	encoding: GatewayOptions["encoding"],
-): Promise<string> {
-	try {
-		const result = await decompress(data);
-		return decodeMessage(result, encoding);
-	} catch (error) {
-		throw new Error(
-			`Unexpected error during Zstd decompression: ${error instanceof Error ? error.message : String(error)}`,
-		);
-	}
 }

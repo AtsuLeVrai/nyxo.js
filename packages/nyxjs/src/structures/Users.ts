@@ -9,7 +9,7 @@ import type {
 	UserFlags,
 	UserStructure,
 } from "@nyxjs/rest";
-import { Base } from "./base";
+import { Base } from "./Base";
 
 export class ApplicationRoleConnection extends Base<ApplicationRoleConnectionStructure> {
 	// TODO: Implement ApplicationRoleConnectionMetadata

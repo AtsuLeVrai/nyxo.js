@@ -9,7 +9,7 @@ import type {
 	AutoModerationTriggerMetadataStructure,
 	AutoModerationTriggerTypes,
 } from "@nyxjs/rest";
-import { Base } from "./base";
+import { Base } from "./Base";
 
 export class AutoModerationActionMetadata extends Base<AutoModerationActionMetadataStructure> {
 	public channelId!: Snowflake;

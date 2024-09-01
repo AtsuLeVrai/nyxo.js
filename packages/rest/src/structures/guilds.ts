@@ -47,22 +47,8 @@ export type PromptOptionStructure = {
 	description: string | null;
 	/**
 	 * Emoji of the option
-	 *
-	 * @deprecated When creating or updating a prompt option, the emoji_id, emoji_name, and emoji_animated fields must be used instead of the emoji object.
 	 */
-	emoji?: EmojiStructure;
-	/**
-	 * Whether the emoji is animated
-	 */
-	emoji_animated?: boolean;
-	/**
-	 * Emoji ID of the option
-	 */
-	emoji_id?: Snowflake;
-	/**
-	 * Emoji name of the option
-	 */
-	emoji_name?: string;
+	emoji?: Pick<EmojiStructure, "id" | "name" | "animated">;
 	/**
 	 * ID of the prompt option
 	 */
@@ -235,7 +221,12 @@ export enum IntegrationExpireBehaviors {
 	Kick = 1,
 }
 
-type IntegrationTypes = "discord" | "guild_subscription" | "twitch" | "youtube";
+export enum IntegrationPlatformTypes {
+	Discord = "discord",
+	GuildSubscription = "guild_subscription",
+	Twitch = "twitch",
+	Youtube = "youtube",
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure}
@@ -300,7 +291,7 @@ export type IntegrationStructure = {
 	/**
 	 * Integration type
 	 */
-	type: IntegrationTypes;
+	type: IntegrationPlatformTypes;
 	/**
 	 * User for this integration
 	 */

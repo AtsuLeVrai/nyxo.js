@@ -1,7 +1,7 @@
 import process from "node:process";
 import {ApiVersions, GatewayIntents} from "@nyxjs/core";
 import {config} from "dotenv";
-import {Gateway} from "@nyxjs/ws";
+import {CompressTypes, EncodingTypes, Gateway} from "@nyxjs/ws";
 
 config();
 
@@ -12,8 +12,8 @@ if (!TOKEN) {
 
 const gateway = new Gateway(TOKEN, {
     v: ApiVersions.V10,
-    encoding: "etf",
-    compress: "zlib-stream",
+    encoding: EncodingTypes.Json,
+    compress: CompressTypes.ZlibStream,
     intents: GatewayIntents.Guilds | GatewayIntents.GuildMessages,
 });
 gateway.on("debug", console.log);

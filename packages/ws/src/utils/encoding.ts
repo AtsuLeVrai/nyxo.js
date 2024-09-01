@@ -1,10 +1,10 @@
 import { Buffer } from "node:buffer";
 import { pack, unpack } from "erlpack";
-import type { GatewayOptions } from "../types/gateway";
+import type { EncodingTypes } from "../types/gateway";
 
 export function decodeMessage(
 	data: string | Buffer,
-	encoding: GatewayOptions["encoding"],
+	encoding: EncodingTypes,
 ): any {
 	if (encoding === "json") {
 		if (Buffer.isBuffer(data)) {
@@ -21,7 +21,7 @@ export function decodeMessage(
 
 export function encodeMessage(
 	data: any,
-	encoding: GatewayOptions["encoding"],
+	encoding: EncodingTypes,
 ): Buffer | string {
 	if (encoding === "json") {
 		return JSON.stringify(data);

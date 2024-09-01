@@ -1,29 +1,27 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/monorepo",
-  "packageManager": "pnpm@9.9.0",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "lint:fix": "turbo run lint:fix",
-    "biome:write": "turbo run biome:write",
-    "clean": "turbo run clean --force",
-    "test": "turbo run test",
-    "test:watch": "turbo run test:watch",
-    "test:ui": "turbo run test:ui",
-    "test:coverage": "turbo run test:coverage",
-    "prepare": "husky",
-    "changeset": "changeset",
-    "changeset:version": "changeset version"
-  },
-  "devDependencies": {
-    "@changesets/cli": "^2.27.7",
-    "husky": "^9.1.5",
-    "turbo": "^2.1.1",
-    "typescript": "^5.5.4"
-  },
-  "engines": {
-    "node": ">=18"
-  }
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "@nyxjs/monorepo",
+	"packageManager": "pnpm@9.9.0",
+	"private": true,
+	"scripts": {
+		"build": "turbo run build",
+		"biome:write": "turbo run biome:write",
+		"clean": "turbo run clean --force",
+		"test": "turbo run test",
+		"test:watch": "turbo run test:watch",
+		"test:ui": "turbo run test:ui",
+		"test:coverage": "turbo run test:coverage",
+		"prepare": "husky",
+		"changeset": "changeset",
+		"changeset:version": "changeset version"
+	},
+	"devDependencies": {
+		"@changesets/cli": "^2.27.7",
+		"husky": "^9.1.5",
+		"turbo": "^2.1.1",
+		"typescript": "^5.5.4"
+	},
+	"engines": {
+		"node": ">=18"
+	}
 }

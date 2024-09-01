@@ -6,7 +6,6 @@ import {
 	setTimeout,
 } from "node:timers";
 import { URL } from "node:url";
-import { TextDecoder } from "node:util";
 import type { GatewayCloseCodes, Integer } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
 import WebSocket from "ws";
@@ -16,7 +15,7 @@ import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
 import type { GatewaySendEvents } from "../types/events";
 import type { GatewayOptions, GatewayPayload } from "../types/gateway";
-import { decompressZlib, decompressZstd } from "../utils/compression";
+import { decompressZlib } from "../utils/compression";
 import { decodeMessage, encodeMessage } from "../utils/encoding";
 import type { Gateway } from "./Gateway";
 
@@ -39,8 +38,6 @@ export class GatewayConnection {
 
 	private readonly zlibInflate: Inflate;
 
-	private readonly textDecoder: TextDecoder;
-
 	public constructor(
 		private readonly gateway: Gateway,
 		private readonly token: string,
@@ -53,7 +50,6 @@ export class GatewayConnection {
 		this.sessionId = null;
 		this.resumeGatewayUrl = null;
 		this.zlibInflate = new Inflate(ZlibInflateOptions);
-		this.textDecoder = new TextDecoder();
 	}
 
 	private get wsUrl(): string {
@@ -149,7 +145,10 @@ export class GatewayConnection {
 					this.zlibInflate,
 				);
 			} else if (this.options.compress === "zstd-stream") {
-				decompressedData = await decompressZstd(data, this.options.encoding);
+				/**
+				 * Node.js does not support Zstd compression, so we throw an error.
+				 */
+				throw new Error("Zstd compression is not supported with node.js...");
 			} else {
 				decompressedData = decodeMessage(
 					decompressedData,

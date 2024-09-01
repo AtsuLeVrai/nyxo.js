@@ -1,6 +1,6 @@
 import type { Snowflake } from "@nyxjs/core";
 import type { StageInstanceStructure, StagePrivacyLevels } from "@nyxjs/rest";
-import { Base } from "./base";
+import { Base } from "./Base";
 
 export class StageInstance extends Base<StageInstanceStructure> {
 	public channelId!: Snowflake;

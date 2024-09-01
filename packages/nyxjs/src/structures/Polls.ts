@@ -8,8 +8,8 @@ import type {
 	PollResultsStructure,
 	PollStructure,
 } from "@nyxjs/rest";
-import { Base } from "./base";
-import { Emoji } from "./emojis";
+import { Base } from "./Base";
+import { Emoji } from "./Emojis";
 
 export class PollAnswerCount extends Base<PollAnswerCountStructure> {
 	public count!: Integer;

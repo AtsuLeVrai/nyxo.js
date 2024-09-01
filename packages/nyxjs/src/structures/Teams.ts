@@ -5,8 +5,8 @@ import type {
 	TeamMemberStructure,
 	TeamStructure,
 } from "@nyxjs/rest";
-import { Base } from "./base";
-import { User } from "./users";
+import { Base } from "./Base";
+import { User } from "./Users";
 
 export class TeamMember extends Base<TeamMemberStructure> {
 	public membershipState!: MembershipState;

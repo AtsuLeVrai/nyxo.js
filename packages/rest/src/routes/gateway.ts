@@ -48,6 +48,7 @@ export const GatewayRoutes = {
 	getGatewayBot: (): RestRequestOptions<GetGatewayBotResponse> => ({
 		method: "GET",
 		path: "/gateway/bot",
+		disableCache: true,
 	}),
 	/**
 	 * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
