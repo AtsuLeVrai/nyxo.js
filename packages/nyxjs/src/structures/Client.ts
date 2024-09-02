@@ -152,6 +152,9 @@ export class Client extends EventEmitter<typeof ClientEvents> {
 			user_agent: this.options.rest?.user_agent,
 			auth_type: this.options.rest?.auth_type,
 		});
+	}
+
+	public connect(): void {
 		void this.ws.connect();
 	}
 

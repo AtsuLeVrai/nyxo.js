@@ -74,7 +74,7 @@ export type ApplicationRoleConnectionMetadataStructure = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#install-params-object-install-params-structure}
  */
-export type ApplicationInstallParams = {
+export type ApplicationInstallParamStructure = {
 	/**
 	 * Permissions to request for the bot role
 	 */
@@ -138,7 +138,7 @@ export type ApplicationIntegrationTypeConfigurationStructure = {
 	/**
 	 * Install params for each installation context's default in-app authorization link
 	 */
-	oauth2_install_params: ApplicationInstallParams;
+	oauth2_install_params: ApplicationInstallParamStructure;
 };
 
 /**
@@ -227,7 +227,7 @@ export type ApplicationStructure = {
 	/**
 	 * Settings for the app's default in-app authorization link, if enabled
 	 */
-	install_params?: ApplicationInstallParams;
+	install_params?: ApplicationInstallParamStructure;
 	/**
 	 * Default scopes and permissions for each supported installation context. Value for each key is an integration type configuration object
 	 */

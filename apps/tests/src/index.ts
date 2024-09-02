@@ -19,3 +19,5 @@ client.on("ready", () => {
 client.on("interactionCreate", (interaction) => {
 	console.log(interaction);
 });
+
+client.connect();

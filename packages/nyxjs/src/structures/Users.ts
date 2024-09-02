@@ -10,6 +10,7 @@ import type {
 	UserStructure,
 } from "@nyxjs/rest";
 import { Base } from "./Base";
+import type { Integration } from "./Guilds";
 
 export class ApplicationRoleConnection extends Base<ApplicationRoleConnectionStructure> {
 	// TODO: Implement ApplicationRoleConnectionMetadata
@@ -29,8 +30,7 @@ export class Connection extends Base<ConnectionStructure> {
 
 	public id!: string;
 
-	// TODO: Implement integrations
-	public integrations?: Partial<any>[];
+	public integrations?: Partial<Integration>[];
 
 	public name!: string;
 
