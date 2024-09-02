@@ -1,26 +1,21 @@
-import process from "node:process";
-import {ApiVersions, GatewayIntents} from "@nyxjs/core";
+import {ApiVersions, Client, GatewayIntents} from "nyx.js";
 import {config} from "dotenv";
-import {CompressTypes, EncodingTypes, Gateway} from "@nyxjs/ws";
 
 config();
 
-const TOKEN = process.env.DISCORD_TOKEN;
-if (!TOKEN) {
-    throw new Error("DISCORD_TOKEN is not set in the environment variables.");
+if (!process.env.DISCORD_TOKEN) {
+    throw new Error("No discord token provided");
 }
 
-const gateway = new Gateway(TOKEN, {
-    v: ApiVersions.V10,
-    encoding: EncodingTypes.Json,
-    compress: CompressTypes.ZlibStream,
-    intents: GatewayIntents.Guilds | GatewayIntents.GuildMessages,
-});
-gateway.on("debug", console.log);
-gateway.on("error", console.error);
-gateway.on("warn", console.log);
-gateway.on("READY", (data) => {
-    console.log("READY", data);
+const client = new Client(process.env.DISCORD_TOKEN, {
+    intents: [GatewayIntents.Guilds],
+    version: ApiVersions.V10,
 });
 
-void gateway.connect();
+client.on("ready", () => {
+    console.log("Ready");
+})
+
+client.on("interactionCreate", (interaction) => {
+    console.log(interaction);
+})

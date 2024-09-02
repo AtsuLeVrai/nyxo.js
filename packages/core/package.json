@@ -7,7 +7,7 @@
 	"readme": "README.md",
 	"main": "./dist/index.js",
 	"module": "./dist/esm/index.js",
-	"types": "./dist/src/index.d.ts",
+	"types": "./dist/index.d.ts",
 	"license": "AGPL-3.0-only",
 	"author": {
 		"name": "3tatsu",
@@ -21,7 +21,7 @@
 		"url": "https://github.com/3tatsu/nyx.js.git"
 	},
 	"scripts": {
-		"build": "pnpm run clean && tsup --experimental-dts --config tsup.config.ts",
+		"build": "pnpm run clean && tsup --config tsup.config.ts",
 		"biome:write": "biome format --write src",
 		"clean": "rimraf dist",
 		"clean:all": "rimraf dist node_modules",
@@ -38,7 +38,7 @@
 		"@biomejs/biome": "1.8.3",
 		"@microsoft/api-extractor": "^7.47.7",
 		"@swc/core": "^1.7.22",
-		"@types/node": "^22.5.1",
+		"@types/node": "^22.5.2",
 		"@vitest/coverage-v8": "^2.0.5",
 		"@vitest/ui": "^2.0.5",
 		"rimraf": "^6.0.1",

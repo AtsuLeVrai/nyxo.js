@@ -9,4 +9,5 @@ export default defineConfig({
 	sourcemap: true,
 	clean: true,
 	legacyOutput: true,
+	onSuccess: "tsc --emitDeclarationOnly --declaration",
 });

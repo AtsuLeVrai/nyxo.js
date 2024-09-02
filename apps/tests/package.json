@@ -10,10 +10,7 @@
     "lint:fix": "eslint src --ext .ts --fix"
   },
   "dependencies": {
-    "@nyxjs/cache": "workspace:*",
-    "@nyxjs/core": "workspace:*",
-    "@nyxjs/rest": "workspace:*",
-    "@nyxjs/ws": "workspace:*",
+    "nyx.js": "workspace:*",
     "tslib": "^2.7.0"
   },
   "devDependencies": {

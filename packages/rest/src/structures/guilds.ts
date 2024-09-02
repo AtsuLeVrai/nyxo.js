@@ -1042,7 +1042,7 @@ export type GuildScheduledEventUserStructure = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-metadata}
  */
-export type GuildScheduledEventEntityMetadata = {
+export type GuildScheduledEventEntityMetadataStructure = {
 	/**
 	 * Location of the event (1-100 characters)
 	 */
@@ -1105,7 +1105,7 @@ export type GuildScheduledEventStructure = {
 	/**
 	 * Additional metadata for the guild scheduled event
 	 */
-	entity_metadata?: GuildScheduledEventEntityMetadata;
+	entity_metadata?: GuildScheduledEventEntityMetadataStructure;
 	/**
 	 * The type of the scheduled event
 	 */

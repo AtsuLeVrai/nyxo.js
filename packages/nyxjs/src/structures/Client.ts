@@ -1,8 +1,8 @@
-import { EventEmitter } from "node:events";
 import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
 import { EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/ws";
+import { EventEmitter } from "eventemitter3";
 
 export const ClientEvents = {
 	applicationCommandPermissionsUpdate: [],
@@ -118,10 +118,14 @@ export const ClientEvents = {
 export type ClientOptions = {
 	intents: GatewayIntents[];
 	presence?: GatewayOptions["presence"];
-	rest?: Pick<RestOptions, "auth_type" | "cache_life_time" | "user_agent">;
+	rest?: Partial<
+		Pick<RestOptions, "auth_type" | "cache_life_time" | "user_agent">
+	>;
 	shard?: GatewayOptions["shard"];
 	version: ApiVersions;
-	ws?: Pick<GatewayOptions, "compress" | "encoding" | "large_threshold">;
+	ws?: Partial<
+		Pick<GatewayOptions, "compress" | "encoding" | "large_threshold">
+	>;
 };
 
 export class Client extends EventEmitter<typeof ClientEvents> {
@@ -158,3 +162,5 @@ export class Client extends EventEmitter<typeof ClientEvents> {
 		);
 	}
 }
+
+export { GatewayIntents, ApiVersions } from "@nyxjs/core";
