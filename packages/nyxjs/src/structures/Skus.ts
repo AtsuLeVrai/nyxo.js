@@ -24,48 +24,11 @@ export class Sku extends Base<SkuStructure> {
 		super(data);
 	}
 
-	public toJSON(): SkuStructure {
-		return {
-			application_id: this.applicationId,
-			id: this.id,
-			name: this.name,
-			slug: this.slug,
-			type: this.type,
-			flags: this.flags,
-		};
-	}
-
 	public async list(): Promise<readonly Sku[]> {
 		const skus = await this.client.rest.request(
 			SkuRoutes.listSkus(this.applicationId),
 		);
 		return skus.map((sku) => new Sku(this.client, sku));
-	}
-
-	protected patch(data: Partial<SkuStructure>): void {
-		if (data.application_id !== undefined) {
-			this.applicationId = data.application_id;
-		}
-
-		if (data.id !== undefined) {
-			this.id = data.id;
-		}
-
-		if (data.name !== undefined) {
-			this.name = data.name;
-		}
-
-		if (data.slug !== undefined) {
-			this.slug = data.slug;
-		}
-
-		if (data.type !== undefined) {
-			this.type = data.type;
-		}
-
-		if (data.flags !== undefined) {
-			this.flags = data.flags;
-		}
 	}
 }
 
