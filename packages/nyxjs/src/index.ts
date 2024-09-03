@@ -3,6 +3,7 @@
  */
 export * from "./structures/Applications";
 export * from "./structures/Base";
+export * from "./structures/Channels";
 export * from "./structures/Client";
 export * from "./structures/Emojis";
 export * from "./structures/Guilds";

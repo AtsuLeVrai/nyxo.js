@@ -10,21 +10,13 @@ import type { Client } from "./Client";
 
 export class Subscription extends Base<SubscriptionStructure> {
 	public canceledAt!: IsoO8601Timestamp | null;
-
 	public country?: string;
-
 	public currentPeriodEnd!: IsoO8601Timestamp;
-
 	public currentPeriodStart!: IsoO8601Timestamp;
-
 	public entitlementIds!: Snowflake[];
-
 	public id!: Snowflake;
-
 	public skuIds!: Snowflake[];
-
 	public status!: SubscriptionStatus;
-
 	public userId!: Snowflake;
 
 	public constructor(
@@ -54,6 +46,22 @@ export class Subscription extends Base<SubscriptionStructure> {
 		return response.map(
 			(subscription) => new Subscription(this.client, subscription),
 		);
+	}
+
+	protected patch(data: Partial<SubscriptionStructure>): void {
+		this.canceledAt = data.canceled_at ?? this.canceledAt;
+		this.currentPeriodEnd = data.current_period_end ?? this.currentPeriodEnd;
+		this.currentPeriodStart =
+			data.current_period_start ?? this.currentPeriodStart;
+		this.entitlementIds = data.entitlement_ids ?? this.entitlementIds;
+		this.id = data.id ?? this.id;
+		this.skuIds = data.sku_ids ?? this.skuIds;
+		this.status = data.status ?? this.status;
+		this.userId = data.user_id ?? this.userId;
+
+		if ("country" in data) {
+			this.country = data.country;
+		}
 	}
 }
 

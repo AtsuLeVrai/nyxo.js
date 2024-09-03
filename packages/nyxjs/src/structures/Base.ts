@@ -29,28 +29,5 @@ export abstract class Base<T extends object> {
 		return result as T;
 	}
 
-	protected patch(data: Partial<T>): void {
-		for (const [key, value] of Object.entries(data)) {
-			if (value !== undefined && key in this) {
-				const thisKey = key as keyof this;
-				if (this[thisKey] instanceof Base) {
-					(this[thisKey] as Base<any>).patch(value as any);
-				} else if (Array.isArray(value) && Array.isArray(this[thisKey])) {
-					(this[thisKey] as any[]) = value.map((item, index) => {
-						const currentItem = (this[thisKey] as any[])[index];
-						return currentItem instanceof Base
-							? Base.from.call(
-									currentItem.constructor as new (
-										data: Partial<any>,
-									) => Base<any>,
-									item,
-								)
-							: item;
-					});
-				} else {
-					(this[thisKey] as any) = value;
-				}
-			}
-		}
-	}
+	protected abstract patch(data: Partial<T>): void;
 }
