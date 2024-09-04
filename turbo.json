@@ -1,15 +1,20 @@
 {
-	"$schema": "https://turbo.build/schema.json",
-	"ui": "tui",
-	"tasks": {
-		"build": {
-			"dependsOn": ["^build"]
-		},
-		"biome:write": {},
-		"clean": {},
-		"test": {},
-		"test:watch": {},
-		"test:ui": {},
-		"test:coverage": {}
-	}
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "biome:write": {},
+    "lint": {},
+    "lint:fix": {},
+    "pretty": {},
+    "clean": {},
+    "test": {},
+    "test:watch": {},
+    "test:ui": {},
+    "test:coverage": {}
+  }
 }

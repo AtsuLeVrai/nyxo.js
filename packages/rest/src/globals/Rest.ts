@@ -3,149 +3,118 @@ import { Cache } from "@nyxjs/cache";
 import { RestHttpResponseCodes } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool, RetryAgent } from "undici";
-import type {
-	RestEvents,
-	RestOptions,
-	RestRequestOptions,
-} from "../types/globals";
+import type { RestEvents, RestOptions, RestRequestOptions } from "../types/globals";
 import { API_BASE_URL, DEFAULT_REST_OPTIONS } from "../utils/constants";
 import { RateLimiter } from "./RateLimiter";
 import { RestRequestHandler } from "./RestRequestHandler";
 
 export class Rest extends EventEmitter<RestEvents> {
-	private readonly pool: Pool;
+    private readonly pool: Pool;
 
-	private readonly retryAgent: RetryAgent;
+    private readonly retryAgent: RetryAgent;
 
-	private readonly cache: Cache<string, { data: any; expiry: number }>;
+    private readonly cache: Cache<string, { data: any; expiry: number }>;
 
-	private readonly requestHandler: RestRequestHandler;
+    private readonly requestHandler: RestRequestHandler;
 
-	private readonly rateLimiter: RateLimiter;
+    private readonly rateLimiter: RateLimiter;
 
-	public constructor(
-		private token: string,
-		private readonly options: RestOptions = {},
-	) {
-		super();
-		this.options = {
-			...DEFAULT_REST_OPTIONS,
-			...options,
-		};
-		this.emit(
-			"debug",
-			`[REST] Initializing Rest with options: ${JSON.stringify(this.options)}`,
-		);
+    public constructor(
+        private token: string,
+        private readonly options: RestOptions = {}
+    ) {
+        super();
+        this.options = {
+            ...DEFAULT_REST_OPTIONS,
+            ...options,
+        };
+        this.emit("debug", `[REST] Initializing Rest with options: ${JSON.stringify(this.options)}`);
 
-		this.cache = new Cache<string, { data: any; expiry: number }>();
-		this.rateLimiter = new RateLimiter();
+        this.cache = new Cache<string, { data: any; expiry: number }>();
+        this.rateLimiter = new RateLimiter();
 
-		try {
-			this.pool = this.createPool();
-			this.retryAgent = this.createRetryAgent();
-			this.requestHandler = new RestRequestHandler(
-				this.token,
-				this,
-				this.retryAgent,
-				this.cache,
-				this.options,
-			);
-		} catch (error) {
-			if (error instanceof Error) {
-				this.emit(
-					"error",
-					new Error(`[REST] Error during initialization: ${error.message}`),
-				);
-			}
+        try {
+            this.pool = this.createPool();
+            this.retryAgent = this.createRetryAgent();
+            this.requestHandler = new RestRequestHandler(this.token, this, this.retryAgent, this.cache, this.options);
+        } catch (error) {
+            if (error instanceof Error) {
+                this.emit("error", new Error(`[REST] Error during initialization: ${error.message}`));
+            }
 
-			throw error;
-		}
-	}
+            throw error;
+        }
+    }
 
-	public async request<T>(options: RestRequestOptions<T>): Promise<T> {
-		try {
-			await this.rateLimiter.wait(options.path);
-			return await this.requestHandler.handle(options);
-		} catch (error) {
-			if (error instanceof Error) {
-				this.emit(
-					"error",
-					new Error(`[REST] Error during request: ${error.message}`),
-				);
-			}
+    public async request<T>(options: RestRequestOptions<T>): Promise<T> {
+        try {
+            await this.rateLimiter.wait(options.path);
+            return await this.requestHandler.handle(options);
+        } catch (error) {
+            if (error instanceof Error) {
+                this.emit("error", new Error(`[REST] Error during request: ${error.message}`));
+            }
 
-			throw error;
-		}
-	}
+            throw error;
+        }
+    }
 
-	public destroy(): void {
-		void this.pool.destroy();
-		this.cache.clear();
-		this.emit("debug", "[REST] Rest instance destroyed");
-	}
+    public destroy(): void {
+        void this.pool.destroy();
+        this.cache.clear();
+        this.emit("debug", "[REST] Rest instance destroyed");
+    }
 
-	public setToken(token: string): void {
-		this.token = token;
-		this.requestHandler.updateToken(token);
-		this.emit("debug", "[REST] Token updated");
-	}
+    public setToken(token: string): void {
+        this.token = token;
+        this.requestHandler.updateToken(token);
+        this.emit("debug", "[REST] Token updated");
+    }
 
-	public setOption<K extends keyof RestOptions>(
-		key: K,
-		value: RestOptions[K],
-	): void {
-		this.options[key] = value;
-		if (key === "auth_type" || key === "user_agent") {
-			this.options[key] = value;
-		}
+    public setOption<K extends keyof RestOptions>(key: K, value: RestOptions[K]): void {
+        this.options[key] = value;
+        if (key === "auth_type" || key === "user_agent") {
+            this.options[key] = value;
+        }
 
-		this.emit("debug", `[REST] Option ${key} updated`);
-	}
+        this.emit("debug", `[REST] Option ${key} updated`);
+    }
 
-	private createPool(): Pool {
-		const baseUrl = new URL(API_BASE_URL);
-		const protocol = baseUrl.protocol;
-		const hostname = baseUrl.hostname;
-		const port = baseUrl.port || (protocol === "https:" ? "443" : "80");
-		const origin = `${protocol}//${hostname}:${port}`;
+    private createPool(): Pool {
+        const baseUrl = new URL(API_BASE_URL);
+        const protocol = baseUrl.protocol;
+        const hostname = baseUrl.hostname;
+        const port = baseUrl.port || (protocol === "https:" ? "443" : "80");
+        const origin = `${protocol}//${hostname}:${port}`;
 
-		this.emit(
-			"debug",
-			`[REST] Creating pool with origin: ${origin}, base URL: ${baseUrl.origin}`,
-		);
+        this.emit("debug", `[REST] Creating pool with origin: ${origin}, base URL: ${baseUrl.origin}`);
 
-		try {
-			return new Pool(origin, {
-				connections: 100,
-				pipelining: 10,
-				keepAliveTimeout: 30_000,
-				keepAliveMaxTimeout: 30_000,
-				allowH2: true,
-			});
-		} catch (error) {
-			if (error instanceof Error) {
-				this.emit(
-					"error",
-					new Error(`[REST] Error creating Pool: ${error.message}`),
-				);
-			}
+        try {
+            return new Pool(origin, {
+                connections: 100,
+                pipelining: 10,
+                keepAliveTimeout: 30_000,
+                keepAliveMaxTimeout: 30_000,
+                allowH2: true,
+            });
+        } catch (error) {
+            if (error instanceof Error) {
+                this.emit("error", new Error(`[REST] Error creating Pool: ${error.message}`));
+            }
 
-			throw error;
-		}
-	}
+            throw error;
+        }
+    }
 
-	private createRetryAgent(): RetryAgent {
-		return new RetryAgent(this.pool, {
-			retryAfter: true,
-			statusCodes: [
-				RestHttpResponseCodes.GatewayUnavailable,
-				RestHttpResponseCodes.TooManyRequests,
-			],
-			maxRetries: 3,
-			retry: (error) => {
-				this.emit("error", new Error(`[REST] ${error.message}`));
-				return null;
-			},
-		});
-	}
+    private createRetryAgent(): RetryAgent {
+        return new RetryAgent(this.pool, {
+            retryAfter: true,
+            statusCodes: [RestHttpResponseCodes.GatewayUnavailable, RestHttpResponseCodes.TooManyRequests],
+            maxRetries: 3,
+            retry: (error) => {
+                this.emit("error", new Error(`[REST] ${error.message}`));
+                return null;
+            },
+        });
+    }
 }

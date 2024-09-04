@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/eslint-config",
+  "private": true,
+  "files": [
+    "node.js"
+  ],
+  "devDependencies": {
+    "@types/eslint": "^8.56.12",
+    "eslint": "^8.57.0",
+    "eslint-config-neon": "^0.1.62"
+  }
+}

@@ -8,7 +8,7 @@ if (!process.env.DISCORD_TOKEN) {
 }
 
 const client = new Client(process.env.DISCORD_TOKEN, {
-	intents: [GatewayIntents.Guilds],
+	intents: [GatewayIntents.GuildWebhooks],
 	version: ApiVersions.V10,
 });
 

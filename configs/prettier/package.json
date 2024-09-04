@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/prettier-config",
+  "private": true,
+  "files": [
+    "node.js"
+  ]
+}

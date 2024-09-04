@@ -4,10 +4,7 @@
 	"private": true,
 	"scripts": {
 		"start": "ts-node-dev --respawn --transpile-only src/index.ts",
-		"start:dev": "nodemon --exec ts-node src/index.ts",
-		"build": "tsc",
-		"lint": "eslint src --ext .ts",
-		"lint:fix": "eslint src --ext .ts --fix"
+		"start:dev": "nodemon --exec ts-node src/index.ts"
 	},
 	"dependencies": {
 		"nyx.js": "workspace:*",
