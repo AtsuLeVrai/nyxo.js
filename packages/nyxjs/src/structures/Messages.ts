@@ -4,15 +4,6 @@ import type {
     AttachmentStructure,
     ChannelMentionStructure,
     ChannelTypes,
-    EmbedAuthorStructure,
-    EmbedFieldStructure,
-    EmbedFooterStructure,
-    EmbedImageStructure,
-    EmbedProviderStructure,
-    EmbedStructure,
-    EmbedThumbnailStructure,
-    EmbedTypes,
-    EmbedVideoStructure,
     InteractionTypes,
     MessageActivityStructure,
     MessageActivityTypes,
@@ -29,9 +20,11 @@ import type {
     RoleSubscriptionDataStructure,
 } from "@nyxjs/api-types";
 import type { DiscordHeaders, Float, Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+import type { PickWithPublicMethods } from "../utils";
 import { Application } from "./Applications";
 import { Base } from "./Base";
 import { ThreadChannel } from "./Channels";
+import { Embed } from "./Embed";
 import { Emoji } from "./Emojis";
 import { ActionRow, MessageInteraction, ResolvedData } from "./Interactions";
 import { Poll } from "./Polls";
@@ -47,15 +40,26 @@ export class RoleSubscriptionData extends Base<RoleSubscriptionDataStructure> {
 
     public totalMonthsSubscribed!: Integer;
 
-    public constructor(data: Partial<RoleSubscriptionDataStructure>) {
+    public constructor(data: Readonly<Partial<RoleSubscriptionDataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<RoleSubscriptionDataStructure>): void {
-        this.isRenewal = data.is_renewal ?? this.isRenewal;
-        this.roleSubscriptionListingId = data.role_subscription_listing_id ?? this.roleSubscriptionListingId;
-        this.tierName = data.tier_name ?? this.tierName;
-        this.totalMonthsSubscribed = data.total_months_subscribed ?? this.totalMonthsSubscribed;
+    protected patch(data: Readonly<Partial<RoleSubscriptionDataStructure>>): void {
+        if (data.is_renewal !== undefined) {
+            this.isRenewal = data.is_renewal;
+        }
+
+        if (data.role_subscription_listing_id !== undefined) {
+            this.roleSubscriptionListingId = data.role_subscription_listing_id;
+        }
+
+        if (data.tier_name !== undefined) {
+            this.tierName = data.tier_name;
+        }
+
+        if (data.total_months_subscribed !== undefined) {
+            this.totalMonthsSubscribed = data.total_months_subscribed;
+        }
     }
 }
 
@@ -68,15 +72,26 @@ export class AllowedMentions extends Base<AllowedMentionsStructure> {
 
     public users!: Snowflake[];
 
-    public constructor(data: Partial<AllowedMentionsStructure>) {
+    public constructor(data: Readonly<Partial<AllowedMentionsStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<AllowedMentionsStructure>): void {
-        this.parse = data.parse ?? this.parse;
-        this.repliedUser = data.replied_user ?? this.repliedUser;
-        this.roles = data.roles ?? this.roles;
-        this.users = data.users ?? this.users;
+    protected patch(data: Readonly<Partial<AllowedMentionsStructure>>): void {
+        if (data.parse !== undefined) {
+            this.parse = data.parse;
+        }
+
+        if (data.replied_user !== undefined) {
+            this.repliedUser = data.replied_user;
+        }
+
+        if (data.roles !== undefined) {
+            this.roles = data.roles;
+        }
+
+        if (data.users !== undefined) {
+            this.users = data.users;
+        }
     }
 }
 
@@ -89,15 +104,26 @@ export class ChannelMention extends Base<ChannelMentionStructure> {
 
     public type!: ChannelTypes;
 
-    public constructor(data: Partial<ChannelMentionStructure>) {
+    public constructor(data: Readonly<Partial<ChannelMentionStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ChannelMentionStructure>): void {
-        this.guildId = data.guild_id ?? this.guildId;
-        this.id = data.id ?? this.id;
-        this.name = data.name ?? this.name;
-        this.type = data.type ?? this.type;
+    protected patch(data: Readonly<Partial<ChannelMentionStructure>>): void {
+        if (data.guild_id !== undefined) {
+            this.guildId = data.guild_id;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
@@ -130,324 +156,101 @@ export class Attachment extends Base<AttachmentStructure> {
 
     public width?: Integer | null;
 
-    public constructor(data: Partial<AttachmentStructure>) {
+    public constructor(data: Readonly<Partial<AttachmentStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<AttachmentStructure>): void {
+    protected patch(data: Readonly<Partial<AttachmentStructure>>): void {
         if ("content_type" in data) {
-            this.contentType = data.content_type;
+            if (data.content_type === null) {
+                this.contentType = undefined;
+            } else if (data.content_type !== undefined) {
+                this.contentType = data.content_type;
+            }
         }
 
         if ("description" in data) {
-            this.description = data.description;
+            if (data.description === null) {
+                this.description = undefined;
+            } else if (data.description !== undefined) {
+                this.description = data.description;
+            }
         }
 
         if ("duration_secs" in data) {
-            this.durationSecs = data.duration_secs;
+            if (data.duration_secs === null) {
+                this.durationSecs = undefined;
+            } else if (data.duration_secs !== undefined) {
+                this.durationSecs = data.duration_secs;
+            }
         }
 
         if ("ephemeral" in data) {
-            this.ephemeral = data.ephemeral;
+            if (data.ephemeral === null) {
+                this.ephemeral = undefined;
+            } else if (data.ephemeral !== undefined) {
+                this.ephemeral = data.ephemeral;
+            }
         }
 
-        this.filename = data.filename ?? this.filename;
+        if (data.filename !== undefined) {
+            this.filename = data.filename;
+        }
 
         if ("flags" in data) {
-            this.flags = data.flags;
+            if (data.flags === null) {
+                this.flags = undefined;
+            } else if (data.flags !== undefined) {
+                this.flags = data.flags;
+            }
         }
 
         if ("height" in data) {
-            this.height = data.height;
+            if (data.height === null) {
+                this.height = undefined;
+            } else if (data.height !== undefined) {
+                this.height = data.height;
+            }
         }
 
-        this.id = data.id ?? this.id;
-        this.proxyUrl = data.proxy_url ?? this.proxyUrl;
-        this.size = data.size ?? this.size;
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.proxy_url !== undefined) {
+            this.proxyUrl = data.proxy_url;
+        }
+
+        if (data.size !== undefined) {
+            this.size = data.size;
+        }
 
         if ("title" in data) {
-            this.title = data.title;
+            if (data.title === null) {
+                this.title = undefined;
+            } else if (data.title !== undefined) {
+                this.title = data.title;
+            }
         }
 
-        this.url = data.url ?? this.url;
+        if (data.url !== undefined) {
+            this.url = data.url;
+        }
 
         if ("waveform" in data) {
-            this.waveform = data.waveform;
+            if (data.waveform === null) {
+                this.waveform = undefined;
+            } else if (data.waveform !== undefined) {
+                this.waveform = data.waveform;
+            }
         }
 
         if ("width" in data) {
-            this.width = data.width;
-        }
-    }
-}
-
-export class EmbedField extends Base<EmbedFieldStructure> {
-    public inline?: boolean;
-
-    public name!: string;
-
-    public value!: string;
-
-    public constructor(data: Partial<EmbedFieldStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedFieldStructure>): void {
-        if ("inline" in data) {
-            this.inline = data.inline;
-        }
-
-        this.name = data.name ?? this.name;
-        this.value = data.value ?? this.value;
-    }
-}
-
-export class EmbedFooter extends Base<EmbedFooterStructure> {
-    public iconUrl?: string;
-
-    public proxyIconUrl?: string;
-
-    public text!: string;
-
-    public constructor(data: Partial<EmbedFooterStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedFooterStructure>): void {
-        if ("icon_url" in data) {
-            this.iconUrl = data.icon_url;
-        }
-
-        if ("proxy_icon_url" in data) {
-            this.proxyIconUrl = data.proxy_icon_url;
-        }
-
-        this.text = data.text ?? this.text;
-    }
-}
-
-export class EmbedAuthor extends Base<EmbedAuthorStructure> {
-    public iconUrl?: string;
-
-    public name!: string;
-
-    public proxyIconUrl?: string;
-
-    public url?: string;
-
-    public constructor(data: Partial<EmbedAuthorStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedAuthorStructure>): void {
-        if ("icon_url" in data) {
-            this.iconUrl = data.icon_url;
-        }
-
-        this.name = data.name ?? this.name;
-
-        if ("proxy_icon_url" in data) {
-            this.proxyIconUrl = data.proxy_icon_url;
-        }
-
-        if ("url" in data) {
-            this.url = data.url;
-        }
-    }
-}
-
-export class EmbedProvider extends Base<EmbedProviderStructure> {
-    public name?: string;
-
-    public url?: string;
-
-    public constructor(data: Partial<EmbedProviderStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedProviderStructure>): void {
-        if ("name" in data) {
-            this.name = data.name;
-        }
-
-        if ("url" in data) {
-            this.url = data.url;
-        }
-    }
-}
-
-export class EmbedImage extends Base<EmbedImageStructure> {
-    public height?: Integer;
-
-    public proxyUrl?: string;
-
-    public url!: string;
-
-    public width?: Integer;
-
-    public constructor(data: Partial<EmbedImageStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedImageStructure>): void {
-        if ("height" in data) {
-            this.height = data.height;
-        }
-
-        if ("proxy_url" in data) {
-            this.proxyUrl = data.proxy_url;
-        }
-
-        this.url = data.url ?? this.url;
-
-        if ("width" in data) {
-            this.width = data.width;
-        }
-    }
-}
-
-export class EmbedVideo extends Base<EmbedVideoStructure> {
-    public height?: Integer;
-
-    public proxyUrl?: string;
-
-    public url!: string;
-
-    public width?: Integer;
-
-    public constructor(data: Partial<EmbedVideoStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedVideoStructure>): void {
-        if ("height" in data) {
-            this.height = data.height;
-        }
-
-        if ("proxy_url" in data) {
-            this.proxyUrl = data.proxy_url;
-        }
-
-        this.url = data.url ?? this.url;
-
-        if ("width" in data) {
-            this.width = data.width;
-        }
-    }
-}
-
-export class EmbedThumbnail extends Base<EmbedThumbnailStructure> {
-    public height?: Integer;
-
-    public proxyUrl?: string;
-
-    public url!: string;
-
-    public width?: Integer;
-
-    public constructor(data: Partial<EmbedThumbnailStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedThumbnailStructure>): void {
-        if ("height" in data) {
-            this.height = data.height;
-        }
-
-        if ("proxy_url" in data) {
-            this.proxyUrl = data.proxy_url;
-        }
-
-        this.url = data.url ?? this.url;
-
-        if ("width" in data) {
-            this.width = data.width;
-        }
-    }
-}
-
-export class Embed extends Base<EmbedStructure> {
-    public author?: EmbedAuthor;
-
-    public color?: Integer;
-
-    public description?: string;
-
-    public fields?: EmbedField[];
-
-    public footer?: EmbedFooter;
-
-    public image?: EmbedImage;
-
-    public provider?: EmbedProvider;
-
-    public thumbnail?: EmbedThumbnail;
-
-    public timestamp?: IsoO8601Timestamp;
-
-    public title?: string;
-
-    public type?: EmbedTypes;
-
-    public url?: string;
-
-    public video?: EmbedVideo;
-
-    public constructor(data: Partial<EmbedStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<EmbedStructure>): void {
-        if ("author" in data && data.author) {
-            this.author = EmbedAuthor.from(data.author);
-        }
-
-        if ("color" in data) {
-            this.color = data.color;
-        }
-
-        if ("description" in data) {
-            this.description = data.description;
-        }
-
-        if ("fields" in data && data.fields) {
-            this.fields = data.fields.map((field) => EmbedField.from(field));
-        }
-
-        if ("footer" in data && data.footer) {
-            this.footer = EmbedFooter.from(data.footer);
-        }
-
-        if ("image" in data && data.image) {
-            this.image = EmbedImage.from(data.image);
-        }
-
-        if ("provider" in data && data.provider) {
-            this.provider = EmbedProvider.from(data.provider);
-        }
-
-        if ("thumbnail" in data && data.thumbnail) {
-            this.thumbnail = EmbedThumbnail.from(data.thumbnail);
-        }
-
-        if ("timestamp" in data) {
-            this.timestamp = data.timestamp;
-        }
-
-        if ("title" in data) {
-            this.title = data.title;
-        }
-
-        if ("type" in data) {
-            this.type = data.type;
-        }
-
-        if ("url" in data) {
-            this.url = data.url;
-        }
-
-        if ("video" in data && data.video) {
-            this.video = EmbedVideo.from(data.video);
+            if (data.width === null) {
+                this.width = undefined;
+            } else if (data.width !== undefined) {
+                this.width = data.width;
+            }
         }
     }
 }
@@ -474,23 +277,40 @@ export class Reaction extends Base<ReactionStructure> {
 
     public countDetails!: ReactionCountDetails;
 
-    public emoji!: Pick<Emoji, "animated" | "id" | "name">;
+    public emoji!: PickWithPublicMethods<Emoji, "animated" | "id" | "name">;
 
     public me!: boolean;
 
     public meBurst!: boolean;
 
-    public constructor(data: Partial<ReactionStructure>) {
+    public constructor(data: Readonly<Partial<ReactionStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ReactionStructure>): void {
-        this.burstColors = data.burst_colors ?? this.burstColors;
-        this.count = data.count ?? this.count;
-        this.countDetails = data.count_details ? ReactionCountDetails.from(data.count_details) : this.countDetails;
-        this.emoji = data.emoji ? Emoji.from(data.emoji) : this.emoji;
-        this.me = data.me ?? this.me;
-        this.meBurst = data.me_burst ?? this.meBurst;
+    protected patch(data: Readonly<Partial<ReactionStructure>>): void {
+        if (data.burst_colors !== undefined) {
+            this.burstColors = data.burst_colors;
+        }
+
+        if (data.count !== undefined) {
+            this.count = data.count;
+        }
+
+        if (data.count_details !== undefined) {
+            this.countDetails = ReactionCountDetails.from(data.count_details);
+        }
+
+        if (data.emoji !== undefined) {
+            this.emoji = Emoji.from(data.emoji);
+        }
+
+        if (data.me !== undefined) {
+            this.me = data.me;
+        }
+
+        if (data.me_burst !== undefined) {
+            this.meBurst = data.me_burst;
+        }
     }
 }
 
@@ -505,29 +325,49 @@ export class MessageReference extends Base<MessageReferenceStructure> {
 
     public type?: MessageReferenceTypes;
 
-    public constructor(data: Partial<MessageReferenceStructure>) {
+    public constructor(data: Readonly<Partial<MessageReferenceStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageReferenceStructure>): void {
+    protected patch(data: Readonly<Partial<MessageReferenceStructure>>): void {
         if ("channel_id" in data) {
-            this.channelId = data.channel_id;
+            if (data.channel_id === null) {
+                this.channelId = undefined;
+            } else if (data.channel_id !== undefined) {
+                this.channelId = data.channel_id;
+            }
         }
 
         if ("fail_if_not_exists" in data) {
-            this.failIfNotExists = data.fail_if_not_exists;
+            if (data.fail_if_not_exists === null) {
+                this.failIfNotExists = undefined;
+            } else if (data.fail_if_not_exists !== undefined) {
+                this.failIfNotExists = data.fail_if_not_exists;
+            }
         }
 
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else if (data.guild_id !== undefined) {
+                this.guildId = data.guild_id;
+            }
         }
 
         if ("message_id" in data) {
-            this.messageId = data.message_id;
+            if (data.message_id === null) {
+                this.messageId = undefined;
+            } else if (data.message_id !== undefined) {
+                this.messageId = data.message_id;
+            }
         }
 
         if ("type" in data) {
-            this.type = data.type;
+            if (data.type === null) {
+                this.type = undefined;
+            } else if (data.type !== undefined) {
+                this.type = data.type;
+            }
         }
     }
 }
@@ -537,16 +377,22 @@ export class MessageCall extends Base<MessageCallStructure> {
 
     public participants!: Snowflake[];
 
-    public constructor(data: Partial<MessageCallStructure>) {
+    public constructor(data: Readonly<Partial<MessageCallStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageCallStructure>): void {
+    protected patch(data: Readonly<Partial<MessageCallStructure>>): void {
         if ("ended_timestamp" in data) {
-            this.endedTimestamp = data.ended_timestamp;
+            if (data.ended_timestamp === null) {
+                this.endedTimestamp = undefined;
+            } else if (data.ended_timestamp !== undefined) {
+                this.endedTimestamp = data.ended_timestamp;
+            }
         }
 
-        this.participants = data.participants ?? this.participants;
+        if (data.participants !== undefined) {
+            this.participants = data.participants;
+        }
     }
 }
 
@@ -565,27 +411,52 @@ export class MessageInteractionMetadata extends Base<MessageInteractionMetadataS
 
     public user!: User;
 
-    public constructor(data: Partial<MessageInteractionMetadataStructure>) {
+    public constructor(data: Readonly<Partial<MessageInteractionMetadataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageInteractionMetadataStructure>): void {
-        this.authorizingIntegrationOwners = data.authorizing_integration_owners ?? this.authorizingIntegrationOwners;
-        this.id = data.id ?? this.id;
+    protected patch(data: Readonly<Partial<MessageInteractionMetadataStructure>>): void {
+        if (data.authorizing_integration_owners !== undefined) {
+            this.authorizingIntegrationOwners = data.authorizing_integration_owners;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
 
         if ("interacted_message_id" in data) {
-            this.interactedMessageId = data.interacted_message_id;
+            if (data.interacted_message_id === null) {
+                this.interactedMessageId = undefined;
+            } else if (data.interacted_message_id !== undefined) {
+                this.interactedMessageId = data.interacted_message_id;
+            }
         }
 
         if ("original_response_message_id" in data) {
-            this.originalResponseMessageId = data.original_response_message_id;
+            if (data.original_response_message_id === null) {
+                this.originalResponseMessageId = undefined;
+            } else if (data.original_response_message_id !== undefined) {
+                this.originalResponseMessageId = data.original_response_message_id;
+            }
         }
 
-        this.triggeringInteractionMetadata = data.triggering_interaction_metadata
-            ? MessageInteractionMetadata.from(data.triggering_interaction_metadata)
-            : this.triggeringInteractionMetadata;
-        this.type = data.type ?? this.type;
-        this.user = data.user ? User.from(data.user) : this.user;
+        if ("triggering_interaction_metadata" in data) {
+            if (data.triggering_interaction_metadata === null) {
+                this.triggeringInteractionMetadata = undefined;
+            } else if (data.triggering_interaction_metadata !== undefined) {
+                this.triggeringInteractionMetadata = MessageInteractionMetadata.from(
+                    data.triggering_interaction_metadata
+                );
+            }
+        }
+
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
+
+        if (data.user !== undefined) {
+            this.user = User.from(data.user);
+        }
     }
 }
 
@@ -594,21 +465,27 @@ export class MessageActivity extends Base<MessageActivityStructure> {
 
     public type!: MessageActivityTypes;
 
-    public constructor(data: Partial<MessageActivityStructure>) {
+    public constructor(data: Readonly<Partial<MessageActivityStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageActivityStructure>): void {
+    protected patch(data: Readonly<Partial<MessageActivityStructure>>): void {
         if ("party_id" in data) {
-            this.partyId = data.party_id;
+            if (data.party_id === null) {
+                this.partyId = undefined;
+            } else if (data.party_id !== undefined) {
+                this.partyId = data.party_id;
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
 export class MessageSnapshot extends Base<MessageSnapshotStructure> {
-    public message!: Pick<
+    public message!: PickWithPublicMethods<
         Message,
         | "attachments"
         | "content"
@@ -621,13 +498,15 @@ export class MessageSnapshot extends Base<MessageSnapshotStructure> {
         | "type"
     >;
 
-    public constructor(data: Partial<MessageSnapshotStructure>) {
+    public constructor(data: Readonly<Partial<MessageSnapshotStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageSnapshotStructure>): void {
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        this.message = data.message ? Message.from(data.message) : this.message;
+    protected patch(data: Readonly<Partial<MessageSnapshotStructure>>): void {
+        if (data.message !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
+            this.message = Message.from(data.message);
+        }
     }
 }
 
@@ -710,126 +589,250 @@ export class Message extends Base<MessageStructure> {
 
     public webhookId?: Snowflake;
 
-    public constructor(data: Partial<MessageStructure>) {
+    public constructor(data: Readonly<Partial<MessageStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageStructure>): void {
+    protected patch(data: Readonly<Partial<MessageStructure>>): void {
         if ("activity" in data) {
-            this.activity = data.activity ? MessageActivity.from(data.activity) : undefined;
+            if (data.activity === null) {
+                this.activity = undefined;
+            } else if (data.activity !== undefined) {
+                this.activity = MessageActivity.from(data.activity);
+            }
         }
 
-        if ("application" in data && data.application) {
-            this.application = Application.from(data.application);
+        if ("application" in data) {
+            if (data.application === null) {
+                this.application = undefined;
+            } else if (data.application !== undefined) {
+                this.application = Application.from(data.application);
+            }
         }
 
         if ("application_id" in data) {
-            this.applicationId = data.application_id;
+            if (data.application_id === null) {
+                this.applicationId = undefined;
+            } else if (data.application_id !== undefined) {
+                this.applicationId = data.application_id;
+            }
         }
 
-        if ("attachments" in data) {
-            this.attachments = data.attachments?.map((attachment) => Attachment.from(attachment)) ?? this.attachments;
+        if (data.attachments !== undefined) {
+            this.attachments = data.attachments.map((attachment) => Attachment.from(attachment));
         }
 
-        if ("author" in data && data.author) {
+        if (data.author !== undefined) {
             this.author = User.from(data.author);
         }
 
         if ("call" in data) {
-            this.call = data.call ? MessageCall.from(data.call) : undefined;
+            if (data.call === null) {
+                this.call = undefined;
+            } else if (data.call !== undefined) {
+                this.call = MessageCall.from(data.call);
+            }
         }
 
-        this.channelId = data.channel_id ?? this.channelId;
+        if (data.channel_id !== undefined) {
+            this.channelId = data.channel_id;
+        }
 
         if ("components" in data) {
-            this.components = data.components?.map((component) => ActionRow.from(component));
+            if (data.components === null) {
+                this.components = undefined;
+            } else if (data.components !== undefined) {
+                this.components = data.components.map((component) => ActionRow.from(component));
+            }
         }
 
-        this.content = data.content ?? this.content;
-        this.editedTimestamp = data.edited_timestamp ?? this.editedTimestamp;
+        if (data.content !== undefined) {
+            this.content = data.content;
+        }
 
-        if ("embeds" in data) {
-            this.embeds = data.embeds?.map((embed) => Embed.from(embed)) ?? this.embeds;
+        if ("edited_timestamp" in data) {
+            if (data.edited_timestamp === null) {
+                this.editedTimestamp = null;
+            } else if (data.edited_timestamp !== undefined) {
+                this.editedTimestamp = data.edited_timestamp;
+            }
+        }
+
+        if (data.embeds !== undefined) {
+            this.embeds = data.embeds.map((embed) => Embed.from(embed));
         }
 
         if ("flags" in data) {
-            this.flags = data.flags;
+            if (data.flags === null) {
+                this.flags = undefined;
+            } else if (data.flags !== undefined) {
+                this.flags = data.flags;
+            }
         }
 
-        this.id = data.id ?? this.id;
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
 
         if ("interaction" in data) {
-            this.interaction = data.interaction ? MessageInteractionMetadata.from(data.interaction) : undefined;
+            if (data.interaction === null) {
+                this.interaction = undefined;
+            } else if (data.interaction !== undefined) {
+                this.interaction = MessageInteractionMetadata.from(data.interaction);
+            }
         }
 
         if ("interaction_metadata" in data) {
-            this.interactionMetadata = data.interaction_metadata
-                ? MessageInteraction.from(data.interaction_metadata)
-                : undefined;
+            if (data.interaction_metadata === null) {
+                this.interactionMetadata = undefined;
+            } else if (data.interaction_metadata !== undefined) {
+                this.interactionMetadata = MessageInteraction.from(data.interaction_metadata);
+            }
         }
 
         if ("mention_channels" in data) {
-            this.mentionChannels = data.mention_channels?.map((channel) => ChannelMention.from(channel));
+            if (data.mention_channels === null) {
+                this.mentionChannels = undefined;
+            } else if (data.mention_channels !== undefined) {
+                this.mentionChannels = data.mention_channels.map((mentionChannel) =>
+                    ChannelMention.from(mentionChannel)
+                );
+            }
         }
 
-        this.mentionEveryone = data.mention_everyone ?? this.mentionEveryone;
-        this.mentionRoles = data.mention_roles ?? this.mentionRoles;
+        if (data.mention_everyone !== undefined) {
+            this.mentionEveryone = data.mention_everyone;
+        }
 
-        if ("mentions" in data) {
-            this.mentions = data.mentions?.map((user) => User.from(user)) ?? this.mentions;
+        if (data.mention_roles !== undefined) {
+            this.mentionRoles = data.mention_roles;
+        }
+
+        if (data.mentions !== undefined) {
+            this.mentions = data.mentions.map((mention) => User.from(mention));
         }
 
         if ("message_reference" in data) {
-            this.messageReference = data.message_reference ? MessageReference.from(data.message_reference) : undefined;
+            if (data.message_reference === null) {
+                this.messageReference = undefined;
+            } else if (data.message_reference !== undefined) {
+                this.messageReference = MessageReference.from(data.message_reference);
+            }
         }
 
         if ("message_snapshots" in data) {
-            this.messageSnapshots = data.message_snapshots?.map((snapshot) => MessageSnapshot.from(snapshot));
+            if (data.message_snapshots === null) {
+                this.messageSnapshots = undefined;
+            } else if (data.message_snapshots !== undefined) {
+                this.messageSnapshots = data.message_snapshots.map((messageSnapshot) =>
+                    MessageSnapshot.from(messageSnapshot)
+                );
+            }
         }
 
-        this.nonce = data.nonce ?? this.nonce;
-        this.pinned = data.pinned ?? this.pinned;
+        if ("nonce" in data) {
+            if (data.nonce === null) {
+                this.nonce = undefined;
+            } else if (data.nonce !== undefined) {
+                this.nonce = data.nonce;
+            }
+        }
+
+        if (data.pinned !== undefined) {
+            this.pinned = data.pinned;
+        }
 
         if ("poll" in data) {
-            this.poll = data.poll ? Poll.from(data.poll) : undefined;
+            if (data.poll === null) {
+                this.poll = undefined;
+            } else if (data.poll !== undefined) {
+                this.poll = Poll.from(data.poll);
+            }
         }
 
-        this.position = data.position ?? this.position;
+        if ("position" in data) {
+            if (data.position === null) {
+                this.position = undefined;
+            } else if (data.position !== undefined) {
+                this.position = data.position;
+            }
+        }
 
         if ("reactions" in data) {
-            this.reactions = data.reactions?.map((reaction) => Reaction.from(reaction));
+            if (data.reactions === null) {
+                this.reactions = undefined;
+            } else if (data.reactions !== undefined) {
+                this.reactions = data.reactions.map((reaction) => Reaction.from(reaction));
+            }
         }
 
         if ("referenced_message" in data) {
-            this.referencedMessage = data.referenced_message ? Message.from(data.referenced_message) : null;
+            if (data.referenced_message === null) {
+                this.referencedMessage = null;
+            } else if (data.referenced_message !== undefined) {
+                this.referencedMessage = Message.from(data.referenced_message);
+            }
         }
 
         if ("resolved" in data) {
-            this.resolved = data.resolved ? ResolvedData.from(data.resolved) : undefined;
+            if (data.resolved === null) {
+                this.resolved = undefined;
+            } else if (data.resolved !== undefined) {
+                this.resolved = ResolvedData.from(data.resolved);
+            }
         }
 
         if ("role_subscription_data" in data) {
-            this.roleSubscriptionData = data.role_subscription_data
-                ? RoleSubscriptionData.from(data.role_subscription_data)
-                : undefined;
+            if (data.role_subscription_data === null) {
+                this.roleSubscriptionData = undefined;
+            } else if (data.role_subscription_data !== undefined) {
+                this.roleSubscriptionData = RoleSubscriptionData.from(data.role_subscription_data);
+            }
         }
 
         if ("sticker_items" in data) {
-            this.stickerItems = data.sticker_items?.map((item) => StickerItem.from(item));
+            if (data.sticker_items === null) {
+                this.stickerItems = undefined;
+            } else if (data.sticker_items !== undefined) {
+                this.stickerItems = data.sticker_items.map((stickerItem) => StickerItem.from(stickerItem));
+            }
         }
 
         if ("stickers" in data) {
-            this.stickers = data.stickers?.map((sticker) => Sticker.from(sticker));
+            if (data.stickers === null) {
+                this.stickers = undefined;
+            } else if (data.stickers !== undefined) {
+                this.stickers = data.stickers.map((sticker) => Sticker.from(sticker));
+            }
         }
 
         if ("thread" in data) {
-            this.thread = data.thread ? ThreadChannel.from(data.thread) : undefined;
+            if (data.thread === null) {
+                this.thread = undefined;
+            } else if (data.thread !== undefined) {
+                this.thread = ThreadChannel.from(data.thread);
+            }
         }
 
-        this.timestamp = data.timestamp ?? this.timestamp;
-        this.tts = data.tts ?? this.tts;
-        this.type = data.type ?? this.type;
-        this.webhookId = data.webhook_id ?? this.webhookId;
+        if (data.timestamp !== undefined) {
+            this.timestamp = data.timestamp;
+        }
+
+        if (data.tts !== undefined) {
+            this.tts = data.tts;
+        }
+
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
+
+        if ("webhook_id" in data) {
+            if (data.webhook_id === null) {
+                this.webhookId = undefined;
+            } else if (data.webhook_id !== undefined) {
+                this.webhookId = data.webhook_id;
+            }
+        }
     }
 }
 
@@ -837,7 +840,6 @@ export {
     type AllowedMentionTypes,
     MessageFlags,
     AttachmentFlags,
-    type EmbedTypes,
     MessageReferenceTypes,
     MessageActivityTypes,
     MessageTypes,

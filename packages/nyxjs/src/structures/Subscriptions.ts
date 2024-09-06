@@ -26,7 +26,7 @@ export class Subscription extends Base<SubscriptionStructure> {
 
     public constructor(
         private readonly client: Client,
-        data: Partial<SubscriptionStructure>
+        data: Readonly<Partial<SubscriptionStructure>> = {}
     ) {
         super(data);
     }
@@ -41,18 +41,45 @@ export class Subscription extends Base<SubscriptionStructure> {
         return response.map((subscription) => new Subscription(this.client, subscription));
     }
 
-    protected patch(data: Partial<SubscriptionStructure>): void {
-        this.canceledAt = data.canceled_at ?? this.canceledAt;
-        this.currentPeriodEnd = data.current_period_end ?? this.currentPeriodEnd;
-        this.currentPeriodStart = data.current_period_start ?? this.currentPeriodStart;
-        this.entitlementIds = data.entitlement_ids ?? this.entitlementIds;
-        this.id = data.id ?? this.id;
-        this.skuIds = data.sku_ids ?? this.skuIds;
-        this.status = data.status ?? this.status;
-        this.userId = data.user_id ?? this.userId;
+    protected patch(data: Readonly<Partial<SubscriptionStructure>>): void {
+        if (data.canceled_at !== undefined) {
+            this.canceledAt = data.canceled_at;
+        }
 
         if ("country" in data) {
-            this.country = data.country;
+            if (data.country === null) {
+                this.country = undefined;
+            } else if (data.country !== undefined) {
+                this.country = data.country;
+            }
+        }
+
+        if (data.current_period_end !== undefined) {
+            this.currentPeriodEnd = data.current_period_end;
+        }
+
+        if (data.current_period_start !== undefined) {
+            this.currentPeriodStart = data.current_period_start;
+        }
+
+        if (data.entitlement_ids !== undefined) {
+            this.entitlementIds = data.entitlement_ids;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.sku_ids !== undefined) {
+            this.skuIds = data.sku_ids;
+        }
+
+        if (data.status !== undefined) {
+            this.status = data.status;
+        }
+
+        if (data.user_id !== undefined) {
+            this.userId = data.user_id;
         }
     }
 }

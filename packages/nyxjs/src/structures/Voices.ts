@@ -1,6 +1,7 @@
-import type { GuildMemberStructure, VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/api-types";
+import type { VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/api-types";
 import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import { Base } from "./Base";
+import { GuildMember } from "./Guilds";
 
 export class VoiceRegion extends Base<VoiceRegionStructure> {
     public custom!: boolean;
@@ -13,16 +14,30 @@ export class VoiceRegion extends Base<VoiceRegionStructure> {
 
     public optimal!: boolean;
 
-    public constructor(data: Partial<VoiceRegionStructure>) {
+    public constructor(data: Readonly<Partial<VoiceRegionStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<VoiceRegionStructure>): void {
-        this.custom = data.custom ?? this.custom;
-        this.deprecated = data.deprecated ?? this.deprecated;
-        this.id = data.id ?? this.id;
-        this.name = data.name ?? this.name;
-        this.optimal = data.optimal ?? this.optimal;
+    protected patch(data: Readonly<Partial<VoiceRegionStructure>>): void {
+        if (data.custom !== undefined) {
+            this.custom = data.custom;
+        }
+
+        if (data.deprecated !== undefined) {
+            this.deprecated = data.deprecated;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
+        if (data.optimal !== undefined) {
+            this.optimal = data.optimal;
+        }
     }
 }
 
@@ -33,7 +48,7 @@ export class VoiceState extends Base<VoiceStateStructure> {
 
     public guildId?: Snowflake;
 
-    public member?: GuildMemberStructure;
+    public member?: GuildMember;
 
     public mute!: boolean;
 
@@ -53,32 +68,73 @@ export class VoiceState extends Base<VoiceStateStructure> {
 
     public userId!: Snowflake;
 
-    public constructor(data: Partial<VoiceStateStructure>) {
+    public constructor(data: Readonly<Partial<VoiceStateStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<VoiceStateStructure>): void {
-        this.channelId = data.channel_id ?? this.channelId;
-        this.deaf = data.deaf ?? this.deaf;
-        this.mute = data.mute ?? this.mute;
-        this.requestToSpeakTimestamp = data.request_to_speak_timestamp ?? this.requestToSpeakTimestamp;
-        this.selfDeaf = data.self_deaf ?? this.selfDeaf;
-        this.selfMute = data.self_mute ?? this.selfMute;
-        this.selfVideo = data.self_video ?? this.selfVideo;
-        this.sessionId = data.session_id ?? this.sessionId;
-        this.suppress = data.suppress ?? this.suppress;
-        this.userId = data.user_id ?? this.userId;
+    protected patch(data: Readonly<Partial<VoiceStateStructure>>): void {
+        if (data.channel_id !== undefined) {
+            this.channelId = data.channel_id;
+        }
+
+        if (data.deaf !== undefined) {
+            this.deaf = data.deaf;
+        }
 
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else if (data.guild_id !== undefined) {
+                this.guildId = data.guild_id;
+            }
         }
 
         if ("member" in data) {
-            this.member = data.member;
+            if (data.member === null) {
+                this.member = undefined;
+            } else if (data.member !== undefined) {
+                this.member = GuildMember.from(data.member);
+            }
+        }
+
+        if (data.mute !== undefined) {
+            this.mute = data.mute;
+        }
+
+        if (data.request_to_speak_timestamp !== undefined) {
+            this.requestToSpeakTimestamp = data.request_to_speak_timestamp;
+        }
+
+        if (data.self_deaf !== undefined) {
+            this.selfDeaf = data.self_deaf;
+        }
+
+        if (data.self_mute !== undefined) {
+            this.selfMute = data.self_mute;
         }
 
         if ("self_stream" in data) {
-            this.selfStream = data.self_stream;
+            if (data.self_stream === null) {
+                this.selfStream = undefined;
+            } else if (data.self_stream !== undefined) {
+                this.selfStream = data.self_stream;
+            }
+        }
+
+        if (data.self_video !== undefined) {
+            this.selfVideo = data.self_video;
+        }
+
+        if (data.session_id !== undefined) {
+            this.sessionId = data.session_id;
+        }
+
+        if (data.suppress !== undefined) {
+            this.suppress = data.suppress;
+        }
+
+        if (data.user_id !== undefined) {
+            this.userId = data.user_id;
         }
     }
 }

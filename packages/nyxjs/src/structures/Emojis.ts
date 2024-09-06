@@ -20,35 +20,65 @@ export class Emoji extends Base<EmojiStructure> {
 
     public user?: User;
 
-    public constructor(data: Partial<EmojiStructure>) {
+    public constructor(data: Readonly<Partial<EmojiStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<EmojiStructure>): void {
+    protected patch(data: Readonly<Partial<EmojiStructure>>): void {
         if ("animated" in data) {
-            this.animated = data.animated;
+            if (data.animated === null) {
+                this.animated = undefined;
+            } else if (data.animated !== undefined) {
+                this.animated = data.animated;
+            }
         }
 
         if ("available" in data) {
-            this.available = data.available;
+            if (data.available === null) {
+                this.available = undefined;
+            } else if (data.available !== undefined) {
+                this.available = data.available;
+            }
         }
 
-        this.id = data.id ?? this.id;
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
         if ("managed" in data) {
-            this.managed = data.managed;
+            if (data.managed === null) {
+                this.managed = undefined;
+            } else if (data.managed !== undefined) {
+                this.managed = data.managed;
+            }
         }
 
-        this.name = data.name ?? this.name;
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
         if ("require_colons" in data) {
-            this.requireColons = data.require_colons;
+            if (data.require_colons === null) {
+                this.requireColons = undefined;
+            } else if (data.require_colons !== undefined) {
+                this.requireColons = data.require_colons;
+            }
         }
 
         if ("roles" in data) {
-            this.roles = data.roles;
+            if (data.roles === null) {
+                this.roles = undefined;
+            } else if (data.roles !== undefined) {
+                this.roles = data.roles;
+            }
         }
 
-        if ("user" in data && data.user) {
-            this.user = User.from(data.user);
+        if ("user" in data) {
+            if (data.user === null) {
+                this.user = undefined;
+            } else if (data.user !== undefined) {
+                this.user = new User(data.user);
+            }
         }
     }
 }

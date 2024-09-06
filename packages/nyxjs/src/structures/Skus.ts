@@ -19,7 +19,7 @@ export class Sku extends Base<SkuStructure> {
 
     public constructor(
         private readonly client: Client,
-        data: Partial<SkuStructure>
+        data: Readonly<Partial<SkuStructure>> = {}
     ) {
         super(data);
     }
@@ -29,13 +29,30 @@ export class Sku extends Base<SkuStructure> {
         return skus.map((sku) => new Sku(this.client, sku));
     }
 
-    protected patch(data: Partial<SkuStructure>): void {
-        this.applicationId = data.application_id ?? this.applicationId;
-        this.id = data.id ?? this.id;
-        this.name = data.name ?? this.name;
-        this.slug = data.slug ?? this.slug;
-        this.type = data.type ?? this.type;
-        this.flags = data.flags ?? this.flags;
+    protected patch(data: Readonly<Partial<SkuStructure>>): void {
+        if (data.application_id !== undefined) {
+            this.applicationId = data.application_id;
+        }
+
+        if (data.flags !== undefined) {
+            this.flags = data.flags;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
+        if (data.slug !== undefined) {
+            this.slug = data.slug;
+        }
+
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 

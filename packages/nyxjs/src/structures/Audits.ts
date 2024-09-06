@@ -7,10 +7,11 @@ import type {
     OptionalAuditEntryInfoStructure,
 } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
+import { ApplicationCommand } from "./ApplicationCommands";
 import { Base } from "./Base";
 import { ThreadChannel } from "./Channels";
-import { GuildScheduledEvent, Integration } from "./Guilds";
-import { ApplicationCommand } from "./Interactions";
+import { GuildScheduledEvent } from "./GuildScheduledEvent";
+import { Integration } from "./Integrations";
 import { AutoModerationRule } from "./Moderations";
 import { User } from "./Users";
 import { Webhook } from "./Webhooks";
@@ -22,19 +23,29 @@ export class AuditLogChange extends Base<AuditLogChangeStructure> {
 
     public oldValue?: any;
 
-    public constructor(data: Partial<AuditLogChangeStructure>) {
+    public constructor(data: Readonly<Partial<AuditLogChangeStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<AuditLogChangeStructure>): void {
-        this.key = data.key ?? this.key;
+    protected patch(data: Readonly<Partial<AuditLogChangeStructure>>): void {
+        if (data.key !== undefined) {
+            this.key = data.key;
+        }
 
         if ("new_value" in data) {
-            this.newValue = data.new_value;
+            if (data.new_value === null) {
+                this.newValue = undefined;
+            } else if (data.new_value !== undefined) {
+                this.newValue = data.new_value;
+            }
         }
 
         if ("old_value" in data) {
-            this.oldValue = data.old_value;
+            if (data.old_value === null) {
+                this.oldValue = undefined;
+            } else if (data.old_value !== undefined) {
+                this.oldValue = data.old_value;
+            }
         }
     }
 }
@@ -64,57 +75,105 @@ export class OptionalAuditEntryInfo extends Base<OptionalAuditEntryInfoStructure
 
     public type?: string;
 
-    public constructor(data: Partial<OptionalAuditEntryInfoStructure>) {
+    public constructor(data: Readonly<Partial<OptionalAuditEntryInfoStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<OptionalAuditEntryInfoStructure>): void {
+    protected patch(data: Readonly<Partial<OptionalAuditEntryInfoStructure>>): void {
         if ("application_id" in data) {
-            this.applicationId = data.application_id;
+            if (data.application_id === null) {
+                this.applicationId = undefined;
+            } else if (data.application_id !== undefined) {
+                this.applicationId = data.application_id;
+            }
         }
 
         if ("auto_moderation_rule_name" in data) {
-            this.autoModerationRuleName = data.auto_moderation_rule_name;
+            if (data.auto_moderation_rule_name === null) {
+                this.autoModerationRuleName = undefined;
+            } else if (data.auto_moderation_rule_name !== undefined) {
+                this.autoModerationRuleName = data.auto_moderation_rule_name;
+            }
         }
 
         if ("auto_moderation_rule_trigger_type" in data) {
-            this.autoModerationRuleTriggerType = data.auto_moderation_rule_trigger_type;
+            if (data.auto_moderation_rule_trigger_type === null) {
+                this.autoModerationRuleTriggerType = undefined;
+            } else if (data.auto_moderation_rule_trigger_type !== undefined) {
+                this.autoModerationRuleTriggerType = data.auto_moderation_rule_trigger_type;
+            }
         }
 
         if ("channel_id" in data) {
-            this.channelId = data.channel_id;
+            if (data.channel_id === null) {
+                this.channelId = undefined;
+            } else if (data.channel_id !== undefined) {
+                this.channelId = data.channel_id;
+            }
         }
 
         if ("count" in data) {
-            this.count = data.count;
+            if (data.count === null) {
+                this.count = undefined;
+            } else if (data.count !== undefined) {
+                this.count = data.count;
+            }
         }
 
         if ("delete_member_days" in data) {
-            this.deleteMemberDays = data.delete_member_days;
+            if (data.delete_member_days === null) {
+                this.deleteMemberDays = undefined;
+            } else if (data.delete_member_days !== undefined) {
+                this.deleteMemberDays = data.delete_member_days;
+            }
         }
 
         if ("id" in data) {
-            this.id = data.id;
+            if (data.id === null) {
+                this.id = undefined;
+            } else if (data.id !== undefined) {
+                this.id = data.id;
+            }
         }
 
         if ("integration_type" in data) {
-            this.integrationType = data.integration_type;
+            if (data.integration_type === null) {
+                this.integrationType = undefined;
+            } else if (data.integration_type !== undefined) {
+                this.integrationType = data.integration_type;
+            }
         }
 
         if ("members_removed" in data) {
-            this.membersRemoved = data.members_removed;
+            if (data.members_removed === null) {
+                this.membersRemoved = undefined;
+            } else if (data.members_removed !== undefined) {
+                this.membersRemoved = data.members_removed;
+            }
         }
 
         if ("message_id" in data) {
-            this.messageId = data.message_id;
+            if (data.message_id === null) {
+                this.messageId = undefined;
+            } else if (data.message_id !== undefined) {
+                this.messageId = data.message_id;
+            }
         }
 
         if ("role_name" in data) {
-            this.roleName = data.role_name;
+            if (data.role_name === null) {
+                this.roleName = undefined;
+            } else if (data.role_name !== undefined) {
+                this.roleName = data.role_name;
+            }
         }
 
         if ("type" in data) {
-            this.type = data.type;
+            if (data.type === null) {
+                this.type = undefined;
+            } else if (data.type !== undefined) {
+                this.type = data.type;
+            }
         }
     }
 }
@@ -134,29 +193,50 @@ export class AuditLogEntry extends Base<AuditLogEntryStructure> {
 
     public userId!: Snowflake | null;
 
-    public constructor(data: Partial<AuditLogEntryStructure>) {
+    public constructor(data: Readonly<Partial<AuditLogEntryStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<AuditLogEntryStructure>): void {
-        this.actionType = data.action_type ?? this.actionType;
-
-        if ("changes" in data && data.changes) {
-            this.changes = data.changes.map((change) => AuditLogChange.from(change));
+    protected patch(data: Readonly<Partial<AuditLogEntryStructure>>): void {
+        if (data.action_type !== undefined) {
+            this.actionType = data.action_type;
         }
 
-        this.id = data.id ?? this.id;
+        if ("changes" in data) {
+            if (data.changes === null) {
+                this.changes = undefined;
+            } else if (data.changes !== undefined) {
+                this.changes = data.changes.map((change) => AuditLogChange.from(change));
+            }
+        }
 
-        if ("options" in data && data.options) {
-            this.options = OptionalAuditEntryInfo.from(data.options);
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if ("options" in data) {
+            if (data.options === null) {
+                this.options = undefined;
+            } else if (data.options !== undefined) {
+                this.options = OptionalAuditEntryInfo.from(data.options);
+            }
         }
 
         if ("reason" in data) {
-            this.reason = data.reason;
+            if (data.reason === null) {
+                this.reason = undefined;
+            } else if (data.reason !== undefined) {
+                this.reason = data.reason;
+            }
         }
 
-        this.targetId = data.target_id ?? this.targetId;
-        this.userId = data.user_id ?? this.userId;
+        if (data.target_id !== undefined) {
+            this.targetId = data.target_id;
+        }
+
+        if (data.user_id !== undefined) {
+            this.userId = data.user_id;
+        }
     }
 }
 
@@ -177,41 +257,69 @@ export class AuditLog extends Base<AuditLogStructure> {
 
     public webhooks?: Webhook[];
 
-    public constructor(data: Partial<AuditLogStructure>) {
+    public constructor(data: Readonly<Partial<AuditLogStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<AuditLogStructure>): void {
-        if ("application_commands" in data && data.application_commands) {
-            this.applicationCommands = data.application_commands.map((command) => ApplicationCommand.from(command));
+    protected patch(data: Readonly<Partial<AuditLogStructure>>): void {
+        if ("application_commands" in data) {
+            if (data.application_commands === null) {
+                this.applicationCommands = undefined;
+            } else if (data.application_commands !== undefined) {
+                this.applicationCommands = data.application_commands.map((command) => ApplicationCommand.from(command));
+            }
         }
 
-        this.auditLogEntries = data.audit_log_entries
-            ? data.audit_log_entries.map((entry) => AuditLogEntry.from(entry))
-            : this.auditLogEntries;
-
-        if ("auto_moderation_rules" in data && data.auto_moderation_rules) {
-            this.autoModerationRules = data.auto_moderation_rules.map((rule) => AutoModerationRule.from(rule));
+        if (data.audit_log_entries !== undefined) {
+            this.auditLogEntries = data.audit_log_entries.map((entry) => AuditLogEntry.from(entry));
         }
 
-        if ("guild_scheduled_events" in data && data.guild_scheduled_events) {
-            this.guildScheduledEvents = data.guild_scheduled_events.map((event) => GuildScheduledEvent.from(event));
+        if ("auto_moderation_rules" in data) {
+            if (data.auto_moderation_rules === null) {
+                this.autoModerationRules = undefined;
+            } else if (data.auto_moderation_rules !== undefined) {
+                this.autoModerationRules = data.auto_moderation_rules.map((rule) => AutoModerationRule.from(rule));
+            }
         }
 
-        if ("integrations" in data && data.integrations) {
-            this.integrations = data.integrations.map((integration) => Integration.from(integration));
+        if ("guild_scheduled_events" in data) {
+            if (data.guild_scheduled_events === null) {
+                this.guildScheduledEvents = undefined;
+            } else if (data.guild_scheduled_events !== undefined) {
+                this.guildScheduledEvents = data.guild_scheduled_events.map((event) => GuildScheduledEvent.from(event));
+            }
         }
 
-        if ("threads" in data && data.threads) {
-            this.threads = data.threads.map((thread) => ThreadChannel.from(thread));
+        if ("integrations" in data) {
+            if (data.integrations === null) {
+                this.integrations = undefined;
+            } else if (data.integrations !== undefined) {
+                this.integrations = data.integrations.map((integration) => Integration.from(integration));
+            }
         }
 
-        if ("users" in data && data.users) {
-            this.users = data.users.map((user) => User.from(user));
+        if ("threads" in data) {
+            if (data.threads === null) {
+                this.threads = undefined;
+            } else if (data.threads !== undefined) {
+                this.threads = data.threads.map((thread) => ThreadChannel.from(thread));
+            }
         }
 
-        if ("webhooks" in data && data.webhooks) {
-            this.webhooks = data.webhooks.map((webhook) => Webhook.from(webhook));
+        if ("users" in data) {
+            if (data.users === null) {
+                this.users = undefined;
+            } else if (data.users !== undefined) {
+                this.users = data.users.map((user) => User.from(user));
+            }
+        }
+
+        if ("webhooks" in data) {
+            if (data.webhooks === null) {
+                this.webhooks = undefined;
+            } else if (data.webhooks !== undefined) {
+                this.webhooks = data.webhooks.map((webhook) => Webhook.from(webhook));
+            }
         }
     }
 }

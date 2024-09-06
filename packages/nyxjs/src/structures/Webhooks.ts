@@ -1,5 +1,6 @@
 import type { WebhookStructure, WebhookTypes } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
+import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";
 import { Guild } from "./Guilds";
@@ -18,9 +19,9 @@ export class Webhook extends Base<WebhookStructure> {
 
     public name!: string | null;
 
-    public sourceChannel?: Pick<BaseChannel, "id" | "name">;
+    public sourceChannel?: PickWithPublicMethods<BaseChannel, "id" | "name">;
 
-    public sourceGuild?: Pick<Guild, "icon" | "id" | "name">;
+    public sourceGuild?: PickWithPublicMethods<Guild, "icon" | "id" | "name">;
 
     public token?: string;
 
@@ -30,42 +31,81 @@ export class Webhook extends Base<WebhookStructure> {
 
     public user?: User;
 
-    public constructor(data: Partial<WebhookStructure>) {
+    public constructor(data: Readonly<Partial<WebhookStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<WebhookStructure>): void {
-        this.applicationId = data.application_id ?? this.applicationId;
-        this.avatar = data.avatar ?? this.avatar;
-        this.channelId = data.channel_id ?? this.channelId;
+    protected patch(data: Readonly<Partial<WebhookStructure>>): void {
+        if (data.application_id !== undefined) {
+            this.applicationId = data.application_id;
+        }
+
+        if (data.avatar !== undefined) {
+            this.avatar = data.avatar;
+        }
+
+        if (data.channel_id !== undefined) {
+            this.channelId = data.channel_id;
+        }
 
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else {
+                this.guildId = data.guild_id;
+            }
         }
 
-        this.id = data.id ?? this.id;
-        this.name = data.name ?? this.name;
-
-        if ("source_channel" in data && data.source_channel) {
-            this.sourceChannel = BaseChannel.from(data.source_channel);
+        if (data.id !== undefined) {
+            this.id = data.id;
         }
 
-        if ("source_guild" in data && data.source_guild) {
-            this.sourceGuild = Guild.from(data.source_guild);
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
+        if ("source_channel" in data) {
+            if (data.source_channel === null) {
+                this.sourceChannel = undefined;
+            } else if (data.source_channel !== undefined) {
+                this.sourceChannel = BaseChannel.from(data.source_channel);
+            }
+        }
+
+        if ("source_guild" in data) {
+            if (data.source_guild === null) {
+                this.sourceGuild = undefined;
+            } else if (data.source_guild !== undefined) {
+                this.sourceGuild = Guild.from(data.source_guild);
+            }
         }
 
         if ("token" in data) {
-            this.token = data.token;
+            if (data.token === null) {
+                this.token = undefined;
+            } else if (data.token !== undefined) {
+                this.token = data.token.trim();
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
 
         if ("url" in data) {
-            this.url = data.url;
+            if (data.url === null) {
+                this.url = undefined;
+            } else if (data.url !== undefined) {
+                this.url = data.url.trim();
+            }
         }
 
-        if ("user" in data && data.user) {
-            this.user = User.from(data.user);
+        if ("user" in data) {
+            if (data.user === null) {
+                this.user = undefined;
+            } else if (data.user !== undefined) {
+                this.user = User.from(data.user);
+            }
         }
     }
 }

@@ -9,10 +9,6 @@
     },
     "lint": {},
     "pretty": {},
-    "clean": {},
-    "test": {},
-    "test:watch": {},
-    "test:ui": {},
-    "test:coverage": {}
+    "clean": {}
   }
 }

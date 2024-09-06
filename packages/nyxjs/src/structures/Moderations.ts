@@ -18,17 +18,26 @@ export class AutoModerationActionMetadata extends Base<AutoModerationActionMetad
 
     public durationSeconds!: Integer;
 
-    public constructor(data: Partial<AutoModerationActionMetadataStructure>) {
+    public constructor(data: Readonly<Partial<AutoModerationActionMetadataStructure>> = {}) {
         super(data);
     }
 
-    public patch(data: Partial<AutoModerationActionMetadataStructure>): void {
-        this.channelId = data.channel_id ?? this.channelId;
-        if ("custom_message" in data) {
-            this.customMessage = data.custom_message;
+    protected patch(data: Readonly<Partial<AutoModerationActionMetadataStructure>>): void {
+        if (data.channel_id !== undefined) {
+            this.channelId = data.channel_id;
         }
 
-        this.durationSeconds = data.duration_seconds ?? this.durationSeconds;
+        if ("custom_message" in data) {
+            if (data.custom_message === null) {
+                this.customMessage = undefined;
+            } else if (data.custom_message !== undefined) {
+                this.customMessage = data.custom_message;
+            }
+        }
+
+        if (data.duration_seconds !== undefined) {
+            this.durationSeconds = data.duration_seconds;
+        }
     }
 }
 
@@ -37,16 +46,22 @@ export class AutoModerationAction extends Base<AutoModerationActionStructure> {
 
     public type!: AutoModerationActionTypes;
 
-    public constructor(data: Partial<AutoModerationActionStructure>) {
+    public constructor(data: Readonly<Partial<AutoModerationActionStructure>> = {}) {
         super(data);
     }
 
-    public patch(data: Partial<AutoModerationActionStructure>): void {
-        if ("metadata" in data && data.metadata) {
-            this.metadata = AutoModerationActionMetadata.from(data.metadata);
+    protected patch(data: Readonly<Partial<AutoModerationActionStructure>>): void {
+        if ("metadata" in data) {
+            if (data.metadata === null) {
+                this.metadata = undefined;
+            } else if (data.metadata !== undefined) {
+                this.metadata = AutoModerationActionMetadata.from(data.metadata);
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
@@ -63,33 +78,57 @@ export class AutoModerationTriggerMetadata extends Base<AutoModerationTriggerMet
 
     public regexPatterns?: string[];
 
-    public constructor(data: Partial<AutoModerationTriggerMetadataStructure>) {
+    public constructor(data: Readonly<Partial<AutoModerationTriggerMetadataStructure>> = {}) {
         super(data);
     }
 
-    public patch(data: Partial<AutoModerationTriggerMetadataStructure>): void {
+    protected patch(data: Readonly<Partial<AutoModerationTriggerMetadataStructure>>): void {
         if ("allow_list" in data) {
-            this.allowList = data.allow_list;
+            if (data.allow_list === null) {
+                this.allowList = undefined;
+            } else if (data.allow_list !== undefined) {
+                this.allowList = data.allow_list;
+            }
         }
 
         if ("keyword_filter" in data) {
-            this.keywordFilter = data.keyword_filter;
+            if (data.keyword_filter === null) {
+                this.keywordFilter = undefined;
+            } else if (data.keyword_filter !== undefined) {
+                this.keywordFilter = data.keyword_filter;
+            }
         }
 
         if ("mention_raid_protection_enabled" in data) {
-            this.mentionRaidProtectionEnabled = data.mention_raid_protection_enabled;
+            if (data.mention_raid_protection_enabled === null) {
+                this.mentionRaidProtectionEnabled = undefined;
+            } else if (data.mention_raid_protection_enabled !== undefined) {
+                this.mentionRaidProtectionEnabled = data.mention_raid_protection_enabled;
+            }
         }
 
         if ("mention_total_limit" in data) {
-            this.mentionTotalLimit = data.mention_total_limit;
+            if (data.mention_total_limit === null) {
+                this.mentionTotalLimit = undefined;
+            } else if (data.mention_total_limit !== undefined) {
+                this.mentionTotalLimit = data.mention_total_limit;
+            }
         }
 
         if ("presets" in data) {
-            this.presets = data.presets;
+            if (data.presets === null) {
+                this.presets = undefined;
+            } else if (data.presets !== undefined) {
+                this.presets = data.presets;
+            }
         }
 
         if ("regex_patterns" in data) {
-            this.regexPatterns = data.regex_patterns;
+            if (data.regex_patterns === null) {
+                this.regexPatterns = undefined;
+            } else if (data.regex_patterns !== undefined) {
+                this.regexPatterns = data.regex_patterns;
+            }
         }
     }
 }
@@ -117,30 +156,62 @@ export class AutoModerationRule extends Base<AutoModerationRuleStructure> {
 
     public triggerType!: AutoModerationTriggerTypes;
 
-    public constructor(data: Partial<AutoModerationRuleStructure>) {
+    public constructor(data: Readonly<Partial<AutoModerationRuleStructure>> = {}) {
         super(data);
     }
 
-    public patch(data: Partial<AutoModerationRuleStructure>): void {
-        this.actions = data.actions ? data.actions.map((action) => AutoModerationAction.from(action)) : this.actions;
-        this.creatorId = data.creator_id ?? this.creatorId;
-        this.enabled = data.enabled ?? this.enabled;
-        this.eventType = data.event_type ?? this.eventType;
+    protected patch(data: Readonly<Partial<AutoModerationRuleStructure>>): void {
+        if (data.actions !== undefined) {
+            this.actions = data.actions.map((action) => AutoModerationAction.from(action));
+        }
+
+        if (data.creator_id !== undefined) {
+            this.creatorId = data.creator_id;
+        }
+
+        if (data.enabled !== undefined) {
+            this.enabled = data.enabled;
+        }
+
+        if (data.event_type !== undefined) {
+            this.eventType = data.event_type;
+        }
+
         if ("exempt_channels" in data) {
-            this.exemptChannels = data.exempt_channels;
+            if (data.exempt_channels === null) {
+                this.exemptChannels = undefined;
+            } else if (data.exempt_channels !== undefined) {
+                this.exemptChannels = data.exempt_channels;
+            }
         }
 
         if ("exempt_roles" in data) {
-            this.exemptRoles = data.exempt_roles;
+            if (data.exempt_roles === null) {
+                this.exemptRoles = undefined;
+            } else if (data.exempt_roles !== undefined) {
+                this.exemptRoles = data.exempt_roles;
+            }
         }
 
-        this.guildId = data.guild_id ?? this.guildId;
-        this.id = data.id ?? this.id;
-        this.name = data.name ?? this.name;
-        this.triggerMetadata = data.trigger_metadata
-            ? AutoModerationTriggerMetadata.from(data.trigger_metadata)
-            : this.triggerMetadata;
-        this.triggerType = data.trigger_type ?? this.triggerType;
+        if (data.guild_id !== undefined) {
+            this.guildId = data.guild_id;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
+        if (data.trigger_metadata !== undefined) {
+            this.triggerMetadata = AutoModerationTriggerMetadata.from(data.trigger_metadata);
+        }
+
+        if (data.trigger_type !== undefined) {
+            this.triggerType = data.trigger_type;
+        }
     }
 }
 

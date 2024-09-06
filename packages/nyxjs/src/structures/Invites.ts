@@ -6,14 +6,16 @@ import type {
     InviteTypes,
 } from "@nyxjs/api-types";
 import type { Integer, IsoO8601Timestamp } from "@nyxjs/core";
+import type { PickWithPublicMethods } from "../utils";
 import { Application } from "./Applications";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";
-import { Guild, GuildMember, GuildScheduledEvent } from "./Guilds";
+import { GuildScheduledEvent } from "./GuildScheduledEvent";
+import { Guild, GuildMember } from "./Guilds";
 import { User } from "./Users";
 
 export class InviteStageInstance extends Base<InviteStageInstanceStructure> {
-    public members!: Pick<
+    public members!: PickWithPublicMethods<
         GuildMember,
         "avatar" | "joinedAt" | "nick" | "pending" | "premiumSince" | "roles" | "user"
     >[];
@@ -24,15 +26,26 @@ export class InviteStageInstance extends Base<InviteStageInstanceStructure> {
 
     public topic!: string;
 
-    public constructor(data: Partial<InviteStageInstanceStructure>) {
+    public constructor(data: Readonly<Partial<InviteStageInstanceStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<InviteStageInstanceStructure>): void {
-        this.members = data.members ? data.members.map((member) => GuildMember.from(member)) : this.members;
-        this.participantCount = data.participant_count ?? this.participantCount;
-        this.speakerCount = data.speaker_count ?? this.speakerCount;
-        this.topic = data.topic ?? this.topic;
+    protected patch(data: Readonly<Partial<InviteStageInstanceStructure>>): void {
+        if (data.members !== undefined) {
+            this.members = data.members.map((member) => GuildMember.from(member));
+        }
+
+        if (data.participant_count !== undefined) {
+            this.participantCount = data.participant_count;
+        }
+
+        if (data.speaker_count !== undefined) {
+            this.speakerCount = data.speaker_count;
+        }
+
+        if (data.topic !== undefined) {
+            this.topic = data.topic;
+        }
     }
 }
 
@@ -47,16 +60,30 @@ export class InviteMetadata extends Base<InviteMetadataStructure> {
 
     public uses!: Integer;
 
-    public constructor(data: Partial<InviteMetadataStructure>) {
+    public constructor(data: Readonly<Partial<InviteMetadataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<InviteMetadataStructure>): void {
-        this.createdAt = data.created_at ?? this.createdAt;
-        this.maxAge = data.max_age ?? this.maxAge;
-        this.maxUses = data.max_uses ?? this.maxUses;
-        this.temporary = data.temporary ?? this.temporary;
-        this.uses = data.uses ?? this.uses;
+    protected patch(data: Readonly<Partial<InviteMetadataStructure>>): void {
+        if (data.created_at !== undefined) {
+            this.createdAt = data.created_at;
+        }
+
+        if (data.max_age !== undefined) {
+            this.maxAge = data.max_age;
+        }
+
+        if (data.max_uses !== undefined) {
+            this.maxUses = data.max_uses;
+        }
+
+        if (data.temporary !== undefined) {
+            this.temporary = data.temporary;
+        }
+
+        if (data.uses !== undefined) {
+            this.uses = data.uses;
+        }
     }
 }
 
@@ -65,13 +92,13 @@ export class Invite extends Base<InviteStructure> {
 
     public approximatePresenceCount?: Integer;
 
-    public channel!: Pick<BaseChannel, "id" | "name" | "type"> | null;
+    public channel!: PickWithPublicMethods<BaseChannel, "id" | "name" | "type"> | null;
 
     public code!: string;
 
     public expiresAt?: IsoO8601Timestamp;
 
-    public guild?: Pick<
+    public guild?: PickWithPublicMethods<
         Guild,
         | "banner"
         | "description"
@@ -100,55 +127,102 @@ export class Invite extends Base<InviteStructure> {
 
     public type!: InviteTypes;
 
-    public constructor(data: Partial<InviteStructure>) {
+    public constructor(data: Readonly<Partial<InviteStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<InviteStructure>): void {
-        if ("approximateMemberCount" in data) {
-            this.approximateMemberCount = data.approximate_member_count;
+    protected patch(data: Readonly<Partial<InviteStructure>>): void {
+        if ("approximate_member_count" in data) {
+            if (data.approximate_member_count === null) {
+                this.approximateMemberCount = undefined;
+            } else if (data.approximate_member_count !== undefined) {
+                this.approximateMemberCount = data.approximate_member_count;
+            }
         }
 
-        if ("approximatePresenceCount" in data) {
-            this.approximatePresenceCount = data.approximate_presence_count;
+        if ("approximate_presence_count" in data) {
+            if (data.approximate_presence_count === null) {
+                this.approximatePresenceCount = undefined;
+            } else if (data.approximate_presence_count !== undefined) {
+                this.approximatePresenceCount = data.approximate_presence_count;
+            }
         }
 
-        this.channel = data.channel ? BaseChannel.from(data.channel) : this.channel;
-        this.code = data.code ?? this.code;
+        if (data.channel !== undefined) {
+            this.channel = BaseChannel.from(data.channel);
+        }
+
+        if (data.code !== undefined) {
+            this.code = data.code;
+        }
 
         if ("expires_at" in data) {
-            this.expiresAt = data.expires_at;
+            if (data.expires_at === null) {
+                this.expiresAt = undefined;
+            } else if (data.expires_at !== undefined) {
+                this.expiresAt = data.expires_at;
+            }
         }
 
-        if ("guild" in data && data.guild) {
-            this.guild = Guild.from(data.guild);
+        if ("guild" in data) {
+            if (data.guild === null) {
+                this.guild = undefined;
+            } else if (data.guild !== undefined) {
+                this.guild = Guild.from(data.guild);
+            }
         }
 
-        if ("guild_scheduled_event" in data && data.guild_scheduled_event) {
-            this.guildScheduledEvent = GuildScheduledEvent.from(data.guild_scheduled_event);
+        if ("guild_scheduled_event" in data) {
+            if (data.guild_scheduled_event === null) {
+                this.guildScheduledEvent = undefined;
+            } else if (data.guild_scheduled_event !== undefined) {
+                this.guildScheduledEvent = GuildScheduledEvent.from(data.guild_scheduled_event);
+            }
         }
 
-        if ("inviter" in data && data.inviter) {
-            this.inviter = User.from(data.inviter);
+        if ("inviter" in data) {
+            if (data.inviter === null) {
+                this.inviter = undefined;
+            } else if (data.inviter !== undefined) {
+                this.inviter = User.from(data.inviter);
+            }
         }
 
-        if ("stage_instance" in data && data.stage_instance) {
-            this.stageInstance = InviteStageInstance.from(data.stage_instance);
+        if ("stage_instance" in data) {
+            if (data.stage_instance === null) {
+                this.stageInstance = undefined;
+            } else if (data.stage_instance !== undefined) {
+                this.stageInstance = InviteStageInstance.from(data.stage_instance);
+            }
         }
 
-        if ("target_application" in data && data.target_application) {
-            this.targetApplication = Application.from(data.target_application);
+        if ("target_application" in data) {
+            if (data.target_application === null) {
+                this.targetApplication = undefined;
+            } else if (data.target_application !== undefined) {
+                this.targetApplication = Application.from(data.target_application);
+            }
         }
 
         if ("target_type" in data) {
-            this.targetType = data.target_type;
+            if (data.target_type === null) {
+                this.targetType = undefined;
+            } else if (data.target_type !== undefined) {
+                this.targetType = data.target_type;
+            }
         }
 
-        if ("target_user" in data && data.target_user) {
-            this.targetUser = User.from(data.target_user);
+        if ("target_user" in data) {
+            if (data.target_user === null) {
+                this.targetUser = undefined;
+            } else if (data.target_user !== undefined) {
+                this.targetUser = User.from(data.target_user);
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 

@@ -29,16 +29,30 @@ export class ForumTag extends Base<ForumTagStructure> {
 
     public name!: string;
 
-    public constructor(data: Partial<ForumTagStructure>) {
+    public constructor(data: Readonly<Partial<ForumTagStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ForumTagStructure>) {
-        this.emojiId = data.emoji_id ?? this.emojiId;
-        this.emojiName = data.emoji_name ?? this.emojiName;
-        this.id = data.id ?? this.id;
-        this.moderated = data.moderated ?? this.moderated;
-        this.name = data.name ?? this.name;
+    protected patch(data: Readonly<Partial<ForumTagStructure>>): void {
+        if (data.emoji_id !== undefined) {
+            this.emojiId = data.emoji_id;
+        }
+
+        if (data.emoji_name !== undefined) {
+            this.emojiName = data.emoji_name;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.moderated !== undefined) {
+            this.moderated = data.moderated;
+        }
+
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
     }
 }
 
@@ -47,13 +61,18 @@ export class DefaultReaction extends Base<DefaultReactionStructure> {
 
     public emojiName!: string | null;
 
-    public constructor(data: Partial<DefaultReactionStructure>) {
+    public constructor(data: Readonly<Partial<DefaultReactionStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<DefaultReactionStructure>): void {
-        this.emojiId = data.emoji_id ?? this.emojiId;
-        this.emojiName = data.emoji_name ?? this.emojiName;
+    protected patch(data: Readonly<Partial<DefaultReactionStructure>>): void {
+        if (data.emoji_id !== undefined) {
+            this.emojiId = data.emoji_id;
+        }
+
+        if (data.emoji_name !== undefined) {
+            this.emojiName = data.emoji_name;
+        }
     }
 }
 
@@ -68,20 +87,37 @@ export class ThreadMember extends Base<ThreadMemberStructure> {
 
     public userId?: Snowflake;
 
-    public constructor(data: Partial<ThreadMemberStructure>) {
+    public constructor(data: Readonly<Partial<ThreadMemberStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ThreadMemberStructure>): void {
-        this.flags = data.flags ?? this.flags;
-        if ("id" in data) {
-            this.id = data.id;
+    protected patch(data: Readonly<Partial<ThreadMemberStructure>>): void {
+        if (data.flags !== undefined) {
+            this.flags = data.flags;
         }
 
-        this.joinTimestamp = data.join_timestamp ?? this.joinTimestamp;
-        this.member = data.member ? GuildMember.from(data.member) : this.member;
+        if ("id" in data) {
+            if (data.id === null) {
+                this.id = undefined;
+            } else if (data.id !== undefined) {
+                this.id = data.id;
+            }
+        }
+
+        if (data.join_timestamp !== undefined) {
+            this.joinTimestamp = data.join_timestamp;
+        }
+
+        if (data.member !== undefined) {
+            this.member = GuildMember.from(data.member);
+        }
+
         if ("user_id" in data) {
-            this.userId = data.user_id;
+            if (data.user_id === null) {
+                this.userId = undefined;
+            } else if (data.user_id !== undefined) {
+                this.userId = data.user_id;
+            }
         }
     }
 }
@@ -99,23 +135,42 @@ export class ThreadMetadata extends Base<ThreadMetadataStructure> {
 
     public locked!: boolean;
 
-    public constructor(data: Partial<ThreadMetadataStructure>) {
+    public constructor(data: Readonly<Partial<ThreadMetadataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ThreadMetadataStructure>): void {
-        this.archiveTimestamp = data.archive_timestamp ?? this.archiveTimestamp;
-        this.archived = data.archived ?? this.archived;
-        this.autoArchiveDuration = data.auto_archive_duration ?? this.autoArchiveDuration;
+    protected patch(data: Readonly<Partial<ThreadMetadataStructure>>): void {
+        if (data.archive_timestamp !== undefined) {
+            this.archiveTimestamp = data.archive_timestamp;
+        }
+
+        if (data.archived !== undefined) {
+            this.archived = data.archived;
+        }
+
+        if (data.auto_archive_duration !== undefined) {
+            this.autoArchiveDuration = data.auto_archive_duration;
+        }
+
         if ("create_timestamp" in data) {
-            this.createTimestamp = data.create_timestamp;
+            if (data.create_timestamp === null) {
+                this.createTimestamp = undefined;
+            } else if (data.create_timestamp !== undefined) {
+                this.createTimestamp = data.create_timestamp;
+            }
         }
 
         if ("invitable" in data) {
-            this.invitable = data.invitable;
+            if (data.invitable === null) {
+                this.invitable = undefined;
+            } else if (data.invitable !== undefined) {
+                this.invitable = data.invitable;
+            }
         }
 
-        this.locked = data.locked ?? this.locked;
+        if (data.locked !== undefined) {
+            this.locked = data.locked;
+        }
     }
 }
 
@@ -128,15 +183,26 @@ export class Overwrite extends Base<OverwriteStructure> {
 
     public type!: OverwriteTypes;
 
-    public constructor(data: Partial<OverwriteStructure>) {
+    public constructor(data: Readonly<Partial<OverwriteStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<OverwriteStructure>): void {
-        this.allow = data.allow ?? this.allow;
-        this.deny = data.deny ?? this.deny;
-        this.id = data.id ?? this.id;
-        this.type = data.type ?? this.type;
+    protected patch(data: Readonly<Partial<OverwriteStructure>>): void {
+        if (data.allow !== undefined) {
+            this.allow = data.allow;
+        }
+
+        if (data.deny !== undefined) {
+            this.deny = data.deny;
+        }
+
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
@@ -145,13 +211,18 @@ export class FollowedChannel extends Base<FollowedChannelStructure> {
 
     public webhookId!: Snowflake;
 
-    public constructor(data: Partial<FollowedChannelStructure>) {
+    public constructor(data: Readonly<Partial<FollowedChannelStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<FollowedChannelStructure>): void {
-        this.channelId = data.channel_id ?? this.channelId;
-        this.webhookId = data.webhook_id ?? this.webhookId;
+    protected patch(data: Readonly<Partial<FollowedChannelStructure>>): void {
+        if (data.channel_id !== undefined) {
+            this.channelId = data.channel_id;
+        }
+
+        if (data.webhook_id !== undefined) {
+            this.webhookId = data.webhook_id;
+        }
     }
 }
 
@@ -184,58 +255,110 @@ export class BaseChannel extends Base<ChannelStructure> {
 
     public type!: ChannelTypes;
 
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ChannelStructure>): void {
+    protected patch(data: Readonly<Partial<ChannelStructure>>): void {
         if ("flags" in data) {
-            this.flags = data.flags;
+            if (data.flags === null) {
+                this.flags = undefined;
+            } else if (data.flags !== undefined) {
+                this.flags = data.flags;
+            }
         }
 
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else if (data.guild_id !== undefined) {
+                this.guildId = data.guild_id;
+            }
         }
 
-        this.id = data.id ?? this.id;
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
         if ("last_message_id" in data) {
-            this.lastMessageId = data.last_message_id;
+            if (data.last_message_id === null) {
+                this.lastMessageId = undefined;
+            } else if (data.last_message_id !== undefined) {
+                this.lastMessageId = data.last_message_id;
+            }
         }
 
         if ("last_pin_timestamp" in data) {
-            this.lastPinTimestamp = data.last_pin_timestamp;
+            if (data.last_pin_timestamp === null) {
+                this.lastPinTimestamp = undefined;
+            } else if (data.last_pin_timestamp !== undefined) {
+                this.lastPinTimestamp = data.last_pin_timestamp;
+            }
         }
 
         if ("name" in data) {
-            this.name = data.name;
+            if (data.name === null) {
+                this.name = undefined;
+            } else if (data.name !== undefined) {
+                this.name = data.name;
+            }
         }
 
-        this.nsfw = data.nsfw ?? this.nsfw;
+        if (data.nsfw !== undefined) {
+            this.nsfw = data.nsfw;
+        }
+
         if ("parent_id" in data) {
-            this.parentId = data.parent_id;
+            if (data.parent_id === null) {
+                this.parentId = undefined;
+            } else if (data.parent_id !== undefined) {
+                this.parentId = data.parent_id;
+            }
         }
 
-        if ("permission_overwrites" in data && data.permission_overwrites) {
-            this.permissionOverwrites = data.permission_overwrites.map((overwrite) => Overwrite.from(overwrite));
+        if ("permission_overwrites" in data) {
+            if (data.permission_overwrites === null) {
+                this.permissionOverwrites = undefined;
+            } else if (data.permission_overwrites !== undefined) {
+                this.permissionOverwrites = data.permission_overwrites.map((overwrite) => Overwrite.from(overwrite));
+            }
         }
 
         if ("permissions" in data) {
-            this.permissions = data.permissions;
+            if (data.permissions === null) {
+                this.permissions = undefined;
+            } else if (data.permissions !== undefined) {
+                this.permissions = data.permissions;
+            }
         }
 
         if ("position" in data) {
-            this.position = data.position;
+            if (data.position === null) {
+                this.position = undefined;
+            } else if (data.position !== undefined) {
+                this.position = data.position;
+            }
         }
 
         if ("rate_limit_per_user" in data) {
-            this.rateLimitPerUser = data.rate_limit_per_user;
+            if (data.rate_limit_per_user === null) {
+                this.rateLimitPerUser = undefined;
+            } else if (data.rate_limit_per_user !== undefined) {
+                this.rateLimitPerUser = data.rate_limit_per_user;
+            }
         }
 
         if ("topic" in data) {
-            this.topic = data.topic;
+            if (data.topic === null) {
+                this.topic = undefined;
+            } else if (data.topic !== undefined) {
+                this.topic = data.topic;
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
@@ -252,29 +375,49 @@ export class DMChannel extends BaseChannel {
 
     public recipients?: User[];
 
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ChannelStructure>): void {
+    protected patch(data: Readonly<Partial<ChannelStructure>>): void {
         if ("application_id" in data) {
-            this.applicationId = data.application_id;
+            if (data.application_id === null) {
+                this.applicationId = undefined;
+            } else if (data.application_id !== undefined) {
+                this.applicationId = data.application_id;
+            }
         }
 
         if ("icon" in data) {
-            this.icon = data.icon;
+            if (data.icon === null) {
+                this.icon = undefined;
+            } else if (data.icon !== undefined) {
+                this.icon = data.icon;
+            }
         }
 
         if ("managed" in data) {
-            this.managed = data.managed;
+            if (data.managed === null) {
+                this.managed = undefined;
+            } else if (data.managed !== undefined) {
+                this.managed = data.managed;
+            }
         }
 
         if ("owner_id" in data) {
-            this.ownerId = data.owner_id;
+            if (data.owner_id === null) {
+                this.ownerId = undefined;
+            } else if (data.owner_id !== undefined) {
+                this.ownerId = data.owner_id;
+            }
         }
 
-        if ("recipients" in data && data.recipients) {
-            this.recipients = data.recipients.map((recipient) => User.from(recipient));
+        if ("recipients" in data) {
+            if (data.recipients === null) {
+                this.recipients = undefined;
+            } else if (data.recipients !== undefined) {
+                this.recipients = data.recipients.map((recipient) => User.from(recipient));
+            }
         }
     }
 }
@@ -288,37 +431,53 @@ export class VoiceChannel extends BaseChannel {
 
     public videoQualityMode?: VideoQualityModes;
 
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ChannelStructure>): void {
+    protected patch(data: Readonly<Partial<ChannelStructure>>): void {
         if ("bitrate" in data) {
-            this.bitrate = data.bitrate;
+            if (data.bitrate === null) {
+                this.bitrate = undefined;
+            } else if (data.bitrate !== undefined) {
+                this.bitrate = data.bitrate;
+            }
         }
 
         if ("rtc_region" in data) {
-            this.rtcRegion = data.rtc_region;
+            if (data.rtc_region === null) {
+                this.rtcRegion = undefined;
+            } else if (data.rtc_region !== undefined) {
+                this.rtcRegion = data.rtc_region;
+            }
         }
 
         if ("user_limit" in data) {
-            this.userLimit = data.user_limit;
+            if (data.user_limit === null) {
+                this.userLimit = undefined;
+            } else if (data.user_limit !== undefined) {
+                this.userLimit = data.user_limit;
+            }
         }
 
         if ("video_quality_mode" in data) {
-            this.videoQualityMode = data.video_quality_mode;
+            if (data.video_quality_mode === null) {
+                this.videoQualityMode = undefined;
+            } else if (data.video_quality_mode !== undefined) {
+                this.videoQualityMode = data.video_quality_mode;
+            }
         }
     }
 }
 
 export class CategoryChannel extends BaseChannel {
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 }
 
 export class AnnouncementChannel extends BaseChannel {
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 }
@@ -336,57 +495,89 @@ export class ThreadChannel extends BaseChannel {
 
     public ownerId?: Snowflake;
 
-    public threadMetadata?: ThreadMetadataStructure;
+    public threadMetadata?: ThreadMetadata;
 
     public totalMessageSent?: Integer;
 
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ChannelStructure>): void {
+    protected patch(data: Readonly<Partial<ChannelStructure>>): void {
         if ("default_auto_archive_duration" in data) {
-            this.defaultAutoArchiveDuration = data.default_auto_archive_duration;
+            if (data.default_auto_archive_duration === null) {
+                this.defaultAutoArchiveDuration = undefined;
+            } else if (data.default_auto_archive_duration !== undefined) {
+                this.defaultAutoArchiveDuration = data.default_auto_archive_duration;
+            }
         }
 
         if ("default_thread_rate_limit_per_user" in data) {
-            this.defaultThreadRateLimitPerUser = data.default_thread_rate_limit_per_user;
+            if (data.default_thread_rate_limit_per_user === null) {
+                this.defaultThreadRateLimitPerUser = undefined;
+            } else if (data.default_thread_rate_limit_per_user !== undefined) {
+                this.defaultThreadRateLimitPerUser = data.default_thread_rate_limit_per_user;
+            }
         }
 
-        if ("member" in data && data.member) {
-            this.member = ThreadMember.from(data.member);
+        if ("member" in data) {
+            if (data.member === null) {
+                this.member = undefined;
+            } else if (data.member !== undefined) {
+                this.member = ThreadMember.from(data.member);
+            }
         }
 
         if ("member_count" in data) {
-            this.memberCount = data.member_count;
+            if (data.member_count === null) {
+                this.memberCount = undefined;
+            } else if (data.member_count !== undefined) {
+                this.memberCount = data.member_count;
+            }
         }
 
         if ("message_count" in data) {
-            this.messageCount = data.message_count;
+            if (data.message_count === null) {
+                this.messageCount = undefined;
+            } else if (data.message_count !== undefined) {
+                this.messageCount = data.message_count;
+            }
         }
 
         if ("owner_id" in data) {
-            this.ownerId = data.owner_id;
+            if (data.owner_id === null) {
+                this.ownerId = undefined;
+            } else if (data.owner_id !== undefined) {
+                this.ownerId = data.owner_id;
+            }
         }
 
         if ("thread_metadata" in data) {
-            this.threadMetadata = data.thread_metadata;
+            if (data.thread_metadata === null) {
+                this.threadMetadata = undefined;
+            } else if (data.thread_metadata !== undefined) {
+                this.threadMetadata = ThreadMetadata.from(data.thread_metadata);
+            }
         }
 
         if ("total_message_sent" in data) {
-            this.totalMessageSent = data.total_message_sent;
+            if (data.total_message_sent === null) {
+                this.totalMessageSent = undefined;
+            } else if (data.total_message_sent !== undefined) {
+                this.totalMessageSent = data.total_message_sent;
+            }
         }
     }
 }
 
 export class StageVoiceChannel extends BaseChannel {
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 }
 
 export class DirectoryChannel extends BaseChannel {
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 }
@@ -394,7 +585,7 @@ export class DirectoryChannel extends BaseChannel {
 export class ForumChannel extends BaseChannel {
     public appliedTags?: Snowflake[];
 
-    public availableTags?: ForumTagStructure[];
+    public availableTags?: ForumTag[];
 
     public defaultForumLayout?: ForumLayoutTypes;
 
@@ -402,58 +593,90 @@ export class ForumChannel extends BaseChannel {
 
     public defaultSortOrder!: SortOrderTypes | null;
 
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ChannelStructure>): void {
+    protected patch(data: Readonly<Partial<ChannelStructure>>): void {
         if ("applied_tags" in data) {
-            this.appliedTags = data.applied_tags;
+            if (data.applied_tags === null) {
+                this.appliedTags = undefined;
+            } else if (data.applied_tags !== undefined) {
+                this.appliedTags = data.applied_tags;
+            }
         }
 
         if ("available_tags" in data) {
-            this.availableTags = data.available_tags;
+            if (data.available_tags === null) {
+                this.availableTags = undefined;
+            } else if (data.available_tags !== undefined) {
+                this.availableTags = data.available_tags.map((tag) => ForumTag.from(tag));
+            }
         }
 
         if ("default_forum_layout" in data) {
-            this.defaultForumLayout = data.default_forum_layout;
+            if (data.default_forum_layout === null) {
+                this.defaultForumLayout = undefined;
+            } else if (data.default_forum_layout !== undefined) {
+                this.defaultForumLayout = data.default_forum_layout;
+            }
         }
 
-        if ("default_reaction_emoji" in data && data.default_reaction_emoji) {
-            this.defaultReactionEmoji = DefaultReaction.from(data.default_reaction_emoji);
+        if ("default_reaction_emoji" in data) {
+            if (data.default_reaction_emoji === null) {
+                this.defaultReactionEmoji = undefined;
+            } else if (data.default_reaction_emoji !== undefined) {
+                this.defaultReactionEmoji = DefaultReaction.from(data.default_reaction_emoji);
+            }
         }
 
-        this.defaultSortOrder = data.default_sort_order ?? this.defaultSortOrder;
+        if (data.default_sort_order !== undefined) {
+            this.defaultSortOrder = data.default_sort_order;
+        }
     }
 }
 
 export class MediaChannel extends BaseChannel {
     public appliedTags?: Snowflake[];
 
-    public availableTags?: ForumTagStructure[];
+    public availableTags?: ForumTag[];
 
     public defaultReactionEmoji?: DefaultReaction | null;
 
     public defaultSortOrder!: SortOrderTypes | null;
 
-    public constructor(data: Partial<ChannelStructure>) {
+    public constructor(data: Readonly<Partial<ChannelStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ChannelStructure>): void {
+    protected patch(data: Readonly<Partial<ChannelStructure>>): void {
         if ("applied_tags" in data) {
-            this.appliedTags = data.applied_tags;
+            if (data.applied_tags === null) {
+                this.appliedTags = undefined;
+            } else if (data.applied_tags !== undefined) {
+                this.appliedTags = data.applied_tags;
+            }
         }
 
         if ("available_tags" in data) {
-            this.availableTags = data.available_tags;
+            if (data.available_tags === null) {
+                this.availableTags = undefined;
+            } else if (data.available_tags !== undefined) {
+                this.availableTags = data.available_tags.map((tag) => ForumTag.from(tag));
+            }
         }
 
-        if ("default_reaction_emoji" in data && data.default_reaction_emoji) {
-            this.defaultReactionEmoji = DefaultReaction.from(data.default_reaction_emoji);
+        if ("default_reaction_emoji" in data) {
+            if (data.default_reaction_emoji === null) {
+                this.defaultReactionEmoji = undefined;
+            } else if (data.default_reaction_emoji !== undefined) {
+                this.defaultReactionEmoji = DefaultReaction.from(data.default_reaction_emoji);
+            }
         }
 
-        this.defaultSortOrder = data.default_sort_order ?? this.defaultSortOrder;
+        if (data.default_sort_order !== undefined) {
+            this.defaultSortOrder = data.default_sort_order;
+        }
     }
 }
 

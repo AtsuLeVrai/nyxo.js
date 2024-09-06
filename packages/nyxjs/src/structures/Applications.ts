@@ -8,6 +8,7 @@ import type {
     IntegrationTypes,
 } from "@nyxjs/api-types";
 import type { Integer, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
+import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Guild } from "./Guilds";
 import { Team } from "./Teams";
@@ -26,23 +27,42 @@ export class ApplicationRoleConnectionMetadata extends Base<ApplicationRoleConne
 
     public type!: ApplicationRoleConnectionMetadataTypes;
 
-    public constructor(data: Partial<ApplicationRoleConnectionMetadataStructure>) {
+    public constructor(data: Readonly<Partial<ApplicationRoleConnectionMetadataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ApplicationRoleConnectionMetadataStructure>): void {
-        this.description = data.description ?? this.description;
+    protected patch(data: Readonly<Partial<ApplicationRoleConnectionMetadataStructure>>): void {
+        if (data.description !== undefined) {
+            this.description = data.description.trim();
+        }
+
         if ("description_localizations" in data) {
-            this.descriptionLocalizations = data.description_localizations;
+            if (data.description_localizations === null) {
+                this.descriptionLocalizations = undefined;
+            } else if (data.description_localizations !== undefined) {
+                this.descriptionLocalizations = data.description_localizations;
+            }
         }
 
-        this.key = data.key ?? this.key;
-        this.name = data.name ?? this.name;
+        if (data.key !== undefined) {
+            this.key = data.key.trim();
+        }
+
+        if (data.name !== undefined) {
+            this.name = data.name.trim();
+        }
+
         if ("name_localizations" in data) {
-            this.nameLocalizations = data.name_localizations;
+            if (data.name_localizations === null) {
+                this.nameLocalizations = undefined;
+            } else if (data.name_localizations !== undefined) {
+                this.nameLocalizations = data.name_localizations;
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
@@ -51,27 +71,32 @@ export class ApplicationInstallParam extends Base<ApplicationInstallParamStructu
 
     public scopes!: Oauth2Scopes[];
 
-    public constructor(data: Partial<ApplicationInstallParamStructure>) {
+    public constructor(data: Readonly<Partial<ApplicationInstallParamStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ApplicationInstallParamStructure>): void {
-        this.permissions = data.permissions ?? this.permissions;
-        this.scopes = data.scopes ?? this.scopes;
+    protected patch(data: Readonly<Partial<ApplicationInstallParamStructure>>): void {
+        if (data.permissions !== undefined) {
+            this.permissions = data.permissions.trim();
+        }
+
+        if (data.scopes !== undefined) {
+            this.scopes = data.scopes;
+        }
     }
 }
 
 export class ApplicationIntegrationTypeConfiguration extends Base<ApplicationIntegrationTypeConfigurationStructure> {
     public oauth2InstallParams!: ApplicationInstallParam;
 
-    public constructor(data: Partial<ApplicationIntegrationTypeConfigurationStructure>) {
+    public constructor(data: Readonly<Partial<ApplicationIntegrationTypeConfigurationStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ApplicationIntegrationTypeConfigurationStructure>): void {
-        this.oauth2InstallParams = data.oauth2_install_params
-            ? ApplicationInstallParam.from(data.oauth2_install_params)
-            : this.oauth2InstallParams;
+    protected patch(data: Readonly<Partial<ApplicationIntegrationTypeConfigurationStructure>>): void {
+        if (data.oauth2_install_params !== undefined) {
+            this.oauth2InstallParams = ApplicationInstallParam.from(data.oauth2_install_params);
+        }
     }
 }
 
@@ -80,7 +105,7 @@ export class Application extends Base<ApplicationStructure> {
 
     public approximateUserInstallCount?: Integer;
 
-    public bot?: Pick<
+    public bot?: PickWithPublicMethods<
         User,
         | "accentColor"
         | "avatar"
@@ -123,7 +148,7 @@ export class Application extends Base<ApplicationStructure> {
 
     public name!: string;
 
-    public owner?: Pick<
+    public owner?: PickWithPublicMethods<
         User,
         | "accentColor"
         | "avatar"
@@ -158,111 +183,215 @@ export class Application extends Base<ApplicationStructure> {
 
     public verifyKey!: string;
 
-    public constructor(data: Partial<ApplicationStructure>) {
+    public constructor(data: Readonly<Partial<ApplicationStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ApplicationStructure>): void {
+    protected patch(data: Readonly<Partial<ApplicationStructure>>): void {
         if ("approximate_guild_count" in data) {
-            this.approximateGuildCount = data.approximate_guild_count;
+            if (data.approximate_guild_count === null) {
+                this.approximateGuildCount = undefined;
+            } else if (data.approximate_guild_count !== undefined) {
+                this.approximateGuildCount = data.approximate_guild_count;
+            }
         }
 
         if ("approximate_user_install_count" in data) {
-            this.approximateUserInstallCount = data.approximate_user_install_count;
+            if (data.approximate_user_install_count === null) {
+                this.approximateUserInstallCount = undefined;
+            } else if (data.approximate_user_install_count !== undefined) {
+                this.approximateUserInstallCount = data.approximate_user_install_count;
+            }
         }
 
-        if ("bot" in data && data.bot) {
-            this.bot = User.from(data.bot);
+        if ("bot" in data) {
+            if (data.bot === null) {
+                this.bot = undefined;
+            } else if (data.bot !== undefined) {
+                this.bot = User.from(data.bot);
+            }
         }
 
-        this.botPublic = data.bot_public ?? this.botPublic;
-        this.botRequireCodeGrant = data.bot_require_code_grant ?? this.botRequireCodeGrant;
+        if (data.bot_public !== undefined) {
+            this.botPublic = data.bot_public;
+        }
+
+        if (data.bot_require_code_grant !== undefined) {
+            this.botRequireCodeGrant = data.bot_require_code_grant;
+        }
+
         if ("cover_image" in data) {
-            this.coverImage = data.cover_image;
+            if (data.cover_image === null) {
+                this.coverImage = undefined;
+            } else if (data.cover_image !== undefined) {
+                this.coverImage = data.cover_image;
+            }
         }
 
         if ("custom_install_url" in data) {
-            this.customInstallUrl = data.custom_install_url;
+            if (data.custom_install_url === null) {
+                this.customInstallUrl = undefined;
+            } else if (data.custom_install_url !== undefined) {
+                this.customInstallUrl = data.custom_install_url;
+            }
         }
 
-        this.description = data.description ?? this.description;
+        if (data.description !== undefined) {
+            this.description = data.description.trim();
+        }
+
         if ("flags" in data) {
-            this.flags = data.flags;
+            if (data.flags === null) {
+                this.flags = undefined;
+            } else if (data.flags !== undefined) {
+                this.flags = data.flags;
+            }
         }
 
-        if ("guild" in data && data.guild) {
-            this.guild = Guild.from(data.guild);
+        if ("guild" in data) {
+            if (data.guild === null) {
+                this.guild = undefined;
+            } else if (data.guild !== undefined) {
+                this.guild = Guild.from(data.guild);
+            }
         }
 
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else if (data.guild_id !== undefined) {
+                this.guildId = data.guild_id;
+            }
         }
 
-        if ("icon" in data && data.icon) {
+        if (data.icon !== undefined) {
             this.icon = data.icon;
         }
 
-        this.id = data.id ?? this.id;
-        if ("install_params" in data && data.install_params) {
-            this.installParams = ApplicationInstallParam.from(data.install_params);
+        if (data.id !== undefined) {
+            this.id = data.id;
         }
 
-        if ("integration_types_config" in data && data.integration_types_config) {
-            this.integrationTypesConfig = Object.entries(data.integration_types_config).reduce<
-                Partial<Record<IntegrationTypes, ApplicationIntegrationTypeConfiguration>>
-            >((acc, [key, value]) => {
-                acc[key as unknown as IntegrationTypes] = ApplicationIntegrationTypeConfiguration.from(value);
-                return acc;
-            }, {});
+        if ("install_params" in data) {
+            if (data.install_params === null) {
+                this.installParams = undefined;
+            } else if (data.install_params !== undefined) {
+                this.installParams = ApplicationInstallParam.from(data.install_params);
+            }
+        }
+
+        if ("integration_types_config" in data) {
+            if (data.integration_types_config === null) {
+                this.integrationTypesConfig = undefined;
+            } else if (data.integration_types_config !== undefined) {
+                this.integrationTypesConfig = Object.fromEntries(
+                    Object.entries(data.integration_types_config).map(([key, value]) => [
+                        key,
+                        ApplicationIntegrationTypeConfiguration.from(value),
+                    ])
+                );
+            }
         }
 
         if ("interactions_endpoint_url" in data) {
-            this.interactionsEndpointUrl = data.interactions_endpoint_url;
+            if (data.interactions_endpoint_url === null) {
+                this.interactionsEndpointUrl = undefined;
+            } else if (data.interactions_endpoint_url !== undefined) {
+                this.interactionsEndpointUrl = data.interactions_endpoint_url;
+            }
         }
 
-        this.name = data.name ?? this.name;
-        if ("owner" in data && data.owner) {
-            this.owner = User.from(data.owner);
+        if (data.name !== undefined) {
+            this.name = data.name.trim();
+        }
+
+        if ("owner" in data) {
+            if (data.owner === null) {
+                this.owner = undefined;
+            } else if (data.owner !== undefined) {
+                this.owner = User.from(data.owner);
+            }
         }
 
         if ("primary_sku_id" in data) {
-            this.primarySkuId = data.primary_sku_id;
+            if (data.primary_sku_id === null) {
+                this.primarySkuId = undefined;
+            } else if (data.primary_sku_id !== undefined) {
+                this.primarySkuId = data.primary_sku_id;
+            }
         }
 
         if ("privacy_policy_url" in data) {
-            this.privacyPolicyUrl = data.privacy_policy_url;
+            if (data.privacy_policy_url === null) {
+                this.privacyPolicyUrl = undefined;
+            } else if (data.privacy_policy_url !== undefined) {
+                this.privacyPolicyUrl = data.privacy_policy_url;
+            }
         }
 
         if ("redirect_uris" in data) {
-            this.redirectUris = data.redirect_uris;
+            if (data.redirect_uris === null) {
+                this.redirectUris = undefined;
+            } else if (data.redirect_uris !== undefined) {
+                this.redirectUris = data.redirect_uris;
+            }
         }
 
         if ("role_connections_verification_url" in data) {
-            this.roleConnectionsVerificationUrl = data.role_connections_verification_url;
+            if (data.role_connections_verification_url === null) {
+                this.roleConnectionsVerificationUrl = undefined;
+            } else if (data.role_connections_verification_url !== undefined) {
+                this.roleConnectionsVerificationUrl = data.role_connections_verification_url;
+            }
         }
 
         if ("rpc_origins" in data) {
-            this.rpcOrigins = data.rpc_origins;
+            if (data.rpc_origins === null) {
+                this.rpcOrigins = undefined;
+            } else if (data.rpc_origins !== undefined) {
+                this.rpcOrigins = data.rpc_origins;
+            }
         }
 
         if ("slug" in data) {
-            this.slug = data.slug;
+            if (data.slug === null) {
+                this.slug = undefined;
+            } else if (data.slug !== undefined) {
+                this.slug = data.slug.trim();
+            }
         }
 
-        this.summary = data.summary ?? this.summary;
+        if (data.summary !== undefined) {
+            this.summary = data.summary.trim();
+        }
+
         if ("tags" in data) {
-            this.tags = data.tags;
+            if (data.tags === null) {
+                this.tags = undefined;
+            } else if (data.tags !== undefined) {
+                this.tags = data.tags;
+            }
         }
 
-        if ("team" in data && data.team) {
-            this.team = Team.from(data.team);
+        if ("team" in data) {
+            if (data.team === null) {
+                this.team = undefined;
+            } else if (data.team !== undefined) {
+                this.team = Team.from(data.team);
+            }
         }
 
         if ("terms_of_service_url" in data) {
-            this.termsOfServiceUrl = data.terms_of_service_url;
+            if (data.terms_of_service_url === null) {
+                this.termsOfServiceUrl = undefined;
+            } else if (data.terms_of_service_url !== undefined) {
+                this.termsOfServiceUrl = data.terms_of_service_url;
+            }
         }
 
-        this.verifyKey = data.verify_key ?? this.verifyKey;
+        if (data.verify_key !== undefined) {
+            this.verifyKey = data.verify_key;
+        }
     }
 }
 

@@ -2,19 +2,9 @@ import type {
     ActionRowStructure,
     ApplicationCommandDataStructure,
     ApplicationCommandInteractionDataOptionStructure,
-    ApplicationCommandOptionChoiceStructure,
-    ApplicationCommandOptionStructure,
     ApplicationCommandOptionTypes,
-    ApplicationCommandPermissionsStructure,
-    ApplicationCommandPermissionTypes,
-    ApplicationCommandStructure,
-    ApplicationCommandTypes,
     AutocompleteStructure,
-    ButtonStructure,
-    ButtonStyles,
-    ChannelTypes,
     ComponentTypes,
-    GuildApplicationCommandPermissionsStructure,
     IntegrationTypes,
     InteractionCallbackTypes,
     InteractionContextTypes,
@@ -28,487 +18,21 @@ import type {
     ModalStructure,
     ModalSubmitDataStructure,
     ResolvedDataStructure,
-    SelectDefaultValueStructure,
-    SelectDefaultValueTypes,
-    SelectMenuStructure,
-    SelectOptionStructure,
-    TextInputStructure,
-    TextInputStyles,
 } from "@nyxjs/api-types";
 import type { Integer, Locales, Snowflake } from "@nyxjs/core";
+import type { PickWithPublicMethods } from "../utils";
+import { ApplicationCommandOptionChoice } from "./ApplicationCommands";
 import { Base } from "./Base";
 import { TextChannel, ThreadChannel } from "./Channels";
-import { Emoji } from "./Emojis";
+import { Embed } from "./Embed";
 import { Entitlement } from "./Entitlements";
 import { Guild, GuildMember } from "./Guilds";
-import { AllowedMentions, Attachment, Embed, Message } from "./Messages";
+import type { Button, SelectMenu, TextInput } from "./MessageComponents";
+import { SelectOption } from "./MessageComponents";
+import { AllowedMentions, Attachment, Message } from "./Messages";
 import { PollCreateRequest } from "./Polls";
 import { Role } from "./Roles";
 import { User } from "./Users";
-
-export class TextInput extends Base<TextInputStructure> {
-    public customId!: string;
-
-    public label!: string;
-
-    public max_length?: Integer;
-
-    public min_length?: Integer;
-
-    public placeholder?: string;
-
-    public required?: boolean;
-
-    public style!: TextInputStyles;
-
-    public type!: ComponentTypes.TextInput;
-
-    public value?: string;
-
-    public constructor(data: Partial<TextInputStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<TextInputStructure>): void {
-        this.customId = data.custom_id ?? this.customId;
-        this.label = data.label ?? this.label;
-
-        if ("max_length" in data) {
-            this.max_length = data.max_length;
-        }
-
-        if ("min_length" in data) {
-            this.min_length = data.min_length;
-        }
-
-        if ("placeholder" in data) {
-            this.placeholder = data.placeholder;
-        }
-
-        if ("required" in data) {
-            this.required = data.required;
-        }
-
-        this.style = data.style ?? this.style;
-        this.type = data.type ?? this.type;
-
-        if ("value" in data) {
-            this.value = data.value;
-        }
-    }
-}
-
-export class SelectDefaultValue extends Base<SelectDefaultValueStructure> {
-    public id!: Snowflake;
-
-    public type!: SelectDefaultValueTypes;
-
-    public constructor(data: Partial<SelectDefaultValueStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<SelectDefaultValueStructure>): void {
-        this.id = data.id ?? this.id;
-        this.type = data.type ?? this.type;
-    }
-}
-
-export class SelectOption extends Base<SelectOptionStructure> {
-    public default?: boolean;
-
-    public description?: string;
-
-    public emoji?: Pick<Emoji, "animated" | "id" | "name" | "toJSON">;
-
-    public label!: string;
-
-    public value!: string;
-
-    public constructor(data: Partial<SelectOptionStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<SelectOptionStructure>): void {
-        if ("default" in data) {
-            this.default = data.default;
-        }
-
-        if ("description" in data) {
-            this.description = data.description;
-        }
-
-        if ("emoji" in data && data.emoji) {
-            this.emoji = Emoji.from(data.emoji);
-        }
-
-        this.label = data.label ?? this.label;
-        this.value = data.value ?? this.value;
-    }
-}
-
-export class SelectMenu extends Base<SelectMenuStructure> {
-    public channelTypes?: ChannelTypes[];
-
-    public customId!: string;
-
-    public defaultValues?: SelectDefaultValue[];
-
-    public disabled?: boolean;
-
-    public maxValues?: Integer;
-
-    public minValues?: Integer;
-
-    public options?: SelectOptionStructure[];
-
-    public placeholder?: string;
-
-    public type!:
-        | ComponentTypes.ChannelSelect
-        | ComponentTypes.MentionableSelect
-        | ComponentTypes.RoleSelect
-        | ComponentTypes.StringSelect
-        | ComponentTypes.UserSelect;
-
-    public constructor(data: Partial<SelectMenuStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<SelectMenuStructure>): void {
-        if ("channel_types" in data) {
-            this.channelTypes = data.channel_types;
-        }
-
-        this.customId = data.custom_id ?? this.customId;
-
-        if ("default_values" in data && data.default_values) {
-            this.defaultValues = data.default_values.map((value) => SelectDefaultValue.from(value));
-        }
-
-        if ("disabled" in data) {
-            this.disabled = data.disabled;
-        }
-
-        if ("max_values" in data) {
-            this.maxValues = data.max_values;
-        }
-
-        if ("min_values" in data) {
-            this.minValues = data.min_values;
-        }
-
-        if ("options" in data && data.options) {
-            this.options = data.options.map((option) => SelectOption.from(option));
-        }
-
-        if ("placeholder" in data) {
-            this.placeholder = data.placeholder;
-        }
-
-        this.type = data.type ?? this.type;
-    }
-}
-
-export class Button extends Base<ButtonStructure> {
-    public customId?: string;
-
-    public disabled?: boolean;
-
-    public emoji?: Pick<Emoji, "animated" | "id" | "name" | "toJSON">;
-
-    public label?: string;
-
-    public skuId?: Snowflake;
-
-    public style!: ButtonStyles;
-
-    public type!: ComponentTypes.Button;
-
-    public url?: string;
-
-    public constructor(data: Partial<ButtonStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<ButtonStructure>): void {
-        if ("custom_id" in data) {
-            this.customId = data.custom_id;
-        }
-
-        if ("disabled" in data) {
-            this.disabled = data.disabled;
-        }
-
-        if ("emoji" in data && data.emoji) {
-            this.emoji = Emoji.from(data.emoji);
-        }
-
-        if ("label" in data) {
-            this.label = data.label;
-        }
-
-        if ("sku_id" in data) {
-            this.skuId = data.sku_id;
-        }
-
-        this.style = data.style ?? this.style;
-        this.type = data.type ?? this.type;
-
-        if ("url" in data) {
-            this.url = data.url;
-        }
-    }
-}
-
-export class ApplicationCommandPermissions extends Base<ApplicationCommandPermissionsStructure> {
-    public id!: Snowflake;
-
-    public permission!: boolean;
-
-    public type!: ApplicationCommandPermissionTypes;
-
-    public constructor(data: Partial<ApplicationCommandPermissionsStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<ApplicationCommandPermissionsStructure>): void {
-        this.id = data.id ?? this.id;
-        this.permission = data.permission ?? this.permission;
-        this.type = data.type ?? this.type;
-    }
-}
-
-export class GuildApplicationCommandPermissions extends Base<GuildApplicationCommandPermissionsStructure> {
-    public applicationId!: Snowflake;
-
-    public guildId!: Snowflake;
-
-    public id!: Snowflake;
-
-    public permissions!: ApplicationCommandPermissions[];
-
-    public constructor(data: Partial<GuildApplicationCommandPermissionsStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<GuildApplicationCommandPermissionsStructure>): void {
-        this.applicationId = data.application_id ?? this.applicationId;
-        this.guildId = data.guild_id ?? this.guildId;
-        this.id = data.id ?? this.id;
-        this.permissions = data.permissions
-            ? data.permissions.map((permission) => ApplicationCommandPermissions.from(permission))
-            : this.permissions;
-    }
-}
-
-export class ApplicationCommandOptionChoice extends Base<ApplicationCommandOptionChoiceStructure> {
-    public name!: string;
-
-    public nameLocalizations?: Record<Locales, string>;
-
-    public value!: Integer | string;
-
-    public constructor(data: Partial<ApplicationCommandOptionChoiceStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<ApplicationCommandOptionChoiceStructure>): void {
-        this.name = data.name ?? this.name;
-
-        if ("name_localizations" in data) {
-            this.nameLocalizations = data.name_localizations;
-        }
-
-        this.value = data.value ?? this.value;
-    }
-}
-
-export class ApplicationCommandOption extends Base<ApplicationCommandOptionStructure> {
-    public autocomplete?: boolean;
-
-    public channelTypes?: ChannelTypes[];
-
-    public choices?: ApplicationCommandOptionChoiceStructure[];
-
-    public description!: string;
-
-    public descriptionLocalizations?: Record<Locales, string> | null;
-
-    public maxLength?: Integer;
-
-    public maxValue?: Integer;
-
-    public minLength?: Integer;
-
-    public minValue?: Integer;
-
-    public name!: string;
-
-    public nameLocalizations?: Record<Locales, string> | null;
-
-    public options?: ApplicationCommandOptionStructure[];
-
-    public required?: boolean;
-
-    public type!: ApplicationCommandOptionTypes;
-
-    public constructor(data: Partial<ApplicationCommandOptionStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<ApplicationCommandOptionStructure>): void {
-        if ("autocomplete" in data) {
-            this.autocomplete = data.autocomplete;
-        }
-
-        if ("channel_types" in data) {
-            this.channelTypes = data.channel_types;
-        }
-
-        if ("choices" in data) {
-            this.choices = data.choices
-                ? data.choices.map((choice) => ApplicationCommandOptionChoice.from(choice))
-                : this.choices;
-        }
-
-        this.description = data.description ?? this.description;
-
-        if ("description_localizations" in data) {
-            this.descriptionLocalizations = data.description_localizations;
-        }
-
-        if ("max_length" in data) {
-            this.maxLength = data.max_length;
-        }
-
-        if ("max_value" in data) {
-            this.maxValue = data.max_value;
-        }
-
-        if ("min_length" in data) {
-            this.minLength = data.min_length;
-        }
-
-        if ("min_value" in data) {
-            this.minValue = data.min_value;
-        }
-
-        this.name = data.name ?? this.name;
-
-        if ("name_localizations" in data) {
-            this.nameLocalizations = data.name_localizations;
-        }
-
-        if ("options" in data) {
-            this.options = data.options
-                ? data.options.map((option) => ApplicationCommandOption.from(option))
-                : this.options;
-        }
-
-        if ("required" in data) {
-            this.required = data.required;
-        }
-
-        this.type = data.type ?? this.type;
-    }
-}
-
-export class ApplicationCommand extends Base<ApplicationCommandStructure> {
-    public applicationId!: Snowflake;
-
-    public contexts?: InteractionContextTypes[] | null;
-
-    public defaultMemberPermissions!: string | null;
-
-    public defaultPermission?: boolean | null;
-
-    public description!: string;
-
-    public descriptionLocalizations?: Record<Locales, string> | null;
-
-    /**
-     * @deprecated Deprecated and will be removed in a future version
-     */
-    public dmPermission?: boolean;
-
-    public guildId?: Snowflake;
-
-    public id!: Snowflake;
-
-    public integrationTypes?: IntegrationTypes[];
-
-    public name!: string;
-
-    public nameLocalizations?: Record<Locales, string> | null;
-
-    public nsfw?: boolean;
-
-    public options?: ApplicationCommandOption[];
-
-    public type?: ApplicationCommandTypes;
-
-    public version!: Snowflake;
-
-    public constructor(data: Partial<ApplicationCommandStructure>) {
-        super(data);
-    }
-
-    protected patch(data: Partial<ApplicationCommandStructure>): void {
-        this.applicationId = data.application_id ?? this.applicationId;
-
-        if ("contexts" in data) {
-            this.contexts = data.contexts;
-        }
-
-        this.defaultMemberPermissions = data.default_member_permissions ?? this.defaultMemberPermissions;
-
-        if ("default_permission" in data) {
-            this.defaultPermission = data.default_permission;
-        }
-
-        this.description = data.description ?? this.description;
-
-        if ("description_localizations" in data) {
-            this.descriptionLocalizations = data.description_localizations;
-        }
-
-        if ("dm_permission" in data) {
-            this.dmPermission = data.dm_permission;
-        }
-
-        if ("guild_id" in data) {
-            this.guildId = data.guild_id;
-        }
-
-        this.id = data.id ?? this.id;
-
-        if ("integration_types" in data) {
-            this.integrationTypes = data.integration_types;
-        }
-
-        this.name = data.name ?? this.name;
-
-        if ("name_localizations" in data) {
-            this.nameLocalizations = data.name_localizations;
-        }
-
-        if ("nsfw" in data) {
-            this.nsfw = data.nsfw;
-        }
-
-        if ("options" in data) {
-            this.options = data.options
-                ? data.options.map((option) => ApplicationCommandOption.from(option))
-                : this.options;
-        }
-
-        if ("type" in data) {
-            this.type = data.type;
-        }
-
-        this.version = data.version ?? this.version;
-    }
-}
 
 export class ActionRow<
     T extends Button | SelectMenu | TextInput = Button | SelectMenu | TextInput,
@@ -517,11 +41,11 @@ export class ActionRow<
 
     public type!: ComponentTypes.ActionRow;
 
-    public constructor(data: Partial<ActionRowStructure>) {
+    public constructor(data: Readonly<Partial<ActionRowStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ActionRowStructure>): void {
+    protected patch(data: Readonly<Partial<ActionRowStructure>>): void {
         // TODO: Fix this
         // this.components = (
         //     data.components
@@ -546,38 +70,43 @@ export class Modal extends Base<ModalStructure> {
 
     public title!: string;
 
-    public constructor(data: Partial<ModalStructure>) {
+    public constructor(data: Readonly<Partial<ModalStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ModalStructure>): void {
-        this.components = (
-            data.components ? data.components.map((component) => ActionRow.from(component)) : this.components
-        ) as ActionRow<TextInput>[];
+    protected patch(data: Readonly<Partial<ModalStructure>>): void {
+        if (data.components !== undefined) {
+            this.components = data.components.map((component) => new ActionRow<TextInput>(component));
+        }
 
-        this.customId = data.custom_id ?? this.customId;
-        this.title = data.title ?? this.title;
+        if (data.custom_id !== undefined) {
+            this.customId = data.custom_id;
+        }
+
+        if (data.title !== undefined) {
+            this.title = data.title;
+        }
     }
 }
 
 export class Autocomplete extends Base<AutocompleteStructure> {
     public choices!: ApplicationCommandOptionChoice[];
 
-    public constructor(data: Partial<AutocompleteStructure>) {
+    public constructor(data: Readonly<Partial<AutocompleteStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<AutocompleteStructure>): void {
-        this.choices = data.choices
-            ? data.choices.map((choice) => ApplicationCommandOptionChoice.from(choice))
-            : this.choices;
+    protected patch(data: Readonly<Partial<AutocompleteStructure>>): void {
+        if (data.choices !== undefined) {
+            this.choices = data.choices.map((choice) => ApplicationCommandOptionChoice.from(choice));
+        }
     }
 }
 
 export class MessageResponse extends Base<MessageResponseStructure> {
     public allowedMentions?: AllowedMentions;
 
-    public attachments?: Pick<Attachment, "description" | "filename">[];
+    public attachments?: PickWithPublicMethods<Attachment, "description" | "filename">[];
 
     public components?: ActionRow[];
 
@@ -591,43 +120,73 @@ export class MessageResponse extends Base<MessageResponseStructure> {
 
     public tts?: boolean;
 
-    public constructor(data: Partial<MessageResponseStructure>) {
+    public constructor(data: Readonly<Partial<MessageResponseStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageResponseStructure>): void {
-        if ("allowed_mentions" in data && data.allowed_mentions) {
-            this.allowedMentions = AllowedMentions.from(data.allowed_mentions);
+    protected patch(data: Readonly<Partial<MessageResponseStructure>>): void {
+        if ("allowed_mentions" in data) {
+            if (data.allowed_mentions === null) {
+                this.allowedMentions = undefined;
+            } else if (data.allowed_mentions !== undefined) {
+                this.allowedMentions = AllowedMentions.from(data.allowed_mentions);
+            }
         }
 
-        if ("attachments" in data && data.attachments) {
-            this.attachments = data.attachments.map((attachment) => Attachment.from(attachment));
+        if ("attachments" in data) {
+            if (data.attachments === null) {
+                this.attachments = undefined;
+            } else if (data.attachments !== undefined) {
+                this.attachments = data.attachments.map((attachment) => Attachment.from(attachment));
+            }
         }
 
         if ("components" in data) {
-            this.components = data.components
-                ? data.components.map((component) => ActionRow.from(component))
-                : this.components;
+            if (data.components === null) {
+                this.components = undefined;
+            } else if (data.components !== undefined) {
+                this.components = data.components.map((component) => new ActionRow(component));
+            }
         }
 
         if ("content" in data) {
-            this.content = data.content;
+            if (data.content === null) {
+                this.content = undefined;
+            } else if (data.content !== undefined) {
+                this.content = data.content;
+            }
         }
 
-        if ("embeds" in data && data.embeds) {
-            this.embeds = data.embeds.map((embed) => Embed.from(embed));
+        if ("embeds" in data) {
+            if (data.embeds === null) {
+                this.embeds = undefined;
+            } else if (data.embeds !== undefined) {
+                this.embeds = data.embeds.map((embed) => Embed.from(embed));
+            }
         }
 
         if ("flags" in data) {
-            this.flags = data.flags;
+            if (data.flags === null) {
+                this.flags = undefined;
+            } else if (data.flags !== undefined) {
+                this.flags = data.flags;
+            }
         }
 
-        if ("poll" in data && data.poll) {
-            this.poll = PollCreateRequest.from(data.poll);
+        if ("poll" in data) {
+            if (data.poll === null) {
+                this.poll = undefined;
+            } else if (data.poll !== undefined) {
+                this.poll = PollCreateRequest.from(data.poll);
+            }
         }
 
         if ("tts" in data) {
-            this.tts = data.tts;
+            if (data.tts === null) {
+                this.tts = undefined;
+            } else if (data.tts !== undefined) {
+                this.tts = data.tts;
+            }
         }
     }
 }
@@ -637,11 +196,11 @@ export class InteractionResponse extends Base<InteractionResponseStructure> {
 
     public type!: InteractionCallbackTypes;
 
-    public constructor(data: Partial<InteractionResponseStructure>) {
+    public constructor(data: Readonly<Partial<InteractionResponseStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<InteractionResponseStructure>): void {
+    protected patch(data: Readonly<Partial<InteractionResponseStructure>>): void {
         // TODO: Fix this
         // if ("data" in data) {
         //     if (data.data instanceof Autocomplete) {
@@ -653,7 +212,9 @@ export class InteractionResponse extends Base<InteractionResponseStructure> {
         //     }
         // }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
@@ -668,20 +229,34 @@ export class MessageInteraction extends Base<MessageInteractionStructure> {
 
     public user!: User;
 
-    public constructor(data: Partial<MessageInteractionStructure>) {
+    public constructor(data: Readonly<Partial<MessageInteractionStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageInteractionStructure>): void {
-        this.id = data.id ?? this.id;
-
-        if ("member" in data && data.member) {
-            this.member = GuildMember.from(data.member);
+    protected patch(data: Readonly<Partial<MessageInteractionStructure>>): void {
+        if (data.id !== undefined) {
+            this.id = data.id;
         }
 
-        this.name = data.name ?? this.name;
-        this.type = data.type ?? this.type;
-        this.user = data.user ? User.from(data.user) : this.user;
+        if ("member" in data) {
+            if (data.member === null) {
+                this.member = undefined;
+            } else if (data.member !== undefined) {
+                this.member = GuildMember.from(data.member);
+            }
+        }
+
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
+
+        if (data.user !== undefined) {
+            this.user = User.from(data.user);
+        }
     }
 }
 
@@ -696,27 +271,41 @@ export class ApplicationCommandInteractionDataOption extends Base<ApplicationCom
 
     public value?: Integer | boolean | string;
 
-    public constructor(data: Partial<ApplicationCommandInteractionDataOptionStructure>) {
+    public constructor(data: Readonly<Partial<ApplicationCommandInteractionDataOptionStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ApplicationCommandInteractionDataOptionStructure>): void {
+    protected patch(data: Readonly<Partial<ApplicationCommandInteractionDataOptionStructure>>): void {
         if ("focused" in data) {
-            this.focused = data.focused;
+            if (data.focused === null) {
+                this.focused = undefined;
+            } else if (data.focused !== undefined) {
+                this.focused = data.focused;
+            }
         }
 
-        this.name = data.name ?? this.name;
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
 
         if ("options" in data) {
-            this.options = data.options
-                ? data.options.map((option) => ApplicationCommandInteractionDataOption.from(option))
-                : this.options;
+            if (data.options === null) {
+                this.options = undefined;
+            } else if (data.options !== undefined) {
+                this.options = data.options.map((option) => ApplicationCommandInteractionDataOption.from(option));
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
 
         if ("value" in data) {
-            this.value = data.value;
+            if (data.value === null) {
+                this.value = undefined;
+            } else if (data.value !== undefined) {
+                this.value = data.value;
+            }
         }
     }
 }
@@ -726,7 +315,7 @@ export class ResolvedData extends Base<ResolvedDataStructure> {
 
     public channels?: Map<
         Snowflake,
-        Pick<ThreadChannel, "id" | "name" | "parentId" | "permissions" | "threadMetadata" | "type">
+        PickWithPublicMethods<ThreadChannel, "id" | "name" | "parentId" | "permissions" | "threadMetadata" | "type">
     >;
 
     public members?: Map<Snowflake, Omit<GuildMember, "deaf" | "mute" | "user">>;
@@ -737,37 +326,65 @@ export class ResolvedData extends Base<ResolvedDataStructure> {
 
     public users?: Map<Snowflake, User>;
 
-    public constructor(data: Partial<ResolvedDataStructure>) {
+    public constructor(data: Readonly<Partial<ResolvedDataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ResolvedDataStructure>): void {
-        if ("attachments" in data && data.attachments) {
-            this.attachments = new Map(
-                Object.entries(data.attachments).map(([key, value]) => [key, Attachment.from(value)])
-            );
+    protected patch(data: Readonly<Partial<ResolvedDataStructure>>): void {
+        if ("attachments" in data) {
+            if (data.attachments === null) {
+                this.attachments = undefined;
+            } else if (data.attachments !== undefined) {
+                this.attachments = new Map(
+                    Object.entries(data.attachments).map(([key, value]) => [key, Attachment.from(value)])
+                );
+            }
         }
 
-        if ("channels" in data && data.channels) {
-            this.channels = new Map(
-                Object.entries(data.channels).map(([key, value]) => [key, ThreadChannel.from(value)])
-            );
+        if ("channels" in data) {
+            if (data.channels === null) {
+                this.channels = undefined;
+            } else if (data.channels !== undefined) {
+                this.channels = new Map(
+                    Object.entries(data.channels).map(([key, value]) => [key, ThreadChannel.from(value)])
+                );
+            }
         }
 
-        if ("members" in data && data.members) {
-            this.members = new Map(Object.entries(data.members).map(([key, value]) => [key, GuildMember.from(value)]));
+        if ("members" in data) {
+            if (data.members === null) {
+                this.members = undefined;
+            } else if (data.members !== undefined) {
+                this.members = new Map(
+                    Object.entries(data.members).map(([key, value]) => [key, GuildMember.from(value)])
+                );
+            }
         }
 
-        if ("messages" in data && data.messages) {
-            this.messages = new Map(Object.entries(data.messages).map(([key, value]) => [key, Message.from(value)]));
+        if ("messages" in data) {
+            if (data.messages === null) {
+                this.messages = undefined;
+            } else if (data.messages !== undefined) {
+                this.messages = new Map(
+                    Object.entries(data.messages).map(([key, value]) => [key, Message.from(value)])
+                );
+            }
         }
 
-        if ("roles" in data && data.roles) {
-            this.roles = new Map(Object.entries(data.roles).map(([key, value]) => [key, Role.from(value)]));
+        if ("roles" in data) {
+            if (data.roles === null) {
+                this.roles = undefined;
+            } else if (data.roles !== undefined) {
+                this.roles = new Map(Object.entries(data.roles).map(([key, value]) => [key, Role.from(value)]));
+            }
         }
 
-        if ("users" in data && data.users) {
-            this.users = new Map(Object.entries(data.users).map(([key, value]) => [key, User.from(value)]));
+        if ("users" in data) {
+            if (data.users === null) {
+                this.users = undefined;
+            } else if (data.users !== undefined) {
+                this.users = new Map(Object.entries(data.users).map(([key, value]) => [key, User.from(value)]));
+            }
         }
     }
 }
@@ -777,16 +394,18 @@ export class ModalSubmitData extends Base<ModalSubmitDataStructure> {
 
     public customId!: string;
 
-    public constructor(data: Partial<ModalSubmitDataStructure>) {
+    public constructor(data: Readonly<Partial<ModalSubmitDataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ModalSubmitDataStructure>): void {
-        this.components = (
-            data.components ? data.components.map((component) => ActionRow.from(component)) : this.components
-        ) as ActionRow<TextInput>[];
+    protected patch(data: Readonly<Partial<ModalSubmitDataStructure>>): void {
+        if (data.components !== undefined) {
+            this.components = data.components.map((component) => new ActionRow<TextInput>(component));
+        }
 
-        this.customId = data.custom_id ?? this.customId;
+        if (data.custom_id !== undefined) {
+            this.customId = data.custom_id;
+        }
     }
 }
 
@@ -799,20 +418,33 @@ export class MessageComponentData extends Base<MessageComponentDataStructure> {
 
     public values?: SelectOption[];
 
-    public constructor(data: Partial<MessageComponentDataStructure>) {
+    public constructor(data: Readonly<Partial<MessageComponentDataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<MessageComponentDataStructure>): void {
-        this.componentType = data.component_type ?? this.componentType;
-        this.customId = data.custom_id ?? this.customId;
-
-        if ("resolved" in data && data.resolved) {
-            this.resolved = ResolvedData.from(data.resolved);
+    protected patch(data: Readonly<Partial<MessageComponentDataStructure>>): void {
+        if (data.component_type !== undefined) {
+            this.componentType = data.component_type;
         }
 
-        if ("values" in data && data.values) {
-            this.values = data.values.map((value) => SelectOption.from(value));
+        if (data.custom_id !== undefined) {
+            this.customId = data.custom_id;
+        }
+
+        if ("resolved" in data) {
+            if (data.resolved === null) {
+                this.resolved = undefined;
+            } else if (data.resolved !== undefined) {
+                this.resolved = ResolvedData.from(data.resolved);
+            }
+        }
+
+        if ("values" in data) {
+            if (data.values === null) {
+                this.values = undefined;
+            } else if (data.values !== undefined) {
+                this.values = data.values.map((value) => SelectOption.from(value));
+            }
         }
     }
 }
@@ -832,31 +464,54 @@ export class ApplicationCommandData extends Base<ApplicationCommandDataStructure
 
     public type!: InteractionTypes;
 
-    public constructor(data: Partial<ApplicationCommandDataStructure>) {
+    public constructor(data: Readonly<Partial<ApplicationCommandDataStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<ApplicationCommandDataStructure>): void {
+    protected patch(data: Readonly<Partial<ApplicationCommandDataStructure>>): void {
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else {
+                this.guildId = data.guild_id;
+            }
         }
 
-        this.id = data.id ?? this.id;
-        this.name = data.name ?? this.name;
-
-        if ("options" in data && data.options) {
-            this.options = data.options.map((option) => ApplicationCommandInteractionDataOption.from(option));
+        if (data.id !== undefined) {
+            this.id = data.id;
         }
 
-        if ("resolved" in data && data.resolved) {
-            this.resolved = ResolvedData.from(data.resolved);
+        if (data.name !== undefined) {
+            this.name = data.name;
+        }
+
+        if ("options" in data) {
+            if (data.options === null) {
+                this.options = undefined;
+            } else if (data.options !== undefined) {
+                this.options = data.options.map((option) => ApplicationCommandInteractionDataOption.from(option));
+            }
+        }
+
+        if ("resolved" in data) {
+            if (data.resolved === null) {
+                this.resolved = undefined;
+            } else if (data.resolved !== undefined) {
+                this.resolved = ResolvedData.from(data.resolved);
+            }
         }
 
         if ("target_id" in data) {
-            this.targetId = data.target_id;
+            if (data.target_id === null) {
+                this.targetId = undefined;
+            } else {
+                this.targetId = data.target_id;
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
     }
 }
 
@@ -904,31 +559,53 @@ export class Interaction extends Base<InteractionStructure> {
 
     public version!: 1;
 
-    public constructor(data: Partial<InteractionStructure>) {
+    public constructor(data: Readonly<Partial<InteractionStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<InteractionStructure>): void {
+    protected patch(data: Readonly<Partial<InteractionStructure>>): void {
         if ("app_permissions" in data) {
-            this.appPermissions = data.app_permissions;
+            if (data.app_permissions === null) {
+                this.appPermissions = undefined;
+            } else if (data.app_permissions !== undefined) {
+                this.appPermissions = data.app_permissions;
+            }
         }
 
-        this.applicationId = data.application_id ?? this.applicationId;
+        if (data.application_id !== undefined) {
+            this.applicationId = data.application_id;
+        }
 
         if ("authorizing_integration_owners" in data) {
-            this.authorizingIntegrationOwners = data.authorizing_integration_owners;
+            if (data.authorizing_integration_owners === null) {
+                this.authorizingIntegrationOwners = undefined;
+            } else if (data.authorizing_integration_owners !== undefined) {
+                this.authorizingIntegrationOwners = data.authorizing_integration_owners;
+            }
         }
 
-        if ("channel" in data && data.channel) {
-            this.channel = TextChannel.from(data.channel);
+        if ("channel" in data) {
+            if (data.channel === null) {
+                this.channel = undefined;
+            } else if (data.channel !== undefined) {
+                this.channel = TextChannel.from(data.channel);
+            }
         }
 
         if ("channel_id" in data) {
-            this.channelId = data.channel_id;
+            if (data.channel_id === null) {
+                this.channelId = undefined;
+            } else {
+                this.channelId = data.channel_id;
+            }
         }
 
         if ("context" in data) {
-            this.context = data.context;
+            if (data.context === null) {
+                this.context = undefined;
+            } else if (data.context !== undefined) {
+                this.context = data.context;
+            }
         }
 
         // TODO: Fix this
@@ -941,63 +618,99 @@ export class Interaction extends Base<InteractionStructure> {
         //         this.data = MessageComponentData.from(data.data);
         //     } else if (data.data instanceof ModalSubmitData) {
         //         this.data = ModalSubmitData.from(data.data);
-        //     } else {
+        //     } else if (data.data instanceof ResolvedData) {
         //         this.data = ResolvedData.from(data.data);
         //     }
         // }
 
-        if ("entitlements" in data && data.entitlements) {
-            this.entitlements = data.entitlements.map((entitlement) => Entitlement.from(entitlement));
+        if ("entitlements" in data) {
+            if (data.entitlements === null) {
+                this.entitlements = undefined;
+            } else if (data.entitlements !== undefined) {
+                this.entitlements = data.entitlements.map((entitlement) => Entitlement.from(entitlement));
+            }
         }
 
-        if ("guild" in data && data.guild) {
-            this.guild = Guild.from(data.guild);
+        if ("guild" in data) {
+            if (data.guild === null) {
+                this.guild = undefined;
+            } else if (data.guild !== undefined) {
+                this.guild = Guild.from(data.guild);
+            }
         }
 
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else {
+                this.guildId = data.guild_id;
+            }
         }
 
         if ("guild_locale" in data) {
-            this.guildLocale = data.guild_locale;
+            if (data.guild_locale === null) {
+                this.guildLocale = undefined;
+            } else if (data.guild_locale !== undefined) {
+                this.guildLocale = data.guild_locale;
+            }
         }
 
-        if ("id" in data && data.id) {
+        if (data.id !== undefined) {
             this.id = data.id;
         }
 
         if ("locale" in data) {
-            this.locale = data.locale;
+            if (data.locale === null) {
+                this.locale = undefined;
+            } else if (data.locale !== undefined) {
+                this.locale = data.locale;
+            }
         }
 
-        if ("member" in data && data.member) {
-            this.member = GuildMember.from(data.member);
+        if ("member" in data) {
+            if (data.member === null) {
+                this.member = undefined;
+            } else if (data.member !== undefined) {
+                this.member = GuildMember.from(data.member);
+            }
         }
 
-        if ("message" in data && data.message) {
-            this.message = Message.from(data.message);
+        if ("message" in data) {
+            if (data.message === null) {
+                this.message = undefined;
+            } else if (data.message !== undefined) {
+                this.message = Message.from(data.message);
+            }
         }
 
-        this.token = data.token ?? this.token;
-        this.type = data.type ?? this.type;
-
-        if ("user" in data && data.user) {
-            this.user = User.from(data.user);
+        if (data.token !== undefined) {
+            this.token = data.token;
         }
 
-        this.version = 1;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
+
+        if ("user" in data) {
+            if (data.user === null) {
+                this.user = undefined;
+            } else if (data.user !== undefined) {
+                this.user = User.from(data.user);
+            }
+        }
+
+        if (data.version !== undefined) {
+            this.version = data.version;
+        }
     }
 }
 
 export {
-    TextInputStyles,
-    SelectDefaultValueTypes,
-    ButtonStyles,
-    ComponentTypes,
-    ApplicationCommandPermissionTypes,
     ApplicationCommandOptionTypes,
-    ApplicationCommandTypes,
+    ComponentTypes,
+    IntegrationTypes,
     InteractionCallbackTypes,
     InteractionContextTypes,
     InteractionTypes,
+    MessageFlags,
 } from "@nyxjs/api-types";

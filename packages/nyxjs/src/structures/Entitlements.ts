@@ -23,38 +23,69 @@ export class Entitlement extends Base<EntitlementStructure> {
 
     public userId?: Snowflake;
 
-    public constructor(data: Partial<EntitlementStructure>) {
+    public constructor(data: Readonly<Partial<EntitlementStructure>> = {}) {
         super(data);
     }
 
-    protected patch(data: Partial<EntitlementStructure>): void {
-        this.applicationId = data.application_id ?? this.applicationId;
-
-        if ("consumed" in data) {
-            this.consumed = data.consumed;
+    protected patch(data: Readonly<Partial<EntitlementStructure>>): void {
+        if (data.application_id !== undefined) {
+            this.applicationId = data.application_id;
         }
 
-        this.deleted = data.deleted ?? this.deleted;
+        if ("consumed" in data) {
+            if (data.consumed === null) {
+                this.consumed = undefined;
+            } else if (data.consumed !== undefined) {
+                this.consumed = data.consumed;
+            }
+        }
+
+        if (data.deleted !== undefined) {
+            this.deleted = data.deleted;
+        }
 
         if ("ends_at" in data) {
-            this.endsAt = data.ends_at;
+            if (data.ends_at === null) {
+                this.endsAt = undefined;
+            } else if (data.ends_at !== undefined) {
+                this.endsAt = data.ends_at;
+            }
         }
 
         if ("guild_id" in data) {
-            this.guildId = data.guild_id;
+            if (data.guild_id === null) {
+                this.guildId = undefined;
+            } else {
+                this.guildId = data.guild_id;
+            }
         }
 
-        this.id = data.id ?? this.id;
-        this.skuId = data.sku_id ?? this.skuId;
+        if (data.id !== undefined) {
+            this.id = data.id;
+        }
+
+        if (data.sku_id !== undefined) {
+            this.skuId = data.sku_id;
+        }
 
         if ("starts_at" in data) {
-            this.startsAt = data.starts_at;
+            if (data.starts_at === null) {
+                this.startsAt = undefined;
+            } else if (data.starts_at !== undefined) {
+                this.startsAt = data.starts_at;
+            }
         }
 
-        this.type = data.type ?? this.type;
+        if (data.type !== undefined) {
+            this.type = data.type;
+        }
 
         if ("user_id" in data) {
-            this.userId = data.user_id;
+            if (data.user_id === null) {
+                this.userId = undefined;
+            } else {
+                this.userId = data.user_id;
+            }
         }
     }
 }

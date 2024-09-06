@@ -1,23 +1,23 @@
 /**
- * ./structures
+ * ./
  */
-export * from "./structures/applications";
-export * from "./structures/audits";
-export * from "./structures/channels";
-export * from "./structures/emojis";
-export * from "./structures/entitlements";
-export * from "./structures/guilds";
-export * from "./structures/interactions";
-export * from "./structures/invites";
-export * from "./structures/messages";
-export * from "./structures/moderations";
-export * from "./structures/polls";
-export * from "./structures/roles";
-export * from "./structures/skus";
-export * from "./structures/stages";
-export * from "./structures/stickers";
-export * from "./structures/subscriptions";
-export * from "./structures/teams";
-export * from "./structures/users";
-export * from "./structures/voices";
-export * from "./structures/webhooks";
+export * from "./applications";
+export * from "./audits";
+export * from "./channels";
+export * from "./emojis";
+export * from "./entitlements";
+export * from "./guilds";
+export * from "./interactions";
+export * from "./invites";
+export * from "./messages";
+export * from "./moderations";
+export * from "./polls";
+export * from "./roles";
+export * from "./skus";
+export * from "./stages";
+export * from "./stickers";
+export * from "./subscriptions";
+export * from "./teams";
+export * from "./users";
+export * from "./voices";
+export * from "./webhooks";
