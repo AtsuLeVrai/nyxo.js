@@ -1,6 +1,5 @@
+import type { ApplicationStructure, UserStructure } from "@nyxjs/api-types";
 import type { IsoO8601Timestamp, Oauth2Scopes } from "@nyxjs/core";
-import type { ApplicationStructure } from "../structures/applications";
-import type { UserStructure } from "../structures/users";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

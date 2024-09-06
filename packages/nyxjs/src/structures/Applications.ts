@@ -1,4 +1,3 @@
-import type { Integer, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
 import type {
     ApplicationFlags,
     ApplicationInstallParamStructure,
@@ -6,11 +5,12 @@ import type {
     ApplicationRoleConnectionMetadataStructure,
     ApplicationRoleConnectionMetadataTypes,
     ApplicationStructure,
-    GuildStructure,
     IntegrationTypes,
-    TeamStructure,
-} from "@nyxjs/rest";
+} from "@nyxjs/api-types";
+import type { Integer, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
 import { Base } from "./Base";
+import { Guild } from "./Guilds";
+import { Team } from "./Teams";
 import { User } from "./Users";
 
 export class ApplicationRoleConnectionMetadata extends Base<ApplicationRoleConnectionMetadataStructure> {
@@ -107,7 +107,7 @@ export class Application extends Base<ApplicationStructure> {
 
     public flags?: ApplicationFlags;
 
-    public guild?: Partial<GuildStructure>;
+    public guild?: Partial<Guild>;
 
     public guildId?: Snowflake;
 
@@ -152,7 +152,7 @@ export class Application extends Base<ApplicationStructure> {
 
     public tags?: string[];
 
-    public team?: TeamStructure;
+    public team?: Team;
 
     public termsOfServiceUrl?: string;
 
@@ -190,8 +190,8 @@ export class Application extends Base<ApplicationStructure> {
             this.flags = data.flags;
         }
 
-        if ("guild" in data) {
-            this.guild = data.guild;
+        if ("guild" in data && data.guild) {
+            this.guild = Guild.from(data.guild);
         }
 
         if ("guild_id" in data) {
@@ -254,8 +254,8 @@ export class Application extends Base<ApplicationStructure> {
             this.tags = data.tags;
         }
 
-        if ("team" in data) {
-            this.team = data.team;
+        if ("team" in data && data.team) {
+            this.team = Team.from(data.team);
         }
 
         if ("terms_of_service_url" in data) {
@@ -265,3 +265,5 @@ export class Application extends Base<ApplicationStructure> {
         this.verifyKey = data.verify_key ?? this.verifyKey;
     }
 }
+
+export { ApplicationFlags, ApplicationRoleConnectionMetadataTypes, IntegrationTypes } from "@nyxjs/api-types";

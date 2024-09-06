@@ -1,6 +1,5 @@
+import type { MessageStructure, UserStructure } from "@nyxjs/api-types";
 import type { Integer, Snowflake } from "@nyxjs/core";
-import type { MessageStructure } from "../structures/messages";
-import type { UserStructure } from "../structures/users";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

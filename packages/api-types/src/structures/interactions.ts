@@ -71,6 +71,12 @@ export type TextInputStructure = {
     value?: string;
 };
 
+export enum SelectDefaultValueTypes {
+    Channel = "channel",
+    Role = "role",
+    User = "user",
+}
+
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-default-value-structure}
  */
@@ -82,7 +88,7 @@ export type SelectDefaultValueStructure = {
     /**
      * Type of value that id represents. Either "user", "role", or "channel"
      */
-    type: "channel" | "role" | "user";
+    type: SelectDefaultValueTypes;
 };
 
 /**

@@ -1,5 +1,5 @@
+import type { SkuStructure } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
-import type { SkuStructure } from "../structures/skus";
 import type { RestRequestOptions } from "../types/globals";
 
 export const SkuRoutes = {

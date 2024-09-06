@@ -1,4 +1,3 @@
-import type { Integer, Locales, Snowflake } from "@nyxjs/core";
 import type {
     ApplicationRoleConnectionStructure,
     AvatarDecorationDataStructure,
@@ -8,7 +7,8 @@ import type {
     PremiumTypes,
     UserFlags,
     UserStructure,
-} from "@nyxjs/rest";
+} from "@nyxjs/api-types";
+import type { Integer, Locales, Snowflake } from "@nyxjs/core";
 import { ApplicationRoleConnectionMetadata } from "./Applications";
 import { Base } from "./Base";
 import { Integration } from "./Guilds";
@@ -192,3 +192,5 @@ export class User extends Base<UserStructure> {
         }
     }
 }
+
+export { type ConnectionServices, ConnectionVisibilityTypes, PremiumTypes, UserFlags } from "@nyxjs/api-types";

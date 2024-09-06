@@ -1,5 +1,5 @@
+import type { VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/api-types";
 import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { VoiceRegionStructure, VoiceStateStructure } from "../structures/voices";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

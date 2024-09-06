@@ -1,7 +1,12 @@
+import type {
+    ApplicationRoleConnectionStructure,
+    ChannelStructure,
+    ConnectionStructure,
+    GuildMemberStructure,
+    GuildStructure,
+    UserStructure,
+} from "@nyxjs/api-types";
 import type { Boolean, Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { ChannelStructure } from "../structures/channels";
-import type { GuildMemberStructure, GuildStructure } from "../structures/guilds";
-import type { ApplicationRoleConnectionStructure, ConnectionStructure, UserStructure } from "../structures/users";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

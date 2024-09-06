@@ -1,5 +1,5 @@
+import type { StageInstanceStructure, StagePrivacyLevels } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
-import type { StageInstanceStructure, StagePrivacyLevels } from "@nyxjs/rest";
 import { Base } from "./Base";
 
 export class StageInstance extends Base<StageInstanceStructure> {
@@ -31,3 +31,5 @@ export class StageInstance extends Base<StageInstanceStructure> {
         this.topic = data.topic ?? this.topic;
     }
 }
+
+export { StagePrivacyLevels } from "@nyxjs/api-types";

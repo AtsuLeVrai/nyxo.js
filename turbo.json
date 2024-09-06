@@ -7,9 +7,7 @@
         "^build"
       ]
     },
-    "biome:write": {},
     "lint": {},
-    "lint:fix": {},
     "pretty": {},
     "clean": {},
     "test": {},

@@ -1,5 +1,6 @@
+import type { SubscriptionStatus, SubscriptionStructure } from "@nyxjs/api-types";
 import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
-import type { ListSkuSubscriptionsQuery, SubscriptionStatus, SubscriptionStructure } from "@nyxjs/rest";
+import type { ListSkuSubscriptionsQuery } from "@nyxjs/rest";
 import { SubscriptionRoutes } from "@nyxjs/rest";
 import { Base } from "./Base";
 import type { Client } from "./Client";
@@ -55,3 +56,5 @@ export class Subscription extends Base<SubscriptionStructure> {
         }
     }
 }
+
+export { SubscriptionStatus } from "@nyxjs/api-types";

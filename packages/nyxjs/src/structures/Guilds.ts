@@ -1,4 +1,3 @@
-import type { Integer, IsoO8601Timestamp, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
 import type {
     BanStructure,
     DefaultMessageNotificationLevels,
@@ -40,7 +39,8 @@ import type {
     VerificationLevels,
     WelcomeScreenChannelStructure,
     WelcomeScreenStructure,
-} from "@nyxjs/rest";
+} from "@nyxjs/api-types";
+import type { Integer, IsoO8601Timestamp, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";
 import { Emoji } from "./Emojis";
@@ -337,7 +337,7 @@ export class GuildMember extends Base<GuildMemberStructure> {
 
     public permissions?: string;
 
-    public premium_since?: IsoO8601Timestamp | null;
+    public premiumSince?: IsoO8601Timestamp | null;
 
     public roles!: Snowflake[];
 
@@ -377,7 +377,7 @@ export class GuildMember extends Base<GuildMemberStructure> {
         }
 
         if ("premium_since" in data) {
-            this.premium_since = data.premium_since;
+            this.premiumSince = data.premium_since;
         }
 
         this.roles = data.roles ?? this.roles;
@@ -918,3 +918,25 @@ export class GuildTemplate extends Base<GuildTemplateStructure> {
         this.usageCount = data.usage_count ?? this.usageCount;
     }
 }
+
+export {
+    DefaultMessageNotificationLevels,
+    ExplicitContentFilterLevels,
+    GuildFeatures,
+    GuildMemberFlags,
+    GuildScheduledEventEntityTypes,
+    GuildScheduledEventPrivacyLevels,
+    GuildScheduledEventStatus,
+    IntegrationExpireBehaviors,
+    IntegrationPlatformTypes,
+    MfaLevels,
+    NsfwLevels,
+    OnboardingMode,
+    PremiumTiers,
+    PromptTypes,
+    RecurrenceRuleFrequencies,
+    RecurrenceRuleMonths,
+    RecurrenceRuleWeekdays,
+    SystemChannelFlags,
+    VerificationLevels,
+} from "@nyxjs/api-types";

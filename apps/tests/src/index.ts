@@ -4,20 +4,20 @@ import { ApiVersions, Client, GatewayIntents } from "nyx.js";
 config();
 
 if (!process.env.DISCORD_TOKEN) {
-	throw new Error("No discord token provided");
+  throw new Error("No discord token provided");
 }
 
 const client = new Client(process.env.DISCORD_TOKEN, {
-	intents: [GatewayIntents.GuildWebhooks],
-	version: ApiVersions.V10,
+  intents: [GatewayIntents.Guilds],
+  version: ApiVersions.V10,
 });
 
 client.on("ready", () => {
-	console.log("Ready");
+  console.log("Ready");
 });
 
 client.on("interactionCreate", (interaction) => {
-	console.log(interaction);
+  console.log(interaction);
 });
 
 client.connect();

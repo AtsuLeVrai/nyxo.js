@@ -1,5 +1,5 @@
+import type { GuildMemberStructure, VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/api-types";
 import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
-import type { GuildMemberStructure, VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/rest";
 import { Base } from "./Base";
 
 export class VoiceRegion extends Base<VoiceRegionStructure> {

@@ -1,5 +1,5 @@
+import type { ChannelStructure, ThreadMemberStructure } from "@nyxjs/api-types";
 import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
-import type { ChannelStructure, ThreadMemberStructure } from "@nyxjs/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#channel-pins-update-channel-pins-update-event-fields}

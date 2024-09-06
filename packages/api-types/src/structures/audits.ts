@@ -28,7 +28,7 @@ export type AuditLogChangeStructure = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
  */
-export type OptionalAuditEntryInfo = {
+export type OptionalAuditEntryInfoStructure = {
     /**
      * ID of the app whose permissions were targeted
      */
@@ -356,7 +356,7 @@ export type AuditLogEntryStructure = {
     /**
      * Additional info for certain event types
      */
-    options?: OptionalAuditEntryInfo;
+    options?: OptionalAuditEntryInfoStructure;
     /**
      * Reason for the change (1-512 characters)
      */

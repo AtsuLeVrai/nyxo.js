@@ -1,5 +1,5 @@
+import type { InviteStructure } from "@nyxjs/api-types";
 import type { Boolean, Snowflake } from "@nyxjs/core";
-import type { InviteStructure } from "../structures/invites";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

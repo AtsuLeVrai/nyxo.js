@@ -1,5 +1,5 @@
+import type { EmojiStructure } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
-import type { EmojiStructure } from "@nyxjs/rest";
 import { Base } from "./Base";
 import { User } from "./Users";
 

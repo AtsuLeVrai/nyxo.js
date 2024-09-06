@@ -1,9 +1,9 @@
 import { Buffer } from "node:buffer";
 import { createReadStream } from "node:fs";
 import type { Readable } from "node:stream";
+import type { StickerPackStructure, StickerStructure } from "@nyxjs/api-types";
 import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
 import { FormData } from "undici";
-import type { StickerPackStructure, StickerStructure } from "../structures/stickers";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

@@ -1,5 +1,5 @@
+import type { SubscriptionStructure } from "@nyxjs/api-types";
 import type { Integer, Snowflake } from "@nyxjs/core";
-import type { SubscriptionStructure } from "../structures/subscriptions";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

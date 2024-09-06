@@ -1,4 +1,3 @@
-import type { GatewayOpcodes, Integer } from "@nyxjs/core";
 import type {
     AuditLogEntryStructure,
     AutoModerationRuleStructure,
@@ -17,7 +16,8 @@ import type {
     UnavailableGuildStructure,
     UserStructure,
     VoiceStateStructure,
-} from "@nyxjs/rest";
+} from "@nyxjs/api-types";
+import type { GatewayOpcodes, Integer } from "@nyxjs/core";
 import type {
     ChannelPinsUpdateEventFields,
     ThreadListSyncEventFields,

@@ -1,4 +1,3 @@
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import type {
     ChannelFlags,
     ChannelStructure,
@@ -13,7 +12,8 @@ import type {
     ThreadMemberStructure,
     ThreadMetadataStructure,
     VideoQualityModes,
-} from "@nyxjs/rest";
+} from "@nyxjs/api-types";
+import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import { Base } from "./Base";
 import { GuildMember } from "./Guilds";
 import { User } from "./Users";
@@ -456,3 +456,12 @@ export class MediaChannel extends BaseChannel {
         this.defaultSortOrder = data.default_sort_order ?? this.defaultSortOrder;
     }
 }
+
+export {
+    ChannelFlags,
+    ChannelTypes,
+    ForumLayoutTypes,
+    OverwriteTypes,
+    SortOrderTypes,
+    VideoQualityModes,
+} from "@nyxjs/api-types";

@@ -5,9 +5,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "biome:write": "turbo run biome:write",
     "lint": "turbo run lint",
-    "lint:fix": "turbo run lint:fix",
     "pretty": "turbo run pretty",
     "clean": "turbo run clean --force",
     "test": "turbo run test",

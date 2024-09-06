@@ -1,5 +1,5 @@
+import type { SkuFlags, SkuStructure, SkuTypes } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
-import type { SkuFlags, SkuStructure, SkuTypes } from "@nyxjs/rest";
 import { SkuRoutes } from "@nyxjs/rest";
 import { Base } from "./Base";
 import type { Client } from "./Client";
@@ -38,3 +38,5 @@ export class Sku extends Base<SkuStructure> {
         this.flags = data.flags ?? this.flags;
     }
 }
+
+export { SkuFlags, SkuTypes } from "@nyxjs/api-types";

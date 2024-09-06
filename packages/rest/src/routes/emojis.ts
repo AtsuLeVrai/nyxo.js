@@ -1,5 +1,5 @@
+import type { EmojiStructure } from "@nyxjs/api-types";
 import type { DataUriSchema, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { EmojiStructure } from "../structures/emojis";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

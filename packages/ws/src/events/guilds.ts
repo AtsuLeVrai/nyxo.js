@@ -1,4 +1,3 @@
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import type {
     AvatarDecorationDataStructure,
     ChannelStructure,
@@ -11,7 +10,8 @@ import type {
     StickerStructure,
     UserStructure,
     VoiceStateStructure,
-} from "@nyxjs/rest";
+} from "@nyxjs/api-types";
+import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import type { PresenceUpdateEventFields } from "./presences";
 
 /**

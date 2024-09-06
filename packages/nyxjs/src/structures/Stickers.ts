@@ -1,11 +1,11 @@
-import type { Integer, Snowflake } from "@nyxjs/core";
 import type {
     StickerFormatTypes,
     StickerItemStructure,
     StickerPackStructure,
     StickerStructure,
     StickerTypes,
-} from "@nyxjs/rest";
+} from "@nyxjs/api-types";
+import type { Integer, Snowflake } from "@nyxjs/core";
 import { Base } from "./Base";
 import { User } from "./Users";
 
@@ -132,3 +132,5 @@ export class StickerItem extends Base<StickerItemStructure> {
         this.name = data.name ?? this.name;
     }
 }
+
+export { StickerFormatTypes, StickerTypes } from "@nyxjs/api-types";

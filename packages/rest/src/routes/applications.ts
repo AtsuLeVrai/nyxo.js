@@ -1,5 +1,5 @@
+import type { ApplicationRoleConnectionMetadataStructure, ApplicationStructure } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
-import type { ApplicationRoleConnectionMetadataStructure, ApplicationStructure } from "../structures/applications";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

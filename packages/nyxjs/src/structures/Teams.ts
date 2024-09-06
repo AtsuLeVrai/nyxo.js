@@ -1,5 +1,5 @@
+import type { MembershipState, TeamMemberRoles, TeamMemberStructure, TeamStructure } from "@nyxjs/api-types";
 import type { Snowflake } from "@nyxjs/core";
-import type { MembershipState, TeamMemberRoles, TeamMemberStructure, TeamStructure } from "@nyxjs/rest";
 import { Base } from "./Base";
 import { User } from "./Users";
 
@@ -47,3 +47,5 @@ export class Team extends Base<TeamStructure> {
         this.members = data.members ? data.members.map((member) => TeamMember.from(member)) : this.members;
     }
 }
+
+export { MembershipState, type TeamMemberRoles } from "@nyxjs/api-types";
