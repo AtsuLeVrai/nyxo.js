@@ -71,15 +71,15 @@ export class ShardManager {
     private async processRateLimitQueue(rateLimitKey: number): Promise<void> {
         const queue = this.rateLimitQueue.get(rateLimitKey) ?? [];
         for (const shardInfo of queue) {
-            await this.connectShard(shardInfo);
+            this.connectShard(shardInfo);
             await new Promise((resolve) => {
                 setTimeout(resolve, 5_000);
             });
         }
     }
 
-    private async connectShard(shardInfo: ShardInfo): Promise<void> {
-        this.gateway.emit("debug", `[WS] Connecting shard ${shardInfo.shardId}...`);
+    private connectShard(shardInfo: ShardInfo): void {
+        void this.gateway.emit("debug", `[WS] Connecting shard ${shardInfo.shardId}...`);
 
         const payload: IdentifyStructure = {
             token: this.token,

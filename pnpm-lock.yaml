@@ -30,6 +30,9 @@ importers:
         specifier: ^2.7.0
         version: 2.7.0
     devDependencies:
+      '@types/node':
+        specifier: ^22.5.4
+        version: 22.5.4
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -110,6 +113,10 @@ importers:
         version: 5.5.4
 
   packages/cache:
+    dependencies:
+      tslib:
+        specifier: ^2.7.0
+        version: 2.7.0
     devDependencies:
       '@microsoft/api-extractor':
         specifier: ^7.47.7
@@ -181,6 +188,9 @@ importers:
 
   packages/nyxjs:
     dependencies:
+      '@3tatsu/emitsy':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@nyxjs/api-types':
         specifier: workspace:*
         version: link:../api-types
@@ -196,9 +206,6 @@ importers:
       '@nyxjs/ws':
         specifier: workspace:*
         version: link:../ws
-      eventemitter3:
-        specifier: ^5.0.1
-        version: 5.0.1
       tslib:
         specifier: ^2.7.0
         version: 2.7.0
@@ -239,6 +246,9 @@ importers:
 
   packages/rest:
     dependencies:
+      '@3tatsu/emitsy':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@nyxjs/api-types':
         specifier: workspace:*
         version: link:../api-types
@@ -248,9 +258,6 @@ importers:
       '@nyxjs/core':
         specifier: workspace:*
         version: link:../core
-      eventemitter3:
-        specifier: ^5.0.1
-        version: 5.0.1
       minizlib:
         specifier: ^3.0.1
         version: 3.0.1
@@ -294,6 +301,9 @@ importers:
 
   packages/ws:
     dependencies:
+      '@3tatsu/emitsy':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@nyxjs/api-types':
         specifier: workspace:*
         version: link:../api-types
@@ -309,9 +319,6 @@ importers:
       erlpack:
         specifier: ^0.1.4
         version: 0.1.4
-      eventemitter3:
-        specifier: ^5.0.1
-        version: 5.0.1
       tslib:
         specifier: ^2.7.0
         version: 2.7.0
@@ -360,6 +367,9 @@ importers:
         version: 5.5.4
 
 packages:
+
+  '@3tatsu/emitsy@1.0.1':
+    resolution: {integrity: sha512-lJxeJt4OtSzdyWAzwt/F4MBjqbY+LJ4w9FNQF/tnmoSdSY8+oSjQqIzJrEvb5pakcEhas5xRY50NbKGbdPtUaQ==}
 
   '@angular-eslint/bundled-angular-compiler@17.5.3':
     resolution: {integrity: sha512-x9jZ6mME9wxumErPGonWERXX/9TJ7mzEkQhOKt3BxBFm0sy9XQqLMAenp1PBSg3RF3rH7EEVdB2+jb75RtHp0g==}
@@ -1612,8 +1622,8 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
-  electron-to-chromium@1.5.17:
-    resolution: {integrity: sha512-Q6Q+04tjC2KJ8qsSOSgovvhWcv5t+SmpH6/YfAWmhpE5/r+zw6KQy1/yWVFFNyEBvy68twTTXr2d5eLfCq7QIw==}
+  electron-to-chromium@1.5.18:
+    resolution: {integrity: sha512-1OfuVACu+zKlmjsNdcJuVQuVE61sZOLbNM4JAQ1Rvh6EOj0/EUKhMJjRH73InPlXSh8HIJk1cVZ8pyOV/FMdUQ==}
 
   emoji-regex@10.4.0:
     resolution: {integrity: sha512-EC+0oUMY1Rqm4O6LLrgjtYDvcVYTy7chDnM4Q7030tP4Kwj3u/pR6gP9ygnp2CJMK5Gq+9Q2oqmrFJAz01DXjw==}
@@ -1958,9 +1968,6 @@ packages:
   esutils@2.0.3:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
-
-  eventemitter3@5.0.1:
-    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
 
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
@@ -3835,6 +3842,8 @@ packages:
 
 snapshots:
 
+  '@3tatsu/emitsy@1.0.1': {}
+
   '@angular-eslint/bundled-angular-compiler@17.5.3': {}
 
   '@angular-eslint/eslint-plugin-template@17.5.3(eslint@8.57.0)(typescript@5.5.4)':
@@ -4978,7 +4987,7 @@ snapshots:
   browserslist@4.23.3:
     dependencies:
       caniuse-lite: 1.0.30001658
-      electron-to-chromium: 1.5.17
+      electron-to-chromium: 1.5.18
       node-releases: 2.0.18
       update-browserslist-db: 1.1.0(browserslist@4.23.3)
 
@@ -5224,7 +5233,7 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
-  electron-to-chromium@1.5.17: {}
+  electron-to-chromium@1.5.18: {}
 
   emoji-regex@10.4.0: {}
 
@@ -5414,7 +5423,7 @@ snapshots:
       eslint-mdx: 3.1.5(eslint@8.57.0)
       eslint-plugin-astro: 0.33.1(eslint@8.57.0)
       eslint-plugin-cypress: 2.15.2(eslint@8.57.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint@8.57.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
       eslint-plugin-jsdoc: 48.11.0(eslint@8.57.0)
       eslint-plugin-jsx-a11y: 6.10.0(eslint@8.57.0)
       eslint-plugin-mdx: 3.1.5(eslint@8.57.0)
@@ -5488,7 +5497,7 @@ snapshots:
       is-bun-module: 1.1.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint@8.57.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0)
       eslint-plugin-import-x: 0.5.3(eslint@8.57.0)(typescript@5.5.4)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
@@ -5554,7 +5563,7 @@ snapshots:
       eslint: 8.57.0
       eslint-compat-utils: 0.5.1(eslint@8.57.0)
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint-plugin-import-x@0.5.3(eslint@8.57.0)(typescript@5.5.4))(eslint@8.57.0))(eslint@8.57.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.3)(eslint@8.57.0):
     dependencies:
       debug: 4.3.7(supports-color@5.5.0)
       doctrine: 3.0.0
@@ -5880,8 +5889,6 @@ snapshots:
       '@types/unist': 3.0.3
 
   esutils@2.0.3: {}
-
-  eventemitter3@5.0.1: {}
 
   execa@5.1.1:
     dependencies:

@@ -29,6 +29,9 @@
   "files": [
     "dist"
   ],
+  "dependencies": {
+    "tslib": "^2.7.0"
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.47.7",
     "@swc/core": "^1.7.23",

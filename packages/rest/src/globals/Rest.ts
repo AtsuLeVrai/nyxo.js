@@ -1,14 +1,14 @@
 import { URL } from "node:url";
+import { Emitsy } from "@3tatsu/emitsy";
 import { Cache } from "@nyxjs/cache";
 import { RestHttpResponseCodes } from "@nyxjs/core";
-import { EventEmitter } from "eventemitter3";
 import { Pool, RetryAgent } from "undici";
 import type { RestEvents, RestOptions, RestRequestOptions } from "../types/globals";
 import { API_BASE_URL, DEFAULT_REST_OPTIONS } from "../utils/constants";
 import { RateLimiter } from "./RateLimiter";
 import { RestRequestHandler } from "./RestRequestHandler";
 
-export class Rest extends EventEmitter<RestEvents> {
+export class Rest extends Emitsy<RestEvents> {
     private readonly pool: Pool;
 
     private readonly retryAgent: RetryAgent;
@@ -28,7 +28,7 @@ export class Rest extends EventEmitter<RestEvents> {
             ...DEFAULT_REST_OPTIONS,
             ...options,
         };
-        this.emit("debug", `[REST] Initializing Rest with options: ${JSON.stringify(this.options)}`);
+        void this.emit("debug", `[REST] Initializing Rest with options: ${JSON.stringify(this.options)}`);
 
         this.cache = new Cache<string, { data: any; expiry: number }>();
         this.rateLimiter = new RateLimiter();
@@ -39,7 +39,7 @@ export class Rest extends EventEmitter<RestEvents> {
             this.requestHandler = new RestRequestHandler(this.token, this, this.retryAgent, this.cache, this.options);
         } catch (error) {
             if (error instanceof Error) {
-                this.emit("error", new Error(`[REST] Error during initialization: ${error.message}`));
+                void this.emit("error", new Error(`[REST] Error during initialization: ${error.message}`));
             }
 
             throw error;
@@ -52,23 +52,23 @@ export class Rest extends EventEmitter<RestEvents> {
             return await this.requestHandler.handle(options);
         } catch (error) {
             if (error instanceof Error) {
-                this.emit("error", new Error(`[REST] Error during request: ${error.message}`));
+                void this.emit("error", new Error(`[REST] Error during request: ${error.message}`));
             }
 
             throw error;
         }
     }
 
-    public destroy(): void {
-        void this.pool.destroy();
+    public async destroy(): Promise<void> {
+        await this.pool.destroy();
         this.cache.clear();
-        this.emit("debug", "[REST] Rest instance destroyed");
+        void this.emit("debug", "[REST] Rest instance destroyed");
     }
 
     public setToken(token: string): void {
         this.token = token;
         this.requestHandler.updateToken(token);
-        this.emit("debug", "[REST] Token updated");
+        void this.emit("debug", "[REST] Token updated");
     }
 
     public setOption<K extends keyof RestOptions>(key: K, value: RestOptions[K]): void {
@@ -77,7 +77,7 @@ export class Rest extends EventEmitter<RestEvents> {
             this.options[key] = value;
         }
 
-        this.emit("debug", `[REST] Option ${key} updated`);
+        void this.emit("debug", `[REST] Option ${key} updated`);
     }
 
     private createPool(): Pool {
@@ -87,7 +87,7 @@ export class Rest extends EventEmitter<RestEvents> {
         const port = baseUrl.port || (protocol === "https:" ? "443" : "80");
         const origin = `${protocol}//${hostname}:${port}`;
 
-        this.emit("debug", `[REST] Creating pool with origin: ${origin}, base URL: ${baseUrl.origin}`);
+        void this.emit("debug", `[REST] Creating pool with origin: ${origin}, base URL: ${baseUrl.origin}`);
 
         try {
             return new Pool(origin, {
@@ -99,7 +99,7 @@ export class Rest extends EventEmitter<RestEvents> {
             });
         } catch (error) {
             if (error instanceof Error) {
-                this.emit("error", new Error(`[REST] Error creating Pool: ${error.message}`));
+                void this.emit("error", new Error(`[REST] Error creating Pool: ${error.message}`));
             }
 
             throw error;
@@ -112,7 +112,7 @@ export class Rest extends EventEmitter<RestEvents> {
             statusCodes: [RestHttpResponseCodes.GatewayUnavailable, RestHttpResponseCodes.TooManyRequests],
             maxRetries: 3,
             retry: (error) => {
-                this.emit("error", new Error(`[REST] ${error.message}`));
+                void this.emit("error", new Error(`[REST] ${error.message}`));
                 return null;
             },
         });

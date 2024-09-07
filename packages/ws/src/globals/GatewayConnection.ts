@@ -56,7 +56,7 @@ export class GatewayConnection {
         return query.toString();
     }
 
-    public async connect(resumeAttempt = false): Promise<void> {
+    public connect(resumeAttempt = false): void {
         if (this.ws) {
             this.ws.close();
         }
@@ -70,7 +70,7 @@ export class GatewayConnection {
             this.ws.on("close", this.onClose.bind(this));
             this.ws.on("error", this.onError.bind(this));
         } catch {
-            this.gateway.emit("error", new Error("Failed to establish a WebSocket connection"));
+            void this.gateway.emit("error", new Error("Failed to establish a WebSocket connection"));
         }
     }
 
@@ -91,7 +91,7 @@ export class GatewayConnection {
     }
 
     public disconnect(): void {
-        this.gateway.emit("debug", "[WS] Disconnecting from the globals...");
+        void this.gateway.emit("debug", "[WS] Disconnecting from the gateway...");
         if (this.ws) {
             this.ws.close();
         }
@@ -100,7 +100,7 @@ export class GatewayConnection {
     }
 
     public cleanup(): void {
-        this.gateway.emit("debug", "[WS] Cleaning up...");
+        void this.gateway.emit("debug", "[WS] Cleaning up...");
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
         }
@@ -115,7 +115,7 @@ export class GatewayConnection {
     }
 
     private onOpen(): void {
-        this.gateway.emit("debug", "[WS] Connected to the globals...");
+        void this.gateway.emit("debug", "[WS] Connected to the gateway...");
     }
 
     private async onMessage(data: Buffer): Promise<void> {
@@ -134,10 +134,13 @@ export class GatewayConnection {
             }
 
             const decoded = JSON.stringify(decompressedData);
-            this.handleMessage(decoded);
+            await this.handleMessage(decoded);
         } catch (error) {
             if (error instanceof Error) {
-                this.gateway.emit("error", new Error(`[WS] Failed to process WebSocket message: ${error.message}`));
+                void this.gateway.emit(
+                    "error",
+                    new Error(`[WS] Failed to process WebSocket message: ${error.message}`)
+                );
             }
 
             this.disconnect();
@@ -145,20 +148,20 @@ export class GatewayConnection {
     }
 
     private onClose(code: GatewayCloseCodes, reason: Buffer): void {
-        this.gateway.emit("close", code, reason.toString());
+        void this.gateway.emit("close", code, reason.toString());
         this.cleanup();
     }
 
     private onError(error: Error): void {
-        this.gateway.emit("error", error);
+        void this.gateway.emit("error", error);
     }
 
-    private handleMessage(message: string): void {
+    private async handleMessage(message: string): Promise<void> {
         let payload: GatewayPayload;
         try {
             payload = JSON.parse(message);
         } catch {
-            this.gateway.emit("error", new Error("[WS] Failed to parse globals payload..."));
+            await this.gateway.emit("error", new Error("[WS] Failed to parse globals payload..."));
             return;
         }
 
@@ -180,7 +183,7 @@ export class GatewayConnection {
             case GatewayOpcodes.InvalidSession: {
                 const resumable = Boolean(payload.d);
                 if (resumable) {
-                    setTimeout(() => this.sendResume(), 5_000);
+                    setTimeout(async () => this.sendResume(), 5_000);
                 } else {
                     this.sessionId = null;
                     this.sequence = null;
@@ -191,53 +194,56 @@ export class GatewayConnection {
             }
 
             case GatewayOpcodes.Reconnect: {
-                this.gateway.emit("debug", "[WS] Received Reconnect opcode, attempting to resume");
+                await this.gateway.emit("debug", "[WS] Received Reconnect opcode, attempting to resume");
                 this.disconnect();
-                void this.connect(true);
+                this.connect(true);
                 break;
             }
 
             case GatewayOpcodes.Dispatch: {
-                this.handleDispatchEvent(payload);
+                await this.handleDispatchEvent(payload);
                 break;
             }
 
             case GatewayOpcodes.HeartbeatAck: {
-                this.gateway.emit("debug", "[WS] Received a heartbeat ack...");
+                await this.gateway.emit("debug", "[WS] Received a heartbeat ack...");
                 break;
             }
 
             default: {
-                this.gateway.emit("warn", `[WS] Received an unhandled gateway event: ${GatewayOpcodes[payload.op]}...`);
+                void this.gateway.emit(
+                    "warn",
+                    `[WS] Received an unhandled gateway event: ${GatewayOpcodes[payload.op]}...`
+                );
                 break;
             }
         }
     }
 
-    private handleDispatchEvent(payload: GatewayPayload): void {
+    private async handleDispatchEvent(payload: GatewayPayload): Promise<void> {
         switch (payload.t) {
             case "READY": {
                 const ready = payload.d as ReadyEventFields;
                 this.sessionId = ready.session_id;
                 this.resumeGatewayUrl = ready.resume_gateway_url;
-                this.gateway.emit("READY", ready);
+                await this.gateway.emit("READY", ready);
                 break;
             }
 
             default: {
                 if (!payload.t) {
-                    this.gateway.emit("warn", "[WS] Received a dispatch event without a name...");
+                    void this.gateway.emit("warn", "[WS] Received a dispatch event without a name...");
                     break;
                 }
 
-                this.gateway.emit(payload.t, payload.d as never);
+                void this.gateway.emit(payload.t, payload.d as never);
                 break;
             }
         }
     }
 
     private setupHeartbeat(interval: number): void {
-        this.gateway.emit("debug", `[WS] Setting up heartbeat with interval: ${interval}ms...`);
+        void this.gateway.emit("debug", `[WS] Setting up heartbeat with interval: ${interval}ms...`);
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
         }
@@ -249,7 +255,7 @@ export class GatewayConnection {
 
     private sendResume(): void {
         if (!this.sessionId || this.sequence === null) {
-            this.gateway.emit("warn", "[WS] Attempted to resume without a valid session, re-identifying");
+            void this.gateway.emit("warn", "[WS] Attempted to resume without a valid session, re-identifying");
             void this.gateway.shardManager.initialize();
             return;
         }

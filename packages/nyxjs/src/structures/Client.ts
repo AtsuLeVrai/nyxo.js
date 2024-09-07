@@ -1,8 +1,8 @@
+import { Emitsy } from "@3tatsu/emitsy";
 import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
 import { EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/ws";
-import { EventEmitter } from "eventemitter3";
 
 export const ClientEvents = {
     applicationCommandPermissionsUpdate: [],
@@ -124,7 +124,7 @@ export type ClientOptions = {
     ws?: Partial<Pick<GatewayOptions, "compress" | "encoding" | "large_threshold">>;
 };
 
-export class Client extends EventEmitter<typeof ClientEvents> {
+export class Client extends Emitsy<typeof ClientEvents> {
     public ws: Gateway;
 
     public rest: Rest;

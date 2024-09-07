@@ -30,12 +30,12 @@
     "dist"
   ],
   "dependencies": {
+    "@3tatsu/emitsy": "^1.0.1",
     "@nyxjs/api-types": "workspace:*",
     "@nyxjs/cache": "workspace:*",
     "@nyxjs/core": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/ws": "workspace:*",
-    "eventemitter3": "^5.0.1",
     "tslib": "^2.7.0"
   },
   "devDependencies": {

@@ -28,7 +28,10 @@ export class RestRequestHandler {
     ) {
         this.defaultHeaders = this.createDefaultHeaders();
         this.rateLimiter = new RateLimiter();
-        this.rest.emit("debug", `[REST] RestRequestHandler initialized with options: ${JSON.stringify(this.options)}`);
+        void this.rest.emit(
+            "debug",
+            `[REST] RestRequestHandler initialized with options: ${JSON.stringify(this.options)}`
+        );
     }
 
     public async handle<T>(options: RestRequestOptions<T>): Promise<T> {
@@ -38,7 +41,7 @@ export class RestRequestHandler {
             if (!options.disableCache) {
                 const cachedResponse = this.cache.get(cacheKey);
                 if (cachedResponse && cachedResponse.expiry > Date.now()) {
-                    this.rest.emit("debug", `[REST] Returning cached response for: ${cacheKey}`);
+                    void this.rest.emit("debug", `[REST] Returning cached response for: ${cacheKey}`);
                     return cachedResponse.data as T;
                 }
             }
@@ -51,8 +54,8 @@ export class RestRequestHandler {
                 ...options.headers,
             };
 
-            this.rest.emit("debug", `[REST] Making request to: ${path}`);
-            this.rest.emit("debug", `[REST] Request headers: ${JSON.stringify(headers)}`);
+            void this.rest.emit("debug", `[REST] Making request to: ${path}`);
+            void this.rest.emit("debug", `[REST] Request headers: ${JSON.stringify(headers)}`);
 
             const response = await this.retryAgent.request({
                 path,
@@ -62,16 +65,16 @@ export class RestRequestHandler {
                 headers,
             });
 
-            this.rest.emit("debug", `[REST] Response status: ${response.statusCode}`);
-            this.rest.emit("debug", `[REST] Response headers: ${JSON.stringify(response.headers)}`);
+            void this.rest.emit("debug", `[REST] Response status: ${response.statusCode}`);
+            void this.rest.emit("debug", `[REST] Response headers: ${JSON.stringify(response.headers)}`);
 
             this.rateLimiter.handleRateLimit(options.path, response.headers);
 
             const responseText = await this.decompressResponse(response);
-            this.rest.emit("debug", `[REST] Raw response: ${responseText}`);
+            void this.rest.emit("debug", `[REST] Raw response: ${responseText}`);
 
             const data = this.parseResponse(responseText);
-            this.rest.emit("debug", `[REST] Parsed response data: ${JSON.stringify(data)}`);
+            void this.rest.emit("debug", `[REST] Parsed response data: ${JSON.stringify(data)}`);
 
             if (response.statusCode === RestHttpResponseCodes.TooManyRequests) {
                 const rateLimitData = data as RateLimitResponseStructure;
@@ -103,12 +106,12 @@ export class RestRequestHandler {
     public updateToken(token: string): void {
         this.token = token;
         this.updateHeaders();
-        this.rest.emit("debug", "[REST] Token updated in RestRequestHandler");
+        void this.rest.emit("debug", "[REST] Token updated in RestRequestHandler");
     }
 
     public updateHeaders(): void {
         this.defaultHeaders = this.createDefaultHeaders();
-        this.rest.emit("debug", "[REST] Default headers updated in RestRequestHandler");
+        void this.rest.emit("debug", "[REST] Default headers updated in RestRequestHandler");
     }
 
     private async decompressResponse(response: any): Promise<string> {
@@ -137,7 +140,7 @@ export class RestRequestHandler {
             return responseText ? JSON.parse(responseText) : null;
         } catch (error) {
             if (error instanceof Error) {
-                this.rest.emit("error", new Error(`[REST] Error parsing JSON: ${error.message}`));
+                void this.rest.emit("error", new Error(`[REST] Error parsing JSON: ${error.message}`));
             }
 
             throw error;

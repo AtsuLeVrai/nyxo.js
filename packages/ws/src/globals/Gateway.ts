@@ -1,10 +1,10 @@
-import { EventEmitter } from "eventemitter3";
+import { Emitsy } from "@3tatsu/emitsy";
 import type { GatewaySendEvents } from "../types/events";
 import type { GatewayEvents, GatewayOptions } from "../types/gateway";
 import { GatewayConnection } from "./GatewayConnection";
 import { ShardManager } from "./ShardManager";
 
-export class Gateway extends EventEmitter<GatewayEvents> {
+export class Gateway extends Emitsy<GatewayEvents> {
     public readonly shardManager: ShardManager;
 
     private readonly connection: GatewayConnection;
@@ -19,7 +19,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     public async connect(): Promise<void> {
-        await this.connection.connect();
+        this.connection.connect();
         await this.shardManager.initialize();
     }
 
@@ -33,7 +33,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     private cleanup(): void {
-        this.emit("debug", "[WS] Cleaning up...");
+        void this.emit("debug", "[WS] Cleaning up...");
         this.connection.cleanup();
         this.shardManager.cleanup();
     }
