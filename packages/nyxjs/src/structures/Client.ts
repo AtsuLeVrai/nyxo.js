@@ -1,8 +1,9 @@
-import { Emitsy } from "@3tatsu/emitsy";
-import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
+import type { GatewayIntents, Integer } from "@nyxjs/core";
+import { ApiVersions } from "@nyxjs/core";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
 import { EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/ws";
+import { EventEmitter } from "eventemitter3";
 
 export const ClientEvents = {
     applicationCommandPermissionsUpdate: [],
@@ -120,11 +121,11 @@ export type ClientOptions = {
     presence?: GatewayOptions["presence"];
     rest?: Partial<Pick<RestOptions, "auth_type" | "cache_life_time" | "user_agent">>;
     shard?: GatewayOptions["shard"];
-    version: ApiVersions;
+    version?: ApiVersions;
     ws?: Partial<Pick<GatewayOptions, "compress" | "encoding" | "large_threshold">>;
 };
 
-export class Client extends Emitsy<typeof ClientEvents> {
+export class Client extends EventEmitter<typeof ClientEvents> {
     public ws: Gateway;
 
     public rest: Rest;
@@ -134,21 +135,8 @@ export class Client extends Emitsy<typeof ClientEvents> {
         private readonly options: ClientOptions
     ) {
         super();
-        this.ws = new Gateway(this.token, {
-            intents: this.calculateIntents(),
-            presence: this.options.presence,
-            shard: this.options.shard,
-            v: this.options.version,
-            compress: this.options.ws?.compress,
-            encoding: this.options.ws?.encoding ?? EncodingTypes.Etf,
-            large_threshold: this.options.ws?.large_threshold,
-        });
-        this.rest = new Rest(this.token, {
-            version: this.options.version,
-            cache_life_time: this.options.rest?.cache_life_time,
-            user_agent: this.options.rest?.user_agent,
-            auth_type: this.options.rest?.auth_type,
-        });
+        this.ws = this.createWs();
+        this.rest = this.createRest();
     }
 
     public connect(): void {
@@ -157,5 +145,30 @@ export class Client extends Emitsy<typeof ClientEvents> {
 
     private calculateIntents(): Integer {
         return this.options.intents.reduce<Integer>((acc, intent) => acc | intent, 0);
+    }
+
+    private defaultVersions(): ApiVersions {
+        return ApiVersions.V10;
+    }
+
+    private createWs(): Gateway {
+        return new Gateway(this.token, {
+            intents: this.calculateIntents(),
+            presence: this.options.presence,
+            shard: this.options.shard,
+            v: this.options.version ?? this.defaultVersions(),
+            compress: this.options.ws?.compress,
+            encoding: this.options.ws?.encoding ?? EncodingTypes.Etf,
+            large_threshold: this.options.ws?.large_threshold,
+        });
+    }
+
+    private createRest(): Rest {
+        return new Rest(this.token, {
+            version: this.options.version ?? this.defaultVersions(),
+            cache_life_time: this.options.rest?.cache_life_time,
+            user_agent: this.options.rest?.user_agent,
+            auth_type: this.options.rest?.auth_type,
+        });
     }
 }

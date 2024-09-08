@@ -79,7 +79,7 @@ export class ShardManager {
     }
 
     private connectShard(shardInfo: ShardInfo): void {
-        void this.gateway.emit("debug", `[WS] Connecting shard ${shardInfo.shardId}...`);
+        this.gateway.emit("debug", `[WS] Connecting shard ${shardInfo.shardId}...`);
 
         const payload: IdentifyStructure = {
             token: this.token,

@@ -1,5 +1,5 @@
-import type { ApiVersions, AuthTypes, DiscordHeaders, Float, Integer, RestHttpResponseCodes } from "@nyxjs/core";
-import type { Dispatcher } from "undici";
+import type {ApiVersions, AuthTypes, DiscordHeaders, Float, Integer, RestHttpResponseCodes} from "@nyxjs/core";
+import type {Dispatcher} from "undici";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure}

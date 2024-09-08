@@ -70,7 +70,7 @@ export class GatewayConnection {
             this.ws.on("close", this.onClose.bind(this));
             this.ws.on("error", this.onError.bind(this));
         } catch {
-            void this.gateway.emit("error", new Error("Failed to establish a WebSocket connection"));
+            this.gateway.emit("error", new Error("Failed to establish a WebSocket connection"));
         }
     }
 
@@ -91,7 +91,7 @@ export class GatewayConnection {
     }
 
     public disconnect(): void {
-        void this.gateway.emit("debug", "[WS] Disconnecting from the gateway...");
+        this.gateway.emit("debug", "[WS] Disconnecting from the gateway...");
         if (this.ws) {
             this.ws.close();
         }
@@ -100,7 +100,7 @@ export class GatewayConnection {
     }
 
     public cleanup(): void {
-        void this.gateway.emit("debug", "[WS] Cleaning up...");
+        this.gateway.emit("debug", "[WS] Cleaning up...");
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
         }
@@ -115,7 +115,7 @@ export class GatewayConnection {
     }
 
     private onOpen(): void {
-        void this.gateway.emit("debug", "[WS] Connected to the gateway...");
+        this.gateway.emit("debug", "[WS] Connected to the gateway...");
     }
 
     private async onMessage(data: Buffer): Promise<void> {
@@ -134,13 +134,10 @@ export class GatewayConnection {
             }
 
             const decoded = JSON.stringify(decompressedData);
-            await this.handleMessage(decoded);
+            this.handleMessage(decoded);
         } catch (error) {
             if (error instanceof Error) {
-                void this.gateway.emit(
-                    "error",
-                    new Error(`[WS] Failed to process WebSocket message: ${error.message}`)
-                );
+                this.gateway.emit("error", new Error(`[WS] Failed to process WebSocket message: ${error.message}`));
             }
 
             this.disconnect();
@@ -148,20 +145,20 @@ export class GatewayConnection {
     }
 
     private onClose(code: GatewayCloseCodes, reason: Buffer): void {
-        void this.gateway.emit("close", code, reason.toString());
+        this.gateway.emit("close", code, reason.toString());
         this.cleanup();
     }
 
     private onError(error: Error): void {
-        void this.gateway.emit("error", error);
+        this.gateway.emit("error", error);
     }
 
-    private async handleMessage(message: string): Promise<void> {
+    private handleMessage(message: string): void {
         let payload: GatewayPayload;
         try {
             payload = JSON.parse(message);
         } catch {
-            await this.gateway.emit("error", new Error("[WS] Failed to parse globals payload..."));
+            this.gateway.emit("error", new Error("[WS] Failed to parse globals payload..."));
             return;
         }
 
@@ -194,56 +191,53 @@ export class GatewayConnection {
             }
 
             case GatewayOpcodes.Reconnect: {
-                await this.gateway.emit("debug", "[WS] Received Reconnect opcode, attempting to resume");
+                this.gateway.emit("debug", "[WS] Received Reconnect opcode, attempting to resume");
                 this.disconnect();
                 this.connect(true);
                 break;
             }
 
             case GatewayOpcodes.Dispatch: {
-                await this.handleDispatchEvent(payload);
+                this.handleDispatchEvent(payload);
                 break;
             }
 
             case GatewayOpcodes.HeartbeatAck: {
-                await this.gateway.emit("debug", "[WS] Received a heartbeat ack...");
+                this.gateway.emit("debug", "[WS] Received a heartbeat ack...");
                 break;
             }
 
             default: {
-                void this.gateway.emit(
-                    "warn",
-                    `[WS] Received an unhandled gateway event: ${GatewayOpcodes[payload.op]}...`
-                );
+                this.gateway.emit("warn", `[WS] Received an unhandled gateway event: ${GatewayOpcodes[payload.op]}...`);
                 break;
             }
         }
     }
 
-    private async handleDispatchEvent(payload: GatewayPayload): Promise<void> {
+    private handleDispatchEvent(payload: GatewayPayload): void {
         switch (payload.t) {
             case "READY": {
                 const ready = payload.d as ReadyEventFields;
                 this.sessionId = ready.session_id;
                 this.resumeGatewayUrl = ready.resume_gateway_url;
-                await this.gateway.emit("READY", ready);
+                this.gateway.emit("READY", ready);
                 break;
             }
 
             default: {
                 if (!payload.t) {
-                    void this.gateway.emit("warn", "[WS] Received a dispatch event without a name...");
+                    this.gateway.emit("warn", "[WS] Received a dispatch event without a name...");
                     break;
                 }
 
-                void this.gateway.emit(payload.t, payload.d as never);
+                this.gateway.emit(payload.t, payload.d as never);
                 break;
             }
         }
     }
 
     private setupHeartbeat(interval: number): void {
-        void this.gateway.emit("debug", `[WS] Setting up heartbeat with interval: ${interval}ms...`);
+        this.gateway.emit("debug", `[WS] Setting up heartbeat with interval: ${interval}ms...`);
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
         }
@@ -255,7 +249,7 @@ export class GatewayConnection {
 
     private sendResume(): void {
         if (!this.sessionId || this.sequence === null) {
-            void this.gateway.emit("warn", "[WS] Attempted to resume without a valid session, re-identifying");
+            this.gateway.emit("warn", "[WS] Attempted to resume without a valid session, re-identifying");
             void this.gateway.shardManager.initialize();
             return;
         }

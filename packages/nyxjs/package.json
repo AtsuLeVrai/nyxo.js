@@ -30,17 +30,17 @@
     "dist"
   ],
   "dependencies": {
-    "@3tatsu/emitsy": "^1.0.1",
     "@nyxjs/api-types": "workspace:*",
     "@nyxjs/cache": "workspace:*",
     "@nyxjs/core": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/ws": "workspace:*",
+    "eventemitter3": "^5.0.1",
     "tslib": "^2.7.0"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.47.7",
-    "@swc/core": "^1.7.23",
+    "@swc/core": "^1.7.24",
     "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.4",
     "@types/ws": "^8.5.12",
