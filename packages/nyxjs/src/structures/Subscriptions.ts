@@ -2,8 +2,8 @@ import type { SubscriptionStatus, SubscriptionStructure } from "@nyxjs/api-types
 import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import type { ListSkuSubscriptionsQuery } from "@nyxjs/rest";
 import { SubscriptionRoutes } from "@nyxjs/rest";
+import type { Client } from "../client/Client";
 import { Base } from "./Base";
-import type { Client } from "./Client";
 
 export class Subscription extends Base<SubscriptionStructure> {
     public canceledAt!: IsoO8601Timestamp | null;

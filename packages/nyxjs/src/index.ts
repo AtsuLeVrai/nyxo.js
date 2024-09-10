@@ -1,4 +1,9 @@
 /**
+ * ./client
+ */
+export * from "./client/Client";
+
+/**
  * ./structures
  */
 export * from "./structures/ApplicationCommands";
@@ -6,7 +11,6 @@ export * from "./structures/Applications";
 export * from "./structures/Audits";
 export * from "./structures/Base";
 export * from "./structures/Channels";
-export * from "./structures/Client";
 export * from "./structures/Embed";
 export * from "./structures/Emojis";
 export * from "./structures/Entitlements";

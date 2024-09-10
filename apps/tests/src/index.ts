@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { ApiVersions, Client, GatewayIntents } from "nyx.js";
+import { Client, GatewayIntents } from "nyx.js";
 
 config();
 
@@ -9,7 +9,6 @@ if (!process.env.DISCORD_TOKEN) {
 
 const client = new Client(process.env.DISCORD_TOKEN, {
   intents: [GatewayIntents.Guilds],
-  version: ApiVersions.V10,
 });
 
 client.on("ready", () => {

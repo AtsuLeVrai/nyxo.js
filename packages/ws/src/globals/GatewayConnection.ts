@@ -220,7 +220,7 @@ export class GatewayConnection {
                 const ready = payload.d as ReadyEventFields;
                 this.sessionId = ready.session_id;
                 this.resumeGatewayUrl = ready.resume_gateway_url;
-                this.gateway.emit("READY", ready);
+                this.gateway.emit("dispatch", "READY", ready);
                 break;
             }
 
@@ -230,7 +230,7 @@ export class GatewayConnection {
                     break;
                 }
 
-                this.gateway.emit(payload.t, payload.d as never);
+                this.gateway.emit("dispatch", payload.t, payload.d as never);
                 break;
             }
         }

@@ -2,8 +2,9 @@ import type { GatewayIntents, Integer } from "@nyxjs/core";
 import { ApiVersions } from "@nyxjs/core";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
-import { EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/ws";
+import { EncodingTypes, type GatewayOptions } from "@nyxjs/ws";
 import { EventEmitter } from "eventemitter3";
+import { WebSocketManager } from "./WebSocketManager";
 
 export const ClientEvents = {
     applicationCommandPermissionsUpdate: [],
@@ -15,7 +16,7 @@ export const ClientEvents = {
     autoModerationFlagToChannel: [],
     autoModerationUserCommunicationDisabled: [],
     debug: [],
-    error: [],
+    error: [new Error()],
     hello: [],
     invalidateSession: [],
     ready: [],
@@ -126,9 +127,11 @@ export type ClientOptions = {
 };
 
 export class Client extends EventEmitter<typeof ClientEvents> {
-    public ws: Gateway;
+    public ws: WebSocketManager;
 
     public rest: Rest;
+
+    private defaultVersions = ApiVersions.V10;
 
     public constructor(
         public token: string,
@@ -147,16 +150,12 @@ export class Client extends EventEmitter<typeof ClientEvents> {
         return this.options.intents.reduce<Integer>((acc, intent) => acc | intent, 0);
     }
 
-    private defaultVersions(): ApiVersions {
-        return ApiVersions.V10;
-    }
-
-    private createWs(): Gateway {
-        return new Gateway(this.token, {
+    private createWs(): WebSocketManager {
+        return new WebSocketManager(this, this.token, {
             intents: this.calculateIntents(),
             presence: this.options.presence,
             shard: this.options.shard,
-            v: this.options.version ?? this.defaultVersions(),
+            v: this.options.version ?? this.defaultVersions,
             compress: this.options.ws?.compress,
             encoding: this.options.ws?.encoding ?? EncodingTypes.Etf,
             large_threshold: this.options.ws?.large_threshold,
@@ -165,7 +164,7 @@ export class Client extends EventEmitter<typeof ClientEvents> {
 
     private createRest(): Rest {
         return new Rest(this.token, {
-            version: this.options.version ?? this.defaultVersions(),
+            version: this.options.version ?? this.defaultVersions,
             cache_life_time: this.options.rest?.cache_life_time,
             user_agent: this.options.rest?.user_agent,
             auth_type: this.options.rest?.auth_type,

@@ -1,6 +1,6 @@
-import type { ApiVersions, GatewayCloseCodes, GatewayOpcodes, Integer } from "@nyxjs/core";
-import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/presences";
-import type { GatewayReceiveEvents } from "./events";
+import type {ApiVersions, GatewayCloseCodes, GatewayOpcodes, Integer} from "@nyxjs/core";
+import type {UpdatePresenceGatewayPresenceUpdateStructure} from "../events/presences";
+import type {GatewayReceiveEvents} from "./events";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
@@ -83,7 +83,17 @@ export type GatewayOptions = {
     v: ApiVersions;
 };
 
-export type GatewayEvents = GatewayReceiveEvents & {
+type GatewayDispatchEvents<K extends keyof GatewayReceiveEvents> = {
+    /**
+     * Event triggered when a globals event is received.
+     *
+     * @param event - The event name.
+     * @param data - The event data.
+     */
+    dispatch: [event: K, ...data: GatewayReceiveEvents[K]];
+};
+
+export type GatewayEvents = GatewayDispatchEvents<keyof GatewayReceiveEvents> & {
     /**
      * Event triggered when the connection is closed.
      *
