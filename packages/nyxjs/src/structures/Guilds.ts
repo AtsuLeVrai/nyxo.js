@@ -7,14 +7,17 @@ import type {
     GuildMemberStructure,
     GuildPreviewStructure,
     GuildStructure,
+    Integer,
+    IsoO8601Timestamp,
+    Locales,
     MfaLevels,
     NsfwLevels,
     PremiumTiers,
+    Snowflake,
     SystemChannelFlags,
     UnavailableGuildStructure,
     VerificationLevels,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp, Locales, Snowflake } from "@nyxjs/core";
+} from "@nyxjs/core";
 import { Base } from "./Base";
 import { Emoji } from "./Emojis";
 import { Role } from "./Roles";
@@ -585,4 +588,4 @@ export {
     PremiumTiers,
     SystemChannelFlags,
     VerificationLevels,
-} from "@nyxjs/api-types";
+} from "@nyxjs/core";

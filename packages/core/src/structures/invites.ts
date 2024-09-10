@@ -1,4 +1,4 @@
-import type { Integer, IsoO8601Timestamp } from "@nyxjs/core";
+import type { Integer, IsoO8601Timestamp } from "../utils/formats";
 import type { ApplicationStructure } from "./applications";
 import type { ChannelStructure } from "./channels";
 import type { GuildMemberStructure, GuildScheduledEventStructure, GuildStructure } from "./guilds";

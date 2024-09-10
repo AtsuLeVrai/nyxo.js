@@ -1,5 +1,4 @@
-import type { EntitlementStructure, EntitlementTypes } from "@nyxjs/api-types";
-import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+import type { EntitlementStructure, EntitlementTypes, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import { Base } from "./Base";
 
 export class Entitlement extends Base<EntitlementStructure> {
@@ -90,4 +89,4 @@ export class Entitlement extends Base<EntitlementStructure> {
     }
 }
 
-export { EntitlementTypes } from "@nyxjs/api-types";
+export { EntitlementTypes } from "@nyxjs/core";

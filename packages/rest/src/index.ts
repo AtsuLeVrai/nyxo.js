@@ -2,7 +2,6 @@
  * ./globals
  */
 export * from "./globals/Cdn";
-export * from "./globals/FileHandler";
 export * from "./globals/RateLimiter";
 export * from "./globals/Rest";
 export * from "./globals/RestRequestHandler";

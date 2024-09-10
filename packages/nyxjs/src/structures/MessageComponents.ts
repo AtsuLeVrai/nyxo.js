@@ -3,14 +3,15 @@ import type {
     ButtonStyles,
     ChannelTypes,
     ComponentTypes,
+    Integer,
     SelectDefaultValueStructure,
     SelectDefaultValueTypes,
     SelectMenuStructure,
     SelectOptionStructure,
+    Snowflake,
     TextInputStructure,
     TextInputStyles,
-} from "@nyxjs/api-types";
-import type { Integer, Snowflake } from "@nyxjs/core";
+} from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Emoji } from "./Emojis";
@@ -342,4 +343,4 @@ export class Button extends Base<ButtonStructure> {
     }
 }
 
-export { ButtonStyles, ChannelTypes, ComponentTypes, SelectDefaultValueTypes, TextInputStyles } from "@nyxjs/api-types";
+export { ButtonStyles, ChannelTypes, ComponentTypes, SelectDefaultValueTypes, TextInputStyles } from "@nyxjs/core";

@@ -1,5 +1,4 @@
-import type { GuildWidgetSettingsStructure, GuildWidgetStructure } from "@nyxjs/api-types";
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { GuildWidgetSettingsStructure, GuildWidgetStructure, Integer, Snowflake } from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";

@@ -1,5 +1,4 @@
-import type { AutoModerationActionStructure, AutoModerationTriggerTypes } from "@nyxjs/api-types";
-import type { Snowflake } from "@nyxjs/core";
+import type { AutoModerationActionStructure, AutoModerationTriggerTypes, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#auto-moderation-action-execution-auto-moderation-action-execution-event-fields}

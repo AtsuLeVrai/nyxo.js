@@ -5,12 +5,14 @@ import type {
     ApplicationCommandOptionTypes,
     AutocompleteStructure,
     ComponentTypes,
+    Integer,
     IntegrationTypes,
     InteractionCallbackTypes,
     InteractionContextTypes,
     InteractionResponseStructure,
     InteractionStructure,
     InteractionTypes,
+    Locales,
     MessageComponentDataStructure,
     MessageFlags,
     MessageInteractionStructure,
@@ -18,8 +20,8 @@ import type {
     ModalStructure,
     ModalSubmitDataStructure,
     ResolvedDataStructure,
-} from "@nyxjs/api-types";
-import type { Integer, Locales, Snowflake } from "@nyxjs/core";
+    Snowflake,
+} from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { ApplicationCommandOptionChoice } from "./ApplicationCommands";
 import { Base } from "./Base";
@@ -713,4 +715,4 @@ export {
     InteractionContextTypes,
     InteractionTypes,
     MessageFlags,
-} from "@nyxjs/api-types";
+} from "@nyxjs/core";

@@ -1,4 +1,4 @@
-import type { Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "../utils/formats";
 import type { UserStructure } from "./users";
 
 /**

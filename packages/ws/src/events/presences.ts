@@ -1,5 +1,4 @@
-import type { GuildMemberStructure, UserStructure } from "@nyxjs/api-types";
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { GuildMemberStructure, Integer, Snowflake, UserStructure } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#typing-start-typing-start-event-fields}

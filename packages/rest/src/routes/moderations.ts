@@ -1,5 +1,4 @@
-import type { AutoModerationRuleStructure } from "@nyxjs/api-types";
-import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+import type { AutoModerationRuleStructure, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

@@ -7,8 +7,9 @@ import type {
     AutoModerationRuleStructure,
     AutoModerationTriggerMetadataStructure,
     AutoModerationTriggerTypes,
-} from "@nyxjs/api-types";
-import type { Integer, Snowflake } from "@nyxjs/core";
+    Integer,
+    Snowflake,
+} from "@nyxjs/core";
 import { Base } from "./Base";
 
 export class AutoModerationActionMetadata extends Base<AutoModerationActionMetadataStructure> {
@@ -220,4 +221,4 @@ export {
     AutoModerationEventTypes,
     AutoModerationKeywordPresetTypes,
     AutoModerationTriggerTypes,
-} from "@nyxjs/api-types";
+} from "@nyxjs/core";

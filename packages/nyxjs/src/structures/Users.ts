@@ -5,11 +5,13 @@ import type {
     ConnectionServices,
     ConnectionStructure,
     ConnectionVisibilityTypes,
+    Integer,
+    Locales,
     PremiumTypes,
+    Snowflake,
     UserFlags,
     UserStructure,
-} from "@nyxjs/api-types";
-import type { Integer, Locales, Snowflake } from "@nyxjs/core";
+} from "@nyxjs/core";
 import { ApplicationRoleConnectionMetadata } from "./Applications";
 import { Base } from "./Base";
 import { Integration } from "./Integrations";
@@ -309,4 +311,4 @@ export class User extends Base<UserStructure> {
     }
 }
 
-export { type ConnectionServices, ConnectionVisibilityTypes, PremiumTypes, UserFlags } from "@nyxjs/api-types";
+export { type ConnectionServices, ConnectionVisibilityTypes, PremiumTypes, UserFlags } from "@nyxjs/core";

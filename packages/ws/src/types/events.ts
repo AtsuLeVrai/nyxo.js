@@ -3,10 +3,12 @@ import type {
     AutoModerationRuleStructure,
     ChannelStructure,
     EntitlementStructure,
+    GatewayOpcodes,
     GuildApplicationCommandPermissionsStructure,
     GuildMemberStructure,
     GuildScheduledEventStructure,
     GuildStructure,
+    Integer,
     IntegrationStructure,
     InteractionStructure,
     MessageStructure,
@@ -16,8 +18,7 @@ import type {
     UnavailableGuildStructure,
     UserStructure,
     VoiceStateStructure,
-} from "@nyxjs/api-types";
-import type { GatewayOpcodes, Integer } from "@nyxjs/core";
+} from "@nyxjs/core";
 import type {
     ChannelPinsUpdateEventFields,
     ThreadListSyncEventFields,

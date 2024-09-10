@@ -5,13 +5,15 @@ import type {
     GuildMemberFlags,
     GuildMemberStructure,
     GuildScheduledEventStructure,
+    Integer,
+    IsoO8601Timestamp,
     RoleStructure,
+    Snowflake,
     StageInstanceStructure,
     StickerStructure,
     UserStructure,
     VoiceStateStructure,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+} from "@nyxjs/core";
 import type { PresenceUpdateEventFields } from "./presences";
 
 /**

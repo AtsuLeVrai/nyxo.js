@@ -1,5 +1,4 @@
-import type { EntitlementStructure } from "@nyxjs/api-types";
-import type { Boolean, Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+import type { Boolean, EntitlementStructure, Integer, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
 import type { RestRequestOptions } from "../types/globals";
 
 export enum EntitlementOwnerTypes {

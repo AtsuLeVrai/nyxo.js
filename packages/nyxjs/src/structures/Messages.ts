@@ -4,7 +4,11 @@ import type {
     AttachmentStructure,
     ChannelMentionStructure,
     ChannelTypes,
+    DiscordHeaders,
+    Float,
+    Integer,
     InteractionTypes,
+    IsoO8601Timestamp,
     MessageActivityStructure,
     MessageActivityTypes,
     MessageCallStructure,
@@ -18,8 +22,8 @@ import type {
     ReactionCountDetailsStructure,
     ReactionStructure,
     RoleSubscriptionDataStructure,
-} from "@nyxjs/api-types";
-import type { DiscordHeaders, Float, Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+    Snowflake,
+} from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Application } from "./Applications";
 import { Base } from "./Base";
@@ -843,4 +847,4 @@ export {
     MessageReferenceTypes,
     MessageActivityTypes,
     MessageTypes,
-} from "@nyxjs/api-types";
+} from "@nyxjs/core";

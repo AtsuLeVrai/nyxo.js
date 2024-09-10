@@ -1,5 +1,4 @@
-import type { ChannelStructure, StageInstanceStructure } from "@nyxjs/api-types";
-import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+import type { ChannelStructure, RestHttpResponseCodes, Snowflake, StageInstanceStructure } from "@nyxjs/core";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

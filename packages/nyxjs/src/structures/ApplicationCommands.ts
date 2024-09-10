@@ -8,10 +8,12 @@ import type {
     ApplicationCommandTypes,
     ChannelTypes,
     GuildApplicationCommandPermissionsStructure,
+    Integer,
     IntegrationTypes,
     InteractionContextTypes,
-} from "@nyxjs/api-types";
-import type { Integer, Locales, Snowflake } from "@nyxjs/core";
+    Locales,
+    Snowflake,
+} from "@nyxjs/core";
 import { Base } from "./Base";
 
 export class ApplicationCommandPermissions extends Base<ApplicationCommandPermissionsStructure> {
@@ -388,4 +390,4 @@ export {
     ChannelTypes,
     IntegrationTypes,
     InteractionContextTypes,
-} from "@nyxjs/api-types";
+} from "@nyxjs/core";

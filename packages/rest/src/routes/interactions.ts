@@ -3,11 +3,14 @@ import type {
     ApplicationCommandPermissionsStructure,
     ApplicationCommandStructure,
     ApplicationCommandTypes,
+    Boolean,
     GuildApplicationCommandPermissionsStructure,
     IntegrationTypes,
     InteractionContextTypes,
-} from "@nyxjs/api-types";
-import type { Boolean, Locales, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+    Locales,
+    RestHttpResponseCodes,
+    Snowflake,
+} from "@nyxjs/core";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

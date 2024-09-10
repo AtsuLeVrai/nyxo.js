@@ -30,7 +30,6 @@
     "dist"
   ],
   "dependencies": {
-    "@nyxjs/api-types": "workspace:*",
     "@nyxjs/cache": "workspace:*",
     "@nyxjs/core": "workspace:*",
     "eventemitter3": "^5.0.1",

@@ -1,4 +1,4 @@
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+import type { Integer, IsoO8601Timestamp, Snowflake } from "../utils/formats";
 import type { GuildMemberStructure } from "./guilds";
 import type { UserStructure } from "./users";
 

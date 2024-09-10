@@ -1,5 +1,4 @@
-import type { WelcomeScreenChannelStructure, WelcomeScreenStructure } from "@nyxjs/api-types";
-import type { Snowflake } from "@nyxjs/core";
+import type { Snowflake, WelcomeScreenChannelStructure, WelcomeScreenStructure } from "@nyxjs/core";
 import { Base } from "./Base";
 
 export class WelcomeScreenChannel extends Base<WelcomeScreenChannelStructure> {

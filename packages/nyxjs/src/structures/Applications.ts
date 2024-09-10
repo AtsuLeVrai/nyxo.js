@@ -5,9 +5,12 @@ import type {
     ApplicationRoleConnectionMetadataStructure,
     ApplicationRoleConnectionMetadataTypes,
     ApplicationStructure,
+    Integer,
     IntegrationTypes,
-} from "@nyxjs/api-types";
-import type { Integer, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
+    Locales,
+    Oauth2Scopes,
+    Snowflake,
+} from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Guild } from "./Guilds";
@@ -395,4 +398,4 @@ export class Application extends Base<ApplicationStructure> {
     }
 }
 
-export { ApplicationFlags, ApplicationRoleConnectionMetadataTypes, IntegrationTypes } from "@nyxjs/api-types";
+export { ApplicationFlags, ApplicationRoleConnectionMetadataTypes, IntegrationTypes } from "@nyxjs/core";

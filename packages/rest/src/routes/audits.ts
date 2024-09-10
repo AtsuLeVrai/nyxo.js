@@ -1,5 +1,4 @@
-import type { AuditLogEvents, AuditLogStructure } from "@nyxjs/api-types";
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { AuditLogEvents, AuditLogStructure, Integer, Snowflake } from "@nyxjs/core";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

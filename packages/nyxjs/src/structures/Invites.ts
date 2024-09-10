@@ -1,11 +1,12 @@
 import type {
+    Integer,
     InviteMetadataStructure,
     InviteStageInstanceStructure,
     InviteStructure,
     InviteTargetTypes,
     InviteTypes,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp } from "@nyxjs/core";
+    IsoO8601Timestamp,
+} from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Application } from "./Applications";
 import { Base } from "./Base";
@@ -226,4 +227,4 @@ export class Invite extends Base<InviteStructure> {
     }
 }
 
-export { InviteTargetTypes, InviteTypes } from "@nyxjs/api-types";
+export { InviteTargetTypes, InviteTypes } from "@nyxjs/core";

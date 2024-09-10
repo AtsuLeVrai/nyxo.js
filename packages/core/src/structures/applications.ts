@@ -1,4 +1,6 @@
-import type { Integer, Locales, Oauth2Scopes, Snowflake } from "@nyxjs/core";
+import type { Locales } from "../constants/locales";
+import type { Oauth2Scopes } from "../constants/oauth2";
+import type { Integer, Snowflake } from "../utils/formats";
 import type { GuildStructure } from "./guilds";
 import type { TeamStructure } from "./teams";
 import type { UserStructure } from "./users";

@@ -1,5 +1,4 @@
-import type { VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/api-types";
-import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+import type { IsoO8601Timestamp, Snowflake, VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/core";
 import { Base } from "./Base";
 import { GuildMember } from "./Guilds";
 

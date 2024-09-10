@@ -6,14 +6,16 @@ import type {
     FollowedChannelStructure,
     ForumLayoutTypes,
     ForumTagStructure,
+    Integer,
+    IsoO8601Timestamp,
     OverwriteStructure,
     OverwriteTypes,
+    Snowflake,
     SortOrderTypes,
     ThreadMemberStructure,
     ThreadMetadataStructure,
     VideoQualityModes,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+} from "@nyxjs/core";
 import { Base } from "./Base";
 import { GuildMember } from "./Guilds";
 import { User } from "./Users";
@@ -687,4 +689,4 @@ export {
     OverwriteTypes,
     SortOrderTypes,
     VideoQualityModes,
-} from "@nyxjs/api-types";
+} from "@nyxjs/core";

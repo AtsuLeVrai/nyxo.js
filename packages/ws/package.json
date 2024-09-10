@@ -30,7 +30,6 @@
     "dist"
   ],
   "dependencies": {
-    "@nyxjs/api-types": "workspace:*",
     "@nyxjs/core": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "bufferutil": "^4.0.8",

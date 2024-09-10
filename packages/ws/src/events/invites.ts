@@ -1,5 +1,11 @@
-import type { ApplicationStructure, InviteTargetTypes, UserStructure } from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+import type {
+    ApplicationStructure,
+    Integer,
+    InviteTargetTypes,
+    IsoO8601Timestamp,
+    Snowflake,
+    UserStructure,
+} from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#invite-delete-invite-delete-event-fields}

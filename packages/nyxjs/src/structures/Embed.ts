@@ -8,8 +8,9 @@ import type {
     EmbedThumbnailStructure,
     EmbedTypes,
     EmbedVideoStructure,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp } from "@nyxjs/core";
+    Integer,
+    IsoO8601Timestamp,
+} from "@nyxjs/core";
 import { Base } from "./Base";
 
 export class EmbedField extends Base<EmbedFieldStructure> {
@@ -418,4 +419,4 @@ export class Embed extends Base<EmbedStructure> {
     }
 }
 
-export { type EmbedTypes } from "@nyxjs/api-types";
+export { type EmbedTypes } from "@nyxjs/core";

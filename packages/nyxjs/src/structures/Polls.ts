@@ -1,4 +1,6 @@
 import type {
+    Integer,
+    IsoO8601Timestamp,
     LayoutTypes,
     PollAnswerCountStructure,
     PollAnswerStructure,
@@ -6,8 +8,7 @@ import type {
     PollMediaStructure,
     PollResultsStructure,
     PollStructure,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp } from "@nyxjs/core";
+} from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Emoji } from "./Emojis";
@@ -190,4 +191,4 @@ export class Poll extends Base<PollStructure> {
     }
 }
 
-export { LayoutTypes } from "@nyxjs/api-types";
+export { LayoutTypes } from "@nyxjs/core";

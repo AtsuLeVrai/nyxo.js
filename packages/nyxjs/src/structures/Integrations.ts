@@ -1,11 +1,14 @@
 import type {
+    Integer,
     IntegrationAccountStructure,
     IntegrationApplicationStructure,
     IntegrationExpireBehaviors,
     IntegrationPlatformTypes,
     IntegrationStructure,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp, Oauth2Scopes, Snowflake } from "@nyxjs/core";
+    IsoO8601Timestamp,
+    Oauth2Scopes,
+    Snowflake,
+} from "@nyxjs/core";
 import { Base } from "./Base";
 import { User } from "./Users";
 
@@ -219,4 +222,4 @@ export class Integration extends Base<IntegrationStructure> {
     }
 }
 
-export { IntegrationExpireBehaviors, IntegrationPlatformTypes } from "@nyxjs/api-types";
+export { IntegrationExpireBehaviors, IntegrationPlatformTypes } from "@nyxjs/core";

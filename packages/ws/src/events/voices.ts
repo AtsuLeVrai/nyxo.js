@@ -1,5 +1,4 @@
-import type { EmojiStructure } from "@nyxjs/api-types";
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { EmojiStructure, Integer, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#voice-server-update-voice-server-update-event-fields}

@@ -5,13 +5,15 @@ import type {
     GuildScheduledEventStatus,
     GuildScheduledEventStructure,
     GuildScheduledEventUserStructure,
+    Integer,
+    IsoO8601Timestamp,
     RecurrenceRuleFrequencies,
     RecurrenceRuleMonths,
     RecurrenceRuleNweekdayStructure,
     RecurrenceRuleStructure,
     RecurrenceRuleWeekdays,
-} from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+    Snowflake,
+} from "@nyxjs/core";
 import { Base } from "./Base";
 import { GuildMember } from "./Guilds";
 import { User } from "./Users";
@@ -301,4 +303,4 @@ export {
     RecurrenceRuleFrequencies,
     RecurrenceRuleMonths,
     RecurrenceRuleWeekdays,
-} from "@nyxjs/api-types";
+} from "@nyxjs/core";

@@ -1,6 +1,6 @@
-import type {ApiVersions, GatewayCloseCodes, GatewayOpcodes, Integer} from "@nyxjs/core";
-import type {UpdatePresenceGatewayPresenceUpdateStructure} from "../events/presences";
-import type {GatewayReceiveEvents} from "./events";
+import type { ApiVersions, GatewayCloseCodes, GatewayOpcodes, Integer } from "@nyxjs/core";
+import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/presences";
+import type { GatewayReceiveEvents } from "./events";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}

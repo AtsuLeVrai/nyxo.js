@@ -1,4 +1,4 @@
-import type { IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+import type { IsoO8601Timestamp, Snowflake } from "../utils/formats";
 
 /**
  * @see {@link https://discord.com/developers/docs/monetization/entitlements#entitlement-object-entitlement-types}

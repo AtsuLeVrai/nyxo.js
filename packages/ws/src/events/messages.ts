@@ -1,5 +1,4 @@
-import type { EmojiStructure, GuildMemberStructure, UserStructure } from "@nyxjs/api-types";
-import type { Snowflake } from "@nyxjs/core";
+import type { EmojiStructure, GuildMemberStructure, Snowflake, UserStructure } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-reaction-remove-emoji-message-reaction-remove-emoji-event-fields}

@@ -5,8 +5,8 @@ import type {
     AuditLogStructure,
     IntegrationTypes,
     OptionalAuditEntryInfoStructure,
-} from "@nyxjs/api-types";
-import type { Snowflake } from "@nyxjs/core";
+    Snowflake,
+} from "@nyxjs/core";
 import { ApplicationCommand } from "./ApplicationCommands";
 import { Base } from "./Base";
 import { ThreadChannel } from "./Channels";
@@ -324,4 +324,4 @@ export class AuditLog extends Base<AuditLogStructure> {
     }
 }
 
-export { AuditLogEvents } from "@nyxjs/api-types";
+export { AuditLogEvents } from "@nyxjs/core";

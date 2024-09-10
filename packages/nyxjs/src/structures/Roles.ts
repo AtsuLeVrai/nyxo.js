@@ -1,5 +1,4 @@
-import type { RoleFlags, RoleStructure, RoleTagStructure } from "@nyxjs/api-types";
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { Integer, RoleFlags, RoleStructure, RoleTagStructure, Snowflake } from "@nyxjs/core";
 import { Base } from "./Base";
 
 export class RoleTags extends Base<RoleTagStructure> {
@@ -162,4 +161,4 @@ export class Role extends Base<RoleStructure> {
     }
 }
 
-export { RoleFlags } from "@nyxjs/api-types";
+export { RoleFlags } from "@nyxjs/core";

@@ -1,5 +1,4 @@
-import type { MembershipState, TeamMemberRoles, TeamMemberStructure, TeamStructure } from "@nyxjs/api-types";
-import type { Snowflake } from "@nyxjs/core";
+import type { MembershipState, Snowflake, TeamMemberRoles, TeamMemberStructure, TeamStructure } from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { User } from "./Users";
@@ -74,4 +73,4 @@ export class Team extends Base<TeamStructure> {
     }
 }
 
-export { MembershipState, type TeamMemberRoles } from "@nyxjs/api-types";
+export { MembershipState, type TeamMemberRoles } from "@nyxjs/core";

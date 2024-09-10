@@ -1,4 +1,4 @@
-import type { Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "../utils/formats";
 import type { ChannelStructure } from "./channels";
 import type { GuildStructure } from "./guilds";
 import type { UserStructure } from "./users";

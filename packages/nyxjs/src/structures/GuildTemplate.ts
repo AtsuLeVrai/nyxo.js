@@ -1,5 +1,4 @@
-import type { GuildTemplateStructure } from "@nyxjs/api-types";
-import type { Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
+import type { GuildTemplateStructure, Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Guild } from "./Guilds";

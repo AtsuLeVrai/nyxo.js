@@ -1,5 +1,4 @@
-import type { WebhookStructure, WebhookTypes } from "@nyxjs/api-types";
-import type { Snowflake } from "@nyxjs/core";
+import type { Snowflake, WebhookStructure, WebhookTypes } from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";
@@ -110,4 +109,4 @@ export class Webhook extends Base<WebhookStructure> {
     }
 }
 
-export { WebhookTypes } from "@nyxjs/api-types";
+export { WebhookTypes } from "@nyxjs/core";

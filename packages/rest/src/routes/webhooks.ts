@@ -3,8 +3,9 @@ import type {
     AllowedMentionsStructure,
     AttachmentStructure,
     EmbedStructure,
-} from "@nyxjs/api-types";
-import type { RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
+    RestHttpResponseCodes,
+    Snowflake,
+} from "@nyxjs/core";
 import type { RestRequestOptions } from "../types/globals";
 
 /**

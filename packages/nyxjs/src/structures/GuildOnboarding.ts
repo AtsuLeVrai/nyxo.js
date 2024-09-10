@@ -4,8 +4,8 @@ import type {
     OnboardingPromptStructure,
     PromptOptionStructure,
     PromptTypes,
-} from "@nyxjs/api-types";
-import type { Snowflake } from "@nyxjs/core";
+    Snowflake,
+} from "@nyxjs/core";
 import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Emoji } from "./Emojis";
@@ -146,4 +146,4 @@ export class GuildOnboarding extends Base<GuildOnboardingStructure> {
     }
 }
 
-export { OnboardingMode, PromptTypes } from "@nyxjs/api-types";
+export { OnboardingMode, PromptTypes } from "@nyxjs/core";
