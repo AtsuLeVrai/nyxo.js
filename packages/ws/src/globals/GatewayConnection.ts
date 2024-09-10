@@ -3,8 +3,8 @@ import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timer
 import { URL } from "node:url";
 import type { GatewayCloseCodes, Integer } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
+import { Inflate, type ZlibOptions } from "minizlib";
 import WebSocket from "ws";
-import { Inflate, type InflateOptions } from "zlib-sync";
 import type { HelloStructure } from "../events/hello";
 import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
@@ -14,7 +14,10 @@ import { decompressZlib } from "../utils/compression";
 import { decodeMessage, encodeMessage } from "../utils/encoding";
 import type { Gateway } from "./Gateway";
 
-const ZlibInflateOptions: InflateOptions = { chunkSize: 1_024 * 1_024 };
+const ZlibInflateOptions: ZlibOptions = {
+    encoding: "utf8",
+    async: true,
+};
 
 export class GatewayConnection {
     private ws: WebSocket | null;

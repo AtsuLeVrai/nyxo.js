@@ -10,7 +10,7 @@ type RateLimitInfo = {
     resetAfter: Integer;
 };
 
-export class RateLimiter {
+export class RestRateLimiter {
     private globalRateLimit: number | null;
 
     private readonly routeRateLimits: Map<string, RateLimitInfo>;

@@ -2,8 +2,9 @@
  * ./globals
  */
 export * from "./globals/Cdn";
-export * from "./globals/RateLimiter";
+export * from "./globals/FileManager";
 export * from "./globals/Rest";
+export * from "./globals/RestRateLimiter";
 export * from "./globals/RestRequestHandler";
 
 /**

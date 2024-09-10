@@ -1,33 +1,28 @@
 import { Buffer } from "node:buffer";
-import type { Cache } from "@nyxjs/cache";
-import type { Integer } from "@nyxjs/core";
+import { Cache } from "@nyxjs/cache";
 import { RestHttpResponseCodes } from "@nyxjs/core";
 import { Gunzip } from "minizlib";
 import type { RetryAgent } from "undici";
 import type { RateLimitResponseStructure, RestOptions, RestRequestOptions } from "../types/globals";
-import { RateLimiter } from "./RateLimiter";
 import type { Rest } from "./Rest";
+import { RestRateLimiter } from "./RestRateLimiter";
 
 export class RestRequestHandler {
     private defaultHeaders: Record<string, string>;
 
-    private readonly rateLimiter: RateLimiter;
+    private readonly rateLimiter: RestRateLimiter;
+
+    private readonly cache: Cache<string, { data: any; expiry: number }>;
 
     public constructor(
         private token: string,
         private readonly rest: Rest,
         private readonly retryAgent: RetryAgent,
-        private readonly cache: Cache<
-            string,
-            {
-                data: any;
-                expiry: Integer;
-            }
-        >,
         private readonly options: RestOptions = {}
     ) {
         this.defaultHeaders = this.createDefaultHeaders();
-        this.rateLimiter = new RateLimiter();
+        this.rateLimiter = new RestRateLimiter();
+        this.cache = new Cache<string, { data: any; expiry: number }>();
         this.rest.emit("debug", `[REST] RestRequestHandler initialized with options: ${JSON.stringify(this.options)}`);
     }
 
@@ -109,6 +104,11 @@ export class RestRequestHandler {
     public updateHeaders(): void {
         this.defaultHeaders = this.createDefaultHeaders();
         this.rest.emit("debug", "[REST] Default headers updated in RestRequestHandler");
+    }
+
+    public destroy(): void {
+        this.cache.clear();
+        this.rest.emit("debug", "[REST] RestRequestHandler destroyed");
     }
 
     private async decompressResponse(response: any): Promise<string> {

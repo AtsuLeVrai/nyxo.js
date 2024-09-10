@@ -1,11 +1,10 @@
 import { URL } from "node:url";
-import { Cache } from "@nyxjs/cache";
 import { RestHttpResponseCodes } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool, RetryAgent } from "undici";
 import type { RestEvents, RestOptions, RestRequestOptions } from "../types/globals";
 import { API_BASE_URL, DEFAULT_REST_OPTIONS } from "../utils/constants";
-import { RateLimiter } from "./RateLimiter";
+import { RestRateLimiter } from "./RestRateLimiter";
 import { RestRequestHandler } from "./RestRequestHandler";
 
 export class Rest extends EventEmitter<RestEvents> {
@@ -13,11 +12,9 @@ export class Rest extends EventEmitter<RestEvents> {
 
     private readonly retryAgent: RetryAgent;
 
-    private readonly cache: Cache<string, { data: any; expiry: number }>;
-
     private readonly requestHandler: RestRequestHandler;
 
-    private readonly rateLimiter: RateLimiter;
+    private readonly rateLimiter: RestRateLimiter;
 
     public constructor(
         private token: string,
@@ -30,20 +27,10 @@ export class Rest extends EventEmitter<RestEvents> {
         };
         this.emit("debug", `[REST] Initializing Rest with options: ${JSON.stringify(this.options)}`);
 
-        this.cache = new Cache<string, { data: any; expiry: number }>();
-        this.rateLimiter = new RateLimiter();
-
-        try {
-            this.pool = this.createPool();
-            this.retryAgent = this.createRetryAgent();
-            this.requestHandler = new RestRequestHandler(this.token, this, this.retryAgent, this.cache, this.options);
-        } catch (error) {
-            if (error instanceof Error) {
-                this.emit("error", new Error(`[REST] Error during initialization: ${error.message}`));
-            }
-
-            throw error;
-        }
+        this.pool = this.createPool();
+        this.retryAgent = this.createRetryAgent();
+        this.rateLimiter = new RestRateLimiter();
+        this.requestHandler = new RestRequestHandler(this.token, this, this.retryAgent, this.options);
     }
 
     public async request<T>(options: RestRequestOptions<T>): Promise<T> {
@@ -61,7 +48,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     public async destroy(): Promise<void> {
         await this.pool.destroy();
-        this.cache.clear();
+        this.requestHandler.destroy();
         this.emit("debug", "[REST] Rest instance destroyed");
     }
 
