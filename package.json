@@ -8,12 +8,9 @@
     "lint": "turbo run lint",
     "pretty": "turbo run pretty",
     "clean": "turbo run clean --force",
-    "prepare": "husky",
-    "changeset": "changeset",
-    "changeset:version": "changeset version"
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.8",
     "husky": "^9.1.5",
     "turbo": "^2.1.1",
     "typescript": "^5.6.2"

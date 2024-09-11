@@ -38,8 +38,8 @@
     "tslib": "^2.7.0"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.47.7",
-    "@swc/core": "^1.7.24",
+    "@microsoft/api-extractor": "^7.47.8",
+    "@swc/core": "^1.7.26",
     "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.4",
     "@types/ws": "^8.5.12",
