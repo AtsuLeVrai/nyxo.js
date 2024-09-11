@@ -17,6 +17,7 @@ import type { Gateway } from "./Gateway";
 const ZlibInflateOptions: ZlibOptions = {
     encoding: "utf8",
     async: true,
+    level: 9,
 };
 
 export class GatewayConnection {

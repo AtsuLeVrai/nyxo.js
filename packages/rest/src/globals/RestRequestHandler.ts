@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
 import { Cache } from "@nyxjs/cache";
-import { RestHttpResponseCodes } from "@nyxjs/core";
+import { ContentTypes, RestHttpResponseCodes } from "@nyxjs/core";
 import { Gunzip } from "minizlib";
 import type { RetryAgent } from "undici";
 import type { RateLimitResponseStructure, RestOptions, RestRequestOptions } from "../types/globals";
@@ -27,72 +27,45 @@ export class RestRequestHandler {
     }
 
     public async handle<T>(options: RestRequestOptions<T>): Promise<T> {
-        try {
-            const cacheKey = `${options.method}:${options.path}`;
+        const cacheKey = `${options.method}:${options.path}`;
 
-            if (!options.disableCache) {
-                const cachedResponse = this.cache.get(cacheKey);
-                if (cachedResponse && cachedResponse.expiry > Date.now()) {
-                    void this.rest.emit("debug", `[REST] Returning cached response for: ${cacheKey}`);
-                    return cachedResponse.data as T;
-                }
-            }
-
-            await this.rateLimiter.wait(options.path);
-
-            const path = `/api/v${this.options.version ?? 10}${options.path}`;
-            const headers = {
-                ...this.defaultHeaders,
-                ...options.headers,
-            };
-
-            this.rest.emit("debug", `[REST] Making request to: ${path}`);
-            this.rest.emit("debug", `[REST] Request headers: ${JSON.stringify(headers)}`);
-
-            const response = await this.retryAgent.request({
-                path,
-                method: options.method,
-                body: options.body,
-                query: options.query,
-                headers,
-            });
-
-            this.rest.emit("debug", `[REST] Response status: ${response.statusCode}`);
-            this.rest.emit("debug", `[REST] Response headers: ${JSON.stringify(response.headers)}`);
-
-            this.rateLimiter.handleRateLimit(options.path, response.headers);
-
-            const responseText = await this.decompressResponse(response);
-            this.rest.emit("debug", `[REST] Raw response: ${responseText}`);
-
-            const data = this.parseResponse(responseText);
-            this.rest.emit("debug", `[REST] Parsed response data: ${JSON.stringify(data)}`);
-
-            if (response.statusCode === RestHttpResponseCodes.TooManyRequests) {
-                const rateLimitData = data as RateLimitResponseStructure;
-                await this.rateLimiter.handleRateLimitResponse(rateLimitData);
-                return await this.handle(options);
-            }
-
-            if (response.statusCode >= 200 && response.statusCode < 300 && !options.disableCache) {
-                this.cache.set(cacheKey, {
-                    data,
-                    expiry: Date.now() + (this.options.cache_life_time ?? 60_000),
-                });
-            }
-
-            if (response.statusCode >= 400) {
-                throw new Error(`[REST] HTTP error! status: ${response.statusCode}, body: ${JSON.stringify(data)}`);
-            }
-
-            return data as T;
-        } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            } else {
-                throw new TypeError("[REST] An unknown error occurred.");
+        if (!options.disableCache) {
+            const cachedResponse = this.cache.get(cacheKey);
+            if (cachedResponse && cachedResponse.expiry > Date.now()) {
+                this.rest.emit("debug", `[REST] Returning cached response for: ${cacheKey}`);
+                return cachedResponse.data as T;
             }
         }
+
+        await this.rateLimiter.wait(options.path);
+
+        const { statusCode, headers, body } = await this.makeRequest(options);
+
+        this.rateLimiter.handleRateLimit(options.path, headers);
+
+        const responseText = await this.decompressResponse(headers, body);
+        this.rest.emit("debug", `[REST] Raw response: ${responseText}`);
+
+        const data = this.parseResponse(responseText);
+        this.rest.emit("debug", `[REST] Parsed response data: ${JSON.stringify(data)}`);
+
+        if (statusCode === RestHttpResponseCodes.TooManyRequests) {
+            await this.rateLimiter.handleRateLimitResponse(data as RateLimitResponseStructure);
+            return this.handle(options);
+        }
+
+        if (statusCode >= 200 && statusCode < 300 && !options.disableCache) {
+            this.cache.set(cacheKey, {
+                data,
+                expiry: Date.now() + (this.options.cache_life_time ?? 60_000),
+            });
+        }
+
+        if (statusCode >= 400) {
+            throw new Error(`[REST] HTTP error! status: ${statusCode}, body: ${JSON.stringify(data)}`);
+        }
+
+        return data as T;
     }
 
     public updateToken(token: string): void {
@@ -111,35 +84,45 @@ export class RestRequestHandler {
         this.rest.emit("debug", "[REST] RestRequestHandler destroyed");
     }
 
-    private async decompressResponse(response: any): Promise<string> {
-        const responseBuffer = await response.body.arrayBuffer();
+    private async makeRequest(options: RestRequestOptions<any>) {
+        const path = `/api/v${this.options.version ?? 10}${options.path}`;
+        const headers = { ...this.defaultHeaders, ...options.headers };
 
-        if (response.headers["content-encoding"] === "gzip") {
-            const gunzip = new Gunzip({ level: 9 });
-            const chunks: Buffer[] = [];
+        this.rest.emit("debug", `[REST] Making request to: ${path}`);
+        this.rest.emit("debug", `[REST] Request headers: ${JSON.stringify(headers)}`);
 
-            gunzip.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+        return this.retryAgent.request({
+            path,
+            method: options.method,
+            body: options.body,
+            query: options.query,
+            headers,
+        });
+    }
 
-            await new Promise<void>((resolve, reject) => {
-                gunzip.on("end", resolve);
+    private async decompressResponse(headers: any, body: any): Promise<string> {
+        const responseBuffer = await body.arrayBuffer();
+
+        if (headers["content-encoding"] === "gzip") {
+            return new Promise((resolve, reject) => {
+                const gunzip = new Gunzip({ level: 9 });
+                const chunks: Buffer[] = [];
+
+                gunzip.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+                gunzip.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
                 gunzip.on("error", reject);
                 gunzip.end(Buffer.from(responseBuffer));
             });
-
-            return Buffer.concat(chunks).toString("utf8");
-        } else {
-            return Buffer.from(responseBuffer).toString("utf8");
         }
+
+        return Buffer.from(responseBuffer).toString("utf8");
     }
 
     private parseResponse(responseText: string): any {
         try {
             return responseText ? JSON.parse(responseText) : null;
         } catch (error) {
-            if (error instanceof Error) {
-                this.rest.emit("error", new Error(`[REST] Error parsing JSON: ${error.message}`));
-            }
-
+            this.rest.emit("error", error instanceof Error ? error : new Error("[REST] Error parsing JSON"));
             throw error;
         }
     }
@@ -147,7 +130,7 @@ export class RestRequestHandler {
     private createDefaultHeaders(): Record<string, string> {
         return {
             Authorization: `${this.options.auth_type ?? "Bot"} ${this.token}`,
-            "Content-Type": "application/json",
+            "Content-Type": ContentTypes.Json,
             "Accept-Encoding": "gzip, deflate",
             ...(this.options.user_agent && { "User-Agent": this.options.user_agent }),
         };

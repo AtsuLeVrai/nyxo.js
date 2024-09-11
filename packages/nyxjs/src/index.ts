@@ -38,4 +38,4 @@ export * from "./structures/Webhooks";
 export * from "./structures/WelcomeScreen";
 
 export * from "@nyxjs/cache";
-export * from "@nyxjs/core";
+// export * from "@nyxjs/core";

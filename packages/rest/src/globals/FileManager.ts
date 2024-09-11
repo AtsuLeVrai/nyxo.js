@@ -1,5 +1,7 @@
 import type { Buffer } from "node:buffer";
+import { URL } from "node:url";
 import type { DataUriSchema } from "@nyxjs/core";
+import { ContentTypes } from "@nyxjs/core";
 import FormData from "form-data";
 
 /**
@@ -20,49 +22,82 @@ export type AttachmentCdnUrlParameters = {
     is: string;
 };
 
+const CONTENT_TYPES = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    webp: "image/webp",
+} as const;
+
+type ContentType = (typeof CONTENT_TYPES)[keyof typeof CONTENT_TYPES] | ContentTypes.Stream;
+
 export class FileManager {
-    // TODO: Implement the form data methods
-    public createFormData(): FormData {
-        return new FormData();
-    }
+    private static readonly CDN_HOSTNAME = "cdn.discordapp.com";
 
-    /**
-     * @see {@link https://discord.com/developers/docs/reference#image-data}
-     */
-    public imageData(type: "image/gif" | "image/jpeg" | "image/png", data: Buffer): DataUriSchema {
-        return `data:${type};base64,${data.toString("base64")}`;
-    }
+    private static readonly ATTACHMENTS_PATH = "/attachments/";
 
-    private attachmentUrl(filename: string): string {
+    public static attachmentUrl(filename: string): string {
         return `attachment://${filename}`;
     }
 
-    private getContentType(filename: string): string {
-        const extension = filename.split(".").pop()?.toLowerCase();
-        switch (extension) {
-            case "png": {
-                return "image/png";
-            }
+    public static createFormData(object: Record<string, any>, files?: string[] | string): FormData {
+        const form = new FormData();
+        form.append("payload_json", JSON.stringify(object), { contentType: ContentTypes.Json });
 
-            case "jpg": {
-                return "image/jpeg";
+        if (files) {
+            if (Array.isArray(files)) {
+                for (const [index, file] of files.entries()) {
+                    form.append(`files[${index}]`, file, {
+                        filename: file,
+                        contentType: this.getContentType(file),
+                    });
+                }
+            } else {
+                form.append("file", files, {
+                    filename: files,
+                    contentType: this.getContentType(files),
+                });
             }
+        }
 
-            case "jpeg": {
-                return "image/jpeg";
-            }
+        return form;
+    }
 
-            case "gif": {
-                return "image/gif";
-            }
+    public static imageData(type: "image/gif" | "image/jpeg" | "image/png", data: Buffer): DataUriSchema {
+        return `data:${type};base64,${data.toString("base64")}`;
+    }
 
-            case "webp": {
-                return "image/webp";
-            }
+    public static getContentType(filename: string): ContentType {
+        const extension = filename.split(".").pop()?.toLowerCase() ?? "";
+        return CONTENT_TYPES[extension as keyof typeof CONTENT_TYPES] ?? ContentTypes.Stream;
+    }
 
-            default: {
-                return "application/octet-stream";
-            }
+    public static parseAttachmentCdnUrl(urlString: string): AttachmentCdnUrlParameters {
+        const url = new URL(urlString);
+        return {
+            ex: url.searchParams.get("ex") ?? "",
+            hm: url.searchParams.get("hm") ?? "",
+            is: url.searchParams.get("is") ?? "",
+        };
+    }
+
+    public static constructAttachmentCdnUrl(baseUrl: string, params: AttachmentCdnUrlParameters): string {
+        const url = new URL(baseUrl);
+        for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+        return url.toString();
+    }
+
+    public static isValidDiscordCdnUrl(urlString: string): boolean {
+        try {
+            const url = new URL(urlString);
+            return (
+                url.hostname === this.CDN_HOSTNAME &&
+                url.pathname.startsWith(this.ATTACHMENTS_PATH) &&
+                ["ex", "hm", "is"].every((param) => url.searchParams.has(param))
+            );
+        } catch {
+            return false;
         }
     }
 }

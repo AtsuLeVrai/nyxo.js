@@ -1,5 +1,5 @@
 import type { Float, Integer, IsoO8601Timestamp, Snowflake } from "../utils/formats";
-import type { DiscordHeaders } from "../utils/headers";
+import type { ContentTypes } from "../utils/headers";
 import type { ApplicationStructure } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
 import type { EmojiStructure } from "./emojis";
@@ -101,7 +101,7 @@ export type AttachmentStructure = {
     /**
      * The attachment's media type
      */
-    content_type?: DiscordHeaders["Content-Type"];
+    content_type?: ContentTypes;
     /**
      * Description for the file (max 1024 characters)
      */

@@ -1,8 +1,5 @@
-import { Buffer } from "node:buffer";
-import { createReadStream } from "node:fs";
-import type { Readable } from "node:stream";
 import type { RestHttpResponseCodes, Snowflake, StickerPackStructure, StickerStructure } from "@nyxjs/core";
-import { FormData } from "undici";
+import { FileManager } from "../globals/FileManager";
 import type { RestRequestOptions } from "../types/globals";
 
 /**
@@ -17,40 +14,8 @@ export type CreateGuildStickerFormParams = Pick<StickerStructure, "description" 
     /**
      * The sticker file to upload, must be a PNG, APNG, GIF, or Lottie JSON file, max 512 KiB
      */
-    file: Buffer | Readable | string;
+    file: string;
 };
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
- */
-function createGuildSticker(
-    guildId: Snowflake,
-    form: CreateGuildStickerFormParams,
-    reason?: string
-): RestRequestOptions<StickerStructure> {
-    const formData = new FormData();
-    formData.append("name", form.name);
-    formData.append("description", form.description);
-    formData.append("tags", form.tags);
-
-    if (typeof form.file === "string") {
-        formData.append("file", createReadStream(form.file));
-    } else if (Buffer.isBuffer(form.file)) {
-        formData.append("file", new Blob([form.file]));
-    } else {
-        formData.append("file", form.file);
-    }
-
-    return {
-        method: "POST",
-        path: `/guilds/${guildId}/stickers`,
-        body: formData,
-        headers: {
-            "Content-Type": "multipart/form-data",
-            ...(reason && { "X-Audit-Log-Reason": reason }),
-        },
-    };
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs-response-structure}
@@ -89,7 +54,29 @@ export const StickerRoutes = {
         body: JSON.stringify(json),
         headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
     }),
-    createGuildSticker,
+    /**
+     * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
+     */
+    createGuildSticker: (
+        guildId: Snowflake,
+        form: CreateGuildStickerFormParams,
+        reason?: string
+    ): RestRequestOptions<StickerStructure> => {
+        const formData = FileManager.createFormData(
+            Object.fromEntries(Object.entries(form).filter(([key]) => key !== "file")),
+            form.file
+        );
+
+        return {
+            method: "POST",
+            path: `/guilds/${guildId}/stickers`,
+            body: formData,
+            headers: {
+                "Content-Type": formData.getHeaders(),
+                ...(reason && { "X-Audit-Log-Reason": reason }),
+            },
+        };
+    },
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker}
      */

@@ -1,4 +1,5 @@
 import type { ApiVersions, AuthTypes, DiscordHeaders, Float, Integer, RestHttpResponseCodes } from "@nyxjs/core";
+import type FormData from "form-data";
 import type { Dispatcher } from "undici";
 
 /**
@@ -88,7 +89,7 @@ export type RestRequestOptions<T> = Omit<Dispatcher.DispatchOptions, "headers"> 
     /**
      * Headers to include in the request.
      */
-    headers?: DiscordHeaders;
+    headers?: DiscordHeaders | FormData.Headers;
     /**
      * The type of the response data.
      */

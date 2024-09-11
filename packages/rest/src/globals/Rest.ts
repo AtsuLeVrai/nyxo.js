@@ -26,7 +26,6 @@ export class Rest extends EventEmitter<RestEvents> {
             ...options,
         };
         this.emit("debug", `[REST] Initializing Rest with options: ${JSON.stringify(this.options)}`);
-
         this.pool = this.createPool();
         this.retryAgent = this.createRetryAgent();
         this.rateLimiter = new RestRateLimiter();
@@ -38,10 +37,7 @@ export class Rest extends EventEmitter<RestEvents> {
             await this.rateLimiter.wait(options.path);
             return await this.requestHandler.handle(options);
         } catch (error) {
-            if (error instanceof Error) {
-                this.emit("error", new Error(`[REST] Error during request: ${error.message}`));
-            }
-
+            this.emit("error", error instanceof Error ? error : new Error(`[REST] Unknown error occurred`));
             throw error;
         }
     }
@@ -60,21 +56,17 @@ export class Rest extends EventEmitter<RestEvents> {
 
     public setOption<K extends keyof RestOptions>(key: K, value: RestOptions[K]): void {
         this.options[key] = value;
-        if (key === "auth_type" || key === "user_agent") {
-            this.options[key] = value;
-        }
-
         this.emit("debug", `[REST] Option ${key} updated`);
+        if (key === "auth_type" || key === "user_agent") {
+            this.requestHandler.updateHeaders();
+        }
     }
 
     private createPool(): Pool {
-        const baseUrl = new URL(API_BASE_URL);
-        const protocol = baseUrl.protocol;
-        const hostname = baseUrl.hostname;
-        const port = baseUrl.port || (protocol === "https:" ? "443" : "80");
-        const origin = `${protocol}//${hostname}:${port}`;
+        const { protocol, hostname, port } = new URL(API_BASE_URL);
+        const origin = `${protocol}//${hostname}:${port || (protocol === "https:" ? "443" : "80")}`;
 
-        this.emit("debug", `[REST] Creating pool with origin: ${origin}, base URL: ${baseUrl.origin}`);
+        this.emit("debug", `[REST] Creating pool with origin: ${origin}`);
 
         try {
             return new Pool(origin, {

@@ -4,7 +4,7 @@ import type {
     AttachmentStructure,
     ChannelMentionStructure,
     ChannelTypes,
-    DiscordHeaders,
+    ContentTypes,
     Float,
     Integer,
     InteractionTypes,
@@ -132,7 +132,7 @@ export class ChannelMention extends Base<ChannelMentionStructure> {
 }
 
 export class Attachment extends Base<AttachmentStructure> {
-    public contentType?: DiscordHeaders["Content-Type"];
+    public contentType?: ContentTypes;
 
     public description?: string;
 

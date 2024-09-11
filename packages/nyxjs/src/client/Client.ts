@@ -171,3 +171,5 @@ export class Client extends EventEmitter<typeof ClientEvents> {
         });
     }
 }
+
+export { type GatewayIntents, ApiVersions } from "@nyxjs/core";
