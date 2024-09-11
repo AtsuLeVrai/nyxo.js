@@ -29,7 +29,7 @@ export * from "./routes/stickers";
 export * from "./routes/subscriptions";
 export * from "./routes/users";
 export * from "./routes/voices";
-// export * from "./routes/webhooks";
+export * from "./routes/webhooks";
 
 /**
  * ./types

@@ -1,3 +1,5 @@
+import {clearInterval, setInterval} from "node:timers";
+
 /**
  * Represents a node in the doubly linked list used by the Cache.
  *
@@ -38,6 +40,13 @@ export type CacheOptions = {
      */
     capacity?: number;
     /**
+     * A callback that is called when an item is evicted from the cache.
+     *
+     * @param key
+     * @param value
+     */
+    onEvict?(key: any, value: any): void;
+    /**
      * The time-to-live for items in the cache, in milliseconds.
      */
     ttl?: number;
@@ -66,11 +75,18 @@ export class Cache<K, V> {
     private tail: Node<K, V> | null = null;
 
     /**
+     * The timer used to evict expired items from the cache.
+     */
+    private timer: NodeJS.Timeout | null = null;
+
+    /**
      * Creates a new Cache.
      *
      * @param options - The options for configuring the cache.
      */
-    public constructor(private readonly options?: CacheOptions) {}
+    public constructor(private options: CacheOptions = {}) {
+        this.startCleanupTimer();
+    }
 
     /**
      * Sets the capacity of the cache.
@@ -80,6 +96,7 @@ export class Cache<K, V> {
     public setCapacity(capacity: number): void {
         if (this.options) {
             this.options.capacity = capacity;
+            this.enforceCapacity();
         }
     }
 
@@ -103,17 +120,16 @@ export class Cache<K, V> {
     public set(key: K, value: V): void {
         const now = Date.now();
         if (this.map.has(key)) {
-            const existingItem = this.map.get(key);
-            if (existingItem) {
-                this.remove(existingItem);
-            }
-        } else if (this.options?.capacity !== undefined && this.map.size >= this.options.capacity) {
+            const existingItem = this.map.get(key)!;
+            this.remove(existingItem);
+        } else if (this.options.capacity !== undefined && this.map.size >= this.options.capacity) {
             this.evict();
         }
 
         const newItem = new Node(key, value, now);
         this.setHead(newItem);
         this.map.set(key, newItem);
+        this.enforceCapacity();
     }
 
     /**
@@ -126,12 +142,10 @@ export class Cache<K, V> {
         const item = this.map.get(key);
         if (item) {
             if (this.isExpired(item)) {
-                this.remove(item);
-                this.map.delete(key);
+                this.delete(key);
                 return undefined;
             } else {
-                this.remove(item);
-                this.setHead(item);
+                this.refresh(item);
                 return item.value;
             }
         }
@@ -149,6 +163,9 @@ export class Cache<K, V> {
         if (item) {
             this.remove(item);
             this.map.delete(key);
+            if (this.options.onEvict) {
+                this.options.onEvict(key, item.value);
+            }
         }
     }
 
@@ -159,6 +176,34 @@ export class Cache<K, V> {
         this.map.clear();
         this.head = null;
         this.tail = null;
+    }
+
+    /**
+     * Returns the number of items in the cache.
+     */
+    public size(): number {
+        return this.map.size;
+    }
+
+    /**
+     * Returns an array of all keys in the cache.
+     */
+    public keys(): K[] {
+        return Array.from(this.map.keys());
+    }
+
+    /**
+     * Returns an array of all values in the cache.
+     */
+    public values(): V[] {
+        return Array.from(this.map.values()).map((node) => node.value);
+    }
+
+    /**
+     * Checks if a key exists in the cache.
+     */
+    public has(key: K): boolean {
+        return this.map.has(key);
     }
 
     /**
@@ -207,8 +252,7 @@ export class Cache<K, V> {
      */
     private evict(): void {
         if (this.tail) {
-            this.map.delete(this.tail.key);
-            this.remove(this.tail);
+            this.delete(this.tail.key);
         }
     }
 
@@ -219,6 +263,51 @@ export class Cache<K, V> {
      * @returns True if the item is expired, false otherwise.
      */
     private isExpired(item: Node<K, V>): boolean {
-        return this.options?.ttl !== undefined && Date.now() - item.timestamp > this.options.ttl;
+        return this.options.ttl !== undefined && Date.now() - item.timestamp > this.options.ttl;
+    }
+
+    /**
+     * Refreshes an item by moving it to the head of the list and updating its timestamp.
+     */
+    private refresh(item: Node<K, V>): void {
+        this.remove(item);
+        this.setHead(item);
+        item.timestamp = Date.now();
+    }
+
+    /**
+     * Enforces the capacity limit by evicting items if necessary.
+     */
+    private enforceCapacity(): void {
+        if (this.options.capacity !== undefined) {
+            while (this.map.size > this.options.capacity) {
+                this.evict();
+            }
+        }
+    }
+
+    /**
+     * Starts the timer that cleans up expired items from the cache.
+     */
+    private startCleanupTimer(): void {
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
+
+        if (this.options.ttl) {
+            this.timer = setInterval(() => this.cleanupExpiredItems(), this.options.ttl);
+        }
+    }
+
+    /**
+     * Removes all expired items from the cache.
+     */
+    private cleanupExpiredItems(): void {
+        const now = Date.now();
+        for (const [key, item] of this.map) {
+            if (now - item.timestamp > (this.options.ttl ?? 0)) {
+                this.delete(key);
+            }
+        }
     }
 }
