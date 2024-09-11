@@ -12,8 +12,8 @@ import type {
     Snowflake,
     WebhookStructure,
 } from "@nyxjs/core";
-import {FileManager} from "../globals/FileManager";
-import type {RestRequestOptions} from "../types/globals";
+import { FileManager } from "../globals/FileManager";
+import type { RestRequestOptions } from "../types/globals";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-message-query-string-params}

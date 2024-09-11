@@ -1,4 +1,4 @@
-import {clearInterval, setInterval} from "node:timers";
+import { clearInterval, setInterval } from "node:timers";
 
 /**
  * Represents a node in the doubly linked list used by the Cache.
