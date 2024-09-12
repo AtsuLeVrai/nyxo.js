@@ -24,54 +24,65 @@ export type CreateAutoModerationRuleJSONParams = Pick<
     | "trigger_type"
 >;
 
-export const ModerationRoutes = {
+export class ModerationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule}
      */
-    deleteAutoModerationRule: (
+    public static deleteAutoModerationRule(
         guildId: Snowflake,
         autoModerationRuleId: Snowflake,
         reason?: string
-    ): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
-        method: "DELETE",
-        path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
-        headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
-    }),
+    ): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+        return {
+            method: "DELETE",
+            path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
+            headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule}
      */
-    modifyAutoModerationRule: (
+    public static modifyAutoModerationRule(
         guildId: Snowflake,
         autoModerationRuleId: Snowflake,
         json: ModifyAutoModerationRuleJSONParams,
         reason?: string
-    ): RestRequestOptions<AutoModerationRuleStructure> => ({
-        method: "PATCH",
-        path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
-        body: JSON.stringify(json),
-        headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
-    }),
+    ): RestRequestOptions<AutoModerationRuleStructure> {
+        return {
+            method: "PATCH",
+            path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
+            body: JSON.stringify(json),
+            headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule}
      */
-    createAutoModerationRule: (
+    public static createAutoModerationRule(
         guildId: Snowflake,
         json: CreateAutoModerationRuleJSONParams,
         reason?: string
-    ): RestRequestOptions<AutoModerationRuleStructure> => ({
-        method: "POST",
-        path: `/guilds/${guildId}/auto-moderation/rules`,
-        body: JSON.stringify(json),
-        headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
-    }),
+    ): RestRequestOptions<AutoModerationRuleStructure> {
+        return {
+            method: "POST",
+            path: `/guilds/${guildId}/auto-moderation/rules`,
+            body: JSON.stringify(json),
+            headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/auto-moderation#get-auto-moderation-rule}
      */
-    getAutoModerationRule: (
+    public static getAutoModerationRule(
         guildId: Snowflake,
         autoModerationRuleId: Snowflake
-    ): RestRequestOptions<AutoModerationRuleStructure> => ({
-        method: "GET",
-        path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
-    }),
-};
+    ): RestRequestOptions<AutoModerationRuleStructure> {
+        return {
+            method: "GET",
+            path: `/guilds/${guildId}/auto-moderation/rules/${autoModerationRuleId}`,
+        };
+    }
+}

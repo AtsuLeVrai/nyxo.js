@@ -41,20 +41,25 @@ export type GetGatewayBotResponse = {
     url: string;
 };
 
-export const GatewayRoutes = {
+export class GatewayRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot}
      */
-    getGatewayBot: (): RestRequestOptions<GetGatewayBotResponse> => ({
-        method: "GET",
-        path: "/gateway/bot",
-        disableCache: true,
-    }),
+    public static getGatewayBot(): RestRequestOptions<GetGatewayBotResponse> {
+        return {
+            method: "GET",
+            path: "/gateway/bot",
+            disableCache: true,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
      */
-    getGateway: (): RestRequestOptions<{ url: string }> => ({
-        method: "GET",
-        path: "/gateway",
-    }),
-};
+    public static getGateway(): RestRequestOptions<{ url: string }> {
+        return {
+            method: "GET",
+            path: "/gateway",
+        };
+    }
+}

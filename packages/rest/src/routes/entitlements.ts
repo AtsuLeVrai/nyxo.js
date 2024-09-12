@@ -64,47 +64,58 @@ export type ListEntitlementsQueryParams = {
     user_id?: Snowflake;
 };
 
-export const EntitlementRoutes = {
+export class EntitlementRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/monetization/entitlements#delete-test-entitlement}
      */
-    deleteTestEntitlement: (
+    public static deleteTestEntitlement(
         applicationId: Snowflake,
         entitlementId: Snowflake
-    ): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
-        method: "DELETE",
-        path: `/applications/${applicationId}/entitlements/${entitlementId}`,
-    }),
+    ): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+        return {
+            method: "DELETE",
+            path: `/applications/${applicationId}/entitlements/${entitlementId}`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/monetization/entitlements#create-test-entitlement}
      */
-    createTestEntitlement: (
+    public static createTestEntitlement(
         applicationId: Snowflake,
         json: CreateTestEntitlementJsonParams
-    ): RestRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> => ({
-        method: "POST",
-        path: `/applications/${applicationId}/entitlements`,
-        body: JSON.stringify(json),
-    }),
+    ): RestRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
+        return {
+            method: "POST",
+            path: `/applications/${applicationId}/entitlements`,
+            body: JSON.stringify(json),
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/monetization/entitlements#consume-an-entitlement}
      */
-    consumeEntitlement: (
+    public static consumeEntitlement(
         applicationId: Snowflake,
         entitlementId: Snowflake
-    ): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
-        method: "POST",
-        path: `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
-    }),
+    ): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+        return {
+            method: "POST",
+            path: `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/monetization/entitlements#list-entitlements}
      */
-    listEntitlements: (
+    public static listEntitlements(
         applicationId: Snowflake,
         query?: ListEntitlementsQueryParams
-    ): RestRequestOptions<EntitlementStructure[]> => ({
-        method: "GET",
-        path: `/applications/${applicationId}/entitlements`,
-        query,
-    }),
-};
+    ): RestRequestOptions<EntitlementStructure[]> {
+        return {
+            method: "GET",
+            path: `/applications/${applicationId}/entitlements`,
+            query,
+        };
+    }
+}

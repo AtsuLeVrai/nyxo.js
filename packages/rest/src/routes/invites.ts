@@ -19,21 +19,26 @@ export type GetInviteQueryStringParams = {
     with_expiration?: Boolean;
 };
 
-export const InviteRoutes = {
+export class InviteRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
      */
-    deleteInvite: (code: string, reason?: string): RestRequestOptions<InviteStructure> => ({
-        method: "DELETE",
-        path: `/invites/${code}`,
-        headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
-    }),
+    public static deleteInvite(code: string, reason?: string): RestRequestOptions<InviteStructure> {
+        return {
+            method: "DELETE",
+            path: `/invites/${code}`,
+            headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
      */
-    getInvite: (code: string, query?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> => ({
-        method: "GET",
-        path: `/invites/${code}`,
-        query,
-    }),
-};
+    public static getInvite(code: string, query?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> {
+        return {
+            method: "GET",
+            path: `/invites/${code}`,
+            query,
+        };
+    }
+}

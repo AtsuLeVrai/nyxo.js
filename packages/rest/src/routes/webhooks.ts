@@ -66,22 +66,6 @@ export type EditWebhookMessageJSONFormParams = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params}
  */
-/**
- * content	string	the message contents (up to 2000 characters)	one of content, file, embeds, poll
- * username	string	override the default username of the webhook	false
- * avatar_url	string	override the default avatar of the webhook	false
- * tts	boolean	true if this is a TTS message	false
- * embeds	array of up to 10 embed objects	embedded rich content	one of content, file, embeds, poll
- * allowed_mentions	allowed mention object	allowed mentions for the message	false
- * components *	array of message component	the components to include with the message	false
- * files[n] **	file contents	the contents of the file being sent	one of content, file, embeds, poll
- * payload_json **	string	JSON encoded body of non-file params	multipart/form-data only
- * attachments **	array of partial attachment objects	attachment objects with filename and description	false
- * flags	integer	message flags combined as a bitfield (only SUPPRESS_EMBEDS and SUPPRESS_NOTIFICATIONS can be set)	false
- * thread_name	string	name of thread to create (requires the webhook channel to be a forum or media channel)	false
- * applied_tags	array of snowflakes	array of tag ids to apply to the thread (requires the webhook channel to be a forum or media channel)	false
- * poll	poll request object	A poll!	one of content, file, embeds, poll
- */
 export type ExecuteWebhookJSONFormParams = {
     /**
      * Allowed mentions for the message
@@ -183,30 +167,33 @@ export type CreateWebhookJsonParams = {
     name: string;
 };
 
-export const WebhookRoutes = {
+export class WebhookRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-message}
      */
-    deleteWebhookMessage: (
+    public static deleteWebhookMessage(
         webhookId: Snowflake,
         webhookToken: string,
         messageId: Snowflake,
         query?: WebhookMessageQueryStringParams
-    ): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
-        method: "DELETE",
-        path: `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`,
-        query,
-    }),
+    ): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+        return {
+            method: "DELETE",
+            path: `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`,
+            query,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message}
      */
-    editWebhookMessage: (
+    public static editWebhookMessage(
         webhookId: Snowflake,
         webhookToken: string,
         messageId: Snowflake,
         json: EditWebhookMessageJSONFormParams,
         query?: WebhookMessageQueryStringParams
-    ): RestRequestOptions<MessageStructure> => {
+    ): RestRequestOptions<MessageStructure> {
         const formData = FileManager.createFormData(
             Object.fromEntries(Object.entries(json).filter(([key]) => key !== "files")),
             json.files
@@ -221,29 +208,33 @@ export const WebhookRoutes = {
                 "Content-Type": formData.getHeaders(),
             },
         };
-    },
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-message}
      */
-    getWebhookMessage: (
+    public static getWebhookMessage(
         webhookId: Snowflake,
         webhookToken: string,
         messageId: Snowflake,
         query?: WebhookMessageQueryStringParams
-    ): RestRequestOptions<MessageStructure> => ({
-        method: "GET",
-        path: `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`,
-        query,
-    }),
+    ): RestRequestOptions<MessageStructure> {
+        return {
+            method: "GET",
+            path: `/webhooks/${webhookId}/${webhookToken}/messages/${messageId}`,
+            query,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook}
      */
-    executeWebhook: (
+    public static executeWebhook(
         webhookId: Snowflake,
         webhookToken: string,
         json: ExecuteWebhookJSONFormParams,
         query?: ExecuteWebhookQueryStringParams
-    ): RestRequestOptions<MessageStructure> => {
+    ): RestRequestOptions<MessageStructure> {
         const formData = FileManager.createFormData(
             Object.fromEntries(Object.entries(json).filter(([key]) => key !== "files")),
             json.files
@@ -258,92 +249,122 @@ export const WebhookRoutes = {
                 "Content-Type": formData.getHeaders(),
             },
         };
-    },
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token}
      */
-    deleteWebhookWithToken: (
+    public static deleteWebhookWithToken(
         webhookId: Snowflake,
         webhookToken: string
-    ): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
-        method: "DELETE",
-        path: `/webhooks/${webhookId}/${webhookToken}`,
-    }),
+    ): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+        return {
+            method: "DELETE",
+            path: `/webhooks/${webhookId}/${webhookToken}`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
      */
-    deleteWebhook: (webhookId: Snowflake, reason?: string): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
-        method: "DELETE",
-        path: `/webhooks/${webhookId}`,
-        headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
-    }),
+    public static deleteWebhook(
+        webhookId: Snowflake,
+        reason?: string
+    ): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+        return {
+            method: "DELETE",
+            path: `/webhooks/${webhookId}`,
+            headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token}
      */
-    modifyWebhookWithToken: (
+    public static modifyWebhookWithToken(
         webhookId: Snowflake,
         webhookToken: string,
         json: Omit<ModifyWebhookJsonParams, "channel_id">
-    ): RestRequestOptions<Omit<WebhookStructure, "user">> => ({
-        method: "PATCH",
-        path: `/webhooks/${webhookId}/${webhookToken}`,
-        body: JSON.stringify(json),
-    }),
+    ): RestRequestOptions<Omit<WebhookStructure, "user">> {
+        return {
+            method: "PATCH",
+            path: `/webhooks/${webhookId}/${webhookToken}`,
+            body: JSON.stringify(json),
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook}
      */
-    modifyWebhook: (
+    public static modifyWebhook(
         webhookId: Snowflake,
         json: ModifyWebhookJsonParams,
         reason?: string
-    ): RestRequestOptions<WebhookStructure> => ({
-        method: "PATCH",
-        path: `/webhooks/${webhookId}`,
-        body: JSON.stringify(json),
-        headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
-    }),
+    ): RestRequestOptions<WebhookStructure> {
+        return {
+            method: "PATCH",
+            path: `/webhooks/${webhookId}`,
+            body: JSON.stringify(json),
+            headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-with-token}
      */
-    getWebhookWithToken: (
+    public static getWebhookWithToken(
         webhookId: Snowflake,
         webhookToken: string
-    ): RestRequestOptions<Omit<WebhookStructure, "user">> => ({
-        method: "GET",
-        path: `/webhooks/${webhookId}/${webhookToken}`,
-    }),
+    ): RestRequestOptions<Omit<WebhookStructure, "user">> {
+        return {
+            method: "GET",
+            path: `/webhooks/${webhookId}/${webhookToken}`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
      */
-    getWebhook: (webhookId: Snowflake): RestRequestOptions<WebhookStructure> => ({
-        method: "GET",
-        path: `/webhooks/${webhookId}`,
-    }),
+    public static getWebhook(webhookId: Snowflake): RestRequestOptions<WebhookStructure> {
+        return {
+            method: "GET",
+            path: `/webhooks/${webhookId}`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
      */
-    getGuildWebhooks: (guildId: Snowflake): RestRequestOptions<WebhookStructure[]> => ({
-        method: "GET",
-        path: `/guilds/${guildId}/webhooks`,
-    }),
+    public static getGuildWebhooks(guildId: Snowflake): RestRequestOptions<WebhookStructure[]> {
+        return {
+            method: "GET",
+            path: `/guilds/${guildId}/webhooks`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
      */
-    getChannelWebhooks: (channelId: Snowflake): RestRequestOptions<WebhookStructure[]> => ({
-        method: "GET",
-        path: `/channels/${channelId}/webhooks`,
-    }),
+    public static getChannelWebhooks(channelId: Snowflake): RestRequestOptions<WebhookStructure[]> {
+        return {
+            method: "GET",
+            path: `/channels/${channelId}/webhooks`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook}
      */
-    createWebhook: (
+    public static createWebhook(
         channelId: Snowflake,
         json: CreateWebhookJsonParams,
         reason?: string
-    ): RestRequestOptions<WebhookStructure> => ({
-        method: "POST",
-        path: `/channels/${channelId}/webhooks`,
-        body: JSON.stringify(json),
-        headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
-    }),
-};
+    ): RestRequestOptions<WebhookStructure> {
+        return {
+            method: "POST",
+            path: `/channels/${channelId}/webhooks`,
+            body: JSON.stringify(json),
+            headers: { ...(reason && { "X-Audit-Log-Reason": reason }) },
+        };
+    }
+}

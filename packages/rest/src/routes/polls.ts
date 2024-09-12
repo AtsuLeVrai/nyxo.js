@@ -25,25 +25,30 @@ export type GetAnswerVotersQueryStringParams = {
     limit?: Integer;
 };
 
-export const PollRoutes = {
+export class PollRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
      */
-    endPoll: (channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> => ({
-        method: "DELETE",
-        path: `/channels/${channelId}/polls/${messageId}/expire`,
-    }),
+    public static endPoll(channelId: Snowflake, messageId: Snowflake): RestRequestOptions<MessageStructure> {
+        return {
+            method: "DELETE",
+            path: `/channels/${channelId}/polls/${messageId}/expire`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
      */
-    getAnswerVoters: (
+    public static getAnswerVoters(
         channelId: Snowflake,
         messageId: Snowflake,
         answerId: Snowflake,
         query?: GetAnswerVotersQueryStringParams
-    ): RestRequestOptions<GetAnswerVotersResponseBody> => ({
-        method: "GET",
-        path: `/channels/${channelId}/polls/${messageId}/answers/${answerId}`,
-        query,
-    }),
-};
+    ): RestRequestOptions<GetAnswerVotersResponseBody> {
+        return {
+            method: "GET",
+            path: `/channels/${channelId}/polls/${messageId}/answers/${answerId}`,
+            query,
+        };
+    }
+}

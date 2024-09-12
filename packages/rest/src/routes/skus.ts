@@ -1,12 +1,14 @@
 import type { SkuStructure, Snowflake } from "@nyxjs/core";
 import type { RestRequestOptions } from "../types/globals";
 
-export const SkuRoutes = {
+export class SkuRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/monetization/skus#list-skus}
      */
-    listSkus: (applicationId: Snowflake): RestRequestOptions<SkuStructure[]> => ({
-        method: "GET",
-        path: `/applications/${applicationId}/skus`,
-    }),
-};
+    public static listSkus(applicationId: Snowflake): RestRequestOptions<SkuStructure[]> {
+        return {
+            method: "GET",
+            path: `/applications/${applicationId}/skus`,
+        };
+    }
+}

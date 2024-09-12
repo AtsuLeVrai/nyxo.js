@@ -68,61 +68,79 @@ export type GetCurrentUserGuildsQueryStringParams = {
  */
 export type ModifyCurrentUserJSONParams = Partial<Pick<UserStructure, "avatar" | "banner" | "username">>;
 
-export const UserRoutes = {
+export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection}
      */
-    updateUserApplicationRoleConnection: (
+    public static updateUserApplicationRoleConnection(
         applicationId: Snowflake,
         json: UpdateUserApplicationRoleConnectionJSONParams
-    ): RestRequestOptions<ApplicationRoleConnectionStructure> => ({
-        method: "PATCH",
-        path: `/users/@me/applications/${applicationId}/role-connection`,
-        body: JSON.stringify(json),
-    }),
+    ): RestRequestOptions<ApplicationRoleConnectionStructure> {
+        return {
+            method: "PATCH",
+            path: `/users/@me/applications/${applicationId}/role-connection`,
+            body: JSON.stringify(json),
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection}
      */
-    getCurrentUserApplicationRoleConnection: (
+    public static getCurrentUserApplicationRoleConnection(
         applicationId: Snowflake
-    ): RestRequestOptions<ApplicationRoleConnectionStructure> => ({
-        method: "GET",
-        path: `/users/@me/applications/${applicationId}/role-connection`,
-    }),
+    ): RestRequestOptions<ApplicationRoleConnectionStructure> {
+        return {
+            method: "GET",
+            path: `/users/@me/applications/${applicationId}/role-connection`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
      */
-    getCurrentUserConnections: (): RestRequestOptions<ConnectionStructure[]> => ({
-        method: "GET",
-        path: "/users/@me/connections",
-    }),
+    public static getCurrentUserConnections(): RestRequestOptions<ConnectionStructure[]> {
+        return {
+            method: "GET",
+            path: "/users/@me/connections",
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
      * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
      */
-    createDM: (json: CreateDMJSONParams | CreateGroupDMJSONParams): RestRequestOptions<ChannelStructure> => ({
-        method: "POST",
-        path: "/users/@me/channels",
-        body: JSON.stringify(json),
-    }),
+    public static createDM(json: CreateDMJSONParams | CreateGroupDMJSONParams): RestRequestOptions<ChannelStructure> {
+        return {
+            method: "POST",
+            path: "/users/@me/channels",
+            body: JSON.stringify(json),
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
      */
-    leaveGuild: (guildId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> => ({
-        method: "DELETE",
-        path: `/users/@me/guilds/${guildId}`,
-    }),
+    public static leaveGuild(guildId: Snowflake): RestRequestOptions<RestHttpResponseCodes.NoContent> {
+        return {
+            method: "DELETE",
+            path: `/users/@me/guilds/${guildId}`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
      */
-    getCurrentUserGuildMember: (guildId: Snowflake): RestRequestOptions<GuildMemberStructure> => ({
-        method: "GET",
-        path: `/users/@me/guilds/${guildId}/member`,
-    }),
+    public static getCurrentUserGuildMember(guildId: Snowflake): RestRequestOptions<GuildMemberStructure> {
+        return {
+            method: "GET",
+            path: `/users/@me/guilds/${guildId}/member`,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
      */
-    getCurrentUserGuilds: (
+    public static getCurrentUserGuilds(
         query?: GetCurrentUserGuildsQueryStringParams
     ): RestRequestOptions<
         Pick<
@@ -137,25 +155,33 @@ export const UserRoutes = {
             | "owner"
             | "permissions"
         >[]
-    > => ({
-        method: "GET",
-        path: "/users/@me/guilds",
-        query,
-    }),
+    > {
+        return {
+            method: "GET",
+            path: "/users/@me/guilds",
+            query,
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
      */
-    modifyCurrentUser: (json: ModifyCurrentUserJSONParams): RestRequestOptions<UserStructure> => ({
-        method: "PATCH",
-        path: "/users/@me",
-        body: JSON.stringify(json),
-    }),
+    public static modifyCurrentUser(json: ModifyCurrentUserJSONParams): RestRequestOptions<UserStructure> {
+        return {
+            method: "PATCH",
+            path: "/users/@me",
+            body: JSON.stringify(json),
+        };
+    }
+
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
      * @see {@link https://discord.com/developers/docs/resources/user#get-user}
      */
-    getUser: (userId: Snowflake | "@me"): RestRequestOptions<UserStructure> => ({
-        method: "GET",
-        path: `/users/${userId}`,
-    }),
-};
+    public static getUser(userId: Snowflake | "@me"): RestRequestOptions<UserStructure> {
+        return {
+            method: "GET",
+            path: `/users/${userId}`,
+        };
+    }
+}
