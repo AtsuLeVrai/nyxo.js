@@ -506,6 +506,78 @@ export type ActionRowStructure<
 };
 
 /**
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-activity-instance-resource}
+ */
+export type InteractionCallbackActivityInstanceResourceStructure = {
+    /**
+     * Instance ID of the Activity if one was launched or joined.
+     */
+    id: string;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-resource-object}
+ */
+export type InteractionCallbackResourceStructure = {
+    /**
+     * Represents the Activity launched by this interaction.
+     */
+    activity_instance?: InteractionCallbackActivityInstanceResourceStructure;
+    /**
+     * Message created by the interaction.
+     */
+    message?: MessageStructure;
+    /**
+     * Interaction callback type
+     */
+    type: InteractionCallbackTypes;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-object}
+ */
+export type InteractionCallbackStructure = {
+    /**
+     * Instance ID of the Activity if one was launched or joined
+     */
+    activity_instance_id?: string;
+    /**
+     * Interaction type
+     */
+    id: Snowflake;
+    /**
+     * Whether or not the response message was ephemeral
+     */
+    response_message_ephemeral?: boolean;
+    /**
+     * ID of the message that was created by the interaction
+     */
+    response_message_id?: Snowflake;
+    /**
+     * Whether or not the message is in a loading state
+     */
+    response_message_loading?: boolean;
+    /**
+     * Interaction type
+     */
+    type: InteractionTypes;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-response-object}
+ */
+export type InteractionCallbackResponseStructure = {
+    /**
+     * Interaction object associated with the resource
+     */
+    interaction: InteractionCallbackStructure;
+    /**
+     * Resource that was created by the interaction response
+     */
+    resource?: InteractionCallbackResourceStructure;
+};
+
+/**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal}
  */
 export type ModalStructure = {

@@ -39,7 +39,7 @@
     "undici": "^6.19.8"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.47.8",
+    "@microsoft/api-extractor": "^7.47.9",
     "@swc/core": "^1.7.26",
     "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.4",
