@@ -24,12 +24,13 @@ import type {
     RoleSubscriptionDataStructure,
     Snowflake,
 } from "@nyxjs/core";
+import type { ActionRowBuilder } from "../builders/ActionRowBuilder";
+import { EmbedBuilder } from "../builders/EmbedBuilder";
 import { Application } from "./Applications";
 import { Base } from "./Base";
 import { ThreadChannel } from "./Channels";
-import { Embed } from "./Embed";
 import { Emoji } from "./Emojis";
-import { ActionRow, MessageInteraction, ResolvedData } from "./Interactions";
+import { MessageInteraction, ResolvedData } from "./Interactions";
 import { Poll } from "./Polls";
 import { Sticker, StickerItem } from "./Stickers";
 import { User } from "./Users";
@@ -528,13 +529,13 @@ export class Message extends Base<MessageStructure> {
 
     public channelId!: Snowflake;
 
-    public components?: ActionRow[];
+    public components?: ActionRowBuilder[];
 
     public content!: string;
 
     public editedTimestamp!: IsoO8601Timestamp | null;
 
-    public embeds!: Embed[];
+    public embeds!: EmbedBuilder[];
 
     public flags?: MessageFlags;
 
@@ -645,7 +646,8 @@ export class Message extends Base<MessageStructure> {
             if (data.components === null) {
                 this.components = undefined;
             } else if (data.components !== undefined) {
-                this.components = data.components.map((component) => ActionRow.from(component));
+                // TODO: Fix this
+                // this.components = data.components.map((component) => ActionRowBuilder.from(component));
             }
         }
 
@@ -662,7 +664,7 @@ export class Message extends Base<MessageStructure> {
         }
 
         if (data.embeds !== undefined) {
-            this.embeds = data.embeds.map((embed) => Embed.from(embed));
+            this.embeds = data.embeds.map((embed) => EmbedBuilder.from(embed));
         }
 
         if ("flags" in data) {

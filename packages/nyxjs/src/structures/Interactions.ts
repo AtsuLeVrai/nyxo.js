@@ -1,94 +1,29 @@
 import type {
-    ActionRowStructure,
     ApplicationCommandDataStructure,
     ApplicationCommandInteractionDataOptionStructure,
     ApplicationCommandOptionTypes,
     AutocompleteStructure,
-    ComponentTypes,
     Integer,
-    IntegrationTypes,
     InteractionCallbackTypes,
-    InteractionContextTypes,
     InteractionResponseStructure,
-    InteractionStructure,
     InteractionTypes,
-    Locales,
-    MessageComponentDataStructure,
     MessageFlags,
     MessageInteractionStructure,
     MessageResponseStructure,
-    ModalStructure,
-    ModalSubmitDataStructure,
     ResolvedDataStructure,
     Snowflake,
 } from "@nyxjs/core";
+import type { ActionRowBuilder } from "../builders/ActionRowBuilder";
+import { EmbedBuilder } from "../builders/EmbedBuilder";
+import type { ModalBuilder } from "../builders/ModalBuilder";
 import { ApplicationCommandOptionChoice } from "./ApplicationCommands";
 import { Base } from "./Base";
-import { TextChannel, ThreadChannel } from "./Channels";
-import { Embed } from "./Embed";
-import { Entitlement } from "./Entitlements";
-import { Guild, GuildMember } from "./Guilds";
-import type { Button, SelectMenu, TextInput } from "./MessageComponents";
-import { SelectOption } from "./MessageComponents";
+import { ThreadChannel } from "./Channels";
+import { GuildMember } from "./Guilds";
 import { AllowedMentions, Attachment, Message } from "./Messages";
 import { PollCreateRequest } from "./Polls";
 import { Role } from "./Roles";
 import { User } from "./Users";
-
-export class ActionRow<
-    T extends Button | SelectMenu | TextInput = Button | SelectMenu | TextInput,
-> extends Base<ActionRowStructure> {
-    public components!: T[];
-
-    public type!: ComponentTypes.ActionRow;
-
-    public constructor(data: Readonly<Partial<ActionRowStructure>> = {}) {
-        super(data);
-    }
-
-    protected patch(data: Readonly<Partial<ActionRowStructure>>): void {
-        // TODO: Fix this
-        // this.components = (
-        //     data.components
-        //         ? data.components.map((component) => {
-        //               if (component.type === ComponentTypes.Button) {
-        //                   return Button.from(component);
-        //               } else if (component.type === ComponentTypes.SelectMenu) {
-        //                   return SelectMenu.from(component);
-        //               } else {
-        //                   return TextInput.from(component);
-        //               }
-        //           })
-        //         : this.components
-        // ) as T[];
-    }
-}
-
-export class Modal extends Base<ModalStructure> {
-    public components!: ActionRow<TextInput>[];
-
-    public customId!: string;
-
-    public title!: string;
-
-    public constructor(data: Readonly<Partial<ModalStructure>> = {}) {
-        super(data);
-    }
-
-    protected patch(data: Readonly<Partial<ModalStructure>>): void {
-        if (data.components !== undefined) {
-            this.components = data.components.map((component) => new ActionRow<TextInput>(component));
-        }
-
-        if (data.custom_id !== undefined) {
-            this.customId = data.custom_id;
-        }
-
-        if (data.title !== undefined) {
-            this.title = data.title;
-        }
-    }
-}
 
 export class Autocomplete extends Base<AutocompleteStructure> {
     public choices!: ApplicationCommandOptionChoice[];
@@ -109,11 +44,11 @@ export class MessageResponse extends Base<MessageResponseStructure> {
 
     public attachments?: Pick<Attachment, "description" | "filename">[];
 
-    public components?: ActionRow[];
+    public components?: ActionRowBuilder[];
 
     public content?: string;
 
-    public embeds?: Embed[];
+    public embeds?: EmbedBuilder[];
 
     public flags?: MessageFlags;
 
@@ -146,7 +81,8 @@ export class MessageResponse extends Base<MessageResponseStructure> {
             if (data.components === null) {
                 this.components = undefined;
             } else if (data.components !== undefined) {
-                this.components = data.components.map((component) => new ActionRow(component));
+                // TODO: Fix this
+                // this.components = data.components.map((component) => ActionRowBuilder.from(component));
             }
         }
 
@@ -162,7 +98,7 @@ export class MessageResponse extends Base<MessageResponseStructure> {
             if (data.embeds === null) {
                 this.embeds = undefined;
             } else if (data.embeds !== undefined) {
-                this.embeds = data.embeds.map((embed) => Embed.from(embed));
+                this.embeds = data.embeds.map((embed) => EmbedBuilder.from(embed));
             }
         }
 
@@ -193,7 +129,7 @@ export class MessageResponse extends Base<MessageResponseStructure> {
 }
 
 export class InteractionResponse extends Base<InteractionResponseStructure> {
-    public data?: Autocomplete | MessageResponse | Modal;
+    public data?: Autocomplete | MessageResponse | ModalBuilder;
 
     public type!: InteractionCallbackTypes;
 
@@ -390,65 +326,67 @@ export class ResolvedData extends Base<ResolvedDataStructure> {
     }
 }
 
-export class ModalSubmitData extends Base<ModalSubmitDataStructure> {
-    public components!: ActionRow<TextInput>[];
+// TODO: Fix this
+// export class ModalSubmitData extends Base<ModalSubmitDataStructure> {
+//     public components!: ActionRowBuilder<TextInputBuilder>[];
+//
+//     public customId!: string;
+//
+//     public constructor(data: Readonly<Partial<ModalSubmitDataStructure>> = {}) {
+//         super(data);
+//     }
+//
+//     protected patch(data: Readonly<Partial<ModalSubmitDataStructure>>): void {
+//         if (data.components !== undefined) {
+//             this.components = data.components.map((component) => ActionRowBuilder.from(component));
+//         }
+//
+//         if (data.custom_id !== undefined) {
+//             this.customId = data.custom_id;
+//         }
+//     }
+// }
 
-    public customId!: string;
-
-    public constructor(data: Readonly<Partial<ModalSubmitDataStructure>> = {}) {
-        super(data);
-    }
-
-    protected patch(data: Readonly<Partial<ModalSubmitDataStructure>>): void {
-        if (data.components !== undefined) {
-            this.components = data.components.map((component) => new ActionRow<TextInput>(component));
-        }
-
-        if (data.custom_id !== undefined) {
-            this.customId = data.custom_id;
-        }
-    }
-}
-
-export class MessageComponentData extends Base<MessageComponentDataStructure> {
-    public componentType!: ComponentTypes;
-
-    public customId!: string;
-
-    public resolved?: ResolvedData;
-
-    public values?: SelectOption[];
-
-    public constructor(data: Readonly<Partial<MessageComponentDataStructure>> = {}) {
-        super(data);
-    }
-
-    protected patch(data: Readonly<Partial<MessageComponentDataStructure>>): void {
-        if (data.component_type !== undefined) {
-            this.componentType = data.component_type;
-        }
-
-        if (data.custom_id !== undefined) {
-            this.customId = data.custom_id;
-        }
-
-        if ("resolved" in data) {
-            if (data.resolved === null) {
-                this.resolved = undefined;
-            } else if (data.resolved !== undefined) {
-                this.resolved = ResolvedData.from(data.resolved);
-            }
-        }
-
-        if ("values" in data) {
-            if (data.values === null) {
-                this.values = undefined;
-            } else if (data.values !== undefined) {
-                this.values = data.values.map((value) => SelectOption.from(value));
-            }
-        }
-    }
-}
+// TODO: Fix this
+// export class MessageComponentData extends Base<MessageComponentDataStructure> {
+//     public componentType!: ComponentTypes;
+//
+//     public customId!: string;
+//
+//     public resolved?: ResolvedData;
+//
+//     public values?: SelectOption[];
+//
+//     public constructor(data: Readonly<Partial<MessageComponentDataStructure>> = {}) {
+//         super(data);
+//     }
+//
+//     protected patch(data: Readonly<Partial<MessageComponentDataStructure>>): void {
+//         if (data.component_type !== undefined) {
+//             this.componentType = data.component_type;
+//         }
+//
+//         if (data.custom_id !== undefined) {
+//             this.customId = data.custom_id;
+//         }
+//
+//         if ("resolved" in data) {
+//             if (data.resolved === null) {
+//                 this.resolved = undefined;
+//             } else if (data.resolved !== undefined) {
+//                 this.resolved = ResolvedData.from(data.resolved);
+//             }
+//         }
+//
+//         if ("values" in data) {
+//             if (data.values === null) {
+//                 this.values = undefined;
+//             } else if (data.values !== undefined) {
+//                 this.values = data.values.map((value) => SelectOption.from(value));
+//             }
+//         }
+//     }
+// }
 
 export class ApplicationCommandData extends Base<ApplicationCommandDataStructure> {
     public guildId?: Snowflake;
@@ -516,6 +454,8 @@ export class ApplicationCommandData extends Base<ApplicationCommandDataStructure
     }
 }
 
+// TODO: Fix this
+/*
 export class Interaction extends Base<InteractionStructure> {
     public appPermissions?: string;
 
@@ -705,3 +645,4 @@ export class Interaction extends Base<InteractionStructure> {
         }
     }
 }
+*/

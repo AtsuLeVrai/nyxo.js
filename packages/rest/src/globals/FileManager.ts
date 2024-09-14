@@ -30,7 +30,7 @@ const CONTENT_TYPES = {
     webp: "image/webp",
 } as const;
 
-type ContentType = (typeof CONTENT_TYPES)[keyof typeof CONTENT_TYPES] | ContentTypes.Stream;
+type ContentType = (typeof CONTENT_TYPES)[keyof typeof CONTENT_TYPES] | ContentTypes.Bin;
 
 export class FileManager {
     private static readonly CDN_HOSTNAME = "cdn.discordapp.com";
@@ -70,7 +70,7 @@ export class FileManager {
 
     public static getContentType(filename: string): ContentType {
         const extension = filename.split(".").pop()?.toLowerCase() ?? "";
-        return CONTENT_TYPES[extension as keyof typeof CONTENT_TYPES] ?? ContentTypes.Stream;
+        return CONTENT_TYPES[extension as keyof typeof CONTENT_TYPES] ?? ContentTypes.Bin;
     }
 
     public static parseAttachmentCdnUrl(urlString: string): AttachmentCdnUrlParameters {
