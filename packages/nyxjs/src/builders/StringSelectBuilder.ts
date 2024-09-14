@@ -23,6 +23,29 @@ export class StringSelectBuilder {
         return this;
     }
 
+    public addOptions(...options: SelectOptionStructure[]): this {
+        if (SelectMenuLimits.Options < options.length) {
+            throw new Error(`Options exceeds the maximum length of ${SelectMenuLimits.Options}`);
+        }
+
+        for (const option of options) {
+            if (SelectOptionLimits.Label < option.label.length) {
+                throw new Error(`Label exceeds the maximum length of ${SelectOptionLimits.Label}`);
+            }
+
+            if (SelectOptionLimits.Value < option.value.length) {
+                throw new Error(`Value exceeds the maximum length of ${SelectOptionLimits.Value}`);
+            }
+
+            if (option.description && SelectOptionLimits.Description < option.description.length) {
+                throw new Error(`Description exceeds the maximum length of ${SelectOptionLimits.Description}`);
+            }
+        }
+
+        this.data.options?.push(...options);
+        return this;
+    }
+
     public setOptions(options: SelectOptionStructure[]): this {
         if (SelectMenuLimits.Options < options.length) {
             throw new Error(`Options exceeds the maximum length of ${SelectMenuLimits.Options}`);

@@ -6,6 +6,7 @@ import type {
     Integer,
     InteractionCallbackTypes,
     InteractionResponseStructure,
+    InteractionStructure,
     InteractionTypes,
     MessageFlags,
     MessageInteractionStructure,
@@ -455,100 +456,98 @@ export class ApplicationCommandData extends Base<ApplicationCommandDataStructure
 }
 
 // TODO: Fix this
-/*
 export class Interaction extends Base<InteractionStructure> {
-    public appPermissions?: string;
-
-    public applicationId!: Snowflake;
-
-    public authorizingIntegrationOwners?: Record<IntegrationTypes, Snowflake>;
-
-    public channel?: Partial<TextChannel>;
-
-    public channelId?: Snowflake;
-
-    public context?: InteractionContextTypes;
-
-    public data?:
-        | ApplicationCommandData
-        | ApplicationCommandInteractionDataOption
-        | MessageComponentData
-        | ModalSubmitData
-        | ResolvedData;
-
-    public entitlements?: Entitlement[];
-
-    public guild?: Partial<Guild>;
-
-    public guildId?: Snowflake;
-
-    public guildLocale?: Locales;
-
-    public id!: Snowflake;
-
-    public locale?: Locales;
-
-    public member?: Partial<GuildMember>;
-
-    public message?: Partial<Message>;
-
-    public token!: string;
-
-    public type!: InteractionTypes;
-
-    public user?: User;
-
-    public version!: 1;
+    // public appPermissions?: string;
+    //
+    // public applicationId!: Snowflake;
+    //
+    // public authorizingIntegrationOwners?: Record<IntegrationTypes, Snowflake>;
+    //
+    // public channel?: Partial<TextChannel>;
+    //
+    // public channelId?: Snowflake;
+    //
+    // public context?: InteractionContextTypes;
+    //
+    // public data?:
+    //     | ApplicationCommandData
+    //     | ApplicationCommandInteractionDataOption
+    //     | MessageComponentData
+    //     | ModalSubmitData
+    //     | ResolvedData;
+    //
+    // public entitlements?: Entitlement[];
+    //
+    // public guild?: Partial<Guild>;
+    //
+    // public guildId?: Snowflake;
+    //
+    // public guildLocale?: Locales;
+    //
+    // public id!: Snowflake;
+    //
+    // public locale?: Locales;
+    //
+    // public member?: Partial<GuildMember>;
+    //
+    // public message?: Partial<Message>;
+    //
+    // public token!: string;
+    //
+    // public type!: InteractionTypes;
+    //
+    // public user?: User;
+    //
+    // public version!: 1;
 
     public constructor(data: Readonly<Partial<InteractionStructure>> = {}) {
         super(data);
     }
 
     protected patch(data: Readonly<Partial<InteractionStructure>>): void {
-        if ("app_permissions" in data) {
-            if (data.app_permissions === null) {
-                this.appPermissions = undefined;
-            } else if (data.app_permissions !== undefined) {
-                this.appPermissions = data.app_permissions;
-            }
-        }
-
-        if (data.application_id !== undefined) {
-            this.applicationId = data.application_id;
-        }
-
-        if ("authorizing_integration_owners" in data) {
-            if (data.authorizing_integration_owners === null) {
-                this.authorizingIntegrationOwners = undefined;
-            } else if (data.authorizing_integration_owners !== undefined) {
-                this.authorizingIntegrationOwners = data.authorizing_integration_owners;
-            }
-        }
-
-        if ("channel" in data) {
-            if (data.channel === null) {
-                this.channel = undefined;
-            } else if (data.channel !== undefined) {
-                this.channel = TextChannel.from(data.channel);
-            }
-        }
-
-        if ("channel_id" in data) {
-            if (data.channel_id === null) {
-                this.channelId = undefined;
-            } else {
-                this.channelId = data.channel_id;
-            }
-        }
-
-        if ("context" in data) {
-            if (data.context === null) {
-                this.context = undefined;
-            } else if (data.context !== undefined) {
-                this.context = data.context;
-            }
-        }
-
+        //     if ("app_permissions" in data) {
+        //         if (data.app_permissions === null) {
+        //             this.appPermissions = undefined;
+        //         } else if (data.app_permissions !== undefined) {
+        //             this.appPermissions = data.app_permissions;
+        //         }
+        //     }
+        //
+        //     if (data.application_id !== undefined) {
+        //         this.applicationId = data.application_id;
+        //     }
+        //
+        //     if ("authorizing_integration_owners" in data) {
+        //         if (data.authorizing_integration_owners === null) {
+        //             this.authorizingIntegrationOwners = undefined;
+        //         } else if (data.authorizing_integration_owners !== undefined) {
+        //             this.authorizingIntegrationOwners = data.authorizing_integration_owners;
+        //         }
+        //     }
+        //
+        //     if ("channel" in data) {
+        //         if (data.channel === null) {
+        //             this.channel = undefined;
+        //         } else if (data.channel !== undefined) {
+        //             this.channel = TextChannel.from(data.channel);
+        //         }
+        //     }
+        //
+        //     if ("channel_id" in data) {
+        //         if (data.channel_id === null) {
+        //             this.channelId = undefined;
+        //         } else {
+        //             this.channelId = data.channel_id;
+        //         }
+        //     }
+        //
+        //     if ("context" in data) {
+        //         if (data.context === null) {
+        //             this.context = undefined;
+        //         } else if (data.context !== undefined) {
+        //             this.context = data.context;
+        //         }
+        //     }
         // TODO: Fix this
         // if ("data" in data) {
         //     if (data.data instanceof ApplicationCommandData) {
@@ -563,86 +562,85 @@ export class Interaction extends Base<InteractionStructure> {
         //         this.data = ResolvedData.from(data.data);
         //     }
         // }
-
-        if ("entitlements" in data) {
-            if (data.entitlements === null) {
-                this.entitlements = undefined;
-            } else if (data.entitlements !== undefined) {
-                this.entitlements = data.entitlements.map((entitlement) => Entitlement.from(entitlement));
-            }
-        }
-
-        if ("guild" in data) {
-            if (data.guild === null) {
-                this.guild = undefined;
-            } else if (data.guild !== undefined) {
-                this.guild = Guild.from(data.guild);
-            }
-        }
-
-        if ("guild_id" in data) {
-            if (data.guild_id === null) {
-                this.guildId = undefined;
-            } else {
-                this.guildId = data.guild_id;
-            }
-        }
-
-        if ("guild_locale" in data) {
-            if (data.guild_locale === null) {
-                this.guildLocale = undefined;
-            } else if (data.guild_locale !== undefined) {
-                this.guildLocale = data.guild_locale;
-            }
-        }
-
-        if (data.id !== undefined) {
-            this.id = data.id;
-        }
-
-        if ("locale" in data) {
-            if (data.locale === null) {
-                this.locale = undefined;
-            } else if (data.locale !== undefined) {
-                this.locale = data.locale;
-            }
-        }
-
-        if ("member" in data) {
-            if (data.member === null) {
-                this.member = undefined;
-            } else if (data.member !== undefined) {
-                this.member = GuildMember.from(data.member);
-            }
-        }
-
-        if ("message" in data) {
-            if (data.message === null) {
-                this.message = undefined;
-            } else if (data.message !== undefined) {
-                this.message = Message.from(data.message);
-            }
-        }
-
-        if (data.token !== undefined) {
-            this.token = data.token;
-        }
-
-        if (data.type !== undefined) {
-            this.type = data.type;
-        }
-
-        if ("user" in data) {
-            if (data.user === null) {
-                this.user = undefined;
-            } else if (data.user !== undefined) {
-                this.user = User.from(data.user);
-            }
-        }
-
-        if (data.version !== undefined) {
-            this.version = data.version;
-        }
+        //
+        //     if ("entitlements" in data) {
+        //         if (data.entitlements === null) {
+        //             this.entitlements = undefined;
+        //         } else if (data.entitlements !== undefined) {
+        //             this.entitlements = data.entitlements.map((entitlement) => Entitlement.from(entitlement));
+        //         }
+        //     }
+        //
+        //     if ("guild" in data) {
+        //         if (data.guild === null) {
+        //             this.guild = undefined;
+        //         } else if (data.guild !== undefined) {
+        //             this.guild = Guild.from(data.guild);
+        //         }
+        //     }
+        //
+        //     if ("guild_id" in data) {
+        //         if (data.guild_id === null) {
+        //             this.guildId = undefined;
+        //         } else {
+        //             this.guildId = data.guild_id;
+        //         }
+        //     }
+        //
+        //     if ("guild_locale" in data) {
+        //         if (data.guild_locale === null) {
+        //             this.guildLocale = undefined;
+        //         } else if (data.guild_locale !== undefined) {
+        //             this.guildLocale = data.guild_locale;
+        //         }
+        //     }
+        //
+        //     if (data.id !== undefined) {
+        //         this.id = data.id;
+        //     }
+        //
+        //     if ("locale" in data) {
+        //         if (data.locale === null) {
+        //             this.locale = undefined;
+        //         } else if (data.locale !== undefined) {
+        //             this.locale = data.locale;
+        //         }
+        //     }
+        //
+        //     if ("member" in data) {
+        //         if (data.member === null) {
+        //             this.member = undefined;
+        //         } else if (data.member !== undefined) {
+        //             this.member = GuildMember.from(data.member);
+        //         }
+        //     }
+        //
+        //     if ("message" in data) {
+        //         if (data.message === null) {
+        //             this.message = undefined;
+        //         } else if (data.message !== undefined) {
+        //             this.message = Message.from(data.message);
+        //         }
+        //     }
+        //
+        //     if (data.token !== undefined) {
+        //         this.token = data.token;
+        //     }
+        //
+        //     if (data.type !== undefined) {
+        //         this.type = data.type;
+        //     }
+        //
+        //     if ("user" in data) {
+        //         if (data.user === null) {
+        //             this.user = undefined;
+        //         } else if (data.user !== undefined) {
+        //             this.user = User.from(data.user);
+        //         }
+        //     }
+        //
+        //     if (data.version !== undefined) {
+        //         this.version = data.version;
+        //     }
     }
 }
-*/

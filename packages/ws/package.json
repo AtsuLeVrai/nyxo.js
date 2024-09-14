@@ -35,6 +35,7 @@
     "bufferutil": "^4.0.8",
     "erlpack": "^0.1.4",
     "eventemitter3": "^5.0.1",
+    "fzstd": "^0.1.1",
     "minizlib": "^3.0.1",
     "tslib": "^2.7.0",
     "utf-8-validate": "^6.0.4",

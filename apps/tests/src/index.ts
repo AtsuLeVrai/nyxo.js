@@ -11,7 +11,7 @@ const client = new Client(process.env.DISCORD_TOKEN, {
   intents: [GatewayIntents.Guilds],
 });
 
-client.on("ready", () => {
+client.on("ready", (ready) => {
   console.log("Ready");
 });
 
@@ -19,7 +19,7 @@ client.on("debug", (message) => {
   console.debug(message);
 });
 
-client.on("interactionCreate", () => {
+client.on("interactionCreate", (interaction) => {
   console.log();
 });
 

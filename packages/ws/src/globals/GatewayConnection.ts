@@ -10,7 +10,7 @@ import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
 import type { GatewaySendEvents } from "../types/events";
 import type { GatewayOptions, GatewayPayload } from "../types/gateway";
-import { decompressZlib } from "../utils/compression";
+import { decompressZlib, decompressZstd } from "../utils/compression";
 import { decodeMessage, encodeMessage } from "../utils/encoding";
 import type { Gateway } from "./Gateway";
 
@@ -129,10 +129,7 @@ export class GatewayConnection {
             if (this.options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
                 decompressedData = await decompressZlib(data, this.options.encoding, this.zlibInflate);
             } else if (this.options.compress === "zstd-stream") {
-                /**
-                 * Node.js does not support Zstd compression, so we throw an error.
-                 */
-                throw new Error("Zstd compression is not supported with node.js...");
+                decompressedData = await decompressZstd(data, this.options.encoding);
             } else {
                 decompressedData = decodeMessage(decompressedData, this.options.encoding);
             }

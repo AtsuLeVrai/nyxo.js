@@ -113,7 +113,7 @@ export class EmbedBuilder {
         return this;
     }
 
-    public addFields(fields: EmbedFieldStructure[]): this {
+    public addFields(...fields: EmbedFieldStructure[]): this {
         if (EmbedLimits.Fields < fields.length) {
             throw new Error(`Fields exceed the maximum number of ${EmbedLimits.Fields}`);
         }
@@ -133,6 +133,25 @@ export class EmbedBuilder {
         }
 
         this.data.fields.push(...fields);
+        return this;
+    }
+
+    public setFields(fields: EmbedFieldStructure[]): this {
+        if (EmbedLimits.Fields < fields.length) {
+            throw new Error(`Fields exceed the maximum number of ${EmbedLimits.Fields}`);
+        }
+
+        for (const field of fields) {
+            if (EmbedLimits.FieldName < field.name.length) {
+                throw new Error(`Field name exceeds the maximum length of ${EmbedLimits.FieldName}`);
+            }
+
+            if (EmbedLimits.FieldValue < field.value.length) {
+                throw new Error(`Field value exceeds the maximum length of ${EmbedLimits.FieldValue}`);
+            }
+        }
+
+        this.data.fields = fields;
         return this;
     }
 
