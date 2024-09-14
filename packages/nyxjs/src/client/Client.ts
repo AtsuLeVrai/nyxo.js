@@ -2,120 +2,11 @@ import type { GatewayIntents, Integer } from "@nyxjs/core";
 import { ApiVersions } from "@nyxjs/core";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
-import { EncodingTypes, type GatewayOptions } from "@nyxjs/ws";
+import type { GatewayOptions } from "@nyxjs/ws";
+import { EncodingTypes } from "@nyxjs/ws";
 import { EventEmitter } from "eventemitter3";
-import { WebSocketManager } from "./WebSocketManager";
-
-export const ClientEvents = {
-    applicationCommandPermissionsUpdate: [],
-    autoModerationActionExecution: [],
-    autoModerationRuleCreate: [],
-    autoModerationRuleDelete: [],
-    autoModerationRuleUpdate: [],
-    autoModerationBlockMessage: [],
-    autoModerationFlagToChannel: [],
-    autoModerationUserCommunicationDisabled: [],
-    debug: [],
-    error: [new Error()],
-    hello: [],
-    invalidateSession: [],
-    ready: [],
-    reconnect: [],
-    resumed: [],
-    warn: [],
-    channelCreate: [],
-    channelDelete: [],
-    channelUpdate: [],
-    channelPinsUpdate: [],
-    channelOverwriteCreate: [],
-    channelOverwriteDelete: [],
-    channelOverwriteUpdate: [],
-    threadCreate: [],
-    threadDelete: [],
-    threadUpdate: [],
-    threadListSync: [],
-    threadMemberUpdate: [],
-    threadMembersUpdate: [],
-    entitlementCreate: [],
-    entitlementDelete: [],
-    entitlementUpdate: [],
-    guildCreate: [],
-    guildDelete: [],
-    guildUpdate: [],
-    guildAuditLogEntryCreate: [],
-    guildBanAdd: [],
-    guildBanRemove: [],
-    guildEmojisUpdate: [],
-    guildEmojiCreate: [],
-    guildEmojiDelete: [],
-    guildEmojiUpdate: [],
-    guildStickersUpdate: [],
-    guildStickerCreate: [],
-    guildStickerDelete: [],
-    guildStickerUpdate: [],
-    guildIntegrationsUpdate: [],
-    guildMemberAdd: [],
-    guildMemberRemove: [],
-    guildMemberUpdate: [],
-    guildMembersChunk: [],
-    guildMemberKick: [],
-    guildMemberPrune: [],
-    guildMemberMove: [],
-    guildMemberDisconnect: [],
-    guildBotAdd: [],
-    guildRoleCreate: [],
-    guildRoleDelete: [],
-    guildRoleUpdate: [],
-    guildScheduledEventCreate: [],
-    guildScheduledEventDelete: [],
-    guildScheduledEventUpdate: [],
-    guildScheduledEventUserAdd: [],
-    guildScheduledEventUserRemove: [],
-    guildOnboardingPromptCreate: [],
-    guildOnboardingPromptDelete: [],
-    guildOnboardingPromptUpdate: [],
-    guildOnboardingCreate: [],
-    guildOnboardingUpdate: [],
-    guildHomeSettingsCreate: [],
-    guildHomeSettingsUpdate: [],
-    integrationCreate: [],
-    integrationDelete: [],
-    integrationUpdate: [],
-    interactionCreate: [],
-    inviteCreate: [],
-    inviteDelete: [],
-    inviteUpdate: [],
-    messageCreate: [],
-    messageDelete: [],
-    messageUpdate: [],
-    messageDeleteBulk: [],
-    messageReactionAdd: [],
-    messageReactionRemove: [],
-    messageReactionRemoveAll: [],
-    messageReactionRemoveEmoji: [],
-    messagePin: [],
-    messageUnpin: [],
-    presenceUpdate: [],
-    stageInstanceCreate: [],
-    stageInstanceDelete: [],
-    stageInstanceUpdate: [],
-    subscriptionCreate: [],
-    subscriptionDelete: [],
-    subscriptionUpdate: [],
-    typingStart: [],
-    userUpdate: [],
-    voiceChannelEffectSend: [],
-    voiceStateUpdate: [],
-    voiceServerUpdate: [],
-    webhooksUpdate: [],
-    webhookCreate: [],
-    webhookDelete: [],
-    webhookUpdate: [],
-    messagePollVoteAdd: [],
-    messagePollVoteRemove: [],
-    creatorMonetizationRequestCreated: [],
-    creatorMonetizationTermsAccepted: [],
-};
+import { WebSocketManager } from "../managers/WebSocketManager";
+import type { ClientEvents } from "../types/ClientEvents";
 
 export type ClientOptions = {
     intents: GatewayIntents[];
@@ -126,7 +17,7 @@ export type ClientOptions = {
     ws?: Partial<Pick<GatewayOptions, "compress" | "encoding" | "large_threshold">>;
 };
 
-export class Client extends EventEmitter<typeof ClientEvents> {
+export class Client extends EventEmitter<ClientEvents> {
     public ws: WebSocketManager;
 
     public rest: Rest;
@@ -171,5 +62,3 @@ export class Client extends EventEmitter<typeof ClientEvents> {
         });
     }
 }
-
-export { type GatewayIntents, ApiVersions } from "@nyxjs/core";

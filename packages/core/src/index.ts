@@ -1,5 +1,6 @@
 /**
- * ./constants
+ * Exports from the ./constants directory
+ * These typically include enums and constant values used throughout the API
  */
 export * from "./constants/intents";
 export * from "./constants/locales";
@@ -8,7 +9,16 @@ export * from "./constants/opcodes";
 export * from "./constants/permissions";
 
 /**
- * ./structures
+ * Exports from the ./libs directory
+ * These usually contain utility functions and helper methods
+ */
+export * from "./libs/formats";
+export * from "./libs/headers";
+export * from "./libs/markdowns";
+
+/**
+ * Exports from the ./structures directory
+ * These typically include interfaces and types representing Discord's data structures
  */
 export * from "./structures/applications";
 export * from "./structures/audits";
@@ -30,9 +40,3 @@ export * from "./structures/teams";
 export * from "./structures/users";
 export * from "./structures/voices";
 export * from "./structures/webhooks";
-
-/**
- * ./utils
- */
-export * from "./utils/formats";
-export * from "./utils/headers";

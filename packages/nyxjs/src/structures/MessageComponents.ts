@@ -12,7 +12,6 @@ import type {
     TextInputStructure,
     TextInputStyles,
 } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Emoji } from "./Emojis";
 
@@ -123,7 +122,7 @@ export class SelectOption extends Base<SelectOptionStructure> {
 
     public description?: string;
 
-    public emoji?: PickWithPublicMethods<Emoji, "animated" | "id" | "name">;
+    public emoji?: Pick<Emoji, "animated" | "id" | "name">;
 
     public label!: string;
 
@@ -268,7 +267,7 @@ export class Button extends Base<ButtonStructure> {
 
     public disabled?: boolean;
 
-    public emoji?: PickWithPublicMethods<Emoji, "animated" | "id" | "name">;
+    public emoji?: Pick<Emoji, "animated" | "id" | "name">;
 
     public label?: string;
 
@@ -342,5 +341,3 @@ export class Button extends Base<ButtonStructure> {
         }
     }
 }
-
-export { ButtonStyles, ChannelTypes, ComponentTypes, SelectDefaultValueTypes, TextInputStyles } from "@nyxjs/core";

@@ -1,4 +1,4 @@
-import type { IsoO8601Timestamp, Snowflake } from "../utils/formats";
+import type { IsoO8601Timestamp, Snowflake } from "../libs/formats";
 import type { GuildMemberStructure } from "./guilds";
 
 /**

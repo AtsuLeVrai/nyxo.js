@@ -1,4 +1,4 @@
-import type { Snowflake } from "../utils/formats";
+import type { Snowflake } from "../libs/formats";
 import type { IntegrationTypes } from "./applications";
 import type { ChannelStructure } from "./channels";
 import type { GuildScheduledEventStructure, IntegrationStructure } from "./guilds";

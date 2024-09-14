@@ -160,5 +160,3 @@ export class Role extends Base<RoleStructure> {
         }
     }
 }
-
-export { RoleFlags } from "@nyxjs/core";

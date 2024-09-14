@@ -24,7 +24,6 @@ import type {
     RoleSubscriptionDataStructure,
     Snowflake,
 } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Application } from "./Applications";
 import { Base } from "./Base";
 import { ThreadChannel } from "./Channels";
@@ -281,7 +280,7 @@ export class Reaction extends Base<ReactionStructure> {
 
     public countDetails!: ReactionCountDetails;
 
-    public emoji!: PickWithPublicMethods<Emoji, "animated" | "id" | "name">;
+    public emoji!: Pick<Emoji, "animated" | "id" | "name">;
 
     public me!: boolean;
 
@@ -489,7 +488,7 @@ export class MessageActivity extends Base<MessageActivityStructure> {
 }
 
 export class MessageSnapshot extends Base<MessageSnapshotStructure> {
-    public message!: PickWithPublicMethods<
+    public message!: Pick<
         Message,
         | "attachments"
         | "content"
@@ -839,12 +838,3 @@ export class Message extends Base<MessageStructure> {
         }
     }
 }
-
-export {
-    type AllowedMentionTypes,
-    MessageFlags,
-    AttachmentFlags,
-    MessageReferenceTypes,
-    MessageActivityTypes,
-    MessageTypes,
-} from "@nyxjs/core";

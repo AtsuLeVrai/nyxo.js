@@ -1,15 +1,28 @@
-import type { Snowflake } from "../utils/formats";
+import type { Snowflake } from "../libs/formats";
 
 /**
+ * Enum representing OAuth2 URLs used in Discord API
+ *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-urls}
  */
 export enum Oauth2Urls {
+    /**
+     * The authorization URL used to start the OAuth2 flow
+     */
     Authorize = "https://discord.com/oauth2/authorize",
+    /**
+     * The URL used to revoke an OAuth2 token
+     */
     Revoke = "https://discord.com/api/oauth2/token/revoke",
+    /**
+     * The URL used to obtain or refresh an OAuth2 token
+     */
     Token = "https://discord.com/api/oauth2/token",
 }
 
 /**
+ * Enum representing OAuth2 scopes in Discord API
+ *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes}
  */
 export enum Oauth2Scopes {
@@ -128,6 +141,8 @@ export enum Oauth2Scopes {
 }
 
 /**
+ * Type representing bot authorization parameters
+ *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#bot-authorization-flow-bot-auth-parameters}
  */
 export type BotAuthParameters = {

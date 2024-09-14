@@ -310,5 +310,3 @@ export class User extends Base<UserStructure> {
         }
     }
 }
-
-export { type ConnectionServices, ConnectionVisibilityTypes, PremiumTypes, UserFlags } from "@nyxjs/core";

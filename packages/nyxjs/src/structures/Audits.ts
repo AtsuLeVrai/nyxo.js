@@ -323,5 +323,3 @@ export class AuditLog extends Base<AuditLogStructure> {
         }
     }
 }
-
-export { AuditLogEvents } from "@nyxjs/core";

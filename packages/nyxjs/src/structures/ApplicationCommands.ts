@@ -382,12 +382,3 @@ export class ApplicationCommand extends Base<ApplicationCommandStructure> {
         }
     }
 }
-
-export {
-    ApplicationCommandOptionTypes,
-    ApplicationCommandPermissionTypes,
-    ApplicationCommandTypes,
-    ChannelTypes,
-    IntegrationTypes,
-    InteractionContextTypes,
-} from "@nyxjs/core";

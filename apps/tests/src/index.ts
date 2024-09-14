@@ -15,8 +15,12 @@ client.on("ready", () => {
   console.log("Ready");
 });
 
-client.on("interactionCreate", (interaction) => {
-  console.log(interaction);
+client.on("debug", (message) => {
+  console.debug(message);
+});
+
+client.on("interactionCreate", () => {
+  console.log();
 });
 
 client.connect();

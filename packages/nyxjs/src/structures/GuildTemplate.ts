@@ -1,5 +1,4 @@
 import type { GuildTemplateStructure, Integer, IsoO8601Timestamp, Snowflake } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Guild } from "./Guilds";
 import { User } from "./Users";
@@ -19,7 +18,7 @@ export class GuildTemplate extends Base<GuildTemplateStructure> {
 
     public name!: string;
 
-    public serializedSourceGuild!: PickWithPublicMethods<
+    public serializedSourceGuild!: Pick<
         Guild,
         | "afkChannelId"
         | "afkTimeout"

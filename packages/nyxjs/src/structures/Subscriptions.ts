@@ -82,5 +82,3 @@ export class Subscription extends Base<SubscriptionStructure> {
         }
     }
 }
-
-export { SubscriptionStatus } from "@nyxjs/core";

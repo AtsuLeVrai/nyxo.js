@@ -577,15 +577,3 @@ export class Guild extends Base<GuildStructure> {
         }
     }
 }
-
-export {
-    DefaultMessageNotificationLevels,
-    ExplicitContentFilterLevels,
-    GuildFeatures,
-    GuildMemberFlags,
-    MfaLevels,
-    NsfwLevels,
-    PremiumTiers,
-    SystemChannelFlags,
-    VerificationLevels,
-} from "@nyxjs/core";

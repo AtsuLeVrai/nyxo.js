@@ -11,7 +11,6 @@ import type {
     Oauth2Scopes,
     Snowflake,
 } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Guild } from "./Guilds";
 import { Team } from "./Teams";
@@ -108,7 +107,7 @@ export class Application extends Base<ApplicationStructure> {
 
     public approximateUserInstallCount?: Integer;
 
-    public bot?: PickWithPublicMethods<
+    public bot?: Pick<
         User,
         | "accentColor"
         | "avatar"
@@ -151,7 +150,7 @@ export class Application extends Base<ApplicationStructure> {
 
     public name!: string;
 
-    public owner?: PickWithPublicMethods<
+    public owner?: Pick<
         User,
         | "accentColor"
         | "avatar"
@@ -397,5 +396,3 @@ export class Application extends Base<ApplicationStructure> {
         }
     }
 }
-
-export { ApplicationFlags, ApplicationRoleConnectionMetadataTypes, IntegrationTypes } from "@nyxjs/core";

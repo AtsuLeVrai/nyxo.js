@@ -221,5 +221,3 @@ export class Integration extends Base<IntegrationStructure> {
         }
     }
 }
-
-export { IntegrationExpireBehaviors, IntegrationPlatformTypes } from "@nyxjs/core";

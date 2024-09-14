@@ -9,7 +9,6 @@ import type {
     PollResultsStructure,
     PollStructure,
 } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Emoji } from "./Emojis";
 
@@ -60,7 +59,7 @@ export class PollResults extends Base<PollResultsStructure> {
 }
 
 export class PollMedia extends Base<PollMediaStructure> {
-    public emoji!: PickWithPublicMethods<Emoji, "id" | "name">;
+    public emoji!: Pick<Emoji, "id" | "name">;
 
     public text!: string;
 
@@ -190,5 +189,3 @@ export class Poll extends Base<PollStructure> {
         }
     }
 }
-
-export { LayoutTypes } from "@nyxjs/core";

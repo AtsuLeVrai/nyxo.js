@@ -1,6 +1,6 @@
 import type { Locales } from "../constants/locales";
 import type { Oauth2Scopes } from "../constants/oauth2";
-import type { Integer, IsoO8601Timestamp, Snowflake } from "../utils/formats";
+import type { Integer, IsoO8601Timestamp, Snowflake } from "../libs/formats";
 import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";

@@ -1,5 +1,4 @@
 import type { Snowflake, WebhookStructure, WebhookTypes } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";
 import { Guild } from "./Guilds";
@@ -18,9 +17,9 @@ export class Webhook extends Base<WebhookStructure> {
 
     public name!: string | null;
 
-    public sourceChannel?: PickWithPublicMethods<BaseChannel, "id" | "name">;
+    public sourceChannel?: Pick<BaseChannel, "id" | "name">;
 
-    public sourceGuild?: PickWithPublicMethods<Guild, "icon" | "id" | "name">;
+    public sourceGuild?: Pick<Guild, "icon" | "id" | "name">;
 
     public token?: string;
 
@@ -108,5 +107,3 @@ export class Webhook extends Base<WebhookStructure> {
         }
     }
 }
-
-export { WebhookTypes } from "@nyxjs/core";

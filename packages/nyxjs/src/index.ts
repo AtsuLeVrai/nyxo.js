@@ -4,6 +4,18 @@
 export * from "./client/Client";
 
 /**
+ * /libs
+ */
+export * from "./libs/Channels";
+export * from "./libs/Colors";
+
+/**
+ * ./managers
+ */
+export * from "./managers/SnowflakeManager";
+export * from "./managers/WebSocketManager";
+
+/**
  * ./structures
  */
 export * from "./structures/ApplicationCommands";
@@ -37,5 +49,14 @@ export * from "./structures/Voices";
 export * from "./structures/Webhooks";
 export * from "./structures/WelcomeScreen";
 
+/**
+ * ./types
+ */
+export * from "./types/ClientEvents";
+
+/**
+ * nyxjs libraries
+ */
 export * from "@nyxjs/cache";
-// export * from "@nyxjs/core";
+export * from "@nyxjs/core";
+export * from "@nyxjs/utils";

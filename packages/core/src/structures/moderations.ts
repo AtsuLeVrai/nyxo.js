@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "../utils/formats";
+import type { Integer, Snowflake } from "../libs/formats";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-metadata}

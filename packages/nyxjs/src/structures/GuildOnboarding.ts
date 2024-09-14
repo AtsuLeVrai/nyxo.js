@@ -6,7 +6,6 @@ import type {
     PromptTypes,
     Snowflake,
 } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { Emoji } from "./Emojis";
 
@@ -15,7 +14,7 @@ export class PromptOption extends Base<PromptOptionStructure> {
 
     public description!: string | null;
 
-    public emoji?: PickWithPublicMethods<Emoji, "animated" | "id" | "name">;
+    public emoji?: Pick<Emoji, "animated" | "id" | "name">;
 
     public id!: Snowflake;
 
@@ -145,5 +144,3 @@ export class GuildOnboarding extends Base<GuildOnboardingStructure> {
         }
     }
 }
-
-export { OnboardingMode, PromptTypes } from "@nyxjs/core";

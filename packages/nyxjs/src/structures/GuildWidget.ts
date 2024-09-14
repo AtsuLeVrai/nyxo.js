@@ -1,17 +1,16 @@
 import type { GuildWidgetSettingsStructure, GuildWidgetStructure, Integer, Snowflake } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";
 import { User } from "./Users";
 
 export class GuildWidget extends Base<GuildWidgetStructure> {
-    public channels!: PickWithPublicMethods<BaseChannel, "id" | "name" | "position">[];
+    public channels!: Pick<BaseChannel, "id" | "name" | "position">[];
 
     public id!: Snowflake;
 
     public instantInvite!: string | null;
 
-    public members!: PickWithPublicMethods<
+    public members!: Pick<
         User & {
             avatarUrl: string;
             status: string;
@@ -41,8 +40,6 @@ export class GuildWidget extends Base<GuildWidgetStructure> {
         }
 
         if (data.members !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-expect-error
             this.members = data.members.map((member) => {
                 const user = User.from(member);
                 return {

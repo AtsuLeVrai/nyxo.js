@@ -1,4 +1,6 @@
 /**
+ * Enum representing Gateway opcodes
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-opcodes}
  */
 export enum GatewayOpcodes {
@@ -49,6 +51,8 @@ export enum GatewayOpcodes {
 }
 
 /**
+ * Enum representing Gateway close event codes
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes}
  */
 export enum GatewayCloseCodes {
@@ -97,7 +101,7 @@ export enum GatewayCloseCodes {
      */
     ShardingRequired = 4_011,
     /**
-     * You sent an invalid version for the globals.
+     * You sent an invalid version for the gateway.
      */
     InvalidAPIVersion = 4_012,
     /**
@@ -111,6 +115,8 @@ export enum GatewayCloseCodes {
 }
 
 /**
+ * Enum representing Voice opcodes
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-opcodes}
  */
 export enum VoiceOpcodes {
@@ -161,6 +167,8 @@ export enum VoiceOpcodes {
 }
 
 /**
+ * Enum representing HTTP response codes
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes}
  */
 export enum RestHttpResponseCodes {
@@ -205,12 +213,14 @@ export enum RestHttpResponseCodes {
      */
     TooManyRequests = 429,
     /**
-     * There was not a globals available to process your request. Wait a bit and retry.
+     * There was not a gateway available to process your request. Wait a bit and retry.
      */
     GatewayUnavailable = 502,
 }
 
 /**
+ * Enum representing JSON error codes
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-json-error-codes}
  */
 export enum RestJsonErrorCodes {
@@ -428,6 +438,8 @@ export enum RestJsonErrorCodes {
 }
 
 /**
+ * Enum representing RPC error codes
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-error-codes}
  */
 export enum RpcErrorCodes {
@@ -498,6 +510,8 @@ export enum RpcErrorCodes {
 }
 
 /**
+ * Enum representing RPC close event codes
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-close-event-codes}
  */
 export enum RpcCloseCodes {

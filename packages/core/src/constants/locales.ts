@@ -1,4 +1,6 @@
 /**
+ * Enum representing Discord locales
+ *
  * @see {@link https://discord.com/developers/docs/reference#locales}
  */
 export enum Locales {

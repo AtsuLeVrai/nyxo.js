@@ -1,4 +1,6 @@
 /**
+ * Enum representing bitwise permission flags in Discord
+ *
  * @see {@link https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags}
  */
 export enum BitwisePermissions {

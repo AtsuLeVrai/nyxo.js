@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "pnpm run clean && tsup --config tsup.config.ts && rimraf .tsup",
-    "lint": "pnpm run pretty && eslint --format=pretty src --fix",
+    "lint": "eslint --format=pretty src --fix",
     "pretty": "prettier --write src",
     "clean": "rimraf dist"
   },
@@ -44,7 +44,7 @@
     "@microsoft/api-extractor": "^7.47.9",
     "@swc/core": "^1.7.26",
     "@types/eslint": "^8.56.12",
-    "@types/node": "^22.5.4",
+    "@types/node": "^22.5.5",
     "@types/ws": "^8.5.12",
     "eslint": "^8.57.0",
     "eslint-formatter-pretty": "^5.0.0",

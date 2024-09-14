@@ -54,5 +54,3 @@ export class Sku extends Base<SkuStructure> {
         }
     }
 }
-
-export { SkuFlags, SkuTypes } from "@nyxjs/core";

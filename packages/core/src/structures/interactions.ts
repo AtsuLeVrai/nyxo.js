@@ -1,5 +1,5 @@
 import type { Locales } from "../constants/locales";
-import type { Integer, Snowflake } from "../utils/formats";
+import type { Integer, Snowflake } from "../libs/formats";
 import type { IntegrationTypes } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
 import type { EmojiStructure } from "./emojis";

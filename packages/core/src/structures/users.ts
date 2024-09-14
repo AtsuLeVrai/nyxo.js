@@ -1,5 +1,5 @@
 import type { Locales } from "../constants/locales";
-import type { Integer, Snowflake } from "../utils/formats";
+import type { Integer, Snowflake } from "../libs/formats";
 import type { ApplicationRoleConnectionMetadataStructure } from "./applications";
 import type { IntegrationStructure } from "./guilds";
 

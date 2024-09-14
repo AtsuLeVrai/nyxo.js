@@ -204,5 +204,3 @@ export class StickerItem extends Base<StickerItemStructure> {
         }
     }
 }
-
-export { StickerFormatTypes, StickerTypes } from "@nyxjs/core";

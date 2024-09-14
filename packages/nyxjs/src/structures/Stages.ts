@@ -50,5 +50,3 @@ export class StageInstance extends Base<StageInstanceStructure> {
         }
     }
 }
-
-export { StagePrivacyLevels } from "@nyxjs/core";

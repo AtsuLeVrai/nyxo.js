@@ -215,10 +215,3 @@ export class AutoModerationRule extends Base<AutoModerationRuleStructure> {
         }
     }
 }
-
-export {
-    AutoModerationActionTypes,
-    AutoModerationEventTypes,
-    AutoModerationKeywordPresetTypes,
-    AutoModerationTriggerTypes,
-} from "@nyxjs/core";

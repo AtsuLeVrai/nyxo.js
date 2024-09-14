@@ -1,4 +1,6 @@
 /**
+ * The gateway intents that can be used to filter the events that the bot receives.
+ *
  * @see {@link https://discord.com/developers/docs/topics/gateway#list-of-intents}
  */
 export enum GatewayIntents {

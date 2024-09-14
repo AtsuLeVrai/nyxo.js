@@ -88,5 +88,3 @@ export class Entitlement extends Base<EntitlementStructure> {
         }
     }
 }
-
-export { EntitlementTypes } from "@nyxjs/core";

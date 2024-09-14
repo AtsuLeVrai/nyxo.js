@@ -7,7 +7,6 @@ import type {
     InviteTypes,
     IsoO8601Timestamp,
 } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Application } from "./Applications";
 import { Base } from "./Base";
 import { BaseChannel } from "./Channels";
@@ -16,7 +15,7 @@ import { Guild, GuildMember } from "./Guilds";
 import { User } from "./Users";
 
 export class InviteStageInstance extends Base<InviteStageInstanceStructure> {
-    public members!: PickWithPublicMethods<
+    public members!: Pick<
         GuildMember,
         "avatar" | "joinedAt" | "nick" | "pending" | "premiumSince" | "roles" | "user"
     >[];
@@ -93,13 +92,13 @@ export class Invite extends Base<InviteStructure> {
 
     public approximatePresenceCount?: Integer;
 
-    public channel!: PickWithPublicMethods<BaseChannel, "id" | "name" | "type"> | null;
+    public channel!: Pick<BaseChannel, "id" | "name" | "type"> | null;
 
     public code!: string;
 
     public expiresAt?: IsoO8601Timestamp;
 
-    public guild?: PickWithPublicMethods<
+    public guild?: Pick<
         Guild,
         | "banner"
         | "description"
@@ -226,5 +225,3 @@ export class Invite extends Base<InviteStructure> {
         }
     }
 }
-
-export { InviteTargetTypes, InviteTypes } from "@nyxjs/core";

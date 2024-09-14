@@ -418,5 +418,3 @@ export class Embed extends Base<EmbedStructure> {
         }
     }
 }
-
-export { type EmbedTypes } from "@nyxjs/core";

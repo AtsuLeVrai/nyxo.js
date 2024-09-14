@@ -295,12 +295,3 @@ export class GuildScheduledEvent extends Base<GuildScheduledEventStructure> {
         }
     }
 }
-
-export {
-    GuildScheduledEventEntityTypes,
-    GuildScheduledEventPrivacyLevels,
-    GuildScheduledEventStatus,
-    RecurrenceRuleFrequencies,
-    RecurrenceRuleMonths,
-    RecurrenceRuleWeekdays,
-} from "@nyxjs/core";

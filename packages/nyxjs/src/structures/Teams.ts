@@ -1,5 +1,4 @@
 import type { MembershipState, Snowflake, TeamMemberRoles, TeamMemberStructure, TeamStructure } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { Base } from "./Base";
 import { User } from "./Users";
 
@@ -10,7 +9,7 @@ export class TeamMember extends Base<TeamMemberStructure> {
 
     public teamId!: Snowflake;
 
-    public user!: PickWithPublicMethods<User, "avatar" | "discriminator" | "id" | "username">;
+    public user!: Pick<User, "avatar" | "discriminator" | "id" | "username">;
 
     public constructor(data: Readonly<Partial<TeamMemberStructure>> = {}) {
         super(data);
@@ -72,5 +71,3 @@ export class Team extends Base<TeamStructure> {
         }
     }
 }
-
-export { MembershipState, type TeamMemberRoles } from "@nyxjs/core";

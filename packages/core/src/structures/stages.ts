@@ -1,4 +1,4 @@
-import type { Snowflake } from "../utils/formats";
+import type { Snowflake } from "../libs/formats";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-privacy-level}

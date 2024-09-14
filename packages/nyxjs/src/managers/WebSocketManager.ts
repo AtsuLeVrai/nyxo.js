@@ -1,6 +1,6 @@
 import type { GatewayOptions } from "@nyxjs/ws";
 import { Gateway } from "@nyxjs/ws";
-import type { Client } from "./Client";
+import type { Client } from "../client/Client";
 
 const GATEWAY_CLIENT_EVENTS = [
     ["APPLICATION_COMMAND_PERMISSIONS_UPDATE", "applicationCommandPermissionsUpdate"],

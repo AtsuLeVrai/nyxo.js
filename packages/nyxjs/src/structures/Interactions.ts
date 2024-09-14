@@ -22,7 +22,6 @@ import type {
     ResolvedDataStructure,
     Snowflake,
 } from "@nyxjs/core";
-import type { PickWithPublicMethods } from "../utils";
 import { ApplicationCommandOptionChoice } from "./ApplicationCommands";
 import { Base } from "./Base";
 import { TextChannel, ThreadChannel } from "./Channels";
@@ -108,7 +107,7 @@ export class Autocomplete extends Base<AutocompleteStructure> {
 export class MessageResponse extends Base<MessageResponseStructure> {
     public allowedMentions?: AllowedMentions;
 
-    public attachments?: PickWithPublicMethods<Attachment, "description" | "filename">[];
+    public attachments?: Pick<Attachment, "description" | "filename">[];
 
     public components?: ActionRow[];
 
@@ -317,7 +316,7 @@ export class ResolvedData extends Base<ResolvedDataStructure> {
 
     public channels?: Map<
         Snowflake,
-        PickWithPublicMethods<ThreadChannel, "id" | "name" | "parentId" | "permissions" | "threadMetadata" | "type">
+        Pick<ThreadChannel, "id" | "name" | "parentId" | "permissions" | "threadMetadata" | "type">
     >;
 
     public members?: Map<Snowflake, Omit<GuildMember, "deaf" | "mute" | "user">>;
@@ -706,13 +705,3 @@ export class Interaction extends Base<InteractionStructure> {
         }
     }
 }
-
-export {
-    ApplicationCommandOptionTypes,
-    ComponentTypes,
-    IntegrationTypes,
-    InteractionCallbackTypes,
-    InteractionContextTypes,
-    InteractionTypes,
-    MessageFlags,
-} from "@nyxjs/core";
