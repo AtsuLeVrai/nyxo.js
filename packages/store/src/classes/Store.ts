@@ -70,6 +70,31 @@ export class Store<K, V> {
     }
 
     /**
+     * Adds an item to the store only if the key doesn't already exist.
+     * If the store has reached its maximum capacity, the least recently used item is evicted.
+     *
+     * @param key - The key associated with the item.
+     * @param value - The value associated with the item.
+     * @returns true if the item was added successfully, false if the key already exists.
+     */
+    public add(key: K, value: V): boolean {
+        if (this.map.has(key)) {
+            return false;
+        }
+
+        const now = Date.now();
+        if (this.options.capacity !== undefined && this.map.size >= this.options.capacity) {
+            this.evict();
+        }
+
+        const newItem = new Node(key, value, now);
+        this.setHead(newItem);
+        this.map.set(key, newItem);
+        this.enforceCapacity();
+        return true;
+    }
+
+    /**
      * Adds or updates an item in the store.
      * If the key already exists, its value is updated and the item becomes the most recently used.
      * If the store has reached its maximum capacity, the least recently used item is evicted.

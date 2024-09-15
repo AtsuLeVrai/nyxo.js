@@ -176,7 +176,7 @@ export class ThreadMetadata extends Base<ThreadMetadataStructure> {
     }
 }
 
-export class Overwrite extends Base<OverwriteStructure> {
+export class ChannelOverwrite extends Base<OverwriteStructure> {
     public allow!: string;
 
     public deny!: string;
@@ -245,7 +245,7 @@ export class BaseChannel extends Base<ChannelStructure> {
 
     public parentId?: Snowflake | null;
 
-    public permissionOverwrites?: Overwrite[];
+    public permissionOverwrites?: ChannelOverwrite[];
 
     public permissions?: string;
 
@@ -322,7 +322,9 @@ export class BaseChannel extends Base<ChannelStructure> {
             if (data.permission_overwrites === null) {
                 this.permissionOverwrites = undefined;
             } else if (data.permission_overwrites !== undefined) {
-                this.permissionOverwrites = data.permission_overwrites.map((overwrite) => Overwrite.from(overwrite));
+                this.permissionOverwrites = data.permission_overwrites.map((overwrite) =>
+                    ChannelOverwrite.from(overwrite)
+                );
             }
         }
 

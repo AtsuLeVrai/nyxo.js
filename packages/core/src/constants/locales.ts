@@ -37,3 +37,5 @@ export enum Locales {
     Ukrainian = "uk",
     Vietnamese = "vi",
 }
+
+export type LocalesKeys = `${Locales}`;

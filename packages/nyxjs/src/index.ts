@@ -3,19 +3,14 @@
  */
 export * from "./builders/ActionRowBuilder";
 export * from "./builders/ButtonBuilder";
-export * from "./builders/ChannelSelectBuilder";
 export * from "./builders/EmbedBuilder";
-export * from "./builders/MentionableSelectBuilder";
 export * from "./builders/ModalBuilder";
-export * from "./builders/RoleSelectBuilder";
-export * from "./builders/StringSelectBuilder";
+export * from "./builders/SelectBuilder";
 export * from "./builders/TextInputBuilder";
-export * from "./builders/UserSelectBuilder";
 
 /**
  * ./client
  */
-export * from "./client/BaseClient";
 export * from "./client/Client";
 
 /**
@@ -28,9 +23,17 @@ export * from "./libs/Limits";
 /**
  * ./managers
  */
+export * from "./managers/ApplicationManager";
 export * from "./managers/BitFieldManager";
+export * from "./managers/ChannelManager";
+export * from "./managers/GuildManager";
+export * from "./managers/InviteManager";
 export * from "./managers/RestManager";
+export * from "./managers/SkuManager";
 export * from "./managers/SnowflakeManager";
+export * from "./managers/StageManager";
+export * from "./managers/UserManager";
+export * from "./managers/WebhookManager";
 export * from "./managers/WebSocketManager";
 
 /**

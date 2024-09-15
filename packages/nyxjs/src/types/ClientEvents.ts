@@ -1,57 +1,32 @@
 import type {
-    AutoModerationActionExecutionEventFields,
-    ChannelPinsUpdateEventFields,
-    GuildAuditLogEntryCreateEventExtraFields,
-    GuildBanAddEventFields,
-    GuildBanRemoveEventFields,
-    GuildCreateExtraFields,
     GuildMemberAddEventFields,
-    GuildMemberRemoveEventFields,
     GuildMembersChunkEventFields,
-    GuildMemberUpdateEventFields,
-    GuildRoleCreateEventFields,
-    GuildRoleDeleteEventFields,
-    GuildRoleUpdateEventFields,
-    GuildScheduledEventUserAddEventFields,
-    GuildScheduledEventUserRemoveEventFields,
-    IntegrationCreateEventAdditionalFields,
-    IntegrationDeleteEventFields,
-    IntegrationUpdateEventAdditionalFields,
-    InviteCreateEventFields,
-    InviteDeleteEventFields,
-    MessageCreateExtraFields,
     MessageDeleteBulkEventFields,
-    MessageDeleteEventFields,
-    MessagePollVoteAddFields,
-    MessageReactionAddEventFields,
-    MessageReactionRemoveAllEventFields,
-    MessageReactionRemoveEmojiEventFields,
-    MessageReactionRemoveEventFields,
     PresenceUpdateEventFields,
     ReadyEventFields,
     ResumeStructure,
     ThreadListSyncEventFields,
     ThreadMembersUpdateEventFields,
-    ThreadMemberUpdateEventExtraFields,
     TypingStartEventFields,
     VoiceChannelEffectSendEventFields,
     VoiceServerUpdateEventFields,
-    WebhooksUpdateEventFields,
 } from "@nyxjs/ws";
 import type { AllChannelTypes } from "../libs/Channels";
 import type { GuildApplicationCommandPermissions } from "../structures/ApplicationCommands";
 import type { AuditLogEntry } from "../structures/Audits";
-import type { Overwrite, ThreadChannel, ThreadMember } from "../structures/Channels";
+import type { ChannelOverwrite, TextChannel, ThreadChannel, ThreadMember } from "../structures/Channels";
 import type { Emoji } from "../structures/Emojis";
 import type { Entitlement } from "../structures/Entitlements";
 import type { GuildOnboarding, OnboardingPrompt } from "../structures/GuildOnboarding";
-import type { GuildScheduledEvent } from "../structures/GuildScheduledEvent";
-import type { Guild, GuildMember, UnavailableGuild } from "../structures/Guilds";
+import type { GuildScheduledEvent, GuildScheduledEventUser } from "../structures/GuildScheduledEvent";
+import type { Ban, Guild, GuildMember, UnavailableGuild } from "../structures/Guilds";
 import type { Integration } from "../structures/Integrations";
 import type { Interaction } from "../structures/Interactions";
 import type { Invite } from "../structures/Invites";
-import type { Message } from "../structures/Messages";
-import type { AutoModerationRule } from "../structures/Moderations";
+import type { Message, Reaction } from "../structures/Messages";
+import type { AutoModerationAction, AutoModerationRule } from "../structures/Moderations";
+import type { Poll } from "../structures/Polls";
+import type { Role } from "../structures/Roles";
 import type { StageInstance } from "../structures/Stages";
 import type { Sticker } from "../structures/Stickers";
 import type { Subscription } from "../structures/Subscriptions";
@@ -64,7 +39,7 @@ export type ClientEvents = {
         oldCommand: GuildApplicationCommandPermissions,
         newCommand: GuildApplicationCommandPermissions,
     ];
-    autoModerationActionExecution: [action: AutoModerationActionExecutionEventFields];
+    autoModerationActionExecution: [action: AutoModerationAction];
     autoModerationBlockMessage: [];
     autoModerationFlagToChannel: [];
     autoModerationRuleCreate: [rule: AutoModerationRule];
@@ -73,10 +48,10 @@ export type ClientEvents = {
     autoModerationUserCommunicationDisabled: [];
     channelCreate: [channel: AllChannelTypes];
     channelDelete: [channel: AllChannelTypes];
-    channelOverwriteCreate: [overwrite: Overwrite];
-    channelOverwriteDelete: [overwrite: Overwrite];
-    channelOverwriteUpdate: [oldOverwrite: Overwrite, newOverwrite: Overwrite];
-    channelPinsUpdate: [pins: ChannelPinsUpdateEventFields];
+    channelOverwriteCreate: [overwrite: ChannelOverwrite];
+    channelOverwriteDelete: [overwrite: ChannelOverwrite];
+    channelOverwriteUpdate: [oldOverwrite: ChannelOverwrite, newOverwrite: ChannelOverwrite];
+    channelPinsUpdate: [pins: TextChannel];
     channelUpdate: [oldChannel: AllChannelTypes, newChannel: AllChannelTypes];
     creatorMonetizationRequestCreated: [];
     creatorMonetizationTermsAccepted: [];
@@ -85,65 +60,61 @@ export type ClientEvents = {
     entitlementDelete: [entitlement: Entitlement];
     entitlementUpdate: [oldEntitlement: Entitlement, newEntitlement: Entitlement];
     error: [error: Error];
-    guildAuditLogEntryCreate: [audit: AuditLogEntry & GuildAuditLogEntryCreateEventExtraFields];
-    guildBanAdd: [GuildBanAddEventFields];
-    guildBanRemove: [GuildBanRemoveEventFields];
-    guildBotAdd: [];
-    guildCreate: [guild: UnavailableGuild | (Guild & GuildCreateExtraFields)];
-    guildDelete: [guild: UnavailableGuild];
+    guildAuditLogEntryCreate: [audit: AuditLogEntry];
+    guildBanAdd: [Ban];
+    guildBanRemove: [Ban];
+    guildBotAdd: [bot: GuildMember];
+    guildCreate: [guild: Guild | UnavailableGuild];
+    guildDelete: [guild: Guild];
     guildEmojiCreate: [emoji: Emoji];
     guildEmojiDelete: [emoji: Emoji];
     guildEmojiUpdate: [oldEmoji: Emoji, newEmoji: Emoji];
     guildHomeSettingsCreate: [];
     guildHomeSettingsUpdate: [];
-    guildIntegrationsUpdate: [];
     guildMemberAdd: [member: GuildMember & GuildMemberAddEventFields];
-    guildMemberDisconnect: [];
-    guildMemberKick: [];
-    guildMemberMove: [];
-    guildMemberPrune: [];
-    guildMemberRemove: [member: GuildMemberRemoveEventFields];
-    guildMemberUpdate: [oldMember: GuildMemberUpdateEventFields, newMember: GuildMemberUpdateEventFields];
+    guildMemberDisconnect: [member: GuildMember];
+    guildMemberKick: [member: GuildMember];
+    guildMemberMove: [member: GuildMember];
+    guildMemberPrune: [member: GuildMember];
+    guildMemberRemove: [member: GuildMember];
+    guildMemberUpdate: [oldMember: GuildMember, newMember: GuildMember];
     guildMembersChunk: [chunk: GuildMembersChunkEventFields];
     guildOnboardingCreate: [onboarding: GuildOnboarding];
     guildOnboardingPromptCreate: [prompt: OnboardingPrompt];
     guildOnboardingPromptDelete: [prompt: OnboardingPrompt];
     guildOnboardingPromptUpdate: [oldPrompt: OnboardingPrompt, newPrompt: OnboardingPrompt];
     guildOnboardingUpdate: [oldOnboarding: GuildOnboarding, newOnboarding: GuildOnboarding];
-    guildRoleCreate: [role: GuildRoleCreateEventFields];
-    guildRoleDelete: [role: GuildRoleDeleteEventFields];
-    guildRoleUpdate: [oldRole: GuildRoleUpdateEventFields, newRole: GuildRoleUpdateEventFields];
+    guildRoleCreate: [role: Role];
+    guildRoleDelete: [role: Role];
+    guildRoleUpdate: [oldRole: Role, newRole: Role];
     guildScheduledEventCreate: [scheduledEvent: GuildScheduledEvent];
     guildScheduledEventDelete: [scheduledEvent: GuildScheduledEvent];
     guildScheduledEventUpdate: [oldScheduledEvent: GuildScheduledEvent, newScheduledEvent: GuildScheduledEvent];
-    guildScheduledEventUserAdd: [user: GuildScheduledEventUserAddEventFields];
-    guildScheduledEventUserRemove: [user: GuildScheduledEventUserRemoveEventFields];
+    guildScheduledEventUserAdd: [user: GuildScheduledEventUser];
+    guildScheduledEventUserRemove: [user: GuildScheduledEventUser];
     guildStickerCreate: [sticker: Sticker];
     guildStickerDelete: [sticker: Sticker];
     guildStickerUpdate: [oldSticker: Sticker, newSticker: Sticker];
     guildUpdate: [oldGuild: Guild, newGuild: Guild];
-    integrationCreate: [integration: Integration & IntegrationCreateEventAdditionalFields];
-    integrationDelete: [integration: Integration & IntegrationDeleteEventFields];
-    integrationUpdate: [
-        oldIntegration: Integration & IntegrationUpdateEventAdditionalFields,
-        newIntegration: Integration & IntegrationUpdateEventAdditionalFields,
-    ];
+    integrationCreate: [integration: Integration];
+    integrationDelete: [integration: Integration];
+    integrationUpdate: [oldIntegration: Integration, newIntegration: Integration];
     interactionCreate: [interaction: Interaction];
     invalidateSession: [invalidate: boolean];
-    inviteCreate: [invite: InviteCreateEventFields];
-    inviteDelete: [invite: InviteDeleteEventFields];
+    inviteCreate: [invite: Invite];
+    inviteDelete: [invite: Invite];
     inviteUpdate: [oldInvite: Invite, newInvite: Invite];
-    messageCreate: [message: Message & MessageCreateExtraFields];
-    messageDelete: [message: MessageDeleteEventFields];
+    messageCreate: [message: Message];
+    messageDelete: [message: Message];
     messageDeleteBulk: [message: MessageDeleteBulkEventFields];
-    messagePin: [];
-    messagePollVoteAdd: [poll: MessagePollVoteAddFields];
-    messagePollVoteRemove: [poll: MessagePollVoteAddFields];
-    messageReactionAdd: [reaction: MessageReactionAddEventFields];
-    messageReactionRemove: [reaction: MessageReactionRemoveEventFields];
-    messageReactionRemoveAll: [reaction: MessageReactionRemoveAllEventFields];
-    messageReactionRemoveEmoji: [reaction: MessageReactionRemoveEmojiEventFields];
-    messageUnpin: [];
+    messagePin: [message: Message];
+    messagePollVoteAdd: [poll: Poll];
+    messagePollVoteRemove: [poll: Poll];
+    messageReactionAdd: [reaction: Reaction];
+    messageReactionRemove: [reaction: Reaction];
+    messageReactionRemoveAll: [reaction: Reaction];
+    messageReactionRemoveEmoji: [reaction: Reaction];
+    messageUnpin: [message: Message];
     messageUpdate: [oldMessage: Message, newMessage: Message];
     presenceUpdate: [presence: PresenceUpdateEventFields];
     ready: [ready: ReadyEventFields];
@@ -158,7 +129,7 @@ export type ClientEvents = {
     threadCreate: [thread: ThreadChannel];
     threadDelete: [thread: ThreadChannel];
     threadListSync: [list: ThreadListSyncEventFields];
-    threadMemberUpdate: [member: ThreadMember & ThreadMemberUpdateEventExtraFields];
+    threadMemberUpdate: [oldMember: ThreadMember, newMember: ThreadMember];
     threadMembersUpdate: [members: ThreadMembersUpdateEventFields];
     threadUpdate: [oldThread: ThreadChannel, newThread: ThreadChannel];
     typingStart: [typing: TypingStartEventFields];
@@ -169,5 +140,5 @@ export type ClientEvents = {
     warn: [message: string];
     webhookCreate: [webhook: Webhook];
     webhookDelete: [webhook: Webhook];
-    webhookUpdate: [oldWebhook: Webhook & WebhooksUpdateEventFields, newWebhook: Webhook & WebhooksUpdateEventFields];
+    webhookUpdate: [oldWebhook: Webhook, newWebhook: Webhook];
 };

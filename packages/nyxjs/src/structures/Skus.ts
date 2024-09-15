@@ -1,6 +1,6 @@
 import type { SkuFlags, SkuStructure, SkuTypes, Snowflake } from "@nyxjs/core";
 import { SkuRoutes } from "@nyxjs/rest";
-import type { BaseClient } from "../client/BaseClient";
+import type { Client } from "../client/Client";
 import { Base } from "./Base";
 
 export class Sku extends Base<SkuStructure> {
@@ -17,7 +17,7 @@ export class Sku extends Base<SkuStructure> {
     public flags!: SkuFlags;
 
     public constructor(
-        private readonly client: BaseClient,
+        private readonly client: Client,
         data: Readonly<Partial<SkuStructure>> = {}
     ) {
         super(data);

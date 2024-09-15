@@ -1,12 +1,14 @@
 import { ComponentTypes } from "@nyxjs/core";
 import type { ButtonBuilder } from "./ButtonBuilder";
-import type { ChannelSelectBuilder } from "./ChannelSelectBuilder";
 import type { EmbedBuilder } from "./EmbedBuilder";
-import type { MentionableSelectBuilder } from "./MentionableSelectBuilder";
-import type { RoleSelectBuilder } from "./RoleSelectBuilder";
-import type { StringSelectBuilder } from "./StringSelectBuilder";
+import type {
+    ChannelSelectBuilder,
+    MentionableSelectBuilder,
+    RoleSelectBuilder,
+    StringSelectBuilder,
+    UserSelectBuilder,
+} from "./SelectBuilder";
 import type { TextInputBuilder } from "./TextInputBuilder";
-import type { UserSelectBuilder } from "./UserSelectBuilder";
 
 export type ComponentResolvable =
     | ButtonBuilder
