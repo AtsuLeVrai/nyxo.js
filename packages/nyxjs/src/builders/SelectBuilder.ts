@@ -10,42 +10,28 @@ import { SelectMenuLimits, SelectOptionLimits } from "../libs/Limits";
 abstract class BaseSelectBuilder<T extends SelectMenuStructure> {
     protected constructor(public data: T) {}
 
-    public setCustomId(customId: string): this {
-        if (SelectMenuLimits.CustomId < customId.length) {
-            throw new Error(`CustomId exceeds the maximum length of ${SelectMenuLimits.CustomId}`);
-        }
+    public abstract toJSON(): T;
 
+    public setCustomId(customId: string): this {
+        this.validateLength(customId, SelectMenuLimits.CustomId, "CustomId");
         this.data.custom_id = customId;
         return this;
     }
 
     public setPlaceholder(placeholder: string): this {
-        if (SelectMenuLimits.Placeholder < placeholder.length) {
-            throw new Error(`Placeholder exceeds the maximum length of ${SelectMenuLimits.Placeholder}`);
-        }
-
+        this.validateLength(placeholder, SelectMenuLimits.Placeholder, "Placeholder");
         this.data.placeholder = placeholder;
         return this;
     }
 
     public setMinValues(minValues: number): this {
-        if (SelectMenuLimits.MinValues.Min > minValues || SelectMenuLimits.MinValues.Max < minValues) {
-            throw new Error(
-                `Min values must be between ${SelectMenuLimits.MinValues.Min} and ${SelectMenuLimits.MinValues.Max}`
-            );
-        }
-
+        this.validateRange(minValues, SelectMenuLimits.MinValues.Min, SelectMenuLimits.MinValues.Max, "Min values");
         this.data.min_values = minValues;
         return this;
     }
 
     public setMaxValues(maxValues: number): this {
-        if (SelectMenuLimits.MaxValues.Min > maxValues || SelectMenuLimits.MaxValues.Max < maxValues) {
-            throw new Error(
-                `Max values must be between ${SelectMenuLimits.MaxValues.Min} and ${SelectMenuLimits.MaxValues.Max}`
-            );
-        }
-
+        this.validateRange(maxValues, SelectMenuLimits.MaxValues.Min, SelectMenuLimits.MaxValues.Max, "Max values");
         this.data.max_values = maxValues;
         return this;
     }
@@ -59,14 +45,43 @@ abstract class BaseSelectBuilder<T extends SelectMenuStructure> {
         this.data.default_values = defaultValues;
         return this;
     }
-}
 
-export class ChannelSelectBuilder extends BaseSelectBuilder<SelectMenuStructure> {
-    public constructor(data?: SelectMenuStructure) {
-        super(data ?? { custom_id: "", type: ComponentTypes.ChannelSelect });
+    protected validateLength(value: string, limit: number, fieldName: string): void {
+        if (value.length > limit) {
+            throw new Error(`${fieldName} exceeds the maximum length of ${limit}`);
+        }
     }
 
-    public static from(data?: SelectMenuStructure): ChannelSelectBuilder {
+    private validateRange(value: number, min: number, max: number, fieldName: string): void {
+        if (value < min || value > max) {
+            throw new Error(`${fieldName} must be between ${min} and ${max}`);
+        }
+    }
+}
+
+class SelectBuilderFactory<T extends SelectMenuStructure> extends BaseSelectBuilder<T> {
+    public constructor(type: ComponentTypes, data?: Partial<T>) {
+        super({ custom_id: "", type, ...data } as T);
+    }
+
+    public static createBuilder<U extends SelectMenuStructure>(
+        type: ComponentTypes,
+        data?: Partial<U>
+    ): SelectBuilderFactory<U> {
+        return new SelectBuilderFactory<U>(type, data);
+    }
+
+    public toJSON(): T {
+        return this.data;
+    }
+}
+
+export class ChannelSelectBuilder extends SelectBuilderFactory<SelectMenuStructure> {
+    public constructor(data?: Partial<SelectMenuStructure>) {
+        super(ComponentTypes.ChannelSelect, data);
+    }
+
+    public static from(data?: Partial<SelectMenuStructure>): ChannelSelectBuilder {
         return new ChannelSelectBuilder(data);
     }
 
@@ -76,42 +91,42 @@ export class ChannelSelectBuilder extends BaseSelectBuilder<SelectMenuStructure>
     }
 }
 
-export class MentionableSelectBuilder extends BaseSelectBuilder<SelectMenuStructure> {
-    public constructor(data?: SelectMenuStructure) {
-        super(data ?? { custom_id: "", type: ComponentTypes.MentionableSelect });
+export class MentionableSelectBuilder extends SelectBuilderFactory<SelectMenuStructure> {
+    public constructor(data?: Partial<SelectMenuStructure>) {
+        super(ComponentTypes.MentionableSelect, data);
     }
 
-    public static from(data?: SelectMenuStructure): MentionableSelectBuilder {
+    public static from(data?: Partial<SelectMenuStructure>): MentionableSelectBuilder {
         return new MentionableSelectBuilder(data);
     }
 }
 
-export class RoleSelectBuilder extends BaseSelectBuilder<SelectMenuStructure> {
-    public constructor(data?: SelectMenuStructure) {
-        super(data ?? { custom_id: "", type: ComponentTypes.RoleSelect });
+export class RoleSelectBuilder extends SelectBuilderFactory<SelectMenuStructure> {
+    public constructor(data?: Partial<SelectMenuStructure>) {
+        super(ComponentTypes.RoleSelect, data);
     }
 
-    public static from(data?: SelectMenuStructure): RoleSelectBuilder {
+    public static from(data?: Partial<SelectMenuStructure>): RoleSelectBuilder {
         return new RoleSelectBuilder(data);
     }
 }
 
-export class UserSelectBuilder extends BaseSelectBuilder<SelectMenuStructure> {
-    public constructor(data?: SelectMenuStructure) {
-        super(data ?? { custom_id: "", type: ComponentTypes.UserSelect });
+export class UserSelectBuilder extends SelectBuilderFactory<SelectMenuStructure> {
+    public constructor(data?: Partial<SelectMenuStructure>) {
+        super(ComponentTypes.UserSelect, data);
     }
 
-    public static from(data?: SelectMenuStructure): UserSelectBuilder {
+    public static from(data?: Partial<SelectMenuStructure>): UserSelectBuilder {
         return new UserSelectBuilder(data);
     }
 }
 
-export class StringSelectBuilder extends BaseSelectBuilder<SelectMenuStructure> {
-    public constructor(data?: SelectMenuStructure) {
-        super(data ?? { custom_id: "", type: ComponentTypes.StringSelect });
+export class StringSelectBuilder extends SelectBuilderFactory<SelectMenuStructure> {
+    public constructor(data?: Partial<SelectMenuStructure>) {
+        super(ComponentTypes.StringSelect, data);
     }
 
-    public static from(data?: SelectMenuStructure): StringSelectBuilder {
+    public static from(data?: Partial<SelectMenuStructure>): StringSelectBuilder {
         return new StringSelectBuilder(data);
     }
 
@@ -128,21 +143,15 @@ export class StringSelectBuilder extends BaseSelectBuilder<SelectMenuStructure> 
     }
 
     private validateOptions(options: SelectOptionStructure[]): void {
-        if (SelectMenuLimits.Options < options.length) {
+        if (options.length > SelectMenuLimits.Options) {
             throw new Error(`Options exceeds the maximum length of ${SelectMenuLimits.Options}`);
         }
 
         for (const option of options) {
-            if (SelectOptionLimits.Label < option.label.length) {
-                throw new Error(`Label exceeds the maximum length of ${SelectOptionLimits.Label}`);
-            }
-
-            if (SelectOptionLimits.Value < option.value.length) {
-                throw new Error(`Value exceeds the maximum length of ${SelectOptionLimits.Value}`);
-            }
-
-            if (option.description && SelectOptionLimits.Description < option.description.length) {
-                throw new Error(`Description exceeds the maximum length of ${SelectOptionLimits.Description}`);
+            this.validateLength(option.label, SelectOptionLimits.Label, "Label");
+            this.validateLength(option.value, SelectOptionLimits.Value, "Value");
+            if (option.description) {
+                this.validateLength(option.description, SelectOptionLimits.Description, "Description");
             }
         }
     }

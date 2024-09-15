@@ -48,7 +48,7 @@ export class ActionRowBuilder<T extends ComponentResolvable = ComponentResolvabl
     public toJSON() {
         return {
             type: ComponentTypes.ActionRow,
-            components: this.components.map((component) => component.data),
+            components: this.components.map((component) => component.toJSON()),
         };
     }
 }

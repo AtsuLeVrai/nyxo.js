@@ -10,9 +10,13 @@ const DEFAULT_VALUES: TextInputStructure = {
 };
 
 export class TextInputBuilder {
-    public constructor(public data: TextInputStructure = DEFAULT_VALUES) {}
+    private readonly data: TextInputStructure;
 
-    public static from(data?: TextInputStructure): TextInputBuilder {
+    public constructor(data: Partial<TextInputStructure> = {}) {
+        this.data = { ...DEFAULT_VALUES, ...data };
+    }
+
+    public static from(data?: Partial<TextInputStructure>): TextInputBuilder {
         return new TextInputBuilder(data);
     }
 
@@ -27,55 +31,48 @@ export class TextInputBuilder {
     }
 
     public setLabel(label: string): this {
-        if (TextInputLimits.Label < label.length) {
-            throw new Error(`Label exceeds the maximum length of ${TextInputLimits.Label}`);
-        }
-
+        this.validateLength(label, TextInputLimits.Label, "Label");
         this.data.label = label;
         return this;
     }
 
     public setMinLength(minLength: number): this {
-        if (TextInputLimits.MinLength.Min > minLength) {
-            throw new Error(`Min length is less than the minimum length of ${TextInputLimits.MinLength.Min}`);
-        }
-
-        if (TextInputLimits.MinLength.Max < minLength) {
-            throw new Error(`Min length exceeds the maximum length of ${TextInputLimits.MinLength.Max}`);
-        }
-
+        this.validateRange(minLength, TextInputLimits.MinLength.Min, TextInputLimits.MinLength.Max, "Min length");
         this.data.min_length = minLength;
         return this;
     }
 
     public setMaxLength(maxLength: number): this {
-        if (TextInputLimits.MaxLength.Min > maxLength) {
-            throw new Error(`Max length is less than the minimum length of ${TextInputLimits.MaxLength.Min}`);
-        }
-
-        if (TextInputLimits.MaxLength.Max < maxLength) {
-            throw new Error(`Max length exceeds the maximum length of ${TextInputLimits.MaxLength.Max}`);
-        }
-
+        this.validateRange(maxLength, TextInputLimits.MaxLength.Min, TextInputLimits.MaxLength.Max, "Max length");
         this.data.max_length = maxLength;
         return this;
     }
 
     public setValue(value: string): this {
-        if (TextInputLimits.Value < value.length) {
-            throw new Error(`Value exceeds the maximum length of ${TextInputLimits.Value}`);
-        }
-
+        this.validateLength(value, TextInputLimits.Value, "Value");
         this.data.value = value;
         return this;
     }
 
     public setPlaceholder(placeholder: string): this {
-        if (TextInputLimits.Placeholder < placeholder.length) {
-            throw new Error(`Placeholder exceeds the maximum length of ${TextInputLimits.Placeholder}`);
-        }
-
+        this.validateLength(placeholder, TextInputLimits.Placeholder, "Placeholder");
         this.data.placeholder = placeholder;
         return this;
+    }
+
+    public toJSON(): TextInputStructure {
+        return this.data;
+    }
+
+    private validateLength(value: string, limit: number, fieldName: string): void {
+        if (value.length > limit) {
+            throw new Error(`${fieldName} exceeds the maximum length of ${limit}`);
+        }
+    }
+
+    private validateRange(value: number, min: number, max: number, fieldName: string): void {
+        if (value < min || value > max) {
+            throw new Error(`${fieldName} must be between ${min} and ${max}`);
+        }
     }
 }

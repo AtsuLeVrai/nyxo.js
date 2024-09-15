@@ -10,25 +10,28 @@ const DEFAULT_VALUES: ModalStructure = {
 };
 
 export class ModalBuilder extends ActionRowBuilder<TextInputBuilder> {
-    public constructor(public data: ModalStructure = DEFAULT_VALUES) {
+    private readonly data: ModalStructure;
+
+    public constructor(data: Partial<ModalStructure> = {}) {
         super();
+        this.data = { ...DEFAULT_VALUES, ...data };
     }
 
     public setCustomId(customId: string): this {
-        if (ModalLimits.CustomId < customId.length) {
-            throw new Error(`CustomId exceeds the maximum length of ${ModalLimits.CustomId}`);
-        }
-
+        this.validateLength(customId, ModalLimits.CustomId, "CustomId");
         this.data.custom_id = customId;
         return this;
     }
 
     public setTitle(title: string): this {
-        if (ModalLimits.Title < title.length) {
-            throw new Error(`Title exceeds the maximum length of ${ModalLimits.Title}`);
-        }
-
+        this.validateLength(title, ModalLimits.Title, "Title");
         this.data.title = title;
         return this;
+    }
+
+    private validateLength(value: string, limit: number, fieldName: string): void {
+        if (value.length > limit) {
+            throw new Error(`${fieldName} exceeds the maximum length of ${limit}`);
+        }
     }
 }

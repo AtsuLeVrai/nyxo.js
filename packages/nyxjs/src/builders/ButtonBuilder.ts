@@ -8,9 +8,13 @@ const DEFAULT_VALUES: ButtonStructure = {
 };
 
 export class ButtonBuilder {
-    public constructor(public data: ButtonStructure = DEFAULT_VALUES) {}
+    private readonly data: ButtonStructure;
 
-    public static from(data?: ButtonStructure): ButtonBuilder {
+    public constructor(data: Partial<ButtonStructure> = {}) {
+        this.data = { ...DEFAULT_VALUES, ...data };
+    }
+
+    public static from(data?: Partial<ButtonStructure>): ButtonBuilder {
         return new ButtonBuilder(data);
     }
 
@@ -20,10 +24,7 @@ export class ButtonBuilder {
     }
 
     public setLabel(label: string): this {
-        if (ButtonLimits.Label < label.length) {
-            throw new Error(`Label exceeds the maximum length of ${ButtonLimits.Label}`);
-        }
-
+        this.validateLength(label, ButtonLimits.Label, `Label exceeds the maximum length of ${ButtonLimits.Label}`);
         this.data.label = label;
         return this;
     }
@@ -34,26 +35,37 @@ export class ButtonBuilder {
     }
 
     public setCustomId(customId: string): this {
-        if (ButtonLimits.CustomId < customId.length) {
-            throw new Error(`CustomId exceeds the maximum length of ${ButtonLimits.CustomId}`);
-        }
-
+        this.validateLength(
+            customId,
+            ButtonLimits.CustomId,
+            `CustomId exceeds the maximum length of ${ButtonLimits.CustomId}`
+        );
         this.data.custom_id = customId;
         return this;
     }
 
-    public setSkuId(skuId: string) {
+    public setSkuId(skuId: string): this {
         this.data.sku_id = skuId;
-        return this as any;
+        return this;
     }
 
-    public setUrl(url: string) {
+    public setUrl(url: string): this {
         this.data.url = url;
-        return this as any;
+        return this;
     }
 
     public setDisabled(disabled: boolean): this {
         this.data.disabled = disabled;
         return this;
+    }
+
+    public toJSON(): ButtonStructure {
+        return this.data;
+    }
+
+    private validateLength(value: string, limit: number, errorMessage: string): void {
+        if (value.length > limit) {
+            throw new Error(errorMessage);
+        }
     }
 }

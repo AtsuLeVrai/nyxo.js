@@ -14,17 +14,18 @@ import { Colors } from "../libs/Colors";
 import { EmbedLimits } from "../libs/Limits";
 
 export class EmbedBuilder {
-    public constructor(public data: EmbedStructure = {}) {}
+    private readonly data: EmbedStructure = {};
+
+    public constructor(data: EmbedStructure = {}) {
+        this.data = data;
+    }
 
     public static from(data?: EmbedStructure): EmbedBuilder {
         return new EmbedBuilder(data);
     }
 
     public setTitle(title: string): this {
-        if (EmbedLimits.Title < title.length) {
-            throw new Error(`Title exceeds the maximum length of ${EmbedLimits.Title}`);
-        }
-
+        this.validateLength(title, EmbedLimits.Title, `Title exceeds the maximum length of ${EmbedLimits.Title}`);
         this.data.title = title;
         return this;
     }
@@ -35,10 +36,11 @@ export class EmbedBuilder {
     }
 
     public setDescription(description: string): this {
-        if (EmbedLimits.Description < description.length) {
-            throw new Error(`Description exceeds the maximum length of ${EmbedLimits.Description}`);
-        }
-
+        this.validateLength(
+            description,
+            EmbedLimits.Description,
+            `Description exceeds the maximum length of ${EmbedLimits.Description}`
+        );
         this.data.description = description;
         return this;
     }
@@ -48,21 +50,22 @@ export class EmbedBuilder {
         return this;
     }
 
-    public setTimestamp(date?: Date): this {
-        this.data.timestamp = date ? date.toISOString() : new Date().toISOString();
+    public setTimestamp(date: Date = new Date()): this {
+        this.data.timestamp = date.toISOString();
         return this;
     }
 
-    public setColor(color: ColorResolvable) {
+    public setColor(color: ColorResolvable): this {
         this.data.color = this.resolveColor(color);
         return this;
     }
 
     public setFooter(footer: EmbedFooterStructure): this {
-        if (EmbedLimits.FooterText < footer.text.length) {
-            throw new Error(`Footer text exceeds the maximum length of ${EmbedLimits.FooterText}`);
-        }
-
+        this.validateLength(
+            footer.text,
+            EmbedLimits.FooterText,
+            `Footer text exceeds the maximum length of ${EmbedLimits.FooterText}`
+        );
         this.data.footer = footer;
         return this;
     }
@@ -88,23 +91,17 @@ export class EmbedBuilder {
     }
 
     public setAuthor(author: EmbedAuthorStructure): this {
-        if (EmbedLimits.AuthorName < author.name.length) {
-            throw new Error(`Provider name exceeds the maximum length of ${EmbedLimits.AuthorName}`);
-        }
-
+        this.validateLength(
+            author.name,
+            EmbedLimits.AuthorName,
+            `Author name exceeds the maximum length of ${EmbedLimits.AuthorName}`
+        );
         this.data.author = author;
         return this;
     }
 
     public addField(field: EmbedFieldStructure): this {
-        if (EmbedLimits.FieldName < field.name.length) {
-            throw new Error(`Field name exceeds the maximum length of ${EmbedLimits.FieldName}`);
-        }
-
-        if (EmbedLimits.FieldValue < field.value.length) {
-            throw new Error(`Field value exceeds the maximum length of ${EmbedLimits.FieldValue}`);
-        }
-
+        this.validateField(field);
         if (!this.data.fields) {
             this.data.fields = [];
         }
@@ -114,20 +111,11 @@ export class EmbedBuilder {
     }
 
     public addFields(...fields: EmbedFieldStructure[]): this {
-        if (EmbedLimits.Fields < fields.length) {
+        if (fields.length > EmbedLimits.Fields) {
             throw new Error(`Fields exceed the maximum number of ${EmbedLimits.Fields}`);
         }
 
-        for (const field of fields) {
-            if (EmbedLimits.FieldName < field.name.length) {
-                throw new Error(`Field name exceeds the maximum length of ${EmbedLimits.FieldName}`);
-            }
-
-            if (EmbedLimits.FieldValue < field.value.length) {
-                throw new Error(`Field value exceeds the maximum length of ${EmbedLimits.FieldValue}`);
-            }
-        }
-
+        for (const field of fields) this.validateField(field);
         if (!this.data.fields) {
             this.data.fields = [];
         }
@@ -137,22 +125,36 @@ export class EmbedBuilder {
     }
 
     public setFields(fields: EmbedFieldStructure[]): this {
-        if (EmbedLimits.Fields < fields.length) {
+        if (fields.length > EmbedLimits.Fields) {
             throw new Error(`Fields exceed the maximum number of ${EmbedLimits.Fields}`);
         }
 
-        for (const field of fields) {
-            if (EmbedLimits.FieldName < field.name.length) {
-                throw new Error(`Field name exceeds the maximum length of ${EmbedLimits.FieldName}`);
-            }
-
-            if (EmbedLimits.FieldValue < field.value.length) {
-                throw new Error(`Field value exceeds the maximum length of ${EmbedLimits.FieldValue}`);
-            }
-        }
-
+        for (const field of fields) this.validateField(field);
         this.data.fields = fields;
         return this;
+    }
+
+    public toJSON(): EmbedStructure {
+        return this.data;
+    }
+
+    private validateLength(value: string, limit: number, errorMessage: string): void {
+        if (value.length > limit) {
+            throw new Error(errorMessage);
+        }
+    }
+
+    private validateField(field: EmbedFieldStructure): void {
+        this.validateLength(
+            field.name,
+            EmbedLimits.FieldName,
+            `Field name exceeds the maximum length of ${EmbedLimits.FieldName}`
+        );
+        this.validateLength(
+            field.value,
+            EmbedLimits.FieldValue,
+            `Field value exceeds the maximum length of ${EmbedLimits.FieldValue}`
+        );
     }
 
     private resolveColor(color: ColorResolvable): number {
@@ -165,11 +167,7 @@ export class EmbedBuilder {
                 return Colors[color as keyof typeof Colors];
             }
 
-            if (color.startsWith("#")) {
-                return Number.parseInt(color.slice(1), 16);
-            }
-
-            return Number.parseInt(color, 16);
+            return Number.parseInt(color.startsWith("#") ? color.slice(1) : color, 16);
         }
 
         if (Array.isArray(color)) {
