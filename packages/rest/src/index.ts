@@ -8,6 +8,11 @@ export * from "./globals/RestRateLimiter";
 export * from "./globals/RestRequestHandler";
 
 /**
+ * ./libs
+ */
+export * from "./libs/constants";
+
+/**
  * ./routes
  */
 export * from "./routes/applications";
@@ -34,9 +39,4 @@ export * from "./routes/webhooks";
 /**
  * ./types
  */
-export * from "./types/globals";
-
-/**
- * ./utils
- */
-export * from "./utils/constants";
+export * from "./types/rest";

@@ -1,5 +1,5 @@
 import type { DataUriSchema, EmojiStructure, RestHttpResponseCodes, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types/globals";
+import type { RestRequestOptions } from "../types/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params}

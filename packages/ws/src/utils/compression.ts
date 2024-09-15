@@ -1,44 +1,24 @@
-import { Buffer } from "node:buffer";
-import { decompress } from "fzstd";
-import type { Inflate } from "minizlib";
+import type { Buffer } from "node:buffer";
+import type { Inflate } from "zlib-sync";
+import { Z_SYNC_FLUSH } from "zlib-sync";
 import type { EncodingTypes } from "../types/gateway";
 import { decodeMessage } from "./encoding";
 
 export async function decompressZlib(data: Buffer, encoding: EncodingTypes, zlibInflate: Inflate): Promise<string> {
     return new Promise((resolve, reject) => {
-        zlibInflate.on("data", (chunk) => {
+        zlibInflate.push(data, Z_SYNC_FLUSH);
+
+        if (zlibInflate.err < 0) {
+            reject(new Error("Failed to decompress zlib data"));
+        }
+
+        const result = zlibInflate.result;
+        if (result) {
             try {
-                const decompressed = decodeMessage(chunk, encoding);
-                resolve(decompressed);
+                resolve(decodeMessage(result, encoding));
             } catch (error) {
-                reject(
-                    new Error(
-                        `Erreur lors du décodage du message décompressé : ${error instanceof Error ? error.message : String(error)}`
-                    )
-                );
+                reject(error);
             }
-        });
-
-        zlibInflate.on("error", (error) => {
-            reject(
-                new Error(`Erreur de décompression Zlib : ${error instanceof Error ? error.message : String(error)}`)
-            );
-        });
-
-        zlibInflate.end(data);
-    });
-}
-
-export async function decompressZstd(data: Buffer, encoding: EncodingTypes): Promise<string> {
-    return new Promise((resolve, reject) => {
-        try {
-            const decompressed = decompress(data);
-            const decoded = decodeMessage(Buffer.from(decompressed.buffer), encoding);
-            resolve(decoded);
-        } catch (error) {
-            reject(
-                new Error(`Erreur de décompression Zstd : ${error instanceof Error ? error.message : String(error)}`)
-            );
         }
     });
 }

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/cache",
+  "name": "@nyxjs/store",
   "version": "1.0.0",
-  "description": "Cache package for Nyx.js",
+  "description": "Store package for Nyx.js",
   "type": "commonjs",
   "readme": "README.md",
   "main": "./dist/index.js",

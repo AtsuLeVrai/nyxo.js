@@ -1,5 +1,5 @@
 import type { ChannelStructure, RestHttpResponseCodes, Snowflake, StageInstanceStructure } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types/globals";
+import type { RestRequestOptions } from "../types/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}

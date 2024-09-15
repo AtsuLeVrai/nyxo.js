@@ -1,5 +1,5 @@
 import type { Integer, Snowflake, SubscriptionStructure } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types/globals";
+import type { RestRequestOptions } from "../types/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/subscription#query-string-params}

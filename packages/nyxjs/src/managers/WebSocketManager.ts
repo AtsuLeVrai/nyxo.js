@@ -1,8 +1,9 @@
-import type { GatewayOptions } from "@nyxjs/ws";
+import type { GatewayOptions, GatewayReceiveEvents } from "@nyxjs/ws";
 import { Gateway } from "@nyxjs/ws";
 import type { Client } from "../client/Client";
+import type { BaseChannel } from "../structures/Channels";
 
-const GATEWAY_CLIENT_EVENTS = [
+type GATEWAY_CLIENT_EVENTS = [
     ["APPLICATION_COMMAND_PERMISSIONS_UPDATE", "applicationCommandPermissionsUpdate"],
     ["AUTO_MODERATION_ACTION_EXECUTION", "autoModerationActionExecution"],
     ["AUTO_MODERATION_RULE_CREATE", "autoModerationRuleCreate"],
@@ -10,7 +11,7 @@ const GATEWAY_CLIENT_EVENTS = [
     ["AUTO_MODERATION_RULE_UPDATE", "autoModerationRuleUpdate"],
     ["CHANNEL_CREATE", "channelCreate"],
     ["CHANNEL_DELETE", "channelDelete"],
-    ["CHANNEL_PINS_UPDATE", "channelPinsUpdate"],
+    ["CHANNEL_PINS_UPDATE", "channelPinsUpdate", Pick<BaseChannel, "guildId" | "id" | "lastPinTimestamp">],
     ["CHANNEL_UPDATE", "channelUpdate"],
     ["ENTITLEMENT_CREATE", "entitlementCreate"],
     ["ENTITLEMENT_DELETE", "entitlementDelete"],
@@ -20,7 +21,6 @@ const GATEWAY_CLIENT_EVENTS = [
     ["GUILD_BAN_REMOVE", "guildBanRemove"],
     ["GUILD_CREATE", "guildCreate"],
     ["GUILD_DELETE", "guildDelete"],
-    ["GUILD_EMOJIS_UPDATE", "guildEmojisUpdate"],
     ["GUILD_INTEGRATIONS_UPDATE", "guildIntegrationsUpdate"],
     ["GUILD_MEMBERS_CHUNK", "guildMembersChunk"],
     ["GUILD_MEMBER_ADD", "guildMemberAdd"],
@@ -34,7 +34,6 @@ const GATEWAY_CLIENT_EVENTS = [
     ["GUILD_SCHEDULED_EVENT_UPDATE", "guildScheduledEventUpdate"],
     ["GUILD_SCHEDULED_EVENT_USER_ADD", "guildScheduledEventUserAdd"],
     ["GUILD_SCHEDULED_EVENT_USER_REMOVE", "guildScheduledEventUserRemove"],
-    ["GUILD_STICKERS_UPDATE", "guildStickersUpdate"],
     ["GUILD_UPDATE", "guildUpdate"],
     ["INTEGRATION_CREATE", "integrationCreate"],
     ["INTEGRATION_DELETE", "integrationDelete"],
@@ -70,7 +69,6 @@ const GATEWAY_CLIENT_EVENTS = [
     ["VOICE_CHANNEL_EFFECT_SEND", "voiceChannelEffectSend"],
     ["VOICE_SERVER_UPDATE", "voiceServerUpdate"],
     ["VOICE_STATE_UPDATE", "voiceStateUpdate"],
-    ["WEBHOOKS_UPDATE", "webhooksUpdate"],
 ];
 
 export class WebSocketManager extends Gateway {
@@ -82,7 +80,22 @@ export class WebSocketManager extends Gateway {
         super(token, options);
     }
 
-    public handleEvent(): void {
-        this.on("dispatch", (event, ...data) => {});
+    public init(): void {
+        void this.connect();
+        this.setupEventListeners();
+    }
+
+    private setupEventListeners(): void {
+        this.on("debug", (message) => this.client.emit("debug", message));
+        this.on("error", (error) => this.client.emit("error", error));
+        this.on("warn", (message) => this.client.emit("warn", message));
+        this.on("dispatch", this.handleDispatch.bind(this));
+    }
+
+    private handleDispatch(event: keyof GatewayReceiveEvents, ...data: unknown[]): void {
+        // const clientEvent = this.eventMap.get(event);
+        // if (clientEvent) {
+        //     this.client.emit(clientEvent, ...data);
+        // }
     }
 }

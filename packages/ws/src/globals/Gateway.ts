@@ -9,18 +9,19 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     private readonly connection: GatewayConnection;
 
-    public constructor(
-        private readonly token: string,
-        private readonly options: GatewayOptions
-    ) {
+    public constructor(token: string, options: GatewayOptions) {
         super();
-        this.connection = new GatewayConnection(this, this.token, this.options);
-        this.shardManager = new ShardManager(this, this.token, this.options);
+        this.connection = new GatewayConnection(this, token, options);
+        this.shardManager = new ShardManager(this, token, options);
     }
 
     public async connect(): Promise<void> {
-        this.connection.connect();
-        await this.shardManager.initialize();
+        try {
+            this.connection.connect();
+            await this.shardManager.initialize();
+        } catch (error) {
+            this.emit("error", error instanceof Error ? error : new Error(String(error)));
+        }
     }
 
     public send<T extends keyof GatewaySendEvents>(op: T, data: GatewaySendEvents[T]): void {

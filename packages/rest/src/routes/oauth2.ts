@@ -1,5 +1,5 @@
 import type { ApplicationStructure, IsoO8601Timestamp, Oauth2Scopes, UserStructure } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types/globals";
+import type { RestRequestOptions } from "../types/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information-response-structure}

@@ -38,9 +38,6 @@ export const TextInputLimits = {
      * The maximum length of the label.
      */
     Label: 45,
-    /**
-     * The minimum and maximum lengths for the input.
-     */
     MinLength: {
         /**
          * The minimum length of the input.

@@ -1,26 +1,18 @@
+import process from "node:process";
 import { config } from "dotenv";
-import { Client, GatewayIntents } from "nyx.js";
+import { ApiVersions, GatewayIntents } from "nyx.js";
+import { ClientTest } from "./client";
 
 config();
 
 if (!process.env.DISCORD_TOKEN) {
-  throw new Error("No discord token provided");
+    throw new Error("DISCORD_TOKEN is not defined");
 }
 
-const client = new Client(process.env.DISCORD_TOKEN, {
-  intents: [GatewayIntents.Guilds],
-});
-
-client.on("ready", (ready) => {
-  console.log("Ready");
-});
-
-client.on("debug", (message) => {
-  console.debug(message);
-});
-
-client.on("interactionCreate", (interaction) => {
-  console.log();
+const client = new ClientTest(process.env.DISCORD_TOKEN, {
+    intents: [GatewayIntents.Guilds],
+    version: ApiVersions.V10,
+    shard: "auto",
 });
 
 client.connect();

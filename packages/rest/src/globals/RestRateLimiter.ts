@@ -1,6 +1,7 @@
 import { setTimeout } from "node:timers/promises";
 import type { DiscordHeaders, Integer } from "@nyxjs/core";
-import type { RateLimitResponseStructure } from "../types/globals";
+import type { RateLimitResponseStructure } from "../types/rest";
+import type { Rest } from "./Rest";
 
 type RateLimitInfo = {
     bucket: string;
@@ -11,9 +12,14 @@ type RateLimitInfo = {
 };
 
 export class RestRateLimiter {
-    private globalRateLimit: number | null = null;
+    private globalRateLimit: number | null;
 
-    private readonly routeRateLimits = new Map<string, RateLimitInfo>();
+    private readonly routeRateLimits: Map<string, RateLimitInfo>;
+
+    public constructor(private readonly rest: Rest) {
+        this.globalRateLimit = null;
+        this.routeRateLimits = new Map<string, RateLimitInfo>();
+    }
 
     public async wait(path: string): Promise<void> {
         const now = Date.now();
@@ -34,12 +40,16 @@ export class RestRateLimiter {
 
         if (headers["X-RateLimit-Global"]) {
             this.globalRateLimit = Date.now() + resetAfter;
+            this.rest.emit("globalRateLimit", resetAfter / 1_000);
+        } else {
+            this.rest.emit("rateLimit", path, resetAfter / 1_000);
         }
     }
 
     public async handleRateLimitResponse(response: RateLimitResponseStructure): Promise<void> {
         if (response.global) {
             this.globalRateLimit = Date.now() + response.retry_after * 1_000;
+            this.rest.emit("globalRateLimit", response.retry_after);
         }
 
         await setTimeout(response.retry_after * 1_000);

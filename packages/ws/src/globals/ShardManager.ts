@@ -32,9 +32,8 @@ export class ShardManager {
     }
 
     public async initialize(): Promise<void> {
-        const [minShardId, maxShardId] = await this.determineShardInfo();
-        const gatewayInfo = await this.rest.request(GatewayRoutes.getGatewayBot());
-        this.maxConcurrency = gatewayInfo.session_start_limit.max_concurrency;
+        const [minShardId, maxShardId, maxConcurrency] = await this.determineShardInfo();
+        this.maxConcurrency = maxConcurrency;
 
         for (let shardId = minShardId; shardId < maxShardId; shardId++) {
             const shardInfo: ShardInfo = {
@@ -98,13 +97,13 @@ export class ShardManager {
         this.gateway.send(GatewayOpcodes.Identify, payload);
     }
 
-    private async determineShardInfo(): Promise<[number, number]> {
+    private async determineShardInfo(): Promise<[minShardId: number, maxShardId: number, maxConcurrency: number]> {
         const info = await this.rest.request(GatewayRoutes.getGatewayBot());
         const totalShards = info.shards;
 
         const guilds = await this.rest.request(UserRoutes.getCurrentUserGuilds());
         if (guilds.length === 0) {
-            return [0, totalShards];
+            return [0, totalShards, info.session_start_limit.max_concurrency];
         }
 
         const shardIds = new Set<Integer>();
@@ -114,12 +113,12 @@ export class ShardManager {
         }
 
         if (shardIds.size === 1) {
-            return [[...shardIds][0], totalShards];
+            return [[...shardIds][0], totalShards, info.session_start_limit.max_concurrency];
         }
 
         const minShardId = Math.min(...shardIds);
         const maxShardId = Math.max(...shardIds);
-        return [minShardId, maxShardId + 1];
+        return [minShardId, maxShardId + 1, info.session_start_limit.max_concurrency];
     }
 
     /**

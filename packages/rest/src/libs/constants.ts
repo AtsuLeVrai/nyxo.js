@@ -1,5 +1,5 @@
 import { ApiVersions } from "@nyxjs/core";
-import type { RestOptions } from "../types/globals";
+import type { RestOptions } from "../types/rest";
 
 export const API_BASE_URL = "https://discord.com/api";
 

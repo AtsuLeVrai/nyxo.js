@@ -31,6 +31,8 @@ export enum CompressTypes {
     ZlibStream = "zlib-stream",
     /**
      * Transport compression using zstd-stream
+     *
+     * @deprecated Use `CompressTypes.ZlibStream` instead
      */
     ZstdStream = "zstd-stream",
 }

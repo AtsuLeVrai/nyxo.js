@@ -1,5 +1,5 @@
 import type { ApplicationRoleConnectionMetadataStructure, ApplicationStructure, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types/globals";
+import type { RestRequestOptions } from "../types/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}

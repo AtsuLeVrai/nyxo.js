@@ -2,8 +2,8 @@ import { URL } from "node:url";
 import { RestHttpResponseCodes } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool, RetryAgent } from "undici";
-import type { RestEvents, RestOptions, RestRequestOptions } from "../types/globals";
-import { API_BASE_URL, DEFAULT_REST_OPTIONS } from "../utils/constants";
+import { API_BASE_URL, DEFAULT_REST_OPTIONS } from "../libs/constants";
+import type { RestEvents, RestOptions, RestRequestOptions } from "../types/rest";
 import { RestRateLimiter } from "./RestRateLimiter";
 import { RestRequestHandler } from "./RestRequestHandler";
 
@@ -28,16 +28,15 @@ export class Rest extends EventEmitter<RestEvents> {
         this.emit("debug", `[REST] Initializing Rest with options: ${JSON.stringify(this.options)}`);
         this.pool = this.createPool();
         this.retryAgent = this.createRetryAgent();
-        this.rateLimiter = new RestRateLimiter();
+        this.rateLimiter = new RestRateLimiter(this);
         this.requestHandler = new RestRequestHandler(this.token, this, this.retryAgent, this.options);
     }
 
     public async request<T>(options: RestRequestOptions<T>): Promise<T> {
         try {
-            await this.rateLimiter.wait(options.path);
             return await this.requestHandler.handle(options);
         } catch (error) {
-            this.emit("error", error instanceof Error ? error : new Error(`[REST] Unknown error occurred`));
+            this.emit("error", error instanceof Error ? error : new Error(String(error)));
             throw error;
         }
     }
@@ -74,14 +73,10 @@ export class Rest extends EventEmitter<RestEvents> {
                 pipelining: 10,
                 keepAliveTimeout: 30_000,
                 keepAliveMaxTimeout: 30_000,
-                allowH2: true,
+                allowH2: false,
             });
         } catch (error) {
-            if (error instanceof Error) {
-                this.emit("error", new Error(`[REST] Error creating Pool: ${error.message}`));
-            }
-
-            throw error;
+            throw new Error(`[REST] Failed to create pool: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 
@@ -91,8 +86,7 @@ export class Rest extends EventEmitter<RestEvents> {
             statusCodes: [RestHttpResponseCodes.GatewayUnavailable, RestHttpResponseCodes.TooManyRequests],
             maxRetries: 3,
             retry: (error) => {
-                this.emit("error", new Error(`[REST] ${error.message}`));
-                return null;
+                throw new Error(`[REST] Retry failed: ${error.message}`);
             },
         });
     }

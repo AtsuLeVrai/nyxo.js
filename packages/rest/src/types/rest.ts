@@ -73,7 +73,7 @@ export type RestEvents = {
      *
      * @param retryAfter - The number of seconds to wait before retrying.
      */
-    rateLimit: [retryAfter: Float];
+    rateLimit: [route: string, retryAfter: Float];
 };
 
 /**

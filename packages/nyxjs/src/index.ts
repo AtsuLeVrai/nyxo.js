@@ -15,6 +15,7 @@ export * from "./builders/UserSelectBuilder";
 /**
  * ./client
  */
+export * from "./client/BaseClient";
 export * from "./client/Client";
 
 /**
@@ -28,6 +29,7 @@ export * from "./libs/Limits";
  * ./managers
  */
 export * from "./managers/BitFieldManager";
+export * from "./managers/RestManager";
 export * from "./managers/SnowflakeManager";
 export * from "./managers/WebSocketManager";
 
@@ -66,11 +68,14 @@ export * from "./structures/WelcomeScreen";
 /**
  * ./types
  */
+export * from "./types/Client";
 export * from "./types/ClientEvents";
 
 /**
  * nyxjs libraries
  */
-export * from "@nyxjs/cache";
 export * from "@nyxjs/core";
+export * from "@nyxjs/rest";
+export * from "@nyxjs/store";
 export * from "@nyxjs/utils";
+export * from "@nyxjs/ws";

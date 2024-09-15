@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint --continue",
     "pretty": "turbo run pretty",
     "clean": "turbo run clean --force",
     "prepare": "husky"

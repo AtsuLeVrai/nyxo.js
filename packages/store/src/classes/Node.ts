@@ -1,5 +1,5 @@
 /**
- * Represents a node in the doubly linked list used by the Cache.
+ * Represents a node in the doubly linked list used by the Store.
  *
  * @template K - The type of the key.
  * @template V - The type of the value.

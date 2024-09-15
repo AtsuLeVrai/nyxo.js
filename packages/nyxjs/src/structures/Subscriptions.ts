@@ -1,7 +1,7 @@
 import type { IsoO8601Timestamp, Snowflake, SubscriptionStatus, SubscriptionStructure } from "@nyxjs/core";
 import type { ListSkuSubscriptionsQuery } from "@nyxjs/rest";
 import { SubscriptionRoutes } from "@nyxjs/rest";
-import type { Client } from "../client/Client";
+import type { BaseClient } from "../client/BaseClient";
 import { Base } from "./Base";
 
 export class Subscription extends Base<SubscriptionStructure> {
@@ -24,7 +24,7 @@ export class Subscription extends Base<SubscriptionStructure> {
     public userId!: Snowflake;
 
     public constructor(
-        private readonly client: Client,
+        private readonly client: BaseClient,
         data: Readonly<Partial<SubscriptionStructure>> = {}
     ) {
         super(data);

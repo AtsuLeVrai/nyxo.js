@@ -3,21 +3,20 @@ import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timer
 import { URL } from "node:url";
 import type { GatewayCloseCodes, Integer } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
-import { Inflate, type ZlibOptions } from "minizlib";
 import WebSocket from "ws";
+import type { InflateOptions } from "zlib-sync";
+import { Inflate } from "zlib-sync";
 import type { HelloStructure } from "../events/hello";
 import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
 import type { GatewaySendEvents } from "../types/events";
 import type { GatewayOptions, GatewayPayload } from "../types/gateway";
-import { decompressZlib, decompressZstd } from "../utils/compression";
+import { decompressZlib } from "../utils/compression";
 import { decodeMessage, encodeMessage } from "../utils/encoding";
 import type { Gateway } from "./Gateway";
 
-const ZlibInflateOptions: ZlibOptions = {
-    encoding: "utf8",
-    async: true,
-    level: 9,
+const ZlibInflateOptions: InflateOptions = {
+    chunkSize: 1_024 * 1_024,
 };
 
 export class GatewayConnection {
@@ -74,7 +73,7 @@ export class GatewayConnection {
             this.ws.on("close", this.onClose.bind(this));
             this.ws.on("error", this.onError.bind(this));
         } catch {
-            this.gateway.emit("error", new Error("Failed to establish a WebSocket connection"));
+            throw new Error("[WS] Failed to establish a WebSocket connection");
         }
     }
 
@@ -129,7 +128,10 @@ export class GatewayConnection {
             if (this.options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
                 decompressedData = await decompressZlib(data, this.options.encoding, this.zlibInflate);
             } else if (this.options.compress === "zstd-stream") {
-                decompressedData = await decompressZstd(data, this.options.encoding);
+                /**
+                 * Node.js does not support Zstd compression yet...
+                 */
+                throw new Error("[WS] Zstd compression is not supported yet...");
             } else {
                 decompressedData = decodeMessage(decompressedData, this.options.encoding);
             }
@@ -138,7 +140,7 @@ export class GatewayConnection {
             this.handleMessage(decoded);
         } catch (error) {
             if (error instanceof Error) {
-                this.gateway.emit("error", new Error(`[WS] Failed to process WebSocket message: ${error.message}`));
+                throw new TypeError(`[WS] Failed to process WebSocket message: ${error.message}`);
             }
 
             this.disconnect();
@@ -159,8 +161,7 @@ export class GatewayConnection {
         try {
             payload = JSON.parse(message);
         } catch {
-            this.gateway.emit("error", new Error("[WS] Failed to parse globals payload..."));
-            return;
+            throw new Error("[WS] Failed to parse WebSocket message...");
         }
 
         this.sequence = payload.s ?? this.sequence;

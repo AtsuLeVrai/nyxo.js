@@ -1,5 +1,5 @@
 import type { Boolean, InviteStructure, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types/globals";
+import type { RestRequestOptions } from "../types/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}

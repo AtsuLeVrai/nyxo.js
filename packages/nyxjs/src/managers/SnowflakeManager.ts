@@ -55,19 +55,19 @@ export class SnowflakeManager {
     }
 
     public static snowflakeToDate(snowflake: Snowflake): Date {
-        return new Date(this.snowflakeToTimestamp(snowflake));
+        return new Date(SnowflakeManager.snowflakeToTimestamp(snowflake));
     }
 
     public static dateToSnowflake(date: Date): Snowflake {
-        return this.timestampToSnowflake(date.getTime());
+        return SnowflakeManager.timestampToSnowflake(date.getTime());
     }
 
     public static compareSnowflakes(snowflake1: Snowflake, snowflake2: Snowflake): number {
-        return this.snowflakeToTimestamp(snowflake1) - this.snowflakeToTimestamp(snowflake2);
+        return SnowflakeManager.snowflakeToTimestamp(snowflake1) - SnowflakeManager.snowflakeToTimestamp(snowflake2);
     }
 
     public static isSnowflakeBeforeDate(snowflake: Snowflake, date: Date): boolean {
-        return this.snowflakeToTimestamp(snowflake) < date.getTime();
+        return SnowflakeManager.snowflakeToTimestamp(snowflake) < date.getTime();
     }
 
     public static generateCustomSnowflake(workerId: number, processId: number): Snowflake {
@@ -80,12 +80,12 @@ export class SnowflakeManager {
     }
 
     public static deconstructSnowflake(snowflake: Snowflake): DeconstructedSnowflakeResult {
-        const timestamp = this.extractTimestamp(snowflake);
+        const timestamp = SnowflakeManager.extractTimestamp(snowflake);
         return {
             timestamp,
-            workerId: this.extractWorkerId(snowflake),
-            processId: this.extractProcessId(snowflake),
-            increment: this.extractIncrement(snowflake),
+            workerId: SnowflakeManager.extractWorkerId(snowflake),
+            processId: SnowflakeManager.extractProcessId(snowflake),
+            increment: SnowflakeManager.extractIncrement(snowflake),
             date: new Date(timestamp),
         };
     }

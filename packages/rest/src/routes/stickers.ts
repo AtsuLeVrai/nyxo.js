@@ -1,6 +1,6 @@
 import type { RestHttpResponseCodes, Snowflake, StickerPackStructure, StickerStructure } from "@nyxjs/core";
 import { FileManager } from "../globals/FileManager";
-import type { RestRequestOptions } from "../types/globals";
+import type { RestRequestOptions } from "../types/rest";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params}

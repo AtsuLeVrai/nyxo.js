@@ -5,6 +5,10 @@ export class BitFieldManager<T extends bigint | number> {
         this.bitfield = this.resolve(bits);
     }
 
+    public static resolve<T extends bigint | number>(bit?: BitFieldManager<T> | T | T[]): bigint {
+        return new BitFieldManager<T>().resolve(bit);
+    }
+
     public add(...bits: (BitFieldManager<T> | T | T[])[]): this {
         for (const bit of bits) {
             this.bitfield |= this.resolve(bit);
@@ -67,7 +71,7 @@ export class BitFieldManager<T extends bigint | number> {
         return this.bitfield.toString(2).padStart(64, "0");
     }
 
-    private resolve(bit?: BitFieldManager<T> | T | T[]): bigint {
+    public resolve(bit?: BitFieldManager<T> | T | T[]): bigint {
         if (bit === undefined) return 0n;
         if (bit instanceof BitFieldManager) {
             return bit.bitfield;

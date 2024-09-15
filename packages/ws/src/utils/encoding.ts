@@ -12,7 +12,7 @@ export function decodeMessage(data: Buffer | string, encoding: EncodingTypes): a
     } else if (encoding === "etf" && Buffer.isBuffer(data)) {
         return unpack(data);
     } else {
-        throw new Error("Unsupported encoding type");
+        throw new Error(`Unsupported encoding type: ${encoding}`);
     }
 }
 
@@ -22,6 +22,6 @@ export function encodeMessage(data: any, encoding: EncodingTypes): Buffer | stri
     } else if (encoding === "etf") {
         return pack(data);
     } else {
-        throw new Error("Unsupported encoding type");
+        throw new Error(`Unsupported encoding type: ${encoding}`);
     }
 }
