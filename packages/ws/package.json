@@ -46,7 +46,7 @@
     "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.5",
     "@types/ws": "^8.5.12",
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.1",
     "eslint-formatter-pretty": "^5.0.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",

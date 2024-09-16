@@ -30,8 +30,8 @@
     "dist"
   ],
   "dependencies": {
-    "@nyxjs/store": "workspace:*",
     "@nyxjs/core": "workspace:*",
+    "@nyxjs/store": "workspace:*",
     "eventemitter3": "^5.0.1",
     "form-data": "^4.0.0",
     "minizlib": "^3.0.1",
@@ -43,7 +43,7 @@
     "@swc/core": "^1.7.26",
     "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.5",
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.1",
     "eslint-formatter-pretty": "^5.0.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",

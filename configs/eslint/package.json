@@ -3,11 +3,12 @@
   "name": "@nyxjs/eslint-config",
   "private": true,
   "files": [
+    "next.js",
     "node.js"
   ],
   "devDependencies": {
     "@types/eslint": "^8.56.12",
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.1",
     "eslint-config-neon": "^0.1.62"
   }
 }

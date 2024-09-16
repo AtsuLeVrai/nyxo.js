@@ -12,16 +12,16 @@
     "tslib": "^2.7.0"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "dotenv": "^16.4.5",
-    "nodemon": "^3.1.4",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.2",
     "@types/eslint": "^8.56.12",
     "@types/node": "^22.5.5",
-    "eslint": "^8.57.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.1",
     "eslint-formatter-pretty": "^5.0.0",
-    "prettier": "^3.3.3"
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.2"
   }
 }
