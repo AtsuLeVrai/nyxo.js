@@ -3,7 +3,6 @@
   "name": "@nyxjs/eslint-config",
   "private": true,
   "files": [
-    "next.js",
     "node.js"
   ],
   "devDependencies": {
