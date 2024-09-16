@@ -208,7 +208,21 @@ export class Store<K, V> {
      * @param item - The node to remove.
      */
     private remove(item: Node<K, V>): void {
-        // ... (rest of the code remains unchanged)
+        if (item.prev) {
+            item.prev.next = item.next;
+        }
+
+        if (item.next) {
+            item.next.prev = item.prev;
+        }
+
+        if (this.head === item) {
+            this.head = item.next;
+        }
+
+        if (this.tail === item) {
+            this.tail = item.prev;
+        }
     }
 
     /**
@@ -217,7 +231,16 @@ export class Store<K, V> {
      * @param item - The node to set as the head.
      */
     private setHead(item: Node<K, V>): void {
-        // ... (rest of the code remains unchanged)
+        item.next = this.head;
+        item.prev = null;
+        if (this.head) {
+            this.head.prev = item;
+        }
+
+        this.head = item;
+        if (!this.tail) {
+            this.tail = item;
+        }
     }
 
     /**
