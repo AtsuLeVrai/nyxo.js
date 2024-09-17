@@ -11,6 +11,10 @@ export class RestManager extends Rest {
         super(token, options);
     }
 
+    public static from(client: Client, token: string, options?: RestOptions): RestManager {
+        return new RestManager(client, token, options);
+    }
+
     public init(): void {
         this.setupEventListeners();
     }

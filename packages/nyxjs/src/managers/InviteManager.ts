@@ -6,6 +6,10 @@ import { Invite } from "../structures/Invites";
 export class InviteManager {
     public constructor(private readonly client: Client) {}
 
+    public static from(client: Client): InviteManager {
+        return new InviteManager(client);
+    }
+
     public async fetch(code: string, query?: GetInviteQueryStringParams): Promise<Invite> {
         const response = await this.client.rest.request(InviteRoutes.getInvite(code, query));
         return Invite.from(response);

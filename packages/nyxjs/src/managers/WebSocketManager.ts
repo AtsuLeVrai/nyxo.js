@@ -80,6 +80,10 @@ export class WebSocketManager extends Gateway {
         super(token, options);
     }
 
+    public static from(client: Client, token: string, options: GatewayOptions): WebSocketManager {
+        return new WebSocketManager(client, token, options);
+    }
+
     public init(): void {
         void this.connect();
         this.setupEventListeners();

@@ -44,15 +44,15 @@ export class Client extends EventEmitter<ClientEvents> {
         private readonly options: ClientOptions
     ) {
         super();
-        this.applications = new ApplicationManager(this);
-        this.channels = new ChannelManager(this);
-        this.guilds = new GuildManager(this);
-        this.invites = new InviteManager(this);
+        this.applications = ApplicationManager.from(this);
+        this.channels = ChannelManager.from(this);
+        this.guilds = GuildManager.from(this);
+        this.invites = InviteManager.from(this);
         this.rest = this.createRest();
-        this.skus = new SkuManager(this);
-        this.stages = new StageManager(this);
-        this.users = new UserManager(this);
-        this.webhooks = new WebhookManager(this);
+        this.skus = SkuManager.from(this);
+        this.stages = StageManager.from(this);
+        this.users = UserManager.from(this);
+        this.webhooks = WebhookManager.from(this);
         this.ws = this.createWs();
     }
 
@@ -66,7 +66,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     private createWs(): WebSocketManager {
-        return new WebSocketManager(this, this.token, {
+        return WebSocketManager.from(this, this.token, {
             intents: this.calculateIntents(),
             presence: this.options.presence,
             shard: this.options.shard,
@@ -78,7 +78,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     private createRest(): RestManager {
-        return new RestManager(this, this.token, {
+        return RestManager.from(this, this.token, {
             version: this.options.version ?? this.defaultVersions,
             cache_life_time: this.options.rest?.cache_life_time,
             user_agent: this.options.rest?.user_agent,
