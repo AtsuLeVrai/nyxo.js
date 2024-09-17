@@ -1,8 +1,170 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="fb71cfd7-d740-48f2-86ff-637dff45b4c1" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/git_toolbox_blame.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/nyx.js.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/.npmrc" beforeDir="false" afterPath="$PROJECT_DIR$/.npmrc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/.vscode/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/.eslintrc.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/app/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/app/fonts/GeistMonoVF.woff" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/app/fonts/GeistVF.woff" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/app/globals.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/app/layout.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/app/page.module.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/app/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/next.config.mjs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/public/file-text.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/public/globe.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/public/next.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/public/vercel.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/public/window.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/docs/tsconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/.eslintrc.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/app/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/app/fonts/GeistMonoVF.woff" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/app/fonts/GeistVF.woff" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/app/globals.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/app/layout.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/app/page.module.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/app/page.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/next.config.mjs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/public/file-text.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/public/globe.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/public/next.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/public/vercel.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/public/window.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/apps/web/tsconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/eslint-config/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/eslint-config/library.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/eslint-config/next.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/eslint-config/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/eslint-config/react-internal.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/typescript-config/base.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/typescript-config/nextjs.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/typescript-config/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/typescript-config/react-library.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/.eslintrc.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/src/button.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/src/card.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/src/code.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/tsconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/tsconfig.lint.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/turbo/generators/config.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/packages/ui/turbo/generators/templates/component.hbs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/pnpm-workspace.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-workspace.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/my-turborepo/turbo.json" beforeDir="false" afterPath="$PROJECT_DIR$/turbo.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FormatOnSaveOptions">
+    <option name="myRunOnSave" value="true" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "3tatsu"
   }
-}</component>
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/3tatsu/nyx.js.git",
+    "accountId": "e1163ba4-bb5e-4ce9-a25d-48a66bf5ac6c"
+  }
+}]]></component>
+  <component name="OptimizeOnSaveOptions">
+    <option name="myRunOnSave" value="true" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="2mD4QyzBQghg9jEUysiGI5LDbMN" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "code.cleanup.on.save": "true",
+    "git-widget-placeholder": "next",
+    "last_opened_file_path": "C:/Users/minec/WebstormProjects/nyx.js/packages",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "pnpm",
+    "rearrange.code.on.save": "true",
+    "settings.editor.selected.configurable": "Settings.Biome",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="ReactDesignerToolWindowState">
+    <option name="myId2Visible">
+      <map>
+        <entry key="com.intellij.reactbuddy.reactComponents" value="false" />
+        <entry key="com.intellij.reactbuddy.reactInspector" value="false" />
+        <entry key="com.intellij.reactbuddy.storybook" value="false" />
+      </map>
+    </option>
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\minec\WebstormProjects\nyx.js\packages" />
+      <recent name="C:\Users\minec\WebstormProjects\nyx.js\apps" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\minec\WebstormProjects\nyx.js" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-WS-242.21829.149" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="fb71cfd7-d740-48f2-86ff-637dff45b4c1" name="Changes" comment="" />
+      <created>1726597802131</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1726597802131</updated>
+      <workItem from="1726597804089" duration="504000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
 </project>
