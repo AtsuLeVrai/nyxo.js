@@ -8,25 +8,25 @@ export type DeconstructedSnowflakeResult = {
     workerId: number;
 };
 
-export class SnowflakeManager {
+export class SnowflakeProvider {
     private static readonly DISCORD_EPOCH: bigint = 1_420_070_400_000n;
 
     public static generateSnowflake(): string {
-        const timestamp: number = Date.now() - Number(SnowflakeManager.DISCORD_EPOCH);
+        const timestamp: number = Date.now() - Number(SnowflakeProvider.DISCORD_EPOCH);
         return ((BigInt(timestamp) << 22n) | (0n << 17n) | (0n << 12n) | 0n).toString();
     }
 
     public static snowflakeToTimestamp(snowflake: Snowflake): number {
-        return Number(BigInt(snowflake) >> (22n + SnowflakeManager.DISCORD_EPOCH));
+        return Number(BigInt(snowflake) >> (22n + SnowflakeProvider.DISCORD_EPOCH));
     }
 
     public static timestampToSnowflake(timestamp: number): Snowflake {
-        const discordMs: number = timestamp - Number(SnowflakeManager.DISCORD_EPOCH);
+        const discordMs: number = timestamp - Number(SnowflakeProvider.DISCORD_EPOCH);
         return ((BigInt(discordMs) << 22n) | (0n << 17n) | (0n << 12n) | 0n).toString();
     }
 
     public static extractTimestamp(snowflake: Snowflake): number {
-        return Number(BigInt(snowflake) >> (22n + SnowflakeManager.DISCORD_EPOCH));
+        return Number(BigInt(snowflake) >> (22n + SnowflakeProvider.DISCORD_EPOCH));
     }
 
     public static extractWorkerId(snowflake: Snowflake): number {
@@ -55,23 +55,23 @@ export class SnowflakeManager {
     }
 
     public static snowflakeToDate(snowflake: Snowflake): Date {
-        return new Date(SnowflakeManager.snowflakeToTimestamp(snowflake));
+        return new Date(SnowflakeProvider.snowflakeToTimestamp(snowflake));
     }
 
     public static dateToSnowflake(date: Date): Snowflake {
-        return SnowflakeManager.timestampToSnowflake(date.getTime());
+        return SnowflakeProvider.timestampToSnowflake(date.getTime());
     }
 
     public static compareSnowflakes(snowflake1: Snowflake, snowflake2: Snowflake): number {
-        return SnowflakeManager.snowflakeToTimestamp(snowflake1) - SnowflakeManager.snowflakeToTimestamp(snowflake2);
+        return SnowflakeProvider.snowflakeToTimestamp(snowflake1) - SnowflakeProvider.snowflakeToTimestamp(snowflake2);
     }
 
     public static isSnowflakeBeforeDate(snowflake: Snowflake, date: Date): boolean {
-        return SnowflakeManager.snowflakeToTimestamp(snowflake) < date.getTime();
+        return SnowflakeProvider.snowflakeToTimestamp(snowflake) < date.getTime();
     }
 
     public static generateCustomSnowflake(workerId: number, processId: number): Snowflake {
-        const timestamp = BigInt(Date.now() - Number(SnowflakeManager.DISCORD_EPOCH));
+        const timestamp = BigInt(Date.now() - Number(SnowflakeProvider.DISCORD_EPOCH));
         const workerIdBits: bigint = BigInt(workerId) << 17n;
         const processIdBits: bigint = BigInt(processId) << 12n;
         const increment = 0n;
@@ -80,12 +80,12 @@ export class SnowflakeManager {
     }
 
     public static deconstructSnowflake(snowflake: Snowflake): DeconstructedSnowflakeResult {
-        const timestamp = SnowflakeManager.extractTimestamp(snowflake);
+        const timestamp = SnowflakeProvider.extractTimestamp(snowflake);
         return {
             timestamp,
-            workerId: SnowflakeManager.extractWorkerId(snowflake),
-            processId: SnowflakeManager.extractProcessId(snowflake),
-            increment: SnowflakeManager.extractIncrement(snowflake),
+            workerId: SnowflakeProvider.extractWorkerId(snowflake),
+            processId: SnowflakeProvider.extractProcessId(snowflake),
+            increment: SnowflakeProvider.extractIncrement(snowflake),
             date: new Date(timestamp),
         };
     }

@@ -1,15 +1,15 @@
-export class BitFieldManager<T extends bigint | number> {
+export class BitFieldProvider<T extends bigint | number> {
     private bitfield: bigint;
 
-    public constructor(bits?: BitFieldManager<T> | T | T[]) {
+    public constructor(bits?: BitFieldProvider<T> | T | T[]) {
         this.bitfield = this.resolve(bits);
     }
 
-    public static resolve<T extends bigint | number>(bit?: BitFieldManager<T> | T | T[]): bigint {
-        return new BitFieldManager<T>().resolve(bit);
+    public static resolve<T extends bigint | number>(bit?: BitFieldProvider<T> | T | T[]): bigint {
+        return new BitFieldProvider<T>().resolve(bit);
     }
 
-    public add(...bits: (BitFieldManager<T> | T | T[])[]): this {
+    public add(...bits: (BitFieldProvider<T> | T | T[])[]): this {
         for (const bit of bits) {
             this.bitfield |= this.resolve(bit);
         }
@@ -17,7 +17,7 @@ export class BitFieldManager<T extends bigint | number> {
         return this;
     }
 
-    public remove(...bits: (BitFieldManager<T> | T | T[])[]): this {
+    public remove(...bits: (BitFieldProvider<T> | T | T[])[]): this {
         for (const bit of bits) {
             this.bitfield &= ~this.resolve(bit);
         }
@@ -25,7 +25,7 @@ export class BitFieldManager<T extends bigint | number> {
         return this;
     }
 
-    public has(bit: BitFieldManager<T> | T | T[]): boolean {
+    public has(bit: BitFieldProvider<T> | T | T[]): boolean {
         const resolved = this.resolve(bit);
         return (this.bitfield & resolved) === resolved;
     }
@@ -34,12 +34,12 @@ export class BitFieldManager<T extends bigint | number> {
         return this.bitfield;
     }
 
-    public set(bits: BitFieldManager<T> | T | T[]): this {
+    public set(bits: BitFieldProvider<T> | T | T[]): this {
         this.bitfield = this.resolve(bits);
         return this;
     }
 
-    public toggle(...bits: (BitFieldManager<T> | T | T[])[]): this {
+    public toggle(...bits: (BitFieldProvider<T> | T | T[])[]): this {
         for (const bit of bits) {
             this.bitfield ^= this.resolve(bit);
         }
@@ -71,9 +71,9 @@ export class BitFieldManager<T extends bigint | number> {
         return this.bitfield.toString(2).padStart(64, "0");
     }
 
-    public resolve(bit?: BitFieldManager<T> | T | T[]): bigint {
+    public resolve(bit?: BitFieldProvider<T> | T | T[]): bigint {
         if (bit === undefined) return 0n;
-        if (bit instanceof BitFieldManager) {
+        if (bit instanceof BitFieldProvider) {
             return bit.bitfield;
         }
 

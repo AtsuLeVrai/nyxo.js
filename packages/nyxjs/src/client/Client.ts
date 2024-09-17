@@ -3,7 +3,6 @@ import { ApiVersions } from "@nyxjs/core";
 import { EncodingTypes } from "@nyxjs/ws";
 import { EventEmitter } from "eventemitter3";
 import { ApplicationManager } from "../managers/ApplicationManager";
-import { BitFieldManager } from "../managers/BitFieldManager";
 import { ChannelManager } from "../managers/ChannelManager";
 import { GuildManager } from "../managers/GuildManager";
 import { InviteManager } from "../managers/InviteManager";
@@ -13,6 +12,7 @@ import { StageManager } from "../managers/StageManager";
 import { UserManager } from "../managers/UserManager";
 import { WebSocketManager } from "../managers/WebSocketManager";
 import { WebhookManager } from "../managers/WebhookManager";
+import { BitFieldProvider } from "../providers/BitFieldProvider";
 import type { ClientOptions } from "../types/Client";
 import type { ClientEvents } from "../types/ClientEvents";
 
@@ -62,7 +62,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     private calculateIntents(): Integer {
-        return Number(BitFieldManager.resolve<GatewayIntents>(this.options.intents));
+        return Number(BitFieldProvider.resolve<GatewayIntents>(this.options.intents));
     }
 
     private createWs(): WebSocketManager {

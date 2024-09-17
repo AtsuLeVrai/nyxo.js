@@ -24,17 +24,21 @@ export * from "./libs/Limits";
  * ./managers
  */
 export * from "./managers/ApplicationManager";
-export * from "./managers/BitFieldManager";
 export * from "./managers/ChannelManager";
 export * from "./managers/GuildManager";
 export * from "./managers/InviteManager";
 export * from "./managers/RestManager";
 export * from "./managers/SkuManager";
-export * from "./managers/SnowflakeManager";
 export * from "./managers/StageManager";
 export * from "./managers/UserManager";
 export * from "./managers/WebhookManager";
 export * from "./managers/WebSocketManager";
+
+/**
+ * ./providers
+ */
+export * from "./providers/BitFieldProvider";
+export * from "./providers/SnowflakeProvider";
 
 /**
  * ./structures
