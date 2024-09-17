@@ -12,6 +12,7 @@
     "devDependencies": {
         "@biomejs/biome": "^1.9.1",
         "@microsoft/api-extractor": "^7.47.9",
+        "@swc/core": "^1.7.26",
         "@types/node": "^22.5.5",
         "rimraf": "^6.0.1",
         "tsup": "^8.3.0",

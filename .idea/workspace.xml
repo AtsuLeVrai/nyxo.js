@@ -4,24 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e867763b-29cb-4c64-aa75-e07240f9a542" name="Changes" comment="test">
-      <change afterPath="$PROJECT_DIR$/packages/core/.tsbuildinfo" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/core/LICENSE" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/core/biome.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/core/package.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/core/src/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/core/src/test.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/core/tsconfig.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/core/tsup.config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="e867763b-29cb-4c64-aa75-e07240f9a542" name="Changes" comment="chore: update project configuration and structure&#10;&#10;- Add .gitignore and .gitkeep files&#10;- Update core package files (package.json, index.ts, LICENSE)&#10;- Add build configuration (tsbuildinf, biome.json, tsconfig.json, tsup.config.ts)&#10;- Update project-wide configuration (pnpm-lock.yaml, turbo.json)&#10;- Add test file (test.ts)&#10;- Update IDE settings (workspace.xml)&#10;- Add Husky pre-commit hook&#10;- Configure TypeScript and Biome&#10;&#10;This commit reorganizes the project structure, updates build tools, and improves development configuration.">
       <change beforePath="$PROJECT_DIR$/.husky/pre-commit" beforeDir="false" afterPath="$PROJECT_DIR$/.husky/pre-commit" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/configs/biome/node.json" beforeDir="false" afterPath="$PROJECT_DIR$/configs/biome/node.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/configs/typescript/node.json" beforeDir="false" afterPath="$PROJECT_DIR$/configs/typescript/node.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages/.gitkeep" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/core/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/core/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/core/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/core/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/core/src/test.ts" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/turbo.json" beforeDir="false" afterPath="$PROJECT_DIR$/turbo.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -99,7 +89,7 @@
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "code.cleanup.on.save": "true",
     "git-widget-placeholder": "next",
-    "last_opened_file_path": "C:/Users/minec/WebstormProjects/nyx.js/packages/core",
+    "last_opened_file_path": "C:/Users/minec/WebstormProjects/nyx.js/apps/test",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -124,6 +114,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\minec\WebstormProjects\nyx.js\apps\test" />
       <recent name="C:\Users\minec\WebstormProjects\nyx.js\packages\core" />
       <recent name="C:\Users\minec\WebstormProjects\nyx.js\packages" />
       <recent name="C:\Users\minec\WebstormProjects\nyx.js\apps" />
@@ -178,8 +169,17 @@
       <updated>1726597802131</updated>
       <workItem from="1726597804089" duration="504000" />
       <workItem from="1726598585090" duration="414000" />
-      <workItem from="1726599014902" duration="1981000" />
+      <workItem from="1726599014902" duration="3566000" />
     </task>
+    <task id="LOCAL-00001" summary="chore: update project configuration and structure&#10;&#10;- Add .gitignore and .gitkeep files&#10;- Update core package files (package.json, index.ts, LICENSE)&#10;- Add build configuration (tsbuildinf, biome.json, tsconfig.json, tsup.config.ts)&#10;- Update project-wide configuration (pnpm-lock.yaml, turbo.json)&#10;- Add test file (test.ts)&#10;- Update IDE settings (workspace.xml)&#10;- Add Husky pre-commit hook&#10;- Configure TypeScript and Biome&#10;&#10;This commit reorganizes the project structure, updates build tools, and improves development configuration.">
+      <option name="closed" value="true" />
+      <created>1726601104481</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1726601104481</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -196,6 +196,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="refactor: restructure entire project&#10;&#10;- Remove turborepo template structure&#10;- Add new project structure for nyx.js&#10;- Create new configuration files (.gitignore, .npmrc, package.json, etc.)&#10;- Add LICENSE and README.md&#10;- Set up new workspace configuration&#10;- Remove old apps (docs, web) and packages (ui, eslint-config, typescript-config)&#10;- Add placeholder directories for apps, configs, and packages&#10;- Update IDE settings&#10;- Adjust line endings from LF to CRLF in various files" />
     <MESSAGE value="test" />
-    <option name="LAST_COMMIT_MESSAGE" value="test" />
+    <MESSAGE value="chore: update project configuration and structure&#10;&#10;- Add .gitignore and .gitkeep files&#10;- Update core package files (package.json, index.ts, LICENSE)&#10;- Add build configuration (tsbuildinf, biome.json, tsconfig.json, tsup.config.ts)&#10;- Update project-wide configuration (pnpm-lock.yaml, turbo.json)&#10;- Add test file (test.ts)&#10;- Update IDE settings (workspace.xml)&#10;- Add Husky pre-commit hook&#10;- Configure TypeScript and Biome&#10;&#10;This commit reorganizes the project structure, updates build tools, and improves development configuration." />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: update project configuration and structure&#10;&#10;- Add .gitignore and .gitkeep files&#10;- Update core package files (package.json, index.ts, LICENSE)&#10;- Add build configuration (tsbuildinf, biome.json, tsconfig.json, tsup.config.ts)&#10;- Update project-wide configuration (pnpm-lock.yaml, turbo.json)&#10;- Add test file (test.ts)&#10;- Update IDE settings (workspace.xml)&#10;- Add Husky pre-commit hook&#10;- Configure TypeScript and Biome&#10;&#10;This commit reorganizes the project structure, updates build tools, and improves development configuration." />
   </component>
 </project>
