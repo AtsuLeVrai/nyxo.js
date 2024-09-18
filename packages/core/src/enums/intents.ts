@@ -1,5 +1,6 @@
 /**
  * Enum representing the various gateway intents used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/gateway#list-of-intents|Gateway Intents}
  */
 export enum GatewayIntents {
@@ -46,45 +47,45 @@ export enum GatewayIntents {
     /**
      * Intent for guild message reactions.
      */
-    GuildMessageReactions = 1024,
+    GuildMessageReactions = 1_024,
     /**
      * Intent for guild message typing.
      */
-    GuildMessageTyping = 2048,
+    GuildMessageTyping = 2_048,
     /**
      * Intent for direct messages.
      */
-    DirectMessages = 4096,
+    DirectMessages = 4_096,
     /**
      * Intent for direct message reactions.
      */
-    DirectMessageReactions = 8192,
+    DirectMessageReactions = 8_192,
     /**
      * Intent for direct message typing.
      */
-    DirectMessageTyping = 16384,
+    DirectMessageTyping = 16_384,
     /**
      * Intent for message content.
      */
-    MessageContent = 32768,
+    MessageContent = 32_768,
     /**
      * Intent for guild scheduled events.
      */
-    GuildScheduledEvents = 65536,
+    GuildScheduledEvents = 65_536,
     /**
      * Intent for auto moderation configuration.
      */
-    AutoModerationConfiguration = 1048576,
+    AutoModerationConfiguration = 1_048_576,
     /**
      * Intent for auto moderation execution.
      */
-    AutoModerationExecution = 2097152,
+    AutoModerationExecution = 2_097_152,
     /**
      * Intent for guild message polls.
      */
-    GuildMessagePolls = 16777216,
+    GuildMessagePolls = 16_777_216,
     /**
      * Intent for direct message polls.
      */
-    DirectMessagePolls = 33554432,
+    DirectMessagePolls = 33_554_432,
 }

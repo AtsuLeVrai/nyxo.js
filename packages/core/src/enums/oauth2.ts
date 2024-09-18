@@ -1,5 +1,6 @@
 /**
  * Enum representing the various OAuth2 URLs used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-urls|OAuth2 URLs}
  */
 export enum OAuth2Urls {
@@ -8,17 +9,18 @@ export enum OAuth2Urls {
      */
     Authorize = "https://discord.com/oauth2/authorize",
     /**
-     * Token URL
-     */
-    Token = "https://discord.com/api/oauth2/token",
-    /**
      * Token Revocation URL
      */
     Revoke = "https://discord.com/api/oauth2/token/revoke",
+    /**
+     * Token URL
+     */
+    Token = "https://discord.com/api/oauth2/token",
 }
 
 /**
  * Enum representing the various OAuth2 scopes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes|OAuth2 Scopes}
  */
 export enum OAuth2Scopes {
@@ -43,13 +45,13 @@ export enum OAuth2Scopes {
      */
     ApplicationsCommands = "applications.commands",
     /**
-     * Allows your app to update its commands using a Bearer token.
-     */
-    ApplicationsCommandsUpdate = "applications.commands.update",
-    /**
      * Allows your app to update permissions for its commands in a guild a user has permissions to.
      */
     ApplicationsCommandsPermissionsUpdate = "applications.commands.permissions.update",
+    /**
+     * Allows your app to update its commands using a Bearer token.
+     */
+    ApplicationsCommandsUpdate = "applications.commands.update",
     /**
      * Allows your app to read entitlements for a user's applications.
      */
@@ -99,14 +101,6 @@ export enum OAuth2Scopes {
      */
     MessagesRead = "messages.read",
     /**
-     * Allows your app to know a user's friends and implicit relationships.
-     */
-    RelationshipsRead = "relationships.read",
-    /**
-     * Allows your app to update a user's connection and metadata for the app.
-     */
-    RoleConnectionsWrite = "role_connections.write",
-    /**
      * For local RPC server access, this allows you to control a user's local Discord client.
      */
     RPC = "rpc",
@@ -126,6 +120,14 @@ export enum OAuth2Scopes {
      * For local RPC server access, this allows you to update a user's voice settings.
      */
     RPCVoiceWrite = "rpc.voice.write",
+    /**
+     * Allows your app to know a user's friends and implicit relationships.
+     */
+    RelationshipsRead = "relationships.read",
+    /**
+     * Allows your app to update a user's connection and metadata for the app.
+     */
+    RoleConnectionsWrite = "role_connections.write",
     /**
      * Allows your app to connect to voice on user's behalf and see all the voice members.
      */

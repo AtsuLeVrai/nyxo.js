@@ -1,5 +1,6 @@
 /**
  * Enum representing the various gateway opcodes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-opcodes|Gateway Opcodes}
  */
 export enum GatewayOpcodes {
@@ -51,69 +52,71 @@ export enum GatewayOpcodes {
 
 /**
  * Enum representing the various gateway close event codes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes|Gateway Close Event Codes}
  */
 export enum GatewayCloseCodes {
     /**
      * Unknown error.
      */
-    UnknownError = 4000,
+    UnknownError = 4_000,
     /**
      * Unknown opcode.
      */
-    UnknownOpcode = 4001,
+    UnknownOpcode = 4_001,
     /**
      * Decode error.
      */
-    DecodeError = 4002,
+    DecodeError = 4_002,
     /**
      * Not authenticated.
      */
-    NotAuthenticated = 4003,
+    NotAuthenticated = 4_003,
     /**
      * Authentication failed.
      */
-    AuthenticationFailed = 4004,
+    AuthenticationFailed = 4_004,
     /**
      * Already authenticated.
      */
-    AlreadyAuthenticated = 4005,
+    AlreadyAuthenticated = 4_005,
     /**
      * Invalid seq.
      */
-    InvalidSeq = 4007,
+    InvalidSeq = 4_007,
     /**
      * Rate limited.
      */
-    RateLimited = 4008,
+    RateLimited = 4_008,
     /**
      * Session timed out.
      */
-    SessionTimedOut = 4009,
+    SessionTimedOut = 4_009,
     /**
      * Invalid shard.
      */
-    InvalidShard = 4010,
+    InvalidShard = 4_010,
     /**
      * Sharding required.
      */
-    ShardingRequired = 4011,
+    ShardingRequired = 4_011,
     /**
      * Invalid API version.
      */
-    InvalidApiVersion = 4012,
+    InvalidApiVersion = 4_012,
     /**
      * Invalid intent(s).
      */
-    InvalidIntents = 4013,
+    InvalidIntents = 4_013,
     /**
      * Disallowed intent(s).
      */
-    DisallowedIntents = 4014,
+    DisallowedIntents = 4_014,
 }
 
 /**
  * Enum representing the various voice opcodes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-opcodes|Voice Opcodes}
  */
 export enum VoiceOpcodes {
@@ -213,65 +216,67 @@ export enum VoiceOpcodes {
 
 /**
  * Enum representing the various voice close event codes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes|Voice Close Event Codes}
  */
 export enum VoiceCloseCodes {
     /**
      * Unknown error.
      */
-    UnknownError = 4000,
+    UnknownError = 4_000,
     /**
      * Unknown opcode.
      */
-    UnknownOpcode = 4001,
+    UnknownOpcode = 4_001,
     /**
      * Decode error.
      */
-    DecodeError = 4002,
+    DecodeError = 4_002,
     /**
      * Not authenticated.
      */
-    NotAuthenticated = 4003,
+    NotAuthenticated = 4_003,
     /**
      * Authentication failed.
      */
-    AuthenticationFailed = 4004,
+    AuthenticationFailed = 4_004,
     /**
      * Already authenticated.
      */
-    AlreadyAuthenticated = 4005,
+    AlreadyAuthenticated = 4_005,
     /**
      * Session no longer valid.
      */
-    SessionNoLongerValid = 4006,
+    SessionNoLongerValid = 4_006,
     /**
      * Session timeout.
      */
-    SessionTimeout = 4009,
+    SessionTimeout = 4_009,
     /**
      * Server not found.
      */
-    ServerNotFound = 4011,
+    ServerNotFound = 4_011,
     /**
      * Unknown protocol.
      */
-    UnknownProtocol = 4012,
+    UnknownProtocol = 4_012,
     /**
      * Disconnected.
      */
-    Disconnected = 4014,
+    Disconnected = 4_014,
     /**
      * Voice server crashed.
      */
-    VoiceServerCrashed = 4015,
+    VoiceServerCrashed = 4_015,
     /**
      * Unknown encryption mode.
      */
-    UnknownEncryptionMode = 4016,
+    UnknownEncryptionMode = 4_016,
 }
 
 /**
  * Enum representing the various HTTP response codes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes|HTTP Response Codes}
  */
 export enum HttpCodes {
@@ -327,324 +332,327 @@ export enum HttpCodes {
 
 /**
  * Enum representing the various JSON error codes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-json-error-codes|JSON Error Codes}
  */
 export enum JsonErrorCodes {
     GeneralError = 0,
-    UnknownAccount = 10001,
-    UnknownApplication = 10002,
-    UnknownChannel = 10003,
-    UnknownGuild = 10004,
-    UnknownIntegration = 10005,
-    UnknownInvite = 10006,
-    UnknownMember = 10007,
-    UnknownMessage = 10008,
-    UnknownPermissionOverwrite = 10009,
-    UnknownProvider = 10010,
-    UnknownRole = 10011,
-    UnknownToken = 10012,
-    UnknownUser = 10013,
-    UnknownEmoji = 10014,
-    UnknownWebhook = 10015,
-    UnknownWebhookService = 10016,
-    UnknownSession = 10020,
-    UnknownBan = 10026,
-    UnknownSKU = 10027,
-    UnknownStoreListing = 10028,
-    UnknownEntitlement = 10029,
-    UnknownBuild = 10030,
-    UnknownLobby = 10031,
-    UnknownBranch = 10032,
-    UnknownStoreDirectoryLayout = 10033,
-    UnknownRedistributable = 10036,
-    UnknownGiftCode = 10038,
-    UnknownStream = 10049,
-    UnknownPremiumServerSubscribeCooldown = 10050,
-    UnknownGuildTemplate = 10057,
-    UnknownDiscoverableServerCategory = 10059,
-    UnknownSticker = 10060,
-    UnknownStickerPack = 10061,
-    UnknownInteraction = 10062,
-    UnknownApplicationCommand = 10063,
-    UnknownVoiceState = 10065,
-    UnknownApplicationCommandPermissions = 10066,
-    UnknownStageInstance = 10067,
-    UnknownGuildMemberVerificationForm = 10068,
-    UnknownGuildWelcomeScreen = 10069,
-    UnknownGuildScheduledEvent = 10070,
-    UnknownGuildScheduledEventUser = 10071,
-    UnknownTag = 10087,
-    BotsCannotUseThisEndpoint = 20001,
-    OnlyBotsCanUseThisEndpoint = 20002,
-    ExplicitContentCannotBeSentToTheDesiredRecipients = 20009,
-    NotAuthorizedToPerformThisActionOnThisApplication = 20012,
-    ActionCannotBePerformedDueToSlowmodeRateLimit = 20016,
-    OnlyTheOwnerOfThisAccountCanPerformThisAction = 20018,
-    MessageCannotBeEditedDueToAnnouncementRateLimits = 20022,
-    UnderMinimumAge = 20024,
-    ChannelHasHitTheWriteRateLimit = 20028,
-    ServerHasHitTheWriteRateLimit = 20029,
-    StageTopicServerNameServerDescriptionOrChannelNamesContainDisallowedWords = 20031,
-    GuildPremiumSubscriptionLevelTooLow = 20035,
-    MaximumNumberOfGuildsReached = 30001,
-    MaximumNumberOfFriendsReached = 30002,
-    MaximumNumberOfPinsReachedForTheChannel = 30003,
-    MaximumNumberOfRecipientsReached = 30004,
-    MaximumNumberOfGuildRolesReached = 30005,
-    MaximumNumberOfWebhooksReached = 30007,
-    MaximumNumberOfEmojisReached = 30008,
-    MaximumNumberOfReactionsReached = 30010,
-    MaximumNumberOfGroupDMsReached = 30011,
-    MaximumNumberOfGuildChannelsReached = 30013,
-    MaximumNumberOfAttachmentsInAMessageReached = 30015,
-    MaximumNumberOfInvitesReached = 30016,
-    MaximumNumberOfAnimatedEmojisReached = 30018,
-    MaximumNumberOfServerMembersReached = 30019,
-    MaximumNumberOfServerCategoriesReached = 30030,
-    GuildAlreadyHasATemplate = 30031,
-    MaximumNumberOfApplicationCommandsReached = 30032,
-    MaximumNumberOfThreadParticipantsReached = 30033,
-    MaximumNumberOfDailyApplicationCommandCreatesReached = 30034,
-    MaximumNumberOfBansForNonGuildMembersExceeded = 30035,
-    MaximumNumberOfBanFetchesReached = 30037,
-    MaximumNumberOfUncompletedGuildScheduledEventsReached = 30038,
-    MaximumNumberOfStickersReached = 30039,
-    MaximumNumberOfPruneRequestsReached = 30040,
-    MaximumNumberOfGuildWidgetSettingsUpdatesReached = 30042,
-    MaximumNumberOfEditsToMessagesOlderThan1HourReached = 30046,
-    MaximumNumberOfPinnedThreadsInAForumChannelReached = 30047,
-    MaximumNumberOfTagsInAForumChannelReached = 30048,
-    BitrateIsTooHighForChannelOfThisType = 30052,
-    MaximumNumberOfPremiumEmojisReached = 30056,
-    MaximumNumberOfWebhooksPerGuildReached = 30058,
-    MaximumNumberOfChannelPermissionOverwritesReached = 30060,
-    ChannelsForThisGuildAreTooLarge = 30061,
-    Unauthorized = 40001,
-    VerificationRequired = 40002,
-    OpeningDirectMessagesTooFast = 40003,
-    SendMessagesTemporarilyDisabled = 40004,
-    RequestEntityTooLarge = 40005,
-    FeatureTemporarilyDisabledServerSide = 40006,
-    UserBannedFromGuild = 40007,
-    ConnectionRevoked = 40012,
-    OnlyConsumableSKUsCanBeConsumed = 40018,
-    OnlySandboxEntitlementsCanBeDeleted = 40019,
-    TargetUserNotConnectedToVoice = 40032,
-    MessageAlreadyCrossposted = 40033,
-    ApplicationCommandWithThatNameAlreadyExists = 40041,
-    ApplicationInteractionFailedToSend = 40043,
-    CannotSendMessageInForumChannel = 40058,
-    InteractionAlreadyAcknowledged = 40060,
-    TagNamesMustBeUnique = 40061,
-    ServiceResourceBeingRateLimited = 40062,
-    NoTagsAvailableForNonModerators = 40066,
-    TagRequiredToCreateForumPost = 40067,
-    EntitlementAlreadyGrantedForResource = 40074,
-    InteractionHitMaximumNumberOfFollowUpMessages = 40094,
-    CloudflareBlocking = 40333,
-    MissingAccess = 50001,
-    InvalidAccountType = 50002,
-    CannotExecuteActionOnDMChannel = 50003,
-    GuildWidgetDisabled = 50004,
-    CannotEditMessageByAnotherUser = 50005,
-    CannotSendEmptyMessage = 50006,
-    CannotSendMessagesToUser = 50007,
-    CannotSendMessagesInNonTextChannel = 50008,
-    ChannelVerificationLevelTooHigh = 50009,
-    OAuth2ApplicationDoesNotHaveBot = 50010,
-    OAuth2ApplicationLimitReached = 50011,
-    InvalidOAuth2State = 50012,
-    LackPermissionsToPerformAction = 50013,
-    InvalidAuthenticationTokenProvided = 50014,
-    NoteTooLong = 50015,
-    TooFewOrTooManyMessagesToDelete = 50016,
-    InvalidMFALevel = 50017,
-    MessageCanOnlyBePinnedToOriginChannel = 50019,
-    InviteCodeInvalidOrTaken = 50020,
-    CannotExecuteActionOnSystemMessage = 50021,
-    CannotExecuteActionOnChannelType = 50024,
-    InvalidOAuth2AccessToken = 50025,
-    MissingRequiredOAuth2Scope = 50026,
-    InvalidWebhookTokenProvided = 50027,
-    InvalidRole = 50028,
-    InvalidRecipients = 50033,
-    MessageTooOldToBulkDelete = 50034,
-    InvalidFormBody = 50035,
-    InviteAcceptedToGuildBotNotIn = 50036,
-    InvalidActivityAction = 50039,
-    InvalidAPIVersion = 50041,
-    FileUploadExceedsMaximumSize = 50045,
-    InvalidFileUploaded = 50046,
-    CannotSelfRedeemGift = 50054,
-    InvalidGuild = 50055,
-    InvalidSKU = 50057,
-    InvalidRequestOrigin = 50067,
-    InvalidMessageType = 50068,
-    PaymentSourceRequiredToRedeemGift = 50070,
-    CannotModifySystemWebhook = 50073,
-    CannotDeleteRequiredCommunityChannel = 50074,
-    CannotEditStickersWithinMessage = 50080,
-    InvalidStickerSent = 50081,
-    CannotPerformActionOnArchivedThread = 50083,
-    InvalidThreadNotificationSettings = 50084,
-    BeforeValueEarlierThanThreadCreationDate = 50085,
-    CommunityServerChannelsMustBeTextChannels = 50086,
-    EntityTypeMismatch = 50091,
-    ServerNotAvailableInLocation = 50095,
-    ServerNeedsMonetizationEnabled = 50097,
-    ServerNeedsMoreBoosts = 50101,
-    InvalidJSONInRequestBody = 50109,
-    OwnerCannotBePendingMember = 50131,
-    OwnershipCannotBeTransferredToBot = 50132,
-    FailedToResizeAssetBelowMaximumSize = 50138,
-    CannotMixSubscriptionAndNonSubscriptionRoles = 50144,
-    CannotConvertBetweenPremiumAndNormalEmoji = 50145,
-    UploadedFileNotFound = 50146,
-    VoiceMessagesDoNotSupportAdditionalContent = 50159,
-    VoiceMessagesMustHaveSingleAudioAttachment = 50160,
-    VoiceMessagesMustHaveSupportingMetadata = 50161,
-    VoiceMessagesCannotBeEdited = 50162,
-    CannotDeleteGuildSubscriptionIntegration = 50163,
-    CannotSendVoiceMessagesInThisChannel = 50173,
-    UserAccountMustBeVerified = 50178,
-    NoPermissionToSendSticker = 50600,
-    TwoFactorRequired = 60003,
-    NoUsersWithDiscordTagExist = 80004,
-    ReactionBlocked = 90001,
-    UserCannotUseBurstReactions = 90002,
-    ApplicationNotYetAvailable = 110001,
-    APIResourceOverloaded = 130000,
-    StageAlreadyOpen = 150006,
-    CannotReplyWithoutPermissionToReadMessageHistory = 160002,
-    ThreadAlreadyCreatedForMessage = 160004,
-    ThreadLocked = 160005,
-    MaximumNumberOfActiveThreadsReached = 160006,
-    MaximumNumberOfActiveAnnouncementThreadsReached = 160007,
-    InvalidJSONForUploadedLottieFile = 170001,
-    UploadedLottiesCannotContainRasterizedImages = 170002,
-    StickerMaximumFramerateExceeded = 170003,
-    StickerFrameCountExceedsMaximum = 170004,
-    LottieAnimationMaximumDimensionsExceeded = 170005,
-    StickerFrameRateInvalid = 170006,
-    StickerAnimationDurationExceedsMaximum = 170007,
-    CannotUpdateFinishedEvent = 180000,
-    FailedToCreateStageNeededForStageEvent = 180002,
-    MessageBlockedByAutomaticModeration = 200000,
-    TitleBlockedByAutomaticModeration = 200001,
-    WebhooksPostedToForumChannelsMustHaveThreadNameOrId = 220001,
-    WebhooksCannotHaveBothThreadNameAndId = 220002,
-    WebhooksCanOnlyCreateThreadsInForumChannels = 220003,
-    WebhookServicesCannotBeUsedInForumChannels = 220004,
-    MessageBlockedByHarmfulLinksFilter = 240000,
-    CannotEnableOnboarding = 350000,
-    CannotUpdateOnboardingWhileBelowRequirements = 350001,
-    FailedToBanUsers = 500000,
-    PollVotingBlocked = 520000,
-    PollExpired = 520001,
-    InvalidChannelTypeForPollCreation = 520002,
-    CannotEditPollMessage = 520003,
-    CannotUseEmojiIncludedWithPoll = 520004,
-    CannotExpireNonPollMessage = 520006,
+    UnknownAccount = 10_001,
+    UnknownApplication = 10_002,
+    UnknownChannel = 10_003,
+    UnknownGuild = 10_004,
+    UnknownIntegration = 10_005,
+    UnknownInvite = 10_006,
+    UnknownMember = 10_007,
+    UnknownMessage = 10_008,
+    UnknownPermissionOverwrite = 10_009,
+    UnknownProvider = 10_010,
+    UnknownRole = 10_011,
+    UnknownToken = 10_012,
+    UnknownUser = 10_013,
+    UnknownEmoji = 10_014,
+    UnknownWebhook = 10_015,
+    UnknownWebhookService = 10_016,
+    UnknownSession = 10_020,
+    UnknownBan = 10_026,
+    UnknownSKU = 10_027,
+    UnknownStoreListing = 10_028,
+    UnknownEntitlement = 10_029,
+    UnknownBuild = 10_030,
+    UnknownLobby = 10_031,
+    UnknownBranch = 10_032,
+    UnknownStoreDirectoryLayout = 10_033,
+    UnknownRedistributable = 10_036,
+    UnknownGiftCode = 10_038,
+    UnknownStream = 10_049,
+    UnknownPremiumServerSubscribeCooldown = 10_050,
+    UnknownGuildTemplate = 10_057,
+    UnknownDiscoverableServerCategory = 10_059,
+    UnknownSticker = 10_060,
+    UnknownStickerPack = 10_061,
+    UnknownInteraction = 10_062,
+    UnknownApplicationCommand = 10_063,
+    UnknownVoiceState = 10_065,
+    UnknownApplicationCommandPermissions = 10_066,
+    UnknownStageInstance = 10_067,
+    UnknownGuildMemberVerificationForm = 10_068,
+    UnknownGuildWelcomeScreen = 10_069,
+    UnknownGuildScheduledEvent = 10_070,
+    UnknownGuildScheduledEventUser = 10_071,
+    UnknownTag = 10_087,
+    BotsCannotUseThisEndpoint = 20_001,
+    OnlyBotsCanUseThisEndpoint = 20_002,
+    ExplicitContentCannotBeSentToTheDesiredRecipients = 20_009,
+    NotAuthorizedToPerformThisActionOnThisApplication = 20_012,
+    ActionCannotBePerformedDueToSlowmodeRateLimit = 20_016,
+    OnlyTheOwnerOfThisAccountCanPerformThisAction = 20_018,
+    MessageCannotBeEditedDueToAnnouncementRateLimits = 20_022,
+    UnderMinimumAge = 20_024,
+    ChannelHasHitTheWriteRateLimit = 20_028,
+    ServerHasHitTheWriteRateLimit = 20_029,
+    StageTopicServerNameServerDescriptionOrChannelNamesContainDisallowedWords = 20_031,
+    GuildPremiumSubscriptionLevelTooLow = 20_035,
+    MaximumNumberOfGuildsReached = 30_001,
+    MaximumNumberOfFriendsReached = 30_002,
+    MaximumNumberOfPinsReachedForTheChannel = 30_003,
+    MaximumNumberOfRecipientsReached = 30_004,
+    MaximumNumberOfGuildRolesReached = 30_005,
+    MaximumNumberOfWebhooksReached = 30_007,
+    MaximumNumberOfEmojisReached = 30_008,
+    MaximumNumberOfReactionsReached = 30_010,
+    MaximumNumberOfGroupDMsReached = 30_011,
+    MaximumNumberOfGuildChannelsReached = 30_013,
+    MaximumNumberOfAttachmentsInAMessageReached = 30_015,
+    MaximumNumberOfInvitesReached = 30_016,
+    MaximumNumberOfAnimatedEmojisReached = 30_018,
+    MaximumNumberOfServerMembersReached = 30_019,
+    MaximumNumberOfServerCategoriesReached = 30_030,
+    GuildAlreadyHasATemplate = 30_031,
+    MaximumNumberOfApplicationCommandsReached = 30_032,
+    MaximumNumberOfThreadParticipantsReached = 30_033,
+    MaximumNumberOfDailyApplicationCommandCreatesReached = 30_034,
+    MaximumNumberOfBansForNonGuildMembersExceeded = 30_035,
+    MaximumNumberOfBanFetchesReached = 30_037,
+    MaximumNumberOfUncompletedGuildScheduledEventsReached = 30_038,
+    MaximumNumberOfStickersReached = 30_039,
+    MaximumNumberOfPruneRequestsReached = 30_040,
+    MaximumNumberOfGuildWidgetSettingsUpdatesReached = 30_042,
+    MaximumNumberOfEditsToMessagesOlderThan1HourReached = 30_046,
+    MaximumNumberOfPinnedThreadsInAForumChannelReached = 30_047,
+    MaximumNumberOfTagsInAForumChannelReached = 30_048,
+    BitrateIsTooHighForChannelOfThisType = 30_052,
+    MaximumNumberOfPremiumEmojisReached = 30_056,
+    MaximumNumberOfWebhooksPerGuildReached = 30_058,
+    MaximumNumberOfChannelPermissionOverwritesReached = 30_060,
+    ChannelsForThisGuildAreTooLarge = 30_061,
+    Unauthorized = 40_001,
+    VerificationRequired = 40_002,
+    OpeningDirectMessagesTooFast = 40_003,
+    SendMessagesTemporarilyDisabled = 40_004,
+    RequestEntityTooLarge = 40_005,
+    FeatureTemporarilyDisabledServerSide = 40_006,
+    UserBannedFromGuild = 40_007,
+    ConnectionRevoked = 40_012,
+    OnlyConsumableSKUsCanBeConsumed = 40_018,
+    OnlySandboxEntitlementsCanBeDeleted = 40_019,
+    TargetUserNotConnectedToVoice = 40_032,
+    MessageAlreadyCrossposted = 40_033,
+    ApplicationCommandWithThatNameAlreadyExists = 40_041,
+    ApplicationInteractionFailedToSend = 40_043,
+    CannotSendMessageInForumChannel = 40_058,
+    InteractionAlreadyAcknowledged = 40_060,
+    TagNamesMustBeUnique = 40_061,
+    ServiceResourceBeingRateLimited = 40_062,
+    NoTagsAvailableForNonModerators = 40_066,
+    TagRequiredToCreateForumPost = 40_067,
+    EntitlementAlreadyGrantedForResource = 40_074,
+    InteractionHitMaximumNumberOfFollowUpMessages = 40_094,
+    CloudflareBlocking = 40_333,
+    MissingAccess = 50_001,
+    InvalidAccountType = 50_002,
+    CannotExecuteActionOnDMChannel = 50_003,
+    GuildWidgetDisabled = 50_004,
+    CannotEditMessageByAnotherUser = 50_005,
+    CannotSendEmptyMessage = 50_006,
+    CannotSendMessagesToUser = 50_007,
+    CannotSendMessagesInNonTextChannel = 50_008,
+    ChannelVerificationLevelTooHigh = 50_009,
+    OAuth2ApplicationDoesNotHaveBot = 50_010,
+    OAuth2ApplicationLimitReached = 50_011,
+    InvalidOAuth2State = 50_012,
+    LackPermissionsToPerformAction = 50_013,
+    InvalidAuthenticationTokenProvided = 50_014,
+    NoteTooLong = 50_015,
+    TooFewOrTooManyMessagesToDelete = 50_016,
+    InvalidMFALevel = 50_017,
+    MessageCanOnlyBePinnedToOriginChannel = 50_019,
+    InviteCodeInvalidOrTaken = 50_020,
+    CannotExecuteActionOnSystemMessage = 50_021,
+    CannotExecuteActionOnChannelType = 50_024,
+    InvalidOAuth2AccessToken = 50_025,
+    MissingRequiredOAuth2Scope = 50_026,
+    InvalidWebhookTokenProvided = 50_027,
+    InvalidRole = 50_028,
+    InvalidRecipients = 50_033,
+    MessageTooOldToBulkDelete = 50_034,
+    InvalidFormBody = 50_035,
+    InviteAcceptedToGuildBotNotIn = 50_036,
+    InvalidActivityAction = 50_039,
+    InvalidAPIVersion = 50_041,
+    FileUploadExceedsMaximumSize = 50_045,
+    InvalidFileUploaded = 50_046,
+    CannotSelfRedeemGift = 50_054,
+    InvalidGuild = 50_055,
+    InvalidSKU = 50_057,
+    InvalidRequestOrigin = 50_067,
+    InvalidMessageType = 50_068,
+    PaymentSourceRequiredToRedeemGift = 50_070,
+    CannotModifySystemWebhook = 50_073,
+    CannotDeleteRequiredCommunityChannel = 50_074,
+    CannotEditStickersWithinMessage = 50_080,
+    InvalidStickerSent = 50_081,
+    CannotPerformActionOnArchivedThread = 50_083,
+    InvalidThreadNotificationSettings = 50_084,
+    BeforeValueEarlierThanThreadCreationDate = 50_085,
+    CommunityServerChannelsMustBeTextChannels = 50_086,
+    EntityTypeMismatch = 50_091,
+    ServerNotAvailableInLocation = 50_095,
+    ServerNeedsMonetizationEnabled = 50_097,
+    ServerNeedsMoreBoosts = 50_101,
+    InvalidJSONInRequestBody = 50_109,
+    OwnerCannotBePendingMember = 50_131,
+    OwnershipCannotBeTransferredToBot = 50_132,
+    FailedToResizeAssetBelowMaximumSize = 50_138,
+    CannotMixSubscriptionAndNonSubscriptionRoles = 50_144,
+    CannotConvertBetweenPremiumAndNormalEmoji = 50_145,
+    UploadedFileNotFound = 50_146,
+    VoiceMessagesDoNotSupportAdditionalContent = 50_159,
+    VoiceMessagesMustHaveSingleAudioAttachment = 50_160,
+    VoiceMessagesMustHaveSupportingMetadata = 50_161,
+    VoiceMessagesCannotBeEdited = 50_162,
+    CannotDeleteGuildSubscriptionIntegration = 50_163,
+    CannotSendVoiceMessagesInThisChannel = 50_173,
+    UserAccountMustBeVerified = 50_178,
+    NoPermissionToSendSticker = 50_600,
+    TwoFactorRequired = 60_003,
+    NoUsersWithDiscordTagExist = 80_004,
+    ReactionBlocked = 90_001,
+    UserCannotUseBurstReactions = 90_002,
+    ApplicationNotYetAvailable = 110_001,
+    APIResourceOverloaded = 130_000,
+    StageAlreadyOpen = 150_006,
+    CannotReplyWithoutPermissionToReadMessageHistory = 160_002,
+    ThreadAlreadyCreatedForMessage = 160_004,
+    ThreadLocked = 160_005,
+    MaximumNumberOfActiveThreadsReached = 160_006,
+    MaximumNumberOfActiveAnnouncementThreadsReached = 160_007,
+    InvalidJSONForUploadedLottieFile = 170_001,
+    UploadedLottiesCannotContainRasterizedImages = 170_002,
+    StickerMaximumFramerateExceeded = 170_003,
+    StickerFrameCountExceedsMaximum = 170_004,
+    LottieAnimationMaximumDimensionsExceeded = 170_005,
+    StickerFrameRateInvalid = 170_006,
+    StickerAnimationDurationExceedsMaximum = 170_007,
+    CannotUpdateFinishedEvent = 180_000,
+    FailedToCreateStageNeededForStageEvent = 180_002,
+    MessageBlockedByAutomaticModeration = 200_000,
+    TitleBlockedByAutomaticModeration = 200_001,
+    WebhooksPostedToForumChannelsMustHaveThreadNameOrId = 220_001,
+    WebhooksCannotHaveBothThreadNameAndId = 220_002,
+    WebhooksCanOnlyCreateThreadsInForumChannels = 220_003,
+    WebhookServicesCannotBeUsedInForumChannels = 220_004,
+    MessageBlockedByHarmfulLinksFilter = 240_000,
+    CannotEnableOnboarding = 350_000,
+    CannotUpdateOnboardingWhileBelowRequirements = 350_001,
+    FailedToBanUsers = 500_000,
+    PollVotingBlocked = 520_000,
+    PollExpired = 520_001,
+    InvalidChannelTypeForPollCreation = 520_002,
+    CannotEditPollMessage = 520_003,
+    CannotUseEmojiIncludedWithPoll = 520_004,
+    CannotExpireNonPollMessage = 520_006,
 }
 
 /**
  * Enum representing the various RPC error codes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-error-codes|RPC Error Codes}
  */
 export enum RpcErrorCodes {
     /**
      * An unknown error occurred.
      */
-    UnknownError = 1000,
+    UnknownError = 1_000,
     /**
      * You sent an invalid payload.
      */
-    InvalidPayload = 4000,
+    InvalidPayload = 4_000,
     /**
      * Invalid command name specified.
      */
-    InvalidCommand = 4002,
+    InvalidCommand = 4_002,
     /**
      * Invalid guild ID specified.
      */
-    InvalidGuild = 4003,
+    InvalidGuild = 4_003,
     /**
      * Invalid event name specified.
      */
-    InvalidEvent = 4004,
+    InvalidEvent = 4_004,
     /**
      * Invalid channel ID specified.
      */
-    InvalidChannel = 4005,
+    InvalidChannel = 4_005,
     /**
      * You lack permissions to access the given resource.
      */
-    InvalidPermissions = 4006,
+    InvalidPermissions = 4_006,
     /**
      * An invalid OAuth2 application ID was used to authorize or authenticate with.
      */
-    InvalidClientId = 4007,
+    InvalidClientId = 4_007,
     /**
      * An invalid OAuth2 application origin was used to authorize or authenticate with.
      */
-    InvalidOrigin = 4008,
+    InvalidOrigin = 4_008,
     /**
      * An invalid OAuth2 token was used to authorize or authenticate with.
      */
-    InvalidToken = 4009,
+    InvalidToken = 4_009,
     /**
      * The specified user ID was invalid.
      */
-    InvalidUser = 4010,
+    InvalidUser = 4_010,
     /**
      * A standard OAuth2 error occurred; check the data object for the OAuth2 error details.
      */
-    OAuth2Error = 5000,
+    OAuth2Error = 5_000,
     /**
      * An asynchronous SELECT_TEXT_CHANNEL/SELECT_VOICE_CHANNEL command timed out.
      */
-    SelectChannelTimedOut = 5001,
+    SelectChannelTimedOut = 5_001,
     /**
      * An asynchronous GET_GUILD command timed out.
      */
-    GetGuildTimedOut = 5002,
+    GetGuildTimedOut = 5_002,
     /**
      * You tried to join a user to a voice channel but the user was already in one.
      */
-    SelectVoiceForceRequired = 5003,
+    SelectVoiceForceRequired = 5_003,
     /**
      * You tried to capture more than one shortcut key at once.
      */
-    CaptureShortcutAlreadyListening = 5004,
+    CaptureShortcutAlreadyListening = 5_004,
 }
 
 /**
  * Enum representing the various RPC close event codes used by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-close-event-codes|RPC Close Event Codes}
  */
 export enum RpcCloseCodes {
     /**
      * Invalid client ID.
      */
-    InvalidClientId = 4000,
+    InvalidClientId = 4_000,
     /**
      * Invalid origin.
      */
-    InvalidOrigin = 4001,
+    InvalidOrigin = 4_001,
     /**
      * Rate limited.
      */
-    RateLimited = 4002,
+    RateLimited = 4_002,
     /**
      * Token revoked.
      */
-    TokenRevoked = 4003,
+    TokenRevoked = 4_003,
     /**
      * Invalid version.
      */
-    InvalidVersion = 4004,
+    InvalidVersion = 4_004,
     /**
      * Invalid encoding.
      */
-    InvalidEncoding = 4005,
+    InvalidEncoding = 4_005,
 }

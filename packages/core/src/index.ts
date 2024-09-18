@@ -11,6 +11,7 @@ export * from "./enums/opcodes";
 /**
  * ./libs
  */
+export * from "./libs/bitfield";
 export * from "./libs/formats";
 export * from "./libs/markdowns";
 export * from "./libs/types";
@@ -18,4 +19,5 @@ export * from "./libs/types";
 /**
  * ./structures
  */
+export * from "./structures/emojis";
 export * from "./structures/users";

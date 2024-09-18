@@ -1,44 +1,44 @@
 /**
  * Enum representing various locales supported by Discord.
+ *
  * @see {@link https://discord.com/developers/docs/reference#locales|Locales}
  */
 export enum Locales {
-    Indonesian = "id",
+    Bulgarian = "bg",
+    ChineseChina = "zh-CN",
+    ChineseTaiwan = "zh-TW",
+    Croatian = "hr",
+    Czech = "cs",
     Danish = "da",
-    German = "de",
+    Dutch = "nl",
     EnglishUK = "en-GB",
     EnglishUS = "en-US",
-    Spanish = "es-ES",
-    SpanishLATAM = "es-419",
+    Finnish = "fi",
     French = "fr",
-    Croatian = "hr",
-    Italian = "it",
-    Lithuanian = "lt",
+    German = "de",
+    Greek = "el",
+    Hindi = "hi",
     Hungarian = "hu",
-    Dutch = "nl",
+    Indonesian = "id",
+    Italian = "it",
+    Japanese = "ja",
+    Korean = "ko",
+    Lithuanian = "lt",
     Norwegian = "no",
     Polish = "pl",
     PortugueseBrazilian = "pt-BR",
     Romanian = "ro",
-    Finnish = "fi",
-    Swedish = "sv-SE",
-    Vietnamese = "vi",
-    Turkish = "tr",
-    Czech = "cs",
-    Greek = "el",
-    Bulgarian = "bg",
     Russian = "ru",
-    Ukrainian = "uk",
-    Hindi = "hi",
+    Spanish = "es-ES",
+    SpanishLATAM = "es-419",
+    Swedish = "sv-SE",
     Thai = "th",
-    ChineseChina = "zh-CN",
-    Japanese = "ja",
-    ChineseTaiwan = "zh-TW",
-    Korean = "ko",
+    Turkish = "tr",
+    Ukrainian = "uk",
+    Vietnamese = "vi",
 }
 
 /**
  * Type representing the keys of the Locales enum.
- * @typedef {`${Locales}`} LocaleKeys
  */
 export type LocaleKeys = `${Locales}`;

@@ -6,6 +6,10 @@ import type { Integer, Snowflake } from "../libs/types";
  */
 export type ApplicationRoleConnectionStructure = {
     /**
+     * @todo Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected.
+     */
+    metadata: Record<string, string>;
+    /**
      * The vanity name of the platform a bot has connected (max 50 characters).
      */
     platform_name: string | null;
@@ -13,10 +17,6 @@ export type ApplicationRoleConnectionStructure = {
      * The username on the platform a bot has connected (max 100 characters).
      */
     platform_username: string | null;
-    /**
-     * @todo Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected.
-     */
-    metadata: Record<string, string>;
 };
 
 /**
@@ -52,8 +52,8 @@ export type ConnectionServices =
     | "reddit"
     | "riotgames"
     | "roblox"
-    | "spotify"
     | "skype"
+    | "spotify"
     | "steam"
     | "tiktok"
     | "twitch"
@@ -66,33 +66,25 @@ export type ConnectionServices =
  */
 export type ConnectionStructure = {
     /**
+     * Whether friend sync is enabled for this connection.
+     */
+    friend_sync: boolean;
+    /**
      * The id of the connection account.
      */
     id: string;
-    /**
-     * The username of the connection account.
-     */
-    name: string;
-    /**
-     * The service of this connection.
-     */
-    type: ConnectionServices;
-    /**
-     * Whether the connection is revoked.
-     */
-    revoked?: boolean;
     /**
      * @todo An array of partial server integrations.
      */
     integrations?: unknown[];
     /**
-     * Whether the connection is verified.
+     * The username of the connection account.
      */
-    verified: boolean;
+    name: string;
     /**
-     * Whether friend sync is enabled for this connection.
+     * Whether the connection is revoked.
      */
-    friend_sync: boolean;
+    revoked?: boolean;
     /**
      * Whether activities related to this connection will be shown in presence updates.
      */
@@ -101,6 +93,14 @@ export type ConnectionStructure = {
      * Whether this connection has a corresponding third party OAuth2 token.
      */
     two_way_link: boolean;
+    /**
+     * The service of this connection.
+     */
+    type: ConnectionServices;
+    /**
+     * Whether the connection is verified.
+     */
+    verified: boolean;
     /**
      * Visibility of this connection.
      */
@@ -170,31 +170,31 @@ export enum UserFlags {
     /**
      * User is a team
      */
-    TeamPseudoUser = 1024,
+    TeamPseudoUser = 1_024,
     /**
      * Bug Hunter Level 2
      */
-    BugHunterLevel2 = 16384,
+    BugHunterLevel2 = 16_384,
     /**
      * Verified Bot
      */
-    VerifiedBot = 65536,
+    VerifiedBot = 65_536,
     /**
      * Early Verified Bot Developer
      */
-    VerifiedDeveloper = 131072,
+    VerifiedDeveloper = 131_072,
     /**
      * Moderator Programs Alumni
      */
-    CertifiedModerator = 262144,
+    CertifiedModerator = 262_144,
     /**
      * Bot uses only HTTP interactions and is shown in the online member list
      */
-    BotHttpInteractions = 524288,
+    BotHttpInteractions = 524_288,
     /**
      * User is an Active Developer
      */
-    ActiveDeveloper = 4194304,
+    ActiveDeveloper = 4_194_304,
 }
 
 /**
@@ -202,53 +202,29 @@ export enum UserFlags {
  */
 export type UserStructure = {
     /**
-     * The user's id.
+     * The user's banner color encoded as an integer representation of hexadecimal color code.
      */
-    id: Snowflake;
-    /**
-     * The user's username, not unique across the platform.
-     */
-    username: string;
-    /**
-     * The user's Discord-tag.
-     */
-    discriminator: string;
-    /**
-     * The user's display name, if it is set. For bots, this is the application name.
-     */
-    global_name: string | null;
+    accent_color?: Integer | null;
     /**
      * The user's avatar hash.
      */
     avatar: string | null;
     /**
-     * Whether the user belongs to an OAuth2 application.
+     * Data for the user's avatar decoration.
      */
-    bot?: boolean;
-    /**
-     * Whether the user is an Official Discord System user (part of the urgent message system).
-     */
-    system?: boolean;
-    /**
-     * Whether the user has two factor enabled on their account.
-     */
-    mfa_enabled?: boolean;
+    avatar_decoration_data?: AvatarDecorationDataStructure | null;
     /**
      * The user's banner hash.
      */
     banner?: string | null;
     /**
-     * The user's banner color encoded as an integer representation of hexadecimal color code.
+     * Whether the user belongs to an OAuth2 application.
      */
-    accent_color?: Integer | null;
+    bot?: boolean;
     /**
-     * The user's chosen language option.
+     * The user's Discord-tag.
      */
-    locale?: LocaleKeys;
-    /**
-     * Whether the email on this account has been verified.
-     */
-    verified?: boolean;
+    discriminator: string;
     /**
      * The user's email.
      */
@@ -258,6 +234,22 @@ export type UserStructure = {
      */
     flags?: UserFlags;
     /**
+     * The user's display name, if it is set. For bots, this is the application name.
+     */
+    global_name: string | null;
+    /**
+     * The user's id.
+     */
+    id: Snowflake;
+    /**
+     * The user's chosen language option.
+     */
+    locale?: LocaleKeys;
+    /**
+     * Whether the user has two factor enabled on their account.
+     */
+    mfa_enabled?: boolean;
+    /**
      * The type of Nitro subscription on a user's account.
      */
     premium_type?: PremiumTypes;
@@ -266,7 +258,15 @@ export type UserStructure = {
      */
     public_flags?: UserFlags;
     /**
-     * Data for the user's avatar decoration.
+     * Whether the user is an Official Discord System user (part of the urgent message system).
      */
-    avatar_decoration_data?: AvatarDecorationDataStructure | null;
+    system?: boolean;
+    /**
+     * The user's username, not unique across the platform.
+     */
+    username: string;
+    /**
+     * Whether the email on this account has been verified.
+     */
+    verified?: boolean;
 };

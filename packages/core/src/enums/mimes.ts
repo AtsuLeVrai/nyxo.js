@@ -1,11 +1,11 @@
 /**
  * Enum representing various MIME types.
+ *
  * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types|MIME types}
  */
 export enum MimeTypes {
     Aac = "audio/aac",
     Abw = "application/x-abiword",
-    Arc = "application/octet-stream",
     Avi = "video/x-msvideo",
     Azw = "application/vnd.amazon.ebook",
     Bin = "application/octet-stream",
@@ -20,16 +20,13 @@ export enum MimeTypes {
     Eot = "application/vnd.ms-fontobject",
     Epub = "application/epub+zip",
     Gif = "image/gif",
-    Htm = "text/html",
     Html = "text/html",
     Ico = "image/x-icon",
     Ics = "text/calendar",
     Jar = "application/java-archive",
     Jpeg = "image/jpeg",
-    Jpg = "image/jpeg",
     Js = "application/javascript",
     Json = "application/json",
-    Mid = "audio/midi",
     Midi = "audio/midi",
     Mpeg = "video/mpeg",
     Mpkg = "application/vnd.apple.installer+xml",
@@ -40,8 +37,8 @@ export enum MimeTypes {
     Ogv = "video/ogg",
     Ogx = "application/ogg",
     Otf = "font/otf",
-    Png = "image/png",
     Pdf = "application/pdf",
+    Png = "image/png",
     Ppt = "application/vnd.ms-powerpoint",
     Pptx = "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     Rar = "application/x-rar-compressed",
@@ -50,7 +47,6 @@ export enum MimeTypes {
     Svg = "image/svg+xml",
     Swf = "application/x-shockwave-flash",
     Tar = "application/x-tar",
-    Tif = "image/tiff",
     Tiff = "image/tiff",
     Ts = "application/typescript",
     Ttf = "font/ttf",
@@ -67,7 +63,7 @@ export enum MimeTypes {
     Xml = "application/xml",
     Xul = "application/vnd.mozilla.xul+xml",
     Zip = "application/zip",
-    _3gp = "video/3gpp",
     _3g2 = "video/3gpp2",
+    _3gp = "video/3gpp",
     _7z = "application/x-7z-compressed",
 }

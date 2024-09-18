@@ -20,9 +20,14 @@
         "^clean"
       ]
     },
-    "format": {
+    "lint": {
       "dependsOn": [
-        "^format"
+        "^lint"
+      ]
+    },
+    "pretty": {
+      "dependsOn": [
+        "^pretty"
       ]
     }
   }
