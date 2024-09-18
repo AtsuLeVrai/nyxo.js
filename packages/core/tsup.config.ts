@@ -7,6 +7,7 @@ export default defineConfig({
     keepNames: true,
     skipNodeModulesBundle: true,
     legacyOutput: true,
+    minify: true,
     tsconfig: "tsconfig.json",
     entry: ["src/index.ts"],
     format: ["cjs", "esm"],
