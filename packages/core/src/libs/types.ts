@@ -1,3 +1,4 @@
+import type { LocaleKeys } from "../enums/locales";
 import type { MimeTypes } from "../enums/mimes";
 
 /**
@@ -43,3 +44,8 @@ export type DiscordHeaders = {
     "X-Signature-Ed25519"?: string;
     "X-Signature-Timestamp"?: string;
 };
+
+/**
+ * Represents the available locales as a record with locale keys and their corresponding string values.
+ */
+export type AvailableLocales = Record<LocaleKeys, string>;

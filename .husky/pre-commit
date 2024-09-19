@@ -1,2 +1,2 @@
-pnpm run pretty && pnpm run build
+pnpm run pretty && pnpm run lint
 git update-index --again
