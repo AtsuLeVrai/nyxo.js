@@ -1,14 +1,16 @@
 import type { LocaleKeys } from "../enums/locales";
 import type { Integer, Snowflake } from "../libs/types";
+import type { ApplicationRoleConnectionMetadataStructure } from "./applications";
+import type { IntegrationStructure } from "./guilds";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure|Application Role Connection Structure}
  */
 export type ApplicationRoleConnectionStructure = {
     /**
-     * @todo Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected.
+     * Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected.
      */
-    metadata: Record<string, string>;
+    metadata: Record<string, ApplicationRoleConnectionMetadataStructure>;
     /**
      * The vanity name of the platform a bot has connected (max 50 characters).
      */
@@ -74,9 +76,11 @@ export type ConnectionStructure = {
      */
     id: string;
     /**
-     * @todo An array of partial server integrations.
+     * An array of partial server integrations.
+     *
+     * @todo No information available in the Discord API documentation
      */
-    integrations?: unknown[];
+    integrations?: IntegrationStructure[];
     /**
      * The username of the connection account.
      */

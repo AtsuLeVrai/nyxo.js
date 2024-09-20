@@ -3,6 +3,7 @@ import type { OAuth2Scopes } from "../enums/oauth2";
 import type { BitwisePermissions } from "../enums/permissions";
 import type { BitfieldResolvable } from "../libs/bitfield";
 import type { Integer, Iso8601Timestamp, Snowflake } from "../libs/types";
+import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";
 import type { StickerStructure } from "./stickers";
@@ -407,9 +408,9 @@ export type GuildMemberStructure = {
  */
 export type GuildWidgetStructure = {
     /**
-     * @todo Voice and stage channels which are accessible by everyone
+     * Voice and stage channels which are accessible by everyone
      */
-    channels: Pick<any, "id" | "name" | "position">[];
+    channels: Pick<ChannelStructure, "id" | "name" | "position">[];
     /**
      * The guild id
      */
