@@ -71,6 +71,36 @@ export type ThreadMemberStructure = {
 };
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/channel#thread-metadata-object-thread-metadata-structure|Thread Metadata Structure}
+ */
+export type ThreadMetadataStructure = {
+    /**
+     * Timestamp when the thread's archive status was last changed, used for calculating recent activity
+     */
+    archive_timestamp: Iso8601Timestamp;
+    /**
+     * Whether the thread is archived
+     */
+    archived: boolean;
+    /**
+     * The thread will stop showing in the channel list after auto_archive_duration minutes of inactivity, can be set to: 60, 1440, 4320, 10080
+     */
+    auto_archive_duration: Integer;
+    /**
+     * Timestamp when the thread was created; only populated for threads created after 2022-01-09
+     */
+    create_timestamp?: Iso8601Timestamp | null;
+    /**
+     * Whether non-moderators can add other non-moderators to a thread; only available on private threads
+     */
+    invitable?: boolean;
+    /**
+     * Whether the thread is locked; when a thread is locked, only users with MANAGE_THREADS can unarchive it
+     */
+    locked: boolean;
+};
+
+/**
  * Enumeration of overwrite types in Discord.
  */
 export enum OverwriteTypes {
@@ -359,9 +389,9 @@ export type ChannelStructure = {
      */
     rtc_region?: string | null;
     /**
-     * @todo Thread-specific fields not needed by other channels
+     * Thread-specific fields not needed by other channels
      */
-    thread_metadata?: any;
+    thread_metadata?: ThreadMetadataStructure;
     /**
      * The channel topic (0-4096 characters for GUILD_FORUM and GUILD_MEDIA channels, 0-1024 characters for all others)
      */

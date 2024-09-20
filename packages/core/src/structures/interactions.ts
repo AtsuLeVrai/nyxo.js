@@ -209,9 +209,9 @@ export type ApplicationCommandStructure = {
      */
     application_id: Snowflake;
     /**
-     * @todo Interaction context(s) where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+     * Interaction context(s) where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
      */
-    contexts?: unknown[] | null;
+    contexts?: InteractionContextTypes[] | null;
     /**
      * Set of permissions represented as a bit set
      */

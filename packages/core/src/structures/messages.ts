@@ -1,8 +1,11 @@
 import type { MimeTypes } from "../enums/mimes";
 import type { BitfieldResolvable } from "../libs/bitfield";
 import type { Float, Integer, Iso8601Timestamp, Snowflake } from "../libs/types";
+import type { ApplicationIntegrationTypes, ApplicationStructure } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
+import type { ActionRowStructure } from "./components";
 import type { EmojiStructure } from "./emojis";
+import type { InteractionTypes, MessageInteractionStructure, ResolvedDataStructure } from "./interactions";
 import type { PollStructure } from "./polls";
 import type { StickerItemStructure, StickerStructure } from "./stickers";
 import type { UserStructure } from "./users";
@@ -489,9 +492,11 @@ export type MessageCallStructure = {
  */
 export type MessageInteractionMetadataStructure = {
     /**
-     * @todo IDs for installation context(s) related to an interaction. Details in Authorizing Integration Owners Object
+     * IDs for installation context(s) related to an interaction. Details in Authorizing Integration Owners Object
+     *
+     * @todo Verify the type of this property
      */
-    authorizing_integration_owners: Record<string, Snowflake>;
+    authorizing_integration_owners: Record<ApplicationIntegrationTypes, Snowflake>;
     /**
      * ID of the interaction
      */
@@ -509,9 +514,9 @@ export type MessageInteractionMetadataStructure = {
      */
     triggering_interaction_metadata?: MessageInteractionMetadataStructure;
     /**
-     * @todo Type of interaction
+     * Type of interaction
      */
-    type: number;
+    type: InteractionTypes;
     /**
      * User who triggered the interaction
      */
@@ -644,9 +649,11 @@ export type MessageStructure = {
      */
     activity?: MessageActivityStructure;
     /**
-     * @todo Sent with Rich Presence-related chat embeds
+     * Sent with Rich Presence-related chat embeds
+     *
+     * @todo No information available in the Discord API documentation
      */
-    application?: unknown;
+    application?: Partial<ApplicationStructure>;
     /**
      * If the message is an Interaction or application-owned webhook, this is the ID of the application
      */
@@ -668,9 +675,9 @@ export type MessageStructure = {
      */
     channel_id: Snowflake;
     /**
-     * @todo Sent if the message contains components like buttons, action rows, or other interactive components
+     * Sent if the message contains components like buttons, action rows, or other interactive components
      */
-    components?: unknown[];
+    components?: ActionRowStructure[];
     /**
      * Contents of the message
      */
@@ -692,10 +699,11 @@ export type MessageStructure = {
      */
     id: Snowflake;
     /**
-     * @todo Deprecated in favor of interaction_metadata; sent if the message is a response to an interaction
+     * Deprecated in favor of interaction_metadata; sent if the message is a response to an interaction
+     *
      * @deprecated Use `interaction_metadata` instead.
      */
-    interaction?: unknown;
+    interaction?: MessageInteractionStructure;
     /**
      * In preview. Sent if the message is sent as a result of an interaction
      */
@@ -749,9 +757,9 @@ export type MessageStructure = {
      */
     referenced_message?: MessageStructure;
     /**
-     * @todo Data for users, members, channels, and roles in the message's auto-populated select menus
+     * Data for users, members, channels, and roles in the message's auto-populated select menus
      */
-    resolved?: unknown;
+    resolved?: Pick<ResolvedDataStructure, "channels" | "members" | "roles" | "users">;
     /**
      * Data of the role subscription purchase or renewal that prompted this ROLE_SUBSCRIPTION_PURCHASE message
      */
