@@ -1,11 +1,14 @@
-import type { Snowflake } from "../libs/formats";
+import type { BitfieldResolvable } from "../libs/bitfield";
+import type { Snowflake } from "../libs/types";
 
 /**
- * @see {@link https://discord.com/developers/docs/monetization/skus#sku-object-sku-flags}
+ * Enumeration representing SKU flags.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-flags|SKU Flags}
  */
 export enum SkuFlags {
     /**
-     * SKU is available for purchase
+     * SKU is available for purchase.
      */
     Available = 4,
     /**
@@ -19,7 +22,9 @@ export enum SkuFlags {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/monetization/skus#sku-object-sku-types}
+ * Enumeration representing SKU types.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-types|SKU Types}
  */
 export enum SkuTypes {
     /**
@@ -41,7 +46,9 @@ export enum SkuTypes {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/monetization/skus#sku-object-sku-structure}
+ * Type representing the structure of an SKU.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-structure|SKU Structure}
  */
 export type SkuStructure = {
     /**
@@ -51,7 +58,7 @@ export type SkuStructure = {
     /**
      * SKU flags combined as a bitfield
      */
-    flags: SkuFlags;
+    flags: BitfieldResolvable<SkuFlags>;
     /**
      * ID of SKU
      */

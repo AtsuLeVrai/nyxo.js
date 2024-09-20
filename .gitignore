@@ -26,7 +26,6 @@ coverage
 out/
 build
 dist
-storybook-static
 
 # Debug
 npm-debug.log*
@@ -36,5 +35,4 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
-*storybook.log
 .idea

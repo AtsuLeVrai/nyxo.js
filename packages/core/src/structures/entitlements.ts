@@ -1,7 +1,9 @@
-import type { IsoO8601Timestamp, Snowflake } from "../libs/formats";
+import type { Iso8601Timestamp, Snowflake } from "../libs/types";
 
 /**
- * @see {@link https://discord.com/developers/docs/monetization/entitlements#entitlement-object-entitlement-types}
+ * Enumeration representing entitlement types.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-types|Entitlement Types}
  */
 export enum EntitlementTypes {
     /**
@@ -39,7 +41,9 @@ export enum EntitlementTypes {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/monetization/entitlements#entitlement-object-entitlement-structure}
+ * Type representing the structure of an entitlement.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-structure|Entitlement Structure}
  */
 export type EntitlementStructure = {
     /**
@@ -57,7 +61,7 @@ export type EntitlementStructure = {
     /**
      * Date at which the entitlement is no longer valid. Not present when using test entitlements.
      */
-    ends_at?: IsoO8601Timestamp;
+    ends_at?: Iso8601Timestamp;
     /**
      * ID of the guild that is granted access to the entitlement's sku
      */
@@ -73,7 +77,7 @@ export type EntitlementStructure = {
     /**
      * Start date at which the entitlement is valid. Not present when using test entitlements.
      */
-    starts_at?: IsoO8601Timestamp;
+    starts_at?: Iso8601Timestamp;
     /**
      * Type of entitlement
      */

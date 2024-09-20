@@ -1,6 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Node.js",
   "compilerOptions": {
     "incremental": true,
     "composite": true,
@@ -18,8 +17,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "importHelpers": true,
-    "importsNotUsedAsValues": "remove",
+    "importHelpers": false,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

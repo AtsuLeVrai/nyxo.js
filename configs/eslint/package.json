@@ -2,12 +2,10 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/eslint-config",
   "private": true,
-  "files": [
-    "node.js"
-  ],
   "devDependencies": {
-    "@types/eslint": "^8.56.12",
-    "eslint": "^8.57.1",
-    "eslint-config-neon": "^0.1.62"
+    "@types/eslint": "^9.6.1",
+    "eslint": "^9.10.0",
+    "eslint-config-neon": "^0.2.0",
+    "lodash.merge": "^4.6.2"
   }
 }

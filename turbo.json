@@ -5,10 +5,30 @@
     "build": {
       "dependsOn": [
         "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
       ]
     },
-    "lint": {},
-    "pretty": {},
-    "clean": {}
+    "clean": {
+      "dependsOn": [
+        "^clean"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "^lint"
+      ]
+    },
+    "pretty": {
+      "dependsOn": [
+        "^pretty"
+      ]
+    }
   }
 }

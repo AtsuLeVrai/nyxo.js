@@ -2,16 +2,15 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "../../configs/typescript/node.json",
   "compilerOptions": {
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "tsBuildInfoFile": "./.tsbuildinfo",
     "rootDir": "./src",
     "outDir": "./dist"
   },
   "include": [
-    "src"
+    "./src"
   ],
   "exclude": [
-    "node_modules",
-    "dist",
-    "tests"
+    "./node_modules",
+    "./dist"
   ]
 }

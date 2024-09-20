@@ -15,7 +15,7 @@ If you discover a security vulnerability, please follow these steps:
 
 1. **Do not open an issue directly on GitHub.** This helps to avoid public exposure of the vulnerability.
 2. **Contact me directly on GitHub**:
-    - Go to my [GitHub profile](https://github.com/AtsumiFlex).
+    - Go to my [GitHub profile](https://github.com/3tatsu).
     - Click on the "Message" button to send me a direct message with the following details:
         - Description of the vulnerability.
         - Steps to reproduce the issue.

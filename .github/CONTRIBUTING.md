@@ -22,7 +22,7 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the standard
 
 If you encounter a bug, please report it by following these steps:
 
-1. **Check the [issues list](https://github.com/AtsumiFlex/nyx.js/issues)** to ensure it hasn't been reported already.
+1. **Check the [issues list](https://github.com/3tatsu/nyx.js/issues)** to ensure it hasn't been reported already.
 2. **Create a new issue** including:
     - A clear and descriptive title.
     - A detailed description of the problem.
@@ -33,7 +33,7 @@ If you encounter a bug, please report it by following these steps:
 
 We welcome suggestions to improve the project! To suggest an enhancement:
 
-1. **Check the [issues list](https://github.com/AtsumiFlex/nyx.js/issues)** to see if a similar suggestion exists.
+1. **Check the [issues list](https://github.com/3tatsu/nyx.js/issues)** to see if a similar suggestion exists.
 2. **Create a new issue** with:
     - A clear and descriptive title.
     - A detailed description of the enhancement.
@@ -64,7 +64,7 @@ To set up your development environment:
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/AtsumiFlex/nyx.js.git
+    git clone https://github.com/3tatsu/nyx.js.git
     ```
 2. Navigate to the project directory:
     ```sh

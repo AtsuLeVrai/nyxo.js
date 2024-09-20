@@ -1,14 +1,16 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-    entry: ["src/index.ts"],
-    format: ["cjs", "esm"],
-    tsconfig: "tsconfig.json",
     splitting: false,
     sourcemap: true,
     clean: true,
+    keepNames: true,
+    skipNodeModulesBundle: true,
     legacyOutput: true,
+    tsconfig: "tsconfig.json",
+    entry: ["src/index.ts"],
+    format: ["cjs", "esm"],
     experimentalDts: {
-        entry: "src/index.ts",
+        entry: ["src/index.ts"],
     },
 });

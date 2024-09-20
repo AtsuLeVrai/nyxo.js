@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "lint": "turbo run lint --continue",
+    "clean": "turbo run clean",
+    "lint": "turbo run lint",
     "pretty": "turbo run pretty",
-    "clean": "turbo run clean --force",
     "prepare": "husky"
   },
   "devDependencies": {

@@ -1,40 +1,40 @@
-import type { Snowflake } from "../libs/formats";
+import type { Snowflake } from "../libs/types";
 import type { UserStructure } from "./users";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object-emoji-structure}
+ * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object-emoji-structure|Emoji Structure}
  */
 export type EmojiStructure = {
     /**
-     * Whether this emoji is animated
+     * Whether this emoji is animated.
      */
     animated?: boolean;
     /**
-     * Whether this emoji can be used, may be false due to loss of Server Boosts
+     * Whether this emoji is available.
      */
     available?: boolean;
     /**
-     * Emoji ID
+     * The ID of the emoji.
      */
     id: Snowflake | null;
     /**
-     * Whether this emoji is managed
+     * Whether this emoji is managed.
      */
     managed?: boolean;
     /**
-     * Emoji name
+     * The name of the emoji.
      */
     name: string | null;
     /**
-     * Whether this emoji must be wrapped in colons
+     * Whether this emoji must be wrapped in colons.
      */
     require_colons?: boolean;
     /**
-     * Roles allowed to use this emoji
+     * The roles that are allowed to use this emoji.
      */
     roles?: Snowflake[];
     /**
-     * User that created this emoji
+     * The user that created this emoji.
      */
     user?: UserStructure;
 };

@@ -1,24 +1,25 @@
-import type { Locales } from "../constants/locales";
-import type { Oauth2Scopes } from "../constants/oauth2";
-import type { Integer, IsoO8601Timestamp, Snowflake } from "../libs/formats";
-import type { ChannelStructure } from "./channels";
+import type { LocaleKeys } from "../enums/locales";
+import type { OAuth2Scopes } from "../enums/oauth2";
+import type { BitwisePermissions } from "../enums/permissions";
+import type { BitfieldResolvable } from "../libs/bitfield";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../libs/types";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";
 import type { StickerStructure } from "./stickers";
 import type { AvatarDecorationDataStructure, UserStructure } from "./users";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types|Guild Onboarding Prompt Types}
  */
-export enum PromptTypes {
+export enum GuildOnboardingPromptTypes {
     MultipleChoice = 0,
     Dropdown = 1,
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-mode}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-mode|Guild Onboarding Modes}
  */
-export enum OnboardingMode {
+export enum GuildOnboardingModes {
     /**
      * Counts only Default Channels towards constraints
      */
@@ -30,9 +31,9 @@ export enum OnboardingMode {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure|Guild Onboarding Prompt Option Structure}
  */
-export type PromptOptionStructure = {
+export type GuildOnboardingPromptOptionStructure = {
     /**
      * IDs for channels a member is added to when the option is selected
      */
@@ -42,9 +43,17 @@ export type PromptOptionStructure = {
      */
     description: string | null;
     /**
-     * Emoji of the option
+     * Whether the emoji is animated (see below)
      */
-    emoji?: Pick<EmojiStructure, "animated" | "id" | "name">;
+    emoji_animated?: boolean;
+    /**
+     * Emoji ID of the option (see below)
+     */
+    emoji_id?: Snowflake;
+    /**
+     * Emoji name of the option (see below)
+     */
+    emoji_name?: string;
     /**
      * ID of the prompt option
      */
@@ -60,9 +69,9 @@ export type PromptOptionStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure|Guild Onboarding Prompt Structure}
  */
-export type OnboardingPromptStructure = {
+export type GuildOnboardingPromptStructure = {
     /**
      * ID of the prompt
      */
@@ -74,7 +83,7 @@ export type OnboardingPromptStructure = {
     /**
      * Options available within the prompt
      */
-    options: PromptOptionStructure[];
+    options: GuildOnboardingPromptOptionStructure[];
     /**
      * Indicates whether the prompt is required before a user completes the onboarding flow
      */
@@ -90,11 +99,11 @@ export type OnboardingPromptStructure = {
     /**
      * Type of prompt
      */
-    type: PromptTypes;
+    type: GuildOnboardingPromptTypes;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-guild-onboarding-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-guild-onboarding-structure|Guild Onboarding Structure}
  */
 export type GuildOnboardingStructure = {
     /**
@@ -112,15 +121,15 @@ export type GuildOnboardingStructure = {
     /**
      * Current mode of onboarding
      */
-    mode: OnboardingMode;
+    mode: GuildOnboardingModes;
     /**
      * Prompts shown during onboarding and in customize community
      */
-    prompts: OnboardingPromptStructure[];
+    prompts: GuildOnboardingPromptStructure[];
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-channel-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-channel-structure|Welcome Screen Channel Structure}
  */
 export type WelcomeScreenChannelStructure = {
     /**
@@ -142,7 +151,7 @@ export type WelcomeScreenChannelStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-structure|Welcome Screen Structure}
  */
 export type WelcomeScreenStructure = {
     /**
@@ -156,7 +165,7 @@ export type WelcomeScreenStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#ban-object-ban-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#ban-object-ban-structure|Ban Structure}
  */
 export type BanStructure = {
     /**
@@ -168,9 +177,8 @@ export type BanStructure = {
      */
     user: UserStructure;
 };
-
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-application-object-integration-application-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#integration-application-object-integration-application-structure|Integration Application Structure}
  */
 export type IntegrationApplicationStructure = {
     /**
@@ -196,28 +204,28 @@ export type IntegrationApplicationStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-account-object-integration-account-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#integration-account-object-integration-account-structure|Integration Account Structure}
  */
 export type IntegrationAccountStructure = {
     /**
-     * ID of the account
+     * id of the account
      */
     id: string;
     /**
-     * Name of the account
+     * name of the account
      */
     name: string;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors}
+ * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors|Integration Expire Behaviors}
  */
 export enum IntegrationExpireBehaviors {
     RemoveRole = 0,
     Kick = 1,
 }
 
-export enum IntegrationPlatformTypes {
+export enum IntegrationTypes {
     Discord = "discord",
     GuildSubscription = "guild_subscription",
     Twitch = "twitch",
@@ -225,15 +233,15 @@ export enum IntegrationPlatformTypes {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure|Integration Structure}
  */
 export type IntegrationStructure = {
     /**
-     * Integration account information
+     * The account for this integration
      */
     account: IntegrationAccountStructure;
     /**
-     * The bot/OAuth2 application for discord integrations
+     * The bot/OAuth2 application for Discord integrations
      */
     application?: IntegrationApplicationStructure;
     /**
@@ -241,7 +249,7 @@ export type IntegrationStructure = {
      */
     enable_emoticons?: boolean;
     /**
-     * Is this integration enabled
+     * Whether the integration is enabled
      */
     enabled: boolean;
     /**
@@ -253,25 +261,25 @@ export type IntegrationStructure = {
      */
     expire_grace_period?: Integer;
     /**
-     * Integration ID
+     * The id of the integration
      */
     id: Snowflake;
     /**
-     * Integration name
+     * The name of the integration
      */
     name: string;
     /**
-     * Has this integration been revoked
+     * Whether this integration has been revoked
      */
     revoked?: boolean;
     /**
-     * ID that this integration uses for "subscribers"
+     * The id of the role that the integration uses for subscribers
      */
     role_id?: Snowflake;
     /**
      * The scopes the application has been authorized for
      */
-    scopes?: Oauth2Scopes[];
+    scopes?: OAuth2Scopes[];
     /**
      * How many subscribers this integration has
      */
@@ -279,23 +287,23 @@ export type IntegrationStructure = {
     /**
      * When this integration was last synced
      */
-    synced_at?: IsoO8601Timestamp;
+    synced_at?: Iso8601Timestamp;
     /**
-     * Is this integration syncing
+     * Whether the integration is syncing
      */
     syncing?: boolean;
     /**
-     * Integration type
+     * The type of the integration
      */
-    type: IntegrationPlatformTypes;
+    type: IntegrationTypes;
     /**
-     * User for this integration
+     * The user for this integration
      */
     user?: UserStructure;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags|Guild Member Flags}
  */
 export enum GuildMemberFlags {
     /**
@@ -314,10 +322,30 @@ export enum GuildMemberFlags {
      * Member has started onboarding
      */
     StartedOnboarding = 8,
+    /**
+     * Member is a guest and can only access the voice channel they were invited to
+     */
+    IsGuest = 16,
+    /**
+     * Member has started Server Guide new member actions
+     */
+    StartedHomeActions = 32,
+    /**
+     * Member has completed Server Guide new member actions
+     */
+    CompletedHomeActions = 64,
+    /**
+     * Member's username, display name, or nickname is blocked by AutoMod
+     */
+    AutomodQuarantinedUsername = 128,
+    /**
+     * Member has dismissed the DM settings upsell
+     */
+    DmSettingsUpsellAcknowledged = 512,
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-structure|Guild Member Structure}
  */
 export type GuildMemberStructure = {
     /**
@@ -327,11 +355,11 @@ export type GuildMemberStructure = {
     /**
      * Data for the member's guild avatar decoration
      */
-    avatar_decoration_data?: AvatarDecorationDataStructure;
+    avatar_decoration_data?: AvatarDecorationDataStructure | null;
     /**
      * When the user's timeout will expire and the user will be able to communicate in the guild again, null or a time in the past if the user is not timed out
      */
-    communication_disabled_until?: IsoO8601Timestamp | null;
+    communication_disabled_until?: Iso8601Timestamp | null;
     /**
      * Whether the user is deafened in voice channels
      */
@@ -339,11 +367,11 @@ export type GuildMemberStructure = {
     /**
      * Guild member flags represented as a bit set, defaults to 0
      */
-    flags: GuildMemberFlags;
+    flags: BitfieldResolvable<GuildMemberFlags>;
     /**
      * When the user joined the guild
      */
-    joined_at: IsoO8601Timestamp;
+    joined_at: Iso8601Timestamp;
     /**
      * Whether the user is muted in voice channels
      */
@@ -363,7 +391,7 @@ export type GuildMemberStructure = {
     /**
      * When the user started boosting the guild
      */
-    premium_since?: IsoO8601Timestamp | null;
+    premium_since?: Iso8601Timestamp | null;
     /**
      * Array of role object ids
      */
@@ -375,13 +403,13 @@ export type GuildMemberStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure|Guild Widget Structure}
  */
 export type GuildWidgetStructure = {
     /**
-     * Voice and stage channels which are accessible by @everyone
+     * @todo Voice and stage channels which are accessible by everyone
      */
-    channels: Pick<ChannelStructure, "id" | "name" | "position">[];
+    channels: Pick<any, "id" | "name" | "position">[];
     /**
      * The guild id
      */
@@ -393,25 +421,19 @@ export type GuildWidgetStructure = {
     /**
      * Special widget user objects that includes users presence (Limit 100)
      */
-    members: Pick<
-        UserStructure & {
-            avatar_url: string;
-            status: string;
-        },
-        "avatar_url" | "avatar" | "discriminator" | "id" | "status" | "username"
-    >[];
+    members: Pick<UserStructure, "discriminator" | "id" | "username">[];
     /**
      * The guild name
      */
     name: string;
     /**
-     * Number of online members in this guild
+     * The number of online members in this guild
      */
     presence_count: Integer;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-settings-object-guild-widget-settings-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-settings-object-guild-widget-settings-structure|Guild Widget Settings Structure}
  */
 export type GuildWidgetSettingsStructure = {
     /**
@@ -425,71 +447,7 @@ export type GuildWidgetSettingsStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-preview-object-guild-preview-structure}
- */
-export type GuildPreviewStructure = {
-    /**
-     * Approximate number of members in this guild
-     */
-    approximate_member_count: Integer;
-    /**
-     * Approximate number of online members in this guild
-     */
-    approximate_presence_count: Integer;
-    /**
-     * The description for the guild
-     */
-    description: string | null;
-    /**
-     * Discovery splash hash
-     */
-    discovery_splash: string | null;
-    /**
-     * Custom guild emojis
-     */
-    emojis: EmojiStructure[];
-    /**
-     * Enabled guild features
-     */
-    features: string[];
-    /**
-     * Icon hash
-     */
-    icon: string | null;
-    /**
-     * Guild ID
-     */
-    id: Snowflake;
-    /**
-     * Guild name
-     */
-    name: string;
-    /**
-     * Splash hash
-     */
-    splash: string | null;
-    /**
-     * Custom guild stickers
-     */
-    stickers: StickerStructure[];
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object}
- */
-export type UnavailableGuildStructure = {
-    /**
-     * Guild id
-     */
-    id: Snowflake;
-    /**
-     * Is the guild unavailable
-     */
-    unavailable: boolean;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features|Guild Features}
  */
 export enum GuildFeatures {
     /**
@@ -603,7 +561,81 @@ export enum GuildFeatures {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-preview-object-guild-preview-structure|Guild Preview Structure}
+ */
+export type GuildPreviewStructure = {
+    /**
+     * Approximate number of members in this guild
+     */
+    approximate_member_count: Integer;
+    /**
+     * Approximate number of online members in this guild
+     */
+    approximate_presence_count: Integer;
+    /**
+     * The description for the guild
+     */
+    description: string | null;
+    /**
+     * Discovery splash hash
+     */
+    discovery_splash: string | null;
+    /**
+     * Custom guild emojis
+     */
+    emojis: EmojiStructure[];
+    /**
+     * Enabled guild features
+     */
+    features: GuildFeatures[];
+    /**
+     * Icon hash
+     */
+    icon: string | null;
+    /**
+     * Guild id
+     */
+    id: Snowflake;
+    /**
+     * Guild name (2-100 characters)
+     */
+    name: string;
+    /**
+     * Splash hash
+     */
+    splash: string | null;
+    /**
+     * Custom guild stickers
+     */
+    stickers: StickerStructure[];
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object-example-unavailable-guild|Unavailable Guild Object}
+ */
+export type UnavailableGuildObject = {
+    /**
+     * The id of the guild
+     */
+    id: Snowflake;
+    /**
+     * Whether the guild is unavailable
+     */
+    unavailable: boolean;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mutable-guild-features|Mutable Guild Features}
+ */
+export type MutableGuildFeatures = {
+    [GuildFeatures.Community]: BitwisePermissions.Administrator;
+    [GuildFeatures.Discoverable]: BitwisePermissions.Administrator;
+    [GuildFeatures.InvitesDisabled]: BitwisePermissions.ManageGuild;
+    [GuildFeatures.RaidAlertsDisabled]: BitwisePermissions.ManageGuild;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags|System Channel Flags}
  */
 export enum SystemChannelFlags {
     /**
@@ -633,9 +665,9 @@ export enum SystemChannelFlags {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-premium-tier}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-premium-tier|Premium Tier}
  */
-export enum PremiumTiers {
+export enum PremiumTier {
     /**
      * Guild has not unlocked any Server Boost perks
      */
@@ -655,9 +687,9 @@ export enum PremiumTiers {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-nsfw-level}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-nsfw-level|Guild NSFW Level}
  */
-export enum NsfwLevels {
+export enum GuildNsfwLevel {
     Default = 0,
     Explicit = 1,
     Safe = 2,
@@ -665,9 +697,9 @@ export enum NsfwLevels {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-verification-level}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-verification-level|Guild Verification Level}
  */
-export enum VerificationLevels {
+export enum GuildVerificationLevel {
     /**
      * Unrestricted
      */
@@ -691,9 +723,9 @@ export enum VerificationLevels {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mfa-level}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mfa-level|Guild MFA Level}
  */
-export enum MfaLevels {
+export enum GuildMfaLevel {
     /**
      * Guild has no MFA/2FA requirement for moderation actions
      */
@@ -705,9 +737,9 @@ export enum MfaLevels {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level|Guild Explicit Content Filter Level}
  */
-export enum ExplicitContentFilterLevels {
+export enum GuildExplicitContentFilterLevel {
     /**
      * Media content will not be scanned
      */
@@ -723,9 +755,9 @@ export enum ExplicitContentFilterLevels {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level|Guild Default Message Notification Level}
  */
-export enum DefaultMessageNotificationLevels {
+export enum GuildDefaultMessageNotificationLevel {
     /**
      * Members will receive notifications for all messages by default
      */
@@ -737,21 +769,21 @@ export enum DefaultMessageNotificationLevels {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-structure}
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-structure|Guild Structure}
  */
 export type GuildStructure = {
     /**
-     * Id of afk channel
+     * The id of the afk channel
      */
     afk_channel_id: Snowflake | null;
     /**
-     * Afk timeout in seconds
+     * The afk timeout in seconds
      */
     afk_timeout: Integer;
     /**
      * Application id of the guild creator if it is bot-created
      */
-    application_id?: Snowflake;
+    application_id: Snowflake | null;
     /**
      * Approximate number of members in this guild, returned from the GET /guilds/<id> and /users/@me/guilds endpoints when with_counts is true
      */
@@ -767,13 +799,13 @@ export type GuildStructure = {
     /**
      * Default message notifications level
      */
-    default_message_notifications: DefaultMessageNotificationLevels;
+    default_message_notifications: GuildDefaultMessageNotificationLevel;
     /**
      * The description of a guild
      */
     description: string | null;
     /**
-     * Discovery splash hash; only present for guilds with the "DISCOVERABLE" feature
+     * The hash of the guild discovery splash; only present for guilds with the "DISCOVERABLE" feature
      */
     discovery_splash: string | null;
     /**
@@ -783,21 +815,21 @@ export type GuildStructure = {
     /**
      * Explicit content filter level
      */
-    explicit_content_filter: ExplicitContentFilterLevels;
+    explicit_content_filter: GuildExplicitContentFilterLevel;
     /**
      * Enabled guild features
      */
     features: GuildFeatures[];
     /**
-     * Icon hash
+     * The hash of the guild icon
      */
     icon: string | null;
     /**
-     * Icon hash, returned when in the template object
+     * The hash of the guild icon, returned when in the template object
      */
     icon_hash?: string | null;
     /**
-     * Guild id
+     * The guild's id
      */
     id: Snowflake;
     /**
@@ -807,7 +839,7 @@ export type GuildStructure = {
     /**
      * The maximum number of presences for the guild (null is always returned, apart from the largest of guilds)
      */
-    max_presences?: Integer;
+    max_presences?: Integer | null;
     /**
      * The maximum amount of users in a stage video channel
      */
@@ -819,21 +851,21 @@ export type GuildStructure = {
     /**
      * Required MFA level for the guild
      */
-    mfa_level: MfaLevels;
+    mfa_level: GuildMfaLevel;
     /**
-     * Guild name
+     * The guild's name
      */
     name: string;
     /**
      * Guild NSFW level
      */
-    nsfw_level: NsfwLevels;
+    nsfw_level: GuildNsfwLevel;
     /**
-     * True if the user is the owner of the guild
+     * Whether the user is the owner of the guild
      */
     owner?: boolean;
     /**
-     * Id of owner
+     * The id of the owner
      */
     owner_id: Snowflake;
     /**
@@ -843,7 +875,7 @@ export type GuildStructure = {
     /**
      * The preferred locale of a Community guild; used in server discovery and notices from Discord, and sent in interactions; defaults to "en-US"
      */
-    preferred_locale: Locales;
+    preferred_locale: LocaleKeys;
     /**
      * Whether the guild has the boost progress bar enabled
      */
@@ -855,7 +887,7 @@ export type GuildStructure = {
     /**
      * Premium tier (Server Boost level)
      */
-    premium_tier: PremiumTiers;
+    premium_tier: PremiumTier;
     /**
      * The id of the channel where admins and moderators of Community guilds receive notices from Discord
      */
@@ -863,7 +895,7 @@ export type GuildStructure = {
     /**
      * Voice region id for the guild (deprecated)
      *
-     * @deprecated Voice region id for the guild (deprecated)
+     * @deprecated This field is deprecated and will be removed in a future API version
      */
     region?: string;
     /**
@@ -879,7 +911,7 @@ export type GuildStructure = {
      */
     safety_alerts_channel_id: Snowflake | null;
     /**
-     * Splash hash
+     * The hash of the guild splash
      */
     splash: string | null;
     /**
@@ -901,7 +933,7 @@ export type GuildStructure = {
     /**
      * Verification level required for the guild
      */
-    verification_level: VerificationLevels;
+    verification_level: GuildVerificationLevel;
     /**
      * The welcome screen of a Community guild, shown to new members, returned in an Invite's guild object
      */
@@ -909,306 +941,9 @@ export type GuildStructure = {
     /**
      * The channel id that the widget will generate an invite to, or null if set to no invite
      */
-    widget_channel_id?: Snowflake;
+    widget_channel_id?: Snowflake | null;
     /**
-     * True if the server widget is enabled
+     * Whether the server widget is enabled
      */
     widget_enabled?: boolean;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-month}
- */
-export enum RecurrenceRuleMonths {
-    January = 1,
-    February = 2,
-    March = 3,
-    April = 4,
-    May = 5,
-    June = 6,
-    July = 7,
-    August = 8,
-    September = 9,
-    October = 10,
-    November = 11,
-    December = 12,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-weekday}
- */
-export enum RecurrenceRuleWeekdays {
-    Monday = 0,
-    Tuesday = 1,
-    Wednesday = 2,
-    Thursday = 3,
-    Friday = 4,
-    Saturday = 5,
-    Sunday = 6,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-nweekday-structure}
- */
-export type RecurrenceRuleNweekdayStructure = {
-    /**
-     * The day within the week to reoccur on
-     */
-    day: RecurrenceRuleWeekdays;
-    /**
-     * The week to reoccur on. 1 - 5
-     */
-    n: Integer;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-frequency}
- */
-export enum RecurrenceRuleFrequencies {
-    Yearly = 0,
-    Monthly = 1,
-    Weekly = 2,
-    Daily = 3,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-structure}
- */
-export type RecurrenceRuleStructure = {
-    /**
-     * Set of specific months to recur on
-     */
-    by_month: RecurrenceRuleMonths[] | null;
-    /**
-     * Set of specific dates within a month to recur on
-     */
-    by_month_day: Integer[] | null;
-    /**
-     * List of specific days within a specific week (1-5) to recur on
-     */
-    by_n_weekday: RecurrenceRuleNweekdayStructure[] | null;
-    /**
-     * Set of specific days within a week for the event to recur on
-     */
-    by_weekday: RecurrenceRuleWeekdays[] | null;
-    /**
-     * Set of days within a year to recur on (1-364)
-     */
-    by_year_day: Integer[] | null;
-    /**
-     * The total amount of times that the event is allowed to recur before stopping
-     */
-    count: Integer | null;
-    /**
-     * Ending time of the recurrence interval
-     */
-    end?: IsoO8601Timestamp;
-    /**
-     * How often the event occurs
-     */
-    frequency: RecurrenceRuleFrequencies;
-    /**
-     * The spacing between the events, defined by frequency. For example, frecency of WEEKLY and an interval of 2 would be "every-other week"
-     */
-    interval: Integer;
-    /**
-     * Starting time of the recurrence interval
-     */
-    start: IsoO8601Timestamp;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-user-object-guild-scheduled-event-user-structure}
- */
-export type GuildScheduledEventUserStructure = {
-    /**
-     * The scheduled event id which the user subscribed to
-     */
-    guild_scheduled_event_id: Snowflake;
-    /**
-     * Guild member data for this user for the guild which this event belongs to, if any
-     */
-    member?: GuildMemberStructure;
-    /**
-     * User which subscribed to an event
-     */
-    user: UserStructure;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-metadata}
- */
-export type GuildScheduledEventEntityMetadataStructure = {
-    /**
-     * Location of the event (1-100 characters)
-     */
-    location?: string;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status}
- */
-export enum GuildScheduledEventStatus {
-    Scheduled = 1,
-    Active = 2,
-    Completed = 3,
-    Canceled = 4,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
- */
-export enum GuildScheduledEventEntityTypes {
-    StageInstance = 1,
-    Voice = 2,
-    External = 3,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level}
- */
-export enum GuildScheduledEventPrivacyLevels {
-    /**
-     * The scheduled event is visible publicly
-     */
-    GuildOnly = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-structure}
- */
-export type GuildScheduledEventStructure = {
-    /**
-     * The channel id in which the scheduled event will be hosted, or null if scheduled entity type is EXTERNAL
-     */
-    channel_id: Snowflake | null;
-    /**
-     * The user that created the scheduled event
-     */
-    creator?: UserStructure;
-    /**
-     * The id of the user that created the scheduled event
-     */
-    creator_id?: Snowflake;
-    /**
-     * The description of the scheduled event (1-1000 characters)
-     */
-    description?: string | null;
-    /**
-     * The id of an entity associated with a guild scheduled event
-     */
-    entity_id: Snowflake | null;
-    /**
-     * Additional metadata for the guild scheduled event
-     */
-    entity_metadata?: GuildScheduledEventEntityMetadataStructure;
-    /**
-     * The type of the scheduled event
-     */
-    entity_type: GuildScheduledEventEntityTypes;
-    /**
-     * The guild id which the scheduled event belongs to
-     */
-    guild_id: Snowflake;
-    /**
-     * The id of the scheduled event
-     */
-    id: Snowflake;
-    /**
-     * The cover image hash of the scheduled event
-     */
-    image?: string | null;
-    /**
-     * The name of the scheduled event (1-100 characters)
-     */
-    name: string;
-    /**
-     * The privacy level of the scheduled event
-     */
-    privacy_level: GuildScheduledEventPrivacyLevels;
-    /**
-     * The definition for how often this event should recur
-     */
-    recurrence_rule: RecurrenceRuleStructure | null;
-    /**
-     * The time the scheduled event will end, required if entity_type is EXTERNAL
-     */
-    scheduled_end_time: IsoO8601Timestamp | null;
-    /**
-     * The time the scheduled event will start
-     */
-    scheduled_start_time: IsoO8601Timestamp;
-    /**
-     * The status of the scheduled event
-     */
-    status: GuildScheduledEventStatus;
-    /**
-     * The number of users subscribed to the scheduled event
-     */
-    user_count?: Integer;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-template#guild-template-object-guild-template-structure}
- */
-export type GuildTemplateStructure = {
-    /**
-     * The template code (unique ID)
-     */
-    code: string;
-    /**
-     * When this template was created
-     */
-    created_at: IsoO8601Timestamp;
-    /**
-     * The user who created the template
-     */
-    creator: UserStructure;
-    /**
-     * The ID of the user who created the template
-     */
-    creator_id: Snowflake;
-    /**
-     * The description for the template
-     */
-    description: string | null;
-    /**
-     * Whether the template has unsynced changes
-     */
-    is_dirty: boolean | null;
-    /**
-     * Template name
-     */
-    name: string;
-    /**
-     * The guild snapshot this template contains
-     */
-    serialized_source_guild: Pick<
-        GuildStructure,
-        | "afk_channel_id"
-        | "afk_timeout"
-        | "default_message_notifications"
-        | "description"
-        | "explicit_content_filter"
-        | "icon_hash"
-        | "name"
-        | "preferred_locale"
-        | "region"
-        | "roles"
-        | "system_channel_flags"
-        | "system_channel_id"
-        | "verification_level"
-    >;
-    /**
-     * The ID of the guild this template is based on
-     */
-    source_guild_id: Snowflake;
-    /**
-     * When this template was last synced to the source guild
-     */
-    updated_at: IsoO8601Timestamp;
-    /**
-     * Number of times this template has been used
-     */
-    usage_count: Integer;
 };

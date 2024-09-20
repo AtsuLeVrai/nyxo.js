@@ -1,63 +1,70 @@
-import type { Snowflake } from "../libs/formats";
+import type { Snowflake } from "../libs/types";
 import type { UserStructure } from "./users";
 
 /**
- * @see {@link https://discord.com/developers/docs/topics/teams#data-models-membership-state-enum}
+ * Enumeration representing the membership state of a team member.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/teams#data-models-membership-state-enum|Membership State}
  */
 export enum MembershipState {
+    /**
+     * The user has been invited to the team.
+     */
     Invited = 1,
+    /**
+     * The user has accepted the invitation to the team.
+     */
     Accepted = 2,
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/topics/teams#team-member-roles-team-member-role-types}
- */
-export type TeamMemberRoles = "admin" | "developer" | "owner" | "read_only";
-
-/**
- * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-member-object}
+ * Type representing the structure of a team member.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-member-object|Team Member Object}
  */
 export type TeamMemberStructure = {
     /**
-     * User's membership state on the team
+     * User's membership state on the team.
      */
     membership_state: MembershipState;
     /**
-     * Role of the team member
+     * Role of the team member.
      */
-    role: TeamMemberRoles;
+    role: string;
     /**
-     * ID of the parent team of which they are a member
+     * ID of the parent team of which they are a member.
      */
     team_id: Snowflake;
     /**
-     * Avatar, discriminator, ID, and username of the user
+     * Avatar, discriminator, ID, and username of the user.
      */
     user: Pick<UserStructure, "avatar" | "discriminator" | "id" | "username">;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-object}
+ * Type representing the structure of a team.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-object|Team Object}
  */
 export type TeamStructure = {
     /**
-     * Hash of the image of the team's icon
+     * Hash of the image of the team's icon.
      */
     icon: string | null;
     /**
-     * Unique ID of the team
+     * Unique ID of the team.
      */
     id: Snowflake;
     /**
-     * Members of the team
+     * Members of the team.
      */
     members: TeamMemberStructure[];
     /**
-     * Name of the team
+     * Name of the team.
      */
     name: string;
     /**
-     * User ID of the current team owner
+     * User ID of the current team owner.
      */
     owner_user_id: Snowflake;
 };

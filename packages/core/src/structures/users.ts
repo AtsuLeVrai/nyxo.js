@@ -1,44 +1,43 @@
-import type { Locales } from "../constants/locales";
-import type { Integer, Snowflake } from "../libs/formats";
-import type { ApplicationRoleConnectionMetadataStructure } from "./applications";
-import type { IntegrationStructure } from "./guilds";
+import type { LocaleKeys } from "../enums/locales";
+import type { Integer, Snowflake } from "../libs/types";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure}
+ * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure|Application Role Connection Structure}
  */
 export type ApplicationRoleConnectionStructure = {
     /**
-     * Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected
+     * @todo Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected.
      */
-    metadata: Record<string, ApplicationRoleConnectionMetadataStructure>;
+    metadata: Record<string, string>;
     /**
-     * The vanity name of the platform a bot has connected (max 50 characters)
+     * The vanity name of the platform a bot has connected (max 50 characters).
      */
     platform_name: string | null;
     /**
-     * The username on the platform a bot has connected (max 100 characters)
+     * The username on the platform a bot has connected (max 100 characters).
      */
     platform_username: string | null;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#connection-object-visibility-types}
+ * @see {@link https://discord.com/developers/docs/resources/user#connection-object-visibility-types|Connection Visibility Types}
  */
 export enum ConnectionVisibilityTypes {
     /**
-     * Invisible to everyone except the user themselves
+     * Invisible to everyone except the user themselves.
      */
     None = 0,
     /**
-     * Visible to everyone
+     * Visible to everyone.
      */
     Everyone = 1,
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#connection-object-services}
+ * @see {@link https://discord.com/developers/docs/resources/user#connection-object-services|Connection Services}
  */
 export type ConnectionServices =
+    | "amazon-music"
     | "battlenet"
     | "bungie"
     | "domain"
@@ -63,67 +62,67 @@ export type ConnectionServices =
     | "youtube";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#connection-object-connection-structure}
+ * @see {@link https://discord.com/developers/docs/resources/user#connection-object-connection-structure|Connection Structure}
  */
 export type ConnectionStructure = {
     /**
-     * Whether friend sync is enabled for this connection
+     * Whether friend sync is enabled for this connection.
      */
     friend_sync: boolean;
     /**
-     * ID of the connection account
+     * The id of the connection account.
      */
     id: string;
     /**
-     * An array of partial server integrations
+     * @todo An array of partial server integrations.
      */
-    integrations?: Partial<IntegrationStructure>[];
+    integrations?: unknown[];
     /**
-     * The username of the connection account
+     * The username of the connection account.
      */
     name: string;
     /**
-     * Whether the connection is revoked
+     * Whether the connection is revoked.
      */
     revoked?: boolean;
     /**
-     * Whether activities related to this connection will be shown in presence updates
+     * Whether activities related to this connection will be shown in presence updates.
      */
     show_activity: boolean;
     /**
-     * Whether this connection has a corresponding third party OAuth2 token
+     * Whether this connection has a corresponding third party OAuth2 token.
      */
     two_way_link: boolean;
     /**
-     * The service of this connection
+     * The service of this connection.
      */
     type: ConnectionServices;
     /**
-     * Whether the connection is verified
+     * Whether the connection is verified.
      */
     verified: boolean;
     /**
-     * Visibility of this connection
+     * Visibility of this connection.
      */
     visibility: ConnectionVisibilityTypes;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure}
+ * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure|Avatar Decoration Data Structure}
  */
 export type AvatarDecorationDataStructure = {
     /**
-     * The avatar decoration hash
+     * The avatar decoration hash.
      */
     asset: string;
     /**
-     * ID of the avatar decoration's SKU
+     * Id of the avatar decoration's SKU.
      */
-    sku_id: Snowflake;
+    sku_id: string;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types}
+ * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types|Premium Types}
  */
 export enum PremiumTypes {
     None = 0,
@@ -133,7 +132,7 @@ export enum PremiumTypes {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
+ * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags|User Flags}
  */
 export enum UserFlags {
     /**
@@ -151,23 +150,23 @@ export enum UserFlags {
     /**
      * Bug Hunter Level 1
      */
-    BugHunter1 = 8,
+    BugHunterLevel1 = 8,
     /**
      * House Bravery Member
      */
-    HouseBravery = 64,
+    HypeSquadOnlineHouse1 = 64,
     /**
      * House Brilliance Member
      */
-    HouseBrilliance = 128,
+    HypeSquadOnlineHouse2 = 128,
     /**
      * House Balance Member
      */
-    HouseBalance = 256,
+    HypeSquadOnlineHouse3 = 256,
     /**
      * Early Nitro Supporter
      */
-    NitroEarlySupporter = 512,
+    PremiumEarlySupporter = 512,
     /**
      * User is a team
      */
@@ -175,7 +174,7 @@ export enum UserFlags {
     /**
      * Bug Hunter Level 2
      */
-    BugHunter2 = 16_384,
+    BugHunterLevel2 = 16_384,
     /**
      * Verified Bot
      */
@@ -199,75 +198,75 @@ export enum UserFlags {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-structure}
+ * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-structure|User Structure}
  */
 export type UserStructure = {
     /**
-     * The user's banner color encoded as an integer representation of hexadecimal color code
+     * The user's banner color encoded as an integer representation of hexadecimal color code.
      */
     accent_color?: Integer | null;
     /**
-     * The user's avatar hash
+     * The user's avatar hash.
      */
     avatar: string | null;
     /**
-     * Data for the user's avatar decoration
+     * Data for the user's avatar decoration.
      */
     avatar_decoration_data?: AvatarDecorationDataStructure | null;
     /**
-     * The user's banner hash
+     * The user's banner hash.
      */
     banner?: string | null;
     /**
-     * Whether the user belongs to an OAuth2 application
+     * Whether the user belongs to an OAuth2 application.
      */
     bot?: boolean;
     /**
-     * The user's Discord-tag
+     * The user's Discord-tag.
      */
     discriminator: string;
     /**
-     * The user's email
+     * The user's email.
      */
     email?: string | null;
     /**
-     * The flags on a user's account
+     * The flags on a user's account.
      */
     flags?: UserFlags;
     /**
-     * The user's display name, if it is set. For bots, this is the application name
+     * The user's display name, if it is set. For bots, this is the application name.
      */
     global_name: string | null;
     /**
-     * The user's id
+     * The user's id.
      */
     id: Snowflake;
     /**
-     * The user's chosen language option
+     * The user's chosen language option.
      */
-    locale?: Locales;
+    locale?: LocaleKeys;
     /**
-     * Whether the user has two factor enabled on their account
+     * Whether the user has two factor enabled on their account.
      */
     mfa_enabled?: boolean;
     /**
-     * The type of Nitro subscription on a user's account
+     * The type of Nitro subscription on a user's account.
      */
     premium_type?: PremiumTypes;
     /**
-     * The public flags on a user's account
+     * The public flags on a user's account.
      */
     public_flags?: UserFlags;
     /**
-     * Whether the user is an Official Discord System user (part of the urgent message system)
+     * Whether the user is an Official Discord System user (part of the urgent message system).
      */
     system?: boolean;
     /**
-     * The user's username, not unique across the platform
+     * The user's username, not unique across the platform.
      */
     username: string;
     /**
-     * Whether the email on this account has been verified
+     * Whether the email on this account has been verified.
      */
     verified?: boolean;
 };

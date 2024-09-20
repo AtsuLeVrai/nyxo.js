@@ -1,10 +1,10 @@
 # Support
 
-Thank you for using [Project Name]! If you need help or have questions, there are several ways you can get support:
+Thank you for using nyx.js! If you need help or have questions, there are several ways you can get support:
 
 ## Documentation
 
-First, check out our [official documentation](https://github.com/AtsumiFlex/nyx.js/discussions). It contains detailed
+First, check out our [official documentation](https://github.com/3tatsu/nyx.js/discussions). It contains detailed
 information on how to use the
 project, including installation instructions, usage examples, and API references.
 
@@ -13,9 +13,9 @@ project, including installation instructions, usage examples, and API references
 If you can't find the answer in the documentation, you can ask the community for help:
 
 - **GitHub Issues**: Browse or create new issues on
-  our [GitHub Issues page](https://github.com/AtsumiFlex/nyx.js/issues) for any bugs or feature requests.
+  our [GitHub Issues page](https://github.com/3tatsu/nyx.js/issues) for any bugs or feature requests.
 - **Discussions**: Join the conversation on
-  our [GitHub Discussions](https://github.com/AtsumiFlex/nyx.js/discussions) page for general questions, ideas,
+  our [GitHub Discussions](https://github.com/3tatsu/nyx.js/discussions) page for general questions, ideas,
   and support from other users.
 
 ## Contact Maintainer
@@ -23,7 +23,7 @@ If you can't find the answer in the documentation, you can ask the community for
 If you need to report a security issue or have a question that isn't suitable for public forums, you can contact the
 project maintainer directly:
 
-- **GitHub Profile**: [AtsumiFlex](https://github.com/AtsumiFlex). Send me a direct message for private
+- **GitHub Profile**: [3tatsu](https://github.com/3tatsu). Send me a direct message for private
   inquiries.
 
 ## Contributing

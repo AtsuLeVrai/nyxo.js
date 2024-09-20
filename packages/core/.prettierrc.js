@@ -1,4 +1,4 @@
 /**
- * @type {import('prettier').Config}
+ * @type {import("prettier").Options}
  */
-module.exports = require("../../configs/prettier/.prettierrc.json");
+module.exports = require("../../configs/prettier/node.json");

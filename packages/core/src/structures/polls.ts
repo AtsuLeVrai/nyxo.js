@@ -1,8 +1,10 @@
-import type { Integer, IsoO8601Timestamp } from "../libs/formats";
+import type { Integer, Iso8601Timestamp } from "../libs/types";
 import type { EmojiStructure } from "./emojis";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-answer-count-object-structure}
+ * Type representing the structure of a poll answer count.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-answer-count-object-structure|Poll Answer Count Object Structure}
  */
 export type PollAnswerCountStructure = {
     /**
@@ -10,7 +12,7 @@ export type PollAnswerCountStructure = {
      */
     count: Integer;
     /**
-     * The answer_id
+     * The answer ID
      */
     id: Integer;
     /**
@@ -20,7 +22,9 @@ export type PollAnswerCountStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-results-object-structure}
+ * Type representing the structure of poll results.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-results-object-structure|Poll Results Object Structure}
  */
 export type PollResultsStructure = {
     /**
@@ -34,21 +38,25 @@ export type PollResultsStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#poll-media-object-poll-media-object-structure}
+ * Type representing the structure of poll media.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/poll#poll-media-object-poll-media-object-structure|Poll Media Object Structure}
  */
 export type PollMediaStructure = {
     /**
      * The emoji of the field
      */
-    emoji: Pick<EmojiStructure, "id" | "name">;
+    emoji?: Pick<EmojiStructure, "id" | "name">;
     /**
      * The text of the field
      */
-    text: string;
+    text?: string;
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#poll-answer-object-poll-answer-object-structure}
+ * Type representing the structure of a poll answer.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/poll#poll-answer-object-poll-answer-object-structure|Poll Answer Object Structure}
  */
 export type PollAnswerStructure = {
     /**
@@ -62,35 +70,39 @@ export type PollAnswerStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#layout-type}
+ * Enumeration representing poll layout types.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/poll#layout-types|Poll Layout Types}
  */
-export enum LayoutTypes {
+export enum PollLayoutTypes {
     /**
-     * The, uhm, default layout type.
+     * The default layout type.
      */
     Default = 1,
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#poll-create-request-object-poll-create-request-object-structure}
+ * Type representing the structure of a poll create request.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/poll#poll-create-request-object-poll-create-request-object-structure|Poll Create Request Object Structure}
  */
 export type PollCreateRequestStructure = {
     /**
-     * Whether a user can select multiple answers. Defaults to false
+     * Whether a user can select multiple answers. Defaults to false.
      */
     allow_multiselect?: boolean;
     /**
-     * Each of the answers available in the poll, up to 10
+     * Each of the answers available in the poll, up to 10.
      */
     answers: PollAnswerStructure[];
     /**
-     * Number of hours the poll should be open for, up to 32 days. Defaults to 24
+     * Number of hours the poll should be open for, up to 32 days. Defaults to 24.
      */
     duration?: Integer;
     /**
-     * The layout type of the poll. Defaults to... DEFAULT!
+     * The layout type of the poll. Defaults to Default.
      */
-    layout_type?: LayoutTypes;
+    layout_type?: PollLayoutTypes;
     /**
      * The question of the poll. Only text is supported.
      */
@@ -98,23 +110,29 @@ export type PollCreateRequestStructure = {
 };
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/poll#poll-object-poll-object-structure}
+ * Type representing the structure of a poll.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/poll#poll-object-poll-object-structure|Poll Object Structure}
  */
 export type PollStructure = {
     /**
-     * The answers available in the poll
+     * Whether a user can select multiple answers
+     */
+    allow_multiselect: boolean;
+    /**
+     * Each of the answers available in the poll.
      */
     answers: PollAnswerStructure[];
     /**
-     * The time when the poll ends
+     * The time when the poll ends.
      */
-    expiry: IsoO8601Timestamp | null;
+    expiry: Iso8601Timestamp | null;
     /**
      * The layout type of the poll
      */
-    layout_type: LayoutTypes;
+    layout_type: PollLayoutTypes;
     /**
-     * The question of the poll
+     * The question of the poll. Only text is supported.
      */
     question: PollMediaStructure;
     /**

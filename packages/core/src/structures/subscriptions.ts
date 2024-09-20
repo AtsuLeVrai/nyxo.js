@@ -1,61 +1,66 @@
-import type { IsoO8601Timestamp, Snowflake } from "../libs/formats";
+import type { Iso8601Timestamp, Snowflake } from "../libs/types";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-statuses}
+ * Enum representing the subscription statuses.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-statuses|Subscription Statuses}
  */
 export enum SubscriptionStatus {
     /**
      * Subscription is active and scheduled to renew.
      */
-    Active = 1,
+    Active = 0,
     /**
      * Subscription is active but will not renew.
      */
-    Ending = 2,
+    Ending = 1,
     /**
      * Subscription is inactive and not being charged.
      */
-    Inactive = 3,
+    Inactive = 2,
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-object}
+ * Type representing the structure of a subscription.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-object|Subscription Object}
  */
 export type SubscriptionStructure = {
     /**
-     * When the subscription was canceled
+     * When the subscription was canceled.
      */
-    canceled_at: IsoO8601Timestamp | null;
+    canceled_at: Iso8601Timestamp | null;
     /**
-     * ISO3166-1 alpha-2 country code of the payment source used to purchase the subscription. Missing unless queried with a private OAuth scope.
+     * ISO3166-1 alpha-2 country code of the payment source used to purchase the subscription.
+     * Missing unless queried with a private OAuth scope.
      */
     country?: string;
     /**
-     * End of the current subscription period
+     * End of the current subscription period.
      */
-    current_period_end: IsoO8601Timestamp;
+    current_period_end: Iso8601Timestamp;
     /**
-     * Start of the current subscription period
+     * Start of the current subscription period.*
      */
-    current_period_start: IsoO8601Timestamp;
+    current_period_start: Iso8601Timestamp;
     /**
-     * List of entitlements granted for this subscription
+     * List of entitlements granted for this subscription.
      */
     entitlement_ids: Snowflake[];
     /**
-     * ID of the subscription
+     * ID of the subscription.
      */
     id: Snowflake;
     /**
-     * List of SKUs subscribed to
+     * List of SKUs subscribed to.
      */
     sku_ids: Snowflake[];
     /**
-     * Current status of the subscription
+     * Current status of the subscription.
      */
     status: SubscriptionStatus;
     /**
-     * ID of the user who is subscribed
+     * ID of the user who is subscribed.
      */
     user_id: Snowflake;
 };

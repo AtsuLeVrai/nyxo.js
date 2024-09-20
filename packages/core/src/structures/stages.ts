@@ -1,13 +1,15 @@
-import type { Snowflake } from "../libs/formats";
+import type { Snowflake } from "../libs/types";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-privacy-level}
+ * Enum representing the privacy levels of a Stage instance.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-privacy-level|Stage Instance Privacy Level}
  */
-export enum StagePrivacyLevels {
+export enum StagePrivacyLevel {
     /**
      * The Stage instance is visible publicly. (deprecated)
      *
-     * @deprecated Stage Discovery is deprecated and will be removed in the future.
+     * @deprecated Use `StagePrivacyLevel.GuildOnly` instead.
      */
     Public = 1,
     /**
@@ -17,35 +19,39 @@ export enum StagePrivacyLevels {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-stage-instance-structure}
+ * Type representing the structure of a Stage instance.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object|Stage Instance Object}
  */
 export type StageInstanceStructure = {
     /**
-     * The id of the associated Stage channel
+     * The id of the associated Stage channel.
      */
     channel_id: Snowflake;
     /**
-     * Whether or not Stage Discovery is disabled (deprecated)
+     * Whether or not Stage Discovery is disabled (deprecated).
+     *
+     * @deprecated No longer supported by Discord.
      */
-    discoverable_disabled: boolean;
+    discoverable_disabled?: boolean;
     /**
-     * The guild id of the associated Stage channel
+     * The guild id of the associated Stage channel.
      */
     guild_id: Snowflake;
     /**
-     * The id of the scheduled event for this Stage instance
+     * The id of the scheduled event for this Stage instance.
      */
     guild_scheduled_event_id: Snowflake | null;
     /**
-     * The id of this Stage instance
+     * The id of this Stage instance.
      */
     id: Snowflake;
     /**
-     * The privacy level of the Stage instance
+     * The privacy level of the Stage instance.
      */
-    privacy_level: StagePrivacyLevels;
+    privacy_level: StagePrivacyLevel;
     /**
-     * The topic of the Stage instance (1-120 characters)
+     * The topic of the Stage instance (1-120 characters).
      */
     topic: string;
 };

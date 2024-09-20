@@ -1,141 +1,141 @@
 /**
- * Italicizes the text.
+ * Formats text in italics.
  *
- * @param text - The text to be italicized
- * @returns The text surrounded by single underscores
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
-export function italic(text: string): `_${string}_` {
+export function italics(text: string): `_${string}_` {
     return `_${text}_`;
 }
 
 /**
- * Bolds the text.
+ * Formats text in bold.
  *
- * @param text - The text to be bolded
- * @returns The text surrounded by double asterisks
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function bold(text: string): `**${string}**` {
     return `**${text}**`;
 }
 
 /**
- * Underlines the text.
+ * Formats text with underline.
  *
- * @param text - The text to be underlined
- * @returns The text surrounded by double underscores
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function underline(text: string): `__${string}__` {
     return `__${text}__`;
 }
 
 /**
- * Strikes through the text.
+ * Formats text with strikethrough.
  *
- * @param text - The text to be struck through
- * @returns The text surrounded by double tildes
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
-export function strikeThrough(text: string): `~~${string}~~` {
+export function strikethrough(text: string): `~~${string}~~` {
     return `~~${text}~~`;
 }
 
 /**
- * Creates a spoiler (hidden text).
+ * Formats text as a spoiler.
  *
- * @param text - The text to be hidden
- * @returns The text surrounded by double vertical bars
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function spoiler(text: string): `||${string}||` {
     return `||${text}||`;
 }
 
 /**
- * Creates a large header (level 1).
+ * Formats text as a big header.
  *
- * @param text - The header text
- * @returns The text preceded by a hash and a space
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function bigHeader(text: string): `# ${string}` {
     return `# ${text}`;
 }
 
 /**
- * Creates a medium header (level 2).
+ * Formats text as a small header.
  *
- * @param text - The header text
- * @returns The text preceded by two hashes and a space
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function smallHeader(text: string): `## ${string}` {
     return `## ${text}`;
 }
 
 /**
- * Creates a small header (level 3).
+ * Formats text as an even smaller header.
  *
- * @param text - The header text
- * @returns The text preceded by three hashes and a space
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function evenSmallerHeader(text: string): `### ${string}` {
     return `### ${text}`;
 }
 
 /**
- * Creates a sub-text.
+ * Formats text as a subheader.
  *
- * @param text - The text to be formatted as sub-text
- * @returns The text preceded by a dash, a hash, and a space
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
-export function subText(text: string): `-# ${string}` {
+export function subHeader(text: string): `-# ${string}` {
     return `-# ${text}`;
 }
 
 /**
- * Creates a hyperlink.
+ * Formats text as a link.
  *
- * @param url - The URL of the link
- * @param text - The text to display for the link
- * @returns The link formatted in Markdown
+ * @param text - The text to display.
+ * @param url - The URL the link points to.
+ * @returns The formatted link.
  */
-export function link(url: string, text: string): `[${string}](${string})` {
+export function link(text: string, url: string): `[${string}](${string})` {
     return `[${text}](${url})`;
 }
 
 /**
- * Formats the text as inline code.
+ * Formats text as inline code.
  *
- * @param text - The text to be formatted as code
- * @returns The text surrounded by single backticks
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function code(text: string): `\`${string}\`` {
     return `\`${text}\``;
 }
 
 /**
- * Creates a code block with syntax highlighting.
+ * Formats text as a code block.
  *
- * @param language - The programming language for syntax highlighting
- * @param text - The code to be displayed in the block
- * @returns The code block formatted in Markdown
+ * @param text - The text to format.
+ * @param language - The language of the code block.
+ * @returns The formatted text.
  */
-export function codeBlock(language: string, text: string): `\`\`\`${string}\n${string}\n\`\`\`` {
+export function codeBlock(text: string, language?: string): `\`\`\`${string}\n${string}\n\`\`\`` {
     return `\`\`\`${language}\n${text}\n\`\`\``;
 }
 
 /**
- * Creates a simple quote.
+ * Formats text as a quote.
  *
- * @param text - The text to be quoted
- * @returns The text preceded by a greater-than sign and a space
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
 export function quote(text: string): `> ${string}` {
     return `> ${text}`;
 }
 
 /**
- * Creates a block quote.
+ * Formats text as a block quote.
  *
- * @param text - The text to be quoted
- * @returns The text preceded by three greater-than signs and a space
+ * @param text - The text to format.
+ * @returns The formatted text.
  */
-export function blockQuote(text: string): `>>> ${string}` {
+export function quoteBlock(text: string): `>>> ${string}` {
     return `>>> ${text}`;
 }
