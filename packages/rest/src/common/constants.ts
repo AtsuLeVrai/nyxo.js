@@ -2,7 +2,7 @@ import { ApiVersions, HttpResponseCodes, JsonErrorCodes } from "@nyxjs/core";
 import type { Pool, RetryHandler } from "undici";
 import type { RestOptions } from "../types";
 
-export const DISCORD_API_URL = "https://discord.com/api";
+export const DISCORD_API_URL = "https://discord.com";
 
 export const DISCORD_CDN_URL = "https://cdn.discordapp.com";
 

@@ -11,14 +11,14 @@ export class Store<K, V> {
         this.cache = new Map();
     }
 
-    public get(key: K): V {
+    public get(key: K): V | undefined {
         if (key === undefined || key === null) {
             throw StoreError.invalidKey(key);
         }
 
         const item = this.cache.get(key);
         if (!item) {
-            throw StoreError.keyNotFound(key);
+            return undefined;
         }
 
         if (item.expiry && Date.now() > item.expiry) {
