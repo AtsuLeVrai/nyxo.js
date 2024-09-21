@@ -1,4 +1,4 @@
-import type { Integer, Iso8601Timestamp } from "../libs/types";
+import type { Integer, Iso8601Timestamp } from "../types";
 import type { EmojiStructure } from "./emojis";
 
 /**

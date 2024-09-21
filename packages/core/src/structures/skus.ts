@@ -1,5 +1,5 @@
 import type { BitfieldResolvable } from "../libs/bitfield";
-import type { Snowflake } from "../libs/types";
+import type { Snowflake } from "../types";
 
 /**
  * Enumeration representing SKU flags.

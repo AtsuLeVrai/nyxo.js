@@ -12,23 +12,12 @@
       ],
       "outputs": [
         ".next/**",
-        "!.next/cache/**"
+        "!.next/cache/**",
+        "dist/**"
       ]
     },
-    "clean": {
-      "dependsOn": [
-        "^clean"
-      ]
-    },
-    "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
-    },
-    "pretty": {
-      "dependsOn": [
-        "^pretty"
-      ]
-    }
+    "clean": {},
+    "lint": {},
+    "pretty": {}
   }
 }

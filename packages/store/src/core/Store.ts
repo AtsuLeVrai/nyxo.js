@@ -6,18 +6,9 @@ export class Store<K, V> {
 
     private readonly cache: Map<K, { expiry?: number; value: V }>;
 
-    private readonly maxSize?: number;
-
-    private readonly defaultTTL?: number;
-
-    private readonly onEvict?: (key: K, value: V) => void;
-
     public constructor(private options: StoreOptions = {}) {
         this.lruOrder = [];
         this.cache = new Map();
-        this.maxSize = options.max_size;
-        this.defaultTTL = options.default_ttL;
-        this.onEvict = options.onEvict;
     }
 
     public get(key: K): V {
@@ -50,7 +41,7 @@ export class Store<K, V> {
 
         const item: { expiry?: number; value: V } = { value };
 
-        const ttl = options?.ttl ?? this.defaultTTL;
+        const ttl = options?.ttl ?? this.options.default_ttl;
         if (ttl !== undefined) {
             if (typeof ttl !== "number" || ttl < 0) {
                 throw StoreError.invalidTTL(ttl);
@@ -59,7 +50,7 @@ export class Store<K, V> {
             item.expiry = Date.now() + ttl;
         }
 
-        if (this.maxSize && this.cache.size >= this.maxSize && !this.cache.has(key)) {
+        if (this.options.max_size && this.cache.size >= this.options.max_size && !this.cache.has(key)) {
             throw StoreError.storeFull();
         }
 
@@ -208,7 +199,7 @@ export class Store<K, V> {
     } {
         return {
             size: this.cache.size,
-            maxSize: this.maxSize ?? 0,
+            maxSize: this.options.max_size ?? 0,
             lruOrderLength: this.lruOrder.length,
         };
     }
@@ -250,16 +241,16 @@ export class Store<K, V> {
     }
 
     private ensureMaxSize(): void {
-        if (!this.maxSize) return;
+        if (!this.options.max_size) return;
 
-        while (this.cache.size > this.maxSize) {
+        while (this.cache.size > this.options.max_size) {
             const leastUsed = this.lruOrder.shift();
             if (leastUsed) {
                 const evictedItem = this.cache.get(leastUsed);
                 this.cache.delete(leastUsed);
-                if (this.onEvict && evictedItem) {
+                if (this.options.onEvict && evictedItem) {
                     try {
-                        this.onEvict(leastUsed, evictedItem.value);
+                        this.options.onEvict(leastUsed, evictedItem.value);
                     } catch (error) {
                         throw StoreError.operationFailed(
                             "onEvict",
@@ -270,8 +261,8 @@ export class Store<K, V> {
             }
         }
 
-        if (this.cache.size > this.maxSize) {
-            throw StoreError.maxSizeExceeded(this.cache.size, this.maxSize);
+        if (this.cache.size > this.options.max_size) {
+            throw StoreError.maxSizeExceeded(this.cache.size, this.options.max_size);
         }
     }
 

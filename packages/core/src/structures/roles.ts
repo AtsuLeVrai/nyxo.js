@@ -1,5 +1,5 @@
 import type { BitfieldResolvable } from "../libs/bitfield";
-import type { Integer, Snowflake } from "../libs/types";
+import type { Integer, Snowflake } from "../types";
 
 /**
  * Enum representing the role flags.

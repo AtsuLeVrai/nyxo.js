@@ -1,4 +1,4 @@
-import type { Snowflake } from "../libs/types";
+import type { Snowflake } from "../types";
 
 /**
  * Enum representing the privacy levels of a Stage instance.

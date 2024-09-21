@@ -1,4 +1,17 @@
-import type { Snowflake } from "./types";
+import type { Snowflake } from "../types";
+
+/**
+ * Enum for different image formats.
+ *
+ * @see {@link https://discord.com/developers/docs/reference#image-formatting-image-formats|Image Formats}
+ */
+export enum ImageFormats {
+    GIF = "gif",
+    JPEG = "jpeg",
+    Lottie = "json",
+    PNG = "png",
+    WebP = "webp",
+}
 
 /**
  * Represents the types of guild navigation.

@@ -15,7 +15,6 @@ export * from "./enums/permissions";
 export * from "./libs/bitfield";
 export * from "./libs/formats";
 export * from "./libs/markdowns";
-export * from "./libs/types";
 
 /**
  * ./structures
@@ -42,3 +41,8 @@ export * from "./structures/templates";
 export * from "./structures/users";
 export * from "./structures/voices";
 export * from "./structures/webhooks";
+
+/**
+ * ./types
+ */
+export * from "./types";

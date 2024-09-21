@@ -1,7 +1,7 @@
 import type { LocaleKeys } from "../enums/locales";
 import type { BitwisePermissions } from "../enums/permissions";
 import type { BitfieldResolvable } from "../libs/bitfield";
-import type { AvailableLocales, Integer, Snowflake } from "../libs/types";
+import type { AvailableLocales, Integer, Snowflake } from "../types";
 import type { ApplicationIntegrationTypes } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
 import type { ActionRowStructure, ComponentTypes, SelectMenuOptionStructure, TextInputStructure } from "./components";

@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "../libs/types";
+import type { Integer, Snowflake } from "../types";
 import type { UserStructure } from "./users";
 
 /**

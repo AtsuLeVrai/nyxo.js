@@ -39,7 +39,7 @@ export type RestRequestOptions<T> = Omit<Dispatcher.DispatchOptions, "headers"> 
     /**
      * Whether to disable caching for this request.
      */
-    disableCache?: boolean;
+    disable_cache?: boolean;
     /**
      * The path to send the request to.
      */
@@ -93,4 +93,22 @@ export type RateLimitInfo = {
      * The time in milliseconds after which the current time frame resets.
      */
     resetAfter: Integer;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/reference#signed-attachment-cdn-urls-attachment-cdn-url-parameters}
+ */
+export type AttachmentCdnUrlParameters = {
+    /**
+     * Hex timestamp indicating when an attachment CDN URL will expire
+     */
+    ex: string;
+    /**
+     * Unique signature that remains valid until the URL's expiration
+     */
+    hm: string;
+    /**
+     * Hex timestamp indicating when the URL was issued
+     */
+    is: string;
 };

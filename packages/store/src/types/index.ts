@@ -2,7 +2,7 @@ export type StoreOptions = {
     /**
      * The time-to-live (in milliseconds) of the value.
      */
-    default_ttL?: number;
+    default_ttl?: number;
     /**
      * The maximum size of the cache.
      */

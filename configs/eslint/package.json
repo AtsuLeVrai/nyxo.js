@@ -4,7 +4,7 @@
   "private": true,
   "devDependencies": {
     "@types/eslint": "^9.6.1",
-    "eslint": "^9.10.0",
+    "eslint": "^9.11.0",
     "eslint-config-neon": "^0.2.0",
     "lodash.merge": "^4.6.2"
   }

@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "../libs/types";
+import type { Integer, Snowflake } from "../types";
 import type { ChannelTypes } from "./channels";
 import type { EmojiStructure } from "./emojis";
 
