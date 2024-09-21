@@ -2,9 +2,19 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/utils",
   "type": "commonjs",
-  "main": "dist/index.js",
-  "types": "dist/src/index.d.ts",
-  "module": "dist/esm/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "module": "./dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup && rimraf .tsup",
     "clean": "rimraf dist",

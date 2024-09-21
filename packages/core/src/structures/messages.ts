@@ -1,5 +1,5 @@
 import type { MimeTypes } from "../enums/mimes";
-import type { BitfieldResolvable } from "../libs/bitfield";
+import type { BitfieldResolvable } from "../managers/bitfield";
 import type { Float, Integer, Iso8601Timestamp, Snowflake } from "../types";
 import type { ApplicationIntegrationTypes, ApplicationStructure } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";

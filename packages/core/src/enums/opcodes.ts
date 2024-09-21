@@ -279,7 +279,7 @@ export enum VoiceCloseCodes {
  *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes|HTTP Response Codes}
  */
-export enum HttpCodes {
+export enum HttpResponseCodes {
     /**
      * The request completed successfully.
      */

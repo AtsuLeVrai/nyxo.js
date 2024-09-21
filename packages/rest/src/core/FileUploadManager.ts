@@ -2,18 +2,8 @@ import { createReadStream } from "node:fs";
 import { basename } from "node:path";
 import { MimeTypes } from "@nyxjs/core";
 import FormData from "form-data";
-import { DISCORD_CDN_URL } from "../libs/constants";
-import type { AttachmentCdnUrlParameters } from "../types";
-
-const CONTENT_TYPES = new Map([
-    ["png", "image/png"],
-    ["jpg", "image/jpeg"],
-    ["jpeg", "image/jpeg"],
-    ["gif", "image/gif"],
-    ["webp", "image/webp"],
-]);
-
-type ContentType = MimeTypes.Bin | (typeof CONTENT_TYPES extends Map<string, infer V> ? V : never);
+import { DISCORD_CDN_URL } from "../common/constants";
+import type { AttachmentCdnUrlParameters, FileInput } from "../types";
 
 export class FileUploadManager {
     private readonly formData: FormData;
@@ -28,11 +18,6 @@ export class FileUploadManager {
 
     public static imageData(type: "image/gif" | "image/jpeg" | "image/png", data: Buffer): string {
         return `data:${type};base64,${data.toString("base64")}`;
-    }
-
-    public static getContentType(filename: string): ContentType {
-        const extension = filename.split(".").pop()?.toLowerCase() ?? "";
-        return CONTENT_TYPES.get(extension) ?? MimeTypes.Bin;
     }
 
     public static parseAttachmentCdnUrl(urlString: string): AttachmentCdnUrlParameters {
@@ -63,37 +48,82 @@ export class FileUploadManager {
         }
     }
 
-    public addFile(file: string): this {
-        const filename = basename(file);
-        this.formData.append("file", createReadStream(file), {
-            filename,
-            contentType: FileUploadManager.getContentType(filename),
-        });
-        return this;
+    private static getContentType(filename: string): string {
+        const extension = filename.split(".").pop()?.toLowerCase() ?? "";
+        const contentTypes: Record<string, string> = {
+            png: "image/png",
+            jpg: "image/jpeg",
+            jpeg: "image/jpeg",
+            gif: "image/gif",
+            webp: "image/webp",
+        };
+        return contentTypes[extension] || MimeTypes.Bin;
     }
 
-    public addFiles(files: string[]): this {
-        for (const [index, file] of files.entries()) {
+    private static getFileDetails(
+        file: FileInput,
+        providedFilename?: string
+    ): {
+        content: any;
+        contentType: string;
+        filename: string;
+    } {
+        if (typeof file === "string") {
             const filename = basename(file);
-            this.formData.append(`files[${index}]`, createReadStream(file), {
-                contentType: FileUploadManager.getContentType(filename),
+            return {
+                content: createReadStream(file),
                 filename,
-            });
+                contentType: this.getContentType(filename),
+            };
+        } else if (file instanceof Buffer) {
+            return {
+                content: file,
+                filename: providedFilename ?? "file.bin",
+                contentType: providedFilename ? this.getContentType(providedFilename) : MimeTypes.Bin,
+            };
+        } else if (file instanceof Blob) {
+            return {
+                content: file,
+                filename: providedFilename ?? "blob",
+                contentType: file.type ?? MimeTypes.Bin,
+            };
+        }
+
+        throw new Error("Invalid file type");
+    }
+
+    public addFile(fieldName: string, file: FileInput, filename?: string): this {
+        const { content, filename: detectedFilename, contentType } = FileUploadManager.getFileDetails(file, filename);
+        this.formData.append(fieldName, content, { filename: detectedFilename, contentType });
+        return this;
+    }
+
+    public addFiles(files: Record<string, { content: FileInput; filename?: string }>): this {
+        for (const [fieldName, { content, filename }] of Object.entries(files)) {
+            this.addFile(fieldName, content, filename);
         }
 
         return this;
     }
 
-    public createPayload(payload: Record<string, unknown>, files?: string[] | string): this {
-        if (files) {
-            void (Array.isArray(files) ? this.addFiles(files) : this.addFile(files));
+    public addFields(fields: Record<string, unknown>): this {
+        for (const [key, value] of Object.entries(fields)) {
+            this.formData.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
         }
 
-        this.formData.append("payload_json", JSON.stringify(payload));
+        return this;
+    }
+
+    public addPayload(fields: Record<string, unknown>): this {
+        this.formData.append("payload_json", JSON.stringify(fields));
         return this;
     }
 
     public getFormData(): FormData {
         return this.formData;
+    }
+
+    public getHeaders(): Record<string, string> {
+        return this.formData.getHeaders();
     }
 }

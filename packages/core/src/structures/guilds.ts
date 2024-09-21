@@ -1,7 +1,7 @@
 import type { LocaleKeys } from "../enums/locales";
 import type { OAuth2Scopes } from "../enums/oauth2";
 import type { BitwisePermissions } from "../enums/permissions";
-import type { BitfieldResolvable } from "../libs/bitfield";
+import type { BitfieldResolvable } from "../managers/bitfield";
 import type { Integer, Iso8601Timestamp, Snowflake } from "../types";
 import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
@@ -614,7 +614,7 @@ export type GuildPreviewStructure = {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object-example-unavailable-guild|Unavailable Guild Object}
  */
-export type UnavailableGuildObject = {
+export type UnavailableGuildStructure = {
     /**
      * The id of the guild
      */

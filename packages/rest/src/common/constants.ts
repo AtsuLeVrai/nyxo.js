@@ -1,4 +1,4 @@
-import { ApiVersions, HttpCodes, JsonErrorCodes } from "@nyxjs/core";
+import { ApiVersions, HttpResponseCodes, JsonErrorCodes } from "@nyxjs/core";
 import type { Pool, RetryHandler } from "undici";
 import type { RestOptions } from "../types";
 
@@ -25,6 +25,6 @@ export const RETRY_AGENT_OPTIONS: RetryHandler.RetryOptions = {
     maxTimeout: 10_000,
     timeoutFactor: 2,
     methods: ["GET", "DELETE", "PUT", "PATCH", "POST"],
-    statusCodes: Object.values(HttpCodes).map(Number),
+    statusCodes: Object.values(HttpResponseCodes).map(Number),
     errorCodes: Object.values(JsonErrorCodes).map(String),
 };

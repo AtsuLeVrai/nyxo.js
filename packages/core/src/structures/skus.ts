@@ -1,4 +1,4 @@
-import type { BitfieldResolvable } from "../libs/bitfield";
+import type { BitfieldResolvable } from "../managers/bitfield";
 import type { Snowflake } from "../types";
 
 /**

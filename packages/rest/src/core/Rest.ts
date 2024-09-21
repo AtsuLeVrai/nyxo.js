@@ -1,14 +1,14 @@
-import { HttpCodes, MimeTypes } from "@nyxjs/core";
+import { HttpResponseCodes, MimeTypes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
-import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import { Pool, RetryAgent } from "undici";
-import { DISCORD_API_URL, POOL_OPTIONS, REST_DEFAULT_OPTIONS, RETRY_AGENT_OPTIONS } from "../libs/constants";
-import { decompressResponse } from "../libs/utils";
-import type { RestEvents, RestOptions, RestRequestOptions } from "../types";
+import { DISCORD_API_URL, POOL_OPTIONS, REST_DEFAULT_OPTIONS, RETRY_AGENT_OPTIONS } from "../common/constants";
+import { decompressResponse } from "../common/utils";
+import type { RestOptions, RestRequestOptions } from "../types";
+import { RestError } from "./RestError";
 import { RestRateLimiter } from "./RestRateLimiter";
 
-export class Rest extends EventEmitter<RestEvents> {
+export class Rest {
     private readonly pool: Pool;
 
     private readonly retryAgent: RetryAgent;
@@ -21,7 +21,6 @@ export class Rest extends EventEmitter<RestEvents> {
         private token: string,
         private options: RestOptions = REST_DEFAULT_OPTIONS
     ) {
-        super();
         this.store = new Store();
         this.rateLimiter = new RestRateLimiter();
         this.pool = new Pool(DISCORD_API_URL, POOL_OPTIONS);
@@ -57,7 +56,7 @@ export class Rest extends EventEmitter<RestEvents> {
             const responseText = await decompressResponse(headers, body);
             const data = JSON.parse(responseText);
 
-            if (statusCode === HttpCodes.TooManyRequests) {
+            if (statusCode === HttpResponseCodes.TooManyRequests) {
                 await this.rateLimiter.handleRateLimitResponse(data);
                 return await this.request(options);
             }
@@ -70,12 +69,29 @@ export class Rest extends EventEmitter<RestEvents> {
             }
 
             if (statusCode >= 400) {
-                throw new Error(`[REST] HTTP error! status: ${statusCode}, body: ${JSON.stringify(data)}`);
+                throw new RestError(
+                    data.message || `HTTP error! status: ${statusCode}`,
+                    data.code || statusCode,
+                    options.method,
+                    options.path,
+                    statusCode,
+                    options.body
+                );
             }
 
             return data as T;
         } catch (error) {
-            throw new Error(error instanceof Error ? error.message : String(error));
+            if (error instanceof RestError) {
+                throw error;
+            }
+
+            throw new RestError(
+                error instanceof Error ? error.message : String(error),
+                0,
+                options.method,
+                options.path,
+                HttpResponseCodes.ServerError
+            );
         }
     }
 

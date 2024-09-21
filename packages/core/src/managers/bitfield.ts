@@ -3,12 +3,12 @@
  * It can be an array of strings, bigints, or template literals,
  * an instance of Bitfield, a string, a bigint, or a template literal.
  */
-export type BitfieldResolvable<T> = (T | bigint | `${bigint}`)[] | Bitfield<T> | T | bigint | `${bigint}`;
+export type BitfieldResolvable<T> = (T | bigint | `${bigint}`)[] | BitfieldManager<T> | T | bigint | `${bigint}`;
 
 /**
  * A class that represents a bitfield.
  */
-export class Bitfield<T> {
+export class BitfieldManager<T> {
     /**
      * The default bit value.
      */
@@ -22,7 +22,7 @@ export class Bitfield<T> {
     /**
      * Creates a new Bitfield instance.*
      */
-    public constructor(public bitfield: bigint = Bitfield.defaultBit) {}
+    public constructor(public bitfield: bigint = BitfieldManager.defaultBit) {}
 
     /**
      * Resolves a bitfield resolvable value to a bigint.
@@ -36,7 +36,7 @@ export class Bitfield<T> {
             return bit;
         }
 
-        if (bit instanceof Bitfield) {
+        if (bit instanceof BitfieldManager) {
             return bit.bitfield;
         }
 
@@ -66,7 +66,7 @@ export class Bitfield<T> {
             return bit.every((b) => this.has(b));
         }
 
-        const bits = Bitfield.resolve(bit as string);
+        const bits = BitfieldManager.resolve(bit as string);
         return (this.bitfield & bits) === bits;
     }
 
@@ -79,7 +79,7 @@ export class Bitfield<T> {
     public add(...bits: BitfieldResolvable<T>[]): this {
         let total = 0n;
         for (const bit of bits) {
-            total |= Bitfield.resolve(bit as string);
+            total |= BitfieldManager.resolve(bit as string);
         }
 
         this.bitfield |= total;
@@ -95,7 +95,7 @@ export class Bitfield<T> {
     public remove(...bits: BitfieldResolvable<T>[]): this {
         let total = 0n;
         for (const bit of bits) {
-            total |= Bitfield.resolve(bit as string);
+            total |= BitfieldManager.resolve(bit as string);
         }
 
         this.bitfield &= ~total;
@@ -108,7 +108,7 @@ export class Bitfield<T> {
      * @returns An array of flag names.
      */
     public toArray(): T[] {
-        return Object.keys(Bitfield.Flags).filter((bit) => this.has(bit as T)) as T[];
+        return Object.keys(BitfieldManager.Flags).filter((bit) => this.has(bit as T)) as T[];
     }
 
     /**

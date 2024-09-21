@@ -10,11 +10,15 @@ export * from "./enums/opcodes";
 export * from "./enums/permissions";
 
 /**
- * ./libs
+ * ./managers
  */
-export * from "./libs/bitfield";
-export * from "./libs/formats";
-export * from "./libs/markdowns";
+export * from "./managers/bitfield";
+
+/**
+ * ./markdown
+ */
+export * from "./markdown/formats";
+export * from "./markdown/markdowns";
 
 /**
  * ./structures
@@ -27,6 +31,7 @@ export * from "./structures/emojis";
 export * from "./structures/entitlements";
 export * from "./structures/guilds";
 export * from "./structures/interactions";
+export * from "./structures/invites";
 export * from "./structures/messages";
 export * from "./structures/moderations";
 export * from "./structures/polls";
