@@ -31,7 +31,7 @@ export class BitfieldManager<T> {
      * @returns The resolved bigint value.
      * @throws If the bitfield resolvable value is invalid.
      */
-    public static resolve<S extends string>(bit: BitfieldResolvable<S>): bigint {
+    public static resolve<S>(bit: BitfieldResolvable<S>): bigint {
         if (typeof bit === "bigint") {
             return bit;
         }

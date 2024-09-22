@@ -8,7 +8,7 @@ import type { EmojiStructure } from "./emojis";
 export enum ComponentTypes {
     ActionRow = 1,
     Button = 2,
-    SelectMenu = 3,
+    StringSelect = 3,
     TextInput = 4,
     UserSelect = 5,
     RoleSelect = 6,
@@ -160,7 +160,7 @@ export type SelectMenuStructure = {
         | ComponentTypes.ChannelSelect
         | ComponentTypes.MentionableSelect
         | ComponentTypes.RoleSelect
-        | ComponentTypes.SelectMenu
+        | ComponentTypes.StringSelect
         | ComponentTypes.UserSelect;
 };
 
@@ -217,12 +217,12 @@ export type ButtonStructure = {
 /**
  * Resolvable component types
  */
-export type ComponentResolvable = ButtonStructure | SelectMenuStructure | TextInputStructure;
+export type ComponentResolvableStructure = ButtonStructure | SelectMenuStructure | TextInputStructure;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#action-rows|Action Rows}
  */
-export type ActionRowStructure<T extends ComponentResolvable = ComponentResolvable> = {
+export type ActionRowStructure<T extends ComponentResolvableStructure = ComponentResolvableStructure> = {
     /**
      * The components in this action row
      */

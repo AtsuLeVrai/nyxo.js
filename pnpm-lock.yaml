@@ -63,6 +63,55 @@ importers:
         specifier: ^5.6.2
         version: 5.6.2
 
+  packages/nyxjs:
+    dependencies:
+      '@nyxjs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nyxjs/rest':
+        specifier: workspace:*
+        version: link:../rest
+      '@nyxjs/store':
+        specifier: workspace:*
+        version: link:../store
+      '@nyxjs/utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@nyxjs/ws':
+        specifier: workspace:*
+        version: link:../ws
+      eventemitter3:
+        specifier: ^5.0.1
+        version: 5.0.1
+    devDependencies:
+      '@microsoft/api-extractor':
+        specifier: ^7.47.9
+        version: 7.47.9(@types/node@22.5.5)
+      '@swc/core':
+        specifier: ^1.7.26
+        version: 1.7.26
+      '@types/node':
+        specifier: ^22.5.5
+        version: 22.5.5
+      eslint:
+        specifier: ^9.11.0
+        version: 9.11.0
+      prettier:
+        specifier: ^3.3.3
+        version: 3.3.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      terser:
+        specifier: ^5.33.0
+        version: 5.33.0
+      tsup:
+        specifier: ^8.3.0
+        version: 8.3.0(@microsoft/api-extractor@7.47.9(@types/node@22.5.5))(@swc/core@1.7.26)(postcss@8.4.47)(typescript@5.6.2)(yaml@2.5.1)
+      typescript:
+        specifier: ^5.6.2
+        version: 5.6.2
+
   packages/rest:
     dependencies:
       '@nyxjs/core':
