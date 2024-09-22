@@ -1,47 +1,52 @@
 import type { HttpResponseCodes } from "@nyxjs/core";
 
+export type RestErrorOptions = {
+    code?: number;
+    httpStatus?: HttpResponseCodes;
+    method?: string;
+    path?: string;
+    requestBody?: unknown;
+};
+
 export class RestError extends Error {
-    public code: number;
+    private readonly details: RestErrorOptions;
 
-    public method: string;
-
-    public path: string;
-
-    public httpStatus: number;
-
-    public requestBody: any;
-
-    public constructor(
-        message: string,
-        code: number,
-        method: string,
-        path: string,
-        httpStatus: HttpResponseCodes,
-        requestBody?: any
-    ) {
+    public constructor(message: string, options: RestErrorOptions) {
         super(message);
         this.name = "RestError";
-        this.code = code;
-        this.method = method;
-        this.path = path;
-        this.httpStatus = httpStatus;
-        this.requestBody = requestBody;
+        this.details = { ...options };
         Object.setPrototypeOf(this, RestError.prototype);
+    }
+
+    public get code(): number | undefined {
+        return this.details.code;
+    }
+
+    public get method(): string | undefined {
+        return this.details.method;
+    }
+
+    public get path(): string | undefined {
+        return this.details.path;
+    }
+
+    public get httpStatus(): HttpResponseCodes | undefined {
+        return this.details.httpStatus;
+    }
+
+    public get requestBody(): unknown {
+        return this.details.requestBody;
     }
 
     public toString(): string {
         return `RestError [${this.code}]: ${this.message} (${this.method} ${this.path})`;
     }
 
-    public toJSON(): Record<string, any> {
+    public toJSON(): Record<string, unknown> {
         return {
             name: this.name,
-            code: this.code,
             message: this.message,
-            method: this.method,
-            path: this.path,
-            httpStatus: this.httpStatus,
-            requestBody: this.requestBody,
+            ...this.details,
         };
     }
 }

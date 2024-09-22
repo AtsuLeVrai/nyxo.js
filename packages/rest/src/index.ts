@@ -4,6 +4,7 @@
 export * from "./core/Cdn";
 export * from "./core/FileUploadManager";
 export * from "./core/Rest";
+export * from "./core/RestError";
 
 /**
  * ./routes

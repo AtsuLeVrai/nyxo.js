@@ -3,7 +3,25 @@ import { basename } from "node:path";
 import { MimeTypes } from "@nyxjs/core";
 import FormData from "form-data";
 import { DISCORD_CDN_URL } from "../common/constants";
-import type { AttachmentCdnUrlParameters, FileInput } from "../types";
+import type { FileInput } from "../types";
+
+/**
+ * @see {@link https://discord.com/developers/docs/reference#signed-attachment-cdn-urls-attachment-cdn-url-parameters}
+ */
+export type AttachmentCdnUrlParameters = {
+    /**
+     * Hex timestamp indicating when an attachment CDN URL will expire
+     */
+    ex: string;
+    /**
+     * Unique signature that remains valid until the URL's expiration
+     */
+    hm: string;
+    /**
+     * Hex timestamp indicating when the URL was issued
+     */
+    is: string;
+};
 
 export class FileUploadManager {
     private readonly formData: FormData;

@@ -1,5 +1,7 @@
 import { setTimeout } from "node:timers/promises";
-import type { DiscordHeaders, Float, HttpResponseCodes, Integer } from "@nyxjs/core";
+import type { DiscordHeaders, Float, Integer } from "@nyxjs/core";
+import { HttpResponseCodes } from "@nyxjs/core";
+import { RestError } from "./RestError";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure|Rate Limit Response Structure}
@@ -84,6 +86,12 @@ export class RestRateLimiter {
         }
 
         await setTimeout(response.retry_after * 1_000);
+
+        throw new RestError("Rate limit exceeded", {
+            code: response.code ?? HttpResponseCodes.TooManyRequests,
+            httpStatus: HttpResponseCodes.TooManyRequests,
+            requestBody: response,
+        });
     }
 
     private parseHeaders(headers: DiscordHeaders): RateLimitInfo {

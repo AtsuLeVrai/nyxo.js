@@ -1,4 +1,5 @@
 import type { StoreOptions, StoreSetOptions } from "../types";
+import { StoreErrorCode } from "../types";
 import { StoreError } from "./StoreError";
 
 export class Store<K, V> {
@@ -13,7 +14,7 @@ export class Store<K, V> {
 
     public get(key: K): V | undefined {
         if (key === undefined || key === null) {
-            throw StoreError.invalidKey(key);
+            throw new StoreError("Invalid key", { code: StoreErrorCode.InvalidKey });
         }
 
         const item = this.cache.get(key);
@@ -23,7 +24,7 @@ export class Store<K, V> {
 
         if (item.expiry && Date.now() > item.expiry) {
             this.delete(key);
-            throw StoreError.expiredKey(key);
+            throw new StoreError("Key expired", { code: StoreErrorCode.ExpiredKey });
         }
 
         this.updateLRUOrder(key);
@@ -32,11 +33,11 @@ export class Store<K, V> {
 
     public set(key: K, value: V, options?: StoreSetOptions): void {
         if (key === undefined || key === null) {
-            throw StoreError.invalidKey(key);
+            throw new StoreError("Invalid key", { code: StoreErrorCode.InvalidKey });
         }
 
         if (value === undefined) {
-            throw StoreError.invalidValue(value);
+            throw new StoreError("Invalid value", { code: StoreErrorCode.InvalidValue });
         }
 
         const item: { expiry?: number; value: V } = { value };
@@ -44,14 +45,14 @@ export class Store<K, V> {
         const ttl = options?.ttl ?? this.options.default_ttl;
         if (ttl !== undefined) {
             if (typeof ttl !== "number" || ttl < 0) {
-                throw StoreError.invalidTTL(ttl);
+                throw new StoreError("Invalid TTL", { code: StoreErrorCode.InvalidTTL });
             }
 
             item.expiry = Date.now() + ttl;
         }
 
         if (this.options.max_size && this.cache.size >= this.options.max_size && !this.cache.has(key)) {
-            throw StoreError.storeFull();
+            throw new StoreError("Store is full", { code: StoreErrorCode.StoreFull });
         }
 
         this.cache.set(key, item);
@@ -74,7 +75,7 @@ export class Store<K, V> {
             try {
                 key = JSON.stringify(args) as K;
             } catch {
-                throw StoreError.serializationError(args);
+                throw new StoreError("Serialization error", { code: StoreErrorCode.SerializationError });
             }
 
             if (this.has(key)) {
@@ -98,7 +99,7 @@ export class Store<K, V> {
 
     public delete(key: K): boolean {
         if (key === undefined || key === null) {
-            throw StoreError.invalidKey(key);
+            throw new StoreError("Invalid key", { code: StoreErrorCode.InvalidKey });
         }
 
         const deleted = this.cache.delete(key);
@@ -175,8 +176,8 @@ export class Store<K, V> {
                     this.delete(key);
                     count++;
                 }
-            } catch (error) {
-                throw StoreError.operationFailed("prune", error instanceof Error ? error.message : String(error));
+            } catch {
+                throw new StoreError("Operation failed", { code: StoreErrorCode.OperationFailed });
             }
         }
 
@@ -251,18 +252,15 @@ export class Store<K, V> {
                 if (this.options.onEvict && evictedItem) {
                     try {
                         this.options.onEvict(leastUsed, evictedItem.value);
-                    } catch (error) {
-                        throw StoreError.operationFailed(
-                            "onEvict",
-                            error instanceof Error ? error.message : String(error)
-                        );
+                    } catch {
+                        throw new StoreError("Eviction callback failed", { code: StoreErrorCode.OperationFailed });
                     }
                 }
             }
         }
 
         if (this.cache.size > this.options.max_size) {
-            throw StoreError.maxSizeExceeded(this.cache.size, this.options.max_size);
+            throw new StoreError("Max size exceeded", { code: StoreErrorCode.MaxSizeExceeded });
         }
     }
 

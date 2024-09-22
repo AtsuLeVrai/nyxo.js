@@ -1,12 +1,31 @@
-import { HttpResponseCodes, MimeTypes } from "@nyxjs/core";
+import { type ApiVersions, type AuthTypes, HttpResponseCodes, type Integer, MimeTypes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
 import type { Dispatcher } from "undici";
 import { Pool, RetryAgent } from "undici";
 import { DISCORD_API_URL, POOL_OPTIONS, REST_DEFAULT_OPTIONS, RETRY_AGENT_OPTIONS } from "../common/constants";
 import { decompressResponse } from "../common/utils";
-import type { RestOptions, RestRequestOptions } from "../types";
+import type { RestRequestOptions } from "../types";
 import { RestError } from "./RestError";
 import { RestRateLimiter } from "./RestRateLimiter";
+
+export type RestOptions = {
+    /**
+     * The type of authentication to use.
+     */
+    auth_type?: AuthTypes;
+    /**
+     * The time-to-live (in milliseconds) of the cache.
+     */
+    cache_life_time?: Integer;
+    /**
+     * The user agent to use.
+     */
+    user_agent?: string;
+    /**
+     * The version of the API to use.
+     */
+    version: ApiVersions;
+};
 
 export class Rest {
     private readonly pool: Pool;
@@ -69,14 +88,13 @@ export class Rest {
             }
 
             if (statusCode >= 400) {
-                throw new RestError(
-                    data.message || `HTTP error! status: ${statusCode}`,
-                    data.code || statusCode,
-                    options.method,
-                    options.path,
-                    statusCode,
-                    options.body
-                );
+                throw new RestError(data.message ?? `HTTP error! status: ${statusCode}`, {
+                    code: data.code ?? statusCode,
+                    method: options.method,
+                    path: options.path,
+                    httpStatus: statusCode,
+                    requestBody: options.body,
+                });
             }
 
             return data as T;
@@ -85,13 +103,12 @@ export class Rest {
                 throw error;
             }
 
-            throw new RestError(
-                error instanceof Error ? error.message : String(error),
-                0,
-                options.method,
-                options.path,
-                HttpResponseCodes.ServerError
-            );
+            throw new RestError(error instanceof Error ? error.message : String(error), {
+                code: 0,
+                method: options.method,
+                path: options.path,
+                httpStatus: HttpResponseCodes.ServerError,
+            });
         }
     }
 
