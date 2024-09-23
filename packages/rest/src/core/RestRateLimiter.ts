@@ -3,10 +3,13 @@ import type { DiscordHeaders, Float, Integer } from "@nyxjs/core";
 import { HttpResponseCodes } from "@nyxjs/core";
 import { RestError } from "./RestError";
 
+const globalRateLimit = Symbol("globalRateLimit");
+const routeRateLimits = Symbol("routeRateLimits");
+
 /**
  * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure|Rate Limit Response Structure}
  */
-type RateLimitResponseStructure = {
+type RateLimitResponseStructure = Readonly<{
     /**
      * An error code for some limits
      */
@@ -23,9 +26,9 @@ type RateLimitResponseStructure = {
      * The number of seconds to wait before submitting another request.
      */
     retry_after: Float;
-};
+}>;
 
-type RateLimitInfo = {
+type RateLimitInfo = Readonly<{
     /**
      * The maximum number of requests that can be made in a given time frame.
      */
@@ -46,43 +49,42 @@ type RateLimitInfo = {
      * The time in milliseconds after which the current time frame resets.
      */
     resetAfter: Integer;
-};
+}>;
 
 export class RestRateLimiter {
-    private globalRateLimit: number | null;
+    private [globalRateLimit]: number | null;
 
-    private readonly routeRateLimits: Map<string, RateLimitInfo>;
+    private readonly [routeRateLimits]: Map<string, RateLimitInfo>;
 
     public constructor() {
-        this.globalRateLimit = null;
-        this.routeRateLimits = new Map();
+        this[globalRateLimit] = null;
+        this[routeRateLimits] = new Map();
     }
 
     public async wait(path: string): Promise<void> {
         const now = Date.now();
-        if (this.globalRateLimit && this.globalRateLimit > now) {
-            await setTimeout(this.globalRateLimit - now);
+        if (this[globalRateLimit] && this[globalRateLimit] > now) {
+            await setTimeout(this[globalRateLimit] - now);
         }
 
-        const routeLimit = this.routeRateLimits.get(path);
+        const routeLimit = this[routeRateLimits].get(path);
         if (routeLimit && routeLimit.remaining <= 0 && routeLimit.reset > now) {
             await setTimeout(routeLimit.reset - now);
         }
     }
 
     public handleRateLimit(path: string, headers: DiscordHeaders): void {
-        const { limit, remaining, reset, resetAfter, bucket } = this.parseHeaders(headers);
-
-        this.routeRateLimits.set(path, { limit, remaining, reset, resetAfter, bucket });
+        const rateLimitInfo = this.parseHeaders(headers);
+        this[routeRateLimits].set(path, rateLimitInfo);
 
         if (headers["X-RateLimit-Global"]) {
-            this.globalRateLimit = Date.now() + resetAfter;
+            this[globalRateLimit] = Date.now() + rateLimitInfo.resetAfter;
         }
     }
 
     public async handleRateLimitResponse(response: RateLimitResponseStructure): Promise<void> {
         if (response.global) {
-            this.globalRateLimit = Date.now() + response.retry_after * 1_000;
+            this[globalRateLimit] = Date.now() + response.retry_after * 1_000;
         }
 
         await setTimeout(response.retry_after * 1_000);
@@ -95,12 +97,12 @@ export class RestRateLimiter {
     }
 
     private parseHeaders(headers: DiscordHeaders): RateLimitInfo {
-        return {
+        return Object.freeze({
             limit: Number.parseInt(headers["X-RateLimit-Limit"] ?? "0", 10),
             remaining: Number.parseInt(headers["X-RateLimit-Remaining"] ?? "0", 10),
             reset: Number.parseInt(headers["X-RateLimit-Reset"] ?? "0", 10) * 1_000,
             resetAfter: Number.parseFloat(headers["X-RateLimit-Reset-After"] ?? "0") * 1_000,
             bucket: headers["X-RateLimit-Bucket"] ?? "",
-        };
+        });
     }
 }

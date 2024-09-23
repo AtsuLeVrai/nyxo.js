@@ -1,275 +1,124 @@
-import type { StoreOptions, StoreSetOptions } from "../types";
+import type { StoreOptions } from "../types";
 import { StoreErrorCode } from "../types";
 import { StoreError } from "./StoreError";
 
-export class Store<K, V> {
-    private lruOrder: K[];
+const cache = Symbol("cache");
+const lruOrder = Symbol("lruOrder");
+const options = Symbol("options");
 
-    private readonly cache: Map<K, { expiry?: number; value: V }>;
+export class Store<K extends string, V> {
+    private [cache]: Map<K, { expiry?: number; value: V }>;
 
-    public constructor(private options: StoreOptions = {}) {
-        this.lruOrder = [];
-        this.cache = new Map();
+    private readonly [lruOrder]: K[];
+
+    private readonly [options]: Required<StoreOptions>;
+
+    public constructor(initialOptions: StoreOptions = {}) {
+        this[cache] = new Map();
+        this[lruOrder] = [];
+        this[options] = {
+            max_size: initialOptions.max_size ?? Infinity,
+            default_ttl: initialOptions.default_ttl ?? 0,
+            onEvict: initialOptions.onEvict ?? (() => {}),
+        };
+        Object.freeze(this[options]);
     }
 
     public get(key: K): V | undefined {
-        if (key === undefined || key === null) {
-            throw new StoreError("Invalid key", { code: StoreErrorCode.InvalidKey });
-        }
+        this.validateKey(key);
 
-        const item = this.cache.get(key);
-        if (!item) {
-            return undefined;
-        }
+        const item = this[cache].get(key);
+        if (!item) return undefined;
 
-        if (item.expiry && Date.now() > item.expiry) {
+        if (this.isExpired(item)) {
             this.delete(key);
-            throw new StoreError("Key expired", { code: StoreErrorCode.ExpiredKey });
+            return undefined;
         }
 
         this.updateLRUOrder(key);
         return item.value;
     }
 
-    public set(key: K, value: V, options?: StoreSetOptions): void {
-        if (key === undefined || key === null) {
-            throw new StoreError("Invalid key", { code: StoreErrorCode.InvalidKey });
-        }
+    public set(key: K, value: V, ttl: number = this[options].default_ttl): void {
+        this.validateKey(key);
+        this.validateValue(value);
 
-        if (value === undefined) {
-            throw new StoreError("Invalid value", { code: StoreErrorCode.InvalidValue });
-        }
+        const item = { value, expiry: ttl ? Date.now() + ttl : undefined };
 
-        const item: { expiry?: number; value: V } = { value };
-
-        const ttl = options?.ttl ?? this.options.default_ttl;
-        if (ttl !== undefined) {
-            if (typeof ttl !== "number" || ttl < 0) {
-                throw new StoreError("Invalid TTL", { code: StoreErrorCode.InvalidTTL });
+        if (this[cache].has(key)) {
+            this[cache].set(key, item);
+            this.updateLRUOrder(key);
+        } else {
+            if (this[lruOrder].length >= this[options].max_size) {
+                this.evictLeastUsed();
             }
 
-            item.expiry = Date.now() + ttl;
+            this[cache].set(key, item);
+            this[lruOrder].push(key);
         }
-
-        if (this.options.max_size && this.cache.size >= this.options.max_size && !this.cache.has(key)) {
-            throw new StoreError("Store is full", { code: StoreErrorCode.StoreFull });
-        }
-
-        this.cache.set(key, item);
-        this.updateLRUOrder(key);
-        this.ensureMaxSize();
-    }
-
-    public add(key: K, value: V, options?: StoreSetOptions): boolean {
-        if (this.has(key)) {
-            return false;
-        }
-
-        this.set(key, value, options);
-        return true;
-    }
-
-    public memoize<T extends (...args: any[]) => any>(fn: T, options?: StoreSetOptions): T {
-        return ((...args: Parameters<T>) => {
-            let key: K;
-            try {
-                key = JSON.stringify(args) as K;
-            } catch {
-                throw new StoreError("Serialization error", { code: StoreErrorCode.SerializationError });
-            }
-
-            if (this.has(key)) {
-                return this.get(key) as ReturnType<T>;
-            }
-
-            const result = fn(...args);
-            this.set(key, result as V, options);
-            return result;
-        }) as T;
-    }
-
-    public clear(): void {
-        this.cache.clear();
-        this.lruOrder = [];
-    }
-
-    public has(key: K): boolean {
-        return this.cache.has(key);
     }
 
     public delete(key: K): boolean {
-        if (key === undefined || key === null) {
-            throw new StoreError("Invalid key", { code: StoreErrorCode.InvalidKey });
-        }
+        this.validateKey(key);
 
-        const deleted = this.cache.delete(key);
-        const index = this.lruOrder.indexOf(key);
-        if (index > -1) {
-            this.lruOrder.splice(index, 1);
+        const deleted = this[cache].delete(key);
+        if (deleted) {
+            const index = this[lruOrder].indexOf(key);
+            if (index > -1) {
+                this[lruOrder].splice(index, 1);
+            }
         }
 
         return deleted;
     }
 
+    public clear(): void {
+        this[lruOrder].length = 0;
+        this[cache] = new Map();
+    }
+
     public size(): number {
-        return this.cache.size;
+        return this[lruOrder].length;
     }
 
-    public keys(): K[] {
-        return Array.from(this.cache.keys());
-    }
-
-    public values(): V[] {
-        return Array.from(this.cache.values()).map((item) => item.value);
-    }
-
-    public entries(): [K, V][] {
-        return Array.from(this.cache.entries()).map(([key, item]) => [key, item.value]);
-    }
-
-    public cleanExpired(): void {
-        const now = Date.now();
-        for (const [key, item] of this.cache.entries()) {
-            if (item.expiry && now > item.expiry) {
-                this.delete(key);
-            }
+    private validateKey(key: K): void {
+        if (typeof key !== "string" || key === "") {
+            throw new StoreError("Invalid key: must be a non-empty string", StoreErrorCode.InvalidKey);
         }
     }
 
-    public updateIfExists(key: K, updateFunction: (oldValue: V) => V): boolean {
-        if (this.has(key)) {
-            const oldValue = this.get(key)!;
-            const newValue = updateFunction(oldValue);
-            this.set(key, newValue);
-            return true;
-        }
-
-        return false;
-    }
-
-    public setMany(entries: [K, V][]): void {
-        for (const [key, value] of entries) this.set(key, value);
-    }
-
-    public getMany(keys: K[]): (V | undefined)[] {
-        return keys.map((key) => this.get(key));
-    }
-
-    public clearExpired(): number {
-        let count = 0;
-        const now = Date.now();
-        for (const [key, item] of this.cache.entries()) {
-            if (item.expiry && now > item.expiry) {
-                this.delete(key);
-                count++;
-            }
-        }
-
-        return count;
-    }
-
-    public prune(shouldDelete: (key: K, value: V) => boolean): number {
-        let count = 0;
-        for (const [key, item] of this.cache.entries()) {
-            try {
-                if (shouldDelete(key, item.value)) {
-                    this.delete(key);
-                    count++;
-                }
-            } catch {
-                throw new StoreError("Operation failed", { code: StoreErrorCode.OperationFailed });
-            }
-        }
-
-        return count;
-    }
-
-    public toJSON(): Record<string, V> {
-        const obj: Record<string, V> = {};
-        for (const [key, item] of this.cache.entries()) {
-            obj[String(key)] = item.value;
-        }
-
-        return obj;
-    }
-
-    public getCacheStats(): {
-        lruOrderLength: number;
-        maxSize: number;
-        size: number;
-    } {
-        return {
-            size: this.cache.size,
-            maxSize: this.options.max_size ?? 0,
-            lruOrderLength: this.lruOrder.length,
-        };
-    }
-
-    public map<T>(transform: (value: V, key: K) => T): Store<K, T> {
-        const newStore = new Store<K, T>(this.options);
-        for (const [key, item] of this.cache.entries()) {
-            const transformedValue = transform(item.value, key);
-            newStore.set(key, transformedValue, { ttl: item.expiry ? item.expiry - Date.now() : undefined });
-        }
-
-        return newStore;
-    }
-
-    public forEach(callback: (value: V, key: K) => void): void {
-        for (const [key, item] of this.cache.entries()) {
-            callback(item.value, key);
+    private validateValue(value: V): void {
+        if (value === undefined) {
+            throw new StoreError("Invalid value: cannot be undefined", StoreErrorCode.InvalidValue);
         }
     }
 
-    public filter(predicate: (value: V, key: K) => boolean): Store<K, V> {
-        const newStore = new Store<K, V>(this.options);
-        for (const [key, item] of this.cache.entries()) {
-            if (predicate(item.value, key)) {
-                newStore.set(key, item.value, { ttl: item.expiry ? item.expiry - Date.now() : undefined });
-            }
-        }
-
-        return newStore;
-    }
-
-    public reduce<T>(reducer: (accumulator: T, value: V, key: K) => T, initialValue: T): T {
-        let accumulator = initialValue;
-        for (const [key, item] of this.cache.entries()) {
-            accumulator = reducer(accumulator, item.value, key);
-        }
-
-        return accumulator;
-    }
-
-    private ensureMaxSize(): void {
-        if (!this.options.max_size) return;
-
-        while (this.cache.size > this.options.max_size) {
-            const leastUsed = this.lruOrder.shift();
-            if (leastUsed) {
-                const evictedItem = this.cache.get(leastUsed);
-                this.cache.delete(leastUsed);
-                if (this.options.onEvict && evictedItem) {
-                    try {
-                        this.options.onEvict(leastUsed, evictedItem.value);
-                    } catch {
-                        throw new StoreError("Eviction callback failed", { code: StoreErrorCode.OperationFailed });
-                    }
-                }
-            }
-        }
-
-        if (this.cache.size > this.options.max_size) {
-            throw new StoreError("Max size exceeded", { code: StoreErrorCode.MaxSizeExceeded });
-        }
+    private isExpired(item: { expiry?: number }): boolean {
+        return item.expiry !== undefined && Date.now() > item.expiry;
     }
 
     private updateLRUOrder(key: K): void {
-        const index = this.lruOrder.indexOf(key);
+        const index = this[lruOrder].indexOf(key);
         if (index > -1) {
-            this.lruOrder.splice(index, 1);
+            this[lruOrder].splice(index, 1);
         }
 
-        this.lruOrder.push(key);
+        this[lruOrder].push(key);
+    }
+
+    private evictLeastUsed(): void {
+        if (this[lruOrder].length === 0) return;
+
+        const leastUsed = this[lruOrder].shift()!;
+        const evictedItem = this[cache].get(leastUsed);
+        this[cache].delete(leastUsed);
+
+        if (evictedItem) {
+            try {
+                this[options].onEvict(leastUsed, evictedItem.value);
+            } catch (error) {
+                console.error("Eviction callback error:", error);
+            }
+        }
     }
 }

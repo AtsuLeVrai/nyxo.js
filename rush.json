@@ -20,9 +20,7 @@
     {
       "packageName": "@nyxjs/eslint-config",
       "projectFolder": "configs/eslint",
-      "tags": [
-        "private"
-      ]
+      "tags": ["private"]
     },
     {
       "packageName": "@nyxjs/core",
@@ -39,10 +37,6 @@
     {
       "packageName": "@nyxjs/store",
       "projectFolder": "packages/store"
-    },
-    {
-      "packageName": "@nyxjs/utils",
-      "projectFolder": "packages/utils"
     },
     {
       "packageName": "@nyxjs/ws",

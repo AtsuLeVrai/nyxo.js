@@ -28,7 +28,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     private calculateIntents(): Integer {
-        return Number(BitfieldManager.resolve<GatewayIntents>(this.options.intents));
+        return Number(BitfieldManager.from<GatewayIntents>(this.options.intents).valueOf());
     }
 
     private createRest(): Rest {

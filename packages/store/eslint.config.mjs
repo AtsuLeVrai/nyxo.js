@@ -1,3 +1,3 @@
-import config from "@nyxjs/eslint-config/eslint.config.mjs";
+import config from "../../configs/eslint/eslint.config.mjs";
 
 export default config;

@@ -33,7 +33,7 @@
       "description": "Runs ESLint on all projects in the monorepo",
       "enableParallelism": true,
       "ignoreDependencyOrder": true,
-      "ignoreMissingScript": false
+      "ignoreMissingScript": true
     },
     {
       "name": "clean",
@@ -42,7 +42,7 @@
       "description": "Cleans build outputs for all projects in the monorepo",
       "enableParallelism": true,
       "ignoreDependencyOrder": true,
-      "ignoreMissingScript": false
+      "ignoreMissingScript": true
     }
   ],
   /**
@@ -56,12 +56,12 @@
     //    * A "flag" is a custom command-line parameter whose presence acts as an on/off switch.
     //    */
     //   "parameterKind": "flag",
-    // 
+    //
     //   /**
     //    * (Required) The long name of the parameter.  It must be lower-case and use dash delimiters.
     //    */
     //   "longName": "--my-flag",
-    // 
+    //
     //   /**
     //    * An optional alternative short name for the parameter.  It must be a dash followed by a single
     //    * lower-case or upper-case letter, which is case-sensitive.
@@ -72,7 +72,7 @@
     //    * a short name if you expect the parameter to be needed very often in everyday operations.
     //    */
     //   "shortName": "-m",
-    // 
+    //
     //   /**
     //    * (Required) A long description to be shown in the command-line help.
     //    *
@@ -80,14 +80,14 @@
     //    * documentation can make a big difference for the developer experience in your repo.
     //    */
     //   "description": "A custom flag parameter that is passed to the scripts that are invoked when building projects",
-    // 
+    //
     //   /**
     //    * (Required) A list of custom commands and/or built-in Rush commands that this parameter may
     //    * be used with.  The parameter will be appended to the shell command that Rush invokes.
     //    */
     //   "associatedCommands": ["build", "rebuild"]
     // },
-    // 
+    //
     // {
     //   /**
     //    * (Required) Determines the type of custom parameter.
@@ -96,17 +96,17 @@
     //   "parameterKind": "string",
     //   "longName": "--my-string",
     //   "description": "A custom string parameter for the \"my-global-command\" custom command",
-    // 
+    //
     //   "associatedCommands": ["my-global-command"],
-    // 
+    //
     //   "argumentName": "SOME_TEXT",
-    // 
+    //
     //   /**
     //    * If true, this parameter must be included with the command.  The default is false.
     //    */
     //   "required": false
     // },
-    // 
+    //
     // {
     //   /**
     //    * (Required) Determines the type of custom parameter.
@@ -116,17 +116,17 @@
     //   "parameterKind": "choice",
     //   "longName": "--my-choice",
     //   "description": "A custom choice parameter for the \"my-global-command\" custom command",
-    // 
+    //
     //   "associatedCommands": ["my-global-command"],
     //   "required": false,
-    // 
+    //
     //   /**
     //    * If a "defaultValue" is specified, then if the Rush command line is invoked without
     //    * this parameter, it will be automatically added with the "defaultValue" as the argument.
     //    * The value must be one of the defined alternatives.
     //    */
     //   "defaultValue": "vanilla",
-    // 
+    //
     //   /**
     //    * (Required) A list of alternative argument values that can be chosen for this parameter.
     //    */
@@ -137,7 +137,7 @@
     //        * e.g. "vanilla" in "--flavor vanilla".
     //        */
     //       "name": "vanilla",
-    // 
+    //
     //       /**
     //        * A detailed description for the alternative that can be shown in the command-line help.
     //        *
@@ -146,19 +146,19 @@
     //        */
     //       "description": "Use the vanilla flavor"
     //     },
-    // 
+    //
     //     {
     //       "name": "chocolate",
     //       "description": "Use the chocolate flavor"
     //     },
-    // 
+    //
     //     {
     //       "name": "strawberry",
     //       "description": "Use the strawberry flavor"
     //     }
     //   ]
     // },
-    // 
+    //
     // {
     //   /**
     //    * (Required) Determines the type of custom parameter.
@@ -167,12 +167,12 @@
     //   "parameterKind": "integer",
     //   "longName": "--my-integer",
     //   "description": "A custom integer parameter for the \"my-global-command\" custom command",
-    // 
+    //
     //   "associatedCommands": ["my-global-command"],
     //   "argumentName": "SOME_NUMBER",
     //   "required": false
     // },
-    // 
+    //
     // {
     //   /**
     //    * (Required) Determines the type of custom parameter.
@@ -187,12 +187,12 @@
     //   "parameterKind": "integerList",
     //   "longName": "--my-integer-list",
     //   "description": "A custom integer list parameter for the \"my-global-command\" custom command",
-    // 
+    //
     //   "associatedCommands": ["my-global-command"],
     //   "argumentName": "SOME_NUMBER",
     //   "required": false
     // },
-    // 
+    //
     // {
     //   /**
     //    * (Required) Determines the type of custom parameter.
@@ -207,12 +207,12 @@
     //   "parameterKind": "stringList",
     //   "longName": "--my-string-list",
     //   "description": "A custom string list parameter for the \"my-global-command\" custom command",
-    // 
+    //
     //   "associatedCommands": ["my-global-command"],
     //   "argumentName": "SOME_TEXT",
     //   "required": false
     // },
-    // 
+    //
     // {
     //   /**
     //    * (Required) Determines the type of custom parameter.
@@ -228,10 +228,10 @@
     //   "parameterKind": "choiceList",
     //   "longName": "--my-choice-list",
     //   "description": "A custom choice list parameter for the \"my-global-command\" custom command",
-    // 
+    //
     //   "associatedCommands": ["my-global-command"],
     //   "required": false,
-    // 
+    //
     //   /**
     //    * (Required) A list of alternative argument values that can be chosen for this parameter.
     //    */
@@ -242,7 +242,7 @@
     //        * e.g. "vanilla" in "--flavor vanilla".
     //        */
     //       "name": "vanilla",
-    // 
+    //
     //       /**
     //        * A detailed description for the alternative that can be shown in the command-line help.
     //        *
@@ -251,12 +251,12 @@
     //        */
     //       "description": "Use the vanilla flavor"
     //     },
-    // 
+    //
     //     {
     //       "name": "chocolate",
     //       "description": "Use the chocolate flavor"
     //     },
-    // 
+    //
     //     {
     //       "name": "strawberry",
     //       "description": "Use the strawberry flavor"

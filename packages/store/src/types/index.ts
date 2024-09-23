@@ -20,16 +20,6 @@ export type StoreOptions = {
 };
 
 /**
- * Options for setting a value in the Store.
- */
-export type StoreSetOptions = {
-    /**
-     * The time-to-live (in milliseconds) of the value.
-     */
-    ttl?: number;
-};
-
-/**
  * Enum representing various error codes that can occur in a Store operation.
  */
 export enum StoreErrorCode {
@@ -66,13 +56,3 @@ export enum StoreErrorCode {
      */
     StoreFull = "STORE_FULL",
 }
-
-/**
- * Options for creating a StoreError.
- */
-export type StoreErrorOptions = {
-    /**
-     * The specific error code from StoreErrorCode enum.
-     */
-    code: StoreErrorCode;
-};
