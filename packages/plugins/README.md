@@ -2,4 +2,4 @@
 
 ## Introduction
 
-Package for creating plugins that can be added to nyx.js.
+Extensible plugin system for nyx.js, allowing easy integration of custom functionalities into Discord bots.

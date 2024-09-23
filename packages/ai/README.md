@@ -2,4 +2,4 @@
 
 ## Introduction
 
-Artificial intelligence or natural language processing integration package.
+Artificial intelligence integration package for nyx.js, enabling smart, context-aware interactions in Discord bots.

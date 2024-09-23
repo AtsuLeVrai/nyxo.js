@@ -2,4 +2,4 @@
 
 ## Introduction
 
-Multi-language support package.
+Internationalization module for nyx.js, facilitating multi-language support in Discord bots.
