@@ -97,10 +97,11 @@ export type GatewayEvents = GatewayDispatchEvents<keyof GatewayReceiveEvents> & 
     /**
      * Event triggered when the connection is closed.
      *
+     * @param message - The close message.
      * @param code - The close code.
      * @param reason - The reason for the closure.
      */
-    close: [code: GatewayCloseCodes, reason: string];
+    close: [message: string, code: GatewayCloseCodes, reason: string];
     /**
      * Event triggered for debugging messages.
      *

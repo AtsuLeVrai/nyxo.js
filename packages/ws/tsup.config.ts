@@ -7,7 +7,7 @@ export default defineConfig({
     clean: true,
     skipNodeModulesBundle: true,
     legacyOutput: true,
-    minify: "terser",
+    minify: false,
     tsconfig: "tsconfig.json",
     entry: ["src/index.ts"],
     format: ["cjs", "esm"],

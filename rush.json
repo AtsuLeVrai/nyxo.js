@@ -27,6 +27,10 @@
       "projectFolder": "packages/core"
     },
     {
+      "packageName": "nyx.js",
+      "projectFolder": "packages/nyxjs"
+    },
+    {
       "packageName": "@nyxjs/rest",
       "projectFolder": "packages/rest"
     },

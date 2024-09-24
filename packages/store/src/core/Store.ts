@@ -7,6 +7,8 @@ const lruOrder = Symbol("lruOrder");
 const options = Symbol("options");
 
 export class Store<K extends string, V> {
+    public [Symbol.toStringTag]: string = "Store";
+
     private [cache]: Map<K, { expiry?: number; value: V }>;
 
     private readonly [lruOrder]: K[];
@@ -79,6 +81,32 @@ export class Store<K extends string, V> {
 
     public size(): number {
         return this[lruOrder].length;
+    }
+
+    public keys(): K[] {
+        return this[lruOrder].slice();
+    }
+
+    public values(): V[] {
+        return this[lruOrder].map((key) => this[cache].get(key)!.value);
+    }
+
+    public entries(): [K, V][] {
+        return this[lruOrder].map((key) => [key, this[cache].get(key)!.value]);
+    }
+
+    public has(key: K): boolean {
+        return this[cache].has(key);
+    }
+
+    public [Symbol.iterator](): IterableIterator<[K, V]> {
+        return this.entries()[Symbol.iterator]();
+    }
+
+    public forEach(callback: (value: V, key: K, store: this) => void): void {
+        for (const [key, value] of this.entries()) {
+            callback(value, key, this);
+        }
     }
 
     private validateKey(key: K): void {

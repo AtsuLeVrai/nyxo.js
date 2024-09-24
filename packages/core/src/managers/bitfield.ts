@@ -6,24 +6,55 @@
 export type BitfieldResolvable<T> = (T | bigint | `${bigint}`)[] | BitfieldManager<T> | T | bigint | `${bigint}`;
 
 /**
+ * Asserts that a string represents a valid BigInt and returns it.
+ *
+ * @param value The string to validate and convert.
+ * @returns The validated BigInt.
+ * @throws Error if the string is not a valid BigInt representation.
+ */
+export function assertValidBigInt(value: string): bigint {
+    // Remove any leading/trailing whitespace
+    const trimmedValue = value.trim();
+
+    // Check if the string is empty after trimming
+    if (trimmedValue.length === 0) {
+        throw new Error("Empty string is not a valid BigInt");
+    }
+
+    // Check if the string contains only digits, optionally preceded by a sign
+    if (!/^-?\d+$/.test(trimmedValue)) {
+        throw new Error("Invalid BigInt format");
+    }
+
+    try {
+        // Attempt to create a BigInt from the string
+        const result = BigInt(trimmedValue);
+
+        // Ensure the result is non-negative
+        if (result < 0n) {
+            throw new Error("BigInt must be non-negative for bitfield operations");
+        }
+
+        return result;
+    } catch (error) {
+        // Catch any errors thrown by BigInt constructor
+        if (error instanceof Error) {
+            throw new TypeError(`Failed to create BigInt: ${error.message}`);
+        } else {
+            throw new TypeError("Failed to create BigInt: Unknown error");
+        }
+    }
+}
+
+/**
  * Symbol used as a key for the internal bitfield value.
  */
 const bitfield = Symbol("bitfield");
 
 /**
- * Symbol used as a key for the static flags map.
- */
-const flags = Symbol("flags");
-
-/**
  * A class that manages bitfields with type-safe flag operations.
  */
 export class BitfieldManager<T> {
-    /**
-     * A map of flag names to their corresponding bit values.
-     */
-    private static readonly [flags]: Map<string, bigint> = new Map();
-
     /**
      * The internal bitfield value.
      */
@@ -32,32 +63,16 @@ export class BitfieldManager<T> {
     /**
      * Creates a new BitfieldManager instance.
      *
-     * @param initialValue - The initial value of the bitfield. Can be an array of flags or a bigint.
+     * @param value - The initial value of the bitfield. Can be an array of flags or a bigint.
      * @throws TypeError If the initial value is neither a bigint nor an array of flags.
      */
-    public constructor(initialValue: T[] | bigint = 0n) {
-        if (typeof initialValue === "bigint") {
-            this[bitfield] = initialValue;
-        } else if (Array.isArray(initialValue)) {
-            this[bitfield] = initialValue.reduce((acc, flag) => acc | this.getBit(flag), 0n);
+    public constructor(value: T[] | bigint = 0n) {
+        if (typeof value === "bigint") {
+            this[bitfield] = value;
+        } else if (Array.isArray(value)) {
+            this[bitfield] = value.reduce((acc, val) => acc | this.resolve(val), 0n);
         } else {
             throw new TypeError("Initial value must be a bigint or an array of flags");
-        }
-    }
-
-    /**
-     * Defines a set of flags for use with BitfieldManager instances.
-     *
-     * @param newFlags - An array of flag names to be defined.
-     * @throws Error If a flag is already defined.
-     */
-    public static defineFlags<F extends string>(newFlags: F[]): void {
-        for (const [index, flag] of newFlags.entries()) {
-            if (this[flags].has(flag)) {
-                throw new Error(`Flag ${flag} is already defined`);
-            }
-
-            this[flags].set(flag, 1n << BigInt(index));
         }
     }
 
@@ -78,11 +93,11 @@ export class BitfieldManager<T> {
     /**
      * Checks if the bitfield has a specific flag set.
      *
-     * @param flag - The flag to check for.
+     * @param val - The flag to check for.
      * @returns True if the flag is set, false otherwise.
      */
-    public has(flag: T): boolean {
-        const bit = this.getBit(flag);
+    public has(val: T): boolean {
+        const bit = this.resolve(val);
         return (this[bitfield] & bit) === bit;
     }
 
@@ -93,7 +108,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public add(...flags: T[]): this {
-        this[bitfield] |= flags.reduce((acc, flag) => acc | this.getBit(flag), 0n);
+        this[bitfield] |= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
         return this;
     }
 
@@ -104,7 +119,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public remove(...flags: T[]): this {
-        this[bitfield] &= ~flags.reduce((acc, flag) => acc | this.getBit(flag), 0n);
+        this[bitfield] &= ~flags.reduce((acc, val) => acc | this.resolve(val), 0n);
         return this;
     }
 
@@ -115,7 +130,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public toggle(...flags: T[]): this {
-        this[bitfield] ^= flags.reduce((acc, flag) => acc | this.getBit(flag), 0n);
+        this[bitfield] ^= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
         return this;
     }
 
@@ -127,17 +142,6 @@ export class BitfieldManager<T> {
     public clear(): this {
         this[bitfield] = 0n;
         return this;
-    }
-
-    /**
-     * Converts the bitfield to an array of set flags.
-     *
-     * @returns An array of flag names that are set in the bitfield.
-     */
-    public toArray(): T[] {
-        return Array.from(BitfieldManager[flags].entries())
-            .filter(([, bit]) => (this[bitfield] & bit) === bit)
-            .map(([flag]) => flag as T);
     }
 
     /**
@@ -159,25 +163,34 @@ export class BitfieldManager<T> {
     }
 
     /**
-     * Implements the iterable protocol for the bitfield.
-     */
-    public *[Symbol.iterator](): Generator<T, void, unknown> {
-        yield* this.toArray();
-    }
-
-    /**
-     * Gets the bit value for a given flag.
+     * Resolves a value to a bigint bitfield.
      *
-     * @param flag - The flag to get the bit value for.
-     * @returns The bigint bit value for the flag.
-     * @throws Error If the flag is not defined.
+     * @param value - The value to resolve. It can be a single value or an array of values.
+     * @returns The resolved bigint bitfield.
+     * @throws TypeError If the value is of an invalid type.
+     * @throws Error If a number value is not a non-negative integer.
      */
-    private getBit(flag: T): bigint {
-        const bit = BitfieldManager[flags].get(flag as string);
-        if (bit === undefined) {
-            throw new Error(`Unknown flag: ${flag}`);
+    private resolve(value: BitfieldResolvable<T> | BitfieldResolvable<T>[]): bigint {
+        if (Array.isArray(value)) {
+            return value.reduce<bigint>((acc, val) => acc | this.resolve(val), 0n);
         }
 
-        return bit;
+        if (typeof value === "bigint") {
+            return value;
+        }
+
+        if (typeof value === "number") {
+            if (!Number.isInteger(value) || value < 0) {
+                throw new Error("Number must be a non-negative integer");
+            }
+
+            return BigInt(value);
+        }
+
+        if (typeof value === "string") {
+            return assertValidBigInt(value);
+        }
+
+        throw new TypeError("Invalid type for bitfield value");
     }
 }

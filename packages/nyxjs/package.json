@@ -1,0 +1,48 @@
+{
+    "$schema": "https://json.schemastore.org/package.json",
+    "name": "nyx.js",
+    "version": "1.0.0",
+    "type": "commonjs",
+    "main": "./dist/index.js",
+    "types": "./dist/src/index.d.ts",
+    "module": "./dist/esm/index.js",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup && rimraf .tsup",
+        "clean": "rimraf dist",
+        "lint": "eslint src --fix",
+        "pretty": "prettier --write src",
+        "test": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files tests/index.ts"
+    },
+    "dependencies": {
+        "@nyxjs/core": "workspace:*",
+        "@nyxjs/rest": "workspace:*",
+        "@nyxjs/store": "workspace:*",
+        "@nyxjs/ws": "workspace:*",
+        "eventemitter3": "^5.0.1"
+    },
+    "devDependencies": {
+        "@microsoft/api-extractor": "^7.47.9",
+        "@swc/core": "^1.7.26",
+        "@types/node": "^22.5.5",
+        "eslint": "^9.11.0",
+        "prettier": "^3.3.3",
+        "rimraf": "^6.0.1",
+        "terser": "^5.33.0",
+        "tsup": "^8.3.0",
+        "typescript": "^5.6.2",
+        "dotenv": "~16.4.5",
+        "ts-node": "~10.9.2",
+        "ts-node-dev": "~2.0.0"
+    },
+    "packageManager": "pnpm@9.11.0+sha512.0a203ffaed5a3f63242cd064c8fb5892366c103e328079318f78062f24ea8c9d50bc6a47aa3567cabefd824d170e78fa2745ed1f16b132e16436146b7688f19b"
+}
