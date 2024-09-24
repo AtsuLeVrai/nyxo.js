@@ -1,6 +1,7 @@
 import { setTimeout } from "node:timers/promises";
 import type { DiscordHeaders, Float, Integer } from "@nyxjs/core";
 import { HttpResponseCodes } from "@nyxjs/core";
+import { Store } from "@nyxjs/store";
 import { RestError } from "./RestError";
 
 const globalRateLimit = Symbol("globalRateLimit");
@@ -54,11 +55,11 @@ type RateLimitInfo = Readonly<{
 export class RestRateLimiter {
     private [globalRateLimit]: number | null;
 
-    private readonly [routeRateLimits]: Map<string, RateLimitInfo>;
+    private readonly [routeRateLimits]: Store<string, RateLimitInfo>;
 
     public constructor() {
         this[globalRateLimit] = null;
-        this[routeRateLimits] = new Map();
+        this[routeRateLimits] = new Store();
     }
 
     public async wait(path: string): Promise<void> {

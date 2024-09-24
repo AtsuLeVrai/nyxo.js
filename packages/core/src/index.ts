@@ -38,6 +38,7 @@ export * from "./structures/polls";
 export * from "./structures/roles";
 export * from "./structures/scheduled";
 export * from "./structures/skus";
+export * from "./structures/soudboards";
 export * from "./structures/stages";
 export * from "./structures/stickers";
 export * from "./structures/subscriptions";

@@ -1,6 +1,9 @@
 import type { Dispatcher } from "undici";
 import type { RestRequestOptions } from "../types";
 
+/**
+ * @todo Possibility of creating a BaseRouteBuilder that includes management of scopes and discord permissions with RestRequestOptions.
+ */
 export class BaseRoutes {
     protected static get<T>(
         path: string,

@@ -21,17 +21,15 @@ const token = Symbol("token");
 const options = Symbol("options");
 
 export class GatewayConnection {
-    private [ws]: WebSocket | null = null;
+    private [ws]: WebSocket | null;
 
-    private [heartbeatInterval]: NodeJS.Timeout | null = null;
+    private [heartbeatInterval]: NodeJS.Timeout | null;
 
-    private [sequence]: number | null = null;
+    private [sequence]: number | null;
 
-    private [sessionId]: string | null = null;
+    private [sessionId]: string | null;
 
-    private [resumeGatewayUrl]: string | null = null;
-
-    private readonly [zlibInflate]: Inflate;
+    private [resumeGatewayUrl]: string | null;
 
     private readonly [gateway]: Gateway;
 
@@ -39,7 +37,14 @@ export class GatewayConnection {
 
     private readonly [options]: Readonly<GatewayOptions>;
 
+    private readonly [zlibInflate]: Inflate;
+
     public constructor(initialGateway: Gateway, initialToken: string, initialOptions: Readonly<GatewayOptions>) {
+        this[ws] = null;
+        this[heartbeatInterval] = null;
+        this[sequence] = null;
+        this[sessionId] = null;
+        this[resumeGatewayUrl] = null;
         this[gateway] = initialGateway;
         this[token] = initialToken;
         this[options] = Object.freeze({ ...initialOptions });
