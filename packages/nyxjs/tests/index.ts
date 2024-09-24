@@ -18,5 +18,6 @@ client.ws.on("debug", console.log);
 client.ws.on("error", console.log);
 client.ws.on("warn", console.log);
 client.ws.on("close", console.log);
+client.ws.on("dispatch", console.log);
 
 void client.connect();
