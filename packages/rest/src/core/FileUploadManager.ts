@@ -2,7 +2,7 @@ import { createReadStream } from "node:fs";
 import { basename } from "node:path";
 import { MimeTypes } from "@nyxjs/core";
 import FormData from "form-data";
-import { DISCORD_CDN_URL } from "../common/constants";
+import { DISCORD_CDN_URL } from "../helpers/constants";
 import type { FileInput } from "../types";
 
 const formData = Symbol("formData");
@@ -45,7 +45,11 @@ export class AttachmentCdnUrl {
 
             return new AttachmentCdnUrl(url);
         } catch (error) {
-            throw new Error(`Invalid URL: ${error instanceof Error ? error.message : String(error)}`);
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
         }
     }
 

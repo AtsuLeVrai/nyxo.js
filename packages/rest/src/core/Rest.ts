@@ -2,10 +2,9 @@ import { type ApiVersions, type AuthTypes, HttpResponseCodes, type Integer, Mime
 import { Store } from "@nyxjs/store";
 import type { Dispatcher } from "undici";
 import { Pool, RetryAgent } from "undici";
-import { DISCORD_API_URL, POOL_OPTIONS, REST_DEFAULT_OPTIONS, RETRY_AGENT_OPTIONS } from "../common/constants";
-import { decompressResponse } from "../common/utils";
+import { DISCORD_API_URL, POOL_OPTIONS, RETRY_AGENT_OPTIONS } from "../helpers/constants";
+import { decompressResponse } from "../helpers/utils";
 import type { RestRequestOptions } from "../types";
-import { RestError } from "./RestError";
 import { RestRateLimiter } from "./RestRateLimiter";
 
 const pool = Symbol("pool");
@@ -15,7 +14,7 @@ const store = Symbol("store");
 const token = Symbol("token");
 const options = Symbol("options");
 
-export type RestOptions = Readonly<{
+export type RestOptions = {
     /**
      * The type of authentication to use.
      */
@@ -32,7 +31,7 @@ export type RestOptions = Readonly<{
      * The version of the API to use.
      */
     version: ApiVersions;
-}>;
+};
 
 export class Rest {
     private readonly [pool]: Pool;
@@ -47,9 +46,9 @@ export class Rest {
 
     private readonly [options]: RestOptions;
 
-    public constructor(initialToken: string, initialOptions: RestOptions = REST_DEFAULT_OPTIONS) {
+    public constructor(initialToken: string, initialOptions: RestOptions) {
         this[token] = initialToken;
-        this[options] = Object.freeze({ ...REST_DEFAULT_OPTIONS, ...initialOptions });
+        this[options] = Object.freeze({ ...initialOptions });
         this[store] = new Store();
         this[rateLimiter] = new RestRateLimiter();
         this[pool] = new Pool(DISCORD_API_URL, POOL_OPTIONS);
@@ -63,7 +62,7 @@ export class Rest {
 
     public setToken(newToken: string): void {
         if (typeof newToken !== "string" || newToken.length === 0) {
-            throw new Error("Invalid token");
+            throw new Error("[REST] Invalid token");
         }
 
         this[token] = newToken;
@@ -102,27 +101,16 @@ export class Rest {
             }
 
             if (statusCode >= 400) {
-                throw new RestError(data.message ?? `HTTP error! status: ${statusCode}`, {
-                    code: data.code ?? statusCode,
-                    method: request.method,
-                    path: request.path,
-                    httpStatus: statusCode,
-                    requestBody: request.body,
-                });
+                throw new Error(`[REST] ${statusCode} ${JSON.stringify(data)}`);
             }
 
             return data as T;
         } catch (error) {
-            if (error instanceof RestError) {
+            if (error instanceof Error) {
                 throw error;
             }
 
-            throw new RestError(error instanceof Error ? error.message : String(error), {
-                code: 0,
-                method: request.method,
-                path: request.path,
-                httpStatus: HttpResponseCodes.ServerError,
-            });
+            throw new Error(String(error));
         }
     }
 

@@ -44,14 +44,14 @@ import type {
     GuildStickersUpdateEventFields,
     RequestGuildMembersRequestStructure,
 } from "../events/guilds";
-import type {HelloStructure} from "../events/hello";
-import type {IdentifyStructure} from "../events/identity";
+import type { HelloStructure } from "../events/hello";
+import type { IdentifyStructure } from "../events/identity";
 import type {
     IntegrationCreateEventAdditionalFields,
     IntegrationDeleteEventFields,
     IntegrationUpdateEventAdditionalFields,
 } from "../events/integrations";
-import type {InviteCreateEventFields, InviteDeleteEventFields} from "../events/invites";
+import type { InviteCreateEventFields, InviteDeleteEventFields } from "../events/invites";
 import type {
     MessageCreateExtraFields,
     MessageDeleteBulkEventFields,
@@ -61,21 +61,21 @@ import type {
     MessageReactionRemoveEmojiEventFields,
     MessageReactionRemoveEventFields,
 } from "../events/messages";
-import type {AutoModerationActionExecutionEventFields} from "../events/moderations";
-import type {MessagePollVoteAddFields, MessagePollVoteRemoveFields} from "../events/polls";
+import type { AutoModerationActionExecutionEventFields } from "../events/moderations";
+import type { MessagePollVoteAddFields, MessagePollVoteRemoveFields } from "../events/polls";
 import type {
     PresenceUpdateEventFields,
     TypingStartEventFields,
     UpdatePresenceGatewayPresenceUpdateStructure,
 } from "../events/presences";
-import type {ReadyEventFields} from "../events/ready";
-import type {ResumeStructure} from "../events/resume";
+import type { ReadyEventFields } from "../events/ready";
+import type { ResumeStructure } from "../events/resume";
 import type {
     UpdateVoiceStateGatewayVoiceStateUpdateStructure,
     VoiceChannelEffectSendEventFields,
     VoiceServerUpdateEventFields,
 } from "../events/voices";
-import type {WebhooksUpdateEventFields} from "../events/webhooks";
+import type { WebhooksUpdateEventFields } from "../events/webhooks";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#send-events}

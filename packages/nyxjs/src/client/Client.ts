@@ -30,8 +30,7 @@ export class Client extends EventEmitter {
     }
 
     private get calculateIntents(): number {
-        const bitfield = new BitfieldManager(this.options.intents);
-        return Number(bitfield.toString());
+        return Number(BitfieldManager.from(this.options.intents).valueOf());
     }
 
     public async connect(): Promise<void> {

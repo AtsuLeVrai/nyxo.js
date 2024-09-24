@@ -1,8 +1,6 @@
 import { setTimeout } from "node:timers/promises";
-import type { DiscordHeaders, Float, Integer } from "@nyxjs/core";
-import { HttpResponseCodes } from "@nyxjs/core";
+import type { DiscordHeaders, Float, Integer, HttpResponseCodes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
-import { RestError } from "./RestError";
 
 const globalRateLimit = Symbol("globalRateLimit");
 const routeRateLimits = Symbol("routeRateLimits");
@@ -90,11 +88,7 @@ export class RestRateLimiter {
 
         await setTimeout(response.retry_after * 1_000);
 
-        throw new RestError("Rate limit exceeded", {
-            code: response.code ?? HttpResponseCodes.TooManyRequests,
-            httpStatus: HttpResponseCodes.TooManyRequests,
-            requestBody: response,
-        });
+        throw new Error(`[REST] Rate limited: ${response.message}`);
     }
 
     private parseHeaders(headers: DiscordHeaders): RateLimitInfo {

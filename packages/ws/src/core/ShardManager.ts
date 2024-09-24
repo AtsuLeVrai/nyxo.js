@@ -46,7 +46,7 @@ export class ShardManager {
         this[gateway] = initialGateway;
         this[options] = initialOptions;
         this[token] = initialToken;
-        this[rest] = new Rest(initialToken);
+        this[rest] = new Rest(initialToken, { version: initialOptions.v });
         this[shards] = new Store();
         this[rateLimitQueue] = new Store();
     }
