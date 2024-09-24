@@ -1,11 +1,11 @@
 import { type GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
 import WebSocket from "ws";
 import { Inflate } from "zlib-sync";
-import { decompressZlib } from "../common/compression";
-import { decodeMessage, encodeMessage } from "../common/encoding";
 import type { HelloStructure } from "../events/hello";
 import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
+import { decompressZlib } from "../helpers/compression";
+import { decodeMessage, encodeMessage } from "../helpers/encoding";
 import type { GatewaySendEvents } from "../types/events";
 import type { GatewayOptions, GatewayPayload } from "../types/gateway";
 import type { Gateway } from "./Gateway";
