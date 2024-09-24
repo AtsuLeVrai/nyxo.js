@@ -53,26 +53,11 @@ export class ShardManager {
 
     public async initialize(): Promise<void> {
         try {
-            const [minShardId, maxShardId, maxConcurrency] = await this.determineShardInfo();
-            this[concurrency] = maxConcurrency;
-
-            for (let shardId = minShardId; shardId < maxShardId; shardId++) {
-                const shardInfo: ShardInfo = Object.freeze({
-                    shardId,
-                    totalShards: maxShardId,
-                });
-                this[shards].set(String(shardId), shardInfo);
-                const rateLimitKey = this.calculateRateLimitKey(shardId, this[concurrency]);
-                if (!this[rateLimitQueue].has(String(rateLimitKey))) {
-                    this[rateLimitQueue].set(String(rateLimitKey), []);
-                }
-
-                if (!this[rateLimitQueue].get(String(rateLimitKey))!.some((some) => some.shardId === shardId)) {
-                    this[rateLimitQueue].get(String(rateLimitKey))!.push(shardInfo);
-                }
+            if (this[options].shard) {
+                await this.initializeWithSharding();
+            } else {
+                await this.connectShard();
             }
-
-            await this.connectShards();
         } catch (error) {
             this[gateway].emit("error", error instanceof Error ? error : new Error(String(error)));
         }
@@ -81,6 +66,29 @@ export class ShardManager {
     public cleanup(): void {
         this[shards].clear();
         this[rateLimitQueue].clear();
+    }
+
+    private async initializeWithSharding(): Promise<void> {
+        const [minShardId, maxShardId, maxConcurrency] = await this.determineShardInfo();
+        this[concurrency] = maxConcurrency;
+
+        for (let shardId = minShardId; shardId < maxShardId; shardId++) {
+            const shardInfo: ShardInfo = Object.freeze({
+                shardId,
+                totalShards: maxShardId,
+            });
+            this[shards].set(String(shardId), shardInfo);
+            const rateLimitKey = this.calculateRateLimitKey(shardId, this[concurrency]);
+            if (!this[rateLimitQueue].has(String(rateLimitKey))) {
+                this[rateLimitQueue].set(String(rateLimitKey), []);
+            }
+
+            if (!this[rateLimitQueue].get(String(rateLimitKey))!.some((some) => some.shardId === shardId)) {
+                this[rateLimitQueue].get(String(rateLimitKey))!.push(shardInfo);
+            }
+        }
+
+        await this.connectShards();
     }
 
     private async connectShards(): Promise<void> {
@@ -101,9 +109,7 @@ export class ShardManager {
         }
     }
 
-    private async connectShard(shardInfo: ShardInfo): Promise<void> {
-        this[gateway].emit("debug", `[WS] Connecting shard: [${shardInfo.shardId},${shardInfo.totalShards}]`);
-
+    private async connectShard(shardInfo?: ShardInfo): Promise<void> {
         const payload: IdentifyStructure = {
             token: this[token],
             properties: {
@@ -115,8 +121,12 @@ export class ShardManager {
             large_threshold: this[options].large_threshold,
             presence: this[options].presence,
             compress: Boolean(this[options].compress),
-            shard: [shardInfo.shardId, shardInfo.totalShards],
         };
+
+        if (this[options].shard && shardInfo) {
+            this[gateway].emit("debug", `[WS] Connecting shard: [${shardInfo.shardId},${shardInfo.totalShards}]`);
+            payload.shard = [shardInfo.shardId, shardInfo.totalShards];
+        }
 
         this[gateway].send(GatewayOpcodes.Identify, payload);
     }
