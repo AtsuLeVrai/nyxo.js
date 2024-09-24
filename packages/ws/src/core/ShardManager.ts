@@ -59,7 +59,11 @@ export class ShardManager {
                 await this.connectShard();
             }
         } catch (error) {
-            this[gateway].emit("error", error instanceof Error ? error : new Error(String(error)));
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
         }
     }
 
@@ -110,25 +114,35 @@ export class ShardManager {
     }
 
     private async connectShard(shardInfo?: ShardInfo): Promise<void> {
-        const payload: IdentifyStructure = {
-            token: this[token],
-            properties: {
-                os: "linux",
-                browser: "nyxjs",
-                device: "nyxjs",
-            },
-            intents: this[options].intents,
-            large_threshold: this[options].large_threshold,
-            presence: this[options].presence,
-            compress: Boolean(this[options].compress),
-        };
+        return new Promise((resolve, reject) => {
+            try {
+                const payload: IdentifyStructure = {
+                    token: this[token],
+                    intents: this[options].intents,
+                    large_threshold: this[options].large_threshold,
+                    presence: this[options].presence,
+                    compress: Boolean(this[options].compress),
+                    properties: {
+                        os: process.platform,
+                        browser: "nyxjs",
+                        device: "nyxjs",
+                    },
+                };
 
-        if (this[options].shard && shardInfo) {
-            this[gateway].emit("debug", `[WS] Connecting shard: [${shardInfo.shardId},${shardInfo.totalShards}]`);
-            payload.shard = [shardInfo.shardId, shardInfo.totalShards];
-        }
+                if (this[options].shard && shardInfo) {
+                    this[gateway].emit(
+                        "debug",
+                        `[WS] Connecting shard: [${shardInfo.shardId},${shardInfo.totalShards}]`
+                    );
+                    payload.shard = [shardInfo.shardId, shardInfo.totalShards];
+                }
 
-        this[gateway].send(GatewayOpcodes.Identify, payload);
+                this[gateway].send(GatewayOpcodes.Identify, payload);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     private async determineShardInfo(): Promise<[minShardId: number, maxShardId: number, maxConcurrency: number]> {

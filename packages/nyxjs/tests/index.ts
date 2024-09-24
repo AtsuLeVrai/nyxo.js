@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { Client, EncodingTypes, GatewayIntents } from "../src";
+import { Client, CompressTypes, EncodingTypes, GatewayIntents } from "../src";
 
 config();
 
@@ -10,7 +10,8 @@ if (!process.env.DISCORD_TOKEN) {
 const client = new Client(process.env.DISCORD_TOKEN, {
     intents: [GatewayIntents.Guilds],
     ws: {
-        encoding: EncodingTypes.Etf,
+        encoding: EncodingTypes.Json,
+        compress: CompressTypes.ZlibStream,
     },
 });
 
