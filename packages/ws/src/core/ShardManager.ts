@@ -37,9 +37,9 @@ export class ShardManager {
 
     private readonly [rest]: Rest;
 
-    private readonly [shards]: Store<string, ShardInfo>;
+    private readonly [shards]: Store<Integer, ShardInfo>;
 
-    private readonly [rateLimitQueue]: Store<string, ShardInfo[]>;
+    private readonly [rateLimitQueue]: Store<Integer, ShardInfo[]>;
 
     public constructor(initialGateway: Gateway, initialToken: string, initialOptions: Readonly<GatewayOptions>) {
         this[concurrency] = 1;
@@ -81,14 +81,14 @@ export class ShardManager {
                 shardId,
                 totalShards: maxShardId,
             });
-            this[shards].set(String(shardId), shardInfo);
+            this[shards].set(shardId, shardInfo);
             const rateLimitKey = this.calculateRateLimitKey(shardId, this[concurrency]);
-            if (!this[rateLimitQueue].has(String(rateLimitKey))) {
-                this[rateLimitQueue].set(String(rateLimitKey), []);
+            if (!this[rateLimitQueue].has(rateLimitKey)) {
+                this[rateLimitQueue].set(rateLimitKey, []);
             }
 
-            if (!this[rateLimitQueue].get(String(rateLimitKey))!.some((some) => some.shardId === shardId)) {
-                this[rateLimitQueue].get(String(rateLimitKey))!.push(shardInfo);
+            if (!this[rateLimitQueue].get(rateLimitKey)!.some((some) => some.shardId === shardId)) {
+                this[rateLimitQueue].get(rateLimitKey)!.push(shardInfo);
             }
         }
 
@@ -106,7 +106,7 @@ export class ShardManager {
     }
 
     private async processRateLimitQueue(rateLimitKey: number): Promise<void> {
-        const queue = this[rateLimitQueue].get(String(rateLimitKey)) ?? [];
+        const queue = this[rateLimitQueue].get(rateLimitKey) ?? [];
         for (const shardInfo of queue) {
             await this.connectShard(shardInfo);
             await setTimeout(5_000);

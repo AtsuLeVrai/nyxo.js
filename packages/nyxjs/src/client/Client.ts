@@ -1,13 +1,13 @@
-import type { GatewayIntents } from "@nyxjs/core";
-import { ApiVersions, BitfieldManager } from "@nyxjs/core";
+import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
 import type { GatewayOptions } from "@nyxjs/ws";
-import { EncodingTypes, Gateway } from "@nyxjs/ws";
+import { Gateway } from "@nyxjs/ws";
 import { EventEmitter } from "eventemitter3";
+import { restOptions, wsOptions } from "../helpers/utils";
 
 export type ClientOptions = {
-    intents: GatewayIntents[];
+    intents: GatewayIntents[] | Integer;
     presence?: GatewayOptions["presence"];
     rest?: Partial<Pick<RestOptions, "auth_type" | "cache_life_time" | "user_agent">>;
     shard?: GatewayOptions["shard"];
@@ -15,50 +15,45 @@ export type ClientOptions = {
     ws?: Partial<Pick<GatewayOptions, "compress" | "encoding" | "large_threshold">>;
 };
 
-export class Client extends EventEmitter {
+export type ClientEvents = {
+    debug: [message: string];
+    error: [error: Error];
+    warn: [message: string];
+};
+
+export class Client extends EventEmitter<ClientEvents> {
     public ws: Gateway;
 
     public rest: Rest;
 
-    public constructor(
-        public token: string,
-        private readonly options: ClientOptions
-    ) {
+    public token!: string;
+
+    public constructor(options: ClientOptions) {
         super();
-        this.ws = this.createWs();
-        this.rest = this.createRest();
+        this.ws = new Gateway(this.token, wsOptions(options));
+        this.rest = new Rest(this.token, restOptions(options));
     }
 
-    private get calculateIntents(): number {
-        return Number(BitfieldManager.from(this.options.intents).valueOf());
-    }
-
-    public async connect(): Promise<void> {
+    public async connect(token: string): Promise<void> {
         try {
+            this.token = token;
+            this.ws.on("error", (error) => this.emit("error", error));
+            this.ws.on("warn", (message) => this.emit("warn", message));
+            this.ws.on("debug", (message) => this.emit("debug", message));
             await this.ws.connect();
         } catch (error) {
-            this.emit("error", error);
+            await this.destroy();
+            if (error instanceof Error) {
+                this.emit("error", error);
+            }
+
+            this.emit("error", new Error(String(error)));
         }
     }
 
-    private createWs(): Gateway {
-        return new Gateway(this.token, {
-            presence: this.options.presence,
-            shard: this.options.shard,
-            v: this.options.version ?? ApiVersions.V10,
-            intents: this.calculateIntents,
-            encoding: this.options.ws?.encoding ?? EncodingTypes.Json,
-            compress: this.options.ws?.compress,
-            large_threshold: this.options.ws?.large_threshold,
-        });
-    }
-
-    private createRest(): Rest {
-        return new Rest(this.token, {
-            auth_type: this.options.rest?.auth_type,
-            cache_life_time: this.options.rest?.cache_life_time,
-            user_agent: this.options.rest?.user_agent,
-            version: this.options.version ?? ApiVersions.V10,
-        });
+    public async destroy(): Promise<void> {
+        this.ws.disconnect();
+        await this.rest.destroy();
+        this.removeAllListeners();
     }
 }

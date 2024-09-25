@@ -2,8 +2,8 @@ import { type ApiVersions, type AuthTypes, HttpResponseCodes, type Integer, Mime
 import { Store } from "@nyxjs/store";
 import type { Dispatcher } from "undici";
 import { Pool, RetryAgent } from "undici";
+import { decompressResponse } from "../helpers/compress";
 import { DISCORD_API_URL, POOL_OPTIONS, RETRY_AGENT_OPTIONS } from "../helpers/constants";
-import { decompressResponse } from "../helpers/utils";
 import type { RestRequestOptions } from "../types";
 import { RestRateLimiter } from "./RestRateLimiter";
 
@@ -34,38 +34,30 @@ export type RestOptions = {
 };
 
 export class Rest {
-    private readonly [pool]: Pool;
-
-    private readonly [retryAgent]: RetryAgent;
-
-    private readonly [rateLimiter]: RestRateLimiter;
+    private [token]: string;
 
     private readonly [store]: Store<string, { data: any; expiry: number }>;
 
-    private [token]: string;
+    private readonly [rateLimiter]: RestRateLimiter;
+
+    private readonly [pool]: Pool;
+
+    private readonly [retryAgent]: RetryAgent;
 
     private readonly [options]: RestOptions;
 
     public constructor(initialToken: string, initialOptions: RestOptions) {
         this[token] = initialToken;
-        this[options] = Object.freeze({ ...initialOptions });
         this[store] = new Store();
         this[rateLimiter] = new RestRateLimiter();
         this[pool] = new Pool(DISCORD_API_URL, POOL_OPTIONS);
         this[retryAgent] = new RetryAgent(this[pool], RETRY_AGENT_OPTIONS);
+        this[options] = Object.freeze({ ...initialOptions });
     }
 
     public async destroy(): Promise<void> {
         await this[pool].destroy();
         this[store].clear();
-    }
-
-    public setToken(newToken: string): void {
-        if (typeof newToken !== "string" || newToken.length === 0) {
-            throw new Error("[REST] Invalid token");
-        }
-
-        this[token] = newToken;
     }
 
     public async request<T>(request: RestRequestOptions<T>): Promise<T> {

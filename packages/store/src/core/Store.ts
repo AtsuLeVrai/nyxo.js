@@ -6,7 +6,7 @@ const cache = Symbol("cache");
 const lruOrder = Symbol("lruOrder");
 const options = Symbol("options");
 
-export class Store<K extends string, V> {
+export class Store<K, V> {
     public [Symbol.toStringTag]: string = "Store";
 
     private [cache]: Map<K, { expiry?: number; value: V }>;
@@ -27,8 +27,6 @@ export class Store<K extends string, V> {
     }
 
     public get(key: K): V | undefined {
-        this.validateKey(key);
-
         const item = this[cache].get(key);
         if (!item) return undefined;
 
@@ -42,7 +40,6 @@ export class Store<K extends string, V> {
     }
 
     public set(key: K, value: V, ttl: number = this[options].default_ttl): void {
-        this.validateKey(key);
         this.validateValue(value);
 
         const item = { value, expiry: ttl ? Date.now() + ttl : undefined };
@@ -61,8 +58,6 @@ export class Store<K extends string, V> {
     }
 
     public delete(key: K): boolean {
-        this.validateKey(key);
-
         const deleted = this[cache].delete(key);
         if (deleted) {
             const index = this[lruOrder].indexOf(key);
@@ -106,12 +101,6 @@ export class Store<K extends string, V> {
     public forEach(callback: (value: V, key: K, store: this) => void): void {
         for (const [key, value] of this.entries()) {
             callback(value, key, this);
-        }
-    }
-
-    private validateKey(key: K): void {
-        if (typeof key !== "string" || key === "") {
-            throw new StoreError("Invalid key: must be a non-empty string", StoreErrorCode.InvalidKey);
         }
     }
 
