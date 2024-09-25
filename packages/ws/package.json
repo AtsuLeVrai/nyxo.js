@@ -35,10 +35,10 @@
     },
     "devDependencies": {
         "@microsoft/api-extractor": "^7.47.9",
-        "@swc/core": "^1.7.26",
-        "@types/node": "^22.5.5",
+        "@swc/core": "^1.7.28",
+        "@types/node": "^22.7.0",
         "@types/ws": "^8.5.12",
-        "eslint": "^9.11.0",
+        "eslint": "^9.11.1",
         "prettier": "^3.3.3",
         "rimraf": "^6.0.1",
         "terser": "^5.33.0",

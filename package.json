@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/source",
+  "packageManager": "pnpm@9.11.0",
+  "private": true,
+  "scripts": {
+    "build": "nx run-many --target=build --all",
+    "clean": "nx run-many --target=clean --all",
+    "lint": "nx run-many --target=lint --all",
+    "pretty": "nx run-many --target=pretty --all",
+    "graph": "nx graph",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@nx/eslint": "19.8.0",
+    "@nx/js": "19.8.0",
+    "@nx/workspace": "19.8.0",
+    "eslint": "~8.57.1",
+    "husky": "^9.1.6",
+    "nx": "19.8.0"
+  }
+}
