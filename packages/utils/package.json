@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "nyx.js",
+  "name": "@nyxjs/utils",
   "version": "1.0.0",
   "type": "commonjs",
   "main": "./dist/index.js",
@@ -20,16 +20,10 @@
     "build": "tsup && rimraf .tsup",
     "clean": "rimraf dist",
     "lint": "eslint src --fix",
-    "pretty": "prettier --write src",
-    "test": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files tests/index.ts"
+    "pretty": "prettier --write src"
   },
   "dependencies": {
-    "@nyxjs/core": "workspace:*",
-    "@nyxjs/rest": "workspace:*",
-    "@nyxjs/store": "workspace:*",
-    "@nyxjs/utils": "workspace:*",
-    "@nyxjs/ws": "workspace:*",
-    "eventemitter3": "^5.0.1"
+    "@nyxjs/core": "workspace:*"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.47.9",

@@ -9,4 +9,5 @@ export * from "./client/Client";
 export * from "@nyxjs/core";
 export * from "@nyxjs/rest";
 export * from "@nyxjs/store";
+export * from "@nyxjs/utils";
 export * from "@nyxjs/ws";
