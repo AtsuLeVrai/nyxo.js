@@ -1,6 +1,4 @@
 import type { StoreOptions } from "../types";
-import { StoreErrorCode } from "../types";
-import { StoreError } from "./StoreError";
 
 const cache = Symbol("cache");
 const lruOrder = Symbol("lruOrder");
@@ -106,7 +104,7 @@ export class Store<K, V> {
 
     private validateValue(value: V): void {
         if (value === undefined) {
-            throw new StoreError("Invalid value: cannot be undefined", StoreErrorCode.InvalidValue);
+            throw new Error(`[Store] Invalid value: ${value}`);
         }
     }
 

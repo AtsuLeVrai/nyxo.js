@@ -6,7 +6,6 @@
     "start": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files src/index.ts"
   },
   "dependencies": {
-    "@nyxjs/ws": "workspace:*",
     "nyx.js": "workspace:*"
   },
   "devDependencies": {
