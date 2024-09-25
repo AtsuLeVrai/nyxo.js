@@ -1,4 +1,4 @@
-import { type GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
+import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { Inflate } from "zlib-sync";
@@ -67,7 +67,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     public async connect(resumeAttempt = false): Promise<void> {
         if (this[ws]) {
-            this[ws].close();
+            this.disconnect();
         }
 
         try {
@@ -125,6 +125,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this[shardManager].cleanup();
     }
 
+    private onOpen(): void {
+        this.emit("debug", "[WS] WebSocket connection opened");
+    }
+
     private async onMessage(data: Buffer): Promise<void> {
         let decompressedData: Buffer | string = data;
 
@@ -147,6 +151,110 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         }
     }
 
+    private onClose(code: GatewayCloseCodes, reason: Buffer): void {
+        const reasonStr = reason.toString();
+        this.emit("close", GatewayCloseCodes[code], reasonStr);
+
+        switch (code) {
+            case GatewayCloseCodes.UnknownError: {
+                this.emit("error", new Error(`[WS] Unknown error: ${reasonStr}`));
+                break;
+            }
+
+            case GatewayCloseCodes.UnknownOpcode: {
+                this.emit("error", new Error(`[WS] Unknown opcode: ${reasonStr}`));
+                break;
+            }
+
+            case GatewayCloseCodes.DecodeError: {
+                this.emit("error", new Error(`[WS] Decode error: ${reasonStr}`));
+                break;
+            }
+
+            case GatewayCloseCodes.NotAuthenticated: {
+                this.emit("warn", "[WS] Not authenticated. Re-identifying...");
+                this[sessionId] = null;
+                this[sequence] = null;
+                break;
+            }
+
+            case GatewayCloseCodes.AuthenticationFailed: {
+                this.emit("error", new Error("[WS] Authentication failed. Check your token"));
+                break;
+            }
+
+            case GatewayCloseCodes.AlreadyAuthenticated: {
+                this.emit("warn", "[WS] Already authenticated. Reconnecting...");
+                break;
+            }
+
+            case GatewayCloseCodes.InvalidSeq: {
+                this.emit("warn", "[WS] Invalid sequence. Resetting session...");
+                this[sequence] = null;
+                break;
+            }
+
+            case GatewayCloseCodes.RateLimited: {
+                this.emit("warn", "[WS] Rate limited. Implementing backoff strategy...");
+                break;
+            }
+
+            case GatewayCloseCodes.SessionTimedOut: {
+                this.emit("warn", "[WS] Session timed out. Reconnecting...");
+                this[sessionId] = null;
+                break;
+            }
+
+            case GatewayCloseCodes.InvalidShard: {
+                this.emit("error", new Error("[WS] Invalid shard. Check your shard configuration"));
+                break;
+            }
+
+            case GatewayCloseCodes.ShardingRequired: {
+                this.emit("error", new Error("[WS] Sharding is required but not implemented"));
+                break;
+            }
+
+            case GatewayCloseCodes.InvalidApiVersion: {
+                this.emit("error", new Error("[WS] Invalid API version. Update your client"));
+                break;
+            }
+
+            case GatewayCloseCodes.InvalidIntents: {
+                this.emit("error", new Error("[WS] Invalid intents specified"));
+                break;
+            }
+
+            case GatewayCloseCodes.DisallowedIntents: {
+                this.emit("error", new Error("[WS] Disallowed intents specified. Check your permissions"));
+                break;
+            }
+
+            default: {
+                this.emit("warn", `[WS] Unhandled close code: ${code}`);
+            }
+        }
+
+        this.cleanup();
+
+        if (
+            [
+                GatewayCloseCodes.UnknownError,
+                GatewayCloseCodes.UnknownOpcode,
+                GatewayCloseCodes.DecodeError,
+                GatewayCloseCodes.InvalidSeq,
+                GatewayCloseCodes.SessionTimedOut,
+            ].includes(code)
+        ) {
+            this.emit("debug", "[WS] Attempting to reconnect...");
+            setTimeout(async () => this.connect(), 5_000);
+        }
+    }
+
+    private onError(error: Error): void {
+        this.emit("error", error);
+    }
+
     private async handleMessage(payload: GatewayPayload): Promise<void> {
         this[sequence] = payload.s ?? this[sequence];
 
@@ -158,7 +266,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
                 this.handleInvalidSession(Boolean(payload.d));
                 break;
             case GatewayOpcodes.Reconnect:
-                this.handleReconnect();
+                await this.connect(true);
                 break;
             case GatewayOpcodes.Dispatch:
                 this.handleDispatchEvent(payload);
@@ -180,53 +288,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         }
     }
 
-    private handleInvalidSession(resumable: boolean): void {
-        if (resumable) {
-            setTimeout(() => this.sendResume(), 5_000);
-        } else {
-            this[sessionId] = null;
-            this[sequence] = null;
-        }
-    }
-
-    private handleReconnect(): void {
-        this.disconnect();
-        void this.connect(true);
-    }
-
-    private handleDispatchEvent(payload: GatewayPayload): void {
-        if (payload.t === "READY") {
-            const ready = payload.d as ReadyEventFields;
-            this[sessionId] = ready.session_id;
-            this[resumeGatewayUrl] = ready.resume_gateway_url;
-            this.emit("debug", `[WS] Session ID: ${this[sessionId]}`);
-        }
-
-        if (!payload.t) {
-            return;
-        }
-
-        this.emit("dispatch", payload.t, payload.d as never);
-    }
-
-    private onOpen(): void {
-        this.emit("debug", "[WS] WebSocket connection opened");
-    }
-
-    private onClose(code: GatewayCloseCodes, reason: Buffer): void {
-        this.emit(
-            "close",
-            `[WS] WebSocket connection closed with code ${code}: ${reason.toString()}`,
-            code,
-            reason.toString()
-        );
-        this.cleanup();
-    }
-
-    private onError(error: Error): void {
-        this.emit("error", error);
-    }
-
     private setupHeartbeat(interval: number): void {
         if (this[heartbeatInterval]) {
             clearInterval(this[heartbeatInterval]);
@@ -236,6 +297,15 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             this.emit("debug", `[WS] Sending heartbeat, sequence: ${this[sequence]}, interval: ${interval}ms`);
             this.send(GatewayOpcodes.Heartbeat, this[sequence]);
         }, interval);
+    }
+
+    private handleInvalidSession(resumable: boolean): void {
+        if (resumable) {
+            setTimeout(() => this.sendResume(), 5_000);
+        } else {
+            this[sessionId] = null;
+            this[sequence] = null;
+        }
     }
 
     private sendResume(): void {
@@ -251,5 +321,20 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         };
 
         this.send(GatewayOpcodes.Resume, resumePayload);
+    }
+
+    private handleDispatchEvent(payload: GatewayPayload): void {
+        if (payload.t === "READY") {
+            const ready = payload.d as ReadyEventFields;
+            this[sessionId] = ready.session_id;
+            this[resumeGatewayUrl] = ready.resume_gateway_url;
+            this.emit("debug", `[WS] Session ID: ${this[sessionId]}`);
+        }
+
+        if (!payload.t) {
+            return;
+        }
+
+        this.emit("dispatch", payload.t, payload.d as never);
     }
 }

@@ -1,4 +1,4 @@
-import type { ApiVersions, GatewayCloseCodes, GatewayOpcodes, Integer } from "@nyxjs/core";
+import type { ApiVersions, GatewayOpcodes, Integer } from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/presences";
 import type { GatewayReceiveEvents } from "./events";
 
@@ -97,11 +97,10 @@ export type GatewayEvents = GatewayDispatchEvents<keyof GatewayReceiveEvents> & 
     /**
      * Event triggered when the connection is closed.
      *
-     * @param message - The close message.
-     * @param code - The close code.
+     * @param code - The close message code.
      * @param reason - The reason for the closure.
      */
-    close: [message: string, code: GatewayCloseCodes, reason: string];
+    close: [code: string, reason: string];
     /**
      * Event triggered for debugging messages.
      *
