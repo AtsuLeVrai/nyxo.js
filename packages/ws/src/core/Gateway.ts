@@ -1,4 +1,5 @@
 import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
+import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { Inflate } from "zlib-sync";
@@ -40,7 +41,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     private readonly [options]: Readonly<GatewayOptions>;
 
-    public constructor(initialToken: string, initialOptions: GatewayOptions) {
+    public constructor(initialToken: string, initialRest: Rest, initialOptions: GatewayOptions) {
         super();
         this[ws] = null;
         this[heartbeatInterval] = null;
@@ -49,7 +50,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this[resumeGatewayUrl] = null;
         this[token] = initialToken;
         this[zlibInflate] = new Inflate({ chunkSize: 1_024 * 1_024 });
-        this[shardManager] = new ShardManager(this, initialToken, initialOptions);
+        this[shardManager] = new ShardManager(this, initialRest, initialToken, initialOptions);
         this[options] = Object.freeze({ ...initialOptions });
     }
 

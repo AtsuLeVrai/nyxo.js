@@ -4,19 +4,18 @@
   "packageManager": "pnpm@9.11.0",
   "private": true,
   "scripts": {
-    "build": "nx run-many --target=build --all",
-    "clean": "nx run-many --target=clean --all",
-    "lint": "nx run-many --target=lint --all",
-    "pretty": "nx run-many --target=pretty --all",
-    "graph": "nx graph",
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "lint": "turbo run lint",
+    "pretty": "turbo run pretty",
     "prepare": "husky"
   },
   "devDependencies": {
-    "@nx/eslint": "19.8.0",
-    "@nx/js": "19.8.0",
-    "@nx/workspace": "19.8.0",
-    "eslint": "~8.57.1",
     "husky": "^9.1.6",
-    "nx": "19.8.0"
+    "turbo": "^2.1.2",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { ApiVersions, EncodingTypes, Gateway } from "nyx.js";
+import { ApiVersions, CompressTypes, EncodingTypes, Gateway, Rest } from "nyx.js";
 
 config();
 
@@ -7,17 +7,23 @@ if (!process.env.DISCORD_TOKEN) {
     throw new Error("no discord token");
 }
 
-const gateway = new Gateway(process.env.DISCORD_TOKEN, {
+const rest = new Rest(process.env.DISCORD_TOKEN, {
+    version: ApiVersions.V10,
+});
+
+const gateway = new Gateway(process.env.DISCORD_TOKEN, rest, {
     intents: 513,
     v: ApiVersions.V10,
-    encoding: EncodingTypes.Json,
+    encoding: EncodingTypes.Etf,
+    compress: CompressTypes.ZlibStream,
+    shard: "auto",
 });
 
 gateway.on("error", console.log);
 gateway.on("close", console.log);
 gateway.on("warn", console.log);
 gateway.on("debug", console.log);
-gateway.on("dispatch", console.log);
+// gateway.on("dispatch", console.log);
 
 void gateway.connect();
 

@@ -1,7 +1,8 @@
 import { setTimeout } from "timers/promises";
 import type { Integer, Snowflake } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
-import { GatewayRoutes, Rest, UserRoutes } from "@nyxjs/rest";
+import type { Rest } from "@nyxjs/rest";
+import { GatewayRoutes, UserRoutes } from "@nyxjs/rest";
 import { Store } from "@nyxjs/store";
 import type { IdentifyStructure } from "../events/identity";
 import type { GatewayOptions } from "../types/gateway";
@@ -41,12 +42,17 @@ export class ShardManager {
 
     private readonly [rateLimitQueue]: Store<Integer, ShardInfo[]>;
 
-    public constructor(initialGateway: Gateway, initialToken: string, initialOptions: Readonly<GatewayOptions>) {
+    public constructor(
+        initialGateway: Gateway,
+        initialRest: Rest,
+        initialToken: string,
+        initialOptions: Readonly<GatewayOptions>
+    ) {
         this[concurrency] = 1;
         this[gateway] = initialGateway;
         this[options] = initialOptions;
         this[token] = initialToken;
-        this[rest] = new Rest(initialToken, { version: initialOptions.v });
+        this[rest] = initialRest;
         this[shards] = new Store();
         this[rateLimitQueue] = new Store();
     }
