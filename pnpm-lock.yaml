@@ -151,6 +151,9 @@ importers:
       '@nyxjs/store':
         specifier: workspace:*
         version: link:../store
+      '@nyxjs/utils':
+        specifier: workspace:*
+        version: link:../utils
       form-data:
         specifier: ^4.0.0
         version: 4.0.0
@@ -264,6 +267,9 @@ importers:
       '@nyxjs/store':
         specifier: workspace:*
         version: link:../store
+      '@nyxjs/utils':
+        specifier: workspace:*
+        version: link:../utils
       bufferutil:
         specifier: ^4.0.8
         version: 4.0.8

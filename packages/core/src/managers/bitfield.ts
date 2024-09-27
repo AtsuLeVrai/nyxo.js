@@ -13,31 +13,25 @@ export type BitfieldResolvable<T> = (T | bigint | `${bigint}`)[] | BitfieldManag
  * @throws Error if the string is not a valid BigInt representation.
  */
 export function assertValidBigInt(value: string): bigint {
-    // Remove any leading/trailing whitespace
     const trimmedValue = value.trim();
 
-    // Check if the string is empty after trimming
     if (trimmedValue.length === 0) {
         throw new Error("Empty string is not a valid BigInt");
     }
 
-    // Check if the string contains only digits, optionally preceded by a sign
     if (!/^-?\d+$/.test(trimmedValue)) {
         throw new Error("Invalid BigInt format");
     }
 
     try {
-        // Attempt to create a BigInt from the string
         const result = BigInt(trimmedValue);
 
-        // Ensure the result is non-negative
         if (result < 0n) {
             throw new Error("BigInt must be non-negative for bitfield operations");
         }
 
         return result;
     } catch (error) {
-        // Catch any errors thrown by BigInt constructor
         if (error instanceof Error) {
             throw new TypeError(`Failed to create BigInt: ${error.message}`);
         } else {

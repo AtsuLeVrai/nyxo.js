@@ -80,7 +80,7 @@ export type ConnectionStructure = {
      *
      * @todo No information available in the Discord API documentation
      */
-    integrations?: IntegrationStructure[];
+    integrations?: Partial<IntegrationStructure>[];
     /**
      * The username of the connection account.
      */

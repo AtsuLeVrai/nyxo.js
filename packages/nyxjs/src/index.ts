@@ -2,6 +2,18 @@
  * ./client
  */
 export * from "./client/Client";
+export * from "./client/ClientEvents";
+
+/**
+ * ./helpers
+ */
+export * from "./helpers/Intents";
+
+/**
+ * ./structures
+ */
+export * from "./structures/Teams";
+export * from "./structures/Users";
 
 /**
  * exports all @nyxjs packages

@@ -1,5 +1,6 @@
 import { type ApiVersions, type AuthTypes, HttpResponseCodes, type Integer, MimeTypes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
+import { safeError } from "@nyxjs/utils";
 import type { Dispatcher } from "undici";
 import { Pool, RetryAgent } from "undici";
 import { decompressResponse } from "../helpers/compress";
@@ -98,11 +99,7 @@ export class Rest {
 
             return data as T;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-
-            throw new Error(String(error));
+            throw safeError(error);
         }
     }
 

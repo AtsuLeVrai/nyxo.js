@@ -7,7 +7,7 @@ export type ReadyEventFields = {
     /**
      * Contains id and flags
      */
-    application: Pick<ApplicationStructure, "id" | "name">;
+    application: Pick<ApplicationStructure, "flags" | "id">;
     /**
      * Guilds the user is in
      */

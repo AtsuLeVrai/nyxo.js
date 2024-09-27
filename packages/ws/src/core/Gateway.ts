@@ -3,6 +3,7 @@ import { clearInterval, setInterval, setTimeout } from "node:timers";
 import { URL } from "node:url";
 import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
+import { safeError } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { Inflate } from "zlib-sync";
@@ -26,15 +27,15 @@ const shardManager = Symbol("shardManager");
 const options = Symbol("options");
 
 export class Gateway extends EventEmitter<GatewayEvents> {
-    private [ws]: WebSocket | null;
+    private [ws]: WebSocket | null = null;
 
-    private [heartbeatInterval]: NodeJS.Timeout | null;
+    private [heartbeatInterval]: NodeJS.Timeout | null = null;
 
-    private [sequence]: number | null;
+    private [sequence]: number | null = null;
 
-    private [sessionId]: string | null;
+    private [sessionId]: string | null = null;
 
-    private [resumeGatewayUrl]: string | null;
+    private [resumeGatewayUrl]: string | null = null;
 
     private readonly [token]: string;
 
@@ -46,11 +47,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     public constructor(initialToken: string, initialRest: Rest, initialOptions: GatewayOptions) {
         super();
-        this[ws] = null;
-        this[heartbeatInterval] = null;
-        this[sequence] = null;
-        this[sessionId] = null;
-        this[resumeGatewayUrl] = null;
         this[token] = initialToken;
         this[zlibInflate] = new Inflate({ chunkSize: 1_024 * 1_024 });
         this[shardManager] = new ShardManager(this, initialRest, initialToken, initialOptions);
@@ -83,11 +79,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             this[ws].on("close", this.onClose.bind(this));
             this[ws].on("error", this.onError.bind(this));
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-
-            throw new Error(String(error));
+            throw safeError(error);
         }
     }
 
@@ -147,11 +139,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
             await this.handleMessage(decoded);
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-
-            throw new Error(String(error));
+            throw safeError(error);
         }
     }
 

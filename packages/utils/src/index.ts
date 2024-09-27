@@ -16,6 +16,7 @@ export * from "./functions/memoize";
 export * from "./functions/paginate";
 export * from "./functions/pipe";
 export * from "./functions/range";
+export * from "./functions/safeError";
 export * from "./functions/shuffle";
 export * from "./functions/throttle";
 export * from "./functions/truncate";

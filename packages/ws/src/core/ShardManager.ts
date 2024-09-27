@@ -5,6 +5,7 @@ import { GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { GatewayRoutes, UserRoutes } from "@nyxjs/rest";
 import { Store } from "@nyxjs/store";
+import { safeError } from "@nyxjs/utils";
 import type { IdentifyStructure } from "../events/identity";
 import type { GatewayOptions } from "../types/gateway";
 import type { Gateway } from "./Gateway";
@@ -66,11 +67,7 @@ export class ShardManager {
                 await this.connectShard();
             }
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-
-            throw new Error(String(error));
+            throw safeError(error);
         }
     }
 
@@ -144,6 +141,7 @@ export class ShardManager {
                     payload.shard = [shardInfo.shardId, shardInfo.totalShards];
                 }
 
+                this[gateway].emit("debug", `[WS] Sending identify payload: ${JSON.stringify(payload, null, 2)}`);
                 this[gateway].send(GatewayOpcodes.Identify, payload);
                 resolve();
             } catch (error) {

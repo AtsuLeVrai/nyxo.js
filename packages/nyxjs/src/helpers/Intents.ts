@@ -1,0 +1,25 @@
+import { GatewayIntents } from "@nyxjs/core";
+
+export const AllIntents: GatewayIntents[] = [
+    GatewayIntents.Guilds,
+    GatewayIntents.GuildMembers,
+    GatewayIntents.GuildModeration,
+    GatewayIntents.GuildEmojisAndStickers,
+    GatewayIntents.GuildIntegrations,
+    GatewayIntents.GuildWebhooks,
+    GatewayIntents.GuildInvites,
+    GatewayIntents.GuildVoiceStates,
+    GatewayIntents.GuildPresences,
+    GatewayIntents.GuildMessages,
+    GatewayIntents.GuildMessageReactions,
+    GatewayIntents.GuildMessageTyping,
+    GatewayIntents.DirectMessages,
+    GatewayIntents.DirectMessageReactions,
+    GatewayIntents.DirectMessageTyping,
+    GatewayIntents.MessageContent,
+    GatewayIntents.GuildScheduledEvents,
+    GatewayIntents.AutoModerationConfiguration,
+    GatewayIntents.AutoModerationExecution,
+    GatewayIntents.GuildMessagePolls,
+    GatewayIntents.DirectMessagePolls,
+];

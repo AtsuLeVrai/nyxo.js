@@ -26,6 +26,7 @@
     "@nyxjs/core": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
+    "@nyxjs/utils": "workspace:*",
     "bufferutil": "^4.0.8",
     "erlpack": "^0.1.4",
     "eventemitter3": "^5.0.1",
