@@ -17,7 +17,7 @@ export class Store<K, V> {
         this[cache] = new Map();
         this[lruOrder] = [];
         this[options] = {
-            max_size: initialOptions.max_size ?? Infinity,
+            max_size: initialOptions.max_size ?? Number.POSITIVE_INFINITY,
             default_ttl: initialOptions.default_ttl ?? 0,
             onEvict: initialOptions.onEvict ?? (() => {}),
         };

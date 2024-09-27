@@ -1,5 +1,7 @@
+import { Buffer } from "node:buffer";
 import { createReadStream } from "node:fs";
 import { basename } from "node:path";
+import { URL } from "node:url";
 import { MimeTypes } from "@nyxjs/core";
 import FormData from "form-data";
 import { DISCORD_CDN_URL } from "../helpers/constants";

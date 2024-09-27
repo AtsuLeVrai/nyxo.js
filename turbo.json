@@ -4,7 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "^lint"
       ],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -16,8 +17,21 @@
         "dist/**"
       ]
     },
-    "clean": {},
-    "lint": {},
-    "pretty": {}
+    "clean": {
+      "dependsOn": [
+        "^clean"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "^pretty",
+        "^lint"
+      ]
+    },
+    "pretty": {
+      "dependsOn": [
+        "^pretty"
+      ]
+    }
   }
 }

@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import type { DiscordHeaders, Integer, Snowflake } from "@nyxjs/core";
 import type { Dispatcher } from "undici";
 

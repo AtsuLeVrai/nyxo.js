@@ -1,4 +1,4 @@
-import config from "../../configs/eslint/eslint.config.mjs";
+import config from "@nyxjs/eslint-config/eslint.config.js";
 
 const overrides = [
     {

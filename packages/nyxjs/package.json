@@ -20,8 +20,7 @@
     "build": "tsup && rimraf .tsup",
     "clean": "rimraf dist",
     "lint": "eslint src --fix",
-    "pretty": "prettier --write src",
-    "test": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files tests/index.ts"
+    "pretty": "prettier --write src"
   },
   "dependencies": {
     "@nyxjs/core": "workspace:*",
@@ -34,8 +33,8 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.47.9",
     "@swc/core": "^1.7.28",
-    "@types/node": "^22.7.3",
-    "eslint": "^9.11.1",
+    "@types/node": "^22.7.4",
+    "eslint": "^8.57.1",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
     "terser": "^5.34.0",

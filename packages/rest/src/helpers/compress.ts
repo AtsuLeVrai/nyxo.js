@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { Gunzip } from "minizlib";
 import type { Dispatcher } from "undici";
 

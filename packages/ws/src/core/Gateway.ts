@@ -1,3 +1,6 @@
+import { Buffer } from "node:buffer";
+import { clearInterval, setInterval, setTimeout } from "node:timers";
+import { URL } from "node:url";
 import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";

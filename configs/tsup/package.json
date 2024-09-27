@@ -1,11 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/eslint-config",
+  "name": "@nyxjs/tsup-config",
   "version": "0.0.0",
   "private": true,
   "devDependencies": {
-    "@types/eslint": "^8.56.12",
-    "eslint": "^8.57.1",
-    "eslint-config-neon": "^0.1.62"
+    "tsup": "^8.3.0"
   }
 }

@@ -1,4 +1,5 @@
-import { setTimeout } from "timers/promises";
+import process from "node:process";
+import { setTimeout } from "node:timers/promises";
 import type { Integer, Snowflake } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
