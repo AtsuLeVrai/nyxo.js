@@ -65,13 +65,13 @@ export class Client extends EventEmitter<ClientEvents> {
             return;
         }
 
-        for (const [gatewayEvent, clientEvent] of GATEWAY_EVENTS) {
-            this.ws.on("dispatch", (eventName, ...args) => {
+        this.ws.on("dispatch", (eventName, ...args) => {
+            for (const [gatewayEvent, clientEvent] of GATEWAY_EVENTS) {
                 if (eventName === gatewayEvent) {
                     this.emit(clientEvent as keyof ClientEvents, ...(args as ClientEvents[keyof ClientEvents]));
                 }
-            });
-        }
+            }
+        });
 
         this.ws.on("debug", (message: string) => this.emit("debug", message));
         this.ws.on("error", (error: Error) => this.emit("error", error));
