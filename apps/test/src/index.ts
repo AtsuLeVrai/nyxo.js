@@ -1,3 +1,4 @@
+import process from "node:process";
 import { config } from "dotenv";
 import { ApiVersions, CompressTypes, EncodingTypes, Gateway, Rest } from "nyx.js";
 
