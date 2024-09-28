@@ -9,8 +9,6 @@ import { EventEmitter } from "eventemitter3";
 import type { ClientEvents } from "./ClientEvents";
 import { GATEWAY_EVENTS } from "./ClientEvents";
 
-const options = Symbol("options");
-
 export type ClientOptions = {
     intents: GatewayIntents[] | Integer;
     presence?: GatewayOptions["presence"];
@@ -25,14 +23,14 @@ export class Client extends EventEmitter<ClientEvents> {
 
     public ws: Gateway | null = null;
 
-    private [options]: ClientOptions;
+    readonly #options: ClientOptions;
 
     public constructor(
         public token: string,
-        initialOptions: ClientOptions
+        options: ClientOptions
     ) {
         super();
-        this[options] = initialOptions;
+        this.#options = options;
     }
 
     public async login(): Promise<void> {
@@ -80,10 +78,10 @@ export class Client extends EventEmitter<ClientEvents> {
 
     private createRest(): Rest {
         return new Rest(this.token, {
-            auth_type: this[options].rest?.auth_type,
-            cache_life_time: this[options].rest?.cache_life_time,
-            user_agent: this[options].rest?.user_agent,
-            version: this[options].version ?? ApiVersions.V10,
+            auth_type: this.#options.rest?.auth_type,
+            cache_life_time: this.#options.rest?.cache_life_time,
+            user_agent: this.#options.rest?.user_agent,
+            version: this.#options.version ?? ApiVersions.V10,
         });
     }
 
@@ -93,13 +91,13 @@ export class Client extends EventEmitter<ClientEvents> {
         }
 
         return new Gateway(this.token, this.rest, {
-            presence: this[options].presence,
-            compress: this[options].ws?.compress,
-            encoding: this[options].ws?.encoding ?? EncodingTypes.Json,
-            shard: this[options].shard,
-            intents: calculateIntents(this[options].intents),
-            v: this[options].version ?? ApiVersions.V10,
-            large_threshold: this[options].ws?.large_threshold,
+            presence: this.#options.presence,
+            compress: this.#options.ws?.compress,
+            encoding: this.#options.ws?.encoding ?? EncodingTypes.Json,
+            shard: this.#options.shard,
+            intents: calculateIntents(this.#options.intents),
+            v: this.#options.version ?? ApiVersions.V10,
+            large_threshold: this.#options.ws?.large_threshold,
         });
     }
 }

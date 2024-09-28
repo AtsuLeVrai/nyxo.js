@@ -16,49 +16,39 @@ import type { GatewaySendEvents } from "../types/events";
 import type { GatewayEvents, GatewayOptions, GatewayPayload } from "../types/gateway";
 import { ShardManager } from "./ShardManager";
 
-const ws = Symbol("ws");
-const heartbeatInterval = Symbol("heartbeatInterval");
-const sequence = Symbol("sequence");
-const sessionId = Symbol("sessionId");
-const resumeGatewayUrl = Symbol("resumeGatewayUrl");
-const token = Symbol("token");
-const zlibInflate = Symbol("zlibInflate");
-const shardManager = Symbol("shardManager");
-const options = Symbol("options");
-
 export class Gateway extends EventEmitter<GatewayEvents> {
-    private [ws]: WebSocket | null = null;
+    #ws: WebSocket | null = null;
 
-    private [heartbeatInterval]: NodeJS.Timeout | null = null;
+    #heartbeatInterval: NodeJS.Timeout | null = null;
 
-    private [sequence]: number | null = null;
+    #sequence: number | null = null;
 
-    private [sessionId]: string | null = null;
+    #sessionId: string | null = null;
 
-    private [resumeGatewayUrl]: string | null = null;
+    #resumeGatewayUrl: string | null = null;
 
-    private readonly [token]: string;
+    readonly #token: string;
 
-    private readonly [zlibInflate]: Inflate;
+    readonly #zlibInflate: Inflate;
 
-    private readonly [shardManager]: ShardManager;
+    readonly #shardManager: ShardManager;
 
-    private readonly [options]: Readonly<GatewayOptions>;
+    readonly #options: Readonly<GatewayOptions>;
 
-    public constructor(initialToken: string, initialRest: Rest, initialOptions: GatewayOptions) {
+    public constructor(token: string, rest: Rest, options: GatewayOptions) {
         super();
-        this[token] = initialToken;
-        this[zlibInflate] = new Inflate({ chunkSize: 1_024 * 1_024 });
-        this[shardManager] = new ShardManager(this, initialRest, initialToken, initialOptions);
-        this[options] = Object.freeze({ ...initialOptions });
+        this.#token = token;
+        this.#zlibInflate = new Inflate({ chunkSize: 1_024 * 1_024 });
+        this.#shardManager = new ShardManager(this, rest, token, options);
+        this.#options = Object.freeze({ ...options });
     }
 
     private get wsUrl(): string {
         const query = new URL("wss://gateway.discord.gg/");
-        query.searchParams.set("v", this[options].v.toString());
-        query.searchParams.set("encoding", this[options].encoding);
-        if (this[options].compress) {
-            query.searchParams.set("compress", this[options].compress);
+        query.searchParams.set("v", this.#options.v.toString());
+        query.searchParams.set("encoding", this.#options.encoding);
+        if (this.#options.compress) {
+            query.searchParams.set("compress", this.#options.compress);
         }
 
         this.emit("debug", `[WS] Generated WebSocket URL: ${query.toString()}`);
@@ -66,25 +56,25 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     public async connect(resumeAttempt = false): Promise<void> {
-        if (this[ws]) {
+        if (this.#ws) {
             this.disconnect();
         }
 
         try {
-            const url = resumeAttempt && this[resumeGatewayUrl] ? this[resumeGatewayUrl] : this.wsUrl;
-            this[ws] = new WebSocket(url);
+            const url = resumeAttempt && this.#resumeGatewayUrl ? this.#resumeGatewayUrl : this.wsUrl;
+            this.#ws = new WebSocket(url);
 
-            this[ws].on("open", this.onOpen.bind(this));
-            this[ws].on("message", this.onMessage.bind(this));
-            this[ws].on("close", this.onClose.bind(this));
-            this[ws].on("error", this.onError.bind(this));
+            this.#ws.on("open", this.onOpen.bind(this));
+            this.#ws.on("message", this.onMessage.bind(this));
+            this.#ws.on("close", this.onClose.bind(this));
+            this.#ws.on("error", this.onError.bind(this));
         } catch (error) {
             throw safeError(error);
         }
     }
 
     public send<T extends keyof GatewaySendEvents>(op: T, data: Readonly<GatewaySendEvents[T]>): void {
-        if (!this[ws]) {
+        if (!this.#ws) {
             this.emit("warn", "[WS] Attempted to send message without active WebSocket connection");
             return;
         }
@@ -92,33 +82,33 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         const payload: GatewayPayload = {
             d: data,
             op,
-            s: this[sequence],
+            s: this.#sequence,
             t: null,
         };
 
-        const encoded = encodeMessage(payload, this[options].encoding);
-        this[ws].send(encoded);
+        const encoded = encodeMessage(payload, this.#options.encoding);
+        this.#ws.send(encoded);
     }
 
     public disconnect(): void {
-        if (this[ws]) {
-            this[ws].close();
+        if (this.#ws) {
+            this.#ws.close();
         }
 
         this.cleanup();
     }
 
     private cleanup(): void {
-        if (this[heartbeatInterval]) {
-            clearInterval(this[heartbeatInterval]);
+        if (this.#heartbeatInterval) {
+            clearInterval(this.#heartbeatInterval);
         }
 
-        this[ws] = null;
-        this[heartbeatInterval] = null;
-        this[sequence] = null;
-        this[sessionId] = null;
-        this[resumeGatewayUrl] = null;
-        this[shardManager].cleanup();
+        this.#ws = null;
+        this.#heartbeatInterval = null;
+        this.#sequence = null;
+        this.#sessionId = null;
+        this.#resumeGatewayUrl = null;
+        this.#shardManager.cleanup();
     }
 
     private onOpen(): void {
@@ -129,13 +119,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         let decompressedData: Buffer | string = data;
 
         try {
-            if (this[options].compress === "zlib-stream" && Buffer.isBuffer(data)) {
-                decompressedData = await decompressZlib(data, this[zlibInflate]);
-            } else if (this[options].compress === "zstd-stream" && Buffer.isBuffer(data)) {
+            if (this.#options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
+                decompressedData = await decompressZlib(data, this.#zlibInflate);
+            } else if (this.#options.compress === "zstd-stream" && Buffer.isBuffer(data)) {
                 throw new Error("[WS] Zstd compression is not supported yet...");
             }
 
-            const decoded: GatewayPayload = decodeMessage(decompressedData, this[options].encoding);
+            const decoded: GatewayPayload = decodeMessage(decompressedData, this.#options.encoding);
 
             await this.handleMessage(decoded);
         } catch (error) {
@@ -165,8 +155,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
             case GatewayCloseCodes.NotAuthenticated: {
                 this.emit("warn", "[WS] Not authenticated. Re-identifying...");
-                this[sessionId] = null;
-                this[sequence] = null;
+                this.#sessionId = null;
+                this.#sequence = null;
                 break;
             }
 
@@ -182,7 +172,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
             case GatewayCloseCodes.InvalidSeq: {
                 this.emit("warn", "[WS] Invalid sequence. Resetting session...");
-                this[sequence] = null;
+                this.#sequence = null;
                 break;
             }
 
@@ -193,7 +183,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
             case GatewayCloseCodes.SessionTimedOut: {
                 this.emit("warn", "[WS] Session timed out. Reconnecting...");
-                this[sessionId] = null;
+                this.#sessionId = null;
                 break;
             }
 
@@ -239,7 +229,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             ].includes(code)
         ) {
             this.emit("debug", "[WS] Attempting to reconnect...");
-            setTimeout(async () => this.connect(), 5_000);
+            setTimeout(async () => this.connect(true), 5_000);
         }
     }
 
@@ -248,46 +238,57 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     private async handleMessage(payload: GatewayPayload): Promise<void> {
-        this[sequence] = payload.s ?? this[sequence];
+        this.#sequence = payload.s ?? this.#sequence;
 
         switch (payload.op) {
-            case GatewayOpcodes.Hello:
+            case GatewayOpcodes.Hello: {
                 await this.handleHello(payload.d as HelloStructure);
                 break;
-            case GatewayOpcodes.InvalidSession:
+            }
+
+            case GatewayOpcodes.InvalidSession: {
                 this.handleInvalidSession(Boolean(payload.d));
                 break;
-            case GatewayOpcodes.Reconnect:
+            }
+
+            case GatewayOpcodes.Reconnect: {
                 await this.connect(true);
                 break;
-            case GatewayOpcodes.Dispatch:
+            }
+
+            case GatewayOpcodes.Dispatch: {
                 this.handleDispatchEvent(payload);
                 break;
-            case GatewayOpcodes.HeartbeatAck:
+            }
+
+            case GatewayOpcodes.HeartbeatAck: {
                 this.emit("debug", "[WS] Received heartbeat ack");
                 break;
-            default:
+            }
+
+            default: {
                 this.emit("warn", `[WS] Received unhandled gateway event: ${GatewayOpcodes[payload.op]}`);
+            }
         }
     }
 
     private async handleHello(data: HelloStructure): Promise<void> {
         this.setupHeartbeat(data.heartbeat_interval);
-        if (this[sessionId] && this[sequence]) {
+        if (this.#sessionId && this.#sequence) {
             this.sendResume();
         } else {
-            await this[shardManager].initialize();
+            await this.#shardManager.initialize();
         }
     }
 
     private setupHeartbeat(interval: number): void {
-        if (this[heartbeatInterval]) {
-            clearInterval(this[heartbeatInterval]);
+        if (this.#heartbeatInterval) {
+            clearInterval(this.#heartbeatInterval);
         }
 
-        this[heartbeatInterval] = setInterval(() => {
-            this.emit("debug", `[WS] Sending heartbeat, sequence: ${this[sequence]}, interval: ${interval}ms`);
-            this.send(GatewayOpcodes.Heartbeat, this[sequence]);
+        this.#heartbeatInterval = setInterval(() => {
+            this.emit("debug", `[WS] Sending heartbeat, sequence: ${this.#sequence}, interval: ${interval}ms`);
+            this.send(GatewayOpcodes.Heartbeat, this.#sequence);
         }, interval);
     }
 
@@ -295,21 +296,21 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         if (resumable) {
             setTimeout(() => this.sendResume(), 5_000);
         } else {
-            this[sessionId] = null;
-            this[sequence] = null;
+            this.#sessionId = null;
+            this.#sequence = null;
         }
     }
 
     private sendResume(): void {
-        if (!this[sessionId] || this[sequence] === null) {
+        if (!this.#sessionId || this.#sequence === null) {
             this.emit("warn", "[WS] Attempted to resume without a valid session, re-identifying");
             return;
         }
 
         const resumePayload: ResumeStructure = {
-            token: this[token],
-            session_id: this[sessionId],
-            seq: this[sequence],
+            token: this.#token,
+            session_id: this.#sessionId,
+            seq: this.#sequence,
         };
 
         this.send(GatewayOpcodes.Resume, resumePayload);
@@ -318,9 +319,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     private handleDispatchEvent(payload: GatewayPayload): void {
         if (payload.t === "READY") {
             const ready = payload.d as ReadyEventFields;
-            this[sessionId] = ready.session_id;
-            this[resumeGatewayUrl] = ready.resume_gateway_url;
-            this.emit("debug", `[WS] Session ID: ${this[sessionId]}`);
+            this.#sessionId = ready.session_id;
+            this.#resumeGatewayUrl = ready.resume_gateway_url;
+            this.emit("debug", `[WS] Session ID: ${this.#sessionId}`);
         }
 
         if (!payload.t) {

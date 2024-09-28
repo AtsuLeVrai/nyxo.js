@@ -1,11 +1,27 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/core",
+  "description": "Core package for Nyx.js",
   "version": "1.0.0",
   "type": "commonjs",
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "bugs": "https://github.com/3tatsu/nyx.js/issues",
   "main": "./dist/index.js",
   "types": "./dist/src/index.d.ts",
   "module": "./dist/esm/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": {
+    "name": "3tatsu",
+    "url": "https://github.com/3tatsu"
+  },
+  "repository": {
+    "url": "https://github.com/3tatsu/nyx.js",
+    "type": "git",
+    "directory": "packages/core"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,13 +29,10 @@
       "require": "./dist/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsup && rimraf .tsup",
     "clean": "rimraf dist",
-    "lint": "eslint src --fix",
+    "lint": "eslint src --fix --format pretty",
     "pretty": "prettier --write src"
   },
   "devDependencies": {
@@ -27,10 +40,14 @@
     "@swc/core": "^1.7.28",
     "@types/node": "^22.7.4",
     "eslint": "^8.57.1",
+    "eslint-formatter-pretty": "^5.0.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
-    "terser": "^5.34.0",
+    "terser": "^5.34.1",
     "tsup": "^8.3.0",
     "typescript": "^5.6.2"
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }

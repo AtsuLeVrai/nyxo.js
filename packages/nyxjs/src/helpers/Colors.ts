@@ -148,3 +148,20 @@ export type HexColorString = `#${string}`;
 export type RBGColor = [red: Integer, blue: Integer, green: Integer];
 
 export type ColorResolvable = Colors | HexColorString | Integer | RBGColor;
+
+export function resolveColor(color: ColorResolvable): Integer {
+    if (typeof color === "number") {
+        return color;
+    }
+
+    if (Array.isArray(color)) {
+        const [red, blue, green] = color;
+        return (red << 16) + (blue << 8) + green;
+    }
+
+    if (color.startsWith("#")) {
+        return Number.parseInt(color.slice(1), 16);
+    }
+
+    return Colors[color as keyof typeof Colors];
+}

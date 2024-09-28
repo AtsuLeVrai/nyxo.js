@@ -1,31 +1,25 @@
 import type { StoreOptions } from "../types";
 
-const cache = Symbol("cache");
-const lruOrder = Symbol("lruOrder");
-const options = Symbol("options");
-
 export class Store<K, V> {
-    public [Symbol.toStringTag]: string = "Store";
+    #cache: Map<K, { expiry?: number; value: V }>;
 
-    private [cache]: Map<K, { expiry?: number; value: V }>;
+    readonly #lruOrder: K[];
 
-    private readonly [lruOrder]: K[];
+    readonly #options: Required<StoreOptions>;
 
-    private readonly [options]: Required<StoreOptions>;
-
-    public constructor(initialOptions: StoreOptions = {}) {
-        this[cache] = new Map();
-        this[lruOrder] = [];
-        this[options] = {
-            max_size: initialOptions.max_size ?? Number.POSITIVE_INFINITY,
-            default_ttl: initialOptions.default_ttl ?? 0,
-            onEvict: initialOptions.onEvict ?? (() => {}),
+    public constructor(options: StoreOptions = {}) {
+        this.#cache = new Map();
+        this.#lruOrder = [];
+        this.#options = {
+            max_size: options.max_size ?? Number.POSITIVE_INFINITY,
+            default_ttl: options.default_ttl ?? 0,
+            onEvict: options.onEvict ?? (() => {}),
         };
-        Object.freeze(this[options]);
+        Object.freeze(this.#options);
     }
 
     public get(key: K): V | undefined {
-        const item = this[cache].get(key);
+        const item = this.#cache.get(key);
         if (!item) return undefined;
 
         if (this.isExpired(item)) {
@@ -37,30 +31,30 @@ export class Store<K, V> {
         return item.value;
     }
 
-    public set(key: K, value: V, ttl: number = this[options].default_ttl): void {
+    public set(key: K, value: V, ttl: number = this.#options.default_ttl): void {
         this.validateValue(value);
 
         const item = { value, expiry: ttl ? Date.now() + ttl : undefined };
 
-        if (this[cache].has(key)) {
-            this[cache].set(key, item);
+        if (this.#cache.has(key)) {
+            this.#cache.set(key, item);
             this.updateLRUOrder(key);
         } else {
-            if (this[lruOrder].length >= this[options].max_size) {
+            if (this.#lruOrder.length >= this.#options.max_size) {
                 this.evictLeastUsed();
             }
 
-            this[cache].set(key, item);
-            this[lruOrder].push(key);
+            this.#cache.set(key, item);
+            this.#lruOrder.push(key);
         }
     }
 
     public delete(key: K): boolean {
-        const deleted = this[cache].delete(key);
+        const deleted = this.#cache.delete(key);
         if (deleted) {
-            const index = this[lruOrder].indexOf(key);
+            const index = this.#lruOrder.indexOf(key);
             if (index > -1) {
-                this[lruOrder].splice(index, 1);
+                this.#lruOrder.splice(index, 1);
             }
         }
 
@@ -68,32 +62,28 @@ export class Store<K, V> {
     }
 
     public clear(): void {
-        this[lruOrder].length = 0;
-        this[cache] = new Map();
+        this.#lruOrder.length = 0;
+        this.#cache = new Map();
     }
 
     public size(): number {
-        return this[lruOrder].length;
+        return this.#lruOrder.length;
     }
 
     public keys(): K[] {
-        return this[lruOrder].slice();
+        return this.#lruOrder.slice();
     }
 
     public values(): V[] {
-        return this[lruOrder].map((key) => this[cache].get(key)!.value);
+        return this.#lruOrder.map((key) => this.#cache.get(key)!.value);
     }
 
     public entries(): [K, V][] {
-        return this[lruOrder].map((key) => [key, this[cache].get(key)!.value]);
+        return this.#lruOrder.map((key) => [key, this.#cache.get(key)!.value]);
     }
 
     public has(key: K): boolean {
-        return this[cache].has(key);
-    }
-
-    public [Symbol.iterator](): IterableIterator<[K, V]> {
-        return this.entries()[Symbol.iterator]();
+        return this.#cache.has(key);
     }
 
     public forEach(callback: (value: V, key: K, store: this) => void): void {
@@ -113,24 +103,24 @@ export class Store<K, V> {
     }
 
     private updateLRUOrder(key: K): void {
-        const index = this[lruOrder].indexOf(key);
+        const index = this.#lruOrder.indexOf(key);
         if (index > -1) {
-            this[lruOrder].splice(index, 1);
+            this.#lruOrder.splice(index, 1);
         }
 
-        this[lruOrder].push(key);
+        this.#lruOrder.push(key);
     }
 
     private evictLeastUsed(): void {
-        if (this[lruOrder].length === 0) return;
+        if (this.#lruOrder.length === 0) return;
 
-        const leastUsed = this[lruOrder].shift()!;
-        const evictedItem = this[cache].get(leastUsed);
-        this[cache].delete(leastUsed);
+        const leastUsed = this.#lruOrder.shift()!;
+        const evictedItem = this.#cache.get(leastUsed);
+        this.#cache.delete(leastUsed);
 
         if (evictedItem) {
             try {
-                this[options].onEvict(leastUsed, evictedItem.value);
+                this.#options.onEvict(leastUsed, evictedItem.value);
             } catch (error) {
                 console.error("Eviction callback error:", error);
             }

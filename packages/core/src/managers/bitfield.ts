@@ -41,18 +41,13 @@ export function assertValidBigInt(value: string): bigint {
 }
 
 /**
- * Symbol used as a key for the internal bitfield value.
- */
-const bitfield = Symbol("bitfield");
-
-/**
  * A class that manages bitfields with type-safe flag operations.
  */
 export class BitfieldManager<T> {
     /**
      * The internal bitfield value.
      */
-    private [bitfield]: bigint;
+    #bitfield: bigint;
 
     /**
      * Creates a new BitfieldManager instance.
@@ -62,9 +57,9 @@ export class BitfieldManager<T> {
      */
     public constructor(value: T[] | bigint = 0n) {
         if (typeof value === "bigint") {
-            this[bitfield] = value;
+            this.#bitfield = value;
         } else if (Array.isArray(value)) {
-            this[bitfield] = value.reduce((acc, val) => acc | this.resolve(val), 0n);
+            this.#bitfield = value.reduce((acc, val) => acc | this.resolve(val), 0n);
         } else {
             throw new TypeError("Initial value must be a bigint or an array of flags");
         }
@@ -92,7 +87,7 @@ export class BitfieldManager<T> {
      */
     public has(val: T): boolean {
         const bit = this.resolve(val);
-        return (this[bitfield] & bit) === bit;
+        return (this.#bitfield & bit) === bit;
     }
 
     /**
@@ -102,7 +97,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public add(...flags: T[]): this {
-        this[bitfield] |= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
+        this.#bitfield |= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
         return this;
     }
 
@@ -113,7 +108,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public remove(...flags: T[]): this {
-        this[bitfield] &= ~flags.reduce((acc, val) => acc | this.resolve(val), 0n);
+        this.#bitfield &= ~flags.reduce((acc, val) => acc | this.resolve(val), 0n);
         return this;
     }
 
@@ -124,7 +119,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public toggle(...flags: T[]): this {
-        this[bitfield] ^= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
+        this.#bitfield ^= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
         return this;
     }
 
@@ -134,7 +129,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public clear(): this {
-        this[bitfield] = 0n;
+        this.#bitfield = 0n;
         return this;
     }
 
@@ -144,7 +139,7 @@ export class BitfieldManager<T> {
      * @returns The bigint value of the bitfield.
      */
     public valueOf(): bigint {
-        return this[bitfield];
+        return this.#bitfield;
     }
 
     /**
@@ -153,7 +148,7 @@ export class BitfieldManager<T> {
      * @returns A string representation of the bitfield's bigint value.
      */
     public toString(): string {
-        return this[bitfield].toString();
+        return this.#bitfield.toString();
     }
 
     /**

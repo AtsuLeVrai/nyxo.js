@@ -2,9 +2,6 @@ import { setTimeout } from "node:timers/promises";
 import type { DiscordHeaders, Float, HttpResponseCodes, Integer } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
 
-const globalRateLimit = Symbol("globalRateLimit");
-const routeRateLimits = Symbol("routeRateLimits");
-
 /**
  * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure|Rate Limit Response Structure}
  */
@@ -51,21 +48,21 @@ type RateLimitInfo = Readonly<{
 }>;
 
 export class RestRateLimiter {
-    private [globalRateLimit]: number | null = null;
+    #globalRateLimit: number | null = null;
 
-    private readonly [routeRateLimits]: Store<string, RateLimitInfo>;
+    readonly #routeRateLimits: Store<string, RateLimitInfo>;
 
     public constructor() {
-        this[routeRateLimits] = new Store();
+        this.#routeRateLimits = new Store();
     }
 
     public async wait(path: string): Promise<void> {
         const now = Date.now();
-        if (this[globalRateLimit] && this[globalRateLimit] > now) {
-            await setTimeout(this[globalRateLimit] - now);
+        if (this.#globalRateLimit && this.#globalRateLimit > now) {
+            await setTimeout(this.#globalRateLimit - now);
         }
 
-        const routeLimit = this[routeRateLimits].get(path);
+        const routeLimit = this.#routeRateLimits.get(path);
         if (routeLimit && routeLimit.remaining <= 0 && routeLimit.reset > now) {
             await setTimeout(routeLimit.reset - now);
         }
@@ -73,16 +70,16 @@ export class RestRateLimiter {
 
     public handleRateLimit(path: string, headers: DiscordHeaders): void {
         const rateLimitInfo = this.parseHeaders(headers);
-        this[routeRateLimits].set(path, rateLimitInfo);
+        this.#routeRateLimits.set(path, rateLimitInfo);
 
         if (headers["X-RateLimit-Global"]) {
-            this[globalRateLimit] = Date.now() + rateLimitInfo.resetAfter;
+            this.#globalRateLimit = Date.now() + rateLimitInfo.resetAfter;
         }
     }
 
     public async handleRateLimitResponse(response: RateLimitResponseStructure): Promise<void> {
         if (response.global) {
-            this[globalRateLimit] = Date.now() + response.retry_after * 1_000;
+            this.#globalRateLimit = Date.now() + response.retry_after * 1_000;
         }
 
         await setTimeout(response.retry_after * 1_000);

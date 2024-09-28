@@ -8,13 +8,6 @@ import { DISCORD_API_URL, POOL_OPTIONS, RETRY_AGENT_OPTIONS } from "../helpers/c
 import type { RestRequestOptions } from "../types";
 import { RestRateLimiter } from "./RestRateLimiter";
 
-const pool = Symbol("pool");
-const retryAgent = Symbol("retryAgent");
-const rateLimiter = Symbol("rateLimiter");
-const store = Symbol("store");
-const token = Symbol("token");
-const options = Symbol("options");
-
 export type RestOptions = {
     /**
      * The type of authentication to use.
@@ -35,30 +28,30 @@ export type RestOptions = {
 };
 
 export class Rest {
-    private [token]: string;
+    readonly #token: string;
 
-    private readonly [store]: Store<string, { data: any; expiry: number }>;
+    readonly #store: Store<string, { data: any; expiry: number }>;
 
-    private readonly [rateLimiter]: RestRateLimiter;
+    readonly #rateLimiter: RestRateLimiter;
 
-    private readonly [pool]: Pool;
+    readonly #pool: Pool;
 
-    private readonly [retryAgent]: RetryAgent;
+    readonly #retryAgent: RetryAgent;
 
-    private readonly [options]: RestOptions;
+    readonly #options: RestOptions;
 
-    public constructor(initialToken: string, initialOptions: RestOptions) {
-        this[token] = initialToken;
-        this[store] = new Store();
-        this[rateLimiter] = new RestRateLimiter();
-        this[pool] = new Pool(DISCORD_API_URL, POOL_OPTIONS);
-        this[retryAgent] = new RetryAgent(this[pool], RETRY_AGENT_OPTIONS);
-        this[options] = Object.freeze({ ...initialOptions });
+    public constructor(token: string, options: RestOptions) {
+        this.#token = token;
+        this.#store = new Store();
+        this.#rateLimiter = new RestRateLimiter();
+        this.#pool = new Pool(DISCORD_API_URL, POOL_OPTIONS);
+        this.#retryAgent = new RetryAgent(this.#pool, RETRY_AGENT_OPTIONS);
+        this.#options = Object.freeze({ ...options });
     }
 
     public async destroy(): Promise<void> {
-        await this[pool].destroy();
-        this[store].clear();
+        await this.#pool.destroy();
+        this.#store.clear();
     }
 
     public async request<T>(request: RestRequestOptions<T>): Promise<T> {
@@ -66,30 +59,30 @@ export class Rest {
             const cacheKey = `${request.method}:${request.path}`;
 
             if (!request.disable_cache) {
-                const cachedResponse = this[store].get(cacheKey);
+                const cachedResponse = this.#store.get(cacheKey);
                 if (cachedResponse && cachedResponse.expiry > Date.now()) {
                     return cachedResponse.data as T;
                 }
             }
 
-            await this[rateLimiter].wait(request.path);
+            await this.#rateLimiter.wait(request.path);
 
             const { statusCode, headers, body } = await this.makeRequest(request);
 
-            this[rateLimiter].handleRateLimit(request.path, headers);
+            this.#rateLimiter.handleRateLimit(request.path, headers);
 
             const responseText = await decompressResponse(headers, body);
             const data = JSON.parse(responseText);
 
             if (statusCode === HttpResponseCodes.TooManyRequests) {
-                await this[rateLimiter].handleRateLimitResponse(data);
+                await this.#rateLimiter.handleRateLimitResponse(data);
                 return await this.request(request);
             }
 
             if (statusCode >= 200 && statusCode < 300 && !request.disable_cache) {
-                this[store].set(cacheKey, {
+                this.#store.set(cacheKey, {
                     data,
-                    expiry: Date.now() + (this[options].cache_life_time ?? 60_000),
+                    expiry: Date.now() + (this.#options.cache_life_time ?? 60_000),
                 });
             }
 
@@ -104,17 +97,17 @@ export class Rest {
     }
 
     private async makeRequest<T>(request: RestRequestOptions<T>): Promise<Dispatcher.ResponseData> {
-        const path = `/api/v${this[options].version}${request.path}`;
+        const path = `/api/v${this.#options.version}${request.path}`;
         const headers = { ...this.createDefaultHeaders(), ...request.headers };
-        return this[retryAgent].request({ ...request, path, headers });
+        return this.#retryAgent.request({ ...request, path, headers });
     }
 
     private createDefaultHeaders(): Readonly<Record<string, string>> {
         return Object.freeze({
-            Authorization: `${this[options].auth_type ?? "Bot"} ${this[token]}`,
+            Authorization: `${this.#options.auth_type ?? "Bot"} ${this.#token}`,
             "Content-Type": MimeTypes.Json,
             "Accept-Encoding": "gzip, deflate",
-            ...(this[options].user_agent && { "User-Agent": this[options].user_agent }),
+            ...(this.#options.user_agent && { "User-Agent": this.#options.user_agent }),
         });
     }
 }

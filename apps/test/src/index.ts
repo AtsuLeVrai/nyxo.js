@@ -1,6 +1,6 @@
 import process from "node:process";
 import { config } from "dotenv";
-import { AllIntents, Client } from "nyx.js";
+import { AllIntents, Client, CompressTypes, EncodingTypes } from "nyx.js";
 
 config();
 
@@ -30,6 +30,10 @@ if (!process.env.DISCORD_TOKEN) {
 
 const client = new Client(process.env.DISCORD_TOKEN, {
     intents: AllIntents,
+    ws: {
+        encoding: EncodingTypes.Etf,
+        compress: CompressTypes.ZlibStream,
+    },
 });
 
 client.on("error", console.log);
@@ -38,3 +42,14 @@ client.on("warn", console.log);
 client.on("close", console.log);
 
 void client.login();
+
+// const embed = new EmbedBuilder();
+// embed.setTitle("Hello, World!");
+// embed.setDescription("This is a test embed.");
+// embed.setColor([0, 255, 0]);
+// embed.setFooter({
+//     text: "This is a footer.",
+//     icon_url: "https://cdn.discordapp.com/embed/avatars/0.png",
+// });
+//
+// console.log(embed.toJSON());

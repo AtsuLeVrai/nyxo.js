@@ -1,4 +1,14 @@
 /**
+ * ./builders
+ */
+export * from "./builders/ActionRowBuilder";
+export * from "./builders/BaseBuilder";
+export * from "./builders/ButtonBuilder";
+export * from "./builders/EmbedBuilder";
+export * from "./builders/SelectMenuBuilder";
+export * from "./builders/TextInputBuilder";
+
+/**
  * ./client
  */
 export * from "./client/Client";
