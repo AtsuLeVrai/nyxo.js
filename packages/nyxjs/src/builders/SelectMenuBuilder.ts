@@ -5,7 +5,7 @@ import type {
     SelectMenuStructure,
 } from "@nyxjs/core";
 import { ComponentTypes } from "@nyxjs/core";
-import { BaseBuilder } from "./BaseBuilder";
+import { BaseBuilder } from "../bases/BaseBuilder";
 
 export const SelectMenuLimits = {
     CUSTOM_ID: 100,

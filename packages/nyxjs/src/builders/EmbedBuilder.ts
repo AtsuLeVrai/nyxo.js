@@ -9,9 +9,9 @@ import type {
     EmbedTypes,
     Integer,
 } from "@nyxjs/core";
+import { BaseBuilder } from "../bases/BaseBuilder";
 import type { ColorResolvable } from "../helpers/Colors";
 import { resolveColor } from "../helpers/Colors";
-import { BaseBuilder } from "./BaseBuilder";
 
 export const EmbedLimits = {
     TITLE: 256,

@@ -1,7 +1,7 @@
 import type { Snowflake, StageInstanceStructure, StagePrivacyLevel } from "@nyxjs/core";
-import { Base } from "./Base";
+import { BaseStructure } from "../bases/BaseStructure";
 
-export class StageInstance extends Base<StageInstanceStructure> {
+export class StageInstance extends BaseStructure<StageInstanceStructure> {
     public channelId: Snowflake;
 
     /**
@@ -28,5 +28,17 @@ export class StageInstance extends Base<StageInstanceStructure> {
         this.id = data.id!;
         this.privacyLevel = data.privacy_level!;
         this.topic = data.topic!;
+    }
+
+    public toJSON(): StageInstanceStructure {
+        return {
+            channel_id: this.channelId,
+            discoverable_disabled: this.discoverableDisabled,
+            guild_id: this.guildId,
+            guild_scheduled_event_id: this.guildScheduledEventId,
+            id: this.id,
+            privacy_level: this.privacyLevel,
+            topic: this.topic,
+        };
     }
 }

@@ -1,6 +1,6 @@
 import process from "node:process";
 import { config } from "dotenv";
-import { AllIntents, Client, CompressTypes, EncodingTypes } from "nyx.js";
+import { AllIntents, Client, CompressTypes, EmbedBuilder, EncodingTypes } from "nyx.js";
 
 config();
 
@@ -43,13 +43,13 @@ client.on("close", console.log);
 
 void client.login();
 
-// const embed = new EmbedBuilder();
-// embed.setTitle("Hello, World!");
-// embed.setDescription("This is a test embed.");
-// embed.setColor([0, 255, 0]);
-// embed.setFooter({
-//     text: "This is a footer.",
-//     icon_url: "https://cdn.discordapp.com/embed/avatars/0.png",
-// });
-//
-// console.log(embed.toJSON());
+const embed = new EmbedBuilder();
+embed.setTitle("Hello, World!");
+embed.setDescription("This is a test embed.");
+embed.setColor([0, 255, 0]);
+embed.setFooter({
+    text: "This is a footer.",
+    icon_url: "https://cdn.discordapp.com/embed/avatars/0.png",
+});
+
+console.log(embed.toJSON());

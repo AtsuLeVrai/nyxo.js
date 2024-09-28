@@ -1,7 +1,7 @@
 import type { Iso8601Timestamp, Snowflake, SubscriptionStatus, SubscriptionStructure } from "@nyxjs/core";
-import { Base } from "./Base";
+import { BaseStructure } from "../bases/BaseStructure";
 
-export class Subscription extends Base<SubscriptionStructure> {
+export class Subscription extends BaseStructure<SubscriptionStructure> {
     public canceledAt: Iso8601Timestamp | null;
 
     public country?: string;
@@ -31,5 +31,19 @@ export class Subscription extends Base<SubscriptionStructure> {
         this.skuIds = data.sku_ids!;
         this.status = data.status!;
         this.userId = data.user_id!;
+    }
+
+    public toJSON(): SubscriptionStructure {
+        return {
+            canceled_at: this.canceledAt,
+            country: this.country,
+            current_period_end: this.currentPeriodEnd,
+            current_period_start: this.currentPeriodStart,
+            entitlement_ids: this.entitlementIds,
+            id: this.id,
+            sku_ids: this.skuIds,
+            status: this.status,
+            user_id: this.userId,
+        };
     }
 }

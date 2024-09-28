@@ -1,8 +1,8 @@
-import type { Snowflake, EmojiStructure } from "@nyxjs/core";
-import { Base } from "./Base";
+import type { EmojiStructure, Snowflake } from "@nyxjs/core";
+import { BaseStructure } from "../bases/BaseStructure";
 import { User } from "./Users";
 
-export class Emoji extends Base<EmojiStructure> {
+export class Emoji extends BaseStructure<EmojiStructure> {
     public animated?: boolean;
 
     public available?: boolean;
@@ -29,5 +29,18 @@ export class Emoji extends Base<EmojiStructure> {
         this.requireColons = data.require_colons;
         this.roles = data.roles;
         this.user = User.from(data.user);
+    }
+
+    public toJSON(): EmojiStructure {
+        return {
+            animated: this.animated,
+            available: this.available,
+            id: this.id,
+            managed: this.managed,
+            name: this.name,
+            require_colons: this.requireColons,
+            roles: this.roles,
+            user: this.user?.toJSON(),
+        };
     }
 }

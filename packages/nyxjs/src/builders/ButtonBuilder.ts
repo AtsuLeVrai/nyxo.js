@@ -1,6 +1,6 @@
 import type { ButtonStructure, EmojiStructure, Snowflake } from "@nyxjs/core";
 import { ButtonStyles } from "@nyxjs/core";
-import { BaseBuilder } from "./BaseBuilder";
+import { BaseBuilder } from "../bases/BaseBuilder";
 
 export const ButtonLimits = {
     LABEL: 80,

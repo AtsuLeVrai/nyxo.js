@@ -1,8 +1,13 @@
 /**
+ * ./bases
+ */
+export * from "./bases/BaseBuilder";
+export * from "./bases/BaseStructure";
+
+/**
  * ./builders
  */
 export * from "./builders/ActionRowBuilder";
-export * from "./builders/BaseBuilder";
 export * from "./builders/ButtonBuilder";
 export * from "./builders/EmbedBuilder";
 export * from "./builders/SelectMenuBuilder";
@@ -36,7 +41,7 @@ export * from "./structures/Teams";
 export * from "./structures/Users";
 
 /**
- * exports all @nyxjs packages
+ * exports all nyxjs packages
  */
 export * from "@nyxjs/core";
 export * from "@nyxjs/rest";

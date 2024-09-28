@@ -1,7 +1,7 @@
 import type { BitfieldResolvable, Integer, RoleFlags, RoleStructure, RoleTagsStructure, Snowflake } from "@nyxjs/core";
-import { Base } from "./Base";
+import { BaseStructure } from "../bases/BaseStructure";
 
-export class RoleTags extends Base<RoleTagsStructure> {
+export class RoleTags extends BaseStructure<RoleTagsStructure> {
     public availableForPurchase?: null;
 
     public botId?: Snowflake;
@@ -23,9 +23,20 @@ export class RoleTags extends Base<RoleTagsStructure> {
         this.premiumSubscriber = data.premium_subscriber;
         this.subscriptionListingId = data.subscription_listing_id;
     }
+
+    public toJSON(): RoleTagsStructure {
+        return {
+            available_for_purchase: this.availableForPurchase,
+            bot_id: this.botId,
+            guild_connections: this.guildConnections,
+            integration_id: this.integrationId,
+            premium_subscriber: this.premiumSubscriber,
+            subscription_listing_id: this.subscriptionListingId,
+        };
+    }
 }
 
-export class Role extends Base<RoleStructure> {
+export class Role extends BaseStructure<RoleStructure> {
     public color: Integer;
 
     public flags: BitfieldResolvable<RoleFlags>;
@@ -64,5 +75,22 @@ export class Role extends Base<RoleStructure> {
         this.position = data.position!;
         this.tags = RoleTags.from(data.tags);
         this.unicodeEmoji = data.unicode_emoji!;
+    }
+
+    public toJSON(): RoleStructure {
+        return {
+            color: this.color,
+            flags: this.flags,
+            hoist: this.hoist,
+            icon: this.icon,
+            id: this.id,
+            managed: this.managed,
+            mentionable: this.mentionable,
+            name: this.name,
+            permissions: this.permissions,
+            position: this.position,
+            tags: this.tags?.toJSON(),
+            unicode_emoji: this.unicodeEmoji,
+        };
     }
 }

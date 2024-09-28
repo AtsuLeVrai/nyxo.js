@@ -1,6 +1,6 @@
 import type { Integer, TextInputStructure, TextInputStyles } from "@nyxjs/core";
 import { ComponentTypes } from "@nyxjs/core";
-import { BaseBuilder } from "./BaseBuilder";
+import { BaseBuilder } from "../bases/BaseBuilder";
 
 export const TextInputLimits = {
     CUSTOM_ID: 100,

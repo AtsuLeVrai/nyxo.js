@@ -1,7 +1,7 @@
 import type { BitfieldResolvable, SkuFlags, SkuStructure, SkuTypes, Snowflake } from "@nyxjs/core";
-import { Base } from "./Base";
+import { BaseStructure } from "../bases/BaseStructure";
 
-export class Sku extends Base<SkuStructure> {
+export class Sku extends BaseStructure<SkuStructure> {
     public applicationId: Snowflake;
 
     public flags: BitfieldResolvable<SkuFlags>;
@@ -22,5 +22,16 @@ export class Sku extends Base<SkuStructure> {
         this.name = data.name!;
         this.slug = data.slug!;
         this.type = data.type!;
+    }
+
+    public toJSON(): SkuStructure {
+        return {
+            application_id: this.applicationId,
+            flags: this.flags,
+            id: this.id,
+            name: this.name,
+            slug: this.slug,
+            type: this.type,
+        };
     }
 }

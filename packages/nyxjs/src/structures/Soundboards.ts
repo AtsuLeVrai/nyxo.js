@@ -1,8 +1,8 @@
 import type { Float, Snowflake, SoundboardSoundStructure } from "@nyxjs/core";
-import { Base } from "./Base";
+import { BaseStructure } from "../bases/BaseStructure";
 import { User } from "./Users";
 
-export class SoundboardSound extends Base<SoundboardSoundStructure> {
+export class SoundboardSound extends BaseStructure<SoundboardSoundStructure> {
     public available: boolean;
 
     public emojiId: Snowflake | null;
@@ -29,5 +29,18 @@ export class SoundboardSound extends Base<SoundboardSoundStructure> {
         this.soundId = data.sound_id!;
         this.user = User.from(data.user);
         this.volume = data.volume!;
+    }
+
+    public toJSON(): SoundboardSoundStructure {
+        return {
+            available: this.available,
+            emoji_id: this.emojiId,
+            emoji_name: this.emojiName,
+            guild_id: this.guildId,
+            name: this.name,
+            sound_id: this.soundId,
+            user: this.user?.toJSON(),
+            volume: this.volume,
+        };
     }
 }

@@ -1,7 +1,7 @@
 import type { EntitlementStructure, EntitlementTypes, Iso8601Timestamp, Snowflake } from "@nyxjs/core";
-import { Base } from "./Base";
+import { BaseStructure } from "../bases/BaseStructure";
 
-export class Entitlement extends Base<EntitlementStructure> {
+export class Entitlement extends BaseStructure<EntitlementStructure> {
     public applicationId: Snowflake;
 
     public consumed?: boolean;
@@ -34,5 +34,20 @@ export class Entitlement extends Base<EntitlementStructure> {
         this.startsAt = data.starts_at;
         this.type = data.type!;
         this.userId = data.user_id;
+    }
+
+    public toJSON(): EntitlementStructure {
+        return {
+            application_id: this.applicationId,
+            consumed: this.consumed,
+            deleted: this.deleted,
+            ends_at: this.endsAt,
+            guild_id: this.guildId,
+            id: this.id,
+            sku_id: this.skuId,
+            starts_at: this.startsAt,
+            type: this.type,
+            user_id: this.userId,
+        };
     }
 }

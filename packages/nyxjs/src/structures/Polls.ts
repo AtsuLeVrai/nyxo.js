@@ -9,10 +9,10 @@ import type {
     PollResultsStructure,
     PollStructure,
 } from "@nyxjs/core";
-import { Base } from "./Base";
+import { BaseStructure } from "../bases/BaseStructure";
 import { Emoji } from "./Emojis";
 
-export class PollAnswerCount extends Base<PollAnswerCountStructure> {
+export class PollAnswerCount extends BaseStructure<PollAnswerCountStructure> {
     public count: Integer;
 
     public id: Integer;
@@ -25,9 +25,17 @@ export class PollAnswerCount extends Base<PollAnswerCountStructure> {
         this.id = data.id!;
         this.meVoted = data.me_voted!;
     }
+
+    public toJSON(): PollAnswerCountStructure {
+        return {
+            count: this.count,
+            id: this.id,
+            me_voted: this.meVoted,
+        };
+    }
 }
 
-export class PollResults extends Base<PollResultsStructure> {
+export class PollResults extends BaseStructure<PollResultsStructure> {
     public answerCounts: PollAnswerCount[];
 
     public isFinalized: boolean;
@@ -37,10 +45,17 @@ export class PollResults extends Base<PollResultsStructure> {
         this.answerCounts = data.answer_counts!.map((answerCount) => PollAnswerCount.from(answerCount));
         this.isFinalized = data.is_finalized!;
     }
+
+    public toJSON(): PollResultsStructure {
+        return {
+            answer_counts: this.answerCounts.map((answerCount) => answerCount.toJSON()),
+            is_finalized: this.isFinalized,
+        };
+    }
 }
 
-export class PollMedia extends Base<PollMediaStructure> {
-    public emoji?: Pick<Emoji, "id" | "name">;
+export class PollMedia extends BaseStructure<PollMediaStructure> {
+    public emoji?: Pick<Emoji, "id" | "name" | "toJSON">;
 
     public text?: string;
 
@@ -49,9 +64,16 @@ export class PollMedia extends Base<PollMediaStructure> {
         this.emoji = Emoji.from(data.emoji);
         this.text = data.text;
     }
+
+    public toJSON(): PollMediaStructure {
+        return {
+            emoji: this.emoji?.toJSON(),
+            text: this.text,
+        };
+    }
 }
 
-export class PollAnswer extends Base<PollAnswerStructure> {
+export class PollAnswer extends BaseStructure<PollAnswerStructure> {
     public answerId: Integer;
 
     public pollMedia: PollMedia;
@@ -61,9 +83,16 @@ export class PollAnswer extends Base<PollAnswerStructure> {
         this.answerId = data.answer_id!;
         this.pollMedia = PollMedia.from(data.poll_media);
     }
+
+    public toJSON(): PollAnswerStructure {
+        return {
+            answer_id: this.answerId,
+            poll_media: this.pollMedia.toJSON(),
+        };
+    }
 }
 
-export class PollCreateRequest extends Base<PollCreateRequestStructure> {
+export class PollCreateRequest extends BaseStructure<PollCreateRequestStructure> {
     public allowMultiselect?: boolean;
 
     public answers: PollAnswer[];
@@ -82,9 +111,19 @@ export class PollCreateRequest extends Base<PollCreateRequestStructure> {
         this.layoutType = data.layout_type;
         this.question = PollMedia.from(data.question);
     }
+
+    public toJSON(): PollCreateRequestStructure {
+        return {
+            allow_multiselect: this.allowMultiselect,
+            answers: this.answers.map((answer) => answer.toJSON()),
+            duration: this.duration,
+            layout_type: this.layoutType,
+            question: this.question.toJSON(),
+        };
+    }
 }
 
-export class Poll extends Base<PollStructure> {
+export class Poll extends BaseStructure<PollStructure> {
     public allowMultiselect: boolean;
 
     public answers: PollAnswer[];
@@ -105,5 +144,16 @@ export class Poll extends Base<PollStructure> {
         this.layoutType = data.layout_type!;
         this.question = PollMedia.from(data.question);
         this.results = PollResults.from(data.results);
+    }
+
+    public toJSON(): PollStructure {
+        return {
+            allow_multiselect: this.allowMultiselect,
+            answers: this.answers.map((answer) => answer.toJSON()),
+            expiry: this.expiry,
+            layout_type: this.layoutType,
+            question: this.question.toJSON(),
+            results: this.results?.toJSON(),
+        };
     }
 }
