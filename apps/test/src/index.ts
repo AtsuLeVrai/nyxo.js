@@ -28,7 +28,7 @@ if (!process.env.DISCORD_TOKEN) {
 //
 // void gateway.connect();
 
-const client = new Client({
+const client = new Client(process.env.DISCORD_TOKEN, {
     intents: AllIntents,
 });
 
@@ -37,4 +37,4 @@ client.on("debug", console.log);
 client.on("warn", console.log);
 client.on("close", console.log);
 
-void client.login(process.env.DISCORD_TOKEN);
+void client.login();

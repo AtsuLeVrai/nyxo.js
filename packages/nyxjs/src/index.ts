@@ -7,11 +7,21 @@ export * from "./client/ClientEvents";
 /**
  * ./helpers
  */
+export * from "./helpers/Colors";
 export * from "./helpers/Intents";
 
 /**
  * ./structures
  */
+export * from "./structures/Emojis";
+export * from "./structures/Entitlements";
+export * from "./structures/Polls";
+export * from "./structures/Roles";
+export * from "./structures/Skus";
+export * from "./structures/Soundboards";
+export * from "./structures/Stages";
+export * from "./structures/Stickers";
+export * from "./structures/Subscriptions";
 export * from "./structures/Teams";
 export * from "./structures/Users";
 

@@ -21,22 +21,22 @@ export type ClientOptions = {
 };
 
 export class Client extends EventEmitter<ClientEvents> {
-    public token: string | null = null;
-
     public rest: Rest | null = null;
 
     public ws: Gateway | null = null;
 
     private [options]: ClientOptions;
 
-    public constructor(initialOptions: ClientOptions) {
+    public constructor(
+        public token: string,
+        initialOptions: ClientOptions
+    ) {
         super();
         this[options] = initialOptions;
     }
 
-    public async login(token: string): Promise<void> {
+    public async login(): Promise<void> {
         try {
-            this.token = token;
             this.rest = this.createRest();
             this.ws = this.createWs();
             this.setupListeners();
@@ -54,7 +54,6 @@ export class Client extends EventEmitter<ClientEvents> {
         } catch (error) {
             this.emit("error", safeError(error));
         } finally {
-            this.token = null;
             this.rest = null;
             this.ws = null;
         }
@@ -73,17 +72,13 @@ export class Client extends EventEmitter<ClientEvents> {
             }
         });
 
-        this.ws.on("debug", (message: string) => this.emit("debug", message));
-        this.ws.on("error", (error: Error) => this.emit("error", error));
-        this.ws.on("warn", (message: string) => this.emit("warn", message));
-        this.ws.on("close", (code: string, reason: string) => this.emit("close", code, reason));
+        this.ws.on("debug", (message) => this.emit("debug", message));
+        this.ws.on("error", (error) => this.emit("error", error));
+        this.ws.on("warn", (message) => this.emit("warn", message));
+        this.ws.on("close", (code, reason) => this.emit("close", code, reason));
     }
 
     private createRest(): Rest {
-        if (!this.token) {
-            throw new Error("No token provided");
-        }
-
         return new Rest(this.token, {
             auth_type: this[options].rest?.auth_type,
             cache_life_time: this[options].rest?.cache_life_time,
@@ -93,10 +88,6 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     private createWs(): Gateway {
-        if (!this.token) {
-            throw new Error("No token provided");
-        }
-
         if (!this.rest) {
             throw new Error("No rest client provided");
         }
