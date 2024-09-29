@@ -8,7 +8,7 @@ import { Store } from "@nyxjs/store";
 import { safeError } from "@nyxjs/utils";
 import type { IdentifyStructure } from "../events/identity";
 import type { GatewayOptions } from "../types/gateway";
-import type { Gateway } from "./Gateway";
+import type { WebSocketManager } from "./WebSocketManager";
 
 type ShardInfo = Readonly<{
     /**
@@ -22,13 +22,13 @@ type ShardInfo = Readonly<{
 }>;
 
 export class ShardManager {
-    #concurrency: number;
-
-    readonly #gateway: Gateway;
-
-    readonly #rest: Rest;
+    #maxConcurrency: number;
 
     readonly #token: string;
+
+    readonly #ws: WebSocketManager;
+
+    readonly #rest: Rest;
 
     readonly #options: Readonly<GatewayOptions>;
 
@@ -36,11 +36,11 @@ export class ShardManager {
 
     readonly #rateLimitQueue: Store<Integer, ShardInfo[]>;
 
-    public constructor(gateway: Gateway, rest: Rest, token: string, options: Readonly<GatewayOptions>) {
-        this.#concurrency = 1;
-        this.#gateway = gateway;
-        this.#rest = rest;
+    public constructor(token: string, ws: WebSocketManager, rest: Rest, options: Readonly<GatewayOptions>) {
+        this.#maxConcurrency = 1;
         this.#token = token;
+        this.#ws = ws;
+        this.#rest = rest;
         this.#options = options;
         this.#shards = new Store();
         this.#rateLimitQueue = new Store();
@@ -65,7 +65,7 @@ export class ShardManager {
 
     private async initializeWithSharding(): Promise<void> {
         const [minShardId, maxShardId, maxConcurrency] = await this.determineShardInfo();
-        this.#concurrency = maxConcurrency;
+        this.#maxConcurrency = maxConcurrency;
 
         for (let shardId = minShardId; shardId < maxShardId; shardId++) {
             const shardInfo: ShardInfo = Object.freeze({
@@ -73,7 +73,7 @@ export class ShardManager {
                 totalShards: maxShardId,
             });
             this.#shards.set(shardId, shardInfo);
-            const rateLimitKey = this.calculateRateLimitKey(shardId, this.#concurrency);
+            const rateLimitKey = this.calculateRateLimitKey(shardId, this.#maxConcurrency);
             if (!this.#rateLimitQueue.has(rateLimitKey)) {
                 this.#rateLimitQueue.set(rateLimitKey, []);
             }
@@ -89,7 +89,7 @@ export class ShardManager {
     private async connectShards(): Promise<void> {
         const connectPromises: Promise<void>[] = [];
 
-        for (let index = 0; index < this.#concurrency; index++) {
+        for (let index = 0; index < this.#maxConcurrency; index++) {
             connectPromises.push(this.processRateLimitQueue(index));
         }
 
@@ -121,15 +121,12 @@ export class ShardManager {
                 };
 
                 if (this.#options.shard && shardInfo) {
-                    this.#gateway.emit(
-                        "debug",
-                        `[WS] Connecting shard: [${shardInfo.shardId},${shardInfo.totalShards}]`
-                    );
+                    this.#ws.emit("debug", `[WS] Connecting shard: [${shardInfo.shardId},${shardInfo.totalShards}]`);
                     payload.shard = [shardInfo.shardId, shardInfo.totalShards];
                 }
 
-                this.#gateway.emit("debug", `[WS] Sending identify payload: ${JSON.stringify(payload, null, 2)}`);
-                this.#gateway.send(GatewayOpcodes.Identify, payload);
+                this.#ws.emit("debug", `[WS] Sending identify payload: ${JSON.stringify(payload, null, 2)}`);
+                this.#ws.send(GatewayOpcodes.Identify, payload);
                 resolve();
             } catch (error) {
                 reject(error);

@@ -4,7 +4,7 @@ import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
 import { calculateIntents, safeError } from "@nyxjs/utils";
 import type { GatewayOptions } from "@nyxjs/ws";
-import { EncodingTypes, Gateway } from "@nyxjs/ws";
+import { EncodingTypes, WebSocketManager } from "@nyxjs/ws";
 import { EventEmitter } from "eventemitter3";
 import type { ClientEvents } from "./ClientEvents";
 import { GATEWAY_EVENTS } from "./ClientEvents";
@@ -21,7 +21,7 @@ export type ClientOptions = {
 export class Client extends EventEmitter<ClientEvents> {
     public rest: Rest | null = null;
 
-    public ws: Gateway | null = null;
+    public ws: WebSocketManager | null = null;
 
     readonly #options: ClientOptions;
 
@@ -85,12 +85,12 @@ export class Client extends EventEmitter<ClientEvents> {
         });
     }
 
-    private createWs(): Gateway {
+    private createWs(): WebSocketManager {
         if (!this.rest) {
             throw new Error("No rest client provided");
         }
 
-        return new Gateway(this.token, this.rest, {
+        return new WebSocketManager(this.token, this.rest, {
             presence: this.#options.presence,
             compress: this.#options.ws?.compress,
             encoding: this.#options.ws?.encoding ?? EncodingTypes.Json,

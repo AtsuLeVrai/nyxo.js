@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { clearInterval, setInterval, setTimeout } from "node:timers";
+import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timers";
 import { URL } from "node:url";
 import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
@@ -16,7 +16,7 @@ import type { GatewaySendEvents } from "../types/events";
 import type { GatewayEvents, GatewayOptions, GatewayPayload } from "../types/gateway";
 import { ShardManager } from "./ShardManager";
 
-export class Gateway extends EventEmitter<GatewayEvents> {
+export class WebSocketManager extends EventEmitter<GatewayEvents> {
     #ws: WebSocket | null = null;
 
     #heartbeatInterval: NodeJS.Timeout | null = null;
@@ -27,7 +27,17 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     #resumeGatewayUrl: string | null = null;
 
+    #heartbeatTimeout: NodeJS.Timeout | null = null;
+
     readonly #token: string;
+
+    #reconnectAttempts: number;
+
+    readonly #maxReconnectAttempts: number;
+
+    readonly #reconnectDelay: number;
+
+    #lastHeartbeatAck: number;
 
     readonly #zlibInflate: Inflate;
 
@@ -38,8 +48,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     public constructor(token: string, rest: Rest, options: GatewayOptions) {
         super();
         this.#token = token;
+        this.#reconnectAttempts = 0;
+        this.#maxReconnectAttempts = 5;
+        this.#reconnectDelay = 5_000;
+        this.#lastHeartbeatAck = Date.now();
         this.#zlibInflate = new Inflate({ chunkSize: 1_024 * 1_024 });
-        this.#shardManager = new ShardManager(this, rest, token, options);
+        this.#shardManager = new ShardManager(token, this, rest, options);
         this.#options = Object.freeze({ ...options });
     }
 
@@ -60,21 +74,26 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             this.disconnect();
         }
 
+        if (this.#reconnectAttempts >= this.#maxReconnectAttempts) {
+            throw new Error("[WS] Max reconnect attempts reached");
+        }
+
         try {
             const url = resumeAttempt && this.#resumeGatewayUrl ? this.#resumeGatewayUrl : this.wsUrl;
             this.#ws = new WebSocket(url);
 
             this.#ws.on("open", this.onOpen.bind(this));
-            this.#ws.on("message", this.onMessage.bind(this));
             this.#ws.on("close", this.onClose.bind(this));
             this.#ws.on("error", this.onError.bind(this));
+            this.#ws.on("message", this.onMessage.bind(this));
+            this.#reconnectAttempts++;
         } catch (error) {
             throw safeError(error);
         }
     }
 
     public send<T extends keyof GatewaySendEvents>(op: T, data: Readonly<GatewaySendEvents[T]>): void {
-        if (!this.#ws) {
+        if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
             this.emit("warn", "[WS] Attempted to send message without active WebSocket connection");
             return;
         }
@@ -92,7 +111,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     public disconnect(): void {
         if (this.#ws) {
-            this.#ws.close();
+            this.#ws.close(1_000, "Disconnecting...");
         }
 
         this.cleanup();
@@ -103,8 +122,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             clearInterval(this.#heartbeatInterval);
         }
 
+        if (this.#heartbeatTimeout) {
+            clearTimeout(this.#heartbeatTimeout);
+        }
+
         this.#ws = null;
         this.#heartbeatInterval = null;
+        this.#heartbeatTimeout = null;
         this.#sequence = null;
         this.#sessionId = null;
         this.#resumeGatewayUrl = null;
@@ -113,24 +137,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     private onOpen(): void {
         this.emit("debug", "[WS] WebSocket connection opened");
-    }
-
-    private async onMessage(data: Buffer): Promise<void> {
-        let decompressedData: Buffer | string = data;
-
-        try {
-            if (this.#options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
-                decompressedData = await decompressZlib(data, this.#zlibInflate);
-            } else if (this.#options.compress === "zstd-stream" && Buffer.isBuffer(data)) {
-                throw new Error("[WS] Zstd compression is not supported yet...");
-            }
-
-            const decoded: GatewayPayload = decodeMessage(decompressedData, this.#options.encoding);
-
-            await this.handleMessage(decoded);
-        } catch (error) {
-            throw safeError(error);
-        }
+        this.#reconnectAttempts = 0;
     }
 
     private onClose(code: GatewayCloseCodes, reason: Buffer): void {
@@ -228,13 +235,33 @@ export class Gateway extends EventEmitter<GatewayEvents> {
                 GatewayCloseCodes.SessionTimedOut,
             ].includes(code)
         ) {
-            this.emit("debug", "[WS] Attempting to reconnect...");
-            setTimeout(async () => this.connect(true), 5_000);
+            this.emit(
+                "debug",
+                `[WS] Attempting to reconnect... (Attempt ${this.#reconnectAttempts + 1}/${this.#maxReconnectAttempts})`
+            );
+            setTimeout(async () => this.connect(true), this.#reconnectDelay * (this.#reconnectAttempts + 1));
         }
     }
 
     private onError(error: Error): void {
         this.emit("error", error);
+    }
+
+    private async onMessage(data: Buffer): Promise<void> {
+        let decompressedData: Buffer | string = data;
+
+        try {
+            if (this.#options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
+                decompressedData = await decompressZlib(data, this.#zlibInflate);
+            } else if (this.#options.compress === "zstd-stream" && Buffer.isBuffer(data)) {
+                throw new Error("[WS] Zstd compression is not supported yet...");
+            }
+
+            const decoded: GatewayPayload = decodeMessage(decompressedData, this.#options.encoding);
+            await this.handleMessage(decoded);
+        } catch (error) {
+            throw safeError(error);
+        }
     }
 
     private async handleMessage(payload: GatewayPayload): Promise<void> {
@@ -247,7 +274,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             }
 
             case GatewayOpcodes.InvalidSession: {
-                this.handleInvalidSession(Boolean(payload.d));
+                await this.handleInvalidSession(Boolean(payload.d));
                 break;
             }
 
@@ -263,6 +290,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
             case GatewayOpcodes.HeartbeatAck: {
                 this.emit("debug", "[WS] Received heartbeat ack");
+                this.#lastHeartbeatAck = Date.now();
+                if (this.#heartbeatTimeout) {
+                    clearTimeout(this.#heartbeatTimeout);
+                }
+
                 break;
             }
 
@@ -286,18 +318,41 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             clearInterval(this.#heartbeatInterval);
         }
 
-        this.#heartbeatInterval = setInterval(() => {
-            this.emit("debug", `[WS] Sending heartbeat, sequence: ${this.#sequence}, interval: ${interval}ms`);
-            this.send(GatewayOpcodes.Heartbeat, this.#sequence);
-        }, interval);
+        if (this.#heartbeatTimeout) {
+            clearTimeout(this.#heartbeatTimeout);
+        }
+
+        const jitter = Math.floor(Math.random() * interval);
+
+        setTimeout(() => {
+            this.sendHeartbeat();
+
+            this.#heartbeatInterval = setInterval(() => {
+                this.emit("debug", `[WS] Sending heartbeat | Sequence: ${this.#sequence} | Interval: ${interval}ms`);
+                this.sendHeartbeat();
+            }, interval);
+
+            this.#heartbeatTimeout = setTimeout(async () => {
+                this.emit("warn", "[WS] Heartbeat ack not received, reconnecting...");
+                this.disconnect();
+                await this.connect(true);
+            }, interval + 5_000);
+        }, jitter);
     }
 
-    private handleInvalidSession(resumable: boolean): void {
+    private sendHeartbeat(): void {
+        this.send(GatewayOpcodes.Heartbeat, this.#sequence);
+        this.#lastHeartbeatAck = Date.now();
+    }
+
+    private async handleInvalidSession(resumable: boolean): Promise<void> {
         if (resumable) {
             setTimeout(() => this.sendResume(), 5_000);
         } else {
             this.#sessionId = null;
             this.#sequence = null;
+            this.disconnect();
+            void this.connect();
         }
     }
 

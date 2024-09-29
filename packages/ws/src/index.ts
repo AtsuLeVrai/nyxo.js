@@ -1,7 +1,7 @@
 /**
  * ./core
  */
-export * from "./core/Gateway";
+export * from "./core/WebSocketManager";
 
 /**
  * ./events

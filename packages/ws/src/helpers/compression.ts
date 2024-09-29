@@ -8,7 +8,6 @@ import { Z_SYNC_FLUSH } from "zlib-sync";
  * @param data - The compressed data as a Buffer.
  * @param zlibInflate - An Inflate object from zlib-sync for decompression.
  * @returns A Promise that resolves with the decompressed data as a Buffer or string.
- * @throws Will throw an error if decompression fails.
  */
 export async function decompressZlib(data: Buffer, zlibInflate: Inflate): Promise<Buffer | string> {
     return new Promise((resolve, reject) => {
