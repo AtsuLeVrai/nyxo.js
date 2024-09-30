@@ -1,6 +1,6 @@
 import type { BitwisePermissions } from "../enums/permissions";
 import type { BitfieldResolvable } from "../managers/bitfield";
-import type { Integer, Iso8601Timestamp, Snowflake } from "../types";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown/formats";
 import type { GuildMemberStructure } from "./guilds";
 import type { UserStructure } from "./users";
 

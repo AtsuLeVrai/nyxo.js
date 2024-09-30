@@ -1,12 +1,11 @@
 import { URL } from "node:url";
 import type { Integer, Snowflake } from "@nyxjs/core";
 import { ImageFormats } from "@nyxjs/core";
-import { DISCORD_CDN_URL } from "../helpers/constants";
 
 type ImageFormat = ImageFormats.GIF | ImageFormats.JPEG | ImageFormats.Lottie | ImageFormats.PNG | ImageFormats.WebP;
 
 export class Cdn {
-    public static baseUrl = new URL(DISCORD_CDN_URL);
+    public static baseUrl = new URL("https://cdn.discordapp.com");
 
     public static customEmoji(emojiId: Snowflake, size?: Integer, format: ImageFormat = ImageFormats.PNG): string {
         return this.createUrl(`emojis/${emojiId}`, format, size);

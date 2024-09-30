@@ -1,103 +1,105 @@
-import type { GatewayIntents, Integer } from "@nyxjs/core";
-import { ApiVersions } from "@nyxjs/core";
+import { ApiVersions, BitfieldManager } from "@nyxjs/core";
+import type { GatewayOptions } from "@nyxjs/gateway";
+import { EncodingTypes, GatewayManager } from "@nyxjs/gateway";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
-import { calculateIntents, safeError } from "@nyxjs/utils";
-import type { GatewayOptions } from "@nyxjs/ws";
-import { EncodingTypes, WebSocketManager } from "@nyxjs/ws";
 import { EventEmitter } from "eventemitter3";
-import type { ClientEvents } from "./ClientEvents";
-import { GATEWAY_EVENTS } from "./ClientEvents";
-
-export type ClientOptions = {
-    intents: GatewayIntents[] | Integer;
-    presence?: GatewayOptions["presence"];
-    rest?: Partial<Pick<RestOptions, "auth_type" | "cache_life_time" | "user_agent">>;
-    shard?: GatewayOptions["shard"];
-    version?: ApiVersions;
-    ws?: Partial<Pick<GatewayOptions, "compress" | "encoding" | "large_threshold">>;
-};
+import { ClientEventManager } from "../managers/ClientEventManager";
+import type { ClientEvents, ClientOptions } from "../types/Client";
 
 export class Client extends EventEmitter<ClientEvents> {
-    public rest: Rest | null = null;
+    public readonly rest: Rest;
 
-    public ws: WebSocketManager | null = null;
+    public readonly ws: GatewayManager;
 
-    readonly #options: ClientOptions;
+    readonly #options: Readonly<ClientOptions>;
 
-    public constructor(
-        public token: string,
-        options: ClientOptions
-    ) {
+    readonly #events: ClientEventManager;
+
+    #token: string;
+
+    public constructor(token: string, options: ClientOptions) {
         super();
-        this.#options = options;
+
+        if (!token || typeof token !== "string") {
+            throw new Error("Invalid token provided");
+        }
+
+        this.#token = token;
+        this.#options = Object.freeze({ ...options });
+        this.#events = new ClientEventManager(this);
+
+        this.rest = this.initializeRest();
+        this.ws = this.initializeWs();
+    }
+
+    public get token(): string {
+        return this.#token;
     }
 
     public async login(): Promise<void> {
         try {
-            this.rest = this.createRest();
-            this.ws = this.createWs();
-            this.setupListeners();
+            this.#events.setupListeners();
             await this.ws.connect();
         } catch (error) {
-            this.emit("error", safeError(error));
+            if (error instanceof Error) {
+                this.emit("error", error);
+                throw error;
+            }
+
+            this.emit("error", new Error(String(error)));
+            throw new Error(String(error));
         }
     }
 
     public async destroy(): Promise<void> {
         try {
             this.removeAllListeners();
-            this.ws?.disconnect();
-            await this.rest?.destroy();
+            this.ws.disconnect();
+            await this.rest.destroy();
         } catch (error) {
-            this.emit("error", safeError(error));
-        } finally {
-            this.rest = null;
-            this.ws = null;
-        }
-    }
-
-    private setupListeners(): void {
-        if (!this.ws) {
-            return;
-        }
-
-        this.ws.on("dispatch", (eventName, ...args) => {
-            for (const [gatewayEvent, clientEvent] of GATEWAY_EVENTS) {
-                if (eventName === gatewayEvent) {
-                    this.emit(clientEvent as keyof ClientEvents, ...(args as ClientEvents[keyof ClientEvents]));
-                }
+            if (error instanceof Error) {
+                this.emit("error", error);
+                throw error;
             }
-        });
 
-        this.ws.on("debug", (message) => this.emit("debug", message));
-        this.ws.on("error", (error) => this.emit("error", error));
-        this.ws.on("warn", (message) => this.emit("warn", message));
-        this.ws.on("close", (code, reason) => this.emit("close", code, reason));
+            this.emit("error", new Error(String(error)));
+            throw new Error(String(error));
+        } finally {
+            this.#token = "";
+        }
     }
 
-    private createRest(): Rest {
-        return new Rest(this.token, {
-            auth_type: this.#options.rest?.auth_type,
+    private initializeRest(): Rest {
+        const restOptions: RestOptions = {
+            auth_type: this.#options.auth_type ?? "Bot",
             cache_life_time: this.#options.rest?.cache_life_time,
             user_agent: this.#options.rest?.user_agent,
             version: this.#options.version ?? ApiVersions.V10,
-        });
+        };
+
+        return new Rest(this.#token, restOptions);
     }
 
-    private createWs(): WebSocketManager {
-        if (!this.rest) {
-            throw new Error("No rest client provided");
-        }
-
-        return new WebSocketManager(this.token, this.rest, {
+    private initializeWs(): GatewayManager {
+        const wsOptions: GatewayOptions = {
             presence: this.#options.presence,
             compress: this.#options.ws?.compress,
             encoding: this.#options.ws?.encoding ?? EncodingTypes.Json,
             shard: this.#options.shard,
-            intents: calculateIntents(this.#options.intents),
+            intents: this.calculateIntents(this.#options.intents),
             v: this.#options.version ?? ApiVersions.V10,
             large_threshold: this.#options.ws?.large_threshold,
-        });
+        };
+
+        return new GatewayManager(this.#token, this.rest, wsOptions);
+    }
+
+    private calculateIntents<T extends number>(intents: T | T[]): number {
+        if (Array.isArray(intents)) {
+            return Number(BitfieldManager.from(intents).valueOf());
+        } else {
+            return intents;
+        }
     }
 }

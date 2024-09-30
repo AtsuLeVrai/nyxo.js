@@ -12,7 +12,7 @@ export type BitfieldResolvable<T> = (T | bigint | `${bigint}`)[] | BitfieldManag
  * @returns The validated BigInt.
  * @throws Error if the string is not a valid BigInt representation.
  */
-export function assertValidBigInt(value: string): bigint {
+function assertValidBigInt(value: string): bigint {
     const trimmedValue = value.trim();
 
     if (trimmedValue.length === 0) {

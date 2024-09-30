@@ -3,6 +3,7 @@ import type {
     AutoModerationRuleStructure,
     ChannelStructure,
     EntitlementStructure,
+    GatewayCloseCodes,
     GatewayOpcodes,
     GuildApplicationCommandPermissionsStructure,
     GuildMemberStructure,
@@ -76,18 +77,6 @@ import type {
     VoiceServerUpdateEventFields,
 } from "../events/voices";
 import type { WebhooksUpdateEventFields } from "../events/webhooks";
-
-/**
- * @see {@link https://discord.com/developers/docs/topics/gateway-events#send-events}
- */
-export type GatewaySendEvents = {
-    [GatewayOpcodes.Identify]: IdentifyStructure;
-    [GatewayOpcodes.Resume]: ResumeStructure;
-    [GatewayOpcodes.Heartbeat]: Integer | null;
-    [GatewayOpcodes.RequestGuildMembers]: RequestGuildMembersRequestStructure;
-    [GatewayOpcodes.VoiceStateUpdate]: UpdateVoiceStateGatewayVoiceStateUpdateStructure;
-    [GatewayOpcodes.PresenceUpdate]: UpdatePresenceGatewayPresenceUpdateStructure;
-};
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#receive-events}
@@ -179,4 +168,51 @@ export type GatewayReceiveEvents = {
     VOICE_SERVER_UPDATE: [voiceServerUpdate: VoiceServerUpdateEventFields];
     VOICE_STATE_UPDATE: [voiceStateUpdate: VoiceStateStructure];
     WEBHOOKS_UPDATE: [webhooksUpdate: WebhooksUpdateEventFields];
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/topics/gateway-events#send-events}
+ */
+export type GatewaySendEvents = {
+    [GatewayOpcodes.Identify]: IdentifyStructure;
+    [GatewayOpcodes.Resume]: ResumeStructure;
+    [GatewayOpcodes.Heartbeat]: Integer | null;
+    [GatewayOpcodes.RequestGuildMembers]: RequestGuildMembersRequestStructure;
+    [GatewayOpcodes.VoiceStateUpdate]: UpdateVoiceStateGatewayVoiceStateUpdateStructure;
+    [GatewayOpcodes.PresenceUpdate]: UpdatePresenceGatewayPresenceUpdateStructure;
+};
+
+export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
+    /**
+     * Event triggered when the connection is closed.
+     *
+     * @param code - The close code.
+     * @param reason - The reason for the closure.
+     */
+    close: [code: GatewayCloseCodes, reason: string];
+    /**
+     * Event triggered for debugging messages.
+     *
+     * @param message - The debug message.
+     */
+    debug: [message: string];
+    /**
+     * Event triggered when a globals event is received.
+     *
+     * @param event - The event name.
+     * @param data - The event data.
+     */
+    dispatch: [event: K, ...data: GatewayReceiveEvents[K]];
+    /**
+     * Event triggered when an error occurs.
+     *
+     * @param error - The error object.
+     */
+    error: [error: Error];
+    /**
+     * Event triggered for warnings.
+     *
+     * @param warning - The warning message.
+     */
+    warn: [warning: string];
 };

@@ -279,7 +279,7 @@ export enum VoiceCloseCodes {
  *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes|HTTP Response Codes}
  */
-export enum HttpResponseCodes {
+export enum RestHttpResponseCodes {
     /**
      * The request completed successfully.
      */
@@ -335,7 +335,7 @@ export enum HttpResponseCodes {
  *
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-json-error-codes|JSON Error Codes}
  */
-export enum JsonErrorCodes {
+export enum RestJsonErrorCodes {
     GeneralError = 0,
     UnknownAccount = 10_001,
     UnknownApplication = 10_002,

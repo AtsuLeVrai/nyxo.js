@@ -1,5 +1,5 @@
 import type { BitfieldResolvable } from "../managers/bitfield";
-import type { Snowflake } from "../types";
+import type { Snowflake } from "../markdown/formats";
 
 /**
  * Enumeration representing SKU flags.

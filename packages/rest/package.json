@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "directory": "packages/core",
+    "directory": "packages/rest",
     "url": "https://github.com/3tatsu/nyx.js"
   },
   "bugs": {
@@ -43,7 +43,6 @@
   "dependencies": {
     "@nyxjs/core": "workspace:*",
     "@nyxjs/store": "workspace:*",
-    "@nyxjs/utils": "workspace:*",
     "form-data": "^4.0.0",
     "minizlib": "^3.0.1",
     "undici": "^6.19.8"

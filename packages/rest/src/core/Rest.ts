@@ -1,18 +1,18 @@
-import { type ApiVersions, type AuthTypes, HttpResponseCodes, type Integer, MimeTypes } from "@nyxjs/core";
+import { Buffer } from "node:buffer";
+import type { ApiVersions, Integer } from "@nyxjs/core";
+import { MimeTypes, RestHttpResponseCodes, RestJsonErrorCodes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
-import { safeError } from "@nyxjs/utils";
-import type { Dispatcher } from "undici";
+import { Gunzip } from "minizlib";
+import type { Dispatcher, RetryHandler } from "undici";
 import { Pool, RetryAgent } from "undici";
-import { decompressResponse } from "../helpers/compress";
-import { DISCORD_API_URL, POOL_OPTIONS, RETRY_AGENT_OPTIONS } from "../helpers/constants";
-import type { RestRequestOptions } from "../types";
+import type { AuthTypes, RestRequestOptions } from "../types";
 import { RestRateLimiter } from "./RestRateLimiter";
 
 export type RestOptions = {
     /**
      * The type of authentication to use.
      */
-    auth_type?: AuthTypes;
+    auth_type: AuthTypes;
     /**
      * The time-to-live (in milliseconds) of the cache.
      */
@@ -44,14 +44,22 @@ export class Rest {
         this.#token = token;
         this.#store = new Store();
         this.#rateLimiter = new RestRateLimiter();
-        this.#pool = new Pool(DISCORD_API_URL, POOL_OPTIONS);
-        this.#retryAgent = new RetryAgent(this.#pool, RETRY_AGENT_OPTIONS);
+        this.#pool = this.initializePool();
+        this.#retryAgent = this.initializeRetryAgent();
         this.#options = Object.freeze({ ...options });
     }
 
     public async destroy(): Promise<void> {
-        await this.#pool.destroy();
-        this.#store.clear();
+        try {
+            await this.#pool.destroy();
+            this.#store.clear();
+        } catch (error) {
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
+        }
     }
 
     public async request<T>(request: RestRequestOptions<T>): Promise<T> {
@@ -67,47 +75,111 @@ export class Rest {
 
             await this.#rateLimiter.wait(request.path);
 
-            const { statusCode, headers, body } = await this.makeRequest(request);
+            const path = `/api/v${this.#options.version}${request.path}`;
+            const response = await this.#retryAgent.request({
+                ...request,
+                path,
+                headers: this.initializeHeaders(request.headers as Record<string, string>),
+            });
 
-            this.#rateLimiter.handleRateLimit(request.path, headers);
+            this.#rateLimiter.handleRateLimit(request.path, response.headers as Record<string, string>);
 
-            const responseText = await decompressResponse(headers, body);
+            const responseText = await this.decompressResponse(response.headers, response.body);
             const data = JSON.parse(responseText);
 
-            if (statusCode === HttpResponseCodes.TooManyRequests) {
+            if (response.statusCode === RestHttpResponseCodes.TooManyRequests) {
                 await this.#rateLimiter.handleRateLimitResponse(data);
                 return await this.request(request);
             }
 
-            if (statusCode >= 200 && statusCode < 300 && !request.disable_cache) {
+            if (response.statusCode >= 200 && response.statusCode < 300 && !request.disable_cache) {
                 this.#store.set(cacheKey, {
                     data,
                     expiry: Date.now() + (this.#options.cache_life_time ?? 60_000),
                 });
             }
 
-            if (statusCode >= 400) {
-                throw new Error(`[REST] ${statusCode} ${JSON.stringify(data)}`);
+            if (response.statusCode >= 400) {
+                throw new Error(JSON.stringify(data));
             }
 
             return data as T;
         } catch (error) {
-            throw safeError(error);
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
         }
     }
 
-    private async makeRequest<T>(request: RestRequestOptions<T>): Promise<Dispatcher.ResponseData> {
-        const path = `/api/v${this.#options.version}${request.path}`;
-        const headers = { ...this.createDefaultHeaders(), ...request.headers };
-        return this.#retryAgent.request({ ...request, path, headers });
+    private async decompressResponse(
+        headers: Record<string, any>,
+        body: Dispatcher.ResponseData["body"]
+    ): Promise<string> {
+        const responseBuffer = await body.arrayBuffer();
+
+        if (headers["content-encoding"] === "gzip") {
+            return new Promise((resolve, reject) => {
+                const gunzip = new Gunzip({ level: 9 });
+                const chunks: Buffer[] = [];
+
+                gunzip.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+                gunzip.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+                gunzip.on("error", reject);
+                gunzip.end(Buffer.from(responseBuffer));
+            });
+        }
+
+        return Buffer.from(responseBuffer).toString("utf8");
     }
 
-    private createDefaultHeaders(): Readonly<Record<string, string>> {
-        return Object.freeze({
-            Authorization: `${this.#options.auth_type ?? "Bot"} ${this.#token}`,
+    private initializePool(): Pool {
+        const poolOptions: Pool.Options = {
+            connections: 10,
+            pipelining: 6,
+            keepAliveTimeout: 20_000,
+            keepAliveMaxTimeout: 30_000,
+            connect: { timeout: 30_000 },
+            allowH2: true,
+        };
+
+        return new Pool("https://discord.com", poolOptions);
+    }
+
+    private initializeRetryAgent(): RetryAgent {
+        if (!this.#pool) {
+            throw new Error("[REST] Pool not initialized");
+        }
+
+        const retryAgentOptions: RetryHandler.RetryOptions = {
+            retryAfter: true,
+            minTimeout: 500,
+            maxTimeout: 10_000,
+            timeoutFactor: 2,
+            methods: ["GET", "DELETE", "PUT", "PATCH", "POST"],
+            statusCodes: Object.values(RestHttpResponseCodes).map(Number),
+            errorCodes: Object.values(RestJsonErrorCodes).map(String),
+        };
+
+        return new RetryAgent(this.#pool, retryAgentOptions);
+    }
+
+    private initializeHeaders(additionalHeaders?: Record<string, string>): Readonly<Record<string, string>> {
+        const headers: Record<string, string> = {
+            Authorization: `${this.#options.auth_type} ${this.#token}`,
             "Content-Type": MimeTypes.Json,
             "Accept-Encoding": "gzip, deflate",
-            ...(this.#options.user_agent && { "User-Agent": this.#options.user_agent }),
-        });
+        };
+
+        if (this.#options.user_agent) {
+            headers["User-Agent"] = this.#options.user_agent;
+        }
+
+        if (additionalHeaders) {
+            Object.assign(headers, additionalHeaders);
+        }
+
+        return Object.freeze(headers);
     }
 }

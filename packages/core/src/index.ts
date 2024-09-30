@@ -1,6 +1,3 @@
-/**
- * ./enums
- */
 export * from "./enums/apis";
 export * from "./enums/intents";
 export * from "./enums/locales";
@@ -9,20 +6,11 @@ export * from "./enums/oauth2";
 export * from "./enums/opcodes";
 export * from "./enums/permissions";
 
-/**
- * ./managers
- */
 export * from "./managers/bitfield";
 
-/**
- * ./markdown
- */
 export * from "./markdown/formats";
 export * from "./markdown/markdowns";
 
-/**
- * ./structures
- */
 export * from "./structures/applications";
 export * from "./structures/audits";
 export * from "./structures/channels";
@@ -47,8 +35,3 @@ export * from "./structures/templates";
 export * from "./structures/users";
 export * from "./structures/voices";
 export * from "./structures/webhooks";
-
-/**
- * ./types
- */
-export * from "./types";

@@ -1,14 +1,6 @@
 import process from "node:process";
 import { config } from "dotenv";
-import {
-    AllIntents,
-    ApiVersions,
-    calculateIntents,
-    CompressTypes,
-    EncodingTypes,
-    Rest,
-    WebSocketManager,
-} from "nyx.js";
+import { ApiVersions, CompressTypes, EncodingTypes, GatewayManager, Rest } from "nyx.js";
 
 config();
 
@@ -17,11 +9,12 @@ if (!process.env.DISCORD_TOKEN) {
 }
 
 const rest = new Rest(process.env.DISCORD_TOKEN, {
+    auth_type: "Bot",
     version: ApiVersions.V10,
 });
 
-const gateway = new WebSocketManager(process.env.DISCORD_TOKEN, rest, {
-    intents: calculateIntents(AllIntents),
+const gateway = new GatewayManager(process.env.DISCORD_TOKEN, rest, {
+    intents: 513,
     v: ApiVersions.V10,
     encoding: EncodingTypes.Json,
     compress: CompressTypes.ZlibStream,
@@ -38,6 +31,7 @@ void gateway.connect();
 
 // const client = new Client(process.env.DISCORD_TOKEN, {
 //     intents: AllIntents,
+//     shard: "auto",
 //     ws: {
 //         encoding: EncodingTypes.Etf,
 //         compress: CompressTypes.ZlibStream,

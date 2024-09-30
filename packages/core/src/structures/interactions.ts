@@ -1,7 +1,7 @@
-import type { LocaleKeys } from "../enums/locales";
+import type { AvailableLocales, LocaleKeys } from "../enums/locales";
 import type { BitwisePermissions } from "../enums/permissions";
 import type { BitfieldResolvable } from "../managers/bitfield";
-import type { AvailableLocales, Integer, Snowflake } from "../types";
+import type { Integer, Snowflake } from "../markdown/formats";
 import type { ApplicationIntegrationTypes } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
 import type { ActionRowStructure, ComponentTypes, SelectMenuOptionStructure, TextInputStructure } from "./components";
@@ -92,7 +92,7 @@ export type ApplicationCommandOptionChoiceStructure = {
     /**
      * Localization dictionary for the name field. Values follow the same restrictions as name
      */
-    name_localizations?: AvailableLocales | Record<string, string>;
+    name_localizations?: AvailableLocales | null;
     /**
      * Value for the choice, up to 100 characters if string
      */

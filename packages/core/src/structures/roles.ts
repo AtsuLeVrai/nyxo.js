@@ -1,5 +1,5 @@
 import type { BitfieldResolvable } from "../managers/bitfield";
-import type { Integer, Snowflake } from "../types";
+import type { Integer, Snowflake } from "../markdown/formats";
 
 /**
  * Enum representing the role flags.

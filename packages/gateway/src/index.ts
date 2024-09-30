@@ -1,11 +1,5 @@
-/**
- * ./core
- */
-export * from "./core/WebSocketManager";
+export * from "./core/GatewayManager";
 
-/**
- * ./events
- */
 export * from "./events/channels";
 export * from "./events/guilds";
 export * from "./events/hello";
@@ -21,8 +15,5 @@ export * from "./events/resume";
 export * from "./events/voices";
 export * from "./events/webhooks";
 
-/**
- * ./types
- */
 export * from "./types/events";
 export * from "./types/gateway";

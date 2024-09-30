@@ -1,4 +1,4 @@
-import type { Integer, Iso8601Timestamp, Snowflake } from "../types";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown/formats";
 import type { GuildMemberStructure } from "./guilds";
 import type { UserStructure } from "./users";
 

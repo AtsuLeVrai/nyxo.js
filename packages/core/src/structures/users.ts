@@ -1,5 +1,5 @@
 import type { LocaleKeys } from "../enums/locales";
-import type { Integer, Snowflake } from "../types";
+import type { Integer, Snowflake } from "../markdown/formats";
 import type { ApplicationRoleConnectionMetadataStructure } from "./applications";
 import type { IntegrationStructure } from "./guilds";
 

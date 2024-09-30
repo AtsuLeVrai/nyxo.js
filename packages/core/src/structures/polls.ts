@@ -1,4 +1,4 @@
-import type { Integer, Iso8601Timestamp } from "../types";
+import type { Integer, Iso8601Timestamp } from "../markdown/formats";
 import type { EmojiStructure } from "./emojis";
 
 /**

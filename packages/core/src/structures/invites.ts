@@ -1,4 +1,4 @@
-import type { Integer, Iso8601Timestamp } from "../types";
+import type { Integer, Iso8601Timestamp } from "../markdown/formats";
 import type { ApplicationStructure } from "./applications";
 import type { ChannelStructure } from "./channels";
 import type { GuildMemberStructure, GuildStructure } from "./guilds";

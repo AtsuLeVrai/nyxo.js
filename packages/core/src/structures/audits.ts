@@ -1,4 +1,4 @@
-import type { Snowflake } from "../types";
+import type { Snowflake } from "../markdown/formats";
 import type { ChannelStructure } from "./channels";
 import type { ApplicationCommandStructure, InteractionStructure } from "./interactions";
 import type { AutoModerationRuleStructure } from "./moderations";

@@ -1,13 +1,7 @@
-/**
- * ./core
- */
 export * from "./core/Cdn";
 export * from "./core/FileUploadManager";
 export * from "./core/Rest";
 
-/**
- * ./routes
- */
 export * from "./routes/applications";
 export * from "./routes/audits";
 export * from "./routes/emojis";
@@ -25,7 +19,4 @@ export * from "./routes/subscriptions";
 export * from "./routes/users";
 export * from "./routes/voices";
 
-/**
- * ./types
- */
 export * from "./types";

@@ -3,9 +3,7 @@ import { createReadStream } from "node:fs";
 import { basename } from "node:path";
 import { URL } from "node:url";
 import { MimeTypes } from "@nyxjs/core";
-import { safeError } from "@nyxjs/utils";
 import FormData from "form-data";
-import { DISCORD_CDN_URL } from "../helpers/constants";
 import type { FileInput } from "../types";
 
 /**
@@ -58,7 +56,11 @@ export class FileUploadManager {
                 toString: () => url.toString(),
             };
         } catch (error) {
-            throw safeError(error);
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
         }
     }
 
@@ -131,7 +133,7 @@ export class FileUploadManager {
 
     private isValidDiscordCdnUrl(url: URL): boolean {
         return (
-            url.hostname === DISCORD_CDN_URL &&
+            url.hostname === "discord.com" &&
             url.pathname.startsWith("/attachments/") &&
             ["ex", "hm", "is"].every((param) => url.searchParams.has(param))
         );

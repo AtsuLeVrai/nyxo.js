@@ -1,28 +1,6 @@
-import type { ApiVersions, GatewayOpcodes, Integer } from "@nyxjs/core";
+import type { ApiVersions, GatewayIntents, GatewayOpcodes, Integer } from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/presences";
 import type { GatewayReceiveEvents } from "./events";
-
-/**
- * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
- */
-export type GatewayPayload = {
-    /**
-     * Event data
-     */
-    d: unknown;
-    /**
-     * Gateway opcode, which indicates the payload type
-     */
-    op: GatewayOpcodes;
-    /**
-     * Sequence number of event used for resuming sessions and heartbeating
-     */
-    s: Integer | null;
-    /**
-     * Event name
-     */
-    t: keyof GatewayReceiveEvents | null;
-};
 
 export enum CompressTypes {
     /**
@@ -32,7 +10,7 @@ export enum CompressTypes {
     /**
      * Transport compression using zstd-stream
      *
-     * @deprecated Use `CompressTypes.ZlibStream` instead
+     * @deprecated Use `CompressTypes.ZlibStream` instead. Node.js does not support Zstd.
      */
     ZstdStream = "zstd-stream",
 }
@@ -57,17 +35,25 @@ export type GatewayOptions = {
      */
     compress?: CompressTypes;
     /**
+     * The maximum number of shards to spawn
+     */
+    delay?: Integer;
+    /**
      * The encoding of received globals packets json or etf
      */
     encoding: EncodingTypes;
     /**
      * The intents for the globals connection.
      */
-    intents: Integer;
+    intents: GatewayIntents | Integer;
     /**
      * The large threshold for the globals connection.
      */
     large_threshold?: Integer;
+    /**
+     * The maximum number of attempts to reconnect
+     */
+    max_attempts?: Integer;
     /**
      * The presence update structure for the globals connection.
      */
@@ -83,40 +69,24 @@ export type GatewayOptions = {
     v: ApiVersions;
 };
 
-type GatewayDispatchEvents<K extends keyof GatewayReceiveEvents> = {
+/**
+ * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
+ */
+export type GatewayPayload = {
     /**
-     * Event triggered when a globals event is received.
-     *
-     * @param event - The event name.
-     * @param data - The event data.
+     * Event data
      */
-    dispatch: [event: K, ...data: GatewayReceiveEvents[K]];
-};
-
-export type GatewayEvents = GatewayDispatchEvents<keyof GatewayReceiveEvents> & {
+    d: unknown;
     /**
-     * Event triggered when the connection is closed.
-     *
-     * @param code - The close message code.
-     * @param reason - The reason for the closure.
+     * Gateway opcode, which indicates the payload type
      */
-    close: [code: string, reason: string];
+    op: GatewayOpcodes;
     /**
-     * Event triggered for debugging messages.
-     *
-     * @param message - The debug message.
+     * Sequence number of event used for resuming sessions and heartbeating
      */
-    debug: [message: string];
+    s: Integer | null;
     /**
-     * Event triggered when an error occurs.
-     *
-     * @param error - The error object.
+     * Event name
      */
-    error: [error: Error];
-    /**
-     * Event triggered for warnings.
-     *
-     * @param warning - The warning message.
-     */
-    warn: [warning: string];
+    t: keyof GatewayReceiveEvents | null;
 };

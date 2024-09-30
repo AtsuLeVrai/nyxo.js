@@ -1,4 +1,22 @@
-import type { Snowflake } from "../types";
+/**
+ * Represents a unique identifier used by Discord.
+ */
+export type Snowflake = string;
+
+/**
+ * Represents an integer number.
+ */
+export type Integer = number;
+
+/**
+ * Represents a floating-point number.
+ */
+export type Float = number;
+
+/**
+ * Represents a timestamp in ISO 8601 format.
+ */
+export type Iso8601Timestamp = string;
 
 /**
  * Enum for different image formats.

@@ -2,7 +2,7 @@ import type { LocaleKeys } from "../enums/locales";
 import type { OAuth2Scopes } from "../enums/oauth2";
 import type { BitwisePermissions } from "../enums/permissions";
 import type { BitfieldResolvable } from "../managers/bitfield";
-import type { Integer, Iso8601Timestamp, Snowflake } from "../types";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown/formats";
 import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";

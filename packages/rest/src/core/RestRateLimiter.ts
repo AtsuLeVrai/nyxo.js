@@ -1,5 +1,5 @@
 import { setTimeout } from "node:timers/promises";
-import type { DiscordHeaders, Float, HttpResponseCodes, Integer } from "@nyxjs/core";
+import type { Float, Integer, RestHttpResponseCodes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
 
 /**
@@ -9,7 +9,7 @@ type RateLimitResponseStructure = Readonly<{
     /**
      * An error code for some limits
      */
-    code?: HttpResponseCodes;
+    code?: RestHttpResponseCodes;
     /**
      * A value indicating if you are being globally rate limited or not
      */
@@ -68,7 +68,7 @@ export class RestRateLimiter {
         }
     }
 
-    public handleRateLimit(path: string, headers: DiscordHeaders): void {
+    public handleRateLimit(path: string, headers: Record<string, string>): void {
         const rateLimitInfo = this.parseHeaders(headers);
         this.#routeRateLimits.set(path, rateLimitInfo);
 
@@ -87,7 +87,7 @@ export class RestRateLimiter {
         throw new Error(`[REST] Rate limited: ${response.message}`);
     }
 
-    private parseHeaders(headers: DiscordHeaders): RateLimitInfo {
+    private parseHeaders(headers: Record<string, string>): RateLimitInfo {
         return Object.freeze({
             limit: Number.parseInt(headers["X-RateLimit-Limit"] ?? "0", 10),
             remaining: Number.parseInt(headers["X-RateLimit-Remaining"] ?? "0", 10),

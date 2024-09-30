@@ -1,9 +1,9 @@
 import { Buffer } from "node:buffer";
-import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timers";
+import { clearInterval, setInterval, setTimeout } from "node:timers";
 import { URL } from "node:url";
+import type { Integer } from "@nyxjs/core";
 import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
-import { safeError } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { Inflate } from "zlib-sync";
@@ -12,11 +12,11 @@ import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
 import { decompressZlib } from "../helpers/compression";
 import { decodeMessage, encodeMessage } from "../helpers/encoding";
-import type { GatewaySendEvents } from "../types/events";
-import type { GatewayEvents, GatewayOptions, GatewayPayload } from "../types/gateway";
+import type { GatewayEvents, GatewayReceiveEvents, GatewaySendEvents } from "../types/events";
+import type { GatewayOptions, GatewayPayload } from "../types/gateway";
 import { ShardManager } from "./ShardManager";
 
-export class WebSocketManager extends EventEmitter<GatewayEvents> {
+export class GatewayManager extends EventEmitter<GatewayEvents<keyof GatewayReceiveEvents>> {
     #ws: WebSocket | null = null;
 
     #heartbeatInterval: NodeJS.Timeout | null = null;
@@ -27,8 +27,6 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
 
     #resumeGatewayUrl: string | null = null;
 
-    #heartbeatTimeout: NodeJS.Timeout | null = null;
-
     readonly #token: string;
 
     #reconnectAttempts: number;
@@ -36,8 +34,6 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
     readonly #maxReconnectAttempts: number;
 
     readonly #reconnectDelay: number;
-
-    #lastHeartbeatAck: number;
 
     readonly #zlibInflate: Inflate;
 
@@ -49,9 +45,8 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
         super();
         this.#token = token;
         this.#reconnectAttempts = 0;
-        this.#maxReconnectAttempts = 5;
-        this.#reconnectDelay = 5_000;
-        this.#lastHeartbeatAck = Date.now();
+        this.#maxReconnectAttempts = options.max_attempts ?? 5;
+        this.#reconnectDelay = options.delay ?? 5_000;
         this.#zlibInflate = new Inflate({ chunkSize: 1_024 * 1_024 });
         this.#shardManager = new ShardManager(token, this, rest, options);
         this.#options = Object.freeze({ ...options });
@@ -88,7 +83,11 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
             this.#ws.on("message", this.onMessage.bind(this));
             this.#reconnectAttempts++;
         } catch (error) {
-            throw safeError(error);
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
         }
     }
 
@@ -122,13 +121,8 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
             clearInterval(this.#heartbeatInterval);
         }
 
-        if (this.#heartbeatTimeout) {
-            clearTimeout(this.#heartbeatTimeout);
-        }
-
         this.#ws = null;
         this.#heartbeatInterval = null;
-        this.#heartbeatTimeout = null;
         this.#sequence = null;
         this.#sessionId = null;
         this.#resumeGatewayUrl = null;
@@ -142,7 +136,7 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
 
     private onClose(code: GatewayCloseCodes, reason: Buffer): void {
         const reasonStr = reason.toString();
-        this.emit("close", GatewayCloseCodes[code], reasonStr);
+        this.emit("close", code, reasonStr);
 
         switch (code) {
             case GatewayCloseCodes.UnknownError: {
@@ -260,7 +254,11 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
             const decoded: GatewayPayload = decodeMessage(decompressedData, this.#options.encoding);
             await this.handleMessage(decoded);
         } catch (error) {
-            throw safeError(error);
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
         }
     }
 
@@ -290,11 +288,6 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
 
             case GatewayOpcodes.HeartbeatAck: {
                 this.emit("debug", "[WS] Received heartbeat ack");
-                this.#lastHeartbeatAck = Date.now();
-                if (this.#heartbeatTimeout) {
-                    clearTimeout(this.#heartbeatTimeout);
-                }
-
                 break;
             }
 
@@ -313,36 +306,21 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
         }
     }
 
-    private setupHeartbeat(interval: number): void {
+    private setupHeartbeat(interval: Integer): void {
         if (this.#heartbeatInterval) {
             clearInterval(this.#heartbeatInterval);
-        }
-
-        if (this.#heartbeatTimeout) {
-            clearTimeout(this.#heartbeatTimeout);
         }
 
         const jitter = Math.floor(Math.random() * interval);
 
         setTimeout(() => {
-            this.sendHeartbeat();
+            this.send(GatewayOpcodes.Heartbeat, this.#sequence);
 
             this.#heartbeatInterval = setInterval(() => {
                 this.emit("debug", `[WS] Sending heartbeat | Sequence: ${this.#sequence} | Interval: ${interval}ms`);
-                this.sendHeartbeat();
+                this.send(GatewayOpcodes.Heartbeat, this.#sequence);
             }, interval);
-
-            this.#heartbeatTimeout = setTimeout(async () => {
-                this.emit("warn", "[WS] Heartbeat ack not received, reconnecting...");
-                this.disconnect();
-                await this.connect(true);
-            }, interval + 5_000);
         }, jitter);
-    }
-
-    private sendHeartbeat(): void {
-        this.send(GatewayOpcodes.Heartbeat, this.#sequence);
-        this.#lastHeartbeatAck = Date.now();
     }
 
     private async handleInvalidSession(resumable: boolean): Promise<void> {

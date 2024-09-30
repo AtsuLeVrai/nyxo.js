@@ -3,7 +3,8 @@
   "name": "@nyxjs/test",
   "private": true,
   "scripts": {
-    "start": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files src/index.ts"
+    "start": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files src/index.ts",
+    "start:bench": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files src/index_bench.ts"
   },
   "dependencies": {
     "nyx.js": "workspace:*"

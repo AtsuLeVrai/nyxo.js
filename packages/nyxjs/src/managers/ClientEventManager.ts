@@ -1,3 +1,67 @@
+/*
+import type { Client } from "../client/Client";
+import type { ClientEvents } from "../client/ClientEvents";
+
+type EventHandler<K extends keyof ClientEvents> = (this: Client, ...args: ClientEvents[K]) => Promise<void> | void;
+
+type ClassConstructor<T> = new (data: any) => T;
+
+export const EVENT_CLASS_MAPPING: Partial<{
+    [K in keyof ClientEvents]: ClassConstructor<ClientEvents[K]>;
+}> = {
+    warn: [String],
+};
+
+export function transformEventData<K extends keyof ClientEvents>(event: K, data: any): ClientEvents[K] {
+    const ClassConstructor = EVENT_CLASS_MAPPING[event];
+    if (ClassConstructor) {
+        return new ClassConstructor(data);
+    }
+
+    return data;
+}
+
+export class ClientEventManager {
+    readonly #client: Client;
+
+    readonly #handlers: Map<string, EventHandler<any>>;
+
+    public constructor(client: Client) {
+        this.#client = client;
+        this.#handlers = new Map();
+    }
+
+    public static from(client: Client): ClientEventManager {
+        return new ClientEventManager(client);
+    }
+
+    public on<K extends keyof ClientEvents>(event: K, handler: EventHandler<K>): this {
+        this.#handlers.set(event, handler);
+        this.#client.on(event, async (...args: ClientEvents[K]) => {
+            await handler.apply(this.#client, args);
+        });
+
+        return this;
+    }
+
+    public off<K extends keyof ClientEvents>(event: K): this {
+        const handler = this.#handlers.get(event as string);
+        if (handler) {
+            this.#client.off(event, handler);
+            this.#handlers.delete(event as string);
+        }
+
+        return this;
+    }
+
+    public emit<K extends keyof ClientEvents>(event: K, ...args: ClientEvents[K]): boolean {
+        return this.#client.emit(event, ...(args as never));
+    }
+}
+*/
+import type { Client } from "../client/Client";
+import type { ClientEvents } from "../types/Client";
+
 export const GATEWAY_EVENTS = [
     ["APPLICATION_COMMAND_PERMISSIONS_UPDATE", "applicationCommandPermissionsUpdate"],
     ["AUTO_MODERATION_ACTION_EXECUTION", "autoModerationActionExecution"],
@@ -69,77 +133,25 @@ export const GATEWAY_EVENTS = [
     ["WEBHOOKS_UPDATE", "webhooksUpdate"],
 ];
 
-export type ClientEvents = {
-    applicationCommandPermissionsUpdate: [];
-    autoModerationActionExecution: [];
-    autoModerationRuleCreate: [];
-    autoModerationRuleDelete: [];
-    autoModerationRuleUpdate: [];
-    channelCreate: [];
-    channelDelete: [];
-    channelPinsUpdate: [];
-    channelUpdate: [];
-    close: [code: string, reason: string];
-    debug: [message: string];
-    entitlementCreate: [];
-    entitlementDelete: [];
-    entitlementUpdate: [];
-    error: [error: Error];
-    guildAuditLogEntryCreate: [];
-    guildBanAdd: [];
-    guildBanRemove: [];
-    guildCreate: [];
-    guildDelete: [];
-    guildEmojisUpdate: [];
-    guildIntegrationsUpdate: [];
-    guildMemberAdd: [];
-    guildMemberRemove: [];
-    guildMemberUpdate: [];
-    guildMembersChunk: [];
-    guildRoleCreate: [];
-    guildRoleDelete: [];
-    guildRoleUpdate: [];
-    guildScheduledEventCreate: [];
-    guildScheduledEventDelete: [];
-    guildScheduledEventUpdate: [];
-    guildScheduledEventUserAdd: [];
-    guildScheduledEventUserRemove: [];
-    guildStickersUpdate: [];
-    guildUpdate: [];
-    integrationCreate: [];
-    integrationDelete: [];
-    integrationUpdate: [];
-    interactionCreate: [];
-    inviteCreate: [];
-    inviteDelete: [];
-    messageCreate: [];
-    messageDelete: [];
-    messageDeleteBulk: [];
-    messagePollVoteAdd: [];
-    messagePollVoteRemove: [];
-    messageReactionAdd: [];
-    messageReactionRemove: [];
-    messageReactionRemoveAll: [];
-    messageReactionRemoveEmoji: [];
-    messageUpdate: [];
-    presenceUpdate: [];
-    ready: [];
-    stageInstanceCreate: [];
-    stageInstanceDelete: [];
-    stageInstanceUpdate: [];
-    subscriptionCreate: [];
-    subscriptionDelete: [];
-    subscriptionUpdate: [];
-    threadCreate: [];
-    threadDelete: [];
-    threadListSync: [];
-    threadMemberUpdate: [];
-    threadMembersUpdate: [];
-    typingStart: [];
-    userUpdate: [];
-    voiceChannelEffectSend: [];
-    voiceServerUpdate: [];
-    voiceStateUpdate: [];
-    warn: [message: string];
-    webhooksUpdate: [];
-};
+export class ClientEventManager {
+    readonly #client: Client;
+
+    public constructor(client: Client) {
+        this.#client = client;
+    }
+
+    public setupListeners(): void {
+        this.#client.ws.on("dispatch", (eventName, ...args) => {
+            for (const [gatewayEvent, clientEvent] of GATEWAY_EVENTS) {
+                if (eventName === gatewayEvent) {
+                    this.#client.emit(clientEvent as keyof ClientEvents, ...(args as ClientEvents[keyof ClientEvents]));
+                }
+            }
+        });
+
+        this.#client.ws.on("debug", (message) => this.#client.emit("debug", message));
+        this.#client.ws.on("error", (error) => this.#client.emit("error", error));
+        this.#client.ws.on("warn", (message) => this.#client.emit("warn", message));
+        this.#client.ws.on("close", (code, reason) => this.#client.emit("close", code, reason));
+    }
+}

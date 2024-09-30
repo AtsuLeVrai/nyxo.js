@@ -42,3 +42,8 @@ export enum Locales {
  * Type representing the keys of the Locales enum.
  */
 export type LocaleKeys = `${Locales}`;
+
+/**
+ * Represents the available locales as a record with locale keys and their corresponding string values.
+ */
+export type AvailableLocales = Record<LocaleKeys, string>;

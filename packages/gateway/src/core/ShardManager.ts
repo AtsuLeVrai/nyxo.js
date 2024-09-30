@@ -5,10 +5,9 @@ import { GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { GatewayRoutes, UserRoutes } from "@nyxjs/rest";
 import { Store } from "@nyxjs/store";
-import { safeError } from "@nyxjs/utils";
 import type { IdentifyStructure } from "../events/identity";
 import type { GatewayOptions } from "../types/gateway";
-import type { WebSocketManager } from "./WebSocketManager";
+import type { GatewayManager } from "./GatewayManager";
 
 type ShardInfo = Readonly<{
     /**
@@ -26,7 +25,7 @@ export class ShardManager {
 
     readonly #token: string;
 
-    readonly #ws: WebSocketManager;
+    readonly #ws: GatewayManager;
 
     readonly #rest: Rest;
 
@@ -36,7 +35,7 @@ export class ShardManager {
 
     readonly #rateLimitQueue: Store<Integer, ShardInfo[]>;
 
-    public constructor(token: string, ws: WebSocketManager, rest: Rest, options: Readonly<GatewayOptions>) {
+    public constructor(token: string, ws: GatewayManager, rest: Rest, options: Readonly<GatewayOptions>) {
         this.#maxConcurrency = 1;
         this.#token = token;
         this.#ws = ws;
@@ -54,7 +53,11 @@ export class ShardManager {
                 await this.connectShard();
             }
         } catch (error) {
-            throw safeError(error);
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(String(error));
         }
     }
 
