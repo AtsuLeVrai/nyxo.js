@@ -9,7 +9,7 @@ import type { FileInput } from "../types";
 /**
  * @see {@link https://discord.com/developers/docs/reference#signed-attachment-cdn-urls-attachment-cdn-url-parameters}
  */
-export type AttachmentCdnUrlParameters = Readonly<{
+export type AttachmentCdnUrlParameters = {
     /**
      * Hex timestamp indicating when an attachment CDN URL will expire
      */
@@ -22,7 +22,7 @@ export type AttachmentCdnUrlParameters = Readonly<{
      * Hex timestamp indicating when the URL was issued
      */
     is: string;
-}>;
+};
 
 export class FileUploadManager {
     readonly #formData: FormData;

@@ -1,12 +1,57 @@
 import { Buffer } from "node:buffer";
-import type { ApiVersions, Integer } from "@nyxjs/core";
+import { setTimeout } from "node:timers/promises";
+import type { ApiVersions, Float, Integer } from "@nyxjs/core";
 import { MimeTypes, RestHttpResponseCodes, RestJsonErrorCodes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
 import { Gunzip } from "minizlib";
 import type { Dispatcher, RetryHandler } from "undici";
 import { Pool, RetryAgent } from "undici";
 import type { AuthTypes, RestRequestOptions } from "../types";
-import { RestRateLimiter } from "./RestRateLimiter";
+
+/**
+ * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure|Rate Limit Response Structure}
+ */
+type RateLimitResponseStructure = {
+    /**
+     * An error code for some limits
+     */
+    code?: RestHttpResponseCodes;
+    /**
+     * A value indicating if you are being globally rate limited or not
+     */
+    global: boolean;
+    /**
+     * A message saying you are being rate limited.
+     */
+    message: string;
+    /**
+     * The number of seconds to wait before submitting another request.
+     */
+    retry_after: Float;
+};
+
+type RateLimitInfo = {
+    /**
+     * The maximum number of requests that can be made in a given time frame.
+     */
+    bucket: string;
+    /**
+     * The number of requests remaining in the current time frame.
+     */
+    limit: Integer;
+    /**
+     * The time at which the current time frame resets.
+     */
+    remaining: Integer;
+    /**
+     * The time at which the current time frame resets.
+     */
+    reset: Integer;
+    /**
+     * The time in milliseconds after which the current time frame resets.
+     */
+    resetAfter: Integer;
+};
 
 export type RestOptions = {
     /**
@@ -28,11 +73,13 @@ export type RestOptions = {
 };
 
 export class Rest {
+    #globalRateLimit: number | null = null;
+
     readonly #token: string;
 
     readonly #store: Store<string, { data: any; expiry: number }>;
 
-    readonly #rateLimiter: RestRateLimiter;
+    readonly #routeRateLimits: Store<string, RateLimitInfo>;
 
     readonly #pool: Pool;
 
@@ -43,7 +90,7 @@ export class Rest {
     public constructor(token: string, options: RestOptions) {
         this.#token = token;
         this.#store = new Store();
-        this.#rateLimiter = new RestRateLimiter();
+        this.#routeRateLimits = new Store();
         this.#pool = this.initializePool();
         this.#retryAgent = this.initializeRetryAgent();
         this.#options = Object.freeze({ ...options });
@@ -73,7 +120,7 @@ export class Rest {
                 }
             }
 
-            await this.#rateLimiter.wait(request.path);
+            await this.wait(request.path);
 
             const path = `/api/v${this.#options.version}${request.path}`;
             const response = await this.#retryAgent.request({
@@ -82,13 +129,13 @@ export class Rest {
                 headers: this.initializeHeaders(request.headers as Record<string, string>),
             });
 
-            this.#rateLimiter.handleRateLimit(request.path, response.headers as Record<string, string>);
+            this.handleRateLimit(request.path, response.headers as Record<string, string>);
 
             const responseText = await this.decompressResponse(response.headers, response.body);
             const data = JSON.parse(responseText);
 
             if (response.statusCode === RestHttpResponseCodes.TooManyRequests) {
-                await this.#rateLimiter.handleRateLimitResponse(data);
+                await this.handleRateLimitResponse(data);
                 return await this.request(request);
             }
 
@@ -181,5 +228,46 @@ export class Rest {
         }
 
         return Object.freeze(headers);
+    }
+
+    private async wait(path: string): Promise<void> {
+        const now = Date.now();
+        if (this.#globalRateLimit && this.#globalRateLimit > now) {
+            await setTimeout(this.#globalRateLimit - now);
+        }
+
+        const routeLimit = this.#routeRateLimits.get(path);
+        if (routeLimit && routeLimit.remaining <= 0 && routeLimit.reset > now) {
+            await setTimeout(routeLimit.reset - now);
+        }
+    }
+
+    private handleRateLimit(path: string, headers: Record<string, string>): void {
+        const rateLimitInfo = this.parseHeaders(headers);
+        this.#routeRateLimits.set(path, rateLimitInfo);
+
+        if (headers["X-RateLimit-Global"]) {
+            this.#globalRateLimit = Date.now() + rateLimitInfo.resetAfter;
+        }
+    }
+
+    private async handleRateLimitResponse(response: RateLimitResponseStructure): Promise<void> {
+        if (response.global) {
+            this.#globalRateLimit = Date.now() + response.retry_after * 1_000;
+        }
+
+        await setTimeout(response.retry_after * 1_000);
+
+        throw new Error(`[REST] Rate limited: ${response.message}`);
+    }
+
+    private parseHeaders(headers: Record<string, string>): RateLimitInfo {
+        return Object.freeze({
+            limit: Number.parseInt(headers["X-RateLimit-Limit"] ?? "0", 10),
+            remaining: Number.parseInt(headers["X-RateLimit-Remaining"] ?? "0", 10),
+            reset: Number.parseInt(headers["X-RateLimit-Reset"] ?? "0", 10) * 1_000,
+            resetAfter: Number.parseFloat(headers["X-RateLimit-Reset-After"] ?? "0") * 1_000,
+            bucket: headers["X-RateLimit-Bucket"] ?? "",
+        });
     }
 }

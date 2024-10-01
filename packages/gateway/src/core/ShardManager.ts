@@ -9,7 +9,7 @@ import type { IdentifyStructure } from "../events/identity";
 import type { GatewayOptions } from "../types/gateway";
 import type { GatewayManager } from "./GatewayManager";
 
-type ShardInfo = Readonly<{
+type ShardInfo = {
     /**
      * The shard ID.
      */
@@ -18,7 +18,7 @@ type ShardInfo = Readonly<{
      * The total number of shards.
      */
     totalShards: Integer;
-}>;
+};
 
 export class ShardManager {
     #maxConcurrency: number;
@@ -35,7 +35,7 @@ export class ShardManager {
 
     readonly #rateLimitQueue: Store<Integer, ShardInfo[]>;
 
-    public constructor(token: string, ws: GatewayManager, rest: Rest, options: Readonly<GatewayOptions>) {
+    public constructor(token: string, ws: GatewayManager, rest: Rest, options: GatewayOptions) {
         this.#maxConcurrency = 1;
         this.#token = token;
         this.#ws = ws;
@@ -43,6 +43,7 @@ export class ShardManager {
         this.#options = options;
         this.#shards = new Store();
         this.#rateLimitQueue = new Store();
+        this.#options = Object.freeze({ ...options });
     }
 
     public async initialize(): Promise<void> {
