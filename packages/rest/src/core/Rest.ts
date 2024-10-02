@@ -50,7 +50,7 @@ type RateLimitInfo = {
     /**
      * The time in milliseconds after which the current time frame resets.
      */
-    resetAfter: Integer;
+    reset_after: Integer;
 };
 
 export type RestOptions = {
@@ -85,7 +85,7 @@ export class Rest {
 
     readonly #retryAgent: RetryAgent;
 
-    readonly #options: RestOptions;
+    readonly #options: Readonly<RestOptions>;
 
     public constructor(token: string, options: RestOptions) {
         this.#token = token;
@@ -100,6 +100,7 @@ export class Rest {
         try {
             await this.#pool.destroy();
             this.#store.clear();
+            this.#routeRateLimits.clear();
         } catch (error) {
             if (error instanceof Error) {
                 throw error;
@@ -110,9 +111,9 @@ export class Rest {
     }
 
     public async request<T>(request: RestRequestOptions<T>): Promise<T> {
-        try {
-            const cacheKey = `${request.method}:${request.path}`;
+        const cacheKey = `${request.method}:${request.path}`;
 
+        try {
             if (!request.disable_cache) {
                 const cachedResponse = this.#store.get(cacheKey);
                 if (cachedResponse && cachedResponse.expiry > Date.now()) {
@@ -124,8 +125,10 @@ export class Rest {
 
             const path = `/api/v${this.#options.version}${request.path}`;
             const response = await this.#retryAgent.request({
-                ...request,
                 path,
+                body: request.body,
+                method: request.method,
+                query: request.query,
                 headers: this.initializeHeaders(request.headers as Record<string, string>),
             });
 
@@ -147,7 +150,7 @@ export class Rest {
             }
 
             if (response.statusCode >= 400) {
-                throw new Error(JSON.stringify(data));
+                throw new Error(`[REST] ${data.message}`);
             }
 
             return data as T;
@@ -166,7 +169,7 @@ export class Rest {
     ): Promise<string> {
         const responseBuffer = await body.arrayBuffer();
 
-        if (headers["content-encoding"] === "gzip") {
+        if (headers["content-encoding"]?.toLowerCase() === "gzip") {
             return new Promise((resolve, reject) => {
                 const gunzip = new Gunzip({ level: 9 });
                 const chunks: Buffer[] = [];
@@ -246,8 +249,8 @@ export class Rest {
         const rateLimitInfo = this.parseHeaders(headers);
         this.#routeRateLimits.set(path, rateLimitInfo);
 
-        if (headers["X-RateLimit-Global"]) {
-            this.#globalRateLimit = Date.now() + rateLimitInfo.resetAfter;
+        if (headers["x-ratelimit-global"]) {
+            this.#globalRateLimit = Date.now() + rateLimitInfo.reset_after;
         }
     }
 
@@ -261,13 +264,13 @@ export class Rest {
         throw new Error(`[REST] Rate limited: ${response.message}`);
     }
 
-    private parseHeaders(headers: Record<string, string>): RateLimitInfo {
+    private parseHeaders(headers: Record<string, string>): Readonly<RateLimitInfo> {
         return Object.freeze({
-            limit: Number.parseInt(headers["X-RateLimit-Limit"] ?? "0", 10),
-            remaining: Number.parseInt(headers["X-RateLimit-Remaining"] ?? "0", 10),
-            reset: Number.parseInt(headers["X-RateLimit-Reset"] ?? "0", 10) * 1_000,
-            resetAfter: Number.parseFloat(headers["X-RateLimit-Reset-After"] ?? "0") * 1_000,
-            bucket: headers["X-RateLimit-Bucket"] ?? "",
+            limit: Number.parseInt(headers["x-ratelimit-limit"] ?? "0", 10),
+            remaining: Number.parseInt(headers["x-ratelimit-remaining"] ?? "0", 10),
+            reset: Number.parseInt(headers["x-ratelimit-reset"] ?? "0", 10) * 1_000,
+            reset_after: Number.parseFloat(headers["x-ratelimit-reset-after"] ?? "0") * 1_000,
+            bucket: headers["x-ratelimit-bucket"] ?? "",
         });
     }
 }
