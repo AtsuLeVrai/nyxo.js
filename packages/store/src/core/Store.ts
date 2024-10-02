@@ -17,21 +17,18 @@ export type StoreOptions = {
 };
 
 export class Store<K, V> {
-    #cache: Map<K, { expiry?: number; value: V }>;
+    #cache: Map<K, { expiry?: number; value: V }> = new Map();
 
-    readonly #lruOrder: K[];
+    readonly #lruOrder: K[] = [];
 
-    readonly #options: Required<StoreOptions>;
+    readonly #options: Readonly<Required<StoreOptions>>;
 
     public constructor(options: StoreOptions = {}) {
-        this.#cache = new Map();
-        this.#lruOrder = [];
-        this.#options = {
+        this.#options = Object.freeze({
             max_size: options.max_size ?? Number.POSITIVE_INFINITY,
             default_ttl: options.default_ttl ?? 0,
             onEvict: options.onEvict ?? (() => {}),
-        };
-        Object.freeze(this.#options);
+        });
     }
 
     public get(key: K): V | undefined {

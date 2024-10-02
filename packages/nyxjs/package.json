@@ -34,12 +34,7 @@
       "require": "./dist/index.js"
     }
   },
-  "scripts": {
-    "build": "tsup && rimraf .tsup",
-    "clean": "rimraf dist",
-    "lint": "eslint src --fix --format pretty",
-    "pretty": "prettier --write src"
-  },
+  "scripts": {},
   "dependencies": {
     "@nyxjs/core": "workspace:*",
     "@nyxjs/gateway": "workspace:*",

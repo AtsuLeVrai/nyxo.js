@@ -77,9 +77,9 @@ export class Rest {
 
     readonly #token: string;
 
-    readonly #store: Store<string, { data: any; expiry: number }>;
+    readonly #store: Store<string, { data: any; expiry: number }> = new Store();
 
-    readonly #routeRateLimits: Store<string, RateLimitInfo>;
+    readonly #routeRateLimits: Store<string, RateLimitInfo> = new Store();
 
     readonly #pool: Pool;
 
@@ -89,8 +89,6 @@ export class Rest {
 
     public constructor(token: string, options: RestOptions) {
         this.#token = token;
-        this.#store = new Store();
-        this.#routeRateLimits = new Store();
         this.#pool = this.initializePool();
         this.#retryAgent = this.initializeRetryAgent();
         this.#options = Object.freeze({ ...options });

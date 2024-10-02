@@ -1,6 +1,5 @@
-import type { ApiVersions, GatewayIntents, GatewayOpcodes, Integer } from "@nyxjs/core";
+import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/presences";
-import type { GatewayReceiveEvents } from "./events";
 
 export enum CompressTypes {
     /**
@@ -29,15 +28,11 @@ export enum EncodingTypes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#connecting-gateway-url-query-string-params}
  */
-export type GatewayOptions = {
+export type GatewayManagerOptions = {
     /**
      * The optional transport compression of globals packets zlib-stream or zstd-stream
      */
     compress?: CompressTypes;
-    /**
-     * The maximum number of shards to spawn
-     */
-    delay?: Integer;
     /**
      * The encoding of received globals packets json or etf
      */
@@ -51,10 +46,6 @@ export type GatewayOptions = {
      */
     large_threshold?: Integer;
     /**
-     * The maximum number of attempts to reconnect
-     */
-    max_attempts?: Integer;
-    /**
      * The presence update structure for the globals connection.
      */
     presence?: UpdatePresenceGatewayPresenceUpdateStructure;
@@ -67,26 +58,4 @@ export type GatewayOptions = {
      * API version
      */
     v: ApiVersions;
-};
-
-/**
- * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
- */
-export type GatewayPayload = {
-    /**
-     * Event data
-     */
-    d: unknown;
-    /**
-     * Gateway opcode, which indicates the payload type
-     */
-    op: GatewayOpcodes;
-    /**
-     * Sequence number of event used for resuming sessions and heartbeating
-     */
-    s: Integer | null;
-    /**
-     * Event name
-     */
-    t: keyof GatewayReceiveEvents | null;
 };

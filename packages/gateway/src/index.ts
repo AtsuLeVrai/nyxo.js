@@ -12,6 +12,7 @@ export * from "./events/polls";
 export * from "./events/presences";
 export * from "./events/ready";
 export * from "./events/resume";
+export * from "./events/soundboards";
 export * from "./events/voices";
 export * from "./events/webhooks";
 

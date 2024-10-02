@@ -2,7 +2,7 @@ import { performance } from "node:perf_hooks";
 import process from "node:process";
 import { clearInterval, setInterval, setTimeout } from "node:timers";
 import { config } from "dotenv";
-import { ApiVersions, EncodingTypes, GatewayManager, Rest } from "nyx.js";
+import { ApiVersions, CompressTypes, EncodingTypes, GatewayManager, Rest } from "nyx.js";
 
 config();
 
@@ -23,8 +23,8 @@ const rest = new Rest(process.env.DISCORD_TOKEN, {
 const gateway = new GatewayManager(process.env.DISCORD_TOKEN, rest, {
     intents: 513,
     v: ApiVersions.V10,
-    encoding: EncodingTypes.Json,
-    // compress: CompressTypes.ZlibStream,
+    encoding: EncodingTypes.Etf,
+    compress: CompressTypes.ZlibStream,
     // shard: "auto",
 });
 
@@ -94,6 +94,6 @@ setTimeout(() => {
     clearInterval(statsInterval);
     logStats();
     console.log("\nFin du benchmark. Fermeture de la connexion...");
-    gateway.disconnect();
+    gateway.destroy();
     process.exit(0);
-}, 60_000);
+}, 10_000);

@@ -13,6 +13,7 @@ import type {
     IntegrationStructure,
     InteractionStructure,
     MessageStructure,
+    SoundboardSoundStructure,
     StageInstanceStructure,
     SubscriptionStructure,
     ThreadMemberStructure,
@@ -71,6 +72,7 @@ import type {
 } from "../events/presences";
 import type { ReadyEventFields } from "../events/ready";
 import type { ResumeStructure } from "../events/resume";
+import type { GuildSoundboardSoundDeleteEventFields } from "../events/soundboards";
 import type {
     UpdateVoiceStateGatewayVoiceStateUpdateStructure,
     VoiceChannelEffectSendEventFields,
@@ -81,7 +83,7 @@ import type { WebhooksUpdateEventFields } from "../events/webhooks";
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#receive-events}
  */
-export type GatewayReceiveEvents = {
+export type GatewayManagerReceiveEvents = {
     [GatewayOpcodes.Hello]: [hello: HelloStructure];
     [GatewayOpcodes.Resume]: [resume: ResumeStructure];
     [GatewayOpcodes.Reconnect]: [reconnect: null];
@@ -121,6 +123,10 @@ export type GatewayReceiveEvents = {
     GUILD_SCHEDULED_EVENT_UPDATE: [guildScheduledEventUpdate: GuildScheduledEventStructure];
     GUILD_SCHEDULED_EVENT_USER_ADD: [guildScheduledEventUserAdd: GuildScheduledEventUserAddEventFields];
     GUILD_SCHEDULED_EVENT_USER_REMOVE: [guildScheduledEventUserRemove: GuildScheduledEventUserRemoveEventFields];
+    GUILD_SOUNDBOARD_SOUNDS_UPDATE: [guildSoundboardSoundsUpdate: SoundboardSoundStructure[]];
+    GUILD_SOUNDBOARD_SOUND_CREATE: [guildSoundboardSoundCreate: SoundboardSoundStructure];
+    GUILD_SOUNDBOARD_SOUND_DELETE: [guildSoundboardSoundDelete: GuildSoundboardSoundDeleteEventFields];
+    GUILD_SOUNDBOARD_SOUND_UPDATE: [guildSoundboardSoundUpdate: SoundboardSoundStructure];
     GUILD_STICKERS_UPDATE: [guildStickersUpdate: GuildStickersUpdateEventFields];
     GUILD_UPDATE: [guildUpdate: GuildStructure];
     INTEGRATION_CREATE: [integrationCreate: IntegrationCreateEventAdditionalFields & IntegrationStructure];
@@ -162,6 +168,7 @@ export type GatewayReceiveEvents = {
     THREAD_LIST_SYNC: [threadListSync: ThreadListSyncEventFields];
     THREAD_MEMBERS_UPDATE: [threadMembersUpdate: ThreadMembersUpdateEventFields];
     THREAD_MEMBER_UPDATE: [threadMemberUpdate: ThreadMemberStructure & ThreadMemberUpdateEventExtraFields];
+    THREAD_UPDATE: [threadUpdate: ChannelStructure];
     TYPING_START: [typingStart: TypingStartEventFields];
     USER_UPDATE: [userUpdate: UserStructure];
     VOICE_CHANNEL_EFFECT_SEND: [voiceChannelEffectSend: VoiceChannelEffectSendEventFields];
@@ -173,7 +180,7 @@ export type GatewayReceiveEvents = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#send-events}
  */
-export type GatewaySendEvents = {
+export type GatewayManagerSendEvents = {
     [GatewayOpcodes.Identify]: IdentifyStructure;
     [GatewayOpcodes.Resume]: ResumeStructure;
     [GatewayOpcodes.Heartbeat]: Integer | null;
@@ -182,7 +189,7 @@ export type GatewaySendEvents = {
     [GatewayOpcodes.PresenceUpdate]: UpdatePresenceGatewayPresenceUpdateStructure;
 };
 
-export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
+export type GatewayManagerEvents<K extends keyof GatewayManagerReceiveEvents> = {
     /**
      * Event triggered when the connection is closed.
      *
@@ -202,7 +209,7 @@ export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
      * @param event - The event name.
      * @param data - The event data.
      */
-    dispatch: [event: K, ...data: GatewayReceiveEvents[K]];
+    dispatch: [event: K, ...data: GatewayManagerReceiveEvents[K]];
     /**
      * Event triggered when an error occurs.
      *

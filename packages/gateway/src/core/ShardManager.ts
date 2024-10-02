@@ -1,4 +1,4 @@
-import process from "node:process";
+import { platform } from "node:os";
 import { setTimeout } from "node:timers/promises";
 import type { Integer, Snowflake } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
@@ -6,7 +6,7 @@ import type { Rest } from "@nyxjs/rest";
 import { GatewayRoutes, UserRoutes } from "@nyxjs/rest";
 import { Store } from "@nyxjs/store";
 import type { IdentifyStructure } from "../events/identity";
-import type { GatewayOptions } from "../types/gateway";
+import type { GatewayManagerOptions } from "../types/gateway";
 import type { GatewayManager } from "./GatewayManager";
 
 type ShardInfo = {
@@ -21,7 +21,7 @@ type ShardInfo = {
 };
 
 export class ShardManager {
-    #maxConcurrency: number;
+    #maxConcurrency: number = 1;
 
     readonly #token: string;
 
@@ -29,123 +29,56 @@ export class ShardManager {
 
     readonly #rest: Rest;
 
-    readonly #options: Readonly<GatewayOptions>;
+    readonly #options: Readonly<GatewayManagerOptions>;
 
-    readonly #shards: Store<Integer, ShardInfo>;
+    readonly #shards: Store<Integer, ShardInfo> = new Store();
 
-    readonly #rateLimitQueue: Store<Integer, ShardInfo[]>;
+    readonly #rateLimitQueue: Store<Integer, ShardInfo[]> = new Store();
 
-    public constructor(token: string, ws: GatewayManager, rest: Rest, options: GatewayOptions) {
-        this.#maxConcurrency = 1;
-        this.#token = token;
+    public constructor(ws: GatewayManager, token: string, rest: Rest, options: GatewayManagerOptions) {
         this.#ws = ws;
+        this.#token = token;
         this.#rest = rest;
         this.#options = options;
-        this.#shards = new Store();
-        this.#rateLimitQueue = new Store();
         this.#options = Object.freeze({ ...options });
     }
 
-    public async initialize(): Promise<void> {
+    public async start(): Promise<void> {
         try {
-            if (this.#options.shard) {
-                await this.initializeWithSharding();
+            if (this.#options.shard === "auto") {
+                await this.autoShard();
             } else {
-                await this.connectShard();
+                await this.connectOne();
             }
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-
-            throw new Error(String(error));
+            throw new Error(`Failed to initialize ShardManager: ${error}`);
         }
     }
 
-    public cleanup(): void {
+    public clear(): void {
         this.#shards.clear();
         this.#rateLimitQueue.clear();
     }
 
-    private async initializeWithSharding(): Promise<void> {
-        const [minShardId, maxShardId, maxConcurrency] = await this.determineShardInfo();
-        this.#maxConcurrency = maxConcurrency;
-
-        for (let shardId = minShardId; shardId < maxShardId; shardId++) {
-            const shardInfo: ShardInfo = Object.freeze({
-                shardId,
-                totalShards: maxShardId,
-            });
-            this.#shards.set(shardId, shardInfo);
-            const rateLimitKey = this.calculateRateLimitKey(shardId, this.#maxConcurrency);
-            if (!this.#rateLimitQueue.has(rateLimitKey)) {
-                this.#rateLimitQueue.set(rateLimitKey, []);
-            }
-
-            if (!this.#rateLimitQueue.get(rateLimitKey)!.some((some) => some.shardId === shardId)) {
-                this.#rateLimitQueue.get(rateLimitKey)!.push(shardInfo);
-            }
-        }
-
-        await this.connectShards();
+    private calculateShardId(guildId: Snowflake, totalShards: Integer): Integer {
+        const guildIdBigInt = BigInt(guildId);
+        const shardIdBigInt = (guildIdBigInt >> 22n) % BigInt(totalShards);
+        return Number(shardIdBigInt);
     }
 
-    private async connectShards(): Promise<void> {
-        const connectPromises: Promise<void>[] = [];
-
-        for (let index = 0; index < this.#maxConcurrency; index++) {
-            connectPromises.push(this.processRateLimitQueue(index));
-        }
-
-        await Promise.all(connectPromises);
-    }
-
-    private async processRateLimitQueue(rateLimitKey: number): Promise<void> {
-        const queue = this.#rateLimitQueue.get(rateLimitKey) ?? [];
-        for (const shardInfo of queue) {
-            await this.connectShard(shardInfo);
-            await setTimeout(5_000);
-        }
-    }
-
-    private async connectShard(shardInfo?: ShardInfo): Promise<void> {
-        return new Promise((resolve, reject) => {
-            try {
-                const payload: IdentifyStructure = {
-                    token: this.#token,
-                    intents: this.#options.intents,
-                    large_threshold: this.#options.large_threshold,
-                    presence: this.#options.presence,
-                    compress: Boolean(this.#options.compress),
-                    properties: {
-                        os: process.platform,
-                        browser: "nyxjs",
-                        device: "nyxjs",
-                    },
-                };
-
-                if (this.#options.shard && shardInfo) {
-                    this.#ws.emit("debug", `[WS] Connecting shard: [${shardInfo.shardId},${shardInfo.totalShards}]`);
-                    payload.shard = [shardInfo.shardId, shardInfo.totalShards];
-                }
-
-                this.#ws.emit("debug", `[WS] Sending identify payload: ${JSON.stringify(payload, null, 2)}`);
-                this.#ws.send(GatewayOpcodes.Identify, payload);
-                resolve();
-            } catch (error) {
-                reject(error);
-            }
-        });
-    }
-
-    private async determineShardInfo(): Promise<[minShardId: number, maxShardId: number, maxConcurrency: number]> {
+    private async getShardInfo(): Promise<[Integer, Integer, number]> {
         const info = await this.#rest.request(GatewayRoutes.getGatewayBot());
         const totalShards = info.shards;
+        const maxConcurrency = info.session_start_limit.max_concurrency;
 
         const guilds = await this.#rest.request(UserRoutes.getCurrentUserGuilds());
 
+        if (guilds.length <= 2_500) {
+            this.#ws.emit("warn", "The bot is in less than 2500 guilds, auto-sharding is not necessary.");
+        }
+
         if (guilds.length === 0) {
-            return [0, totalShards, info.session_start_limit.max_concurrency];
+            return [0, totalShards, maxConcurrency];
         }
 
         const shardIds = new Set<Integer>();
@@ -154,20 +87,73 @@ export class ShardManager {
             shardIds.add(shardId);
         }
 
-        if (shardIds.size === 1) {
-            return [[...shardIds][0], totalShards, info.session_start_limit.max_concurrency];
+        const minShardId = Math.min(...shardIds);
+        const maxShardId = Math.max(...shardIds) + 1;
+        return [minShardId, maxShardId, maxConcurrency];
+    }
+
+    private calculateRateLimitKey(shardId: Integer): Integer {
+        return shardId % this.#maxConcurrency;
+    }
+
+    private async autoShard(): Promise<void> {
+        const [minShardId, maxShardId, maxConcurrency] = await this.getShardInfo();
+        this.#maxConcurrency = maxConcurrency;
+
+        for (let shardId = minShardId; shardId < maxShardId; shardId++) {
+            const shardInfo: ShardInfo = Object.freeze({
+                shardId,
+                totalShards: maxShardId,
+            });
+            this.#shards.set(shardId, shardInfo);
+            const rateLimitKey = this.calculateRateLimitKey(shardId);
+            const queue = this.#rateLimitQueue.get(rateLimitKey) ?? [];
+            queue.push(shardInfo);
+            this.#rateLimitQueue.set(rateLimitKey, queue);
         }
 
-        const minShardId = Math.min(...shardIds);
-        const maxShardId = Math.max(...shardIds);
-        return [minShardId, maxShardId + 1, info.session_start_limit.max_concurrency];
+        await this.connectAll();
     }
 
-    private calculateShardId(guildId: Snowflake, shardCount: Integer): Integer {
-        return Number((BigInt(guildId) >> 22n) % BigInt(shardCount));
+    private async connectAll(): Promise<void> {
+        const promises: Promise<void>[] = [];
+
+        for (let index = 0; index < this.#maxConcurrency; index++) {
+            promises.push(this.processQueue(index));
+        }
+
+        await Promise.all(promises);
     }
 
-    private calculateRateLimitKey(shardId: Integer, maxConcurrency: Integer): Integer {
-        return shardId % maxConcurrency;
+    private async processQueue(rateLimitKey: Integer): Promise<void> {
+        const queue = this.#rateLimitQueue.get(rateLimitKey) ?? [];
+        for (const shardInfo of queue) {
+            await this.connectOne(shardInfo);
+            await setTimeout(5_000);
+        }
+    }
+
+    private async connectOne(shardInfo?: ShardInfo): Promise<void> {
+        const identify: IdentifyStructure = {
+            token: this.#token,
+            intents: this.#options.intents,
+            large_threshold: this.#options.large_threshold,
+            presence: this.#options.presence,
+            compress: Boolean(this.#options.compress),
+            properties: {
+                os: platform(),
+                browser: "nyxjs",
+                device: "nyxjs",
+            },
+        };
+
+        if (shardInfo) {
+            identify.shard = [shardInfo.shardId, shardInfo.totalShards];
+        } else if (Array.isArray(this.#options.shard)) {
+            identify.shard = this.#options.shard;
+        }
+
+        this.#ws.send(GatewayOpcodes.Identify, identify);
+        this.#ws.emit("debug", `Sent Identify payload: ${JSON.stringify(identify, null, 2)}`);
     }
 }

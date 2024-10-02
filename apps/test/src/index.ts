@@ -16,15 +16,27 @@ const rest = new Rest(process.env.DISCORD_TOKEN, {
 const gateway = new GatewayManager(process.env.DISCORD_TOKEN, rest, {
     intents: 513,
     v: ApiVersions.V10,
-    encoding: EncodingTypes.Json,
+    encoding: EncodingTypes.Etf,
     compress: CompressTypes.ZlibStream,
     // shard: "auto",
 });
 
-gateway.on("error", console.log);
-gateway.on("close", console.log);
-gateway.on("warn", console.log);
-gateway.on("debug", console.log);
+gateway.on("error", (error) => {
+    console.error("Error:", error);
+});
+
+gateway.on("close", (event) => {
+    console.log("Close:", event);
+});
+
+gateway.on("warn", (warning) => {
+    console.warn("Warn:", warning);
+});
+
+gateway.on("debug", (info) => {
+    console.debug("Debug:", info);
+});
+
 // gateway.on("dispatch", console.log);
 
 void gateway.connect();
