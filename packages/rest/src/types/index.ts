@@ -85,4 +85,8 @@ export type QueryStringParams = {
      * Number of results to return (1-100)
      */
     limit?: Integer;
+    /**
+     * ID of the thread the message is in
+     */
+    thread_id?: Snowflake;
 };

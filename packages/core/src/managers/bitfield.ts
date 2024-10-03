@@ -6,41 +6,6 @@
 export type BitfieldResolvable<T> = (T | bigint | `${bigint}`)[] | BitfieldManager<T> | T | bigint | `${bigint}`;
 
 /**
- * Asserts that a string represents a valid BigInt and returns it.
- *
- * @param value The string to validate and convert.
- * @returns The validated BigInt.
- * @throws Error if the string is not a valid BigInt representation.
- */
-function assertValidBigInt(value: string): bigint {
-    const trimmedValue = value.trim();
-
-    if (trimmedValue.length === 0) {
-        throw new Error("Empty string is not a valid BigInt");
-    }
-
-    if (!/^-?\d+$/.test(trimmedValue)) {
-        throw new Error("Invalid BigInt format");
-    }
-
-    try {
-        const result = BigInt(trimmedValue);
-
-        if (result < 0n) {
-            throw new Error("BigInt must be non-negative for bitfield operations");
-        }
-
-        return result;
-    } catch (error) {
-        if (error instanceof Error) {
-            throw new TypeError(`Failed to create BigInt: ${error.message}`);
-        } else {
-            throw new TypeError("Failed to create BigInt: Unknown error");
-        }
-    }
-}
-
-/**
  * A class that manages bitfields with type-safe flag operations.
  */
 export class BitfieldManager<T> {
@@ -59,7 +24,7 @@ export class BitfieldManager<T> {
         if (typeof value === "bigint") {
             this.#bitfield = value;
         } else if (Array.isArray(value)) {
-            this.#bitfield = value.reduce((acc, val) => acc | this.resolve(val), 0n);
+            this.#bitfield = value.reduce((acc, val) => acc | this.#resolve(val), 0n);
         } else {
             throw new TypeError("Initial value must be a bigint or an array of flags");
         }
@@ -86,7 +51,7 @@ export class BitfieldManager<T> {
      * @returns True if the flag is set, false otherwise.
      */
     public has(val: T): boolean {
-        const bit = this.resolve(val);
+        const bit = this.#resolve(val);
         return (this.#bitfield & bit) === bit;
     }
 
@@ -97,7 +62,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public add(...flags: T[]): this {
-        this.#bitfield |= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
+        this.#bitfield |= flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
         return this;
     }
 
@@ -108,7 +73,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public remove(...flags: T[]): this {
-        this.#bitfield &= ~flags.reduce((acc, val) => acc | this.resolve(val), 0n);
+        this.#bitfield &= ~flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
         return this;
     }
 
@@ -119,7 +84,7 @@ export class BitfieldManager<T> {
      * @returns The BitfieldManager instance for chaining.
      */
     public toggle(...flags: T[]): this {
-        this.#bitfield ^= flags.reduce((acc, val) => acc | this.resolve(val), 0n);
+        this.#bitfield ^= flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
         return this;
     }
 
@@ -159,9 +124,9 @@ export class BitfieldManager<T> {
      * @throws TypeError If the value is of an invalid type.
      * @throws Error If a number value is not a non-negative integer.
      */
-    private resolve(value: BitfieldResolvable<T> | BitfieldResolvable<T>[]): bigint {
+    #resolve(value: BitfieldResolvable<T> | BitfieldResolvable<T>[]): bigint {
         if (Array.isArray(value)) {
-            return value.reduce<bigint>((acc, val) => acc | this.resolve(val), 0n);
+            return value.reduce<bigint>((acc, val) => acc | this.#resolve(val), 0n);
         }
 
         if (typeof value === "bigint") {
@@ -177,9 +142,44 @@ export class BitfieldManager<T> {
         }
 
         if (typeof value === "string") {
-            return assertValidBigInt(value);
+            return this.#assertValidBigInt(value);
         }
 
         throw new TypeError("Invalid type for bitfield value");
+    }
+
+    /**
+     * Asserts that a string represents a valid BigInt and returns it.
+     *
+     * @param value The string to validate and convert.
+     * @returns The validated BigInt.
+     * @throws Error if the string is not a valid BigInt representation.
+     */
+    #assertValidBigInt(value: string): bigint {
+        const trimmedValue = value.trim();
+
+        if (trimmedValue.length === 0) {
+            throw new Error("Empty string is not a valid BigInt");
+        }
+
+        if (!/^-?\d+$/.test(trimmedValue)) {
+            throw new Error("Invalid BigInt format");
+        }
+
+        try {
+            const result = BigInt(trimmedValue);
+
+            if (result < 0n) {
+                throw new Error("BigInt must be non-negative for bitfield operations");
+            }
+
+            return result;
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new TypeError(`Failed to create BigInt: ${error.message}`);
+            } else {
+                throw new TypeError("Failed to create BigInt: Unknown error");
+            }
+        }
     }
 }

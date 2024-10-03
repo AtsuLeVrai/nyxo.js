@@ -41,7 +41,7 @@ export class FileUploadManager {
     } {
         try {
             const url = new URL(urlString);
-            if (!this.isValidDiscordCdnUrl(url)) {
+            if (!this.#isValidDiscordCdnUrl(url)) {
                 throw new Error("Invalid Discord CDN URL");
             }
 
@@ -94,7 +94,7 @@ export class FileUploadManager {
             throw new Error("Invalid field name");
         }
 
-        const details = this.getFileDetails(file, filename);
+        const details = this.#getFileDetails(file, filename);
         this.#formData.append(fieldName, details.content, {
             filename: details.filename,
             contentType: details.contentType,
@@ -131,7 +131,7 @@ export class FileUploadManager {
         return Object.freeze(this.#formData.getHeaders());
     }
 
-    private isValidDiscordCdnUrl(url: URL): boolean {
+    #isValidDiscordCdnUrl(url: URL): boolean {
         return (
             url.hostname === "discord.com" &&
             url.pathname.startsWith("/attachments/") &&
@@ -139,7 +139,7 @@ export class FileUploadManager {
         );
     }
 
-    private getContentType(filename: string): string {
+    #getContentType(filename: string): string {
         const extension = filename.split(".").pop()?.toLowerCase() ?? "";
         const contentTypes: Readonly<Record<string, string>> = {
             png: "image/png",
@@ -151,7 +151,7 @@ export class FileUploadManager {
         return contentTypes[extension] || MimeTypes.Bin;
     }
 
-    private getFileDetails(
+    #getFileDetails(
         file: FileInput,
         providedFilename?: string
     ): {
@@ -164,14 +164,14 @@ export class FileUploadManager {
             return {
                 content: createReadStream(file),
                 filename,
-                contentType: this.getContentType(filename),
+                contentType: this.#getContentType(filename),
             };
         } else if (file instanceof Buffer) {
             const filename = providedFilename ?? "file.bin";
             return {
                 content: file,
                 filename,
-                contentType: providedFilename ? this.getContentType(filename) : MimeTypes.Bin,
+                contentType: providedFilename ? this.#getContentType(filename) : MimeTypes.Bin,
             };
         } else if (file instanceof Blob) {
             return { content: file, filename: providedFilename ?? "blob", contentType: file.type ?? MimeTypes.Bin };

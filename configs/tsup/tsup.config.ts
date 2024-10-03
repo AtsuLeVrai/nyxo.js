@@ -1,14 +1,10 @@
-const tsup = require("tsup");
+import {defineConfig, Options} from "tsup";
 
 /**
  * Create tsup config
- *
- * @param {string[]} entry
- * @param {tsup.Options} [options={}]
- * @returns {tsup.Options | tsup.Options[] | ((overrideOptions: tsup.Options) => MaybePromise<tsup.Options | tsup.Options[]>)}
  */
-function createTsupConfig(entry, options = {}) {
-  return tsup.defineConfig({
+export function createTsupConfig(entry: string[], options: Options = {}) {
+  return defineConfig({
     splitting: false,
     sourcemap: true,
     clean: true,
@@ -58,5 +54,3 @@ function createTsupConfig(entry, options = {}) {
     ...options,
   });
 }
-
-module.exports.createTsupConfig = createTsupConfig;

@@ -1,4 +1,4 @@
-import { platform } from "node:os";
+import { platform } from "node:process";
 import { setTimeout } from "node:timers/promises";
 import type { Integer, Snowflake } from "@nyxjs/core";
 import { GatewayOpcodes } from "@nyxjs/core";
@@ -46,9 +46,11 @@ export class ShardManager {
     public async start(): Promise<void> {
         try {
             if (this.#options.shard === "auto") {
-                await this.autoShard();
+                this.#ws.emit("debug", "Starting auto-sharding process.");
+                await this.#autoShard();
             } else {
-                await this.connectOne();
+                this.#ws.emit("debug", "Starting single shard connection.");
+                await this.#connectOne();
             }
         } catch (error) {
             throw new Error(`Failed to initialize ShardManager: ${error}`);
@@ -60,80 +62,98 @@ export class ShardManager {
         this.#rateLimitQueue.clear();
     }
 
-    private calculateShardId(guildId: Snowflake, totalShards: Integer): Integer {
+    #calculateShardId(guildId: Snowflake, totalShards: Integer): Integer {
         const guildIdBigInt = BigInt(guildId);
         const shardIdBigInt = (guildIdBigInt >> 22n) % BigInt(totalShards);
         return Number(shardIdBigInt);
     }
 
-    private async getShardInfo(): Promise<[Integer, Integer, number]> {
-        const info = await this.#rest.request(GatewayRoutes.getGatewayBot());
-        const totalShards = info.shards;
-        const maxConcurrency = info.session_start_limit.max_concurrency;
+    async #getShardInfo(): Promise<[Integer, Integer, number]> {
+        try {
+            const info = await this.#rest.request(GatewayRoutes.getGatewayBot());
+            const totalShards = info.shards;
+            const maxConcurrency = info.session_start_limit.max_concurrency;
 
-        const guilds = await this.#rest.request(UserRoutes.getCurrentUserGuilds());
+            const guilds = await this.#rest.request(UserRoutes.getCurrentUserGuilds());
 
-        if (guilds.length <= 2_500) {
-            this.#ws.emit("warn", "The bot is in less than 2500 guilds, auto-sharding is not necessary.");
+            if (guilds.length <= 2_500) {
+                this.#ws.emit("warn", "The bot is in less than 2500 guilds. Auto-sharding may not be necessary.");
+            }
+
+            if (guilds.length === 0) {
+                this.#ws.emit("debug", "No guilds found. Using default shard configuration.");
+                return [0, totalShards, maxConcurrency];
+            }
+
+            const shardIds = new Set<Integer>();
+            for (const guild of guilds) {
+                const shardId = this.#calculateShardId(guild.id, totalShards);
+                shardIds.add(shardId);
+            }
+
+            const minShardId = Math.min(...shardIds);
+            const maxShardId = Math.max(...shardIds) + 1;
+            this.#ws.emit(
+                "debug",
+                `Calculated shard range: ${minShardId} to ${maxShardId - 1}. Max concurrency: ${maxConcurrency}`
+            );
+            return [minShardId, maxShardId, maxConcurrency];
+        } catch (error) {
+            this.#ws.emit("error", new Error(`Failed to get shard information: ${error}`));
+            throw error;
         }
-
-        if (guilds.length === 0) {
-            return [0, totalShards, maxConcurrency];
-        }
-
-        const shardIds = new Set<Integer>();
-        for (const guild of guilds) {
-            const shardId = this.calculateShardId(guild.id, totalShards);
-            shardIds.add(shardId);
-        }
-
-        const minShardId = Math.min(...shardIds);
-        const maxShardId = Math.max(...shardIds) + 1;
-        return [minShardId, maxShardId, maxConcurrency];
     }
 
-    private calculateRateLimitKey(shardId: Integer): Integer {
+    #calculateRateLimitKey(shardId: Integer): Integer {
         return shardId % this.#maxConcurrency;
     }
 
-    private async autoShard(): Promise<void> {
-        const [minShardId, maxShardId, maxConcurrency] = await this.getShardInfo();
-        this.#maxConcurrency = maxConcurrency;
+    async #autoShard(): Promise<void> {
+        try {
+            const [minShardId, maxShardId, maxConcurrency] = await this.#getShardInfo();
+            this.#maxConcurrency = maxConcurrency;
 
-        for (let shardId = minShardId; shardId < maxShardId; shardId++) {
-            const shardInfo: ShardInfo = Object.freeze({
-                shardId,
-                totalShards: maxShardId,
-            });
-            this.#shards.set(shardId, shardInfo);
-            const rateLimitKey = this.calculateRateLimitKey(shardId);
-            const queue = this.#rateLimitQueue.get(rateLimitKey) ?? [];
-            queue.push(shardInfo);
-            this.#rateLimitQueue.set(rateLimitKey, queue);
+            for (let shardId = minShardId; shardId < maxShardId; shardId++) {
+                const shardInfo: ShardInfo = Object.freeze({
+                    shardId,
+                    totalShards: maxShardId,
+                });
+                this.#shards.set(shardId, shardInfo);
+                const rateLimitKey = this.#calculateRateLimitKey(shardId);
+                const queue = this.#rateLimitQueue.get(rateLimitKey) ?? [];
+                queue.push(shardInfo);
+                this.#rateLimitQueue.set(rateLimitKey, queue);
+            }
+
+            this.#ws.emit("debug", `Auto-sharding setup complete. Total shards: ${maxShardId - minShardId}`);
+            await this.#connectAll();
+        } catch (error) {
+            this.#ws.emit("error", new Error(`Failed to auto-shard: ${error}`));
+            throw error;
         }
-
-        await this.connectAll();
     }
 
-    private async connectAll(): Promise<void> {
+    async #connectAll(): Promise<void> {
         const promises: Promise<void>[] = [];
 
         for (let index = 0; index < this.#maxConcurrency; index++) {
-            promises.push(this.processQueue(index));
+            promises.push(this.#processQueue(index));
         }
 
+        this.#ws.emit("debug", `Connecting all shards with max concurrency of ${this.#maxConcurrency}`);
         await Promise.all(promises);
     }
 
-    private async processQueue(rateLimitKey: Integer): Promise<void> {
+    async #processQueue(rateLimitKey: Integer): Promise<void> {
         const queue = this.#rateLimitQueue.get(rateLimitKey) ?? [];
         for (const shardInfo of queue) {
-            await this.connectOne(shardInfo);
+            this.#ws.emit("debug", `Processing shard ${shardInfo.shardId} (Rate limit key: ${rateLimitKey})`);
+            await this.#connectOne(shardInfo);
             await setTimeout(5_000);
         }
     }
 
-    private async connectOne(shardInfo?: ShardInfo): Promise<void> {
+    async #connectOne(shardInfo?: ShardInfo): Promise<void> {
         const identify: IdentifyStructure = {
             token: this.#token,
             intents: this.#options.intents,
@@ -141,7 +161,7 @@ export class ShardManager {
             presence: this.#options.presence,
             compress: Boolean(this.#options.compress),
             properties: {
-                os: platform(),
+                os: platform,
                 browser: "nyxjs",
                 device: "nyxjs",
             },
@@ -149,11 +169,19 @@ export class ShardManager {
 
         if (shardInfo) {
             identify.shard = [shardInfo.shardId, shardInfo.totalShards];
+            this.#ws.emit("debug", `Connecting shard ${shardInfo.shardId}/${shardInfo.totalShards}`);
         } else if (Array.isArray(this.#options.shard)) {
-            identify.shard = this.#options.shard;
+            const [shardId, totalShards] = this.#options.shard;
+            identify.shard = [shardId, totalShards];
+            this.#ws.emit("debug", `Connecting single shard ${shardId}/${totalShards}`);
+        } else {
+            this.#ws.emit("debug", "Connecting without shard information");
         }
 
         this.#ws.send(GatewayOpcodes.Identify, identify);
-        this.#ws.emit("debug", `Sent Identify payload: ${JSON.stringify(identify, null, 2)}`);
+        this.#ws.emit(
+            "debug",
+            `Sent Identify payload for ${shardInfo ? `shard ${shardInfo.shardId}` : "single connection"} with payload: ${JSON.stringify(identify, null, 2)}`
+        );
     }
 }

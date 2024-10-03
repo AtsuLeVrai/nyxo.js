@@ -14,36 +14,36 @@ export class Cdn {
     public static baseUrl = new URL("https://cdn.discordapp.com");
 
     public static customEmoji(emojiId: Snowflake, options?: CdnImageOptions): string {
-        return this.createUrl(`emojis/${emojiId}`, options?.format, options?.size);
+        return this.#createUrl(`emojis/${emojiId}`, options?.format, options?.size);
     }
 
     public static guildIcon(guildId: Snowflake, icon: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/icons/${guildId}/${icon}`, options?.format, options?.size);
+        return this.#createUrl(`/icons/${guildId}/${icon}`, options?.format, options?.size);
     }
 
     public static guildSplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/splashes/${guildId}/${splash}`, options?.format, options?.size);
+        return this.#createUrl(`/splashes/${guildId}/${splash}`, options?.format, options?.size);
     }
 
     public static guildDiscoverySplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/discovery-splashes/${guildId}/${splash}`, options?.format, options?.size);
+        return this.#createUrl(`/discovery-splashes/${guildId}/${splash}`, options?.format, options?.size);
     }
 
     public static guildBanner(guildId: Snowflake, banner: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/banners/${guildId}/${banner}`, options?.format, options?.size);
+        return this.#createUrl(`/banners/${guildId}/${banner}`, options?.format, options?.size);
     }
 
     public static userBanner(userId: Snowflake, banner: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/banners/${userId}/${banner}`, options?.format, options?.size);
+        return this.#createUrl(`/banners/${userId}/${banner}`, options?.format, options?.size);
     }
 
     public static defaultUserAvatar(userId: Snowflake): string {
-        const hash = this.calculateDefaultAvatarHash(userId);
-        return this.createUrl(`/embed/avatars/${hash}`, ImageFormats.PNG);
+        const hash = this.#calculateDefaultAvatarHash(userId);
+        return this.#createUrl(`/embed/avatars/${hash}`, ImageFormats.PNG);
     }
 
     public static userAvatar(userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/avatars/${userId}/${avatar}`, options?.format, options?.size);
+        return this.#createUrl(`/avatars/${userId}/${avatar}`, options?.format, options?.size);
     }
 
     public static guildMemberAvatar(
@@ -52,23 +52,23 @@ export class Cdn {
         avatar: string,
         options?: CdnImageOptions
     ): string {
-        return this.createUrl(`/guilds/${guildId}/users/${userId}/avatars/${avatar}`, options?.format, options?.size);
+        return this.#createUrl(`/guilds/${guildId}/users/${userId}/avatars/${avatar}`, options?.format, options?.size);
     }
 
     public static avatarDecoration(avatarDecorationDataAsset: string): string {
-        return this.createUrl(`/avatar-decoration-presets/${avatarDecorationDataAsset}`, ImageFormats.PNG);
+        return this.#createUrl(`/avatar-decoration-presets/${avatarDecorationDataAsset}`, ImageFormats.PNG);
     }
 
     public static applicationIcon(applicationId: Snowflake, icon: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/app-icons/${applicationId}/${icon}`, options?.format, options?.size);
+        return this.#createUrl(`/app-icons/${applicationId}/${icon}`, options?.format, options?.size);
     }
 
     public static applicationCover(applicationId: Snowflake, coverImage: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/app-icons/${applicationId}/${coverImage}`, options?.format, options?.size);
+        return this.#createUrl(`/app-icons/${applicationId}/${coverImage}`, options?.format, options?.size);
     }
 
     public static applicationAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
-        return this.createUrl(`/app-assets/${applicationId}/${assetId}`, options?.format, options?.size);
+        return this.#createUrl(`/app-assets/${applicationId}/${assetId}`, options?.format, options?.size);
     }
 
     public static achievementIcon(
@@ -77,7 +77,7 @@ export class Cdn {
         iconHash: string,
         options?: CdnImageOptions
     ): string {
-        return this.createUrl(
+        return this.#createUrl(
             `/app-assets/${applicationId}/achievements/${achievementId}/icons/${iconHash}`,
             options?.format,
             options?.size
@@ -85,7 +85,7 @@ export class Cdn {
     }
 
     public static storePageAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
-        return this.createUrl(`/app-assets/${applicationId}/store/${assetId}`, options?.format, options?.size);
+        return this.#createUrl(`/app-assets/${applicationId}/store/${assetId}`, options?.format, options?.size);
     }
 
     public static stickerPackBanner(
@@ -93,7 +93,7 @@ export class Cdn {
         stickerPackBannerAssetId: Snowflake,
         options?: CdnImageOptions
     ): string {
-        return this.createUrl(
+        return this.#createUrl(
             `/app-assets/${applicationId}/store/${stickerPackBannerAssetId}`,
             options?.format,
             options?.size
@@ -101,15 +101,15 @@ export class Cdn {
     }
 
     public static teamIcon(teamId: Snowflake, teamIcon: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/team-icons/${teamId}/${teamIcon}`, options?.format, options?.size);
+        return this.#createUrl(`/team-icons/${teamId}/${teamIcon}`, options?.format, options?.size);
     }
 
     public static sticker(stickerId: Snowflake, format: ImageFormat = ImageFormats.PNG): string {
-        return this.createUrl(`/stickers/${stickerId}`, format, undefined, "media.discordapp.net");
+        return this.#createUrl(`/stickers/${stickerId}`, format, undefined, "media.discordapp.net");
     }
 
     public static roleIcon(roleId: Snowflake, roleIcon: string, options?: CdnImageOptions): string {
-        return this.createUrl(`/role-icons/${roleId}/${roleIcon}`, options?.format, options?.size);
+        return this.#createUrl(`/role-icons/${roleId}/${roleIcon}`, options?.format, options?.size);
     }
 
     public static guildScheduledEventCover(
@@ -118,7 +118,7 @@ export class Cdn {
         scheduledEventCoverImage: string,
         options?: CdnImageOptions
     ): string {
-        return this.createUrl(
+        return this.#createUrl(
             `/guild-events/${guildId}/${scheduledEventId}/${scheduledEventCoverImage}`,
             options?.format,
             options?.size
@@ -131,17 +131,17 @@ export class Cdn {
         banner: string,
         options?: CdnImageOptions
     ): string {
-        return this.createUrl(`/guilds/${guildId}/users/${userId}/banners/${banner}`, options?.format, options?.size);
+        return this.#createUrl(`/guilds/${guildId}/users/${userId}/banners/${banner}`, options?.format, options?.size);
     }
 
-    private static createUrl(
+    static #createUrl(
         path: string,
         format: ImageFormat = ImageFormats.PNG,
         size?: Integer,
         hostname: string = this.baseUrl.hostname
     ): string {
-        this.validateSize(size);
-        this.validateGifFormat(path, format, size);
+        this.#validateSize(size);
+        this.#validateGifFormat(path, format, size);
 
         const url = new URL(this.baseUrl);
         url.hostname = hostname;
@@ -154,14 +154,14 @@ export class Cdn {
         return url.toString();
     }
 
-    private static validateSize(size?: number): void {
+    static #validateSize(size?: number): void {
         if (size && (size < 16 || size > 4_096)) {
             throw new Error("Size must be between 16 and 4096.");
         }
     }
 
-    private static validateGifFormat(path: string, format: ImageFormat, size?: Integer): void {
-        if (format === ImageFormats.GIF && !this.isHashGif(path.split("/").pop() ?? "")) {
+    static #validateGifFormat(path: string, format: ImageFormat, size?: Integer): void {
+        if (format === ImageFormats.GIF && !this.#isHashGif(path.split("/").pop() ?? "")) {
             throw new Error("The asset is not a gif.");
         }
 
@@ -170,11 +170,11 @@ export class Cdn {
         }
     }
 
-    private static isHashGif(hash: string): boolean {
+    static #isHashGif(hash: string): boolean {
         return hash.startsWith("a_");
     }
 
-    private static calculateDefaultAvatarHash(userId: Snowflake): string {
+    static #calculateDefaultAvatarHash(userId: Snowflake): string {
         if (userId.length === 17) {
             return ((BigInt(userId) >> 22n) % 6n).toString();
         } else {

@@ -89,8 +89,8 @@ export class Rest {
 
     public constructor(token: string, options: RestOptions) {
         this.#token = token;
-        this.#pool = this.initializePool();
-        this.#retryAgent = this.initializeRetryAgent();
+        this.#pool = this.#initializePool();
+        this.#retryAgent = this.#initializeRetryAgent();
         this.#options = Object.freeze({ ...options });
     }
 
@@ -119,7 +119,7 @@ export class Rest {
                 }
             }
 
-            await this.wait(request.path);
+            await this.#wait(request.path);
 
             const path = `/api/v${this.#options.version}${request.path}`;
             const response = await this.#retryAgent.request({
@@ -127,16 +127,16 @@ export class Rest {
                 body: request.body,
                 method: request.method,
                 query: request.query,
-                headers: this.initializeHeaders(request.headers as Record<string, string>),
+                headers: this.#initializeHeaders(request.headers as Record<string, string>),
             });
 
-            this.handleRateLimit(request.path, response.headers as Record<string, string>);
+            this.#handleRateLimit(request.path, response.headers as Record<string, string>);
 
-            const responseText = await this.decompressResponse(response.headers, response.body);
+            const responseText = await this.#decompressResponse(response.headers, response.body);
             const data = JSON.parse(responseText);
 
             if (response.statusCode === RestHttpResponseCodes.TooManyRequests) {
-                await this.handleRateLimitResponse(data);
+                await this.#handleRateLimitResponse(data);
                 return await this.request(request);
             }
 
@@ -161,10 +161,7 @@ export class Rest {
         }
     }
 
-    private async decompressResponse(
-        headers: Record<string, any>,
-        body: Dispatcher.ResponseData["body"]
-    ): Promise<string> {
+    async #decompressResponse(headers: Record<string, any>, body: Dispatcher.ResponseData["body"]): Promise<string> {
         const responseBuffer = await body.arrayBuffer();
 
         if (headers["content-encoding"]?.toLowerCase() === "gzip") {
@@ -182,7 +179,7 @@ export class Rest {
         return Buffer.from(responseBuffer).toString("utf8");
     }
 
-    private initializePool(): Pool {
+    #initializePool(): Pool {
         const poolOptions: Pool.Options = {
             connections: 10,
             pipelining: 6,
@@ -195,7 +192,7 @@ export class Rest {
         return new Pool("https://discord.com", poolOptions);
     }
 
-    private initializeRetryAgent(): RetryAgent {
+    #initializeRetryAgent(): RetryAgent {
         if (!this.#pool) {
             throw new Error("[REST] Pool not initialized");
         }
@@ -213,7 +210,7 @@ export class Rest {
         return new RetryAgent(this.#pool, retryAgentOptions);
     }
 
-    private initializeHeaders(additionalHeaders?: Record<string, string>): Readonly<Record<string, string>> {
+    #initializeHeaders(additionalHeaders?: Record<string, string>): Readonly<Record<string, string>> {
         const headers: Record<string, string> = {
             Authorization: `${this.#options.auth_type} ${this.#token}`,
             "Content-Type": MimeTypes.Json,
@@ -231,7 +228,7 @@ export class Rest {
         return Object.freeze(headers);
     }
 
-    private async wait(path: string): Promise<void> {
+    async #wait(path: string): Promise<void> {
         const now = Date.now();
         if (this.#globalRateLimit && this.#globalRateLimit > now) {
             await setTimeout(this.#globalRateLimit - now);
@@ -243,8 +240,8 @@ export class Rest {
         }
     }
 
-    private handleRateLimit(path: string, headers: Record<string, string>): void {
-        const rateLimitInfo = this.parseHeaders(headers);
+    #handleRateLimit(path: string, headers: Record<string, string>): void {
+        const rateLimitInfo = this.#parseHeaders(headers);
         this.#routeRateLimits.set(path, rateLimitInfo);
 
         if (headers["x-ratelimit-global"]) {
@@ -252,7 +249,7 @@ export class Rest {
         }
     }
 
-    private async handleRateLimitResponse(response: RateLimitResponseStructure): Promise<void> {
+    async #handleRateLimitResponse(response: RateLimitResponseStructure): Promise<void> {
         if (response.global) {
             this.#globalRateLimit = Date.now() + response.retry_after * 1_000;
         }
@@ -262,7 +259,7 @@ export class Rest {
         throw new Error(`[REST] Rate limited: ${response.message}`);
     }
 
-    private parseHeaders(headers: Record<string, string>): Readonly<RateLimitInfo> {
+    #parseHeaders(headers: Record<string, string>): Readonly<RateLimitInfo> {
         return Object.freeze({
             limit: Number.parseInt(headers["x-ratelimit-limit"] ?? "0", 10),
             remaining: Number.parseInt(headers["x-ratelimit-remaining"] ?? "0", 10),

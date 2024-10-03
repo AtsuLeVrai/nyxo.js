@@ -32,6 +32,21 @@
       "dependsOn": [
         "^pretty"
       ]
+    },
+    "vt:test": {
+      "dependsOn": [
+        "^vt:test"
+      ]
+    },
+    "vt:ui": {
+      "dependsOn": [
+        "^vt:ui"
+      ]
+    },
+    "vt:coverage": {
+      "dependsOn": [
+        "^vt:coverage"
+      ]
     }
   }
 }
