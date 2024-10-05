@@ -1,6 +1,6 @@
 import type { EntitlementStructure, Snowflake } from "@nyxjs/core";
-import type { QueryStringParams, RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { QueryStringParams, RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params|Create Test Entitlement JSON Params}
@@ -42,12 +42,15 @@ export type ListEntitlementsQueryStringParams = QueryStringParams & {
     user_id?: Snowflake;
 };
 
-export class EntitlementRoutes extends BaseRoutes {
+export class EntitlementRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#delete-test-entitlement|Delete Test Entitlement}
      */
-    public static deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RestRequestOptions<void> {
-        return this.delete(`/applications/${applicationId}/entitlements/${entitlementId}`);
+    public static deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
+        return {
+            method: RestMethods.Delete,
+            path: `/applications/${applicationId}/entitlements/${entitlementId}`,
+        };
     }
 
     /**
@@ -56,17 +59,22 @@ export class EntitlementRoutes extends BaseRoutes {
     public static createTestEntitlement(
         applicationId: Snowflake,
         params: CreateTestEntitlementJsonParams
-    ): RestRequestOptions<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
-        return this.post(`/applications/${applicationId}/entitlements`, {
+    ): RouteStructure<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
+        return {
+            method: RestMethods.Post,
+            path: `/applications/${applicationId}/entitlements`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement|Consume an Entitlement}
      */
-    public static consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RestRequestOptions<void> {
-        return this.post(`/applications/${applicationId}/entitlements/${entitlementId}/consume`);
+    public static consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
+        return {
+            method: RestMethods.Post,
+            path: `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
+        };
     }
 
     /**
@@ -75,9 +83,11 @@ export class EntitlementRoutes extends BaseRoutes {
     public static listEntitlements(
         applicationId: Snowflake,
         params?: ListEntitlementsQueryStringParams
-    ): RestRequestOptions<EntitlementStructure[]> {
-        return this.get(`/applications/${applicationId}/entitlements`, {
+    ): RouteStructure<EntitlementStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/applications/${applicationId}/entitlements`,
             query: params,
-        });
+        };
     }
 }

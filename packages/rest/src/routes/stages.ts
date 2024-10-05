@@ -1,6 +1,6 @@
 import type { Snowflake, StageInstanceStructure } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params|Modify Stage Instance JSON Params}
@@ -20,14 +20,22 @@ export type CreateStageInstanceJsonParams = Pick<
     send_start_notification?: boolean;
 };
 
-export class StageRoutes extends BaseRoutes {
+export class StageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance|Delete Stage Instance}
      */
-    public static deleteStageInstance(channelId: Snowflake, reason?: string): RestRequestOptions<void> {
-        return this.delete(`/stage-instances/${channelId}`, {
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+    public static deleteStageInstance(channelId: Snowflake, reason?: string): RouteStructure<void> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Delete,
+            path: `/stage-instances/${channelId}`,
+            headers,
+        };
     }
 
     /**
@@ -37,18 +45,29 @@ export class StageRoutes extends BaseRoutes {
         channelId: Snowflake,
         params: ModifyStageInstanceJsonParams,
         reason?: string
-    ): RestRequestOptions<StageInstanceStructure> {
-        return this.patch(`/stage-instances/${channelId}`, {
+    ): RouteStructure<StageInstanceStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Patch,
+            path: `/stage-instances/${channelId}`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance|Get Stage Instance}
      */
-    public static getStageInstance(channelId: Snowflake): RestRequestOptions<StageInstanceStructure> {
-        return this.get(`/stage-instances/${channelId}`);
+    public static getStageInstance(channelId: Snowflake): RouteStructure<StageInstanceStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/stage-instances/${channelId}`,
+        };
     }
 
     /**
@@ -57,10 +76,18 @@ export class StageRoutes extends BaseRoutes {
     public static createStageInstance(
         params: CreateStageInstanceJsonParams,
         reason?: string
-    ): RestRequestOptions<StageInstanceStructure> {
-        return this.post("/stage-instances", {
+    ): RouteStructure<StageInstanceStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Post,
+            path: "/stage-instances",
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 }

@@ -1,6 +1,6 @@
 import type { InviteStructure, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params|Get Invite Query String Params}
@@ -20,22 +20,32 @@ export type GetInviteQueryStringParams = {
     with_expiration?: boolean;
 };
 
-export class InviteRoutes extends BaseRoutes {
+export class InviteRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite|Delete Invite}
      */
-    public static deleteInvite(code: string, reason?: string): RestRequestOptions<InviteStructure> {
-        return this.delete(`/invites/${code}`, {
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+    public static deleteInvite(code: string, reason?: string): RouteStructure<InviteStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Delete,
+            path: `/invites/${code}`,
+            headers,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#get-invite|Get Invite}
      */
-    public static getInvite(code: string, params?: GetInviteQueryStringParams): RestRequestOptions<InviteStructure> {
-        return this.get(`/invites/${code}`, {
+    public static getInvite(code: string, params?: GetInviteQueryStringParams): RouteStructure<InviteStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/invites/${code}`,
             query: params,
-        });
+        };
     }
 }

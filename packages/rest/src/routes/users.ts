@@ -7,8 +7,8 @@ import type {
     Snowflake,
     UserStructure,
 } from "@nyxjs/core";
-import type { QueryStringParams, RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { QueryStringParams, RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params|Update Current User Application Role Connection}
@@ -67,17 +67,19 @@ export type ModifyCurrentUserJsonParams = {
     username?: string;
 };
 
-export class UserRoutes extends BaseRoutes {
+export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params|Update Current User Application Role Connection}
      */
     public static updateCurrentUserApplicationRoleConnection(
         applicationId: Snowflake,
         params: UpdateCurrentUserApplicationRoleConnectionJsonParams
-    ): RestRequestOptions<ApplicationRoleConnectionStructure> {
-        return this.put(`/users/@me/applications/${applicationId}/role-connection`, {
+    ): RouteStructure<ApplicationRoleConnectionStructure> {
+        return {
+            method: RestMethods.Put,
+            path: `/users/@me/applications/${applicationId}/role-connection`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
@@ -85,39 +87,53 @@ export class UserRoutes extends BaseRoutes {
      */
     public static getCurrentUserApplicationRoleConnection(
         applicationId: Snowflake
-    ): RestRequestOptions<ApplicationRoleConnectionStructure> {
-        return this.get(`/users/@me/applications/${applicationId}/role-connection`);
+    ): RouteStructure<ApplicationRoleConnectionStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/users/@me/applications/${applicationId}/role-connection`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections|Get Current User Connections}
      */
-    public static getCurrentUserConnections(): RestRequestOptions<ConnectionStructure[]> {
-        return this.get(`/users/@me/connections`);
+    public static getCurrentUserConnections(): RouteStructure<ConnectionStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/users/@me/connections`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm|Create Group DM}
      * @see {@link https://discord.com/developers/docs/resources/user#create-dm|Create DM}
      */
-    public static createDm(params: CreateDmJsonParams | CreateGroupDmJsonParams): RestRequestOptions<ChannelStructure> {
-        return this.post("/users/@me/channels", {
+    public static createDm(params: CreateDmJsonParams | CreateGroupDmJsonParams): RouteStructure<ChannelStructure> {
+        return {
+            method: RestMethods.Post,
+            path: `/users/@me/channels`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#leave-guild|Leave Guild}
      */
-    public static leaveGuild(guildId: Snowflake): RestRequestOptions<void> {
-        return this.delete(`/users/@me/guilds/${guildId}`);
+    public static leaveGuild(guildId: Snowflake): RouteStructure<void> {
+        return {
+            method: RestMethods.Delete,
+            path: `/users/@me/guilds/${guildId}`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member|Get Current User Guild Member}
      */
-    public static getCurrentUserGuildMember(guildId: Snowflake): RestRequestOptions<GuildMemberStructure> {
-        return this.get(`/users/@me/guilds/${guildId}`);
+    public static getCurrentUserGuildMember(guildId: Snowflake): RouteStructure<GuildMemberStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/users/@me/guilds/${guildId}`,
+        };
     }
 
     /**
@@ -126,7 +142,7 @@ export class UserRoutes extends BaseRoutes {
      */
     public static getCurrentUserGuilds(
         params?: GetCurrentGuildsQueryStringParams
-    ): RestRequestOptions<
+    ): RouteStructure<
         Pick<
             GuildStructure,
             | "approximate_member_count"
@@ -140,31 +156,41 @@ export class UserRoutes extends BaseRoutes {
             | "permissions"
         >[]
     > {
-        return this.get("/users/@me/guilds", {
+        return {
+            method: RestMethods.Get,
+            path: `/users/@me/guilds`,
             query: params,
-        });
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user|Modify Current User}
      */
-    public static modifyCurrentUser(params: ModifyCurrentUserJsonParams): RestRequestOptions<UserStructure> {
-        return this.patch("/users/@me", {
+    public static modifyCurrentUser(params: ModifyCurrentUserJsonParams): RouteStructure<UserStructure> {
+        return {
+            method: RestMethods.Patch,
+            path: `/users/@me`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-user|Get User}
      */
-    public static getUser(userId: Snowflake): RestRequestOptions<UserStructure> {
-        return this.get(`/users/${userId}`);
+    public static getUser(userId: Snowflake): RouteStructure<UserStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/users/${userId}`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user|Get Current User}
      */
-    public static getCurrentUser(): RestRequestOptions<UserStructure> {
-        return this.get("/users/@me");
+    public static getCurrentUser(): RouteStructure<UserStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/users/@me`,
+        };
     }
 }

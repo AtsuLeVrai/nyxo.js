@@ -2,4 +2,4 @@
 
 ## Introduction
 
-Main package.
+Main package for the Nyx.js framework.

@@ -1,6 +1,6 @@
 import type { Integer } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#session-start-limit-object-session-start-limit-structure|Session Start Limit Structure}
@@ -42,18 +42,24 @@ export type GetGatewayBotJsonResponse = {
     url: string;
 };
 
-export class GatewayRoutes extends BaseRoutes {
+export class GatewayRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot|Get Gateway Bot}
      */
-    public static getGatewayBot(): RestRequestOptions<GetGatewayBotJsonResponse> {
-        return this.get("/gateway/bot");
+    public static getGatewayBot(): RouteStructure<GetGatewayBotJsonResponse> {
+        return {
+            method: RestMethods.Get,
+            path: "/gateway/bot",
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway|Get Gateway}
      */
-    public static getGateway(): RestRequestOptions<{ url: string }> {
-        return this.get("/gateway");
+    public static getGateway(): RouteStructure<{ url: string }> {
+        return {
+            method: RestMethods.Get,
+            path: "/gateway",
+        };
     }
 }

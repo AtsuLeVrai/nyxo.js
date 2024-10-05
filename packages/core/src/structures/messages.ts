@@ -1,6 +1,6 @@
-import type { MimeTypes } from "../enums/mimes";
-import type { BitfieldResolvable } from "../managers/bitfield";
-import type { Float, Integer, Iso8601Timestamp, Snowflake } from "../markdown/formats";
+import type { MimeTypes } from "../enums";
+import type { BitfieldResolvable } from "../managers";
+import type { Float, Integer, Iso8601Timestamp, Snowflake } from "../markdown";
 import type { ApplicationIntegrationTypes, ApplicationStructure } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
 import type { ActionRowStructure } from "./components";

@@ -1,6 +1,8 @@
 import process from "node:process";
+import { ApiVersions } from "@nyxjs/core";
+import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
+import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
-import { ApiVersions, CompressTypes, EncodingTypes, GatewayManager, Rest } from "nyx.js";
 
 config();
 
@@ -13,46 +15,30 @@ const rest = new Rest(process.env.DISCORD_TOKEN, {
     version: ApiVersions.V10,
 });
 
-const gateway = new GatewayManager(process.env.DISCORD_TOKEN, rest, {
+const gateway = new Gateway(process.env.DISCORD_TOKEN, rest, {
     intents: 513,
     v: ApiVersions.V10,
     encoding: EncodingTypes.Etf,
     compress: CompressTypes.ZlibStream,
-    // shard: "auto",
+    shard: "auto",
 });
 
-gateway.on("error", (error) => {
+gateway.on("ERROR", (error) => {
     console.error("Error:", error);
 });
 
-gateway.on("close", (event) => {
+gateway.on("CLOSE", (event) => {
     console.log("Close:", event);
 });
 
-gateway.on("warn", (warning) => {
+gateway.on("WARN", (warning) => {
     console.warn("Warn:", warning);
 });
 
-gateway.on("debug", (info) => {
+gateway.on("DEBUG", (info) => {
     console.debug("Debug:", info);
 });
 
-// gateway.on("dispatch", console.log);
+// gateway.on("DISPATCH", console.log);
 
 void gateway.connect();
-
-// const client = new Client(process.env.DISCORD_TOKEN, {
-//     intents: AllIntents,
-//     shard: "auto",
-//     ws: {
-//         encoding: EncodingTypes.Etf,
-//         compress: CompressTypes.ZlibStream,
-//     },
-// });
-//
-// client.on("error", console.log);
-// client.on("debug", console.log);
-// client.on("warn", console.log);
-// client.on("close", console.log);
-//
-// void client.login();

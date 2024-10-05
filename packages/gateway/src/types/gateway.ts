@@ -1,5 +1,5 @@
 import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
-import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/presences";
+import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events";
 
 export enum CompressTypes {
     /**
@@ -25,10 +25,12 @@ export enum EncodingTypes {
     Json = "json",
 }
 
+export type GatewayShardType = "auto" | [shardId: Integer, numShards: Integer];
+
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#connecting-gateway-url-query-string-params}
  */
-export type GatewayManagerOptions = {
+export type GatewayOptions = {
     /**
      * The optional transport compression of globals packets zlib-stream or zstd-stream
      */
@@ -53,7 +55,7 @@ export type GatewayManagerOptions = {
      * The shard information for the globals connection.
      * Can be an array with shard ID and shard count, or "auto".
      */
-    shard?: "auto" | [shardId: Integer, numShards: Integer];
+    shard?: GatewayShardType;
     /**
      * API version
      */

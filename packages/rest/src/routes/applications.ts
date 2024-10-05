@@ -1,6 +1,6 @@
 import type { ApplicationRoleConnectionStructure, ApplicationStructure, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum|Application Activity Instance Activity Location Kind Enum}
@@ -83,17 +83,19 @@ export type EditCurrentApplicationJsonParams = Partial<
     >
 >;
 
-export class ApplicationRoutes extends BaseRoutes {
+export class ApplicationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records|Update Application Role Connection Metadata Records}
      */
     public static updateApplicationRoleConnectionMetadata(
         applicationId: Snowflake,
         params: ApplicationRoleConnectionStructure[]
-    ): RestRequestOptions<ApplicationRoleConnectionStructure> {
-        return this.put(`/applications/${applicationId}/role-connections/metadata`, {
+    ): RouteStructure<ApplicationRoleConnectionStructure> {
+        return {
+            method: RestMethods.Put,
+            path: `/applications/${applicationId}/role-connections/metadata`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
@@ -101,8 +103,11 @@ export class ApplicationRoutes extends BaseRoutes {
      */
     public static getApplicationRoleConnectionMetadata(
         applicationId: Snowflake
-    ): RestRequestOptions<ApplicationRoleConnectionStructure[]> {
-        return this.get(`/applications/${applicationId}/role-connections/metadata`);
+    ): RouteStructure<ApplicationRoleConnectionStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/applications/${applicationId}/role-connections/metadata`,
+        };
     }
 
     /**
@@ -111,8 +116,11 @@ export class ApplicationRoutes extends BaseRoutes {
     public static getApplicationActivityInstance(
         applicationId: Snowflake,
         instanceId: string
-    ): RestRequestOptions<ActivityInstanceStructure> {
-        return this.get(`/applications/${applicationId}/activity-instances/${instanceId}`);
+    ): RouteStructure<ActivityInstanceStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/applications/${applicationId}/activity-instances/${instanceId}`,
+        };
     }
 
     /**
@@ -120,16 +128,21 @@ export class ApplicationRoutes extends BaseRoutes {
      */
     public static editCurrentApplication(
         params: EditCurrentApplicationJsonParams
-    ): RestRequestOptions<ApplicationStructure> {
-        return this.patch(`/applications/@me`, {
+    ): RouteStructure<ApplicationStructure> {
+        return {
+            method: RestMethods.Patch,
+            path: `/applications/@me`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/application#get-current-application|Get Current Application}
      */
-    public static getCurrentApplication(): RestRequestOptions<ApplicationStructure> {
-        return this.get(`/applications/@me`);
+    public static getCurrentApplication(): RouteStructure<ApplicationStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/applications/@me`,
+        };
     }
 }

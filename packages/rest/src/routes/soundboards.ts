@@ -1,6 +1,6 @@
 import type { Snowflake, SoundboardSoundStructure, VoiceStateStructure } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params|Modify Guild Soundboard Sound JSON Params}
@@ -33,7 +33,7 @@ export type SendSoundboardSoundJsonParams = Pick<SoundboardSoundStructure, "soun
     source_guild_id?: Snowflake;
 };
 
-export class SoundboardRoutes extends BaseRoutes {
+export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound|Delete Guild Soundboard Sound}
      */
@@ -41,10 +41,18 @@ export class SoundboardRoutes extends BaseRoutes {
         guildId: Snowflake,
         soundId: Snowflake,
         reason?: string
-    ): RestRequestOptions<void> {
-        return this.delete(`/guilds/${guildId}/soundboard-sounds/${soundId}`, {
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+    ): RouteStructure<void> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Delete,
+            path: `/guilds/${guildId}/soundboard-sounds/${soundId}`,
+            headers,
+        };
     }
 
     /**
@@ -55,11 +63,19 @@ export class SoundboardRoutes extends BaseRoutes {
         soundId: Snowflake,
         params: ModifyGuildSoundboardSoundJsonParams,
         reason?: string
-    ): RestRequestOptions<SoundboardSoundStructure> {
-        return this.patch(`/guilds/${guildId}/soundboard-sounds/${soundId}`, {
+    ): RouteStructure<SoundboardSoundStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Patch,
+            path: `/guilds/${guildId}/soundboard-sounds/${soundId}`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
@@ -69,11 +85,19 @@ export class SoundboardRoutes extends BaseRoutes {
         guildId: Snowflake,
         params: CreateGuildSoundboardSoundJsonParams,
         reason?: string
-    ): RestRequestOptions<SoundboardSoundStructure> {
-        return this.post(`/guilds/${guildId}/soundboard-sounds`, {
+    ): RouteStructure<SoundboardSoundStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Post,
+            path: `/guilds/${guildId}/soundboard-sounds`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
@@ -82,24 +106,31 @@ export class SoundboardRoutes extends BaseRoutes {
     public static getGuildSoundboardSound(
         guildId: Snowflake,
         soundId: Snowflake
-    ): RestRequestOptions<SoundboardSoundStructure> {
-        return this.get(`/guilds/${guildId}/soundboard-sounds/${soundId}`);
+    ): RouteStructure<SoundboardSoundStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/soundboard-sounds/${soundId}`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds|List Guild Soundboard Sounds}
      */
-    public static listGuildSoundboardSounds(
-        guildId: Snowflake
-    ): RestRequestOptions<{ items: SoundboardSoundStructure[] }> {
-        return this.get(`/guilds/${guildId}/soundboard-sounds`);
+    public static listGuildSoundboardSounds(guildId: Snowflake): RouteStructure<{ items: SoundboardSoundStructure[] }> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/soundboard-sounds`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds|List Default Soundboard Sounds}
      */
-    public static listDefaultSoundboardSounds(): RestRequestOptions<SoundboardSoundStructure[]> {
-        return this.get(`/soundboard-default-sounds`);
+    public static listDefaultSoundboardSounds(): RouteStructure<SoundboardSoundStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/soundboard-default-sounds`,
+        };
     }
 
     /**
@@ -108,9 +139,11 @@ export class SoundboardRoutes extends BaseRoutes {
     public static sendSoundboardSound(
         channelId: Snowflake,
         params: SendSoundboardSoundJsonParams
-    ): RestRequestOptions<VoiceStateStructure> {
-        return this.post(`/channels/${channelId}/send-soundboard-sound`, {
+    ): RouteStructure<VoiceStateStructure> {
+        return {
+            method: RestMethods.Post,
+            path: `/channels/${channelId}/send-soundboard-sound`,
             body: JSON.stringify(params),
-        });
+        };
     }
 }

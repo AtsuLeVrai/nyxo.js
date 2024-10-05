@@ -1,6 +1,6 @@
 import type { ApplicationStructure, Iso8601Timestamp, OAuth2Scopes, UserStructure } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information-response-structure|Get Current Authorization Information Response Structure}
@@ -29,18 +29,24 @@ export type GetCurrentAuthorizationInformationResponse = {
     user?: UserStructure;
 };
 
-export class OAuth2Routes extends BaseRoutes {
+export class OAuth2Routes {
     /**
      * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information|Get Current Authorization Information}
      */
-    public static getCurrentAuthorizationInformation(): RestRequestOptions<GetCurrentAuthorizationInformationResponse> {
-        return this.get("/oauth2/@me");
+    public static getCurrentAuthorizationInformation(): RouteStructure<GetCurrentAuthorizationInformationResponse> {
+        return {
+            method: RestMethods.Get,
+            path: "/oauth2/@me",
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information|Get Current Bot Application Information}
      */
-    public static getCurrentBotApplicationInformation(): RestRequestOptions<ApplicationStructure> {
-        return this.get("/oauth2/applications/@me");
+    public static getCurrentBotApplicationInformation(): RouteStructure<ApplicationStructure> {
+        return {
+            method: RestMethods.Get,
+            path: "/oauth2/applications/@me",
+        };
     }
 }

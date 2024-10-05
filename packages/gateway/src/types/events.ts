@@ -22,12 +22,8 @@ import type {
     VoiceStateStructure,
 } from "@nyxjs/core";
 import type {
+    AutoModerationActionExecutionEventFields,
     ChannelPinsUpdateEventFields,
-    ThreadListSyncEventFields,
-    ThreadMembersUpdateEventFields,
-    ThreadMemberUpdateEventExtraFields,
-} from "../events/channels";
-import type {
     GuildAuditLogEntryCreateEventExtraFields,
     GuildBanAddEventFields,
     GuildBanRemoveEventFields,
@@ -43,47 +39,43 @@ import type {
     GuildRoleUpdateEventFields,
     GuildScheduledEventUserAddEventFields,
     GuildScheduledEventUserRemoveEventFields,
+    GuildSoundboardSoundDeleteEventFields,
     GuildStickersUpdateEventFields,
-    RequestGuildMembersRequestStructure,
-} from "../events/guilds";
-import type { HelloStructure } from "../events/hello";
-import type { IdentifyStructure } from "../events/identity";
-import type {
+    HelloStructure,
+    IdentifyStructure,
     IntegrationCreateEventAdditionalFields,
     IntegrationDeleteEventFields,
     IntegrationUpdateEventAdditionalFields,
-} from "../events/integrations";
-import type { InviteCreateEventFields, InviteDeleteEventFields } from "../events/invites";
-import type {
+    InviteCreateEventFields,
+    InviteDeleteEventFields,
     MessageCreateExtraFields,
     MessageDeleteBulkEventFields,
     MessageDeleteEventFields,
+    MessagePollVoteAddFields,
+    MessagePollVoteRemoveFields,
     MessageReactionAddEventFields,
     MessageReactionRemoveAllEventFields,
     MessageReactionRemoveEmojiEventFields,
     MessageReactionRemoveEventFields,
-} from "../events/messages";
-import type { AutoModerationActionExecutionEventFields } from "../events/moderations";
-import type { MessagePollVoteAddFields, MessagePollVoteRemoveFields } from "../events/polls";
-import type {
     PresenceUpdateEventFields,
+    ReadyEventFields,
+    RequestGuildMembersRequestStructure,
+    ResumeStructure,
+    ThreadListSyncEventFields,
+    ThreadMembersUpdateEventFields,
+    ThreadMemberUpdateEventExtraFields,
     TypingStartEventFields,
     UpdatePresenceGatewayPresenceUpdateStructure,
-} from "../events/presences";
-import type { ReadyEventFields } from "../events/ready";
-import type { ResumeStructure } from "../events/resume";
-import type { GuildSoundboardSoundDeleteEventFields } from "../events/soundboards";
-import type {
     UpdateVoiceStateGatewayVoiceStateUpdateStructure,
     VoiceChannelEffectSendEventFields,
     VoiceServerUpdateEventFields,
-} from "../events/voices";
-import type { WebhooksUpdateEventFields } from "../events/webhooks";
+    WebhooksUpdateEventFields,
+} from "../events";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#receive-events}
  */
-export type GatewayManagerReceiveEvents = {
+export type GatewayReceiveEvents = {
     [GatewayOpcodes.Hello]: [hello: HelloStructure];
     [GatewayOpcodes.Resume]: [resume: ResumeStructure];
     [GatewayOpcodes.Reconnect]: [reconnect: null];
@@ -180,7 +172,7 @@ export type GatewayManagerReceiveEvents = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#send-events}
  */
-export type GatewayManagerSendEvents = {
+export type GatewaySendEvents = {
     [GatewayOpcodes.Identify]: IdentifyStructure;
     [GatewayOpcodes.Resume]: ResumeStructure;
     [GatewayOpcodes.Heartbeat]: Integer | null;
@@ -189,37 +181,37 @@ export type GatewayManagerSendEvents = {
     [GatewayOpcodes.PresenceUpdate]: UpdatePresenceGatewayPresenceUpdateStructure;
 };
 
-export type GatewayManagerEvents<K extends keyof GatewayManagerReceiveEvents> = {
+export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
     /**
      * Event triggered when the connection is closed.
      *
      * @param code - The close code.
      * @param reason - The reason for the closure.
      */
-    close: [code: GatewayCloseCodes, reason: string];
+    CLOSE: [code: GatewayCloseCodes, reason: string];
     /**
      * Event triggered for debugging messages.
      *
      * @param message - The debug message.
      */
-    debug: [message: string];
+    DEBUG: [message: string];
     /**
      * Event triggered when a globals event is received.
      *
      * @param event - The event name.
      * @param data - The event data.
      */
-    dispatch: [event: K, ...data: GatewayManagerReceiveEvents[K]];
+    DISPATCH: [event: K, ...data: GatewayReceiveEvents[K]];
     /**
      * Event triggered when an error occurs.
      *
      * @param error - The error object.
      */
-    error: [error: Error];
+    ERROR: [error: Error];
     /**
      * Event triggered for warnings.
      *
      * @param warning - The warning message.
      */
-    warn: [warning: string];
+    WARN: [warning: string];
 };

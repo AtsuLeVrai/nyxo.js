@@ -1,6 +1,6 @@
 import type { Snowflake, SubscriptionStructure } from "@nyxjs/core";
-import type { QueryStringParams, RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { QueryStringParams, RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/subscription#query-string-params|Query String Params}
@@ -12,15 +12,18 @@ export type SubscriptionQueryStringParams = QueryStringParams & {
     user_id?: Snowflake;
 };
 
-export class SubscriptionRoutes extends BaseRoutes {
+export class SubscriptionRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/subscription#get-sku-subscription|Get SKU Subscription}
      */
     public static getSkuSubscription(
         skuId: Snowflake,
         subscriptionId: Snowflake
-    ): RestRequestOptions<SubscriptionStructure> {
-        return this.get(`/skus/${skuId}/subscriptions/${subscriptionId}`);
+    ): RouteStructure<SubscriptionStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/skus/${skuId}/subscriptions/${subscriptionId}`,
+        };
     }
 
     /**
@@ -29,9 +32,11 @@ export class SubscriptionRoutes extends BaseRoutes {
     public static listSkuSubscriptions(
         skuId: Snowflake,
         params?: SubscriptionQueryStringParams
-    ): RestRequestOptions<SubscriptionStructure[]> {
-        return this.get(`/skus/${skuId}/subscriptions`, {
+    ): RouteStructure<SubscriptionStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/skus/${skuId}/subscriptions`,
             query: params,
-        });
+        };
     }
 }

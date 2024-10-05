@@ -1,8 +1,6 @@
-import type { LocaleKeys } from "../enums/locales";
-import type { OAuth2Scopes } from "../enums/oauth2";
-import type { BitwisePermissions } from "../enums/permissions";
-import type { BitfieldResolvable } from "../managers/bitfield";
-import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown/formats";
+import type { BitwisePermissions, LocaleKeys, OAuth2Scopes } from "../enums";
+import type { BitfieldResolvable } from "../managers";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown";
 import type { ChannelStructure } from "./channels";
 import type { EmojiStructure } from "./emojis";
 import type { RoleStructure } from "./roles";

@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "../markdown/formats";
+import type { Integer, Snowflake } from "../markdown";
 import type { UserStructure } from "./users";
 
 /**

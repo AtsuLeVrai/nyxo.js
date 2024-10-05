@@ -1,7 +1,7 @@
 import type { Snowflake, StickerPackStructure, StickerStructure } from "@nyxjs/core";
-import { FileUploadManager } from "../core/FileUploadManager";
-import type { FileInput, RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import { FileUpload } from "../core";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params|Modify Guild Sticker JSON Params}
@@ -15,21 +15,25 @@ export type CreateGuildStickerFormParams = Pick<StickerStructure, "description" 
     /**
      * The sticker file to upload, must be a PNG, APNG, GIF, or Lottie JSON file, max 512 KiB
      */
-    file: FileInput;
+    file: string;
 };
 
-export class StickerRoutes extends BaseRoutes {
+export class StickerRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker|Delete Guild Sticker}
      */
-    public static deleteGuildSticker(
-        guildId: Snowflake,
-        stickerId: Snowflake,
-        reason?: string
-    ): RestRequestOptions<void> {
-        return this.delete(`/guilds/${guildId}/stickers/${stickerId}`, {
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+    public static deleteGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason?: string): RouteStructure<void> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Delete,
+            path: `/guilds/${guildId}/stickers/${stickerId}`,
+            headers,
+        };
     }
 
     /**
@@ -40,11 +44,19 @@ export class StickerRoutes extends BaseRoutes {
         stickerId: Snowflake,
         params: ModifyGuildStickerJsonParams,
         reason?: string
-    ): RestRequestOptions<StickerStructure> {
-        return this.patch(`/guilds/${guildId}/stickers/${stickerId}`, {
+    ): RouteStructure<StickerStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Patch,
+            path: `/guilds/${guildId}/stickers/${stickerId}`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
@@ -54,40 +66,59 @@ export class StickerRoutes extends BaseRoutes {
         guildId: Snowflake,
         params: CreateGuildStickerFormParams,
         reason?: string
-    ): RestRequestOptions<StickerStructure> {
-        const { file, ...restParams } = params;
-        const formData = new FileUploadManager();
+    ): RouteStructure<StickerStructure> {
+        const file = new FileUpload();
+        file.addField("name", params.name);
+        file.addField("tags", params.tags);
+        void file.addFiles(params.file);
 
-        formData.addFile("file", file);
-        formData.addFields(restParams);
+        if (params.description) {
+            file.addField("description", params.description);
+        }
 
-        return this.post(`/guilds/${guildId}/stickers`, {
-            body: formData.getFormData(),
-            headers: {
-                ...formData.getHeaders(),
-                ...(reason && { "X-Audit-Log-Reason": reason }),
-            },
-        });
+        const headers: Record<string, string> = {
+            ...file.getHeaders,
+        };
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Post,
+            path: `/guilds/${guildId}/stickers`,
+            body: file.getFormData,
+            headers,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker|Get Guild Sticker}
      */
-    public static getGuildSticker(guildId: Snowflake, stickerId: Snowflake): RestRequestOptions<StickerStructure> {
-        return this.get(`/guilds/${guildId}/stickers/${stickerId}`);
+    public static getGuildSticker(guildId: Snowflake, stickerId: Snowflake): RouteStructure<StickerStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/stickers/${stickerId}`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers|List Guild Stickers}
      */
-    public static listGuildStickers(guildId: Snowflake): RestRequestOptions<StickerStructure[]> {
-        return this.get(`/guilds/${guildId}/stickers`);
+    public static listGuildStickers(guildId: Snowflake): RouteStructure<StickerStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/stickers`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack|Get Sticker Pack}
      */
-    public static getStickerPack(stickerPackId: Snowflake): RestRequestOptions<StickerPackStructure[]> {
-        return this.get(`/sticker-packs/${stickerPackId}`);
+    public static getStickerPack(stickerPackId: Snowflake): RouteStructure<StickerPackStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/sticker-packs/${stickerPackId}`,
+        };
     }
 }

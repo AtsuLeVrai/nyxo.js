@@ -7,7 +7,10 @@
     "start:bench": "ts-node-dev --respawn --transpile-only --no-notify --prefer-ts-exts --files src/index_bench.ts"
   },
   "dependencies": {
-    "nyx.js": "workspace:*"
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/gateway": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
+    "@nyxjs/store": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",

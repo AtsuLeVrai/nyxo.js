@@ -1,7 +1,6 @@
-import type { AvailableLocales, LocaleKeys } from "../enums/locales";
-import type { BitwisePermissions } from "../enums/permissions";
-import type { BitfieldResolvable } from "../managers/bitfield";
-import type { Integer, Snowflake } from "../markdown/formats";
+import type { AvailableLocales, BitwisePermissions, LocaleKeys } from "../enums";
+import type { BitfieldResolvable } from "../managers";
+import type { Integer, Snowflake } from "../markdown";
 import type { ApplicationIntegrationTypes } from "./applications";
 import type { ChannelStructure, ChannelTypes } from "./channels";
 import type { ActionRowStructure, ComponentTypes, SelectMenuOptionStructure, TextInputStructure } from "./components";

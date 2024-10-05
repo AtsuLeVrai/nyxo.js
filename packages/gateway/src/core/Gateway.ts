@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { platform } from "node:process";
 import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timers";
 import { URL } from "node:url";
 import type { Integer } from "@nyxjs/core";
@@ -8,12 +9,9 @@ import { pack, unpack } from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { Inflate, Z_SYNC_FLUSH } from "zlib-sync";
-import type { HelloStructure } from "../events/hello";
-import type { ReadyEventFields } from "../events/ready";
-import type { ResumeStructure } from "../events/resume";
-import type { GatewayManagerEvents, GatewayManagerReceiveEvents, GatewayManagerSendEvents } from "../types/events";
-import type { GatewayManagerOptions } from "../types/gateway";
-import { ShardManager } from "./ShardManager";
+import type { HelloStructure, IdentifyStructure, ReadyEventFields, ResumeStructure } from "../events";
+import { ShardManager } from "../managers";
+import type { GatewayEvents, GatewayOptions, GatewayReceiveEvents, GatewaySendEvents } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
@@ -34,10 +32,10 @@ type GatewayManagerPayload = {
     /**
      * Event name
      */
-    t: keyof GatewayManagerReceiveEvents | null;
+    t: keyof GatewayReceiveEvents | null;
 };
 
-export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof GatewayManagerReceiveEvents>> {
+export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEvents>> {
     #ws: WebSocket | null = null;
 
     #sequence: number | null = null;
@@ -46,25 +44,47 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
 
     #resumeGatewayUrl: string | null = null;
 
-    // #lastHeartbeatAck: boolean = false;
+    #lastHeartbeatAck: boolean = false;
 
     #heartbeatInterval: NodeJS.Timeout | null = null;
+
+    #heartbeatTimer: NodeJS.Timeout | null = null;
 
     #reconnectTimeout: NodeJS.Timeout | null = null;
 
     #inflator: Inflate = new Inflate({ chunkSize: 65_535 });
 
-    readonly #token: string;
+    #token: string;
 
-    readonly #options: Readonly<GatewayManagerOptions>;
+    readonly #options: Readonly<GatewayOptions>;
 
     readonly #shardManager: ShardManager;
 
-    public constructor(token: string, rest: Rest, options: GatewayManagerOptions) {
+    public constructor(token: string, rest: Rest, options: GatewayOptions) {
         super();
         this.#token = token;
-        this.#shardManager = new ShardManager(this, token, rest, options);
+        this.#shardManager = new ShardManager(this, rest, token, options);
         this.#options = Object.freeze({ ...options });
+    }
+
+    public get getSessionId(): string | null {
+        return this.#sessionId;
+    }
+
+    public get getSequence(): number | null {
+        return this.#sequence;
+    }
+
+    public get getResumeGatewayUrl(): string | null {
+        return this.#resumeGatewayUrl;
+    }
+
+    public get getOptions(): Readonly<GatewayOptions> {
+        return this.#options;
+    }
+
+    public isLastHeartbeatAcknowledged(): boolean {
+        return this.#lastHeartbeatAck;
     }
 
     public async connect(resumable: boolean = false) {
@@ -90,12 +110,12 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
             this.#ws.on("close", this.#onClose.bind(this));
             this.#ws.on("error", this.#onError.bind(this));
 
-            this.emit("debug", `Connecting to Gateway: ${url} (Resumable: ${resumable})`);
+            this.emit("DEBUG", `Connecting to Gateway: ${url} (Resumable: ${resumable})`);
         } catch (error) {
             if (error instanceof Error) {
-                this.emit("error", new Error(`Failed to connect to Gateway: ${error.message}`));
+                this.emit("ERROR", new Error(`Failed to connect to Gateway: ${error.message}`));
             } else {
-                this.emit("error", new Error(`Failed to connect to Gateway: ${String(error)}`));
+                this.emit("ERROR", new Error(`Failed to connect to Gateway: ${String(error)}`));
             }
 
             this.#scheduleReconnect();
@@ -111,12 +131,16 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
 
         this.cleanup();
         this.removeAllListeners();
-        this.emit("debug", "Gateway connection destroyed. Cleaning up resources.");
+        this.emit("DEBUG", "Gateway connection destroyed. Cleaning up resources.");
     }
 
     public cleanup(): void {
         if (this.#heartbeatInterval) {
             clearInterval(this.#heartbeatInterval);
+        }
+
+        if (this.#heartbeatTimer) {
+            clearTimeout(this.#heartbeatTimer);
         }
 
         if (this.#reconnectTimeout) {
@@ -126,13 +150,13 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
         this.#sequence = null;
         this.#sessionId = null;
         this.#resumeGatewayUrl = null;
-        // this.#lastHeartbeatAck = false;
-        this.#shardManager.clear();
+        this.#lastHeartbeatAck = false;
+        // this.#shardManager.clear();
     }
 
-    public send<T extends keyof GatewayManagerSendEvents>(op: T, data: Readonly<GatewayManagerSendEvents[T]>): void {
+    public send<T extends keyof GatewaySendEvents>(op: T, data: Readonly<GatewaySendEvents[T]>): void {
         if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
-            this.emit("warn", "Attempted to send a message while the WebSocket is not open");
+            this.emit("WARN", "Attempted to send a message while the WebSocket is not open");
             return;
         }
 
@@ -144,10 +168,38 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
         };
 
         this.#ws.send(this.#encodePayload(payload));
+        this.emit("DEBUG", `Sent payload: ${JSON.stringify(payload, null, 2)}`);
+    }
+
+    public isConnected(): boolean {
+        return this.#ws !== null && this.#ws.readyState === WebSocket.OPEN;
+    }
+
+    public forceHeartbeat(): void {
+        this.#sendHeartbeat();
+    }
+
+    public setToken(token: string): void {
+        this.#token = token;
+        this.emit("DEBUG", "Token updated successfully");
+
+        if (this.isConnected()) {
+            this.emit("DEBUG", "Reconnecting with new token");
+            this.destroy();
+            void this.connect(false);
+        }
+    }
+
+    public async resumeSession(): Promise<void> {
+        if (this.#sessionId && this.#sequence && this.#resumeGatewayUrl) {
+            await this.connect(true);
+        } else {
+            throw new Error("Unable to resume session: missing required information");
+        }
     }
 
     #onOpen(): void {
-        this.emit("debug", "WebSocket connection opened successfully.");
+        this.emit("DEBUG", "WebSocket connection opened successfully.");
     }
 
     #onMessage(data: Buffer): void {
@@ -200,7 +252,7 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
             }
 
             default: {
-                this.emit("warn", `Unhandled gateway opcode: ${payload.op}`);
+                this.emit("WARN", `Unhandled gateway opcode: ${payload.op}`);
                 break;
             }
         }
@@ -212,7 +264,7 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
             this.#sessionId = ready.session_id;
             this.#resumeGatewayUrl = ready.resume_gateway_url;
             this.emit(
-                "debug",
+                "DEBUG",
                 `Session established. Session ID: ${this.#sessionId}, Resume URL: ${this.#resumeGatewayUrl}`
             );
         }
@@ -221,35 +273,28 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
             return;
         }
 
-        this.emit("dispatch", payload.t, payload.d as never);
+        this.emit("DISPATCH", payload.t, payload.d as never);
     }
 
     #sendHeartbeat(): void {
-        // if (!this.#lastHeartbeatAck) {
-        //     this.emit("warn", "No heartbeat acknowledgement received. Initiating reconnection.");
-        //     this.#reconnect();
-        //     return;
-        // }
-        //
-        // this.#lastHeartbeatAck = false;
         this.send(GatewayOpcodes.Heartbeat, this.#sequence);
-        this.emit("debug", `Sent Heartbeat. Sequence: ${this.#sequence}`);
+        this.emit("DEBUG", `Sent Heartbeat. Sequence: ${this.#sequence}`);
     }
 
     #reconnect(): void {
-        this.emit("debug", "Initiating reconnection process.");
+        this.emit("DEBUG", "Initiating reconnection process.");
         this.destroy();
         void this.connect(true);
     }
 
     #invalidSession(resumable: boolean): void {
-        this.emit("debug", `Received Invalid Session. Resumable: ${resumable}`);
+        this.emit("DEBUG", `Received Invalid Session. Resumable: ${resumable}`);
         setTimeout(
             () => {
                 if (resumable) {
                     this.#resume();
                 } else {
-                    void this.#shardManager.start();
+                    this.#identify();
                 }
             },
             (Math.random() * 5 + 1) * 1_000
@@ -258,8 +303,8 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
 
     #resume(): void {
         if (!this.#sessionId || !this.#sequence) {
-            this.emit("warn", "Failed to resume session: missing session ID or sequence number. Starting new session.");
-            void this.#shardManager.start();
+            this.emit("WARN", "Failed to resume session: missing session ID or sequence number. Starting new session.");
+            this.#identify();
             return;
         }
 
@@ -273,41 +318,76 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
     }
 
     #hello(data: HelloStructure): void {
-        void this.#shardManager.start();
+        this.#identify();
         this.#setHeartbeatInterval(data.heartbeat_interval);
     }
 
     #setHeartbeatInterval(interval: Integer): void {
-        this.emit("debug", `Setting heartbeat interval to ${interval}ms with jitter.`);
+        this.emit("DEBUG", `Setting heartbeat interval to ${interval}ms with jitter.`);
         if (this.#heartbeatInterval) {
             clearInterval(this.#heartbeatInterval);
         }
 
-        const jitter = Math.floor(Math.random() * interval);
+        if (this.#heartbeatTimer) {
+            clearTimeout(this.#heartbeatTimer);
+        }
 
-        setTimeout(() => {
+        const jitter = Math.random() * interval;
+        this.#lastHeartbeatAck = true;
+
+        this.#heartbeatTimer = setTimeout(() => {
             this.#sendHeartbeat();
-            this.#heartbeatInterval = setInterval(() => this.#sendHeartbeat(), interval);
+            this.#heartbeatInterval = setInterval(() => {
+                if (!this.#lastHeartbeatAck) {
+                    this.emit("WARN", "No heartbeat acknowledgement received. Initiating reconnection.");
+                    this.#reconnect();
+                    return;
+                }
+
+                this.#lastHeartbeatAck = false;
+                this.#sendHeartbeat();
+            }, interval);
         }, jitter);
     }
 
+    #identify(): void {
+        if (this.#options.shard) {
+            void this.#shardManager.initialize(this.#options.shard);
+        } else {
+            const identify: IdentifyStructure = {
+                token: this.#token,
+                intents: this.#options.intents,
+                large_threshold: this.#options.large_threshold,
+                presence: this.#options.presence,
+                compress: Boolean(this.#options.compress),
+                properties: {
+                    os: platform,
+                    browser: "nyxjs",
+                    device: "nyxjs",
+                },
+            };
+
+            this.send(GatewayOpcodes.Identify, identify);
+        }
+    }
+
     #heartbeatAck(): void {
-        this.emit("debug", "Received Heartbeat Acknowledgement.");
-        // this.#lastHeartbeatAck = true;
+        this.emit("DEBUG", "Received Heartbeat Acknowledgement.");
+        this.#lastHeartbeatAck = true;
     }
 
     #onClose(code: GatewayCloseCodes, reason: Buffer): void {
         this.cleanup();
-        this.emit("close", code, reason.toString());
+        this.emit("CLOSE", code, reason.toString());
 
         const errorMessage = this.#getCloseCodeErrorMessage(code);
-        this.emit("error", new Error(`WebSocket closed: ${errorMessage}`));
+        this.emit("ERROR", new Error(`WebSocket closed: ${errorMessage}`));
 
         if (this.#canReconnect(code)) {
-            this.emit("debug", `Scheduling reconnection attempt after close. Code: ${code}`);
+            this.emit("DEBUG", `Scheduling reconnection attempt after close. Code: ${code}`);
             this.#scheduleReconnect();
         } else {
-            this.emit("error", new Error(`Cannot reconnect due to critical error. Close code: ${code}`));
+            this.emit("ERROR", new Error(`Cannot reconnect due to critical error. Close code: ${code}`));
         }
     }
 
@@ -397,7 +477,7 @@ export class GatewayManager extends EventEmitter<GatewayManagerEvents<keyof Gate
     }
 
     #onError(error: Error): void {
-        this.emit("error", error);
+        this.emit("ERROR", error);
     }
 
     #decompressZlib(data: Buffer): Buffer | string {

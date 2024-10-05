@@ -1,12 +1,13 @@
 import { Buffer } from "node:buffer";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
-import type { ApiVersions, Float, Integer } from "@nyxjs/core";
+import type { Float, Integer } from "@nyxjs/core";
 import { MimeTypes, RestHttpResponseCodes, RestJsonErrorCodes } from "@nyxjs/core";
 import { Store } from "@nyxjs/store";
 import { Gunzip } from "minizlib";
 import type { Dispatcher, RetryHandler } from "undici";
 import { Pool, RetryAgent } from "undici";
-import type { AuthTypes, RestRequestOptions } from "../types";
+import type { RestOptions, RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure|Rate Limit Response Structure}
@@ -53,29 +54,10 @@ type RateLimitInfo = {
     reset_after: Integer;
 };
 
-export type RestOptions = {
-    /**
-     * The type of authentication to use.
-     */
-    auth_type: AuthTypes;
-    /**
-     * The time-to-live (in milliseconds) of the cache.
-     */
-    cache_life_time?: Integer;
-    /**
-     * The user agent to use.
-     */
-    user_agent?: string;
-    /**
-     * The version of the API to use.
-     */
-    version: ApiVersions;
-};
-
 export class Rest {
     #globalRateLimit: number | null = null;
 
-    readonly #token: string;
+    #token: string;
 
     readonly #store: Store<string, { data: any; expiry: number }> = new Store();
 
@@ -88,10 +70,14 @@ export class Rest {
     readonly #options: Readonly<RestOptions>;
 
     public constructor(token: string, options: RestOptions) {
-        this.#token = token;
+        this.#token = this.#encryptToken(token);
         this.#pool = this.#initializePool();
         this.#retryAgent = this.#initializeRetryAgent();
         this.#options = Object.freeze({ ...options });
+    }
+
+    public setToken(token: string): void {
+        this.#token = this.#encryptToken(token);
     }
 
     public async destroy(): Promise<void> {
@@ -108,8 +94,9 @@ export class Rest {
         }
     }
 
-    public async request<T>(request: RestRequestOptions<T>): Promise<T> {
-        const cacheKey = `${request.method}:${request.path}`;
+    public async request<T>(request: RouteStructure<T>): Promise<T> {
+        const { path, headers, ...options } = request;
+        const cacheKey = `${request.method}:${path}`;
 
         try {
             if (!request.disable_cache) {
@@ -119,18 +106,15 @@ export class Rest {
                 }
             }
 
-            await this.#wait(request.path);
+            await this.#wait(path);
 
-            const path = `/api/v${this.#options.version}${request.path}`;
             const response = await this.#retryAgent.request({
-                path,
-                body: request.body,
-                method: request.method,
-                query: request.query,
-                headers: this.#initializeHeaders(request.headers as Record<string, string>),
+                path: `/api/v${this.#options.version}${path}`,
+                headers: this.#initializeHeaders(headers as Record<string, string>),
+                ...options,
             });
 
-            this.#handleRateLimit(request.path, response.headers as Record<string, string>);
+            this.#handleRateLimit(path, response.headers as Record<string, string>);
 
             const responseText = await this.#decompressResponse(response.headers, response.body);
             const data = JSON.parse(responseText);
@@ -212,7 +196,7 @@ export class Rest {
 
     #initializeHeaders(additionalHeaders?: Record<string, string>): Readonly<Record<string, string>> {
         const headers: Record<string, string> = {
-            Authorization: `${this.#options.auth_type} ${this.#token}`,
+            Authorization: `${this.#options.auth_type} ${this.#decryptToken(this.#token)}`,
             "Content-Type": MimeTypes.Json,
             "Accept-Encoding": "gzip, deflate",
         };
@@ -267,5 +251,25 @@ export class Rest {
             reset_after: Number.parseFloat(headers["x-ratelimit-reset-after"] ?? "0") * 1_000,
             bucket: headers["x-ratelimit-bucket"] ?? "",
         });
+    }
+
+    #encryptToken(token: string): string {
+        const algorithm = "aes-256-cbc";
+        const key = randomBytes(32);
+        const iv = randomBytes(16);
+        const cipher = createCipheriv(algorithm, key, iv);
+        let encrypted = cipher.update(token, "utf8", "hex");
+        encrypted += cipher.final("hex");
+        return `${iv.toString("hex")}:${encrypted}:${key.toString("hex")}`;
+    }
+
+    #decryptToken(encryptedToken: string): string {
+        const [ivHex, encrypted, keyHex] = encryptedToken.split(":");
+        const iv = Buffer.from(ivHex, "hex");
+        const key = Buffer.from(keyHex, "hex");
+        const decipher = createDecipheriv("aes-256-cbc", key, iv);
+        let decrypted = decipher.update(encrypted, "hex", "utf8");
+        decrypted += decipher.final("utf8");
+        return decrypted;
     }
 }

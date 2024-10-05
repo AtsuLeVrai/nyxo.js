@@ -1,6 +1,5 @@
-import type { AvailableLocales } from "../enums/locales";
-import type { OAuth2Scopes } from "../enums/oauth2";
-import type { Integer, Snowflake } from "../markdown/formats";
+import type { AvailableLocales, OAuth2Scopes } from "../enums";
+import type { Integer, Snowflake } from "../markdown";
 import type { GuildStructure } from "./guilds";
 import type { TeamStructure } from "./teams";
 import type { UserStructure } from "./users";

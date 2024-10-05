@@ -1,6 +1,6 @@
 import type { AutoModerationRuleStructure, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule-json-params|Modify Auto Moderation Rule JSON Params}
@@ -27,7 +27,7 @@ export type CreateAutoModerationRuleJsonParams = Pick<
     | "trigger_type"
 >;
 
-export class ModerationRoutes extends BaseRoutes {
+export class ModerationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule|Delete Auto Moderation Rule}
      */
@@ -35,10 +35,18 @@ export class ModerationRoutes extends BaseRoutes {
         guildId: Snowflake,
         ruleId: Snowflake,
         reason?: string
-    ): RestRequestOptions<void> {
-        return this.delete(`/guilds/${guildId}/auto-moderation/rules/${ruleId}`, {
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+    ): RouteStructure<void> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Delete,
+            path: `/guilds/${guildId}/auto-moderation/rules/${ruleId}`,
+            headers,
+        };
     }
 
     /**
@@ -49,11 +57,19 @@ export class ModerationRoutes extends BaseRoutes {
         ruleId: Snowflake,
         params: ModifyAutoModerationRuleJsonParams,
         reason?: string
-    ): RestRequestOptions<AutoModerationRuleStructure> {
-        return this.patch(`/guilds/${guildId}/auto-moderation/rules/${ruleId}`, {
+    ): RouteStructure<AutoModerationRuleStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Patch,
+            path: `/guilds/${guildId}/auto-moderation/rules/${ruleId}`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
@@ -63,11 +79,19 @@ export class ModerationRoutes extends BaseRoutes {
         guildId: Snowflake,
         params: CreateAutoModerationRuleJsonParams,
         reason?: string
-    ): RestRequestOptions<AutoModerationRuleStructure> {
-        return this.post(`/guilds/${guildId}/auto-moderation/rules`, {
+    ): RouteStructure<AutoModerationRuleStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Post,
+            path: `/guilds/${guildId}/auto-moderation/rules`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
@@ -76,16 +100,20 @@ export class ModerationRoutes extends BaseRoutes {
     public static getAutoModerationRule(
         guildId: Snowflake,
         ruleId: Snowflake
-    ): RestRequestOptions<AutoModerationRuleStructure> {
-        return this.get(`/guilds/${guildId}/auto-moderation/rules/${ruleId}`);
+    ): RouteStructure<AutoModerationRuleStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/auto-moderation/rules/${ruleId}`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/auto-moderation#list-auto-moderation-rules-for-guild|List Auto Moderation Rules for Guild}
      */
-    public static listAutoModerationRulesForGuild(
-        guildId: Snowflake
-    ): RestRequestOptions<AutoModerationRuleStructure[]> {
-        return this.get(`/guilds/${guildId}/auto-moderation/rules`);
+    public static listAutoModerationRulesForGuild(guildId: Snowflake): RouteStructure<AutoModerationRuleStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/auto-moderation/rules`,
+        };
     }
 }

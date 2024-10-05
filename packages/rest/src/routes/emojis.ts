@@ -1,6 +1,6 @@
 import type { EmojiStructure, Snowflake } from "@nyxjs/core";
-import type { RestRequestOptions } from "../types";
-import { BaseRoutes } from "./base";
+import type { RouteStructure } from "../types";
+import { RestMethods } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params|Modify Application Emoji JSON Params}
@@ -34,12 +34,15 @@ export type CreateGuildEmojiJsonParams = Pick<EmojiStructure, "name" | "roles"> 
     image: string;
 };
 
-export class EmojiRoutes extends BaseRoutes {
+export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#delete-application-emoji|Delete Application Emoji}
      */
-    public static deleteApplicationEmoji(applicationId: Snowflake, emojiId: Snowflake): RestRequestOptions<void> {
-        return this.delete(`/applications/${applicationId}/emojis/${emojiId}`);
+    public static deleteApplicationEmoji(applicationId: Snowflake, emojiId: Snowflake): RouteStructure<void> {
+        return {
+            method: RestMethods.Delete,
+            path: `/applications/${applicationId}/emojis/${emojiId}`,
+        };
     }
 
     /**
@@ -49,10 +52,12 @@ export class EmojiRoutes extends BaseRoutes {
         applicationId: Snowflake,
         emojiId: Snowflake,
         params: ModifyApplicationEmojiJsonParams
-    ): RestRequestOptions<EmojiStructure> {
-        return this.patch(`/applications/${applicationId}/emojis/${emojiId}`, {
+    ): RouteStructure<EmojiStructure> {
+        return {
+            method: RestMethods.Patch,
+            path: `/applications/${applicationId}/emojis/${emojiId}`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
@@ -61,36 +66,49 @@ export class EmojiRoutes extends BaseRoutes {
     public static createApplicationEmoji(
         applicationId: Snowflake,
         params: CreateApplicationEmojiJsonParams
-    ): RestRequestOptions<EmojiStructure> {
-        return this.post(`/applications/${applicationId}/emojis`, {
+    ): RouteStructure<EmojiStructure> {
+        return {
+            method: RestMethods.Post,
+            path: `/applications/${applicationId}/emojis`,
             body: JSON.stringify(params),
-        });
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#get-application-emoji|Get Application Emoji}
      */
-    public static getApplicationEmoji(
-        applicationId: Snowflake,
-        emojiId: Snowflake
-    ): RestRequestOptions<EmojiStructure> {
-        return this.get(`/applications/${applicationId}/emojis/${emojiId}`);
+    public static getApplicationEmoji(applicationId: Snowflake, emojiId: Snowflake): RouteStructure<EmojiStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/applications/${applicationId}/emojis/${emojiId}`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#list-application-emojis|List Application Emojis}
      */
-    public static listApplicationEmojis(applicationId: Snowflake): RestRequestOptions<{ items: EmojiStructure[] }> {
-        return this.get(`/applications/${applicationId}/emojis`);
+    public static listApplicationEmojis(applicationId: Snowflake): RouteStructure<{ items: EmojiStructure[] }> {
+        return {
+            method: RestMethods.Get,
+            path: `/applications/${applicationId}/emojis`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#delete-guild-emoji|Delete Guild Emoji}
      */
-    public static deleteGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason?: string): RestRequestOptions<void> {
-        return this.delete(`/guilds/${guildId}/emojis/${emojiId}`, {
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+    public static deleteGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason?: string): RouteStructure<void> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Delete,
+            path: `/guilds/${guildId}/emojis/${emojiId}`,
+            headers,
+        };
     }
 
     /**
@@ -101,11 +119,19 @@ export class EmojiRoutes extends BaseRoutes {
         emojiId: Snowflake,
         params: ModifyGuildEmojiJsonParams,
         reason?: string
-    ): RestRequestOptions<EmojiStructure> {
-        return this.patch(`/guilds/${guildId}/emojis/${emojiId}`, {
+    ): RouteStructure<EmojiStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Patch,
+            path: `/guilds/${guildId}/emojis/${emojiId}`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
@@ -115,24 +141,38 @@ export class EmojiRoutes extends BaseRoutes {
         guildId: Snowflake,
         params: CreateGuildEmojiJsonParams,
         reason?: string
-    ): RestRequestOptions<EmojiStructure> {
-        return this.post(`/guilds/${guildId}/emojis`, {
+    ): RouteStructure<EmojiStructure> {
+        const headers: Record<string, string> = {};
+
+        if (reason) {
+            headers["X-Audit-Log-Reason"] = reason;
+        }
+
+        return {
+            method: RestMethods.Post,
+            path: `/guilds/${guildId}/emojis`,
             body: JSON.stringify(params),
-            headers: reason ? { "X-Audit-Log-Reason": reason } : undefined,
-        });
+            headers,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji|Get Guild Emoji}
      */
-    public static getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): RestRequestOptions<EmojiStructure> {
-        return this.get(`/guilds/${guildId}/emojis/${emojiId}`);
+    public static getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): RouteStructure<EmojiStructure> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/emojis/${emojiId}`,
+        };
     }
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis|List Guild Emojis}
      */
-    public static listGuildEmojis(guildId: Snowflake): RestRequestOptions<EmojiStructure[]> {
-        return this.get(`/guilds/${guildId}/emojis`);
+    public static listGuildEmojis(guildId: Snowflake): RouteStructure<EmojiStructure[]> {
+        return {
+            method: RestMethods.Get,
+            path: `/guilds/${guildId}/emojis`,
+        };
     }
 }

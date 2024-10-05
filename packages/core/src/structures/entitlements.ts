@@ -1,4 +1,4 @@
-import type { Iso8601Timestamp, Snowflake } from "../markdown/formats";
+import type { Iso8601Timestamp, Snowflake } from "../markdown";
 
 /**
  * Enumeration representing entitlement types.
