@@ -4,6 +4,7 @@ export * from "./emojis";
 export * from "./entitlements";
 export * from "./gateway";
 export * from "./invites";
+export * from "./messages";
 export * from "./moderations";
 export * from "./oauth2";
 export * from "./polls";

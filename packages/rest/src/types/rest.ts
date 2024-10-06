@@ -1,5 +1,5 @@
+import type { Buffer } from "node:buffer";
 import type { ApiVersions, Integer, MimeTypes, Snowflake } from "@nyxjs/core";
-import type { Dispatcher } from "undici";
 import type { AuthTypes } from "./auth";
 
 /**
@@ -20,7 +20,11 @@ export enum RestMethods {
 /**
  * Route structure for a REST request.
  */
-export type RouteStructure<T> = Omit<Dispatcher.DispatchOptions, "method" | "path"> & {
+export type RouteStructure<T> = {
+    /**
+     * Body of the request.
+     */
+    body?: Buffer;
     /**
      * Whether to disable caching for this request.
      */
@@ -28,15 +32,19 @@ export type RouteStructure<T> = Omit<Dispatcher.DispatchOptions, "method" | "pat
     /**
      * Headers to send with the request.
      */
-    headers?: RestHttpDiscordHeaders;
+    headers?: Record<string, string>;
     /**
-     * Method to use for the request.
+     * HTTP method to be used for the request.
      */
     method: RestMethods;
     /**
-     * Path to the endpoint to send the request to.
+     * Path of the request.
      */
     path: `/${string}`;
+    /**
+     * Query string parameters for the request.
+     */
+    query?: Record<string, any>;
 };
 
 /**
@@ -46,55 +54,55 @@ export type RestHttpDiscordHeaders = {
     /**
      * Authorization header containing the authentication type and token.
      */
-    Authorization?: `${AuthTypes} ${string}`;
+    authorization?: `${AuthTypes} ${string}`;
     /**
      * MIME type of the content being sent.
      */
-    "Content-Type"?: MimeTypes;
+    "content-type"?: MimeTypes;
     /**
      * User agent string identifying the client.
      */
-    "User-Agent"?: string;
+    "user-agent"?: string;
     /**
      * Reason for the action, to be logged in the audit log.
      */
-    "X-Audit-Log-Reason"?: string;
+    "x-audit-log-reason"?: string;
     /**
      * Rate limit bucket identifier.
      */
-    "X-RateLimit-Bucket"?: string;
+    "x-ratelimit-bucket"?: string;
     /**
      * Indicates if the rate limit is global.
      */
-    "X-RateLimit-Global"?: string;
+    "x-ratelimit-global"?: string;
     /**
      * Maximum number of requests that can be made.
      */
-    "X-RateLimit-Limit"?: string;
+    "x-ratelimit-limit"?: string;
     /**
      * Number of requests remaining in the current rate limit window.
      */
-    "X-RateLimit-Remaining"?: string;
+    "x-ratelimit-remaining"?: string;
     /**
      * Timestamp when the rate limit resets.
      */
-    "X-RateLimit-Reset"?: string;
+    "x-ratelimit-reset"?: string;
     /**
      * Time in seconds until the rate limit resets.
      */
-    "X-RateLimit-Reset-After"?: string;
+    "x-ratelimit-reset-after"?: string;
     /**
      * Scope of the rate limit.
      */
-    "X-RateLimit-Scope"?: "global" | "shared" | "user";
+    "x-ratelimit-scope"?: "global" | "shared" | "user";
     /**
      * Ed25519 signature for request validation.
      */
-    "X-Signature-Ed25519"?: string;
+    "x-signature-ed25519"?: string;
     /**
      * Timestamp for the Ed25519 signature.
      */
-    "X-Signature-Timestamp"?: string;
+    "x-signature-timestamp"?: string;
 };
 
 /**
@@ -124,19 +132,46 @@ export type QueryStringParams = {
  */
 export type RestOptions = {
     /**
-     * The type of authentication to use.
+     * Maximum number of retries for a request.
      */
-    auth_type: AuthTypes;
+    max_retries?: number;
     /**
-     * The time-to-live (in milliseconds) of the cache.
+     * Number of retries for rate-limited requests.
      */
-    cache_life_time?: Integer;
+    rate_limit_retries?: number;
     /**
-     * The user agent to use.
+     * Timeout for a request in milliseconds.
+     */
+    timeout?: number;
+    /**
+     * User agent string identifying the client.
      */
     user_agent?: string;
     /**
-     * The version of the API to use.
+     * Version of the API to use.
      */
     version: ApiVersions;
+};
+
+/**
+ * Events emitted by the REST client.
+ */
+export type RestEvents = {
+    /**
+     * Debug event with a message.
+     */
+    DEBUG: [message: string];
+    /**
+     * Error event with an error object.
+     */
+    ERROR: [error: Error];
+
+    /**
+     * Rate limit event with rate limit information.
+     */
+    RATE_LIMIT: [rateLimitInfo: { limit: number; method: string; path: string; route: string; timeout: number }];
+    /**
+     * Warning event with a message.
+     */
+    WARN: [message: string];
 };

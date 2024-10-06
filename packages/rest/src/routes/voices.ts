@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Snowflake, VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/core";
 import type { RouteStructure } from "../types";
 import { RestMethods } from "../types";
@@ -28,7 +29,7 @@ export class VoiceRoutes {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/voice-states/${userId}`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 
@@ -42,7 +43,7 @@ export class VoiceRoutes {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/voice-states/@me`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 

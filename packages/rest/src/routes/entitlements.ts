@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { EntitlementStructure, Snowflake } from "@nyxjs/core";
 import type { QueryStringParams, RouteStructure } from "../types";
 import { RestMethods } from "../types";
@@ -63,7 +64,7 @@ export class EntitlementRoutes {
         return {
             method: RestMethods.Post,
             path: `/applications/${applicationId}/entitlements`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 

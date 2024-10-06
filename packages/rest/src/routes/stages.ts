@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Snowflake, StageInstanceStructure } from "@nyxjs/core";
 import type { RouteStructure } from "../types";
 import { RestMethods } from "../types";
@@ -55,7 +56,7 @@ export class StageRoutes {
         return {
             method: RestMethods.Patch,
             path: `/stage-instances/${channelId}`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }
@@ -86,7 +87,7 @@ export class StageRoutes {
         return {
             method: RestMethods.Post,
             path: "/stage-instances",
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }

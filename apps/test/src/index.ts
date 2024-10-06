@@ -1,5 +1,5 @@
 import process from "node:process";
-import { ApiVersions } from "@nyxjs/core";
+import { ApiVersions, GatewayIntents } from "@nyxjs/core";
 import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
@@ -11,34 +11,48 @@ if (!process.env.DISCORD_TOKEN) {
 }
 
 const rest = new Rest(process.env.DISCORD_TOKEN, {
-    auth_type: "Bot",
     version: ApiVersions.V10,
 });
 
+rest.on("ERROR", console.error);
+rest.on("WARN", console.warn);
+rest.on("DEBUG", console.debug);
+rest.on("RATE_LIMIT", console.log);
+
 const gateway = new Gateway(process.env.DISCORD_TOKEN, rest, {
-    intents: 513,
+    intents: [
+        GatewayIntents.Guilds,
+        GatewayIntents.GuildMembers,
+        GatewayIntents.GuildModeration,
+        GatewayIntents.GuildEmojisAndStickers,
+        GatewayIntents.GuildIntegrations,
+        GatewayIntents.GuildWebhooks,
+        GatewayIntents.GuildInvites,
+        GatewayIntents.GuildVoiceStates,
+        GatewayIntents.GuildPresences,
+        GatewayIntents.GuildMessages,
+        GatewayIntents.GuildMessageReactions,
+        GatewayIntents.GuildMessageTyping,
+        GatewayIntents.DirectMessages,
+        GatewayIntents.DirectMessageReactions,
+        GatewayIntents.DirectMessageTyping,
+        GatewayIntents.MessageContent,
+        GatewayIntents.GuildScheduledEvents,
+        GatewayIntents.AutoModerationConfiguration,
+        GatewayIntents.AutoModerationExecution,
+        GatewayIntents.GuildMessagePolls,
+        GatewayIntents.DirectMessagePolls,
+    ].reduce((acc, intent) => acc | intent, 0),
     v: ApiVersions.V10,
     encoding: EncodingTypes.Etf,
     compress: CompressTypes.ZlibStream,
-    shard: "auto",
+    // shard: "auto",
 });
 
-gateway.on("ERROR", (error) => {
-    console.error("Error:", error);
-});
-
-gateway.on("CLOSE", (event) => {
-    console.log("Close:", event);
-});
-
-gateway.on("WARN", (warning) => {
-    console.warn("Warn:", warning);
-});
-
-gateway.on("DEBUG", (info) => {
-    console.debug("Debug:", info);
-});
-
+gateway.on("ERROR", console.error);
+gateway.on("CLOSE", console.log);
+gateway.on("WARN", console.warn);
+gateway.on("DEBUG", console.debug);
 // gateway.on("DISPATCH", console.log);
 
 void gateway.connect();

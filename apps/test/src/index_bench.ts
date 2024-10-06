@@ -1,8 +1,10 @@
 import { performance } from "node:perf_hooks";
 import process from "node:process";
 import { clearInterval, setInterval, setTimeout } from "node:timers";
+import { ApiVersions, GatewayIntents } from "@nyxjs/core";
+import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
+import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
-import { ApiVersions, CompressTypes, EncodingTypes, GatewayManager, Rest } from "nyx.js";
 
 config();
 
@@ -16,12 +18,33 @@ console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} 
 const startTime = performance.now();
 
 const rest = new Rest(process.env.DISCORD_TOKEN, {
-    auth_type: "Bot",
     version: ApiVersions.V10,
 });
 
-const gateway = new GatewayManager(process.env.DISCORD_TOKEN, rest, {
-    intents: 513,
+const gateway = new Gateway(process.env.DISCORD_TOKEN, rest, {
+    intents: [
+        GatewayIntents.Guilds,
+        GatewayIntents.GuildMembers,
+        GatewayIntents.GuildModeration,
+        GatewayIntents.GuildEmojisAndStickers,
+        GatewayIntents.GuildIntegrations,
+        GatewayIntents.GuildWebhooks,
+        GatewayIntents.GuildInvites,
+        GatewayIntents.GuildVoiceStates,
+        GatewayIntents.GuildPresences,
+        GatewayIntents.GuildMessages,
+        GatewayIntents.GuildMessageReactions,
+        GatewayIntents.GuildMessageTyping,
+        GatewayIntents.DirectMessages,
+        GatewayIntents.DirectMessageReactions,
+        GatewayIntents.DirectMessageTyping,
+        GatewayIntents.MessageContent,
+        GatewayIntents.GuildScheduledEvents,
+        GatewayIntents.AutoModerationConfiguration,
+        GatewayIntents.AutoModerationExecution,
+        GatewayIntents.GuildMessagePolls,
+        GatewayIntents.DirectMessagePolls,
+    ].reduce((acc, intent) => acc | intent, 0),
     v: ApiVersions.V10,
     encoding: EncodingTypes.Etf,
     compress: CompressTypes.ZlibStream,
@@ -32,28 +55,28 @@ let isReady = false;
 let messagesReceived = 0;
 let lastMessageTime = startTime;
 
-gateway.on("error", (error) => {
+gateway.on("ERROR", (error) => {
     console.error("Erreur:", error);
 });
 
-gateway.on("close", (event) => {
+gateway.on("CLOSE", (event) => {
     console.log("Connexion fermée:", event);
 });
 
-gateway.on("warn", (warning) => {
+gateway.on("WARN", (warning) => {
     console.warn("Avertissement:", warning);
 });
 
-gateway.on("debug", (info) => {
+gateway.on("DEBUG", (info) => {
     console.debug("Debug:", info);
 });
 
-gateway.on("dispatch", () => {
+gateway.on("DISPATCH", () => {
     messagesReceived++;
     lastMessageTime = performance.now();
 });
 
-gateway.on("dispatch", (event, ...data) => {
+gateway.on("DISPATCH", (event, ...data) => {
     if (event === "READY") {
         const readyTime = performance.now();
         const connectionTime = readyTime - startTime;

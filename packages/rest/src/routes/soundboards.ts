@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Snowflake, SoundboardSoundStructure, VoiceStateStructure } from "@nyxjs/core";
 import type { RouteStructure } from "../types";
 import { RestMethods } from "../types";
@@ -73,7 +74,7 @@ export class SoundboardRoutes {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/soundboard-sounds/${soundId}`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }
@@ -95,7 +96,7 @@ export class SoundboardRoutes {
         return {
             method: RestMethods.Post,
             path: `/guilds/${guildId}/soundboard-sounds`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }
@@ -143,7 +144,7 @@ export class SoundboardRoutes {
         return {
             method: RestMethods.Post,
             path: `/channels/${channelId}/send-soundboard-sound`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 }

@@ -20,7 +20,7 @@ export type StoreOptions<K, V> = {
     /**
      * The eviction strategy to use when the cache is full.
      */
-    eviction_strategy?: "fifo" | "lfu" | "lru";
+    eviction_strategy?: "lfu" | "lru";
     /**
      * The maximum size of the cache.
      */
@@ -247,9 +247,6 @@ export class Store<K, V> {
                 break;
             case "lfu":
                 keyToEvict = this.#getLeastFrequentlyUsedKey();
-                break;
-            case "fifo":
-                keyToEvict = this.#lruOrder.shift()!;
                 break;
             default:
                 keyToEvict = this.#lruOrder.shift()!;

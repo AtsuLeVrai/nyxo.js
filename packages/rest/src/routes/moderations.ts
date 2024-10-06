@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { AutoModerationRuleStructure, Snowflake } from "@nyxjs/core";
 import type { RouteStructure } from "../types";
 import { RestMethods } from "../types";
@@ -67,7 +68,7 @@ export class ModerationRoutes {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/auto-moderation/rules/${ruleId}`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }
@@ -89,7 +90,7 @@ export class ModerationRoutes {
         return {
             method: RestMethods.Post,
             path: `/guilds/${guildId}/auto-moderation/rules`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }

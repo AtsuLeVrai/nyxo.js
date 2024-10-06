@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
@@ -13,26 +14,30 @@ export class FileUpload {
         this.#fileLimit = fileLimit;
     }
 
-    public get getHeaders(): Record<string, string> {
-        return this.#formData.getHeaders();
+    public getHeaders(additionalHeaders?: Record<string, any>): Record<string, string> {
+        return this.#formData.getHeaders(additionalHeaders);
     }
 
-    public get getFormData(): FormData {
+    public getFormData(): FormData {
         return this.#formData;
+    }
+
+    public toBuffer(): Buffer {
+        return this.#formData.getBuffer();
+    }
+
+    public createAttachmentUrl(file: string): string {
+        return `attachment://${file}`;
     }
 
     public addField(name: string, value: string): void {
         this.#formData.append(name, value);
     }
 
-    public addPayload(payload: Record<string, string>): void {
+    public addPayload(payload: Record<string, any>): void {
         this.#formData.append("payload_json", JSON.stringify(payload), {
             contentType: MimeTypes.Json,
         });
-    }
-
-    public createAttachmentUrl(file: string): string {
-        return `attachment://${file}`;
     }
 
     public async addFiles(files: string[] | string): Promise<void> {
@@ -50,22 +55,15 @@ export class FileUpload {
         }
 
         const filename = basename(file);
-        const contentType = this.#getFileType(filename);
-
-        if (index === undefined) {
-            this.#formData.append("file", createReadStream(file), {
-                filename,
-                contentType,
-            });
-        } else {
-            this.#formData.append(`files[${index}]`, createReadStream(file), {
-                filename,
-                contentType,
-            });
-        }
+        const contentType = this.#getMimeType(filename);
+        const fieldName = index === undefined ? "file" : `files[${index}]`;
+        this.#formData.append(fieldName, createReadStream(file), {
+            filename,
+            contentType,
+        });
     }
 
-    #getFileType(filename: string): MimeTypes {
+    #getMimeType(filename: string): MimeTypes {
         const extension = extname(filename).slice(1);
         switch (extension) {
             case "png": {

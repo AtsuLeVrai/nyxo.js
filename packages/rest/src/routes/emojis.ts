@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { EmojiStructure, Snowflake } from "@nyxjs/core";
 import type { RouteStructure } from "../types";
 import { RestMethods } from "../types";
@@ -56,7 +57,7 @@ export class EmojiRoutes {
         return {
             method: RestMethods.Patch,
             path: `/applications/${applicationId}/emojis/${emojiId}`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 
@@ -70,7 +71,7 @@ export class EmojiRoutes {
         return {
             method: RestMethods.Post,
             path: `/applications/${applicationId}/emojis`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 
@@ -129,7 +130,7 @@ export class EmojiRoutes {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/emojis/${emojiId}`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }
@@ -151,7 +152,7 @@ export class EmojiRoutes {
         return {
             method: RestMethods.Post,
             path: `/guilds/${guildId}/emojis`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }

@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type {
     ApplicationRoleConnectionStructure,
     ChannelStructure,
@@ -78,7 +79,7 @@ export class UserRoutes {
         return {
             method: RestMethods.Put,
             path: `/users/@me/applications/${applicationId}/role-connection`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 
@@ -112,7 +113,7 @@ export class UserRoutes {
         return {
             method: RestMethods.Post,
             path: `/users/@me/channels`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 
@@ -170,7 +171,7 @@ export class UserRoutes {
         return {
             method: RestMethods.Patch,
             path: `/users/@me`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 

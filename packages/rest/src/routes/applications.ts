@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { ApplicationRoleConnectionStructure, ApplicationStructure, Snowflake } from "@nyxjs/core";
 import type { RouteStructure } from "../types";
 import { RestMethods } from "../types";
@@ -94,7 +95,7 @@ export class ApplicationRoutes {
         return {
             method: RestMethods.Put,
             path: `/applications/${applicationId}/role-connections/metadata`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 
@@ -132,7 +133,7 @@ export class ApplicationRoutes {
         return {
             method: RestMethods.Patch,
             path: `/applications/@me`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
         };
     }
 

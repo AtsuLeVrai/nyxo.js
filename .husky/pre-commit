@@ -1,2 +1,2 @@
-pnpm run lint
+pnpm run pretty lint
 git update-index --again

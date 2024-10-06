@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import type { Snowflake, StickerPackStructure, StickerStructure } from "@nyxjs/core";
 import { FileUpload } from "../core";
 import type { RouteStructure } from "../types";
@@ -54,7 +55,7 @@ export class StickerRoutes {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/stickers/${stickerId}`,
-            body: JSON.stringify(params),
+            body: Buffer.from(JSON.stringify(params)),
             headers,
         };
     }
@@ -67,19 +68,16 @@ export class StickerRoutes {
         params: CreateGuildStickerFormParams,
         reason?: string
     ): RouteStructure<StickerStructure> {
-        const file = new FileUpload();
-        file.addField("name", params.name);
-        file.addField("tags", params.tags);
-        void file.addFiles(params.file);
+        const form = new FileUpload();
+        form.addField("name", params.name);
+        form.addField("tags", params.tags);
+        void form.addFiles(params.file);
 
         if (params.description) {
-            file.addField("description", params.description);
+            form.addField("description", params.description);
         }
 
-        const headers: Record<string, string> = {
-            ...file.getHeaders,
-        };
-
+        const headers: Record<string, string> = {};
         if (reason) {
             headers["X-Audit-Log-Reason"] = reason;
         }
@@ -87,8 +85,8 @@ export class StickerRoutes {
         return {
             method: RestMethods.Post,
             path: `/guilds/${guildId}/stickers`,
-            body: file.getFormData,
-            headers,
+            body: form.toBuffer(),
+            headers: form.getHeaders(headers),
         };
     }
 

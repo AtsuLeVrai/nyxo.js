@@ -25,6 +25,9 @@ export enum EncodingTypes {
     Json = "json",
 }
 
+/**
+ * The shard information for the globals connection.
+ */
 export type GatewayShardType = "auto" | [shardId: Integer, numShards: Integer];
 
 /**
