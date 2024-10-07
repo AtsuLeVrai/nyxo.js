@@ -1,8 +1,6 @@
 import process from "node:process";
-import { ApiVersions, GatewayIntents } from "@nyxjs/core";
-import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
-import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
+import { Client, GatewayIntents } from "nyx.js";
 
 config();
 
@@ -10,16 +8,7 @@ if (!process.env.DISCORD_TOKEN) {
     throw new Error("no discord token");
 }
 
-const rest = new Rest(process.env.DISCORD_TOKEN, {
-    version: ApiVersions.V10,
-});
-
-rest.on("ERROR", console.error);
-rest.on("WARN", console.warn);
-rest.on("DEBUG", console.debug);
-rest.on("RATE_LIMIT", console.log);
-
-const gateway = new Gateway(process.env.DISCORD_TOKEN, rest, {
+const client = new Client(process.env.DISCORD_TOKEN, {
     intents: [
         GatewayIntents.Guilds,
         GatewayIntents.GuildMembers,
@@ -42,17 +31,12 @@ const gateway = new Gateway(process.env.DISCORD_TOKEN, rest, {
         GatewayIntents.AutoModerationExecution,
         GatewayIntents.GuildMessagePolls,
         GatewayIntents.DirectMessagePolls,
-    ].reduce((acc, intent) => acc | intent, 0),
-    v: ApiVersions.V10,
-    encoding: EncodingTypes.Etf,
-    compress: CompressTypes.ZlibStream,
-    // shard: "auto",
+    ],
 });
 
-gateway.on("ERROR", console.error);
-gateway.on("CLOSE", console.log);
-gateway.on("WARN", console.warn);
-gateway.on("DEBUG", console.debug);
-// gateway.on("DISPATCH", console.log);
+client.on("error", console.error);
+client.on("warn", console.warn);
+client.on("debug", console.log);
+client.on("close", (code, reason) => console.log(`Gateway closed with code ${code} and reason ${reason}`));
 
-void gateway.connect();
+void client.connect();
