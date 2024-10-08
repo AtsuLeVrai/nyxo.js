@@ -34,9 +34,10 @@ const client = new Client(process.env.DISCORD_TOKEN, {
     ],
 });
 
-client.on("error", console.error);
-client.on("warn", console.warn);
-client.on("debug", console.log);
-client.on("close", (code, reason) => console.log(`Gateway closed with code ${code} and reason ${reason}`));
+client.on("error", (error) => console.error("Error:", error));
+client.on("warn", (warning) => console.warn("Warning:", warning));
+client.on("debug", (info) => console.debug("Debug:", info));
+client.on("close", (code, reason) => console.log("Connection closed:", code, reason));
+client.on("ready", () => console.log("Client is ready"));
 
 void client.connect();

@@ -154,6 +154,32 @@ export type RestOptions = {
 };
 
 /**
+ * Information about the rate limit.
+ */
+export type RateLimitInfo = {
+    /**
+     * The maximum number of requests that can be made in a given time period.
+     */
+    limit: number;
+    /**
+     * The HTTP method used for the request.
+     */
+    method: string;
+    /**
+     * The path of the request.
+     */
+    path: string;
+    /**
+     * The route of the request.
+     */
+    route: string;
+    /**
+     * The timeout duration in milliseconds.
+     */
+    timeout: number;
+};
+
+/**
  * Events emitted by the REST client.
  */
 export type RestEvents = {
@@ -169,7 +195,7 @@ export type RestEvents = {
     /**
      * Rate limit event with rate limit information.
      */
-    RATE_LIMIT: [rateLimitInfo: { limit: number; method: string; path: string; route: string; timeout: number }];
+    RATE_LIMIT: [rateLimitInfo: RateLimitInfo];
     /**
      * Warning event with a message.
      */

@@ -5,7 +5,8 @@ import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
 import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
-import type { ClientEvents } from "./ClientEventManager";
+import type { ClientEvents } from "./ClientEventEmitter";
+import { ClientEventEmitter } from "./ClientEventEmitter";
 
 export type ClientOptions = {
     intents: GatewayIntents[] | Integer;
@@ -20,6 +21,8 @@ export class Client extends EventEmitter<ClientEvents> {
     public gateway: Gateway;
 
     readonly #options: Required<ClientOptions>;
+
+    readonly #events: ClientEventEmitter;
 
     public constructor(
         public token: string,
@@ -37,26 +40,16 @@ export class Client extends EventEmitter<ClientEvents> {
         };
         this.rest = this.#initializeRest();
         this.gateway = this.#initializeGateway();
+        this.#events = new ClientEventEmitter(this);
     }
 
     public async connect(): Promise<void> {
         try {
-            this.#setupListeners();
+            this.#events.setupListeners();
             await this.gateway.connect();
         } catch (error) {
             this.emit("error", new Error(`Failed to connect to gateway: ${error}`));
         }
-    }
-
-    #setupListeners(): void {
-        this.gateway.on("WARN", (message) => this.emit("warn", message));
-        this.gateway.on("ERROR", (error) => this.emit("error", error));
-        this.gateway.on("DEBUG", (message) => this.emit("debug", message));
-        this.gateway.on("CLOSE", (code, reason) => this.emit("close", code, reason));
-        this.rest.on("WARN", (message) => this.emit("warn", message));
-        this.rest.on("ERROR", (error) => this.emit("error", error));
-        this.rest.on("DEBUG", (message) => this.emit("debug", message));
-        this.rest.on("RATE_LIMIT", (message) => this.emit("warn", JSON.stringify(message)));
     }
 
     #initializeRest(): Rest {

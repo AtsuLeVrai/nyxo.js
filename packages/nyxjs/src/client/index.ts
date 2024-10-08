@@ -1,2 +1,2 @@
 export * from "./Client";
-export * from "./ClientEventManager";
+export * from "./ClientEventEmitter";
