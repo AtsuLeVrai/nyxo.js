@@ -41,7 +41,6 @@ import type {
     GuildScheduledEventUserRemoveEventFields,
     GuildSoundboardSoundDeleteEventFields,
     GuildStickersUpdateEventFields,
-    HelloStructure,
     IdentifyStructure,
     IntegrationCreateEventAdditionalFields,
     IntegrationDeleteEventFields,
@@ -76,10 +75,6 @@ import type {
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#receive-events}
  */
 export type GatewayReceiveEvents = {
-    [GatewayOpcodes.Hello]: [hello: HelloStructure];
-    [GatewayOpcodes.Resume]: [resume: ResumeStructure];
-    [GatewayOpcodes.Reconnect]: [reconnect: null];
-    [GatewayOpcodes.InvalidSession]: [invalidSession: boolean];
     APPLICATION_COMMAND_PERMISSIONS_UPDATE: [
         applicationCommandPermissionsUpdate: GuildApplicationCommandPermissionsStructure,
     ];

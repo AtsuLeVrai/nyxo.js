@@ -1,6 +1,6 @@
 import process from "node:process";
 import { config } from "dotenv";
-import { Client, GatewayIntents } from "nyx.js";
+import { Client, EmbedBuilder, GatewayIntents } from "nyx.js";
 
 config();
 
@@ -41,3 +41,9 @@ client.on("close", (code, reason) => console.log("Connection closed:", code, rea
 client.on("ready", () => console.log("Client is ready"));
 
 void client.connect();
+
+const embed = new EmbedBuilder({
+    title: "TITLE_LIMIT",
+});
+
+console.log(embed.toJSON());

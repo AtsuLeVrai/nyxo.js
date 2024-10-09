@@ -44,6 +44,7 @@ export class ShardManager {
     public clear(): void {
         this.#shards.clear();
         this.#connectionQueue = [];
+        this.#gateway.emit("DEBUG", "[SHARD] ShardManager cleared all shards and connection queue");
     }
 
     public async initialize(mode: GatewayShardType): Promise<void> {
@@ -68,13 +69,14 @@ export class ShardManager {
     async #setupAutoSharding(): Promise<void> {
         try {
             const guilds = await this.#rest.request(UserRoutes.getCurrentUserGuilds());
-            if (guilds.length === 0) {
-                this.#addShard({ shardId: 0, shardCount: 1 });
-                return;
-            }
-
             if (guilds.length <= 2_500) {
                 this.#gateway.emit("WARN", "[SHARD] You have less than 2500 guilds, consider disabling auto-sharding.");
+            }
+
+            if (guilds.length === 0) {
+                this.#addShard({ shardId: 0, shardCount: 1 });
+                this.#gateway.emit("DEBUG", "[SHARD] No guilds found, added single shard");
+                return;
             }
 
             const {
@@ -83,11 +85,14 @@ export class ShardManager {
             } = await this.#rest.request(GatewayRoutes.getGatewayBot());
 
             this.#maxConcurrency = max_concurrency;
+            this.#gateway.emit("DEBUG", `[SHARD] Max concurrency set to ${max_concurrency}`);
 
             const shardIds = new Set(guilds.map((guild) => this.#calculateShardId(guild.id, recommendedShards)));
             for (const shardId of shardIds) {
                 this.#addShard({ shardId, shardCount: recommendedShards });
             }
+
+            this.#gateway.emit("DEBUG", `[SHARD] Added ${shardIds.size} shards based on guild distribution`);
         } catch (error) {
             throw new Error(`Failed to setup auto-sharding: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -100,11 +105,13 @@ export class ShardManager {
     #addShard(config: ShardConfig): void {
         this.#shards.set(config.shardId, config);
         this.#connectionQueue.push(config);
+        this.#gateway.emit("DEBUG", `[SHARD] Added shard ${config.shardId} to connection queue`);
     }
 
     async #connectShards(): Promise<void> {
         try {
             const concurrentConnections = Math.min(this.#maxConcurrency, this.#connectionQueue.length);
+            this.#gateway.emit("DEBUG", `[SHARD] Connecting ${concurrentConnections} shards concurrently`);
             const connectionPromises = Array.from({ length: concurrentConnections }, async () =>
                 this.#processConnectionQueue()
             );
@@ -120,6 +127,7 @@ export class ShardManager {
             if (config) {
                 try {
                     await this.#connectShard(config);
+                    this.#gateway.emit("DEBUG", `[SHARD] Connected shard ${config.shardId}`);
                     await new Promise((resolve) => {
                         setTimeout(resolve, 5_000);
                     });
@@ -130,6 +138,8 @@ export class ShardManager {
                 }
             }
         }
+
+        this.#gateway.emit("DEBUG", "[SHARD] Finished processing connection queue");
     }
 
     async #connectShard({ shardId, shardCount }: ShardConfig): Promise<void> {

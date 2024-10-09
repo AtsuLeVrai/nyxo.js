@@ -1,5 +1,9 @@
 import type { Float, Integer } from "@nyxjs/core";
 
+export type RGB = [red: Integer, green: Integer, blue: Integer];
+export type RGBA = [red: Integer, green: Integer, blue: Integer, alpha: Float];
+export type HexColorString = `#${string}`;
+
 export enum Colors {
     AliceBlue = 0xf0f8ff,
     AntiqueWhite = 0xfaebd7,
@@ -143,14 +147,10 @@ export enum Colors {
     YellowGreen = 0x9acd32,
 }
 
-export type RGB = [red: Integer, green: Integer, blue: Integer];
-export type RGBA = [red: Integer, green: Integer, blue: Integer, alpha: Float];
-export type HEX = Integer | `#${string}`;
-
-export type ColorResolvable = Colors | HEX | RGB | RGBA;
+export type ColorResolvable = Colors | HexColorString | Integer | RGB | RGBA;
 
 export function resolveColor(color: ColorResolvable): Integer {
-    if (typeof color === "number") {
+    if (typeof color === "number" && color >= 0 && color <= 0xffffff) {
         return color;
     }
 

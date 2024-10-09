@@ -1,4 +1,6 @@
-export * from "./client";
+export * from "./components";
+export * from "./core";
+export * from "./managers";
 export * from "./utils";
 
 export * from "@nyxjs/core";

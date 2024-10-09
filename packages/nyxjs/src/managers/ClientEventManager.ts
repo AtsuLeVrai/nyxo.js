@@ -1,7 +1,8 @@
+import type { AuditLogEvents } from "@nyxjs/core";
 import { GatewayCloseCodes } from "@nyxjs/core";
 import type { GatewayReceiveEvents } from "@nyxjs/gateway";
 import type { RateLimitInfo } from "@nyxjs/rest";
-import type { Client } from "./Client";
+import type { Client } from "../core/Client";
 
 type Class<T = any> = new (...args: any[]) => T;
 
@@ -9,7 +10,7 @@ type ReturnTypes = Class | bigint | boolean | number | object | string | symbol 
 
 type ClientEventMappingStructure = {
     [client_event_name in keyof Partial<ClientEvents>]: {
-        audit_log_event_name?: string;
+        audit_log_event_type?: AuditLogEvents;
         gateway_event_name?: string;
         rest_event_name?: string;
         return?: ReturnTypes[];
@@ -40,6 +41,10 @@ const ClientEventMapping: ClientEventMappingStructure = {
     rateLimit: {
         rest_event_name: "RATE_LIMIT",
         return: [Object],
+    },
+    ready: {
+        gateway_event_name: "READY",
+        return: [],
     },
 };
 
@@ -166,7 +171,7 @@ export type ClientEvents = {
     webhooksUpdate: [];
 };
 
-export class ClientEventEmitter {
+export class ClientEventManager {
     readonly #client: Client;
 
     public constructor(client: Client) {
@@ -193,6 +198,19 @@ export class ClientEventEmitter {
     }
 
     #handleDispatch<K extends keyof GatewayReceiveEvents>(event: K, ...data: GatewayReceiveEvents[K]): void {
-        throw new Error("Not implemented");
+        const eventName = this.#transformEventName(event) as keyof ClientEventMappingStructure;
+        const eventMapping = ClientEventMapping[eventName];
+
+        if (!eventMapping) {
+            return;
+        }
+
+        if (eventMapping.gateway_event_name) {
+            this.#client.emit(eventName, ...(data as never));
+        }
+    }
+
+    #transformEventName(event: string): string {
+        return event.toLowerCase().replaceAll(/_(?<temp1>[a-z])/g, (substring) => substring[1].toUpperCase());
     }
 }

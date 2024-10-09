@@ -111,6 +111,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
 
             if (this.#options.compress === "zlib-stream") {
                 this.#inflator = new Inflate({ chunkSize: 65_535 });
+                this.emit("DEBUG", "[GATEWAY] Zlib-stream compression initialized");
             }
 
             this.#ws.on("open", this.#onOpen.bind(this));
@@ -157,6 +158,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         this.#resumeGatewayUrl = null;
         this.#lastHeartbeatAck = false;
         this.#shardManager.clear();
+        this.emit("DEBUG", "[GATEWAY] Cleanup completed. Resources released.");
     }
 
     public send<T extends keyof GatewaySendEvents>(op: T, data: Readonly<GatewaySendEvents[T]>): void {
@@ -173,6 +175,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         };
 
         this.#ws.send(this.#encodePayload(payload));
+        this.emit("DEBUG", `[GATEWAY] Sent payload with opcode: ${GatewayOpcodes[op]}`);
     }
 
     public isConnected(): boolean {
@@ -204,6 +207,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
 
     #onOpen(): void {
         this.#isOpened = true;
+        this.emit("DEBUG", "[GATEWAY] WebSocket connection opened");
     }
 
     #onMessage(data: WebSocket.RawData): void {
@@ -232,6 +236,8 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         if (payload.s) {
             this.#sequence = payload.s;
         }
+
+        this.emit("DEBUG", `[GATEWAY] Received payload with opcode: ${GatewayOpcodes[payload.op]}`);
 
         try {
             switch (payload.op) {
@@ -266,7 +272,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
                 }
 
                 default: {
-                    this.emit("WARN", `[GATEWAY] Unhandled gateway opcode: ${payload.op}`);
+                    this.emit("WARN", `[GATEWAY] Unhandled gateway opcode: ${GatewayOpcodes[payload.op]}`);
                     break;
                 }
             }
@@ -292,6 +298,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         }
 
         this.emit("DISPATCH", payload.t, payload.d as never);
+        this.emit("DEBUG", `[GATEWAY] Dispatched event: ${payload.t}`);
     }
 
     #sendHeartbeat(): void {
@@ -503,7 +510,10 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
             clearTimeout(this.#reconnectTimeout);
         }
 
-        this.#reconnectTimeout = setTimeout(async () => this.connect(true), 5_000);
+        this.#reconnectTimeout = setTimeout(async () => {
+            this.emit("DEBUG", "[GATEWAY] Attempting to reconnect");
+            await this.connect(true);
+        }, 5_000);
     }
 
     #onError(error: Error): void {
