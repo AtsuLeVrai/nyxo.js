@@ -39,6 +39,9 @@ const client = new Client(process.env.DISCORD_TOKEN, {
         GatewayIntents.GuildMessagePolls,
         GatewayIntents.DirectMessagePolls,
     ],
+    gateway: {
+        shard: "auto",
+    },
 });
 
 let isReady = false;

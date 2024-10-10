@@ -28,7 +28,13 @@ export enum EncodingTypes {
 /**
  * The shard information for the globals connection.
  */
-export type GatewayShardType = "auto" | [shardId: Integer, numShards: Integer];
+export type GatewayShardTypes =
+    | "auto"
+    | {
+          numShards: Integer;
+          shardId: Integer;
+      }
+    | [shardId: Integer, numShards: Integer];
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#connecting-gateway-url-query-string-params}
@@ -58,7 +64,7 @@ export type GatewayOptions = {
      * The shard information for the globals connection.
      * Can be an array with shard ID and shard count, or "auto".
      */
-    shard?: GatewayShardType;
+    shard?: GatewayShardTypes;
     /**
      * API version
      */

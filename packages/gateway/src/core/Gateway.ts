@@ -1,5 +1,4 @@
 import { Buffer } from "node:buffer";
-import { platform } from "node:process";
 import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timers";
 import { URL } from "node:url";
 import type { Integer } from "@nyxjs/core";
@@ -9,7 +8,7 @@ import { pack, unpack } from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { Inflate, Z_SYNC_FLUSH } from "zlib-sync";
-import type { HelloStructure, IdentifyStructure, ReadyEventFields, ResumeStructure } from "../events";
+import type { HelloStructure, ReadyEventFields, ResumeStructure } from "../events";
 import type { GatewayEvents, GatewayOptions, GatewayReceiveEvents, GatewaySendEvents } from "../types";
 import { ShardManager } from "./ShardManager";
 
@@ -210,7 +209,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         this.emit("DEBUG", "[GATEWAY] WebSocket connection opened");
     }
 
-    #onMessage(data: WebSocket.RawData): void {
+    #onMessage(data: WebSocket.RawData, isBinary: boolean): void {
         let decompressedData: Buffer = Buffer.alloc(0);
 
         try {
@@ -223,7 +222,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
             }
 
             if (decompressedData.length > 0) {
-                const decodedPayload = this.#decodePayload<GatewayManagerPayload>(decompressedData);
+                const decodedPayload = this.#decodePayload<GatewayManagerPayload>(decompressedData, isBinary);
                 this.#handlePayload(decodedPayload);
             }
         } catch (error) {
@@ -319,7 +318,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
                 if (resumable) {
                     this.#resume();
                 } else {
-                    this.#identify();
+                    void this.#shardManager.initialize(this.#options.shard);
                 }
             },
             (Math.random() * 5 + 1) * 1_000
@@ -332,7 +331,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
                 "WARN",
                 "[GATEWAY] Failed to resume session: missing session ID or sequence number. Starting new session."
             );
-            this.#identify();
+            void this.#shardManager.initialize(this.#options.shard);
             return;
         }
 
@@ -346,7 +345,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
     }
 
     #hello(data: HelloStructure): void {
-        this.#identify();
+        void this.#shardManager.initialize(this.#options.shard);
         this.#setHeartbeatInterval(data.heartbeat_interval);
     }
 
@@ -376,27 +375,6 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
                 this.#sendHeartbeat();
             }, interval);
         }, jitter);
-    }
-
-    #identify(): void {
-        if (this.#options.shard) {
-            void this.#shardManager.initialize(this.#options.shard);
-        } else {
-            const identify: IdentifyStructure = {
-                token: this.#token,
-                intents: this.#options.intents,
-                large_threshold: this.#options.large_threshold,
-                presence: this.#options.presence,
-                compress: Boolean(this.#options.compress),
-                properties: {
-                    os: platform,
-                    browser: "nyxjs",
-                    device: "nyxjs",
-                },
-            };
-
-            this.send(GatewayOpcodes.Identify, identify);
-        }
     }
 
     #heartbeatAck(): void {
@@ -558,7 +536,11 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         }
     }
 
-    #decodePayload<T>(data: Buffer): T {
+    #decodePayload<T>(data: Buffer, isBinary: boolean): T {
+        if (!isBinary && !Buffer.isBuffer(data)) {
+            return JSON.parse(data);
+        }
+
         switch (this.#options.encoding) {
             case "json": {
                 try {

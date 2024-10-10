@@ -5,7 +5,7 @@ import { GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { GatewayRoutes, UserRoutes } from "@nyxjs/rest";
 import type { IdentifyStructure } from "../events";
-import type { GatewayOptions, GatewayShardType } from "../types";
+import type { GatewayOptions, GatewayShardTypes } from "../types";
 import type { Gateway } from "./index";
 
 type ShardConfig = {
@@ -47,13 +47,21 @@ export class ShardManager {
         this.#gateway.emit("DEBUG", "[SHARD] ShardManager cleared all shards and connection queue");
     }
 
-    public async initialize(mode: GatewayShardType): Promise<void> {
+    public async initialize(mode?: GatewayShardTypes): Promise<void> {
         try {
+            if (!mode) {
+                await this.#connectShard();
+                return;
+            }
+
             if (mode === "auto") {
                 await this.#setupAutoSharding();
-            } else {
+            } else if (Array.isArray(mode)) {
                 const [shardId, shardCount] = mode;
                 this.#addShard({ shardId, shardCount });
+            } else {
+                const { shardId, numShards } = mode;
+                this.#addShard({ shardId, shardCount: numShards });
             }
 
             await this.#connectShards();
@@ -142,16 +150,15 @@ export class ShardManager {
         this.#gateway.emit("DEBUG", "[SHARD] Finished processing connection queue");
     }
 
-    async #connectShard({ shardId, shardCount }: ShardConfig): Promise<void> {
+    async #connectShard(shard?: ShardConfig): Promise<void> {
         const payload: IdentifyStructure = {
             token: this.#token,
+            intents: this.#options.intents,
             properties: {
                 os: platform,
                 browser: "nyxjs",
                 device: "nyxjs",
             },
-            intents: this.#options.intents,
-            shard: [shardId, shardCount],
         };
 
         if (this.#options.presence) {
@@ -166,13 +173,15 @@ export class ShardManager {
             payload.compress = Boolean(this.#options.compress);
         }
 
+        if (shard) {
+            payload.shard = [shard.shardId, shard.shardCount];
+            this.#gateway.emit("DEBUG", `[SHARD] Shard ${shard.shardId} connected`);
+        }
+
         try {
             this.#gateway.send(GatewayOpcodes.Identify, payload);
-            this.#gateway.emit("DEBUG", `[SHARD] Shard ${shardId} connected`);
         } catch (error) {
-            throw new Error(
-                `Failed to connect shard ${shardId}: ${error instanceof Error ? error.message : String(error)}`
-            );
+            throw new Error(`Failed to connect shard: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }

@@ -53,8 +53,8 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.47.9",
-    "@swc/core": "^1.7.28",
-    "@types/node": "^22.7.4",
+    "@swc/core": "^1.7.35",
+    "@types/node": "^22.7.5",
     "@types/ws": "^8.5.12",
     "eslint": "^8.57.1",
     "eslint-formatter-pretty": "^5.0.0",
@@ -62,7 +62,7 @@
     "rimraf": "^6.0.1",
     "terser": "^5.34.1",
     "tsup": "^8.3.0",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.3"
   },
   "files": [
     "dist"
