@@ -6,7 +6,7 @@ import type { RestOptions } from "@nyxjs/rest";
 import { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import type { ClientEvents } from "../managers";
-import { ClientEventManager } from "../managers";
+import { ClientEventManager, UserManager } from "../managers";
 
 export type ClientOptions = {
     gateway?: Partial<Omit<GatewayOptions, "intents" | "v">>;
@@ -20,6 +20,8 @@ export class Client extends EventEmitter<ClientEvents> {
 
     public gateway: Gateway;
 
+    public users: UserManager;
+
     readonly #options: Required<ClientOptions>;
 
     readonly #events: ClientEventManager;
@@ -32,6 +34,7 @@ export class Client extends EventEmitter<ClientEvents> {
         this.#options = this.#initializeConfig(options);
         this.rest = this.#initializeRest();
         this.gateway = this.#initializeGateway();
+        this.users = new UserManager(this);
         this.#events = new ClientEventManager(this);
     }
 

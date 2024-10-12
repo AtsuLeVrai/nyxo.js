@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/benchmark",
+  "description": "Benchmark for nyx.js",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": {
+    "name": "3tatsu",
+    "url": "https://github.com/3tatsu"
+  },
+  "repository": {
+    "type": "git",
+    "directory": "packages/benchmark",
+    "url": "https://github.com/3tatsu/nyx.js"
+  },
+  "bugs": {
+    "url": "https://github.com/3tatsu/nyx.js/issues"
+  },
+  "scripts": {
+    "start:discordjs": "node src/discordjs.js",
+    "start:eris": "node src/eris.js",
+    "start:nyxjs": "node src/nyxjs.js",
+    "lint": "eslint src --fix --format pretty",
+    "pretty": "prettier --write src"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "eris": "^0.18.0",
+    "nyx.js": "workspace:*"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.1",
+    "eslint-formatter-pretty": "^5.0.0",
+    "prettier": "^3.3.3"
+  },
+  "files": [
+    "dist"
+  ]
+}

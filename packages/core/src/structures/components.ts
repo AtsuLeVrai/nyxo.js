@@ -118,6 +118,16 @@ export type SelectMenuOptionStructure = {
 };
 
 /**
+ * Resolvable select menu types
+ */
+export type SelectMenuTypes =
+    | ComponentTypes.ChannelSelect
+    | ComponentTypes.MentionableSelect
+    | ComponentTypes.RoleSelect
+    | ComponentTypes.StringSelect
+    | ComponentTypes.UserSelect;
+
+/**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure|Select Menu Structure}
  */
 export type SelectMenuStructure = {
@@ -156,12 +166,7 @@ export type SelectMenuStructure = {
     /**
      * Type of select menu component (text: 3, user: 5, role: 6, mentionable: 7, channels: 8)
      */
-    type:
-        | ComponentTypes.ChannelSelect
-        | ComponentTypes.MentionableSelect
-        | ComponentTypes.RoleSelect
-        | ComponentTypes.StringSelect
-        | ComponentTypes.UserSelect;
+    type: SelectMenuTypes;
 };
 
 /**

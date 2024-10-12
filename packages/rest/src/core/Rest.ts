@@ -35,6 +35,12 @@ export class Rest extends EventEmitter<RestEvents> {
         this.#retryAgent = this.#initializeRetryAgent();
     }
 
+    public async manyRequest<T extends readonly RouteStructure<any>[] | []>(
+        routes: T
+    ): Promise<{ [K in keyof T]: T[K] extends RouteStructure<infer U> ? Awaited<U> : never }> {
+        return Promise.all(routes.map(async (route) => this.request(route))) as any;
+    }
+
     public async request<T>(route: RouteStructure<T>): Promise<T> {
         const { headers, method, body, path, disable_cache, query } = route;
 

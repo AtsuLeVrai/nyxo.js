@@ -2,9 +2,11 @@ import type { AuditLogEvents } from "@nyxjs/core";
 import { GatewayCloseCodes } from "@nyxjs/core";
 import type { GatewayReceiveEvents } from "@nyxjs/gateway";
 import type { RateLimitInfo } from "@nyxjs/rest";
-import type { Client } from "../core/Client";
+import type { Client } from "../core";
+import type { User } from "../structures";
+import { Ready } from "../structures";
 
-type Class<T = any> = new (...args: any[]) => T;
+type Class<T = unknown> = new (...args: unknown[]) => T;
 
 type ReturnTypes = Class | bigint | boolean | number | object | string | symbol | undefined;
 
@@ -16,6 +18,25 @@ type ClientEventMappingStructure = {
         return?: ReturnTypes[];
     };
 };
+
+class ClassInstance<T> {
+    public readonly class: Class<T>[];
+
+    public readonly instance: T[];
+
+    public constructor(classes: Class<T>[], ...args: unknown[]) {
+        if (!Array.isArray(classes) || classes.some((cls) => typeof cls !== "function")) {
+            throw new Error("Invalid class array provided.");
+        }
+
+        this.class = classes;
+        this.instance = this.#createInstance(...args);
+    }
+
+    #createInstance(...args: unknown[]): T[] {
+        return this.class.map((Class) => new Class(...args));
+    }
+}
 
 const ClientEventMapping: ClientEventMappingStructure = {
     close: {
@@ -44,7 +65,7 @@ const ClientEventMapping: ClientEventMappingStructure = {
     },
     ready: {
         gateway_event_name: "READY",
-        return: [],
+        return: [Ready],
     },
 };
 
@@ -137,7 +158,7 @@ export type ClientEvents = {
     onboardingUpdate: [];
     presenceUpdate: [];
     rateLimit: [rateLimitInfo: RateLimitInfo];
-    ready: [];
+    ready: [ready: Ready];
     roleCreate: [];
     roleDelete: [];
     roleUpdate: [];
@@ -160,7 +181,7 @@ export type ClientEvents = {
     threadMembersUpdate: [];
     threadUpdate: [];
     typingStart: [];
-    userUpdate: [];
+    userUpdate: [oldUser: User, newUser: User];
     voiceChannelEffectSend: [];
     voiceServerUpdate: [];
     voiceStateUpdate: [];
@@ -179,38 +200,64 @@ export class ClientEventManager {
     }
 
     public setupListeners(): void {
-        /**
-         * Setup listeners for the REST client.
-         */
-        this.#client.rest.on("DEBUG", (message) => this.#client.emit("debug", message));
-        this.#client.rest.on("ERROR", (error) => this.#client.emit("error", error));
-        this.#client.rest.on("RATE_LIMIT", (info) => this.#client.emit("rateLimit", info));
-        this.#client.rest.on("WARN", (message) => this.#client.emit("warn", message));
+        try {
+            // Setup listeners for the REST client.
+            this.#client.rest.on("DEBUG", (message) => this.#emitEvent("debug", message));
+            this.#client.rest.on("ERROR", (error) => this.#emitEvent("error", error));
+            this.#client.rest.on("RATE_LIMIT", (info) => this.#emitEvent("rateLimit", info));
+            this.#client.rest.on("WARN", (message) => this.#emitEvent("warn", message));
 
-        /**
-         * Setup listeners for the gateway client.
-         */
-        this.#client.gateway.on("CLOSE", (code, reason) => this.#client.emit("close", code, reason));
-        this.#client.gateway.on("DEBUG", (message) => this.#client.emit("debug", message));
-        this.#client.gateway.on("ERROR", (error) => this.#client.emit("error", error));
-        this.#client.gateway.on("WARN", (message) => this.#client.emit("warn", message));
-        this.#client.gateway.on("DISPATCH", this.#handleDispatch.bind(this));
+            // Setup listeners for the gateway client.
+            this.#client.gateway.on("CLOSE", (code, reason) => this.#emitEvent("close", code, reason));
+            this.#client.gateway.on("DEBUG", (message) => this.#emitEvent("debug", message));
+            this.#client.gateway.on("ERROR", (error) => this.#emitEvent("error", error));
+            this.#client.gateway.on("WARN", (message) => this.#emitEvent("warn", message));
+            this.#client.gateway.on("DISPATCH", this.#handleDispatch.bind(this));
+        } catch (error) {
+            console.error("Error setting up listeners:", error);
+        }
     }
 
     #handleDispatch<K extends keyof GatewayReceiveEvents>(event: K, ...data: GatewayReceiveEvents[K]): void {
-        const eventName = this.#transformEventName(event) as keyof ClientEventMappingStructure;
-        const eventMapping = ClientEventMapping[eventName];
+        try {
+            const eventName = this.#transformEventName(event) as keyof ClientEventMappingStructure;
+            const eventMapping = ClientEventMapping[eventName];
 
-        if (!eventMapping) {
-            return;
+            if (!eventMapping) {
+                console.warn(`No mapping found for event: ${event}`);
+                return;
+            }
+
+            if (eventMapping.gateway_event_name) {
+                if (eventMapping.return && this.#isClass(eventMapping.return)) {
+                    const validClasses = eventMapping.return.filter((item): item is Class<any> => item !== undefined);
+                    const classInstance = new ClassInstance(validClasses, ...data);
+                    this.#emitEvent(eventName, ...classInstance.instance);
+                    return;
+                }
+
+                this.#emitEvent(eventName, ...data);
+            }
+        } catch (error) {
+            console.error(`Error handling dispatch for event: ${event}`, error);
         }
+    }
 
-        if (eventMapping.gateway_event_name) {
-            this.#client.emit(eventName, ...(data as never));
+    #emitEvent(eventName: keyof ClientEvents, ...args: any[]): void {
+        try {
+            this.#client.emit(eventName, ...(args as never));
+        } catch (error) {
+            console.error(`Error emitting event: ${eventName}`, error);
         }
     }
 
     #transformEventName(event: string): string {
         return event.toLowerCase().replaceAll(/_(?<temp1>[a-z])/g, (substring) => substring[1].toUpperCase());
+    }
+
+    #isClass<T>(values: (Class<T> | T)[]): values is Class<T>[] {
+        return values.every(
+            (value) => typeof value === "function" && value.prototype && value === value.prototype.constructor
+        );
     }
 }

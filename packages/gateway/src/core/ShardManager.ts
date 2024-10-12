@@ -5,19 +5,8 @@ import { GatewayOpcodes } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { GatewayRoutes, UserRoutes } from "@nyxjs/rest";
 import type { IdentifyStructure } from "../events";
-import type { GatewayOptions, GatewayShardTypes } from "../types";
+import type { GatewayOptions, GatewayShardTypes, ShardConfig } from "../types";
 import type { Gateway } from "./index";
-
-type ShardConfig = {
-    /**
-     * The total number of shards.
-     */
-    shardCount: Integer;
-    /**
-     * The shard ID.
-     */
-    shardId: Integer;
-};
 
 export class ShardManager {
     #shards: Map<number, ShardConfig> = new Map();
@@ -60,8 +49,8 @@ export class ShardManager {
                 const [shardId, shardCount] = mode;
                 this.#addShard({ shardId, shardCount });
             } else {
-                const { shardId, numShards } = mode;
-                this.#addShard({ shardId, shardCount: numShards });
+                const { shardId, shardCount } = mode;
+                this.#addShard({ shardId, shardCount });
             }
 
             await this.#connectShards();
@@ -70,13 +59,16 @@ export class ShardManager {
         }
     }
 
-    public getShardsInfo(): ReadonlyMap<Integer, Readonly<ShardConfig>> {
-        return new Map(Array.from(this.#shards, ([id, config]) => [id, Object.freeze({ ...config })]));
-    }
-
     async #setupAutoSharding(): Promise<void> {
         try {
-            const guilds = await this.#rest.request(UserRoutes.getCurrentUserGuilds());
+            const [
+                guilds,
+                {
+                    shards: recommendedShards,
+                    session_start_limit: { max_concurrency },
+                },
+            ] = await this.#rest.manyRequest([UserRoutes.getCurrentUserGuilds(), GatewayRoutes.getGatewayBot()]);
+
             if (guilds.length <= 2_500) {
                 this.#gateway.emit("WARN", "[SHARD] You have less than 2500 guilds, consider disabling auto-sharding.");
             }
@@ -86,11 +78,6 @@ export class ShardManager {
                 this.#gateway.emit("DEBUG", "[SHARD] No guilds found, added single shard");
                 return;
             }
-
-            const {
-                shards: recommendedShards,
-                session_start_limit: { max_concurrency },
-            } = await this.#rest.request(GatewayRoutes.getGatewayBot());
 
             this.#maxConcurrency = max_concurrency;
             this.#gateway.emit("DEBUG", `[SHARD] Max concurrency set to ${max_concurrency}`);

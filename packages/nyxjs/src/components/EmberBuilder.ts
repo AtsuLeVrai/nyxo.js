@@ -35,8 +35,8 @@ export class EmbedBuilder {
         this.#data = this.#resolveEmbed(data ?? {});
     }
 
-    public static create(): EmbedBuilder {
-        return new EmbedBuilder();
+    public static create(data?: EmbedStructure): EmbedBuilder {
+        return new EmbedBuilder(data);
     }
 
     public setTitle(title: string): this {
@@ -240,16 +240,6 @@ export class EmbedBuilder {
             return true;
         } catch {
             return false;
-        }
-    }
-
-    #parseField(field: EmbedFieldStructure): void {
-        if (field.name.length > EmbedBuilder.FIELD_NAME_LIMIT) {
-            throw new Error(`Field name exceeds ${EmbedBuilder.FIELD_NAME_LIMIT} characters`);
-        }
-
-        if (field.value.length > EmbedBuilder.FIELD_VALUE_LIMIT) {
-            throw new Error(`Field value exceeds ${EmbedBuilder.FIELD_VALUE_LIMIT} characters`);
         }
     }
 }

@@ -1,6 +1,7 @@
 export * from "./components";
 export * from "./core";
 export * from "./managers";
+export * from "./structures";
 export * from "./utils";
 
 export * from "@nyxjs/core";
