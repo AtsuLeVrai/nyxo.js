@@ -44,7 +44,6 @@
     "@nyxjs/core": "workspace:*",
     "@nyxjs/gateway": "workspace:*",
     "@nyxjs/rest": "workspace:*",
-    "@nyxjs/store": "workspace:*",
     "eventemitter3": "^5.0.1"
   },
   "devDependencies": {

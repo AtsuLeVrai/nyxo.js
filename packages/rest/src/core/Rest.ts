@@ -1,6 +1,5 @@
 import { setTimeout } from "node:timers";
 import { MimeTypes, RestHttpResponseCodes, RestJsonErrorCodes } from "@nyxjs/core";
-import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import type { RetryHandler } from "undici";
 import { Pool, RetryAgent } from "undici";
@@ -19,7 +18,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     readonly #rateLimiter: RateLimiter = new RateLimiter();
 
-    readonly #cache: Store<string, any> = new Store();
+    readonly #cache: Map<string, any> = new Map();
 
     public constructor(token: string, options: RestOptions) {
         super();

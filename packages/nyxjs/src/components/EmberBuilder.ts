@@ -12,7 +12,7 @@ import type {
     Integer,
 } from "@nyxjs/core";
 import type { ColorResolvable } from "../utils";
-import { resolveColor } from "../utils";
+import { Colors } from "../utils";
 
 export class EmbedBuilder {
     public static readonly TITLE_LIMIT = 256;
@@ -71,7 +71,7 @@ export class EmbedBuilder {
     }
 
     public setColor(color: ColorResolvable): this {
-        this.#data.color = resolveColor(color);
+        this.#data.color = Colors.resolve(color);
         return this;
     }
 

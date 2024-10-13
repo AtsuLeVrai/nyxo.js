@@ -11,19 +11,23 @@ export class Ready {
 
     public sessionId!: string;
 
-    public shard?: [shard_id: Integer, num_shards: Integer];
+    public shard?: [shardId: Integer, numShards: Integer];
 
-    public user: User;
+    public user!: User;
 
-    public version!: ApiVersions;
+    public v!: ApiVersions;
 
-    public constructor(data: ReadyEventFields) {
-        this.application = data.application;
-        this.guilds = data.guilds;
-        this.resumeGatewayUrl = data.resume_gateway_url;
-        this.sessionId = data.session_id;
-        this.shard = data.shard;
-        this.user = new User(data.user);
-        this.version = data.v;
+    public constructor(data: Partial<ReadyEventFields>) {
+        this.#patch(data);
+    }
+
+    #patch(data: Partial<ReadyEventFields>): void {
+        if (data.application) this.application = { flags: data.application.flags, id: data.application.id };
+        if (data.guilds) this.guilds = data.guilds;
+        if (data.resume_gateway_url) this.resumeGatewayUrl = data.resume_gateway_url;
+        if (data.session_id) this.sessionId = data.session_id;
+        if (data.shard) this.shard = data.shard;
+        if (data.user) this.user = new User(data.user);
+        if (data.v) this.v = data.v;
     }
 }

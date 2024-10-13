@@ -1,5 +1,4 @@
 import { setTimeout } from "node:timers";
-import { Store } from "@nyxjs/store";
 import type { RestHttpDiscordHeaders } from "../types";
 
 /**
@@ -21,7 +20,7 @@ type RateLimiterBucket = {
 };
 
 export class RateLimiter {
-    #buckets: Store<string, RateLimiterBucket> = new Store();
+    #buckets: Map<string, RateLimiterBucket> = new Map();
 
     public async wait(bucket: string): Promise<void> {
         const rateLimitInfo = this.#buckets.get(bucket);

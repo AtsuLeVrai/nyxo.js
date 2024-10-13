@@ -8,9 +8,6 @@
     "clean": "turbo run clean",
     "lint": "turbo run lint",
     "pretty": "turbo run pretty",
-    "vt:test": "turbo run vt:test",
-    "vt:ui": "turbo run vt:ui",
-    "vt:coverage": "turbo run t:coverage",
     "prepare": "husky"
   },
   "devDependencies": {
