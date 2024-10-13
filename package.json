@@ -4,6 +4,8 @@
   "packageManager": "pnpm@9.12.1",
   "private": true,
   "scripts": {
+    "dev": "turbo run dev",
+    "start": "turbo run start",
     "build": "turbo run build",
     "clean": "turbo run clean",
     "lint": "turbo run lint",
