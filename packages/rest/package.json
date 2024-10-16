@@ -45,17 +45,17 @@
     "eventemitter3": "^5.0.1",
     "form-data": "^4.0.1",
     "minizlib": "^3.0.1",
-    "undici": "^6.20.0"
+    "undici": "^6.20.1"
   },
   "devDependencies": {
-    "@microsoft/api-extractor": "^7.47.9",
-    "@swc/core": "^1.7.35",
+    "@microsoft/api-extractor": "^7.47.10",
+    "@swc/core": "^1.7.36",
     "@types/node": "^22.7.5",
     "eslint": "^8.57.1",
     "eslint-formatter-pretty": "^5.0.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
-    "terser": "^5.34.1",
+    "terser": "^5.36.0",
     "tsup": "^8.3.0",
     "typescript": "^5.6.3"
   },

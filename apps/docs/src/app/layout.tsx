@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import React from "react";
+import { inter } from "@/lib";
 
 export const metadata: Metadata = {
     title: "Nyx.js Documentation",
@@ -14,7 +15,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body>{children}</body>
+            <body className={`bg-neutral-900 text-white ${inter.className}`}>{children}</body>
         </html>
     );
 }

@@ -1,4 +1,6 @@
 packages:
   - 'apps/*'
   - 'configs/*'
+  - 'internals/*'
   - 'packages/*'
+  - 'scripts/*'
