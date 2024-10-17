@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/benchmark",
-  "description": "Benchmark for nyx.js",
+  "name": "@nyxjs/tests",
+  "description": "Test suite for Nyx.js",
   "version": "1.0.0",
   "type": "commonjs",
   "readme": "README.md",
@@ -10,21 +10,21 @@
     "node": ">=18"
   },
   "scripts": {
-    "start:discordjs": "node src/discordjs.js",
-    "start:eris": "node src/eris.js",
-    "start:nyxjs": "node src/nyxjs.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "lint": "eslint src --fix --format pretty",
     "pretty": "prettier --write src"
   },
   "dependencies": {
-    "discord.js": "^14.16.3",
-    "eris": "^0.18.0",
     "nyx.js": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^22.7.5",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.1",
     "eslint-formatter-pretty": "^5.0.0",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
   }
 }

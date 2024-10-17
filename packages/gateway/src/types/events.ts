@@ -59,6 +59,7 @@ import type {
     PresenceUpdateEventFields,
     ReadyEventFields,
     RequestGuildMembersRequestStructure,
+    RequestSoundboardSoundsStructure,
     ResumeStructure,
     ThreadListSyncEventFields,
     ThreadMembersUpdateEventFields,
@@ -172,6 +173,7 @@ export type GatewaySendEvents = {
     [GatewayOpcodes.Resume]: ResumeStructure;
     [GatewayOpcodes.Heartbeat]: Integer | null;
     [GatewayOpcodes.RequestGuildMembers]: RequestGuildMembersRequestStructure;
+    [GatewayOpcodes.RequestSoundboardSounds]: RequestSoundboardSoundsStructure;
     [GatewayOpcodes.VoiceStateUpdate]: UpdateVoiceStateGatewayVoiceStateUpdateStructure;
     [GatewayOpcodes.PresenceUpdate]: UpdatePresenceGatewayPresenceUpdateStructure;
 };

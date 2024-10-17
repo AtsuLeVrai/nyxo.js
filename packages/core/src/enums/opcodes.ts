@@ -48,6 +48,10 @@ export enum GatewayOpcodes {
      * Heartbeat ACK opcode.
      */
     HeartbeatAck = 11,
+    /**
+     * Request information about soundboard sounds in a set of guilds.
+     */
+    RequestSoundboardSounds = 31,
 }
 
 /**

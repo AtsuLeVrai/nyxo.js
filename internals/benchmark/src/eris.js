@@ -13,27 +13,7 @@ console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} 
 const startTime = performance.now();
 
 const client = new Eris(process.env.DISCORD_TOKEN, {
-    intents: [
-        "guilds",
-        "guildMembers",
-        "guildModeration",
-        "guildEmojisAndStickers",
-        "guildIntegrations",
-        "guildWebhooks",
-        "guildInvites",
-        "guildVoiceStates",
-        "guildPresences",
-        "guildMessages",
-        "guildMessageReactions",
-        "guildMessageTyping",
-        "directMessages",
-        "directMessageReactions",
-        "directMessageTyping",
-        "messageContent",
-        "guildScheduledEvents",
-        "autoModerationConfiguration",
-        "autoModerationExecution",
-    ],
+    intents: ["all"],
     maxShards: "auto",
 });
 

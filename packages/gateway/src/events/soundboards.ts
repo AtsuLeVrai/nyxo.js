@@ -27,3 +27,13 @@ export type SoundboardSoundsEventFields = {
      */
     soundboard_sounds: SoundboardSoundStructure[];
 };
+
+/**
+ * @see {@link https://discord.com/developers/docs/topics/gateway-events#request-soundboard-sounds-request-soundboard-sounds-structure}
+ */
+export type RequestSoundboardSoundsStructure = {
+    /**
+     * IDs of the guilds to get soundboard sounds for
+     */
+    guild_ids: Snowflake[];
+};

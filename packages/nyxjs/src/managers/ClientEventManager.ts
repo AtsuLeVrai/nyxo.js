@@ -1,5 +1,4 @@
-import type { AuditLogEvents } from "@nyxjs/core";
-import { GatewayCloseCodes } from "@nyxjs/core";
+import type { AuditLogEvents, GatewayCloseCodes } from "@nyxjs/core";
 import type { GatewayReceiveEvents } from "@nyxjs/gateway";
 import type { RateLimitInfo } from "@nyxjs/rest";
 import type { Client } from "../core";
@@ -11,7 +10,7 @@ type Class<T = unknown> = new (...args: unknown[]) => T;
 type ReturnTypes = Class | bigint | boolean | number | object | string | symbol | undefined;
 
 type ClientEventMappingStructure = {
-    [client_event_name in keyof Partial<ClientEvents>]: {
+    [client_event_name in keyof Omit<Partial<ClientEvents>, "close" | "debug" | "error" | "rateLimit" | "warn">]: {
         audit_log_event_type?: AuditLogEvents;
         gateway_event_name?: string;
         rest_event_name?: string;
@@ -39,30 +38,6 @@ class ClassInstance<T> {
 }
 
 const ClientEventMapping: ClientEventMappingStructure = {
-    close: {
-        gateway_event_name: "CLOSE",
-        rest_event_name: "CLOSE",
-        return: [GatewayCloseCodes, String],
-    },
-    debug: {
-        gateway_event_name: "DEBUG",
-        rest_event_name: "DEBUG",
-        return: [String],
-    },
-    error: {
-        gateway_event_name: "ERROR",
-        rest_event_name: "ERROR",
-        return: [Error],
-    },
-    warn: {
-        gateway_event_name: "WARN",
-        rest_event_name: "WARN",
-        return: [String],
-    },
-    rateLimit: {
-        rest_event_name: "RATE_LIMIT",
-        return: [Object],
-    },
     ready: {
         gateway_event_name: "READY",
         return: [Ready],
@@ -201,21 +176,28 @@ export class ClientEventManager {
 
     public setupListeners(): void {
         try {
-            // Setup listeners for the REST client.
-            this.#client.rest.on("DEBUG", (message) => this.#emitEvent("debug", message));
-            this.#client.rest.on("ERROR", (error) => this.#emitEvent("error", error));
-            this.#client.rest.on("RATE_LIMIT", (info) => this.#emitEvent("rateLimit", info));
-            this.#client.rest.on("WARN", (message) => this.#emitEvent("warn", message));
-
-            // Setup listeners for the gateway client.
-            this.#client.gateway.on("CLOSE", (code, reason) => this.#emitEvent("close", code, reason));
-            this.#client.gateway.on("DEBUG", (message) => this.#emitEvent("debug", message));
-            this.#client.gateway.on("ERROR", (error) => this.#emitEvent("error", error));
-            this.#client.gateway.on("WARN", (message) => this.#emitEvent("warn", message));
-            this.#client.gateway.on("DISPATCH", this.#handleDispatch.bind(this));
+            this.#setupRestListeners();
+            this.#setupGatewayListeners();
         } catch (error) {
-            console.error("Error setting up listeners:", error);
+            throw new Error(`Error setting up listeners: ${error}`);
         }
+    }
+
+    #setupRestListeners(): void {
+        const { rest } = this.#client;
+        rest.on("DEBUG", (message) => this.#emitEvent("debug", message));
+        rest.on("ERROR", (error) => this.#emitEvent("error", error));
+        rest.on("RATE_LIMIT", (info) => this.#emitEvent("rateLimit", info));
+        rest.on("WARN", (message) => this.#emitEvent("warn", message));
+    }
+
+    #setupGatewayListeners(): void {
+        const { gateway } = this.#client;
+        gateway.on("CLOSE", (code, reason) => this.#emitEvent("close", code, reason));
+        gateway.on("DEBUG", (message) => this.#emitEvent("debug", message));
+        gateway.on("ERROR", (error) => this.#emitEvent("error", error));
+        gateway.on("WARN", (message) => this.#emitEvent("warn", message));
+        gateway.on("DISPATCH", this.#handleDispatch.bind(this));
     }
 
     #handleDispatch<K extends keyof GatewayReceiveEvents>(event: K, ...data: GatewayReceiveEvents[K]): void {
@@ -229,14 +211,14 @@ export class ClientEventManager {
             }
 
             if (eventMapping.gateway_event_name) {
-                if (eventMapping.return && this.#isClass(eventMapping.return)) {
-                    const validClasses = eventMapping.return.filter((item): item is Class<any> => item !== undefined);
+                const returnTypes = eventMapping.return;
+                if (returnTypes && this.#isClass(returnTypes)) {
+                    const validClasses = returnTypes.filter((item): item is Class<any> => item !== undefined);
                     const classInstance = new ClassInstance(validClasses, ...data);
                     this.#emitEvent(eventName, ...classInstance.instance);
-                    return;
+                } else {
+                    this.#emitEvent(eventName, ...data);
                 }
-
-                this.#emitEvent(eventName, ...data);
             }
         } catch (error) {
             console.error(`Error handling dispatch for event: ${event}`, error);
@@ -252,7 +234,7 @@ export class ClientEventManager {
     }
 
     #transformEventName(event: string): string {
-        return event.toLowerCase().replaceAll(/_(?<temp1>[a-z])/g, (substring) => substring[1].toUpperCase());
+        return event.toLowerCase().replaceAll(/_(?<temp1>[a-z])/g, (_, letter) => letter.toUpperCase());
     }
 
     #isClass<T>(values: (Class<T> | T)[]): values is Class<T>[] {

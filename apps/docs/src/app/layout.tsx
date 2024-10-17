@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import React from "react";
+import type { ReactNode } from "react";
 import { inter } from "@/lib";
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({
     children,
 }: Readonly<{
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     return (
         <html lang="en">
