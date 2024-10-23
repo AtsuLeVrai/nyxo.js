@@ -1,12 +1,8 @@
-import type { GatewayIntents, Integer } from "@nyxjs/core";
-import { ApiVersions, BitfieldManager } from "@nyxjs/core";
-import type { GatewayOptions } from "@nyxjs/gateway";
-import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
-import type { RestOptions } from "@nyxjs/rest";
-import { Rest } from "@nyxjs/rest";
+import { ApiVersions, BitfieldManager, type GatewayIntents, type Integer } from "@nyxjs/core";
+import { CompressTypes, EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/gateway";
+import { Rest, type RestOptions } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
-import type { ClientEvents } from "../managers";
-import { ClientEventManager, UserManager } from "../managers";
+import { ClientEventManager, type ClientEvents, UserManager } from "../managers";
 
 export type ClientOptions = {
     gateway?: Partial<Omit<GatewayOptions, "intents" | "v">>;
@@ -16,21 +12,21 @@ export type ClientOptions = {
 };
 
 export class Client extends EventEmitter<ClientEvents> {
-    public rest: Rest;
+    token: string;
 
-    public gateway: Gateway;
+    rest: Rest;
 
-    public users: UserManager;
+    gateway: Gateway;
+
+    users: UserManager;
 
     readonly #options: Required<ClientOptions>;
 
     readonly #events: ClientEventManager;
 
-    public constructor(
-        public token: string,
-        options: ClientOptions
-    ) {
+    constructor(token: string, options: ClientOptions) {
         super();
+        this.token = token;
         this.#options = this.#initializeConfig(options);
         this.rest = this.#initializeRest();
         this.gateway = this.#initializeGateway();
@@ -38,7 +34,7 @@ export class Client extends EventEmitter<ClientEvents> {
         this.#events = new ClientEventManager(this);
     }
 
-    public async connect(): Promise<void> {
+    async connect(): Promise<void> {
         try {
             this.#events.setupListeners();
             await this.gateway.connect();
@@ -99,7 +95,7 @@ export class Client extends EventEmitter<ClientEvents> {
 
     #resolveIntents(intents: GatewayIntents[] | Integer): Integer {
         if (Array.isArray(intents)) {
-            return Number(BitfieldManager.from(intents).valueOf());
+            return BitfieldManager.from(intents).toNumber();
         }
 
         return intents;

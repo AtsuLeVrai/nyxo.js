@@ -1,63 +1,67 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "ui": "tui",
-  "tasks": {
-    "dev": {
-      "dependsOn": [
-        "^dev"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**"
-      ]
-    },
-    "start": {
-      "dependsOn": [
-        "^start"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**"
-      ]
-    },
-    "build": {
-      "dependsOn": [
-        "^build",
-        "^lint",
-        "^pretty"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "dist/**"
-      ]
-    },
-    "clean": {
-      "dependsOn": [
-        "^clean"
-      ]
-    },
-    "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
-    },
-    "pretty": {
-      "dependsOn": [
-        "^pretty"
-      ]
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "tui",
+    "tasks": {
+        "dev": {
+            "cache": false,
+            "persistent": true,
+            "dependsOn": [
+                "^dev"
+            ],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env*"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**"
+            ]
+        },
+        "start": {
+            "dependsOn": [
+                "^start"
+            ],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env*"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**"
+            ]
+        },
+        "build": {
+            "dependsOn": [
+                "^build",
+                "^format"
+            ],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                ".env*"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                "dist/**"
+            ]
+        },
+        "clean": {
+            "dependsOn": [
+                "^clean"
+            ],
+            "outputs": [
+                ".next/**",
+                "dist/**"
+            ]
+        },
+        "format": {
+            "dependsOn": [
+                "^format"
+            ],
+            "outputs": [
+                ".next/**",
+                "dist/**"
+            ]
+        }
     }
-  }
 }

@@ -1,70 +1,63 @@
-import { URL } from "node:url";
-import type { Integer, Snowflake } from "@nyxjs/core";
-import { ImageFormats } from "@nyxjs/core";
+import { ImageFormats, type Integer, type Snowflake } from "@nyxjs/core";
 import type { CdnImageOptions, ImageType } from "../types";
 
 export class Cdn {
-    public static baseUrl = new URL("https://cdn.discordapp.com");
+    static baseUrl = new URL("https://cdn.discordapp.com");
 
-    public static customEmoji(emojiId: Snowflake, options?: CdnImageOptions): string {
+    static customEmoji(emojiId: Snowflake, options?: CdnImageOptions): string {
         return this.#createUrl(`emojis/${emojiId}`, options?.format, options?.size);
     }
 
-    public static guildIcon(guildId: Snowflake, icon: string, options?: CdnImageOptions): string {
+    static guildIcon(guildId: Snowflake, icon: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/icons/${guildId}/${icon}`, options?.format, options?.size);
     }
 
-    public static guildSplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
+    static guildSplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/splashes/${guildId}/${splash}`, options?.format, options?.size);
     }
 
-    public static guildDiscoverySplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
+    static guildDiscoverySplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/discovery-splashes/${guildId}/${splash}`, options?.format, options?.size);
     }
 
-    public static guildBanner(guildId: Snowflake, banner: string, options?: CdnImageOptions): string {
+    static guildBanner(guildId: Snowflake, banner: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/banners/${guildId}/${banner}`, options?.format, options?.size);
     }
 
-    public static userBanner(userId: Snowflake, banner: string, options?: CdnImageOptions): string {
+    static userBanner(userId: Snowflake, banner: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/banners/${userId}/${banner}`, options?.format, options?.size);
     }
 
-    public static defaultUserAvatar(userId: Snowflake): string {
+    static defaultUserAvatar(userId: Snowflake): string {
         const hash = this.#calculateDefaultAvatarHash(userId);
         return this.#createUrl(`/embed/avatars/${hash}`, ImageFormats.PNG);
     }
 
-    public static userAvatar(userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
+    static userAvatar(userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/avatars/${userId}/${avatar}`, options?.format, options?.size);
     }
 
-    public static guildMemberAvatar(
-        guildId: Snowflake,
-        userId: Snowflake,
-        avatar: string,
-        options?: CdnImageOptions
-    ): string {
+    static guildMemberAvatar(guildId: Snowflake, userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/guilds/${guildId}/users/${userId}/avatars/${avatar}`, options?.format, options?.size);
     }
 
-    public static avatarDecoration(avatarDecorationDataAsset: string): string {
+    static avatarDecoration(avatarDecorationDataAsset: string): string {
         return this.#createUrl(`/avatar-decoration-presets/${avatarDecorationDataAsset}`, ImageFormats.PNG);
     }
 
-    public static applicationIcon(applicationId: Snowflake, icon: string, options?: CdnImageOptions): string {
+    static applicationIcon(applicationId: Snowflake, icon: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/app-icons/${applicationId}/${icon}`, options?.format, options?.size);
     }
 
-    public static applicationCover(applicationId: Snowflake, coverImage: string, options?: CdnImageOptions): string {
+    static applicationCover(applicationId: Snowflake, coverImage: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/app-icons/${applicationId}/${coverImage}`, options?.format, options?.size);
     }
 
-    public static applicationAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
+    static applicationAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
         return this.#createUrl(`/app-assets/${applicationId}/${assetId}`, options?.format, options?.size);
     }
 
-    public static achievementIcon(
+    static achievementIcon(
         applicationId: Snowflake,
         achievementId: Snowflake,
         iconHash: string,
@@ -77,11 +70,11 @@ export class Cdn {
         );
     }
 
-    public static storePageAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
+    static storePageAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
         return this.#createUrl(`/app-assets/${applicationId}/store/${assetId}`, options?.format, options?.size);
     }
 
-    public static stickerPackBanner(
+    static stickerPackBanner(
         applicationId: Snowflake,
         stickerPackBannerAssetId: Snowflake,
         options?: CdnImageOptions
@@ -93,19 +86,19 @@ export class Cdn {
         );
     }
 
-    public static teamIcon(teamId: Snowflake, teamIcon: string, options?: CdnImageOptions): string {
+    static teamIcon(teamId: Snowflake, teamIcon: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/team-icons/${teamId}/${teamIcon}`, options?.format, options?.size);
     }
 
-    public static sticker(stickerId: Snowflake, format: ImageType = ImageFormats.PNG): string {
+    static sticker(stickerId: Snowflake, format: ImageType = ImageFormats.PNG): string {
         return this.#createUrl(`/stickers/${stickerId}`, format, undefined, "media.discordapp.net");
     }
 
-    public static roleIcon(roleId: Snowflake, roleIcon: string, options?: CdnImageOptions): string {
+    static roleIcon(roleId: Snowflake, roleIcon: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/role-icons/${roleId}/${roleIcon}`, options?.format, options?.size);
     }
 
-    public static guildScheduledEventCover(
+    static guildScheduledEventCover(
         guildId: Snowflake,
         scheduledEventId: Snowflake,
         scheduledEventCoverImage: string,
@@ -118,12 +111,7 @@ export class Cdn {
         );
     }
 
-    public static guildMemberBanner(
-        guildId: Snowflake,
-        userId: Snowflake,
-        banner: string,
-        options?: CdnImageOptions
-    ): string {
+    static guildMemberBanner(guildId: Snowflake, userId: Snowflake, banner: string, options?: CdnImageOptions): string {
         return this.#createUrl(`/guilds/${guildId}/users/${userId}/banners/${banner}`, options?.format, options?.size);
     }
 

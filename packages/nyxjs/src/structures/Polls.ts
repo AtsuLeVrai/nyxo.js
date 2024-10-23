@@ -12,116 +12,155 @@ import type {
 import { Emoji } from "./Emojis";
 
 export class PollAnswerCount {
-    public count!: Integer;
+    count!: Integer;
 
-    public id!: Integer;
+    id!: Integer;
 
-    public meVoted!: boolean;
+    meVoted!: boolean;
 
-    public constructor(data: Partial<PollAnswerCountStructure>) {
+    constructor(data: Partial<PollAnswerCountStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<PollAnswerCountStructure>): void {
-        if (data.count) this.count = data.count;
-        if (data.id) this.id = data.id;
-        if (data.me_voted) this.meVoted = data.me_voted;
+        if (data.count) {
+            this.count = data.count;
+        }
+        if (data.id) {
+            this.id = data.id;
+        }
+        if (data.me_voted) {
+            this.meVoted = data.me_voted;
+        }
     }
 }
 
 export class PollResults {
-    public answerCounts!: PollAnswerCount[];
+    answerCounts!: PollAnswerCount[];
 
-    public isFinalized!: boolean;
+    isFinalized!: boolean;
 
-    public constructor(data: Partial<PollResultsStructure>) {
+    constructor(data: Partial<PollResultsStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<PollResultsStructure>): void {
-        if (data.answer_counts)
+        if (data.answer_counts) {
             this.answerCounts = data.answer_counts.map((answerCount) => new PollAnswerCount(answerCount));
-        if (data.is_finalized) this.isFinalized = data.is_finalized;
+        }
+        if (data.is_finalized) {
+            this.isFinalized = data.is_finalized;
+        }
     }
 }
 
 export class PollMedia {
-    public emoji?: Pick<Emoji, "id" | "name">;
+    emoji?: Pick<Emoji, "id" | "name">;
 
-    public text?: string;
+    text?: string;
 
-    public constructor(data: Partial<PollMediaStructure>) {
+    constructor(data: Partial<PollMediaStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<PollMediaStructure>): void {
-        if (data.emoji) this.emoji = new Emoji(data.emoji);
-        if (data.text) this.text = data.text;
+        if (data.emoji) {
+            this.emoji = new Emoji(data.emoji);
+        }
+        if (data.text) {
+            this.text = data.text;
+        }
     }
 }
 
 export class PollAnswer {
-    public answerId!: Integer;
+    answerId!: Integer;
 
-    public pollMedia!: PollMedia;
+    pollMedia!: PollMedia;
 
-    public constructor(data: Partial<PollAnswerStructure>) {
+    constructor(data: Partial<PollAnswerStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<PollAnswerStructure>): void {
-        if (data.answer_id) this.answerId = data.answer_id;
-        if (data.poll_media) this.pollMedia = new PollMedia(data.poll_media);
+        if (data.answer_id) {
+            this.answerId = data.answer_id;
+        }
+        if (data.poll_media) {
+            this.pollMedia = new PollMedia(data.poll_media);
+        }
     }
 }
 
 export class PollCreateRequest {
-    public allowMultiselect?: boolean;
+    allowMultiselect?: boolean;
 
-    public answers!: PollAnswer[];
+    answers!: PollAnswer[];
 
-    public duration?: Integer;
+    duration?: Integer;
 
-    public layoutType?: PollLayoutTypes;
+    layoutType?: PollLayoutTypes;
 
-    public question!: PollMedia;
+    question!: PollMedia;
 
-    public constructor(data: Partial<PollCreateRequestStructure>) {
+    constructor(data: Partial<PollCreateRequestStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<PollCreateRequestStructure>): void {
-        if (data.allow_multiselect) this.allowMultiselect = data.allow_multiselect;
-        if (data.answers) this.answers = data.answers.map((answer) => new PollAnswer(answer));
-        if (data.duration) this.duration = data.duration;
-        if (data.layout_type) this.layoutType = data.layout_type;
-        if (data.question) this.question = new PollMedia(data.question);
+        if (data.allow_multiselect) {
+            this.allowMultiselect = data.allow_multiselect;
+        }
+        if (data.answers) {
+            this.answers = data.answers.map((answer) => new PollAnswer(answer));
+        }
+        if (data.duration) {
+            this.duration = data.duration;
+        }
+        if (data.layout_type) {
+            this.layoutType = data.layout_type;
+        }
+        if (data.question) {
+            this.question = new PollMedia(data.question);
+        }
     }
 }
 
 export class Poll {
-    public allowMultiselect!: boolean;
+    allowMultiselect!: boolean;
 
-    public answers!: PollAnswer[];
+    answers!: PollAnswer[];
 
-    public expiry!: Iso8601Timestamp | null;
+    expiry!: Iso8601Timestamp | null;
 
-    public layoutType!: PollLayoutTypes;
+    layoutType!: PollLayoutTypes;
 
-    public question!: PollMedia;
+    question!: PollMedia;
 
-    public results?: PollResults;
+    results?: PollResults;
 
-    public constructor(data: Partial<PollStructure>) {
+    constructor(data: Partial<PollStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<PollStructure>): void {
-        if (data.allow_multiselect) this.allowMultiselect = data.allow_multiselect;
-        if (data.answers) this.answers = data.answers.map((answer) => new PollAnswer(answer));
-        if (data.expiry) this.expiry = data.expiry;
-        if (data.layout_type) this.layoutType = data.layout_type;
-        if (data.question) this.question = new PollMedia(data.question);
-        if (data.results) this.results = new PollResults(data.results);
+        if (data.allow_multiselect) {
+            this.allowMultiselect = data.allow_multiselect;
+        }
+        if (data.answers) {
+            this.answers = data.answers.map((answer) => new PollAnswer(answer));
+        }
+        if (data.expiry) {
+            this.expiry = data.expiry;
+        }
+        if (data.layout_type) {
+            this.layoutType = data.layout_type;
+        }
+        if (data.question) {
+            this.question = new PollMedia(data.question);
+        }
+        if (data.results) {
+            this.results = new PollResults(data.results);
+        }
     }
 }

@@ -1,7 +1,5 @@
-import { Buffer } from "node:buffer";
 import type { Snowflake, StageInstanceStructure } from "@nyxjs/core";
-import type { RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params|Modify Stage Instance JSON Params}
@@ -25,7 +23,7 @@ export class StageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance|Delete Stage Instance}
      */
-    public static deleteStageInstance(channelId: Snowflake, reason?: string): RouteStructure<void> {
+    static deleteStageInstance(channelId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -42,7 +40,7 @@ export class StageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance|Modify Stage Instance}
      */
-    public static modifyStageInstance(
+    static modifyStageInstance(
         channelId: Snowflake,
         params: ModifyStageInstanceJsonParams,
         reason?: string
@@ -64,7 +62,7 @@ export class StageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance|Get Stage Instance}
      */
-    public static getStageInstance(channelId: Snowflake): RouteStructure<StageInstanceStructure> {
+    static getStageInstance(channelId: Snowflake): RouteStructure<StageInstanceStructure> {
         return {
             method: RestMethods.Get,
             path: `/stage-instances/${channelId}`,
@@ -74,7 +72,7 @@ export class StageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance|Create Stage Instance}
      */
-    public static createStageInstance(
+    static createStageInstance(
         params: CreateStageInstanceJsonParams,
         reason?: string
     ): RouteStructure<StageInstanceStructure> {

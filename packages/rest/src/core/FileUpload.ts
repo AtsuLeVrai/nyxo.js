@@ -1,4 +1,3 @@
-import type { Buffer } from "node:buffer";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
@@ -10,37 +9,37 @@ export class FileUpload {
 
     readonly #fileLimit: number;
 
-    public constructor(fileLimit: number = 25 * 1_024 * 1_024) {
+    constructor(fileLimit: number = 25 * 1_024 * 1_024) {
         this.#fileLimit = fileLimit;
     }
 
-    public getHeaders(additionalHeaders?: Record<string, any>): Record<string, string> {
+    getHeaders(additionalHeaders?: Record<string, any>): Record<string, string> {
         return this.#formData.getHeaders(additionalHeaders);
     }
 
-    public getFormData(): FormData {
+    getFormData(): FormData {
         return this.#formData;
     }
 
-    public toBuffer(): Buffer {
+    toBuffer(): Buffer {
         return this.#formData.getBuffer();
     }
 
-    public createAttachmentUrl(file: string): string {
+    createAttachmentUrl(file: string): string {
         return `attachment://${file}`;
     }
 
-    public addField(name: string, value: string): void {
+    addField(name: string, value: string): void {
         this.#formData.append(name, value);
     }
 
-    public addPayload(payload: Record<string, any>): void {
+    addPayload(payload: Record<string, any>): void {
         this.#formData.append("payload_json", JSON.stringify(payload), {
             contentType: MimeTypes.Json,
         });
     }
 
-    public async addFiles(files: string[] | string): Promise<void> {
+    async addFiles(files: string[] | string): Promise<void> {
         if (Array.isArray(files)) {
             await Promise.all(files.map(async (file, index) => this.#processFile(file, index)));
         } else {

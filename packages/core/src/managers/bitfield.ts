@@ -20,7 +20,7 @@ export class BitfieldManager<T> {
      * @param value - The initial value of the bitfield. Can be an array of flags or a bigint.
      * @throws TypeError If the initial value is neither a bigint nor an array of flags.
      */
-    public constructor(value: T[] | bigint = 0n) {
+    constructor(value: T[] | bigint = 0n) {
         if (typeof value === "bigint") {
             this.#bitfield = value;
         } else if (Array.isArray(value)) {
@@ -36,7 +36,7 @@ export class BitfieldManager<T> {
      * @param value - The value to create the BitfieldManager from.
      * @returns A new BitfieldManager instance.
      */
-    public static from<F>(value: BitfieldManager<F> | F[] | bigint): BitfieldManager<F> {
+    static from<F>(value: BitfieldManager<F> | F[] | bigint): BitfieldManager<F> {
         if (value instanceof BitfieldManager) {
             return new BitfieldManager(value.valueOf());
         }
@@ -50,7 +50,7 @@ export class BitfieldManager<T> {
      * @param val - The flag to check for.
      * @returns True if the flag is set, false otherwise.
      */
-    public has(val: T): boolean {
+    has(val: T): boolean {
         const bit = this.#resolve(val);
         return (this.#bitfield & bit) === bit;
     }
@@ -61,7 +61,7 @@ export class BitfieldManager<T> {
      * @param flags - The flags to add.
      * @returns The BitfieldManager instance for chaining.
      */
-    public add(...flags: T[]): this {
+    add(...flags: T[]): this {
         this.#bitfield |= flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
         return this;
     }
@@ -72,7 +72,7 @@ export class BitfieldManager<T> {
      * @param flags - The flags to remove.
      * @returns The BitfieldManager instance for chaining.
      */
-    public remove(...flags: T[]): this {
+    remove(...flags: T[]): this {
         this.#bitfield &= ~flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
         return this;
     }
@@ -83,7 +83,7 @@ export class BitfieldManager<T> {
      * @param flags - The flags to toggle.
      * @returns The BitfieldManager instance for chaining.
      */
-    public toggle(...flags: T[]): this {
+    toggle(...flags: T[]): this {
         this.#bitfield ^= flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
         return this;
     }
@@ -93,7 +93,7 @@ export class BitfieldManager<T> {
      *
      * @returns The BitfieldManager instance for chaining.
      */
-    public clear(): this {
+    clear(): this {
         this.#bitfield = 0n;
         return this;
     }
@@ -103,7 +103,7 @@ export class BitfieldManager<T> {
      *
      * @returns The bigint value of the bitfield.
      */
-    public valueOf(): bigint {
+    valueOf(): bigint {
         return this.#bitfield;
     }
 
@@ -112,8 +112,17 @@ export class BitfieldManager<T> {
      *
      * @returns A string representation of the bitfield's bigint value.
      */
-    public toString(): string {
+    toString(): string {
         return this.#bitfield.toString();
+    }
+
+    /**
+     * Converts the bitfield to a number.
+     *
+     * @returns The number representation of the bitfield.
+     */
+    toNumber(): number {
+        return Number(this.#bitfield);
     }
 
     /**

@@ -1,12 +1,12 @@
 "use client";
 
+import { Sidebar } from "@/components/sidebar";
+import profile from "@/public/nyx.js.jpg";
 import { Book, Github, Home } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Sidebar } from "@/components/sidebar";
-import profile from "@/public/nyx.js.jpg";
 
 export function Layout({ children }: { readonly children: ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);

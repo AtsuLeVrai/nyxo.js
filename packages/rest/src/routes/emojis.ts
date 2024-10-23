@@ -1,7 +1,5 @@
-import { Buffer } from "node:buffer";
 import type { EmojiStructure, Snowflake } from "@nyxjs/core";
-import type { RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params|Modify Application Emoji JSON Params}
@@ -39,7 +37,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#delete-application-emoji|Delete Application Emoji}
      */
-    public static deleteApplicationEmoji(applicationId: Snowflake, emojiId: Snowflake): RouteStructure<void> {
+    static deleteApplicationEmoji(applicationId: Snowflake, emojiId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/applications/${applicationId}/emojis/${emojiId}`,
@@ -49,7 +47,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji|Modify Application Emoji}
      */
-    public static modifyApplicationEmoji(
+    static modifyApplicationEmoji(
         applicationId: Snowflake,
         emojiId: Snowflake,
         params: ModifyApplicationEmojiJsonParams
@@ -64,7 +62,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji|Create Application Emoji}
      */
-    public static createApplicationEmoji(
+    static createApplicationEmoji(
         applicationId: Snowflake,
         params: CreateApplicationEmojiJsonParams
     ): RouteStructure<EmojiStructure> {
@@ -78,7 +76,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#get-application-emoji|Get Application Emoji}
      */
-    public static getApplicationEmoji(applicationId: Snowflake, emojiId: Snowflake): RouteStructure<EmojiStructure> {
+    static getApplicationEmoji(applicationId: Snowflake, emojiId: Snowflake): RouteStructure<EmojiStructure> {
         return {
             method: RestMethods.Get,
             path: `/applications/${applicationId}/emojis/${emojiId}`,
@@ -88,7 +86,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#list-application-emojis|List Application Emojis}
      */
-    public static listApplicationEmojis(applicationId: Snowflake): RouteStructure<{ items: EmojiStructure[] }> {
+    static listApplicationEmojis(applicationId: Snowflake): RouteStructure<{ items: EmojiStructure[] }> {
         return {
             method: RestMethods.Get,
             path: `/applications/${applicationId}/emojis`,
@@ -98,7 +96,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#delete-guild-emoji|Delete Guild Emoji}
      */
-    public static deleteGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason?: string): RouteStructure<void> {
+    static deleteGuildEmoji(guildId: Snowflake, emojiId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -115,7 +113,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji|Modify Guild Emoji}
      */
-    public static modifyGuildEmoji(
+    static modifyGuildEmoji(
         guildId: Snowflake,
         emojiId: Snowflake,
         params: ModifyGuildEmojiJsonParams,
@@ -138,7 +136,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji|Create Guild Emoji}
      */
-    public static createGuildEmoji(
+    static createGuildEmoji(
         guildId: Snowflake,
         params: CreateGuildEmojiJsonParams,
         reason?: string
@@ -160,7 +158,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji|Get Guild Emoji}
      */
-    public static getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): RouteStructure<EmojiStructure> {
+    static getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): RouteStructure<EmojiStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/emojis/${emojiId}`,
@@ -170,7 +168,7 @@ export class EmojiRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis|List Guild Emojis}
      */
-    public static listGuildEmojis(guildId: Snowflake): RouteStructure<EmojiStructure[]> {
+    static listGuildEmojis(guildId: Snowflake): RouteStructure<EmojiStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/emojis`,

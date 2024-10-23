@@ -1,8 +1,4 @@
-import { Buffer } from "node:buffer";
-import { clearInterval, clearTimeout, setInterval, setTimeout } from "node:timers";
-import { URL } from "node:url";
-import type { Integer } from "@nyxjs/core";
-import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
+import { GatewayCloseCodes, GatewayOpcodes, type Integer } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { pack, unpack } from "erlpack";
 import { EventEmitter } from "eventemitter3";
@@ -43,9 +39,9 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
 
     #resumeGatewayUrl: string | null = null;
 
-    #lastHeartbeatAck: boolean = false;
+    #lastHeartbeatAck = false;
 
-    #isOpened: boolean = false;
+    #isOpened = false;
 
     #heartbeatInterval: NodeJS.Timeout | null = null;
 
@@ -61,34 +57,14 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
 
     readonly #shardManager: ShardManager;
 
-    public constructor(token: string, rest: Rest, options: GatewayOptions) {
+    constructor(token: string, rest: Rest, options: GatewayOptions) {
         super();
         this.#token = token;
         this.#shardManager = new ShardManager(this, rest, token, options);
         this.#options = Object.freeze({ ...options });
     }
 
-    public get getSessionId(): string | null {
-        return this.#sessionId;
-    }
-
-    public get getSequence(): number | null {
-        return this.#sequence;
-    }
-
-    public get getResumeGatewayUrl(): string | null {
-        return this.#resumeGatewayUrl;
-    }
-
-    public get getOptions(): Readonly<GatewayOptions> {
-        return this.#options;
-    }
-
-    public isLastHeartbeatAcknowledged(): boolean {
-        return this.#lastHeartbeatAck;
-    }
-
-    public async connect(resumable: boolean = false) {
+    async connect(resumable = false) {
         if (this.#ws) {
             this.destroy();
         }
@@ -126,7 +102,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         }
     }
 
-    public destroy(): void {
+    destroy(): void {
         if (this.#ws) {
             this.#ws.removeAllListeners();
             this.#ws.close();
@@ -139,7 +115,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         this.emit("DEBUG", "[GATEWAY] Gateway connection destroyed. Cleaning up resources.");
     }
 
-    public cleanup(): void {
+    cleanup(): void {
         if (this.#heartbeatInterval) {
             clearInterval(this.#heartbeatInterval);
         }
@@ -160,7 +136,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         this.emit("DEBUG", "[GATEWAY] Cleanup completed. Resources released.");
     }
 
-    public send<T extends keyof GatewaySendEvents>(op: T, data: Readonly<GatewaySendEvents[T]>): void {
+    send<T extends keyof GatewaySendEvents>(op: T, data: Readonly<GatewaySendEvents[T]>): void {
         if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN || !this.#isOpened) {
             this.emit("WARN", "[GATEWAY] Attempted to send a message while the WebSocket is not open");
             return;
@@ -174,18 +150,17 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         };
 
         this.#ws.send(this.#encodePayload(payload));
-        this.emit("DEBUG", `[GATEWAY] Sent payload with opcode: ${GatewayOpcodes[op]}`);
     }
 
-    public isConnected(): boolean {
+    isConnected(): boolean {
         return this.#ws !== null && this.#ws.readyState === WebSocket.OPEN && this.#isOpened;
     }
 
-    public forceHeartbeat(): void {
+    forceHeartbeat(): void {
         this.#sendHeartbeat();
     }
 
-    public setToken(token: string): void {
+    setToken(token: string): void {
         this.#token = token;
         this.emit("DEBUG", "[GATEWAY] Token updated successfully");
 
@@ -196,7 +171,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         }
     }
 
-    public async resumeSession(): Promise<void> {
+    async resumeSession(): Promise<void> {
         if (this.#sessionId && this.#sequence && this.#resumeGatewayUrl) {
             await this.connect(true);
         } else {
@@ -235,8 +210,6 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         if (payload.s) {
             this.#sequence = payload.s;
         }
-
-        this.emit("DEBUG", `[GATEWAY] Received payload with opcode: ${GatewayOpcodes[payload.op]}`);
 
         try {
             switch (payload.op) {
@@ -297,7 +270,6 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
         }
 
         this.emit("DISPATCH", payload.t, payload.d as never);
-        this.emit("DEBUG", `[GATEWAY] Dispatched event: ${payload.t}`);
     }
 
     #sendHeartbeat(): void {

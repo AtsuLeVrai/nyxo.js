@@ -1,10 +1,10 @@
 "use client";
 
+import { Layout } from "@/components";
+import { fira_code } from "@/lib";
 import { motion } from "framer-motion";
 import { Book, Code, Coffee, Puzzle, Shield, Terminal, Zap } from "lucide-react";
 import React from "react";
-import { Layout } from "@/components";
-import { fira_code } from "@/lib";
 
 export default function DocPage() {
     const fadeInUp = {

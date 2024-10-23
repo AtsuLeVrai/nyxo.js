@@ -1,7 +1,5 @@
-import { Buffer } from "node:buffer";
 import type { Snowflake, SoundboardSoundStructure, VoiceStateStructure } from "@nyxjs/core";
-import type { RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params|Modify Guild Soundboard Sound JSON Params}
@@ -38,11 +36,7 @@ export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound|Delete Guild Soundboard Sound}
      */
-    public static deleteGuildSoundboardSound(
-        guildId: Snowflake,
-        soundId: Snowflake,
-        reason?: string
-    ): RouteStructure<void> {
+    static deleteGuildSoundboardSound(guildId: Snowflake, soundId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -59,7 +53,7 @@ export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound|Modify Guild Soundboard Sound}
      */
-    public static modifyGuildSoundboardSound(
+    static modifyGuildSoundboardSound(
         guildId: Snowflake,
         soundId: Snowflake,
         params: ModifyGuildSoundboardSoundJsonParams,
@@ -82,7 +76,7 @@ export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound|Create Guild Soundboard Sound}
      */
-    public static createGuildSoundboardSound(
+    static createGuildSoundboardSound(
         guildId: Snowflake,
         params: CreateGuildSoundboardSoundJsonParams,
         reason?: string
@@ -104,10 +98,7 @@ export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#get-guild-soundboard-sound|Get Guild Soundboard Sound}
      */
-    public static getGuildSoundboardSound(
-        guildId: Snowflake,
-        soundId: Snowflake
-    ): RouteStructure<SoundboardSoundStructure> {
+    static getGuildSoundboardSound(guildId: Snowflake, soundId: Snowflake): RouteStructure<SoundboardSoundStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/soundboard-sounds/${soundId}`,
@@ -117,7 +108,7 @@ export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds|List Guild Soundboard Sounds}
      */
-    public static listGuildSoundboardSounds(guildId: Snowflake): RouteStructure<{ items: SoundboardSoundStructure[] }> {
+    static listGuildSoundboardSounds(guildId: Snowflake): RouteStructure<{ items: SoundboardSoundStructure[] }> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/soundboard-sounds`,
@@ -127,7 +118,7 @@ export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds|List Default Soundboard Sounds}
      */
-    public static listDefaultSoundboardSounds(): RouteStructure<SoundboardSoundStructure[]> {
+    static listDefaultSoundboardSounds(): RouteStructure<SoundboardSoundStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/soundboard-default-sounds`,
@@ -137,7 +128,7 @@ export class SoundboardRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound|Send Soundboard Sound}
      */
-    public static sendSoundboardSound(
+    static sendSoundboardSound(
         channelId: Snowflake,
         params: SendSoundboardSoundJsonParams
     ): RouteStructure<VoiceStateStructure> {

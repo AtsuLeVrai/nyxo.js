@@ -1,7 +1,5 @@
-import { Buffer } from "node:buffer";
 import type { Snowflake, VoiceRegionStructure, VoiceStateStructure } from "@nyxjs/core";
-import type { RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state-json-params|Modify User Voice State JSON Params}
@@ -21,7 +19,7 @@ export class VoiceRoutes {
      * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state|Modify User Voice State}
      * @return No information available in the Discord API documentation for the response.
      */
-    public static modifyUserVoiceState(
+    static modifyUserVoiceState(
         guildId: Snowflake,
         userId: Snowflake,
         params: ModifyUserVoiceStateJsonParams
@@ -36,7 +34,7 @@ export class VoiceRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state|Modify Current User Voice State}
      */
-    public static modifyCurrentUserVoiceState(
+    static modifyCurrentUserVoiceState(
         guildId: Snowflake,
         params: ModifyCurrentUserVoiceStateJsonParams
     ): RouteStructure<void> {
@@ -50,7 +48,7 @@ export class VoiceRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#get-user-voice-state|Get User Voice State}
      */
-    public static getUserVoiceState(guildId: Snowflake, userId: Snowflake): RouteStructure<VoiceStateStructure> {
+    static getUserVoiceState(guildId: Snowflake, userId: Snowflake): RouteStructure<VoiceStateStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/voice-states/${userId}`,
@@ -60,7 +58,7 @@ export class VoiceRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state|Get Current User Voice State}
      */
-    public static getCurrentUserVoiceState(guildId: Snowflake): RouteStructure<VoiceStateStructure> {
+    static getCurrentUserVoiceState(guildId: Snowflake): RouteStructure<VoiceStateStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/voice-states/@me`,
@@ -70,7 +68,7 @@ export class VoiceRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions|List Voice Regions}
      */
-    public static listVoiceRegions(): RouteStructure<VoiceRegionStructure[]> {
+    static listVoiceRegions(): RouteStructure<VoiceRegionStructure[]> {
         return {
             method: RestMethods.Get,
             path: "/voice/regions",

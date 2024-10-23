@@ -22,9 +22,6 @@
     "nyx.js": "workspace:*"
   },
   "devDependencies": {
-    "dotenv": "^16.4.5",
-    "eslint": "^8.57.1",
-    "eslint-formatter-pretty": "^5.0.0",
-    "prettier": "^3.3.3"
+    "dotenv": "^16.4.5"
   }
 }

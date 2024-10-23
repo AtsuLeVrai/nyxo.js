@@ -1,7 +1,5 @@
-import { Buffer } from "node:buffer";
 import type { ApplicationRoleConnectionStructure, ApplicationStructure, Snowflake } from "@nyxjs/core";
-import type { RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum|Application Activity Instance Activity Location Kind Enum}
@@ -88,7 +86,7 @@ export class ApplicationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records|Update Application Role Connection Metadata Records}
      */
-    public static updateApplicationRoleConnectionMetadata(
+    static updateApplicationRoleConnectionMetadata(
         applicationId: Snowflake,
         params: ApplicationRoleConnectionStructure[]
     ): RouteStructure<ApplicationRoleConnectionStructure> {
@@ -102,7 +100,7 @@ export class ApplicationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records|Get Application Role Connection Metadata Records}
      */
-    public static getApplicationRoleConnectionMetadata(
+    static getApplicationRoleConnectionMetadata(
         applicationId: Snowflake
     ): RouteStructure<ApplicationRoleConnectionStructure[]> {
         return {
@@ -114,7 +112,7 @@ export class ApplicationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance|Get Application Activity Instance}
      */
-    public static getApplicationActivityInstance(
+    static getApplicationActivityInstance(
         applicationId: Snowflake,
         instanceId: string
     ): RouteStructure<ActivityInstanceStructure> {
@@ -127,9 +125,7 @@ export class ApplicationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application|Edit Current Application}
      */
-    public static editCurrentApplication(
-        params: EditCurrentApplicationJsonParams
-    ): RouteStructure<ApplicationStructure> {
+    static editCurrentApplication(params: EditCurrentApplicationJsonParams): RouteStructure<ApplicationStructure> {
         return {
             method: RestMethods.Patch,
             path: `/applications/@me`,
@@ -140,7 +136,7 @@ export class ApplicationRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/application#get-current-application|Get Current Application}
      */
-    public static getCurrentApplication(): RouteStructure<ApplicationStructure> {
+    static getCurrentApplication(): RouteStructure<ApplicationStructure> {
         return {
             method: RestMethods.Get,
             path: `/applications/@me`,

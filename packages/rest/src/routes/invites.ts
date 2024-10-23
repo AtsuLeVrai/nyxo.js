@@ -1,6 +1,5 @@
 import type { InviteStructure, Snowflake } from "@nyxjs/core";
-import type { RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params|Get Invite Query String Params}
@@ -24,7 +23,7 @@ export class InviteRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite|Delete Invite}
      */
-    public static deleteInvite(code: string, reason?: string): RouteStructure<InviteStructure> {
+    static deleteInvite(code: string, reason?: string): RouteStructure<InviteStructure> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -41,7 +40,7 @@ export class InviteRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#get-invite|Get Invite}
      */
-    public static getInvite(code: string, params?: GetInviteQueryStringParams): RouteStructure<InviteStructure> {
+    static getInvite(code: string, params?: GetInviteQueryStringParams): RouteStructure<InviteStructure> {
         return {
             method: RestMethods.Get,
             path: `/invites/${code}`,

@@ -10,91 +10,133 @@ import type {
 import { User } from "./Users";
 
 export class StickerItem {
-    public formatType!: StickerFormatTypes;
+    formatType!: StickerFormatTypes;
 
-    public id!: Snowflake;
+    id!: Snowflake;
 
-    public name!: string;
+    name!: string;
 
-    public constructor(data: Partial<StickerItemStructure>) {
+    constructor(data: Partial<StickerItemStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<StickerItemStructure>): void {
-        if (data.format_type) this.formatType = data.format_type;
-        if (data.id) this.id = data.id;
-        if (data.name) this.name = data.name;
+        if (data.format_type) {
+            this.formatType = data.format_type;
+        }
+        if (data.id) {
+            this.id = data.id;
+        }
+        if (data.name) {
+            this.name = data.name;
+        }
     }
 }
 
 export class Sticker {
-    public available?: boolean | null;
+    available?: boolean | null;
 
-    public description!: string | null;
+    description!: string | null;
 
-    public formatType!: StickerFormatTypes;
+    formatType!: StickerFormatTypes;
 
-    public guildId?: Snowflake;
+    guildId?: Snowflake;
 
-    public id!: Snowflake;
+    id!: Snowflake;
 
-    public name!: string;
+    name!: string;
 
-    public packId?: Snowflake;
+    packId?: Snowflake;
 
-    public sortValue?: Integer;
+    sortValue?: Integer;
 
-    public tags!: string;
+    tags!: string;
 
-    public type!: StickerTypes;
+    type!: StickerTypes;
 
-    public user?: User;
+    user?: User;
 
-    public constructor(data: Partial<StickerStructure>) {
+    constructor(data: Partial<StickerStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<StickerStructure>): void {
-        if (data.available) this.available = data.available;
-        if (data.description) this.description = data.description;
-        if (data.format_type) this.formatType = data.format_type;
-        if (data.guild_id) this.guildId = data.guild_id;
-        if (data.id) this.id = data.id;
-        if (data.name) this.name = data.name;
-        if (data.pack_id) this.packId = data.pack_id;
-        if (data.sort_value) this.sortValue = data.sort_value;
-        if (data.tags) this.tags = data.tags;
-        if (data.type) this.type = data.type;
-        if (data.user) this.user = new User(data.user);
+        if (data.available) {
+            this.available = data.available;
+        }
+        if (data.description) {
+            this.description = data.description;
+        }
+        if (data.format_type) {
+            this.formatType = data.format_type;
+        }
+        if (data.guild_id) {
+            this.guildId = data.guild_id;
+        }
+        if (data.id) {
+            this.id = data.id;
+        }
+        if (data.name) {
+            this.name = data.name;
+        }
+        if (data.pack_id) {
+            this.packId = data.pack_id;
+        }
+        if (data.sort_value) {
+            this.sortValue = data.sort_value;
+        }
+        if (data.tags) {
+            this.tags = data.tags;
+        }
+        if (data.type) {
+            this.type = data.type;
+        }
+        if (data.user) {
+            this.user = new User(data.user);
+        }
     }
 }
 
 export class StickerPack {
-    public bannerAssetId?: Snowflake;
+    bannerAssetId?: Snowflake;
 
-    public coverStickerId?: Snowflake;
+    coverStickerId?: Snowflake;
 
-    public description!: string;
+    description!: string;
 
-    public id!: Snowflake;
+    id!: Snowflake;
 
-    public name!: string;
+    name!: string;
 
-    public skuId!: Snowflake;
+    skuId!: Snowflake;
 
-    public stickers!: Sticker[];
+    stickers!: Sticker[];
 
-    public constructor(data: Partial<StickerPackStructure>) {
+    constructor(data: Partial<StickerPackStructure>) {
         this.#patch(data);
     }
 
     #patch(data: Partial<StickerPackStructure>): void {
-        if (data.banner_asset_id) this.bannerAssetId = data.banner_asset_id;
-        if (data.cover_sticker_id) this.coverStickerId = data.cover_sticker_id;
-        if (data.description) this.description = data.description;
-        if (data.id) this.id = data.id;
-        if (data.name) this.name = data.name;
-        if (data.sku_id) this.skuId = data.sku_id;
-        if (data.stickers) this.stickers = data.stickers.map((sticker) => new Sticker(sticker));
+        if (data.banner_asset_id) {
+            this.bannerAssetId = data.banner_asset_id;
+        }
+        if (data.cover_sticker_id) {
+            this.coverStickerId = data.cover_sticker_id;
+        }
+        if (data.description) {
+            this.description = data.description;
+        }
+        if (data.id) {
+            this.id = data.id;
+        }
+        if (data.name) {
+            this.name = data.name;
+        }
+        if (data.sku_id) {
+            this.skuId = data.sku_id;
+        }
+        if (data.stickers) {
+            this.stickers = data.stickers.map((sticker) => new Sticker(sticker));
+        }
     }
 }

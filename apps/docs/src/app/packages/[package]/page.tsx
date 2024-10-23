@@ -1,11 +1,11 @@
 "use client";
 
+import { Layout } from "@/components";
+import type { SymbolInfo } from "@/types";
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Layout } from "@/components";
-import type { SymbolInfo } from "@/types";
 
 type CategoryState = Record<string, SymbolInfo[]>;
 
@@ -19,7 +19,9 @@ export default function PackagePage() {
     const [error, setError] = useState<string | null>(null);
 
     const fetchSymbols = useCallback(async () => {
-        if (!packageName) return;
+        if (!packageName) {
+            return;
+        }
 
         try {
             setIsLoading(true);
@@ -56,7 +58,9 @@ export default function PackagePage() {
     }, [symbols]);
 
     const packageSummary = useMemo(() => {
-        if (symbols.length === 0) return "";
+        if (symbols.length === 0) {
+            return "";
+        }
         const classCount = symbols.filter((symbol) => symbol.kind === "ClassDeclaration").length;
         const functionCount = symbols.filter((symbol) => symbol.kind === "FunctionDeclaration").length;
         const interfaceCount = symbols.filter((symbol) => symbol.kind === "InterfaceDeclaration").length;

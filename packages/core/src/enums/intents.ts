@@ -1,91 +1,151 @@
+import { BitfieldManager } from "../managers";
+import type { Integer } from "../markdown";
+
 /**
  * Enum representing the various gateway intents used by Discord.
  *
  * @see {@link https://discord.com/developers/docs/topics/gateway#list-of-intents|Gateway Intents}
  */
-export enum GatewayIntents {
+export class GatewayIntents {
     /**
      * Intent for guilds.
      */
-    Guilds = 0,
+    static Guilds = 1;
+
     /**
      * Intent for guild members.
      */
-    GuildMembers = 2,
+    static GuildMembers = 2;
+
     /**
      * Intent for guild moderation.
      */
-    GuildModeration = 4,
+    static GuildModeration = 4;
+
     /**
      * Intent for guild emojis and stickers.
      */
-    GuildEmojisAndStickers = 8,
+    static GuildEmojisAndStickers = 8;
+
     /**
      * Intent for guild integrations.
      */
-    GuildIntegrations = 16,
+    static GuildIntegrations = 16;
+
     /**
      * Intent for guild webhooks.
      */
-    GuildWebhooks = 32,
+    static GuildWebhooks = 32;
+
     /**
      * Intent for guild invites.
      */
-    GuildInvites = 64,
+    static GuildInvites = 64;
+
     /**
      * Intent for guild voice states.
      */
-    GuildVoiceStates = 128,
+    static GuildVoiceStates = 128;
+
     /**
      * Intent for guild presences.
      */
-    GuildPresences = 256,
+    static GuildPresences = 256;
+
     /**
      * Intent for guild messages.
      */
-    GuildMessages = 512,
+    static GuildMessages = 512;
+
     /**
      * Intent for guild message reactions.
      */
-    GuildMessageReactions = 1_024,
+    static GuildMessageReactions = 1_024;
+
     /**
      * Intent for guild message typing.
      */
-    GuildMessageTyping = 2_048,
+    static GuildMessageTyping = 2_048;
+
     /**
      * Intent for direct messages.
      */
-    DirectMessages = 4_096,
+    static DirectMessages = 4_096;
+
     /**
      * Intent for direct message reactions.
      */
-    DirectMessageReactions = 8_192,
+    static DirectMessageReactions = 8_192;
+
     /**
      * Intent for direct message typing.
      */
-    DirectMessageTyping = 16_384,
+    static DirectMessageTyping = 16_384;
+
     /**
      * Intent for message content.
      */
-    MessageContent = 32_768,
+    static MessageContent = 32_768;
+
     /**
      * Intent for guild scheduled events.
      */
-    GuildScheduledEvents = 65_536,
+    static GuildScheduledEvents = 65_536;
+
     /**
      * Intent for auto moderation configuration.
      */
-    AutoModerationConfiguration = 1_048_576,
+    static AutoModerationConfiguration = 1_048_576;
+
     /**
      * Intent for auto moderation execution.
      */
-    AutoModerationExecution = 2_097_152,
+    static AutoModerationExecution = 2_097_152;
+
     /**
      * Intent for guild message polls.
      */
-    GuildMessagePolls = 16_777_216,
+    static GuildMessagePolls = 16_777_216;
+
     /**
      * Intent for direct message polls.
      */
-    DirectMessagePolls = 33_554_432,
+    static DirectMessagePolls = 33_554_432;
+
+    /**
+     * Returns all intents.
+     */
+    static All(): Integer {
+        const intents = [
+            this.Guilds,
+            this.GuildMembers,
+            this.GuildModeration,
+            this.GuildEmojisAndStickers,
+            this.GuildIntegrations,
+            this.GuildWebhooks,
+            this.GuildInvites,
+            this.GuildVoiceStates,
+            this.GuildPresences,
+            this.GuildMessages,
+            this.GuildMessageReactions,
+            this.GuildMessageTyping,
+            this.DirectMessages,
+            this.DirectMessageReactions,
+            this.DirectMessageTyping,
+            this.MessageContent,
+            this.GuildScheduledEvents,
+            this.AutoModerationConfiguration,
+            this.AutoModerationExecution,
+            this.GuildMessagePolls,
+            this.DirectMessagePolls,
+        ];
+
+        return BitfieldManager.from(intents).toNumber();
+    }
+
+    static Privileged(): Integer {
+        const intents = [this.GuildPresences, this.GuildMembers, this.MessageContent];
+
+        return BitfieldManager.from(intents).toNumber();
+    }
 }

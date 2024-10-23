@@ -1,7 +1,5 @@
-import { Buffer } from "node:buffer";
 import type { EntitlementStructure, Snowflake } from "@nyxjs/core";
-import type { QueryStringParams, RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params|Create Test Entitlement JSON Params}
@@ -47,7 +45,7 @@ export class EntitlementRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#delete-test-entitlement|Delete Test Entitlement}
      */
-    public static deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
+    static deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/applications/${applicationId}/entitlements/${entitlementId}`,
@@ -57,7 +55,7 @@ export class EntitlementRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement|Create Test Entitlement}
      */
-    public static createTestEntitlement(
+    static createTestEntitlement(
         applicationId: Snowflake,
         params: CreateTestEntitlementJsonParams
     ): RouteStructure<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
@@ -71,7 +69,7 @@ export class EntitlementRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement|Consume an Entitlement}
      */
-    public static consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
+    static consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Post,
             path: `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
@@ -81,7 +79,7 @@ export class EntitlementRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements|List Entitlements}
      */
-    public static listEntitlements(
+    static listEntitlements(
         applicationId: Snowflake,
         params?: ListEntitlementsQueryStringParams
     ): RouteStructure<EntitlementStructure[]> {

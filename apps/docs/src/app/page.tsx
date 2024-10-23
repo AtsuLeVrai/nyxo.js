@@ -1,11 +1,11 @@
 "use client";
 
+import { Layout } from "@/components";
+import profile from "@/public/nyx.js.jpg";
 import { motion } from "framer-motion";
 import { ArrowRight, Coffee, Github, Puzzle, Shield, Terminal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Layout } from "@/components";
-import profile from "@/public/nyx.js.jpg";
 
 export default function HomePage() {
     return (
