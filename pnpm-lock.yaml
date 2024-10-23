@@ -85,6 +85,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/nyxjs
     devDependencies:
+      '@biomejs/biome':
+        specifier: 1.9.4
+        version: 1.9.4
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -95,6 +98,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/nyxjs
     devDependencies:
+      '@biomejs/biome':
+        specifier: 1.9.4
+        version: 1.9.4
       '@types/node':
         specifier: ^22.7.9
         version: 22.7.9

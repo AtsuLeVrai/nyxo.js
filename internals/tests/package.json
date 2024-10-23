@@ -11,13 +11,13 @@
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "lint": "eslint src --fix --format pretty",
-    "pretty": "prettier --write src"
+    "format": "biome format --write ."
   },
   "dependencies": {
     "nyx.js": "workspace:*"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@types/node": "^22.7.9",
     "dotenv": "^16.4.5",
     "ts-node": "^10.9.2",

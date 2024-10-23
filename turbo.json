@@ -48,19 +48,11 @@
         "clean": {
             "dependsOn": [
                 "^clean"
-            ],
-            "outputs": [
-                ".next/**",
-                "dist/**"
             ]
         },
         "format": {
             "dependsOn": [
                 "^format"
-            ],
-            "outputs": [
-                ".next/**",
-                "dist/**"
             ]
         }
     }

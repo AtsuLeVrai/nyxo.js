@@ -1,27 +1,27 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/benchmark",
-  "description": "Benchmark for nyx.js",
-  "version": "1.0.0",
-  "type": "commonjs",
-  "readme": "README.md",
-  "license": "AGPL-3.0-only",
-  "engines": {
-    "node": ">=18"
-  },
-  "scripts": {
-    "start:discordjs": "node src/discordjs.js",
-    "start:eris": "node src/eris.js",
-    "start:nyxjs": "node src/nyxjs.js",
-    "lint": "eslint src --fix --format pretty",
-    "pretty": "prettier --write src"
-  },
-  "dependencies": {
-    "discord.js": "^14.16.3",
-    "eris": "^0.18.0",
-    "nyx.js": "workspace:*"
-  },
-  "devDependencies": {
-    "dotenv": "^16.4.5"
-  }
+    "$schema": "https://json.schemastore.org/package.json",
+    "name": "@nyxjs/benchmark",
+    "description": "Benchmark for nyx.js",
+    "version": "1.0.0",
+    "type": "commonjs",
+    "readme": "README.md",
+    "license": "AGPL-3.0-only",
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "start:discordjs": "node src/discordjs.js",
+        "start:eris": "node src/eris.js",
+        "start:nyxjs": "node src/nyxjs.js",
+        "format": "biome format --write ."
+    },
+    "dependencies": {
+        "discord.js": "^14.16.3",
+        "eris": "^0.18.0",
+        "nyx.js": "workspace:*"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "dotenv": "^16.4.5"
+    }
 }
