@@ -1,5 +1,5 @@
 export * from "./ActionRowBuilder";
 export * from "./ButtonBuilder";
-export * from "./EmberBuilder";
+export * from "./EmbedBuilder";
 export * from "./SelectMenuBuilder";
 export * from "./TextInputBuilder";

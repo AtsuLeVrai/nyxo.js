@@ -1,10 +1,13 @@
-import { setTimeout } from "node:timers";
 import { MimeTypes, RestHttpResponseCodes, RestJsonErrorCodes } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
-import type { RetryHandler } from "undici";
-import { Pool, RetryAgent } from "undici";
-import type { RestEvents, RestHttpDiscordHeaders, RestOptions, RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { Pool, RetryAgent, type RetryHandler } from "undici";
+import {
+    type RestEvents,
+    type RestHttpDiscordHeaders,
+    RestMethods,
+    type RestOptions,
+    type RouteStructure,
+} from "../types";
 import { RateLimiter } from "./RateLimiter";
 
 export class Rest extends EventEmitter<RestEvents> {
@@ -18,9 +21,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     readonly #rateLimiter: RateLimiter = new RateLimiter();
 
-    readonly #cache: Map<string, any> = new Map();
-
-    public constructor(token: string, options: RestOptions) {
+    constructor(token: string, options: RestOptions) {
         super();
         this.#token = token;
         this.#options = {
@@ -34,23 +35,14 @@ export class Rest extends EventEmitter<RestEvents> {
         this.#retryAgent = this.#initializeRetryAgent();
     }
 
-    public async manyRequest<T extends readonly RouteStructure<any>[] | []>(
+    async manyRequest<T extends readonly RouteStructure<any>[] | []>(
         routes: T
     ): Promise<{ [K in keyof T]: T[K] extends RouteStructure<infer U> ? Awaited<U> : never }> {
-        return Promise.all(routes.map(async (route) => this.request(route))) as any;
+        return (await Promise.all(routes.map(async (route) => this.request(route)))) as any;
     }
 
-    public async request<T>(route: RouteStructure<T>): Promise<T> {
-        const { headers, method, body, path, disable_cache, query } = route;
-
-        const cacheKey = `${method}:${path}`;
-        if (!disable_cache && method === RestMethods.Get) {
-            const cachedResponse = this.#cache.get(cacheKey);
-            if (cachedResponse) {
-                this.emit("DEBUG", `Cache hit for ${cacheKey}`);
-                return cachedResponse as T;
-            }
-        }
+    async request<T>(route: RouteStructure<T>): Promise<T> {
+        const { headers, method, body, path, query } = route;
 
         const requestHeaders: Record<string | keyof RestHttpDiscordHeaders, any> = {
             authorization: `Bot ${this.#token}`,
@@ -88,13 +80,8 @@ export class Rest extends EventEmitter<RestEvents> {
                 this.#rateLimiter.update(path, response.headers as RestHttpDiscordHeaders);
 
                 if (response.statusCode >= 200 && response.statusCode < 300) {
-                    const data = JSON.parse(text) as T;
-                    if (!disable_cache && method === RestMethods.Get) {
-                        this.#cache.set(cacheKey, data);
-                        this.emit("DEBUG", `[REST] Cached response for ${cacheKey}`);
-                    }
-
-                    return data;
+                    this.emit("DEBUG", `[REST] Request successful: ${text}`);
+                    return JSON.parse(text);
                 } else if (response.statusCode === 429) {
                     const retryAfter = Number(response.headers["retry-after"]) * 1_000;
                     this.emit("RATE_LIMIT", {

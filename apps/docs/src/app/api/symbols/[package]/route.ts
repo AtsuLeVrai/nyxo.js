@@ -1,9 +1,9 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import type { SymbolInfo } from "@/types";
 import { NextResponse } from "next/server";
 import * as ts from "typescript";
-import type { SymbolInfo } from "@/types";
 
 const resolveModulePath = (currentPath: string, importPath: string): string | undefined => {
     const possibleExtensions = [".ts", ".tsx", ".d.ts"];
@@ -11,7 +11,9 @@ const resolveModulePath = (currentPath: string, importPath: string): string | un
 
     for (const ext of possibleExtensions) {
         const fullPath = basePath + ext;
-        if (existsSync(fullPath)) return fullPath;
+        if (existsSync(fullPath)) {
+            return fullPath;
+        }
     }
 
     return existsSync(basePath) && existsSync(join(basePath, "index.ts")) ? join(basePath, "index.ts") : undefined;
@@ -45,7 +47,7 @@ const getSymbols = (
         } else if (ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node)) {
             symbolInfo.properties = [];
             symbolInfo.methods = [];
-            if (symbol.members)
+            if (symbol.members) {
                 for (const [key, member] of symbol.members.entries()) {
                     const memberDeclaration = member.declarations?.[0];
                     if (
@@ -70,6 +72,7 @@ const getSymbols = (
                         });
                     }
                 }
+            }
         } else if (ts.isEnumDeclaration(node)) {
             symbolInfo.enumMembers = node.members.map((member) => member.name.getText());
         }
@@ -90,7 +93,9 @@ const getSymbols = (
             } else if (node.exportClause && ts.isNamedExports(node.exportClause)) {
                 for (const element of node.exportClause.elements) {
                     const symbol = checker.getSymbolAtLocation(element.name);
-                    if (symbol) addSymbol(symbol, element);
+                    if (symbol) {
+                        addSymbol(symbol, element);
+                    }
                 }
             }
         } else if (
@@ -105,11 +110,15 @@ const getSymbols = (
             if (ts.isVariableStatement(node)) {
                 for (const decl of node.declarationList.declarations) {
                     const symbol = checker.getSymbolAtLocation(decl.name);
-                    if (symbol) addSymbol(symbol, decl);
+                    if (symbol) {
+                        addSymbol(symbol, decl);
+                    }
                 }
             } else if ("name" in node && node.name) {
                 const symbol = checker.getSymbolAtLocation(node.name);
-                if (symbol) addSymbol(symbol, node);
+                if (symbol) {
+                    addSymbol(symbol, node);
+                }
             }
         }
 
@@ -120,7 +129,8 @@ const getSymbols = (
     return symbols;
 };
 
-export async function GET(request: Request, { params }: { params: { package: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ package: string }> }) {
+    const params = await props.params;
     const packageName = params.package;
 
     if (typeof packageName !== "string") {

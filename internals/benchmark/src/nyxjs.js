@@ -13,29 +13,7 @@ console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} 
 const startTime = performance.now();
 
 const client = new nyxjs.Client(process.env.DISCORD_TOKEN, {
-    intents: [
-        nyxjs.GatewayIntents.Guilds,
-        nyxjs.GatewayIntents.GuildMembers,
-        nyxjs.GatewayIntents.GuildModeration,
-        nyxjs.GatewayIntents.GuildEmojisAndStickers,
-        nyxjs.GatewayIntents.GuildIntegrations,
-        nyxjs.GatewayIntents.GuildWebhooks,
-        nyxjs.GatewayIntents.GuildInvites,
-        nyxjs.GatewayIntents.GuildVoiceStates,
-        nyxjs.GatewayIntents.GuildPresences,
-        nyxjs.GatewayIntents.GuildMessages,
-        nyxjs.GatewayIntents.GuildMessageReactions,
-        nyxjs.GatewayIntents.GuildMessageTyping,
-        nyxjs.GatewayIntents.DirectMessages,
-        nyxjs.GatewayIntents.DirectMessageReactions,
-        nyxjs.GatewayIntents.DirectMessageTyping,
-        nyxjs.GatewayIntents.MessageContent,
-        nyxjs.GatewayIntents.GuildScheduledEvents,
-        nyxjs.GatewayIntents.AutoModerationConfiguration,
-        nyxjs.GatewayIntents.AutoModerationExecution,
-        nyxjs.GatewayIntents.GuildMessagePolls,
-        nyxjs.GatewayIntents.DirectMessagePolls,
-    ],
+    intents: nyxjs.GatewayIntents.All(),
     gateway: {
         shard: "auto",
     },

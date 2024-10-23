@@ -1,58 +1,53 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/core",
-  "description": "Core package for Nyx.js",
-  "version": "1.0.0",
-  "type": "commonjs",
-  "readme": "README.md",
-  "license": "AGPL-3.0-only",
-  "main": "./dist/index.js",
-  "types": "./dist/src/index.d.ts",
-  "module": "./dist/esm/index.js",
-  "engines": {
-    "node": ">=18"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "author": {
-    "name": "3tatsu",
-    "url": "https://github.com/3tatsu"
-  },
-  "repository": {
-    "type": "git",
-    "directory": "packages/core",
-    "url": "https://github.com/3tatsu/nyx.js"
-  },
-  "bugs": {
-    "url": "https://github.com/3tatsu/nyx.js/issues"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/index.js"
-    }
-  },
-  "scripts": {
-    "build": "tsup && rimraf .tsup",
-    "clean": "rimraf dist",
-    "lint": "eslint src --fix --format pretty",
-    "pretty": "prettier --write src"
-  },
-  "devDependencies": {
-    "@microsoft/api-extractor": "^7.47.10",
-    "@swc/core": "^1.7.36",
-    "@types/node": "^22.7.5",
-    "eslint": "^8.57.1",
-    "eslint-formatter-pretty": "^5.0.0",
-    "prettier": "^3.3.3",
-    "rimraf": "^6.0.1",
-    "terser": "^5.36.0",
-    "tsup": "^8.3.0",
-    "typescript": "^5.6.3"
-  },
-  "files": [
-    "dist"
-  ]
+    "$schema": "https://json.schemastore.org/package.json",
+    "name": "@nyxjs/core",
+    "description": "Core package for Nyx.js",
+    "version": "1.0.0",
+    "type": "commonjs",
+    "readme": "README.md",
+    "license": "AGPL-3.0-only",
+    "main": "./dist/index.js",
+    "types": "./dist/src/index.d.ts",
+    "module": "./dist/esm/index.js",
+    "engines": {
+        "node": ">=18"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "author": {
+        "name": "3tatsu",
+        "url": "https://github.com/3tatsu"
+    },
+    "repository": {
+        "type": "git",
+        "directory": "packages/core",
+        "url": "https://github.com/3tatsu/nyx.js"
+    },
+    "bugs": {
+        "url": "https://github.com/3tatsu/nyx.js/issues"
+    },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsup && rimraf .tsup",
+        "clean": "rimraf dist",
+        "format": "biome format --write ."
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@microsoft/api-extractor": "^7.47.11",
+        "@swc/core": "^1.7.39",
+        "@types/node": "^22.7.9",
+        "rimraf": "^6.0.1",
+        "terser": "^5.36.0",
+        "tsup": "^8.3.0",
+        "typescript": "^5.6.3"
+    },
+    "files": ["dist"]
 }

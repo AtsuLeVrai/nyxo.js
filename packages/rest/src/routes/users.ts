@@ -1,4 +1,3 @@
-import { Buffer } from "node:buffer";
 import type {
     ApplicationRoleConnectionStructure,
     ChannelStructure,
@@ -8,8 +7,7 @@ import type {
     Snowflake,
     UserStructure,
 } from "@nyxjs/core";
-import type { QueryStringParams, RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params|Update Current User Application Role Connection}
@@ -72,7 +70,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params|Update Current User Application Role Connection}
      */
-    public static updateCurrentUserApplicationRoleConnection(
+    static updateCurrentUserApplicationRoleConnection(
         applicationId: Snowflake,
         params: UpdateCurrentUserApplicationRoleConnectionJsonParams
     ): RouteStructure<ApplicationRoleConnectionStructure> {
@@ -86,7 +84,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection|Get Current User Application Role Connection}
      */
-    public static getCurrentUserApplicationRoleConnection(
+    static getCurrentUserApplicationRoleConnection(
         applicationId: Snowflake
     ): RouteStructure<ApplicationRoleConnectionStructure> {
         return {
@@ -98,7 +96,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections|Get Current User Connections}
      */
-    public static getCurrentUserConnections(): RouteStructure<ConnectionStructure[]> {
+    static getCurrentUserConnections(): RouteStructure<ConnectionStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/users/@me/connections`,
@@ -109,7 +107,7 @@ export class UserRoutes {
      * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm|Create Group DM}
      * @see {@link https://discord.com/developers/docs/resources/user#create-dm|Create DM}
      */
-    public static createDm(params: CreateDmJsonParams | CreateGroupDmJsonParams): RouteStructure<ChannelStructure> {
+    static createDm(params: CreateDmJsonParams | CreateGroupDmJsonParams): RouteStructure<ChannelStructure> {
         return {
             method: RestMethods.Post,
             path: `/users/@me/channels`,
@@ -120,7 +118,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#leave-guild|Leave Guild}
      */
-    public static leaveGuild(guildId: Snowflake): RouteStructure<void> {
+    static leaveGuild(guildId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/users/@me/guilds/${guildId}`,
@@ -130,7 +128,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member|Get Current User Guild Member}
      */
-    public static getCurrentUserGuildMember(guildId: Snowflake): RouteStructure<GuildMemberStructure> {
+    static getCurrentUserGuildMember(guildId: Snowflake): RouteStructure<GuildMemberStructure> {
         return {
             method: RestMethods.Get,
             path: `/users/@me/guilds/${guildId}`,
@@ -141,7 +139,7 @@ export class UserRoutes {
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds|Get Current User Guilds}
      * @todo Verify if GuildStructure is correct
      */
-    public static getCurrentUserGuilds(
+    static getCurrentUserGuilds(
         params?: GetCurrentGuildsQueryStringParams
     ): RouteStructure<
         Pick<
@@ -167,7 +165,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user|Modify Current User}
      */
-    public static modifyCurrentUser(params: ModifyCurrentUserJsonParams): RouteStructure<UserStructure> {
+    static modifyCurrentUser(params: ModifyCurrentUserJsonParams): RouteStructure<UserStructure> {
         return {
             method: RestMethods.Patch,
             path: `/users/@me`,
@@ -178,7 +176,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-user|Get User}
      */
-    public static getUser(userId: Snowflake): RouteStructure<UserStructure> {
+    static getUser(userId: Snowflake): RouteStructure<UserStructure> {
         return {
             method: RestMethods.Get,
             path: `/users/${userId}`,
@@ -188,7 +186,7 @@ export class UserRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user|Get Current User}
      */
-    public static getCurrentUser(): RouteStructure<UserStructure> {
+    static getCurrentUser(): RouteStructure<UserStructure> {
         return {
             method: RestMethods.Get,
             path: `/users/@me`,

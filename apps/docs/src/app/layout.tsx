@@ -1,7 +1,7 @@
 import "./globals.css";
+import { inter } from "@/lib";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { inter } from "@/lib";
 
 export const metadata: Metadata = {
     title: "Nyx.js Documentation",

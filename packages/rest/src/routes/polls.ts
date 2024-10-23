@@ -1,6 +1,5 @@
 import type { MessageStructure, Snowflake, UserStructure } from "@nyxjs/core";
-import type { QueryStringParams, RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body|Get Answer Voters Response Body}
@@ -21,7 +20,7 @@ export class PollRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/poll#end-poll|End Poll}
      */
-    public static endPoll(channelId: Snowflake, messageId: Snowflake): RouteStructure<MessageStructure> {
+    static endPoll(channelId: Snowflake, messageId: Snowflake): RouteStructure<MessageStructure> {
         return {
             method: RestMethods.Delete,
             path: `/channels/${channelId}/polls/${messageId}`,
@@ -31,7 +30,7 @@ export class PollRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters|Get Answer Voters}
      */
-    public static getAnswerVoters(
+    static getAnswerVoters(
         channelId: Snowflake,
         messageId: Snowflake,
         answerId: Snowflake,

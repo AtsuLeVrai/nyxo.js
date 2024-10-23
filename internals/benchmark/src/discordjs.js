@@ -13,6 +13,7 @@ console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} 
 const startTime = performance.now();
 
 const client = new discordjs.Client({
+    shards: "auto",
     intents: [
         discordjs.GatewayIntentBits.Guilds,
         discordjs.GatewayIntentBits.GuildMembers,
@@ -33,6 +34,15 @@ const client = new discordjs.Client({
         discordjs.GatewayIntentBits.GuildScheduledEvents,
         discordjs.GatewayIntentBits.AutoModerationConfiguration,
         discordjs.GatewayIntentBits.AutoModerationExecution,
+    ],
+    partials: [
+        discordjs.Partials.User,
+        discordjs.Partials.Channel,
+        discordjs.Partials.GuildMember,
+        discordjs.Partials.Message,
+        discordjs.Partials.Reaction,
+        discordjs.Partials.GuildScheduledEvent,
+        discordjs.Partials.ThreadMember,
     ],
 });
 

@@ -1,4 +1,3 @@
-import type { Buffer } from "node:buffer";
 import type { ApiVersions, Integer, MimeTypes, Snowflake } from "@nyxjs/core";
 import type { AuthTypes } from "./auth";
 
@@ -25,10 +24,6 @@ export type RouteStructure<T> = {
      * Body of the request.
      */
     body?: Buffer;
-    /**
-     * Whether to disable caching for this request.
-     */
-    disable_cache?: boolean;
     /**
      * Headers to send with the request.
      */

@@ -9,29 +9,7 @@ if (!process.env.DISCORD_TOKEN) {
 }
 
 const client = new Client(process.env.DISCORD_TOKEN, {
-    intents: [
-        GatewayIntents.Guilds,
-        GatewayIntents.GuildMembers,
-        GatewayIntents.GuildModeration,
-        GatewayIntents.GuildEmojisAndStickers,
-        GatewayIntents.GuildIntegrations,
-        GatewayIntents.GuildWebhooks,
-        GatewayIntents.GuildInvites,
-        GatewayIntents.GuildVoiceStates,
-        GatewayIntents.GuildPresences,
-        GatewayIntents.GuildMessages,
-        GatewayIntents.GuildMessageReactions,
-        GatewayIntents.GuildMessageTyping,
-        GatewayIntents.DirectMessages,
-        GatewayIntents.DirectMessageReactions,
-        GatewayIntents.DirectMessageTyping,
-        GatewayIntents.MessageContent,
-        GatewayIntents.GuildScheduledEvents,
-        GatewayIntents.AutoModerationConfiguration,
-        GatewayIntents.AutoModerationExecution,
-        GatewayIntents.GuildMessagePolls,
-        GatewayIntents.DirectMessagePolls,
-    ],
+    intents: GatewayIntents.All(),
 });
 
 client.on("error", (error) => {
@@ -51,7 +29,11 @@ client.on("close", (close) => {
 });
 
 client.on("ready", (ready) => {
-    console.log(`ready ${new Date().toISOString()}`, ready.user.username);
+    console.log(`ready ${new Date().toISOString()}`, ready);
+});
+
+client.on("roleCreate", (role) => {
+    console.log(`roleCreate ${new Date().toISOString()}`, role);
 });
 
 void client.connect();

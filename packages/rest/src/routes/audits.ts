@@ -1,6 +1,5 @@
 import type { AuditLogEvents, AuditLogStructure, Snowflake } from "@nyxjs/core";
-import type { QueryStringParams, RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params|Get Guild Audit Log Query String Params}
@@ -20,7 +19,7 @@ export class AuditRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log|Get Guild Audit Log}
      */
-    public static getGuildAuditLog(
+    static getGuildAuditLog(
         guildId: Snowflake,
         params: GetGuildAuditLogQueryStringParams
     ): RouteStructure<AuditLogStructure> {

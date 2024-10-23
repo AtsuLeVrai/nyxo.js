@@ -1,4 +1,3 @@
-import { Buffer } from "node:buffer";
 import type {
     ActionRowStructure,
     AllowedMentionStructure,
@@ -14,8 +13,7 @@ import type {
     UserStructure,
 } from "@nyxjs/core";
 import { FileUpload } from "../core";
-import type { QueryStringParams, RouteStructure } from "../types";
-import { RestMethods } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages-json-params|Bulk Delete Messages JSON Params}
@@ -159,7 +157,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages|Bulk Delete Messages}
      */
-    public static bulkDeleteMessages(
+    static bulkDeleteMessages(
         channelId: Snowflake,
         params: BulkDeleteMessagesJsonParams,
         reason?: string
@@ -181,7 +179,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#delete-message|Delete Message}
      */
-    public static deleteMessage(channelId: Snowflake, messageId: Snowflake, reason?: string): RouteStructure<void> {
+    static deleteMessage(channelId: Snowflake, messageId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -198,7 +196,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#edit-message|Edit Message}
      */
-    public static editMessage(
+    static editMessage(
         channelId: Snowflake,
         messageId: Snowflake,
         params: EditMessageJsonFormParams
@@ -222,11 +220,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#delete-all-reactions-for-emoji|Delete All Reactions For Emoji}
      */
-    public static deleteAllReactionsForEmoji(
-        channelId: Snowflake,
-        messageId: Snowflake,
-        emoji: string
-    ): RouteStructure<void> {
+    static deleteAllReactionsForEmoji(channelId: Snowflake, messageId: Snowflake, emoji: string): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`,
@@ -236,7 +230,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#delete-all-reactions|Delete All Reactions}
      */
-    public static deleteAllReactions(channelId: Snowflake, messageId: Snowflake): RouteStructure<void> {
+    static deleteAllReactions(channelId: Snowflake, messageId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/channels/${channelId}/messages/${messageId}/reactions`,
@@ -246,7 +240,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#get-reactions|Get Reactions}
      */
-    public static getReactions(
+    static getReactions(
         channelId: Snowflake,
         messageId: Snowflake,
         emoji: string,
@@ -262,7 +256,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#delete-own-reaction|Delete Own Reaction}
      */
-    public static deleteOwnReaction(channelId: Snowflake, messageId: Snowflake, emoji: string): RouteStructure<void> {
+    static deleteOwnReaction(channelId: Snowflake, messageId: Snowflake, emoji: string): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}/@me`,
@@ -272,7 +266,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#create-reaction|Create Reaction}
      */
-    public static createReaction(channelId: Snowflake, messageId: Snowflake, emoji: string): RouteStructure<void> {
+    static createReaction(channelId: Snowflake, messageId: Snowflake, emoji: string): RouteStructure<void> {
         return {
             method: RestMethods.Put,
             path: `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}/@me`,
@@ -282,7 +276,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#crosspost-message|Crosspost Message}
      */
-    public static crosspostMessage(channelId: Snowflake, messageId: Snowflake): RouteStructure<MessageStructure> {
+    static crosspostMessage(channelId: Snowflake, messageId: Snowflake): RouteStructure<MessageStructure> {
         return {
             method: RestMethods.Post,
             path: `/channels/${channelId}/messages/${messageId}/crosspost`,
@@ -292,10 +286,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#create-message|Create Message}
      */
-    public static createMessage(
-        channelId: Snowflake,
-        params: CreateMessageJsonFormParams
-    ): RouteStructure<MessageStructure> {
+    static createMessage(channelId: Snowflake, params: CreateMessageJsonFormParams): RouteStructure<MessageStructure> {
         const { files, ...restParams } = params;
         const form = new FileUpload();
         form.addPayload(restParams);
@@ -315,7 +306,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#get-channel-message|Get Channel Message}
      */
-    public static getChannelMessage(channelId: Snowflake, messageId: Snowflake): RouteStructure<MessageStructure> {
+    static getChannelMessage(channelId: Snowflake, messageId: Snowflake): RouteStructure<MessageStructure> {
         return {
             method: RestMethods.Get,
             path: `/channels/${channelId}/messages/${messageId}`,
@@ -325,7 +316,7 @@ export class MessageRoutes {
     /**
      * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages|Get Channel Messages}
      */
-    public static getChannelMessages(
+    static getChannelMessages(
         channelId: Snowflake,
         params?: GetChannelMessagesQueryStringParams
     ): RouteStructure<MessageStructure[]> {

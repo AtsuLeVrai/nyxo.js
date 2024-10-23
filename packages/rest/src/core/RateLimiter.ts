@@ -1,4 +1,3 @@
-import { setTimeout } from "node:timers";
 import type { RestHttpDiscordHeaders } from "../types";
 
 /**
@@ -22,7 +21,7 @@ type RateLimiterBucket = {
 export class RateLimiter {
     #buckets: Map<string, RateLimiterBucket> = new Map();
 
-    public async wait(bucket: string): Promise<void> {
+    async wait(bucket: string): Promise<void> {
         const rateLimitInfo = this.#buckets.get(bucket);
         if (rateLimitInfo && rateLimitInfo.remaining <= 0) {
             const now = Date.now();
@@ -35,7 +34,7 @@ export class RateLimiter {
         }
     }
 
-    public update(bucket: string, headers: RestHttpDiscordHeaders): void {
+    update(bucket: string, headers: RestHttpDiscordHeaders): void {
         this.#buckets.set(bucket, {
             limit: Number(headers["x-ratelimit-limit"]),
             remaining: Number(headers["x-ratelimit-remaining"]),
