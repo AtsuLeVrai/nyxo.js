@@ -1,7 +1,7 @@
-require("dotenv").config();
-const process = require("node:process");
-const timers = require("node:timers");
-const discordjs = require("discord.js");
+import { Client, GatewayIntentBits, Partials } from "discord.js";
+import { config } from "dotenv";
+
+config();
 
 if (!process.env.DISCORD_TOKEN) {
     throw new Error("no discord token");
@@ -12,37 +12,37 @@ console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} 
 
 const startTime = performance.now();
 
-const client = new discordjs.Client({
+const client = new Client({
     shards: "auto",
     intents: [
-        discordjs.GatewayIntentBits.Guilds,
-        discordjs.GatewayIntentBits.GuildMembers,
-        discordjs.GatewayIntentBits.GuildModeration,
-        discordjs.GatewayIntentBits.GuildEmojisAndStickers,
-        discordjs.GatewayIntentBits.GuildIntegrations,
-        discordjs.GatewayIntentBits.GuildWebhooks,
-        discordjs.GatewayIntentBits.GuildInvites,
-        discordjs.GatewayIntentBits.GuildVoiceStates,
-        discordjs.GatewayIntentBits.GuildPresences,
-        discordjs.GatewayIntentBits.GuildMessages,
-        discordjs.GatewayIntentBits.GuildMessageReactions,
-        discordjs.GatewayIntentBits.GuildMessageTyping,
-        discordjs.GatewayIntentBits.DirectMessages,
-        discordjs.GatewayIntentBits.DirectMessageReactions,
-        discordjs.GatewayIntentBits.DirectMessageTyping,
-        discordjs.GatewayIntentBits.MessageContent,
-        discordjs.GatewayIntentBits.GuildScheduledEvents,
-        discordjs.GatewayIntentBits.AutoModerationConfiguration,
-        discordjs.GatewayIntentBits.AutoModerationExecution,
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildModeration,
+        GatewayIntentBits.GuildEmojisAndStickers,
+        GatewayIntentBits.GuildIntegrations,
+        GatewayIntentBits.GuildWebhooks,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMessageTyping,
+        GatewayIntentBits.DirectMessages,
+        GatewayIntentBits.DirectMessageReactions,
+        GatewayIntentBits.DirectMessageTyping,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildScheduledEvents,
+        GatewayIntentBits.AutoModerationConfiguration,
+        GatewayIntentBits.AutoModerationExecution,
     ],
     partials: [
-        discordjs.Partials.User,
-        discordjs.Partials.Channel,
-        discordjs.Partials.GuildMember,
-        discordjs.Partials.Message,
-        discordjs.Partials.Reaction,
-        discordjs.Partials.GuildScheduledEvent,
-        discordjs.Partials.ThreadMember,
+        Partials.User,
+        Partials.Channel,
+        Partials.GuildMember,
+        Partials.Message,
+        Partials.Reaction,
+        Partials.GuildScheduledEvent,
+        Partials.ThreadMember,
     ],
 });
 
@@ -78,7 +78,7 @@ client.login(process.env.DISCORD_TOKEN).catch((error) => {
     process.exit(1);
 });
 
-function logStats() {
+function logStats(): void {
     if (isReady) {
         const currentTime = performance.now();
         const uptime = (currentTime - startTime) / 1_000; // en secondes
@@ -89,10 +89,10 @@ function logStats() {
     }
 }
 
-const statsInterval = timers.setInterval(logStats, 10_000);
+const statsInterval = setInterval(logStats, 10_000);
 
-timers.setTimeout(() => {
-    timers.clearInterval(statsInterval);
+setTimeout(() => {
+    clearInterval(statsInterval);
     logStats();
     console.log("\nFin du benchmark. Fermeture de la connexion...");
     process.exit(0);

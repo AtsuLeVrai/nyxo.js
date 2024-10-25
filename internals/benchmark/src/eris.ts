@@ -1,7 +1,7 @@
-require("dotenv").config();
-const process = require("node:process");
-const timers = require("node:timers");
-const Eris = require("eris");
+import { config } from "dotenv";
+import { Client } from "eris";
+
+config();
 
 if (!process.env.DISCORD_TOKEN) {
     throw new Error("no discord token");
@@ -12,7 +12,7 @@ console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} 
 
 const startTime = performance.now();
 
-const client = new Eris(process.env.DISCORD_TOKEN, {
+const client = new Client(process.env.DISCORD_TOKEN, {
     intents: ["all"],
     maxShards: "auto",
 });
@@ -49,7 +49,7 @@ client.connect().catch((error) => {
     process.exit(1);
 });
 
-function logStats() {
+function logStats(): void {
     if (isReady) {
         const currentTime = performance.now();
         const uptime = (currentTime - startTime) / 1_000; // en secondes
@@ -60,10 +60,10 @@ function logStats() {
     }
 }
 
-const statsInterval = timers.setInterval(logStats, 10_000);
+const statsInterval = setInterval(logStats, 10_000);
 
-timers.setTimeout(() => {
-    timers.clearInterval(statsInterval);
+setTimeout(() => {
+    clearInterval(statsInterval);
     logStats();
     console.log("\nFin du benchmark. Fermeture de la connexion...");
     process.exit(0);
