@@ -1,5 +1,5 @@
 import type { GatewayIntents, Integer } from "@nyxjs/core";
-import type { UpdatePresenceGatewayPresenceUpdateStructure } from "./presences";
+import type { UpdatePresenceGatewayPresenceUpdateStructure } from "./presences.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#identify-identify-connection-properties}

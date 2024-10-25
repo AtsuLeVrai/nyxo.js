@@ -1,5 +1,5 @@
 import type { Float, Snowflake, SoundboardSoundStructure } from "@nyxjs/core";
-import { User } from "./Users";
+import { User } from "./Users.js";
 
 export class SoundboardSound {
     available!: boolean;

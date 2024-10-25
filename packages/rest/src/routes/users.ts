@@ -7,7 +7,7 @@ import type {
     Snowflake,
     UserStructure,
 } from "@nyxjs/core";
-import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params|Update Current User Application Role Connection}

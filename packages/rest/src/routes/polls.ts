@@ -1,5 +1,5 @@
 import type { MessageStructure, Snowflake, UserStructure } from "@nyxjs/core";
-import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body|Get Answer Voters Response Body}

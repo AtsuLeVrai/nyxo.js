@@ -1,7 +1,7 @@
 "use client";
 
 import { Layout } from "@/components";
-import profile from "@/public/nyx.js.jpg";
+import { nyx_banner } from "@/lib";
 import { motion } from "framer-motion";
 import { ArrowRight, Coffee, Github, Puzzle, Shield, Terminal } from "lucide-react";
 import Image from "next/image";
@@ -10,23 +10,15 @@ import Link from "next/link";
 export default function HomePage() {
     return (
         <Layout>
-            <main className="flex-1 p-8">
+            <main className="flex-1">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                     className="max-w-4xl mx-auto text-center"
                 >
-                    <Image
-                        src={profile}
-                        alt="Nyx.js Logo"
-                        width={200}
-                        height={200}
-                        className="mx-auto mb-8 rounded-full"
-                    />
-                    <h1 className="text-5xl font-bold mb-6 py-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 inline-block">
-                        Welcome to Nyx.js
-                    </h1>
+                    <Image src={nyx_banner} alt="Nyx.js Banner" width={550} height={550} className="mx-auto mb-8" />
+                    <h1 className="text-5xl font-bold mb-6 py-2 text-white inline-block">Welcome to Nyx.js</h1>
                     <p className="text-xl mb-8 text-gray-300">
                         A powerful framework for creating Discord bots using TypeScript. Build feature-rich bots with
                         ease and flexibility.

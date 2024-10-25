@@ -1,5 +1,5 @@
 import type { ApiVersions, Integer, MimeTypes, Snowflake } from "@nyxjs/core";
-import type { AuthTypes } from "./auth";
+import type { AuthTypes } from "./auth.js";
 
 /**
  * Represents the types of HTTP methods that can be used.
@@ -40,6 +40,10 @@ export type RouteStructure<T> = {
      * Query string parameters for the request.
      */
     query?: Record<string, any>;
+    /**
+     * Response type for the request.
+     */
+    response?: T;
 };
 
 /**

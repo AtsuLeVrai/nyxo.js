@@ -1,6 +1,6 @@
 import type { Snowflake, StickerPackStructure, StickerStructure } from "@nyxjs/core";
-import { FileUpload } from "../core";
-import { RestMethods, type RouteStructure } from "../types";
+import { FileUpload } from "../core/index.js";
+import { RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params|Modify Guild Sticker JSON Params}

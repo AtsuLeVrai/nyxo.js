@@ -1,8 +1,8 @@
-import type { AvailableLocales, OAuth2Scopes } from "../enums";
-import type { Integer, Snowflake } from "../markdown";
-import type { GuildStructure } from "./guilds";
-import type { TeamStructure } from "./teams";
-import type { UserStructure } from "./users";
+import type { AvailableLocales, OAuth2Scopes } from "../enums/index.js";
+import type { Integer, Snowflake } from "../markdown/index.js";
+import type { GuildStructure } from "./guilds.js";
+import type { TeamStructure } from "./teams.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * Enumeration representing the types of application role connection metadata.

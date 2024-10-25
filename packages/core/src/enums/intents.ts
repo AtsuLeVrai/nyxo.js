@@ -1,5 +1,5 @@
-import { BitfieldManager } from "../managers";
-import type { Integer } from "../markdown";
+import { BitfieldManager } from "../managers/index.js";
+import type { Integer } from "../markdown/index.js";
 
 /**
  * Enum representing the various gateway intents used by Discord.
@@ -140,12 +140,12 @@ export class GatewayIntents {
             this.DirectMessagePolls,
         ];
 
-        return BitfieldManager.from(intents).toNumber();
+        return Number(BitfieldManager.from(intents).valueOf());
     }
 
     static Privileged(): Integer {
         const intents = [this.GuildPresences, this.GuildMembers, this.MessageContent];
 
-        return BitfieldManager.from(intents).toNumber();
+        return Number(BitfieldManager.from(intents).valueOf());
     }
 }

@@ -125,7 +125,9 @@
                     "level": "off",
                     "options": {
                         "requireAscii": true,
-                        "filenameCases": ["kebab-case"]
+                        "filenameCases": [
+                            "kebab-case"
+                        ]
                     }
                 },
                 "useForOf": "error",
@@ -176,7 +178,9 @@
                 "useValidTypeof": "error"
             }
         },
-        "ignore": ["**/dist/*"]
+        "ignore": [
+            "**/dist/*"
+        ]
     },
     "javascript": {
         "formatter": {
@@ -193,7 +197,10 @@
     },
     "overrides": [
         {
-            "include": ["**/*.ts", "**/*.tsx"],
+            "include": [
+                "**/*.ts",
+                "**/*.tsx"
+            ],
             "linter": {
                 "rules": {
                     "complexity": {
@@ -264,7 +271,9 @@
             }
         },
         {
-            "include": ["*.ts"]
+            "include": [
+                "*.ts"
+            ]
         }
     ]
 }

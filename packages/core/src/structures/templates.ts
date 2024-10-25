@@ -1,6 +1,6 @@
-import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown";
-import type { GuildStructure } from "./guilds";
-import type { UserStructure } from "./users";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown/index.js";
+import type { GuildStructure } from "./guilds.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * Type representing the structure of a guild template.

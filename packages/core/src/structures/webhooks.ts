@@ -1,7 +1,7 @@
-import type { Snowflake } from "../markdown";
-import type { ChannelStructure } from "./channels";
-import type { GuildStructure } from "./guilds";
-import type { UserStructure } from "./users";
+import type { Snowflake } from "../markdown/index.js";
+import type { ChannelStructure } from "./channels.js";
+import type { GuildStructure } from "./guilds.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * Enum representing the different types of webhooks.

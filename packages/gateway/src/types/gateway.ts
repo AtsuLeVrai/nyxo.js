@@ -1,5 +1,5 @@
 import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
-import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events";
+import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/index.js";
 
 export enum CompressTypes {
     /**

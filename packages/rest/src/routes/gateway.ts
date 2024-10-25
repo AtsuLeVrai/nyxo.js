@@ -1,5 +1,5 @@
 import type { Integer } from "@nyxjs/core";
-import { RestMethods, type RouteStructure } from "../types";
+import { RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#session-start-limit-object-session-start-limit-structure|Session Start Limit Structure}

@@ -1,5 +1,5 @@
 import type { SkuStructure, Snowflake } from "@nyxjs/core";
-import { RestMethods, type RouteStructure } from "../types";
+import { RestMethods, type RouteStructure } from "../types/index.js";
 
 export class SkuRoutes {
     /**

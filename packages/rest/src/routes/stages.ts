@@ -1,5 +1,5 @@
 import type { Snowflake, StageInstanceStructure } from "@nyxjs/core";
-import { RestMethods, type RouteStructure } from "../types";
+import { RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params|Modify Stage Instance JSON Params}

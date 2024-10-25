@@ -1,11 +1,11 @@
-import type { BitwisePermissions, LocaleKeys, OAuth2Scopes } from "../enums";
-import type { BitfieldResolvable } from "../managers";
-import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown";
-import type { ChannelStructure } from "./channels";
-import type { EmojiStructure } from "./emojis";
-import type { RoleStructure } from "./roles";
-import type { StickerStructure } from "./stickers";
-import type { AvatarDecorationDataStructure, UserStructure } from "./users";
+import type { BitwisePermissions, LocaleKeys, OAuth2Scopes } from "../enums/index.js";
+import type { BitfieldResolvable } from "../managers/index.js";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown/index.js";
+import type { ChannelStructure } from "./channels.js";
+import type { EmojiStructure } from "./emojis.js";
+import type { RoleStructure } from "./roles.js";
+import type { StickerStructure } from "./stickers.js";
+import type { AvatarDecorationDataStructure, UserStructure } from "./users.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types|Guild Onboarding Prompt Types}

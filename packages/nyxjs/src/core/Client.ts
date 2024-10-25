@@ -2,14 +2,8 @@ import { ApiVersions, BitfieldManager, type GatewayIntents, type Integer } from 
 import { CompressTypes, EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/gateway";
 import { Rest, type RestOptions } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
-import { ClientEventManager, type ClientEvents, UserManager } from "../managers";
-
-export type ClientOptions = {
-    gateway?: Partial<Omit<GatewayOptions, "intents" | "v">>;
-    intents: GatewayIntents[] | Integer;
-    rest?: Partial<Omit<RestOptions, "version">>;
-    version?: ApiVersions;
-};
+import type { ClientEvents, ClientOptions } from "../types/index.js";
+import { ClientEventManager } from "./ClientEventManager.js";
 
 export class Client extends EventEmitter<ClientEvents> {
     token: string;
@@ -17,8 +11,6 @@ export class Client extends EventEmitter<ClientEvents> {
     rest: Rest;
 
     gateway: Gateway;
-
-    users: UserManager;
 
     readonly #options: Required<ClientOptions>;
 
@@ -30,7 +22,6 @@ export class Client extends EventEmitter<ClientEvents> {
         this.#options = this.#initializeConfig(options);
         this.rest = this.#initializeRest();
         this.gateway = this.#initializeGateway();
-        this.users = new UserManager(this);
         this.#events = new ClientEventManager(this);
     }
 
@@ -95,7 +86,7 @@ export class Client extends EventEmitter<ClientEvents> {
 
     #resolveIntents(intents: GatewayIntents[] | Integer): Integer {
         if (Array.isArray(intents)) {
-            return BitfieldManager.from(intents).toNumber();
+            return Number(BitfieldManager.from(intents).valueOf());
         }
 
         return intents;

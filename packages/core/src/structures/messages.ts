@@ -1,14 +1,14 @@
-import type { MimeTypes } from "../enums";
-import type { BitfieldResolvable } from "../managers";
-import type { Float, Integer, Iso8601Timestamp, Snowflake } from "../markdown";
-import type { ApplicationIntegrationTypes, ApplicationStructure } from "./applications";
-import type { ChannelStructure, ChannelTypes } from "./channels";
-import type { ActionRowStructure } from "./components";
-import type { EmojiStructure } from "./emojis";
-import type { InteractionTypes, MessageInteractionStructure, ResolvedDataStructure } from "./interactions";
-import type { PollStructure } from "./polls";
-import type { StickerItemStructure, StickerStructure } from "./stickers";
-import type { UserStructure } from "./users";
+import type { MimeTypes } from "../enums/index.js";
+import type { BitfieldResolvable } from "../managers/index.js";
+import type { Float, Integer, Iso8601Timestamp, Snowflake } from "../markdown/index.js";
+import type { ApplicationIntegrationTypes, ApplicationStructure } from "./applications.js";
+import type { ChannelStructure, ChannelTypes } from "./channels.js";
+import type { ActionRowStructure } from "./components.js";
+import type { EmojiStructure } from "./emojis.js";
+import type { InteractionTypes, MessageInteractionStructure, ResolvedDataStructure } from "./interactions.js";
+import type { PollStructure } from "./polls.js";
+import type { StickerItemStructure, StickerStructure } from "./stickers.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#role-subscription-data-object-role-subscription-data-object-structure|Role Subscription Data Object}

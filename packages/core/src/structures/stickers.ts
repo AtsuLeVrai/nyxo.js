@@ -1,5 +1,5 @@
-import type { Integer, Snowflake } from "../markdown";
-import type { UserStructure } from "./users";
+import type { Integer, Snowflake } from "../markdown/index.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * Enum representing the different formats a sticker can have.

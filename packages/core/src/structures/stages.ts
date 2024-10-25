@@ -1,4 +1,4 @@
-import type { Snowflake } from "../markdown";
+import type { Snowflake } from "../markdown/index.js";
 
 /**
  * Enum representing the privacy levels of a Stage instance.

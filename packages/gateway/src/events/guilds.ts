@@ -14,7 +14,7 @@ import type {
     UserStructure,
     VoiceStateStructure,
 } from "@nyxjs/core";
-import type { PresenceUpdateEventFields } from "./presences";
+import type { PresenceUpdateEventFields } from "./presences.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-scheduled-event-user-remove-guild-scheduled-event-user-remove-event-fields}

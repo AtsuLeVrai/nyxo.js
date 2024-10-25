@@ -70,7 +70,7 @@ import type {
     VoiceChannelEffectSendEventFields,
     VoiceServerUpdateEventFields,
     WebhooksUpdateEventFields,
-} from "../events";
+} from "../events/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#receive-events}

@@ -1,5 +1,5 @@
 import type { EntitlementStructure, Snowflake } from "@nyxjs/core";
-import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params|Create Test Entitlement JSON Params}

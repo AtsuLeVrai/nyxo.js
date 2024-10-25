@@ -7,7 +7,7 @@ import type {
     StickerStructure,
     StickerTypes,
 } from "@nyxjs/core";
-import { User } from "./Users";
+import { User } from "./Users.js";
 
 export class StickerItem {
     formatType!: StickerFormatTypes;

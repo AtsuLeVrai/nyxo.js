@@ -1,7 +1,7 @@
-import type { LocaleKeys } from "../enums";
-import type { Integer, Snowflake } from "../markdown";
-import type { ApplicationRoleConnectionMetadataStructure } from "./applications";
-import type { IntegrationStructure } from "./guilds";
+import type { LocaleKeys } from "../enums/index.js";
+import type { Integer, Snowflake } from "../markdown/index.js";
+import type { ApplicationRoleConnectionMetadataStructure } from "./applications.js";
+import type { IntegrationStructure } from "./guilds.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure|Application Role Connection Structure}

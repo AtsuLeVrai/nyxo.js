@@ -1,5 +1,5 @@
-import type { Snowflake } from "../markdown";
-import type { UserStructure } from "./users";
+import type { Snowflake } from "../markdown/index.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * Enumeration representing the membership state of a team member.

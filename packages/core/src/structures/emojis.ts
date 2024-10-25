@@ -1,5 +1,5 @@
-import type { Snowflake } from "../markdown";
-import type { UserStructure } from "./users";
+import type { Snowflake } from "../markdown/index.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object-emoji-structure|Emoji Structure}

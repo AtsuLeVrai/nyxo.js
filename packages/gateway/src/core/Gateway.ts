@@ -4,9 +4,9 @@ import { pack, unpack } from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { Inflate, Z_SYNC_FLUSH } from "zlib-sync";
-import type { HelloStructure, ReadyEventFields, ResumeStructure } from "../events";
-import type { GatewayEvents, GatewayOptions, GatewayReceiveEvents, GatewaySendEvents } from "../types";
-import { ShardManager } from "./ShardManager";
+import type { HelloStructure, ReadyEventFields, ResumeStructure } from "../events/index.js";
+import type { GatewayEvents, GatewayOptions, GatewayReceiveEvents, GatewaySendEvents } from "../types/index.js";
+import { ShardManager } from "./ShardManager.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}

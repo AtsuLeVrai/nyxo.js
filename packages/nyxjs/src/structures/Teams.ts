@@ -1,5 +1,5 @@
 import type { MembershipState, Snowflake, TeamMemberStructure, TeamStructure } from "@nyxjs/core";
-import { User } from "./Users";
+import { User } from "./Users.js";
 
 export class TeamMember {
     membershipState!: MembershipState;

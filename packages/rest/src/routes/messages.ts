@@ -12,8 +12,8 @@ import type {
     Snowflake,
     UserStructure,
 } from "@nyxjs/core";
-import { FileUpload } from "../core";
-import { type QueryStringParams, RestMethods, type RouteStructure } from "../types";
+import { FileUpload } from "../core/index.js";
+import { type QueryStringParams, RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages-json-params|Bulk Delete Messages JSON Params}

@@ -1,29 +1,29 @@
 {
-    "$schema": "https://json.schemastore.org/package.json",
-    "name": "@nyxjs/docs",
-    "private": true,
-    "scripts": {
-        "dev": "next dev --turbopack",
-        "build": "next build",
-        "start": "next start",
-        "format": "biome format --write ."
-    },
-    "dependencies": {
-        "framer-motion": "^11.11.9",
-        "lucide-react": "^0.453.0",
-        "next": "15.0.1",
-        "react": "19.0.0-rc-69d4b800-20241021",
-        "react-dom": "19.0.0-rc-69d4b800-20241021",
-        "sharp": "^0.33.5",
-        "tailwind-merge": "^2.5.4"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "1.9.4",
-        "@types/node": "^20.17.0",
-        "@types/react": "^18.3.12",
-        "@types/react-dom": "^18.3.1",
-        "postcss": "^8.4.47",
-        "tailwindcss": "^3.4.14",
-        "typescript": "^5.6.3"
-    }
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/docs",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "framer-motion": "^11.11.10",
+    "lucide-react": "^0.453.0",
+    "next": "15.0.1",
+    "react": "19.0.0-rc-69d4b800-20241021",
+    "react-dom": "19.0.0-rc-69d4b800-20241021",
+    "sharp": "^0.33.5",
+    "tailwind-merge": "^2.5.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^20.17.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3"
+  }
 }

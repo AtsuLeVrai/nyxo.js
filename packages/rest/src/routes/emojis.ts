@@ -1,5 +1,5 @@
 import type { EmojiStructure, Snowflake } from "@nyxjs/core";
-import { RestMethods, type RouteStructure } from "../types";
+import { RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params|Modify Application Emoji JSON Params}

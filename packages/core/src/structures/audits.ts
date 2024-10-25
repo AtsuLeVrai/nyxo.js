@@ -1,10 +1,10 @@
-import type { Snowflake } from "../markdown";
-import type { ChannelStructure } from "./channels";
-import type { ApplicationCommandStructure, InteractionStructure } from "./interactions";
-import type { AutoModerationRuleStructure } from "./moderations";
-import type { GuildScheduledEventStructure } from "./scheduled";
-import type { UserStructure } from "./users";
-import type { WebhookStructure } from "./webhooks";
+import type { Snowflake } from "../markdown/index.js";
+import type { ChannelStructure } from "./channels.js";
+import type { ApplicationCommandStructure, InteractionStructure } from "./interactions.js";
+import type { AutoModerationRuleStructure } from "./moderations.js";
+import type { GuildScheduledEventStructure } from "./scheduled.js";
+import type { UserStructure } from "./users.js";
+import type { WebhookStructure } from "./webhooks.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-structure|Audit Log Change Structure}

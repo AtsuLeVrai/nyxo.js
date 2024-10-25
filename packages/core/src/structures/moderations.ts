@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "../markdown";
+import type { Integer, Snowflake } from "../markdown/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-metadata|Auto-Moderation Action Metadata}

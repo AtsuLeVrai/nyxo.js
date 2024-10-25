@@ -1,4 +1,4 @@
-import type { RestHttpDiscordHeaders } from "../types";
+import type { RestHttpDiscordHeaders } from "../types/index.js";
 
 /**
  * Represents a rate limiter bucket.

@@ -1,5 +1,5 @@
-import type { Integer, Iso8601Timestamp } from "../markdown";
-import type { EmojiStructure } from "./emojis";
+import type { Integer, Iso8601Timestamp } from "../markdown/index.js";
+import type { EmojiStructure } from "./emojis.js";
 
 /**
  * Type representing the structure of a poll answer count.

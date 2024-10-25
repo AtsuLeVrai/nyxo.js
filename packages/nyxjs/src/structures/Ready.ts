@@ -1,6 +1,6 @@
 import type { ApiVersions, ApplicationStructure, Integer, UnavailableGuildStructure } from "@nyxjs/core";
 import type { ReadyEventFields } from "@nyxjs/gateway";
-import { User } from "./Users";
+import { User } from "./Users.js";
 
 export class Ready {
     application!: Pick<ApplicationStructure, "flags" | "id">;

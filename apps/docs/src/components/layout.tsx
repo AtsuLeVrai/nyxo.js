@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar } from "@/components/sidebar";
-import profile from "@/public/nyx.js.jpg";
+import { nyx_icon_transparent } from "@/lib";
 import { Book, Github, Home } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,7 +16,7 @@ export function Layout({ children }: { readonly children: ReactNode }) {
             {/* Header */}
             <header className="bg-neutral-800 bg-opacity-90 p-4 flex justify-between items-center backdrop-blur-sm">
                 <div className="flex items-center space-x-4">
-                    <Image src={profile} alt="Nyx.js Logo" width={40} height={40} className="rounded-full" />
+                    <Image src={nyx_icon_transparent} alt="Nyx.js Logo" width={40} height={40} />
                     <h1 className="text-2xl font-bold">Nyx.js</h1>
                 </div>
                 <nav>

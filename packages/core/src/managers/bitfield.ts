@@ -59,10 +59,12 @@ export class BitfieldManager<T> {
      * Adds one or more flags to the bitfield.
      *
      * @param flags - The flags to add.
-     * @returns The BitfieldManager instance for chaining.
+     * @returns This BitfieldManager instance.
      */
     add(...flags: T[]): this {
-        this.#bitfield |= flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
+        for (const flag of flags) {
+            this.#bitfield |= this.#resolve(flag);
+        }
         return this;
     }
 
@@ -70,10 +72,12 @@ export class BitfieldManager<T> {
      * Removes one or more flags from the bitfield.
      *
      * @param flags - The flags to remove.
-     * @returns The BitfieldManager instance for chaining.
+     * @returns This BitfieldManager instance.
      */
     remove(...flags: T[]): this {
-        this.#bitfield &= ~flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
+        for (const flag of flags) {
+            this.#bitfield &= ~this.#resolve(flag);
+        }
         return this;
     }
 
@@ -81,52 +85,26 @@ export class BitfieldManager<T> {
      * Toggles one or more flags in the bitfield.
      *
      * @param flags - The flags to toggle.
-     * @returns The BitfieldManager instance for chaining.
+     * @returns This BitfieldManager instance.
      */
     toggle(...flags: T[]): this {
-        this.#bitfield ^= flags.reduce((acc, val) => acc | this.#resolve(val), 0n);
+        for (const flag of flags) {
+            this.#bitfield ^= this.#resolve(flag);
+        }
         return this;
     }
 
     /**
-     * Clears all flags in the bitfield.
+     * Gets the raw bitfield value.
      *
-     * @returns The BitfieldManager instance for chaining.
-     */
-    clear(): this {
-        this.#bitfield = 0n;
-        return this;
-    }
-
-    /**
-     * Gets the raw bigint value of the bitfield.
-     *
-     * @returns The bigint value of the bitfield.
+     * @returns The raw bitfield value as a bigint.
      */
     valueOf(): bigint {
         return this.#bitfield;
     }
 
     /**
-     * Converts the bitfield to a string representation.
-     *
-     * @returns A string representation of the bitfield's bigint value.
-     */
-    toString(): string {
-        return this.#bitfield.toString();
-    }
-
-    /**
-     * Converts the bitfield to a number.
-     *
-     * @returns The number representation of the bitfield.
-     */
-    toNumber(): number {
-        return Number(this.#bitfield);
-    }
-
-    /**
-     * Resolves a value to a bigint bitfield.
+     * Resolves a value to a bitfield.
      *
      * @param value - The value to resolve. It can be a single value or an array of values.
      * @returns The resolved bigint bitfield.
@@ -139,12 +117,15 @@ export class BitfieldManager<T> {
         }
 
         if (typeof value === "bigint") {
+            if (value < 0n) {
+                throw new TypeError("Bitfield value cannot be negative");
+            }
             return value;
         }
 
         if (typeof value === "number") {
             if (!Number.isInteger(value) || value < 0) {
-                throw new Error("Number must be a non-negative integer");
+                throw new TypeError("Number must be a non-negative integer");
             }
 
             return BigInt(value);

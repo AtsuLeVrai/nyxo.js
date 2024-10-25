@@ -1,5 +1,5 @@
 import type { InviteStructure, Snowflake } from "@nyxjs/core";
-import { RestMethods, type RouteStructure } from "../types";
+import { RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params|Get Invite Query String Params}

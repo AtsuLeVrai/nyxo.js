@@ -3,7 +3,6 @@ import {
     ChevronLeft,
     ChevronRight,
     Command,
-    Database,
     ExternalLink,
     LayoutPanelLeft,
     Mic,
@@ -67,15 +66,6 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
                                 >
                                     <Package size={18} />
                                     <span>Core</span>
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/packages/database"
-                                    className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-neutral-700 rounded-lg p-2 transition-all duration-200"
-                                >
-                                    <Database size={18} />
-                                    <span>Database</span>
                                 </Link>
                             </li>
                             <li>

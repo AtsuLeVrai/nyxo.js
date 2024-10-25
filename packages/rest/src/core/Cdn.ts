@@ -1,5 +1,5 @@
 import { ImageFormats, type Integer, type Snowflake } from "@nyxjs/core";
-import type { CdnImageOptions, ImageType } from "../types";
+import type { CdnImageOptions, ImageType } from "../types/index.js";
 
 export class Cdn {
     static baseUrl = new URL("https://cdn.discordapp.com");

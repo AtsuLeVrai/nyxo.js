@@ -1,21 +1,26 @@
-import type { AvailableLocales, BitwisePermissions, LocaleKeys } from "../enums";
-import type { BitfieldResolvable } from "../managers";
-import type { Integer, Snowflake } from "../markdown";
-import type { ApplicationIntegrationTypes } from "./applications";
-import type { ChannelStructure, ChannelTypes } from "./channels";
-import type { ActionRowStructure, ComponentTypes, SelectMenuOptionStructure, TextInputStructure } from "./components";
-import type { EntitlementStructure } from "./entitlements";
-import type { GuildMemberStructure, GuildStructure } from "./guilds";
+import type { AvailableLocales, BitwisePermissions, LocaleKeys } from "../enums/index.js";
+import type { BitfieldResolvable } from "../managers/index.js";
+import type { Integer, Snowflake } from "../markdown/index.js";
+import type { ApplicationIntegrationTypes } from "./applications.js";
+import type { ChannelStructure, ChannelTypes } from "./channels.js";
+import type {
+    ActionRowStructure,
+    ComponentTypes,
+    SelectMenuOptionStructure,
+    TextInputStructure,
+} from "./components.js";
+import type { EntitlementStructure } from "./entitlements.js";
+import type { GuildMemberStructure, GuildStructure } from "./guilds.js";
 import type {
     AllowedMentionStructure,
     AttachmentStructure,
     EmbedStructure,
     MessageFlags,
     MessageStructure,
-} from "./messages";
-import type { PollCreateRequestStructure } from "./polls";
-import type { RoleStructure } from "./roles";
-import type { UserStructure } from "./users";
+} from "./messages.js";
+import type { PollCreateRequestStructure } from "./polls.js";
+import type { RoleStructure } from "./roles.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permission-type|Application Command Permission Types}

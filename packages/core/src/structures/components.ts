@@ -1,6 +1,6 @@
-import type { Integer, Snowflake } from "../markdown";
-import type { ChannelTypes } from "./channels";
-import type { EmojiStructure } from "./emojis";
+import type { Integer, Snowflake } from "../markdown/index.js";
+import type { ChannelTypes } from "./channels.js";
+import type { EmojiStructure } from "./emojis.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#component-object-component-types|Component Types}

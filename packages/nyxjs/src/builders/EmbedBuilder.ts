@@ -10,7 +10,7 @@ import type {
     EmbedVideoStructure,
     Integer,
 } from "@nyxjs/core";
-import { type ColorResolvable, Colors } from "../utils";
+import { type ColorResolvable, Colors } from "../libs/index.js";
 
 type EmbedSchema = {
     addFields(...fields: EmbedFieldStructure[]): EmbedSchema;

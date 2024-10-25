@@ -1,5 +1,5 @@
-import type { Float, Snowflake } from "../markdown";
-import type { UserStructure } from "./users";
+import type { Float, Snowflake } from "../markdown/index.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#soundboard-sound-object-soundboard-sound-structure|Soundboard Sound Structure}

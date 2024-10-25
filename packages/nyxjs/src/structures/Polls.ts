@@ -9,7 +9,7 @@ import type {
     PollResultsStructure,
     PollStructure,
 } from "@nyxjs/core";
-import { Emoji } from "./Emojis";
+import { Emoji } from "./Emojis.js";
 
 export class PollAnswerCount {
     count!: Integer;

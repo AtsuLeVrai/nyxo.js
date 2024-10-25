@@ -1,9 +1,9 @@
-import type { Integer, Iso8601Timestamp } from "../markdown";
-import type { ApplicationStructure } from "./applications";
-import type { ChannelStructure } from "./channels";
-import type { GuildMemberStructure, GuildStructure } from "./guilds";
-import type { GuildScheduledEventStructure } from "./scheduled";
-import type { UserStructure } from "./users";
+import type { Integer, Iso8601Timestamp } from "../markdown/index.js";
+import type { ApplicationStructure } from "./applications.js";
+import type { ChannelStructure } from "./channels.js";
+import type { GuildMemberStructure, GuildStructure } from "./guilds.js";
+import type { GuildScheduledEventStructure } from "./scheduled.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#invite-stage-instance-object-invite-stage-instance-structure|Invite Stage Instance Structure}

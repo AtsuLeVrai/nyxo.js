@@ -7,8 +7,8 @@ import {
     RestMethods,
     type RestOptions,
     type RouteStructure,
-} from "../types";
-import { RateLimiter } from "./RateLimiter";
+} from "../types/index.js";
+import { RateLimiter } from "./RateLimiter.js";
 
 export class Rest extends EventEmitter<RestEvents> {
     readonly #token: string;

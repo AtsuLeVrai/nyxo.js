@@ -1,5 +1,5 @@
 import type { EmojiStructure, Snowflake } from "@nyxjs/core";
-import { User } from "./Users";
+import { User } from "./Users.js";
 
 export class Emoji {
     animated?: boolean;

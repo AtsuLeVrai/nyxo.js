@@ -1,5 +1,5 @@
-import type { Iso8601Timestamp, Snowflake } from "../markdown";
-import type { GuildMemberStructure } from "./guilds";
+import type { Iso8601Timestamp, Snowflake } from "../markdown/index.js";
+import type { GuildMemberStructure } from "./guilds.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#voice-region-object-voice-region-structure|Voice Region Structure}

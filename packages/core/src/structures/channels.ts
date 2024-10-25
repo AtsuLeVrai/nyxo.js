@@ -1,8 +1,8 @@
-import type { BitwisePermissions } from "../enums";
-import type { BitfieldResolvable } from "../managers";
-import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown";
-import type { GuildMemberStructure } from "./guilds";
-import type { UserStructure } from "./users";
+import type { BitwisePermissions } from "../enums/index.js";
+import type { BitfieldResolvable } from "../managers/index.js";
+import type { Integer, Iso8601Timestamp, Snowflake } from "../markdown/index.js";
+import type { GuildMemberStructure } from "./guilds.js";
+import type { UserStructure } from "./users.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#forum-tag-object-forum-tag-structure|Forum Tag Structure}

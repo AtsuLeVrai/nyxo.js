@@ -1,27 +1,27 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/tests",
-  "description": "Test suite for Nyx.js",
-  "version": "1.0.0",
-  "type": "commonjs",
-  "readme": "README.md",
-  "license": "AGPL-3.0-only",
-  "engines": {
-    "node": ">=18"
-  },
-  "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "format": "biome format --write ."
-  },
-  "dependencies": {
-    "nyx.js": "workspace:*"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@types/node": "^22.7.9",
-    "dotenv": "^16.4.5",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.3"
-  }
+    "$schema": "https://json.schemastore.org/package.json",
+    "name": "@nyxjs/tests",
+    "description": "Test suite for Nyx.js",
+    "version": "1.0.0",
+    "type": "commonjs",
+    "readme": "README.md",
+    "license": "AGPL-3.0-only",
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+        "format": "biome format --write ."
+    },
+    "dependencies": {
+        "nyx.js": "workspace:*"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@types/node": "^22.8.0",
+        "dotenv": "^16.4.5",
+        "ts-node": "^10.9.2",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.6.3"
+    }
 }

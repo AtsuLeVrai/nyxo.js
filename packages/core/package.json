@@ -1,32 +1,13 @@
 {
     "$schema": "https://json.schemastore.org/package.json",
     "name": "@nyxjs/core",
-    "description": "Core package for Nyx.js",
     "version": "1.0.0",
-    "type": "commonjs",
-    "readme": "README.md",
+    "description": "Core package for Nyx.js",
     "license": "AGPL-3.0-only",
+    "type": "module",
     "main": "./dist/index.js",
-    "types": "./dist/src/index.d.ts",
     "module": "./dist/esm/index.js",
-    "engines": {
-        "node": ">=18"
-    },
-    "publishConfig": {
-        "access": "public"
-    },
-    "author": {
-        "name": "3tatsu",
-        "url": "https://github.com/3tatsu"
-    },
-    "repository": {
-        "type": "git",
-        "directory": "packages/core",
-        "url": "https://github.com/3tatsu/nyx.js"
-    },
-    "bugs": {
-        "url": "https://github.com/3tatsu/nyx.js/issues"
-    },
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
@@ -34,8 +15,26 @@
             "require": "./dist/index.js"
         }
     },
+    "engines": {
+        "node": ">=18"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/3tatsu/nyx.js",
+        "directory": "packages/core"
+    },
+    "bugs": {
+        "url": "https://github.com/3tatsu/nyx.js/issues"
+    },
+    "author": {
+        "name": "3tatsu",
+        "url": "https://github.com/3tatsu"
+    },
     "scripts": {
-        "build": "tsup && rimraf .tsup",
+        "build": "tsup-node && rimraf .tsup",
         "clean": "rimraf dist",
         "format": "biome format --write ."
     },
@@ -43,11 +42,12 @@
         "@biomejs/biome": "1.9.4",
         "@microsoft/api-extractor": "^7.47.11",
         "@swc/core": "^1.7.39",
-        "@types/node": "^22.7.9",
+        "@types/node": "^22.8.0",
         "rimraf": "^6.0.1",
         "terser": "^5.36.0",
-        "tsup": "^8.3.0",
+        "tsup": "^8.3.4",
         "typescript": "^5.6.3"
     },
-    "files": ["dist"]
+    "files": ["dist"],
+    "readme": "README.md"
 }

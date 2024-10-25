@@ -1,4 +1,4 @@
-import type { Iso8601Timestamp, Snowflake } from "../markdown";
+import type { Iso8601Timestamp, Snowflake } from "../markdown/index.js";
 
 /**
  * Enum representing the subscription statuses.
