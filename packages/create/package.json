@@ -1,8 +1,9 @@
 {
     "$schema": "https://json.schemastore.org/package.json",
-    "name": "nyx.js",
+    "name": "@nyxjs/create",
     "version": "1.0.0",
-    "description": "A simple and fast Discord API wrapper for Node.js",
+    "description": "Create a new Nyx.js project",
+    "bin": "./dist/index.js",
     "license": "AGPL-3.0-only",
     "type": "module",
     "main": "./dist/index.js",
@@ -24,7 +25,7 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/3tatsu/nyx.js",
-        "directory": "packages/nyxjs"
+        "directory": "packages/create"
     },
     "bugs": {
         "url": "https://github.com/3tatsu/nyx.js/issues"
@@ -39,21 +40,24 @@
         "format": "biome format --write ."
     },
     "dependencies": {
-        "@nyxjs/core": "workspace:*",
-        "@nyxjs/gateway": "workspace:*",
-        "@nyxjs/rest": "workspace:*",
-        "eventemitter3": "^5.0.1"
+        "chalk": "^5.3.0",
+        "commander": "^12.1.0",
+        "fs-extra": "^11.2.0",
+        "glob": "^11.0.0",
+        "inquirer": "^12.0.1",
+        "ora": "^8.1.0"
     },
     "devDependencies": {
         "@biomejs/biome": "1.9.4",
         "@microsoft/api-extractor": "^7.47.11",
         "@swc/core": "^1.7.40",
+        "@types/fs-extra": "^11.0.4",
         "@types/node": "^22.8.1",
         "rimraf": "^6.0.1",
         "terser": "^5.36.0",
         "tsup": "^8.3.5",
         "typescript": "^5.6.3"
     },
-    "files": ["dist"],
+    "files": ["dist", "templates"],
     "readme": "README.md"
 }

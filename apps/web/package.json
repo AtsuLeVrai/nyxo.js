@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/docs",
+  "name": "@nyxjs/web",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

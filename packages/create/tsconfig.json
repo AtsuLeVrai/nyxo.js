@@ -4,7 +4,8 @@
     "compilerOptions": {
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "resolveJsonModule": true
     },
     "include": ["./src"],
     "exclude": ["./node_modules", "./dist"]

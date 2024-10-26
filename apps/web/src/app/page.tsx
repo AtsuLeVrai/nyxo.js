@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function HomePage() {
     return (
-        <Layout>
+        <Layout sidebar={false}>
             <main className="flex-1">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -17,7 +17,7 @@ export default function HomePage() {
                     transition={{ duration: 0.5 }}
                     className="max-w-4xl mx-auto text-center"
                 >
-                    <Image src={nyx_banner} alt="Nyx.js Banner" width={550} height={550} className="mx-auto mb-8" />
+                    <Image src={nyx_banner} alt="Nyx.js Banner" width={500} height={500} className="mx-auto mb-8" />
                     <h1 className="text-5xl font-bold mb-6 py-2 text-white inline-block">Welcome to Nyx.js</h1>
                     <p className="text-xl mb-8 text-gray-300">
                         A powerful framework for creating Discord bots using TypeScript. Build feature-rich bots with

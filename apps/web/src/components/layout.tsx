@@ -1,9 +1,17 @@
+"use client";
+
+import { nyx_icon_transparent } from "@/lib";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+    Book,
+    BookOpen,
     ChevronLeft,
     ChevronRight,
-    Command,
+    Code,
     ExternalLink,
+    FileText,
+    Github,
+    Home,
     LayoutPanelLeft,
     Mic,
     Moon,
@@ -13,14 +21,14 @@ import {
     Search,
     Server,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { useState } from "react";
 
-type SidebarProps = {
-    readonly isSidebarOpen: boolean;
-    setIsSidebarOpen(this: void, isOpen: boolean): void;
-};
+function Sidebar() {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
     return (
         <motion.aside
             initial={{ width: 256 }}
@@ -47,18 +55,64 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
                             <Search className="absolute right-3 top-2.5 text-gray-400" size={18} />
                         </div>
 
-                        {/* Packages navigation */}
-                        <h2 className="text-xl font-semibold mb-4 text-gray-300">Packages</h2>
+                        {/* Getting Started */}
+                        <h2 className="text-xl font-semibold mb-4 text-gray-300">Getting Started</h2>
                         <ul className="space-y-2 mb-6">
                             <li>
                                 <Link
-                                    href="/packages/cli"
+                                    href="#"
                                     className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-neutral-700 rounded-lg p-2 transition-all duration-200"
                                 >
-                                    <Command size={18} />
-                                    <span>Cli</span>
+                                    <BookOpen size={18} />
+                                    <span>Introduction</span>
                                 </Link>
                             </li>
+                            <li>
+                                <Link
+                                    href="#"
+                                    className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-neutral-700 rounded-lg p-2 transition-all duration-200"
+                                >
+                                    <Code size={18} />
+                                    <span>Installation</span>
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="#"
+                                    className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-neutral-700 rounded-lg p-2 transition-all duration-200"
+                                >
+                                    <FileText size={18} />
+                                    <span>Quick Start</span>
+                                </Link>
+                            </li>
+                        </ul>
+
+                        {/* Core Concepts */}
+                        <h2 className="text-xl font-semibold mb-4 text-gray-300">Core Concepts</h2>
+                        <ul className="space-y-2 mb-6">
+                            <li>
+                                <Link
+                                    href="#"
+                                    className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-neutral-700 rounded-lg p-2 transition-all duration-200"
+                                >
+                                    <Book size={18} />
+                                    <span>Commands</span>
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="#"
+                                    className="flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-neutral-700 rounded-lg p-2 transition-all duration-200"
+                                >
+                                    <Book size={18} />
+                                    <span>Events</span>
+                                </Link>
+                            </li>
+                        </ul>
+
+                        {/* Packages navigation */}
+                        <h2 className="text-xl font-semibold mb-4 text-gray-300">Packages</h2>
+                        <ul className="space-y-2 mb-6">
                             <li>
                                 <Link
                                     href="/packages/core"
@@ -164,5 +218,58 @@ export function Sidebar({ isSidebarOpen, setIsSidebarOpen }: SidebarProps) {
                 {isSidebarOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
             </motion.button>
         </motion.aside>
+    );
+}
+
+export function Layout({ sidebar = true, children }: { sidebar?: boolean; children: ReactNode }) {
+    return (
+        <div className="flex flex-col min-h-screen">
+            {/* Header */}
+            <header className="bg-neutral-800 bg-opacity-90 p-4 flex justify-between items-center backdrop-blur-sm">
+                <div className="flex items-center space-x-4">
+                    <Image src={nyx_icon_transparent} alt="Nyx.js Logo" width={40} height={40} />
+                    <h1 className="text-2xl font-bold">Nyx.js</h1>
+                </div>
+                <nav>
+                    <ul className="flex space-x-6">
+                        <li>
+                            <Link
+                                href="/"
+                                className="hover:text-blue-400 transition-colors duration-200 flex items-center space-x-2"
+                            >
+                                <Home size={20} />
+                                <span>Home</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                href="/docs"
+                                className="hover:text-blue-400 transition-colors duration-200 flex items-center space-x-2"
+                            >
+                                <Book size={20} />
+                                <span>Documentation</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <a
+                                href="https://github.com/3tatsu/nyx.js"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-blue-400 transition-colors duration-200 flex items-center space-x-2"
+                            >
+                                <Github size={20} />
+                                <span>GitHub</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </header>
+
+            {/* Main content */}
+            <div className="flex flex-1">
+                {sidebar && <Sidebar />}
+                {children}
+            </div>
+        </div>
     );
 }
