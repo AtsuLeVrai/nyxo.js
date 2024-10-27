@@ -13,7 +13,6 @@ export class BitfieldManager<T> {
      * The internal bitfield value.
      */
     #bitfield: bigint;
-
     /**
      * Creates a new BitfieldManager instance.
      *

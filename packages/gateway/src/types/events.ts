@@ -21,6 +21,7 @@ import type {
     UserStructure,
     VoiceStateStructure,
 } from "@nyxjs/core";
+import type WebSocket from "ws";
 import type {
     AutoModerationActionExecutionEventFields,
     ChannelPinsUpdateEventFields,
@@ -211,4 +212,11 @@ export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
      * @param warning - The warning message.
      */
     WARN: [warning: string];
+    /**
+     * Event triggered when a message is received.
+     *
+     * @param data - The raw data.
+     * @param isBinary - Whether the data is binary.
+     */
+    MESSAGE: [data: WebSocket.RawData, isBinary: boolean];
 };

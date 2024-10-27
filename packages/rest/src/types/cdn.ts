@@ -3,7 +3,7 @@ import type { ImageFormats, Integer } from "@nyxjs/core";
 /**
  * Represents the possible image formats that can be used.
  */
-export type ImageType =
+export type ImageTypes =
     | ImageFormats.GIF
     | ImageFormats.JPEG
     | ImageFormats.Lottie
@@ -17,7 +17,7 @@ export type CdnImageOptions = {
     /**
      * The format of the image.
      */
-    format?: ImageType;
+    format?: ImageTypes;
     /**
      * The hostname for the CDN.
      */

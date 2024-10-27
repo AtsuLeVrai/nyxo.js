@@ -1,5 +1,5 @@
 import { ImageFormats, type Integer, type Snowflake } from "@nyxjs/core";
-import type { CdnImageOptions, ImageType } from "../types/index.js";
+import type { CdnImageOptions, ImageTypes } from "./types/index.js";
 
 export class Cdn {
     static baseUrl = new URL("https://cdn.discordapp.com");
@@ -90,7 +90,7 @@ export class Cdn {
         return this.#createUrl(`/team-icons/${teamId}/${teamIcon}`, options?.format, options?.size);
     }
 
-    static sticker(stickerId: Snowflake, format: ImageType = ImageFormats.PNG): string {
+    static sticker(stickerId: Snowflake, format: ImageTypes = ImageFormats.PNG): string {
         return this.#createUrl(`/stickers/${stickerId}`, format, undefined, "media.discordapp.net");
     }
 
@@ -117,7 +117,7 @@ export class Cdn {
 
     static #createUrl(
         path: string,
-        format: ImageType = ImageFormats.PNG,
+        format: ImageTypes = ImageFormats.PNG,
         size?: Integer,
         hostname: string = this.baseUrl.hostname
     ): string {
@@ -141,7 +141,7 @@ export class Cdn {
         }
     }
 
-    static #validateGifFormat(path: string, format: ImageType, size?: Integer): void {
+    static #validateGifFormat(path: string, format: ImageTypes, size?: Integer): void {
         if (format === ImageFormats.GIF && !this.#isHashGif(path.split("/").pop() ?? "")) {
             throw new Error("The asset is not a gif.");
         }

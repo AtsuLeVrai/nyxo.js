@@ -3,6 +3,10 @@
   <img src="./assets/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="margin-top: 20px; border-radius: 8px;">
 </div>
 
+[![Formatted with Biome](https://img.shields.io/badge/Formatted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev/)
+[![Powered by TurboRepo](https://img.shields.io/badge/Powered_by-TurboRepo-60a5fa?style=flat&logo=turborepo)](https://turborepo.dev/)
+[![AGPL-3.0 License](https://img.shields.io/badge/License-AGPL_3.0-60a5fa?style=flat)](https://www.gnu.org/licenses/agpl-3.0.html)
+
 Welcome to the **@nyxjs/source** monorepo! This repository is the central hub for all Nyx.js packages and tools,
 designed to empower developers with a high-performance, modular TypeScript ecosystem for building next-generation
 Discord bots.
@@ -15,17 +19,19 @@ The monorepo is organized into various packages, each fulfilling a critical role
 
 ### Packages
 
-- **`cli`**: The Command Line Interface for managing and interacting with Nyx.js. Offers a range of utilities to set up,
-  run, and maintain your Discord bots.
-- **`core`**: The core functionality of Nyx.js, providing the fundamental components that power the rest of the system.
-- **`gateway`**: Handles WebSocket connections and shard management for efficient communication with the Discord API.
-- **`nyxjs`**: The core package that ties all components together and serves as the main entry point for Nyx.js.
-- **`panel`**: An administrative panel built with Next.js to monitor statistics like the number of guilds, members, and
+- `core`: The core functionality of Nyx.js, providing the fundamental components that power the rest of the system.
+- `create`: A CLI tool for generating new Nyx.js projects with ease, including templates and configurations.
+- `gateway`: Handles WebSocket connections and shard management for efficient communication with the Discord API.
+- `nyxjs`: The core package that ties all components together and serves as the main entry point for Nyx.js.
+- `panel` **_(not currently under development)_**: An administrative panel built with Next.js to monitor statistics like
+  the number of guilds, members, and
   commands.
-- **`plugins`**: A set of optional plugins that extend the functionality of Nyx.js with additional features.
-- **`rest`**: Manages RESTful API requests to Discord, with rate limiting and caching strategies for optimal
+- `plugins` **_(not currently under development)_**: A set of optional plugins that extend the functionality of Nyx.js
+  with additional features.
+- `rest`: Manages RESTful API requests to Discord, with rate limiting and caching strategies for optimal
   performance.
-- **`voice`**: Enables voice connections and interactions, allowing bots to join voice channels and manage audio
+- `voice` **_(not currently under development)_**: Enables voice connections and interactions, allowing bots to join
+  voice channels and manage audio
   streams.
 
 ---
@@ -43,6 +49,13 @@ To get started with the **@nyxjs/source** monorepo, you'll need to have the foll
 To setup the monorepo, run:
 
 ```bash
+git clone https://github.com/3tatsu/nyx.js.git
+```
+
+Next, navigate to the cloned repository and run the following commands:
+
+```bash
+cd nyx.js
 pnpm run setup
 ```
 

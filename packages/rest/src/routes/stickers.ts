@@ -1,5 +1,5 @@
 import type { Snowflake, StickerPackStructure, StickerStructure } from "@nyxjs/core";
-import { FileUpload } from "../core/index.js";
+import { FileUploadManager } from "../managers/index.js";
 import { RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
@@ -66,7 +66,7 @@ export class StickerRoutes {
         params: CreateGuildStickerFormParams,
         reason?: string
     ): RouteStructure<StickerStructure> {
-        const form = new FileUpload();
+        const form = new FileUploadManager();
         form.addField("name", params.name);
         form.addField("tags", params.tags);
         void form.addFiles(params.file);

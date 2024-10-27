@@ -12,7 +12,7 @@ import type {
     Snowflake,
     UserStructure,
 } from "@nyxjs/core";
-import { FileUpload } from "../core/index.js";
+import { FileUploadManager } from "../managers/index.js";
 import { type QueryStringParams, RestMethods, type RouteStructure } from "../types/index.js";
 
 /**
@@ -202,7 +202,7 @@ export class MessageRoutes {
         params: EditMessageJsonFormParams
     ): RouteStructure<MessageStructure> {
         const { files, ...restParams } = params;
-        const form = new FileUpload();
+        const form = new FileUploadManager();
         form.addPayload(restParams);
 
         if (files) {
@@ -288,7 +288,7 @@ export class MessageRoutes {
      */
     static createMessage(channelId: Snowflake, params: CreateMessageJsonFormParams): RouteStructure<MessageStructure> {
         const { files, ...restParams } = params;
-        const form = new FileUpload();
+        const form = new FileUploadManager();
         form.addPayload(restParams);
 
         if (files) {

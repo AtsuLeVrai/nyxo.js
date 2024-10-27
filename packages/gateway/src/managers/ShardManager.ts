@@ -1,9 +1,9 @@
 import { platform } from "node:process";
 import { GatewayOpcodes, type Integer, type Snowflake } from "@nyxjs/core";
 import { GatewayRoutes, type Rest, type SessionStartLimitStructure, UserRoutes } from "@nyxjs/rest";
+import type { Gateway } from "../Gateway.js";
 import type { IdentifyStructure } from "../events/index.js";
 import type { GatewayOptions, GatewayShardTypes, ShardConfig } from "../types/index.js";
-import type { Gateway } from "./Gateway.js";
 
 export class ShardManager {
     #shards: Map<number, ShardConfig> = new Map();

@@ -1,5 +1,6 @@
-import type { ApiVersions, GatewayIntents, Integer } from "@nyxjs/core";
+import type { ApiVersions, GatewayIntents, GatewayOpcodes, Integer } from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/index.js";
+import type { GatewayReceiveEvents } from "./events.js";
 
 export enum CompressTypes {
     /**
@@ -77,4 +78,26 @@ export type GatewayOptions = {
      * API version
      */
     v: ApiVersions;
+};
+
+/**
+ * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
+ */
+export type GatewayManagerPayload = {
+    /**
+     * Event data
+     */
+    d: unknown;
+    /**
+     * Gateway opcode, which indicates the payload type
+     */
+    op: GatewayOpcodes;
+    /**
+     * Sequence number of event used for resuming sessions and heartbeating
+     */
+    s: Integer | null;
+    /**
+     * Event name
+     */
+    t: keyof GatewayReceiveEvents | null;
 };

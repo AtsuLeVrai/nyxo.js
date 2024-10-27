@@ -4,7 +4,7 @@ import { basename, extname } from "node:path";
 import { MimeTypes } from "@nyxjs/core";
 import FormData from "form-data";
 
-export class FileUpload {
+export class FileUploadManager {
     readonly #formData: FormData = new FormData();
 
     readonly #fileLimit: number;

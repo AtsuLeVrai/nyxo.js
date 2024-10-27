@@ -3,16 +3,17 @@
   "name": "@nyxjs/benchmark",
   "description": "Benchmark for nyx.js",
   "version": "1.0.0",
-  "type": "commonjs",
+  "type": "module",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "start:discordjs": "ts-node src/discordjs.ts",
-    "start:eris": "ts-node src/eris.ts",
-    "start:nyxjs": "ts-node src/nyxjs.ts",
+    "build": "tsc",
+    "start:discordjs": "node dist/discordjs.js",
+    "start:eris": "node dist/eris.js",
+    "start:nyxjs": "node dist/nyxjs.js",
     "format": "biome format --write ."
   },
   "dependencies": {
@@ -24,7 +25,6 @@
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.8.1",
     "dotenv": "^16.4.5",
-    "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   }
 }

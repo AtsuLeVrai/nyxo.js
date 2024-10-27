@@ -1,36 +1,14 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center" style="padding: 30px;">
+  <h1 style="font-size: 3em; font-weight: bold;">@nyxjs/panel 📊</h1>
+  <h6 style="font-size: 1em; font-weight: bold;">Not currently under development</h6>
+  <p style="font-size: 1.2em; margin-top: 10px;">Administrative Panel for Monitoring Nyx.js Bot Statistics</p>
+  <img src="../../assets/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="margin-top: 20px; border-radius: 8px;">
+</div>
 
-## Getting Started
+[![License](https://img.shields.io/github/license/3tatsu/nyx.js?style=flat-square)](LICENSE)
 
-First, run the development server:
+## 🌟 Description
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**@nyxjs/panel** is an administrative dashboard built with Next.js, designed to provide a real-time overview of your
+Nyx.js bot's statistics, such as guild count, member count, and command usage. This panel streamlines bot management by
+giving you instant access to essential metrics and insights.

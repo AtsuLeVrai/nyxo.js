@@ -3,7 +3,7 @@ import { Client, GatewayIntents } from "nyx.js";
 
 config();
 
-if (!process.env.DISCORD_TOKEN) {
+if (!process.env["DISCORD_TOKEN"]) {
     throw new Error("no discord token");
 }
 
@@ -12,7 +12,7 @@ console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} 
 
 const startTime = performance.now();
 
-const client = new Client(process.env.DISCORD_TOKEN, {
+const client = new Client(process.env["DISCORD_TOKEN"], {
     intents: GatewayIntents.All(),
     gateway: {
         shard: "auto",

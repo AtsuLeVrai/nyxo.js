@@ -3,7 +3,7 @@ import { config } from "dotenv";
 
 config();
 
-if (!process.env.DISCORD_TOKEN) {
+if (!process.env["DISCORD_TOKEN"]) {
     throw new Error("no discord token");
 }
 
@@ -73,7 +73,7 @@ client.once("ready", () => {
 });
 
 console.log("Connexion de la gateway...");
-client.login(process.env.DISCORD_TOKEN).catch((error) => {
+client.login(process.env["DISCORD_TOKEN"]).catch((error) => {
     console.error("Erreur lors de la connexion:", error);
     process.exit(1);
 });
