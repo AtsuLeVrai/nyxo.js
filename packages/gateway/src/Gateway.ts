@@ -54,7 +54,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
             if (this.#options.compress) {
                 query.searchParams.set("compress", this.#options.compress);
                 if (this.#options.compress === "zlib-stream") {
-                    this.#compression.initialize();
+                    this.#compression.initializeZlib();
                     this.emit("DEBUG", "[GATEWAY] Zlib-stream compression initialized");
                 }
             }
@@ -158,7 +158,7 @@ export class Gateway extends EventEmitter<GatewayEvents<keyof GatewayReceiveEven
     }
 
     #setupEventListeners(): void {
-        this.#webSocket.on("MESSAGE", this.#onMessage.bind(this));
+        this.#webSocket.on("RAW", this.#onMessage.bind(this));
         this.#webSocket.on("CLOSE", (code, reason) => this.#onClose(code as GatewayCloseCodes, reason));
         this.#webSocket.on("ERROR", (error) => this.emit("ERROR", error));
         this.#webSocket.on("DEBUG", (message) => this.emit("DEBUG", message));

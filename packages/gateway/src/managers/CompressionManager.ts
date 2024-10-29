@@ -3,7 +3,7 @@ import zlib from "zlib-sync";
 export class CompressionManager {
     #inflator: zlib.Inflate | null = null;
 
-    initialize(): void {
+    initializeZlib(): void {
         this.#inflator = new zlib.Inflate({ chunkSize: 65_535 });
     }
 

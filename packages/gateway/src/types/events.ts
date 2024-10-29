@@ -218,5 +218,5 @@ export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
      * @param data - The raw data.
      * @param isBinary - Whether the data is binary.
      */
-    MESSAGE: [data: WebSocket.RawData, isBinary: boolean];
+    RAW: [data: WebSocket.RawData, isBinary: boolean];
 };

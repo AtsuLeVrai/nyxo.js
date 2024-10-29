@@ -1,26 +1,26 @@
 {
-    "$schema": "https://json.schemastore.org/package.json",
-    "name": "@nyxjs/workbench",
-    "description": "Workbench for nyx.js",
-    "version": "1.0.0",
-    "type": "module",
-    "readme": "README.md",
-    "license": "AGPL-3.0-only",
-    "engines": {
-        "node": ">=18"
-    },
-    "scripts": {
-        "build": "tsc",
-        "dev": "node dist/index.js",
-        "format": "biome format --write ."
-    },
-    "dependencies": {
-        "nyx.js": "workspace:*"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "1.9.4",
-        "@types/node": "^22.8.1",
-        "dotenv": "^16.4.5",
-        "typescript": "^5.6.3"
-    }
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/workbench",
+  "description": "Workbench for nyx.js",
+  "version": "1.0.0",
+  "type": "module",
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "nyx.js": "workspace:*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^22.8.4",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
 }

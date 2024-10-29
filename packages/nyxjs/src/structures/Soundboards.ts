@@ -1,51 +1,81 @@
-import type { Float, Snowflake, SoundboardSoundStructure } from "@nyxjs/core";
+import type { Float, Snowflake, SoundboardSoundStructure, UserStructure } from "@nyxjs/core";
 import { User } from "./Users.js";
 
 export class SoundboardSound {
-    available!: boolean;
-
-    emojiId!: Snowflake | null;
-
-    emojiName!: string | null;
-
-    guildId?: Snowflake;
-
-    name!: string;
-
-    soundId!: Snowflake;
-
-    user?: User;
-
-    volume!: Float;
+    #available = true;
+    #emojiId: Snowflake | null = null;
+    #emojiName: string | null = null;
+    #guildId: Snowflake | null = null;
+    #name: string | null = null;
+    #soundId: Snowflake | null = null;
+    #user?: User;
+    #volume: Float | null = null;
 
     constructor(data: Partial<SoundboardSoundStructure>) {
-        this.#patch(data);
+        this.patch(data);
     }
 
-    #patch(data: Partial<SoundboardSoundStructure>): void {
-        if (data.available) {
-            this.available = data.available;
+    get available() {
+        return this.#available;
+    }
+
+    get emojiId() {
+        return this.#emojiId;
+    }
+
+    get emojiName() {
+        return this.#emojiName;
+    }
+
+    get guildId() {
+        return this.#guildId;
+    }
+
+    get name() {
+        return this.#name;
+    }
+
+    get soundId() {
+        return this.#soundId;
+    }
+
+    get user() {
+        return this.#user;
+    }
+
+    get volume() {
+        return this.#volume;
+    }
+
+    patch(data: Partial<SoundboardSoundStructure>): void {
+        if (!data) {
+            return;
         }
-        if (data.emoji_id) {
-            this.emojiId = data.emoji_id;
-        }
-        if (data.emoji_name) {
-            this.emojiName = data.emoji_name;
-        }
-        if (data.guild_id) {
-            this.guildId = data.guild_id;
-        }
-        if (data.name) {
-            this.name = data.name;
-        }
-        if (data.sound_id) {
-            this.soundId = data.sound_id;
-        }
+
+        this.#available = data.available ?? this.#available;
+        this.#emojiId = data.emoji_id ?? this.#emojiId;
+        this.#emojiName = data.emoji_name ?? this.#emojiName;
+        this.#guildId = data.guild_id ?? this.#guildId;
+        this.#name = data.name ?? this.#name;
+        this.#soundId = data.sound_id ?? this.#soundId;
+
         if (data.user) {
-            this.user = new User(data.user);
+            this.#user = new User(data.user);
         }
-        if (data.volume) {
-            this.volume = data.volume;
-        }
+
+        this.#volume = data.volume ?? this.#volume;
+    }
+
+    toJSON(): Partial<SoundboardSoundStructure> {
+        return {
+            available: this.#available,
+            emoji_id: this.#emojiId,
+            emoji_name: this.#emojiName,
+            guild_id: this.#guildId ?? undefined,
+            name: this.#name ?? undefined,
+            sound_id: this.#soundId ?? undefined,
+            user: this.#user?.toJSON() as UserStructure,
+            volume: this.#volume ?? undefined,
+        };
     }
 }

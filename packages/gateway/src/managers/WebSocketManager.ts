@@ -61,7 +61,7 @@ export class WebSocketManager extends EventEmitter<GatewayEvents<keyof GatewayRe
         });
 
         this.#ws.on("message", (data, isBinary) => {
-            this.emit("MESSAGE", data, isBinary);
+            this.emit("RAW", data, isBinary);
         });
     }
 }

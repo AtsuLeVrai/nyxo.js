@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { Client, GatewayIntents } from "nyx.js";
+import { Client, EncodingTypes, GatewayIntents } from "nyx.js";
 
 config();
 
@@ -9,6 +9,9 @@ if (!process.env["DISCORD_TOKEN"]) {
 
 const client = new Client(process.env["DISCORD_TOKEN"], {
     intents: GatewayIntents.All(),
+    gateway: {
+        encoding: EncodingTypes.Json,
+    },
 });
 
 client.on("error", (error) => {
@@ -28,7 +31,7 @@ client.on("close", (close) => {
 });
 
 client.on("ready", (ready) => {
-    console.log(`ready ${new Date().toISOString()}`, ready);
+    console.log(`ready ${new Date().toISOString()}`, ready.user?.id);
 });
 
 client.on("roleCreate", (role) => {

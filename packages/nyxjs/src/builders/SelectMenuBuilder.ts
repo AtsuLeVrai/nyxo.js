@@ -60,7 +60,7 @@ abstract class BaseSelectMenu<
 
     static readonly PLACEHOLDER_LIMIT = 150;
 
-    static readonly MIN_VALUES: [Integer, Integer] = [0, 25];
+    static readonly MIN_VALUES: [min: Integer, max: Integer] = [0, 25];
 
     static readonly MAX_VALUES = 25;
 
@@ -210,3 +210,10 @@ export class MentionableSelectMenuBuilder
         return this;
     }
 }
+
+export type SelectMenuResolvable =
+    | StringSelectMenuBuilder
+    | ChannelSelectMenuBuilder
+    | UserSelectMenuBuilder
+    | RoleSelectMenuBuilder
+    | MentionableSelectMenuBuilder;

@@ -18,9 +18,9 @@ export class TextInputBuilder implements TextInputSchema {
 
     static readonly LABEL_LIMIT = 45;
 
-    static readonly MIN_LENGTH: [Integer, Integer] = [0, 4_000];
+    static readonly MIN_LENGTH: [min: Integer, max: Integer] = [0, 4_000];
 
-    static readonly MAX_LENGTH: [Integer, Integer] = [1, 4_000];
+    static readonly MAX_LENGTH: [min: Integer, max: Integer] = [1, 4_000];
 
     static readonly VALUE_LIMIT = 4_000;
 

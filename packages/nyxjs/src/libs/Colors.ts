@@ -188,4 +188,31 @@ export class Colors {
 
         return color;
     }
+
+    static toHex(color: Integer): HexColorString {
+        return `#${color.toString(16).padStart(6, "0")}`;
+    }
+
+    static toRGB(color: Integer): RGB {
+        return [(color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff];
+    }
+
+    static invert(color: Integer): Integer {
+        return 0xffffff - color;
+    }
+
+    static invertRGB(color: RGB): RGB {
+        return [255 - color[0], 255 - color[1], 255 - color[2]];
+    }
+
+    static lighten(color: Integer, amount: number): Integer {
+        const r = Math.min(255, (color >> 16) + 255 * amount);
+        const g = Math.min(255, ((color >> 8) & 0xff) + 255 * amount);
+        const b = Math.min(255, (color & 0xff) + 255 * amount);
+        return (r << 16) + (g << 8) + b;
+    }
+
+    static random(): Integer {
+        return Math.floor(Math.random() * 0xffffff);
+    }
 }

@@ -19,6 +19,12 @@ export type ClientOptions = {
     version?: ApiVersions;
 };
 
+export type ClientState = {
+    isConnecting: boolean;
+    isConnected: boolean;
+    isReconnecting: boolean;
+};
+
 export type ClientEvents = {
     applicationCommandPermissionUpdate: [];
     autoModerationActionExecute: [];

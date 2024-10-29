@@ -4,7 +4,7 @@ Thank you for using nyx.js! If you need help or have questions, there are severa
 
 ## Documentation
 
-First, check out our [official documentation](https://github.com/3tatsu/nyx.js/discussions). It contains detailed
+First, check out our [official documentation](https://nyxjs.dev). It contains detailed
 information on how to use the
 project, including installation instructions, usage examples, and API references.
 
