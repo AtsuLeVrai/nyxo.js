@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { Client } from "eris";
+import { BenchmarkManager } from "./BenchmarkManager.js";
 
 config();
 
@@ -7,64 +8,55 @@ if (!process.env["DISCORD_TOKEN"]) {
     throw new Error("no discord token");
 }
 
-const startMemoryUsage = process.memoryUsage().heapUsed / 1_024 / 1_024;
-console.log(`Utilisation mémoire au démarrage: ${startMemoryUsage.toFixed(2)} MB`);
-
-const startTime = performance.now();
-
 const client = new Client(process.env["DISCORD_TOKEN"], {
     intents: ["all"],
     maxShards: "auto",
 });
 
-let isReady = false;
+const benchmark = new BenchmarkManager();
 
 client.on("error", (error) => {
-    console.error("Erreur:", error);
+    console.error("Error:", error);
+    benchmark.incrementErrorCount();
+});
+
+client.on("close", (event) => {
+    console.log("Connection closed:", event);
+    benchmark.incrementEventCount();
 });
 
 client.on("warn", (warning) => {
-    console.warn("Avertissement:", warning);
+    console.warn("Warning:", warning);
+    benchmark.incrementEventCount();
 });
 
 client.on("debug", (info) => {
     console.debug("Debug:", info);
+    benchmark.incrementEventCount();
 });
 
-client.on("ready", () => {
-    const readyTime = performance.now();
-    const connectionTime = readyTime - startTime;
-    console.log(`Gateway prêt en ${connectionTime.toFixed(2)} ms`);
-
-    const readyMemoryUsage = process.memoryUsage().heapUsed / 1_024 / 1_024;
-    console.log(`Utilisation mémoire après connexion: ${readyMemoryUsage.toFixed(2)} MB`);
-    console.log(`Augmentation de la mémoire: ${(readyMemoryUsage - startMemoryUsage).toFixed(2)} MB`);
-
-    isReady = true;
+client.on("ready", async () => {
+    benchmark.setReadyTime();
+    console.log("Gateway connected");
+    await benchmark.captureMetrics();
 });
 
-console.log("Connexion de la gateway...");
+console.log("Starting benchmark...");
+const BENCHMARK_DURATION = 10000;
+
+benchmark.setConnectStartTime();
 client.connect().catch((error) => {
-    console.error("Erreur lors de la connexion:", error);
+    console.error("Connection error:", error);
     process.exit(1);
 });
 
-function logStats(): void {
-    if (isReady) {
-        const currentTime = performance.now();
-        const uptime = (currentTime - startTime) / 1_000; // en secondes
-        const currentMemoryUsage = process.memoryUsage().heapUsed / 1_024 / 1_024;
-
-        console.log(`\n--- Statistiques après ${uptime.toFixed(2)} secondes ---`);
-        console.log(`Utilisation mémoire actuelle: ${currentMemoryUsage.toFixed(2)} MB`);
-    }
-}
-
-const statsInterval = setInterval(logStats, 10_000);
+const metricsInterval = setInterval(async () => {
+    await benchmark.captureMetrics();
+}, 1000);
 
 setTimeout(() => {
-    clearInterval(statsInterval);
-    logStats();
-    console.log("\nFin du benchmark. Fermeture de la connexion...");
+    clearInterval(metricsInterval);
+    console.log(benchmark.generateReport());
+    void client.disconnect({ reconnect: false });
     process.exit(0);
-}, 10_000);
+}, BENCHMARK_DURATION);

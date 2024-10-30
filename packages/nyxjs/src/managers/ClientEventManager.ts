@@ -2,7 +2,7 @@ import type { AuditLogEvents } from "@nyxjs/core";
 import type { GatewayEvents, GatewayReceiveEvents } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import type { Client } from "../Client.js";
-import { Ready } from "../structures/index.js";
+import { Guild, Ready } from "../structures/index.js";
 import type { ClientEvents } from "../types/index.js";
 
 type Constructor<T = unknown> = new (...args: any[]) => T;
@@ -67,6 +67,11 @@ const ClientEventMapping: ClientEventMappingStructure[] = [
         gatewayReceiveEventName: "READY",
         clientEventName: "ready",
         serialize: (...data) => createInstance(Ready, ...data),
+    },
+    {
+        gatewayReceiveEventName: "GUILD_CREATE",
+        clientEventName: "guildCreate",
+        serialize: (...data) => createInstance(Guild, ...data),
     },
 ];
 

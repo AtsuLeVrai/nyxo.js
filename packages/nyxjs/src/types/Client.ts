@@ -4,6 +4,7 @@ import type { RateLimitInfo, RestOptions } from "@nyxjs/rest";
 import type {
     Emoji,
     Entitlement,
+    Guild,
     Ready,
     Role,
     SoundboardSound,
@@ -56,7 +57,7 @@ export type ClientEvents = {
     guildAuditLogEntryCreate: [];
     guildBanAdd: [];
     guildBanRemove: [];
-    guildCreate: [];
+    guildCreate: [guild: Guild];
     guildDelete: [];
     guildMemberAdd: [];
     guildMemberRemove: [];

@@ -1,5 +1,6 @@
 import { config } from "dotenv";
-import { Client, EncodingTypes, GatewayIntents } from "nyx.js";
+import { ClientWorkBench } from "./client.js";
+import { WorkBenchClientOptions } from "./config.js";
 
 config();
 
@@ -7,35 +8,16 @@ if (!process.env["DISCORD_TOKEN"]) {
     throw new Error("no discord token");
 }
 
-const client = new Client(process.env["DISCORD_TOKEN"], {
-    intents: GatewayIntents.All(),
-    gateway: {
-        encoding: EncodingTypes.Json,
-    },
+process.on("unhandledRejection", (error) => {
+    console.error(error);
+    process.exit(1);
 });
 
-client.on("error", (error) => {
-    console.error(`error ${new Date().toISOString()}`, error);
+process.on("uncaughtException", (error) => {
+    console.error(error);
+    process.exit(1);
 });
 
-client.on("warn", (warn) => {
-    console.warn(`warn ${new Date().toISOString()}`, warn);
-});
+const workBench = new ClientWorkBench(process.env["DISCORD_TOKEN"], WorkBenchClientOptions);
 
-client.on("debug", (debug) => {
-    console.log(`debug ${new Date().toISOString()}`, debug);
-});
-
-client.on("close", (close) => {
-    console.log(`close ${new Date().toISOString()}`, close);
-});
-
-client.on("ready", (ready) => {
-    console.log(`ready ${new Date().toISOString()}`, ready.user?.id);
-});
-
-client.on("roleCreate", (role) => {
-    console.log(`roleCreate ${new Date().toISOString()}`, role);
-});
-
-void client.connect();
+void workBench.start();
