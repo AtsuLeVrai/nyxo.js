@@ -2,7 +2,7 @@ import { readdir } from "node:fs/promises";
 import { Client, type ClientEvents, type ClientOptions } from "nyx.js";
 import type { WorkBenchEvent } from "./env/index.js";
 
-export class ClientWorkBench extends Client {
+export class WorkBench extends Client {
     commands: Map<string, object> = new Map();
 
     constructor(token: string, options: ClientOptions) {
@@ -12,6 +12,11 @@ export class ClientWorkBench extends Client {
     async start(): Promise<void> {
         await Promise.all([this.#initEvent()]);
         await this.connect();
+
+        // setInterval(async () => {
+        //     const user = await this.users.fetch("@me");
+        //     console.log(user.id, user.username);
+        // }, 1000);
     }
 
     async #initEvent(): Promise<void> {

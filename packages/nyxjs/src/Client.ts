@@ -2,7 +2,8 @@ import { ApiVersions, BitfieldManager, type GatewayIntents, type Integer } from 
 import { CompressTypes, EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/gateway";
 import { Rest, type RestOptions } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
-import { ClientEventManager } from "./managers/index.js";
+import { ClientEventManager, GuildManager, UserManager } from "./managers/index.js";
+import type { User } from "./structures/index.js";
 import type { ClientEvents, ClientOptions, ClientState } from "./types/index.js";
 
 export class Client extends EventEmitter<ClientEvents> {
@@ -13,6 +14,9 @@ export class Client extends EventEmitter<ClientEvents> {
 
     #rest?: Rest;
     #gateway?: Gateway;
+    #guilds?: GuildManager;
+    #users?: UserManager;
+    #user?: User;
 
     constructor(token: string, options: ClientOptions) {
         super();
@@ -40,6 +44,7 @@ export class Client extends EventEmitter<ClientEvents> {
         if (!this.#rest) {
             throw new Error("Rest client is not initialized.");
         }
+
         return this.#rest;
     }
 
@@ -47,7 +52,32 @@ export class Client extends EventEmitter<ClientEvents> {
         if (!this.#gateway) {
             throw new Error("Gateway is not initialized.");
         }
+
         return this.#gateway;
+    }
+
+    get guilds(): GuildManager {
+        if (!this.#guilds) {
+            throw new Error("GuildManager is not initialized.");
+        }
+
+        return this.#guilds;
+    }
+
+    get users(): UserManager {
+        if (!this.#users) {
+            throw new Error("UserManager is not initialized.");
+        }
+
+        return this.#users;
+    }
+
+    get user(): User {
+        if (!this.#user) {
+            throw new Error("User is not initialized.");
+        }
+
+        return this.#user;
     }
 
     get isConnected(): boolean {
@@ -69,6 +99,7 @@ export class Client extends EventEmitter<ClientEvents> {
 
         try {
             this.#state.isConnecting = true;
+            this.#user = await this.users.fetch("@me");
             this.#events.setupListeners();
             await this.gateway.connect();
             this.#state.isConnected = true;
@@ -169,6 +200,8 @@ export class Client extends EventEmitter<ClientEvents> {
         try {
             this.#rest = this.#initializeRest();
             this.#gateway = this.#initializeGateway();
+            this.#guilds = this.#initializeGuildManager();
+            this.#users = this.#initializeUserManager();
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             throw new Error(`Failed to initialize services: ${errorMessage}`);
@@ -203,6 +236,22 @@ export class Client extends EventEmitter<ClientEvents> {
         };
 
         return new Gateway(this.#token, this.#rest, options);
+    }
+
+    #initializeGuildManager(): GuildManager {
+        if (!this.#rest) {
+            throw new Error("Rest client must be initialized before GuildManager.");
+        }
+
+        return new GuildManager(this);
+    }
+
+    #initializeUserManager(): UserManager {
+        if (!this.#rest) {
+            throw new Error("Rest client must be initialized before UserManager.");
+        }
+
+        return new UserManager(this);
     }
 
     #resolveIntents(intents: GatewayIntents[] | Integer): Integer {

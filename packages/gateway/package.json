@@ -44,15 +44,15 @@
     "bufferutil": "^4.0.8",
     "erlpack": "^0.1.4",
     "eventemitter3": "^5.0.1",
-    "utf-8-validate": "^6.0.4",
+    "utf-8-validate": "^6.0.5",
     "ws": "^8.18.0",
     "zlib-sync": "^0.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@microsoft/api-extractor": "^7.47.11",
-    "@swc/core": "^1.7.40",
-    "@types/node": "^22.8.4",
+    "@swc/core": "^1.7.42",
+    "@types/node": "^22.8.6",
     "@types/ws": "^8.5.12",
     "rimraf": "^6.0.1",
     "terser": "^5.36.0",

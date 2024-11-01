@@ -1,6 +1,7 @@
 import { config } from "dotenv";
-import { ClientWorkBench } from "./client.js";
+import { WorkBench } from "./client.js";
 import { WorkBenchClientOptions } from "./config.js";
+import { logger } from "./utils/index.js";
 
 config();
 
@@ -9,15 +10,14 @@ if (!process.env["DISCORD_TOKEN"]) {
 }
 
 process.on("unhandledRejection", (error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });
 
 process.on("uncaughtException", (error) => {
-    console.error(error);
+    logger.error(error);
     process.exit(1);
 });
 
-const workBench = new ClientWorkBench(process.env["DISCORD_TOKEN"], WorkBenchClientOptions);
-
+const workBench = new WorkBench(process.env["DISCORD_TOKEN"], WorkBenchClientOptions);
 void workBench.start();

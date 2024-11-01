@@ -179,7 +179,7 @@ export type GatewaySendEvents = {
     [GatewayOpcodes.PresenceUpdate]: UpdatePresenceGatewayPresenceUpdateStructure;
 };
 
-export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
+export type GatewayEvents<K extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents> = {
     /**
      * Event triggered when the connection is closed.
      *
@@ -219,4 +219,10 @@ export type GatewayEvents<K extends keyof GatewayReceiveEvents> = {
      * @param isBinary - Whether the data is binary.
      */
     RAW: [data: WebSocket.RawData, isBinary: boolean];
+    /**
+     * Event triggered when a ACK is missed.
+     *
+     * @param message - The message.
+     */
+    MISSED_ACK: [message: string];
 };

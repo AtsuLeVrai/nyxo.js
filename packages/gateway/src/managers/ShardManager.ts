@@ -1,6 +1,6 @@
 import { platform } from "node:process";
 import { GatewayOpcodes, type Integer, type Snowflake } from "@nyxjs/core";
-import { GatewayRoutes, type Rest, type SessionStartLimitStructure, UserRoutes } from "@nyxjs/rest";
+import { type Rest, UserRoutes } from "@nyxjs/rest";
 import type { Gateway } from "../Gateway.js";
 import type { IdentifyStructure } from "../events/index.js";
 import type { GatewayOptions, GatewayShardTypes, ShardConfig } from "../types/index.js";
@@ -12,8 +12,6 @@ export class ShardManager {
 
     #maxConcurrency = 1;
 
-    #sessionStartLimit: SessionStartLimitStructure | null = null;
-
     readonly #gateway: Gateway;
 
     readonly #rest: Rest;
@@ -22,11 +20,11 @@ export class ShardManager {
 
     readonly #options: Readonly<GatewayOptions>;
 
-    constructor(gateway: Gateway, rest: Rest, token: string, options: GatewayOptions) {
+    constructor(gateway: Gateway, rest: Rest, token: string, options: Readonly<GatewayOptions>) {
         this.#gateway = gateway;
         this.#rest = rest;
         this.#token = token;
-        this.#options = Object.freeze({ ...options });
+        this.#options = options;
     }
 
     clear(): void {
@@ -59,11 +57,7 @@ export class ShardManager {
 
     async #setupAutoSharding(): Promise<void> {
         try {
-            const [guilds, gatewayInfo] = await this.#rest.manyRequest([
-                UserRoutes.getCurrentUserGuilds(),
-                GatewayRoutes.getGatewayBot(),
-            ]);
-
+            const guilds = await this.#rest.request(UserRoutes.getCurrentUserGuilds());
             if (guilds.length <= 2_500) {
                 this.#gateway.emit("WARN", "[SHARD] You have less than 2500 guilds, consider disabling auto-sharding.");
             }
@@ -74,16 +68,17 @@ export class ShardManager {
                 return;
             }
 
-            this.#sessionStartLimit = gatewayInfo.session_start_limit;
-            this.#maxConcurrency = gatewayInfo.session_start_limit.max_concurrency;
-            this.#gateway.emit(
-                "DEBUG",
-                `[SHARD] Max concurrency set to ${gatewayInfo.session_start_limit.max_concurrency}`
-            );
+            this.#gateway.emit("DEBUG", `[SHARD] Max concurrency set to ${this.#gateway.session.maxConcurrency}`);
 
-            const shardIds = new Set(guilds.map((guild) => this.#calculateShardId(guild.id, gatewayInfo.shards)));
+            if (this.#gateway.session.shards === null) {
+                return;
+            }
+
+            const shardIds = new Set(
+                guilds.map((guild) => this.#calculateShardId(guild.id, this.#gateway.session.shards!))
+            );
             for (const shardId of shardIds) {
-                this.#addShard({ shardId, shardCount: gatewayInfo.shards });
+                this.#addShard({ shardId, shardCount: this.#gateway.session.shards });
             }
 
             this.#gateway.emit("DEBUG", `[SHARD] Added ${shardIds.size} shards based on guild distribution`);
@@ -117,16 +112,11 @@ export class ShardManager {
 
     async #processConnectionQueue(): Promise<void> {
         while (this.#connectionQueue.length > 0) {
-            if (!this.#canStartNewSession()) {
-                await this.#waitForReset();
-            }
-
             const config = this.#connectionQueue.shift();
             if (config) {
                 try {
                     await this.#connectShard(config);
                     this.#gateway.emit("DEBUG", `[SHARD] Connected shard ${config.shardId}`);
-                    this.#decrementSessionStartLimit();
                     await new Promise((resolve) => {
                         setTimeout(resolve, 5_000);
                     });
@@ -139,42 +129,6 @@ export class ShardManager {
         }
 
         this.#gateway.emit("DEBUG", "[SHARD] Finished processing connection queue");
-    }
-
-    #canStartNewSession(): boolean {
-        return this.#sessionStartLimit !== null && this.#sessionStartLimit.remaining > 0;
-    }
-
-    #decrementSessionStartLimit(): void {
-        if (this.#sessionStartLimit) {
-            this.#sessionStartLimit.remaining--;
-        }
-    }
-
-    async #waitForReset(): Promise<void> {
-        if (this.#sessionStartLimit) {
-            const waitTime = this.#sessionStartLimit.reset_after;
-            this.#gateway.emit("DEBUG", `[SHARD] Waiting ${waitTime}ms for session limit reset`);
-            await new Promise((resolve) => {
-                setTimeout(resolve, waitTime);
-            });
-            await this.#refreshSessionStartLimit();
-        }
-    }
-
-    async #refreshSessionStartLimit(): Promise<void> {
-        try {
-            const { session_start_limit } = await this.#rest.request(GatewayRoutes.getGatewayBot());
-            this.#sessionStartLimit = session_start_limit;
-            this.#gateway.emit(
-                "DEBUG",
-                `[SHARD] Refreshed session start limit: ${JSON.stringify(this.#sessionStartLimit)}`
-            );
-        } catch (error) {
-            throw new Error(
-                `Failed to refresh session start limit: ${error instanceof Error ? error.message : String(error)}`
-            );
-        }
     }
 
     async #connectShard(shard?: ShardConfig): Promise<void> {

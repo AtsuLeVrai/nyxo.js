@@ -1,8 +1,8 @@
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
-import type { GatewayEvents, GatewayReceiveEvents } from "../types/index.js";
+import type { GatewayEvents } from "../types/index.js";
 
-export class WebSocketManager extends EventEmitter<GatewayEvents<keyof GatewayReceiveEvents>> {
+export class WebSocketManager extends EventEmitter<GatewayEvents> {
     #ws: WebSocket | null = null;
     #isOpened = false;
 

@@ -14,44 +14,14 @@ type ClientEventMappingStructure = {
     serialize?(...data: unknown[]): unknown | unknown[];
 };
 
-class InstanceCache {
-    private static instance: InstanceCache;
-    private cache = new Map<string, unknown>();
-
-    private constructor() {}
-
-    static getInstance(): InstanceCache {
-        if (!InstanceCache.instance) {
-            InstanceCache.instance = new InstanceCache();
-        }
-        return InstanceCache.instance;
-    }
-
-    get<T>(key: string): T | undefined {
-        return this.cache.get(key) as T | undefined;
-    }
-
-    set<T>(key: string, value: T): void {
-        this.cache.set(key, value);
-    }
-
-    has(key: string): boolean {
-        return this.cache.has(key);
-    }
-
-    clear(): void {
-        this.cache.clear();
-    }
-}
+const cache = new Map<string, any>();
 
 function createInstance<T>(constructors: Constructor<T> | Constructor<T>[], ...args: unknown[]): T[] {
-    const cache = InstanceCache.getInstance();
     const constructorsArr = Array.isArray(constructors) ? constructors : [constructors];
-
     return constructorsArr.map((Constructor) => {
         const cacheKey = `${Constructor.name}:${JSON.stringify(args)}`;
 
-        const cachedInstance = cache.get<T>(cacheKey);
+        const cachedInstance = cache.get(cacheKey);
         if (cachedInstance) {
             return cachedInstance;
         }
@@ -118,10 +88,10 @@ export class ClientEventManager {
             DEBUG: "debug",
             ERROR: "error",
             WARN: "warn",
-        } as Record<keyof GatewayEvents<keyof GatewayReceiveEvents>, keyof ClientEvents>;
+        } as Record<keyof GatewayEvents, keyof ClientEvents>;
 
         for (const [gatewayEvent, clientEvent] of Object.entries(events)) {
-            gateway.on(gatewayEvent as keyof GatewayEvents<keyof GatewayReceiveEvents>, (...args) =>
+            gateway.on(gatewayEvent as keyof GatewayEvents, (...args) =>
                 this.#client.emit(clientEvent, ...(args as never))
             );
         }

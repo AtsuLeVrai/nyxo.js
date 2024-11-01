@@ -1,11 +1,8 @@
 import type { Integer } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
+import type { GatewayEvents } from "../types/index.js";
 
-type HeartbeatManagerEvents = {
-    MISSED_ACK: [];
-};
-
-export class HeartbeatManager extends EventEmitter<HeartbeatManagerEvents> {
+export class HeartbeatManager extends EventEmitter<GatewayEvents> {
     #interval: NodeJS.Timeout | null = null;
     #timer: NodeJS.Timeout | null = null;
     #lastAck = false;
@@ -20,7 +17,10 @@ export class HeartbeatManager extends EventEmitter<HeartbeatManagerEvents> {
             onHeartbeat();
             this.#interval = setInterval(() => {
                 if (!this.#lastAck) {
-                    this.emit("MISSED_ACK");
+                    this.emit(
+                        "MISSED_ACK",
+                        "[HEARTBEAT] No heartbeat acknowledgement received. Initiating reconnection."
+                    );
                     return;
                 }
 

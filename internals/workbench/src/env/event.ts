@@ -1,9 +1,9 @@
 import type { ClientEvents } from "nyx.js";
-import type { ClientWorkBench } from "../client.js";
+import type { WorkBench } from "../client.js";
 
 export type ClientEventOptions<T extends keyof ClientEvents> = {
     event: T;
-    listener(client: ClientWorkBench, ...args: ClientEvents[T]): void;
+    listener(client: WorkBench, ...args: ClientEvents[T]): void;
     once?: boolean;
 };
 
