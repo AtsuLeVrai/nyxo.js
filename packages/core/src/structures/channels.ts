@@ -13,7 +13,7 @@ export type ForumTagStructure = {
      */
     emoji_id: Snowflake | null;
     /**
-     * The unicode character of the emoji
+     * The Unicode character of the emoji
      */
     emoji_name: string | null;
     /**
@@ -39,7 +39,7 @@ export type DefaultReactionStructure = {
      */
     emoji_id: Snowflake | null;
     /**
-     * The unicode character of the emoji
+     * The Unicode character of the emoji
      */
     emoji_name: string | null;
 };
@@ -311,7 +311,7 @@ export type ChannelStructure = {
      */
     flags?: BitfieldResolvable<ChannelFlags>;
     /**
-     * The id of the guild (may be missing for some channel objects received over gateway guild dispatches)
+     * The id of the guild (maybe missing for some channel objects received over gateway guild dispatches)
      */
     guild_id?: Snowflake;
     /**

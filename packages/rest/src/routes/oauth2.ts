@@ -28,24 +28,24 @@ export type GetCurrentAuthorizationInformationResponse = {
     user?: UserStructure;
 };
 
-export class OAuth2Routes {
+export const OAuth2Routes = {
     /**
      * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information|Get Current Authorization Information}
      */
-    static getCurrentAuthorizationInformation(): RouteStructure<GetCurrentAuthorizationInformationResponse> {
+    getCurrentAuthorizationInformation(): RouteStructure<GetCurrentAuthorizationInformationResponse> {
         return {
             method: RestMethods.Get,
             path: "/oauth2/@me",
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information|Get Current Bot Application Information}
      */
-    static getCurrentBotApplicationInformation(): RouteStructure<ApplicationStructure> {
+    getCurrentBotApplicationInformation(): RouteStructure<ApplicationStructure> {
         return {
             method: RestMethods.Get,
             path: "/oauth2/applications/@me",
         };
-    }
-}
+    },
+} as const;

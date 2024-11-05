@@ -1,4 +1,4 @@
-import type { ApiVersions, GatewayIntents, GatewayOpcodes, Integer } from "@nyxjs/core";
+import type { ApiVersions, GatewayOpcodes, Integer } from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/index.js";
 import type { GatewayReceiveEvents } from "./events.js";
 
@@ -60,7 +60,7 @@ export type GatewayOptions = {
     /**
      * The intents for the globals connection.
      */
-    intents: GatewayIntents | Integer;
+    intents: Integer;
     /**
      * The large threshold for the globals connection.
      */
@@ -83,7 +83,7 @@ export type GatewayOptions = {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
  */
-export type GatewayManagerPayload = {
+export type GatewayPayload = {
     /**
      * Event data
      */

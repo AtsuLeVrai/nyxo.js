@@ -15,18 +15,15 @@ export type GetGuildAuditLogQueryStringParams = Pick<QueryStringParams, "after" 
     user_id?: Snowflake;
 };
 
-export class AuditRoutes {
+export const AuditRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log|Get Guild Audit Log}
      */
-    static getGuildAuditLog(
-        guildId: Snowflake,
-        params: GetGuildAuditLogQueryStringParams
-    ): RouteStructure<AuditLogStructure> {
+    getGuildAuditLog(guildId: Snowflake, params: GetGuildAuditLogQueryStringParams): RouteStructure<AuditLogStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/audit-logs`,
             query: params,
         };
-    }
-}
+    },
+} as const;

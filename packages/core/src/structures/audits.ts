@@ -17,11 +17,11 @@ export type AuditLogChangeStructure = {
     /**
      * New value of the key.
      */
-    new_value?: any;
+    new_value?: unknown;
     /**
      * Old value of the key.
      */
-    old_value?: any;
+    old_value?: unknown;
 };
 
 /**

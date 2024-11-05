@@ -32,11 +32,11 @@ export type SendSoundboardSoundJsonParams = Pick<SoundboardSoundStructure, "soun
     source_guild_id?: Snowflake;
 };
 
-export class SoundboardRoutes {
+export const SoundboardRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound|Delete Guild Soundboard Sound}
      */
-    static deleteGuildSoundboardSound(guildId: Snowflake, soundId: Snowflake, reason?: string): RouteStructure<void> {
+    deleteGuildSoundboardSound(guildId: Snowflake, soundId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -48,16 +48,16 @@ export class SoundboardRoutes {
             path: `/guilds/${guildId}/soundboard-sounds/${soundId}`,
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound|Modify Guild Soundboard Sound}
      */
-    static modifyGuildSoundboardSound(
+    modifyGuildSoundboardSound(
         guildId: Snowflake,
         soundId: Snowflake,
         params: ModifyGuildSoundboardSoundJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<SoundboardSoundStructure> {
         const headers: Record<string, string> = {};
 
@@ -71,15 +71,15 @@ export class SoundboardRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound|Create Guild Soundboard Sound}
      */
-    static createGuildSoundboardSound(
+    createGuildSoundboardSound(
         guildId: Snowflake,
         params: CreateGuildSoundboardSoundJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<SoundboardSoundStructure> {
         const headers: Record<string, string> = {};
 
@@ -93,49 +93,49 @@ export class SoundboardRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#get-guild-soundboard-sound|Get Guild Soundboard Sound}
      */
-    static getGuildSoundboardSound(guildId: Snowflake, soundId: Snowflake): RouteStructure<SoundboardSoundStructure> {
+    getGuildSoundboardSound(guildId: Snowflake, soundId: Snowflake): RouteStructure<SoundboardSoundStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/soundboard-sounds/${soundId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds|List Guild Soundboard Sounds}
      */
-    static listGuildSoundboardSounds(guildId: Snowflake): RouteStructure<{ items: SoundboardSoundStructure[] }> {
+    listGuildSoundboardSounds(guildId: Snowflake): RouteStructure<{ items: SoundboardSoundStructure[] }> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/soundboard-sounds`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds|List Default Soundboard Sounds}
      */
-    static listDefaultSoundboardSounds(): RouteStructure<SoundboardSoundStructure[]> {
+    listDefaultSoundboardSounds(): RouteStructure<SoundboardSoundStructure[]> {
         return {
             method: RestMethods.Get,
-            path: `/soundboard-default-sounds`,
+            path: "/soundboard-default-sounds",
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound|Send Soundboard Sound}
      */
-    static sendSoundboardSound(
+    sendSoundboardSound(
         channelId: Snowflake,
-        params: SendSoundboardSoundJsonParams
+        params: SendSoundboardSoundJsonParams,
     ): RouteStructure<VoiceStateStructure> {
         return {
             method: RestMethods.Post,
             path: `/channels/${channelId}/send-soundboard-sound`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
-}
+    },
+} as const;

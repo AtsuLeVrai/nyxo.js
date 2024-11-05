@@ -19,7 +19,7 @@ program.exitOverride((err) => {
 
 program.addHelpText(
     "before",
-    chalk.cyanBright("\nWelcome to the Nyx.js CLI - Simplify your project tasks with ease!\n")
+    chalk.cyanBright("\nWelcome to the Nyx.js CLI - Simplify your project tasks with ease!\n"),
 );
 
 program.parse(process.argv);

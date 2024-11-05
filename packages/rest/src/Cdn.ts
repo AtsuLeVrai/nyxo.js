@@ -1,165 +1,311 @@
 import { ImageFormats, type Integer, type Snowflake } from "@nyxjs/core";
-import type { CdnImageOptions, ImageTypes } from "./types/index.js";
 
-export class Cdn {
-    static baseUrl = new URL("https://cdn.discordapp.com");
+export type CdnImageTypes =
+    | ImageFormats.Gif
+    | ImageFormats.Jpeg
+    | ImageFormats.Lottie
+    | ImageFormats.Png
+    | ImageFormats.WebP;
 
-    static customEmoji(emojiId: Snowflake, options?: CdnImageOptions): string {
-        return this.#createUrl(`emojis/${emojiId}`, options?.format, options?.size);
+export type CdnImageOptions = {
+    /**
+     * The format of the image.
+     */
+    format?: CdnImageTypes;
+    /**
+     * The hostname for the CDN.
+     */
+    hostname?: string;
+    /**
+     * The size of the image.
+     */
+    size?: Integer;
+};
+
+export type CdnEndpointTypes =
+    | "emoji"
+    | "guildIcon"
+    | "guildSplash"
+    | "guildDiscoverySplash"
+    | "guildBanner"
+    | "userBanner"
+    | "defaultUserAvatar"
+    | "userAvatar"
+    | "guildMemberAvatar"
+    | "avatarDecoration"
+    | "applicationIcon"
+    | "applicationCover"
+    | "applicationAsset"
+    | "achievementIcon"
+    | "storePageAsset"
+    | "stickerPackBanner"
+    | "teamIcon"
+    | "sticker"
+    | "roleIcon"
+    | "guildScheduledEventCover"
+    | "guildMemberBanner";
+
+type CdnEndpoint = {
+    /**
+     * The path template for the endpoint
+     * Use {paramName} for parameters that will be replaced
+     */
+    path: string;
+    /**
+     * The default format for this endpoint if none specified
+     */
+    defaultFormat?: ImageFormats.Gif | ImageFormats.Jpeg | ImageFormats.Lottie | ImageFormats.Png | ImageFormats.WebP;
+    /**
+     * Custom hostname for this endpoint
+     */
+    customHostname?: string;
+    /**
+     * Whether this endpoint supports and needs GIF validation
+     */
+    validateGif?: boolean;
+};
+
+class CdnError extends Error {
+    code: string;
+
+    constructor(message: string, code: string) {
+        super(message);
+        this.name = "CdnError";
+        this.code = code;
     }
+}
 
-    static guildIcon(guildId: Snowflake, icon: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/icons/${guildId}/${icon}`, options?.format, options?.size);
-    }
+export const Cdn = {
+    defaultFormat: ImageFormats.Png,
+    baseUrl: "https://cdn.discordapp.com",
+    mediaUrl: "media.discordapp.net",
 
-    static guildSplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/splashes/${guildId}/${splash}`, options?.format, options?.size);
-    }
+    sizeConstraints: {
+        min: 16,
+        max: 4096,
+    } satisfies Record<"min" | "max", Integer>,
 
-    static guildDiscoverySplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/discovery-splashes/${guildId}/${splash}`, options?.format, options?.size);
-    }
+    endpoints: {
+        emoji: {
+            path: "emojis/{id}",
+        },
+        guildIcon: {
+            path: "icons/{guildId}/{hash}",
+            validateGif: true,
+        },
+        guildSplash: {
+            path: "splashes/{guildId}/{hash}",
+        },
+        guildDiscoverySplash: {
+            path: "discovery-splashes/{guildId}/{hash}",
+        },
+        guildBanner: {
+            path: "banners/{guildId}/{hash}",
+            validateGif: true,
+        },
+        userBanner: {
+            path: "banners/{userId}/{hash}",
+            validateGif: true,
+        },
+        defaultUserAvatar: {
+            path: "embed/avatars/{hash}",
+            defaultFormat: ImageFormats.Png,
+        },
+        userAvatar: {
+            path: "avatars/{userId}/{hash}",
+            validateGif: true,
+        },
+        guildMemberAvatar: {
+            path: "guilds/{guildId}/users/{userId}/avatars/{hash}",
+            validateGif: true,
+        },
+        avatarDecoration: {
+            path: "avatar-decoration-presets/{hash}",
+            defaultFormat: ImageFormats.Png,
+        },
+        applicationIcon: {
+            path: "app-icons/{applicationId}/{hash}",
+        },
+        applicationCover: {
+            path: "app-icons/{applicationId}/{hash}",
+        },
+        applicationAsset: {
+            path: "app-assets/{applicationId}/{assetId}",
+        },
+        achievementIcon: {
+            path: "app-assets/{applicationId}/achievements/{achievementId}/icons/{iconHash}",
+        },
+        storePageAsset: {
+            path: "app-assets/{applicationId}/store/{assetId}",
+        },
+        stickerPackBanner: {
+            path: "app-assets/{applicationId}/store/{bannerAssetId}",
+        },
+        teamIcon: {
+            path: "team-icons/{teamId}/{hash}",
+        },
+        sticker: {
+            path: "stickers/{id}",
+            customHostname: "media.discordapp.net",
+            defaultFormat: ImageFormats.Png,
+        },
+        roleIcon: {
+            path: "role-icons/{roleId}/{hash}",
+        },
+        guildScheduledEventCover: {
+            path: "guild-events/{guildId}/{eventId}/{hash}",
+        },
+        guildMemberBanner: {
+            path: "guilds/{guildId}/users/{userId}/banners/{hash}",
+            validateGif: true,
+        },
+    } satisfies Record<CdnEndpointTypes, CdnEndpoint>,
 
-    static guildBanner(guildId: Snowflake, banner: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/banners/${guildId}/${banner}`, options?.format, options?.size);
-    }
+    customEmoji(emojiId: Snowflake, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.emoji, { id: emojiId }, options);
+    },
 
-    static userBanner(userId: Snowflake, banner: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/banners/${userId}/${banner}`, options?.format, options?.size);
-    }
+    guildIcon(guildId: Snowflake, icon: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.guildIcon, { guildId, hash: icon }, options);
+    },
 
-    static defaultUserAvatar(userId: Snowflake): string {
-        const hash = this.#calculateDefaultAvatarHash(userId);
-        return this.#createUrl(`/embed/avatars/${hash}`, ImageFormats.PNG);
-    }
+    guildSplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.guildSplash, { guildId, hash: splash }, options);
+    },
 
-    static userAvatar(userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/avatars/${userId}/${avatar}`, options?.format, options?.size);
-    }
+    guildDiscoverySplash(guildId: Snowflake, splash: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.guildDiscoverySplash, { guildId, hash: splash }, options);
+    },
 
-    static guildMemberAvatar(guildId: Snowflake, userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/guilds/${guildId}/users/${userId}/avatars/${avatar}`, options?.format, options?.size);
-    }
+    guildBanner(guildId: Snowflake, banner: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.guildBanner, { guildId, hash: banner }, options);
+    },
 
-    static avatarDecoration(avatarDecorationDataAsset: string): string {
-        return this.#createUrl(`/avatar-decoration-presets/${avatarDecorationDataAsset}`, ImageFormats.PNG);
-    }
+    userBanner(userId: Snowflake, banner: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.userBanner, { userId, hash: banner }, options);
+    },
 
-    static applicationIcon(applicationId: Snowflake, icon: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/app-icons/${applicationId}/${icon}`, options?.format, options?.size);
-    }
+    defaultUserAvatar(userId: Snowflake): string {
+        const hash = Cdn.calculateDefaultAvatarHash(userId);
+        return Cdn.buildUrl(Cdn.endpoints.defaultUserAvatar, { hash });
+    },
 
-    static applicationCover(applicationId: Snowflake, coverImage: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/app-icons/${applicationId}/${coverImage}`, options?.format, options?.size);
-    }
+    userAvatar(userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.userAvatar, { userId, hash: avatar }, options);
+    },
 
-    static applicationAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
-        return this.#createUrl(`/app-assets/${applicationId}/${assetId}`, options?.format, options?.size);
-    }
+    guildMemberAvatar(guildId: Snowflake, userId: Snowflake, avatar: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.guildMemberAvatar, { guildId, userId, hash: avatar }, options);
+    },
 
-    static achievementIcon(
+    avatarDecoration(avatarDecorationAsset: string): string {
+        return Cdn.buildUrl(Cdn.endpoints.avatarDecoration, { hash: avatarDecorationAsset });
+    },
+
+    applicationIcon(applicationId: Snowflake, icon: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.applicationIcon, { applicationId, hash: icon }, options);
+    },
+
+    applicationCover(applicationId: Snowflake, coverImage: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.applicationCover, { applicationId, hash: coverImage }, options);
+    },
+
+    applicationAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.applicationAsset, { applicationId, assetId }, options);
+    },
+
+    achievementIcon(
         applicationId: Snowflake,
         achievementId: Snowflake,
         iconHash: string,
-        options?: CdnImageOptions
+        options?: CdnImageOptions,
     ): string {
-        return this.#createUrl(
-            `/app-assets/${applicationId}/achievements/${achievementId}/icons/${iconHash}`,
-            options?.format,
-            options?.size
-        );
-    }
+        return Cdn.buildUrl(Cdn.endpoints.achievementIcon, { applicationId, achievementId, iconHash }, options);
+    },
 
-    static storePageAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
-        return this.#createUrl(`/app-assets/${applicationId}/store/${assetId}`, options?.format, options?.size);
-    }
+    storePageAsset(applicationId: Snowflake, assetId: Snowflake, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.storePageAsset, { applicationId, assetId }, options);
+    },
 
-    static stickerPackBanner(
-        applicationId: Snowflake,
-        stickerPackBannerAssetId: Snowflake,
-        options?: CdnImageOptions
-    ): string {
-        return this.#createUrl(
-            `/app-assets/${applicationId}/store/${stickerPackBannerAssetId}`,
-            options?.format,
-            options?.size
-        );
-    }
+    stickerPackBanner(applicationId: Snowflake, bannerAssetId: Snowflake, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.stickerPackBanner, { applicationId, bannerAssetId }, options);
+    },
 
-    static teamIcon(teamId: Snowflake, teamIcon: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/team-icons/${teamId}/${teamIcon}`, options?.format, options?.size);
-    }
+    teamIcon(teamId: Snowflake, icon: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.teamIcon, { teamId, hash: icon }, options);
+    },
 
-    static sticker(stickerId: Snowflake, format: ImageTypes = ImageFormats.PNG): string {
-        return this.#createUrl(`/stickers/${stickerId}`, format, undefined, "media.discordapp.net");
-    }
+    sticker(stickerId: Snowflake, format: CdnImageTypes = ImageFormats.Png): string {
+        return Cdn.buildUrl(Cdn.endpoints.sticker, { id: stickerId }, { format });
+    },
 
-    static roleIcon(roleId: Snowflake, roleIcon: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/role-icons/${roleId}/${roleIcon}`, options?.format, options?.size);
-    }
+    roleIcon(roleId: Snowflake, icon: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.roleIcon, { roleId, hash: icon }, options);
+    },
 
-    static guildScheduledEventCover(
+    guildScheduledEventCover(
         guildId: Snowflake,
-        scheduledEventId: Snowflake,
-        scheduledEventCoverImage: string,
-        options?: CdnImageOptions
+        eventId: Snowflake,
+        coverImage: string,
+        options?: CdnImageOptions,
     ): string {
-        return this.#createUrl(
-            `/guild-events/${guildId}/${scheduledEventId}/${scheduledEventCoverImage}`,
-            options?.format,
-            options?.size
-        );
-    }
+        return Cdn.buildUrl(Cdn.endpoints.guildScheduledEventCover, { guildId, eventId, hash: coverImage }, options);
+    },
 
-    static guildMemberBanner(guildId: Snowflake, userId: Snowflake, banner: string, options?: CdnImageOptions): string {
-        return this.#createUrl(`/guilds/${guildId}/users/${userId}/banners/${banner}`, options?.format, options?.size);
-    }
+    guildMemberBanner(guildId: Snowflake, userId: Snowflake, banner: string, options?: CdnImageOptions): string {
+        return Cdn.buildUrl(Cdn.endpoints.guildMemberBanner, { guildId, userId, hash: banner }, options);
+    },
 
-    static #createUrl(
-        path: string,
-        format: ImageTypes = ImageFormats.PNG,
-        size?: Integer,
-        hostname: string = this.baseUrl.hostname
-    ): string {
-        this.#validateSize(size);
-        this.#validateGifFormat(path, format, size);
+    buildUrl(endpoint: CdnEndpoint, params: Record<string, string>, options?: CdnImageOptions): string {
+        const format = options?.format ?? endpoint.defaultFormat ?? Cdn.defaultFormat;
+        const hostname = endpoint.customHostname ?? new URL(Cdn.baseUrl).hostname;
 
-        const url = new URL(this.baseUrl);
+        Cdn.validateSize(options?.size);
+        // @ts-expect-error
+        if (endpoint.validateGif && params.hash) {
+            // @ts-expect-error
+            Cdn.validateGifFormat(params.hash, format, options?.size);
+        }
+
+        let path = endpoint.path;
+        for (const [key, value] of Object.entries(params)) {
+            path = path.replace(`{${key}}`, value);
+        }
+
+        const url = new URL(Cdn.baseUrl);
         url.hostname = hostname;
-        url.pathname += `${path}.${format}`;
+        url.pathname = `/${path}.${format}`;
 
-        if (size && format !== ImageFormats.GIF) {
+        const size = options?.size;
+        if (size && size > 0 && format !== ImageFormats.Gif) {
             url.searchParams.set("size", size.toString());
         }
 
         return url.toString();
-    }
+    },
 
-    static #validateSize(size?: number): void {
-        if (size && (size < 16 || size > 4_096)) {
-            throw new Error("Size must be between 16 and 4096.");
+    validateSize(size?: number): void {
+        if (size && (size < Cdn.sizeConstraints.min || size > Cdn.sizeConstraints.max)) {
+            throw new CdnError(
+                `Size must be between ${Cdn.sizeConstraints.min} and ${Cdn.sizeConstraints.max}`,
+                "INVALID_SIZE",
+            );
         }
-    }
+    },
 
-    static #validateGifFormat(path: string, format: ImageTypes, size?: Integer): void {
-        if (format === ImageFormats.GIF && !this.#isHashGif(path.split("/").pop() ?? "")) {
-            throw new Error("The asset is not a gif.");
+    validateGifFormat(hash: string, format: CdnImageTypes, size?: Integer): void {
+        if (format === ImageFormats.Gif && !hash.startsWith("a_")) {
+            throw new CdnError("The asset is not a gif", "INVALID_GIF");
         }
 
-        if (format === ImageFormats.GIF && size !== undefined) {
-            throw new Error("GIFs do not support resizing.");
+        if (format === ImageFormats.Gif && size !== undefined) {
+            throw new CdnError("GIFs do not support resizing", "INVALID_GIF_RESIZE");
         }
-    }
+    },
 
-    static #isHashGif(hash: string): boolean {
-        return hash.startsWith("a_");
-    }
-
-    static #calculateDefaultAvatarHash(userId: Snowflake): string {
-        if (userId.length === 17) {
-            return ((BigInt(userId) >> 22n) % 6n).toString();
-        } else {
-            return (Number.parseInt(userId.slice(-4), 10) % 5).toString();
-        }
-    }
-}
+    calculateDefaultAvatarHash(userId: Snowflake): string {
+        return userId.length === 17
+            ? ((BigInt(userId) >> 22n) % 6n).toString()
+            : (Number.parseInt(userId.slice(-4), 10) % 5).toString();
+    },
+} as const;

@@ -41,52 +41,52 @@ export type ListEntitlementsQueryStringParams = QueryStringParams & {
     user_id?: Snowflake;
 };
 
-export class EntitlementRoutes {
+export const EntitlementRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#delete-test-entitlement|Delete Test Entitlement}
      */
-    static deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
+    deleteTestEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/applications/${applicationId}/entitlements/${entitlementId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement|Create Test Entitlement}
      */
-    static createTestEntitlement(
+    createTestEntitlement(
         applicationId: Snowflake,
-        params: CreateTestEntitlementJsonParams
+        params: CreateTestEntitlementJsonParams,
     ): RouteStructure<Omit<EntitlementStructure, "ends_at" | "starts_at">> {
         return {
             method: RestMethods.Post,
             path: `/applications/${applicationId}/entitlements`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement|Consume an Entitlement}
      */
-    static consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
+    consumeEntitlement(applicationId: Snowflake, entitlementId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Post,
             path: `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements|List Entitlements}
      */
-    static listEntitlements(
+    listEntitlements(
         applicationId: Snowflake,
-        params?: ListEntitlementsQueryStringParams
+        params?: ListEntitlementsQueryStringParams,
     ): RouteStructure<EntitlementStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/applications/${applicationId}/entitlements`,
             query: params,
         };
-    }
-}
+    },
+} as const;

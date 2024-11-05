@@ -21,87 +21,87 @@ export type CreateGuildFromGuildTemplateJsonParams = Pick<GuildTemplateStructure
     icon?: string;
 };
 
-export class GuildTemplateRoutes {
+export const GuildTemplateRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-template#delete-guild-template|Delete Guild Template}
      */
-    static deleteGuildTemplate(guildId: Snowflake, code: string): RouteStructure<GuildTemplateStructure> {
+    deleteGuildTemplate(guildId: Snowflake, code: string): RouteStructure<GuildTemplateStructure> {
         return {
             method: RestMethods.Delete,
             path: `/guilds/${guildId}/templates/${code}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-template#modify-guild-template|Modify Guild Template}
      */
-    static modifyGuildTemplate(
+    modifyGuildTemplate(
         guildId: Snowflake,
         code: string,
-        params: ModifyGuildTemplateJsonParams
+        params: ModifyGuildTemplateJsonParams,
     ): RouteStructure<GuildTemplateStructure> {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/templates/${code}`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-template#sync-guild-template|Sync Guild Template}
      */
-    static syncGuildTemplate(guildId: Snowflake, code: string): RouteStructure<GuildTemplateStructure> {
+    syncGuildTemplate(guildId: Snowflake, code: string): RouteStructure<GuildTemplateStructure> {
         return {
             method: RestMethods.Put,
             path: `/guilds/${guildId}/templates/${code}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-template|Create Guild Template}
      */
-    static createGuildTemplate(
+    createGuildTemplate(
         guildId: Snowflake,
-        params: CreateGuildTemplateJsonParams
+        params: CreateGuildTemplateJsonParams,
     ): RouteStructure<GuildTemplateStructure> {
         return {
             method: RestMethods.Post,
             path: `/guilds/${guildId}/templates`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link hhttps://discord.com/developers/docs/resources/guild-template#get-guild-templates|Get Guild Templates}
      */
-    static getGuildTemplates(guildId: Snowflake): RouteStructure<GuildTemplateStructure[]> {
+    getGuildTemplates(guildId: Snowflake): RouteStructure<GuildTemplateStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/templates`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template|Create Guild From Guild Template}
      */
-    static createGuildFromGuildTemplate(
+    createGuildFromGuildTemplate(
         code: string,
-        params: CreateGuildFromGuildTemplateJsonParams
+        params: CreateGuildFromGuildTemplateJsonParams,
     ): RouteStructure<GuildStructure> {
         return {
             method: RestMethods.Post,
             path: `/guilds/templates/${code}`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template|Get Guild Template}
      */
-    static getGuildTemplate(code: string): RouteStructure<GuildTemplateStructure> {
+    getGuildTemplate(code: string): RouteStructure<GuildTemplateStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/templates/${code}`,
         };
-    }
-}
+    },
+} as const;

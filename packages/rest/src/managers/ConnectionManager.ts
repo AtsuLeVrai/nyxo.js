@@ -38,7 +38,7 @@ export class ConnectionManager {
         }
 
         const retryOptions: RetryHandler.RetryOptions = {
-            maxRetries: options.max_retries,
+            maxRetries: options.maxRetries,
             minTimeout: 500,
             maxTimeout: 30_000,
             timeoutFactor: 1.5,

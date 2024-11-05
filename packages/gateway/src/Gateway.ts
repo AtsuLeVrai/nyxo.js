@@ -1,5 +1,6 @@
 import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
 import { GatewayRoutes, type Rest } from "@nyxjs/rest";
+import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
 import type WebSocket from "ws";
 import type { HelloStructure, ReadyEventFields, ResumeStructure } from "./events/index.js";
@@ -11,299 +12,568 @@ import {
     ShardManager,
     WebSocketManager,
 } from "./managers/index.js";
-import type { GatewayEvents, GatewayManagerPayload, GatewayOptions, GatewaySendEvents } from "./types/index.js";
+import type { GatewayEvents, GatewayOptions, GatewayPayload, GatewaySendEvents } from "./types/index.js";
+
+export enum GatewayErrorCode {
+    ConnectionError = "GATEWAY_CONNECTION_ERROR",
+    InitializationError = "GATEWAY_INITIALIZATION_ERROR",
+    ManageHandlingError = "GATEWAY_MESSAGE_ERROR",
+    PayloadError = "GATEWAY_PAYLOAD_ERROR",
+    SessionError = "GATEWAY_SESSION_ERROR",
+    WebSocketError = "GATEWAY_WEBSOCKET_ERROR",
+    ReconnectionError = "GATEWAY_RECONNECTION_ERROR",
+    CompressionError = "GATEWAY_COMPRESSION_ERROR",
+    StateError = "GATEWAY_STATE_ERROR",
+}
+
+export class GatewayError extends Error {
+    code: GatewayErrorCode;
+    details?: Record<string, unknown>;
+
+    constructor(message: string, code: GatewayErrorCode, details?: Record<string, unknown>, cause?: Error) {
+        super(message);
+        this.name = "GatewayError";
+        this.code = code;
+        this.details = details;
+        this.cause = cause;
+    }
+}
 
 export class Gateway extends EventEmitter<GatewayEvents> {
-    readonly compression: CompressionManager;
-    readonly payload: PayloadManager;
-    readonly session: SessionManager;
     #token: string;
-    readonly #rest: Rest;
-    readonly #options: Readonly<GatewayOptions>;
-    readonly #webSocket: WebSocketManager;
-    readonly #heartbeat: HeartbeatManager;
-    readonly #shardManager: ShardManager;
-    #reconnectTimeout: NodeJS.Timeout | null = null;
+    #rest: Rest;
+    #options: Readonly<GatewayOptions>;
+
+    #compression: CompressionManager;
+    #payload: PayloadManager;
+    #session: SessionManager;
+    #ws: WebSocketManager;
+    #heartbeat: HeartbeatManager;
+    #shardManager: ShardManager;
+
+    #reconnectTimer: NodeJS.Timeout | null = null;
+    #isReconnecting = false;
 
     constructor(token: string, rest: Rest, options: GatewayOptions) {
         super();
+
         this.#token = token;
         this.#rest = rest;
         this.#options = Object.freeze({ ...options });
 
-        this.compression = new CompressionManager();
-        this.payload = new PayloadManager(this.#options.encoding);
-        this.session = new SessionManager();
-        this.#webSocket = new WebSocketManager();
+        this.#compression = new CompressionManager(this);
+        this.#payload = new PayloadManager(this, this.#options.encoding);
+        this.#session = new SessionManager();
+        this.#ws = new WebSocketManager();
         this.#heartbeat = new HeartbeatManager();
-        this.#shardManager = new ShardManager(this, rest, token, this.#options);
+        this.#shardManager = new ShardManager(this, rest, token, this.#options, this.#session);
 
         this.#setupEventListeners();
     }
 
-    async connect(resumable = false): Promise<void> {
+    async connect(resume = false): Promise<void> {
         try {
-            if (!resumable) {
-                const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
-                this.session.updateLimit(gatewayInfo);
-                this.emit("DEBUG", "[GATEWAY] Retrieved fresh session limits");
+            if (!resume) {
+                const gateway = await this.#rest.request(GatewayRoutes.getGatewayBot());
+                this.#session.updateLimit(gateway);
+                this.#emitDebug("Retrieved fresh gateway session limits");
             }
 
-            const query = new URL("wss://gateway.discord.gg/");
-            query.searchParams.set("v", this.#options.v.toString());
-            query.searchParams.set("encoding", this.#options.encoding);
+            const url = this.#buildGatewayUrl(resume);
 
-            if (this.#options.compress) {
-                query.searchParams.set("compress", this.#options.compress);
-                if (this.#options.compress === "zlib-stream") {
-                    this.compression.initializeZlib();
-                    this.emit("DEBUG", "[GATEWAY] Zlib-stream compression initialized");
-                }
+            if (this.#options.compress === "zlib-stream") {
+                this.#compression.initializeZlib();
+                this.#emitDebug("Initialized zlib-stream compression");
             }
 
-            const url = resumable && this.session.getResumeUrl() ? this.session.getResumeUrl()! : query.toString();
+            await this.#session.acquire();
+            this.#ws.connect(url);
 
-            await this.session.acquire();
-            this.#webSocket.connect(url);
-            this.emit("DEBUG", `[GATEWAY] Connecting to Gateway: ${url} (Resumable: ${resumable})`);
+            this.#emitDebug(`Connected to gateway: ${url} (Resume: ${resume})`);
         } catch (error) {
-            const errorMessage = `[GATEWAY] Failed to connect to Gateway: ${error instanceof Error ? error.message : String(error)}`;
-            this.emit("ERROR", new Error(errorMessage));
-            await this.#scheduleReconnect();
+            const gatewayError = new GatewayError(
+                "Failed to establish gateway connection",
+                GatewayErrorCode.ConnectionError,
+                {
+                    resume,
+                    error,
+                },
+            );
+            this.#emitError(gatewayError);
+            this.#scheduleReconnect();
         }
     }
 
     destroy(): void {
-        this.#webSocket.destroy();
-        this.cleanup();
-        this.removeAllListeners();
-        this.emit("DEBUG", "[GATEWAY] Gateway connection destroyed. Cleaning up resources.");
+        try {
+            this.#emitDebug("Destroying gateway connection");
+            this.#ws.destroy();
+            this.cleanup();
+            this.removeAllListeners();
+            this.#emitDebug("Gateway connection destroyed");
+        } catch (error) {
+            const gatewayError = new GatewayError("Error during gateway destruction", GatewayErrorCode.StateError, {
+                error,
+            });
+            this.#emitError(gatewayError);
+        }
     }
 
     cleanup(): void {
-        this.#heartbeat.cleanup();
-        if (this.#reconnectTimeout) {
-            clearTimeout(this.#reconnectTimeout);
-            this.#reconnectTimeout = null;
+        try {
+            this.#emitDebug("Starting gateway cleanup");
+            this.#heartbeat.cleanup();
+            this.#clearReconnectTimer();
+            this.#session.destroy();
+            this.#shardManager.destroy();
+            this.#emitDebug("Gateway cleanup completed");
+        } catch (error) {
+            const gatewayError = new GatewayError("Error during gateway cleanup", GatewayErrorCode.StateError, {
+                error,
+            });
+            this.#emitError(gatewayError);
         }
-
-        this.session.clear();
-        this.#shardManager.clear();
-        this.emit("DEBUG", "[GATEWAY] Cleanup completed. Resources released.");
     }
 
     send<T extends keyof GatewaySendEvents>(op: T, data: Readonly<GatewaySendEvents[T]>): void {
-        if (!this.#webSocket.isConnected()) {
-            this.emit("WARN", "[GATEWAY] Attempted to send a message while the WebSocket is not open");
+        if (!this.isConnected()) {
+            const error = new GatewayError(
+                "Attempted to send message while disconnected",
+                GatewayErrorCode.StateError,
+                { operation: op },
+            );
+            this.#emitError(error);
             return;
         }
 
-        const payload: GatewayManagerPayload = {
-            op,
-            d: data,
-            s: this.session.getSequence(),
-            t: null,
-        };
+        try {
+            const payload: GatewayPayload = {
+                op,
+                d: data,
+                s: this.#session.sequence,
+                t: null,
+            };
 
-        this.#webSocket.send(this.payload.encode(payload));
-    }
-
-    isConnected(): boolean {
-        return this.#webSocket.isConnected();
-    }
-
-    async setToken(token: string): Promise<void> {
-        this.#token = token;
-        this.emit("DEBUG", "[GATEWAY] Token updated successfully");
-
-        if (this.isConnected()) {
-            this.emit("DEBUG", "[GATEWAY] Reconnecting with new token");
-            this.destroy();
-            await this.connect(false);
+            this.#ws.send(this.#payload.encode(payload));
+            this.#emitDebug("Sent payload", { op: GatewayOpcodes[op] });
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to send payload", GatewayErrorCode.PayloadError, {
+                operation: op,
+                error,
+            });
+            this.#emitError(gatewayError);
         }
     }
 
-    async resumeSession(): Promise<void> {
-        if (this.session.canResume()) {
-            await this.connect(true);
-        } else {
-            throw new Error("Cannot resume session: missing session ID, sequence number, or resume URL");
+    isConnected(): boolean {
+        return this.#ws.isConnected();
+    }
+
+    async updateToken(token: string): Promise<void> {
+        try {
+            this.#emitDebug("Updating gateway token");
+            this.#token = token;
+
+            if (this.isConnected()) {
+                this.#emitDebug("Reconnecting with new token");
+                this.destroy();
+                await this.connect(false);
+            }
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to update token", GatewayErrorCode.StateError, { error });
+            this.#emitError(gatewayError);
+            throw gatewayError;
+        }
+    }
+
+    async resume(): Promise<void> {
+        try {
+            if (!this.#session.canResume()) {
+                this.#emitDebug("Cannot resume: missing session data");
+                await this.#initializeNewSession();
+                return;
+            }
+
+            if (this.#session.sequence === null || this.#session.sessionId === null) {
+                this.#emitDebug("Cannot resume: missing sequence or session ID");
+                await this.#initializeNewSession();
+                return;
+            }
+
+            await this.#session.acquire();
+
+            const resumeData: ResumeStructure = {
+                token: this.#token,
+                session_id: this.#session.sessionId,
+                seq: this.#session.sequence,
+            };
+
+            this.send(GatewayOpcodes.Resume, resumeData);
+            this.#emitDebug("Resume request sent");
+        } catch (error) {
+            const gatewayError = new GatewayError(
+                "Failed to resume gateway connection",
+                GatewayErrorCode.SessionError,
+                { error },
+            );
+            this.#emitError(gatewayError);
+            throw gatewayError;
         }
     }
 
     sendHeartbeat(): void {
-        this.send(GatewayOpcodes.Heartbeat, this.session.getSequence());
-        this.emit("DEBUG", `[GATEWAY] Sent Heartbeat. Sequence: ${this.session.getSequence()}`);
+        try {
+            this.send(GatewayOpcodes.Heartbeat, this.#session.sequence);
+            this.#emitDebug("Sent heartbeat", { sequence: this.#session.sequence });
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to send heartbeat", GatewayErrorCode.PayloadError, {
+                sequence: this.#session.sequence,
+                error,
+            });
+            this.#emitError(gatewayError);
+        }
     }
 
-    async reconnect(): Promise<void> {
-        this.emit("DEBUG", "[GATEWAY] Initiating reconnection process.");
-        this.destroy();
-        await this.connect(true);
-    }
-
-    async resume(): Promise<void> {
-        if (!this.session.canResume()) {
-            this.emit(
-                "WARN",
-                "[GATEWAY] Failed to resume session: missing session ID or sequence number. Starting new session."
-            );
-
-            try {
-                const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
-                this.session.updateLimit(gatewayInfo);
-                this.emit("DEBUG", "[GATEWAY] Retrieved fresh session limits for new session");
-            } catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                this.emit("ERROR", new Error(`Failed to get session limits: ${message}`));
+    async handleMessage(data: WebSocket.RawData, isBinary: boolean): Promise<void> {
+        try {
+            const decompressed = this.#decompressData(data);
+            if (!decompressed) {
+                return;
             }
 
-            await this.#shardManager.initialize(this.#options.shard);
-            return;
+            const payload = this.#payload.decode<GatewayPayload>(decompressed, isBinary);
+            await this.#handlePayload(payload);
+        } catch (error) {
+            const gatewayError = new GatewayError(
+                "Failed to handle gateway message",
+                GatewayErrorCode.ManageHandlingError,
+                {
+                    dataSize: data.slice.length,
+                    isBinary,
+                    error,
+                },
+            );
+            this.#emitError(gatewayError);
         }
-
-        await this.session.acquire();
-
-        const resume: ResumeStructure = {
-            token: this.#token,
-            session_id: this.session.getSessionId()!,
-            seq: this.session.getSequence()!,
-        };
-
-        this.send(GatewayOpcodes.Resume, resume);
     }
 
     #setupEventListeners(): void {
-        this.#webSocket.on("RAW", this.#onMessage.bind(this));
-        this.#webSocket.on("CLOSE", (code, reason) => this.#onClose(code as GatewayCloseCodes, reason));
-        this.#webSocket.on("ERROR", (error) => this.emit("ERROR", error));
-        this.#webSocket.on("DEBUG", (message) => this.emit("DEBUG", message));
-
-        this.#heartbeat.on("MISSED_ACK", async (message) => {
-            this.emit("MISSED_ACK", message);
-            await this.reconnect();
-        });
-
-        this.session.on("DEBUG", (message) => this.emit("DEBUG", message));
-        this.session.on("ERROR", (error) => this.emit("ERROR", error));
-    }
-
-    async #onMessage(data: WebSocket.RawData, isBinary: boolean): Promise<void> {
-        let decompressedData: Buffer = Buffer.alloc(0);
-
         try {
-            if (this.#options.compress === "zlib-stream" && Buffer.isBuffer(data)) {
-                decompressedData = this.compression.decompressZlib(data);
-            } else if (this.#options.compress === "zstd-stream" && Buffer.isBuffer(data)) {
-                throw new Error("Zstd compression is not supported in this environment");
-            } else if (Buffer.isBuffer(data)) {
-                decompressedData = Buffer.from(data);
-            }
+            this.#emitDebug("Setting up gateway event listeners");
 
-            if (decompressedData.length > 0) {
-                const decodedPayload = this.payload.decode<GatewayManagerPayload>(decompressedData, isBinary);
-                await this.#handlePayload(decodedPayload);
-            }
+            this.#ws.on("raw", this.handleMessage.bind(this));
+            this.#ws.on("close", this.#handleClose.bind(this));
+            this.#ws.on("error", (error) =>
+                this.#emitError(new GatewayError("WebSocket error", GatewayErrorCode.WebSocketError, { error })),
+            );
+            this.#ws.on("debug", (message) => this.#emitDebug(message));
+
+            this.#heartbeat.on("missedAck", async () => {
+                this.#emitDebug("Missed heartbeat acknowledgement");
+                if (!this.#isReconnecting) {
+                    this.#isReconnecting = true;
+                    await this.#reconnect();
+                    this.#isReconnecting = false;
+                }
+            });
+
+            this.#session.on("debug", (message) => this.#emitDebug(message));
+            this.#session.on("error", (error) =>
+                this.#emitError(new GatewayError("Session error", GatewayErrorCode.SessionError, { error })),
+            );
+
+            this.#emitDebug("Event listeners setup completed");
         } catch (error) {
-            const errorMessage = `[GATEWAY] Failed to handle message: ${error instanceof Error ? error.message : String(error)}`;
-            this.emit("ERROR", new Error(errorMessage));
+            const gatewayError = new GatewayError(
+                "Failed to setup event listeners",
+                GatewayErrorCode.InitializationError,
+                { error },
+            );
+            this.#emitError(gatewayError);
+            throw gatewayError;
         }
     }
 
-    async #handlePayload(payload: GatewayManagerPayload): Promise<void> {
-        if (payload.s) {
-            this.session.updateSequence(payload.s);
-        }
-
+    #buildGatewayUrl(resume: boolean): string {
         try {
-            switch (payload.op) {
-                case GatewayOpcodes.Dispatch: {
-                    this.#handleDispatch(payload);
-                    break;
+            if (resume && this.#session.resumeUrl) {
+                this.#emitDebug("Using resume URL for connection");
+                return this.#session.resumeUrl;
+            }
+
+            const url = new URL("wss://gateway.discord.gg/");
+            url.searchParams.set("v", this.#options.v.toString());
+            url.searchParams.set("encoding", this.#options.encoding);
+
+            if (this.#options.compress) {
+                url.searchParams.set("compress", this.#options.compress);
+            }
+
+            this.#emitDebug("Built gateway URL", {
+                url: url.toString(),
+                version: this.#options.v,
+                encoding: this.#options.encoding,
+                compression: this.#options.compress,
+            });
+
+            return url.toString();
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to build gateway URL", GatewayErrorCode.InitializationError, {
+                resume,
+                error,
+            });
+            this.#emitError(gatewayError);
+            throw gatewayError;
+        }
+    }
+
+    #decompressData(data: WebSocket.RawData): Buffer | null {
+        try {
+            if (!Buffer.isBuffer(data)) {
+                this.#emitDebug("Received non-buffer data, skipping decompression");
+                return null;
+            }
+
+            switch (this.#options.compress) {
+                case "zlib-stream": {
+                    this.#emitDebug("Decompressing zlib data", { size: data.length });
+                    return this.#compression.decompressZlib(data);
                 }
 
+                case "zstd-stream": {
+                    throw new GatewayError("Zstd compression not supported", GatewayErrorCode.CompressionError, {
+                        compressionType: "zstd-stream",
+                    });
+                }
+
+                default: {
+                    this.#emitDebug("No compression, returning raw data");
+                    return data;
+                }
+            }
+        } catch (error) {
+            const gatewayError =
+                error instanceof GatewayError
+                    ? error
+                    : new GatewayError("Failed to decompress data", GatewayErrorCode.CompressionError, {
+                          compressionType: this.#options.compress,
+                          dataSize: Buffer.isBuffer(data) ? data.length : "unknown",
+                          error,
+                      });
+            this.#emitError(gatewayError);
+            throw gatewayError;
+        }
+    }
+
+    async #handlePayload(payload: GatewayPayload): Promise<void> {
+        try {
+            if (payload.s) {
+                this.#session.updateSequence(payload.s);
+            }
+
+            this.#emitDebug("Processing payload", {
+                op: GatewayOpcodes[payload.op],
+                type: payload.t,
+                sequence: payload.s,
+            });
+
+            switch (payload.op) {
+                case GatewayOpcodes.Dispatch:
+                    this.#handleDispatch(payload);
+                    break;
+
                 case GatewayOpcodes.Heartbeat: {
+                    this.#emitDebug("Received heartbeat request");
                     this.sendHeartbeat();
                     break;
                 }
 
                 case GatewayOpcodes.Reconnect: {
-                    await this.reconnect();
+                    this.#emitDebug("Received reconnect request");
+                    await this.#reconnect();
                     break;
                 }
 
-                case GatewayOpcodes.InvalidSession: {
-                    this.#handleInvalidSession(payload.d as boolean);
+                case GatewayOpcodes.InvalidSession:
+                    await this.#handleInvalidSession(payload.d as boolean);
                     break;
-                }
 
-                case GatewayOpcodes.Hello: {
+                case GatewayOpcodes.Hello:
                     await this.#handleHello(payload.d as HelloStructure);
                     break;
-                }
 
                 case GatewayOpcodes.HeartbeatAck: {
                     this.#heartbeat.acknowledge();
-                    this.emit("DEBUG", "[GATEWAY] Received Heartbeat Acknowledgement.");
+                    this.#emitDebug("Received heartbeat acknowledgement");
                     break;
                 }
 
                 default: {
-                    this.emit("WARN", `[GATEWAY] Unhandled gateway opcode: ${GatewayOpcodes[payload.op]}`);
-                    break;
+                    const error = new GatewayError(
+                        `Unhandled gateway opcode: ${GatewayOpcodes[payload.op]}`,
+                        GatewayErrorCode.PayloadError,
+                        { opcode: payload.op },
+                    );
+                    this.#emitError(error);
                 }
             }
         } catch (error) {
-            const errorMessage = `[GATEWAY] Error handling payload: ${error instanceof Error ? error.message : String(error)}`;
-            this.emit("ERROR", new Error(errorMessage));
+            const gatewayError =
+                error instanceof GatewayError
+                    ? error
+                    : new GatewayError("Failed to handle payload", GatewayErrorCode.PayloadError, {
+                          opcode: payload.op,
+                          type: payload.t,
+                          error,
+                      });
+            this.#emitError(gatewayError);
+            throw gatewayError;
         }
     }
 
-    #handleDispatch(payload: GatewayManagerPayload): void {
-        if (payload.t === "READY") {
-            const ready = payload.d as ReadyEventFields;
-            this.session.updateSession(ready.session_id, ready.resume_gateway_url);
-            this.emit(
-                "DEBUG",
-                `[GATEWAY] Session established. Session ID: ${ready.session_id}, Resume URL: ${ready.resume_gateway_url}`
-            );
-        }
+    #handleDispatch(payload: GatewayPayload): void {
+        try {
+            if (!payload.t) {
+                this.#emitDebug("Received dispatch without type, ignoring");
+                return;
+            }
 
-        if (!payload.t) {
-            return;
-        }
+            this.#emitDebug(`Handling dispatch event: ${payload.t}`);
 
-        this.emit("DISPATCH", payload.t, payload.d as never);
+            if (payload.t === "READY") {
+                const ready = payload.d as ReadyEventFields;
+                this.#session.updateSession(ready.session_id, ready.resume_gateway_url);
+                this.#emitDebug("Session established", {
+                    sessionId: ready.session_id,
+                    resumeUrl: ready.resume_gateway_url,
+                });
+            }
+
+            this.emit("dispatch", payload.t, payload.d as never);
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to handle dispatch", GatewayErrorCode.PayloadError, {
+                type: payload.t,
+                error,
+            });
+            this.#emitError(gatewayError);
+            throw gatewayError;
+        }
     }
 
-    #handleInvalidSession(resumable: boolean): void {
-        this.emit("DEBUG", `[GATEWAY] Received Invalid Session. Resumable: ${resumable}`);
-        setTimeout(
-            async () => {
-                if (resumable) {
-                    await this.resume();
-                } else {
-                    await this.#shardManager.initialize(this.#options.shard);
-                }
-            },
-            (Math.random() * 5 + 1) * 1_000
-        );
+    async #handleInvalidSession(resumable: boolean): Promise<void> {
+        try {
+            this.#emitDebug("Handling invalid session", { resumable });
+
+            const delay = (Math.random() * 5 + 1) * 1000;
+            this.#emitDebug(`Waiting ${delay}ms before ${resumable ? "resuming" : "reinitializing"}`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+
+            if (resumable) {
+                await this.resume();
+            } else {
+                await this.#initializeNewSession();
+            }
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to handle invalid session", GatewayErrorCode.SessionError, {
+                resumable,
+                error,
+            });
+            this.#emitError(gatewayError);
+            throw gatewayError;
+        }
     }
 
     async #handleHello(data: HelloStructure): Promise<void> {
         try {
-            if (this.session.remaining === 0) {
-                const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
-                this.session.updateLimit(gatewayInfo);
-                this.emit("DEBUG", "[GATEWAY] Retrieved updated session limits");
+            this.#emitDebug("Received Hello event", {
+                heartbeatInterval: data.heartbeat_interval,
+            });
+
+            if (this.#session.remaining === 0) {
+                const gateway = await this.#rest.request(GatewayRoutes.getGatewayBot());
+                this.#session.updateLimit(gateway);
+                this.#emitDebug("Updated session limits");
             }
 
             await this.#shardManager.initialize(this.#options.shard);
             this.#heartbeat.setInterval(data.heartbeat_interval, () => this.sendHeartbeat());
+            this.#emitDebug("Hello handling completed");
         } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            this.emit("ERROR", new Error(`Failed to handle Hello: ${message}`));
-            await this.#scheduleReconnect();
+            const gatewayError = new GatewayError(
+                "Failed to handle hello event",
+                GatewayErrorCode.InitializationError,
+                {
+                    heartbeatInterval: data.heartbeat_interval,
+                    error,
+                },
+            );
+            this.#emitError(gatewayError);
+            this.#scheduleReconnect();
+        }
+    }
+
+    async #initializeNewSession(): Promise<void> {
+        try {
+            this.#emitDebug("Initializing new session");
+            const gateway = await this.#rest.request(GatewayRoutes.getGatewayBot());
+            this.#session.updateLimit(gateway);
+            this.#emitDebug("Retrieved fresh session limits");
+            await this.#shardManager.initialize(this.#options.shard);
+            this.#emitDebug("New session initialized successfully");
+        } catch (error) {
+            const gatewayError = new GatewayError(
+                "Failed to initialize new session",
+                GatewayErrorCode.InitializationError,
+                { error },
+            );
+            this.#emitError(gatewayError);
+            this.#scheduleReconnect();
+        }
+    }
+
+    #handleClose(code: GatewayCloseCodes, reason: string): void {
+        try {
+            this.#emitDebug("Handling WebSocket close", { code: code, reason });
+
+            this.cleanup();
+            this.emit("close", code, reason);
+
+            const errorMessage = this.#getCloseCodeMessage(code);
+            const canReconnect = this.#canReconnect(code);
+
+            const closeError = new GatewayError(`WebSocket closed: ${errorMessage}`, GatewayErrorCode.WebSocketError, {
+                code: code,
+                reason,
+                message: errorMessage,
+                canReconnect,
+            });
+            this.#emitError(closeError);
+
+            if (canReconnect) {
+                this.#emitDebug("Connection is recoverable, scheduling reconnection", {
+                    code: code,
+                    reason,
+                });
+                this.#scheduleReconnect();
+            } else {
+                const finalError = new GatewayError(
+                    `Cannot reconnect: ${errorMessage}`,
+                    GatewayErrorCode.ReconnectionError,
+                    {
+                        code: code,
+                        reason,
+                        message: errorMessage,
+                    },
+                );
+                this.#emitError(finalError);
+            }
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to handle WebSocket close", GatewayErrorCode.WebSocketError, {
+                code,
+                reason,
+                error,
+            });
+            this.#emitError(gatewayError);
         }
     }
 
@@ -317,83 +587,130 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             GatewayCloseCodes.DisallowedIntents,
         ];
 
-        return !nonRecoverableCodes.includes(code);
+        const canReconnect = !nonRecoverableCodes.includes(code);
+        this.#emitDebug("Checking if code is recoverable", {
+            code,
+            recoverable: canReconnect,
+            message: this.#getCloseCodeMessage(code),
+        });
+
+        return canReconnect;
     }
 
-    async #onClose(code: GatewayCloseCodes, reason: string): Promise<void> {
-        this.cleanup();
+    #getCloseCodeMessage(code: GatewayCloseCodes): string {
+        const messages: Record<number, string> = {
+            [GatewayCloseCodes.UnknownError]: "Unknown error",
+            [GatewayCloseCodes.UnknownOpcode]: "Unknown opcode",
+            [GatewayCloseCodes.DecodeError]: "Decode error",
+            [GatewayCloseCodes.NotAuthenticated]: "Not authenticated",
+            [GatewayCloseCodes.AuthenticationFailed]: "Authentication failed",
+            [GatewayCloseCodes.AlreadyAuthenticated]: "Already authenticated",
+            [GatewayCloseCodes.InvalidSeq]: "Invalid sequence",
+            [GatewayCloseCodes.RateLimited]: "Rate limited",
+            [GatewayCloseCodes.SessionTimedOut]: "Session timeout",
+            [GatewayCloseCodes.InvalidShard]: "Invalid shard",
+            [GatewayCloseCodes.ShardingRequired]: "Sharding required",
+            [GatewayCloseCodes.InvalidApiVersion]: "Invalid API version",
+            [GatewayCloseCodes.InvalidIntents]: "Invalid intents",
+            [GatewayCloseCodes.DisallowedIntents]: "Disallowed intents",
+        };
 
-        this.emit("CLOSE", code, reason);
-        const errorMessage = this.#getCloseCodeErrorMessage(code);
-        this.emit("ERROR", new Error(`[GATEWAY] WebSocket closed: ${errorMessage}. Reason: ${reason}`));
+        const message = messages[code] ?? `Unknown close code: ${code}`;
+        this.#emitDebug("Getting close code message", { code, message });
+        return message;
+    }
 
-        if (this.#canReconnect(code)) {
-            this.emit(
-                "DEBUG",
-                `[GATEWAY] Scheduling reconnection attempt after close. Code: ${code}, Reason: ${reason}`
+    #scheduleReconnect(): void {
+        try {
+            this.#clearReconnectTimer();
+            const reconnectDelay = 5000;
+            this.#emitDebug(`Scheduling reconnection attempt in ${reconnectDelay}ms`);
+
+            this.#reconnectTimer = setTimeout(async () => {
+                try {
+                    this.#emitDebug("Executing scheduled reconnection");
+                    const gateway = await this.#rest.request(GatewayRoutes.getGatewayBot());
+
+                    this.#session.updateLimit(gateway);
+                    this.#emitDebug("Retrieved fresh session limits for reconnection", {
+                        remaining: gateway.session_start_limit.remaining,
+                        resetAfter: gateway.session_start_limit.reset_after,
+                    });
+
+                    await this.connect(true);
+                } catch (error) {
+                    const gatewayError = new GatewayError(
+                        "Scheduled reconnection failed",
+                        GatewayErrorCode.ReconnectionError,
+                        { error },
+                    );
+                    this.#emitError(gatewayError);
+                    this.#scheduleReconnect();
+                }
+            }, reconnectDelay);
+        } catch (error) {
+            const gatewayError = new GatewayError(
+                "Failed to schedule reconnection",
+                GatewayErrorCode.ReconnectionError,
+                { error },
             );
-            await this.#scheduleReconnect();
-        } else {
-            this.emit(
-                "ERROR",
-                new Error(`[GATEWAY] Cannot reconnect due to critical error. Close code: ${code}, Reason: ${reason}`)
-            );
+            this.#emitError(gatewayError);
         }
     }
 
-    #getCloseCodeErrorMessage(code: GatewayCloseCodes): string {
-        switch (code) {
-            case GatewayCloseCodes.UnknownError:
-                return "Unknown error. Try reconnecting?";
-            case GatewayCloseCodes.UnknownOpcode:
-                return "Unknown opcode sent";
-            case GatewayCloseCodes.DecodeError:
-                return "Invalid payload sent";
-            case GatewayCloseCodes.NotAuthenticated:
-                return "Payload sent before identifying";
-            case GatewayCloseCodes.AuthenticationFailed:
-                return "Invalid token";
-            case GatewayCloseCodes.AlreadyAuthenticated:
-                return "Already identified";
-            case GatewayCloseCodes.InvalidSeq:
-                return "Invalid seq number";
-            case GatewayCloseCodes.RateLimited:
-                return "Rate limited";
-            case GatewayCloseCodes.SessionTimedOut:
-                return "Session timed out";
-            case GatewayCloseCodes.InvalidShard:
-                return "Invalid shard";
-            case GatewayCloseCodes.ShardingRequired:
-                return "Sharding required";
-            case GatewayCloseCodes.InvalidApiVersion:
-                return "Invalid API version";
-            case GatewayCloseCodes.InvalidIntents:
-                return "Invalid intent(s)";
-            case GatewayCloseCodes.DisallowedIntents:
-                return "Disallowed intent(s)";
-            default:
-                return `Unknown close code: ${code}`;
-        }
-    }
-
-    async #scheduleReconnect(): Promise<void> {
-        if (this.#reconnectTimeout) {
-            clearTimeout(this.#reconnectTimeout);
-        }
-
-        this.#reconnectTimeout = setTimeout(async () => {
-            this.emit("DEBUG", "[GATEWAY] Attempting to reconnect");
-            try {
-                const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
-                this.session.updateLimit(gatewayInfo);
-                this.emit("DEBUG", "[GATEWAY] Retrieved fresh session limits for reconnection");
-
-                await this.connect(true);
-            } catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                this.emit("ERROR", new Error(`Failed to reconnect: ${message}`));
-                await this.#scheduleReconnect();
+    #clearReconnectTimer(): void {
+        try {
+            if (this.#reconnectTimer) {
+                this.#emitDebug("Clearing existing reconnect timer");
+                clearTimeout(this.#reconnectTimer);
+                this.#reconnectTimer = null;
             }
-        }, 5_000);
+        } catch (error) {
+            const gatewayError = new GatewayError("Failed to clear reconnect timer", GatewayErrorCode.StateError, {
+                error,
+            });
+            this.#emitError(gatewayError);
+        }
+    }
+
+    async #reconnect(): Promise<void> {
+        try {
+            this.#emitDebug("Initiating manual reconnection");
+
+            this.destroy();
+            await this.connect(true);
+
+            this.#emitDebug("Manual reconnection completed successfully");
+        } catch (error) {
+            const gatewayError = new GatewayError("Manual reconnection failed", GatewayErrorCode.ReconnectionError, {
+                error,
+            });
+            this.#emitError(gatewayError);
+            throw gatewayError;
+        }
+    }
+
+    #emitError(error: GatewayError): void {
+        this.emit(
+            "error",
+            formatErrorLog(error.message, {
+                component: "Gateway",
+                code: error.code,
+                details: error.details,
+                stack: error.stack,
+                timestamp: true,
+            }),
+        );
+    }
+
+    #emitDebug(message: string, details?: Record<string, unknown>): void {
+        this.emit(
+            "debug",
+            formatDebugLog(message, {
+                component: "Gateway",
+                timestamp: true,
+                details,
+            }),
+        );
     }
 }

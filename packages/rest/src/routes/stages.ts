@@ -19,11 +19,11 @@ export type CreateStageInstanceJsonParams = Pick<
     send_start_notification?: boolean;
 };
 
-export class StageRoutes {
+export const StageRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance|Delete Stage Instance}
      */
-    static deleteStageInstance(channelId: Snowflake, reason?: string): RouteStructure<void> {
+    deleteStageInstance(channelId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -35,15 +35,15 @@ export class StageRoutes {
             path: `/stage-instances/${channelId}`,
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance|Modify Stage Instance}
      */
-    static modifyStageInstance(
+    modifyStageInstance(
         channelId: Snowflake,
         params: ModifyStageInstanceJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<StageInstanceStructure> {
         const headers: Record<string, string> = {};
 
@@ -57,24 +57,24 @@ export class StageRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance|Get Stage Instance}
      */
-    static getStageInstance(channelId: Snowflake): RouteStructure<StageInstanceStructure> {
+    getStageInstance(channelId: Snowflake): RouteStructure<StageInstanceStructure> {
         return {
             method: RestMethods.Get,
             path: `/stage-instances/${channelId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance|Create Stage Instance}
      */
-    static createStageInstance(
+    createStageInstance(
         params: CreateStageInstanceJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<StageInstanceStructure> {
         const headers: Record<string, string> = {};
 
@@ -88,5 +88,5 @@ export class StageRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
-}
+    },
+} as const;

@@ -164,11 +164,7 @@ export class BitfieldManager<T> {
 
             return result;
         } catch (error) {
-            if (error instanceof Error) {
-                throw new TypeError(`Failed to create BigInt: ${error.message}`);
-            } else {
-                throw new TypeError("Failed to create BigInt: Unknown error");
-            }
+            throw new Error(`Failed to create BigInt: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 }

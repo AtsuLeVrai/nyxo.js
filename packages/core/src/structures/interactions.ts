@@ -191,11 +191,11 @@ export enum ApplicationCommandTypes {
      */
     ChatInput = 1,
     /**
-     * A UI-based command that shows up when you right click or tap on a user
+     * A UI-based command that shows up when you right-click or tap on a user
      */
     User = 2,
     /**
-     * A UI-based command that shows up when you right click or tap on a message
+     * A UI-based command that shows up when you right-click or tap on a message
      */
     Message = 3,
     /**
@@ -370,7 +370,7 @@ export type InteractionCallbackStructure = {
      */
     activity_instance_id?: string;
     /**
-     * Whether or not the response message was ephemeral
+     * Whether the response message was ephemeral
      */
     response_message_ephemeral?: boolean;
     /**
@@ -378,7 +378,7 @@ export type InteractionCallbackStructure = {
      */
     response_message_id?: Snowflake;
     /**
-     * Whether or not the message is in a loading state
+     * Whether the message is in a loading state
      */
     response_message_loading?: boolean;
     /**

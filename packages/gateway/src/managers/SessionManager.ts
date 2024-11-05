@@ -1,140 +1,328 @@
 import type { Integer } from "@nyxjs/core";
 import type { GetGatewayBotJsonResponse } from "@nyxjs/rest";
+import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
-import type { GatewayEvents } from "../types/index.js";
 
-export class SessionManager extends EventEmitter<Pick<GatewayEvents, "DEBUG" | "ERROR">> {
-    #gatewayInfo: GetGatewayBotJsonResponse | null = null;
-    #waitQueue: Array<() => Promise<void>> = [];
-    #processing = false;
-    #sequence: Integer | null = null;
-    #sessionId: string | null = null;
-    #resumeGatewayUrl: string | null = null;
+type SessionState = {
+    sequence: Integer | null;
+    sessionId: string | null;
+    resumeUrl: string | null;
+};
+
+type SessionLimits = {
+    remaining: Integer;
+    total: Integer;
+    resetAfter: Integer;
+    maxConcurrency: Integer;
+    recommendedShards: Integer;
+};
+
+export enum SessionErrorCode {
+    NotInitialized = "SESSION_NOT_INITIALIZED",
+    LimitExceeded = "SESSION_LIMIT_EXCEEDED",
+    AcquisitionError = "SESSION_ACQUISITION_ERROR",
+    QueueProcessingError = "QUEUE_PROCESSING_ERROR",
+    ResetError = "SESSION_RESET_ERROR",
+    StateError = "SESSION_STATE_ERROR",
+}
+
+export class SessionError extends Error {
+    code: SessionErrorCode;
+    details?: Record<string, unknown>;
+
+    constructor(message: string, code: SessionErrorCode, details?: Record<string, unknown>, cause?: Error) {
+        super(message);
+        this.name = "SessionError";
+        this.code = code;
+        this.details = details;
+        this.cause = cause;
+    }
+}
+
+export class SessionManager extends EventEmitter {
+    #defaultConcurrency = 1;
+    #rateLimitDelay = 5000;
+    #limits: SessionLimits | null = null;
+    #acquireQueue: Array<() => Promise<void>> = [];
+    #isProcessing = false;
+    #resetTimeout: NodeJS.Timeout | null = null;
+    #state: SessionState = {
+        sequence: null,
+        sessionId: null,
+        resumeUrl: null,
+    };
 
     get remaining(): number {
-        return this.#gatewayInfo?.session_start_limit.remaining ?? 0;
+        return this.#limits?.remaining ?? 0;
     }
 
     get maxConcurrency(): number {
-        return this.#gatewayInfo?.session_start_limit.max_concurrency ?? 1;
+        return this.#limits?.maxConcurrency ?? this.#defaultConcurrency;
     }
 
     get shards(): Integer | null {
-        return this.#gatewayInfo?.shards ?? null;
+        return this.#limits?.recommendedShards ?? null;
+    }
+
+    get isReady(): boolean {
+        return this.#limits !== null;
+    }
+
+    get sequence(): Integer | null {
+        return this.#state.sequence;
+    }
+
+    get sessionId(): string | null {
+        return this.#state.sessionId;
+    }
+
+    get resumeUrl(): string | null {
+        return this.#state.resumeUrl;
     }
 
     updateSequence(sequence: Integer): void {
-        this.#sequence = sequence;
+        try {
+            this.#state.sequence = sequence;
+            this.#emitDebug(`Sequence updated to ${sequence}`);
+        } catch (error) {
+            const sessionError = new SessionError("Failed to update sequence", SessionErrorCode.StateError, {
+                sequence,
+                error,
+            });
+            this.#emitError(sessionError);
+            throw sessionError;
+        }
     }
 
     updateSession(sessionId: string, resumeUrl: string): void {
-        this.#sessionId = sessionId;
-        this.#resumeGatewayUrl = resumeUrl;
-    }
-
-    getSequence(): Integer | null {
-        return this.#sequence;
-    }
-
-    getSessionId(): string | null {
-        return this.#sessionId;
-    }
-
-    getResumeUrl(): string | null {
-        return this.#resumeGatewayUrl;
+        try {
+            this.#state.sessionId = sessionId;
+            this.#state.resumeUrl = resumeUrl;
+            this.#emitDebug(`Session updated - ID: ${sessionId}, URL: ${resumeUrl}`);
+        } catch (error) {
+            const sessionError = new SessionError("Failed to update session", SessionErrorCode.StateError, {
+                sessionId,
+                resumeUrl,
+                error,
+            });
+            this.#emitError(sessionError);
+            throw sessionError;
+        }
     }
 
     canResume(): boolean {
-        return !!(this.#sessionId && this.#sequence && this.#resumeGatewayUrl);
+        const { sessionId, sequence, resumeUrl } = this.#state;
+        const canResume = Boolean(sessionId && sequence !== null && resumeUrl);
+        this.#emitDebug(`Resume availability checked: ${canResume}`);
+        return canResume;
     }
 
     updateLimit(gateway: GetGatewayBotJsonResponse): void {
-        this.#gatewayInfo = gateway;
-        this.emit(
-            "DEBUG",
-            `[SESSION] Updated session limits - Remaining: ${gateway.session_start_limit.remaining}, Max Concurrency: ${gateway.session_start_limit.max_concurrency}`
-        );
+        try {
+            const { remaining, total, reset_after, max_concurrency } = gateway.session_start_limit;
+
+            this.#limits = {
+                remaining,
+                total,
+                resetAfter: reset_after,
+                maxConcurrency: max_concurrency,
+                recommendedShards: gateway.shards,
+            };
+
+            this.#emitDebug(
+                `Limits updated - Remaining: ${remaining}/${total}, Max Concurrency: ${max_concurrency}, Reset After: ${reset_after}ms`,
+            );
+
+            if (this.#resetTimeout) {
+                clearTimeout(this.#resetTimeout);
+                this.#resetTimeout = null;
+            }
+        } catch (error) {
+            const sessionError = new SessionError("Failed to update session limits", SessionErrorCode.StateError, {
+                gateway,
+                error,
+            });
+            this.#emitError(sessionError);
+            throw sessionError;
+        }
     }
 
     async acquire(): Promise<void> {
-        if (!this.#gatewayInfo) {
-            throw new Error("Session limits not initialized");
-        }
+        try {
+            if (!this.isReady) {
+                const error = new SessionError(
+                    "Session manager not initialized with gateway info",
+                    SessionErrorCode.NotInitialized,
+                );
+                this.#emitError(error);
+                throw error;
+            }
 
-        if (this.#gatewayInfo.session_start_limit.remaining <= 0) {
-            await this.#waitForReset();
-            return this.acquire();
-        }
+            if (this.remaining <= 0) {
+                this.#emitDebug("No sessions remaining, waiting for reset");
+                await this.#waitForReset();
+                return this.acquire();
+            }
 
-        return new Promise((resolve) => {
-            this.#waitQueue.push(async () => {
-                try {
-                    this.#gatewayInfo!.session_start_limit.remaining--;
-                    this.emit(
-                        "DEBUG",
-                        `[SESSION] Session acquired - Remaining: ${this.#gatewayInfo!.session_start_limit!.remaining}`
-                    );
-                    resolve();
-                } catch (error) {
-                    const message = error instanceof Error ? error.message : String(error);
-                    this.emit("ERROR", new Error(`Failed to acquire session: ${message}`));
+            const acquirePromise = (): Promise<void> => {
+                if (!this.#limits) {
+                    const error = new SessionError("Limits lost during acquisition", SessionErrorCode.StateError);
+                    this.#emitError(error);
                     throw error;
                 }
-            });
 
-            void this.#processQueue();
-        });
+                this.#limits.remaining--;
+                this.#emitDebug(`Session acquired - ${this.remaining} remaining`);
+                return Promise.resolve();
+            };
+
+            this.#acquireQueue.push(acquirePromise);
+            await this.#processQueue();
+        } catch (error) {
+            const sessionError =
+                error instanceof SessionError
+                    ? error
+                    : new SessionError("Failed to acquire session", SessionErrorCode.AcquisitionError, { error });
+            this.#emitError(sessionError);
+            throw sessionError;
+        }
     }
 
-    clear(): void {
-        this.#gatewayInfo = null;
-        this.#waitQueue = [];
-        this.#processing = false;
-        this.#sequence = null;
-        this.#sessionId = null;
-        this.#resumeGatewayUrl = null;
+    destroy(): void {
+        try {
+            if (this.#resetTimeout) {
+                clearTimeout(this.#resetTimeout);
+                this.#resetTimeout = null;
+            }
 
-        this.emit("DEBUG", "[SESSION] Session manager cleared");
+            this.#state = {
+                sequence: null,
+                sessionId: null,
+                resumeUrl: null,
+            };
+
+            this.#limits = null;
+            this.#acquireQueue = [];
+            this.#isProcessing = false;
+
+            this.#emitDebug("Session manager destroyed");
+        } catch (error) {
+            const sessionError = new SessionError(
+                "Error during session manager destruction",
+                SessionErrorCode.StateError,
+                { error },
+            );
+            this.#emitError(sessionError);
+        }
     }
 
     async #waitForReset(): Promise<void> {
-        if (!this.#gatewayInfo) {
-            return;
+        if (!this.#limits) {
+            const error = new SessionError(
+                "Cannot wait for reset: limits not initialized",
+                SessionErrorCode.StateError,
+            );
+            this.#emitError(error);
+            throw error;
         }
 
-        const resetAfter = this.#gatewayInfo.session_start_limit.reset_after;
-        this.emit("DEBUG", `[SESSION] Waiting ${resetAfter}ms for session limit reset`);
+        const { resetAfter, total } = this.#limits;
+        this.#emitDebug(`Waiting ${resetAfter}ms for session limit reset`);
 
-        await new Promise((resolve) => setTimeout(resolve, resetAfter));
+        try {
+            await new Promise<void>((resolve, reject) => {
+                this.#resetTimeout = setTimeout(() => {
+                    if (!this.#limits) {
+                        const error = new SessionError(
+                            "Session limits lost during reset wait",
+                            SessionErrorCode.ResetError,
+                        );
+                        reject(error);
+                        return;
+                    }
 
-        if (this.#gatewayInfo) {
-            this.#gatewayInfo.session_start_limit.remaining = this.#gatewayInfo.session_start_limit.total;
-            this.emit(
-                "DEBUG",
-                `[SESSION] Session limits reset - New remaining: ${this.#gatewayInfo.session_start_limit.remaining}`
-            );
+                    this.#limits.remaining = total;
+                    this.#emitDebug(`Session limits reset - ${total} sessions available`);
+                    resolve();
+                }, resetAfter);
+            });
+        } catch (error) {
+            const sessionError =
+                error instanceof SessionError
+                    ? error
+                    : new SessionError("Failed to wait for session reset", SessionErrorCode.ResetError, { error });
+            this.#emitError(sessionError);
+            throw sessionError;
         }
     }
 
     async #processQueue(): Promise<void> {
-        if (this.#processing || this.#waitQueue.length === 0) {
+        if (this.#isProcessing || this.#acquireQueue.length === 0) {
             return;
         }
 
-        this.#processing = true;
+        this.#isProcessing = true;
+        this.#emitDebug("Starting queue processing");
 
         try {
-            while (this.#waitQueue.length > 0) {
-                const batch = this.#waitQueue.splice(0, this.maxConcurrency).map((fn) => fn());
+            while (this.#acquireQueue.length > 0) {
+                const batchSize = Math.min(this.maxConcurrency, this.#acquireQueue.length);
+                const batch = this.#acquireQueue.splice(0, batchSize);
 
-                await Promise.all(batch);
+                this.#emitDebug(`Processing batch of ${batchSize} sessions`);
 
-                if (this.#waitQueue.length > 0) {
-                    await new Promise((resolve) => setTimeout(resolve, 5_000));
+                await Promise.all(
+                    batch.map((fn) =>
+                        fn().catch((error) => {
+                            const sessionError = new SessionError(
+                                "Failed to acquire session in batch",
+                                SessionErrorCode.AcquisitionError,
+                                { error },
+                            );
+                            this.#emitError(sessionError);
+                            throw sessionError;
+                        }),
+                    ),
+                );
+
+                if (this.#acquireQueue.length > 0) {
+                    this.#emitDebug(`Waiting ${this.#rateLimitDelay}ms before next batch`);
+                    await new Promise((resolve) => setTimeout(resolve, this.#rateLimitDelay));
                 }
             }
+        } catch (error) {
+            const sessionError =
+                error instanceof SessionError
+                    ? error
+                    : new SessionError("Queue processing failed", SessionErrorCode.QueueProcessingError, { error });
+            this.#emitError(sessionError);
+            throw sessionError;
         } finally {
-            this.#processing = false;
+            this.#isProcessing = false;
+            this.#emitDebug("Queue processing completed");
         }
+    }
+
+    #emitError(error: SessionError): void {
+        this.emit(
+            "error",
+            formatErrorLog(error.message, {
+                component: "SessionManager",
+                code: error.code,
+                details: error.details,
+                stack: error.stack,
+                timestamp: true,
+            }),
+        );
+    }
+
+    #emitDebug(message: string): void {
+        this.emit(
+            "debug",
+            formatDebugLog(message, {
+                component: "SessionManager",
+                timestamp: true,
+            }),
+        );
     }
 }

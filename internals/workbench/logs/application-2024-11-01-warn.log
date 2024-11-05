@@ -1,6 +1,0 @@
-[33mwarn[39m: [WARN]
-[33mwarn[39m: [WARN] [SHARD] You have less than 2500 guilds, consider disabling auto-sharding.
-[33mwarn[39m: [SHARD] You have less than 2500 guilds, consider disabling auto-sharding.
-[33mwarn[39m: No mapping found for event: PRESENCE_UPDATE
-[33mwarn[39m: No mapping found for event: PRESENCE_UPDATE
-[33mwarn[39m: No mapping found for event: PRESENCE_UPDATE

@@ -71,7 +71,7 @@ export enum OAuth2Scopes {
     /**
      * Allows your app to see information about the user's DMs and group DMs.
      */
-    DMChannelsRead = "dm_channels.read",
+    DmChannelsRead = "dm_channels.read",
     /**
      * Enables /users/@me to return an email.
      */
@@ -79,7 +79,7 @@ export enum OAuth2Scopes {
     /**
      * Allows your app to join users to a group dm.
      */
-    GDMJoin = "gdm.join",
+    GdmJoin = "gdm.join",
     /**
      * Allows /users/@me/guilds to return basic information about all of a user's guilds.
      */
@@ -103,23 +103,23 @@ export enum OAuth2Scopes {
     /**
      * For local RPC server access, this allows you to control a user's local Discord client.
      */
-    RPC = "rpc",
+    Rpc = "rpc",
     /**
      * For local RPC server access, this allows you to update a user's activity.
      */
-    RPCActivitiesWrite = "rpc.activities.write",
+    RpcActivitiesWrite = "rpc.activities.write",
     /**
      * For local RPC server access, this allows you to receive notifications pushed out to the user.
      */
-    RPCNotificationsRead = "rpc.notifications.read",
+    RpcNotificationsRead = "rpc.notifications.read",
     /**
      * For local RPC server access, this allows you to read a user's voice settings and listen for voice events.
      */
-    RPCVoiceRead = "rpc.voice.read",
+    RpcVoiceRead = "rpc.voice.read",
     /**
      * For local RPC server access, this allows you to update a user's voice settings.
      */
-    RPCVoiceWrite = "rpc.voice.write",
+    RpcVoiceWrite = "rpc.voice.write",
     /**
      * Allows your app to know a user's friends and implicit relationships.
      */

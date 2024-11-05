@@ -51,7 +51,7 @@ export type EntitlementStructure = {
      */
     application_id: Snowflake;
     /**
-     * For consumable items, whether or not the entitlement has been consumed
+     * For consumable items, whether the entitlement has been consumed
      */
     consumed?: boolean;
     /**

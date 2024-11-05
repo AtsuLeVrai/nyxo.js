@@ -5,43 +5,48 @@ import type { Client } from "../Client.js";
 import { Guild, Ready } from "../structures/index.js";
 import type { ClientEvents } from "../types/index.js";
 
-type Constructor<T = unknown> = new (...args: any[]) => T;
-
-type ClientEventMappingStructure = {
+type Constructor<T> = new (...args: any[]) => T;
+type EventDataType<T extends keyof GatewayReceiveEvents> = GatewayReceiveEvents[T];
+type SerializeResult<T> = [T] | [T, T];
+type ClientEventMappingStructure<T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents> = {
     readonly auditLogEventType?: AuditLogEvents;
-    readonly clientEventName?: keyof Omit<ClientEvents, "close" | "debug" | "error" | "rateLimit" | "warn">;
-    readonly gatewayReceiveEventName?: keyof GatewayReceiveEvents;
-    serialize?(...data: unknown[]): unknown | unknown[];
+    readonly clientEventName?: keyof Omit<
+        ClientEvents,
+        "close" | "debug" | "error" | "rateLimit" | "warn" | "raw" | "missedAck"
+    >;
+    readonly gatewayReceiveEventName: T;
+    serialize(client: Client, data: EventDataType<T>): SerializeResult<unknown>;
 };
 
-const cache = new Map<string, any>();
-
-function createInstance<T>(constructors: Constructor<T> | Constructor<T>[], ...args: unknown[]): T[] {
-    const constructorsArr = Array.isArray(constructors) ? constructors : [constructors];
-    return constructorsArr.map((Constructor) => {
-        const cacheKey = `${Constructor.name}:${JSON.stringify(args)}`;
-
-        const cachedInstance = cache.get(cacheKey);
-        if (cachedInstance) {
-            return cachedInstance;
-        }
-
-        const instance = new Constructor(...args);
-        cache.set(cacheKey, instance);
-        return instance;
-    });
+function createInstance<T>(Constructor: Constructor<T>, args: unknown): T {
+    // @todo: Add cache system with client.<manager>.cache.get() && set()
+    return new Constructor(args);
 }
 
-const ClientEventMapping: ClientEventMappingStructure[] = [
+type ClientEventMapping = {
+    [K in keyof GatewayReceiveEvents]: ClientEventMappingStructure<K>;
+}[keyof GatewayReceiveEvents];
+
+const ClientEventMapping: ClientEventMapping[] = [
     {
-        gatewayReceiveEventName: "READY",
         clientEventName: "ready",
-        serialize: (...data) => createInstance(Ready, ...data),
+        gatewayReceiveEventName: "READY",
+        serialize: (_, data) => [createInstance(Ready, data)],
     },
     {
         gatewayReceiveEventName: "GUILD_CREATE",
         clientEventName: "guildCreate",
-        serialize: (...data) => createInstance(Guild, ...data),
+        serialize: (_, data) => [createInstance(Guild, data)],
+    },
+    {
+        gatewayReceiveEventName: "GUILD_UPDATE",
+        clientEventName: "guildUpdate",
+        serialize: (client, data) => {
+            // @todo: Need to be checked if it's correct
+            const oldGuild = client.guilds.cache.get(data.id);
+            const newGuild = createInstance(Guild, data);
+            return [oldGuild, newGuild];
+        },
     },
 ];
 
@@ -52,7 +57,7 @@ export class ClientEventManager {
     constructor(client: Client) {
         this.#client = client;
         this.#eventMapping = new Map(
-            ClientEventMapping.map((mapping) => [mapping.gatewayReceiveEventName as string, mapping])
+            ClientEventMapping.map((mapping) => [mapping.gatewayReceiveEventName as string, mapping]),
         );
     }
 
@@ -88,11 +93,13 @@ export class ClientEventManager {
             DEBUG: "debug",
             ERROR: "error",
             WARN: "warn",
+            MISSED_ACK: "missedAck",
+            RAW: "raw",
         } as Record<keyof GatewayEvents, keyof ClientEvents>;
 
         for (const [gatewayEvent, clientEvent] of Object.entries(events)) {
             gateway.on(gatewayEvent as keyof GatewayEvents, (...args) =>
-                this.#client.emit(clientEvent, ...(args as never))
+                this.#client.emit(clientEvent, ...(args as never)),
             );
         }
 
@@ -101,47 +108,40 @@ export class ClientEventManager {
 
     async #handleDispatch<K extends keyof GatewayReceiveEvents>(
         event: K,
-        ...data: GatewayReceiveEvents[K]
+        data: GatewayReceiveEvents[K],
     ): Promise<void> {
         const mapping = this.#eventMapping.get(event);
 
         if (!mapping) {
-            this.#emitWarning(`No mapping found for event: ${event}`);
+            this.#client.emit("warn", `No mapping found for event: ${event}`);
             return;
         }
 
         const { clientEventName, serialize } = mapping;
 
         if (!clientEventName) {
-            this.#emitWarning(`No client event found for event: ${event}`);
+            this.#client.emit("warn", `No client event found for event: ${event}`);
             return;
         }
 
-        await this.#emitClientEvent(clientEventName, data, serialize);
+        this.#emitClientEvent(clientEventName, data, serialize);
     }
 
-    #emitWarning(message: string): void {
-        this.#client.emit("warn", message);
-    }
-
-    async #emitClientEvent(
+    #emitClientEvent(
         eventName: keyof ClientEvents,
-        data: unknown[],
-        serialize?: (...args: unknown[]) => unknown | unknown[]
-    ): Promise<void> {
+        data: unknown,
+        serialize?: ClientEventMappingStructure["serialize"],
+    ): void {
         const listeners = this.#client.listeners(eventName);
 
         if (!listeners.length) {
-            this.#emitWarning(`No listeners found for event: ${eventName}`);
+            this.#client.emit("warn", `No listeners found for event: ${eventName}`);
             return;
         }
 
         try {
-            const serializedData = serialize ? await Promise.resolve(serialize(...data)) : data;
-            this.#client.emit(
-                eventName,
-                ...((Array.isArray(serializedData) ? serializedData : [serializedData]) as never)
-            );
+            const serializedData = serialize ? serialize(this.#client, data as never) : data;
+            this.#client.emit(eventName, ...(serializedData as never));
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.#client.emit("error", new Error(`Error serializing data for event ${eventName}: ${errorMessage}`));

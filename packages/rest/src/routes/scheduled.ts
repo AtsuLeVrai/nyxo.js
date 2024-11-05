@@ -63,40 +63,40 @@ export type CreateGuildScheduledEventJsonParams = Pick<
     | "recurrence_rule"
 >;
 
-export class ScheduledRoutes {
+export const ScheduledRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users|Get Guild Scheduled Event Users}
      */
-    static getGuildScheduledEventUsers(
+    getGuildScheduledEventUsers(
         guildId: Snowflake,
         scheduledEventId: Snowflake,
-        params?: GetGuildScheduledEventUsersQueryStringParams
+        params?: GetGuildScheduledEventUsersQueryStringParams,
     ): RouteStructure<GuildScheduledEventUserStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/scheduled-events/${scheduledEventId}/users`,
             query: params,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event|Delete Guild Scheduled Event}
      */
-    static deleteGuildScheduledEvent(guildId: Snowflake, scheduledEventId: Snowflake): RouteStructure<void> {
+    deleteGuildScheduledEvent(guildId: Snowflake, scheduledEventId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/guilds/${guildId}/scheduled-events/${scheduledEventId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event|Modify Guild Scheduled Event}
      */
-    static modifyGuildScheduledEvent(
+    modifyGuildScheduledEvent(
         guildId: Snowflake,
         scheduledEventId: Snowflake,
         params: ModifyGuildScheduledEventJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<GuildScheduledEventStructure> {
         const headers: Record<string, string> = {};
 
@@ -110,48 +110,48 @@ export class ScheduledRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event|Get Guild Scheduled Event}
      */
-    static getGuildScheduledEvent(
+    getGuildScheduledEvent(
         guildId: Snowflake,
         scheduledEventId: Snowflake,
-        params?: GetGuildScheduledEventQueryStringParams
+        params?: GetGuildScheduledEventQueryStringParams,
     ): RouteStructure<GuildScheduledEventStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/scheduled-events/${scheduledEventId}`,
             query: params,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event|Create Guild Scheduled Event}
      */
-    static createGuildScheduledEvent(
+    createGuildScheduledEvent(
         guildId: Snowflake,
-        params: CreateGuildScheduledEventJsonParams
+        params: CreateGuildScheduledEventJsonParams,
     ): RouteStructure<GuildScheduledEventStructure> {
         return {
             method: RestMethods.Post,
             path: `/guilds/${guildId}/scheduled-events`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild|List Scheduled Events For Guild}
      */
-    static listScheduledEventsForGuild(
+    listScheduledEventsForGuild(
         guildId: Snowflake,
-        params?: ListScheduledEventsForGuildQueryStringParams
+        params?: ListScheduledEventsForGuildQueryStringParams,
     ): RouteStructure<GuildScheduledEventStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/scheduled-events`,
             query: params,
         };
-    }
-}
+    },
+} as const;

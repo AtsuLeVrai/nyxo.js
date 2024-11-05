@@ -1,4 +1,16 @@
 {
     "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-    "extends": ["../../configs/biome/node.json"]
+    "extends": ["../../configs/biome/node.json"],
+    "overrides": [
+        {
+            "include": ["packages/core/src/structures/**/*"],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "useNamingConvention": "info"
+                    }
+                }
+            }
+        }
+    ]
 }

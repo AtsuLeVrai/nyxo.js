@@ -120,7 +120,7 @@ export type AvatarDecorationDataStructure = {
      */
     asset: string;
     /**
-     * Id of the avatar decoration's SKU.
+     * ID of the avatar decoration's SKU.
      */
     sku_id: string;
 };

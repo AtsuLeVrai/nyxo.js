@@ -88,7 +88,7 @@ export class TextInputBuilder implements TextInputSchema {
         try {
             if (this.#data.custom_id && this.#data.custom_id.length > TextInputBuilder.CUSTOM_ID_LIMIT) {
                 throw new Error(
-                    `Custom ID must be less than or equal to ${TextInputBuilder.CUSTOM_ID_LIMIT} characters`
+                    `Custom ID must be less than or equal to ${TextInputBuilder.CUSTOM_ID_LIMIT} characters`,
                 );
             }
 
@@ -102,7 +102,7 @@ export class TextInputBuilder implements TextInputSchema {
                     this.#data.max_length > TextInputBuilder.MAX_LENGTH[1])
             ) {
                 throw new Error(
-                    `Max length must be between ${TextInputBuilder.MAX_LENGTH[0]} and ${TextInputBuilder.MAX_LENGTH[1]}`
+                    `Max length must be between ${TextInputBuilder.MAX_LENGTH[0]} and ${TextInputBuilder.MAX_LENGTH[1]}`,
                 );
             }
 
@@ -112,13 +112,13 @@ export class TextInputBuilder implements TextInputSchema {
                     this.#data.min_length > TextInputBuilder.MIN_LENGTH[1])
             ) {
                 throw new Error(
-                    `Min length must be between ${TextInputBuilder.MIN_LENGTH[0]} and ${TextInputBuilder.MIN_LENGTH[1]}`
+                    `Min length must be between ${TextInputBuilder.MIN_LENGTH[0]} and ${TextInputBuilder.MIN_LENGTH[1]}`,
                 );
             }
 
             if (this.#data.placeholder && this.#data.placeholder.length > TextInputBuilder.PLACEHOLDER_LIMIT) {
                 throw new Error(
-                    `Placeholder must be less than or equal to ${TextInputBuilder.PLACEHOLDER_LIMIT} characters`
+                    `Placeholder must be less than or equal to ${TextInputBuilder.PLACEHOLDER_LIMIT} characters`,
                 );
             }
 

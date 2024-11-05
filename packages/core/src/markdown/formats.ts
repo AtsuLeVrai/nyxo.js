@@ -1,3 +1,5 @@
+import type { MimeTypes } from "../enums/index.js";
+
 /**
  * Represents a unique identifier used by Discord.
  */
@@ -19,15 +21,25 @@ export type Float = number;
 export type Iso8601Timestamp = string;
 
 /**
+ * Type for a data URI content type.
+ */
+export type DataUriContentTypes = MimeTypes.Jpeg | MimeTypes.Png | MimeTypes.Gif;
+
+/**
+ * Represents a data URI schema.
+ */
+export type DataUriSchema = `data:${DataUriContentTypes};base64,${string}`;
+
+/**
  * Enum for different image formats.
  *
  * @see {@link https://discord.com/developers/docs/reference#image-formatting-image-formats|Image Formats}
  */
 export enum ImageFormats {
-    GIF = "gif",
-    JPEG = "jpeg",
+    Gif = "gif",
+    Jpeg = "jpeg",
     Lottie = "json",
-    PNG = "png",
+    Png = "png",
     WebP = "webp",
 }
 
@@ -103,7 +115,7 @@ export function formatSlashCommand(name: string, commandId: Snowflake): `</${str
 export function formatSlashCommand(
     name: string,
     subCommand: string,
-    commandId: Snowflake
+    commandId: Snowflake,
 ): `</${string} ${string}:${Snowflake}>`;
 
 /**
@@ -119,7 +131,7 @@ export function formatSlashCommand(
     name: string,
     subGroupCommand: string,
     subCommand: string,
-    commandId: Snowflake
+    commandId: Snowflake,
 ): `</${string} ${string} ${string}:${Snowflake}>`;
 
 /**
@@ -135,7 +147,7 @@ export function formatSlashCommand(
     name: string,
     subCommandOrGroup?: string,
     subCommand?: string,
-    commandId?: Snowflake
+    commandId?: Snowflake,
 ):
     | `</${string} ${string} ${string}:${Snowflake}>`
     | `</${string} ${string}:${Snowflake}>`
@@ -143,12 +155,11 @@ export function formatSlashCommand(
     if (subCommandOrGroup) {
         if (subCommand) {
             return `</${name} ${subCommand}:${commandId}>`;
-        } else {
-            return `</${name} ${subCommandOrGroup} ${subCommand}:${commandId}>`;
         }
-    } else {
-        return `</${name}:${commandId}>`;
+        return `</${name} ${subCommandOrGroup} ${subCommand}:${commandId}>`;
     }
+
+    return `</${name}:${commandId}>`;
 }
 
 /**
@@ -181,7 +192,7 @@ export function formatCustomEmoji(name: string, emojiId: Snowflake, animated: tr
 export function formatCustomEmoji(
     name: string,
     emojiId: Snowflake,
-    animated?: boolean
+    animated?: boolean,
 ): `<:${string}:${Snowflake}>` | `<a:${string}:${Snowflake}>` {
     return animated ? `<a:${name}:${emojiId}>` : `<:${name}:${emojiId}>`;
 }
@@ -212,7 +223,7 @@ export function formatUnixTimestamp(timestamp: number, style: TimestampStyles): 
  */
 export function formatUnixTimestamp(
     timestamp: number,
-    style?: TimestampStyles
+    style?: TimestampStyles,
 ): `<t:${number}:${TimestampStyles}>` | `<t:${number}>` {
     return style ? `<t:${timestamp}:${style}>` : `<t:${timestamp}>`;
 }
@@ -226,7 +237,7 @@ export function formatUnixTimestamp(
  */
 export function formatGuildNavigation(
     guildId: Snowflake,
-    type: GuildNavigationTypes
+    type: GuildNavigationTypes,
 ): `<${Snowflake}:${GuildNavigationTypes}>` {
     return `<${guildId}:${type}>`;
 }

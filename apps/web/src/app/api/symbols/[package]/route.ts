@@ -1,18 +1,39 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { SymbolInfo } from "@/types";
 import { NextResponse } from "next/server";
-import * as ts from "typescript";
+import {
+    ModuleResolutionKind,
+    type Node,
+    type Program,
+    type SourceFile,
+    SyntaxKind,
+    type Symbol as TsSymbol,
+    type TypeChecker,
+    createProgram,
+    displayPartsToString,
+    forEachChild,
+    getDefaultCompilerOptions,
+    isClassDeclaration,
+    isExportDeclaration,
+    isFunctionDeclaration,
+    isInterfaceDeclaration,
+    isMethodDeclaration,
+    isMethodSignature,
+    isPropertyDeclaration,
+    isPropertySignature,
+    isStringLiteral,
+    isTypeAliasDeclaration,
+    isVariableStatement,
+} from "typescript";
 
 const resolveModulePath = (currentPath: string, importPath: string): string | undefined => {
     const possibleExtensions = [".ts", ".tsx", ".d.ts"];
     const basePath = join(dirname(currentPath), importPath);
 
     for (const ext of possibleExtensions) {
-        const fullPath = basePath + ext;
-        if (existsSync(fullPath)) {
-            return fullPath;
+        if (existsSync(basePath + ext)) {
+            return basePath + ext;
         }
     }
 
@@ -20,151 +41,138 @@ const resolveModulePath = (currentPath: string, importPath: string): string | un
 };
 
 const getSymbols = (
-    sourceFile: ts.SourceFile,
-    checker: ts.TypeChecker,
-    program: ts.Program,
-    visitedFiles: Set<string> = new Set()
+    sourceFile: SourceFile,
+    checker: TypeChecker,
+    program: Program,
+    visited = new Set<string>(),
 ): SymbolInfo[] => {
     const symbols: SymbolInfo[] = [];
-    visitedFiles.add(sourceFile.fileName);
+    visited.add(sourceFile.fileName);
 
-    const addSymbol = (symbol: ts.Symbol, node: ts.Node): void => {
+    const processSymbol = (symbol: TsSymbol, node: Node) => {
         const type = checker.getTypeAtLocation(node);
-        const symbolInfo: SymbolInfo = {
+        const info: SymbolInfo = {
             name: symbol.getName(),
-            kind: ts.SyntaxKind[node.kind],
-            documentation: ts.displayPartsToString(symbol.getDocumentationComment(checker)),
+            kind: SyntaxKind[node.kind],
+            documentation: displayPartsToString(symbol.getDocumentationComment(checker)),
             fileName: sourceFile.fileName,
-            isExported: true,
             type: checker.typeToString(type),
+            isExported: true,
         };
 
-        if (ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node)) {
-            symbolInfo.parameters = node.parameters.map((param) => ({
-                name: param.name.getText(),
-                type: checker.typeToString(checker.getTypeAtLocation(param)),
+        if (isFunctionDeclaration(node) || isMethodDeclaration(node)) {
+            info.parameters = node.parameters.map((p) => ({
+                name: p.name.getText(),
+                type: checker.typeToString(checker.getTypeAtLocation(p)),
             }));
-        } else if (ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node)) {
-            symbolInfo.properties = [];
-            symbolInfo.methods = [];
-            if (symbol.members) {
-                for (const [key, member] of symbol.members.entries()) {
-                    const memberDeclaration = member.declarations?.[0];
-                    if (
-                        (memberDeclaration && ts.isPropertyDeclaration(memberDeclaration)) ||
-                        (memberDeclaration && ts.isPropertySignature(memberDeclaration))
-                    ) {
-                        symbolInfo.properties?.push({
-                            name: key.toString(),
-                            type: checker.typeToString(checker.getTypeAtLocation(memberDeclaration)),
-                        });
-                    } else if (
-                        (memberDeclaration && ts.isMethodDeclaration(memberDeclaration)) ||
-                        (memberDeclaration && ts.isMethodSignature(memberDeclaration))
-                    ) {
-                        symbolInfo.methods?.push({
-                            name: key.toString(),
-                            returnType: checker.typeToString(
-                                checker.getReturnTypeOfSignature(
-                                    checker.getSignatureFromDeclaration(memberDeclaration)!
-                                )
-                            ),
-                        });
-                    }
-                }
-            }
-        } else if (ts.isEnumDeclaration(node)) {
-            symbolInfo.enumMembers = node.members.map((member) => member.name.getText());
         }
 
-        symbols.push(symbolInfo);
-    };
+        if (isClassDeclaration(node) || isInterfaceDeclaration(node)) {
+            info.properties = [];
+            info.methods = [];
 
-    const visit = (node: ts.Node): void => {
-        if (ts.isExportDeclaration(node)) {
-            if (node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-                const modulePath = resolveModulePath(sourceFile.fileName, node.moduleSpecifier.text);
-                if (modulePath && !visitedFiles.has(modulePath)) {
-                    const moduleSource = program.getSourceFile(modulePath);
-                    if (moduleSource) {
-                        symbols.push(...getSymbols(moduleSource, checker, program, visitedFiles));
+            symbol.members?.forEach((member, key) => {
+                const decl = member.declarations?.[0];
+                if (!decl) {
+                    return;
+                }
+
+                if (isPropertyDeclaration(decl) || isPropertySignature(decl)) {
+                    info.properties?.push({
+                        name: key.toString(),
+                        type: checker.typeToString(checker.getTypeAtLocation(decl)),
+                    });
+                } else if (isMethodDeclaration(decl) || isMethodSignature(decl)) {
+                    const signature = checker.getSignatureFromDeclaration(decl);
+                    if (signature) {
+                        info.methods?.push({
+                            name: key.toString(),
+                            returnType: checker.typeToString(checker.getReturnTypeOfSignature(signature)),
+                        });
                     }
                 }
-            } else if (node.exportClause && ts.isNamedExports(node.exportClause)) {
-                for (const element of node.exportClause.elements) {
-                    const symbol = checker.getSymbolAtLocation(element.name);
-                    if (symbol) {
-                        addSymbol(symbol, element);
-                    }
+            });
+        }
+
+        symbols.push(info);
+    };
+
+    const visitNode = (node: Node): void => {
+        console.log(
+            "Visiting node:",
+            isExportDeclaration(node) && node.moduleSpecifier && isStringLiteral(node.moduleSpecifier),
+        );
+        if (isExportDeclaration(node) && node.moduleSpecifier && isStringLiteral(node.moduleSpecifier)) {
+            console.log("Resolving module path:", node.moduleSpecifier.text);
+            const modulePath = resolveModulePath(sourceFile.fileName, node.moduleSpecifier.text);
+            console.log("Resolved module path:", modulePath, !visited.has(modulePath!));
+            if (modulePath && !visited.has(modulePath)) {
+                const moduleSource = program.getSourceFile(modulePath);
+                console.log("Module source:", moduleSource);
+                if (moduleSource) {
+                    symbols.push(...getSymbols(moduleSource, checker, program, visited));
                 }
             }
         } else if (
-            (ts.isVariableStatement(node) ||
-                ts.isFunctionDeclaration(node) ||
-                ts.isClassDeclaration(node) ||
-                ts.isInterfaceDeclaration(node) ||
-                ts.isTypeAliasDeclaration(node) ||
-                ts.isEnumDeclaration(node)) &&
-            node.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
+            (isVariableStatement(node) ||
+                isFunctionDeclaration(node) ||
+                isClassDeclaration(node) ||
+                isInterfaceDeclaration(node) ||
+                isTypeAliasDeclaration(node)) &&
+            node.modifiers?.some((m) => m.kind === SyntaxKind.ExportKeyword)
         ) {
-            if (ts.isVariableStatement(node)) {
+            if (isVariableStatement(node)) {
                 for (const decl of node.declarationList.declarations) {
                     const symbol = checker.getSymbolAtLocation(decl.name);
                     if (symbol) {
-                        addSymbol(symbol, decl);
+                        processSymbol(symbol, decl);
                     }
                 }
             } else if ("name" in node && node.name) {
                 const symbol = checker.getSymbolAtLocation(node.name);
                 if (symbol) {
-                    addSymbol(symbol, node);
+                    processSymbol(symbol, node);
                 }
             }
         }
 
-        ts.forEachChild(node, visit);
+        forEachChild(node, visitNode);
     };
 
-    visit(sourceFile);
+    visitNode(sourceFile);
     return symbols;
 };
 
-export async function GET(request: Request, props: { params: Promise<{ package: string }> }) {
-    const params = await props.params;
-    const packageName = params.package;
-
-    if (typeof packageName !== "string") {
-        return NextResponse.json({ error: "Invalid package name" }, { status: 400 });
-    }
-
-    const packagePath = join(process.cwd(), "..", "..", "packages", packageName, "src", "index.ts");
-
-    if (!existsSync(packagePath)) {
-        return NextResponse.json({ error: "Package not found" }, { status: 404 });
-    }
-
+export async function GET(request: Request, { params }: { params: Promise<{ package: string }> }) {
     try {
-        const content = await readFile(packagePath, "utf8");
+        const { package: packageName } = await params;
 
-        const compilerOptions = ts.getDefaultCompilerOptions();
-        compilerOptions.moduleResolution = ts.ModuleResolutionKind.NodeJs;
+        if (typeof packageName !== "string") {
+            return NextResponse.json({ error: "Invalid package name" }, { status: 400 });
+        }
 
-        const program = ts.createProgram([packagePath], compilerOptions);
+        const packagePath = join(process.cwd(), "..", "..", "packages", packageName, "src", "index.ts");
+        if (!existsSync(packagePath)) {
+            return NextResponse.json({ error: "Package not found" }, { status: 404 });
+        }
+
+        const program = createProgram([packagePath], {
+            ...getDefaultCompilerOptions(),
+            moduleResolution: ModuleResolutionKind.NodeNext,
+        });
+
         const sourceFile = program.getSourceFile(packagePath);
-        const checker = program.getTypeChecker();
-
         if (!sourceFile) {
             throw new Error("Failed to create source file");
         }
 
-        const symbols = getSymbols(sourceFile, checker, program);
-
+        const symbols = getSymbols(sourceFile, program.getTypeChecker(), program);
         return NextResponse.json(symbols);
     } catch (error) {
-        console.error("Error getting symbols:", error);
+        console.error("Error processing symbols:", error);
         return NextResponse.json(
-            { error: "Internal server error", details: (error as Error).message },
-            { status: 500 }
+            { error: "Internal server error", details: error instanceof Error ? error.message : String(error) },
+            { status: 500 },
         );
     }
 }

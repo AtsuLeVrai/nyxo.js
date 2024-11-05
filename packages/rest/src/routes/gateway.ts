@@ -41,24 +41,24 @@ export type GetGatewayBotJsonResponse = {
     url: string;
 };
 
-export class GatewayRoutes {
+export const GatewayRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot|Get Gateway Bot}
      */
-    static getGatewayBot(): RouteStructure<GetGatewayBotJsonResponse> {
+    getGatewayBot(): RouteStructure<GetGatewayBotJsonResponse> {
         return {
             method: RestMethods.Get,
             path: "/gateway/bot",
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway|Get Gateway}
      */
-    static getGateway(): RouteStructure<{ url: string }> {
+    getGateway(): RouteStructure<{ url: string }> {
         return {
             method: RestMethods.Get,
             path: "/gateway",
         };
-    }
-}
+    },
+} as const;

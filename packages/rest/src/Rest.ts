@@ -14,13 +14,13 @@ export class Rest extends EventEmitter<RestEvents> {
         this.#requestHandler = new RequestManager(token, options, this.#rateLimiter, this.#connectionManager, this);
     }
 
-    async manyRequest<T extends readonly RouteStructure<any>[] | []>(
-        routes: T
+    manyRequest<T extends readonly RouteStructure<unknown>[] | []>(
+        routes: T,
     ): Promise<{ [K in keyof T]: T[K] extends RouteStructure<infer U> ? Awaited<U> : never }> {
         return this.#requestHandler.handleManyRequests(routes);
     }
 
-    async request<T>(route: RouteStructure<T>): Promise<T> {
+    request<T>(route: RouteStructure<T>): Promise<T> {
         return this.#requestHandler.handleRequest(route);
     }
 }

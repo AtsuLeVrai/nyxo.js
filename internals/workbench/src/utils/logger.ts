@@ -7,7 +7,7 @@ const logFormat = format.combine(
     format.splat(),
     format.colorize(),
     format.errors({ stack: true }),
-    format.printf((info) => `${info.level}: ${info.message}`)
+    format.printf((info) => `${info.level}: ${info.message}`),
 );
 
 const filesRotateTransport: DailyRotateFile[] = [];
@@ -19,7 +19,7 @@ for (const type of logType) {
             level: type,
             maxSize: "20m",
             maxFiles: "14d",
-        })
+        }),
     );
 }
 

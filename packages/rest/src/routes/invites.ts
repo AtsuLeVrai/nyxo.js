@@ -19,11 +19,11 @@ export type GetInviteQueryStringParams = {
     with_expiration?: boolean;
 };
 
-export class InviteRoutes {
+export const InviteRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite|Delete Invite}
      */
-    static deleteInvite(code: string, reason?: string): RouteStructure<InviteStructure> {
+    deleteInvite(code: string, reason?: string): RouteStructure<InviteStructure> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -35,16 +35,16 @@ export class InviteRoutes {
             path: `/invites/${code}`,
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#get-invite|Get Invite}
      */
-    static getInvite(code: string, params?: GetInviteQueryStringParams): RouteStructure<InviteStructure> {
+    getInvite(code: string, params?: GetInviteQueryStringParams): RouteStructure<InviteStructure> {
         return {
             method: RestMethods.Get,
             path: `/invites/${code}`,
             query: params,
         };
-    }
-}
+    },
+} as const;

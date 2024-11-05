@@ -17,6 +17,7 @@ import type {
     GuildOnboardingPromptTypes,
     GuildOnboardingStructure,
     GuildPreviewStructure,
+    GuildScheduledEventStructure,
     GuildStructure,
     GuildVerificationLevel,
     GuildWidgetSettingsStructure,
@@ -33,16 +34,20 @@ import type {
     PremiumTier,
     RoleStructure,
     Snowflake,
+    StageInstanceStructure,
     StickerStructure,
     SystemChannelFlags,
     UnavailableGuildStructure,
     UserStructure,
+    VoiceStateStructure,
     WelcomeScreenChannelStructure,
     WelcomeScreenStructure,
 } from "@nyxjs/core";
+import type { GuildCreateExtraFields, PresenceUpdateEventFields } from "@nyxjs/gateway";
 import type { PickWithMethods } from "../types/index.js";
 import { Emoji } from "./Emojis.js";
 import { Role } from "./Roles.js";
+import { StageInstance } from "./Stages.js";
 import { Sticker } from "./Stickers.js";
 import { AvatarDecorationData, User } from "./Users.js";
 
@@ -319,7 +324,7 @@ export class WelcomeScreen {
         return {
             description: this.#description,
             welcome_channels: this.#welcomeChannels.map((channel) =>
-                channel.toJSON()
+                channel.toJSON(),
             ) as WelcomeScreenChannelStructure[],
         };
     }
@@ -969,8 +974,31 @@ export class Guild {
     #welcomeScreen: WelcomeScreen | null = null;
     #widgetChannelId: Snowflake | null = null;
     #widgetEnabled = false;
+    /**
+     * @todo Implement Channel Class
+     */
+    #channels: ChannelStructure[] = [];
+    /**
+     * @todo Implement GuildScheduledEvent Class
+     */
+    #guildScheduledEvents: GuildScheduledEventStructure[] = [];
+    #joinedAt: Iso8601Timestamp | null = null;
+    #large = false;
+    #memberCount: Integer | null = null;
+    #members: GuildMember[] = [];
+    #presences: Partial<PresenceUpdateEventFields>[] = [];
+    #stageInstances: StageInstance[] = [];
+    /**
+     * @todo Implement Channel Class
+     */
+    #threads: ChannelStructure[] = [];
+    #unavailable = false;
+    /**
+     * @todo Implement VoiceState Class
+     */
+    #voiceStates: Partial<VoiceStateStructure>[] = [];
 
-    constructor(data: Partial<GuildStructure>) {
+    constructor(data: Partial<GuildStructure & GuildCreateExtraFields>) {
         this.patch(data);
     }
 
@@ -1146,7 +1174,51 @@ export class Guild {
         return this.#widgetEnabled;
     }
 
-    patch(data: Partial<GuildStructure>) {
+    get channels() {
+        return this.#channels;
+    }
+
+    get guildScheduledEvents() {
+        return this.#guildScheduledEvents;
+    }
+
+    get joinedAt() {
+        return this.#joinedAt;
+    }
+
+    get large() {
+        return this.#large;
+    }
+
+    get memberCount() {
+        return this.#memberCount;
+    }
+
+    get members() {
+        return this.#members;
+    }
+
+    get presences() {
+        return this.#presences;
+    }
+
+    get stageInstances() {
+        return this.#stageInstances;
+    }
+
+    get threads() {
+        return this.#threads;
+    }
+
+    get unavailable() {
+        return this.#unavailable;
+    }
+
+    get voiceStates() {
+        return this.#voiceStates;
+    }
+
+    patch(data: Partial<GuildStructure & GuildCreateExtraFields>) {
         this.#afkChannelId = data.afk_channel_id ?? this.#afkChannelId;
         this.#afkTimeout = data.afk_timeout ?? this.#afkTimeout;
         this.#applicationId = data.application_id ?? this.#applicationId;
@@ -1210,9 +1282,29 @@ export class Guild {
 
         this.#widgetChannelId = data.widget_channel_id ?? this.#widgetChannelId;
         this.#widgetEnabled = data.widget_enabled ?? this.#widgetEnabled;
+
+        this.#channels = data.channels ?? this.#channels;
+        this.#guildScheduledEvents = data.guild_scheduled_events ?? this.#guildScheduledEvents;
+        this.#joinedAt = data.joined_at ?? this.#joinedAt;
+        this.#large = data.large ?? this.#large;
+        this.#memberCount = data.member_count ?? this.#memberCount;
+
+        if (Array.isArray(data.members)) {
+            this.#members = data.members.map((member) => new GuildMember(member));
+        }
+
+        this.#presences = data.presences ?? this.#presences;
+
+        if (Array.isArray(data.stage_instances)) {
+            this.#stageInstances = data.stage_instances.map((stageInstance) => new StageInstance(stageInstance));
+        }
+
+        this.#threads = data.threads ?? this.#threads;
+        this.#unavailable = data.unavailable ?? this.#unavailable;
+        this.#voiceStates = data.voice_states ?? this.#voiceStates;
     }
 
-    toJSON(): Partial<GuildStructure> {
+    toJSON(): Partial<GuildStructure & GuildCreateExtraFields> {
         return {
             afk_channel_id: this.#afkChannelId,
             afk_timeout: this.#afkTimeout ?? undefined,
@@ -1257,6 +1349,19 @@ export class Guild {
             welcome_screen: this.#welcomeScreen?.toJSON() as WelcomeScreenStructure,
             widget_channel_id: this.#widgetChannelId,
             widget_enabled: this.#widgetEnabled,
+            channels: this.#channels,
+            guild_scheduled_events: this.#guildScheduledEvents,
+            joined_at: this.#joinedAt ?? undefined,
+            large: this.#large,
+            member_count: this.#memberCount ?? undefined,
+            members: this.#members.map((member) => member.toJSON()) as GuildMemberStructure[],
+            presences: this.#presences,
+            stage_instances: this.#stageInstances.map((stageInstance) =>
+                stageInstance.toJSON(),
+            ) as StageInstanceStructure[],
+            threads: this.#threads,
+            unavailable: this.#unavailable,
+            voice_states: this.#voiceStates,
         };
     }
 }

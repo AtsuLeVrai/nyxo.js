@@ -144,7 +144,7 @@ export type WelcomeScreenChannelStructure = {
      */
     emoji_id: Snowflake | null;
     /**
-     * The emoji name if custom, the unicode character if standard, or null if no emoji is set
+     * The emoji name if custom, the Unicode character if standard, or null if no emoji is set
      */
     emoji_name: string | null;
 };
@@ -494,7 +494,7 @@ export enum GuildFeatures {
      */
     Featurable = "FEATURABLE",
     /**
-     * Guild has access to set an invite splash background
+     * Guild has access to set an invitation splash background
      */
     InviteSplash = "INVITE_SPLASH",
     /**
@@ -934,11 +934,11 @@ export type GuildStructure = {
      */
     verification_level: GuildVerificationLevel;
     /**
-     * The welcome screen of a Community guild, shown to new members, returned in an Invite's guild object
+     * The welcome screen of a Community guild, shown to new members, returned in an Invitation's guild object
      */
     welcome_screen?: WelcomeScreenStructure;
     /**
-     * The channel id that the widget will generate an invite to, or null if set to no invite
+     * The channel id that the widget will generate an invitation to, or null if set to no invite
      */
     widget_channel_id?: Snowflake | null;
     /**

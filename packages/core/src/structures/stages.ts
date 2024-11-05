@@ -29,7 +29,7 @@ export type StageInstanceStructure = {
      */
     channel_id: Snowflake;
     /**
-     * Whether or not Stage Discovery is disabled (deprecated).
+     * Whether Stage Discovery is disabled (deprecated).
      *
      * @deprecated No longer supported by Discord.
      */

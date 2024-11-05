@@ -136,7 +136,7 @@ export class Client extends EventEmitter<ClientEvents> {
 
         try {
             this.#state.isReconnecting = true;
-            this.gateway.reconnect();
+            await this.gateway.reconnect();
         } finally {
             this.#state.isReconnecting = false;
         }

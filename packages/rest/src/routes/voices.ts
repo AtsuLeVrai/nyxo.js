@@ -14,64 +14,64 @@ export type ModifyCurrentUserVoiceStateJsonParams = Pick<
     "channel_id" | "request_to_speak_timestamp" | "suppress"
 >;
 
-export class VoiceRoutes {
+export const VoiceRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state|Modify User Voice State}
      * @return No information available in the Discord API documentation for the response.
      */
-    static modifyUserVoiceState(
+    modifyUserVoiceState(
         guildId: Snowflake,
         userId: Snowflake,
-        params: ModifyUserVoiceStateJsonParams
+        params: ModifyUserVoiceStateJsonParams,
     ): RouteStructure<void> {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/voice-states/${userId}`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state|Modify Current User Voice State}
      */
-    static modifyCurrentUserVoiceState(
+    modifyCurrentUserVoiceState(
         guildId: Snowflake,
-        params: ModifyCurrentUserVoiceStateJsonParams
+        params: ModifyCurrentUserVoiceStateJsonParams,
     ): RouteStructure<void> {
         return {
             method: RestMethods.Patch,
             path: `/guilds/${guildId}/voice-states/@me`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#get-user-voice-state|Get User Voice State}
      */
-    static getUserVoiceState(guildId: Snowflake, userId: Snowflake): RouteStructure<VoiceStateStructure> {
+    getUserVoiceState(guildId: Snowflake, userId: Snowflake): RouteStructure<VoiceStateStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/voice-states/${userId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state|Get Current User Voice State}
      */
-    static getCurrentUserVoiceState(guildId: Snowflake): RouteStructure<VoiceStateStructure> {
+    getCurrentUserVoiceState(guildId: Snowflake): RouteStructure<VoiceStateStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/voice-states/@me`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions|List Voice Regions}
      */
-    static listVoiceRegions(): RouteStructure<VoiceRegionStructure[]> {
+    listVoiceRegions(): RouteStructure<VoiceRegionStructure[]> {
         return {
             method: RestMethods.Get,
             path: "/voice/regions",
         };
-    }
-}
+    },
+} as const;

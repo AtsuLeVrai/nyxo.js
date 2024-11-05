@@ -25,7 +25,7 @@ async function createProjectDirectory(projectName: string): Promise<boolean> {
         if (stats.isDirectory()) {
             spinner.fail(chalk.red("Project directory already exists!"));
             console.log(
-                `${chalk.red("Error:")} The directory ${chalk.white(projectName)} already exists. Please choose a different name or remove the existing directory.`
+                `${chalk.red("Error:")} The directory ${chalk.white(projectName)} already exists. Please choose a different name or remove the existing directory.`,
             );
 
             return false;
@@ -33,7 +33,7 @@ async function createProjectDirectory(projectName: string): Promise<boolean> {
             await mkdir(projectName);
             spinner.succeed(chalk.green("Project directory created!"));
             console.log(
-                `${chalk.green("1. Success:")} Project directory ${chalk.white(projectName)} created successfully.`
+                `${chalk.green("1. Success:")} Project directory ${chalk.white(projectName)} created successfully.`,
             );
 
             return true;
@@ -41,7 +41,7 @@ async function createProjectDirectory(projectName: string): Promise<boolean> {
     } catch {
         spinner.fail(chalk.red("Failed to create project directory!"));
         console.error(
-            `${chalk.red("Error:")} Failed to create project directory ${chalk.white(projectName)}. Please check your permissions and try again.`
+            `${chalk.red("Error:")} Failed to create project directory ${chalk.white(projectName)}. Please check your permissions and try again.`,
         );
 
         return false;
@@ -52,7 +52,7 @@ async function copyTemplate(
     typescript: boolean,
     projectName: string,
     projectPath: string,
-    features: Feature[]
+    features: Feature[],
 ): Promise<boolean> {
     const isTypescript = typescript ? "ts" : "js";
     const templatePath = resolve(new URL(`../../templates/${isTypescript}`, import.meta.url).pathname);
@@ -62,7 +62,7 @@ async function copyTemplate(
         await copy(templatePath, projectPath);
         spinner.succeed(chalk.green("Template files copied!"));
         console.log(
-            `${chalk.green("2. Success:")} Template files for ${chalk.white(isTypescript)} copied successfully to ${chalk.white(projectName)}.`
+            `${chalk.green("2. Success:")} Template files for ${chalk.white(isTypescript)} copied successfully to ${chalk.white(projectName)}.`,
         );
 
         await createPackageJson(projectName, typescript, projectPath, features);
@@ -71,7 +71,7 @@ async function copyTemplate(
     } catch (error) {
         spinner.fail(chalk.red("Failed to copy template files!"));
         console.error(
-            `${chalk.red("Error:")} Failed to copy template files to ${chalk.white(projectPath)}. Please verify the template path and permissions.`
+            `${chalk.red("Error:")} Failed to copy template files to ${chalk.white(projectPath)}. Please verify the template path and permissions.`,
         );
 
         return false;
@@ -82,7 +82,7 @@ async function createPackageJson(
     projectName: string,
     typescript: boolean,
     projectPath: string,
-    features: Feature[]
+    features: Feature[],
 ): Promise<void> {
     const packageJson = {
         name: projectName,
@@ -122,12 +122,12 @@ async function createPackageJson(
     try {
         await writeFile(join(projectPath, "package.json"), JSON.stringify(packageJson, null, 2));
         console.log(
-            `${chalk.green("3. Success:")} The ${chalk.white("package.json")} file was created successfully in ${chalk.white(projectPath)}.`
+            `${chalk.green("3. Success:")} The ${chalk.white("package.json")} file was created successfully in ${chalk.white(projectPath)}.`,
         );
     } catch (error) {
         console.error(chalk.red("Failed to create package.json"));
         console.error(
-            `${chalk.red("Error:")} Failed to write ${chalk.white("package.json")} to ${chalk.white(projectPath)}. Please check your permissions and file paths.`
+            `${chalk.red("Error:")} Failed to write ${chalk.white("package.json")} to ${chalk.white(projectPath)}. Please check your permissions and file paths.`,
         );
     }
 }
@@ -138,14 +138,14 @@ async function initializeGit(projectPath: string): Promise<boolean> {
         await execPromise(`git init`, { cwd: projectPath });
         spinner.succeed(chalk.green("Git repository initialized!"));
         console.log(
-            `${chalk.green("4. Success:")} Git repository initialized successfully in ${chalk.white(projectPath)}.`
+            `${chalk.green("4. Success:")} Git repository initialized successfully in ${chalk.white(projectPath)}.`,
         );
 
         return true;
     } catch (error) {
         spinner.fail(chalk.red("Failed to initialize Git repository!"));
         console.error(
-            `${chalk.red("Error:")} Failed to initialize Git repository in ${chalk.white(projectPath)}. Please verify your Git installation.`
+            `${chalk.red("Error:")} Failed to initialize Git repository in ${chalk.white(projectPath)}. Please verify your Git installation.`,
         );
 
         return false;
@@ -161,14 +161,14 @@ async function addFeatures(features: Feature[], projectPath: string): Promise<vo
                     // Create .eslintrc file and add dependencies
                     await execPromise(`npx eslint --init`, { cwd: projectPath });
                     console.log(
-                        `${chalk.green("5. Success:")} ESLint configured successfully in ${chalk.white(projectPath)}.`
+                        `${chalk.green("5. Success:")} ESLint configured successfully in ${chalk.white(projectPath)}.`,
                     );
                     break;
                 case "prettier":
                     // Create .prettierrc file and add dependencies
                     await execPromise(`npm install prettier -D`, { cwd: projectPath });
                     console.log(
-                        `${chalk.green("6. Success:")} Prettier installed and configured successfully in ${chalk.white(projectPath)}.`
+                        `${chalk.green("6. Success:")} Prettier installed and configured successfully in ${chalk.white(projectPath)}.`,
                     );
                     break;
                 case "husky":
@@ -176,7 +176,7 @@ async function addFeatures(features: Feature[], projectPath: string): Promise<vo
                     await execPromise(`npm install husky -D`, { cwd: projectPath });
                     await execPromise(`npx husky install`, { cwd: projectPath });
                     console.log(
-                        `${chalk.green("7. Success:")} Husky installed and Git hooks set up successfully in ${chalk.white(projectPath)}.`
+                        `${chalk.green("7. Success:")} Husky installed and Git hooks set up successfully in ${chalk.white(projectPath)}.`,
                     );
                     break;
                 // Add other features as needed
@@ -188,7 +188,7 @@ async function addFeatures(features: Feature[], projectPath: string): Promise<vo
     } catch (error) {
         spinner.fail(chalk.red("Failed to add selected features!"));
         console.error(
-            `${chalk.red("Error:")} Failed to add selected features to ${chalk.white(projectPath)}. Please check the logs for more details.`
+            `${chalk.red("Error:")} Failed to add selected features to ${chalk.white(projectPath)}. Please check the logs for more details.`,
         );
     }
 }
@@ -200,14 +200,14 @@ async function installDependencies(packageManager: PackageManager, projectPath: 
         await execPromise(installCommand, { cwd: projectPath });
         spinner.succeed(chalk.green("Dependencies installed!"));
         console.log(
-            `${chalk.green("8. Success:")} Dependencies installed successfully in ${chalk.white(projectPath)} using ${chalk.white(packageManager)}.`
+            `${chalk.green("8. Success:")} Dependencies installed successfully in ${chalk.white(projectPath)} using ${chalk.white(packageManager)}.`,
         );
 
         return true;
     } catch (error) {
         spinner.fail(chalk.red("Failed to install dependencies!"));
         console.error(
-            `${chalk.red("Error:")} Failed to install dependencies in ${chalk.white(projectPath)}. Please verify your internet connection and package manager configuration.`
+            `${chalk.red("Error:")} Failed to install dependencies in ${chalk.white(projectPath)}. Please verify your internet connection and package manager configuration.`,
         );
 
         return false;
@@ -230,13 +230,13 @@ function initFinished(answers: Answers): void {
     console.log(chalk.green("\nProject setup completed!"));
     console.log(`${chalk.green("1.")} Navigate to your project: ${chalk.white(`cd ${answers.projectName}`)}`);
     console.log(
-        `${chalk.green("2.")} Run the development server: ${chalk.white(`${answers.packageManager} run start`)}`
+        `${chalk.green("2.")} Run the development server: ${chalk.white(`${answers.packageManager} run start`)}`,
     );
     console.log(`${chalk.green("3.")} Enjoy coding and building something awesome! 🚀`);
     console.log(chalk.white("\n💡 Tip: Don't forget to check out the documentation for any extra setup steps."));
     console.log(
         chalk.white(`   Visit: ${chalk.underline("https://nyxjs.dev/docs")}
-`)
+`),
     );
 }
 

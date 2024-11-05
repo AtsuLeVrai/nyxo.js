@@ -143,7 +143,7 @@ export class EmbedBuilder implements EmbedSchema {
             if (this.#data.fields) {
                 if (this.#data.fields.length > EmbedBuilder.FIELDS_LIMIT) {
                     throw new Error(
-                        `Fields limit exceeded. Must be less than or equal to ${EmbedBuilder.FIELDS_LIMIT}`
+                        `Fields limit exceeded. Must be less than or equal to ${EmbedBuilder.FIELDS_LIMIT}`,
                     );
                 }
 

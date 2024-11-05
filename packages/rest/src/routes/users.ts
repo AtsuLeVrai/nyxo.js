@@ -66,81 +66,81 @@ export type ModifyCurrentUserJsonParams = {
     username?: string;
 };
 
-export class UserRoutes {
+export const UserRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params|Update Current User Application Role Connection}
      */
-    static updateCurrentUserApplicationRoleConnection(
+    updateCurrentUserApplicationRoleConnection(
         applicationId: Snowflake,
-        params: UpdateCurrentUserApplicationRoleConnectionJsonParams
+        params: UpdateCurrentUserApplicationRoleConnectionJsonParams,
     ): RouteStructure<ApplicationRoleConnectionStructure> {
         return {
             method: RestMethods.Put,
             path: `/users/@me/applications/${applicationId}/role-connection`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection|Get Current User Application Role Connection}
      */
-    static getCurrentUserApplicationRoleConnection(
-        applicationId: Snowflake
+    getCurrentUserApplicationRoleConnection(
+        applicationId: Snowflake,
     ): RouteStructure<ApplicationRoleConnectionStructure> {
         return {
             method: RestMethods.Get,
             path: `/users/@me/applications/${applicationId}/role-connection`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections|Get Current User Connections}
      */
-    static getCurrentUserConnections(): RouteStructure<ConnectionStructure[]> {
+    getCurrentUserConnections(): RouteStructure<ConnectionStructure[]> {
         return {
             method: RestMethods.Get,
-            path: `/users/@me/connections`,
+            path: "/users/@me/connections",
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm|Create Group DM}
      * @see {@link https://discord.com/developers/docs/resources/user#create-dm|Create DM}
      */
-    static createDm(params: CreateDmJsonParams | CreateGroupDmJsonParams): RouteStructure<ChannelStructure> {
+    createDm(params: CreateDmJsonParams | CreateGroupDmJsonParams): RouteStructure<ChannelStructure> {
         return {
             method: RestMethods.Post,
-            path: `/users/@me/channels`,
+            path: "/users/@me/channels",
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#leave-guild|Leave Guild}
      */
-    static leaveGuild(guildId: Snowflake): RouteStructure<void> {
+    leaveGuild(guildId: Snowflake): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/users/@me/guilds/${guildId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member|Get Current User Guild Member}
      */
-    static getCurrentUserGuildMember(guildId: Snowflake): RouteStructure<GuildMemberStructure> {
+    getCurrentUserGuildMember(guildId: Snowflake): RouteStructure<GuildMemberStructure> {
         return {
             method: RestMethods.Get,
             path: `/users/@me/guilds/${guildId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds|Get Current User Guilds}
      * @todo Verify if GuildStructure is correct
      */
-    static getCurrentUserGuilds(
-        params?: GetCurrentGuildsQueryStringParams
+    getCurrentUserGuilds(
+        params?: GetCurrentGuildsQueryStringParams,
     ): RouteStructure<
         Pick<
             GuildStructure,
@@ -157,39 +157,39 @@ export class UserRoutes {
     > {
         return {
             method: RestMethods.Get,
-            path: `/users/@me/guilds`,
+            path: "/users/@me/guilds",
             query: params,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user|Modify Current User}
      */
-    static modifyCurrentUser(params: ModifyCurrentUserJsonParams): RouteStructure<UserStructure> {
+    modifyCurrentUser(params: ModifyCurrentUserJsonParams): RouteStructure<UserStructure> {
         return {
             method: RestMethods.Patch,
-            path: `/users/@me`,
+            path: "/users/@me",
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-user|Get User}
      */
-    static getUser(userId: Snowflake): RouteStructure<UserStructure> {
+    getUser(userId: Snowflake): RouteStructure<UserStructure> {
         return {
             method: RestMethods.Get,
             path: `/users/${userId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/user#get-current-user|Get Current User}
      */
-    static getCurrentUser(): RouteStructure<UserStructure> {
+    getCurrentUser(): RouteStructure<UserStructure> {
         return {
             method: RestMethods.Get,
-            path: `/users/@me`,
+            path: "/users/@me",
         };
-    }
-}
+    },
+} as const;

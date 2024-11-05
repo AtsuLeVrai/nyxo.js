@@ -121,7 +121,7 @@ export type GuildMembersChunkEventFields = {
     /**
      * When passing an invalid ID to REQUEST_GUILD_MEMBERS, it will be returned here
      */
-    not_found?: any[];
+    not_found?: unknown[];
     /**
      * When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here
      */

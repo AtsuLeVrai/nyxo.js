@@ -25,10 +25,10 @@ export default function HomePage() {
                     </p>
                     <div className="flex justify-center space-x-4 mb-8">
                         <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                            v1.0.0 Beta
+                            v1.0.0-alpha
                         </span>
-                        <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                            Stable
+                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                            Alpha Release
                         </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-md mx-auto">

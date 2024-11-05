@@ -14,7 +14,7 @@ export type SoundboardSoundStructure = {
      */
     emoji_id: Snowflake | null;
     /**
-     * The unicode character of this sound's standard emoji.
+     * The Unicode character of this sound's standard emoji.
      */
     emoji_name: string | null;
     /**

@@ -15,22 +15,26 @@ import {
 import type { Client } from "../Client.js";
 import { ApplicationRoleConnection, Connection, Guild, GuildMember, User } from "../structures/index.js";
 
+type CacheKey = `user:${string}` | `member:${string}` | `connections:${string}` | `guilds:${string}`;
+type CacheValue = UserStructure | GuildMemberStructure | ConnectionStructure[] | GuildStructure[];
+
 export class UserManager {
     #client: Client;
-    #userCache: Map<string, UserStructure> = new Map();
-    #guildMemberCache: Map<string, GuildMemberStructure> = new Map();
-    #connectionCache: Map<string, ConnectionStructure[]> = new Map();
-    #guildCache: Map<string, GuildStructure[]> = new Map();
+    #cache: Map<CacheKey, { value: CacheValue; timestamp: number }> = new Map();
 
     constructor(client: Client) {
         this.#client = client;
+    }
+
+    get cache(): Map<CacheKey, { value: CacheValue; timestamp: number }> {
+        return this.#cache;
     }
 
     async createDm(userId: Snowflake): Promise<ChannelStructure> {
         return this.#client.rest.request(
             UserRoutes.createDm({
                 recipient_id: userId,
-            })
+            }),
         );
     }
 
@@ -39,110 +43,121 @@ export class UserManager {
     }
 
     async fetch(userId: Snowflake | "@me", force = false): Promise<User> {
-        // 1. Si force = true, on skip complètement la vérification du cache
-        if (!force) {
-            // 2. On essaie de récupérer du cache
-            const cachedUser = this.#userCache.get(userId);
+        const cacheKey = this.#getCacheKey("user", userId);
 
-            // 3. Si on a trouvé quelque chose
+        if (!force) {
+            const cachedUser = this.#getCache<UserStructure>(cacheKey);
             if (cachedUser) {
                 return new User(cachedUser);
             }
-            // 4. Si cachedUser est undefined, on continue naturellement
         }
 
-        // 5. On arrive ici si :
-        //    - force = true
-        //    - OU si aucune donnée n'a été trouvée dans le cache
-        //    - OU si les données du cache étaient expirées
         const userData = await this.#client.rest.request(UserRoutes.getUser(userId));
-        this.#userCache.set(userId, userData);
+        this.#setCache(cacheKey, userData);
         return new User(userData);
     }
 
     async fetchCurrentApplicationRoleConnection(applicationId: Snowflake): Promise<ApplicationRoleConnection> {
         const applicationData = await this.#client.rest.request(
-            UserRoutes.getCurrentUserApplicationRoleConnection(applicationId)
+            UserRoutes.getCurrentUserApplicationRoleConnection(applicationId),
         );
         return new ApplicationRoleConnection(applicationData);
     }
 
     async fetchCurrentConnections(force = false): Promise<Connection[]> {
+        const cacheKey = this.#getCacheKey("connections");
+
         if (!force) {
-            const cachedConnections = this.#connectionCache.get("current");
+            const cachedConnections = this.#getCache<ConnectionStructure[]>(cacheKey);
             if (cachedConnections) {
                 return cachedConnections.map((conn) => new Connection(conn));
             }
         }
 
         const connectionsData = await this.#client.rest.request(UserRoutes.getCurrentUserConnections());
-        this.#connectionCache.set("current", connectionsData);
+        this.#setCache(cacheKey, connectionsData);
         return connectionsData.map((conn) => new Connection(conn));
     }
 
     async fetchCurrentGuildMember(guildId: Snowflake, force = false): Promise<GuildMember> {
+        const cacheKey = this.#getCacheKey("member", guildId);
+
         if (!force) {
-            const cacheKey = `${guildId}`;
-            const cachedMember = this.#guildMemberCache.get(cacheKey);
+            const cachedMember = this.#getCache<GuildMemberStructure>(cacheKey);
             if (cachedMember) {
                 return new GuildMember(cachedMember);
             }
         }
 
         const memberData = await this.#client.rest.request(UserRoutes.getCurrentUserGuildMember(guildId));
-        this.#guildMemberCache.set(guildId, memberData);
+        this.#setCache(cacheKey, memberData);
         return new GuildMember(memberData);
     }
 
     async fetchCurrentGuilds(force = false): Promise<Guild[]> {
+        const cacheKey = this.#getCacheKey("guilds");
+
         if (!force) {
-            const cachedGuilds = this.#guildCache.get("current");
+            const cachedGuilds = this.#getCache<GuildStructure[]>(cacheKey);
             if (cachedGuilds) {
                 return cachedGuilds.map((guild) => new Guild(guild));
             }
         }
 
         const guildsData = await this.#client.rest.request(UserRoutes.getCurrentUserGuilds());
-        this.#guildCache.set("current", guildsData as GuildStructure[]);
+        this.#setCache(cacheKey, guildsData as GuildStructure[]);
         return guildsData.map((guild) => new Guild(guild));
     }
 
     async modifyCurrentUser(data: ModifyCurrentUserJsonParams): Promise<User> {
         const userData = await this.#client.rest.request(UserRoutes.modifyCurrentUser(data));
-        this.#userCache.set("@me", userData);
+        this.#setCache(this.#getCacheKey("user"), userData);
         return new User(userData);
     }
 
     async updateCurrentApplicationRoleConnection(
         applicationId: Snowflake,
-        data: UpdateCurrentUserApplicationRoleConnectionJsonParams
+        data: UpdateCurrentUserApplicationRoleConnectionJsonParams,
     ): Promise<ApplicationRoleConnection> {
         const applicationData = await this.#client.rest.request(
-            UserRoutes.updateCurrentUserApplicationRoleConnection(applicationId, data)
+            UserRoutes.updateCurrentUserApplicationRoleConnection(applicationId, data),
         );
         return new ApplicationRoleConnection(applicationData);
     }
 
     clearCache(): void {
-        this.#userCache.clear();
-        this.#guildMemberCache.clear();
-        this.#connectionCache.clear();
-        this.#guildCache.clear();
+        this.#cache.clear();
     }
 
     invalidateUser(userId: Snowflake): void {
-        this.#userCache.delete(userId);
+        this.#cache.delete(this.#getCacheKey("user", userId));
     }
 
     invalidateGuildMember(guildId: Snowflake): void {
-        this.#guildMemberCache.delete(guildId);
+        this.#cache.delete(this.#getCacheKey("member", guildId));
     }
 
     invalidateConnections(): void {
-        this.#connectionCache.clear();
+        this.#cache.delete(this.#getCacheKey("connections"));
     }
 
     invalidateGuilds(): void {
-        this.#guildCache.clear();
+        this.#cache.delete(this.#getCacheKey("guilds"));
+    }
+
+    #getCacheKey(type: "user" | "member" | "connections" | "guilds", id = this.#client.user.id): CacheKey {
+        return `${type}:${id}`;
+    }
+
+    #setCache<T extends CacheValue>(key: CacheKey, value: T): void {
+        this.#cache.set(key, {
+            value,
+            timestamp: Date.now(),
+        });
+    }
+
+    #getCache<T extends CacheValue>(key: CacheKey): T | undefined {
+        const cached = this.#cache.get(key);
+        return cached?.value as T;
     }
 }

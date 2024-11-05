@@ -1,6 +1,7 @@
 import type { ApiVersions, GatewayCloseCodes, GatewayIntents, Integer } from "@nyxjs/core";
 import type { GatewayOptions } from "@nyxjs/gateway";
 import type { RateLimitInfo, RestOptions } from "@nyxjs/rest";
+import type WebSocket from "ws";
 import type {
     Emoji,
     Entitlement,
@@ -58,7 +59,7 @@ export type ClientEvents = {
     guildBanAdd: [];
     guildBanRemove: [];
     guildCreate: [guild: Guild];
-    guildDelete: [];
+    guildDelete: [guild: Guild];
     guildMemberAdd: [];
     guildMemberRemove: [];
     guildMemberUpdate: [];
@@ -70,7 +71,7 @@ export type ClientEvents = {
     guildSoundboardSoundCreate: [];
     guildSoundboardSoundDelete: [];
     guildSoundboardSoundUpdate: [];
-    guildUpdate: [];
+    guildUpdate: [oldGuild: Guild, newGuild: Guild];
     homeSettingsCreate: [];
     homeSettingsUpdate: [];
     integrationCreate: [];
@@ -96,6 +97,7 @@ export type ClientEvents = {
     messageReactionRemoveEmoji: [];
     messageUnpin: [];
     messageUpdate: [];
+    missedAck: [message: string];
     onboardingCreate: [];
     onboardingPromptCreate: [];
     onboardingPromptDelete: [];
@@ -103,6 +105,7 @@ export type ClientEvents = {
     onboardingUpdate: [];
     presenceUpdate: [];
     rateLimit: [rateLimitInfo: RateLimitInfo];
+    raw: [data: WebSocket.RawData, isBinary: boolean];
     ready: [ready: Ready];
     roleCreate: [role: Role];
     roleDelete: [role: Role];

@@ -82,64 +82,63 @@ export type EditCurrentApplicationJsonParams = Partial<
     >
 >;
 
-export class ApplicationRoutes {
+export const ApplicationRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records|Update Application Role Connection Metadata Records}
      */
-    static updateApplicationRoleConnectionMetadata(
+    updateApplicationRoleConnectionMetadata(
         applicationId: Snowflake,
-        params: ApplicationRoleConnectionStructure[]
+        params: ApplicationRoleConnectionStructure[],
     ): RouteStructure<ApplicationRoleConnectionStructure> {
         return {
             method: RestMethods.Put,
             path: `/applications/${applicationId}/role-connections/metadata`,
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records|Get Application Role Connection Metadata Records}
      */
-    static getApplicationRoleConnectionMetadata(
-        applicationId: Snowflake
+    getApplicationRoleConnectionMetadata(
+        applicationId: Snowflake,
     ): RouteStructure<ApplicationRoleConnectionStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/applications/${applicationId}/role-connections/metadata`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance|Get Application Activity Instance}
      */
-    static getApplicationActivityInstance(
+    getApplicationActivityInstance(
         applicationId: Snowflake,
-        instanceId: string
+        instanceId: string,
     ): RouteStructure<ActivityInstanceStructure> {
         return {
             method: RestMethods.Get,
             path: `/applications/${applicationId}/activity-instances/${instanceId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application|Edit Current Application}
      */
-    static editCurrentApplication(params: EditCurrentApplicationJsonParams): RouteStructure<ApplicationStructure> {
+    editCurrentApplication(params: EditCurrentApplicationJsonParams): RouteStructure<ApplicationStructure> {
         return {
             method: RestMethods.Patch,
-            path: `/applications/@me`,
+            path: "/applications/@me",
             body: Buffer.from(JSON.stringify(params)),
         };
-    }
-
+    },
     /**
      * @see {@link https://discord.com/developers/docs/resources/application#get-current-application|Get Current Application}
      */
-    static getCurrentApplication(): RouteStructure<ApplicationStructure> {
+    getCurrentApplication(): RouteStructure<ApplicationStructure> {
         return {
             method: RestMethods.Get,
-            path: `/applications/@me`,
+            path: "/applications/@me",
         };
-    }
-}
+    },
+} as const;

@@ -17,11 +17,11 @@ export type CreateGuildStickerFormParams = Pick<StickerStructure, "description" 
     file: string;
 };
 
-export class StickerRoutes {
+export const StickerRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker|Delete Guild Sticker}
      */
-    static deleteGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason?: string): RouteStructure<void> {
+    deleteGuildSticker(guildId: Snowflake, stickerId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -33,16 +33,16 @@ export class StickerRoutes {
             path: `/guilds/${guildId}/stickers/${stickerId}`,
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker|Modify Guild Sticker}
      */
-    static modifyGuildSticker(
+    modifyGuildSticker(
         guildId: Snowflake,
         stickerId: Snowflake,
         params: ModifyGuildStickerJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<StickerStructure> {
         const headers: Record<string, string> = {};
 
@@ -56,15 +56,15 @@ export class StickerRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker|Create Guild Sticker}
      */
-    static createGuildSticker(
+    createGuildSticker(
         guildId: Snowflake,
         params: CreateGuildStickerFormParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<StickerStructure> {
         const form = new FileUploadManager();
         form.addField("name", params.name);
@@ -86,35 +86,35 @@ export class StickerRoutes {
             body: form.toBuffer(),
             headers: form.getHeaders(headers),
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker|Get Guild Sticker}
      */
-    static getGuildSticker(guildId: Snowflake, stickerId: Snowflake): RouteStructure<StickerStructure> {
+    getGuildSticker(guildId: Snowflake, stickerId: Snowflake): RouteStructure<StickerStructure> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/stickers/${stickerId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers|List Guild Stickers}
      */
-    static listGuildStickers(guildId: Snowflake): RouteStructure<StickerStructure[]> {
+    listGuildStickers(guildId: Snowflake): RouteStructure<StickerStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/stickers`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack|Get Sticker Pack}
      */
-    static getStickerPack(stickerPackId: Snowflake): RouteStructure<StickerPackStructure[]> {
+    getStickerPack(stickerPackId: Snowflake): RouteStructure<StickerPackStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/sticker-packs/${stickerPackId}`,
         };
-    }
-}
+    },
+} as const;

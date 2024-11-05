@@ -6,146 +6,146 @@ import type { Integer } from "../markdown/index.js";
  *
  * @see {@link https://discord.com/developers/docs/topics/gateway#list-of-intents|Gateway Intents}
  */
-export class GatewayIntents {
+export const GatewayIntents = {
     /**
      * Intent for guilds.
      */
-    static Guilds = 1;
+    guilds: 1,
 
     /**
      * Intent for guild members.
      */
-    static GuildMembers = 2;
+    guildMembers: 2,
 
     /**
      * Intent for guild moderation.
      */
-    static GuildModeration = 4;
+    guildModeration: 4,
 
     /**
      * Intent for guild emojis and stickers.
      */
-    static GuildEmojisAndStickers = 8;
+    guildEmojisAndStickers: 8,
 
     /**
      * Intent for guild integrations.
      */
-    static GuildIntegrations = 16;
+    guildIntegrations: 16,
 
     /**
      * Intent for guild webhooks.
      */
-    static GuildWebhooks = 32;
+    guildWebhooks: 32,
 
     /**
      * Intent for guild invites.
      */
-    static GuildInvites = 64;
+    guildInvites: 64,
 
     /**
      * Intent for guild voice states.
      */
-    static GuildVoiceStates = 128;
+    guildVoiceStates: 128,
 
     /**
      * Intent for guild presences.
      */
-    static GuildPresences = 256;
+    guildPresences: 256,
 
     /**
      * Intent for guild messages.
      */
-    static GuildMessages = 512;
+    guildMessages: 512,
 
     /**
      * Intent for guild message reactions.
      */
-    static GuildMessageReactions = 1_024;
+    guildMessageReactions: 1_024,
 
     /**
      * Intent for guild message typing.
      */
-    static GuildMessageTyping = 2_048;
+    guildMessageTyping: 2_048,
 
     /**
      * Intent for direct messages.
      */
-    static DirectMessages = 4_096;
+    directMessages: 4_096,
 
     /**
      * Intent for direct message reactions.
      */
-    static DirectMessageReactions = 8_192;
+    directMessageReactions: 8_192,
 
     /**
      * Intent for direct message typing.
      */
-    static DirectMessageTyping = 16_384;
+    directMessageTyping: 16_384,
 
     /**
      * Intent for message content.
      */
-    static MessageContent = 32_768;
+    messageContent: 32_768,
 
     /**
      * Intent for guild scheduled events.
      */
-    static GuildScheduledEvents = 65_536;
+    guildScheduledEvents: 65_536,
 
     /**
      * Intent for auto moderation configuration.
      */
-    static AutoModerationConfiguration = 1_048_576;
+    autoModerationConfiguration: 1_048_576,
 
     /**
      * Intent for auto moderation execution.
      */
-    static AutoModerationExecution = 2_097_152;
+    autoModerationExecution: 2_097_152,
 
     /**
      * Intent for guild message polls.
      */
-    static GuildMessagePolls = 16_777_216;
+    guildMessagePolls: 16_777_216,
 
     /**
      * Intent for direct message polls.
      */
-    static DirectMessagePolls = 33_554_432;
+    directMessagePolls: 33_554_432,
 
     /**
      * Returns all intents.
      */
-    static All(): Integer {
+    all(): Integer {
         const intents = [
-            this.Guilds,
-            this.GuildMembers,
-            this.GuildModeration,
-            this.GuildEmojisAndStickers,
-            this.GuildIntegrations,
-            this.GuildWebhooks,
-            this.GuildInvites,
-            this.GuildVoiceStates,
-            this.GuildPresences,
-            this.GuildMessages,
-            this.GuildMessageReactions,
-            this.GuildMessageTyping,
-            this.DirectMessages,
-            this.DirectMessageReactions,
-            this.DirectMessageTyping,
-            this.MessageContent,
-            this.GuildScheduledEvents,
-            this.AutoModerationConfiguration,
-            this.AutoModerationExecution,
-            this.GuildMessagePolls,
-            this.DirectMessagePolls,
+            this.guilds,
+            this.guildMembers,
+            this.guildModeration,
+            this.guildEmojisAndStickers,
+            this.guildIntegrations,
+            this.guildWebhooks,
+            this.guildInvites,
+            this.guildVoiceStates,
+            this.guildPresences,
+            this.guildMessages,
+            this.guildMessageReactions,
+            this.guildMessageTyping,
+            this.directMessages,
+            this.directMessageReactions,
+            this.directMessageTyping,
+            this.messageContent,
+            this.guildScheduledEvents,
+            this.autoModerationConfiguration,
+            this.autoModerationExecution,
+            this.guildMessagePolls,
+            this.directMessagePolls,
         ];
 
         return Number(BitfieldManager.from(intents).valueOf());
-    }
+    },
 
-    static Privileged(): Integer {
-        const intents = [this.GuildPresences, this.GuildMembers, this.MessageContent];
+    privileged(): Integer {
+        const intents = [this.guildPresences, this.guildMembers, this.messageContent];
 
         return Number(BitfieldManager.from(intents).valueOf());
-    }
-}
+    },
+} as const;

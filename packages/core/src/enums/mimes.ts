@@ -63,7 +63,7 @@ export enum MimeTypes {
     Xml = "application/xml",
     Xul = "application/vnd.mozilla.xul+xml",
     Zip = "application/zip",
-    _3g2 = "video/3gpp2",
-    _3gp = "video/3gpp",
-    _7z = "application/x-7z-compressed",
+    "3g2" = "video/3gpp2",
+    "3gp" = "video/3gpp",
+    "7z" = "application/x-7z-compressed",
 }

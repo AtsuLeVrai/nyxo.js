@@ -1,4 +1,17 @@
 {
     "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-    "extends": ["../../configs/biome/node.json"]
+    "extends": ["../../configs/biome/node.json"],
+    "overrides": [
+        {
+            "include": ["internals/workbench/src/**/*"],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noConsole": "off",
+                        "noConsoleLog": "off"
+                    }
+                }
+            }
+        }
+    ]
 }

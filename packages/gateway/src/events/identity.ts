@@ -1,4 +1,4 @@
-import type { GatewayIntents, Integer } from "@nyxjs/core";
+import type { Integer } from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "./presences.js";
 
 /**
@@ -30,7 +30,7 @@ export type IdentifyStructure = {
     /**
      * Gateway Intents you wish to receive
      */
-    intents: GatewayIntents;
+    intents: Integer;
     /**
      * Value between 50 and 250, total number of members where the globals will stop sending offline members in the guild member list
      */

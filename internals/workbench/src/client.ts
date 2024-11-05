@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { Client, type ClientEvents, type ClientOptions } from "nyx.js";
 import type { WorkBenchEvent } from "./env/index.js";
+import { logger } from "./utils/index.js";
 
 export class WorkBench extends Client {
     commands: Map<string, object> = new Map();
@@ -10,7 +11,7 @@ export class WorkBench extends Client {
     }
 
     async start(): Promise<void> {
-        await Promise.all([this.#initEvent()]);
+        await Promise.all([this.#init()]);
         await this.connect();
 
         // setInterval(async () => {
@@ -19,7 +20,7 @@ export class WorkBench extends Client {
         // }, 1000);
     }
 
-    async #initEvent(): Promise<void> {
+    async #init(): Promise<void> {
         const dirs = await readdir(new URL("./events", import.meta.url), {
             withFileTypes: true,
         });
@@ -41,6 +42,7 @@ export class WorkBench extends Client {
                 ).default;
 
                 this.on(event.event, (...args) => event.listener(this, ...args));
+                logger.info(`Loaded event: ${event.event}`);
             }
         }
     }

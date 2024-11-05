@@ -4,6 +4,24 @@ import { basename, extname } from "node:path";
 import { MimeTypes } from "@nyxjs/core";
 import FormData from "form-data";
 
+/**
+ * @see {@link https://discord.com/developers/docs/reference#signed-attachment-cdn-urls-attachment-cdn-url-parameters}
+ */
+export type AttachmentCdnUrlParameters = {
+    /**
+     * Hex timestamp indicating when an attachment CDN URL will expire
+     */
+    ex: string;
+    /**
+     * Unique signature that remains valid until the URL's expiration
+     */
+    hm: string;
+    /**
+     * Hex timestamp indicating when the URL was issued
+     */
+    is: string;
+};
+
 export class FileUploadManager {
     readonly #formData: FormData = new FormData();
 
@@ -13,7 +31,7 @@ export class FileUploadManager {
         this.#fileLimit = fileLimit;
     }
 
-    getHeaders(additionalHeaders?: Record<string, any>): Record<string, string> {
+    getHeaders(additionalHeaders?: Record<string, unknown>): Record<string, string> {
         return this.#formData.getHeaders(additionalHeaders);
     }
 
@@ -33,7 +51,7 @@ export class FileUploadManager {
         this.#formData.append(name, value);
     }
 
-    addPayload(payload: Record<string, any>): void {
+    addPayload(payload: Record<string, unknown>): void {
         this.#formData.append("payload_json", JSON.stringify(payload), {
             contentType: MimeTypes.Json,
         });

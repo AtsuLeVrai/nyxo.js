@@ -11,3 +11,9 @@ are the tasks to address:
 
 The goal is to have a benchmark that provides actionable insights into the performance of our system.
 
+## Benchmark Libraries
+
+- `nyx.js`
+- `discord.js`
+- `eris.js`
+- `oceanic.js`

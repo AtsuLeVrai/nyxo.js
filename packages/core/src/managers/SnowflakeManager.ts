@@ -33,7 +33,7 @@ export class SnowflakeManager {
     } {
         const snowflakeNum = BigInt(snowflake);
 
-        const timestamp = Number(snowflakeNum >> BigInt(22)) + this.DISCORD_EPOCH;
+        const timestamp = Number(snowflakeNum >> BigInt(22)) + SnowflakeManager.DISCORD_EPOCH;
         const workerId = Number((snowflakeNum & BigInt(0x3e0000)) >> BigInt(17));
         const processId = Number((snowflakeNum & BigInt(0x1f000)) >> BigInt(12));
         const increment = Number(snowflakeNum & BigInt(0xfff));
@@ -47,7 +47,7 @@ export class SnowflakeManager {
     }
 
     static generateSnowflakeFromTimestamp(timestamp: number): string {
-        const snowflake = BigInt(timestamp - this.DISCORD_EPOCH) << BigInt(22);
+        const snowflake = BigInt(timestamp - SnowflakeManager.DISCORD_EPOCH) << BigInt(22);
         return snowflake.toString();
     }
 

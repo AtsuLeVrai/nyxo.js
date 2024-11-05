@@ -127,7 +127,7 @@ abstract class BaseSelectMenu<
                     this.data.min_values > BaseSelectMenu.MIN_VALUES[1])
             ) {
                 throw new Error(
-                    `Min values must be between ${BaseSelectMenu.MIN_VALUES[0]} and ${BaseSelectMenu.MIN_VALUES[1]}`
+                    `Min values must be between ${BaseSelectMenu.MIN_VALUES[0]} and ${BaseSelectMenu.MIN_VALUES[1]}`,
                 );
             }
 

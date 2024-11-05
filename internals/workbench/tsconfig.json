@@ -4,7 +4,12 @@
     "compilerOptions": {
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "incremental": false,
+        "composite": false,
+        "declaration": false,
+        "declarationMap": false,
+        "sourceMap": false
     },
     "include": ["./src"],
     "exclude": ["./node_modules", "./dist"]

@@ -180,32 +180,32 @@ export type CreateWebhookJsonParams = {
     avatar?: string;
 };
 
-export class WebhookRoutes {
+export const WebhookRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-message|Delete Webhook Message}
      */
-    static deleteWebhookMessage(
+    deleteWebhookMessage(
         webhookId: Snowflake,
         token: string,
         messageId: Snowflake,
-        params?: DeleteWebhookMessageQueryStringParams
+        params?: DeleteWebhookMessageQueryStringParams,
     ): RouteStructure<void> {
         return {
             method: RestMethods.Delete,
             path: `/webhooks/${webhookId}/${token}/messages/${messageId}`,
             query: params,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message|Edit Webhook Message}
      */
-    static editWebhookMessage(
+    editWebhookMessage(
         webhookId: Snowflake,
         token: string,
         messageId: Snowflake,
         params: EditWebhookMessageJsonFormParams,
-        query?: EditWebhookMessageQueryStringParams
+        query?: EditWebhookMessageQueryStringParams,
     ): RouteStructure<MessageStructure> {
         const { files, ...restParams } = params;
         const form = new FileUploadManager();
@@ -222,62 +222,62 @@ export class WebhookRoutes {
             headers: form.getHeaders(),
             query,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-message|Get Webhook Message}
      */
-    static getWebhookMessage(
+    getWebhookMessage(
         webhookId: Snowflake,
         token: string,
         messageId: Snowflake,
-        params?: GetWebhookMessageQueryStringParams
+        params?: GetWebhookMessageQueryStringParams,
     ): RouteStructure<MessageStructure> {
         return {
             method: RestMethods.Get,
             path: `/webhooks/${webhookId}/${token}/messages/${messageId}`,
             query: params,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook|Execute GitHub-Compatible Webhook}
      */
-    static executeGitHubCompatibleWebhook(
+    executeGitHubCompatibleWebhook(
         webhookId: Snowflake,
         token: string,
-        params?: ExecuteGitHubCompatibleWebhookQueryStringParams
+        params?: ExecuteGitHubCompatibleWebhookQueryStringParams,
     ): RouteStructure<void> {
         return {
             method: RestMethods.Post,
             path: `/webhooks/${webhookId}/${token}/github`,
             query: params,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook|Execute Slack-Compatible Webhook}
      */
-    static executeSlackCompatibleWebhook(
+    executeSlackCompatibleWebhook(
         webhookId: Snowflake,
         token: string,
-        params?: ExecuteSlackCompatibleWebhookQueryStringParams
+        params?: ExecuteSlackCompatibleWebhookQueryStringParams,
     ): RouteStructure<void> {
         return {
             method: RestMethods.Post,
             path: `/webhooks/${webhookId}/${token}/slack`,
             query: params,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook|Execute Webhook}
      */
-    static executeWebhook(
+    executeWebhook(
         webhookId: Snowflake,
         token: string,
         params: ExecuteWebhookJsonFormParams,
-        query?: ExecuteWebhookQueryStringParams
+        query?: ExecuteWebhookQueryStringParams,
     ): RouteStructure<MessageStructure> {
         const { files, ...restParams } = params;
         const form = new FileUploadManager();
@@ -294,12 +294,12 @@ export class WebhookRoutes {
             headers: form.getHeaders(),
             query,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token|Delete Webhook with Token}
      */
-    static deleteWebhookWithToken(webhookId: Snowflake, token: string, reason?: string): RouteStructure<void> {
+    deleteWebhookWithToken(webhookId: Snowflake, token: string, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -311,12 +311,12 @@ export class WebhookRoutes {
             path: `/webhooks/${webhookId}/${token}`,
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook|Delete Webhook}
      */
-    static deleteWebhook(webhookId: Snowflake, reason?: string): RouteStructure<void> {
+    deleteWebhook(webhookId: Snowflake, reason?: string): RouteStructure<void> {
         const headers: Record<string, string> = {};
 
         if (reason) {
@@ -328,16 +328,16 @@ export class WebhookRoutes {
             path: `/webhooks/${webhookId}`,
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token|Modify Webhook with Token}
      */
-    static modifyWebhookWithToken(
+    modifyWebhookWithToken(
         webhookId: Snowflake,
         token: string,
         params: ModifyWebhookJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<WebhookStructure> {
         const headers: Record<string, string> = {};
 
@@ -351,15 +351,15 @@ export class WebhookRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook|Modify Webhook}
      */
-    static modifyWebhook(
+    modifyWebhook(
         webhookId: Snowflake,
         params: ModifyWebhookJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<WebhookStructure> {
         const headers: Record<string, string> = {};
 
@@ -373,55 +373,55 @@ export class WebhookRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-with-token|Get Webhook with Token}
      */
-    static getWebhookWithToken(webhookId: Snowflake, token: string): RouteStructure<WebhookStructure> {
+    getWebhookWithToken(webhookId: Snowflake, token: string): RouteStructure<WebhookStructure> {
         return {
             method: RestMethods.Get,
             path: `/webhooks/${webhookId}/${token}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook|Get Webhook}
      */
-    static getWebhook(webhookId: Snowflake): RouteStructure<WebhookStructure> {
+    getWebhook(webhookId: Snowflake): RouteStructure<WebhookStructure> {
         return {
             method: RestMethods.Get,
             path: `/webhooks/${webhookId}`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks|Get Guild Webhooks}
      */
-    static getGuildWebhooks(guildId: Snowflake): RouteStructure<WebhookStructure[]> {
+    getGuildWebhooks(guildId: Snowflake): RouteStructure<WebhookStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/webhooks`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks|Get Channel Webhooks}
      */
-    static getChannelWebhooks(channelId: Snowflake): RouteStructure<WebhookStructure[]> {
+    getChannelWebhooks(channelId: Snowflake): RouteStructure<WebhookStructure[]> {
         return {
             method: RestMethods.Get,
             path: `/channels/${channelId}/webhooks`,
         };
-    }
+    },
 
     /**
      * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook|Create Webhook}
      */
-    static createWebhook(
+    createWebhook(
         channelId: Snowflake,
         params: CreateWebhookJsonParams,
-        reason?: string
+        reason?: string,
     ): RouteStructure<WebhookStructure> {
         const headers: Record<string, string> = {};
 
@@ -435,5 +435,5 @@ export class WebhookRoutes {
             body: Buffer.from(JSON.stringify(params)),
             headers,
         };
-    }
-}
+    },
+} as const;
