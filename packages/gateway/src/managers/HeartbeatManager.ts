@@ -1,6 +1,7 @@
 import type { Integer } from "@nyxjs/core";
 import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
+import type { GatewayEvents } from "../types/index.js";
 
 export type HeartbeatState = {
     interval: NodeJS.Timeout | null;
@@ -33,7 +34,7 @@ export class HeartbeatError extends Error {
     }
 }
 
-export class HeartbeatManager extends EventEmitter {
+export class HeartbeatManager extends EventEmitter<GatewayEvents> {
     #maxMissedAcks = 3;
     #minInterval = 1000;
     #maxInterval = 60000;

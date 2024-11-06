@@ -23,7 +23,7 @@
 // void workBench.start();
 
 import { ApiVersions, GatewayIntents } from "@nyxjs/core";
-import { CompressTypes, EncodingTypes, Gateway, type ReadyEventFields } from "@nyxjs/gateway";
+import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import { formatInfoLog } from "@nyxjs/utils";
 import { config } from "dotenv";
@@ -39,7 +39,7 @@ const rest = new Rest(env.parsed["DISCORD_TOKEN"], {
 });
 
 const gateway = new Gateway(env.parsed["DISCORD_TOKEN"], rest, {
-    encoding: EncodingTypes.Json,
+    encoding: EncodingTypes.Etf,
     compress: CompressTypes.ZlibStream,
     intents: GatewayIntents.all(),
     v: ApiVersions.V10,
@@ -49,7 +49,7 @@ async function start() {
     gateway.on("debug", console.log);
     gateway.on("dispatch", (event, data) => {
         if (event === "READY") {
-            console.log(formatInfoLog(`READY ${(data as ReadyEventFields).user.id}`));
+            console.log(formatInfoLog("READY"), JSON.stringify(data, null, 2));
         }
     });
     await gateway.connect();

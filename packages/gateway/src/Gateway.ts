@@ -20,6 +20,7 @@ export enum GatewayErrorCode {
     ManageHandlingError = "GATEWAY_MESSAGE_ERROR",
     PayloadError = "GATEWAY_PAYLOAD_ERROR",
     SessionError = "GATEWAY_SESSION_ERROR",
+    HeartBeatError = "GATEWAY_HEARTBEAT_ERROR",
     WebSocketError = "GATEWAY_WEBSOCKET_ERROR",
     ReconnectionError = "GATEWAY_RECONNECTION_ERROR",
     CompressionError = "GATEWAY_COMPRESSION_ERROR",
@@ -61,8 +62,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this.#rest = rest;
         this.#options = Object.freeze({ ...options });
 
-        this.#compression = new CompressionManager(this);
-        this.#payload = new PayloadManager(this, this.#options.encoding);
+        this.#compression = new CompressionManager();
+        this.#payload = new PayloadManager(this.#options.encoding);
         this.#session = new SessionManager();
         this.#ws = new WebSocketManager();
         this.#heartbeat = new HeartbeatManager();
@@ -261,13 +262,27 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         try {
             this.#emitDebug("Setting up gateway event listeners");
 
+            this.#compression.on("debug", (message) => this.emit("debug", message));
+            this.#compression.on("error", (error) =>
+                this.#emitError(new GatewayError("Compression error", GatewayErrorCode.CompressionError, { error })),
+            );
+
+            this.#payload.on("debug", (message) => this.emit("debug", message));
+            this.#payload.on("error", (error) =>
+                this.#emitError(new GatewayError("Payload error", GatewayErrorCode.PayloadError, { error })),
+            );
+
             this.#ws.on("raw", this.handleMessage.bind(this));
             this.#ws.on("close", this.#handleClose.bind(this));
+            this.#ws.on("debug", (message) => this.emit("debug", message));
             this.#ws.on("error", (error) =>
                 this.#emitError(new GatewayError("WebSocket error", GatewayErrorCode.WebSocketError, { error })),
             );
-            this.#ws.on("debug", (message) => this.#emitDebug(message));
 
+            this.#heartbeat.on("debug", (message) => this.emit("debug", message));
+            this.#heartbeat.on("error", (error) =>
+                this.#emitError(new GatewayError("Heartbeat error", GatewayErrorCode.HeartBeatError, { error })),
+            );
             this.#heartbeat.on("missedAck", async () => {
                 this.#emitDebug("Missed heartbeat acknowledgement");
                 if (!this.#isReconnecting) {
@@ -277,7 +292,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
                 }
             });
 
-            this.#session.on("debug", (message) => this.#emitDebug(message));
+            this.#session.on("debug", (message) => this.emit("debug", message));
             this.#session.on("error", (error) =>
                 this.#emitError(new GatewayError("Session error", GatewayErrorCode.SessionError, { error })),
             );

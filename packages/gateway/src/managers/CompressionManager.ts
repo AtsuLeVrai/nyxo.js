@@ -1,6 +1,7 @@
 import { formatErrorLog } from "@nyxjs/utils";
+import { EventEmitter } from "eventemitter3";
 import zlib from "zlib-sync";
-import type { Gateway } from "../Gateway.js";
+import type { GatewayEvents } from "../types/index.js";
 
 export type CompressionStats = {
     totalDecompressed: number;
@@ -30,11 +31,10 @@ export class CompressionError extends Error {
     }
 }
 
-export class CompressionManager {
+export class CompressionManager extends EventEmitter<GatewayEvents> {
     static FLUSH_MARKER = Buffer.from([0x00, 0x00, 0xff, 0xff]);
     static MAX_CHUNK_SIZE = 1024 * 1024;
 
-    #gateway: Gateway;
     #inflator: zlib.Inflate | null = null;
     #stats: CompressionStats = {
         totalDecompressed: 0,
@@ -43,10 +43,6 @@ export class CompressionManager {
         bytesProcessed: 0,
         compressionRatio: 0,
     };
-
-    constructor(gateway: Gateway) {
-        this.#gateway = gateway;
-    }
 
     get stats(): CompressionStats {
         return { ...this.#stats };
@@ -123,13 +119,15 @@ export class CompressionManager {
             try {
                 this.#inflator = null;
             } catch (error) {
-                this.#gateway.emit(
-                    "error",
-                    formatErrorLog("Error during inflator destruction", {
-                        component: "CompressionManager",
-                        stack: (error as Error).stack,
-                    }),
+                const compressionError = new CompressionError(
+                    "Failed to destroy Zlib inflator",
+                    CompressionErrorCode.ZlibInitError,
+                    { originalError: error },
+                    error as Error,
                 );
+
+                this.#emitError(compressionError);
+                throw compressionError;
             }
         }
         this.resetStats();
@@ -193,7 +191,7 @@ export class CompressionManager {
     }
 
     #emitError(error: CompressionError): void {
-        this.#gateway.emit(
+        this.emit(
             "error",
             formatErrorLog(error.message, {
                 component: "CompressionManager",

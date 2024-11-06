@@ -1,8 +1,8 @@
 import type { Integer } from "@nyxjs/core";
 import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import erlpack from "erlpack";
-import type { Gateway } from "../Gateway.js";
-import type { EncodingTypes } from "../types/index.js";
+import { EventEmitter } from "eventemitter3";
+import type { EncodingTypes, GatewayEvents } from "../types/index.js";
 
 export type EncodingStats = {
     successfulEncodes: Integer;
@@ -37,14 +37,13 @@ export class PayloadError extends Error {
     }
 }
 
-export class PayloadManager {
+export class PayloadManager extends EventEmitter<GatewayEvents> {
     static SUPPORTED_ENCODINGS = ["json", "etf"] as const;
-    #gateway: Gateway;
     #encoding: EncodingTypes;
     #stats: EncodingStats;
 
-    constructor(gateway: Gateway, encoding: EncodingTypes) {
-        this.#gateway = gateway;
+    constructor(encoding: EncodingTypes) {
+        super();
         this.#validateEncoding(encoding);
         this.#encoding = encoding;
         this.#stats = this.#createInitialStats();
@@ -298,7 +297,7 @@ export class PayloadManager {
     }
 
     #emitError(error: PayloadError): void {
-        this.#gateway.emit(
+        this.emit(
             "error",
             formatErrorLog(error.message, {
                 component: "PayloadManager",
@@ -311,7 +310,7 @@ export class PayloadManager {
     }
 
     #emitDebug(message: string): void {
-        this.#gateway.emit(
+        this.emit(
             "debug",
             formatDebugLog(message, {
                 component: "PayloadManager",
