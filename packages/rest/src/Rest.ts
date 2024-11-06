@@ -11,7 +11,7 @@ export class Rest extends EventEmitter<RestEvents> {
         super();
         this.#rateLimiter = new RateLimiterManager();
         this.#connectionManager = new ConnectionManager(options);
-        this.#requestHandler = new RequestManager(token, options, this.#rateLimiter, this.#connectionManager, this);
+        this.#requestHandler = new RequestManager(this, token, options, this.#rateLimiter, this.#connectionManager);
     }
 
     manyRequest<T extends readonly RouteStructure<unknown>[] | []>(

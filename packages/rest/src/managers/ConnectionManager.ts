@@ -24,7 +24,7 @@ export class ConnectionManager {
             bodyTimeout: 20e3,
             headersTimeout: 20e3,
             maxHeaderSize: 16_384,
-            allowH2: true,
+            allowH2: false,
             maxConcurrentStreams: 200,
             connectTimeout: 15e3,
         };

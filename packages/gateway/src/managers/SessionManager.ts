@@ -2,6 +2,7 @@ import type { Integer } from "@nyxjs/core";
 import type { GetGatewayBotJsonResponse } from "@nyxjs/rest";
 import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
+import type { GatewayEvents } from "../types/index.js";
 
 type SessionState = {
     sequence: Integer | null;
@@ -39,7 +40,7 @@ export class SessionError extends Error {
     }
 }
 
-export class SessionManager extends EventEmitter {
+export class SessionManager extends EventEmitter<GatewayEvents> {
     #defaultConcurrency = 1;
     #rateLimitDelay = 5000;
     #limits: SessionLimits | null = null;

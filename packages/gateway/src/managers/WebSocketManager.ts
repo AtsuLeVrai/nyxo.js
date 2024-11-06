@@ -2,6 +2,7 @@ import { GatewayCloseCodes } from "@nyxjs/core";
 import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
+import type { GatewayEvents } from "../types/index.js";
 
 export type WebSocketState = {
     socket: WebSocket | null;
@@ -35,7 +36,7 @@ export class WebSocketError extends Error {
     }
 }
 
-export class WebSocketManager extends EventEmitter {
+export class WebSocketManager extends EventEmitter<GatewayEvents> {
     #state: WebSocketState = {
         socket: null,
         isOpen: false,
@@ -131,7 +132,7 @@ export class WebSocketManager extends EventEmitter {
             bytesReceived: 0,
             bytesSent: 0,
         };
-        this.#emitDebug("WebSocket state reset", { oldState });
+        this.#emitDebug("WebSocket state reset", { oldState: JSON.stringify(oldState) });
     }
     #setupEventListeners(): void {
         if (!this.#state.socket) {

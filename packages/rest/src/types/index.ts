@@ -194,7 +194,7 @@ export type RestEvents = {
     /**
      * Error event with an error object.
      */
-    error: [error: Error];
+    error: [error: Error | string];
     /**
      * Rate limit event with rate limit information.
      */

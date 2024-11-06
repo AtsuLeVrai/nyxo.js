@@ -23,7 +23,7 @@
 // void workBench.start();
 
 import { ApiVersions, GatewayIntents } from "@nyxjs/core";
-import { CompressTypes, EncodingTypes, Gateway } from "@nyxjs/gateway";
+import { CompressTypes, EncodingTypes, Gateway, type ReadyEventFields } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import { formatInfoLog } from "@nyxjs/utils";
 import { config } from "dotenv";
@@ -43,13 +43,27 @@ const gateway = new Gateway(env.parsed["DISCORD_TOKEN"], rest, {
     compress: CompressTypes.ZlibStream,
     intents: GatewayIntents.all(),
     v: ApiVersions.V10,
+    shard: "auto",
 });
 
 async function start() {
+    const startTime = process.hrtime.bigint();
+
+    rest.on("debug", console.log);
+    rest.on("error", console.error);
+    rest.on("warn", console.warn);
+
     gateway.on("debug", console.log);
+    gateway.on("error", console.error);
+    gateway.on("warn", console.warn);
+    gateway.on("close", console.warn);
     gateway.on("dispatch", (event, data) => {
         if (event === "READY") {
-            console.log(formatInfoLog("READY"), JSON.stringify(data, null, 2));
+            const endTime = process.hrtime.bigint();
+            const timeInMs = Number(endTime - startTime) / 1_000_000;
+
+            console.log(formatInfoLog(`Connection completed in ${timeInMs.toFixed(2)}ms`));
+            console.log(formatInfoLog(`READY ${(data as ReadyEventFields).user.id}`));
         }
     });
     await gateway.connect();

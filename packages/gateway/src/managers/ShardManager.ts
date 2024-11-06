@@ -1,7 +1,7 @@
 import { platform } from "node:process";
 import { GatewayOpcodes, type GuildStructure, type Integer, type Snowflake } from "@nyxjs/core";
 import { GatewayRoutes, type Rest, UserRoutes } from "@nyxjs/rest";
-import { formatDebugLog, formatErrorLog, wait } from "@nyxjs/utils";
+import { formatDebugLog, formatErrorLog, formatWarnLog, wait } from "@nyxjs/utils";
 import type { Gateway } from "../Gateway.js";
 import type { IdentifyStructure } from "../events/index.js";
 import type { GatewayOptions, GatewayShardTypes, ShardConfig } from "../types/index.js";
@@ -35,6 +35,7 @@ export enum ShardErrorCode {
     StateError = "SHARD_STATE_ERROR",
     SpawnError = "SHARD_SPAWN_ERROR",
     AutoShardingError = "AUTO_SHARDING_ERROR",
+    LargeBotShardingError = "LARGE_BOT_SHARDING_ERROR",
 }
 
 export class ShardError extends Error {
@@ -300,17 +301,21 @@ export class ShardManager {
                 GatewayRoutes.getGatewayBot(),
             ]);
 
-            this.#validateShardingRequirements(guilds);
-            const recommendedShards = this.#getRecommendedShards(guilds.length, gatewayInfo.shards);
+            if (guilds.length < this.#guildsPerShard) {
+                this.#emitWarn(
+                    `Auto-sharding requested but you only have ${guilds.length} guilds.\nAuto-sharding is designed for bots with more than ${this.#guildsPerShard} guilds.\nUsing auto-sharding with a small number of guilds is inefficient.\nConsider removing sharding configuration for better performance.`,
+                );
 
-            if (guilds.length === 0) {
-                this.#emitDebug("No guilds found, spawning single shard");
+                this.#emitDebug("Falling back to single shard due to low guild count");
                 await this.#spawnShard({
                     shardId: 0,
                     shardCount: this.#defaultShardCount,
                 });
                 return;
             }
+
+            this.#validateShardingRequirements(guilds);
+            const recommendedShards = this.#getRecommendedShards(guilds.length, gatewayInfo.shards);
 
             const guildDistribution = new Map<number, Set<Snowflake>>();
             for (const guild of guilds) {
@@ -461,7 +466,9 @@ export class ShardManager {
 
             const sortedBuckets = Array.from(pendingBuckets.entries()).sort(([keyA], [keyB]) => keyA - keyB);
 
-            for (const [_, shardIds] of sortedBuckets) {
+            for (const [bucketKey, shardIds] of sortedBuckets) {
+                this.#emitDebug(`Processing bucket ${bucketKey} with shards: ${shardIds.join(", ")}`);
+
                 const connectionPromises = shardIds.map((shardId) => {
                     const shard = this.#shards.get(shardId);
                     if (!shard) {
@@ -473,7 +480,11 @@ export class ShardManager {
                 });
 
                 await Promise.all(connectionPromises);
-                await wait(5000);
+
+                if (bucketKey < Math.max(...Array.from(pendingBuckets.keys()))) {
+                    this.#emitDebug("Waiting 5 seconds before processing next bucket");
+                    await wait(5000);
+                }
             }
 
             this.#emitDebug("Queue processing completed successfully");
@@ -748,6 +759,16 @@ export class ShardManager {
         this.#gateway.emit(
             "debug",
             formatDebugLog(message, {
+                component: "ShardManager",
+                timestamp: true,
+            }),
+        );
+    }
+
+    #emitWarn(message: string): void {
+        this.#gateway.emit(
+            "warn",
+            formatWarnLog(message, {
                 component: "ShardManager",
                 timestamp: true,
             }),

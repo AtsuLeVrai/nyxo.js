@@ -261,28 +261,19 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     #setupEventListeners(): void {
         try {
             this.#emitDebug("Setting up gateway event listeners");
-
             this.#compression.on("debug", (message) => this.emit("debug", message));
-            this.#compression.on("error", (error) =>
-                this.#emitError(new GatewayError("Compression error", GatewayErrorCode.CompressionError, { error })),
-            );
+            this.#compression.on("error", (error) => this.emit("error", error));
 
             this.#payload.on("debug", (message) => this.emit("debug", message));
-            this.#payload.on("error", (error) =>
-                this.#emitError(new GatewayError("Payload error", GatewayErrorCode.PayloadError, { error })),
-            );
+            this.#payload.on("error", (error) => this.emit("error", error));
 
             this.#ws.on("raw", this.handleMessage.bind(this));
             this.#ws.on("close", this.#handleClose.bind(this));
             this.#ws.on("debug", (message) => this.emit("debug", message));
-            this.#ws.on("error", (error) =>
-                this.#emitError(new GatewayError("WebSocket error", GatewayErrorCode.WebSocketError, { error })),
-            );
+            this.#ws.on("error", (error) => this.emit("error", error));
 
             this.#heartbeat.on("debug", (message) => this.emit("debug", message));
-            this.#heartbeat.on("error", (error) =>
-                this.#emitError(new GatewayError("Heartbeat error", GatewayErrorCode.HeartBeatError, { error })),
-            );
+            this.#heartbeat.on("error", (error) => this.emit("error", error));
             this.#heartbeat.on("missedAck", async () => {
                 this.#emitDebug("Missed heartbeat acknowledgement");
                 if (!this.#isReconnecting) {
@@ -293,9 +284,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             });
 
             this.#session.on("debug", (message) => this.emit("debug", message));
-            this.#session.on("error", (error) =>
-                this.#emitError(new GatewayError("Session error", GatewayErrorCode.SessionError, { error })),
-            );
+            this.#session.on("error", (error) => this.emit("error", error));
 
             this.#emitDebug("Event listeners setup completed");
         } catch (error) {

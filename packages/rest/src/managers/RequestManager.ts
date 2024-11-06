@@ -1,10 +1,33 @@
 import { MimeTypes } from "@nyxjs/core";
+import { formatDebugLog, formatErrorLog, formatWarnLog } from "@nyxjs/utils";
 import type { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import type { IncomingHttpHeaders } from "undici/types/header.js";
 import type { RestEvents, RestHttpDiscordHeaders, RestOptions, RouteStructure } from "../types/index.js";
 import type { ConnectionManager } from "./ConnectionManager.js";
 import type { RateLimiterManager } from "./RateLimiterManager.js";
+
+export enum RequestErrorCode {
+    ConnectionError = "REQUEST_CONNECTION_ERROR",
+    RateLimitError = "REQUEST_RATE_LIMIT_ERROR",
+    ParseError = "REQUEST_PARSE_ERROR",
+    InvalidStateError = "REQUEST_INVALID_STATE",
+    HttpError = "REQUEST_HTTP_ERROR",
+    TimeoutError = "REQUEST_TIMEOUT_ERROR",
+}
+
+export class RequestError extends Error {
+    code: RequestErrorCode;
+    details?: Record<string, unknown>;
+
+    constructor(message: string, code: RequestErrorCode, details?: Record<string, unknown>, cause?: Error) {
+        super(message);
+        this.name = "RequestError";
+        this.code = code;
+        this.details = details;
+        this.cause = cause;
+    }
+}
 
 export class RequestManager {
     readonly #token: string;
@@ -15,17 +38,17 @@ export class RequestManager {
     readonly #requestCache = new Map<string, Promise<unknown>>();
 
     constructor(
+        eventEmitter: EventEmitter<RestEvents>,
         token: string,
         options: RestOptions,
         rateLimiter: RateLimiterManager,
         connectionManager: ConnectionManager,
-        eventEmitter: EventEmitter<RestEvents>,
     ) {
+        this.#eventEmitter = eventEmitter;
         this.#token = token;
         this.#options = this.#normalizeOptions(options);
         this.#rateLimiter = rateLimiter;
         this.#connectionManager = connectionManager;
-        this.#eventEmitter = eventEmitter;
     }
 
     async handleManyRequests<T extends readonly RouteStructure<unknown>[] | []>(
@@ -73,7 +96,7 @@ export class RequestManager {
         for (let attempt = 0; attempt <= this.#options.rateLimitRetries; attempt++) {
             try {
                 await this.#rateLimiter.wait(path);
-                this.#eventEmitter.emit("debug", `[REST] Sending ${method} request to ${url}`);
+                this.#emitDebug(`Sending ${method} request to ${url}`);
 
                 const response = await this.#connectionManager.retryAgent.request({
                     method,
@@ -85,13 +108,29 @@ export class RequestManager {
 
                 return await this.#handleResponse(response, method, path);
             } catch (error) {
-                if (!this.#shouldRetry(error, attempt)) {
+                if (error instanceof RequestError) {
                     throw error;
+                }
+
+                const requestError = new RequestError("Failed to execute request", RequestErrorCode.ConnectionError, {
+                    method,
+                    path,
+                    attempt,
+                    maxRetries: this.#options.rateLimitRetries,
+                    error,
+                });
+
+                if (!this.#shouldRetry(requestError, attempt)) {
+                    throw requestError;
                 }
             }
         }
 
-        throw new Error("Max rate limit retries reached");
+        throw new RequestError("Max rate limit retries reached", RequestErrorCode.RateLimitError, {
+            method,
+            path,
+            maxRetries: this.#options.rateLimitRetries,
+        });
     }
 
     #normalizeOptions(options: RestOptions): Required<RestOptions> {
@@ -114,19 +153,50 @@ export class RequestManager {
     }
 
     async #handleResponse<T>(response: Dispatcher.ResponseData, method: string, path: string): Promise<T> {
-        const text = await response.body.text();
-        this.#rateLimiter.update(path, response.headers as RestHttpDiscordHeaders);
+        let text: string;
+        try {
+            text = await response.body.text();
+            this.#rateLimiter.update(path, response.headers as RestHttpDiscordHeaders);
+        } catch (error) {
+            throw new RequestError("Failed to read response body", RequestErrorCode.ParseError, {
+                method,
+                path,
+                statusCode: response.statusCode,
+                error,
+            });
+        }
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
-            this.#eventEmitter.emit("debug", `[REST] Request successful: ${text}`);
-            return JSON.parse(text);
+            this.#emitDebug(`Request successful: ${text}`);
+            try {
+                return JSON.parse(text);
+            } catch (error) {
+                throw new RequestError("Failed to parse JSON response", RequestErrorCode.ParseError, {
+                    method,
+                    path,
+                    responseText: text,
+                    error,
+                });
+            }
         }
 
         if (response.statusCode === 429) {
             await this.#handleRateLimit(response, method, path);
+            throw new RequestError("Rate limit exceeded", RequestErrorCode.RateLimitError, {
+                method,
+                path,
+                retryAfter: response.headers["retry-after"],
+                limit: response.headers["x-ratelimit-limit"],
+                bucket: response.headers["x-ratelimit-bucket"],
+            });
         }
 
-        throw new Error(`HTTP Error ${response.statusCode}: ${text}`);
+        throw new RequestError(`HTTP Error ${response.statusCode}`, RequestErrorCode.HttpError, {
+            method,
+            path,
+            statusCode: response.statusCode,
+            response: text,
+        });
     }
 
     async #handleRateLimit(response: Dispatcher.ResponseData, method: string, path: string): Promise<void> {
@@ -138,24 +208,62 @@ export class RequestManager {
             path,
             route: response.headers["x-ratelimit-bucket"] as string,
         });
-        this.#eventEmitter.emit("warn", `[REST] Rate limited on ${method} ${path}. Retrying after ${retryAfter}ms`);
+        this.#emitWarn(`Rate limited on ${method} ${path}. Retrying after ${retryAfter}ms`);
         await new Promise((resolve) => setTimeout(resolve, retryAfter));
     }
 
-    #shouldRetry(error: unknown, attempt: number): boolean {
-        if (error instanceof Error) {
-            this.#eventEmitter.emit("error", new Error(`[REST] Request failed: ${error.message}`));
-        }
+    #shouldRetry(error: RequestError, attempt: number): boolean {
+        this.#emitError(error);
 
         if (attempt === this.#options.rateLimitRetries) {
-            this.#eventEmitter.emit("error", new Error("[REST] Max rate limit retries reached"));
+            this.#emitDebug("Max rate limit retries reached", {
+                maxRetries: this.#options.rateLimitRetries,
+                error: error.message,
+            });
             return false;
         }
 
+        this.#emitDebug("Request failed, retrying", {
+            attempt: attempt + 1,
+            maxRetries: this.#options.rateLimitRetries,
+            errorCode: error.code,
+            errorMessage: error.message,
+        });
+        return true;
+    }
+
+    #emitDebug(message: string, details?: Record<string, unknown>): void {
+        this.#eventEmitter.emit(
+            "debug",
+            formatDebugLog(message, {
+                component: "RequestManager",
+                timestamp: true,
+                details,
+            }),
+        );
+    }
+
+    #emitError(error: RequestError): void {
+        this.#eventEmitter.emit(
+            "error",
+            formatErrorLog(error.message, {
+                component: "RequestManager",
+                code: error.code,
+                details: error.details,
+                stack: error.stack,
+                timestamp: true,
+            }),
+        );
+    }
+
+    #emitWarn(message: string, details?: Record<string, unknown>): void {
         this.#eventEmitter.emit(
             "warn",
-            `[REST] Request failed, retrying (${attempt + 1}/${this.#options.rateLimitRetries}): ${String(error)}`,
+            formatWarnLog(message, {
+                component: "RequestManager",
+                timestamp: true,
+                details,
+            }),
         );
-        return true;
     }
 }
