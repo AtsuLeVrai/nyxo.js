@@ -1,8 +1,8 @@
 {
     "$schema": "https://json.schemastore.org/package.json",
-    "name": "@nyxjs/utils",
+    "name": "@nyxjs/logger",
     "version": "1.0.0",
-    "description": "A utility package for the Nyx.js framework",
+    "description": "Logger for nyx.js",
     "license": "AGPL-3.0-only",
     "type": "module",
     "main": "./dist/index.js",
@@ -24,7 +24,7 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/3tatsu/nyx.js",
-        "directory": "packages/utils"
+        "directory": "packages/logger"
     },
     "bugs": {
         "url": "https://github.com/3tatsu/nyx.js/issues"
@@ -47,7 +47,6 @@
         "@swc/core": "^1.8.0",
         "@types/node": "^22.9.0",
         "rimraf": "^6.0.1",
-        "terser": "^5.36.0",
         "tsup": "^8.3.5",
         "typescript": "^5.6.3"
     },

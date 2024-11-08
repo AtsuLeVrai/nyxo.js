@@ -40,7 +40,7 @@
     },
     "dependencies": {
         "@nyxjs/core": "workspace:*",
-        "@nyxjs/utils": "workspace:*",
+        "@nyxjs/logger": "workspace:*",
         "eventemitter3": "^5.0.1",
         "form-data": "^4.0.1",
         "minizlib": "^3.0.1",
@@ -52,7 +52,6 @@
         "@swc/core": "^1.8.0",
         "@types/node": "^22.9.0",
         "rimraf": "^6.0.1",
-        "terser": "^5.36.0",
         "tsup": "^8.3.5",
         "typescript": "^5.6.3"
     },

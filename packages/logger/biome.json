@@ -1,0 +1,16 @@
+{
+    "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+    "extends": ["../../configs/biome/node.json"],
+    "overrides": [
+        {
+            "include": ["packages/gateway/src/events/**/*"],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "useNamingConvention": "info"
+                    }
+                }
+            }
+        }
+    ]
+}

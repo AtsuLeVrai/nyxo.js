@@ -1,7 +1,7 @@
 import { platform } from "node:process";
 import { GatewayOpcodes, type GuildStructure, type Integer, type Snowflake } from "@nyxjs/core";
+import { Logger } from "@nyxjs/logger";
 import { GatewayRoutes, type Rest, UserRoutes } from "@nyxjs/rest";
-import { formatDebugLog, formatErrorLog, formatWarnLog, wait } from "@nyxjs/utils";
 import type { Gateway } from "../Gateway.js";
 import type { IdentifyStructure } from "../events/index.js";
 import type { GatewayOptions, GatewayShardTypes, ShardConfig } from "../types/index.js";
@@ -391,7 +391,7 @@ export class ShardManager {
             );
 
             await Promise.all(spawnPromises);
-            await wait(5000);
+            await this.#wait(5000);
             this.#emitDebug(`Bucket ${bucket.key} spawned successfully`);
         } catch (error) {
             const shardError = new ShardError("Failed to spawn bucket", ShardErrorCode.SpawnError, { bucket, error });
@@ -483,7 +483,7 @@ export class ShardManager {
 
                 if (bucketKey < Math.max(...Array.from(pendingBuckets.keys()))) {
                     this.#emitDebug("Waiting 5 seconds before processing next bucket");
-                    await wait(5000);
+                    await this.#wait(5000);
                 }
             }
 
@@ -568,9 +568,13 @@ export class ShardManager {
             if (error instanceof ShardError) {
                 this.#emitError(error);
             }
-            await wait(this.#reconnectTimeout);
+            await this.#wait(this.#reconnectTimeout);
             await this.#reconnectShard(shardId);
         }
+    }
+
+    async #wait(ms: number): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     #calculateShardId(guildId: Snowflake, shardCount: Integer): Integer {
@@ -745,12 +749,11 @@ export class ShardManager {
     #emitError(error: ShardError): void {
         this.#gateway.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.error(error.message, {
                 component: "ShardManager",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }
@@ -758,9 +761,8 @@ export class ShardManager {
     #emitDebug(message: string): void {
         this.#gateway.emit(
             "debug",
-            formatDebugLog(message, {
+            Logger.debug(message, {
                 component: "ShardManager",
-                timestamp: true,
             }),
         );
     }
@@ -768,9 +770,8 @@ export class ShardManager {
     #emitWarn(message: string): void {
         this.#gateway.emit(
             "warn",
-            formatWarnLog(message, {
+            Logger.warn(message, {
                 component: "ShardManager",
-                timestamp: true,
             }),
         );
     }

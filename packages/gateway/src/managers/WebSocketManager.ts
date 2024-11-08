@@ -1,5 +1,5 @@
 import { GatewayCloseCodes } from "@nyxjs/core";
-import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
+import { Logger } from "@nyxjs/logger";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { GatewayEvents } from "../types/index.js";
@@ -216,12 +216,11 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
     #emitError(error: WebSocketError): void {
         this.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.error(error.message, {
                 component: "WebSocketManager",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }
@@ -229,9 +228,8 @@ export class WebSocketManager extends EventEmitter<GatewayEvents> {
     #emitDebug(message: string, details?: Record<string, unknown>): void {
         this.emit(
             "debug",
-            formatDebugLog(message, {
+            Logger.debug(message, {
                 component: "WebSocketManager",
-                timestamp: true,
                 details,
             }),
         );

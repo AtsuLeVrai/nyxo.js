@@ -1,5 +1,5 @@
 import { MimeTypes } from "@nyxjs/core";
-import { formatDebugLog, formatErrorLog, formatWarnLog } from "@nyxjs/utils";
+import { Logger, formatJson } from "@nyxjs/logger";
 import type { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import type { IncomingHttpHeaders } from "undici/types/header.js";
@@ -167,7 +167,10 @@ export class RequestManager {
         }
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
-            this.#emitDebug(`Request successful: ${text}`);
+            this.#emitDebug("Request successful", {
+                response: formatJson(text),
+            });
+
             try {
                 return JSON.parse(text);
             } catch (error) {
@@ -235,9 +238,8 @@ export class RequestManager {
     #emitDebug(message: string, details?: Record<string, unknown>): void {
         this.#eventEmitter.emit(
             "debug",
-            formatDebugLog(message, {
+            Logger.debug(message, {
                 component: "RequestManager",
-                timestamp: true,
                 details,
             }),
         );
@@ -246,12 +248,11 @@ export class RequestManager {
     #emitError(error: RequestError): void {
         this.#eventEmitter.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.error(error.message, {
                 component: "RequestManager",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }
@@ -259,9 +260,8 @@ export class RequestManager {
     #emitWarn(message: string, details?: Record<string, unknown>): void {
         this.#eventEmitter.emit(
             "warn",
-            formatWarnLog(message, {
+            Logger.warn(message, {
                 component: "RequestManager",
-                timestamp: true,
                 details,
             }),
         );

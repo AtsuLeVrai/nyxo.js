@@ -1,5 +1,5 @@
 import type { Integer } from "@nyxjs/core";
-import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
+import { Logger } from "@nyxjs/logger";
 import { EventEmitter } from "eventemitter3";
 import type { GatewayEvents } from "../types/index.js";
 
@@ -249,12 +249,11 @@ export class HeartbeatManager extends EventEmitter<GatewayEvents> {
     #emitError(error: HeartbeatError): void {
         this.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.debug(error.message, {
                 component: "HeartbeatManager",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }
@@ -262,9 +261,8 @@ export class HeartbeatManager extends EventEmitter<GatewayEvents> {
     #emitDebug(message: string): void {
         this.emit(
             "debug",
-            formatDebugLog(message, {
+            Logger.debug(message, {
                 component: "HeartbeatManager",
-                timestamp: true,
             }),
         );
     }

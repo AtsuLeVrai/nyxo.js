@@ -1,6 +1,6 @@
 import { GatewayCloseCodes, GatewayOpcodes } from "@nyxjs/core";
+import { Logger } from "@nyxjs/logger";
 import { GatewayRoutes, type Rest } from "@nyxjs/rest";
-import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
 import type WebSocket from "ws";
 import type { HelloStructure, ReadyEventFields, ResumeStructure } from "./events/index.js";
@@ -697,12 +697,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     #emitError(error: GatewayError): void {
         this.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.error(error.message, {
                 component: "Gateway",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }
@@ -710,9 +709,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     #emitDebug(message: string, details?: Record<string, unknown>): void {
         this.emit(
             "debug",
-            formatDebugLog(message, {
+            Logger.debug(message, {
                 component: "Gateway",
-                timestamp: true,
                 details,
             }),
         );

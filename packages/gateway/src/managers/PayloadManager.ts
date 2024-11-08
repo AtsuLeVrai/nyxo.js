@@ -1,5 +1,5 @@
 import type { Integer } from "@nyxjs/core";
-import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
+import { Logger } from "@nyxjs/logger";
 import erlpack from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import type { EncodingTypes, GatewayEvents } from "../types/index.js";
@@ -299,12 +299,11 @@ export class PayloadManager extends EventEmitter<GatewayEvents> {
     #emitError(error: PayloadError): void {
         this.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.error(error.message, {
                 component: "PayloadManager",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }
@@ -312,9 +311,8 @@ export class PayloadManager extends EventEmitter<GatewayEvents> {
     #emitDebug(message: string): void {
         this.emit(
             "debug",
-            formatDebugLog(message, {
+            Logger.debug(message, {
                 component: "PayloadManager",
-                timestamp: true,
             }),
         );
     }

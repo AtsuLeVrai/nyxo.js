@@ -1,60 +1,59 @@
 {
-    "$schema": "https://json.schemastore.org/package.json",
-    "name": "nyx.js",
-    "version": "1.0.0",
-    "description": "A simple and fast Discord API wrapper for Node.js",
-    "license": "AGPL-3.0-only",
-    "type": "module",
-    "main": "./dist/index.js",
-    "module": "./dist/esm/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/esm/index.js",
-            "require": "./dist/index.js"
-        }
-    },
-    "engines": {
-        "node": ">=20"
-    },
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/3tatsu/nyx.js",
-        "directory": "packages/nyxjs"
-    },
-    "bugs": {
-        "url": "https://github.com/3tatsu/nyx.js/issues"
-    },
-    "author": {
-        "name": "3tatsu",
-        "url": "https://github.com/3tatsu"
-    },
-    "scripts": {
-        "build": "tsup && rimraf .tsup",
-        "clean": "rimraf dist",
-        "format": "biome format --write ."
-    },
-    "dependencies": {
-        "@nyxjs/core": "workspace:*",
-        "@nyxjs/gateway": "workspace:*",
-        "@nyxjs/rest": "workspace:*",
-        "eventemitter3": "^5.0.1"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "1.9.4",
-        "@microsoft/api-extractor": "^7.47.11",
-        "@swc/core": "^1.8.0",
-        "@types/node": "^22.9.0",
-        "@types/ws": "^8.5.13",
-        "rimraf": "^6.0.1",
-        "terser": "^5.36.0",
-        "tsup": "^8.3.5",
-        "typescript": "^5.6.3"
-    },
-    "files": ["dist"],
-    "readme": "README.md"
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "nyx.js",
+  "version": "1.0.0",
+  "description": "A simple and fast Discord API wrapper for Node.js",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/3tatsu/nyx.js",
+    "directory": "packages/nyxjs"
+  },
+  "bugs": {
+    "url": "https://github.com/3tatsu/nyx.js/issues"
+  },
+  "author": {
+    "name": "3tatsu",
+    "url": "https://github.com/3tatsu"
+  },
+  "scripts": {
+    "build": "tsup && rimraf .tsup",
+    "clean": "rimraf dist",
+    "format": "biome format --write ."
+  },
+  "dependencies": {
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/gateway": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
+    "eventemitter3": "^5.0.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@microsoft/api-extractor": "^7.47.11",
+    "@swc/core": "^1.8.0",
+    "@types/node": "^22.9.0",
+    "@types/ws": "^8.5.13",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3"
+  },
+  "files": ["dist"],
+  "readme": "README.md"
 }

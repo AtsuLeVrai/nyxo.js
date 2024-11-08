@@ -1,6 +1,6 @@
 import type { Integer } from "@nyxjs/core";
+import { Logger } from "@nyxjs/logger";
 import type { GetGatewayBotJsonResponse } from "@nyxjs/rest";
-import { formatDebugLog, formatErrorLog } from "@nyxjs/utils";
 import { EventEmitter } from "eventemitter3";
 import type { GatewayEvents } from "../types/index.js";
 
@@ -307,12 +307,11 @@ export class SessionManager extends EventEmitter<GatewayEvents> {
     #emitError(error: SessionError): void {
         this.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.error(error.message, {
                 component: "SessionManager",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }
@@ -320,9 +319,8 @@ export class SessionManager extends EventEmitter<GatewayEvents> {
     #emitDebug(message: string): void {
         this.emit(
             "debug",
-            formatDebugLog(message, {
+            Logger.debug(message, {
                 component: "SessionManager",
-                timestamp: true,
             }),
         );
     }

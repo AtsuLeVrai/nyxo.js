@@ -1,4 +1,4 @@
-import { formatErrorLog } from "@nyxjs/utils";
+import { Logger } from "@nyxjs/logger";
 import { EventEmitter } from "eventemitter3";
 import zlib from "zlib-sync";
 import type { GatewayEvents } from "../types/index.js";
@@ -193,12 +193,11 @@ export class CompressionManager extends EventEmitter<GatewayEvents> {
     #emitError(error: CompressionError): void {
         this.emit(
             "error",
-            formatErrorLog(error.message, {
+            Logger.error(error.message, {
                 component: "CompressionManager",
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
-                timestamp: true,
             }),
         );
     }

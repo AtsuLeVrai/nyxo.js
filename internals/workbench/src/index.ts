@@ -25,7 +25,6 @@
 import { ApiVersions, GatewayIntents } from "@nyxjs/core";
 import { CompressTypes, EncodingTypes, Gateway, type ReadyEventFields } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
-import { formatInfoLog } from "@nyxjs/utils";
 import { config } from "dotenv";
 
 const env = config();
@@ -62,8 +61,8 @@ async function start() {
             const endTime = process.hrtime.bigint();
             const timeInMs = Number(endTime - startTime) / 1_000_000;
 
-            console.log(formatInfoLog(`Connection completed in ${timeInMs.toFixed(2)}ms`));
-            console.log(formatInfoLog(`READY ${(data as ReadyEventFields).user.id}`));
+            console.log(`Connection completed in ${timeInMs.toFixed(2)}ms`);
+            console.log(`READY ${(data as ReadyEventFields).user.id}`);
         }
     });
     await gateway.connect();
