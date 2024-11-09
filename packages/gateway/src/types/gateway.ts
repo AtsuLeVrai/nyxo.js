@@ -29,7 +29,7 @@ export enum EncodingTypes {
 /**
  * The shard information for the globals connection.
  */
-export type ShardConfig = {
+export interface ShardConfig {
     /**
      * The total number of shards.
      */
@@ -38,7 +38,7 @@ export type ShardConfig = {
      * The shard ID.
      */
     shardId: Integer;
-};
+}
 
 /**
  * The shard information for the globals connection.
@@ -48,7 +48,7 @@ export type GatewayShardTypes = ShardConfig | "auto" | [shardId: Integer, numSha
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#connecting-gateway-url-query-string-params}
  */
-export type GatewayOptions = {
+export interface GatewayOptions {
     /**
      * The optional transport compression of globals packets zlib-stream or zstd-stream
      */
@@ -64,7 +64,7 @@ export type GatewayOptions = {
     /**
      * The large threshold for the globals connection.
      */
-    large_threshold?: Integer;
+    largeThreshold?: Integer;
     /**
      * The presence update structure for the globals connection.
      */
@@ -78,12 +78,12 @@ export type GatewayOptions = {
      * API version
      */
     v: ApiVersions;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#payload-structure}
  */
-export type GatewayPayload = {
+export interface GatewayPayload {
     /**
      * Event data
      */
@@ -100,4 +100,4 @@ export type GatewayPayload = {
      * Event name
      */
     t: keyof GatewayReceiveEvents | null;
-};
+}

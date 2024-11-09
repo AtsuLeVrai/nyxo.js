@@ -12,7 +12,7 @@ import type {
 } from "@nyxjs/core";
 import { type ColorResolvable, Colors } from "../libs/index.js";
 
-type EmbedSchema = {
+interface EmbedSchema {
     addFields(...fields: EmbedFieldStructure[]): EmbedSchema;
     setAuthor(author: EmbedAuthorStructure): EmbedSchema;
     setColor(color: ColorResolvable): EmbedSchema;
@@ -29,7 +29,7 @@ type EmbedSchema = {
     setVideo(video: EmbedVideoStructure): EmbedSchema;
     toJSON(): Readonly<Partial<EmbedStructure>>;
     toString(): string;
-};
+}
 
 export class EmbedBuilder implements EmbedSchema {
     static readonly TITLE_LIMIT = 256;

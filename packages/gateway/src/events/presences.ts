@@ -3,7 +3,7 @@ import type { GuildMemberStructure, Integer, Snowflake, UserStructure } from "@n
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#typing-start-typing-start-event-fields}
  */
-export type TypingStartEventFields = {
+export interface TypingStartEventFields {
     /**
      * ID of the channel
      */
@@ -24,12 +24,12 @@ export type TypingStartEventFields = {
      * ID of the user
      */
     user_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-buttons}
  */
-export type ActivityButton = {
+export interface ActivityButton {
     /**
      * Text shown on the button (1-32 characters)
      */
@@ -38,7 +38,7 @@ export type ActivityButton = {
      * URL opened when clicking the button (1-512 characters)
      */
     url: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-flags}
@@ -58,7 +58,7 @@ export enum ActivityFlags {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-secrets}
  */
-export type ActivitySecrets = {
+export interface ActivitySecrets {
     /**
      * Secret for joining a party
      */
@@ -71,12 +71,12 @@ export type ActivitySecrets = {
      * Secret for spectating a game
      */
     spectate?: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-assets}
  */
-export type ActivityAssets = {
+export interface ActivityAssets {
     /**
      * ID for the large asset of the activity
      */
@@ -93,20 +93,20 @@ export type ActivityAssets = {
      * Text displayed when hovering over the small image of the activity
      */
     small_text?: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-party}
  */
-export type ActivityParty = {
+export interface ActivityParty {
     id?: string;
     size?: [current_size: Integer, max_size: Integer];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-emoji}
  */
-export type ActivityEmoji = {
+export interface ActivityEmoji {
     /**
      * Whether the emoji is animated
      */
@@ -119,12 +119,12 @@ export type ActivityEmoji = {
      * Name of the emoji
      */
     name: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-timestamps}
  */
-export type ActivityTimestamps = {
+export interface ActivityTimestamps {
     /**
      * Unix time (in milliseconds) of when the activity ends
      */
@@ -133,7 +133,7 @@ export type ActivityTimestamps = {
      * Unix time (in milliseconds) of when the activity started
      */
     start?: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-types}
@@ -168,7 +168,7 @@ export enum ActivityTypes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#activity-object-activity-structure}
  */
-export type ActivityStructure = {
+export interface ActivityStructure {
     /**
      * Application ID for the game
      */
@@ -226,15 +226,15 @@ export type ActivityStructure = {
      */
     type: ActivityTypes;
     /**
-     * Stream URL, is validated when type is 1
+     * Stream URL, is validated when interface is 1
      */
     url?: string | null;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#client-status-object}
  */
-export type ClientStatus = {
+export interface ClientStatus {
     /**
      * User's status set for an active desktop (Windows, Linux, Mac) application session
      */
@@ -247,12 +247,12 @@ export type ClientStatus = {
      * User's status set for an active web (browser, bot user) application session
      */
     web?: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#presence-update-presence-update-event-fields}
  */
-export type PresenceUpdateEventFields = {
+export interface PresenceUpdateEventFields {
     /**
      * User's current activities
      */
@@ -273,7 +273,7 @@ export type PresenceUpdateEventFields = {
      * User whose presence is being updated
      */
     user: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence-status-types}
@@ -283,7 +283,7 @@ export type UpdatePresenceStatusTypes = "dnd" | "idle" | "invisible" | "offline"
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence-gateway-presence-update-structure}
  */
-export type UpdatePresenceGatewayPresenceUpdateStructure = {
+export interface UpdatePresenceGatewayPresenceUpdateStructure {
     /**
      * User's activities
      */
@@ -300,4 +300,4 @@ export type UpdatePresenceGatewayPresenceUpdateStructure = {
      * User's new status
      */
     status: UpdatePresenceStatusTypes;
-};
+}

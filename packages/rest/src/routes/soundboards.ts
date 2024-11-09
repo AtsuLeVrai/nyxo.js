@@ -12,25 +12,23 @@ export type ModifyGuildSoundboardSoundJsonParams = Pick<
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound-json-params|Create Guild Soundboard Sound JSON Params}
  */
-export type CreateGuildSoundboardSoundJsonParams = Pick<
-    SoundboardSoundStructure,
-    "emoji_id" | "emoji_name" | "name" | "volume"
-> & {
+export interface CreateGuildSoundboardSoundJsonParams
+    extends Pick<SoundboardSoundStructure, "emoji_id" | "emoji_name" | "name" | "volume"> {
     /**
      * The mp3 or ogg sound data, base64 encoded, similar to image data
      */
     sound: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params|Send Soundboard Sound JSON Params}
  */
-export type SendSoundboardSoundJsonParams = Pick<SoundboardSoundStructure, "sound_id"> & {
+export interface SendSoundboardSoundJsonParams extends Pick<SoundboardSoundStructure, "sound_id"> {
     /**
      * The id of the guild the soundboard sound is from, required to play sounds from different servers
      */
     source_guild_id?: Snowflake;
-};
+}
 
 export const SoundboardRoutes = {
     /**

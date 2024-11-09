@@ -7,7 +7,7 @@ import type { UserStructure } from "./users.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#forum-tag-object-forum-tag-structure|Forum Tag Structure}
  */
-export type ForumTagStructure = {
+export interface ForumTagStructure {
     /**
      * The id of a guild's custom emoji
      */
@@ -28,12 +28,12 @@ export type ForumTagStructure = {
      * The name of the tag (0-20 characters)
      */
     name: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#default-reaction-object-default-reaction-structure|Default Reaction Structure}
  */
-export type DefaultReactionStructure = {
+export interface DefaultReactionStructure {
     /**
      * The id of a guild's custom emoji
      */
@@ -42,12 +42,12 @@ export type DefaultReactionStructure = {
      * The Unicode character of the emoji
      */
     emoji_name: string | null;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#thread-member-object-thread-member-structure|Thread Member Structure}
  */
-export type ThreadMemberStructure = {
+export interface ThreadMemberStructure {
     /**
      * Any user-thread settings, currently only used for notifications
      */
@@ -68,12 +68,12 @@ export type ThreadMemberStructure = {
      * ID of the user
      */
     user_id?: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#thread-metadata-object-thread-metadata-structure|Thread Metadata Structure}
  */
-export type ThreadMetadataStructure = {
+export interface ThreadMetadataStructure {
     /**
      * Timestamp when the thread's archive status was last changed, used for calculating recent activity
      */
@@ -98,7 +98,7 @@ export type ThreadMetadataStructure = {
      * Whether the thread is locked; when a thread is locked, only users with MANAGE_THREADS can unarchive it
      */
     locked: boolean;
-};
+}
 
 /**
  * Enumeration of overwrite types in Discord.
@@ -111,7 +111,7 @@ export enum OverwriteTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#overwrite-object-overwrite-structure|Overwrite Structure}
  */
-export type OverwriteStructure = {
+export interface OverwriteStructure {
     /**
      * Permission bit set
      */
@@ -128,12 +128,12 @@ export type OverwriteStructure = {
      * Either 0 (role) or 1 (member)
      */
     type: OverwriteTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#followed-channel-object-followed-channel-structure|Followed Channel Structure}
  */
-export type FollowedChannelStructure = {
+export interface FollowedChannelStructure {
     /**
      * Source channel id
      */
@@ -142,7 +142,7 @@ export type FollowedChannelStructure = {
      * Created target webhook id
      */
     webhook_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-forum-layout-types|Forum Layout Types}
@@ -269,7 +269,7 @@ export enum ChannelTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-structure|Channel Structure}
  */
-export type ChannelStructure = {
+export interface ChannelStructure {
     /**
      * Application id of the group DM creator if it is bot-created
      */
@@ -299,7 +299,7 @@ export type ChannelStructure = {
      */
     default_reaction_emoji?: DefaultReactionStructure | null;
     /**
-     * The default sort order type used to order posts in GUILD_FORUM and GUILD_MEDIA channels. Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin
+     * The default sort order interface used to order posts in GUILD_FORUM and GUILD_MEDIA channels. Defaults to null, which indicates a preferred sort order hasn't been set by a channel admin
      */
     default_sort_order?: SortOrderTypes | null;
     /**
@@ -401,7 +401,7 @@ export type ChannelStructure = {
      */
     total_message_sent?: Integer;
     /**
-     * The type of channel
+     * The interface of channel
      */
     type: ChannelTypes;
     /**
@@ -412,4 +412,4 @@ export type ChannelStructure = {
      * The camera video quality mode of the voice channel, 1 when not present
      */
     video_quality_mode?: VideoQualityModes;
-};
+}

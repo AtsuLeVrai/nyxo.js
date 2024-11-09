@@ -4,19 +4,19 @@ import type { GetGatewayBotJsonResponse } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import type { GatewayEvents } from "../types/index.js";
 
-type SessionState = {
+interface SessionState {
     sequence: Integer | null;
     sessionId: string | null;
     resumeUrl: string | null;
-};
+}
 
-type SessionLimits = {
+interface SessionLimits {
     remaining: Integer;
     total: Integer;
     resetAfter: Integer;
     maxConcurrency: Integer;
     recommendedShards: Integer;
-};
+}
 
 export enum SessionErrorCode {
     NotInitialized = "SESSION_NOT_INITIALIZED",

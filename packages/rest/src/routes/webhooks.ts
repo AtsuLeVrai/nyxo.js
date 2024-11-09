@@ -21,7 +21,7 @@ export type DeleteWebhookMessageQueryStringParams = Pick<QueryStringParams, "thr
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message-jsonform-params|Edit Webhook Message JSON/Form Params}
  */
-export type EditWebhookMessageJsonFormParams = {
+export interface EditWebhookMessageJsonFormParams {
     /**
      * The message contents (up to 2000 characters)
      */
@@ -54,7 +54,7 @@ export type EditWebhookMessageJsonFormParams = {
      * A poll!
      */
     poll?: PollCreateRequestStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message-query-string-params|Edit Webhook Message Query String Params}
@@ -69,12 +69,12 @@ export type GetWebhookMessageQueryStringParams = Pick<QueryStringParams, "thread
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook-query-string-params|Execute GitHub-Compatible Webhook Query String Params}
  */
-export type ExecuteGitHubCompatibleWebhookQueryStringParams = Pick<QueryStringParams, "thread_id"> & {
+export interface ExecuteGitHubCompatibleWebhookQueryStringParams extends Pick<QueryStringParams, "thread_id"> {
     /**
      * Wait for server to confirm message create before response
      */
     wait?: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook-query-string-params|Execute Slack-Compatible Webhook Query String Params}
@@ -84,7 +84,7 @@ export type ExecuteSlackCompatibleWebhookQueryStringParams = ExecuteGitHubCompat
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params|Execute Webhook JSON/Form Params}
  */
-export type ExecuteWebhookJsonFormParams = {
+export interface ExecuteWebhookJsonFormParams {
     /**
      * The message contents (up to 2000 characters)
      */
@@ -141,7 +141,7 @@ export type ExecuteWebhookJsonFormParams = {
      * A poll!
      */
     poll: PollCreateRequestStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-query-string-params|Execute Webhook Query String Params}
@@ -151,7 +151,7 @@ export type ExecuteWebhookQueryStringParams = ExecuteGitHubCompatibleWebhookQuer
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params|Modify Webhook JSON Params}
  */
-export type ModifyWebhookJsonParams = {
+export interface ModifyWebhookJsonParams {
     /**
      * The default name of the webhook
      */
@@ -164,12 +164,12 @@ export type ModifyWebhookJsonParams = {
      * The new channel id this webhook should be moved to
      */
     channel_id?: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook-json-params|Create Webhook JSON Params}
  */
-export type CreateWebhookJsonParams = {
+export interface CreateWebhookJsonParams {
     /**
      * The name of the webhook (1-80 characters)
      */
@@ -178,7 +178,7 @@ export type CreateWebhookJsonParams = {
      * Image for the default webhook avatar
      */
     avatar?: string;
-};
+}
 
 export const WebhookRoutes = {
     /**
@@ -247,7 +247,7 @@ export const WebhookRoutes = {
         webhookId: Snowflake,
         token: string,
         params?: ExecuteGitHubCompatibleWebhookQueryStringParams,
-    ): RouteStructure<void> {
+    ): RouteStructure<void, ExecuteGitHubCompatibleWebhookQueryStringParams> {
         return {
             method: RestMethods.Post,
             path: `/webhooks/${webhookId}/${token}/github`,
@@ -262,7 +262,7 @@ export const WebhookRoutes = {
         webhookId: Snowflake,
         token: string,
         params?: ExecuteSlackCompatibleWebhookQueryStringParams,
-    ): RouteStructure<void> {
+    ): RouteStructure<void, ExecuteSlackCompatibleWebhookQueryStringParams> {
         return {
             method: RestMethods.Post,
             path: `/webhooks/${webhookId}/${token}/slack`,
@@ -278,7 +278,7 @@ export const WebhookRoutes = {
         token: string,
         params: ExecuteWebhookJsonFormParams,
         query?: ExecuteWebhookQueryStringParams,
-    ): RouteStructure<MessageStructure> {
+    ): RouteStructure<MessageStructure, ExecuteWebhookQueryStringParams> {
         const { files, ...restParams } = params;
         const form = new FileUploadManager();
         form.addPayload(restParams);

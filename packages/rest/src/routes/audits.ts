@@ -4,7 +4,7 @@ import { type QueryStringParams, RestMethods, type RouteStructure } from "../typ
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params|Get Guild Audit Log Query String Params}
  */
-export type GetGuildAuditLogQueryStringParams = Pick<QueryStringParams, "after" | "before" | "limit"> & {
+export interface GetGuildAuditLogQueryStringParams extends Pick<QueryStringParams, "after" | "before" | "limit"> {
     /**
      * The type of audit log event
      */
@@ -13,13 +13,16 @@ export type GetGuildAuditLogQueryStringParams = Pick<QueryStringParams, "after" 
      * Filter the log for actions made by a user
      */
     user_id?: Snowflake;
-};
+}
 
 export const AuditRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log|Get Guild Audit Log}
      */
-    getGuildAuditLog(guildId: Snowflake, params: GetGuildAuditLogQueryStringParams): RouteStructure<AuditLogStructure> {
+    getGuildAuditLog(
+        guildId: Snowflake,
+        params: GetGuildAuditLogQueryStringParams,
+    ): RouteStructure<AuditLogStructure, GetGuildAuditLogQueryStringParams> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/audit-logs`,

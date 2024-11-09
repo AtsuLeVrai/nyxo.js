@@ -76,7 +76,7 @@ import type {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#receive-events}
  */
-export type GatewayReceiveEvents = {
+export interface GatewayReceiveEvents {
     APPLICATION_COMMAND_PERMISSIONS_UPDATE: GuildApplicationCommandPermissionsStructure;
     AUTO_MODERATION_ACTION_EXECUTION: AutoModerationActionExecutionEventFields;
     AUTO_MODERATION_RULE_CREATE: AutoModerationRuleStructure;
@@ -158,12 +158,12 @@ export type GatewayReceiveEvents = {
     VOICE_SERVER_UPDATE: VoiceServerUpdateEventFields;
     VOICE_STATE_UPDATE: VoiceStateStructure;
     WEBHOOKS_UPDATE: WebhooksUpdateEventFields;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#send-events}
  */
-export type GatewaySendEvents = {
+export interface GatewaySendEvents {
     [GatewayOpcodes.Identify]: IdentifyStructure;
     [GatewayOpcodes.Resume]: ResumeStructure;
     [GatewayOpcodes.Heartbeat]: Integer | null;
@@ -171,9 +171,9 @@ export type GatewaySendEvents = {
     [GatewayOpcodes.RequestSoundboardSounds]: RequestSoundboardSoundsStructure;
     [GatewayOpcodes.VoiceStateUpdate]: UpdateVoiceStateGatewayVoiceStateUpdateStructure;
     [GatewayOpcodes.PresenceUpdate]: UpdatePresenceGatewayPresenceUpdateStructure;
-};
+}
 
-export type GatewayEvents<K extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents> = {
+export interface GatewayEvents<K extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents> {
     /**
      * Event triggered when the connection is closed.
      *
@@ -219,4 +219,4 @@ export type GatewayEvents<K extends keyof GatewayReceiveEvents = keyof GatewayRe
      * @param message - The message.
      */
     missedAck: [message: string];
-};
+}

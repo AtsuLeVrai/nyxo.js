@@ -45,11 +45,11 @@ export enum ApplicationRoleConnectionMetadataType {
 }
 
 /**
- * Type representing the structure of application role connection metadata.
+ * interface representing the structure of application role connection metadata.
  *
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#application-role-connection-metadata-object-application-role-connection-metadata-structure|Application Role Connection Metadata Structure}
  */
-export type ApplicationRoleConnectionMetadataStructure = {
+export interface ApplicationRoleConnectionMetadataStructure {
     /**
      * Description of the metadata field (1-200 characters).
      */
@@ -71,15 +71,15 @@ export type ApplicationRoleConnectionMetadataStructure = {
      */
     name_localizations?: AvailableLocales;
     /**
-     * Type of metadata value.
+     * interface of metadata value.
      */
     type: ApplicationRoleConnectionMetadataType;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#install-params-object-install-params-structure|Install Params Structure}
  */
-export type InstallParamsStructure = {
+export interface InstallParamsStructure {
     /**
      * Permissions to request for the bot role.
      *
@@ -90,7 +90,7 @@ export type InstallParamsStructure = {
      * Scopes to add the application to the server with.
      */
     scopes: OAuth2Scopes[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-flags|Application Flags}
@@ -139,14 +139,14 @@ export enum ApplicationFlags {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object|Integration Type Configuration Object}
+ * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object|Integration interface Configuration Object}
  */
-export type IntegrationTypeConfigurationStructure = {
+export interface IntegrationTypeConfigurationStructure {
     /**
      * Install params for each installation context's default in-app authorization link.
      */
     oauth2_install_params: InstallParamsStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-types|Application Integration Types}
@@ -165,7 +165,7 @@ export enum ApplicationIntegrationTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-structure|Application Structure}
  */
-export type ApplicationStructure = {
+export interface ApplicationStructure {
     /**
      * Approximate count of guilds the app has been added to.
      */
@@ -227,7 +227,7 @@ export type ApplicationStructure = {
      */
     install_params?: InstallParamsStructure;
     /**
-     * Default scopes and permissions for each supported installation context. Value for each key is an integration type configuration object.
+     * Default scopes and permissions for each supported installation context. Value for each key is an integration interface configuration object.
      */
     integration_types_config?: Record<ApplicationIntegrationTypes, IntegrationTypeConfigurationStructure>;
     /**
@@ -284,4 +284,4 @@ export type ApplicationStructure = {
      * Hex encoded key for verification in interactions and the GameSDK's GetTicket.
      */
     verify_key: string;
-};
+}

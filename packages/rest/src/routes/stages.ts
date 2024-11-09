@@ -9,15 +9,13 @@ export type ModifyStageInstanceJsonParams = Partial<Pick<StageInstanceStructure,
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params|Create Stage Instance JSON Params}
  */
-export type CreateStageInstanceJsonParams = Pick<
-    StageInstanceStructure,
-    "channel_id" | "guild_scheduled_event_id" | "privacy_level" | "topic"
-> & {
+export interface CreateStageInstanceJsonParams
+    extends Pick<StageInstanceStructure, "channel_id" | "guild_scheduled_event_id" | "privacy_level" | "topic"> {
     /**
      * Notify @everyone that a Stage instance has started
      */
     send_start_notification?: boolean;
-};
+}
 
 export const StageRoutes = {
     /**

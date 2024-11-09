@@ -7,14 +7,14 @@ import {
     type SelectMenuStructure,
 } from "@nyxjs/core";
 
-type BaseSelectMenuSchema<
+interface BaseSelectMenuSchema<
     T extends
         | ComponentTypes.ChannelSelect
         | ComponentTypes.MentionableSelect
         | ComponentTypes.RoleSelect
         | ComponentTypes.StringSelect
         | ComponentTypes.UserSelect,
-> = {
+> {
     setCustomId(customId: string): BaseSelectMenuSchema<T>;
     setDisabled(disabled: boolean): BaseSelectMenuSchema<T>;
     setMaxValues(max: Integer): BaseSelectMenuSchema<T>;
@@ -22,28 +22,28 @@ type BaseSelectMenuSchema<
     setPlaceholder(placeholder: string): BaseSelectMenuSchema<T>;
     toJSON(): Readonly<Partial<SelectMenuStructure>>;
     toString(): string;
-};
+}
 
-type StringSelectMenuSchema = BaseSelectMenuSchema<ComponentTypes.StringSelect> & {
+interface StringSelectMenuSchema extends BaseSelectMenuSchema<ComponentTypes.StringSelect> {
     setOptions(options: SelectMenuOptionStructure[]): StringSelectMenuSchema;
-};
+}
 
-type ChannelSelectMenuSchema = BaseSelectMenuSchema<ComponentTypes.ChannelSelect> & {
+interface ChannelSelectMenuSchema extends BaseSelectMenuSchema<ComponentTypes.ChannelSelect> {
     setChannelTypes(types: ChannelTypes[]): ChannelSelectMenuSchema;
     setDefaultValues(values: SelectMenuDefaultValueStructure[]): ChannelSelectMenuSchema;
-};
+}
 
-type UserSelectMenuSchema = BaseSelectMenuSchema<ComponentTypes.UserSelect> & {
+interface UserSelectMenuSchema extends BaseSelectMenuSchema<ComponentTypes.UserSelect> {
     setDefaultValues(values: SelectMenuDefaultValueStructure[]): UserSelectMenuSchema;
-};
+}
 
-type RoleSelectMenuSchema = BaseSelectMenuSchema<ComponentTypes.RoleSelect> & {
+interface RoleSelectMenuSchema extends BaseSelectMenuSchema<ComponentTypes.RoleSelect> {
     setDefaultValues(values: SelectMenuDefaultValueStructure[]): RoleSelectMenuSchema;
-};
+}
 
-type MentionableSelectMenuSchema = BaseSelectMenuSchema<ComponentTypes.MentionableSelect> & {
+interface MentionableSelectMenuSchema extends BaseSelectMenuSchema<ComponentTypes.MentionableSelect> {
     setDefaultValues(values: SelectMenuDefaultValueStructure[]): MentionableSelectMenuSchema;
-};
+}
 
 abstract class BaseSelectMenu<
     T extends

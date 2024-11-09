@@ -19,7 +19,7 @@ import type { PresenceUpdateEventFields } from "./presences.js";
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-scheduled-event-user-remove-guild-scheduled-event-user-remove-event-fields}
  */
-export type GuildScheduledEventUserRemoveEventFields = {
+export interface GuildScheduledEventUserRemoveEventFields {
     /**
      * ID of the guild
      */
@@ -32,12 +32,12 @@ export type GuildScheduledEventUserRemoveEventFields = {
      * ID of the user
      */
     user_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-scheduled-event-user-add-guild-scheduled-event-user-add-event-fields}
  */
-export type GuildScheduledEventUserAddEventFields = {
+export interface GuildScheduledEventUserAddEventFields {
     /**
      * ID of the guild
      */
@@ -50,12 +50,12 @@ export type GuildScheduledEventUserAddEventFields = {
      * ID of the user
      */
     user_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-role-delete-guild-role-delete-event-fields}
  */
-export type GuildRoleDeleteEventFields = {
+export interface GuildRoleDeleteEventFields {
     /**
      * ID of the guild
      */
@@ -64,12 +64,12 @@ export type GuildRoleDeleteEventFields = {
      * ID of the role
      */
     role_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-role-update-guild-role-update-event-fields}
  */
-export type GuildRoleUpdateEventFields = {
+export interface GuildRoleUpdateEventFields {
     /**
      * ID of the guild
      */
@@ -78,12 +78,12 @@ export type GuildRoleUpdateEventFields = {
      * Role that was updated
      */
     role: RoleStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-role-create-guild-role-create-event-fields}
  */
-export type GuildRoleCreateEventFields = {
+export interface GuildRoleCreateEventFields {
     /**
      * ID of the guild
      */
@@ -92,12 +92,12 @@ export type GuildRoleCreateEventFields = {
      * Role that was created
      */
     role: RoleStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-members-chunk-guild-members-chunk-event-fields}
  */
-export type GuildMembersChunkEventFields = {
+export interface GuildMembersChunkEventFields {
     /**
      * Total number of expected chunks for this response
      */
@@ -126,12 +126,12 @@ export type GuildMembersChunkEventFields = {
      * When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here
      */
     presences?: PresenceUpdateEventFields[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-member-update-guild-member-update-event-fields}
  */
-export type GuildMemberUpdateEventFields = {
+export interface GuildMemberUpdateEventFields {
     /**
      * Member's guild avatar hash
      */
@@ -184,12 +184,12 @@ export type GuildMemberUpdateEventFields = {
      * User
      */
     user: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-member-remove-guild-member-remove-event-fields}
  */
-export type GuildMemberRemoveEventFields = {
+export interface GuildMemberRemoveEventFields {
     /**
      * ID of the guild
      */
@@ -198,32 +198,32 @@ export type GuildMemberRemoveEventFields = {
      * User who was removed
      */
     user: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-member-add-guild-member-add-extra-fields}
  */
-export type GuildMemberAddEventFields = {
+export interface GuildMemberAddEventFields {
     /**
      * ID of the guild
      */
     guild_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-integrations-update-guild-integrations-update-event-fields}
  */
-export type GuildIntegrationsUpdateEventFields = {
+export interface GuildIntegrationsUpdateEventFields {
     /**
      * ID of the guild whose integrations were updated
      */
     guild_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-stickers-update-guild-stickers-update-event-fields}
  */
-export type GuildStickersUpdateEventFields = {
+export interface GuildStickersUpdateEventFields {
     /**
      * ID of the guild
      */
@@ -232,12 +232,12 @@ export type GuildStickersUpdateEventFields = {
      * Array of stickers
      */
     stickers: StickerStructure[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-emojis-update-guild-emojis-update-event-fields}
  */
-export type GuildEmojisUpdateEventFields = {
+export interface GuildEmojisUpdateEventFields {
     /**
      * Array of emojis
      */
@@ -246,12 +246,12 @@ export type GuildEmojisUpdateEventFields = {
      * ID of the guild
      */
     guild_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-ban-remove-guild-ban-remove-event-fields}
  */
-export type GuildBanRemoveEventFields = {
+export interface GuildBanRemoveEventFields {
     /**
      * ID of the guild
      */
@@ -260,12 +260,12 @@ export type GuildBanRemoveEventFields = {
      * User who was unbanned
      */
     user: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-ban-add-guild-ban-add-event-fields}
  */
-export type GuildBanAddEventFields = {
+export interface GuildBanAddEventFields {
     /**
      * ID of the guild
      */
@@ -274,22 +274,22 @@ export type GuildBanAddEventFields = {
      * User who was banned
      */
     user: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-audit-log-entry-create-guild-audit-log-entry-create-event-extra-fields}
  */
-export type GuildAuditLogEntryCreateEventExtraFields = {
+export interface GuildAuditLogEntryCreateEventExtraFields {
     /**
      * ID of the guild
      */
     guild_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#guild-create-guild-create-extra-fields}
  */
-export type GuildCreateExtraFields = {
+export interface GuildCreateExtraFields {
     /**
      * Channels in the guild
      */
@@ -334,12 +334,12 @@ export type GuildCreateExtraFields = {
      * States of members currently in voice channels; lacks the guild_id key
      */
     voice_states: Partial<VoiceStateStructure>[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#request-guild-members-request-guild-members-structure}
  */
-export type RequestGuildMembersRequestStructure = {
+export interface RequestGuildMembersRequestStructure {
     /**
      * ID of the guild to get members for
      */
@@ -364,4 +364,4 @@ export type RequestGuildMembersRequestStructure = {
      * Used to specify which users you wish to fetch
      */
     user_ids?: Snowflake | Snowflake[];
-};
+}

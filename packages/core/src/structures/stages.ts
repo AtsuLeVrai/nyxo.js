@@ -23,7 +23,7 @@ export enum StagePrivacyLevel {
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object|Stage Instance Object}
  */
-export type StageInstanceStructure = {
+export interface StageInstanceStructure {
     /**
      * The id of the associated Stage channel.
      */
@@ -54,4 +54,4 @@ export type StageInstanceStructure = {
      * The topic of the Stage instance (1-120 characters).
      */
     topic: string;
-};
+}

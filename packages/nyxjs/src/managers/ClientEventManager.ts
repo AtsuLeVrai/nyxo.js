@@ -5,10 +5,10 @@ import type { Client } from "../Client.js";
 import { Guild, Ready } from "../structures/index.js";
 import type { ClientEvents } from "../types/index.js";
 
-type Constructor<T> = new (...args: any[]) => T;
+type Constructor<T> = new (...args: never[]) => T;
 type EventDataType<T extends keyof GatewayReceiveEvents> = GatewayReceiveEvents[T];
 type SerializeResult<T> = [T] | [T, T];
-type ClientEventMappingStructure<T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents> = {
+interface ClientEventMappingStructure<T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents> {
     readonly auditLogEventType?: AuditLogEvents;
     readonly clientEventName?: keyof Omit<
         ClientEvents,
@@ -16,11 +16,11 @@ type ClientEventMappingStructure<T extends keyof GatewayReceiveEvents = keyof Ga
     >;
     readonly gatewayReceiveEventName: T;
     serialize(client: Client, data: EventDataType<T>): SerializeResult<unknown>;
-};
+}
 
 function createInstance<T>(Constructor: Constructor<T>, args: unknown): T {
     // @todo: Add cache system with client.<manager>.cache.get() && set()
-    return new Constructor(args);
+    return new Constructor(args as never);
 }
 
 type ClientEventMapping = {
@@ -75,10 +75,10 @@ export class ClientEventManager {
         const { rest } = this.#client;
 
         const events = {
-            DEBUG: "debug",
-            ERROR: "error",
-            RATE_LIMIT: "rateLimit",
-            WARN: "warn",
+            debug: "debug",
+            error: "error",
+            rateLimit: "rateLimit",
+            warn: "warn",
         } as Record<keyof RestEvents, keyof ClientEvents>;
 
         for (const [restEvent, clientEvent] of Object.entries(events)) {
@@ -89,12 +89,12 @@ export class ClientEventManager {
     #setupGatewayListeners(): void {
         const { gateway } = this.#client;
         const events = {
-            CLOSE: "close",
-            DEBUG: "debug",
-            ERROR: "error",
-            WARN: "warn",
-            MISSED_ACK: "missedAck",
-            RAW: "raw",
+            close: "close",
+            debug: "debug",
+            error: "error",
+            warn: "warn",
+            missedAck: "missedAck",
+            raw: "raw",
         } as Record<keyof GatewayEvents, keyof ClientEvents>;
 
         for (const [gatewayEvent, clientEvent] of Object.entries(events)) {
@@ -103,13 +103,10 @@ export class ClientEventManager {
             );
         }
 
-        gateway.on("DISPATCH", this.#handleDispatch.bind(this));
+        gateway.on("dispatch", this.#handleDispatch.bind(this));
     }
 
-    async #handleDispatch<K extends keyof GatewayReceiveEvents>(
-        event: K,
-        data: GatewayReceiveEvents[K],
-    ): Promise<void> {
+    #handleDispatch<K extends keyof GatewayReceiveEvents>(event: K, data: GatewayReceiveEvents[K]): void {
         const mapping = this.#eventMapping.get(event);
 
         if (!mapping) {
@@ -134,7 +131,7 @@ export class ClientEventManager {
     ): void {
         const listeners = this.#client.listeners(eventName);
 
-        if (!listeners.length) {
+        if (listeners.length === 0) {
             this.#client.emit("warn", `No listeners found for event: ${eventName}`);
             return;
         }

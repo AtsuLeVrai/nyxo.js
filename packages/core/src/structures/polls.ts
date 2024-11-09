@@ -6,7 +6,7 @@ import type { EmojiStructure } from "./emojis.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-answer-count-object-structure|Poll Answer Count Object Structure}
  */
-export type PollAnswerCountStructure = {
+export interface PollAnswerCountStructure {
     /**
      * The number of votes for this answer
      */
@@ -19,14 +19,14 @@ export type PollAnswerCountStructure = {
      * Whether the current user voted for this answer
      */
     me_voted: boolean;
-};
+}
 
 /**
  * Type representing the structure of poll results.
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-results-object-structure|Poll Results Object Structure}
  */
-export type PollResultsStructure = {
+export interface PollResultsStructure {
     /**
      * The counts for each answer
      */
@@ -35,14 +35,14 @@ export type PollResultsStructure = {
      * Whether the votes have been precisely counted
      */
     is_finalized: boolean;
-};
+}
 
 /**
  * Type representing the structure of poll media.
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-media-object-poll-media-object-structure|Poll Media Object Structure}
  */
-export type PollMediaStructure = {
+export interface PollMediaStructure {
     /**
      * The emoji of the field
      */
@@ -51,14 +51,14 @@ export type PollMediaStructure = {
      * The text of the field
      */
     text?: string;
-};
+}
 
 /**
  * Type representing the structure of a poll answer.
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-answer-object-poll-answer-object-structure|Poll Answer Object Structure}
  */
-export type PollAnswerStructure = {
+export interface PollAnswerStructure {
     /**
      * The ID of the answer
      */
@@ -67,7 +67,7 @@ export type PollAnswerStructure = {
      * The data of the answer
      */
     poll_media: PollMediaStructure;
-};
+}
 
 /**
  * Enumeration representing poll layout types.
@@ -86,7 +86,7 @@ export enum PollLayoutTypes {
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-create-request-object-poll-create-request-object-structure|Poll Create Request Object Structure}
  */
-export type PollCreateRequestStructure = {
+export interface PollCreateRequestStructure {
     /**
      * Whether a user can select multiple answers. Defaults to false.
      */
@@ -107,14 +107,14 @@ export type PollCreateRequestStructure = {
      * The question of the poll. Only text is supported.
      */
     question: PollMediaStructure;
-};
+}
 
 /**
  * Type representing the structure of a poll.
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-object-poll-object-structure|Poll Object Structure}
  */
-export type PollStructure = {
+export interface PollStructure {
     /**
      * Whether a user can select multiple answers
      */
@@ -139,4 +139,4 @@ export type PollStructure = {
      * The results of the poll
      */
     results?: PollResultsStructure;
-};
+}

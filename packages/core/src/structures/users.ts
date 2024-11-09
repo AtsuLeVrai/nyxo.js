@@ -6,7 +6,7 @@ import type { IntegrationStructure } from "./guilds.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure|Application Role Connection Structure}
  */
-export type ApplicationRoleConnectionStructure = {
+export interface ApplicationRoleConnectionStructure {
     /**
      * Object mapping application role connection metadata keys to their string-ified value (max 100 characters) for the user on the platform a bot has connected.
      */
@@ -19,7 +19,7 @@ export type ApplicationRoleConnectionStructure = {
      * The username on the platform a bot has connected (max 100 characters).
      */
     platform_username: string | null;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#connection-object-visibility-types|Connection Visibility Types}
@@ -66,7 +66,7 @@ export type ConnectionServices =
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#connection-object-connection-structure|Connection Structure}
  */
-export type ConnectionStructure = {
+export interface ConnectionStructure {
     /**
      * Whether friend sync is enabled for this connection.
      */
@@ -109,12 +109,12 @@ export type ConnectionStructure = {
      * Visibility of this connection.
      */
     visibility: ConnectionVisibilityTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure|Avatar Decoration Data Structure}
  */
-export type AvatarDecorationDataStructure = {
+export interface AvatarDecorationDataStructure {
     /**
      * The avatar decoration hash.
      */
@@ -123,7 +123,7 @@ export type AvatarDecorationDataStructure = {
      * ID of the avatar decoration's SKU.
      */
     sku_id: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types|Premium Types}
@@ -204,7 +204,7 @@ export enum UserFlags {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-structure|User Structure}
  */
-export type UserStructure = {
+export interface UserStructure {
     /**
      * The user's banner color encoded as an integer representation of hexadecimal color code.
      */
@@ -273,4 +273,4 @@ export type UserStructure = {
      * Whether the email on this account has been verified.
      */
     verified?: boolean;
-};
+}

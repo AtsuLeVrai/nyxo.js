@@ -34,7 +34,7 @@ export enum StickerTypes {
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-pack-object-sticker-pack-structure|Sticker Pack Structure}
  */
-export type StickerPackStructure = {
+export interface StickerPackStructure {
     /**
      * ID of the sticker pack's banner image.
      */
@@ -63,14 +63,14 @@ export type StickerPackStructure = {
      * The stickers in the pack.
      */
     stickers: StickerStructure[];
-};
+}
 
 /**
  * Type representing the structure of a sticker item.
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-item-object-sticker-item-structure|Sticker Item Structure}
  */
-export type StickerItemStructure = {
+export interface StickerItemStructure {
     /**
      * Type of sticker format.
      */
@@ -83,14 +83,14 @@ export type StickerItemStructure = {
      * Name of the sticker.
      */
     name: string;
-};
+}
 
 /**
  * Type representing the structure of a sticker.
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-structure|Sticker Structure}
  */
-export type StickerStructure = {
+export interface StickerStructure {
     /**
      * Whether this guild sticker can be used, may be false due to loss of Server Boosts.
      */
@@ -135,4 +135,4 @@ export type StickerStructure = {
      * The user that uploaded the guild sticker.
      */
     user?: UserStructure;
-};
+}

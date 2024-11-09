@@ -32,7 +32,7 @@ export enum GuildOnboardingModes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure|Guild Onboarding Prompt Option Structure}
  */
-export type GuildOnboardingPromptOptionStructure = {
+export interface GuildOnboardingPromptOptionStructure {
     /**
      * IDs for channels a member is added to when the option is selected
      */
@@ -65,12 +65,12 @@ export type GuildOnboardingPromptOptionStructure = {
      * Title of the option
      */
     title: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure|Guild Onboarding Prompt Structure}
  */
-export type GuildOnboardingPromptStructure = {
+export interface GuildOnboardingPromptStructure {
     /**
      * ID of the prompt
      */
@@ -96,15 +96,15 @@ export type GuildOnboardingPromptStructure = {
      */
     title: string;
     /**
-     * Type of prompt
+     * interface of prompt
      */
     type: GuildOnboardingPromptTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-guild-onboarding-structure|Guild Onboarding Structure}
  */
-export type GuildOnboardingStructure = {
+export interface GuildOnboardingStructure {
     /**
      * Channel IDs that members get opted into automatically
      */
@@ -125,12 +125,12 @@ export type GuildOnboardingStructure = {
      * Prompts shown during onboarding and in customize community
      */
     prompts: GuildOnboardingPromptStructure[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-channel-structure|Welcome Screen Channel Structure}
  */
-export type WelcomeScreenChannelStructure = {
+export interface WelcomeScreenChannelStructure {
     /**
      * The channel's id
      */
@@ -147,12 +147,12 @@ export type WelcomeScreenChannelStructure = {
      * The emoji name if custom, the Unicode character if standard, or null if no emoji is set
      */
     emoji_name: string | null;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-structure|Welcome Screen Structure}
  */
-export type WelcomeScreenStructure = {
+export interface WelcomeScreenStructure {
     /**
      * The server description shown in the welcome screen
      */
@@ -161,12 +161,12 @@ export type WelcomeScreenStructure = {
      * The channels shown in the welcome screen, up to 5
      */
     welcome_channels: WelcomeScreenChannelStructure[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#ban-object-ban-structure|Ban Structure}
  */
-export type BanStructure = {
+export interface BanStructure {
     /**
      * The reason for the ban
      */
@@ -175,11 +175,12 @@ export type BanStructure = {
      * The banned user
      */
     user: UserStructure;
-};
+}
+
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-application-object-integration-application-structure|Integration Application Structure}
  */
-export type IntegrationApplicationStructure = {
+export interface IntegrationApplicationStructure {
     /**
      * The bot associated with this application
      */
@@ -200,12 +201,12 @@ export type IntegrationApplicationStructure = {
      * The name of the app
      */
     name: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-account-object-integration-account-structure|Integration Account Structure}
  */
-export type IntegrationAccountStructure = {
+export interface IntegrationAccountStructure {
     /**
      * id of the account
      */
@@ -214,7 +215,7 @@ export type IntegrationAccountStructure = {
      * name of the account
      */
     name: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors|Integration Expire Behaviors}
@@ -234,7 +235,7 @@ export enum IntegrationTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure|Integration Structure}
  */
-export type IntegrationStructure = {
+export interface IntegrationStructure {
     /**
      * The account for this integration
      */
@@ -292,14 +293,14 @@ export type IntegrationStructure = {
      */
     syncing?: boolean;
     /**
-     * The type of the integration
+     * The interface of the integration
      */
     type: IntegrationTypes;
     /**
      * The user for this integration
      */
     user?: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags|Guild Member Flags}
@@ -346,7 +347,7 @@ export enum GuildMemberFlags {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-structure|Guild Member Structure}
  */
-export type GuildMemberStructure = {
+export interface GuildMemberStructure {
     /**
      * The member's guild avatar hash
      */
@@ -399,12 +400,12 @@ export type GuildMemberStructure = {
      * The user this guild member represents
      */
     user?: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure|Guild Widget Structure}
  */
-export type GuildWidgetStructure = {
+export interface GuildWidgetStructure {
     /**
      * Voice and stage channels which are accessible by everyone
      */
@@ -429,12 +430,12 @@ export type GuildWidgetStructure = {
      * The number of online members in this guild
      */
     presence_count: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-settings-object-guild-widget-settings-structure|Guild Widget Settings Structure}
  */
-export type GuildWidgetSettingsStructure = {
+export interface GuildWidgetSettingsStructure {
     /**
      * The widget channel id
      */
@@ -443,7 +444,7 @@ export type GuildWidgetSettingsStructure = {
      * Whether the widget is enabled
      */
     enabled: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features|Guild Features}
@@ -562,7 +563,7 @@ export enum GuildFeatures {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-preview-object-guild-preview-structure|Guild Preview Structure}
  */
-export type GuildPreviewStructure = {
+export interface GuildPreviewStructure {
     /**
      * Approximate number of members in this guild
      */
@@ -607,12 +608,12 @@ export type GuildPreviewStructure = {
      * Custom guild stickers
      */
     stickers: StickerStructure[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object-example-unavailable-guild|Unavailable Guild Object}
  */
-export type UnavailableGuildStructure = {
+export interface UnavailableGuildStructure {
     /**
      * The id of the guild
      */
@@ -621,17 +622,17 @@ export type UnavailableGuildStructure = {
      * Whether the guild is unavailable
      */
     unavailable: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mutable-guild-features|Mutable Guild Features}
  */
-export type MutableGuildFeatures = {
+export interface MutableGuildFeatures {
     [GuildFeatures.Community]: BitwisePermissions.Administrator;
     [GuildFeatures.Discoverable]: BitwisePermissions.Administrator;
     [GuildFeatures.InvitesDisabled]: BitwisePermissions.ManageGuild;
     [GuildFeatures.RaidAlertsDisabled]: BitwisePermissions.ManageGuild;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags|System Channel Flags}
@@ -770,7 +771,7 @@ export enum GuildDefaultMessageNotificationLevel {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-structure|Guild Structure}
  */
-export type GuildStructure = {
+export interface GuildStructure {
     /**
      * The id of the afk channel
      */
@@ -945,4 +946,4 @@ export type GuildStructure = {
      * Whether the server widget is enabled
      */
     widget_enabled?: boolean;
-};
+}

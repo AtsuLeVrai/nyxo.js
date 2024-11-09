@@ -8,7 +8,7 @@ import type { UserStructure } from "./users.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#invite-stage-instance-object-invite-stage-instance-structure|Invite Stage Instance Structure}
  */
-export type InviteStageInstanceStructure = {
+export interface InviteStageInstanceStructure {
     /**
      * The members speaking in the Stage
      *
@@ -30,12 +30,12 @@ export type InviteStageInstanceStructure = {
      * The topic of the Stage instance (1-120 characters)
      */
     topic: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#invite-metadata-object-invite-metadata-structure|Invite Metadata Structure}
  */
-export type InviteMetadataStructure = {
+export interface InviteMetadataStructure {
     /**
      * When this invite was created
      */
@@ -56,7 +56,7 @@ export type InviteMetadataStructure = {
      * Number of times this invite has been used
      */
     uses: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-target-types|Invite Target Types}
@@ -78,22 +78,7 @@ export enum InviteTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-structure|Invite Structure}
  */
-/**
- * type	integer	the type of invite
- * code	string	the invite code (unique ID)
- * guild?	partial guild object	the guild this invite is for
- * channel	?partial channel object	the channel this invite is for
- * inviter?	user object	the user who created the invite
- * target_type?	integer	the type of target for this voice channel invite
- * target_user?	user object	the user whose stream to display for this voice channel stream invite
- * target_application?	partial application object	the embedded application to open for this voice channel embedded application invite
- * approximate_presence_count?	integer	approximate count of online members, returned from the GET /invites/<code> endpoint when with_counts is true
- * approximate_member_count?	integer	approximate count of total members, returned from the GET /invites/<code> endpoint when with_counts is true
- * expires_at?	?ISO8601 timestamp	the expiration date of this invite, returned from the GET /invites/<code> endpoint when with_expiration is true
- * stage_instance?	invite stage instance object	stage instance data if there is a public Stage instance in the Stage channel this invite is for (deprecated)
- * guild_scheduled_event?	guild scheduled event object	guild scheduled event data, only included if guild_scheduled_event_id contains a valid guild scheduled event id
- */
-export type InviteStructure = {
+export interface InviteStructure {
     /**
      * Approximate count of total members, returned from the GET /invites/<code> endpoint when with_counts is true
      */
@@ -165,4 +150,4 @@ export type InviteStructure = {
      * The type of invite
      */
     type: InviteTypes;
-};
+}

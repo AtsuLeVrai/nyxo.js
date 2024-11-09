@@ -30,8 +30,6 @@ The monorepo is organized into various packages, each fulfilling a critical role
   with additional features.
 - `rest`: Manages RESTful API requests to Discord, with rate limiting and caching strategies for optimal
   performance.
-- `store`: A simple and efficient store for managing data in Nyx.js applications, including data caching and
-  persistence.
 - `voice` **_(not currently under development)_**: Enables voice connections and interactions, allowing bots to join
   voice channels and manage audio
   streams.

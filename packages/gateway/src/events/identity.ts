@@ -4,7 +4,7 @@ import type { UpdatePresenceGatewayPresenceUpdateStructure } from "./presences.j
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#identify-identify-connection-properties}
  */
-export type IdentifyConnectionProperties = {
+export interface IdentifyConnectionProperties {
     /**
      * Your library name
      */
@@ -17,12 +17,12 @@ export type IdentifyConnectionProperties = {
      * Your operating system
      */
     os: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#identify-identify-structure}
  */
-export type IdentifyStructure = {
+export interface IdentifyStructure {
     /**
      * Whether this connection supports compression of packets
      */
@@ -51,4 +51,4 @@ export type IdentifyStructure = {
      * Authentication token
      */
     token: string;
-};
+}

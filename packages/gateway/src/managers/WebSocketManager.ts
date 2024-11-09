@@ -4,7 +4,7 @@ import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { GatewayEvents } from "../types/index.js";
 
-export type WebSocketState = {
+export interface WebSocketState {
     socket: WebSocket | null;
     isOpen: boolean;
     lastError: Error | null;
@@ -13,7 +13,7 @@ export type WebSocketState = {
     latency?: number;
     bytesReceived: number;
     bytesSent: number;
-};
+}
 
 export enum WebSocketErrorCode {
     ConnectionError = "WEBSOCKET_CONNECTION_ERROR",

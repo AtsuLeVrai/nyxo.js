@@ -1,6 +1,6 @@
 import type { ButtonStructure, ButtonStyles, EmojiStructure, Snowflake } from "@nyxjs/core";
 
-type BaseButtonSchema<T extends ButtonStyles> = {
+interface BaseButtonSchema<T extends ButtonStyles> {
     setData(data: Partial<ButtonStructure>): BaseButtonSchema<T>;
     setDisabled(disabled: boolean): BaseButtonSchema<T>;
     setEmoji(emoji: Pick<EmojiStructure, "animated" | "id" | "name">): BaseButtonSchema<T>;
@@ -8,21 +8,22 @@ type BaseButtonSchema<T extends ButtonStyles> = {
     setStyle(style: T): BaseButtonSchema<T>;
     toJSON(): Readonly<Partial<ButtonStructure>>;
     toString(): string;
-};
+}
 
-type ButtonSchema = BaseButtonSchema<
-    ButtonStyles.Danger | ButtonStyles.Primary | ButtonStyles.Secondary | ButtonStyles.Success
-> & {
+interface ButtonSchema
+    extends BaseButtonSchema<
+        ButtonStyles.Danger | ButtonStyles.Primary | ButtonStyles.Secondary | ButtonStyles.Success
+    > {
     setCustomId(customId: Snowflake): ButtonSchema;
-};
+}
 
-type ButtonUrlSchema = BaseButtonSchema<ButtonStyles.Link> & {
+interface ButtonUrlSchema extends BaseButtonSchema<ButtonStyles.Link> {
     setUrl(url: string): ButtonUrlSchema;
-};
+}
 
-type ButtonPremiumSchema = BaseButtonSchema<ButtonStyles.Premium> & {
+interface ButtonPremiumSchema extends BaseButtonSchema<ButtonStyles.Premium> {
     setSkuId(skuId: Snowflake): ButtonPremiumSchema;
-};
+}
 
 abstract class BaseButton<T extends ButtonStyles> implements BaseButtonSchema<T> {
     static readonly LABEL_LIMIT = 80;

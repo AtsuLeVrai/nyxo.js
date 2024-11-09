@@ -4,7 +4,7 @@ import type { GuildMemberStructure } from "./guilds.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#voice-region-object-voice-region-structure|Voice Region Structure}
  */
-export type VoiceRegionStructure = {
+export interface VoiceRegionStructure {
     /**
      * Whether this is a custom voice region (used for events/etc).
      */
@@ -25,12 +25,12 @@ export type VoiceRegionStructure = {
      * Whether this is the optimal region for the current user's client.
      */
     optimal: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#voice-state-object-voice-state-structure|Voice State Structure}
  */
-export type VoiceStateStructure = {
+export interface VoiceStateStructure {
     /**
      * The channel id this user is connected to.
      */
@@ -83,4 +83,4 @@ export type VoiceStateStructure = {
      * The user id this voice state is for.
      */
     user_id: Snowflake;
-};
+}

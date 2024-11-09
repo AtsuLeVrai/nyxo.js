@@ -42,7 +42,7 @@ export enum GuildScheduledEventRecurrenceRuleWeekday {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-nweekday-structure|Guild Scheduled Event Recurrence Rule NWeekday Structure}
  */
-export type GuildScheduledEventRecurrenceRuleNWeekdayStructure = {
+export interface GuildScheduledEventRecurrenceRuleNWeekdayStructure {
     /**
      * The day within the week to reoccur on.
      */
@@ -51,7 +51,7 @@ export type GuildScheduledEventRecurrenceRuleNWeekdayStructure = {
      * The week to reoccur on. 1 - 5.
      */
     n: 1 | 2 | 3 | 4 | 5;
-};
+}
 
 /**
  * Enumeration representing the frequency of a guild scheduled event recurrence rule.
@@ -70,7 +70,7 @@ export enum GuildScheduledEventRecurrenceRuleFrequency {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-structure|Guild Scheduled Event Recurrence Rule Structure}
  */
-export type GuildScheduledEventRecurrenceRuleStructure = {
+export interface GuildScheduledEventRecurrenceRuleStructure {
     /**
      * Set of specific months to recur on.
      */
@@ -111,14 +111,14 @@ export type GuildScheduledEventRecurrenceRuleStructure = {
      * Starting time of the recurrence interval.
      */
     start: Iso8601Timestamp;
-};
+}
 
 /**
  * Type representing the structure of a user subscribed to a guild scheduled event.
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-user-object-guild-scheduled-event-user-structure|Guild Scheduled Event User Structure}
  */
-export type GuildScheduledEventUserStructure = {
+export interface GuildScheduledEventUserStructure {
     /**
      * The scheduled event id which the user subscribed to.
      */
@@ -131,19 +131,19 @@ export type GuildScheduledEventUserStructure = {
      * User which subscribed to an event.
      */
     user: UserStructure;
-};
+}
 
 /**
  * Type representing the metadata of a guild scheduled event entity.
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-metadata|Guild Scheduled Event Entity Metadata}
  */
-export type GuildScheduledEventEntityMetadataStructure = {
+export interface GuildScheduledEventEntityMetadataStructure {
     /**
      * Location of the event (1-100 characters).
      */
     location?: string;
-};
+}
 
 /**
  * Enumeration representing the status of a guild scheduled event.
@@ -185,7 +185,7 @@ export enum GuildScheduledEventPrivacyLevel {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-structure|Guild Scheduled Event Structure}
  */
-export type GuildScheduledEventStructure = {
+export interface GuildScheduledEventStructure {
     /**
      * The channel id in which the scheduled event will be hosted, or null if scheduled entity type is EXTERNAL.
      */
@@ -254,4 +254,4 @@ export type GuildScheduledEventStructure = {
      * The number of users subscribed to the scheduled event.
      */
     user_count: Integer;
-};
+}

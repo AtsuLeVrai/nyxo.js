@@ -25,7 +25,7 @@ export enum SubscriptionStatus {
  *
  * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-object|Subscription Object}
  */
-export type SubscriptionStructure = {
+export interface SubscriptionStructure {
     /**
      * When the subscription was canceled.
      */
@@ -63,4 +63,4 @@ export type SubscriptionStructure = {
      * ID of the user who is subscribed.
      */
     user_id: Snowflake;
-};
+}

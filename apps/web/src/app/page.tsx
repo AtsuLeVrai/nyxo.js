@@ -10,63 +10,63 @@ import Link from "next/link";
 export default function HomePage() {
     return (
         <Layout sidebar={false}>
-            <main className="flex-1">
+            <main class="flex-1">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="max-w-4xl mx-auto text-center"
+                    class="max-w-4xl mx-auto text-center"
                 >
-                    <Image src={nyx_banner} alt="Nyx.js Banner" width={500} height={500} className="mx-auto mb-8" />
-                    <h1 className="text-5xl font-bold mb-6 py-2 text-white inline-block">Welcome to Nyx.js</h1>
-                    <p className="text-xl mb-8 text-gray-300">
+                    <Image src={nyx_banner} alt="Nyx.js Banner" width={500} height={500} class="mx-auto mb-8" />
+                    <h1 class="text-5xl font-bold mb-6 py-2 text-white inline-block">Welcome to Nyx.js</h1>
+                    <p class="text-xl mb-8 text-gray-300">
                         A powerful framework for creating Discord bots using TypeScript. Build feature-rich bots with
                         ease and flexibility.
                     </p>
-                    <div className="flex justify-center space-x-4 mb-8">
-                        <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                    <div class="flex justify-center space-x-4 mb-8">
+                        <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                             v1.0.0-alpha
                         </span>
-                        <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                             Alpha Release
                         </span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-md mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-md mx-auto">
                         <Link
                             href="/docs"
-                            className="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg flex items-center justify-center"
+                            class="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg flex items-center justify-center"
                         >
-                            <span className="relative z-10 flex items-center">
+                            <span class="relative z-10 flex items-center">
                                 Get Started
                                 <ArrowRight
                                     size={20}
-                                    className="ml-2 transform transition-transform duration-300 group-hover:translate-x-1"
+                                    class="ml-2 transform transition-transform duration-300 group-hover:translate-x-1"
                                 />
                             </span>
-                            <span className="absolute bottom-0 left-0 w-full h-1 bg-blue-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out" />
+                            <span class="absolute bottom-0 left-0 w-full h-1 bg-blue-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out" />
                         </Link>
                         <a
                             href="https://github.com/3tatsu/nyx.js"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group relative overflow-hidden bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg flex items-center justify-center"
+                            class="group relative overflow-hidden bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg text-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg flex items-center justify-center"
                         >
-                            <span className="relative z-10 flex items-center">
+                            <span class="relative z-10 flex items-center">
                                 View on GitHub
-                                <Github size={20} className="ml-2" />
+                                <Github size={20} class="ml-2" />
                             </span>
-                            <span className="absolute bottom-0 left-0 w-full h-1 bg-gray-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out" />
+                            <span class="absolute bottom-0 left-0 w-full h-1 bg-gray-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out" />
                         </a>
                     </div>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
-                        className="mt-10"
+                        class="mt-10"
                     >
-                        <section className="mb-16">
-                            <h2 className="text-3xl font-semibold mb-8 text-center">Key Features</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <section class="mb-16">
+                            <h2 class="text-3xl font-semibold mb-8 text-center">Key Features</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
                                     {
                                         icon: <Terminal size={24} />,
@@ -91,12 +91,12 @@ export default function HomePage() {
                                 ].map((feature, index) => (
                                     <motion.div
                                         key={index}
-                                        className="bg-neutral-800 p-6 rounded-lg shadow-lg text-center"
+                                        class="bg-neutral-800 p-6 rounded-lg shadow-lg text-center"
                                         whileHover={{ scale: 1.05 }}
                                     >
-                                        <div className="text-blue-400 mb-4">{feature.icon}</div>
-                                        <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                                        <p className="text-gray-400">{feature.description}</p>
+                                        <div class="text-blue-400 mb-4">{feature.icon}</div>
+                                        <h3 class="text-xl font-semibold mb-2">{feature.title}</h3>
+                                        <p class="text-gray-400">{feature.description}</p>
                                     </motion.div>
                                 ))}
                             </div>

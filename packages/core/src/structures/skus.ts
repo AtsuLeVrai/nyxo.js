@@ -50,7 +50,7 @@ export enum SkuTypes {
  *
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-structure|SKU Structure}
  */
-export type SkuStructure = {
+export interface SkuStructure {
     /**
      * ID of the parent application
      */
@@ -75,4 +75,4 @@ export type SkuStructure = {
      * Type of SKU
      */
     type: SkuTypes;
-};
+}

@@ -33,7 +33,7 @@ export enum TextInputStyles {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#text-input-object-text-input-structure|Text Input Structure}
  */
-export type TextInputStructure = {
+export interface TextInputStructure {
     /**
      * Developer-defined identifier for the input; max 100 characters
      */
@@ -70,7 +70,7 @@ export type TextInputStructure = {
      * Pre-filled value for this component; max 4000 characters
      */
     value?: string;
-};
+}
 
 /**
  * Type representing the types of default values for select menus.
@@ -80,7 +80,7 @@ export type SelectMenuDefaultTypes = "channel" | "role" | "user";
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-default-value-structure|Select Default Value Structure}
  */
-export type SelectMenuDefaultValueStructure = {
+export interface SelectMenuDefaultValueStructure {
     /**
      * ID of a user, role, or channel
      */
@@ -89,12 +89,12 @@ export type SelectMenuDefaultValueStructure = {
      * Type of value that id represents. Either "user", "role", or "channel"
      */
     type: SelectMenuDefaultTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure|Select Option Structure}
  */
-export type SelectMenuOptionStructure = {
+export interface SelectMenuOptionStructure {
     /**
      * Will show this option as selected by default
      */
@@ -115,7 +115,7 @@ export type SelectMenuOptionStructure = {
      * Dev-defined value of the option; max 100 characters
      */
     value: string;
-};
+}
 
 /**
  * Resolvable select menu types
@@ -130,7 +130,7 @@ export type SelectMenuTypes =
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure|Select Menu Structure}
  */
-export type SelectMenuStructure = {
+export interface SelectMenuStructure {
     /**
      * List of channel types to include in the channel select component (type 8)
      */
@@ -167,7 +167,7 @@ export type SelectMenuStructure = {
      * Type of select menu component (text: 3, user: 5, role: 6, mentionable: 7, channels: 8)
      */
     type: SelectMenuTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-styles|Button Styles}
@@ -184,7 +184,7 @@ export enum ButtonStyles {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-structure|Button Structure}
  */
-export type ButtonStructure = {
+export interface ButtonStructure {
     /**
      * Developer-defined identifier for the button; max 100 characters
      */
@@ -217,7 +217,7 @@ export type ButtonStructure = {
      * URL for link-style buttons
      */
     url?: string;
-};
+}
 
 /**
  * Resolvable component types
@@ -227,7 +227,7 @@ export type ComponentResolvableStructure = ButtonStructure | SelectMenuStructure
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#action-rows|Action Rows}
  */
-export type ActionRowStructure<T extends ComponentResolvableStructure = ComponentResolvableStructure> = {
+export interface ActionRowStructure<T extends ComponentResolvableStructure = ComponentResolvableStructure> {
     /**
      * The components in this action row
      */
@@ -236,4 +236,4 @@ export type ActionRowStructure<T extends ComponentResolvableStructure = Componen
      * 1 for an action row
      */
     type: ComponentTypes.ActionRow;
-};
+}

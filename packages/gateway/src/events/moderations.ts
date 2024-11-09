@@ -3,7 +3,7 @@ import type { AutoModerationActionStructure, AutoModerationRuleTriggerTypes, Sno
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#auto-moderation-action-execution-auto-moderation-action-execution-event-fields}
  */
-export type AutoModerationActionExecutionEventFields = {
+export interface AutoModerationActionExecutionEventFields {
     /**
      * Action which was executed
      */
@@ -48,4 +48,4 @@ export type AutoModerationActionExecutionEventFields = {
      * ID of the user who triggered the rule
      */
     user_id: Snowflake;
-};
+}

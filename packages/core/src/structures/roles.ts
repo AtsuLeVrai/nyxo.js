@@ -18,7 +18,7 @@ export enum RoleFlags {
  *
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-tags-structure|Role Tags Structure}
  */
-export type RoleTagsStructure = {
+export interface RoleTagsStructure {
     /**
      * Whether this role is available for purchase.
      */
@@ -43,14 +43,14 @@ export type RoleTagsStructure = {
      * The id of this role's subscription sku and listing.
      */
     subscription_listing_id?: Snowflake;
-};
+}
 
 /**
  * Type representing the structure of a role.
  *
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-structure|Role Structure}
  */
-export type RoleStructure = {
+export interface RoleStructure {
     /**
      * The role's color encoded as an integer representation of hexadecimal color code.
      */
@@ -99,4 +99,4 @@ export type RoleStructure = {
      * The role's unicode emoji.
      */
     unicode_emoji?: string | null;
-};
+}

@@ -4,7 +4,7 @@ import erlpack from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import type { EncodingTypes, GatewayEvents } from "../types/index.js";
 
-export type EncodingStats = {
+export interface EncodingStats {
     successfulEncodes: Integer;
     successfulDecodes: Integer;
     failedEncodes: Integer;
@@ -13,7 +13,7 @@ export type EncodingStats = {
     averageEncodeSize: number;
     averageDecodeSize: number;
     totalBytesProcessed: number;
-};
+}
 
 export enum PayloadErrorCode {
     UnsupportedEncoding = "UNSUPPORTED_ENCODING",

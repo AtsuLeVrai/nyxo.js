@@ -3,7 +3,7 @@ import type { Integer, Snowflake } from "../markdown/index.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-metadata|Auto-Moderation Action Metadata}
  */
-export type AutoModerationActionMetadataStructure = {
+export interface AutoModerationActionMetadataStructure {
     /**
      * Channel to which user content should be logged.
      */
@@ -16,7 +16,7 @@ export type AutoModerationActionMetadataStructure = {
      * Timeout duration in seconds.
      */
     duration_seconds: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types|Auto-Moderation Action Types}
@@ -43,7 +43,7 @@ export enum AutoModerationActionTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-auto-moderation-action-structure|Auto-Moderation Action Structure}
  */
-export type AutoModerationActionStructure = {
+export interface AutoModerationActionStructure {
     /**
      * Additional metadata needed during execution for this specific action type.
      */
@@ -52,7 +52,7 @@ export type AutoModerationActionStructure = {
      * The type of action.
      */
     type: AutoModerationActionTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types|Auto-Moderation Rule Event Types}
@@ -89,7 +89,7 @@ export enum AutoModerationRuleKeywordPresetTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata|Auto-Moderation Rule Trigger Metadata}
  */
-export type AutoModerationRuleTriggerMetadata = {
+export interface AutoModerationRuleTriggerMetadata {
     /**
      * Substrings which should not trigger the rule (Maximum of 100 or 1000)
      */
@@ -114,7 +114,7 @@ export type AutoModerationRuleTriggerMetadata = {
      * Regular expression patterns which will be matched against content (Maximum of 10)
      */
     regex_patterns?: string[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types|Auto-Moderation Rule Trigger Types}
@@ -145,7 +145,7 @@ export enum AutoModerationRuleTriggerTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-auto-moderation-rule-structure|Auto-Moderation Rule Structure}
  */
-export type AutoModerationRuleStructure = {
+export interface AutoModerationRuleStructure {
     /**
      * The actions which will execute when the rule is triggered.
      */
@@ -190,4 +190,4 @@ export type AutoModerationRuleStructure = {
      * The rule trigger type.
      */
     trigger_type: AutoModerationRuleTriggerTypes;
-};
+}

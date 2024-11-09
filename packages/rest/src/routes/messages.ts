@@ -18,17 +18,17 @@ import { type QueryStringParams, RestMethods, type RouteStructure } from "../typ
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages-json-params|Bulk Delete Messages JSON Params}
  */
-export type BulkDeleteMessagesJsonParams = {
+export interface BulkDeleteMessagesJsonParams {
     /**
      * An array of message ids to delete
      */
     messages: Snowflake[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#edit-message-jsonform-params|Edit Message JSON/Form Params}
  */
-export type EditMessageJsonFormParams = {
+export interface EditMessageJsonFormParams {
     /**
      * Allowed mentions for the message
      */
@@ -61,7 +61,7 @@ export type EditMessageJsonFormParams = {
      * JSON-encoded body of non-file params (multipart/form-data only). See Uploading Files
      */
     payload_json?: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-reaction-types|Get Reactions Reaction Types}
@@ -74,17 +74,17 @@ export enum ReactionTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-query-string-params|Get Reactions Query String Params}
  */
-export type GetReactionsQueryStringParams = Pick<QueryStringParams, "after" | "limit"> & {
+export interface GetReactionsQueryStringParams extends Pick<QueryStringParams, "after" | "limit"> {
     /**
      * The type of reaction
      */
     type?: ReactionTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params|Create Message JSON/Form Params}
  */
-export type CreateMessageJsonFormParams = {
+export interface CreateMessageJsonFormParams {
     /**
      * Allowed mentions for the message
      */
@@ -141,17 +141,17 @@ export type CreateMessageJsonFormParams = {
      * true if this is a TTS message
      */
     tts?: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params|Get Channel Messages Query String Params}
  */
-export type GetChannelMessagesQueryStringParams = Pick<QueryStringParams, "after" | "before" | "limit"> & {
+export interface GetChannelMessagesQueryStringParams extends Pick<QueryStringParams, "after" | "before" | "limit"> {
     /**
      * Get messages around this message ID
      */
     around?: Snowflake;
-};
+}
 
 export const MessageRoutes = {
     /**
@@ -245,7 +245,7 @@ export const MessageRoutes = {
         messageId: Snowflake,
         emoji: string,
         params?: GetReactionsQueryStringParams,
-    ): RouteStructure<UserStructure[]> {
+    ): RouteStructure<UserStructure[], GetReactionsQueryStringParams> {
         return {
             method: RestMethods.Get,
             path: `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`,
@@ -319,7 +319,7 @@ export const MessageRoutes = {
     getChannelMessages(
         channelId: Snowflake,
         params?: GetChannelMessagesQueryStringParams,
-    ): RouteStructure<MessageStructure[]> {
+    ): RouteStructure<MessageStructure[], GetChannelMessagesQueryStringParams> {
         return {
             method: RestMethods.Get,
             path: `/channels/${channelId}/messages`,

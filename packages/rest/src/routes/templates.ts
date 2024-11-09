@@ -14,12 +14,12 @@ export type CreateGuildTemplateJsonParams = Pick<GuildTemplateStructure, "name" 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template-json-params|Create Guild From Guild Template JSON Params}
  */
-export type CreateGuildFromGuildTemplateJsonParams = Pick<GuildTemplateStructure, "name"> & {
+export interface CreateGuildFromGuildTemplateJsonParams extends Pick<GuildTemplateStructure, "name"> {
     /**
      * base64 128x128 image for the guild icon
      */
     icon?: string;
-};
+}
 
 export const GuildTemplateRoutes = {
     /**

@@ -3,7 +3,7 @@ import type { Integer } from "@nyxjs/core";
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#resume-resume-structure}
  */
-export type ResumeStructure = {
+export interface ResumeStructure {
     /**
      * Last sequence number received
      */
@@ -16,4 +16,4 @@ export type ResumeStructure = {
      * Session token
      */
     token: string;
-};
+}

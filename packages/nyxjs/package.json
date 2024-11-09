@@ -41,13 +41,13 @@
   "dependencies": {
     "@nyxjs/core": "workspace:*",
     "@nyxjs/gateway": "workspace:*",
+    "@nyxjs/logger": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "eventemitter3": "^5.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@microsoft/api-extractor": "^7.47.11",
-    "@swc/core": "^1.8.0",
     "@types/node": "^22.9.0",
     "@types/ws": "^8.5.13",
     "rimraf": "^6.0.1",

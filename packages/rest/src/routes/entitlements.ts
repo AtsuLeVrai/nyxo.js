@@ -4,7 +4,7 @@ import { type QueryStringParams, RestMethods, type RouteStructure } from "../typ
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params|Create Test Entitlement JSON Params}
  */
-export type CreateTestEntitlementJsonParams = {
+export interface CreateTestEntitlementJsonParams {
     /**
      * ID of the guild or user to grant the entitlement to
      */
@@ -17,12 +17,12 @@ export type CreateTestEntitlementJsonParams = {
      * ID of the SKU to grant the entitlement to
      */
     sku_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params|List Entitlements Query String Params}
  */
-export type ListEntitlementsQueryStringParams = QueryStringParams & {
+export interface ListEntitlementsQueryStringParams extends QueryStringParams {
     /**
      * Whether or not ended entitlements should be omitted
      */
@@ -39,7 +39,7 @@ export type ListEntitlementsQueryStringParams = QueryStringParams & {
      * User ID to look up entitlements for
      */
     user_id?: Snowflake;
-};
+}
 
 export const EntitlementRoutes = {
     /**

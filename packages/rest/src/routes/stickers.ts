@@ -10,12 +10,12 @@ export type ModifyGuildStickerJsonParams = Partial<Pick<StickerStructure, "descr
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker-form-params|Create Guild Sticker Form Params}
  */
-export type CreateGuildStickerFormParams = Pick<StickerStructure, "description" | "name" | "tags"> & {
+export interface CreateGuildStickerFormParams extends Pick<StickerStructure, "description" | "name" | "tags"> {
     /**
      * The sticker file to upload, must be a PNG, APNG, GIF, or Lottie JSON file, max 512 KiB
      */
     file: string;
-};
+}
 
 export const StickerRoutes = {
     /**

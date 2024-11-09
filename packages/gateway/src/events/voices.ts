@@ -3,7 +3,7 @@ import type { EmojiStructure, Integer, Snowflake } from "@nyxjs/core";
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#voice-server-update-voice-server-update-event-fields}
  */
-export type VoiceServerUpdateEventFields = {
+export interface VoiceServerUpdateEventFields {
     /**
      * Voice server host
      */
@@ -16,7 +16,7 @@ export type VoiceServerUpdateEventFields = {
      * Voice connection token
      */
     token: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#voice-channel-effect-send-animation-types}
@@ -35,13 +35,13 @@ export enum VoiceChannelEffectSendAnimationTypes {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#voice-channel-effect-send-voice-channel-effect-send-event-fields}
  */
-export type VoiceChannelEffectSendEventFields = {
+export interface VoiceChannelEffectSendEventFields {
     /**
      * The ID of the emoji animation, for emoji reaction and soundboard effects
      */
     animation_id?: number;
     /**
-     * The type of emoji animation, for emoji reaction and soundboard effects
+     * The interface of emoji animation, for emoji reaction and soundboard effects
      */
     animation_type?: VoiceChannelEffectSendAnimationTypes | null;
     /**
@@ -68,12 +68,12 @@ export type VoiceChannelEffectSendEventFields = {
      * ID of the user who sent the effect
      */
     user_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-voice-state-gateway-voice-state-update-structure}
  */
-export type UpdateVoiceStateGatewayVoiceStateUpdateStructure = {
+export interface UpdateVoiceStateGatewayVoiceStateUpdateStructure {
     /**
      * ID of the voice channel client wants to join (null if disconnecting)
      */
@@ -90,4 +90,4 @@ export type UpdateVoiceStateGatewayVoiceStateUpdateStructure = {
      * Whether the client is muted
      */
     self_mute: boolean;
-};
+}

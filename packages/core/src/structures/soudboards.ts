@@ -4,7 +4,7 @@ import type { UserStructure } from "./users.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#soundboard-sound-object-soundboard-sound-structure|Soundboard Sound Structure}
  */
-export type SoundboardSoundStructure = {
+export interface SoundboardSoundStructure {
     /**
      * Whether this sound can be used, may be false due to loss of Server Boosts.
      */
@@ -37,4 +37,4 @@ export type SoundboardSoundStructure = {
      * The volume of this sound, from 0 to 1.
      */
     volume: Float;
-};
+}

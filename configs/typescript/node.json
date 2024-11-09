@@ -9,8 +9,6 @@
             "DOM",
             "DOM.Iterable"
         ],
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
         "moduleDetection": "auto",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",

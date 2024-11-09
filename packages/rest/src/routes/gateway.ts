@@ -4,7 +4,7 @@ import { RestMethods, type RouteStructure } from "../types/index.js";
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#session-start-limit-object-session-start-limit-structure|Session Start Limit Structure}
  */
-export type SessionStartLimitStructure = {
+export interface SessionStartLimitStructure {
     /**
      * Number of identify requests allowed per 5 seconds.
      */
@@ -21,12 +21,12 @@ export type SessionStartLimitStructure = {
      * Total number of session starts the current user is allowed.
      */
     total: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot-json-response|Get Gateway Bot JSON Response}
  */
-export type GetGatewayBotJsonResponse = {
+export interface GetGatewayBotJsonResponse {
     /**
      * Information on the current session start limit
      */
@@ -39,7 +39,7 @@ export type GetGatewayBotJsonResponse = {
      * WSS URL that can be used for connecting to the Gateway
      */
     url: string;
-};
+}
 
 export const GatewayRoutes = {
     /**

@@ -34,7 +34,7 @@ export enum ApplicationCommandPermissionTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permissions-structure|Application Command Permissions Structure}
  */
-export type ApplicationCommandPermissionsStructure = {
+export interface ApplicationCommandPermissionsStructure {
     /**
      * ID of the role, user, or channel. It can also be a permission constant
      */
@@ -47,12 +47,12 @@ export type ApplicationCommandPermissionsStructure = {
      * role (1), user (2), or channel (3)
      */
     type: ApplicationCommandPermissionTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-guild-application-command-permissions-structure|Guild Application Command Permissions Structure}
  */
-export type GuildApplicationCommandPermissionsStructure = {
+export interface GuildApplicationCommandPermissionsStructure {
     /**
      * ID of the application the command belongs to
      */
@@ -69,7 +69,7 @@ export type GuildApplicationCommandPermissionsStructure = {
      * Permissions for the command in the guild, max of 100
      */
     permissions: ApplicationCommandPermissionsStructure[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-entry-point-command-handler-types|Entry Point Command Handler Types}
@@ -88,7 +88,7 @@ export enum EntryPointCommandHandlerTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-choice-structure|Application Command Option Choice Structure}
  */
-export type ApplicationCommandOptionChoiceStructure = {
+export interface ApplicationCommandOptionChoiceStructure {
     /**
      * 1-100 character choice name
      */
@@ -101,7 +101,7 @@ export type ApplicationCommandOptionChoiceStructure = {
      * Value for the choice, up to 100 characters if string
      */
     value: Integer | boolean | string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type}
@@ -123,7 +123,7 @@ export enum ApplicationCommandOptionTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export type ApplicationCommandOptionStructure = {
+export interface ApplicationCommandOptionStructure {
     /**
      * If autocomplete interactions are enabled for this option
      */
@@ -180,7 +180,7 @@ export type ApplicationCommandOptionStructure = {
      * Type of option
      */
     type: ApplicationCommandOptionTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-types|Application Command Types}
@@ -207,7 +207,7 @@ export enum ApplicationCommandTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure|Application Command Structure}
  */
-export type ApplicationCommandStructure = {
+export interface ApplicationCommandStructure {
     /**
      * ID of the parent application
      */
@@ -278,17 +278,17 @@ export type ApplicationCommandStructure = {
      * Autoincrementing version identifier updated during substantial record changes
      */
     version: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-activity-instance-resource|Interaction Callback Activity Instance Resource}
  */
-export type InteractionCallbackActivityInstanceResourceStructure = {
+export interface InteractionCallbackActivityInstanceResourceStructure {
     /**
      * Instance ID of the Activity if one was launched or joined.
      */
     id: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type|Interaction Callback Types}
@@ -335,7 +335,7 @@ export enum InteractionCallbackTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-resource-object|Interaction Callback Resource Object}
  */
-export type InteractionCallbackResourceStructure = {
+export interface InteractionCallbackResourceStructure {
     /**
      * Represents the Activity launched by this interaction.
      */
@@ -348,7 +348,7 @@ export type InteractionCallbackResourceStructure = {
      * Interaction callback type
      */
     type: InteractionCallbackTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-type|Interaction Types}
@@ -364,7 +364,7 @@ export enum InteractionTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-object|Interaction Callback Object}
  */
-export type InteractionCallbackStructure = {
+export interface InteractionCallbackStructure {
     /**
      * Instance ID of the Activity if one was launched or joined
      */
@@ -385,12 +385,12 @@ export type InteractionCallbackStructure = {
      * Interaction type
      */
     type: InteractionTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-response-object|Interaction Callback Response Object}
  */
-export type InteractionCallbackResponseStructure = {
+export interface InteractionCallbackResponseStructure {
     /**
      * Interaction object associated with the resource
      */
@@ -399,12 +399,12 @@ export type InteractionCallbackResponseStructure = {
      * Resource that was created by the interaction response
      */
     resource?: InteractionCallbackResourceStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal|Interaction Response Modal Structure}
  */
-export type InteractionResponseModalStructure = {
+export interface InteractionResponseModalStructure {
     /**
      * Between 1 and 5 (inclusive) components that make up the modal
      */
@@ -417,22 +417,22 @@ export type InteractionResponseModalStructure = {
      * Title of the popup modal, max 45 characters
      */
     title: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-autocomplete|Interaction Response Autocomplete Structure}
  */
-export type InteractionResponseAutocompleteStructure = {
+export interface InteractionResponseAutocompleteStructure {
     /**
      * Developer-defined identifier for the autocomplete, max 100 characters
      */
     choices: ApplicationCommandOptionChoiceStructure[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-data-structure|Interaction Callback Data Structure}
  */
-export type InteractionCallbackDataStructure = {
+export interface InteractionCallbackDataStructure {
     /**
      * Allowed mentions object
      */
@@ -467,12 +467,12 @@ export type InteractionCallbackDataStructure = {
      * Whether the response is TTS
      */
     tts?: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-response-structure|Interaction Response Structure}
  */
-export type InteractionResponseStructure = {
+export interface InteractionResponseStructure {
     /**
      * An optional response message
      */
@@ -481,12 +481,12 @@ export type InteractionResponseStructure = {
      * Type of response
      */
     type: InteractionCallbackTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#message-interaction-object-message-interaction-structure|Message Interaction Structure}
  */
-export type MessageInteractionStructure = {
+export interface MessageInteractionStructure {
     /**
      * ID of the interaction
      */
@@ -509,12 +509,12 @@ export type MessageInteractionStructure = {
      * User who invoked the interaction
      */
     user: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure|Application Command Interaction Data Option Structure}
  */
-export type ApplicationCommandInteractionDataOptionStructure = {
+export interface ApplicationCommandInteractionDataOptionStructure {
     /**
      * true if this option is the currently focused option for autocomplete
      */
@@ -535,12 +535,12 @@ export type ApplicationCommandInteractionDataOptionStructure = {
      * Value of the option resulting from user input
      */
     value?: Integer | boolean | string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure|Resolved Data Structure}
  */
-export type ResolvedDataStructure = {
+export interface ResolvedDataStructure {
     /**
      * Map of Snowflakes to attachment objects
      */
@@ -570,12 +570,12 @@ export type ResolvedDataStructure = {
      * Map of Snowflakes to user objects
      */
     users?: Map<Snowflake, UserStructure>;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-modal-submit-data-structure|Modal Submit Data Structure}
  */
-export type ModalSubmitDataStructure = {
+export interface ModalSubmitDataStructure {
     /**
      * Values submitted by the user
      */
@@ -584,12 +584,12 @@ export type ModalSubmitDataStructure = {
      * custom_id of the modal
      */
     custom_id: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-message-component-data-structure|Message Component Data Structure}
  */
-export type MessageComponentDataStructure = {
+export interface MessageComponentDataStructure {
     /**
      * Type of the component
      */
@@ -606,12 +606,12 @@ export type MessageComponentDataStructure = {
      * Values the user selected in a select menu component
      */
     values?: SelectMenuOptionStructure[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-data-structure|Application Command Data Structure}
  */
-export type ApplicationCommandDataStructure = {
+export interface ApplicationCommandDataStructure {
     /**
      * ID of the guild the command is registered to
      */
@@ -640,7 +640,7 @@ export type ApplicationCommandDataStructure = {
      * Type of the invoked command
      */
     type: ApplicationCommandTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-context-types|Interaction Context Types}
@@ -663,7 +663,7 @@ export enum InteractionContextTypes {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-structure|Interaction Structure}
  */
-export type InteractionStructure = {
+export interface InteractionStructure {
     /**
      * Bitwise set of permissions the app has in the source location of the interaction
      */
@@ -749,4 +749,4 @@ export type InteractionStructure = {
      * Read-only property, always 1
      */
     version: 1;
-};
+}

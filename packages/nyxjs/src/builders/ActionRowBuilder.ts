@@ -1,11 +1,11 @@
 import type { ActionRowStructure, ComponentResolvableStructure } from "@nyxjs/core";
 
-type ActionRowSchema = {
+interface ActionRowSchema {
     addComponents(...components: ComponentResolvableStructure[]): ActionRowSchema;
     setComponents(components: ComponentResolvableStructure[]): ActionRowSchema;
     toJSON(): Readonly<Partial<ActionRowStructure>>;
     toString(): string;
-};
+}
 
 export class ActionRowBuilder implements ActionRowSchema {
     static readonly COMPONENT_LIMIT = 5;

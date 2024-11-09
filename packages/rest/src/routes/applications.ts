@@ -18,7 +18,7 @@ export enum ActivityLocationKindTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-object|Application Activity Instance Activity Location Structure}
  */
-export type ActivityLocationStructure = {
+export interface ActivityLocationStructure {
     /**
      * The id of the Channel
      */
@@ -35,12 +35,12 @@ export type ActivityLocationStructure = {
      * Enum describing kind of location
      */
     kind: ActivityLocationKindTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-instance-object|Application Activity Instance Activity Instance Structure}
  */
-export type ActivityInstanceStructure = {
+export interface ActivityInstanceStructure {
     /**
      * Application ID
      */
@@ -61,7 +61,7 @@ export type ActivityInstanceStructure = {
      * The IDs of the Users currently connected to the instance
      */
     users: Snowflake[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application|Edit Current Application}

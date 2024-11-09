@@ -26,12 +26,12 @@ export type ModifyGuildEmojiJsonParams = Pick<EmojiStructure, "name" | "roles">;
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params|Create Guild Emoji JSON Params}
  */
-export type CreateGuildEmojiJsonParams = Pick<EmojiStructure, "name" | "roles"> & {
+export interface CreateGuildEmojiJsonParams extends Pick<EmojiStructure, "name" | "roles"> {
     /**
      * The 128x128 emoji image
      */
     image: string;
-};
+}
 
 export const EmojiRoutes = {
     /**

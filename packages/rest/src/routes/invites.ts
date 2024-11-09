@@ -4,7 +4,7 @@ import { RestMethods, type RouteStructure } from "../types/index.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params|Get Invite Query String Params}
  */
-export type GetInviteQueryStringParams = {
+export interface GetInviteQueryStringParams {
     /**
      * The guild scheduled event to include with the invite
      */
@@ -17,7 +17,7 @@ export type GetInviteQueryStringParams = {
      * Whether the invite should contain the expiration date
      */
     with_expiration?: boolean;
-};
+}
 
 export const InviteRoutes = {
     /**
@@ -40,7 +40,10 @@ export const InviteRoutes = {
     /**
      * @see {@link https://discord.com/developers/docs/resources/invite#get-invite|Get Invite}
      */
-    getInvite(code: string, params?: GetInviteQueryStringParams): RouteStructure<InviteStructure> {
+    getInvite(
+        code: string,
+        params?: GetInviteQueryStringParams,
+    ): RouteStructure<InviteStructure, GetInviteQueryStringParams> {
         return {
             method: RestMethods.Get,
             path: `/invites/${code}`,

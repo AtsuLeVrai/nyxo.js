@@ -3,7 +3,7 @@ import type { ChannelStructure, Integer, Iso8601Timestamp, Snowflake, ThreadMemb
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#channel-pins-update-channel-pins-update-event-fields}
  */
-export type ChannelPinsUpdateEventFields = {
+export interface ChannelPinsUpdateEventFields {
     /**
      * ID of the channel
      */
@@ -16,12 +16,12 @@ export type ChannelPinsUpdateEventFields = {
      * Time at which the most recent pinned message was pinned
      */
     last_pin_timestamp?: Iso8601Timestamp | null;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#thread-members-update-thread-members-update-event-fields}
  */
-export type ThreadMembersUpdateEventFields = {
+export interface ThreadMembersUpdateEventFields {
     /**
      * Users who were added to the thread
      */
@@ -42,22 +42,22 @@ export type ThreadMembersUpdateEventFields = {
      * ID of the users who were removed from the thread
      */
     removed_member_ids?: Snowflake[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#thread-member-update-thread-member-update-event-extra-fields}
  */
-export type ThreadMemberUpdateEventExtraFields = {
+export interface ThreadMemberUpdateEventExtraFields {
     /**
      * ID of the guild
      */
     guild_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#thread-list-sync-thread-list-sync-event-fields}
  */
-export type ThreadListSyncEventFields = {
+export interface ThreadListSyncEventFields {
     /**
      * Parent channel IDs whose threads are being synced. If omitted, then threads were synced for the entire guild. This array may contain channel_ids that have no active threads as well, so you know to clear that data.
      */
@@ -74,4 +74,4 @@ export type ThreadListSyncEventFields = {
      * All active threads in the given channels that the current user can access
      */
     threads: ChannelStructure[];
-};
+}

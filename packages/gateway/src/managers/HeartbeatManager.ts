@@ -3,7 +3,7 @@ import { Logger } from "@nyxjs/logger";
 import { EventEmitter } from "eventemitter3";
 import type { GatewayEvents } from "../types/index.js";
 
-export type HeartbeatState = {
+export interface HeartbeatState {
     interval: NodeJS.Timeout | null;
     timer: NodeJS.Timeout | null;
     lastAck: boolean;
@@ -12,7 +12,7 @@ export type HeartbeatState = {
     totalBeats: number;
     latency: number | null;
     isActive: boolean;
-};
+}
 
 export enum HeartbeatErrorCode {
     SendFailure = "HEARTBEAT_SEND_FAILURE",

@@ -1,4 +1,4 @@
-import type { ApiVersions, GatewayCloseCodes, GatewayIntents, Integer } from "@nyxjs/core";
+import type { ApiVersions, GatewayCloseCodes, GatewayIntentResolvable } from "@nyxjs/core";
 import type { GatewayOptions } from "@nyxjs/gateway";
 import type { RateLimitInfo, RestOptions } from "@nyxjs/rest";
 import type WebSocket from "ws";
@@ -14,20 +14,20 @@ import type {
     User,
 } from "../structures/index.js";
 
-export type ClientOptions = {
+export interface ClientOptions {
     gateway?: Partial<Omit<GatewayOptions, "intents" | "v">>;
-    intents: GatewayIntents[] | Integer;
+    intents: GatewayIntentResolvable;
     rest?: Partial<Omit<RestOptions, "version">>;
     version?: ApiVersions;
-};
+}
 
-export type ClientState = {
+export interface ClientState {
     isConnecting: boolean;
     isConnected: boolean;
     isReconnecting: boolean;
-};
+}
 
-export type ClientEvents = {
+export interface ClientEvents {
     applicationCommandPermissionUpdate: [];
     autoModerationActionExecute: [];
     autoModerationBlockMessage: [];
@@ -137,4 +137,4 @@ export type ClientEvents = {
     webhookCreate: [];
     webhookDelete: [];
     webhookUpdate: [];
-};
+}

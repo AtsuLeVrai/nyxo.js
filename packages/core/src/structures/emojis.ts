@@ -4,7 +4,7 @@ import type { UserStructure } from "./users.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object-emoji-structure|Emoji Structure}
  */
-export type EmojiStructure = {
+export interface EmojiStructure {
     /**
      * Whether this emoji is animated.
      */
@@ -37,4 +37,4 @@ export type EmojiStructure = {
      * The user that created this emoji.
      */
     user?: UserStructure;
-};
+}

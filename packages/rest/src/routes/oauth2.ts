@@ -4,7 +4,7 @@ import { RestMethods, type RouteStructure } from "../types/index.js";
 /**
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information-response-structure|Get Current Authorization Information Response Structure}
  */
-export type GetCurrentAuthorizationInformationResponse = {
+export interface GetCurrentAuthorizationInformationResponse {
     /**
      * The current application.
      *
@@ -26,7 +26,7 @@ export type GetCurrentAuthorizationInformationResponse = {
      * The user who has authorized, if the user has authorized with the identify scope.
      */
     user?: UserStructure;
-};
+}
 
 export const OAuth2Routes = {
     /**

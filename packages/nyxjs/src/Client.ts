@@ -1,4 +1,4 @@
-import { ApiVersions, BitfieldManager, type GatewayIntents, type Integer } from "@nyxjs/core";
+import { ApiVersions, GatewayIntents } from "@nyxjs/core";
 import { CompressTypes, EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/gateway";
 import { Rest, type RestOptions } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
@@ -6,77 +6,55 @@ import { ClientEventManager, GuildManager, UserManager } from "./managers/index.
 import type { User } from "./structures/index.js";
 import type { ClientEvents, ClientOptions, ClientState } from "./types/index.js";
 
+interface ServiceDependencies {
+    rest: Rest;
+    gateway: Gateway;
+    guilds: GuildManager;
+    users: UserManager;
+}
+
 export class Client extends EventEmitter<ClientEvents> {
     readonly #token: string;
     readonly #options: Required<ClientOptions>;
     readonly #events: ClientEventManager;
     readonly #state: ClientState;
+    readonly #services: Partial<ServiceDependencies> = {};
 
-    #rest?: Rest;
-    #gateway?: Gateway;
-    #guilds?: GuildManager;
-    #users?: UserManager;
     #user?: User;
 
     constructor(token: string, options: ClientOptions) {
         super();
-
-        this.#validateToken(token);
-        this.#validateOptions(options);
+        this.#validateInputs(token, options);
 
         this.#token = token;
         this.#options = this.#initializeConfig(options);
-        this.#state = {
-            isConnecting: false,
-            isConnected: false,
-            isReconnecting: false,
-        };
+        this.#state = this.#createInitialState();
 
         this.#initializeServices();
+
         this.#events = new ClientEventManager(this);
     }
 
-    get token(): string {
-        return this.#token;
-    }
-
     get rest(): Rest {
-        if (!this.#rest) {
-            throw new Error("Rest client is not initialized.");
-        }
-
-        return this.#rest;
+        return this.#getService("rest");
     }
 
     get gateway(): Gateway {
-        if (!this.#gateway) {
-            throw new Error("Gateway is not initialized.");
-        }
-
-        return this.#gateway;
+        return this.#getService("gateway");
     }
 
     get guilds(): GuildManager {
-        if (!this.#guilds) {
-            throw new Error("GuildManager is not initialized.");
-        }
-
-        return this.#guilds;
+        return this.#getService("guilds");
     }
 
     get users(): UserManager {
-        if (!this.#users) {
-            throw new Error("UserManager is not initialized.");
-        }
-
-        return this.#users;
+        return this.#getService("users");
     }
 
     get user(): User {
         if (!this.#user) {
             throw new Error("User is not initialized.");
         }
-
         return this.#user;
     }
 
@@ -93,9 +71,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     async connect(): Promise<void> {
-        if (this.#state.isConnected || this.#state.isConnecting) {
-            throw new Error("Client is already connected or connecting.");
-        }
+        this.#validateConnectionState();
 
         try {
             this.#state.isConnecting = true;
@@ -104,14 +80,13 @@ export class Client extends EventEmitter<ClientEvents> {
             await this.gateway.connect();
             this.#state.isConnected = true;
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`Failed to connect to gateway: ${errorMessage}`);
+            throw this.#createError("Failed to connect to gateway", error);
         } finally {
             this.#state.isConnecting = false;
         }
     }
 
-    async disconnect(): Promise<void> {
+    disconnect(): void {
         if (!this.#state.isConnected) {
             throw new Error("Client is not connected.");
         }
@@ -120,19 +95,12 @@ export class Client extends EventEmitter<ClientEvents> {
             this.gateway.destroy();
             this.#state.isConnected = false;
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`Failed to disconnect from gateway: ${errorMessage}`);
+            throw this.#createError("Failed to disconnect from gateway", error);
         }
     }
 
     async reconnect(): Promise<void> {
-        if (!this.#state.isConnected) {
-            throw new Error("Client is not connected.");
-        }
-
-        if (this.#state.isReconnecting) {
-            throw new Error("Client is already reconnecting.");
-        }
+        this.#validateReconnectionState();
 
         try {
             this.#state.isReconnecting = true;
@@ -142,12 +110,25 @@ export class Client extends EventEmitter<ClientEvents> {
         }
     }
 
+    #getService<K extends keyof ServiceDependencies>(name: K): ServiceDependencies[K] {
+        if (!this.#services[name]) {
+            throw new Error(`${name} service is not initialized.`);
+        }
+        return this.#services[name] as ServiceDependencies[K];
+    }
+
+    #validateInputs(token: string, options: ClientOptions): void {
+        this.#validateToken(token);
+        this.#validateOptions(options);
+    }
+
     #validateToken(token: string): void {
         if (!token?.trim()) {
             throw new Error("Token cannot be empty or undefined.");
         }
 
-        if (!/^[A-Za-z0-9-_.]*$/.test(token)) {
+        const tokenRegex = /^[A-Za-z0-9-_.]*$/;
+        if (!tokenRegex.test(token)) {
             throw new Error("Invalid token format.");
         }
     }
@@ -156,6 +137,91 @@ export class Client extends EventEmitter<ClientEvents> {
         if (!options?.intents) {
             throw new Error("Intents must be provided in client options.");
         }
+    }
+
+    #validateConnectionState(): void {
+        if (this.#state.isConnected || this.#state.isConnecting) {
+            throw new Error("Client is already connected or connecting.");
+        }
+    }
+
+    #validateReconnectionState(): void {
+        if (!this.#state.isConnected) {
+            throw new Error("Client is not connected.");
+        }
+        if (this.#state.isReconnecting) {
+            throw new Error("Client is already reconnecting.");
+        }
+    }
+
+    #createInitialState(): ClientState {
+        return {
+            isConnecting: false,
+            isConnected: false,
+            isReconnecting: false,
+        };
+    }
+
+    #createError(message: string, error: unknown): Error {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return new Error(`${message}: ${errorMessage}`);
+    }
+
+    #initializeServices(): void {
+        try {
+            this.#services.rest = this.#initializeRest();
+            this.#services.gateway = this.#initializeGateway();
+            this.#services.guilds = this.#initializeGuildManager();
+            this.#services.users = this.#initializeUserManager();
+        } catch (error) {
+            throw this.#createError("Failed to initialize services", error);
+        }
+    }
+
+    #initializeRest(): Rest {
+        const options: RestOptions = {
+            version: this.#options.version,
+            maxRetries: this.#options.rest.maxRetries,
+            rateLimitRetries: this.#options.rest.rateLimitRetries,
+            userAgent: this.#options.rest.userAgent,
+            timeout: this.#options.rest.timeout,
+        };
+
+        return new Rest(this.#token, options);
+    }
+
+    #initializeGateway(): Gateway {
+        if (!this.#services.rest) {
+            throw new Error("Rest client must be initialized before gateway.");
+        }
+
+        const options: GatewayOptions = {
+            shard: this.#options.gateway.shard,
+            compress: this.#options.gateway.compress,
+            encoding: this.#options.gateway.encoding as EncodingTypes,
+            v: this.#options.version,
+            largeThreshold: this.#options.gateway.largeThreshold,
+            intents: GatewayIntents.resolve(this.#options.intents),
+            presence: this.#options.gateway.presence,
+        };
+
+        return new Gateway(this.#token, this.#services.rest, options);
+    }
+
+    #initializeGuildManager(): GuildManager {
+        if (!this.#services.rest) {
+            throw new Error("Rest client must be initialized before GuildManager.");
+        }
+
+        return new GuildManager(this);
+    }
+
+    #initializeUserManager(): UserManager {
+        if (!this.#services.rest) {
+            throw new Error("Rest client must be initialized before UserManager.");
+        }
+
+        return new UserManager(this);
     }
 
     #initializeConfig(options: ClientOptions): Required<ClientOptions> {
@@ -167,13 +233,13 @@ export class Client extends EventEmitter<ClientEvents> {
                 compress: CompressTypes.ZlibStream,
                 shard: undefined,
                 presence: undefined,
-                large_threshold: undefined,
+                largeThreshold: undefined,
             },
             rest: {
                 timeout: undefined,
-                user_agent: undefined,
-                rate_limit_retries: undefined,
-                max_retries: undefined,
+                userAgent: undefined,
+                rateLimitRetries: undefined,
+                maxRetries: undefined,
             },
         };
 
@@ -185,84 +251,14 @@ export class Client extends EventEmitter<ClientEvents> {
                 compress: options.gateway?.compress ?? defaultConfig.gateway.compress,
                 shard: options.gateway?.shard,
                 presence: options.gateway?.presence,
-                large_threshold: options.gateway?.large_threshold,
+                largeThreshold: options.gateway?.largeThreshold,
             },
             rest: {
                 timeout: options.rest?.timeout,
-                user_agent: options.rest?.user_agent,
-                rate_limit_retries: options.rest?.rate_limit_retries,
-                max_retries: options.rest?.max_retries,
+                userAgent: options.rest?.userAgent,
+                rateLimitRetries: options.rest?.rateLimitRetries,
+                maxRetries: options.rest?.maxRetries,
             },
         };
-    }
-
-    #initializeServices(): void {
-        try {
-            this.#rest = this.#initializeRest();
-            this.#gateway = this.#initializeGateway();
-            this.#guilds = this.#initializeGuildManager();
-            this.#users = this.#initializeUserManager();
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new Error(`Failed to initialize services: ${errorMessage}`);
-        }
-    }
-
-    #initializeRest(): Rest {
-        const options: RestOptions = {
-            version: this.#options.version,
-            max_retries: this.#options.rest.max_retries,
-            rate_limit_retries: this.#options.rest.rate_limit_retries,
-            user_agent: this.#options.rest.user_agent,
-            timeout: this.#options.rest.timeout,
-        };
-
-        return new Rest(this.#token, options);
-    }
-
-    #initializeGateway(): Gateway {
-        if (!this.#rest) {
-            throw new Error("Rest client must be initialized before gateway.");
-        }
-
-        const options: GatewayOptions = {
-            shard: this.#options.gateway.shard,
-            compress: this.#options.gateway.compress,
-            encoding: this.#options.gateway.encoding as EncodingTypes,
-            v: this.#options.version,
-            large_threshold: this.#options.gateway.large_threshold,
-            intents: this.#resolveIntents(this.#options.intents),
-            presence: this.#options.gateway.presence,
-        };
-
-        return new Gateway(this.#token, this.#rest, options);
-    }
-
-    #initializeGuildManager(): GuildManager {
-        if (!this.#rest) {
-            throw new Error("Rest client must be initialized before GuildManager.");
-        }
-
-        return new GuildManager(this);
-    }
-
-    #initializeUserManager(): UserManager {
-        if (!this.#rest) {
-            throw new Error("Rest client must be initialized before UserManager.");
-        }
-
-        return new UserManager(this);
-    }
-
-    #resolveIntents(intents: GatewayIntents[] | Integer): Integer {
-        if (!Array.isArray(intents)) {
-            return intents;
-        }
-
-        try {
-            return Number(BitfieldManager.from(intents).valueOf());
-        } catch (error) {
-            throw new Error(`Failed to resolve intents: ${error instanceof Error ? error.message : String(error)}`);
-        }
     }
 }

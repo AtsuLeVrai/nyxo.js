@@ -3,7 +3,7 @@ import type { Snowflake } from "@nyxjs/core";
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#webhooks-update-webhooks-update-event-fields}
  */
-export type WebhooksUpdateEventFields = {
+export interface WebhooksUpdateEventFields {
     /**
      * ID of the channel
      */
@@ -12,4 +12,4 @@ export type WebhooksUpdateEventFields = {
      * ID of the guild
      */
     guild_id: Snowflake;
-};
+}

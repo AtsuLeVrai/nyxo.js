@@ -17,7 +17,7 @@ export type UpdateCurrentUserApplicationRoleConnectionJsonParams = ApplicationRo
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params|Create Group DM JSON Params}
  */
-export type CreateGroupDmJsonParams = {
+export interface CreateGroupDmJsonParams {
     /**
      * Access tokens of users that have granted your app the gdm.join scope.
      */
@@ -26,32 +26,32 @@ export type CreateGroupDmJsonParams = {
      * A dictionary of user ids to their respective nicknames.
      */
     nicks: Record<Snowflake, string>;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#create-dm-json-params|Create DM JSON Params}
  */
-export type CreateDmJsonParams = {
+export interface CreateDmJsonParams {
     /**
      * The recipient to open a DM channel with.
      */
     recipient_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params|Get Current User Guilds Query String Params}
  */
-export type GetCurrentGuildsQueryStringParams = QueryStringParams & {
+export interface GetCurrentGuildsQueryStringParams extends QueryStringParams {
     /**
      * Include approximate member and presence counts in response.
      */
     with_counts?: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params|Modify Current User JSON Params}
  */
-export type ModifyCurrentUserJsonParams = {
+export interface ModifyCurrentUserJsonParams {
     /**
      * If passed, modifies the user's avatar.
      */
@@ -64,7 +64,7 @@ export type ModifyCurrentUserJsonParams = {
      * The user's username, if changed may cause the user's discriminator to be randomized.
      */
     username?: string;
-};
+}
 
 export const UserRoutes = {
     /**

@@ -9,7 +9,7 @@ import type { WebhookStructure } from "./webhooks.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-structure|Audit Log Change Structure}
  */
-export type AuditLogChangeStructure = {
+export interface AuditLogChangeStructure {
     /**
      * Name of the changed entity, with a few exceptions.
      */
@@ -22,12 +22,12 @@ export type AuditLogChangeStructure = {
      * Old value of the key.
      */
     old_value?: unknown;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info|Audit Log Entry Optional Info}
  */
-export type AuditLogEntryOptionalInfoStructure = {
+export interface AuditLogEntryOptionalInfoStructure {
     /**
      * ID of the app whose permissions were targeted
      */
@@ -37,7 +37,7 @@ export type AuditLogEntryOptionalInfoStructure = {
      */
     auto_moderation_rule_name?: string;
     /**
-     * Trigger type of the Auto Moderation rule that was triggered
+     * Trigger interface of the Auto Moderation rule that was triggered
      */
     auto_moderation_rule_trigger_type?: string;
     /**
@@ -57,7 +57,7 @@ export type AuditLogEntryOptionalInfoStructure = {
      */
     id?: Snowflake;
     /**
-     * The type of integration which performed the action
+     * The interface of integration which performed the action
      */
     integration_type?: string;
     /**
@@ -69,14 +69,14 @@ export type AuditLogEntryOptionalInfoStructure = {
      */
     message_id?: Snowflake;
     /**
-     * Name of the role if type is "0" (not present if type is "1")
+     * Name of the role if interface is "0" (not present if interface is "1")
      */
     role_name?: string;
     /**
-     * Type of overwritten entity - role ("0") or member ("1")
+     * interface of overwritten entity - role ("0") or member ("1")
      */
     type?: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-audit-log-events|Audit Log Events}
@@ -351,9 +351,9 @@ export enum AuditLogEvents {
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-audit-log-entry-structure|Audit Log Entry Structure}
  */
-export type AuditLogEntryStructure = {
+export interface AuditLogEntryStructure {
     /**
-     * Type of action that occurred
+     * interface of action that occurred
      */
     action_type: AuditLogEvents;
     /**
@@ -380,12 +380,12 @@ export type AuditLogEntryStructure = {
      * User or app that made the changes
      */
     user_id: Snowflake | null;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-object-audit-log-structure|Audit Log Structure}
  */
-export type AuditLogStructure = {
+export interface AuditLogStructure {
     /**
      * List of application commands referenced in the audit log
      */
@@ -420,4 +420,4 @@ export type AuditLogStructure = {
      * List of webhooks referenced in the audit log
      */
     webhooks: WebhookStructure[];
-};
+}

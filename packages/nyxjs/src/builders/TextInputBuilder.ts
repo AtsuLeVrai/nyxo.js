@@ -1,6 +1,6 @@
 import type { Integer, TextInputStructure, TextInputStyles } from "@nyxjs/core";
 
-type TextInputSchema = {
+interface TextInputSchema {
     setCustomId(customId: string): TextInputSchema;
     setLabel(label: string): TextInputSchema;
     setMaxLength(maxLength: Integer): TextInputSchema;
@@ -11,7 +11,7 @@ type TextInputSchema = {
     setValue(value: string): TextInputSchema;
     toJSON(): Readonly<Partial<TextInputStructure>>;
     toString(): string;
-};
+}
 
 export class TextInputBuilder implements TextInputSchema {
     static readonly CUSTOM_ID_LIMIT = 100;

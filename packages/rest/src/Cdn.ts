@@ -7,7 +7,7 @@ export type CdnImageTypes =
     | ImageFormats.Png
     | ImageFormats.WebP;
 
-export type CdnImageOptions = {
+export interface CdnImageOptions {
     /**
      * The format of the image.
      */
@@ -20,7 +20,7 @@ export type CdnImageOptions = {
      * The size of the image.
      */
     size?: Integer;
-};
+}
 
 export type CdnEndpointTypes =
     | "emoji"
@@ -45,7 +45,7 @@ export type CdnEndpointTypes =
     | "guildScheduledEventCover"
     | "guildMemberBanner";
 
-type CdnEndpoint = {
+interface CdnEndpoint {
     /**
      * The path template for the endpoint
      * Use {paramName} for parameters that will be replaced
@@ -63,7 +63,7 @@ type CdnEndpoint = {
      * Whether this endpoint supports and needs GIF validation
      */
     validateGif?: boolean;
-};
+}
 
 class CdnError extends Error {
     code: string;

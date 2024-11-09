@@ -7,21 +7,21 @@ import type { IdentifyStructure } from "../events/index.js";
 import type { GatewayOptions, GatewayShardTypes, ShardConfig } from "../types/index.js";
 import type { SessionManager } from "./SessionManager.js";
 
-type ShardBucket = {
-    key: number;
-    shardIds: number[];
-};
-
 export type ShardStatusTypes = "disconnected" | "connecting" | "connected" | "reconnecting";
 
-export type ShardState = {
+interface ShardBucket {
+    key: number;
+    shardIds: number[];
+}
+
+export interface ShardState {
     config: ShardConfig;
     status: ShardStatusTypes;
     lastReconnectAttempt?: number;
     reconnectAttempts: number;
     rateLimitKey: number;
     guilds: Set<Snowflake>;
-};
+}
 
 export enum ShardErrorCode {
     InitializationError = "SHARD_INITIALIZATION_ERROR",
@@ -519,8 +519,8 @@ export class ShardManager {
                 payload.presence = this.#options.presence;
             }
 
-            if (this.#options.large_threshold) {
-                payload.large_threshold = this.#options.large_threshold;
+            if (this.#options.largeThreshold) {
+                payload.large_threshold = this.#options.largeThreshold;
             }
 
             if (this.#options.compress !== undefined) {

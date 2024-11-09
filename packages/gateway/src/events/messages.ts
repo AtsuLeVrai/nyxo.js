@@ -3,7 +3,7 @@ import type { EmojiStructure, GuildMemberStructure, Snowflake, UserStructure } f
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-reaction-remove-emoji-message-reaction-remove-emoji-event-fields}
  */
-export type MessageReactionRemoveEmojiEventFields = {
+export interface MessageReactionRemoveEmojiEventFields {
     /**
      * ID of the channel
      */
@@ -20,12 +20,12 @@ export type MessageReactionRemoveEmojiEventFields = {
      * ID of the message
      */
     message_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-reaction-remove-all-message-reaction-remove-all-event-fields}
  */
-export type MessageReactionRemoveAllEventFields = {
+export interface MessageReactionRemoveAllEventFields {
     /**
      * ID of the channel
      */
@@ -38,12 +38,12 @@ export type MessageReactionRemoveAllEventFields = {
      * ID of the message
      */
     message_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-reaction-remove-message-reaction-remove-event-fields}
  */
-export type MessageReactionRemoveEventFields = {
+export interface MessageReactionRemoveEventFields {
     /**
      * True if this was a super-reaction
      */
@@ -65,19 +65,19 @@ export type MessageReactionRemoveEventFields = {
      */
     message_id: Snowflake;
     /**
-     * The type of reaction
+     * The interface of reaction
      */
     type: 0 | 1;
     /**
      * ID of the user
      */
     user_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-reaction-add-message-reaction-add-event-fields}
  */
-export type MessageReactionAddEventFields = {
+export interface MessageReactionAddEventFields {
     /**
      * true if this is a super-reaction
      */
@@ -111,19 +111,19 @@ export type MessageReactionAddEventFields = {
      */
     message_id: Snowflake;
     /**
-     * The type of reaction
+     * The interface of reaction
      */
     type: 0 | 1;
     /**
      * ID of the user
      */
     user_id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-delete-bulk-message-delete-bulk-event-fields}
  */
-export type MessageDeleteBulkEventFields = {
+export interface MessageDeleteBulkEventFields {
     /**
      * ID of the channel
      */
@@ -136,12 +136,12 @@ export type MessageDeleteBulkEventFields = {
      * IDs of the messages
      */
     ids: Snowflake[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-delete-message-delete-event-fields}
  */
-export type MessageDeleteEventFields = {
+export interface MessageDeleteEventFields {
     /**
      * ID of the channel
      */
@@ -154,12 +154,12 @@ export type MessageDeleteEventFields = {
      * ID of the message
      */
     id: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#message-create-message-create-extra-fields}
  */
-export type MessageCreateExtraFields = {
+export interface MessageCreateExtraFields {
     /**
      * ID of the guild the message was sent in - unless it is an ephemeral message
      */
@@ -172,4 +172,4 @@ export type MessageCreateExtraFields = {
      * Users specifically mentioned in the message
      */
     mentions: (Partial<GuildMemberStructure> & UserStructure)[];
-};
+}

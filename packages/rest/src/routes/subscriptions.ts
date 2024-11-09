@@ -4,12 +4,12 @@ import { type QueryStringParams, RestMethods, type RouteStructure } from "../typ
 /**
  * @see {@link https://discord.com/developers/docs/resources/subscription#query-string-params|Query String Params}
  */
-export type SubscriptionQueryStringParams = QueryStringParams & {
+export interface SubscriptionQueryStringParams extends QueryStringParams {
     /**
      * User ID for which to return subscriptions. Required except for OAuth queries.
      */
     user_id?: Snowflake;
-};
+}
 
 export const SubscriptionRoutes = {
     /**

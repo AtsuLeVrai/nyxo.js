@@ -4,12 +4,13 @@ import { type QueryStringParams, RestMethods, type RouteStructure } from "../typ
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params|Get Guild Scheduled Event Users Query String Params}
  */
-export type GetGuildScheduledEventUsersQueryStringParams = Pick<QueryStringParams, "before" | "after" | "limit"> & {
+export interface GetGuildScheduledEventUsersQueryStringParams
+    extends Pick<QueryStringParams, "before" | "after" | "limit"> {
     /**
      * Include guild member data if it exists
      */
     with_member?: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params|Modify Guild Scheduled Event JSON Params}
@@ -34,12 +35,12 @@ export type ModifyGuildScheduledEventJsonParams = Partial<
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-query-string-params|Get Guild Scheduled Event Query String Params}
  */
-export type GetGuildScheduledEventQueryStringParams = {
+export interface GetGuildScheduledEventQueryStringParams {
     /**
      * Include number of users subscribed to this event
      */
     with_user_count?: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild-query-string-params|List Scheduled Events For Guild Query String Params}
@@ -71,7 +72,7 @@ export const ScheduledRoutes = {
         guildId: Snowflake,
         scheduledEventId: Snowflake,
         params?: GetGuildScheduledEventUsersQueryStringParams,
-    ): RouteStructure<GuildScheduledEventUserStructure[]> {
+    ): RouteStructure<GuildScheduledEventUserStructure[], GetGuildScheduledEventUsersQueryStringParams> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/scheduled-events/${scheduledEventId}/users`,
@@ -119,7 +120,7 @@ export const ScheduledRoutes = {
         guildId: Snowflake,
         scheduledEventId: Snowflake,
         params?: GetGuildScheduledEventQueryStringParams,
-    ): RouteStructure<GuildScheduledEventStructure> {
+    ): RouteStructure<GuildScheduledEventStructure, GetGuildScheduledEventQueryStringParams> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/scheduled-events/${scheduledEventId}`,
@@ -147,7 +148,7 @@ export const ScheduledRoutes = {
     listScheduledEventsForGuild(
         guildId: Snowflake,
         params?: ListScheduledEventsForGuildQueryStringParams,
-    ): RouteStructure<GuildScheduledEventStructure[]> {
+    ): RouteStructure<GuildScheduledEventStructure[], ListScheduledEventsForGuildQueryStringParams> {
         return {
             method: RestMethods.Get,
             path: `/guilds/${guildId}/scheduled-events`,

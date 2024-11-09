@@ -19,7 +19,7 @@ export enum RestMethods {
 /**
  * Route structure for a REST request.
  */
-export type RouteStructure<T> = {
+export interface RouteStructure<T, Q = Record<string, unknown>> {
     /**
      * Body of the request.
      */
@@ -39,12 +39,12 @@ export type RouteStructure<T> = {
     /**
      * Query string parameters for the request.
      */
-    query?: Record<string, unknown>;
+    query?: Q;
     /**
      * Response type for the request.
      */
     response?: T;
-};
+}
 
 /**
  * Represents the types of authentication that can be used.
@@ -54,7 +54,7 @@ export type AuthTypes = "Bearer" | "Bot";
 /**
  * Headers for a REST HTTP request to Discord.
  */
-export type RestHttpDiscordHeaders = {
+export interface RestHttpDiscordHeaders {
     /**
      * Authorization header containing the authentication type and token.
      */
@@ -107,12 +107,12 @@ export type RestHttpDiscordHeaders = {
      * Timestamp for the Ed25519 signature.
      */
     "x-signature-timestamp"?: string;
-};
+}
 
 /**
  * Query string parameters for a REST request.
  */
-export type QueryStringParams = {
+export interface QueryStringParams extends Record<string, unknown> {
     /**
      * List subscriptions after this ID
      */
@@ -129,12 +129,12 @@ export type QueryStringParams = {
      * ID of the thread the message is in
      */
     thread_id?: Snowflake;
-};
+}
 
 /**
  * Options for configuring the REST client.
  */
-export type RestOptions = {
+export interface RestOptions {
     /**
      * Maximum number of retries for a request.
      */
@@ -155,12 +155,12 @@ export type RestOptions = {
      * Version of the API to use.
      */
     version: ApiVersions;
-};
+}
 
 /**
  * Information about the rate limit.
  */
-export type RateLimitInfo = {
+export interface RateLimitInfo {
     /**
      * The maximum number of requests that can be made in a given time period.
      */
@@ -181,12 +181,12 @@ export type RateLimitInfo = {
      * The timeout duration in milliseconds.
      */
     timeout: number;
-};
+}
 
 /**
  * Events emitted by the REST client.
  */
-export type RestEvents = {
+export interface RestEvents {
     /**
      * Debug event with a message.
      */
@@ -203,4 +203,4 @@ export type RestEvents = {
      * Warning event with a message.
      */
     warn: [message: string];
-};
+}

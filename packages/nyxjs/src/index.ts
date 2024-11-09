@@ -7,4 +7,5 @@ export * from "./Client.js";
 
 export * from "@nyxjs/core";
 export * from "@nyxjs/gateway";
+export * from "@nyxjs/logger";
 export * from "@nyxjs/rest";

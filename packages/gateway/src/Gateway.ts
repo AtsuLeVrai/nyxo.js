@@ -258,6 +258,23 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         }
     }
 
+    async reconnect(): Promise<void> {
+        try {
+            this.#emitDebug("Initiating manual reconnection");
+
+            this.destroy();
+            await this.connect(true);
+
+            this.#emitDebug("Manual reconnection completed successfully");
+        } catch (error) {
+            const gatewayError = new GatewayError("Manual reconnection failed", GatewayErrorCode.ReconnectionError, {
+                error,
+            });
+            this.#emitError(gatewayError);
+            throw gatewayError;
+        }
+    }
+
     #setupEventListeners(): void {
         try {
             this.#emitDebug("Setting up gateway event listeners");
@@ -278,7 +295,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
                 this.#emitDebug("Missed heartbeat acknowledgement");
                 if (!this.#isReconnecting) {
                     this.#isReconnecting = true;
-                    await this.#reconnect();
+                    await this.reconnect();
                     this.#isReconnecting = false;
                 }
             });
@@ -394,7 +411,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
                 case GatewayOpcodes.Reconnect: {
                     this.#emitDebug("Received reconnect request");
-                    await this.#reconnect();
+                    await this.reconnect();
                     break;
                 }
 
@@ -674,23 +691,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
                 error,
             });
             this.#emitError(gatewayError);
-        }
-    }
-
-    async #reconnect(): Promise<void> {
-        try {
-            this.#emitDebug("Initiating manual reconnection");
-
-            this.destroy();
-            await this.connect(true);
-
-            this.#emitDebug("Manual reconnection completed successfully");
-        } catch (error) {
-            const gatewayError = new GatewayError("Manual reconnection failed", GatewayErrorCode.ReconnectionError, {
-                error,
-            });
-            this.#emitError(gatewayError);
-            throw gatewayError;
         }
     }
 

@@ -3,7 +3,7 @@ import type { ApiVersions, ApplicationStructure, Integer, UnavailableGuildStruct
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#ready-ready-event-fields}
  */
-export type ReadyEventFields = {
+export interface ReadyEventFields {
     /**
      * Contains id and flags
      */
@@ -32,4 +32,4 @@ export type ReadyEventFields = {
      * API version
      */
     v: ApiVersions;
-};
+}

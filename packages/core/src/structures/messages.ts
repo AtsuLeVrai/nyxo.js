@@ -13,7 +13,7 @@ import type { UserStructure } from "./users.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#role-subscription-data-object-role-subscription-data-object-structure|Role Subscription Data Object}
  */
-export type RoleSubscriptionDataStructure = {
+export interface RoleSubscriptionDataStructure {
     /**
      * Whether this notification is for a renewal rather than a new purchase.
      */
@@ -30,7 +30,7 @@ export type RoleSubscriptionDataStructure = {
      * The cumulative number of months that the user has been subscribed for.
      */
     total_months_subscribed: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#allowed-mentions-object-allowed-mention-types|Allowed Mention Types}
@@ -53,7 +53,7 @@ export enum AllowedMentionTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#allowed-mentions-object-allowed-mentions-structure|Allowed Mentions Object}
  */
-export type AllowedMentionStructure = {
+export interface AllowedMentionStructure {
     /**
      * An array of allowed mention types to parse from the content.
      */
@@ -70,12 +70,12 @@ export type AllowedMentionStructure = {
      * Array of user_ids to mention (Max size of 100).
      */
     users?: Snowflake[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#channel-mention-object-channel-mention-structure|Channel Mention Structure}
  */
-export type ChannelMentionStructure = {
+export interface ChannelMentionStructure {
     /**
      * ID of the guild containing the channel
      */
@@ -92,7 +92,7 @@ export type ChannelMentionStructure = {
      * The type of channel
      */
     type: ChannelTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#attachment-object-attachment-flags|Attachment Flags}
@@ -107,7 +107,7 @@ export enum AttachmentFlags {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#attachment-object-attachment-structure|Attachment Structure}
  */
-export type AttachmentStructure = {
+export interface AttachmentStructure {
     /**
      * The attachment's media type
      */
@@ -164,12 +164,12 @@ export type AttachmentStructure = {
      * Width of file (if image)
      */
     width?: Integer | null;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-fields-by-embed-type-poll-result-embed-fields|Poll Result Embed Fields}
  */
-export type PollResultEmbedFieldStructure = {
+export interface PollResultEmbedFieldStructure {
     /**
      * Question text from the original poll
      */
@@ -202,12 +202,12 @@ export type PollResultEmbedFieldStructure = {
      * Number of votes for the answer(s) with the most votes
      */
     victor_answer_votes: Integer;
-};
+}
 
 /**
  * Represents the structure of an embed object.
  */
-export type BaseEmbedImageStructure = {
+export interface BaseEmbedImageStructure {
     /**
      * Height of image
      */
@@ -232,12 +232,12 @@ export type BaseEmbedImageStructure = {
      * Width of image
      */
     width?: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-field-structure|Embed Field Structure}
  */
-export type EmbedFieldStructure = {
+export interface EmbedFieldStructure {
     /**
      * Whether or not this field should display inline
      */
@@ -250,37 +250,37 @@ export type EmbedFieldStructure = {
      * The value of the field
      */
     value: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-footer-structure|Embed Footer Structure}
  */
-export type EmbedFooterStructure = Pick<BaseEmbedImageStructure, "icon_url" | "proxy_icon_url"> & {
+export interface EmbedFooterStructure extends Pick<BaseEmbedImageStructure, "icon_url" | "proxy_icon_url"> {
     /**
      * Footer text
      */
     text: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-author-structure|Embed Author Structure}
  */
-export type EmbedAuthorStructure = Pick<BaseEmbedImageStructure, "icon_url" | "proxy_icon_url" | "url"> & {
+export interface EmbedAuthorStructure extends Pick<BaseEmbedImageStructure, "icon_url" | "proxy_icon_url" | "url"> {
     /**
      * Name of the author
      */
     name: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-provider-structure|Embed Provider Structure}
  */
-export type EmbedProviderStructure = Pick<BaseEmbedImageStructure, "url"> & {
+export interface EmbedProviderStructure extends Pick<BaseEmbedImageStructure, "url"> {
     /**
      * Name of provider
      */
     name?: string;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-image-structure|Embed Image Structure}
@@ -334,7 +334,7 @@ export enum EmbedTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-structure|Embed Structure}
  */
-export type EmbedStructure = {
+export interface EmbedStructure {
     /**
      * Author information
      */
@@ -387,12 +387,12 @@ export type EmbedStructure = {
      * Video information
      */
     video?: EmbedVideoStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#reaction-count-details-object-reaction-count-details-structure|Reaction Count Details Structure}
  */
-export type ReactionCountDetailStructure = {
+export interface ReactionCountDetailStructure {
     /**
      * Count of super reactions
      */
@@ -401,12 +401,12 @@ export type ReactionCountDetailStructure = {
      * Count of normal reactions
      */
     normal: Integer;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#reaction-object-reaction-structure|Reaction Structure}
  */
-export type ReactionStructure = {
+export interface ReactionStructure {
     /**
      * HEX colors used for super reaction
      */
@@ -431,7 +431,7 @@ export type ReactionStructure = {
      * Whether the current user super-reacted using this emoji
      */
     me_burst: boolean;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-reference-types}
@@ -450,7 +450,7 @@ export enum MessageReferenceTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-reference-structure|Message Reference Structure}
  */
-export type MessageReferenceStructure = {
+export interface MessageReferenceStructure {
     /**
      * id of the originating message's channel
      */
@@ -471,12 +471,12 @@ export type MessageReferenceStructure = {
      * type of reference.
      */
     type?: MessageReferenceTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-call-object-message-call-object-structure|Message Call Object}
  */
-export type MessageCallStructure = {
+export interface MessageCallStructure {
     /**
      * time when call ended
      */
@@ -485,12 +485,12 @@ export type MessageCallStructure = {
      * array of user object ids that participated in the call
      */
     participants: Snowflake[];
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-message-interaction-metadata-structure|Message Interaction Metadata Object}
  */
-export type MessageInteractionMetadataStructure = {
+export interface MessageInteractionMetadataStructure {
     /**
      * IDs for installation context(s) related to an interaction. Details in Authorizing Integration Owners Object
      *
@@ -521,7 +521,7 @@ export type MessageInteractionMetadataStructure = {
      * User who triggered the interaction
      */
     user: UserStructure;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-flags}
@@ -586,7 +586,7 @@ export enum MessageActivityTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-activity-structure|Message Activity Structure}
  */
-export type MessageActivityStructure = {
+export interface MessageActivityStructure {
     /**
      * party_id from a Rich Presence event
      */
@@ -595,7 +595,7 @@ export type MessageActivityStructure = {
      * Type of message activity
      */
     type: MessageActivityTypes;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-types|Message Types}
@@ -643,7 +643,7 @@ export enum MessageTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-structure|Message Structure}
  */
-export type MessageStructure = {
+export interface MessageStructure {
     /**
      * Sent with Rich Presence-related chat embeds
      */
@@ -794,12 +794,12 @@ export type MessageStructure = {
      * If the message is generated by a webhook, this is the webhook's ID
      */
     webhook_id?: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-snapshot-structure|Message Snapshot Structure}
  */
-export type MessageSnapshotStructure = {
+export interface MessageSnapshotStructure {
     /**
      * The message that was forwarded
      */
@@ -818,4 +818,4 @@ export type MessageSnapshotStructure = {
         | "timestamp"
         | "type"
     >;
-};
+}

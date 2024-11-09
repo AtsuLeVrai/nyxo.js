@@ -4,17 +4,17 @@ import { isValidLogLevel } from "./utils/index.js";
 
 export type LogLevel = "debug" | "info" | "warn" | "error" | "critical" | "fatal" | "success";
 
-export type LogContext = {
+export interface LogContext {
     code?: string | number;
     component?: string;
     details?: Record<string, unknown>;
     stack?: string;
-};
+}
 
-export type StyleConfig = {
+export interface StyleConfig {
     color: ChalkInstance;
     prefix: string;
-};
+}
 
 class LogBuilder {
     #level: LogLevel;

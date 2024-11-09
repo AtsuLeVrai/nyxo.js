@@ -3,13 +3,13 @@ import { EventEmitter } from "eventemitter3";
 import zlib from "zlib-sync";
 import type { GatewayEvents } from "../types/index.js";
 
-export type CompressionStats = {
+export interface CompressionStats {
     totalDecompressed: number;
     failedDecompressions: number;
     lastError: Error | null;
     bytesProcessed: number;
     compressionRatio?: number;
-};
+}
 
 export enum CompressionErrorCode {
     ZlibInitError = "ZLIB_INIT_ERROR",

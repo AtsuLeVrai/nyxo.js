@@ -10,7 +10,7 @@ import type {
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#invite-delete-invite-delete-event-fields}
  */
-export type InviteDeleteEventFields = {
+export interface InviteDeleteEventFields {
     /**
      * Channel of the invite
      */
@@ -23,12 +23,12 @@ export type InviteDeleteEventFields = {
      * Guild of the invite
      */
     guild_id?: Snowflake;
-};
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/gateway-events#invite-create-invite-create-event-fields}
  */
-export type InviteCreateEventFields = {
+export interface InviteCreateEventFields {
     /**
      * Channel the invite is for
      */
@@ -62,7 +62,7 @@ export type InviteCreateEventFields = {
      */
     target_application?: Partial<ApplicationStructure>;
     /**
-     * Type of target for this voice channel invite
+     * interface of target for this voice channel invite
      */
     target_type?: InviteTargetTypes;
     /**
@@ -77,4 +77,4 @@ export type InviteCreateEventFields = {
      * How many times the invite has been used (always will be 0)
      */
     uses: Integer;
-};
+}

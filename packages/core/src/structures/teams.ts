@@ -22,7 +22,7 @@ export enum MembershipState {
  *
  * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-member-object|Team Member Object}
  */
-export type TeamMemberStructure = {
+export interface TeamMemberStructure {
     /**
      * User's membership state on the team.
      */
@@ -39,14 +39,14 @@ export type TeamMemberStructure = {
      * Avatar, discriminator, ID, and username of the user.
      */
     user: Pick<UserStructure, "avatar" | "discriminator" | "id" | "username">;
-};
+}
 
 /**
  * Type representing the structure of a team.
  *
  * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-object|Team Object}
  */
-export type TeamStructure = {
+export interface TeamStructure {
     /**
      * Hash of the image of the team's icon.
      */
@@ -67,4 +67,4 @@ export type TeamStructure = {
      * User ID of the current team owner.
      */
     owner_user_id: Snowflake;
-};
+}

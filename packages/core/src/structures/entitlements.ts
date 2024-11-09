@@ -41,11 +41,11 @@ export enum EntitlementTypes {
 }
 
 /**
- * Type representing the structure of an entitlement.
+ * interface representing the structure of an entitlement.
  *
  * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-structure|Entitlement Structure}
  */
-export type EntitlementStructure = {
+export interface EntitlementStructure {
     /**
      * ID of the parent application
      */
@@ -79,11 +79,11 @@ export type EntitlementStructure = {
      */
     starts_at?: Iso8601Timestamp;
     /**
-     * Type of entitlement
+     * interface of entitlement
      */
     type: EntitlementTypes;
     /**
      * ID of the user that is granted access to the entitlement's sku
      */
     user_id?: Snowflake;
-};
+}

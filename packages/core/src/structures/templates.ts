@@ -7,7 +7,7 @@ import type { UserStructure } from "./users.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-template#guild-template-object-guild-template-structure|Guild Template Structure}
  */
-export type GuildTemplateStructure = {
+export interface GuildTemplateStructure {
     /**
      * The template code (unique ID).
      */
@@ -69,4 +69,4 @@ export type GuildTemplateStructure = {
      * Number of times this template has been used.
      */
     usage_count: Integer;
-};
+}

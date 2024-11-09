@@ -28,7 +28,7 @@ export enum WebhookTypes {
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#webhook-object-webhook-structure|Webhook Structure}
  */
-export type WebhookStructure = {
+export interface WebhookStructure {
     /**
      * The bot/OAuth2 application that created this webhook.
      */
@@ -81,4 +81,4 @@ export type WebhookStructure = {
      * The user this webhook was created by (not returned when getting a webhook with its token).
      */
     user?: UserStructure;
-};
+}
