@@ -3,7 +3,7 @@ import type { ActionRowStructure, ComponentResolvableStructure } from "@nyxjs/co
 interface ActionRowSchema {
     addComponents(...components: ComponentResolvableStructure[]): ActionRowSchema;
     setComponents(components: ComponentResolvableStructure[]): ActionRowSchema;
-    toJSON(): Readonly<Partial<ActionRowStructure>>;
+    toJson(): Readonly<Partial<ActionRowStructure>>;
     toString(): string;
 }
 
@@ -26,7 +26,7 @@ export class ActionRowBuilder implements ActionRowSchema {
         return this;
     }
 
-    toJSON(): Readonly<Partial<ActionRowStructure>> {
+    toJson(): Readonly<Partial<ActionRowStructure>> {
         if (!this.#validate()) {
             return Object.freeze({});
         }
@@ -35,7 +35,7 @@ export class ActionRowBuilder implements ActionRowSchema {
     }
 
     toString(): string {
-        return JSON.stringify(this.toJSON());
+        return JSON.stringify(this.toJson());
     }
 
     #validate(): boolean {

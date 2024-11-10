@@ -27,7 +27,7 @@ interface EmbedSchema {
     setType(type: EmbedTypes): EmbedSchema;
     setUrl(url: string): EmbedSchema;
     setVideo(video: EmbedVideoStructure): EmbedSchema;
-    toJSON(): Readonly<Partial<EmbedStructure>>;
+    toJson(): Readonly<Partial<EmbedStructure>>;
     toString(): string;
 }
 
@@ -122,7 +122,7 @@ export class EmbedBuilder implements EmbedSchema {
         return this;
     }
 
-    toJSON(): Readonly<Partial<EmbedStructure>> {
+    toJson(): Readonly<Partial<EmbedStructure>> {
         if (!this.#validate()) {
             return Object.freeze({});
         }
@@ -131,7 +131,7 @@ export class EmbedBuilder implements EmbedSchema {
     }
 
     toString(): string {
-        return JSON.stringify(this.toJSON());
+        return JSON.stringify(this.toJson());
     }
 
     #validate(): boolean {

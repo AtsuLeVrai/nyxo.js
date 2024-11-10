@@ -13,34 +13,46 @@ import type {
     UserFlags,
     UserStructure,
 } from "@nyxjs/core";
+import { Base } from "./Base.js";
 
-export class ApplicationRoleConnection {
-    /**
-     * @todo Change to ApplicationRoleConnectionMetadata
-     */
+export interface ApplicationRoleConnectionSchema {
+    readonly metadata: Record<string, ApplicationRoleConnectionMetadataStructure>;
+    readonly platformName: string | null;
+    readonly platformUsername: string | null;
+}
+
+export class ApplicationRoleConnection extends Base<
+    ApplicationRoleConnectionStructure,
+    ApplicationRoleConnectionSchema
+> {
     #metadata: Record<string, ApplicationRoleConnectionMetadataStructure> = {};
     #platformName: string | null = null;
     #platformUsername: string | null = null;
 
     constructor(data: Partial<ApplicationRoleConnectionStructure>) {
+        super();
         this.patch(data);
     }
 
-    get metadata() {
+    get metadata(): Record<string, ApplicationRoleConnectionMetadataStructure> {
         return { ...this.#metadata };
     }
 
-    get platformName() {
+    get platformName(): string | null {
         return this.#platformName;
     }
 
-    get platformUsername() {
+    get platformUsername(): string | null {
         return this.#platformUsername;
     }
 
+    static from(data: Partial<ApplicationRoleConnectionStructure>): ApplicationRoleConnection {
+        return new ApplicationRoleConnection(data);
+    }
+
     patch(data: Partial<ApplicationRoleConnectionStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#metadata = data.metadata ?? this.#metadata;
@@ -48,22 +60,61 @@ export class ApplicationRoleConnection {
         this.#platformUsername = data.platform_username ?? this.#platformUsername;
     }
 
-    toJSON(): Partial<ApplicationRoleConnectionStructure> {
+    toJson(): Partial<ApplicationRoleConnectionStructure> {
         return {
             metadata: this.#metadata,
             platform_name: this.#platformName,
             platform_username: this.#platformUsername,
         };
     }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): ApplicationRoleConnectionSchema {
+        return {
+            metadata: this.#metadata,
+            platformName: this.#platformName,
+            platformUsername: this.#platformUsername,
+        };
+    }
+
+    clone(): ApplicationRoleConnection {
+        return new ApplicationRoleConnection(this.toJson());
+    }
+
+    reset(): void {
+        this.#metadata = {};
+        this.#platformName = null;
+        this.#platformUsername = null;
+    }
+
+    equals(other: Partial<ApplicationRoleConnection>): boolean {
+        return (
+            JSON.stringify(this.#metadata) === JSON.stringify(other.metadata) &&
+            this.#platformName === other.platformName &&
+            this.#platformUsername === other.platformUsername
+        );
+    }
 }
 
-export class Connection {
+export interface ConnectionSchema {
+    readonly friendSync: boolean;
+    readonly id: string | null;
+    readonly integrations: Partial<IntegrationStructure>[];
+    readonly name: string | null;
+    readonly revoked: boolean;
+    readonly showActivity: boolean;
+    readonly twoWayLink: boolean;
+    readonly type: ConnectionServices | null;
+    readonly verified: boolean;
+    readonly visibility: ConnectionVisibilityTypes | null;
+}
+
+export class Connection extends Base<ConnectionStructure, ConnectionSchema> {
     #friendSync = false;
     #id: string | null = null;
-    /**
-     * @todo No information available in the Discord API documentation
-     * @todo Change to Integration
-     */
     #integrations: Partial<IntegrationStructure>[] = [];
     #name: string | null = null;
     #revoked = false;
@@ -74,67 +125,72 @@ export class Connection {
     #visibility: ConnectionVisibilityTypes | null = null;
 
     constructor(data: Partial<ConnectionStructure>) {
+        super();
         this.patch(data);
     }
 
-    get friendSync() {
+    get friendSync(): boolean {
         return this.#friendSync;
     }
 
-    get id() {
+    get id(): string | null {
         return this.#id;
     }
 
-    get integrations() {
+    get integrations(): Partial<IntegrationStructure>[] {
         return [...this.#integrations];
     }
 
-    get name() {
+    get name(): string | null {
         return this.#name;
     }
 
-    get revoked() {
+    get revoked(): boolean {
         return this.#revoked;
     }
 
-    get showActivity() {
+    get showActivity(): boolean {
         return this.#showActivity;
     }
 
-    get twoWayLink() {
+    get twoWayLink(): boolean {
         return this.#twoWayLink;
     }
 
-    get type() {
+    get type(): ConnectionServices | null {
         return this.#type;
     }
 
-    get verified() {
+    get verified(): boolean {
         return this.#verified;
     }
 
-    get visibility() {
+    get visibility(): ConnectionVisibilityTypes | null {
         return this.#visibility;
     }
 
+    static from(data: Partial<ConnectionStructure>): Connection {
+        return new Connection(data);
+    }
+
     patch(data: Partial<ConnectionStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
-        this.#friendSync = data.friend_sync ?? this.#friendSync;
+        this.#friendSync = Boolean(data.friend_sync ?? this.#friendSync);
         this.#id = data.id ?? this.#id;
         this.#integrations = data.integrations ?? this.#integrations;
         this.#name = data.name ?? this.#name;
-        this.#revoked = data.revoked ?? this.#revoked;
-        this.#showActivity = data.show_activity ?? this.#showActivity;
-        this.#twoWayLink = data.two_way_link ?? this.#twoWayLink;
+        this.#revoked = Boolean(data.revoked ?? this.#revoked);
+        this.#showActivity = Boolean(data.show_activity ?? this.#showActivity);
+        this.#twoWayLink = Boolean(data.two_way_link ?? this.#twoWayLink);
         this.#type = data.type ?? this.#type;
-        this.#verified = data.verified ?? this.#verified;
+        this.#verified = Boolean(data.verified ?? this.#verified);
         this.#visibility = data.visibility ?? this.#visibility;
     }
 
-    toJSON(): Partial<ConnectionStructure> {
+    toJson(): Partial<ConnectionStructure> {
         return {
             friend_sync: this.#friendSync,
             id: this.#id ?? undefined,
@@ -148,45 +204,150 @@ export class Connection {
             visibility: this.#visibility ?? undefined,
         };
     }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): ConnectionSchema {
+        return {
+            friendSync: this.#friendSync,
+            id: this.#id,
+            integrations: this.#integrations,
+            name: this.#name,
+            revoked: this.#revoked,
+            showActivity: this.#showActivity,
+            twoWayLink: this.#twoWayLink,
+            type: this.#type,
+            verified: this.#verified,
+            visibility: this.#visibility,
+        };
+    }
+
+    clone(): Connection {
+        return new Connection(this.toJson());
+    }
+
+    reset(): void {
+        this.#friendSync = false;
+        this.#id = null;
+        this.#integrations = [];
+        this.#name = null;
+        this.#revoked = false;
+        this.#showActivity = false;
+        this.#twoWayLink = false;
+        this.#type = null;
+        this.#verified = false;
+        this.#visibility = null;
+    }
+
+    equals(other: Partial<Connection>): boolean {
+        return (
+            this.#friendSync === other.friendSync &&
+            this.#id === other.id &&
+            JSON.stringify(this.#integrations) === JSON.stringify(other.integrations) &&
+            this.#name === other.name &&
+            this.#revoked === other.revoked &&
+            this.#showActivity === other.showActivity &&
+            this.#twoWayLink === other.twoWayLink &&
+            this.#type === other.type &&
+            this.#verified === other.verified &&
+            this.#visibility === other.visibility
+        );
+    }
 }
 
-export class AvatarDecorationData {
+export interface AvatarDecorationDataSchema {
+    readonly asset: string | null;
+    readonly skuId: string | null;
+}
+
+export class AvatarDecorationData extends Base<AvatarDecorationDataStructure, AvatarDecorationDataSchema> {
     #asset: string | null = null;
     #skuId: string | null = null;
 
     constructor(data: Partial<AvatarDecorationDataStructure>) {
+        super();
         this.patch(data);
     }
 
-    get asset() {
+    get asset(): string | null {
         return this.#asset;
     }
 
-    get skuId() {
+    get skuId(): string | null {
         return this.#skuId;
     }
 
+    static from(data: Partial<AvatarDecorationDataStructure>): AvatarDecorationData {
+        return new AvatarDecorationData(data);
+    }
+
     patch(data: Partial<AvatarDecorationDataStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#asset = data.asset ?? this.#asset;
         this.#skuId = data.sku_id ?? this.#skuId;
     }
 
-    toJSON(): Partial<AvatarDecorationDataStructure> {
+    toJson(): Partial<AvatarDecorationDataStructure> {
         return {
             asset: this.#asset ?? undefined,
             sku_id: this.#skuId ?? undefined,
         };
     }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): AvatarDecorationDataSchema {
+        return {
+            asset: this.#asset,
+            skuId: this.#skuId,
+        };
+    }
+
+    clone(): AvatarDecorationData {
+        return new AvatarDecorationData(this.toJson());
+    }
+
+    reset(): void {
+        this.#asset = null;
+        this.#skuId = null;
+    }
+
+    equals(other: Partial<AvatarDecorationData>): boolean {
+        return Boolean(this.#asset === other.asset && this.#skuId === other.skuId);
+    }
 }
 
-export class User {
+export interface UserSchema {
+    readonly accentColor: Integer | null;
+    readonly avatar: string | null;
+    readonly avatarDecorationData: AvatarDecorationData | null;
+    readonly banner: string | null;
+    readonly bot: boolean;
+    readonly discriminator: string | null;
+    readonly email: string | null;
+    readonly flags: UserFlags | null;
+    readonly globalName: string | null;
+    readonly id: Snowflake | null;
+    readonly locale: LocaleKeys | null;
+    readonly mfaEnabled: boolean;
+    readonly premiumType: PremiumTypes | null;
+    readonly publicFlags: UserFlags | null;
+    readonly system: boolean;
+    readonly username: string | null;
+    readonly verified: boolean;
+}
+
+export class User extends Base<UserStructure, UserSchema> {
     #accentColor: Integer | null = null;
     #avatar: string | null = null;
-    #avatarDecorationData: AvatarDecorationDataStructure | null = null;
+    #avatarDecorationData: AvatarDecorationData | null = null;
     #banner: string | null = null;
     #bot = false;
     #discriminator: string | null = null;
@@ -203,106 +364,113 @@ export class User {
     #verified = false;
 
     constructor(data: Partial<UserStructure>) {
+        super();
         this.patch(data);
     }
 
-    get accentColor() {
+    get accentColor(): Integer | null {
         return this.#accentColor;
     }
 
-    get avatar() {
+    get avatar(): string | null {
         return this.#avatar;
     }
 
-    get avatarDecorationData() {
+    get avatarDecorationData(): AvatarDecorationData | null {
         return this.#avatarDecorationData;
     }
 
-    get banner() {
+    get banner(): string | null {
         return this.#banner;
     }
 
-    get bot() {
+    get bot(): boolean {
         return this.#bot;
     }
 
-    get discriminator() {
+    get discriminator(): string | null {
         return this.#discriminator;
     }
 
-    get email() {
+    get email(): string | null {
         return this.#email;
     }
 
-    get flags() {
+    get flags(): UserFlags | null {
         return this.#flags;
     }
 
-    get globalName() {
+    get globalName(): string | null {
         return this.#globalName;
     }
 
-    get id() {
+    get id(): Snowflake | null {
         return this.#id;
     }
 
-    get locale() {
+    get locale(): LocaleKeys | null {
         return this.#locale;
     }
 
-    get mfaEnabled() {
+    get mfaEnabled(): boolean {
         return this.#mfaEnabled;
     }
 
-    get premiumType() {
+    get premiumType(): PremiumTypes | null {
         return this.#premiumType;
     }
 
-    get publicFlags() {
+    get publicFlags(): UserFlags | null {
         return this.#publicFlags;
     }
 
-    get system() {
+    get system(): boolean {
         return this.#system;
     }
 
-    get username() {
+    get username(): string | null {
         return this.#username;
     }
 
-    get verified() {
+    get verified(): boolean {
         return this.#verified;
     }
 
+    static from(data: Partial<UserStructure>): User {
+        return new User(data);
+    }
+
     patch(data: Partial<UserStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#accentColor = data.accent_color ?? this.#accentColor;
         this.#avatar = data.avatar ?? this.#avatar;
-        this.#avatarDecorationData = data.avatar_decoration_data ?? this.#avatarDecorationData;
+        this.#avatarDecorationData = data.avatar_decoration_data
+            ? AvatarDecorationData.from(data.avatar_decoration_data)
+            : this.#avatarDecorationData;
         this.#banner = data.banner ?? this.#banner;
-        this.#bot = data.bot ?? this.#bot;
+        this.#bot = Boolean(data.bot ?? this.#bot);
         this.#discriminator = data.discriminator ?? this.#discriminator;
         this.#email = data.email ?? this.#email;
         this.#flags = data.flags ?? this.#flags;
         this.#globalName = data.global_name ?? this.#globalName;
         this.#id = data.id ?? this.#id;
         this.#locale = data.locale ?? this.#locale;
-        this.#mfaEnabled = data.mfa_enabled ?? this.#mfaEnabled;
+        this.#mfaEnabled = Boolean(data.mfa_enabled ?? this.#mfaEnabled);
         this.#premiumType = data.premium_type ?? this.#premiumType;
         this.#publicFlags = data.public_flags ?? this.#publicFlags;
-        this.#system = data.system ?? this.#system;
+        this.#system = Boolean(data.system ?? this.#system);
         this.#username = data.username ?? this.#username;
-        this.#verified = data.verified ?? this.#verified;
+        this.#verified = Boolean(data.verified ?? this.#verified);
     }
 
-    toJSON(): Partial<UserStructure> {
+    toJson(): Partial<UserStructure> {
         return {
             accent_color: this.#accentColor,
             avatar: this.#avatar,
-            avatar_decoration_data: this.#avatarDecorationData,
+            avatar_decoration_data: this.#avatarDecorationData?.toJson() as AvatarDecorationDataStructure,
             banner: this.#banner,
             bot: this.#bot,
             discriminator: this.#discriminator ?? undefined,
@@ -318,5 +486,77 @@ export class User {
             username: this.#username ?? undefined,
             verified: this.#verified,
         };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): UserSchema {
+        return {
+            accentColor: this.#accentColor,
+            avatar: this.#avatar,
+            avatarDecorationData: this.#avatarDecorationData,
+            banner: this.#banner,
+            bot: this.#bot,
+            discriminator: this.#discriminator,
+            email: this.#email,
+            flags: this.#flags,
+            globalName: this.#globalName,
+            id: this.#id,
+            locale: this.#locale,
+            mfaEnabled: this.#mfaEnabled,
+            premiumType: this.#premiumType,
+            publicFlags: this.#publicFlags,
+            system: this.#system,
+            username: this.#username,
+            verified: this.#verified,
+        };
+    }
+
+    clone(): User {
+        return new User(this.toJson());
+    }
+
+    reset(): void {
+        this.#accentColor = null;
+        this.#avatar = null;
+        this.#avatarDecorationData = null;
+        this.#banner = null;
+        this.#bot = false;
+        this.#discriminator = null;
+        this.#email = null;
+        this.#flags = null;
+        this.#globalName = null;
+        this.#id = null;
+        this.#locale = null;
+        this.#mfaEnabled = false;
+        this.#premiumType = null;
+        this.#publicFlags = null;
+        this.#system = false;
+        this.#username = null;
+        this.#verified = false;
+    }
+
+    equals(other: Partial<User>): boolean {
+        return Boolean(
+            this.#accentColor === other.accentColor &&
+                this.#avatar === other.avatar &&
+                this.#avatarDecorationData?.equals(other.avatarDecorationData ?? this.#avatarDecorationData) &&
+                this.#banner === other.banner &&
+                this.#bot === other.bot &&
+                this.#discriminator === other.discriminator &&
+                this.#email === other.email &&
+                this.#flags === other.flags &&
+                this.#globalName === other.globalName &&
+                this.#id === other.id &&
+                this.#locale === other.locale &&
+                this.#mfaEnabled === other.mfaEnabled &&
+                this.#premiumType === other.premiumType &&
+                this.#publicFlags === other.publicFlags &&
+                this.#system === other.system &&
+                this.#username === other.username &&
+                this.#verified === other.verified,
+        );
     }
 }

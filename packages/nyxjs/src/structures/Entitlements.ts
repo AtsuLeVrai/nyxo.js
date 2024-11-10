@@ -1,6 +1,20 @@
 import type { EntitlementStructure, EntitlementTypes, Iso8601Timestamp, Snowflake } from "@nyxjs/core";
+import { Base } from "./Base.js";
 
-export class Entitlement {
+export interface EntitlementSchema {
+    readonly applicationId: Snowflake | null;
+    readonly consumed: boolean;
+    readonly deleted: boolean;
+    readonly endsAt: Iso8601Timestamp | null;
+    readonly guildId: Snowflake | null;
+    readonly id: Snowflake | null;
+    readonly skuId: Snowflake | null;
+    readonly startsAt: Iso8601Timestamp | null;
+    readonly type: EntitlementTypes | null;
+    readonly userId: Snowflake | null;
+}
+
+export class Entitlement extends Base<EntitlementStructure, EntitlementSchema> {
     #applicationId: Snowflake | null = null;
     #deleted = false;
     #endsAt: Iso8601Timestamp | null = null;
@@ -13,6 +27,7 @@ export class Entitlement {
     #consumed = false;
 
     constructor(data: Partial<EntitlementStructure>) {
+        super();
         this.patch(data);
     }
 
@@ -82,14 +97,18 @@ export class Entitlement {
         return new Date(this.#endsAt).getTime() - Date.now();
     }
 
+    static from(data: Partial<EntitlementStructure>): Entitlement {
+        return new Entitlement(data);
+    }
+
     patch(data: Partial<EntitlementStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#applicationId = data.application_id ?? this.#applicationId;
-        this.#consumed = data.consumed ?? this.#consumed;
-        this.#deleted = data.deleted ?? this.#deleted;
+        this.#consumed = Boolean(data.consumed ?? this.#consumed);
+        this.#deleted = Boolean(data.deleted ?? this.#deleted);
         this.#endsAt = data.ends_at ?? this.#endsAt;
         this.#guildId = data.guild_id ?? this.#guildId;
         this.#id = data.id ?? this.#id;
@@ -111,7 +130,7 @@ export class Entitlement {
         return this.#userId !== null;
     }
 
-    toJSON(): Partial<EntitlementStructure> {
+    toJson(): Partial<EntitlementStructure> {
         return {
             application_id: this.#applicationId ?? undefined,
             consumed: this.#consumed,
@@ -124,5 +143,56 @@ export class Entitlement {
             type: this.#type ?? undefined,
             user_id: this.#userId ?? undefined,
         };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): EntitlementSchema {
+        return {
+            applicationId: this.#applicationId,
+            consumed: this.#consumed,
+            deleted: this.#deleted,
+            endsAt: this.#endsAt,
+            guildId: this.#guildId,
+            id: this.#id,
+            skuId: this.#skuId,
+            startsAt: this.#startsAt,
+            type: this.#type,
+            userId: this.#userId,
+        };
+    }
+
+    clone(): Entitlement {
+        return new Entitlement(this.toJson());
+    }
+
+    reset(): void {
+        this.#applicationId = null;
+        this.#consumed = false;
+        this.#deleted = false;
+        this.#endsAt = null;
+        this.#guildId = null;
+        this.#id = null;
+        this.#skuId = null;
+        this.#startsAt = null;
+        this.#type = null;
+        this.#userId = null;
+    }
+
+    equals(other: Partial<Entitlement>): boolean {
+        return Boolean(
+            this.#applicationId === other.applicationId &&
+                this.#consumed === other.consumed &&
+                this.#deleted === other.deleted &&
+                this.#endsAt === other.endsAt &&
+                this.#guildId === other.guildId &&
+                this.#id === other.id &&
+                this.#skuId === other.skuId &&
+                this.#startsAt === other.startsAt &&
+                this.#type === other.type &&
+                this.#userId === other.userId,
+        );
     }
 }

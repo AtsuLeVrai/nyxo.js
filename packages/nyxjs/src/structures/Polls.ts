@@ -1,4 +1,5 @@
 import type {
+    EmojiStructure,
     Integer,
     Iso8601Timestamp,
     PollAnswerCountStructure,
@@ -10,14 +11,22 @@ import type {
     PollStructure,
 } from "@nyxjs/core";
 import type { PickWithMethods } from "../types/index.js";
+import { Base } from "./Base.js";
 import { Emoji } from "./Emojis.js";
 
-export class PollAnswerCount {
+export interface PollAnswerCountSchema {
+    readonly count: Integer;
+    readonly id: Integer;
+    readonly meVoted: boolean;
+}
+
+export class PollAnswerCount extends Base<PollAnswerCountStructure, PollAnswerCountSchema> {
     #count: Integer = 0;
     #id: Integer = 0;
     #meVoted = false;
 
     constructor(data: Partial<PollAnswerCountStructure>) {
+        super();
         this.patch(data);
     }
 
@@ -33,30 +42,66 @@ export class PollAnswerCount {
         return this.#meVoted;
     }
 
+    static from(data: Partial<PollAnswerCountStructure>): PollAnswerCount {
+        return new PollAnswerCount(data);
+    }
+
     patch(data: Partial<PollAnswerCountStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#count = data.count ?? this.#count;
         this.#id = data.id ?? this.#id;
-        this.#meVoted = data.me_voted ?? this.#meVoted;
+        this.#meVoted = Boolean(data.me_voted ?? this.#meVoted);
     }
 
-    toJSON(): Partial<PollAnswerCountStructure> {
+    toJson(): Partial<PollAnswerCountStructure> {
         return {
             count: this.#count,
             id: this.#id,
             me_voted: this.#meVoted,
         };
     }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): PollAnswerCountSchema {
+        return {
+            count: this.#count,
+            id: this.#id,
+            meVoted: this.#meVoted,
+        };
+    }
+
+    clone(): PollAnswerCount {
+        return new PollAnswerCount(this.toJson());
+    }
+
+    reset(): void {
+        this.#count = 0;
+        this.#id = 0;
+        this.#meVoted = false;
+    }
+
+    equals(other: Partial<PollAnswerCount>): boolean {
+        return Boolean(this.#count === other.count && this.#id === other.id && this.#meVoted === other.meVoted);
+    }
 }
 
-export class PollResults {
+export interface PollResultsSchema {
+    readonly answerCounts: PollAnswerCount[];
+    readonly isFinalized: boolean;
+}
+
+export class PollResults extends Base<PollResultsStructure, PollResultsSchema> {
     #answerCounts: PollAnswerCount[] = [];
     #isFinalized = false;
 
     constructor(data: Partial<PollResultsStructure>) {
+        super();
         this.patch(data);
     }
 
@@ -76,6 +121,10 @@ export class PollResults {
         return this.totalVotes > 0;
     }
 
+    static from(data: Partial<PollResultsStructure>): PollResults {
+        return new PollResults(data);
+    }
+
     getVotePercentage(answerId: Integer): number {
         const total = this.totalVotes;
         if (total === 0) {
@@ -87,30 +136,64 @@ export class PollResults {
     }
 
     patch(data: Partial<PollResultsStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         if (Array.isArray(data.answer_counts)) {
-            this.#answerCounts = data.answer_counts.map((count) => new PollAnswerCount(count));
+            this.#answerCounts = data.answer_counts.map((count) => PollAnswerCount.from(count));
         }
 
-        this.#isFinalized = data.is_finalized ?? this.#isFinalized;
+        this.#isFinalized = Boolean(data.is_finalized ?? this.#isFinalized);
     }
 
-    toJSON(): Partial<PollResultsStructure> {
+    toJson(): Partial<PollResultsStructure> {
         return {
-            answer_counts: this.#answerCounts.map((count) => count.toJSON()) as PollAnswerCountStructure[],
+            answer_counts: this.#answerCounts.map((count) => count.toJson()) as PollAnswerCountStructure[],
             is_finalized: this.#isFinalized,
         };
     }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): PollResultsSchema {
+        return {
+            answerCounts: [...this.#answerCounts],
+            isFinalized: this.#isFinalized,
+        };
+    }
+
+    clone(): PollResults {
+        return new PollResults(this.toJson());
+    }
+
+    reset(): void {
+        this.#answerCounts = [];
+        this.#isFinalized = false;
+    }
+
+    equals(other: Partial<PollResults>): boolean {
+        return Boolean(
+            this.#answerCounts.length === other.answerCounts?.length &&
+                this.#answerCounts.every((count, index) => count.equals(other.answerCounts?.[index] ?? count)) &&
+                this.#isFinalized === other.isFinalized,
+        );
+    }
 }
 
-export class PollMedia {
+export interface PollMediaSchema {
+    readonly emoji: PickWithMethods<Emoji, "id" | "name"> | null;
+    readonly text: string | null;
+}
+
+export class PollMedia extends Base<PollMediaStructure, PollMediaSchema> {
     #emoji: PickWithMethods<Emoji, "id" | "name"> | null = null;
     #text: string | null = null;
 
     constructor(data: Partial<PollMediaStructure>) {
+        super();
         this.patch(data);
     }
 
@@ -126,28 +209,62 @@ export class PollMedia {
         return this.#text ?? this.#emoji?.name ?? "";
     }
 
+    static from(data: Partial<PollMediaStructure>): PollMedia {
+        return new PollMedia(data);
+    }
+
     patch(data: Partial<PollMediaStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
-        this.#emoji = data.emoji ? new Emoji(data.emoji) : this.#emoji;
+        this.#emoji = data.emoji ? Emoji.from(data.emoji) : this.#emoji;
         this.#text = data.text ?? this.#text;
     }
 
-    toJSON(): Partial<PollMediaStructure> {
+    toJson(): Partial<PollMediaStructure> {
         return {
-            emoji: this.#emoji ?? undefined,
+            emoji: this.#emoji?.toJson() as EmojiStructure,
             text: this.#text ?? undefined,
         };
     }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): PollMediaSchema {
+        return {
+            emoji: this.#emoji,
+            text: this.#text,
+        };
+    }
+
+    clone(): PollMedia {
+        return new PollMedia(this.toJson());
+    }
+
+    reset(): void {
+        this.#emoji = null;
+        this.#text = null;
+    }
+
+    equals(other: Partial<PollMedia>): boolean {
+        return Boolean(this.#emoji?.equals(other.emoji ?? this.#emoji) && this.#text === other.text);
+    }
 }
 
-export class PollAnswer {
+export interface PollAnswerSchema {
+    readonly answerId: Integer | null;
+    readonly pollMedia: PollMedia | null;
+}
+
+export class PollAnswer extends Base<PollAnswerStructure, PollAnswerSchema> {
     #answerId: Integer | null = null;
     #pollMedia: PollMedia | null = null;
 
     constructor(data: Partial<PollAnswerStructure>) {
+        super();
         this.patch(data);
     }
 
@@ -158,28 +275,67 @@ export class PollAnswer {
     get pollMedia(): PollMedia | null {
         return this.#pollMedia;
     }
+
     get displayText(): string {
         return this.#pollMedia?.displayText ?? "";
     }
 
+    static from(data: Partial<PollAnswerStructure>): PollAnswer {
+        return new PollAnswer(data);
+    }
+
     patch(data: Partial<PollAnswerStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#answerId = data.answer_id ?? this.#answerId;
-        this.#pollMedia = data.poll_media ? new PollMedia(data.poll_media) : this.#pollMedia;
+        this.#pollMedia = data.poll_media ? PollMedia.from(data.poll_media) : this.#pollMedia;
     }
 
-    toJSON(): Partial<PollAnswerStructure> {
+    toJson(): Partial<PollAnswerStructure> {
         return {
             answer_id: this.#answerId ?? undefined,
-            poll_media: this.#pollMedia?.toJSON(),
+            poll_media: this.#pollMedia?.toJson(),
         };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): PollAnswerSchema {
+        return {
+            answerId: this.#answerId,
+            pollMedia: this.#pollMedia,
+        };
+    }
+
+    clone(): PollAnswer {
+        return new PollAnswer(this.toJson());
+    }
+
+    reset(): void {
+        this.#answerId = null;
+        this.#pollMedia = null;
+    }
+
+    equals(other: Partial<PollAnswer>): boolean {
+        return Boolean(
+            this.#answerId === other.answerId && this.#pollMedia?.equals(other.pollMedia ?? this.#pollMedia),
+        );
     }
 }
 
-export class PollCreateResquest {
+export interface PollCreateRequestSchema {
+    readonly allowMultiselect: boolean;
+    readonly answers: PollAnswer[];
+    readonly duration: Integer | null;
+    readonly layoutType: PollLayoutTypes | null;
+    readonly question: PollMedia | null;
+}
+
+export class PollCreateRequest extends Base<PollCreateRequestStructure, PollCreateRequestSchema> {
     #allowMultiselect = false;
     #answers: PollAnswer[] = [];
     #duration: Integer | null = null;
@@ -187,6 +343,7 @@ export class PollCreateResquest {
     #question: PollMedia | null = null;
 
     constructor(data: Partial<PollCreateRequestStructure>) {
+        super();
         this.patch(data);
     }
 
@@ -210,35 +367,84 @@ export class PollCreateResquest {
         return this.#question;
     }
 
+    static from(data: Partial<PollCreateRequestStructure>): PollCreateRequest {
+        return new PollCreateRequest(data);
+    }
+
     patch(data: Partial<PollCreateRequestStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
-        this.#allowMultiselect = data.allow_multiselect ?? this.#allowMultiselect;
+        this.#allowMultiselect = Boolean(data.allow_multiselect ?? this.#allowMultiselect);
 
         if (Array.isArray(data.answers)) {
-            this.#answers = data.answers.map((answer) => new PollAnswer(answer));
+            this.#answers = data.answers.map((answer) => PollAnswer.from(answer));
         }
 
         this.#duration = data.duration ?? this.#duration;
         this.#layoutType = data.layout_type ?? this.#layoutType;
-
-        this.#question = data.question ? new PollMedia(data.question) : this.#question;
+        this.#question = data.question ? PollMedia.from(data.question) : this.#question;
     }
 
-    toJSON(): Partial<PollCreateRequestStructure> {
+    toJson(): Partial<PollCreateRequestStructure> {
         return {
             allow_multiselect: this.#allowMultiselect,
-            answers: this.#answers.map((answer) => answer.toJSON()) as PollAnswerStructure[],
+            answers: this.#answers.map((answer) => answer.toJson()) as PollAnswerStructure[],
             duration: this.#duration ?? undefined,
             layout_type: this.#layoutType ?? undefined,
-            question: this.#question?.toJSON(),
+            question: this.#question?.toJson(),
         };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): PollCreateRequestSchema {
+        return {
+            allowMultiselect: this.#allowMultiselect,
+            answers: [...this.#answers],
+            duration: this.#duration,
+            layoutType: this.#layoutType,
+            question: this.#question,
+        };
+    }
+
+    clone(): PollCreateRequest {
+        return new PollCreateRequest(this.toJson());
+    }
+
+    reset(): void {
+        this.#allowMultiselect = false;
+        this.#answers = [];
+        this.#duration = null;
+        this.#layoutType = null;
+        this.#question = null;
+    }
+
+    equals(other: Partial<PollCreateRequest>): boolean {
+        return Boolean(
+            this.#allowMultiselect === other.allowMultiselect &&
+                this.#answers.length === other.answers?.length &&
+                this.#answers.every((answer, index) => answer.equals(other.answers?.[index] ?? answer)) &&
+                this.#duration === other.duration &&
+                this.#layoutType === other.layoutType &&
+                this.#question?.equals(other.question ?? this.#question),
+        );
     }
 }
 
-export class Poll {
+export interface PollSchema {
+    readonly allowMultiselect: boolean;
+    readonly answers: PollAnswer[];
+    readonly expiry: Iso8601Timestamp | null;
+    readonly layoutType: PollLayoutTypes | null;
+    readonly question: PollMedia | null;
+    readonly results: PollResults | null;
+}
+
+export class Poll extends Base<PollStructure, PollSchema> {
     #allowMultiselect = false;
     #answers: PollAnswer[] = [];
     #expiry: Iso8601Timestamp | null = null;
@@ -247,6 +453,7 @@ export class Poll {
     #results: PollResults | null = null;
 
     constructor(data: Partial<PollStructure>) {
+        super();
         this.patch(data);
     }
 
@@ -274,7 +481,6 @@ export class Poll {
         return this.#results;
     }
 
-    // Getters calculés
     get isExpired(): boolean {
         return this.#expiry ? new Date(this.#expiry).getTime() < Date.now() : false;
     }
@@ -288,11 +494,15 @@ export class Poll {
     }
 
     get isActive(): boolean {
-        return !this.isExpired && !this.#results?.isFinalized;
+        return !(this.isExpired || this.#results?.isFinalized);
     }
 
     get totalVotes(): number {
         return this.#results?.totalVotes ?? 0;
+    }
+
+    static from(data: Partial<PollStructure>): Poll {
+        return new Poll(data);
     }
 
     getAnswerPercentage(answerId: Integer): number {
@@ -300,28 +510,70 @@ export class Poll {
     }
 
     patch(data: Partial<PollStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
-        this.#allowMultiselect = data.allow_multiselect ?? this.#allowMultiselect;
-        this.#answers = Array.isArray(data.answers)
-            ? data.answers.map((answer) => new PollAnswer(answer))
-            : this.#answers;
+        this.#allowMultiselect = Boolean(data.allow_multiselect ?? this.#allowMultiselect);
+
+        if (Array.isArray(data.answers)) {
+            this.#answers = data.answers.map((answer) => PollAnswer.from(answer));
+        }
+
         this.#expiry = data.expiry ?? this.#expiry;
         this.#layoutType = data.layout_type ?? this.#layoutType;
-        this.#question = data.question ? new PollMedia(data.question) : this.#question;
-        this.#results = data.results ? new PollResults(data.results) : this.#results;
+        this.#question = data.question ? PollMedia.from(data.question) : this.#question;
+        this.#results = data.results ? PollResults.from(data.results) : this.#results;
     }
 
-    toJSON(): Partial<PollStructure> {
+    toJson(): Partial<PollStructure> {
         return {
             allow_multiselect: this.#allowMultiselect,
-            answers: this.#answers.map((answer) => answer.toJSON()) as PollAnswerStructure[],
-            expiry: this.#expiry,
+            answers: this.#answers.map((answer) => answer.toJson()) as PollAnswerStructure[],
+            expiry: this.#expiry ?? undefined,
             layout_type: this.#layoutType ?? undefined,
-            question: this.#question?.toJSON(),
-            results: this.#results?.toJSON() as PollResultsStructure | undefined,
+            question: this.#question?.toJson(),
+            results: this.#results?.toJson() as PollResultsStructure | undefined,
         };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): PollSchema {
+        return {
+            allowMultiselect: this.#allowMultiselect,
+            answers: [...this.#answers],
+            expiry: this.#expiry,
+            layoutType: this.#layoutType,
+            question: this.#question,
+            results: this.#results,
+        };
+    }
+
+    clone(): Poll {
+        return new Poll(this.toJson());
+    }
+
+    reset(): void {
+        this.#allowMultiselect = false;
+        this.#answers = [];
+        this.#expiry = null;
+        this.#layoutType = null;
+        this.#question = null;
+        this.#results = null;
+    }
+
+    equals(other: Partial<Poll>): boolean {
+        return Boolean(
+            this.#allowMultiselect === other.allowMultiselect &&
+                this.#answers.length === other.answers?.length &&
+                this.#answers.every((answer, index) => answer.equals(other.answers?.[index] ?? answer)) &&
+                this.#expiry === other.expiry &&
+                this.#layoutType === other.layoutType &&
+                this.#question?.equals(other.question ?? this.#question) &&
+                this.#results?.equals(other.results ?? this.#results),
+        );
     }
 }

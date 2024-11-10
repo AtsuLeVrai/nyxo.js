@@ -20,7 +20,7 @@ interface BaseSelectMenuSchema<
     setMaxValues(max: Integer): BaseSelectMenuSchema<T>;
     setMinValues(min: Integer): BaseSelectMenuSchema<T>;
     setPlaceholder(placeholder: string): BaseSelectMenuSchema<T>;
-    toJSON(): Readonly<Partial<SelectMenuStructure>>;
+    toJson(): Readonly<Partial<SelectMenuStructure>>;
     toString(): string;
 }
 
@@ -95,7 +95,7 @@ abstract class BaseSelectMenu<
         return this;
     }
 
-    toJSON(): Readonly<Partial<SelectMenuStructure>> {
+    toJson(): Readonly<Partial<SelectMenuStructure>> {
         if (!this.#validate()) {
             return Object.freeze({});
         }
@@ -104,7 +104,7 @@ abstract class BaseSelectMenu<
     }
 
     toString(): string {
-        return JSON.stringify(this.toJSON());
+        return JSON.stringify(this.toJson());
     }
 
     #validate(): boolean {

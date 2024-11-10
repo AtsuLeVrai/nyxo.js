@@ -1,6 +1,16 @@
 import type { BitfieldResolvable, Integer, RoleFlags, RoleStructure, RoleTagsStructure, Snowflake } from "@nyxjs/core";
+import { Base } from "./Base.js";
 
-export class RoleTags {
+export interface RoleTagsSchema {
+    readonly availableForPurchase: null;
+    readonly botId: Snowflake | null;
+    readonly guildConnections: null;
+    readonly integrationId: Snowflake | null;
+    readonly premiumSubscriber: null;
+    readonly subscriptionListingId: Snowflake | null;
+}
+
+export class RoleTags extends Base<RoleTagsStructure, RoleTagsSchema> {
     #availableForPurchase: null = null;
     #botId: Snowflake | null = null;
     #guildConnections: null = null;
@@ -9,36 +19,41 @@ export class RoleTags {
     #subscriptionListingId: Snowflake | null = null;
 
     constructor(data: Partial<RoleTagsStructure>) {
+        super();
         this.patch(data);
     }
 
-    get availableForPurchase() {
+    get availableForPurchase(): null {
         return this.#availableForPurchase;
     }
 
-    get botId() {
+    get botId(): Snowflake | null {
         return this.#botId;
     }
 
-    get guildConnections() {
+    get guildConnections(): null {
         return this.#guildConnections;
     }
 
-    get integrationId() {
+    get integrationId(): Snowflake | null {
         return this.#integrationId;
     }
 
-    get premiumSubscriber() {
+    get premiumSubscriber(): null {
         return this.#premiumSubscriber;
     }
 
-    get subscriptionListingId() {
+    get subscriptionListingId(): Snowflake | null {
         return this.#subscriptionListingId;
     }
 
+    static from(data: Partial<RoleTagsStructure>): RoleTags {
+        return new RoleTags(data);
+    }
+
     patch(data: Partial<RoleTagsStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#availableForPurchase = data.available_for_purchase ?? this.#availableForPurchase;
@@ -49,7 +64,7 @@ export class RoleTags {
         this.#subscriptionListingId = data.subscription_listing_id ?? this.#subscriptionListingId;
     }
 
-    toJSON(): Partial<RoleTagsStructure> {
+    toJson(): Partial<RoleTagsStructure> {
         return {
             available_for_purchase: this.#availableForPurchase,
             bot_id: this.#botId ?? undefined,
@@ -59,9 +74,63 @@ export class RoleTags {
             subscription_listing_id: this.#subscriptionListingId ?? undefined,
         };
     }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): RoleTagsSchema {
+        return {
+            availableForPurchase: this.#availableForPurchase,
+            botId: this.#botId,
+            guildConnections: this.#guildConnections,
+            integrationId: this.#integrationId,
+            premiumSubscriber: this.#premiumSubscriber,
+            subscriptionListingId: this.#subscriptionListingId,
+        };
+    }
+
+    clone(): RoleTags {
+        return new RoleTags(this.toJson());
+    }
+
+    reset(): void {
+        this.#availableForPurchase = null;
+        this.#botId = null;
+        this.#guildConnections = null;
+        this.#integrationId = null;
+        this.#premiumSubscriber = null;
+        this.#subscriptionListingId = null;
+    }
+
+    equals(other: Partial<RoleTags>): boolean {
+        return Boolean(
+            this.#availableForPurchase === other.availableForPurchase &&
+                this.#botId === other.botId &&
+                this.#guildConnections === other.guildConnections &&
+                this.#integrationId === other.integrationId &&
+                this.#premiumSubscriber === other.premiumSubscriber &&
+                this.#subscriptionListingId === other.subscriptionListingId,
+        );
+    }
 }
 
-export class Role {
+export interface RoleSchema {
+    readonly color: Integer | null;
+    readonly flags: BitfieldResolvable<RoleFlags>;
+    readonly hoist: boolean;
+    readonly icon: string | null;
+    readonly id: Snowflake | null;
+    readonly managed: boolean;
+    readonly mentionable: boolean;
+    readonly name: string | null;
+    readonly permissions: string | null;
+    readonly position: Integer | null;
+    readonly tags: RoleTags | null;
+    readonly unicodeEmoji: string | null;
+}
+
+export class Role extends Base<RoleStructure, RoleSchema> {
     #color: Integer | null = null;
     #flags: BitfieldResolvable<RoleFlags> = 0n;
     #hoist = false;
@@ -76,94 +145,152 @@ export class Role {
     #unicodeEmoji: string | null = null;
 
     constructor(data: Partial<RoleStructure>) {
+        super();
         this.patch(data);
     }
 
-    get color() {
+    get color(): Integer | null {
         return this.#color;
     }
 
-    get flags() {
+    get flags(): BitfieldResolvable<RoleFlags> {
         return this.#flags;
     }
 
-    get hoist() {
+    get hoist(): boolean {
         return this.#hoist;
     }
 
-    get icon() {
+    get icon(): string | null {
         return this.#icon;
     }
 
-    get id() {
+    get id(): Snowflake | null {
         return this.#id;
     }
 
-    get managed() {
+    get managed(): boolean {
         return this.#managed;
     }
 
-    get mentionable() {
+    get mentionable(): boolean {
         return this.#mentionable;
     }
 
-    get name() {
+    get name(): string | null {
         return this.#name;
     }
 
-    get permissions() {
+    get permissions(): string | null {
         return this.#permissions;
     }
 
-    get position() {
+    get position(): Integer | null {
         return this.#position;
     }
 
-    get tags() {
+    get tags(): RoleTags | null {
         return this.#tags;
     }
 
-    get unicodeEmoji() {
+    get unicodeEmoji(): string | null {
         return this.#unicodeEmoji;
     }
 
+    static from(data: Partial<RoleStructure>): Role {
+        return new Role(data);
+    }
+
     patch(data: Partial<RoleStructure>): void {
-        if (!data) {
-            return;
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
         }
 
         this.#color = data.color ?? this.#color;
         this.#flags = data.flags ?? this.#flags;
-        this.#hoist = data.hoist ?? this.#hoist;
+        this.#hoist = Boolean(data.hoist ?? this.#hoist);
         this.#icon = data.icon ?? this.#icon;
         this.#id = data.id ?? this.#id;
-        this.#managed = data.managed ?? this.#managed;
-        this.#mentionable = data.mentionable ?? this.#mentionable;
+        this.#managed = Boolean(data.managed ?? this.#managed);
+        this.#mentionable = Boolean(data.mentionable ?? this.#mentionable);
         this.#name = data.name ?? this.#name;
         this.#permissions = data.permissions ?? this.#permissions;
         this.#position = data.position ?? this.#position;
-
-        if (data.tags) {
-            this.#tags = new RoleTags(data.tags);
-        }
-
+        this.#tags = data.tags ? RoleTags.from(data.tags) : this.#tags;
         this.#unicodeEmoji = data.unicode_emoji ?? this.#unicodeEmoji;
     }
 
-    toJSON(): Partial<RoleStructure> {
+    toJson(): Partial<RoleStructure> {
         return {
             color: this.#color ?? undefined,
             flags: this.#flags,
             hoist: this.#hoist,
-            icon: this.#icon,
+            icon: this.#icon ?? undefined,
             id: this.#id ?? undefined,
             managed: this.#managed,
             mentionable: this.#mentionable,
             name: this.#name ?? undefined,
             permissions: this.#permissions ?? undefined,
             position: this.#position ?? undefined,
-            tags: this.#tags?.toJSON(),
-            unicode_emoji: this.#unicodeEmoji,
+            tags: this.#tags?.toJson(),
+            unicode_emoji: this.#unicodeEmoji ?? undefined,
         };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): RoleSchema {
+        return {
+            color: this.#color,
+            flags: this.#flags,
+            hoist: this.#hoist,
+            icon: this.#icon,
+            id: this.#id,
+            managed: this.#managed,
+            mentionable: this.#mentionable,
+            name: this.#name,
+            permissions: this.#permissions,
+            position: this.#position,
+            tags: this.#tags,
+            unicodeEmoji: this.#unicodeEmoji,
+        };
+    }
+
+    clone(): Role {
+        return new Role(this.toJson());
+    }
+
+    reset(): void {
+        this.#color = null;
+        this.#flags = 0n;
+        this.#hoist = false;
+        this.#icon = null;
+        this.#id = null;
+        this.#managed = false;
+        this.#mentionable = false;
+        this.#name = null;
+        this.#permissions = null;
+        this.#position = null;
+        this.#tags = null;
+        this.#unicodeEmoji = null;
+    }
+
+    equals(other: Partial<Role>): boolean {
+        return Boolean(
+            this.#color === other.color &&
+                this.#flags === other.flags &&
+                this.#hoist === other.hoist &&
+                this.#icon === other.icon &&
+                this.#id === other.id &&
+                this.#managed === other.managed &&
+                this.#mentionable === other.mentionable &&
+                this.#name === other.name &&
+                this.#permissions === other.permissions &&
+                this.#position === other.position &&
+                this.#tags?.equals(other.tags ?? this.#tags) &&
+                this.#unicodeEmoji === other.unicodeEmoji,
+        );
     }
 }

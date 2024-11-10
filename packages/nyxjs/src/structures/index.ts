@@ -1,3 +1,4 @@
+export * from "./Base.js";
 export * from "./Emojis.js";
 export * from "./Entitlements.js";
 export * from "./Guilds.js";
@@ -10,4 +11,6 @@ export * from "./Stages.js";
 export * from "./Stickers.js";
 export * from "./Subscriptions.js";
 export * from "./Teams.js";
+export * from "./Templates.js";
 export * from "./Users.js";
+export * from "./Voices.js";

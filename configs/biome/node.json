@@ -1,8 +1,9 @@
 {
     "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
     "vcs": {
-        "enabled": false,
         "clientKind": "git",
+        "defaultBranch": "main",
+        "enabled": false,
         "useIgnoreFile": false
     },
     "files": {
@@ -14,11 +15,17 @@
         "useEditorconfig": true,
         "formatWithErrors": false,
         "indentStyle": "space",
-        "indentWidth": 4,
+        "indentWidth": 2,
         "lineEnding": "lf",
-        "lineWidth": 120,
-        "attributePosition": "auto",
-        "bracketSpacing": true
+        "lineWidth": 100,
+        "attributePosition": "multiline",
+        "bracketSpacing": true,
+        "ignore": [
+            "**/coverage/*",
+            "**/dist/*",
+            "**/node_modules/*",
+            "**/.next/*"
+        ]
     },
     "organizeImports": {
         "enabled": true
@@ -40,6 +47,7 @@
             }
         },
         "ignore": [
+            "**/coverage/*",
             "**/dist/*",
             "**/node_modules/*",
             "**/.next/*"

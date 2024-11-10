@@ -1,23 +1,31 @@
 {
-    "$schema": "https://json.schemastore.org/package.json",
-    "name": "@nyxjs/source",
-    "packageManager": "pnpm@9.12.3",
-    "private": true,
-    "scripts": {
-        "setup": "pnpm install -r && pnpm run build",
-        "dev": "turbo run dev",
-        "start": "turbo run start",
-        "build": "turbo run build",
-        "clean": "turbo run clean",
-        "format": "turbo run format",
-        "prepare": "husky"
-    },
-    "devDependencies": {
-        "husky": "^9.1.6",
-        "turbo": "^2.2.3",
-        "typescript": "^5.6.3"
-    },
-    "engines": {
-        "node": ">=20"
-    }
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/source",
+  "packageManager": "pnpm@9.12.3",
+  "private": true,
+  "scripts": {
+    "setup": "pnpm install -r && pnpm run build",
+    "dev": "turbo run dev",
+    "start": "turbo run start",
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "format": "turbo run format",
+    "lint": "turbo run lint",
+    "check": "turbo run check",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:bench": "turbo run test:bench",
+    "test:coverage": "turbo run test:coverage",
+    "type-check": "turbo run type-check",
+    "validate": "turbo run validate",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.6",
+    "turbo": "^2.2.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }

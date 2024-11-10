@@ -3,14 +3,19 @@ import type { GatewayOptions } from "@nyxjs/gateway";
 import type { RateLimitInfo, RestOptions } from "@nyxjs/rest";
 import type WebSocket from "ws";
 import type {
+    Ban,
     Emoji,
     Entitlement,
     Guild,
+    GuildMember,
+    GuildOnboardingPrompt,
+    Integration,
     Ready,
     Role,
     SoundboardSound,
     StageInstance,
     Sticker,
+    Subscription,
     User,
 } from "../structures/index.js";
 
@@ -56,13 +61,13 @@ export interface ClientEvents {
     entitlementUpdate: [oldEntitlement: Entitlement, newEntitlement: Entitlement];
     error: [error: Error];
     guildAuditLogEntryCreate: [];
-    guildBanAdd: [];
-    guildBanRemove: [];
+    guildBanAdd: [ban: Ban];
+    guildBanRemove: [ban: Ban];
     guildCreate: [guild: Guild];
     guildDelete: [guild: Guild];
-    guildMemberAdd: [];
-    guildMemberRemove: [];
-    guildMemberUpdate: [];
+    guildMemberAdd: [member: GuildMember];
+    guildMemberRemove: [member: GuildMember];
+    guildMemberUpdate: [oldMember: GuildMember, newMember: GuildMember];
     guildScheduledEventCreate: [];
     guildScheduledEventDelete: [];
     guildScheduledEventUpdate: [];
@@ -74,9 +79,9 @@ export interface ClientEvents {
     guildUpdate: [oldGuild: Guild, newGuild: Guild];
     homeSettingsCreate: [];
     homeSettingsUpdate: [];
-    integrationCreate: [];
-    integrationDelete: [];
-    integrationUpdate: [];
+    integrationCreate: [integration: Integration];
+    integrationDelete: [integration: Integration];
+    integrationUpdate: [oldIntegration: Integration, newIntegration: Integration];
     inviteCreate: [];
     inviteDelete: [];
     inviteUpdate: [];
@@ -99,9 +104,9 @@ export interface ClientEvents {
     messageUpdate: [];
     missedAck: [message: string];
     onboardingCreate: [];
-    onboardingPromptCreate: [];
-    onboardingPromptDelete: [];
-    onboardingPromptUpdate: [];
+    onboardingPromptCreate: [onboardingPrompt: GuildOnboardingPrompt];
+    onboardingPromptDelete: [onboardingPrompt: GuildOnboardingPrompt];
+    onboardingPromptUpdate: [oldOnboardingPrompt: GuildOnboardingPrompt, newOnboardingPrompt: GuildOnboardingPrompt];
     onboardingUpdate: [];
     presenceUpdate: [];
     rateLimit: [rateLimitInfo: RateLimitInfo];
@@ -119,9 +124,9 @@ export interface ClientEvents {
     stickerCreate: [sticker: Sticker];
     stickerDelete: [sticker: Sticker];
     stickerUpdate: [oldSticker: Sticker, newSticker: Sticker];
-    subscriptionCreate: [];
-    subscriptionDelete: [];
-    subscriptionUpdate: [];
+    subscriptionCreate: [subscription: Subscription];
+    subscriptionDelete: [subscription: Subscription];
+    subscriptionUpdate: [oldSubscription: Subscription, newSubscription: Subscription];
     threadCreate: [];
     threadDelete: [];
     threadListSync: [];

@@ -9,7 +9,7 @@ interface TextInputSchema {
     setRequired(required: boolean): TextInputSchema;
     setStyle(style: TextInputStyles): TextInputSchema;
     setValue(value: string): TextInputSchema;
-    toJSON(): Readonly<Partial<TextInputStructure>>;
+    toJson(): Readonly<Partial<TextInputStructure>>;
     toString(): string;
 }
 
@@ -72,7 +72,7 @@ export class TextInputBuilder implements TextInputSchema {
         return this;
     }
 
-    toJSON(): Readonly<Partial<TextInputStructure>> {
+    toJson(): Readonly<Partial<TextInputStructure>> {
         if (!this.#validate()) {
             return Object.freeze({});
         }
@@ -81,7 +81,7 @@ export class TextInputBuilder implements TextInputSchema {
     }
 
     toString(): string {
-        return JSON.stringify(this.toJSON());
+        return JSON.stringify(this.toJson());
     }
 
     #validate(): boolean {

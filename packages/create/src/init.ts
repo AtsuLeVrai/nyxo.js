@@ -24,25 +24,15 @@ async function createProjectDirectory(projectName: string): Promise<boolean> {
         const stats = await stat(projectName);
         if (stats.isDirectory()) {
             spinner.fail(chalk.red("Project directory already exists!"));
-            console.log(
-                `${chalk.red("Error:")} The directory ${chalk.white(projectName)} already exists. Please choose a different name or remove the existing directory.`,
-            );
 
             return false;
-        } else {
-            await mkdir(projectName);
-            spinner.succeed(chalk.green("Project directory created!"));
-            console.log(
-                `${chalk.green("1. Success:")} Project directory ${chalk.white(projectName)} created successfully.`,
-            );
-
-            return true;
         }
+        await mkdir(projectName);
+        spinner.succeed(chalk.green("Project directory created!"));
+
+        return true;
     } catch {
         spinner.fail(chalk.red("Failed to create project directory!"));
-        console.error(
-            `${chalk.red("Error:")} Failed to create project directory ${chalk.white(projectName)}. Please check your permissions and try again.`,
-        );
 
         return false;
     }
@@ -61,18 +51,12 @@ async function copyTemplate(
     try {
         await copy(templatePath, projectPath);
         spinner.succeed(chalk.green("Template files copied!"));
-        console.log(
-            `${chalk.green("2. Success:")} Template files for ${chalk.white(isTypescript)} copied successfully to ${chalk.white(projectName)}.`,
-        );
 
         await createPackageJson(projectName, typescript, projectPath, features);
 
         return true;
-    } catch (error) {
+    } catch (_error) {
         spinner.fail(chalk.red("Failed to copy template files!"));
-        console.error(
-            `${chalk.red("Error:")} Failed to copy template files to ${chalk.white(projectPath)}. Please verify the template path and permissions.`,
-        );
 
         return false;
     }
@@ -121,32 +105,18 @@ async function createPackageJson(
 
     try {
         await writeFile(join(projectPath, "package.json"), JSON.stringify(packageJson, null, 2));
-        console.log(
-            `${chalk.green("3. Success:")} The ${chalk.white("package.json")} file was created successfully in ${chalk.white(projectPath)}.`,
-        );
-    } catch (error) {
-        console.error(chalk.red("Failed to create package.json"));
-        console.error(
-            `${chalk.red("Error:")} Failed to write ${chalk.white("package.json")} to ${chalk.white(projectPath)}. Please check your permissions and file paths.`,
-        );
-    }
+    } catch (_error) {}
 }
 
 async function initializeGit(projectPath: string): Promise<boolean> {
     const spinner = ora("Initializing Git repository...").start();
     try {
-        await execPromise(`git init`, { cwd: projectPath });
+        await execPromise("git init", { cwd: projectPath });
         spinner.succeed(chalk.green("Git repository initialized!"));
-        console.log(
-            `${chalk.green("4. Success:")} Git repository initialized successfully in ${chalk.white(projectPath)}.`,
-        );
 
         return true;
-    } catch (error) {
+    } catch (_error) {
         spinner.fail(chalk.red("Failed to initialize Git repository!"));
-        console.error(
-            `${chalk.red("Error:")} Failed to initialize Git repository in ${chalk.white(projectPath)}. Please verify your Git installation.`,
-        );
 
         return false;
     }
@@ -157,39 +127,29 @@ async function addFeatures(features: Feature[], projectPath: string): Promise<vo
     try {
         for (const feature of features) {
             switch (feature) {
-                case "eslint":
+                case "eslint": {
                     // Create .eslintrc file and add dependencies
-                    await execPromise(`npx eslint --init`, { cwd: projectPath });
-                    console.log(
-                        `${chalk.green("5. Success:")} ESLint configured successfully in ${chalk.white(projectPath)}.`,
-                    );
+                    await execPromise("npx eslint --init", { cwd: projectPath });
                     break;
-                case "prettier":
+                }
+                case "prettier": {
                     // Create .prettierrc file and add dependencies
-                    await execPromise(`npm install prettier -D`, { cwd: projectPath });
-                    console.log(
-                        `${chalk.green("6. Success:")} Prettier installed and configured successfully in ${chalk.white(projectPath)}.`,
-                    );
+                    await execPromise("npm install prettier -D", { cwd: projectPath });
                     break;
-                case "husky":
+                }
+                case "husky": {
                     // Install husky and set up hooks
-                    await execPromise(`npm install husky -D`, { cwd: projectPath });
-                    await execPromise(`npx husky install`, { cwd: projectPath });
-                    console.log(
-                        `${chalk.green("7. Success:")} Husky installed and Git hooks set up successfully in ${chalk.white(projectPath)}.`,
-                    );
+                    await execPromise("npm install husky -D", { cwd: projectPath });
+                    await execPromise("npx husky install", { cwd: projectPath });
                     break;
+                }
                 // Add other features as needed
                 default:
-                    console.log(chalk.yellow(`Feature ${feature} is not yet implemented.`));
             }
         }
         spinner.succeed(chalk.green("Selected features added!"));
-    } catch (error) {
+    } catch (_error) {
         spinner.fail(chalk.red("Failed to add selected features!"));
-        console.error(
-            `${chalk.red("Error:")} Failed to add selected features to ${chalk.white(projectPath)}. Please check the logs for more details.`,
-        );
     }
 }
 
@@ -199,16 +159,10 @@ async function installDependencies(packageManager: PackageManager, projectPath: 
         const installCommand = packageManager === "npm" ? "npm install" : `${packageManager} install`;
         await execPromise(installCommand, { cwd: projectPath });
         spinner.succeed(chalk.green("Dependencies installed!"));
-        console.log(
-            `${chalk.green("8. Success:")} Dependencies installed successfully in ${chalk.white(projectPath)} using ${chalk.white(packageManager)}.`,
-        );
 
         return true;
-    } catch (error) {
+    } catch (_error) {
         spinner.fail(chalk.red("Failed to install dependencies!"));
-        console.error(
-            `${chalk.red("Error:")} Failed to install dependencies in ${chalk.white(projectPath)}. Please verify your internet connection and package manager configuration.`,
-        );
 
         return false;
     }
@@ -226,19 +180,7 @@ function execPromise(command: string, options: { cwd: string }): Promise<void> {
     });
 }
 
-function initFinished(answers: Answers): void {
-    console.log(chalk.green("\nProject setup completed!"));
-    console.log(`${chalk.green("1.")} Navigate to your project: ${chalk.white(`cd ${answers.projectName}`)}`);
-    console.log(
-        `${chalk.green("2.")} Run the development server: ${chalk.white(`${answers.packageManager} run start`)}`,
-    );
-    console.log(`${chalk.green("3.")} Enjoy coding and building something awesome! 🚀`);
-    console.log(chalk.white("\n💡 Tip: Don't forget to check out the documentation for any extra setup steps."));
-    console.log(
-        chalk.white(`   Visit: ${chalk.underline("https://nyxjs.dev/docs")}
-`),
-    );
-}
+function initFinished(_answers: Answers): void {}
 
 export async function init(): Promise<void> {
     const answers = await inquirer.prompt<Answers>([

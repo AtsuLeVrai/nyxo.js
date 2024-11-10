@@ -5,55 +5,122 @@
         "dev": {
             "cache": false,
             "persistent": true,
-            "dependsOn": [
-                "^dev"
-            ],
             "inputs": [
-                "$TURBO_DEFAULT$",
+                "src/**/*.ts",
+                "src/**/*.tsx",
+                "tsup.config.ts",
                 ".env*"
-            ],
-            "outputs": [
-                ".next/**",
-                "!.next/cache/**"
-            ]
-        },
-        "start": {
-            "dependsOn": [
-                "^start"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                ".env*"
-            ],
-            "outputs": [
-                ".next/**",
-                "!.next/cache/**"
             ]
         },
         "build": {
             "dependsOn": [
                 "^build",
-                "^format"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                ".env*"
+                "clean"
             ],
             "outputs": [
-                ".next/**",
-                "!.next/cache/**",
                 "dist/**"
+            ],
+            "inputs": [
+                "src/**/*.ts",
+                "src/**/*.tsx",
+                "tsup.config.ts",
+                "package.json"
             ]
         },
         "clean": {
-            "dependsOn": [
-                "^clean"
-            ]
+            "cache": false
         },
         "format": {
+            "inputs": [
+                "**/*.ts",
+                "**/*.tsx",
+                "**/*.js",
+                "**/*.jsx",
+                "**/*.json"
+            ],
+            "outputs": []
+        },
+        "lint": {
             "dependsOn": [
-                "^format"
+                "^lint"
+            ],
+            "inputs": [
+                "**/*.ts",
+                "**/*.tsx",
+                "**/*.js",
+                "**/*.jsx"
+            ],
+            "outputs": []
+        },
+        "check": {
+            "dependsOn": [
+                "^check"
+            ],
+            "inputs": [
+                "**/*.ts",
+                "**/*.tsx",
+                "**/*.js",
+                "**/*.jsx"
+            ],
+            "outputs": []
+        },
+        "test": {
+            "dependsOn": [
+                "^build"
+            ],
+            "inputs": [
+                "src/**/*.ts",
+                "src/**/*.tsx",
+                "tests/**/*.ts",
+                "tests/**/*.tsx",
+                "vitest.config.ts"
+            ],
+            "outputs": []
+        },
+        "test:watch": {
+            "cache": false,
+            "persistent": true,
+            "dependsOn": [
+                "^build"
             ]
+        },
+        "test:bench": {
+            "cache": false,
+            "dependsOn": [
+                "^build"
+            ]
+        },
+        "test:coverage": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "coverage/**"
+            ]
+        },
+        "type-check": {
+            "inputs": [
+                "src/**/*.ts",
+                "src/**/*.tsx",
+                "tests/**/*.ts",
+                "tests/**/*.tsx",
+                "tsconfig.json"
+            ],
+            "outputs": []
+        },
+        "prepack": {
+            "dependsOn": [
+                "clean",
+                "build"
+            ]
+        },
+        "validate": {
+            "dependsOn": [
+                "type-check",
+                "check",
+                "test"
+            ],
+            "outputs": []
         }
     }
 }

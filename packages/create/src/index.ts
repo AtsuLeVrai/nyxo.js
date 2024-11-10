@@ -13,7 +13,6 @@ const program = new Command()
 
 program.exitOverride((err) => {
     if (err.code === "commander.unknownCommand") {
-        console.error(chalk.red("Unknown command! Use --help to see available commands."));
     }
 });
 

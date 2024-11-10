@@ -6,7 +6,7 @@ interface BaseButtonSchema<T extends ButtonStyles> {
     setEmoji(emoji: Pick<EmojiStructure, "animated" | "id" | "name">): BaseButtonSchema<T>;
     setLabel(label: string): BaseButtonSchema<T>;
     setStyle(style: T): BaseButtonSchema<T>;
-    toJSON(): Readonly<Partial<ButtonStructure>>;
+    toJson(): Readonly<Partial<ButtonStructure>>;
     toString(): string;
 }
 
@@ -61,7 +61,7 @@ abstract class BaseButton<T extends ButtonStyles> implements BaseButtonSchema<T>
         return this;
     }
 
-    toJSON(): Readonly<Partial<ButtonStructure>> {
+    toJson(): Readonly<Partial<ButtonStructure>> {
         if (!this.#validate()) {
             return Object.freeze({});
         }
@@ -70,7 +70,7 @@ abstract class BaseButton<T extends ButtonStyles> implements BaseButtonSchema<T>
     }
 
     toString(): string {
-        return JSON.stringify(this.toJSON());
+        return JSON.stringify(this.toJson());
     }
 
     #validate(): boolean {

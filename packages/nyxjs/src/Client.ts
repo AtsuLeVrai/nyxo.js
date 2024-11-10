@@ -24,9 +24,7 @@ export class Client extends EventEmitter<ClientEvents> {
 
     constructor(token: string, options: ClientOptions) {
         super();
-        this.#validateInputs(token, options);
-
-        this.#token = token;
+        this.#token = this.#validateToken(token);
         this.#options = this.#initializeConfig(options);
         this.#state = this.#createInitialState();
 
@@ -117,12 +115,7 @@ export class Client extends EventEmitter<ClientEvents> {
         return this.#services[name] as ServiceDependencies[K];
     }
 
-    #validateInputs(token: string, options: ClientOptions): void {
-        this.#validateToken(token);
-        this.#validateOptions(options);
-    }
-
-    #validateToken(token: string): void {
+    #validateToken(token: string): string {
         if (!token?.trim()) {
             throw new Error("Token cannot be empty or undefined.");
         }
@@ -131,12 +124,8 @@ export class Client extends EventEmitter<ClientEvents> {
         if (!tokenRegex.test(token)) {
             throw new Error("Invalid token format.");
         }
-    }
 
-    #validateOptions(options: ClientOptions): void {
-        if (!options?.intents) {
-            throw new Error("Intents must be provided in client options.");
-        }
+        return token;
     }
 
     #validateConnectionState(): void {
