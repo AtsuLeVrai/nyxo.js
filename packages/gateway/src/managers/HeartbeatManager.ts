@@ -34,7 +34,7 @@ export class HeartbeatError extends Error {
     }
 }
 
-export class HeartbeatManager extends EventEmitter<GatewayEvents> {
+export class HeartbeatManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn" | "missedAck">> {
     #maxMissedAcks = 3;
     #minInterval = 1000;
     #maxInterval = 60000;

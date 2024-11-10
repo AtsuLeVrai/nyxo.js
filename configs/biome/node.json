@@ -8,7 +8,13 @@
     },
     "files": {
         "ignoreUnknown": false,
-        "ignore": []
+        "ignore": [
+            "**/coverage/**",
+            "**/dist/**",
+            "**/node_modules/**",
+            "**/.next/**",
+            ".next/types/**/*.ts"
+        ]
     },
     "formatter": {
         "enabled": true,
@@ -21,14 +27,22 @@
         "attributePosition": "multiline",
         "bracketSpacing": true,
         "ignore": [
-            "**/coverage/*",
-            "**/dist/*",
-            "**/node_modules/*",
-            "**/.next/*"
+            "**/coverage/**",
+            "**/dist/**",
+            "**/node_modules/**",
+            "**/.next/**",
+            ".next/types/**/*.ts"
         ]
     },
     "organizeImports": {
-        "enabled": true
+        "enabled": true,
+        "ignore": [
+            "**/coverage/**",
+            "**/dist/**",
+            "**/node_modules/**",
+            "**/.next/**",
+            ".next/types/**/*.ts"
+        ]
     },
     "linter": {
         "enabled": true,
@@ -44,13 +58,18 @@
             "performance": {
                 "noBarrelFile": "off",
                 "noReExportAll": "off"
+            },
+            "suspicious": {
+                "noReactSpecificProps": "off",
+                "noArrayIndexKey": "info"
             }
         },
         "ignore": [
-            "**/coverage/*",
-            "**/dist/*",
-            "**/node_modules/*",
-            "**/.next/*"
+            "**/coverage/**",
+            "**/dist/**",
+            "**/node_modules/**",
+            "**/.next/**",
+            ".next/types/**/*.ts"
         ]
     }
 }

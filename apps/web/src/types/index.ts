@@ -1,4 +1,4 @@
-export type SymbolInfo = {
+export interface SymbolInfo {
     documentation: string;
     enumMembers?: string[];
     fileName: string;
@@ -9,4 +9,4 @@ export type SymbolInfo = {
     parameters?: { name: string; type: string }[];
     properties?: { name: string; type: string }[];
     type?: string;
-};
+}

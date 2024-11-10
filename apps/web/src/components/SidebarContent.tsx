@@ -14,12 +14,13 @@ import {
     Server,
 } from "lucide-react";
 import Link from "next/link";
+import type { ElementType } from "react";
 
 type NavSection = {
     title: string;
     items: {
         href: string;
-        icon: any;
+        icon: ElementType;
         label: string;
         external?: boolean;
     }[];
@@ -72,12 +73,14 @@ const navigationSections: NavSection[] = [
     },
 ];
 
-function NavItem({
-    href,
-    icon: Icon,
-    label,
-    external,
-}: { href: string; icon: any; label: string; external?: boolean }) {
+interface NavItemProps {
+    href: string;
+    icon: ElementType;
+    label: string;
+    external?: boolean;
+}
+
+function NavItem({ href, icon: Icon, label, external }: NavItemProps) {
     const commonProps = {
         className:
             "flex items-center space-x-3 text-gray-300 hover:text-white hover:bg-neutral-700 rounded-lg p-2 transition-all duration-200",
@@ -88,12 +91,18 @@ function NavItem({
     };
 
     return external ? (
-        <a href={href} {...commonProps}>
+        <a
+            href={href}
+            {...commonProps}
+        >
             <Icon size={18} />
             <span>{label}</span>
         </a>
     ) : (
-        <Link href={href} {...commonProps}>
+        <Link
+            href={href}
+            {...commonProps}
+        >
             <Icon size={18} />
             <span>{label}</span>
         </Link>
@@ -110,7 +119,10 @@ export function SidebarContent() {
             className="flex flex-col h-full"
         >
             {navigationSections.map((section, index) => (
-                <div key={section.title} className={`${index !== navigationSections.length - 1 ? "mb-6" : ""}`}>
+                <div
+                    key={section.title}
+                    className={`${index !== navigationSections.length - 1 ? "mb-6" : ""}`}
+                >
                     <h2 className="text-xl font-semibold mb-4 text-gray-300">{section.title}</h2>
                     <ul className="space-y-2">
                         {section.items.map((item) => (

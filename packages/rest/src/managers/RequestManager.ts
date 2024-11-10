@@ -1,6 +1,6 @@
 import { MimeTypes } from "@nyxjs/core";
 import { Logger, formatJson } from "@nyxjs/logger";
-import type { EventEmitter } from "eventemitter3";
+import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import type { IncomingHttpHeaders } from "undici/types/header.js";
 import type { RestEvents, RestHttpDiscordHeaders, RestOptions, RouteStructure } from "../types/index.js";
@@ -29,22 +29,20 @@ export class RequestError extends Error {
     }
 }
 
-export class RequestManager {
+export class RequestManager extends EventEmitter<RestEvents> {
     readonly #token: string;
     readonly #options: Required<RestOptions>;
     readonly #rateLimiter: RateLimiterManager;
     readonly #connectionManager: ConnectionManager;
-    readonly #eventEmitter: EventEmitter<RestEvents>;
     readonly #requestCache = new Map<string, Promise<unknown>>();
 
     constructor(
-        eventEmitter: EventEmitter<RestEvents>,
         token: string,
         options: RestOptions,
         rateLimiter: RateLimiterManager,
         connectionManager: ConnectionManager,
     ) {
-        this.#eventEmitter = eventEmitter;
+        super();
         this.#token = token;
         this.#options = this.#normalizeOptions(options);
         this.#rateLimiter = rateLimiter;
@@ -204,7 +202,7 @@ export class RequestManager {
 
     async #handleRateLimit(response: Dispatcher.ResponseData, method: string, path: string): Promise<void> {
         const retryAfter = Number(response.headers["retry-after"]) * 1_000;
-        this.#eventEmitter.emit("rateLimit", {
+        this.emit("rateLimit", {
             timeout: retryAfter,
             limit: Number(response.headers["x-ratelimit-limit"]),
             method,
@@ -236,7 +234,7 @@ export class RequestManager {
     }
 
     #emitDebug(message: string, details?: Record<string, unknown>): void {
-        this.#eventEmitter.emit(
+        this.emit(
             "debug",
             Logger.debug(message, {
                 component: "RequestManager",
@@ -246,7 +244,7 @@ export class RequestManager {
     }
 
     #emitError(error: RequestError): void {
-        this.#eventEmitter.emit(
+        this.emit(
             "error",
             Logger.error(error.message, {
                 component: "RequestManager",
@@ -258,7 +256,7 @@ export class RequestManager {
     }
 
     #emitWarn(message: string, details?: Record<string, unknown>): void {
-        this.#eventEmitter.emit(
+        this.emit(
             "warn",
             Logger.warn(message, {
                 component: "RequestManager",

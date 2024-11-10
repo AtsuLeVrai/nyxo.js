@@ -11,7 +11,9 @@ export class Rest extends EventEmitter<RestEvents> {
         super();
         this.#rateLimiter = new RateLimiterManager();
         this.#connectionManager = new ConnectionManager(options);
-        this.#requestHandler = new RequestManager(this, token, options, this.#rateLimiter, this.#connectionManager);
+        this.#requestHandler = new RequestManager(token, options, this.#rateLimiter, this.#connectionManager);
+
+        this.#setupEventListeners();
     }
 
     manyRequest<T extends readonly RouteStructure<unknown>[] | []>(
@@ -22,5 +24,12 @@ export class Rest extends EventEmitter<RestEvents> {
 
     request<T>(route: RouteStructure<T>): Promise<T> {
         return this.#requestHandler.handleRequest(route);
+    }
+
+    #setupEventListeners(): void {
+        this.#requestHandler.on("rateLimit", (route) => this.emit("rateLimit", route));
+        this.#requestHandler.on("error", (error) => this.emit("error", error));
+        this.#requestHandler.on("debug", (message) => this.emit("debug", message));
+        this.#requestHandler.on("warn", (message) => this.emit("warn", message));
     }
 }

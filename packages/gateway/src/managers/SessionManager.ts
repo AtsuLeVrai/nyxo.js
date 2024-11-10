@@ -40,7 +40,7 @@ export class SessionError extends Error {
     }
 }
 
-export class SessionManager extends EventEmitter<GatewayEvents> {
+export class SessionManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn">> {
     #defaultConcurrency = 1;
     #rateLimitDelay = 5000;
     #limits: SessionLimits | null = null;

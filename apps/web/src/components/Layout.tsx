@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarContent } from "@/components/SidebarContent";
-import { nyx_icon_transparent } from "@/lib";
+import { nyxIconTransparent } from "@/lib";
 import { AnimatePresence, motion } from "framer-motion";
 import { Book, Github, Home } from "lucide-react";
 import Image from "next/image";
@@ -36,12 +36,18 @@ function NavLink({ href, icon: Icon, label, external }: NavItem) {
     };
 
     return external ? (
-        <a href={href} {...commonProps}>
+        <a
+            href={href}
+            {...commonProps}
+        >
             <Icon size={20} />
             <span>{label}</span>
         </a>
     ) : (
-        <Link href={href} {...commonProps}>
+        <Link
+            href={href}
+            {...commonProps}
+        >
             <Icon size={20} />
             <span>{label}</span>
         </Link>
@@ -52,7 +58,12 @@ function Header() {
     return (
         <header className="bg-neutral-800 bg-opacity-90 p-4 flex justify-between items-center backdrop-blur-sm">
             <div className="flex items-center space-x-4">
-                <Image src={nyx_icon_transparent} alt="Nyx.js Logo" width={40} height={40} />
+                <Image
+                    src={nyxIconTransparent}
+                    alt="Nyx.js Logo"
+                    width={40}
+                    height={40}
+                />
                 <h1 className="text-2xl font-bold">Nyx.js</h1>
             </div>
             <nav>

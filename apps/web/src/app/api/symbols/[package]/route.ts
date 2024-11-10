@@ -98,17 +98,10 @@ const getSymbols = (
     };
 
     const visitNode = (node: Node): void => {
-        console.log(
-            "Visiting node:",
-            isExportDeclaration(node) && node.moduleSpecifier && isStringLiteral(node.moduleSpecifier),
-        );
         if (isExportDeclaration(node) && node.moduleSpecifier && isStringLiteral(node.moduleSpecifier)) {
-            console.log("Resolving module path:", node.moduleSpecifier.text);
             const modulePath = resolveModulePath(sourceFile.fileName, node.moduleSpecifier.text);
-            console.log("Resolved module path:", modulePath, !visited.has(modulePath!));
             if (modulePath && !visited.has(modulePath)) {
                 const moduleSource = program.getSourceFile(modulePath);
-                console.log("Module source:", moduleSource);
                 if (moduleSource) {
                     symbols.push(...getSymbols(moduleSource, checker, program, visited));
                 }
@@ -143,7 +136,7 @@ const getSymbols = (
     return symbols;
 };
 
-export async function GET(request: Request, { params }: { params: Promise<{ package: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ package: string }> }) {
     try {
         const { package: packageName } = await params;
 
@@ -169,7 +162,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ pack
         const symbols = getSymbols(sourceFile, program.getTypeChecker(), program);
         return NextResponse.json(symbols);
     } catch (error) {
-        console.error("Error processing symbols:", error);
         return NextResponse.json(
             { error: "Internal server error", details: error instanceof Error ? error.message : String(error) },
             { status: 500 },

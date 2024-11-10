@@ -82,7 +82,7 @@ export class ClientEventManager {
         } as Record<keyof RestEvents, keyof ClientEvents>;
 
         for (const [restEvent, clientEvent] of Object.entries(events)) {
-            rest.on(restEvent as keyof RestEvents, (data) => this.#client.emit(clientEvent, ...(data as never)));
+            rest.on(restEvent as keyof RestEvents, (...data) => this.#client.emit(clientEvent, ...(data as never)));
         }
     }
 

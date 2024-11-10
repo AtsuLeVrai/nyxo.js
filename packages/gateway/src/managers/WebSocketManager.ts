@@ -36,7 +36,7 @@ export class WebSocketError extends Error {
     }
 }
 
-export class WebSocketManager extends EventEmitter<GatewayEvents> {
+export class WebSocketManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn" | "raw" | "close">> {
     #state: WebSocketState = {
         socket: null,
         isOpen: false,

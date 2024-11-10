@@ -1,7 +1,7 @@
 "use client";
 
 import { Layout } from "@/components";
-import { jetbrains_mono } from "@/lib";
+import { jetbrainsMono } from "@/lib";
 import { motion } from "framer-motion";
 import { Highlight, themes } from "prism-react-renderer";
 import type { ReactNode } from "react";
@@ -28,7 +28,7 @@ function DocSection({
     );
 }
 
-const installationCode = `npm install @nyxjs/core`;
+const installationCode = "npm install @nyxjs/core";
 const codeBlock = `import { Client, GatewayIntents } from 'nyx.js';
 
 const client = new Client('your-token-here', {
@@ -67,15 +67,25 @@ export default function DocPage() {
                                         Welcome to the Nyx.js documentation! This guide will help you get started with
                                         building your first Discord bot using Nyx.js.
                                     </p>
-                                    <Highlight theme={themes.oneDark} code={installationCode} language="bash">
+                                    <Highlight
+                                        theme={themes.oneDark}
+                                        code={installationCode}
+                                        language="bash"
+                                    >
                                         {({ tokens, getLineProps, getTokenProps }) => (
                                             <pre
-                                                className={`bg-neutral-900 p-4 rounded-lg mt-4 ${jetbrains_mono.className}`}
+                                                className={`bg-neutral-900 p-4 rounded-lg mt-4 ${jetbrainsMono.className}`}
                                             >
                                                 {tokens.map((line, i) => (
-                                                    <div key={i} {...getLineProps({ line })}>
+                                                    <div
+                                                        key={i}
+                                                        {...getLineProps({ line })}
+                                                    >
                                                         {line.map((token, key) => (
-                                                            <span key={key} {...getTokenProps({ token })} />
+                                                            <span
+                                                                key={key}
+                                                                {...getTokenProps({ token })}
+                                                            />
                                                         ))}
                                                     </div>
                                                 ))}
@@ -88,15 +98,25 @@ export default function DocPage() {
                             <DocSection title="Basic Example">
                                 <div className="prose prose-invert max-w-none">
                                     <p>Here's a simple example of creating a basic bot with Nyx.js:</p>
-                                    <Highlight theme={themes.oneDark} code={codeBlock} language="js">
+                                    <Highlight
+                                        theme={themes.oneDark}
+                                        code={codeBlock}
+                                        language="js"
+                                    >
                                         {({ tokens, getLineProps, getTokenProps }) => (
                                             <pre
-                                                className={`bg-neutral-900 p-4 rounded-lg mt-4 ${jetbrains_mono.className}`}
+                                                className={`bg-neutral-900 p-4 rounded-lg mt-4 ${jetbrainsMono.className}`}
                                             >
                                                 {tokens.map((line, i) => (
-                                                    <div key={i} {...getLineProps({ line })}>
+                                                    <div
+                                                        key={i}
+                                                        {...getLineProps({ line })}
+                                                    >
                                                         {line.map((token, key) => (
-                                                            <span key={key} {...getTokenProps({ token })} />
+                                                            <span
+                                                                key={key}
+                                                                {...getTokenProps({ token })}
+                                                            />
                                                         ))}
                                                     </div>
                                                 ))}

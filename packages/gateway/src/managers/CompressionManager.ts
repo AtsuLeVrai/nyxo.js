@@ -31,7 +31,7 @@ export class CompressionError extends Error {
     }
 }
 
-export class CompressionManager extends EventEmitter<GatewayEvents> {
+export class CompressionManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn">> {
     static FLUSH_MARKER = Buffer.from([0x00, 0x00, 0xff, 0xff]);
     static MAX_CHUNK_SIZE = 1024 * 1024;
 

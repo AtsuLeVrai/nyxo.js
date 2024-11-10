@@ -62,7 +62,10 @@ export default function PackagePage() {
                             <h3 className="text-sm font-medium text-gray-400">Parameters</h3>
                             <div className="space-y-2">
                                 {symbol.parameters.map((param) => (
-                                    <div key={param.name} className="flex">
+                                    <div
+                                        key={param.name}
+                                        className="flex"
+                                    >
                                         <span className="text-purple-400 font-mono">{param.name}</span>
                                         <span className="text-gray-400 mx-2">:</span>
                                         <span className="text-blue-400 font-mono">{param.type}</span>
@@ -77,7 +80,10 @@ export default function PackagePage() {
                             <h3 className="text-sm font-medium text-gray-400">Properties</h3>
                             <div className="space-y-2">
                                 {symbol.properties.map((prop) => (
-                                    <div key={prop.name} className="flex">
+                                    <div
+                                        key={prop.name}
+                                        className="flex"
+                                    >
                                         <span className="text-purple-400 font-mono">{prop.name}</span>
                                         <span className="text-gray-400 mx-2">:</span>
                                         <span className="text-blue-400 font-mono">{prop.type}</span>
@@ -92,7 +98,10 @@ export default function PackagePage() {
                             <h3 className="text-sm font-medium text-gray-400">Methods</h3>
                             <div className="space-y-2">
                                 {symbol.methods?.map((method) => (
-                                    <div key={method.name} className="flex">
+                                    <div
+                                        key={method.name}
+                                        className="flex"
+                                    >
                                         <span className="text-purple-400 font-mono">{method.name}</span>
                                         <span className="text-gray-400 mx-2">→</span>
                                         <span className="text-blue-400 font-mono">{method.returnType}</span>
@@ -130,7 +139,10 @@ export default function PackagePage() {
             <div className="flex h-screen">
                 <div className="w-80 border-r border-neutral-800 p-4 flex flex-col">
                     <div className="relative mb-4">
-                        <Search className="absolute left-3 top-2.5 text-gray-500" size={20} />
+                        <Search
+                            className="absolute left-3 top-2.5 text-gray-500"
+                            size={20}
+                        />
                         <input
                             type="text"
                             placeholder="Search..."
@@ -161,7 +173,7 @@ export default function PackagePage() {
 
                 <div className="flex-1 p-6 overflow-auto">
                     {activeSymbol ? (
-                        renderSymbolDetails(filteredSymbols.find((s) => s.name === activeSymbol)!)
+                        renderSymbolDetails(filteredSymbols.find((s) => s.name === activeSymbol) as SymbolInfo)
                     ) : (
                         <div className="text-center text-gray-400 mt-10">Select a symbol to view details</div>
                     )}

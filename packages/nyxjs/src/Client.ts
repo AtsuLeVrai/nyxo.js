@@ -6,47 +6,61 @@ import { ClientEventManager, GuildManager, UserManager } from "./managers/index.
 import type { User } from "./structures/index.js";
 import type { ClientEvents, ClientOptions, ClientState } from "./types/index.js";
 
-interface ServiceDependencies {
-    rest: Rest;
-    gateway: Gateway;
-    guilds: GuildManager;
-    users: UserManager;
-}
-
 export class Client extends EventEmitter<ClientEvents> {
     readonly #token: string;
     readonly #options: Required<ClientOptions>;
     readonly #events: ClientEventManager;
     readonly #state: ClientState;
-    readonly #services: Partial<ServiceDependencies> = {};
 
     #user?: User;
+    #rest?: Rest;
+    #gateway?: Gateway;
+    #guilds?: GuildManager;
+    #users?: UserManager;
 
     constructor(token: string, options: ClientOptions) {
         super();
         this.#token = this.#validateToken(token);
         this.#options = this.#initializeConfig(options);
         this.#state = this.#createInitialState();
-
-        this.#initializeServices();
+        this.#rest = this.#initializeRest();
+        this.#gateway = this.#initializeGateway();
+        this.#guilds = this.#initializeGuildManager();
+        this.#users = this.#initializeUserManager();
 
         this.#events = new ClientEventManager(this);
     }
 
     get rest(): Rest {
-        return this.#getService("rest");
+        if (!this.#rest) {
+            throw new Error("Rest client is not initialized.");
+        }
+
+        return this.#rest;
     }
 
     get gateway(): Gateway {
-        return this.#getService("gateway");
+        if (!this.#gateway) {
+            throw new Error("Gateway is not initialized.");
+        }
+
+        return this.#gateway;
     }
 
     get guilds(): GuildManager {
-        return this.#getService("guilds");
+        if (!this.#guilds) {
+            throw new Error("Guild manager is not initialized.");
+        }
+
+        return this.#guilds;
     }
 
     get users(): UserManager {
-        return this.#getService("users");
+        if (!this.#users) {
+            throw new Error("User manager is not initialized.");
+        }
+
+        return this.#users;
     }
 
     get user(): User {
@@ -108,13 +122,6 @@ export class Client extends EventEmitter<ClientEvents> {
         }
     }
 
-    #getService<K extends keyof ServiceDependencies>(name: K): ServiceDependencies[K] {
-        if (!this.#services[name]) {
-            throw new Error(`${name} service is not initialized.`);
-        }
-        return this.#services[name] as ServiceDependencies[K];
-    }
-
     #validateToken(token: string): string {
         if (!token?.trim()) {
             throw new Error("Token cannot be empty or undefined.");
@@ -156,17 +163,6 @@ export class Client extends EventEmitter<ClientEvents> {
         return new Error(`${message}: ${errorMessage}`);
     }
 
-    #initializeServices(): void {
-        try {
-            this.#services.rest = this.#initializeRest();
-            this.#services.gateway = this.#initializeGateway();
-            this.#services.guilds = this.#initializeGuildManager();
-            this.#services.users = this.#initializeUserManager();
-        } catch (error) {
-            throw this.#createError("Failed to initialize services", error);
-        }
-    }
-
     #initializeRest(): Rest {
         const options: RestOptions = {
             version: this.#options.version,
@@ -180,7 +176,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     #initializeGateway(): Gateway {
-        if (!this.#services.rest) {
+        if (!this.#rest) {
             throw new Error("Rest client must be initialized before gateway.");
         }
 
@@ -194,11 +190,11 @@ export class Client extends EventEmitter<ClientEvents> {
             presence: this.#options.gateway.presence,
         };
 
-        return new Gateway(this.#token, this.#services.rest, options);
+        return new Gateway(this.#token, this.#rest, options);
     }
 
     #initializeGuildManager(): GuildManager {
-        if (!this.#services.rest) {
+        if (!this.#rest) {
             throw new Error("Rest client must be initialized before GuildManager.");
         }
 
@@ -206,7 +202,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     #initializeUserManager(): UserManager {
-        if (!this.#services.rest) {
+        if (!this.#rest) {
             throw new Error("Rest client must be initialized before UserManager.");
         }
 

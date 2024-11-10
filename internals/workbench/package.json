@@ -10,10 +10,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts",
-    "format": "biome format --write ."
+    "start": "tsx watch src/index.ts",
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe ."
   },
   "dependencies": {
     "@nyxjs/core": "workspace:*",

@@ -1,8 +1,9 @@
-import { type ClientOptions, EncodingTypes, GatewayIntents } from "nyx.js";
+import { type ClientOptions, CompressTypes, EncodingTypes, GatewayIntents } from "nyx.js";
 
 export const WorkBenchClientOptions: ClientOptions = {
-    intents: GatewayIntents.All(),
+    intents: GatewayIntents.all(),
     gateway: {
         encoding: EncodingTypes.Etf,
+        compress: CompressTypes.ZlibStream,
     },
 };

@@ -37,7 +37,7 @@ export class PayloadError extends Error {
     }
 }
 
-export class PayloadManager extends EventEmitter<GatewayEvents> {
+export class PayloadManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn">> {
     static SUPPORTED_ENCODINGS = ["json", "etf"] as const;
     #encoding: EncodingTypes;
     #stats: EncodingStats;

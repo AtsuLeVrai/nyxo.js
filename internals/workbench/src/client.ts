@@ -1,14 +1,10 @@
 import { readdir } from "node:fs/promises";
-import { Client, type ClientEvents, type ClientOptions } from "nyx.js";
+import { Client, type ClientEvents } from "nyx.js";
 import type { WorkBenchEvent } from "./env/index.js";
 import { logger } from "./utils/index.js";
 
 export class WorkBench extends Client {
     commands: Map<string, object> = new Map();
-
-    constructor(token: string, options: ClientOptions) {
-        super(token, options);
-    }
 
     async start(): Promise<void> {
         await Promise.all([this.#init()]);
