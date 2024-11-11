@@ -1,11 +1,11 @@
 import type { RestHttpDiscordHeaders } from "../types/index.js";
 
-type RateLimiterBucket = {
+interface RateLimiterBucket {
     limit: number;
     remaining: number;
     reset: number;
     lastUpdated: number;
-};
+}
 
 export class RateLimiterManager {
     readonly #buckets = new Map<string, RateLimiterBucket>();

@@ -14,7 +14,7 @@ export interface StageInstanceSchema {
     readonly topic: string | null;
 }
 
-export class StageInstance extends Base<StageInstanceStructure, StageInstanceSchema> {
+export class StageInstance extends Base<StageInstanceStructure, StageInstanceSchema> implements StageInstanceSchema {
     #channelId: Snowflake | null = null;
     /**
      * @deprecated No longer supported by Discord.

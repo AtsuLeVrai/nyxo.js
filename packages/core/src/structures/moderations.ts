@@ -89,7 +89,7 @@ export enum AutoModerationRuleKeywordPresetTypes {
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata|Auto-Moderation Rule Trigger Metadata}
  */
-export interface AutoModerationRuleTriggerMetadata {
+export interface AutoModerationRuleTriggerMetadataStructure {
     /**
      * Substrings which should not trigger the rule (Maximum of 100 or 1000)
      */
@@ -185,7 +185,7 @@ export interface AutoModerationRuleStructure {
     /**
      * The rule trigger metadata.
      */
-    trigger_metadata: AutoModerationRuleTriggerMetadata;
+    trigger_metadata: AutoModerationRuleTriggerMetadataStructure;
     /**
      * The rule trigger type.
      */

@@ -19,7 +19,7 @@ export interface ReadySchema {
     readonly v: ApiVersions;
 }
 
-export class Ready extends Base<ReadyEventFields, ReadySchema> {
+export class Ready extends Base<ReadyEventFields, ReadySchema> implements ReadySchema {
     #application: Pick<ApplicationStructure, "flags" | "id"> | null = null;
     #guilds: UnavailableGuildStructure[] = [];
     #resumeGatewayUrl: string | null = null;
@@ -136,7 +136,7 @@ export class Ready extends Base<ReadyEventFields, ReadySchema> {
                 this.#resumeGatewayUrl === other.resumeGatewayUrl &&
                 this.#sessionId === other.sessionId &&
                 JSON.stringify(this.#shard) === JSON.stringify(other.shard) &&
-                this.#user?.equals(other.user ?? this.#user) &&
+                this.#user?.equals(other.user ?? {}) &&
                 this.#v === other.v,
         );
     }

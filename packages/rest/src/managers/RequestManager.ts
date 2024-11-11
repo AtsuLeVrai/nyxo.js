@@ -1,4 +1,4 @@
-import { MimeTypes } from "@nyxjs/core";
+import { ApiVersions, MimeTypes } from "@nyxjs/core";
 import { Logger, formatJson } from "@nyxjs/logger";
 import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
@@ -133,7 +133,7 @@ export class RequestManager extends EventEmitter<RestEvents> {
 
     #normalizeOptions(options: RestOptions): Required<RestOptions> {
         return {
-            version: options.version,
+            version: options.version ?? ApiVersions.V6,
             userAgent: options.userAgent ?? `DiscordBot (https://github.com/3tatsu/nyx.js, ${options.version})`,
             rateLimitRetries: options.rateLimitRetries ?? 5,
             timeout: options.timeout ?? 30_000,

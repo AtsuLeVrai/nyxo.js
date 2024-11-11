@@ -1,11 +1,19 @@
 import type {
+    EmojiStructure,
     GuildMemberStructure,
+    Integer,
     Iso8601Timestamp,
     Snowflake,
     VoiceRegionStructure,
     VoiceStateStructure,
 } from "@nyxjs/core";
+import type {
+    VoiceChannelEffectSendAnimationTypes,
+    VoiceChannelEffectSendEventFields,
+    VoiceServerUpdateEventFields,
+} from "@nyxjs/gateway";
 import { Base } from "./Base.js";
+import { Emoji } from "./Emojis.js";
 import { GuildMember } from "./Guilds.js";
 
 export interface VoiceRegionSchema {
@@ -16,7 +24,7 @@ export interface VoiceRegionSchema {
     readonly optimal: boolean;
 }
 
-export class VoiceRegion extends Base<VoiceRegionStructure, VoiceRegionSchema> {
+export class VoiceRegion extends Base<VoiceRegionStructure, VoiceRegionSchema> implements VoiceRegionSchema {
     #custom = false;
     #deprecated = false;
     #id: string | null = null;
@@ -101,12 +109,12 @@ export class VoiceRegion extends Base<VoiceRegionStructure, VoiceRegionSchema> {
     }
 
     equals(other: Partial<VoiceRegion>): boolean {
-        return (
+        return Boolean(
             this.#custom === other.custom &&
-            this.#deprecated === other.deprecated &&
-            this.#id === other.id &&
-            this.#name === other.name &&
-            this.#optimal === other.optimal
+                this.#deprecated === other.deprecated &&
+                this.#id === other.id &&
+                this.#name === other.name &&
+                this.#optimal === other.optimal,
         );
     }
 }
@@ -127,7 +135,7 @@ export interface VoiceStateSchema {
     readonly userId: Snowflake | null;
 }
 
-export class VoiceState extends Base<VoiceStateStructure, VoiceStateSchema> {
+export class VoiceState extends Base<VoiceStateStructure, VoiceStateSchema> implements VoiceStateSchema {
     #channelId: Snowflake | null = null;
     #deaf = false;
     #guildId: Snowflake | null = null;
@@ -288,7 +296,7 @@ export class VoiceState extends Base<VoiceStateStructure, VoiceStateSchema> {
             this.#channelId === other.channelId &&
                 this.#deaf === other.deaf &&
                 this.#guildId === other.guildId &&
-                this.#member?.equals(other.member ?? this.#member) &&
+                this.#member?.equals(other.member ?? {}) &&
                 this.#mute === other.mute &&
                 this.#requestToSpeakTimestamp === other.requestToSpeakTimestamp &&
                 this.#selfDeaf === other.selfDeaf &&
@@ -297,6 +305,233 @@ export class VoiceState extends Base<VoiceStateStructure, VoiceStateSchema> {
                 this.#selfVideo === other.selfVideo &&
                 this.#sessionId === other.sessionId &&
                 this.#suppress === other.suppress &&
+                this.#userId === other.userId,
+        );
+    }
+}
+
+export interface VoiceServerSchema {
+    readonly endpoint: string | null;
+    readonly guildId: Snowflake | null;
+    readonly token: string | null;
+}
+
+export class VoiceServer extends Base<VoiceServerUpdateEventFields, VoiceServerSchema> implements VoiceServerSchema {
+    #endpoint: string | null = null;
+    #guildId: Snowflake | null = null;
+    #token: string | null = null;
+
+    constructor(data: Partial<VoiceServerUpdateEventFields>) {
+        super();
+        this.patch(data);
+    }
+
+    get endpoint(): string | null {
+        return this.#endpoint;
+    }
+
+    get guildId(): Snowflake | null {
+        return this.#guildId;
+    }
+
+    get token(): string | null {
+        return this.#token;
+    }
+
+    static from(data: Partial<VoiceServerUpdateEventFields>): VoiceServer {
+        return new VoiceServer(data);
+    }
+
+    patch(data: Partial<VoiceServerUpdateEventFields>): void {
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
+        }
+
+        this.#endpoint = data.endpoint ?? this.#endpoint;
+        this.#guildId = data.guild_id ?? this.#guildId;
+        this.#token = data.token ?? this.#token;
+    }
+
+    toJson(): Partial<VoiceServerUpdateEventFields> {
+        return {
+            endpoint: this.#endpoint ?? undefined,
+            guild_id: this.#guildId ?? undefined,
+            token: this.#token ?? undefined,
+        };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): VoiceServerSchema {
+        return {
+            endpoint: this.#endpoint,
+            guildId: this.#guildId,
+            token: this.#token,
+        };
+    }
+
+    clone(): VoiceServer {
+        return new VoiceServer(this.toJson());
+    }
+
+    reset(): void {
+        this.#endpoint = null;
+        this.#guildId = null;
+        this.#token = null;
+    }
+
+    equals(other: Partial<VoiceServer>): boolean {
+        return Boolean(
+            this.#endpoint === other.endpoint && this.#guildId === other.guildId && this.#token === other.token,
+        );
+    }
+}
+
+export interface VoiceChannelEffectSendSchema {
+    readonly animationId: number | null;
+    readonly animationType: VoiceChannelEffectSendAnimationTypes | null;
+    readonly channelId: Snowflake | null;
+    readonly emoji: Emoji | null;
+    readonly guildId: Snowflake | null;
+    readonly soundId: Integer | Snowflake | null;
+    readonly soundVolume: Integer | null;
+    readonly userId: Snowflake | null;
+}
+
+export class VoiceChannelEffectSend
+    extends Base<VoiceChannelEffectSendEventFields, VoiceChannelEffectSendSchema>
+    implements VoiceChannelEffectSendSchema
+{
+    #animationId: number | null = null;
+    #animationType: VoiceChannelEffectSendAnimationTypes | null = null;
+    #channelId: Snowflake | null = null;
+    #emoji: Emoji | null = null;
+    #guildId: Snowflake | null = null;
+    #soundId: Integer | Snowflake | null = null;
+    #soundVolume: Integer | null = null;
+    #userId: Snowflake | null = null;
+
+    constructor(data: Partial<VoiceChannelEffectSendEventFields>) {
+        super();
+        this.patch(data);
+    }
+
+    get animationId(): number | null {
+        return this.#animationId;
+    }
+
+    get animationType(): VoiceChannelEffectSendAnimationTypes | null {
+        return this.#animationType;
+    }
+
+    get channelId(): Snowflake | null {
+        return this.#channelId;
+    }
+
+    get emoji(): Emoji | null {
+        return this.#emoji;
+    }
+
+    get guildId(): Snowflake | null {
+        return this.#guildId;
+    }
+
+    get soundId(): Integer | Snowflake | null {
+        return this.#soundId;
+    }
+
+    get soundVolume(): Integer | null {
+        return this.#soundVolume;
+    }
+
+    get userId(): Snowflake | null {
+        return this.#userId;
+    }
+
+    static from(data: Partial<VoiceChannelEffectSendEventFields>): VoiceChannelEffectSend {
+        return new VoiceChannelEffectSend(data);
+    }
+
+    patch(data: Partial<VoiceChannelEffectSendEventFields>): void {
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
+        }
+
+        this.#animationId = data.animation_id ?? this.#animationId;
+        this.#animationType = data.animation_type ?? this.#animationType;
+        this.#channelId = data.channel_id ?? this.#channelId;
+        this.#emoji = data.emoji ? Emoji.from(data.emoji) : this.#emoji;
+        this.#guildId = data.guild_id ?? this.#guildId;
+        this.#soundId = data.sound_id ?? this.#soundId;
+
+        if (data.sound_volume !== undefined) {
+            if (typeof data.sound_volume === "number") {
+                if (data.sound_volume < 0 || data.sound_volume > 1) {
+                    throw new RangeError("Sound volume must be between 0 and 1");
+                }
+                this.#soundVolume = data.sound_volume;
+            }
+        }
+
+        this.#userId = data.user_id ?? this.#userId;
+    }
+
+    toJson(): Partial<VoiceChannelEffectSendEventFields> {
+        return {
+            animation_id: this.#animationId ?? undefined,
+            animation_type: this.#animationType ?? undefined,
+            channel_id: this.#channelId ?? undefined,
+            emoji: this.#emoji?.toJson() as EmojiStructure,
+            guild_id: this.#guildId ?? undefined,
+            sound_id: this.#soundId ?? undefined,
+            sound_volume: this.#soundVolume ?? undefined,
+            user_id: this.#userId ?? undefined,
+        };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): VoiceChannelEffectSendSchema {
+        return {
+            animationId: this.#animationId,
+            animationType: this.#animationType,
+            channelId: this.#channelId,
+            emoji: this.#emoji,
+            guildId: this.#guildId,
+            soundId: this.#soundId,
+            soundVolume: this.#soundVolume,
+            userId: this.#userId,
+        };
+    }
+
+    clone(): VoiceChannelEffectSend {
+        return new VoiceChannelEffectSend(this.toJson());
+    }
+
+    reset(): void {
+        this.#animationId = null;
+        this.#animationType = null;
+        this.#channelId = null;
+        this.#emoji = null;
+        this.#guildId = null;
+        this.#soundId = null;
+        this.#soundVolume = null;
+        this.#userId = null;
+    }
+
+    equals(other: Partial<VoiceChannelEffectSend>): boolean {
+        return Boolean(
+            this.#animationId === other.animationId &&
+                this.#animationType === other.animationType &&
+                this.#channelId === other.channelId &&
+                this.#emoji?.equals(other.emoji ?? {}) &&
+                this.#guildId === other.guildId &&
+                this.#soundId === other.soundId &&
+                this.#soundVolume === other.soundVolume &&
                 this.#userId === other.userId,
         );
     }

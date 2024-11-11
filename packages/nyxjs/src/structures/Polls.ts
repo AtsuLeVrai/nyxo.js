@@ -9,7 +9,9 @@ import type {
     PollMediaStructure,
     PollResultsStructure,
     PollStructure,
+    Snowflake,
 } from "@nyxjs/core";
+import type { MessagePollVoteAddFields, MessagePollVoteRemoveFields } from "@nyxjs/gateway";
 import type { PickWithMethods } from "../types/index.js";
 import { Base } from "./Base.js";
 import { Emoji } from "./Emojis.js";
@@ -20,7 +22,10 @@ export interface PollAnswerCountSchema {
     readonly meVoted: boolean;
 }
 
-export class PollAnswerCount extends Base<PollAnswerCountStructure, PollAnswerCountSchema> {
+export class PollAnswerCount
+    extends Base<PollAnswerCountStructure, PollAnswerCountSchema>
+    implements PollAnswerCountSchema
+{
     #count: Integer = 0;
     #id: Integer = 0;
     #meVoted = false;
@@ -96,7 +101,7 @@ export interface PollResultsSchema {
     readonly isFinalized: boolean;
 }
 
-export class PollResults extends Base<PollResultsStructure, PollResultsSchema> {
+export class PollResults extends Base<PollResultsStructure, PollResultsSchema> implements PollResultsSchema {
     #answerCounts: PollAnswerCount[] = [];
     #isFinalized = false;
 
@@ -188,7 +193,7 @@ export interface PollMediaSchema {
     readonly text: string | null;
 }
 
-export class PollMedia extends Base<PollMediaStructure, PollMediaSchema> {
+export class PollMedia extends Base<PollMediaStructure, PollMediaSchema> implements PollMediaSchema {
     #emoji: PickWithMethods<Emoji, "id" | "name"> | null = null;
     #text: string | null = null;
 
@@ -250,7 +255,7 @@ export class PollMedia extends Base<PollMediaStructure, PollMediaSchema> {
     }
 
     equals(other: Partial<PollMedia>): boolean {
-        return Boolean(this.#emoji?.equals(other.emoji ?? this.#emoji) && this.#text === other.text);
+        return Boolean(this.#emoji?.equals(other.emoji ?? {}) && this.#text === other.text);
     }
 }
 
@@ -259,7 +264,7 @@ export interface PollAnswerSchema {
     readonly pollMedia: PollMedia | null;
 }
 
-export class PollAnswer extends Base<PollAnswerStructure, PollAnswerSchema> {
+export class PollAnswer extends Base<PollAnswerStructure, PollAnswerSchema> implements PollAnswerSchema {
     #answerId: Integer | null = null;
     #pollMedia: PollMedia | null = null;
 
@@ -321,9 +326,7 @@ export class PollAnswer extends Base<PollAnswerStructure, PollAnswerSchema> {
     }
 
     equals(other: Partial<PollAnswer>): boolean {
-        return Boolean(
-            this.#answerId === other.answerId && this.#pollMedia?.equals(other.pollMedia ?? this.#pollMedia),
-        );
+        return Boolean(this.#answerId === other.answerId && this.#pollMedia?.equals(other.pollMedia ?? {}));
     }
 }
 
@@ -335,7 +338,10 @@ export interface PollCreateRequestSchema {
     readonly question: PollMedia | null;
 }
 
-export class PollCreateRequest extends Base<PollCreateRequestStructure, PollCreateRequestSchema> {
+export class PollCreateRequest
+    extends Base<PollCreateRequestStructure, PollCreateRequestSchema>
+    implements PollCreateRequestSchema
+{
     #allowMultiselect = false;
     #answers: PollAnswer[] = [];
     #duration: Integer | null = null;
@@ -427,10 +433,116 @@ export class PollCreateRequest extends Base<PollCreateRequestStructure, PollCrea
         return Boolean(
             this.#allowMultiselect === other.allowMultiselect &&
                 this.#answers.length === other.answers?.length &&
-                this.#answers.every((answer, index) => answer.equals(other.answers?.[index] ?? answer)) &&
+                this.#answers.every((answer, index) => answer.equals(other.answers?.[index] ?? {})) &&
                 this.#duration === other.duration &&
                 this.#layoutType === other.layoutType &&
-                this.#question?.equals(other.question ?? this.#question),
+                this.#question?.equals(other.question ?? {}),
+        );
+    }
+}
+
+export interface MessagePollVoteSchema {
+    readonly answerId: Integer | null;
+    readonly channelId: Snowflake | null;
+    readonly guildId: Snowflake | null;
+    readonly messageId: Snowflake | null;
+    readonly userId: Snowflake | null;
+}
+
+export class MessagePollVote
+    extends Base<MessagePollVoteAddFields | MessagePollVoteRemoveFields, MessagePollVoteSchema>
+    implements MessagePollVoteSchema
+{
+    #answerId: Integer | null = null;
+    #channelId: Snowflake | null = null;
+    #guildId: Snowflake | null = null;
+    #messageId: Snowflake | null = null;
+    #userId: Snowflake | null = null;
+
+    constructor(data: Partial<MessagePollVoteAddFields | MessagePollVoteRemoveFields>) {
+        super();
+        this.patch(data);
+    }
+
+    get answerId(): Integer | null {
+        return this.#answerId;
+    }
+
+    get channelId(): Snowflake | null {
+        return this.#channelId;
+    }
+
+    get guildId(): Snowflake | null {
+        return this.#guildId;
+    }
+
+    get messageId(): Snowflake | null {
+        return this.#messageId;
+    }
+
+    get userId(): Snowflake | null {
+        return this.#userId;
+    }
+
+    static from(data: Partial<MessagePollVoteAddFields | MessagePollVoteRemoveFields>): MessagePollVote {
+        return new MessagePollVote(data);
+    }
+
+    patch(data: Partial<MessagePollVoteAddFields | MessagePollVoteRemoveFields>): void {
+        if (!data || typeof data !== "object") {
+            throw new TypeError(`Expected object, got ${typeof data}`);
+        }
+
+        this.#answerId = data.answer_id ?? this.#answerId;
+        this.#channelId = data.channel_id ?? this.#channelId;
+        this.#guildId = data.guild_id ?? this.#guildId;
+        this.#messageId = data.message_id ?? this.#messageId;
+        this.#userId = data.user_id ?? this.#userId;
+    }
+
+    toJson(): Partial<MessagePollVoteAddFields | MessagePollVoteRemoveFields> {
+        return {
+            answer_id: this.#answerId ?? undefined,
+            channel_id: this.#channelId ?? undefined,
+            guild_id: this.#guildId ?? undefined,
+            message_id: this.#messageId ?? undefined,
+            user_id: this.#userId ?? undefined,
+        };
+    }
+
+    toString(): string {
+        return JSON.stringify(this.toJson());
+    }
+
+    valueOf(): MessagePollVoteSchema {
+        return {
+            answerId: this.#answerId,
+            channelId: this.#channelId,
+            guildId: this.#guildId,
+            messageId: this.#messageId,
+            userId: this.#userId,
+        };
+    }
+
+    clone(): MessagePollVote {
+        return new MessagePollVote(this.toJson());
+    }
+
+    reset(): void {
+        this.#answerId = null;
+        this.#channelId = null;
+        this.#guildId = null;
+        this.#messageId = null;
+        this.#userId = null;
+    }
+
+    equals(other: Partial<MessagePollVote>): boolean {
+        return Boolean(
+            this.#answerId === other.answerId &&
+                this.#channelId === other.channelId &&
+                this.#guildId === other.guildId &&
+                this.#messageId === other.messageId &&
+                this.#userId === other.userId,
         );
     }
 }
@@ -444,7 +556,7 @@ export interface PollSchema {
     readonly results: PollResults | null;
 }
 
-export class Poll extends Base<PollStructure, PollSchema> {
+export class Poll extends Base<PollStructure, PollSchema> implements PollSchema {
     #allowMultiselect = false;
     #answers: PollAnswer[] = [];
     #expiry: Iso8601Timestamp | null = null;
@@ -569,11 +681,11 @@ export class Poll extends Base<PollStructure, PollSchema> {
         return Boolean(
             this.#allowMultiselect === other.allowMultiselect &&
                 this.#answers.length === other.answers?.length &&
-                this.#answers.every((answer, index) => answer.equals(other.answers?.[index] ?? answer)) &&
+                this.#answers.every((answer, index) => answer.equals(other.answers?.[index] ?? {})) &&
                 this.#expiry === other.expiry &&
                 this.#layoutType === other.layoutType &&
-                this.#question?.equals(other.question ?? this.#question) &&
-                this.#results?.equals(other.results ?? this.#results),
+                this.#question?.equals(other.question ?? {}) &&
+                this.#results?.equals(other.results ?? {}),
         );
     }
 }

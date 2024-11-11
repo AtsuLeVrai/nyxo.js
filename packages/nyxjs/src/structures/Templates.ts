@@ -40,7 +40,7 @@ export interface GuildTemplateSchema {
     readonly usageCount: Integer | null;
 }
 
-export class GuildTemplate extends Base<GuildTemplateStructure, GuildTemplateSchema> {
+export class GuildTemplate extends Base<GuildTemplateStructure, GuildTemplateSchema> implements GuildTemplateSchema {
     #code: string | null = null;
     #createdAt: Iso8601Timestamp | null = null;
     #creator: User | null = null;
@@ -104,7 +104,7 @@ export class GuildTemplate extends Base<GuildTemplateStructure, GuildTemplateSch
         return this.#name;
     }
 
-    get serializedSourceGuild(): PickWithMethods<Guild, keyof GuildTemplateSchema["serializedSourceGuild"]> | null {
+    get serializedSourceGuild(): GuildTemplateSchema["serializedSourceGuild"] {
         return this.#serializedSourceGuild;
     }
 
@@ -202,12 +202,12 @@ export class GuildTemplate extends Base<GuildTemplateStructure, GuildTemplateSch
         return Boolean(
             this.#code === other.code &&
                 this.#createdAt === other.createdAt &&
-                this.#creator?.equals(other.creator ?? this.#creator) &&
+                this.#creator?.equals(other.creator ?? {}) &&
                 this.#creatorId === other.creatorId &&
                 this.#description === other.description &&
                 this.#isDirty === other.isDirty &&
                 this.#name === other.name &&
-                this.#serializedSourceGuild?.equals(other.serializedSourceGuild ?? this.#serializedSourceGuild) &&
+                this.#serializedSourceGuild?.equals(other.serializedSourceGuild ?? {}) &&
                 this.#sourceGuildId === other.sourceGuildId &&
                 this.#updatedAt === other.updatedAt &&
                 this.#usageCount === other.usageCount,

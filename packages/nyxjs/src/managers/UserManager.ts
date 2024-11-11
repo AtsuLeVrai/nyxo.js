@@ -30,7 +30,7 @@ export class UserManager {
         return this.#cache;
     }
 
-    async createDm(userId: Snowflake): Promise<ChannelStructure> {
+    createDm(userId: Snowflake): Promise<ChannelStructure> {
         return this.#client.rest.request(
             UserRoutes.createDm({
                 recipient_id: userId,
@@ -38,7 +38,7 @@ export class UserManager {
         );
     }
 
-    async createGroupDm(data: CreateGroupDmJsonParams): Promise<ChannelStructure> {
+    createGroupDm(data: CreateGroupDmJsonParams): Promise<ChannelStructure> {
         return this.#client.rest.request(UserRoutes.createDm(data));
     }
 

@@ -13,7 +13,10 @@ export interface SoundboardSoundSchema {
     readonly volume: Float | null;
 }
 
-export class SoundboardSound extends Base<SoundboardSoundStructure, SoundboardSoundSchema> {
+export class SoundboardSound
+    extends Base<SoundboardSoundStructure, SoundboardSoundSchema>
+    implements SoundboardSoundSchema
+{
     #available = true;
     #emojiId: Snowflake | null = null;
     #emojiName: string | null = null;
@@ -132,7 +135,7 @@ export class SoundboardSound extends Base<SoundboardSoundStructure, SoundboardSo
                 this.#guildId === other.guildId &&
                 this.#name === other.name &&
                 this.#soundId === other.soundId &&
-                this.#user?.equals(other.user ?? this.#user) &&
+                this.#user?.equals(other.user ?? {}) &&
                 this.#volume === other.volume,
         );
     }

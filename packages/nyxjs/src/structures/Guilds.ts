@@ -63,10 +63,10 @@ export interface GuildOnboardingPromptOptionSchema {
     readonly title: string | null;
 }
 
-export class GuildOnboardingPromptOption extends Base<
-    GuildOnboardingPromptOptionStructure,
-    GuildOnboardingPromptOptionSchema
-> {
+export class GuildOnboardingPromptOption
+    extends Base<GuildOnboardingPromptOptionStructure, GuildOnboardingPromptOptionSchema>
+    implements GuildOnboardingPromptOptionSchema
+{
     #channelIds: Snowflake[] = [];
     #description: string | null = null;
     #emojiAnimated = false;
@@ -208,7 +208,10 @@ export interface GuildOnboardingPromptSchema {
     readonly type: GuildOnboardingPromptTypes | null;
 }
 
-export class GuildOnboardingPrompt extends Base<GuildOnboardingPromptStructure, GuildOnboardingPromptSchema> {
+export class GuildOnboardingPrompt
+    extends Base<GuildOnboardingPromptStructure, GuildOnboardingPromptSchema>
+    implements GuildOnboardingPromptSchema
+{
     #id: Snowflake | null = null;
     #inOnboarding = false;
     #options: GuildOnboardingPromptOption[] = [];
@@ -336,7 +339,10 @@ export interface GuildOnboardingSchema {
     readonly prompts: GuildOnboardingPrompt[];
 }
 
-export class GuildOnboarding extends Base<GuildOnboardingStructure, GuildOnboardingSchema> {
+export class GuildOnboarding
+    extends Base<GuildOnboardingStructure, GuildOnboardingSchema>
+    implements GuildOnboardingSchema
+{
     #defaultChannelIds: Snowflake[] = [];
     #enabled = false;
     #guildId: Snowflake | null = null;
@@ -445,7 +451,10 @@ export interface WelcomeScreenChannelSchema {
     readonly emojiName: string | null;
 }
 
-export class WelcomeScreenChannel extends Base<WelcomeScreenChannelStructure, WelcomeScreenChannelSchema> {
+export class WelcomeScreenChannel
+    extends Base<WelcomeScreenChannelStructure, WelcomeScreenChannelSchema>
+    implements WelcomeScreenChannelSchema
+{
     #channelId: Snowflake | null = null;
     #description: string | null = null;
     #emojiId: Snowflake | null = null;
@@ -535,7 +544,7 @@ export interface WelcomeScreenSchema {
     readonly welcomeChannels: WelcomeScreenChannel[];
 }
 
-export class WelcomeScreen extends Base<WelcomeScreenStructure, WelcomeScreenSchema> {
+export class WelcomeScreen extends Base<WelcomeScreenStructure, WelcomeScreenSchema> implements WelcomeScreenSchema {
     #description: string | null = null;
     #welcomeChannels: WelcomeScreenChannel[] = [];
 
@@ -611,7 +620,7 @@ export interface BanSchema {
     readonly user: User | null;
 }
 
-export class Ban extends Base<BanStructure, BanSchema> {
+export class Ban extends Base<BanStructure, BanSchema> implements BanSchema {
     #reason: string | null = null;
     #user: User | null = null;
 
@@ -681,7 +690,10 @@ export interface IntegrationApplicationSchema {
     readonly name: string | null;
 }
 
-export class IntegrationApplication extends Base<IntegrationApplicationStructure, IntegrationApplicationSchema> {
+export class IntegrationApplication
+    extends Base<IntegrationApplicationStructure, IntegrationApplicationSchema>
+    implements IntegrationApplicationSchema
+{
     #bot: User | null = null;
     #description: string | null = null;
     #icon: string | null = null;
@@ -781,7 +793,10 @@ export interface IntegrationAccountSchema {
     readonly name: string | null;
 }
 
-export class IntegrationAccount extends Base<IntegrationAccountStructure, IntegrationAccountSchema> {
+export class IntegrationAccount
+    extends Base<IntegrationAccountStructure, IntegrationAccountSchema>
+    implements IntegrationAccountSchema
+{
     #id: string | null = null;
     #name: string | null = null;
 
@@ -862,7 +877,7 @@ export interface IntegrationSchema {
     readonly user: User | null;
 }
 
-export class Integration extends Base<IntegrationStructure, IntegrationSchema> {
+export class Integration extends Base<IntegrationStructure, IntegrationSchema> implements IntegrationSchema {
     #account: IntegrationAccount | null = null;
     #application: IntegrationApplication | null = null;
     #enableEmoticons = false;
@@ -1087,7 +1102,7 @@ export interface GuildMemberSchema {
     readonly user: User | null;
 }
 
-export class GuildMember extends Base<GuildMemberStructure, GuildMemberSchema> {
+export class GuildMember extends Base<GuildMemberStructure, GuildMemberSchema> implements GuildMemberSchema {
     #avatar: string | null = null;
     #avatarDecorationData: AvatarDecorationData | null = null;
     #communicationDisabledUntil: Iso8601Timestamp | null = null;
@@ -1277,7 +1292,7 @@ export interface GuildWidgetSchema {
     readonly presenceCount: Integer | null;
 }
 
-export class GuildWidget extends Base<GuildWidgetStructure, GuildWidgetSchema> {
+export class GuildWidget extends Base<GuildWidgetStructure, GuildWidgetSchema> implements GuildWidgetSchema {
     /**
      * @todo Implement Channel Class
      */
@@ -1398,7 +1413,10 @@ export interface GuildWidgetSettingsSchema {
     readonly enabled: boolean;
 }
 
-export class GuildWidgetSettings extends Base<GuildWidgetSettingsStructure, GuildWidgetSettingsSchema> {
+export class GuildWidgetSettings
+    extends Base<GuildWidgetSettingsStructure, GuildWidgetSettingsSchema>
+    implements GuildWidgetSettingsSchema
+{
     #channelId: Snowflake | null = null;
     #enabled = false;
 
@@ -1474,7 +1492,7 @@ export interface GuildPreviewSchema {
     readonly stickers: Sticker[];
 }
 
-export class GuildPreview extends Base<GuildPreviewStructure, GuildPreviewSchema> {
+export class GuildPreview extends Base<GuildPreviewStructure, GuildPreviewSchema> implements GuildPreviewSchema {
     #approximateMemberCount: Integer | null = null;
     #approximatePresenceCount: Integer | null = null;
     #description: string | null = null;
@@ -1646,7 +1664,10 @@ export interface UnavailableGuildSchema {
     readonly unavailable: boolean;
 }
 
-export class UnavailableGuild extends Base<UnavailableGuildStructure, UnavailableGuildSchema> {
+export class UnavailableGuild
+    extends Base<UnavailableGuildStructure, UnavailableGuildSchema>
+    implements UnavailableGuildSchema
+{
     #id: Snowflake | null = null;
     #unavailable = false;
 
@@ -1766,7 +1787,7 @@ export interface GuildSchema {
     readonly voiceStates: Partial<VoiceStateStructure>[];
 }
 
-export class Guild extends Base<GuildStructure & GuildCreateExtraFields, GuildSchema> {
+export class Guild extends Base<GuildStructure & GuildCreateExtraFields, GuildSchema> implements GuildSchema {
     #afkChannelId: Snowflake | null = null;
     #afkTimeout: Integer | null = null;
     #applicationId: Snowflake | null = null;
@@ -1952,7 +1973,7 @@ export class Guild extends Base<GuildStructure & GuildCreateExtraFields, GuildSc
         return this.#publicUpdatesChannelId;
     }
 
-    get region(): string | null | undefined {
+    get region(): string | null {
         return this.#region;
     }
 

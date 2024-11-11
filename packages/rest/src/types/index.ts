@@ -154,7 +154,7 @@ export interface RestOptions {
     /**
      * Version of the API to use.
      */
-    version: ApiVersions;
+    version?: ApiVersions;
 }
 
 /**

@@ -10,7 +10,7 @@ export interface SkuSchema {
     readonly type: SkuTypes | null;
 }
 
-export class Sku extends Base<SkuStructure, SkuSchema> {
+export class Sku extends Base<SkuStructure, SkuSchema> implements SkuSchema {
     #applicationId: Snowflake | null = null;
     #flags: BitfieldResolvable<SkuFlags> = 0n;
     #id: Snowflake | null = null;

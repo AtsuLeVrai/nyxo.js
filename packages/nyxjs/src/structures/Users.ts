@@ -21,10 +21,10 @@ export interface ApplicationRoleConnectionSchema {
     readonly platformUsername: string | null;
 }
 
-export class ApplicationRoleConnection extends Base<
-    ApplicationRoleConnectionStructure,
-    ApplicationRoleConnectionSchema
-> {
+export class ApplicationRoleConnection
+    extends Base<ApplicationRoleConnectionStructure, ApplicationRoleConnectionSchema>
+    implements ApplicationRoleConnectionSchema
+{
     #metadata: Record<string, ApplicationRoleConnectionMetadataStructure> = {};
     #platformName: string | null = null;
     #platformUsername: string | null = null;
@@ -112,7 +112,7 @@ export interface ConnectionSchema {
     readonly visibility: ConnectionVisibilityTypes | null;
 }
 
-export class Connection extends Base<ConnectionStructure, ConnectionSchema> {
+export class Connection extends Base<ConnectionStructure, ConnectionSchema> implements ConnectionSchema {
     #friendSync = false;
     #id: string | null = null;
     #integrations: Partial<IntegrationStructure>[] = [];
@@ -262,7 +262,10 @@ export interface AvatarDecorationDataSchema {
     readonly skuId: string | null;
 }
 
-export class AvatarDecorationData extends Base<AvatarDecorationDataStructure, AvatarDecorationDataSchema> {
+export class AvatarDecorationData
+    extends Base<AvatarDecorationDataStructure, AvatarDecorationDataSchema>
+    implements AvatarDecorationDataSchema
+{
     #asset: string | null = null;
     #skuId: string | null = null;
 
@@ -344,7 +347,7 @@ export interface UserSchema {
     readonly verified: boolean;
 }
 
-export class User extends Base<UserStructure, UserSchema> {
+export class User extends Base<UserStructure, UserSchema> implements UserSchema {
     #accentColor: Integer | null = null;
     #avatar: string | null = null;
     #avatarDecorationData: AvatarDecorationData | null = null;
@@ -542,7 +545,7 @@ export class User extends Base<UserStructure, UserSchema> {
         return Boolean(
             this.#accentColor === other.accentColor &&
                 this.#avatar === other.avatar &&
-                this.#avatarDecorationData?.equals(other.avatarDecorationData ?? this.#avatarDecorationData) &&
+                this.#avatarDecorationData?.equals(other.avatarDecorationData ?? {}) &&
                 this.#banner === other.banner &&
                 this.#bot === other.bot &&
                 this.#discriminator === other.discriminator &&

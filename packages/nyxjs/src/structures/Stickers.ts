@@ -17,7 +17,7 @@ export interface StickerItemSchema {
     readonly name: string | null;
 }
 
-export class StickerItem extends Base<StickerItemStructure, StickerItemSchema> {
+export class StickerItem extends Base<StickerItemStructure, StickerItemSchema> implements StickerItemSchema {
     #formatType: StickerFormatTypes | null = null;
     #id: Snowflake | null = null;
     #name: string | null = null;
@@ -99,10 +99,10 @@ export interface StickerSchema {
     readonly sortValue: Integer | null;
     readonly tags: string | null;
     readonly type: StickerTypes | null;
-    readonly user?: User;
+    readonly user: User | null;
 }
 
-export class Sticker extends Base<StickerStructure, StickerSchema> {
+export class Sticker extends Base<StickerStructure, StickerSchema> implements StickerSchema {
     #available: boolean | null = null;
     #description: string | null = null;
     #formatType: StickerFormatTypes | null = null;
@@ -113,7 +113,7 @@ export class Sticker extends Base<StickerStructure, StickerSchema> {
     #sortValue: Integer | null = null;
     #tags: string | null = null;
     #type: StickerTypes | null = null;
-    #user?: User;
+    #user: User | null = null;
 
     constructor(data: Partial<StickerStructure>) {
         super();
@@ -160,7 +160,7 @@ export class Sticker extends Base<StickerStructure, StickerSchema> {
         return this.#type;
     }
 
-    get user(): User | undefined {
+    get user(): User | null {
         return this.#user;
     }
 
@@ -237,7 +237,7 @@ export class Sticker extends Base<StickerStructure, StickerSchema> {
         this.#sortValue = null;
         this.#tags = null;
         this.#type = null;
-        this.#user = undefined;
+        this.#user = null;
     }
 
     equals(other: Partial<Sticker>): boolean {
@@ -252,7 +252,7 @@ export class Sticker extends Base<StickerStructure, StickerSchema> {
                 this.#sortValue === other.sortValue &&
                 this.#tags === other.tags &&
                 this.#type === other.type &&
-                this.#user?.equals(other.user ?? this.#user),
+                this.#user?.equals(other.user ?? {}),
         );
     }
 }
@@ -267,7 +267,7 @@ export interface StickerPackSchema {
     readonly stickers: Sticker[];
 }
 
-export class StickerPack extends Base<StickerPackStructure, StickerPackSchema> {
+export class StickerPack extends Base<StickerPackStructure, StickerPackSchema> implements StickerPackSchema {
     #bannerAssetId: Snowflake | null = null;
     #coverStickerId: Snowflake | null = null;
     #description: string | null = null;
@@ -381,7 +381,7 @@ export class StickerPack extends Base<StickerPackStructure, StickerPackSchema> {
                 this.#name === other.name &&
                 this.#skuId === other.skuId &&
                 this.#stickers.length === other.stickers?.length &&
-                this.#stickers.every((sticker, index) => sticker.equals(other.stickers?.[index] ?? sticker)),
+                this.#stickers.every((sticker, index) => sticker.equals(other.stickers?.[index] ?? {})),
         );
     }
 }

@@ -10,7 +10,7 @@ export interface RoleTagsSchema {
     readonly subscriptionListingId: Snowflake | null;
 }
 
-export class RoleTags extends Base<RoleTagsStructure, RoleTagsSchema> {
+export class RoleTags extends Base<RoleTagsStructure, RoleTagsSchema> implements RoleTagsSchema {
     #availableForPurchase: null = null;
     #botId: Snowflake | null = null;
     #guildConnections: null = null;
@@ -130,7 +130,7 @@ export interface RoleSchema {
     readonly unicodeEmoji: string | null;
 }
 
-export class Role extends Base<RoleStructure, RoleSchema> {
+export class Role extends Base<RoleStructure, RoleSchema> implements RoleSchema {
     #color: Integer | null = null;
     #flags: BitfieldResolvable<RoleFlags> = 0n;
     #hoist = false;
@@ -289,7 +289,7 @@ export class Role extends Base<RoleStructure, RoleSchema> {
                 this.#name === other.name &&
                 this.#permissions === other.permissions &&
                 this.#position === other.position &&
-                this.#tags?.equals(other.tags ?? this.#tags) &&
+                this.#tags?.equals(other.tags ?? {}) &&
                 this.#unicodeEmoji === other.unicodeEmoji,
         );
     }

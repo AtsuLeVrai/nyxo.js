@@ -14,7 +14,7 @@ export interface EntitlementSchema {
     readonly userId: Snowflake | null;
 }
 
-export class Entitlement extends Base<EntitlementStructure, EntitlementSchema> {
+export class Entitlement extends Base<EntitlementStructure, EntitlementSchema> implements EntitlementSchema {
     #applicationId: Snowflake | null = null;
     #deleted = false;
     #endsAt: Iso8601Timestamp | null = null;

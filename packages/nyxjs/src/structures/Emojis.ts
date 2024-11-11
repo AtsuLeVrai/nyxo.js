@@ -13,7 +13,7 @@ export interface EmojiSchema {
     readonly user: User | null;
 }
 
-export class Emoji extends Base<EmojiStructure, EmojiSchema> {
+export class Emoji extends Base<EmojiStructure, EmojiSchema> implements EmojiSchema {
     #animated = false;
     #available = true;
     #id: Snowflake | null = null;
@@ -137,7 +137,7 @@ export class Emoji extends Base<EmojiStructure, EmojiSchema> {
                 this.#name === other.name &&
                 this.#requireColons === other.requireColons &&
                 JSON.stringify(this.#roles) === JSON.stringify(other.roles) &&
-                this.#user?.equals(other.user ?? this.#user),
+                this.#user?.equals(other.user ?? {}),
         );
     }
 }

@@ -10,7 +10,7 @@ export interface TeamMemberSchema {
     readonly user: PickWithMethods<User, "avatar" | "discriminator" | "id" | "username"> | null;
 }
 
-export class TeamMember extends Base<TeamMemberStructure, TeamMemberSchema> {
+export class TeamMember extends Base<TeamMemberStructure, TeamMemberSchema> implements TeamMemberSchema {
     #membershipState: MembershipState | null = null;
     #role: string | null = null;
     #teamId: Snowflake | null = null;
@@ -90,7 +90,7 @@ export class TeamMember extends Base<TeamMemberStructure, TeamMemberSchema> {
             this.#membershipState === other.membershipState &&
                 this.#role === other.role &&
                 this.#teamId === other.teamId &&
-                this.#user?.equals(other.user ?? this.#user),
+                this.#user?.equals(other.user ?? {}),
         );
     }
 }
@@ -103,7 +103,7 @@ export interface TeamSchema {
     readonly ownerUserId: Snowflake | null;
 }
 
-export class Team extends Base<TeamStructure, TeamSchema> {
+export class Team extends Base<TeamStructure, TeamSchema> implements TeamSchema {
     #icon: string | null = null;
     #id: Snowflake | null = null;
     #members: TeamMember[] = [];
@@ -195,7 +195,7 @@ export class Team extends Base<TeamStructure, TeamSchema> {
             this.#icon === other.icon &&
                 this.#id === other.id &&
                 this.#members.length === other.members?.length &&
-                this.#members.every((member, index) => member.equals(other.members?.[index] ?? member)) &&
+                this.#members.every((member, index) => member.equals(other.members?.[index] ?? {})) &&
                 this.#name === other.name &&
                 this.#ownerUserId === other.ownerUserId,
         );

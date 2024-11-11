@@ -15,7 +15,7 @@ export class GuildManager {
         return this.#cache;
     }
 
-    async leave(guildId: Snowflake): Promise<void> {
+    leave(guildId: Snowflake): Promise<void> {
         return this.#client.rest.request(UserRoutes.leaveGuild(guildId));
     }
 }

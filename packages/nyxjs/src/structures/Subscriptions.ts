@@ -13,7 +13,7 @@ export interface SubscriptionSchema {
     readonly userId: Snowflake | null;
 }
 
-export class Subscription extends Base<SubscriptionStructure, SubscriptionSchema> {
+export class Subscription extends Base<SubscriptionStructure, SubscriptionSchema> implements SubscriptionSchema {
     #canceledAt: Iso8601Timestamp | null = null;
     #country: string | null = null;
     #currentPeriodEnd: Iso8601Timestamp | null = null;
