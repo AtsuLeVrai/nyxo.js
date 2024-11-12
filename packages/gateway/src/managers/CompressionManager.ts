@@ -1,7 +1,6 @@
 import { Logger } from "@nyxjs/logger";
-import { EventEmitter } from "eventemitter3";
 import zlib from "zlib-sync";
-import type { GatewayEvents } from "../types/index.js";
+import type { Gateway } from "../Gateway.js";
 
 export interface CompressionStats {
     totalDecompressed: number;
@@ -28,12 +27,16 @@ export class CompressionError extends Error {
         this.code = code;
         this.details = details;
         this.cause = cause;
+
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 
-export class CompressionManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn">> {
+export class CompressionManager {
     static FLUSH_MARKER = Buffer.from([0x00, 0x00, 0xff, 0xff]);
     static MAX_CHUNK_SIZE = 1024 * 1024;
+
+    readonly #gateway: Gateway;
 
     #inflator: zlib.Inflate | null = null;
     #stats: CompressionStats = {
@@ -43,6 +46,10 @@ export class CompressionManager extends EventEmitter<Pick<GatewayEvents, "error"
         bytesProcessed: 0,
         compressionRatio: 0,
     };
+
+    constructor(gateway: Gateway) {
+        this.#gateway = gateway;
+    }
 
     get stats(): CompressionStats {
         return { ...this.#stats };
@@ -191,7 +198,7 @@ export class CompressionManager extends EventEmitter<Pick<GatewayEvents, "error"
     }
 
     #emitError(error: CompressionError): void {
-        this.emit(
+        this.#gateway.emit(
             "error",
             Logger.error(error.message, {
                 component: "CompressionManager",

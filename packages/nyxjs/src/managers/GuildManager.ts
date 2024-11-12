@@ -4,8 +4,8 @@ import type { Client } from "../Client.js";
 import type { Guild } from "../structures/index.js";
 
 export class GuildManager {
-    #client: Client;
-    #cache: Map<Snowflake, Guild> = new Map();
+    readonly #client: Client;
+    readonly #cache: Map<Snowflake, Guild> = new Map();
 
     constructor(client: Client) {
         this.#client = client;

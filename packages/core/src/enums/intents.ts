@@ -9,7 +9,7 @@ export enum GatewayIntentBits {
     Guilds = 1 << 0,
     GuildMembers = 1 << 1,
     GuildModeration = 1 << 2,
-    GuildEmojisAndStickers = 1 << 3,
+    GuildExpressions = 1 << 3,
     GuildIntegrations = 1 << 4,
     GuildWebhooks = 1 << 5,
     GuildInvites = 1 << 6,

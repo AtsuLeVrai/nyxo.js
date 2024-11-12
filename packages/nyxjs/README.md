@@ -4,10 +4,9 @@
   <img src="../../assets/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="margin-top: 20px; border-radius: 8px;">
 </div>
 
-[![Nyx.js](https://img.shields.io/badge/nyx.js-v0.1.0-blue?style=flat-square)](https://nyxjs.dev)
-[![NPM Version](https://img.shields.io/npm/v/nyx.js.svg?style=flat-square)](https://www.npmjs.com/package/nyx.js)
-[![License](https://img.shields.io/github/license/3tatsu/nyx.js?style=flat-square)](LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/3tatsu/nyx.js/ci.yml?branch=main&style=flat-square)](https://github.com/3tatsu/nyx.js/actions)
+[![Formatted with Biome](https://img.shields.io/badge/Formatted_with-Biome-27272a?style=for-the-badge&logo=biome)](https://biomejs.dev/)
+[![AGPL-3.0 License](https://img.shields.io/badge/License-AGPL_3.0-3f3f46?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0.html)
+[![Typescript](https://img.shields.io/badge/TypeScript-Ready-52525b?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 
 ## 🚀 Description
 

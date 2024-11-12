@@ -37,23 +37,24 @@ export class GatewayError extends Error {
         this.code = code;
         this.details = details;
         this.cause = cause;
+
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 
 export class Gateway extends EventEmitter<GatewayEvents> {
     #token: string;
-    #rest: Rest;
-    #options: Readonly<GatewayOptions>;
+    readonly #rest: Rest;
+    readonly #options: Readonly<GatewayOptions>;
 
-    #compression: CompressionManager;
-    #payload: PayloadManager;
-    #session: SessionManager;
-    #ws: WebSocketManager;
-    #heartbeat: HeartbeatManager;
-    #shardManager: ShardManager;
+    readonly #compression: CompressionManager;
+    readonly #payload: PayloadManager;
+    readonly #session: SessionManager;
+    readonly #ws: WebSocketManager;
+    readonly #heartbeat: HeartbeatManager;
+    readonly #shardManager: ShardManager;
 
     #reconnectTimer: NodeJS.Timeout | null = null;
-    #isReconnecting = false;
 
     constructor(token: string, rest: Rest, options: GatewayOptions) {
         super();
@@ -62,14 +63,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this.#rest = rest;
         this.#options = Object.freeze({ ...options });
 
-        this.#compression = new CompressionManager();
-        this.#payload = new PayloadManager(this.#options.encoding);
-        this.#session = new SessionManager();
-        this.#ws = new WebSocketManager();
-        this.#heartbeat = new HeartbeatManager();
+        this.#compression = new CompressionManager(this);
+        this.#payload = new PayloadManager(this, this.#options.encoding);
+        this.#session = new SessionManager(this);
+        this.#ws = new WebSocketManager(this);
+        this.#heartbeat = new HeartbeatManager(this);
         this.#shardManager = new ShardManager(this, rest, token, this.#options, this.#session);
-
-        this.#setupEventListeners();
     }
 
     async connect(resume = false): Promise<void> {
@@ -275,43 +274,49 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         }
     }
 
-    #setupEventListeners(): void {
+    handleClose(code: GatewayCloseCodes, reason: string): void {
         try {
-            this.#emitDebug("Setting up gateway event listeners");
-            this.#compression.on("debug", (message) => this.emit("debug", message));
-            this.#compression.on("error", (error) => this.emit("error", error));
+            this.#emitDebug("Handling WebSocket close", { code: code, reason });
 
-            this.#payload.on("debug", (message) => this.emit("debug", message));
-            this.#payload.on("error", (error) => this.emit("error", error));
+            this.cleanup();
+            this.emit("close", code, reason);
 
-            this.#ws.on("raw", this.handleMessage.bind(this));
-            this.#ws.on("close", this.#handleClose.bind(this));
-            this.#ws.on("debug", (message) => this.emit("debug", message));
-            this.#ws.on("error", (error) => this.emit("error", error));
+            const errorMessage = this.#getCloseCodeMessage(code);
+            const canReconnect = this.#canReconnect(code);
 
-            this.#heartbeat.on("debug", (message) => this.emit("debug", message));
-            this.#heartbeat.on("error", (error) => this.emit("error", error));
-            this.#heartbeat.on("missedAck", async () => {
-                this.#emitDebug("Missed heartbeat acknowledgement");
-                if (!this.#isReconnecting) {
-                    this.#isReconnecting = true;
-                    await this.reconnect();
-                    this.#isReconnecting = false;
-                }
+            const closeError = new GatewayError(`WebSocket closed: ${errorMessage}`, GatewayErrorCode.WebSocketError, {
+                code: code,
+                reason,
+                message: errorMessage,
+                canReconnect,
             });
+            this.#emitError(closeError);
 
-            this.#session.on("debug", (message) => this.emit("debug", message));
-            this.#session.on("error", (error) => this.emit("error", error));
-
-            this.#emitDebug("Event listeners setup completed");
+            if (canReconnect) {
+                this.#emitDebug("Connection is recoverable, scheduling reconnection", {
+                    code: code,
+                    reason,
+                });
+                this.#scheduleReconnect();
+            } else {
+                const finalError = new GatewayError(
+                    `Cannot reconnect: ${errorMessage}`,
+                    GatewayErrorCode.ReconnectionError,
+                    {
+                        code: code,
+                        reason,
+                        message: errorMessage,
+                    },
+                );
+                this.#emitError(finalError);
+            }
         } catch (error) {
-            const gatewayError = new GatewayError(
-                "Failed to setup event listeners",
-                GatewayErrorCode.InitializationError,
-                { error },
-            );
+            const gatewayError = new GatewayError("Failed to handle WebSocket close", GatewayErrorCode.WebSocketError, {
+                code,
+                reason,
+                error,
+            });
             this.#emitError(gatewayError);
-            throw gatewayError;
         }
     }
 
@@ -323,7 +328,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             }
 
             const url = new URL("wss://gateway.discord.gg/");
-            url.searchParams.set("v", this.#options.v.toString());
+            url.searchParams.set("v", this.#options.version.toString());
             url.searchParams.set("encoding", this.#options.encoding);
 
             if (this.#options.compress) {
@@ -332,7 +337,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
             this.#emitDebug("Built gateway URL", {
                 url: url.toString(),
-                version: this.#options.v,
+                version: this.#options.version,
                 encoding: this.#options.encoding,
                 compression: this.#options.compress,
             });
@@ -549,52 +554,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
             );
             this.#emitError(gatewayError);
             this.#scheduleReconnect();
-        }
-    }
-
-    #handleClose(code: GatewayCloseCodes, reason: string): void {
-        try {
-            this.#emitDebug("Handling WebSocket close", { code: code, reason });
-
-            this.cleanup();
-            this.emit("close", code, reason);
-
-            const errorMessage = this.#getCloseCodeMessage(code);
-            const canReconnect = this.#canReconnect(code);
-
-            const closeError = new GatewayError(`WebSocket closed: ${errorMessage}`, GatewayErrorCode.WebSocketError, {
-                code: code,
-                reason,
-                message: errorMessage,
-                canReconnect,
-            });
-            this.#emitError(closeError);
-
-            if (canReconnect) {
-                this.#emitDebug("Connection is recoverable, scheduling reconnection", {
-                    code: code,
-                    reason,
-                });
-                this.#scheduleReconnect();
-            } else {
-                const finalError = new GatewayError(
-                    `Cannot reconnect: ${errorMessage}`,
-                    GatewayErrorCode.ReconnectionError,
-                    {
-                        code: code,
-                        reason,
-                        message: errorMessage,
-                    },
-                );
-                this.#emitError(finalError);
-            }
-        } catch (error) {
-            const gatewayError = new GatewayError("Failed to handle WebSocket close", GatewayErrorCode.WebSocketError, {
-                code,
-                reason,
-                error,
-            });
-            this.#emitError(gatewayError);
         }
     }
 

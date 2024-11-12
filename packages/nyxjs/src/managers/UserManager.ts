@@ -19,8 +19,8 @@ type CacheKey = `user:${string}` | `member:${string}` | `connections:${string}` 
 type CacheValue = UserStructure | GuildMemberStructure | ConnectionStructure[] | GuildStructure[];
 
 export class UserManager {
-    #client: Client;
-    #cache: Map<CacheKey, { value: CacheValue; timestamp: number }> = new Map();
+    readonly #client: Client;
+    readonly #cache: Map<CacheKey, { value: CacheValue; timestamp: number }> = new Map();
 
     constructor(client: Client) {
         this.#client = client;

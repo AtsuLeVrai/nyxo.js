@@ -1,7 +1,6 @@
 import type { Integer } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
-import { EventEmitter } from "eventemitter3";
-import type { GatewayEvents } from "../types/index.js";
+import type { Gateway } from "../Gateway.js";
 
 export interface HeartbeatState {
     interval: NodeJS.Timeout | null;
@@ -31,17 +30,21 @@ export class HeartbeatError extends Error {
         this.code = code;
         this.details = details;
         this.cause = cause;
+
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 
-export class HeartbeatManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn" | "missedAck">> {
-    #maxMissedAcks = 3;
-    #minInterval = 1000;
-    #maxInterval = 60000;
+export class HeartbeatManager {
+    readonly #gateway: Gateway;
+
+    readonly #maxMissedAcks = 3;
+    readonly #minInterval = 1000;
+    readonly #maxInterval = 60000;
     #state: HeartbeatState;
 
-    constructor() {
-        super();
+    constructor(gateway: Gateway) {
+        this.#gateway = gateway;
         this.#state = this.#createInitialState();
     }
 
@@ -221,14 +224,15 @@ export class HeartbeatManager extends EventEmitter<Pick<GatewayEvents, "error" |
         }
     }
 
-    #handleMissedAck(): void {
+    async #handleMissedAck(): Promise<void> {
         this.#state.missedAcks++;
 
         const warning = `No heartbeat acknowledgement received. Missed acks: ${
             this.#state.missedAcks
         }/${this.#maxMissedAcks}`;
 
-        this.emit("missedAck", warning);
+        this.#gateway.emit("missedAck", warning);
+        await this.#gateway.reconnect();
 
         if (this.#state.missedAcks >= this.#maxMissedAcks) {
             const error = new HeartbeatError(
@@ -247,7 +251,7 @@ export class HeartbeatManager extends EventEmitter<Pick<GatewayEvents, "error" |
     }
 
     #emitError(error: HeartbeatError): void {
-        this.emit(
+        this.#gateway.emit(
             "error",
             Logger.debug(error.message, {
                 component: "HeartbeatManager",
@@ -259,7 +263,7 @@ export class HeartbeatManager extends EventEmitter<Pick<GatewayEvents, "error" |
     }
 
     #emitDebug(message: string): void {
-        this.emit(
+        this.#gateway.emit(
             "debug",
             Logger.debug(message, {
                 component: "HeartbeatManager",

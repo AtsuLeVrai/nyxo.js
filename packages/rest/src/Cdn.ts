@@ -72,6 +72,8 @@ class CdnError extends Error {
         super(message);
         this.name = "CdnError";
         this.code = code;
+
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 

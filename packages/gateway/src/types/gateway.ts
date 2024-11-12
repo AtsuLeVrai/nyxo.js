@@ -1,4 +1,4 @@
-import type { ApiVersions, GatewayOpcodes, Integer } from "@nyxjs/core";
+import type { ApiVersions, GatewayIntentResolvable, GatewayOpcodes, Integer } from "@nyxjs/core";
 import type { UpdatePresenceGatewayPresenceUpdateStructure } from "../events/index.js";
 import type { GatewayReceiveEvents } from "./events.js";
 
@@ -52,7 +52,7 @@ export interface GatewayOptions {
     /**
      * The optional transport compression of globals packets zlib-stream or zstd-stream
      */
-    compress?: CompressTypes;
+    compress: CompressTypes;
     /**
      * The encoding of received globals packets json or etf
      */
@@ -60,7 +60,7 @@ export interface GatewayOptions {
     /**
      * The intents for the globals connection.
      */
-    intents: Integer;
+    intents: GatewayIntentResolvable;
     /**
      * The large threshold for the globals connection.
      */
@@ -77,7 +77,7 @@ export interface GatewayOptions {
     /**
      * API version
      */
-    v: ApiVersions;
+    version: ApiVersions;
 }
 
 /**

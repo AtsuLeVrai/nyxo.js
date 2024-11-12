@@ -1,4 +1,4 @@
-import type { ApiVersions, GatewayCloseCodes, GatewayIntentResolvable } from "@nyxjs/core";
+import type { GatewayCloseCodes } from "@nyxjs/core";
 import type { GatewayOptions, PresenceUpdateEventFields } from "@nyxjs/gateway";
 import type { RateLimitInfo, RestOptions } from "@nyxjs/rest";
 import type WebSocket from "ws";
@@ -40,12 +40,7 @@ import type {
     Webhook,
 } from "../structures/index.js";
 
-export interface ClientOptions {
-    gateway?: Partial<Omit<GatewayOptions, "intents" | "v">>;
-    intents: GatewayIntentResolvable;
-    rest?: Partial<Omit<RestOptions, "version">>;
-    version?: ApiVersions;
-}
+export type ClientOptions = GatewayOptions & RestOptions;
 
 export interface ClientState {
     isConnecting: boolean;

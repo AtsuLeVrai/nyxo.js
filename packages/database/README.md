@@ -1,7 +1,7 @@
 <div align="center" style="padding: 30px;">
-  <h1 style="font-size: 3em; font-weight: bold;">@nyxjs/panel 📊</h1>
+  <h1 style="font-size: 3em; font-weight: bold;">@nyxjs/database 🗄️</h1>
   <h6 style="font-size: 1em; font-weight: bold;">Not currently under development</h6>
-  <p style="font-size: 1.2em; margin-top: 10px;">Administrative Panel for Monitoring Nyx.js Bot Statistics</p>
+  <p style="font-size: 1.2em; margin-top: 10px;">A versatile database abstraction layer for the Nyx.js ecosystem, seamlessly integrating and managing multiple database engines for Discord bots.</p>
   <img src="../../assets/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="margin-top: 20px; border-radius: 8px;">
 </div>
 
@@ -11,6 +11,6 @@
 
 ## 🌟 Description
 
-**@nyxjs/panel** is an administrative dashboard built with Next.js, designed to provide a real-time overview of your
-Nyx.js bot's statistics, such as guild count, member count, and command usage. This panel streamlines bot management by
-giving you instant access to essential metrics and insights.
+**@nyxjs/database** is a robust database management system tailored for Discord bots within the Nyx.js ecosystem. This
+package provides a unified interface to work with multiple database engines, offering flexibility and power while
+maintaining ease of use.

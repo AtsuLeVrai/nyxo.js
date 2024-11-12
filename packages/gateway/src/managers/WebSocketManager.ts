@@ -1,8 +1,7 @@
 import { GatewayCloseCodes } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
-import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
-import type { GatewayEvents } from "../types/index.js";
+import type { Gateway } from "../Gateway.js";
 
 export interface WebSocketState {
     socket: WebSocket | null;
@@ -33,10 +32,14 @@ export class WebSocketError extends Error {
         this.code = code;
         this.details = details;
         this.cause = cause;
+
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 
-export class WebSocketManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn" | "raw" | "close">> {
+export class WebSocketManager {
+    readonly #gateway: Gateway;
+
     #state: WebSocketState = {
         socket: null,
         isOpen: false,
@@ -45,6 +48,10 @@ export class WebSocketManager extends EventEmitter<Pick<GatewayEvents, "error" |
         bytesReceived: 0,
         bytesSent: 0,
     };
+
+    constructor(gateway: Gateway) {
+        this.#gateway = gateway;
+    }
 
     get state(): WebSocketState {
         return { ...this.#state };
@@ -168,7 +175,8 @@ export class WebSocketManager extends EventEmitter<Pick<GatewayEvents, "error" |
             bytesReceived: this.#state.bytesReceived,
             bytesSent: this.#state.bytesSent,
         });
-        this.emit("close", code, reason.toString());
+
+        this.#gateway.handleClose(code, reason.toString());
     }
 
     #handleSocketError(error: Error): void {
@@ -181,12 +189,12 @@ export class WebSocketManager extends EventEmitter<Pick<GatewayEvents, "error" |
         this.#emitError(error);
     }
 
-    #handleMessage(data: WebSocket.RawData, isBinary: boolean): void {
+    async #handleMessage(data: WebSocket.RawData, isBinary: boolean): Promise<void> {
         try {
             const dataLength = Buffer.isBuffer(data) ? data.length : data.toString().length;
             this.#state.bytesReceived += dataLength;
             this.#emitDebug(`Received ${dataLength} bytes`, { isBinary });
-            this.emit("raw", data, isBinary);
+            await this.#gateway.handleMessage(data, isBinary);
         } catch (error) {
             const wsError = new WebSocketError("Error processing WebSocket message", WebSocketErrorCode.StateError, {
                 dataSize: data.slice.length,
@@ -214,7 +222,7 @@ export class WebSocketManager extends EventEmitter<Pick<GatewayEvents, "error" |
     }
 
     #emitError(error: WebSocketError): void {
-        this.emit(
+        this.#gateway.emit(
             "error",
             Logger.error(error.message, {
                 component: "WebSocketManager",
@@ -226,7 +234,7 @@ export class WebSocketManager extends EventEmitter<Pick<GatewayEvents, "error" |
     }
 
     #emitDebug(message: string, details?: Record<string, unknown>): void {
-        this.emit(
+        this.#gateway.emit(
             "debug",
             Logger.debug(message, {
                 component: "WebSocketManager",

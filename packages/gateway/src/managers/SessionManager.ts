@@ -1,8 +1,7 @@
 import type { Integer } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
 import type { GetGatewayBotJsonResponse } from "@nyxjs/rest";
-import { EventEmitter } from "eventemitter3";
-import type { GatewayEvents } from "../types/index.js";
+import type { Gateway } from "../Gateway.js";
 
 interface SessionState {
     sequence: Integer | null;
@@ -37,21 +36,29 @@ export class SessionError extends Error {
         this.code = code;
         this.details = details;
         this.cause = cause;
+
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 
-export class SessionManager extends EventEmitter<Pick<GatewayEvents, "error" | "debug" | "warn">> {
-    #defaultConcurrency = 1;
-    #rateLimitDelay = 5000;
-    #limits: SessionLimits | null = null;
-    #acquireQueue: Array<() => Promise<void>> = [];
+export class SessionManager {
+    readonly #gateway: Gateway;
+
     #isProcessing = false;
+    readonly #defaultConcurrency = 1;
+    readonly #rateLimitDelay = 5000;
+    #limits: SessionLimits | null = null;
     #resetTimeout: NodeJS.Timeout | null = null;
+    #acquireQueue: Array<() => Promise<void>> = [];
     #state: SessionState = {
         sequence: null,
         sessionId: null,
         resumeUrl: null,
     };
+
+    constructor(gateway: Gateway) {
+        this.#gateway = gateway;
+    }
 
     get remaining(): number {
         return this.#limits?.remaining ?? 0;
@@ -305,7 +312,7 @@ export class SessionManager extends EventEmitter<Pick<GatewayEvents, "error" | "
     }
 
     #emitError(error: SessionError): void {
-        this.emit(
+        this.#gateway.emit(
             "error",
             Logger.error(error.message, {
                 component: "SessionManager",
@@ -317,7 +324,7 @@ export class SessionManager extends EventEmitter<Pick<GatewayEvents, "error" | "
     }
 
     #emitDebug(message: string): void {
-        this.emit(
+        this.#gateway.emit(
             "debug",
             Logger.debug(message, {
                 component: "SessionManager",

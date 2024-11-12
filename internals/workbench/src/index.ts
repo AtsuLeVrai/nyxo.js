@@ -1,23 +1,38 @@
 import { config } from "dotenv";
-import { WorkBench } from "./client.js";
-import { WorkBenchClientOptions } from "./config.js";
-import { logger } from "./utils/index.js";
+import { ApiVersions, Client, CompressTypes, EncodingTypes, GatewayIntents } from "nyx.js";
 
-config();
+const env = config();
 
-if (!process.env["DISCORD_TOKEN"]) {
+if (!env.parsed?.["DISCORD_TOKEN"]) {
     throw new Error("no discord token");
 }
 
-process.on("unhandledRejection", (error) => {
-    logger.error(error);
+let startTime = 0;
+
+const client = new Client(env.parsed["DISCORD_TOKEN"], {
+    compress: CompressTypes.ZlibStream,
+    encoding: EncodingTypes.Json,
+    intents: GatewayIntents.all(),
+    version: ApiVersions.V10,
+});
+
+client.on("error", console.log);
+client.on("debug", console.log);
+client.on("warn", console.log);
+client.on("missedAck", console.log);
+client.on("close", console.log);
+
+client.on("ready", (_ready) => {
+    const _connectionTime = performance.now() - startTime;
+});
+
+startTime = performance.now();
+client.connect().catch(console.error);
+
+process.on("unhandledRejection", (_error) => {
     process.exit(1);
 });
 
-process.on("uncaughtException", (error) => {
-    logger.error(error);
+process.on("uncaughtException", (_error) => {
     process.exit(1);
 });
-
-const workBench = new WorkBench(process.env["DISCORD_TOKEN"], WorkBenchClientOptions);
-void workBench.start();

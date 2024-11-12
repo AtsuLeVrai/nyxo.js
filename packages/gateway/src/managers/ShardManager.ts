@@ -1,5 +1,5 @@
 import { platform } from "node:process";
-import { GatewayOpcodes, type GuildStructure, type Integer, type Snowflake } from "@nyxjs/core";
+import { GatewayIntents, GatewayOpcodes, type GuildStructure, type Integer, type Snowflake } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
 import { GatewayRoutes, type Rest, UserRoutes } from "@nyxjs/rest";
 import type { Gateway } from "../Gateway.js";
@@ -48,24 +48,27 @@ export class ShardError extends Error {
         this.code = code;
         this.details = details;
         this.cause = cause;
+
+        Error.captureStackTrace(this, this.constructor);
     }
 }
 
 export class ShardManager {
-    #guildsPerShard = 2500;
-    #largeBotThreshold = 150_000;
-    #defaultShardCount = 1;
+    readonly #gateway: Gateway;
+    readonly #rest: Rest;
+    readonly #token: string;
+    readonly #options: Readonly<GatewayOptions>;
+    readonly #session: SessionManager;
+
     #isProcessingQueue = false;
-    #shards = new Map<number, ShardState>();
-    #connectionQueue: number[] = [];
-    #maxReconnectAttempts = 5;
-    #reconnectTimeout = 5000;
-    #buckets = new Map<number, ShardBucket>();
-    #gateway: Gateway;
-    #rest: Rest;
-    #token: string;
-    #options: Readonly<GatewayOptions>;
-    #session: SessionManager;
+    readonly #defaultShardCount = 1;
+    readonly #maxReconnectAttempts = 5;
+    readonly #guildsPerShard = 2500;
+    readonly #reconnectTimeout = 5000;
+    readonly #largeBotThreshold = 150_000;
+    readonly #connectionQueue: number[] = [];
+    readonly #shards = new Map<number, ShardState>();
+    readonly #buckets = new Map<number, ShardBucket>();
 
     constructor(
         gateway: Gateway,
@@ -506,7 +509,7 @@ export class ShardManager {
 
             const payload: IdentifyStructure = {
                 token: this.#token,
-                intents: this.#options.intents,
+                intents: GatewayIntents.resolve(this.#options.intents),
                 properties: {
                     os: platform,
                     browser: "nyxjs",

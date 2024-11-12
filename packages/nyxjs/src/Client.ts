@@ -1,5 +1,5 @@
-import { ApiVersions, GatewayIntents } from "@nyxjs/core";
-import { CompressTypes, EncodingTypes, Gateway, type GatewayOptions } from "@nyxjs/gateway";
+import { GatewayIntents } from "@nyxjs/core";
+import { Gateway, type GatewayOptions } from "@nyxjs/gateway";
 import { Rest, type RestOptions } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import { ClientEventManager, GuildManager, UserManager } from "./managers/index.js";
@@ -8,20 +8,20 @@ import type { ClientEvents, ClientOptions, ClientState } from "./types/index.js"
 
 export class Client extends EventEmitter<ClientEvents> {
     readonly #token: string;
-    readonly #options: Required<ClientOptions>;
+    readonly #options: Readonly<ClientOptions>;
     readonly #events: ClientEventManager;
     readonly #state: ClientState;
 
     #user?: User;
-    #rest?: Rest;
-    #gateway?: Gateway;
-    #guilds?: GuildManager;
-    #users?: UserManager;
+    readonly #rest?: Rest;
+    readonly #gateway?: Gateway;
+    readonly #guilds?: GuildManager;
+    readonly #users?: UserManager;
 
     constructor(token: string, options: ClientOptions) {
         super();
         this.#token = this.#validateToken(token);
-        this.#options = this.#initializeConfig(options);
+        this.#options = Object.freeze(options);
         this.#state = this.#createInitialState();
         this.#rest = this.#initializeRest();
         this.#gateway = this.#initializeGateway();
@@ -166,10 +166,10 @@ export class Client extends EventEmitter<ClientEvents> {
     #initializeRest(): Rest {
         const options: RestOptions = {
             version: this.#options.version,
-            maxRetries: this.#options.rest.maxRetries,
-            rateLimitRetries: this.#options.rest.rateLimitRetries,
-            userAgent: this.#options.rest.userAgent,
-            timeout: this.#options.rest.timeout,
+            maxRetries: this.#options.maxRetries,
+            rateLimitRetries: this.#options.rateLimitRetries,
+            userAgent: this.#options.userAgent,
+            timeout: this.#options.timeout,
         };
 
         return new Rest(this.#token, options);
@@ -181,13 +181,13 @@ export class Client extends EventEmitter<ClientEvents> {
         }
 
         const options: GatewayOptions = {
-            shard: this.#options.gateway.shard,
-            compress: this.#options.gateway.compress,
-            encoding: this.#options.gateway.encoding as EncodingTypes,
-            v: this.#options.version,
-            largeThreshold: this.#options.gateway.largeThreshold,
+            shard: this.#options.shard,
+            compress: this.#options.compress,
+            encoding: this.#options.encoding,
+            version: this.#options.version,
+            largeThreshold: this.#options.largeThreshold,
             intents: GatewayIntents.resolve(this.#options.intents),
-            presence: this.#options.gateway.presence,
+            presence: this.#options.presence,
         };
 
         return new Gateway(this.#token, this.#rest, options);
@@ -207,43 +207,5 @@ export class Client extends EventEmitter<ClientEvents> {
         }
 
         return new UserManager(this);
-    }
-
-    #initializeConfig(options: ClientOptions): Required<ClientOptions> {
-        const defaultConfig: Required<ClientOptions> = {
-            version: ApiVersions.V10,
-            intents: [],
-            gateway: {
-                encoding: EncodingTypes.Json,
-                compress: CompressTypes.ZlibStream,
-                shard: undefined,
-                presence: undefined,
-                largeThreshold: undefined,
-            },
-            rest: {
-                timeout: undefined,
-                userAgent: undefined,
-                rateLimitRetries: undefined,
-                maxRetries: undefined,
-            },
-        };
-
-        return {
-            version: options.version ?? defaultConfig.version,
-            intents: options.intents,
-            gateway: {
-                encoding: options.gateway?.encoding ?? defaultConfig.gateway.encoding,
-                compress: options.gateway?.compress ?? defaultConfig.gateway.compress,
-                shard: options.gateway?.shard,
-                presence: options.gateway?.presence,
-                largeThreshold: options.gateway?.largeThreshold,
-            },
-            rest: {
-                timeout: options.rest?.timeout,
-                userAgent: options.rest?.userAgent,
-                rateLimitRetries: options.rest?.rateLimitRetries,
-                maxRetries: options.rest?.maxRetries,
-            },
-        };
     }
 }
