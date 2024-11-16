@@ -2,6 +2,7 @@ import { GatewayCloseCodes } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
 import WebSocket from "ws";
 import type { Gateway } from "../Gateway.js";
+import { BaseError, ErrorCodes } from "../errors/index.js";
 
 export interface WebSocketState {
     socket: WebSocket | null;
@@ -14,28 +15,7 @@ export interface WebSocketState {
     bytesSent: number;
 }
 
-export enum WebSocketErrorCode {
-    ConnectionError = "WEBSOCKET_CONNECTION_ERROR",
-    SendError = "WEBSOCKET_SEND_ERROR",
-    CleanupError = "WEBSOCKET_CLEANUP_ERROR",
-    StateError = "WEBSOCKET_STATE_ERROR",
-    InvalidState = "WEBSOCKET_INVALID_STATE",
-}
-
-export class WebSocketError extends Error {
-    code: WebSocketErrorCode;
-    details?: Record<string, unknown>;
-
-    constructor(message: string, code: WebSocketErrorCode, details?: Record<string, unknown>, cause?: Error) {
-        super(message);
-        this.name = "WebSocketError";
-        this.code = code;
-        this.details = details;
-        this.cause = cause;
-
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
+export class WebSocketError extends BaseError {}
 
 export class WebSocketManager {
     readonly #gateway: Gateway;
@@ -74,7 +54,7 @@ export class WebSocketManager {
         } catch (error) {
             const wsError = new WebSocketError(
                 "Failed to establish WebSocket connection",
-                WebSocketErrorCode.ConnectionError,
+                ErrorCodes.WebSocketConnectionError,
                 { url, error },
             );
             this.#handleError(wsError);
@@ -91,7 +71,7 @@ export class WebSocketManager {
             this.#state.socket.removeAllListeners();
             this.#state.socket.close(GatewayCloseCodes.UnknownError, "WebSocket manager destroyed");
         } catch (error) {
-            const wsError = new WebSocketError("Error during WebSocket cleanup", WebSocketErrorCode.CleanupError, {
+            const wsError = new WebSocketError("Error during WebSocket cleanup", ErrorCodes.WebSocketCleanupError, {
                 error,
             });
             this.#handleError(wsError);
@@ -105,7 +85,7 @@ export class WebSocketManager {
         if (!this.isConnected()) {
             const wsError = new WebSocketError(
                 "Attempted to send a message while the WebSocket is not open",
-                WebSocketErrorCode.InvalidState,
+                ErrorCodes.WebSocketInvalidState,
                 { socketState: this.#state.socket?.readyState },
             );
             this.#emitError(wsError);
@@ -117,7 +97,7 @@ export class WebSocketManager {
             this.#state.bytesSent += data.length;
             this.#emitDebug(`Sent ${data.length} bytes over WebSocket`);
         } catch (error) {
-            const wsError = new WebSocketError("Failed to send WebSocket message", WebSocketErrorCode.SendError, {
+            const wsError = new WebSocketError("Failed to send WebSocket message", ErrorCodes.WebSocketSendError, {
                 dataLength: data.length,
                 error,
             });
@@ -141,11 +121,12 @@ export class WebSocketManager {
         };
         this.#emitDebug("WebSocket state reset", { oldState: JSON.stringify(oldState) });
     }
+
     #setupEventListeners(): void {
         if (!this.#state.socket) {
             const wsError = new WebSocketError(
                 "Cannot setup listeners: socket is null",
-                WebSocketErrorCode.InvalidState,
+                ErrorCodes.WebSocketInvalidState,
             );
             this.#handleError(wsError);
             return;
@@ -180,7 +161,7 @@ export class WebSocketManager {
     }
 
     #handleSocketError(error: Error): void {
-        const wsError = new WebSocketError("WebSocket error occurred", WebSocketErrorCode.ConnectionError, { error });
+        const wsError = new WebSocketError("WebSocket error occurred", ErrorCodes.WebSocketConnectionError, { error });
         this.#handleError(wsError);
     }
 
@@ -196,7 +177,7 @@ export class WebSocketManager {
             this.#emitDebug(`Received ${dataLength} bytes`, { isBinary });
             await this.#gateway.handleMessage(data, isBinary);
         } catch (error) {
-            const wsError = new WebSocketError("Error processing WebSocket message", WebSocketErrorCode.StateError, {
+            const wsError = new WebSocketError("Error processing WebSocket message", ErrorCodes.WebSocketStateError, {
                 dataSize: data.slice.length,
                 isBinary,
                 error,

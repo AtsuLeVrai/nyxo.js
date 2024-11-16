@@ -4,7 +4,7 @@
 </div>
 
 [![Formatted with Biome](https://img.shields.io/badge/Formatted_with-Biome-27272a?style=for-the-badge&logo=biome)](https://biomejs.dev/)
-[![Powered by TurboRepo](https://img.shields.io/badge/Powered_by-TurboRepo-3f3f46?style=for-the-badge&logo=turborepo)](https://turborepo.dev/)
+[![Powered by Nx](https://img.shields.io/badge/Powered_by-Nx-3f3f46?style=for-the-badge&logo=nx)](https://nx.dev/)
 [![AGPL-3.0 License](https://img.shields.io/badge/License-AGPL_3.0-52525b?style=for-the-badge)](https://www.gnu.org/licenses/agpl-3.0.html)
 [![Typescript](https://img.shields.io/badge/TypeScript-Ready-71717a?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 
@@ -69,7 +69,7 @@ pnpm run setup
 
 ## 🛠️ Development Workflow
 
-This monorepo is managed with **TurboRepo** for high-performance builds and efficient package management.
+This monorepo is managed with **Nx** for high-performance builds and efficient package management.
 
 ### Key Commands
 

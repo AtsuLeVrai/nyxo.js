@@ -1,23 +1,101 @@
 /**
- * Represents a value that can be resolved to a bitfield.
- * It can be an array of T, bigint, or string representations of bigint,
- * an instance of BitfieldManager, a single T, a bigint, or a string representation of a bigint.
+ * Discord Bitfield Management System
+ *
+ * Provides a robust and type-safe way to handle Discord's bitfield-based flags,
+ * such as permissions, intents, and other binary flag combinations.
+ *
+ * @module BitfieldManager
+ * @version 1.0.0
+ */
+
+/**
+ * BitfieldResolvable Type
+ *
+ * Represents values that can be resolved into a bitfield.
+ * Supports various input formats for maximum flexibility.
+ *
+ * @typeParam T - The type of the individual flags (usually an enum)
+ *
+ * Supported formats:
+ * 1. Array of flags/bigints/strings
+ * 2. Single flag/bigint/string
+ * 3. BitfieldManager instance
+ *
+ * @example
+ * ```typescript
+ * // Using with Permissions
+ * type PermissionResolvable = BitfieldResolvable<typeof Permissions>;
+ *
+ * // Valid inputs
+ * const inputs: PermissionResolvable[] = [
+ *   [Permissions.ADMIN, Permissions.BAN_MEMBERS], // Flag array
+ *   8n,                                          // BigInt
+ *   "8",                                         // String
+ *   new BitfieldManager([Permissions.ADMIN])     // BitfieldManager
+ * ];
+ * ```
  */
 export type BitfieldResolvable<T> = (T | bigint | `${bigint}`)[] | BitfieldManager<T> | T | bigint | `${bigint}`;
 
 /**
- * A class that manages bitfields with type-safe flag operations.
+ * Bitfield Management Class
+ *
+ * Provides a comprehensive system for managing binary flags with type safety.
+ * Useful for handling Discord's permission systems, intents, and other bitfield-based features.
+ *
+ * Features:
+ * - Type-safe flag operations
+ * - Chainable methods
+ * - Flexible input formats
+ * - Error validation
+ *
+ * @typeParam T - The type of the flags being managed (usually an enum)
+ *
+ * @example
+ * ```typescript
+ * // Managing permissions
+ * const permissions = new BitfieldManager([
+ *   Permissions.VIEW_CHANNEL,
+ *   Permissions.SEND_MESSAGES
+ * ]);
+ *
+ * // Checking permissions
+ * if (permissions.has(Permissions.ADMIN)) {
+ *   console.log('Has admin permissions');
+ * }
+ *
+ * // Chaining operations
+ * permissions
+ *   .add(Permissions.BAN_MEMBERS)
+ *   .remove(Permissions.SEND_MESSAGES)
+ *   .toggle(Permissions.MANAGE_ROLES);
+ * ```
  */
 export class BitfieldManager<T> {
     /**
-     * The internal bitfield value.
+     * Internal bitfield value
+     * Stored as BigInt to handle large flag combinations
+     * @private
      */
     #bitfield: bigint;
+
     /**
      * Creates a new BitfieldManager instance.
      *
-     * @param value - The initial value of the bitfield. Can be an array of flags or a bigint.
-     * @throws TypeError If the initial value is neither a bigint nor an array of flags.
+     * @param value - Initial bitfield value
+     * @throws {TypeError} If value is neither bigint nor flag array
+     *
+     * @example
+     * ```typescript
+     * // Initialize with flags
+     * const flags = new BitfieldManager([Flag.A, Flag.B]);
+     *
+     * // Initialize with BigInt
+     * const value = new BitfieldManager(8n);
+     *
+     * // Initialize empty
+     * const empty = new BitfieldManager();
+     * ```
      */
     constructor(value: T[] | bigint = 0n) {
         if (typeof value === "bigint") {
@@ -30,24 +108,45 @@ export class BitfieldManager<T> {
     }
 
     /**
-     * Creates a new BitfieldManager instance from various input types.
+     * Creates a BitfieldManager from various input types.
+     * Factory method providing flexible instantiation.
      *
-     * @param value - The value to create the BitfieldManager from.
-     * @returns A new BitfieldManager instance.
+     * @param value - Source value to create from
+     * @returns New BitfieldManager instance
+     *
+     * @example
+     * ```typescript
+     * // From existing manager
+     * const copy = BitfieldManager.from(existingManager);
+     *
+     * // From flag array
+     * const fromArray = BitfieldManager.from([Flag.A, Flag.B]);
+     *
+     * // From BigInt
+     * const fromBigInt = BitfieldManager.from(8n);
+     * ```
      */
     static from<F>(value: BitfieldManager<F> | F[] | bigint): BitfieldManager<F> {
         if (value instanceof BitfieldManager) {
             return new BitfieldManager(value.valueOf());
         }
-
         return new BitfieldManager(value);
     }
 
     /**
-     * Checks if the bitfield has a specific flag set.
+     * Checks if specific flag is set.
      *
-     * @param val - The flag to check for.
-     * @returns True if the flag is set, false otherwise.
+     * @param val - Flag to check
+     * @returns True if flag is set
+     *
+     * @example
+     * ```typescript
+     * const perms = new BitfieldManager([Permissions.ADMIN]);
+     *
+     * if (perms.has(Permissions.ADMIN)) {
+     *   console.log('Has admin permissions');
+     * }
+     * ```
      */
     has(val: T): boolean {
         const bit = this.#resolve(val);
@@ -55,10 +154,18 @@ export class BitfieldManager<T> {
     }
 
     /**
-     * Adds one or more flags to the bitfield.
+     * Adds flags to the bitfield.
      *
-     * @param flags - The flags to add.
-     * @returns This BitfieldManager instance.
+     * @param flags - Flags to add
+     * @returns This instance (chainable)
+     *
+     * @example
+     * ```typescript
+     * perms.add(
+     *   Permissions.BAN_MEMBERS,
+     *   Permissions.KICK_MEMBERS
+     * );
+     * ```
      */
     add(...flags: T[]): this {
         for (const flag of flags) {
@@ -68,10 +175,18 @@ export class BitfieldManager<T> {
     }
 
     /**
-     * Removes one or more flags from the bitfield.
+     * Removes flags from the bitfield.
      *
-     * @param flags - The flags to remove.
-     * @returns This BitfieldManager instance.
+     * @param flags - Flags to remove
+     * @returns This instance (chainable)
+     *
+     * @example
+     * ```typescript
+     * perms.remove(
+     *   Permissions.SEND_MESSAGES,
+     *   Permissions.EMBED_LINKS
+     * );
+     * ```
      */
     remove(...flags: T[]): this {
         for (const flag of flags) {
@@ -81,10 +196,16 @@ export class BitfieldManager<T> {
     }
 
     /**
-     * Toggles one or more flags in the bitfield.
+     * Toggles flags in the bitfield.
      *
-     * @param flags - The flags to toggle.
-     * @returns This BitfieldManager instance.
+     * @param flags - Flags to toggle
+     * @returns This instance (chainable)
+     *
+     * @example
+     * ```typescript
+     * perms.toggle(Permissions.MANAGE_ROLES);
+     * // Turns flag on if off, off if on
+     * ```
      */
     toggle(...flags: T[]): this {
         for (const flag of flags) {
@@ -94,21 +215,28 @@ export class BitfieldManager<T> {
     }
 
     /**
-     * Gets the raw bitfield value.
+     * Gets raw bitfield value.
      *
-     * @returns The raw bitfield value as a bigint.
+     * @returns Bitfield as BigInt
+     *
+     * @example
+     * ```typescript
+     * const raw = perms.valueOf();
+     * console.log(raw.toString(2)); // Binary representation
+     * ```
      */
     valueOf(): bigint {
         return this.#bitfield;
     }
 
     /**
-     * Resolves a value to a bitfield.
+     * Resolves value to bitfield.
+     * Internal utility for converting inputs to BigInt.
      *
-     * @param value - The value to resolve. It can be a single value or an array of values.
-     * @returns The resolved bigint bitfield.
-     * @throws TypeError If the value is of an invalid type.
-     * @throws Error If a number value is not a non-negative integer.
+     * @private
+     * @param value - Value to resolve
+     * @returns Resolved BigInt value
+     * @throws {TypeError} For invalid inputs
      */
     #resolve(value: BitfieldResolvable<T> | BitfieldResolvable<T>[]): bigint {
         if (Array.isArray(value)) {
@@ -126,7 +254,6 @@ export class BitfieldManager<T> {
             if (!Number.isInteger(value) || value < 0) {
                 throw new TypeError("Number must be a non-negative integer");
             }
-
             return BigInt(value);
         }
 
@@ -138,11 +265,13 @@ export class BitfieldManager<T> {
     }
 
     /**
-     * Asserts that a string represents a valid BigInt and returns it.
+     * Validates and converts string to BigInt.
+     * Internal utility for string validation.
      *
-     * @param value The string to validate and convert.
-     * @returns The validated BigInt.
-     * @throws Error if the string is not a valid BigInt representation.
+     * @private
+     * @param value - String to validate
+     * @returns Validated BigInt
+     * @throws {Error} For invalid BigInt strings
      */
     #assertValidBigInt(value: string): bigint {
         const trimmedValue = value.trim();
@@ -157,11 +286,9 @@ export class BitfieldManager<T> {
 
         try {
             const result = BigInt(trimmedValue);
-
             if (result < 0n) {
                 throw new Error("BigInt must be non-negative for bitfield operations");
             }
-
             return result;
         } catch (error) {
             throw new Error(`Failed to create BigInt: ${error instanceof Error ? error.message : String(error)}`);

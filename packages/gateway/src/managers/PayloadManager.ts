@@ -1,60 +1,20 @@
-import type { Integer } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
 import erlpack from "erlpack";
 import type { Gateway } from "../Gateway.js";
+import { BaseError, ErrorCodes } from "../errors/index.js";
 import type { EncodingTypes } from "../types/index.js";
 
-export interface EncodingStats {
-    successfulEncodes: Integer;
-    successfulDecodes: Integer;
-    failedEncodes: Integer;
-    failedDecodes: Integer;
-    lastError: Error | null;
-    averageEncodeSize: number;
-    averageDecodeSize: number;
-    totalBytesProcessed: number;
-}
-
-export enum PayloadErrorCode {
-    UnsupportedEncoding = "UNSUPPORTED_ENCODING",
-    EncodeError = "ENCODE_ERROR",
-    DecodeError = "DECODE_ERROR",
-    InvalidInput = "INVALID_INPUT",
-    InvalidBinary = "INVALID_BINARY",
-    MaxSizeExceeded = "MAX_SIZE_EXCEEDED",
-}
-
-export class PayloadError extends Error {
-    code: PayloadErrorCode;
-    details?: Record<string, unknown>;
-
-    constructor(message: string, code: PayloadErrorCode, details?: Record<string, unknown>, cause?: Error) {
-        super(message);
-        this.name = "PayloadError";
-        this.code = code;
-        this.details = details;
-        this.cause = cause;
-
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
+export class PayloadError extends BaseError {}
 
 export class PayloadManager {
     static SUPPORTED_ENCODINGS = ["json", "etf"] as const;
+
     readonly #gateway: Gateway;
     readonly #encoding: EncodingTypes;
 
-    #stats: EncodingStats;
-
     constructor(gateway: Gateway, encoding: EncodingTypes) {
         this.#gateway = gateway;
-        this.#validateEncoding(encoding);
-        this.#encoding = encoding;
-        this.#stats = this.#createInitialStats();
-    }
-
-    get stats(): EncodingStats {
-        return { ...this.#stats };
+        this.#encoding = this.#validateEncoding(encoding);
     }
 
     decode<T>(data: Buffer | string, isBinary: boolean): T {
@@ -63,13 +23,18 @@ export class PayloadManager {
             this.#validateDecodeInput(data, isBinary);
 
             const result = this.#performDecode<T>(data, isBinary);
-            this.#updateDecodeStats(data);
             this.#emitDebug("Decode operation completed successfully");
             return result;
         } catch (error) {
-            this.#handleError("decode", error);
             const payloadError =
-                error instanceof PayloadError ? error : this.#createPayloadError("decode", error as Error);
+                error instanceof PayloadError
+                    ? error
+                    : new PayloadError(
+                          `Failed to decode payload: ${(error as Error).message}`,
+                          ErrorCodes.PayloadDecodingError,
+                          { encoding: this.#encoding },
+                          error as Error,
+                      );
             this.#emitError(payloadError);
             throw payloadError;
         }
@@ -81,58 +46,43 @@ export class PayloadManager {
             this.#validateEncodeInput(data);
 
             const result = this.#performEncode(data);
-            this.#updateEncodeStats(result);
             this.#emitDebug("Encode operation completed successfully");
             return result;
         } catch (error) {
-            this.#handleError("encode", error);
             const payloadError =
-                error instanceof PayloadError ? error : this.#createPayloadError("encode", error as Error);
+                error instanceof PayloadError
+                    ? error
+                    : new PayloadError(
+                          `Failed to encode payload: ${(error as Error).message}`,
+                          ErrorCodes.PayloadEncodingError,
+                          { encoding: this.#encoding },
+                          error as Error,
+                      );
             this.#emitError(payloadError);
             throw payloadError;
         }
     }
 
-    resetStats(): void {
-        this.#stats = this.#createInitialStats();
-    }
-
-    #createInitialStats(): EncodingStats {
-        return {
-            successfulEncodes: 0,
-            successfulDecodes: 0,
-            failedEncodes: 0,
-            failedDecodes: 0,
-            lastError: null,
-            averageEncodeSize: 0,
-            averageDecodeSize: 0,
-            totalBytesProcessed: 0,
-        };
-    }
-
-    #validateEncoding(encoding: string): void {
-        if (!this.#isSupportedEncoding(encoding)) {
-            const error = new PayloadError(
-                `Unsupported encoding type: ${encoding}`,
-                PayloadErrorCode.UnsupportedEncoding,
-                {
-                    providedEncoding: encoding,
-                    supportedEncodings: PayloadManager.SUPPORTED_ENCODINGS,
-                },
-            );
-            this.#emitError(error);
-            throw error;
+    #validateEncoding(encoding: string): EncodingTypes {
+        const supportedEncoding = PayloadManager.SUPPORTED_ENCODINGS.includes(encoding as EncodingTypes);
+        if (!supportedEncoding) {
+            throw new PayloadError(`Unsupported encoding type: ${encoding}`, ErrorCodes.PayloadUnsupportedFormat, {
+                providedEncoding: encoding,
+                supportedEncodings: PayloadManager.SUPPORTED_ENCODINGS,
+            });
         }
         this.#emitDebug(`Encoding validated: ${encoding}`);
+
+        return encoding as EncodingTypes;
     }
 
     #validateDecodeInput(data: Buffer | string, isBinary: boolean): void {
         if (data == null) {
-            throw new PayloadError("Input data cannot be null or undefined", PayloadErrorCode.InvalidInput);
+            throw new PayloadError("Input data cannot be null or undefined", ErrorCodes.PayloadInvalidInput);
         }
 
         if (isBinary && !Buffer.isBuffer(data)) {
-            throw new PayloadError("Binary data must be provided as Buffer", PayloadErrorCode.InvalidBinary, {
+            throw new PayloadError("Binary data must be provided as Buffer", ErrorCodes.PayloadInvalidBinary, {
                 dataType: typeof data,
             });
         }
@@ -140,11 +90,11 @@ export class PayloadManager {
 
     #validateEncodeInput(data: unknown): void {
         if (data == null) {
-            throw new PayloadError("Input data cannot be null or undefined", PayloadErrorCode.InvalidInput);
+            throw new PayloadError("Input data cannot be null or undefined", ErrorCodes.PayloadInvalidInput);
         }
 
         if (this.#hasCircularReferences(data)) {
-            throw new PayloadError("Circular references detected in input data", PayloadErrorCode.InvalidInput, {
+            throw new PayloadError("Circular references detected in input data", ErrorCodes.PayloadInvalidInput, {
                 data,
             });
         }
@@ -166,20 +116,16 @@ export class PayloadManager {
                 this.#emitDebug("Decoding ETF data");
                 return erlpack.unpack(data as Buffer);
             } catch (error) {
-                const payloadError = new PayloadError("Failed to unpack ETF data", PayloadErrorCode.DecodeError, {
+                throw new PayloadError("Failed to unpack ETF data", ErrorCodes.PayloadDecodingError, {
                     originalError: error,
                 });
-                this.#emitError(payloadError);
-                throw payloadError;
             }
         }
 
-        const error = new PayloadError(
+        throw new PayloadError(
             `Unsupported encoding for decode: ${this.#encoding}`,
-            PayloadErrorCode.UnsupportedEncoding,
+            ErrorCodes.PayloadUnsupportedFormat,
         );
-        this.#emitError(error);
-        throw error;
     }
 
     #performEncode(data: unknown): Buffer | string {
@@ -193,27 +139,23 @@ export class PayloadManager {
                 this.#emitDebug("Encoding data to ETF");
                 return erlpack.pack(data);
             } catch (error) {
-                const payloadError = new PayloadError("Failed to pack ETF data", PayloadErrorCode.EncodeError, {
+                throw new PayloadError("Failed to pack ETF data", ErrorCodes.PayloadEncodingError, {
                     originalError: error,
                 });
-                this.#emitError(payloadError);
-                throw payloadError;
             }
         }
 
-        const error = new PayloadError(
+        throw new PayloadError(
             `Unsupported encoding for encode: ${this.#encoding}`,
-            PayloadErrorCode.UnsupportedEncoding,
+            ErrorCodes.PayloadUnsupportedFormat,
         );
-        this.#emitError(error);
-        throw error;
     }
 
     #parseJson(data: string): unknown {
         try {
             return JSON.parse(data);
         } catch (error) {
-            throw new PayloadError("Failed to parse JSON data", PayloadErrorCode.DecodeError, {
+            throw new PayloadError("Failed to parse JSON data", ErrorCodes.PayloadDecodingError, {
                 originalError: error,
             });
         }
@@ -223,7 +165,7 @@ export class PayloadManager {
         try {
             return JSON.stringify(data);
         } catch (error) {
-            throw new PayloadError("Failed to stringify JSON data", PayloadErrorCode.EncodeError, {
+            throw new PayloadError("Failed to stringify JSON data", ErrorCodes.PayloadEncodingError, {
                 originalError: error,
             });
         }
@@ -248,56 +190,6 @@ export class PayloadManager {
 
         seen.delete(obj);
         return false;
-    }
-
-    #updateEncodeStats(result: Buffer | string): void {
-        this.#stats.successfulEncodes++;
-        const size = Buffer.isBuffer(result) ? result.length : Buffer.byteLength(result);
-        this.#stats.totalBytesProcessed += size;
-        this.#stats.averageEncodeSize = this.#calculateNewAverage(
-            this.#stats.averageEncodeSize,
-            size,
-            this.#stats.successfulEncodes,
-        );
-    }
-
-    #updateDecodeStats(data: Buffer | string): void {
-        this.#stats.successfulDecodes++;
-        const size = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
-        this.#stats.totalBytesProcessed += size;
-        this.#stats.averageDecodeSize = this.#calculateNewAverage(
-            this.#stats.averageDecodeSize,
-            size,
-            this.#stats.successfulDecodes,
-        );
-    }
-
-    #calculateNewAverage(oldAvg: number, newValue: number, count: number): number {
-        return oldAvg + (newValue - oldAvg) / count;
-    }
-
-    #handleError(operation: "encode" | "decode", error: unknown): void {
-        if (operation === "encode") {
-            this.#stats.failedEncodes++;
-        } else {
-            this.#stats.failedDecodes++;
-        }
-        this.#stats.lastError = error as Error;
-    }
-
-    #createPayloadError(operation: "encode" | "decode", originalError: Error): PayloadError {
-        return new PayloadError(
-            `Failed to ${operation} payload: ${originalError.message}`,
-            operation === "encode" ? PayloadErrorCode.EncodeError : PayloadErrorCode.DecodeError,
-            {
-                encoding: this.#encoding,
-            },
-            originalError,
-        );
-    }
-
-    #isSupportedEncoding(encoding: string): encoding is EncodingTypes {
-        return PayloadManager.SUPPORTED_ENCODINGS.includes(encoding as EncodingTypes);
     }
 
     #emitError(error: PayloadError): void {

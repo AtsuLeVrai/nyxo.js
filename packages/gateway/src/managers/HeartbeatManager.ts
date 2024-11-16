@@ -1,6 +1,7 @@
 import type { Integer } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
 import type { Gateway } from "../Gateway.js";
+import { BaseError, ErrorCodes } from "../errors/index.js";
 
 export interface HeartbeatState {
     interval: NodeJS.Timeout | null;
@@ -13,31 +14,10 @@ export interface HeartbeatState {
     isActive: boolean;
 }
 
-export enum HeartbeatErrorCode {
-    SendFailure = "HEARTBEAT_SEND_FAILURE",
-    MaxMissedAcks = "MAX_MISSED_ACKS_EXCEEDED",
-    InvalidInterval = "INVALID_INTERVAL",
-    StateError = "HEARTBEAT_STATE_ERROR",
-}
-
-export class HeartbeatError extends Error {
-    code: HeartbeatErrorCode;
-    details?: Record<string, unknown>;
-
-    constructor(message: string, code: HeartbeatErrorCode, details?: Record<string, unknown>, cause?: Error) {
-        super(message);
-        this.name = "HeartbeatError";
-        this.code = code;
-        this.details = details;
-        this.cause = cause;
-
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
+export class HeartbeatError extends BaseError {}
 
 export class HeartbeatManager {
     readonly #gateway: Gateway;
-
     readonly #maxMissedAcks = 3;
     readonly #minInterval = 1000;
     readonly #maxInterval = 60000;
@@ -46,11 +26,6 @@ export class HeartbeatManager {
     constructor(gateway: Gateway) {
         this.#gateway = gateway;
         this.#state = this.#createInitialState();
-    }
-
-    get stats(): Omit<HeartbeatState, "interval" | "timer"> {
-        const { interval, timer, ...stats } = this.#state;
-        return stats;
     }
 
     setInterval(intervalMs: Integer, onHeartbeat: () => void): void {
@@ -67,9 +42,9 @@ export class HeartbeatManager {
             this.#state.timer = this.#createSafeTimeout(() => {
                 this.#sendHeartbeat(onHeartbeat);
 
-                this.#state.interval = this.#createSafeInterval(() => {
+                this.#state.interval = this.#createSafeInterval(async () => {
                     if (!this.#state.lastAck) {
-                        this.#handleMissedAck();
+                        await this.#handleMissedAck();
                         return;
                     }
 
@@ -79,7 +54,7 @@ export class HeartbeatManager {
         } catch (error) {
             const heartbeatError = new HeartbeatError(
                 "Failed to set heartbeat interval",
-                HeartbeatErrorCode.StateError,
+                ErrorCodes.HeartbeatStateError,
                 {
                     originalError: error,
                     intervalMs,
@@ -95,7 +70,7 @@ export class HeartbeatManager {
             if (!this.#state.isActive) {
                 throw new HeartbeatError(
                     "Cannot acknowledge heartbeat: manager is not active",
-                    HeartbeatErrorCode.StateError,
+                    ErrorCodes.HeartbeatStateError,
                 );
             }
 
@@ -116,7 +91,7 @@ export class HeartbeatManager {
             const heartbeatError =
                 error instanceof HeartbeatError
                     ? error
-                    : new HeartbeatError("Failed to acknowledge heartbeat", HeartbeatErrorCode.StateError, {
+                    : new HeartbeatError("Failed to acknowledge heartbeat", ErrorCodes.HeartbeatStateError, {
                           originalError: error,
                       });
             this.#emitError(heartbeatError);
@@ -139,7 +114,7 @@ export class HeartbeatManager {
             this.#state = this.#createInitialState();
             this.#emitDebug("Heartbeat manager cleaned up");
         } catch (error) {
-            const heartbeatError = new HeartbeatError("Error during cleanup", HeartbeatErrorCode.StateError, {
+            const heartbeatError = new HeartbeatError("Error during cleanup", ErrorCodes.HeartbeatStateError, {
                 originalError: error,
             });
             this.#emitError(heartbeatError);
@@ -163,7 +138,7 @@ export class HeartbeatManager {
         if (!Number.isInteger(intervalMs) || intervalMs < this.#minInterval || intervalMs > this.#maxInterval) {
             throw new HeartbeatError(
                 `Invalid heartbeat interval: must be between ${this.#minInterval}ms and ${this.#maxInterval}ms`,
-                HeartbeatErrorCode.InvalidInterval,
+                ErrorCodes.HeartbeatIntervalError,
                 { providedInterval: intervalMs },
             );
         }
@@ -179,7 +154,7 @@ export class HeartbeatManager {
                 callback();
             } catch (error) {
                 this.#emitError(
-                    new HeartbeatError("Error in timeout callback", HeartbeatErrorCode.StateError, {
+                    new HeartbeatError("Error in timeout callback", ErrorCodes.HeartbeatStateError, {
                         originalError: error,
                     }),
                 );
@@ -193,7 +168,7 @@ export class HeartbeatManager {
                 callback();
             } catch (error) {
                 this.#emitError(
-                    new HeartbeatError("Error in interval callback", HeartbeatErrorCode.StateError, {
+                    new HeartbeatError("Error in interval callback", ErrorCodes.HeartbeatIntervalError, {
                         originalError: error,
                     }),
                 );
@@ -215,7 +190,7 @@ export class HeartbeatManager {
             //     missedAcks: this.#state.missedAcks,
             // });
         } catch (error) {
-            const heartbeatError = new HeartbeatError("Failed to send heartbeat", HeartbeatErrorCode.SendFailure, {
+            const heartbeatError = new HeartbeatError("Failed to send heartbeat", ErrorCodes.HeartbeatSendError, {
                 originalError: error,
                 totalBeats: this.#state.totalBeats,
             });
@@ -237,7 +212,7 @@ export class HeartbeatManager {
         if (this.#state.missedAcks >= this.#maxMissedAcks) {
             const error = new HeartbeatError(
                 `Maximum missed heartbeats (${this.#maxMissedAcks}) exceeded`,
-                HeartbeatErrorCode.MaxMissedAcks,
+                ErrorCodes.HeartbeatMaxMissedError,
                 {
                     missedAcks: this.#state.missedAcks,
                     maxMissedAcks: this.#maxMissedAcks,

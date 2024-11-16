@@ -1,201 +1,338 @@
 /**
- * @see {@link https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags|Permissions}
+ * Discord Permission System
+ *
+ * This module defines the bitwise permission flags used in Discord's permission system.
+ * Permissions are stored as a bitfield, where each bit represents a specific permission.
+ *
+ * @module Discord Permissions
+ * @version 1.0.0
+ * @see {@link https://discord.com/developers/docs/topics/permissions}
+ */
+
+/**
+ * Discord Bitwise Permission Flags
+ *
+ * Represents all available permissions in Discord. These permissions are grouped into
+ * several categories for better organization:
+ * - General Server Management
+ * - Member Management
+ * - Channel & Messages
+ * - Voice & Stage
+ * - Events & Activities
+ * - Content Management
+ * - Advanced Features
+ *
+ * @remarks
+ * Permissions are stored as bits in a bitfield. To check if a user has a permission,
+ * perform a bitwise AND operation between the user's permission bitfield and the
+ * desired permission flag.
+ *
+ * @example
+ * ```typescript
+ * // Checking if a user has administrator permissions
+ * const hasAdmin = (userPermissions & BitwisePermissions.Administrator) === BitwisePermissions.Administrator;
+ *
+ * // Creating a permission bitfield with multiple permissions
+ * const moderatorPerms =
+ *   BitwisePermissions.KickMembers |
+ *   BitwisePermissions.BanMembers |
+ *   BitwisePermissions.ManageMessages;
+ * ```
  */
 export enum BitwisePermissions {
     /**
-     * Allows creation of instant invites
+     * Enables creating instant invites to the server.
+     * Basic server growth permission.
      */
-    CreateInstantInvite = 1,
+    CreateInstantInvite = 0x0000000000000001,
+
     /**
-     * Allows kicking members
+     * Allows removing members from the server.
+     * Members can rejoin with a new invite unless banned.
      */
-    KickMembers = 2,
+    KickMembers = 0x0000000000000002,
+
     /**
-     * Allows banning members
+     * Enables permanently removing members from the server.
+     * Banned members cannot rejoin unless unbanned.
      */
-    BanMembers = 4,
+    BanMembers = 0x0000000000000004,
+
     /**
-     * Allows all permissions and bypasses channel permission overwrites
+     * Grants all permissions and bypasses channel permission overwrites.
+     * This is a dangerous permission that should be granted carefully.
+     *
+     * @security Critical permission that provides full control
      */
-    Administrator = 8,
+    Administrator = 0x0000000000000008,
+
     /**
-     * Allows management and editing of channels
+     * Allows creating, editing, and deleting channels.
+     * Includes text, voice, and category channels.
      */
-    ManageChannels = 16,
+    ManageChannels = 0x0000000000000010,
+
     /**
-     * Allows management and editing of the guild
+     * Allows management and editing of the guild's settings.
+     * This includes server name, icon, verification level, etc.
      */
-    ManageGuild = 32,
+    ManageGuild = 0x0000000000000020,
+
     /**
-     * Allows for the addition of reactions to messages
+     * Enables adding reactions to messages.
+     * Basic interaction permission.
      */
-    AddReactions = 64,
+    AddReactions = 0x0000000000000040,
+
     /**
-     * Allows for viewing of audit logs
+     * Enables viewing the server's audit log.
+     * Contains detailed history of all server changes.
      */
-    ViewAuditLog = 128,
+    ViewAuditLog = 0x0000000000000080,
+
     /**
-     * Allows for using priority speaker in a voice channel
+     * Grants priority speaker status in voice channels.
+     * Reduces others' audio when speaking.
      */
-    PrioritySpeaker = 256,
+    PrioritySpeaker = 0x0000000000000100,
+
     /**
-     * Allows the user to go live
+     * Allows streaming video in voice channels.
+     * Required for screen sharing and video calls.
      */
-    Stream = 512,
+    Stream = 0x0000000000000200,
+
     /**
-     * Allows guild members to view a channel, which includes reading messages in text channels and joining voice channels
+     * Enables viewing channels and reading messages.
+     * Basic permission required for channel access.
      */
-    ViewChannel = 1_024,
+    ViewChannel = 0x0000000000000400,
+
     /**
-     * Allows for sending messages in a channel and creating threads in a forum (does not allow sending messages in threads)
+     * Permits sending messages in text channels.
+     * Also allows creating threads in forum channels.
      */
-    SendMessages = 2_048,
+    SendMessages = 0x0000000000000800,
+
     /**
-     * Allows for sending of /tts messages
+     * Allows sending Text-to-Speech messages.
+     * Can be restricted to prevent disruption.
      */
-    SendTtsMessages = 4_096,
+    SendTtsMessages = 0x0000000000001000,
+
     /**
-     * Allows for deletion of other users messages
+     * Enables deletion and pinning of messages.
+     * Applies to all messages, not just own messages.
      */
-    ManageMessages = 8_192,
+    ManageMessages = 0x0000000000002000,
+
     /**
-     * Links sent by users with this permission will be auto-embedded
+     * Permits automatic embedding of links.
+     * Affects message appearance and previews.
      */
-    EmbedLinks = 16_384,
+    EmbedLinks = 0x0000000000004000,
+
     /**
-     * Allows for uploading images and files
+     * Enables file and image uploads.
+     * Can be restricted for content control.
      */
-    AttachFiles = 32_768,
+    AttachFiles = 0x0000000000008000,
+
     /**
-     * Allows for reading of message history
+     * Allows reading message history in text channels.
+     * Required for viewing messages sent before joining.
      */
-    ReadMessageHistory = 65_536,
+    ReadMessageHistory = 0x0000000000010000,
+
     /**
-     * Allows for using the @everyone tag to notify all users in a channel, and the @here tag to notify all online users in a channel
+     * Enables mentioning @everyone and @here.
+     * Can be restricted to prevent mass pings.
      */
-    MentionEveryone = 131_072,
+    MentionEveryone = 0x0000000000020000,
+
     /**
-     * Allows the usage of custom emojis from other servers
+     * Allows using emojis from other servers.
+     * Requires Discord Nitro subscription.
      */
-    UseExternalEmojis = 262_144,
+    UseExternalEmojis = 0x0000000000040000,
+
     /**
-     * Allows for viewing guild insights
+     * Permits viewing server insights and analytics.
+     * Available for servers that meet certain requirements.
      */
-    ViewGuildInsights = 524_288,
+    ViewGuildInsights = 0x0000000000080000,
+
     /**
-     * Allows for joining of a voice channel
+     * Permits joining voice channels.
+     * Basic voice permission required for voice features.
      */
-    Connect = 1_048_576,
+    Connect = 0x0000000000100000,
+
     /**
-     * Allows for speaking in a voice channel
+     * Enables speaking in voice channels.
+     * Can be revoked while still allowing listening.
      */
-    Speak = 2_097_152,
+    Speak = 0x0000000000200000,
+
     /**
-     * Allows for muting members in a voice channel
+     * Enables muting members in voice channels.
+     * Affects server-wide voice status.
      */
-    MuteMembers = 4_194_304,
+    MuteMembers = 0x0000000000400000,
+
     /**
-     * Allows for deafening of members in a voice channel
+     * Allows deafening members in voice channels.
+     * Prevents members from hearing any audio.
      */
-    DeafenMembers = 8_388_608,
+    DeafenMembers = 0x0000000000800000,
+
     /**
-     * Allows for moving of members between voice channels
+     * Permits moving members between voice channels.
+     * Required for moderation and organization.
      */
-    MoveMembers = 16_777_216,
+    MoveMembers = 0x0000000001000000,
+
     /**
-     * Allows for using voice-activity-detection in a voice channel
+     * Allows using voice-activity-detection.
+     * Alternative to push-to-talk in voice channels.
      */
-    UseVad = 33_554_432,
+    UseVad = 0x0000000002000000,
+
     /**
-     * Allows for modification of own nickname
+     * Allows modification of own nickname.
+     * Does not grant permission to change others' nicknames.
      */
-    ChangeNickname = 67_108_864,
+    ChangeNickname = 0x0000000004000000,
+
     /**
-     * Allows for modification of other users nicknames
+     * Permits changing nicknames of other members.
+     * Useful for maintaining naming standards.
      */
-    ManageNicknames = 134_217_728,
+    ManageNicknames = 0x0000000008000000,
+
     /**
-     * Allows management and editing of roles
+     * Enables management of server roles.
+     * Includes creating, editing, and deleting roles.
      */
-    ManageRoles = 268_435_456,
+    ManageRoles = 0x0000000010000000,
+
     /**
-     * Allows management and editing of webhooks
+     * Allows management of webhooks.
+     * Includes creating, editing, and deleting webhooks.
      */
-    ManageWebhooks = 536_870_912,
+    ManageWebhooks = 0x0000000020000000,
+
     /**
-     * Allows for editing and deleting emojis, stickers, and soundboard sounds created by all users
+     * Enables management of all server expressions.
+     * Includes emojis, stickers, and soundboard sounds.
      */
-    ManageGuildExpressions = 1_073_741_824,
+    ManageGuildExpressions = 0x0000000040000000,
+
     /**
-     * Allows members to use application commands, including slash commands and context menu commands
+     * Enables use of application commands.
+     * Includes slash commands and context menus.
      */
-    UseApplicationCommands = 2_147_483_648,
+    UseApplicationCommands = 0x0000000080000000,
+
     /**
-     * Allows for requesting to speak in stage channels. (This permission is under active development and may be changed or removed.)
+     * Allows requesting to speak in stage channels.
+     * Used for organized audio events.
      */
-    RequestToSpeak = 4_294_967_296,
+    RequestToSpeak = 0x0000000100000000,
+
     /**
-     * Allows for editing and deleting scheduled events created by all users
+     * Enables creation and management of scheduled events.
+     * Includes editing and deleting all events.
      */
-    ManageEvents = 8_589_934_592,
+    ManageEvents = 0x0000000200000000,
+
     /**
-     * Allows for deleting and archiving threads, and viewing all private threads
+     * Permits managing all thread operations.
+     * Includes archiving, deleting, and viewing private threads.
      */
-    ManageThreads = 17_179_869_184,
+    ManageThreads = 0x0000000400000000,
+
     /**
-     * Allows for creating public and announcement threads
+     * Allows creating public and announcement threads.
+     * Available in text and news channels.
      */
-    CreatePublicThreads = 34_359_738_368,
+    CreatePublicThreads = 0x0000000800000000,
+
     /**
-     * Allows for creating private threads
+     * Enables creation of private threads.
+     * Only visible to selected members.
      */
-    CreatePrivateThreads = 68_719_476_736,
+    CreatePrivateThreads = 0x0000001000000000,
+
     /**
-     * Allows the usage of custom stickers from other servers
+     * Enables using stickers from other servers.
+     * Requires Discord Nitro subscription.
      */
-    UseExternalStickers = 137_438_953_472,
+    UseExternalStickers = 0x0000002000000000,
+
     /**
-     * Allows for sending messages in threads
+     * Allows sending messages within threads.
+     * Separate from general message sending permission.
      */
-    SendMessagesInThreads = 274_877_906_944,
+    SendMessagesInThreads = 0x0000004000000000,
+
     /**
-     * Allows for using Activities (applications with the EMBEDDED flag) in a voice channel
+     * Allows using embedded activities in voice channels.
+     * Includes games and other interactive features.
      */
-    UseEmbeddedActivities = 549_755_813_888,
+    UseEmbeddedActivities = 0x0000008000000000,
+
     /**
-     * Allows for timing out users to prevent them from sending or reacting to messages in chat and threads, and from speaking in voice and stage channels
+     * Enables temporary restriction of member permissions.
+     * Timed out members cannot send messages or join voice channels.
      */
-    ModerateMembers = 1_099_511_627_776,
+    ModerateMembers = 0x0000010000000000,
+
     /**
-     * Allows for viewing role subscription insights
+     * Enables viewing role subscription insights.
+     * Available for servers with monetization features.
      */
-    ViewCreatorMonetizationAnalytics = 2_199_023_255_552,
+    ViewCreatorMonetizationAnalytics = 0x0000020000000000,
+
     /**
-     * Allows for using soundboard in a voice channel
+     * Permits using soundboard features.
+     * Enables playing sound effects in voice channels.
      */
-    UseSoundboard = 4_398_046_511_104,
+    UseSoundboard = 0x0000040000000000,
+
     /**
-     * Allows for creating emojis, stickers, and soundboard sounds, and editing and deleting those created by the current user. Not yet available to developers, see changelog.
+     * Permits creating personal server expressions.
+     * Limited to managing own created content.
      */
-    CreateGuildExpressions = 8_796_093_022_208,
+    CreateGuildExpressions = 0x0000080000000000,
+
     /**
-     * Allows for creating scheduled events, and editing and deleting those created by the current user. Not yet available to developers, see changelog.
+     * Permits creating personal scheduled events.
+     * Limited to managing own created events.
      */
-    CreateEvents = 17_592_186_044_416,
+    CreateEvents = 0x0000100000000000,
+
     /**
-     * Allows the usage of custom soundboard sounds from other servers
+     * Allows using sounds from other servers.
+     * Related to soundboard functionality.
      */
-    UseExternalSounds = 35_184_372_088_832,
+    UseExternalSounds = 0x0000200000000000,
+
     /**
-     * Allows sending voice messages
+     * Enables sending voice messages.
+     * Available in text channels.
      */
-    SendVoiceMessages = 70_368_744_177_664,
+    SendVoiceMessages = 0x0000400000000000,
+
     /**
-     * Allows sending polls
+     * Allows creating and sending polls.
+     * Interactive voting feature.
      */
-    SendPolls = 140_737_488_355_328,
+    SendPolls = 0x0002000000000000,
+
     /**
-     * Allows user-installed apps to send public responses. When disabled, users will still be allowed to use their apps but the responses will be ephemeral. This only applies to apps not also installed to the server.
+     * Permits using external app features publicly.
+     * When disabled, responses are ephemeral.
      */
-    UseExternalApps = 281_474_976_710_656,
+    UseExternalApps = 0x0004000000000000,
 }

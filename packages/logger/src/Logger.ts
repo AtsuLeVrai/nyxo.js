@@ -17,10 +17,10 @@ export interface StyleConfig {
 }
 
 class LogBuilder {
-    #level: LogLevel;
-    #message: string;
-    #context?: LogContext;
-    #output: string[] = [];
+    readonly #level: LogLevel;
+    readonly #message: string;
+    readonly #context?: LogContext;
+    readonly #output: string[] = [];
 
     constructor(message: string, level: LogLevel, context?: LogContext) {
         this.#level = level;

@@ -3,16 +3,17 @@ import { GatewayIntents, GatewayOpcodes, type GuildStructure, type Integer, type
 import { Logger } from "@nyxjs/logger";
 import { GatewayRoutes, type Rest, UserRoutes } from "@nyxjs/rest";
 import type { Gateway } from "../Gateway.js";
+import { BaseError, ErrorCodes } from "../errors/index.js";
 import type { IdentifyStructure } from "../events/index.js";
 import type { GatewayOptions, GatewayShardTypes, ShardConfig } from "../types/index.js";
 import type { SessionManager } from "./SessionManager.js";
-
-export type ShardStatusTypes = "disconnected" | "connecting" | "connected" | "reconnecting";
 
 interface ShardBucket {
     key: number;
     shardIds: number[];
 }
+
+export type ShardStatusTypes = "disconnected" | "connecting" | "connected" | "reconnecting";
 
 export interface ShardState {
     config: ShardConfig;
@@ -23,35 +24,7 @@ export interface ShardState {
     guilds: Set<Snowflake>;
 }
 
-export enum ShardErrorCode {
-    InitializationError = "SHARD_INITIALIZATION_ERROR",
-    ConnectionError = "SHARD_CONNECTION_ERROR",
-    ReconnectionError = "SHARD_RECONNECTION_ERROR",
-    InvalidConfig = "INVALID_SHARD_CONFIG",
-    LimitExceeded = "SHARD_LIMIT_EXCEEDED",
-    QueueError = "SHARD_QUEUE_ERROR",
-    SessionError = "SESSION_ERROR",
-    ScalingError = "SCALING_ERROR",
-    StateError = "SHARD_STATE_ERROR",
-    SpawnError = "SHARD_SPAWN_ERROR",
-    AutoShardingError = "AUTO_SHARDING_ERROR",
-    LargeBotShardingError = "LARGE_BOT_SHARDING_ERROR",
-}
-
-export class ShardError extends Error {
-    code: ShardErrorCode;
-    details?: Record<string, unknown>;
-
-    constructor(message: string, code: ShardErrorCode, details?: Record<string, unknown>, cause?: Error) {
-        super(message);
-        this.name = "ShardError";
-        this.code = code;
-        this.details = details;
-        this.cause = cause;
-
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
+export class ShardError extends BaseError {}
 
 export class ShardManager {
     readonly #gateway: Gateway;
@@ -59,7 +32,6 @@ export class ShardManager {
     readonly #token: string;
     readonly #options: Readonly<GatewayOptions>;
     readonly #session: SessionManager;
-
     #isProcessingQueue = false;
     readonly #defaultShardCount = 1;
     readonly #maxReconnectAttempts = 5;
@@ -164,7 +136,7 @@ export class ShardManager {
                 await this.#spawnShard(mode);
             }
         } catch (error) {
-            const shardError = new ShardError("Failed to initialize shards", ShardErrorCode.InitializationError, {
+            const shardError = new ShardError("Failed to initialize shards", ErrorCodes.ShardInitError, {
                 mode,
                 error,
             });
@@ -187,7 +159,7 @@ export class ShardManager {
             }
             this.#emitDebug("All shards reconnected successfully");
         } catch (error) {
-            const shardError = new ShardError("Failed to reconnect all shards", ShardErrorCode.ReconnectionError, {
+            const shardError = new ShardError("Failed to reconnect all shards", ErrorCodes.ShardReconnectionError, {
                 error,
             });
             this.#emitError(shardError);
@@ -203,7 +175,7 @@ export class ShardManager {
             this.#buckets.clear();
             this.#emitDebug("ShardManager destroyed successfully");
         } catch (error) {
-            const shardError = new ShardError("Error during ShardManager destruction", ShardErrorCode.StateError, {
+            const shardError = new ShardError("Error during ShardManager destruction", ErrorCodes.ShardStateError, {
                 error,
             });
             this.#emitError(shardError);
@@ -237,7 +209,7 @@ export class ShardManager {
                 }
             }
         } catch (error) {
-            const shardError = new ShardError("Failed to handle guild event", ShardErrorCode.StateError, {
+            const shardError = new ShardError("Failed to handle guild event", ErrorCodes.ShardStateError, {
                 guildId,
                 type,
                 error,
@@ -255,7 +227,7 @@ export class ShardManager {
             if (this.#isLargeBot() && !this.#isValidShardCount(gatewayInfo.shards)) {
                 throw new ShardError(
                     `Invalid shard count. Must be a multiple of ${gatewayInfo.shards}`,
-                    ShardErrorCode.ScalingError,
+                    ErrorCodes.ShardScalingError,
                     { newShardCount, recommendedShards: gatewayInfo.shards },
                 );
             }
@@ -290,7 +262,10 @@ export class ShardManager {
             const shardError =
                 error instanceof ShardError
                     ? error
-                    : new ShardError("Failed to rescale shards", ShardErrorCode.ScalingError, { newShardCount, error });
+                    : new ShardError("Failed to rescale shards", ErrorCodes.ShardScalingError, {
+                          newShardCount,
+                          error,
+                      });
             this.#emitError(shardError);
             throw shardError;
         }
@@ -343,7 +318,7 @@ export class ShardManager {
             const shardError =
                 error instanceof ShardError
                     ? error
-                    : new ShardError("Auto-sharding setup failed", ShardErrorCode.AutoShardingError, { error });
+                    : new ShardError("Auto-sharding setup failed", ErrorCodes.ShardAutoError, { error });
             this.#emitError(shardError);
             throw shardError;
         }
@@ -369,7 +344,7 @@ export class ShardManager {
 
             this.#emitDebug(`Created ${this.#buckets.size} buckets`);
         } catch (error) {
-            const shardError = new ShardError("Failed to organize shards into buckets", ShardErrorCode.StateError, {
+            const shardError = new ShardError("Failed to organize shards into buckets", ErrorCodes.ShardStateError, {
                 shardIds,
                 maxConcurrency,
                 error,
@@ -397,7 +372,7 @@ export class ShardManager {
             await this.#wait(5000);
             this.#emitDebug(`Bucket ${bucket.key} spawned successfully`);
         } catch (error) {
-            const shardError = new ShardError("Failed to spawn bucket", ShardErrorCode.SpawnError, { bucket, error });
+            const shardError = new ShardError("Failed to spawn bucket", ErrorCodes.ShardSpawnError, { bucket, error });
             this.#emitError(shardError);
             throw shardError;
         }
@@ -409,7 +384,7 @@ export class ShardManager {
             this.#validateShardConfig(config);
 
             if (this.#shards.has(config.shardId)) {
-                throw new ShardError(`Shard ${config.shardId} already exists`, ShardErrorCode.SpawnError, { config });
+                throw new ShardError(`Shard ${config.shardId} already exists`, ErrorCodes.ShardSpawnError, { config });
             }
 
             const rateLimitKey = config.shardId % this.#session.maxConcurrency;
@@ -438,7 +413,7 @@ export class ShardManager {
             const shardError =
                 error instanceof ShardError
                     ? error
-                    : new ShardError("Failed to spawn shard", ShardErrorCode.SpawnError, { config, error });
+                    : new ShardError("Failed to spawn shard", ErrorCodes.ShardSpawnError, { config, error });
             this.#emitError(shardError);
             throw shardError;
         }
@@ -492,7 +467,7 @@ export class ShardManager {
 
             this.#emitDebug("Queue processing completed successfully");
         } catch (error) {
-            const shardError = new ShardError("Failed to process connection queue", ShardErrorCode.QueueError, {
+            const shardError = new ShardError("Failed to process connection queue", ErrorCodes.ShardQueueError, {
                 error,
             });
             this.#emitError(shardError);
@@ -557,7 +532,7 @@ export class ShardManager {
             if (shard.reconnectAttempts > this.#maxReconnectAttempts) {
                 throw new ShardError(
                     `Maximum reconnection attempts (${this.#maxReconnectAttempts}) exceeded`,
-                    ShardErrorCode.ReconnectionError,
+                    ErrorCodes.ShardReconnectionError,
                     {
                         shardId,
                         attempts: shard.reconnectAttempts,
@@ -600,7 +575,7 @@ export class ShardManager {
     #handleConnectionError(shard: ShardState, error: unknown): void {
         const connectionError = new ShardError(
             `Shard ${shard.config.shardId} failed to connect`,
-            ShardErrorCode.ConnectionError,
+            ErrorCodes.ShardConnectionError,
             {
                 shardId: shard.config.shardId,
                 attempts: shard.reconnectAttempts,
@@ -622,7 +597,7 @@ export class ShardManager {
                 this.#processQueue().catch((err) => {
                     const queueError = new ShardError(
                         "Failed to process reconnection queue",
-                        ShardErrorCode.QueueError,
+                        ErrorCodes.ShardQueueError,
                         {
                             shardId: shard.config.shardId,
                             error: err,
@@ -634,7 +609,7 @@ export class ShardManager {
         } else {
             const maxAttemptsError = new ShardError(
                 `Shard ${shard.config.shardId} exceeded maximum reconnection attempts`,
-                ShardErrorCode.ReconnectionError,
+                ErrorCodes.ShardReconnectionError,
                 {
                     shardId: shard.config.shardId,
                     attempts: shard.reconnectAttempts,
@@ -662,7 +637,7 @@ export class ShardManager {
             ) {
                 throw new ShardError(
                     `Large bot sharding requires shard count to be a multiple of ${this.#session.shards}`,
-                    ShardErrorCode.InvalidConfig,
+                    ErrorCodes.ShardConfigError,
                     {
                         guildCount: guilds.length,
                         requiredShards: this.#session.shards,
@@ -673,7 +648,7 @@ export class ShardManager {
             const shardError =
                 error instanceof ShardError
                     ? error
-                    : new ShardError("Failed to validate sharding requirements", ShardErrorCode.InvalidConfig, {
+                    : new ShardError("Failed to validate sharding requirements", ErrorCodes.ShardConfigError, {
                           guilds: guilds.length,
                           error,
                       });
@@ -689,7 +664,7 @@ export class ShardManager {
 
     #validateShardConfig(config: ShardConfig): void {
         if (config.shardId < 0) {
-            throw new ShardError(`Invalid shard ID: ${config.shardId}. Must be >= 0`, ShardErrorCode.InvalidConfig, {
+            throw new ShardError(`Invalid shard ID: ${config.shardId}. Must be >= 0`, ErrorCodes.ShardConfigError, {
                 config,
             });
         }
@@ -697,15 +672,17 @@ export class ShardManager {
         if (config.shardCount < 1) {
             throw new ShardError(
                 `Invalid shard count: ${config.shardCount}. Must be >= 1`,
-                ShardErrorCode.InvalidConfig,
-                { config },
+                ErrorCodes.ShardConfigError,
+                {
+                    config,
+                },
             );
         }
 
         if (config.shardId >= config.shardCount) {
             throw new ShardError(
                 `Invalid shard ID: ${config.shardId}. Must be less than shard count: ${config.shardCount}`,
-                ShardErrorCode.InvalidConfig,
+                ErrorCodes.ShardConfigError,
                 { config },
             );
         }
@@ -719,7 +696,7 @@ export class ShardManager {
 
             if (remaining === 0) {
                 const resetTime = new Date(Date.now() + reset_after).toISOString();
-                throw new ShardError(`Session limit reached. Resets at ${resetTime}`, ShardErrorCode.SessionError, {
+                throw new ShardError(`Session limit reached. Resets at ${resetTime}`, ErrorCodes.ShardStateError, {
                     resetTime,
                     resetAfter: reset_after,
                     shardCount: this.shardCount,
@@ -729,7 +706,7 @@ export class ShardManager {
             if (remaining < this.shardCount) {
                 throw new ShardError(
                     `Insufficient sessions remaining (${remaining}) to connect all shards (${this.shardCount})`,
-                    ShardErrorCode.LimitExceeded,
+                    ErrorCodes.ShardLimitError,
                     {
                         remaining,
                         required: this.shardCount,
@@ -743,7 +720,7 @@ export class ShardManager {
             const shardError =
                 error instanceof ShardError
                     ? error
-                    : new ShardError("Failed to check session limits", ShardErrorCode.SessionError, { error });
+                    : new ShardError("Failed to check session limits", ErrorCodes.ShardStateError, { error });
             this.#emitError(shardError);
             throw shardError;
         }

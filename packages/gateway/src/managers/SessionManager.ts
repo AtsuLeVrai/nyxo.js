@@ -2,6 +2,7 @@ import type { Integer } from "@nyxjs/core";
 import { Logger } from "@nyxjs/logger";
 import type { GetGatewayBotJsonResponse } from "@nyxjs/rest";
 import type { Gateway } from "../Gateway.js";
+import { BaseError, ErrorCodes } from "../errors/index.js";
 
 interface SessionState {
     sequence: Integer | null;
@@ -17,33 +18,10 @@ interface SessionLimits {
     recommendedShards: Integer;
 }
 
-export enum SessionErrorCode {
-    NotInitialized = "SESSION_NOT_INITIALIZED",
-    LimitExceeded = "SESSION_LIMIT_EXCEEDED",
-    AcquisitionError = "SESSION_ACQUISITION_ERROR",
-    QueueProcessingError = "QUEUE_PROCESSING_ERROR",
-    ResetError = "SESSION_RESET_ERROR",
-    StateError = "SESSION_STATE_ERROR",
-}
-
-export class SessionError extends Error {
-    code: SessionErrorCode;
-    details?: Record<string, unknown>;
-
-    constructor(message: string, code: SessionErrorCode, details?: Record<string, unknown>, cause?: Error) {
-        super(message);
-        this.name = "SessionError";
-        this.code = code;
-        this.details = details;
-        this.cause = cause;
-
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
+export class SessionError extends BaseError {}
 
 export class SessionManager {
     readonly #gateway: Gateway;
-
     #isProcessing = false;
     readonly #defaultConcurrency = 1;
     readonly #rateLimitDelay = 5000;
@@ -93,7 +71,7 @@ export class SessionManager {
             this.#state.sequence = sequence;
             this.#emitDebug(`Sequence updated to ${sequence}`);
         } catch (error) {
-            const sessionError = new SessionError("Failed to update sequence", SessionErrorCode.StateError, {
+            const sessionError = new SessionError("Failed to update sequence", ErrorCodes.SessionStateError, {
                 sequence,
                 error,
             });
@@ -108,7 +86,7 @@ export class SessionManager {
             this.#state.resumeUrl = resumeUrl;
             this.#emitDebug(`Session updated - ID: ${sessionId}, URL: ${resumeUrl}`);
         } catch (error) {
-            const sessionError = new SessionError("Failed to update session", SessionErrorCode.StateError, {
+            const sessionError = new SessionError("Failed to update session", ErrorCodes.SessionStateError, {
                 sessionId,
                 resumeUrl,
                 error,
@@ -146,7 +124,7 @@ export class SessionManager {
                 this.#resetTimeout = null;
             }
         } catch (error) {
-            const sessionError = new SessionError("Failed to update session limits", SessionErrorCode.StateError, {
+            const sessionError = new SessionError("Failed to update session limits", ErrorCodes.SessionStateError, {
                 gateway,
                 error,
             });
@@ -158,12 +136,10 @@ export class SessionManager {
     async acquire(): Promise<void> {
         try {
             if (!this.isReady) {
-                const error = new SessionError(
+                throw new SessionError(
                     "Session manager not initialized with gateway info",
-                    SessionErrorCode.NotInitialized,
+                    ErrorCodes.SessionNotInitialized,
                 );
-                this.#emitError(error);
-                throw error;
             }
 
             if (this.remaining <= 0) {
@@ -174,9 +150,7 @@ export class SessionManager {
 
             const acquirePromise = (): Promise<void> => {
                 if (!this.#limits) {
-                    const error = new SessionError("Limits lost during acquisition", SessionErrorCode.StateError);
-                    this.#emitError(error);
-                    throw error;
+                    throw new SessionError("Limits lost during acquisition", ErrorCodes.SessionStateError);
                 }
 
                 this.#limits.remaining--;
@@ -190,7 +164,7 @@ export class SessionManager {
             const sessionError =
                 error instanceof SessionError
                     ? error
-                    : new SessionError("Failed to acquire session", SessionErrorCode.AcquisitionError, { error });
+                    : new SessionError("Failed to acquire session", ErrorCodes.SessionAcquisitionError, { error });
             this.#emitError(sessionError);
             throw sessionError;
         }
@@ -217,7 +191,7 @@ export class SessionManager {
         } catch (error) {
             const sessionError = new SessionError(
                 "Error during session manager destruction",
-                SessionErrorCode.StateError,
+                ErrorCodes.SessionStateError,
                 { error },
             );
             this.#emitError(sessionError);
@@ -226,12 +200,7 @@ export class SessionManager {
 
     async #waitForReset(): Promise<void> {
         if (!this.#limits) {
-            const error = new SessionError(
-                "Cannot wait for reset: limits not initialized",
-                SessionErrorCode.StateError,
-            );
-            this.#emitError(error);
-            throw error;
+            throw new SessionError("Cannot wait for reset: limits not initialized", ErrorCodes.SessionStateError);
         }
 
         const { resetAfter, total } = this.#limits;
@@ -241,11 +210,7 @@ export class SessionManager {
             await new Promise<void>((resolve, reject) => {
                 this.#resetTimeout = setTimeout(() => {
                     if (!this.#limits) {
-                        const error = new SessionError(
-                            "Session limits lost during reset wait",
-                            SessionErrorCode.ResetError,
-                        );
-                        reject(error);
+                        reject(new SessionError("Session limits lost during reset wait", ErrorCodes.SessionResetError));
                         return;
                     }
 
@@ -258,7 +223,7 @@ export class SessionManager {
             const sessionError =
                 error instanceof SessionError
                     ? error
-                    : new SessionError("Failed to wait for session reset", SessionErrorCode.ResetError, { error });
+                    : new SessionError("Failed to wait for session reset", ErrorCodes.SessionResetError, { error });
             this.#emitError(sessionError);
             throw sessionError;
         }
@@ -282,13 +247,11 @@ export class SessionManager {
                 await Promise.all(
                     batch.map((fn) =>
                         fn().catch((error) => {
-                            const sessionError = new SessionError(
+                            throw new SessionError(
                                 "Failed to acquire session in batch",
-                                SessionErrorCode.AcquisitionError,
+                                ErrorCodes.SessionAcquisitionError,
                                 { error },
                             );
-                            this.#emitError(sessionError);
-                            throw sessionError;
                         }),
                     ),
                 );
@@ -302,7 +265,7 @@ export class SessionManager {
             const sessionError =
                 error instanceof SessionError
                     ? error
-                    : new SessionError("Queue processing failed", SessionErrorCode.QueueProcessingError, { error });
+                    : new SessionError("Queue processing failed", ErrorCodes.SessionQueueError, { error });
             this.#emitError(sessionError);
             throw sessionError;
         } finally {

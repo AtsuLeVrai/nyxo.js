@@ -1,46 +1,116 @@
+/**
+ * Discord Gateway Intents Module
+ *
+ * This module provides comprehensive tooling for managing Discord Gateway Intents.
+ * Gateway Intents are used to specify which events your bot will receive from Discord's gateway.
+ *
+ * @module Discord Gateway Intents
+ * @version 1.0.0
+ * @see {@link https://discord.com/developers/docs/topics/gateway#gateway-intents}
+ */
+
 import type { Integer } from "../markdown/index.js";
 
 /**
- * Represents Discord Gateway Intent bit flags.
- * Uses enum for better runtime performance and type safety.
- * @see {@link https://discord.com/developers/docs/topics/gateway#gateway-intents}
+ * Gateway Intent Bit Flags
+ *
+ * Represents the available Gateway Intents as bit flags.
+ * Each intent corresponds to a specific set of events your bot can receive.
+ *
+ * @remarks
+ * - Bits are calculated using left shift operation (1 << n)
+ * - Some intents are privileged and require special approval from Discord
+ * - Privileged intents: GuildMembers, GuildPresences, MessageContent
+ *
+ * @example
+ * ```typescript
+ * // Combining multiple intents
+ * const intents = GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages;
+ *
+ * // Checking for privileged intents
+ * const requiresPrivileged = GatewayIntents.isPrivileged(GatewayIntentBits.GuildMembers);
+ * ```
  */
 export enum GatewayIntentBits {
+    /** Access to guild related events (creation, updates, deletes, role changes) */
     Guilds = 1 << 0,
+
+    /** Access to guild member related events (joins, leaves, updates) - Privileged Intent */
     GuildMembers = 1 << 1,
+
+    /** Access to guild moderation events (bans, unbans, timeouts) */
     GuildModeration = 1 << 2,
+
+    /** Access to guild expression events (emoji, sticker updates) */
     GuildExpressions = 1 << 3,
+
+    /** Access to guild integration events (bot joins, updates, removes) */
     GuildIntegrations = 1 << 4,
+
+    /** Access to webhook related events (creates, updates, deletes) */
     GuildWebhooks = 1 << 5,
+
+    /** Access to guild invite events (creates, deletes) */
     GuildInvites = 1 << 6,
+
+    /** Access to voice state events (joins, leaves, moves) */
     GuildVoiceStates = 1 << 7,
+
+    /** Access to presence updates (status, activities) - Privileged Intent */
     GuildPresences = 1 << 8,
+
+    /** Access to guild message events (sends, updates, deletes) */
     GuildMessages = 1 << 9,
+
+    /** Access to message reaction events in guilds */
     GuildMessageReactions = 1 << 10,
+
+    /** Access to typing indicators in guilds */
     GuildMessageTyping = 1 << 11,
+
+    /** Access to direct message events */
     DirectMessages = 1 << 12,
+
+    /** Access to reaction events in DMs */
     DirectMessageReactions = 1 << 13,
+
+    /** Access to typing indicators in DMs */
     DirectMessageTyping = 1 << 14,
+
+    /** Access to message content - Privileged Intent */
     MessageContent = 1 << 15,
+
+    /** Access to scheduled event related updates */
     GuildScheduledEvents = 1 << 16,
+
+    /** Access to auto moderation configuration events */
     AutoModerationConfiguration = 1 << 20,
+
+    /** Access to auto moderation execution events */
     AutoModerationExecution = 1 << 21,
+
+    /** Access to polls in guild messages */
     GuildMessagePolls = 1 << 24,
+
+    /** Access to polls in direct messages */
     DirectMessagePolls = 1 << 25,
 }
 
 /**
- * Utility type for extracting intent names from the enum
+ * Gateway Intent Names Type
+ * Utility type representing valid intent names as strings
  */
 export type GatewayIntentNames = keyof typeof GatewayIntentBits;
 
 /**
- * Represents a bitfield of combined gateway intents
+ * Gateway Intent Bitfield Type
+ * Represents a combined bitfield of multiple intents
  */
 export type GatewayIntentBitField = Integer;
 
 /**
- * Represents privileged intents that require special permissions
+ * Privileged Intents Type
+ * Represents intents that require special Discord approval
  */
 export type PrivilegedIntents =
     | GatewayIntentBits.GuildMembers
@@ -48,55 +118,65 @@ export type PrivilegedIntents =
     | GatewayIntentBits.MessageContent;
 
 /**
- * Represents a single intent that can be resolved
+ * Single Gateway Intent Type
+ * Represents all valid ways to specify a single intent
  */
 export type SingleGatewayIntent = GatewayIntentNames | GatewayIntentBits | GatewayIntentBitField;
 
 /**
- * Represents an array of intents that can be resolved
+ * Gateway Intent Array Type
+ * Represents arrays of intent names or bits
  */
 export type GatewayIntentArray = readonly GatewayIntentNames[] | readonly GatewayIntentBits[];
 
 /**
- * Represents all possible ways to specify gateway intents
+ * Gateway Intent Resolvable Type
+ *
+ * Represents all possible ways to specify gateway intents in your application.
+ * This type provides flexibility in how intents can be defined while maintaining type safety.
  *
  * @remarks
- * This type allows for:
- * - Single intent name as string (e.g., 'Guilds')
- * - Array of intent names (e.g., ['Guilds', 'GuildMessages'])
- * - Single intent bit (e.g., GatewayIntentBits.Guilds)
- * - Array of intent bits (e.g., [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages])
- * - Pre-computed bitfield (e.g., 0b1111)
+ * Supports the following formats:
+ * - Single intent name as string
+ * - Array of intent names
+ * - Single intent bit
+ * - Array of intent bits
+ * - Pre-computed bitfield
  *
  * @example
  * ```typescript
- * // Single intent name
+ * // Using string intent name
  * const intent1: GatewayIntentResolvable = 'Guilds';
  *
- * // Array of intent names
+ * // Using array of names
  * const intent2: GatewayIntentResolvable = ['Guilds', 'GuildMessages'];
  *
- * // Single intent bit
+ * // Using single bit
  * const intent3: GatewayIntentResolvable = GatewayIntentBits.Guilds;
  *
- * // Array of intent bits
+ * // Using bit array
  * const intent4: GatewayIntentResolvable = [
  *   GatewayIntentBits.Guilds,
  *   GatewayIntentBits.GuildMessages
  * ];
  *
- * // Pre-computed bitfield
+ * // Using pre-computed bitfield
  * const intent5: GatewayIntentResolvable = 0b11 as GatewayIntentBitField;
  * ```
  */
 export type GatewayIntentResolvable = SingleGatewayIntent | GatewayIntentArray;
 
 /**
- * Provides utility functions for managing Discord Gateway Intents
+ * Gateway Intents Utility Object
+ *
+ * Provides utility functions for working with Discord Gateway Intents.
+ * Includes methods for resolving, combining, and validating intents.
  */
 export const GatewayIntents = {
     /**
-     * List of intents that require privileged access
+     * List of intents that require privileged access from Discord
+     * These intents need special approval and additional bot verification
+     *
      * @see {@link https://discord.com/developers/docs/topics/gateway#privileged-intents}
      */
     privilegedIntents: [
@@ -106,26 +186,25 @@ export const GatewayIntents = {
     ] as readonly PrivilegedIntents[],
 
     /**
-     * Converts any valid intent input into a GatewayIntentBitField
-     * @param resolvable - The intents to resolve
+     * Resolves any valid intent input into a GatewayIntentBitField
+     *
+     * @param resolvable - The intent(s) to resolve
      * @returns A bitfield containing all resolved intents
-     * @throws {Error} If the input is invalid or contains invalid intents
+     * @throws {Error} If input is invalid or contains invalid intents
      *
      * @example
-     * // Single intent name
-     * resolve('Guilds') // Returns GatewayIntentBits.Guilds
+     * ```typescript
+     * // Resolve single intent name
+     * const bits1 = GatewayIntents.resolve('Guilds');
      *
-     * @example
-     * // Array of intent names
-     * resolve(['Guilds', 'GuildMessages'])
+     * // Resolve multiple intent names
+     * const bits2 = GatewayIntents.resolve(['Guilds', 'GuildMessages']);
      *
-     * @example
-     * // Single intent bit or combined bits
-     * resolve(GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages)
-     *
-     * @example
-     * // Array of intent bits
-     * resolve([GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages])
+     * // Resolve combined bits
+     * const bits3 = GatewayIntents.resolve(
+     *   GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages
+     * );
+     * ```
      */
     resolve(resolvable: GatewayIntentResolvable): GatewayIntentBitField {
         if (this.isGatewayIntentBitField(resolvable) || this.isGatewayIntentBit(resolvable)) {
@@ -157,8 +236,10 @@ export const GatewayIntents = {
     },
 
     /**
-     * Returns all available intents combined into a single bitfield
-     * @returns Bitfield containing all intents
+     * Returns a bitfield containing all available intents combined
+     *
+     * @returns Bitfield with all intents enabled
+     * @remarks Use with caution as this includes privileged intents
      */
     all(): GatewayIntentBitField {
         return Object.values(GatewayIntentBits)
@@ -167,8 +248,10 @@ export const GatewayIntents = {
     },
 
     /**
-     * Returns all privileged intents combined into a single bitfield
-     * @returns Bitfield containing all privileged intents
+     * Returns a bitfield containing only privileged intents
+     *
+     * @returns Bitfield with all privileged intents
+     * @remarks These intents require special Discord approval
      */
     privileged(): GatewayIntentBitField {
         return GatewayIntents.privilegedIntents.reduce((acc, value) => acc | value, 0) as GatewayIntentBitField;
@@ -176,6 +259,7 @@ export const GatewayIntents = {
 
     /**
      * Checks if a given intent requires privileged access
+     *
      * @param intent - The intent to check
      * @returns True if the intent requires privileged access
      */
@@ -183,19 +267,31 @@ export const GatewayIntents = {
         return this.privilegedIntents.includes(intent as PrivilegedIntents);
     },
 
+    /**
+     * Type guard for gateway intent names
+     *
+     * @param value - Value to check
+     * @returns True if value is a valid intent name
+     */
     isGatewayIntentName(value: unknown): value is GatewayIntentNames {
         return typeof value === "string" && value in GatewayIntentBits;
     },
 
     /**
-     * Type guard to check if a value is a valid intent bit
+     * Type guard for gateway intent bits
+     *
+     * @param value - Value to check
+     * @returns True if value is a valid intent bit
      */
     isGatewayIntentBit(value: unknown): value is GatewayIntentBits {
         return typeof value === "number" && Object.values(GatewayIntentBits).includes(value);
     },
 
     /**
-     * Type guard to check if a value is a valid intent bitfield
+     * Type guard for gateway intent bitfields
+     *
+     * @param value - Value to check
+     * @returns True if value is a valid intent bitfield
      */
     isGatewayIntentBitField(value: unknown): value is GatewayIntentBitField {
         if (typeof value !== "number") {
@@ -205,7 +301,10 @@ export const GatewayIntents = {
     },
 
     /**
-     * Type guard to check if a value is a valid intent array
+     * Type guard for gateway intent arrays
+     *
+     * @param value - Value to check
+     * @returns True if value is a valid intent array
      */
     isGatewayIntentArray(value: unknown): value is GatewayIntentArray {
         return (
@@ -216,18 +315,32 @@ export const GatewayIntents = {
 
     /**
      * Checks if a bitfield contains a specific intent
+     *
      * @param bitfield - The bitfield to check
      * @param intent - The intent to look for
      * @returns True if the bitfield contains the intent
+     *
+     * @example
+     * ```typescript
+     * const intents = GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages;
+     * const hasGuilds = GatewayIntents.has(intents, GatewayIntentBits.Guilds); // true
+     * ```
      */
     has(bitfield: GatewayIntentBitField, intent: GatewayIntentBits): boolean {
         return (bitfield & intent) === intent;
     },
 
     /**
-     * Converts a bitfield back into an array of intent names
+     * Converts a bitfield into an array of intent names
+     *
      * @param bitfield - The bitfield to convert
      * @returns Array of intent names present in the bitfield
+     *
+     * @example
+     * ```typescript
+     * const intents = GatewayIntentBits.Guilds | GatewayIntentBits.GuildMessages;
+     * const names = GatewayIntents.toNames(intents); // ['Guilds', 'GuildMessages']
+     * ```
      */
     toNames(bitfield: GatewayIntentBitField): GatewayIntentNames[] {
         return Object.entries(GatewayIntentBits)

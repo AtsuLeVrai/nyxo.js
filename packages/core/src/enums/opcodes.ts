@@ -1,343 +1,663 @@
 /**
- * Enum representing the various gateway opcodes used by Discord.
+ * Discord Communication Protocol
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-opcodes|Gateway Opcodes}
+ * This module defines the various opcodes and status codes used in Discord's
+ * communication protocols, including Gateway, Voice, REST, and RPC interactions.
+ *
+ * @module Discord Opcodes & Status Codes
+ * @version 1.0.0
+ *
+ * Main Documentation:
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes Discord Opcodes & Status Codes}
+ *
+ * Gateway Related:
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway Gateway Documentation}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-opcodes Gateway Opcodes}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes Gateway Close Event Codes}
+ *
+ * Voice Related:
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice Voice Documentation}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-opcodes Voice Opcodes}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes Voice Close Event Codes}
+ *
+ * HTTP Related:
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http HTTP Documentation}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes HTTP Response Codes}
+ *
+ * JSON Error Related:
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json JSON Documentation}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-json-error-codes JSON Error Codes}
+ *
+ * RPC Related:
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc RPC Documentation}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-error-codes RPC Error Codes}
+ * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-close-event-codes RPC Close Event Codes}
+ *
+ * Additional Resources:
+ * @see {@link https://discord.com/developers/docs/topics/gateway Gateway Guide}
+ * @see {@link https://discord.com/developers/docs/topics/voice-connections Voice Connections}
+ * @see {@link https://discord.com/developers/docs/reference Reference}
+ * @see {@link https://discord.com/developers/docs/topics/rate-limits Rate Limits}
+ */
+
+/**
+ * Gateway Opcodes
+ *
+ * Defines the operation codes used in Discord's WebSocket-based Gateway protocol.
+ * These codes identify the type of payload being sent or received.
+ *
+ * @remarks
+ * The Gateway protocol is used for:
+ * - Real-time events
+ * - State synchronization
+ * - Heartbeat maintenance
+ * - Session management
+ *
+ * @example
+ * ```typescript
+ * // Handling a gateway payload
+ * function handleGatewayPayload(payload: unknown) {
+ *   switch (payload.op) {
+ *     case GatewayOpcodes.Dispatch:
+ *       handleDispatchEvent(payload);
+ *       break;
+ *     case GatewayOpcodes.Heartbeat:
+ *       sendHeartbeatResponse();
+ *       break;
+ *   }
+ * }
+ * ```
  */
 export enum GatewayOpcodes {
     /**
-     * Dispatch opcode.
+     * Event dispatch
+     * @remarks Client ← Server: Dispatches an event
      */
     Dispatch = 0,
+
     /**
-     * Heartbeat opcode.
+     * Heartbeat
+     * @remarks Client ↔ Server: Used for ping checking
      */
     Heartbeat = 1,
+
     /**
-     * Identify opcode.
+     * Identify
+     * @remarks Client → Server: Starts a new session
      */
     Identify = 2,
+
     /**
-     * Presence Update opcode.
+     * Presence Update
+     * @remarks Client → Server: Updates the client's presence
      */
     PresenceUpdate = 3,
+
     /**
-     * Voice State Update opcode.
+     * Voice State Update
+     * @remarks Client → Server: Used to join/leave/move between voice channels
      */
     VoiceStateUpdate = 4,
+
     /**
-     * Resume opcode.
+     * Resume
+     * @remarks Client → Server: Resumes a closed connection
      */
     Resume = 6,
+
     /**
-     * Reconnect opcode.
+     * Reconnect
+     * @remarks Client ← Server: Server asks client to reconnect
      */
     Reconnect = 7,
+
     /**
-     * Request Guild Members opcode.
+     * Request Guild Members
+     * @remarks Client → Server: Requests members for a guild
      */
     RequestGuildMembers = 8,
+
     /**
-     * Invalid Session opcode.
+     * Invalid Session
+     * @remarks Client ← Server: Session is no longer valid
      */
     InvalidSession = 9,
+
     /**
-     * Hello opcode.
+     * Hello
+     * @remarks Client ← Server: Sent immediately after connecting
      */
     Hello = 10,
+
     /**
-     * Heartbeat ACK opcode.
+     * Heartbeat ACK
+     * @remarks Client ← Server: Server acknowledges heartbeat
      */
     HeartbeatAck = 11,
+
     /**
-     * Request information about soundboard sounds in a set of guilds.
+     * Request Soundboard Sounds
+     * @remarks Client → Server: Requests available soundboard sounds
      */
     RequestSoundboardSounds = 31,
 }
 
 /**
- * Enum representing the various gateway close event codes used by Discord.
+ * Gateway Close Event Codes
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes|Gateway Close Event Codes}
+ * Defines the close codes sent when a Gateway connection is terminated.
+ * These codes help identify the reason for the disconnection.
+ *
+ * @remarks
+ * - 4000-4009: Common connection errors
+ * - 4010-4014: Configuration/validation errors
+ *
+ * @example
+ * ```typescript
+ * // Handling gateway closure
+ * websocket.onclose = (event) => {
+ *   switch (event.code) {
+ *     case GatewayCloseCodes.AuthenticationFailed:
+ *       console.error('Invalid token provided');
+ *       break;
+ *     case GatewayCloseCodes.InvalidShard:
+ *       console.error('Invalid shard configuration');
+ *       break;
+ *   }
+ * };
+ * ```
  */
 export enum GatewayCloseCodes {
     /**
-     * Unknown error.
+     * Unknown error
+     * @remarks We're not sure what went wrong. Try reconnecting?
      */
     UnknownError = 4_000,
+
     /**
-     * Unknown opcode.
+     * Unknown opcode
+     * @remarks You sent an invalid Gateway opcode or an invalid payload for an opcode
      */
     UnknownOpcode = 4_001,
+
     /**
-     * Decode error.
+     * Decode error
+     * @remarks You sent an invalid payload to Discord
      */
     DecodeError = 4_002,
+
     /**
-     * Not authenticated.
+     * Not authenticated
+     * @remarks You sent us a payload prior to identifying
      */
     NotAuthenticated = 4_003,
+
     /**
-     * Authentication failed.
+     * Authentication failed
+     * @remarks The account token sent with your identify payload is incorrect
      */
     AuthenticationFailed = 4_004,
+
     /**
-     * Already authenticated.
+     * Already authenticated
+     * @remarks You sent more than one identify payload
      */
     AlreadyAuthenticated = 4_005,
+
     /**
-     * Invalid seq.
+     * Invalid sequence number
+     * @remarks The sequence sent when resuming the session was invalid
      */
     InvalidSeq = 4_007,
+
     /**
-     * Rate limited.
+     * Rate limited
+     * @remarks Woah nelly! You're sending payloads too quickly
      */
     RateLimited = 4_008,
+
     /**
-     * Session timed out.
+     * Session timed out
+     * @remarks Your session timed out
      */
     SessionTimedOut = 4_009,
+
     /**
-     * Invalid shard.
+     * Invalid shard
+     * @remarks You sent us an invalid shard when identifying
      */
     InvalidShard = 4_010,
+
     /**
-     * Sharding required.
+     * Sharding required
+     * @remarks The session would have handled too many guilds - you are required to shard
      */
     ShardingRequired = 4_011,
+
     /**
-     * Invalid API version.
+     * Invalid API version
+     * @remarks You sent an invalid version for the gateway
      */
     InvalidApiVersion = 4_012,
+
     /**
-     * Invalid intent(s).
+     * Invalid intent(s)
+     * @remarks You sent an invalid intent for a Gateway Intent
      */
     InvalidIntents = 4_013,
+
     /**
-     * Disallowed intent(s).
+     * Disallowed intent(s)
+     * @remarks You sent a disallowed intent for a Gateway Intent
      */
     DisallowedIntents = 4_014,
 }
 
 /**
- * Enum representing the various voice opcodes used by Discord.
+ * Voice Communication Opcodes
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-opcodes|Voice Opcodes}
+ * Defines the operation codes used in Discord's voice connection protocol.
+ * These codes manage voice connections, state, and data transmission.
+ *
+ * @remarks
+ * Voice opcodes handle:
+ * - Voice connection establishment
+ * - Protocol selection
+ * - Audio transmission
+ * - Connection maintenance
+ * - DAVE (Discord Audio Video Engine) operations
+ *
+ * @example
+ * ```typescript
+ * // Handling voice connection
+ * function handleVoicePayload(payload: any) {
+ *   switch (payload.op) {
+ *     case VoiceOpcodes.Ready:
+ *       setupVoiceConnection(payload);
+ *       break;
+ *     case VoiceOpcodes.Speaking:
+ *       handleUserSpeaking(payload);
+ *       break;
+ *   }
+ * }
+ * ```
  */
 export enum VoiceOpcodes {
     /**
-     * Identify opcode.
+     * Identify
+     * @remarks Client → Server: Begins a voice websocket connection
      */
     Identify = 0,
+
     /**
-     * Select Protocol opcode.
+     * Select Protocol
+     * @remarks Client → Server: Select the voice protocol and IP/Port
      */
     SelectProtocol = 1,
+
     /**
-     * Ready opcode.
+     * Ready
+     * @remarks Client ← Server: Complete the websocket handshake
      */
     Ready = 2,
+
     /**
-     * Heartbeat opcode.
+     * Heartbeat
+     * @remarks Client → Server: Keep the websocket connection alive
      */
     Heartbeat = 3,
+
     /**
-     * Session Description opcode.
+     * Session Description
+     * @remarks Client ← Server: Describe the session
      */
     SessionDescription = 4,
+
     /**
-     * Speaking opcode.
+     * Speaking
+     * @remarks Client ↔ Server: Indicate which users are speaking
      */
     Speaking = 5,
+
     /**
-     * Heartbeat ACK opcode.
+     * Heartbeat ACK
+     * @remarks Client ← Server: Server acknowledges heartbeat
      */
     HeartbeatAck = 6,
+
     /**
-     * Resume opcode.
+     * Resume
+     * @remarks Client → Server: Resume a connection
      */
     Resume = 7,
+
     /**
-     * Hello opcode.
+     * Hello
+     * @remarks Client ← Server: Server tells client to initialize
      */
     Hello = 8,
+
     /**
-     * Resumed opcode.
+     * Resumed
+     * @remarks Client ← Server: Acknowledge Resume
      */
     Resumed = 9,
+
     /**
-     * Clients Connect opcode.
+     * Client Connect
+     * @remarks Client ← Server: A client has connected to the voice channel
      */
     ClientsConnect = 11,
+
     /**
-     * Client Disconnect opcode.
+     * Client Disconnect
+     * @remarks Client ← Server: A client has disconnected from the voice channel
      */
     ClientDisconnect = 13,
+
+    // DAVE (Discord Audio Video Engine) Related Opcodes
     /**
-     * DAVE Prepare Transition opcode.
+     * DAVE Prepare Transition
+     * @remarks Related to audio/video engine state changes
      */
     DavePrepareTransition = 21,
+
     /**
-     * DAVE Execute Transition opcode.
+     * DAVE Execute Transition
+     * @remarks Execute prepared audio/video transition
      */
     DaveExecuteTransition = 22,
+
     /**
-     * DAVE Transition Ready opcode.
+     * DAVE Transition Ready
+     * @remarks Indicates that transition is ready
      */
     DaveTransitionReady = 23,
+
     /**
-     * DAVE Prepare Epoch opcode.
+     * DAVE Prepare Epoch
+     * @remarks Prepare for audio/video timing epoch
      */
     DavePrepareEpoch = 24,
+
     /**
-     * DAVE MLS External Sender opcode.
+     * DAVE MLS External Sender
+     * @remarks MLS protocol external sender handling
      */
     DaveMlsExternalSender = 25,
+
     /**
-     * DAVE MLS Key Package opcode.
+     * DAVE MLS Key Package
+     * @remarks MLS protocol key package management
      */
     DaveMlsKeyPackage = 26,
+
     /**
-     * DAVE MLS Proposals opcode.
+     * DAVE MLS Proposals
+     * @remarks MLS protocol proposals handling
      */
     DaveMlsProposals = 27,
+
     /**
-     * DAVE MLS Commit Welcome opcode.
+     * DAVE MLS Commit Welcome
+     * @remarks MLS protocol commit welcome message
      */
     DaveMlsCommitWelcome = 28,
+
     /**
-     * DAVE MLS Announce Commit Transition opcode.
+     * DAVE MLS Announce Commit Transition
+     * @remarks MLS protocol commit transition announcement
      */
     DaveMlsAnnounceCommitTransition = 29,
+
     /**
-     * DAVE MLS Welcome opcode.
+     * DAVE MLS Welcome
+     * @remarks MLS protocol welcome message
      */
     DaveMlsWelcome = 30,
+
     /**
-     * DAVE MLS Invalid Commit Welcome opcode.
+     * DAVE MLS Invalid Commit Welcome
+     * @remarks MLS protocol invalid commit welcome handling
      */
     DaveMlsInvalidCommitWelcome = 31,
 }
 
 /**
- * Enum representing the various voice close event codes used by Discord.
+ * Voice Connection Close Codes
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#voice-voice-close-event-codes|Voice Close Event Codes}
+ * Defines the close codes used when a voice connection is terminated.
+ * These codes help identify why the voice connection was closed.
+ *
+ * @remarks
+ * - 4000-4006: Authentication/validation errors
+ * - 4009-4016: Connection/protocol errors
+ *
+ * @example
+ * ```typescript
+ * // Handling voice connection closure
+ * voiceConnection.onclose = (event) => {
+ *   switch (event.code) {
+ *     case VoiceCloseCodes.SessionTimeout:
+ *       reconnectVoice();
+ *       break;
+ *     case VoiceCloseCodes.ServerNotFound:
+ *       handleServerError();
+ *       break;
+ *   }
+ * };
+ * ```
  */
 export enum VoiceCloseCodes {
     /**
-     * Unknown error.
+     * Unknown Error
+     * @remarks An unknown error occurred during voice connection
      */
     UnknownError = 4_000,
+
     /**
-     * Unknown opcode.
+     * Unknown Opcode
+     * @remarks An invalid opcode was sent
      */
     UnknownOpcode = 4_001,
+
     /**
-     * Decode error.
+     * Decode Error
+     * @remarks Failed to decode payload
      */
     DecodeError = 4_002,
+
     /**
-     * Not authenticated.
+     * Not Authenticated
+     * @remarks Voice connection not authenticated
      */
     NotAuthenticated = 4_003,
+
     /**
-     * Authentication failed.
+     * Authentication Failed
+     * @remarks Authentication of voice connection failed
      */
     AuthenticationFailed = 4_004,
+
     /**
-     * Already authenticated.
+     * Already Authenticated
+     * @remarks Voice connection already authenticated
      */
     AlreadyAuthenticated = 4_005,
+
     /**
-     * Session no longer valid.
+     * Session Invalid
+     * @remarks Session is no longer valid
      */
     SessionNoLongerValid = 4_006,
+
     /**
-     * Session timeout.
+     * Session Timeout
+     * @remarks Voice session timed out
      */
     SessionTimeout = 4_009,
+
     /**
-     * Server not found.
+     * Server Not Found
+     * @remarks Unable to find the voice server
      */
     ServerNotFound = 4_011,
+
     /**
-     * Unknown protocol.
+     * Unknown Protocol
+     * @remarks Unknown voice protocol selected
      */
     UnknownProtocol = 4_012,
+
     /**
-     * Disconnected.
+     * Disconnected
+     * @remarks Disconnected from voice channel
      */
     Disconnected = 4_014,
+
     /**
-     * Voice server crashed.
+     * Voice Server Crashed
+     * @remarks Voice server crashed
      */
     VoiceServerCrashed = 4_015,
+
     /**
-     * Unknown encryption mode.
+     * Unknown Encryption Mode
+     * @remarks Unknown encryption mode selected
      */
     UnknownEncryptionMode = 4_016,
 }
 
 /**
- * Enum representing the various HTTP response codes used by Discord.
+ * HTTP Response Codes
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes|HTTP Response Codes}
+ * Defines the standard HTTP response codes used by Discord's REST API.
+ * These codes indicate the success or failure of API requests.
+ *
+ * @remarks
+ * Code categories:
+ * - 2xx: Success
+ * - 3xx: Redirection
+ * - 4xx: Client errors
+ * - 5xx: Server errors
+ *
+ * @example
+ * ```typescript
+ * async function makeDiscordRequest(endpoint: string) {
+ *   const response = await fetch(endpoint);
+ *   switch (response.status) {
+ *     case RestHttpResponseCodes.Ok:
+ *       return await response.json();
+ *     case RestHttpResponseCodes.TooManyRequests:
+ *       throw new Error('Rate limited!');
+ *     case RestHttpResponseCodes.Unauthorized:
+ *       throw new Error('Invalid token!');
+ *   }
+ * }
+ * ```
  */
 export enum RestHttpResponseCodes {
     /**
-     * The request completed successfully.
+     * OK (200)
+     * @remarks Request completed successfully
      */
     Ok = 200,
+
     /**
-     * The entity was created successfully.
+     * Created (201)
+     * @remarks Entity was created successfully
      */
     Created = 201,
+
     /**
-     * The request completed successfully but returned no content.
+     * No Content (204)
+     * @remarks Request succeeded but no content returned
      */
     NoContent = 204,
+
     /**
-     * The entity was not modified (no action was taken).
+     * Not Modified (304)
+     * @remarks Entity was not modified (no action taken)
      */
     NotModified = 304,
+
     /**
-     * The request was improperly formatted, or the server couldn't understand it.
+     * Bad Request (400)
+     * @remarks Request was improperly formatted or invalid
      */
     BadRequest = 400,
+
     /**
-     * The Authorization header was missing or invalid.
+     * Unauthorized (401)
+     * @remarks Missing or invalid authentication
      */
     Unauthorized = 401,
+
     /**
-     * The Authorization token you passed did not have permission to the resource.
+     * Forbidden (403)
+     * @remarks Valid token but insufficient permissions
      */
     Forbidden = 403,
+
     /**
-     * The resource at the location specified doesn't exist.
+     * Not Found (404)
+     * @remarks Resource does not exist
      */
     NotFound = 404,
+
     /**
-     * The HTTP method used is not valid for the location specified.
+     * Method Not Allowed (405)
+     * @remarks HTTP method not valid for this endpoint
      */
     MethodNotAllowed = 405,
+
     /**
-     * You are being rate limited, see Rate Limits.
+     * Too Many Requests (429)
+     * @remarks You are being rate limited
      */
     TooManyRequests = 429,
+
     /**
-     * There was not a gateway available to process your request. Wait a bit and retry.
+     * Gateway Unavailable (502)
+     * @remarks Discord's gateway is not available
      */
     GatewayUnavailable = 502,
+
     /**
-     * The server had an error processing your request (these are rare).
+     * Server Error (500)
+     * @remarks Discord server error (rare)
      */
     ServerError = 500,
 }
 
 /**
- * Enum representing the various JSON error codes used by Discord.
+ * REST API JSON Error Codes
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-json-error-codes|JSON Error Codes}
+ * Defines specific error codes returned in JSON responses from Discord's REST API.
+ * These codes provide detailed information about why a request failed.
+ *
+ * @remarks
+ * Code categories:
+ * - 10xxx: Resource errors
+ * - 20xxx: Permission/Authorization errors
+ * - 30xxx: Limit errors
+ * - 40xxx: Request errors
+ * - 50xxx: Resource errors
+ * - Others: Miscellaneous errors
+ *
+ * @example
+ * ```typescript
+ * async function handleApiError(error: any) {
+ *   switch (error.code) {
+ *     case RestJsonErrorCodes.RateLimited:
+ *       await sleep(error.retry_after);
+ *       break;
+ *     case RestJsonErrorCodes.MissingAccess:
+ *       throw new Error('Bot lacks required permissions');
+ *       break;
+ *   }
+ * }
+ * ```
  */
 export enum RestJsonErrorCodes {
     GeneralError = 0,
@@ -558,105 +878,211 @@ export enum RestJsonErrorCodes {
 }
 
 /**
- * Enum representing the various RPC error codes used by Discord.
+ * RPC Error Codes
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-error-codes|RPC Error Codes}
+ * Defines error codes that can occur during RPC communication with Discord.
+ * These codes help identify specific issues in RPC operations.
+ *
+ * @remarks
+ * Code categories:
+ * - 1000: General errors
+ * - 4000-4010: Protocol errors
+ * - 5000-5004: Implementation errors
+ *
+ * @example
+ * ```typescript
+ * // Handling RPC errors
+ * function handleRpcError(code: RpcErrorCodes, message: string) {
+ *   switch (code) {
+ *     case RpcErrorCodes.InvalidPayload:
+ *       console.error('Invalid data sent:', message);
+ *       break;
+ *     case RpcErrorCodes.InvalidClientId:
+ *       console.error('Client ID verification failed');
+ *       break;
+ *   }
+ * }
+ * ```
  */
 export enum RpcErrorCodes {
     /**
-     * An unknown error occurred.
+     * Unknown Error
+     * @remarks An unknown error occurred during RPC communication
+     * @action Check the error message for more details
      */
     UnknownError = 1_000,
+
     /**
-     * You sent an invalid payload.
+     * Invalid Payload
+     * @remarks The sent payload was malformed or invalid
+     * @action Verify the payload structure and content
      */
     InvalidPayload = 4_000,
+
     /**
-     * Invalid command name specified.
+     * Invalid Command
+     * @remarks The command name specified was invalid
+     * @action Check command spelling and availability
      */
     InvalidCommand = 4_002,
+
     /**
-     * Invalid guild ID specified.
+     * Invalid Guild
+     * @remarks The guild ID provided was invalid
+     * @action Verify the guild ID exists and is accessible
      */
     InvalidGuild = 4_003,
+
     /**
-     * Invalid event name specified.
+     * Invalid Event
+     * @remarks The event name specified was invalid
+     * @action Check event name spelling and registration
      */
     InvalidEvent = 4_004,
+
     /**
-     * Invalid channel ID specified.
+     * Invalid Channel
+     * @remarks The channel ID provided was invalid
+     * @action Verify channel ID exists and is accessible
      */
     InvalidChannel = 4_005,
+
     /**
-     * You lack permissions to access the given resource.
+     * Invalid Permissions
+     * @remarks The application lacks required permissions
+     * @action Check required vs granted permissions
      */
     InvalidPermissions = 4_006,
+
     /**
-     * An invalid OAuth2 application ID was used to authorize or authenticate with.
+     * Invalid Client ID
+     * @remarks The application ID was invalid
+     * @action Verify your application's client ID
      */
     InvalidClientId = 4_007,
+
     /**
-     * An invalid OAuth2 application origin was used to authorize or authenticate with.
+     * Invalid Origin
+     * @remarks The origin the application is running from is not valid
+     * @action Check allowed origins in your application settings
      */
     InvalidOrigin = 4_008,
+
     /**
-     * An invalid OAuth2 token was used to authorize or authenticate with.
+     * Invalid Token
+     * @remarks The provided authentication token was invalid
+     * @action Verify token validity and permissions
      */
     InvalidToken = 4_009,
+
     /**
-     * The specified user ID was invalid.
+     * Invalid User
+     * @remarks The specified user ID was invalid
+     * @action Check if user exists and is accessible
      */
     InvalidUser = 4_010,
+
     /**
-     * A standard OAuth2 error occurred; check the data object for the OAuth2 error details.
+     * OAuth2 Error
+     * @remarks A standard OAuth2 error occurred
+     * @remarks Check the data object for OAuth2 error details
      */
     OAuth2Error = 5_000,
+
     /**
-     * An asynchronous SELECT_TEXT_CHANNEL/SELECT_VOICE_CHANNEL command timed out.
+     * Select Channel Timed Out
+     * @remarks Channel selection operation timed out
+     * @action Retry the operation or check for UI blocking
      */
     SelectChannelTimedOut = 5_001,
+
     /**
-     * An asynchronous GET_GUILD command timed out.
+     * Get Guild Timed Out
+     * @remarks Guild fetch operation timed out
+     * @action Check network connection and retry
      */
     GetGuildTimedOut = 5_002,
+
     /**
-     * You tried to join a user to a voice channel but the user was already in one.
+     * Select Voice Force Required
+     * @remarks Cannot join user to voice - already in voice
+     * @action Force move user or handle existing connection
      */
     SelectVoiceForceRequired = 5_003,
+
     /**
-     * You tried to capture more than one shortcut key at once.
+     * Capture Shortcut Already Listening
+     * @remarks Cannot capture multiple shortcut keys simultaneously
+     * @action Handle one shortcut at a time
      */
     CaptureShortcutAlreadyListening = 5_004,
 }
 
 /**
- * Enum representing the various RPC close event codes used by Discord.
+ * RPC Close Event Codes
  *
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#rpc-rpc-close-event-codes|RPC Close Event Codes}
+ * Defines close codes sent when an RPC connection is terminated.
+ * These codes help identify why the connection was closed.
+ *
+ * @remarks
+ * All codes are in the 4000-4005 range
+ * Each code represents a specific reason for connection termination
+ *
+ * @example
+ * ```typescript
+ * // Handling RPC connection closure
+ * rpcConnection.onclose = (event) => {
+ *   switch (event.code) {
+ *     case RpcCloseCodes.InvalidClientId:
+ *       console.error('Invalid client ID - check your application settings');
+ *       break;
+ *     case RpcCloseCodes.InvalidOrigin:
+ *       console.error('Connection from unauthorized origin');
+ *       break;
+ *   }
+ * };
+ * ```
  */
 export enum RpcCloseCodes {
     /**
-     * Invalid client ID.
+     * Invalid Client ID
+     * @remarks The provided client ID was invalid
+     * @action Verify your application's client ID in Discord Developer Portal
      */
     InvalidClientId = 4_000,
+
     /**
-     * Invalid origin.
+     * Invalid Origin
+     * @remarks Connection attempted from an invalid origin
+     * @action Check allowed origins in your application settings
      */
     InvalidOrigin = 4_001,
+
     /**
-     * Rate limited.
+     * Rate Limited
+     * @remarks Too many requests made to the RPC server
+     * @action Implement rate limiting or backoff strategy
      */
     RateLimited = 4_002,
+
     /**
-     * Token revoked.
+     * Token Revoked
+     * @remarks The OAuth2 token was revoked
+     * @action Re-authenticate the user
      */
     TokenRevoked = 4_003,
+
     /**
-     * Invalid version.
+     * Invalid Version
+     * @remarks Invalid RPC version specified
+     * @action Check supported RPC versions
      */
     InvalidVersion = 4_004,
+
     /**
-     * Invalid encoding.
+     * Invalid Encoding
+     * @remarks Invalid encoding specified
+     * @action Use only supported encodings (JSON)
      */
     InvalidEncoding = 4_005,
 }
