@@ -4,11 +4,7 @@
         "incremental": true,
         "composite": true,
         "target": "ESNext",
-        "lib": [
-            "ESNext",
-            "DOM",
-            "DOM.Iterable"
-        ],
+        "lib": ["ESNext"],
         "moduleDetection": "auto",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
@@ -36,7 +32,10 @@
         "noUncheckedIndexedAccess": true,
         "noImplicitOverride": true,
         "noPropertyAccessFromIndexSignature": true,
-        "allowUnusedLabels": true,
-        "allowUnreachableCode": true
+        "allowUnusedLabels": false,
+        "allowUnreachableCode": false,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "verbatimModuleSyntax": true
     }
 }

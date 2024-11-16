@@ -1,5 +1,6 @@
 <div align="center" style="padding: 30px;">
   <h1 style="font-size: 3em; font-weight: bold;">@nyxjs/create 🚀</h1>
+  <h6 style="font-size: 1em; font-weight: bold;">Not currently under development</h6>
   <p style="font-size: 1.2em; margin-top: 10px;">CLI Tool for Quickly Setting Up Nyx.js Projects</p>
   <img src="../../assets/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="margin-top: 20px; border-radius: 8px;">
 </div>

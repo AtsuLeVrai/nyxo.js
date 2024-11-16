@@ -21,7 +21,6 @@ The monorepo is organized into various packages, each fulfilling a critical role
 #### ✅ Currently Under Development
 
 - `core`: The fundamental component of Nyx.js, providing the essential elements that power the rest of the system.
-- `create`: A CLI tool for easily generating new Nyx.js projects, including templates and configurations.
 - `gateway`: Handles WebSocket connections and shard management for efficient communication with the Discord API.
 - `logger`: Advanced logging system for application tracking and debugging.
 - `nyxjs`: The main package that connects all components and serves as the entry point for Nyx.js.
@@ -29,6 +28,7 @@ The monorepo is organized into various packages, each fulfilling a critical role
 
 #### ⏳ Future Development
 
+- `create`: A CLI tool for easily generating new Nyx.js projects, including templates and configurations.
 - `database`: A unified database manager supporting multiple database engines.
 - `panel`: An administrative panel built with Next.js to monitor statistics (guilds, members, commands).
 - `plugins`: A set of optional plugins to extend Nyx.js functionality.

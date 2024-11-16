@@ -1,11 +1,11 @@
 {
-    "$schema": "https://json.schemastore.org/tsconfig",
-    "extends": "../../configs/typescript/node.json",
-    "compilerOptions": {
-        "tsBuildInfoFile": "./dist/.tsbuildinfo",
-        "rootDir": "./src",
-        "outDir": "./dist"
-    },
-    "include": ["./src"],
-    "exclude": ["./node_modules", "./dist"]
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@nyxjs/configs/tsconfig/base",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["./src"],
+  "exclude": ["./node_modules", "./dist"]
 }

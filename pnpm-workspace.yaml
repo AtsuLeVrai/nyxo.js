@@ -1,5 +1,5 @@
 packages:
     - 'apps/*'
-    - 'configs/*'
     - 'internals/*'
     - 'packages/*'
+    - 'configs'

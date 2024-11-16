@@ -54,13 +54,14 @@
     "devDependencies": {
         "@biomejs/biome": "1.9.4",
         "@microsoft/api-extractor": "^7.47.11",
+        "@nyxjs/configs": "workspace:*",
         "@types/node": "^22.9.0",
         "@vitest/coverage-v8": "2.1.4",
         "@vitest/ui": "2.1.4",
         "rimraf": "^6.0.1",
         "tsup": "^8.3.5",
         "typescript": "^5.6.3",
-        "vitest": "^2.1.4"
+        "vitest": "^2.1.5"
     },
     "files": ["dist"],
     "readme": "README.md"

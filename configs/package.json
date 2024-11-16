@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/configs",
+  "version": "0.0.0-private",
+  "private": true,
+  "type": "module",
+  "files": ["tsconfig", "biome.json", "tsup.config.mjs", "tsup.config.d.ts", "vitest.config.mjs", "vitest.config.d.ts"],
+  "exports": {
+    "./biome": "./biome.json",
+    "./tsconfig/base": "./tsconfig/base.json",
+    "./tsup": {
+      "default": "./tsup.config.mjs"
+    },
+    "./vitest": {
+      "default": "./vitest.config.mjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "tsup": ["./tsup.config.d.ts"],
+      "vitest": ["./vitest.config.d.ts"]
+    }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

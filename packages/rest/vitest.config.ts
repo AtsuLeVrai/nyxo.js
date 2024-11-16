@@ -1,3 +1,3 @@
-import { createVitestConfig } from "../../configs/vitest/vitest.config";
+import { createVitestConfig } from "@nyxjs/configs/vitest";
 
 export default createVitestConfig();

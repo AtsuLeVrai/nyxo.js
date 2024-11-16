@@ -1,3 +1,3 @@
-import { createTsupConfig } from "../../configs/tsup/tsup.config";
+import { createTsupConfig } from "@nyxjs/configs/tsup";
 
 export default createTsupConfig();
