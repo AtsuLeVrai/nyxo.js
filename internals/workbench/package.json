@@ -1,29 +1,29 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/workbench",
-  "description": "Workbench for nyx.js",
-  "version": "1.0.0",
-  "type": "module",
-  "readme": "README.md",
-  "license": "AGPL-3.0-only",
-  "engines": {
-    "node": ">=20"
-  },
-  "scripts": {
-    "start": "tsx watch src/index.ts",
-    "format": "biome format --write .",
-    "lint": "biome lint --write --unsafe .",
-    "check": "biome check --write --unsafe ."
-  },
-  "dependencies": {
-    "dotenv": "^16.4.5",
-    "nyx.js": "workspace:*"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@nyxjs/configs": "workspace:*",
-    "@types/node": "^22.9.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
-  }
+    "$schema": "https://json.schemastore.org/package.json",
+    "name": "@nyxjs/workbench",
+    "description": "Workbench for nyx.js",
+    "version": "1.0.0",
+    "type": "module",
+    "readme": "README.md",
+    "license": "AGPL-3.0-only",
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "start": "tsx watch src/index.ts",
+        "format": "biome format --write .",
+        "lint": "biome lint --write --unsafe .",
+        "check": "biome check --write --unsafe ."
+    },
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "nyx.js": "workspace:*"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@nyxjs/configs": "workspace:*",
+        "@types/node": "^22.9.0",
+        "tsx": "^4.19.2",
+        "typescript": "^5.6.3"
+    }
 }

@@ -23,6 +23,7 @@ export class CompressionManager {
             }
 
             this.#inflator = new zlib.Inflate({ chunkSize: 65_535, windowBits: 15 });
+            this.#emitDebug("Zlib inflator initialized");
         } catch (error) {
             const compressionError = new CompressionError(
                 "Failed to initialize Zlib inflator",
@@ -134,6 +135,15 @@ export class CompressionManager {
                 code: error.code,
                 details: error.details,
                 stack: error.stack,
+            }),
+        );
+    }
+
+    #emitDebug(message: string): void {
+        this.#gateway.emit(
+            "debug",
+            Logger.debug(message, {
+                component: "CompressionManager",
             }),
         );
     }

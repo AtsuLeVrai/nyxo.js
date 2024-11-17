@@ -120,7 +120,7 @@ export class ShardManager {
 
     async initialize(mode?: GatewayShardTypes): Promise<void> {
         try {
-            this.#emitDebug(`Initializing shards with mode: ${mode ?? "default"}`);
+            this.#emitDebug(`Starting shard initialization: ${mode ?? "single shard"}`);
 
             if (!mode) {
                 await this.#spawnShard({ shardId: 0, shardCount: 1 });
@@ -135,6 +135,8 @@ export class ShardManager {
             } else {
                 await this.#spawnShard(mode);
             }
+
+            this.#emitDebug(`Shard initialization completed with ${this.#shards.size} shards`);
         } catch (error) {
             const shardError = new ShardError("Failed to initialize shards", ErrorCodes.ShardInitError, {
                 mode,
@@ -146,9 +148,7 @@ export class ShardManager {
     }
 
     fetchShardStatus(shardId: number): ShardState | undefined {
-        const state = this.#shards.get(shardId);
-        this.#emitDebug(`Fetched status for shard ${shardId}: ${state?.status ?? "not found"}`);
-        return state;
+        return this.#shards.get(shardId);
     }
 
     async reconnectAll(): Promise<void> {
@@ -183,9 +183,7 @@ export class ShardManager {
     }
 
     getShardForGuild(guildId: Snowflake): number {
-        const shardId = this.#calculateShardId(guildId, this.shardCount);
-        this.#emitDebug(`Calculated shard ${shardId} for guild ${guildId}`);
-        return shardId;
+        return this.#calculateShardId(guildId, this.shardCount);
     }
 
     handleGuildEvent(guildId: Snowflake, type: "ADD" | "REMOVE"): void {
@@ -196,16 +194,11 @@ export class ShardManager {
             if (shard) {
                 if (type === "ADD") {
                     shard.guilds.add(guildId);
-                    this.#emitDebug(`Guild ${guildId} added to shard ${shardId}`);
-
                     if (shard.guilds.size > this.#guildsPerShard) {
-                        const warning = `Shard ${shardId} has exceeded ${this.#guildsPerShard} guilds`;
-                        this.#emitDebug(warning);
-                        this.#gateway.emit("warn", warning);
+                        this.#emitWarn(`Shard ${shardId} exceeds ${this.#guildsPerShard} guilds threshold`);
                     }
                 } else {
                     shard.guilds.delete(guildId);
-                    this.#emitDebug(`Guild ${guildId} removed from shard ${shardId}`);
                 }
             }
         } catch (error) {
@@ -221,7 +214,7 @@ export class ShardManager {
 
     async rescale(newShardCount: number): Promise<void> {
         try {
-            this.#emitDebug(`Starting rescale to ${newShardCount} shards`);
+            this.#emitDebug(`Starting rescale operation to ${newShardCount} shards`);
             const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
 
             if (this.#isLargeBot() && !this.#isValidShardCount(gatewayInfo.shards)) {
@@ -257,7 +250,7 @@ export class ShardManager {
                 }
             }
 
-            this.#emitDebug(`Successfully rescaled to ${newShardCount} shards`);
+            this.#emitDebug(`Rescale completed: ${newShardCount} shards active`);
         } catch (error) {
             const shardError =
                 error instanceof ShardError
@@ -273,18 +266,22 @@ export class ShardManager {
 
     async #setupAutoSharding(): Promise<void> {
         try {
-            this.#emitDebug("Starting auto-sharding setup");
-            const [guilds, gatewayInfo] = await this.#rest.manyRequest([
-                UserRoutes.getCurrentUserGuilds(),
-                GatewayRoutes.getGatewayBot(),
-            ]);
+            if (!this.#session.isReady) {
+                const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
+                this.#session.updateLimit(gatewayInfo);
+            }
+
+            const guilds = await this.#rest.request(UserRoutes.getCurrentUserGuilds());
+
+            const recommendedShards = this.#getRecommendedShards(
+                guilds.length,
+                this.#session.shards ?? this.#defaultShardCount,
+            );
 
             if (guilds.length < this.#guildsPerShard) {
                 this.#emitWarn(
-                    `Auto-sharding requested but you only have ${guilds.length} guilds.\nAuto-sharding is designed for bots with more than ${this.#guildsPerShard} guilds.\nUsing auto-sharding with a small number of guilds is inefficient.\nConsider removing sharding configuration for better performance.`,
+                    `Auto-sharding requested but only ${guilds.length} guilds present. Using single shard for better performance.`,
                 );
-
-                this.#emitDebug("Falling back to single shard due to low guild count");
                 await this.#spawnShard({
                     shardId: 0,
                     shardCount: this.#defaultShardCount,
@@ -293,7 +290,6 @@ export class ShardManager {
             }
 
             this.#validateShardingRequirements(guilds);
-            const recommendedShards = this.#getRecommendedShards(guilds.length, gatewayInfo.shards);
 
             const guildDistribution = new Map<number, Set<Snowflake>>();
             for (const guild of guilds) {
@@ -304,16 +300,13 @@ export class ShardManager {
                 guildDistribution.get(shardId)?.add(guild.id);
             }
 
-            const maxConcurrency = gatewayInfo.session_start_limit.max_concurrency;
-            this.#organizeShardsIntoBuckets(Array.from(guildDistribution.keys()), maxConcurrency);
+            this.#organizeShardsIntoBuckets(Array.from(guildDistribution.keys()), this.#session.maxConcurrency);
 
-            await this.#checkSessionLimits();
+            await Promise.all(
+                Array.from(this.#buckets.values()).map((bucket) => this.#spawnBucket(bucket, guildDistribution)),
+            );
 
-            for (const bucket of this.#buckets.values()) {
-                await this.#spawnBucket(bucket, guildDistribution);
-            }
-
-            this.#emitDebug("Auto-sharding setup completed successfully");
+            this.#emitDebug(`Auto-sharding completed with ${this.#buckets.size} buckets`);
         } catch (error) {
             const shardError =
                 error instanceof ShardError
@@ -326,7 +319,6 @@ export class ShardManager {
 
     #organizeShardsIntoBuckets(shardIds: number[], maxConcurrency: number): void {
         try {
-            this.#emitDebug(`Organizing ${shardIds.length} shards into buckets (max concurrency: ${maxConcurrency})`);
             this.#buckets.clear();
 
             for (const shardId of shardIds) {
@@ -341,8 +333,6 @@ export class ShardManager {
 
                 this.#buckets.get(rateLimitKey)?.shardIds.push(shardId);
             }
-
-            this.#emitDebug(`Created ${this.#buckets.size} buckets`);
         } catch (error) {
             const shardError = new ShardError("Failed to organize shards into buckets", ErrorCodes.ShardStateError, {
                 shardIds,
@@ -356,21 +346,19 @@ export class ShardManager {
 
     async #spawnBucket(bucket: ShardBucket, guildDistribution: Map<number, Set<Snowflake>>): Promise<void> {
         try {
-            this.#emitDebug(`Spawning bucket ${bucket.key} with shards: ${bucket.shardIds.join(", ")}`);
-
-            const spawnPromises = bucket.shardIds.map((shardId) =>
-                this.#spawnShard(
-                    {
-                        shardId,
-                        shardCount: this.#session?.shards ?? 1,
-                    },
-                    guildDistribution.get(shardId),
+            await Promise.all(
+                bucket.shardIds.map((shardId) =>
+                    this.#spawnShard(
+                        {
+                            shardId,
+                            shardCount: this.#session?.shards ?? 1,
+                        },
+                        guildDistribution.get(shardId),
+                    ),
                 ),
             );
 
-            await Promise.all(spawnPromises);
-            await this.#wait(5000);
-            this.#emitDebug(`Bucket ${bucket.key} spawned successfully`);
+            await this.#wait(1000);
         } catch (error) {
             const shardError = new ShardError("Failed to spawn bucket", ErrorCodes.ShardSpawnError, { bucket, error });
             this.#emitError(shardError);
@@ -380,7 +368,6 @@ export class ShardManager {
 
     async #spawnShard(config: ShardConfig, guilds?: Set<Snowflake>): Promise<void> {
         try {
-            this.#emitDebug(`Spawning shard ${config.shardId}/${config.shardCount}`);
             this.#validateShardConfig(config);
 
             if (this.#shards.has(config.shardId)) {
@@ -397,18 +384,12 @@ export class ShardManager {
                 guilds: guilds ?? new Set(),
             };
 
-            if (config.shardId === 0) {
-                this.#emitDebug("Shard 0 will handle DMs");
-            }
-
             this.#shards.set(config.shardId, shardState);
             this.#connectionQueue.push(config.shardId);
 
             if (!this.#isProcessingQueue) {
                 await this.#processQueue();
             }
-
-            this.#emitDebug(`Shard ${config.shardId} spawned successfully`);
         } catch (error) {
             const shardError =
                 error instanceof ShardError
@@ -425,7 +406,6 @@ export class ShardManager {
         }
 
         this.#isProcessingQueue = true;
-        this.#emitDebug("Starting queue processing");
 
         try {
             const pendingBuckets = new Map<number, number[]>();
@@ -445,8 +425,6 @@ export class ShardManager {
             const sortedBuckets = Array.from(pendingBuckets.entries()).sort(([keyA], [keyB]) => keyA - keyB);
 
             for (const [bucketKey, shardIds] of sortedBuckets) {
-                this.#emitDebug(`Processing bucket ${bucketKey} with shards: ${shardIds.join(", ")}`);
-
                 const connectionPromises = shardIds.map((shardId) => {
                     const shard = this.#shards.get(shardId);
                     if (!shard) {
@@ -460,12 +438,9 @@ export class ShardManager {
                 await Promise.all(connectionPromises);
 
                 if (bucketKey < Math.max(...Array.from(pendingBuckets.keys()))) {
-                    this.#emitDebug("Waiting 5 seconds before processing next bucket");
                     await this.#wait(5000);
                 }
             }
-
-            this.#emitDebug("Queue processing completed successfully");
         } catch (error) {
             const shardError = new ShardError("Failed to process connection queue", ErrorCodes.ShardQueueError, {
                 error,
@@ -479,7 +454,6 @@ export class ShardManager {
 
     #connectShard(shard: ShardState): void {
         try {
-            this.#emitDebug(`Connecting shard ${shard.config.shardId}`);
             shard.status = "connecting";
 
             const payload: IdentifyStructure = {
@@ -508,8 +482,6 @@ export class ShardManager {
             this.#gateway.send(GatewayOpcodes.Identify, payload);
             shard.status = "connected";
             shard.reconnectAttempts = 0;
-
-            this.#emitDebug(`Shard ${shard.config.shardId} connected successfully`);
         } catch (error) {
             shard.status = "disconnected";
             this.#handleConnectionError(shard, error);
@@ -519,16 +491,10 @@ export class ShardManager {
     async #reconnectShard(shardId: number): Promise<void> {
         const shard = this.#shards.get(shardId);
         if (!shard) {
-            this.#emitDebug(`Cannot reconnect non-existent shard ${shardId}`);
             return;
         }
 
         try {
-            this.#emitDebug(`Attempting to reconnect shard ${shardId}`);
-            shard.status = "reconnecting";
-            shard.reconnectAttempts++;
-            shard.lastReconnectAttempt = Date.now();
-
             if (shard.reconnectAttempts > this.#maxReconnectAttempts) {
                 throw new ShardError(
                     `Maximum reconnection attempts (${this.#maxReconnectAttempts}) exceeded`,
@@ -540,6 +506,14 @@ export class ShardManager {
                     },
                 );
             }
+
+            shard.status = "reconnecting";
+            shard.reconnectAttempts++;
+            shard.lastReconnectAttempt = Date.now();
+
+            this.#emitDebug(
+                `Reconnecting shard ${shardId} (attempt ${shard.reconnectAttempts}/${this.#maxReconnectAttempts})`,
+            );
 
             this.#connectShard(shard);
         } catch (error) {
@@ -585,14 +559,12 @@ export class ShardManager {
         );
 
         this.#emitError(connectionError);
-        this.#emitDebug(
-            `Connection failed for shard ${shard.config.shardId} (attempt ${shard.reconnectAttempts + 1}/${this.#maxReconnectAttempts})`,
-        );
 
         if (shard.reconnectAttempts < this.#maxReconnectAttempts) {
-            this.#emitDebug(`Queuing reconnection for shard ${shard.config.shardId}`);
+            this.#emitDebug(
+                `Connection failed for shard ${shard.config.shardId} - Queuing reconnection (attempt ${shard.reconnectAttempts + 1}/${this.#maxReconnectAttempts})`,
+            );
             this.#connectionQueue.push(shard.config.shardId);
-
             if (!this.#isProcessingQueue) {
                 this.#processQueue().catch((err) => {
                     const queueError = new ShardError(
@@ -618,14 +590,14 @@ export class ShardManager {
                 },
             );
             this.#emitError(maxAttemptsError);
-            this.#emitDebug(`Maximum reconnection attempts reached for shard ${shard.config.shardId}`);
+            this.#emitWarn(`Maximum reconnection attempts reached for shard ${shard.config.shardId}`);
         }
     }
 
     #validateShardingRequirements(guilds: Partial<GuildStructure>[]): void {
         try {
             if (guilds.length > this.#guildsPerShard) {
-                this.#emitDebug(
+                this.#emitWarn(
                     `Sharding is required: ${guilds.length} guilds exceed the ${this.#guildsPerShard} guild limit`,
                 );
             }
@@ -690,17 +662,18 @@ export class ShardManager {
 
     async #checkSessionLimits(): Promise<void> {
         try {
-            this.#emitDebug("Checking session limits");
-            const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
-            const { remaining, reset_after } = gatewayInfo.session_start_limit;
+            if (!this.#session.isReady) {
+                const gatewayInfo = await this.#rest.request(GatewayRoutes.getGatewayBot());
+                this.#session.updateLimit(gatewayInfo);
+            }
+
+            const remaining = this.#session.remaining;
+            if (remaining < this.shardCount * 2) {
+                this.#emitDebug(`Session limits critical: ${remaining}/${this.shardCount} sessions available`);
+            }
 
             if (remaining === 0) {
-                const resetTime = new Date(Date.now() + reset_after).toISOString();
-                throw new ShardError(`Session limit reached. Resets at ${resetTime}`, ErrorCodes.ShardStateError, {
-                    resetTime,
-                    resetAfter: reset_after,
-                    shardCount: this.shardCount,
-                });
+                throw new ShardError("Session limit reached", ErrorCodes.ShardStateError);
             }
 
             if (remaining < this.shardCount) {
@@ -714,8 +687,6 @@ export class ShardManager {
                     },
                 );
             }
-
-            this.#emitDebug(`Session limits checked: ${remaining} sessions available`);
         } catch (error) {
             const shardError =
                 error instanceof ShardError
@@ -732,7 +703,12 @@ export class ShardManager {
             Logger.error(error.message, {
                 component: "ShardManager",
                 code: error.code,
-                details: error.details,
+                details: {
+                    ...error.details,
+                    shardCount: this.shardCount,
+                    totalGuilds: [...this.#shards.values()].reduce((acc, shard) => acc + shard.guilds.size, 0),
+                    activeShards: [...this.#shards.values()].filter((s) => s.status === "connected").length,
+                },
                 stack: error.stack,
             }),
         );

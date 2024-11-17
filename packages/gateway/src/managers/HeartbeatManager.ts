@@ -37,7 +37,7 @@ export class HeartbeatManager {
             this.#state.lastAck = true;
             this.#state.isActive = true;
 
-            this.#emitDebug(`Setting up heartbeat with interval ${intervalMs}ms (jitter: ${jitter.toFixed(2)}ms)`);
+            this.#emitDebug("Heartbeat started", { intervalMs, jitter: Math.round(jitter) });
 
             this.#state.timer = this.#createSafeTimeout(() => {
                 this.#sendHeartbeat(onHeartbeat);
@@ -75,18 +75,15 @@ export class HeartbeatManager {
             }
 
             const now = Date.now();
-            this.#state.latency = this.#state.lastBeat ? now - this.#state.lastBeat : null;
+            const latency = this.#state.lastBeat ? now - this.#state.lastBeat : null;
+
+            if (latency && latency > 1000) {
+                this.#emitDebug("High heartbeat latency detected", { latencyMs: latency });
+            }
+
+            this.#state.latency = latency;
             this.#state.lastAck = true;
             this.#state.missedAcks = 0;
-
-            this.#emitDebug(
-                `Heartbeat acknowledged${this.#state.latency ? ` (latency: ${this.#state.latency}ms)` : ""}`,
-            );
-
-            // this.emit("heartbeatAck", {
-            //     latency: this.#state.latency,
-            //     totalBeats: this.#state.totalBeats,
-            // });
         } catch (error) {
             const heartbeatError =
                 error instanceof HeartbeatError
@@ -111,8 +108,14 @@ export class HeartbeatManager {
                 this.#state.timer = null;
             }
 
+            if (this.#state.isActive) {
+                this.#emitDebug("Heartbeat stopped", {
+                    totalBeats: this.#state.totalBeats,
+                    missedAcks: this.#state.missedAcks,
+                });
+            }
+
             this.#state = this.#createInitialState();
-            this.#emitDebug("Heartbeat manager cleaned up");
         } catch (error) {
             const heartbeatError = new HeartbeatError("Error during cleanup", ErrorCodes.HeartbeatStateError, {
                 originalError: error,
@@ -183,12 +186,6 @@ export class HeartbeatManager {
             this.#state.totalBeats++;
 
             onHeartbeat();
-            this.#emitDebug(`Heartbeat sent (total: ${this.#state.totalBeats})`);
-
-            // this.emit("heartbeat", {
-            //     totalBeats: this.#state.totalBeats,
-            //     missedAcks: this.#state.missedAcks,
-            // });
         } catch (error) {
             const heartbeatError = new HeartbeatError("Failed to send heartbeat", ErrorCodes.HeartbeatSendError, {
                 originalError: error,
@@ -202,11 +199,11 @@ export class HeartbeatManager {
     async #handleMissedAck(): Promise<void> {
         this.#state.missedAcks++;
 
-        const warning = `No heartbeat acknowledgement received. Missed acks: ${
-            this.#state.missedAcks
-        }/${this.#maxMissedAcks}`;
+        this.#emitDebug("Missed heartbeat acknowledgement", {
+            missedAcks: this.#state.missedAcks,
+            maxMissedAcks: this.#maxMissedAcks,
+        });
 
-        this.#gateway.emit("missedAck", warning);
         await this.#gateway.reconnect();
 
         if (this.#state.missedAcks >= this.#maxMissedAcks) {
@@ -228,7 +225,7 @@ export class HeartbeatManager {
     #emitError(error: HeartbeatError): void {
         this.#gateway.emit(
             "error",
-            Logger.debug(error.message, {
+            Logger.error(error.message, {
                 component: "HeartbeatManager",
                 code: error.code,
                 details: error.details,
@@ -237,11 +234,12 @@ export class HeartbeatManager {
         );
     }
 
-    #emitDebug(message: string): void {
+    #emitDebug(message: string, details?: Record<string, unknown>): void {
         this.#gateway.emit(
             "debug",
             Logger.debug(message, {
                 component: "HeartbeatManager",
+                details,
             }),
         );
     }

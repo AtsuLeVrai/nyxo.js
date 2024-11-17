@@ -14,6 +14,7 @@ const client = new Client(env.parsed["DISCORD_TOKEN"], {
     encoding: EncodingTypes.Json,
     intents: GatewayIntents.all(),
     version: ApiVersions.V10,
+    shard: "auto",
 });
 
 client.on("error", console.log);

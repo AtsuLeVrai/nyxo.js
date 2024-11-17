@@ -15,16 +15,13 @@ export class PayloadManager {
     constructor(gateway: Gateway, encoding: EncodingTypes) {
         this.#gateway = gateway;
         this.#encoding = this.#validateEncoding(encoding);
+        this.#emitDebug(`PayloadManager initialized with ${encoding} encoding`);
     }
 
     decode<T>(data: Buffer | string, isBinary: boolean): T {
         try {
-            this.#emitDebug(`Starting decode operation (isBinary: ${isBinary})`);
             this.#validateDecodeInput(data, isBinary);
-
-            const result = this.#performDecode<T>(data, isBinary);
-            this.#emitDebug("Decode operation completed successfully");
-            return result;
+            return this.#performDecode<T>(data, isBinary);
         } catch (error) {
             const payloadError =
                 error instanceof PayloadError
@@ -42,12 +39,8 @@ export class PayloadManager {
 
     encode(data: unknown): Buffer | string {
         try {
-            this.#emitDebug("Starting encode operation");
             this.#validateEncodeInput(data);
-
-            const result = this.#performEncode(data);
-            this.#emitDebug("Encode operation completed successfully");
-            return result;
+            return this.#performEncode(data);
         } catch (error) {
             const payloadError =
                 error instanceof PayloadError
@@ -71,8 +64,6 @@ export class PayloadManager {
                 supportedEncodings: PayloadManager.SUPPORTED_ENCODINGS,
             });
         }
-        this.#emitDebug(`Encoding validated: ${encoding}`);
-
         return encoding as EncodingTypes;
     }
 
@@ -94,26 +85,21 @@ export class PayloadManager {
         }
 
         if (this.#hasCircularReferences(data)) {
-            throw new PayloadError("Circular references detected in input data", ErrorCodes.PayloadInvalidInput, {
-                data,
-            });
+            throw new PayloadError("Circular references detected in input data", ErrorCodes.PayloadInvalidInput);
         }
     }
 
     #performDecode<T>(data: Buffer | string, isBinary: boolean): T {
         if (!(isBinary || Buffer.isBuffer(data))) {
-            this.#emitDebug("Decoding JSON string data");
             return this.#parseJson(data as string) as T;
         }
 
         if (this.#encoding === "json") {
-            this.#emitDebug("Decoding JSON buffer data");
             return this.#parseJson(data.toString()) as T;
         }
 
         if (this.#encoding === "etf") {
             try {
-                this.#emitDebug("Decoding ETF data");
                 return erlpack.unpack(data as Buffer);
             } catch (error) {
                 throw new PayloadError("Failed to unpack ETF data", ErrorCodes.PayloadDecodingError, {
@@ -130,13 +116,11 @@ export class PayloadManager {
 
     #performEncode(data: unknown): Buffer | string {
         if (this.#encoding === "json") {
-            this.#emitDebug("Encoding data to JSON");
             return this.#stringifyJson(data);
         }
 
         if (this.#encoding === "etf") {
             try {
-                this.#emitDebug("Encoding data to ETF");
                 return erlpack.pack(data);
             } catch (error) {
                 throw new PayloadError("Failed to pack ETF data", ErrorCodes.PayloadEncodingError, {

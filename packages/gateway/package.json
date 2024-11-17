@@ -1,82 +1,82 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/gateway",
-  "version": "1.0.0",
-  "description": "A gateway for the Nyx.js framework",
-  "license": "AGPL-3.0-only",
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/index.js"
-    }
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/3tatsu/nyx.js",
-    "directory": "packages/gateway"
-  },
-  "bugs": {
-    "url": "https://github.com/3tatsu/nyx.js/issues"
-  },
-  "author": {
-    "name": "3tatsu",
-    "url": "https://github.com/3tatsu"
-  },
-  "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup && rimraf .tsup",
-    "clean": "rimraf dist",
-    "format": "biome format --write .",
-    "lint": "biome lint --write --unsafe .",
-    "check": "biome check --write --unsafe .",
-    "test": "vitest run",
-    "test:watch": "vitest watch --ui",
-    "test:bench": "vitest bench --ui",
-    "test:coverage": "vitest --coverage",
-    "type-check": "tsc --noEmit",
-    "prepack": "pnpm run clean && pnpm run build",
-    "validate": "pnpm run type-check && pnpm run check && pnpm run test"
-  },
-  "dependencies": {
-    "@nyxjs/core": "workspace:*",
-    "@nyxjs/logger": "workspace:*",
-    "@nyxjs/rest": "workspace:*",
-    "bufferutil": "^4.0.8",
-    "erlpack": "^0.1.4",
-    "eventemitter3": "^5.0.1",
-    "utf-8-validate": "^6.0.5",
-    "ws": "^8.18.0",
-    "zlib-sync": "^0.1.9"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@microsoft/api-extractor": "^7.47.11",
-    "@nyxjs/configs": "workspace:*",
-    "@types/node": "^22.9.0",
-    "@types/ws": "^8.5.13",
-    "@vitest/coverage-v8": "2.1.4",
-    "@vitest/ui": "2.1.4",
-    "rimraf": "^6.0.1",
-    "tsup": "^8.3.5",
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
-  },
-  "peerDependencies": {
-    "@nyxjs/core": "workspace:*",
-    "@nyxjs/logger": "workspace:*",
-    "@nyxjs/rest": "workspace:*"
-  },
-  "files": ["dist"],
-  "readme": "README.md"
+    "$schema": "https://json.schemastore.org/package.json",
+    "name": "@nyxjs/gateway",
+    "version": "1.0.0",
+    "description": "A gateway for the Nyx.js framework",
+    "license": "AGPL-3.0-only",
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/esm/index.js",
+            "require": "./dist/index.js"
+        }
+    },
+    "engines": {
+        "node": ">=20"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/3tatsu/nyx.js",
+        "directory": "packages/gateway"
+    },
+    "bugs": {
+        "url": "https://github.com/3tatsu/nyx.js/issues"
+    },
+    "author": {
+        "name": "3tatsu",
+        "url": "https://github.com/3tatsu"
+    },
+    "scripts": {
+        "dev": "tsup --watch",
+        "build": "tsup && rimraf .tsup",
+        "clean": "rimraf dist",
+        "format": "biome format --write .",
+        "lint": "biome lint --write --unsafe .",
+        "check": "biome check --write --unsafe .",
+        "test": "vitest run",
+        "test:watch": "vitest watch --ui",
+        "test:bench": "vitest bench --ui",
+        "test:coverage": "vitest --coverage",
+        "type-check": "tsc --noEmit",
+        "prepack": "pnpm run clean && pnpm run build",
+        "validate": "pnpm run type-check && pnpm run check && pnpm run test"
+    },
+    "dependencies": {
+        "@nyxjs/core": "workspace:*",
+        "@nyxjs/logger": "workspace:*",
+        "@nyxjs/rest": "workspace:*",
+        "bufferutil": "^4.0.8",
+        "erlpack": "^0.1.4",
+        "eventemitter3": "^5.0.1",
+        "utf-8-validate": "^6.0.5",
+        "ws": "^8.18.0",
+        "zlib-sync": "^0.1.9"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@microsoft/api-extractor": "^7.47.11",
+        "@nyxjs/configs": "workspace:*",
+        "@types/node": "^22.9.0",
+        "@types/ws": "^8.5.13",
+        "@vitest/coverage-v8": "2.1.4",
+        "@vitest/ui": "2.1.4",
+        "rimraf": "^6.0.1",
+        "tsup": "^8.3.5",
+        "typescript": "^5.6.3",
+        "vitest": "^2.1.5"
+    },
+    "peerDependencies": {
+        "@nyxjs/core": "workspace:*",
+        "@nyxjs/logger": "workspace:*",
+        "@nyxjs/rest": "workspace:*"
+    },
+    "files": ["dist"],
+    "readme": "README.md"
 }

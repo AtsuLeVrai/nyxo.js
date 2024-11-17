@@ -169,8 +169,9 @@ export class RequestManager {
         }
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
-            this.#emitDebug("Request successful", {
-                response: formatJson(text),
+            this.#emitDebug(`Received ${response.statusCode} response from ${method} ${path}`, {
+                headers: formatJson(response.headers),
+                body: text,
             });
 
             try {

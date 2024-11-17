@@ -1,5 +1,5 @@
 import type { Integer } from "@nyxjs/core";
-import { Logger } from "@nyxjs/logger";
+import { Logger, formatUrl } from "@nyxjs/logger";
 import type { GetGatewayBotJsonResponse } from "@nyxjs/rest";
 import type { Gateway } from "../Gateway.js";
 import { BaseError, ErrorCodes } from "../errors/index.js";
@@ -69,7 +69,6 @@ export class SessionManager {
     updateSequence(sequence: Integer): void {
         try {
             this.#state.sequence = sequence;
-            this.#emitDebug(`Sequence updated to ${sequence}`);
         } catch (error) {
             const sessionError = new SessionError("Failed to update sequence", ErrorCodes.SessionStateError, {
                 sequence,
@@ -84,7 +83,7 @@ export class SessionManager {
         try {
             this.#state.sessionId = sessionId;
             this.#state.resumeUrl = resumeUrl;
-            this.#emitDebug(`Session updated - ID: ${sessionId}, URL: ${resumeUrl}`);
+            this.#emitDebug("New session established", { sessionId, resumeUrl: formatUrl(resumeUrl) });
         } catch (error) {
             const sessionError = new SessionError("Failed to update session", ErrorCodes.SessionStateError, {
                 sessionId,
@@ -98,14 +97,26 @@ export class SessionManager {
 
     canResume(): boolean {
         const { sessionId, sequence, resumeUrl } = this.#state;
-        const canResume = Boolean(sessionId && sequence !== null && resumeUrl);
-        this.#emitDebug(`Resume availability checked: ${canResume}`);
-        return canResume;
+        return Boolean(sessionId && sequence !== null && resumeUrl);
     }
 
     updateLimit(gateway: GetGatewayBotJsonResponse): void {
         try {
             const { remaining, total, reset_after, max_concurrency } = gateway.session_start_limit;
+
+            const limitsChanged =
+                !this.#limits ||
+                this.#limits.remaining !== remaining ||
+                this.#limits.total !== total ||
+                this.#limits.maxConcurrency !== max_concurrency;
+
+            if (limitsChanged) {
+                this.#emitDebug("Session limits updated", {
+                    remaining,
+                    total,
+                    maxConcurrency: max_concurrency,
+                });
+            }
 
             this.#limits = {
                 remaining,
@@ -114,10 +125,6 @@ export class SessionManager {
                 maxConcurrency: max_concurrency,
                 recommendedShards: gateway.shards,
             };
-
-            this.#emitDebug(
-                `Limits updated - Remaining: ${remaining}/${total}, Max Concurrency: ${max_concurrency}, Reset After: ${reset_after}ms`,
-            );
 
             if (this.#resetTimeout) {
                 clearTimeout(this.#resetTimeout);
@@ -143,7 +150,7 @@ export class SessionManager {
             }
 
             if (this.remaining <= 0) {
-                this.#emitDebug("No sessions remaining, waiting for reset");
+                this.#emitDebug("Session limit reached, waiting for reset");
                 await this.#waitForReset();
                 return this.acquire();
             }
@@ -154,7 +161,6 @@ export class SessionManager {
                 }
 
                 this.#limits.remaining--;
-                this.#emitDebug(`Session acquired - ${this.remaining} remaining`);
                 return Promise.resolve();
             };
 
@@ -177,6 +183,8 @@ export class SessionManager {
                 this.#resetTimeout = null;
             }
 
+            const hadSession = Boolean(this.#state.sessionId);
+
             this.#state = {
                 sequence: null,
                 sessionId: null,
@@ -187,7 +195,9 @@ export class SessionManager {
             this.#acquireQueue = [];
             this.#isProcessing = false;
 
-            this.#emitDebug("Session manager destroyed");
+            if (hadSession) {
+                this.#emitDebug("Session destroyed");
+            }
         } catch (error) {
             const sessionError = new SessionError(
                 "Error during session manager destruction",
@@ -204,7 +214,6 @@ export class SessionManager {
         }
 
         const { resetAfter, total } = this.#limits;
-        this.#emitDebug(`Waiting ${resetAfter}ms for session limit reset`);
 
         try {
             await new Promise<void>((resolve, reject) => {
@@ -215,7 +224,7 @@ export class SessionManager {
                     }
 
                     this.#limits.remaining = total;
-                    this.#emitDebug(`Session limits reset - ${total} sessions available`);
+                    this.#emitDebug("Session limits reset", { availableSessions: total });
                     resolve();
                 }, resetAfter);
             });
@@ -235,14 +244,11 @@ export class SessionManager {
         }
 
         this.#isProcessing = true;
-        this.#emitDebug("Starting queue processing");
 
         try {
             while (this.#acquireQueue.length > 0) {
                 const batchSize = Math.min(this.maxConcurrency, this.#acquireQueue.length);
                 const batch = this.#acquireQueue.splice(0, batchSize);
-
-                this.#emitDebug(`Processing batch of ${batchSize} sessions`);
 
                 await Promise.all(
                     batch.map((fn) =>
@@ -257,7 +263,6 @@ export class SessionManager {
                 );
 
                 if (this.#acquireQueue.length > 0) {
-                    this.#emitDebug(`Waiting ${this.#rateLimitDelay}ms before next batch`);
                     await new Promise((resolve) => setTimeout(resolve, this.#rateLimitDelay));
                 }
             }
@@ -270,7 +275,6 @@ export class SessionManager {
             throw sessionError;
         } finally {
             this.#isProcessing = false;
-            this.#emitDebug("Queue processing completed");
         }
     }
 
@@ -286,11 +290,12 @@ export class SessionManager {
         );
     }
 
-    #emitDebug(message: string): void {
+    #emitDebug(message: string, details?: Record<string, unknown>): void {
         this.#gateway.emit(
             "debug",
             Logger.debug(message, {
                 component: "SessionManager",
+                details,
             }),
         );
     }
