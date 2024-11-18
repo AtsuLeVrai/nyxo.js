@@ -116,14 +116,14 @@ export function SidebarContent() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-col h-full"
+            className="flex h-full flex-col"
         >
             {navigationSections.map((section, index) => (
                 <div
                     key={section.title}
                     className={`${index !== navigationSections.length - 1 ? "mb-6" : ""}`}
                 >
-                    <h2 className="text-xl font-semibold mb-4 text-gray-300">{section.title}</h2>
+                    <h2 className="mb-4 font-semibold text-gray-300 text-xl">{section.title}</h2>
                     <ul className="space-y-2">
                         {section.items.map((item) => (
                             <li key={item.label}>

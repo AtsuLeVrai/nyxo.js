@@ -466,13 +466,11 @@ export class VoiceChannelEffectSend
         this.#guildId = data.guild_id ?? this.#guildId;
         this.#soundId = data.sound_id ?? this.#soundId;
 
-        if (data.sound_volume !== undefined) {
-            if (typeof data.sound_volume === "number") {
-                if (data.sound_volume < 0 || data.sound_volume > 1) {
-                    throw new RangeError("Sound volume must be between 0 and 1");
-                }
-                this.#soundVolume = data.sound_volume;
+        if (data.sound_volume !== undefined && typeof data.sound_volume === "number") {
+            if (data.sound_volume < 0 || data.sound_volume > 1) {
+                throw new RangeError("Sound volume must be between 0 and 1");
             }
+            this.#soundVolume = data.sound_volume;
         }
 
         this.#userId = data.user_id ?? this.#userId;

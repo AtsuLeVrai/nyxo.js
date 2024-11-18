@@ -1,5 +1,5 @@
 import { ApiVersions, MimeTypes } from "@nyxjs/core";
-import { Logger, formatJson } from "@nyxjs/logger";
+import { Logger } from "@nyxjs/logger";
 import type { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import type { IncomingHttpHeaders } from "undici/types/header.js";
@@ -170,7 +170,7 @@ export class RequestManager {
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
             this.#emitDebug(`Received ${response.statusCode} response from ${method} ${path}`, {
-                headers: formatJson(response.headers),
+                headers: JSON.stringify(response.headers),
                 body: text,
             });
 

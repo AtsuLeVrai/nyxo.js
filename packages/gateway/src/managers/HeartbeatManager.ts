@@ -1,246 +1,102 @@
 import type { Integer } from "@nyxjs/core";
-import { Logger } from "@nyxjs/logger";
-import type { Gateway } from "../Gateway.js";
-import { BaseError, ErrorCodes } from "../errors/index.js";
+import { ErrorCodes, GatewayError } from "../GatewayError.js";
+import { BaseManager } from "./BaseManager.js";
 
-export interface HeartbeatState {
-    interval: NodeJS.Timeout | null;
-    timer: NodeJS.Timeout | null;
-    lastAck: boolean;
-    lastBeat: number | null;
-    missedAcks: number;
-    totalBeats: number;
-    latency: number | null;
-    isActive: boolean;
-}
-
-export class HeartbeatError extends BaseError {}
-
-export class HeartbeatManager {
-    readonly #gateway: Gateway;
-    readonly #maxMissedAcks = 3;
+export class HeartbeatManager extends BaseManager {
     readonly #minInterval = 1000;
     readonly #maxInterval = 60000;
-    #state: HeartbeatState;
+    readonly #maxMissedAcks = 3;
 
-    constructor(gateway: Gateway) {
-        this.#gateway = gateway;
-        this.#state = this.#createInitialState();
-    }
+    #interval: NodeJS.Timeout | null = null;
+    #lastAck = true;
+    #missedAcks = 0;
 
-    setInterval(intervalMs: Integer, onHeartbeat: () => void): void {
+    connect(intervalMs: Integer, onHeartbeat: () => void): void {
         try {
-            this.#validateInterval(intervalMs);
-            this.cleanup();
+            this.destroy();
 
-            const jitter = this.#calculateJitter(intervalMs);
-            this.#state.lastAck = true;
-            this.#state.isActive = true;
+            if (!Number.isInteger(intervalMs) || intervalMs < this.#minInterval || intervalMs > this.#maxInterval) {
+                throw new GatewayError(
+                    `Invalid interval: must be between ${this.#minInterval}ms and ${this.#maxInterval}ms`,
+                    ErrorCodes.HeartbeatIntervalError,
+                );
+            }
 
-            this.#emitDebug("Heartbeat started", { intervalMs, jitter: Math.round(jitter) });
-
-            this.#state.timer = this.#createSafeTimeout(() => {
-                this.#sendHeartbeat(onHeartbeat);
-
-                this.#state.interval = this.#createSafeInterval(async () => {
-                    if (!this.#state.lastAck) {
-                        await this.#handleMissedAck();
-                        return;
-                    }
-
-                    this.#sendHeartbeat(onHeartbeat);
-                }, intervalMs);
-            }, jitter);
+            const jitter = Math.random() * Math.min(intervalMs, 1000);
+            setTimeout(() => this.#setupHeartbeat(intervalMs, onHeartbeat), jitter);
         } catch (error) {
-            const heartbeatError = new HeartbeatError(
-                "Failed to set heartbeat interval",
-                ErrorCodes.HeartbeatStateError,
-                {
-                    originalError: error,
-                    intervalMs,
-                },
-            );
-            this.#emitError(heartbeatError);
+            const heartbeatError = new GatewayError("Failed to start heartbeat", ErrorCodes.HeartbeatStateError, {
+                cause: error,
+            });
+            this.error(heartbeatError);
             throw heartbeatError;
         }
     }
 
     acknowledge(): void {
-        try {
-            if (!this.#state.isActive) {
-                throw new HeartbeatError(
-                    "Cannot acknowledge heartbeat: manager is not active",
-                    ErrorCodes.HeartbeatStateError,
-                );
-            }
-
-            const now = Date.now();
-            const latency = this.#state.lastBeat ? now - this.#state.lastBeat : null;
-
-            if (latency && latency > 1000) {
-                this.#emitDebug("High heartbeat latency detected", { latencyMs: latency });
-            }
-
-            this.#state.latency = latency;
-            this.#state.lastAck = true;
-            this.#state.missedAcks = 0;
-        } catch (error) {
-            const heartbeatError =
-                error instanceof HeartbeatError
-                    ? error
-                    : new HeartbeatError("Failed to acknowledge heartbeat", ErrorCodes.HeartbeatStateError, {
-                          originalError: error,
-                      });
-            this.#emitError(heartbeatError);
-            throw heartbeatError;
+        if (!this.#interval) {
+            const error = new GatewayError("Heartbeat is not running", ErrorCodes.HeartbeatStateError);
+            this.error(error);
+            return;
         }
+
+        this.#lastAck = true;
+        this.#missedAcks = 0;
+        this.debug("Received heartbeat acknowledgement");
     }
 
-    cleanup(): void {
-        try {
-            if (this.#state.interval) {
-                clearInterval(this.#state.interval);
-                this.#state.interval = null;
-            }
-
-            if (this.#state.timer) {
-                clearTimeout(this.#state.timer);
-                this.#state.timer = null;
-            }
-
-            if (this.#state.isActive) {
-                this.#emitDebug("Heartbeat stopped", {
-                    totalBeats: this.#state.totalBeats,
-                    missedAcks: this.#state.missedAcks,
-                });
-            }
-
-            this.#state = this.#createInitialState();
-        } catch (error) {
-            const heartbeatError = new HeartbeatError("Error during cleanup", ErrorCodes.HeartbeatStateError, {
-                originalError: error,
-            });
-            this.#emitError(heartbeatError);
+    destroy(): void {
+        if (this.#interval) {
+            clearInterval(this.#interval);
+            this.#interval = null;
         }
+        this.#lastAck = true;
+        this.#missedAcks = 0;
     }
 
-    #createInitialState(): HeartbeatState {
-        return {
-            interval: null,
-            timer: null,
-            lastAck: false,
-            lastBeat: null,
-            missedAcks: 0,
-            totalBeats: 0,
-            latency: null,
-            isActive: false,
-        };
-    }
+    #setupHeartbeat(intervalMs: number, onHeartbeat: () => void): void {
+        this.#sendHeartbeat(onHeartbeat);
 
-    #validateInterval(intervalMs: number): void {
-        if (!Number.isInteger(intervalMs) || intervalMs < this.#minInterval || intervalMs > this.#maxInterval) {
-            throw new HeartbeatError(
-                `Invalid heartbeat interval: must be between ${this.#minInterval}ms and ${this.#maxInterval}ms`,
-                ErrorCodes.HeartbeatIntervalError,
-                { providedInterval: intervalMs },
-            );
-        }
-    }
-
-    #calculateJitter(intervalMs: number): number {
-        return Math.random() * Math.min(intervalMs, 1000);
-    }
-
-    #createSafeTimeout(callback: () => void, ms: number): NodeJS.Timeout {
-        return setTimeout(() => {
+        this.#interval = setInterval(async () => {
             try {
-                callback();
+                if (!this.#lastAck) {
+                    await this.#handleMissedHeartbeat();
+                    return;
+                }
+                this.#sendHeartbeat(onHeartbeat);
             } catch (error) {
-                this.#emitError(
-                    new HeartbeatError("Error in timeout callback", ErrorCodes.HeartbeatStateError, {
-                        originalError: error,
-                    }),
+                const heartbeatError = new GatewayError(
+                    "Error in heartbeat interval",
+                    ErrorCodes.HeartbeatIntervalError,
+                    { cause: error },
                 );
+                this.error(heartbeatError);
+                throw heartbeatError;
             }
-        }, ms);
-    }
-
-    #createSafeInterval(callback: () => void, ms: number): NodeJS.Timeout {
-        return setInterval(() => {
-            try {
-                callback();
-            } catch (error) {
-                this.#emitError(
-                    new HeartbeatError("Error in interval callback", ErrorCodes.HeartbeatIntervalError, {
-                        originalError: error,
-                    }),
-                );
-            }
-        }, ms);
+        }, intervalMs);
     }
 
     #sendHeartbeat(onHeartbeat: () => void): void {
-        try {
-            this.#state.lastAck = false;
-            this.#state.lastBeat = Date.now();
-            this.#state.totalBeats++;
-
-            onHeartbeat();
-        } catch (error) {
-            const heartbeatError = new HeartbeatError("Failed to send heartbeat", ErrorCodes.HeartbeatSendError, {
-                originalError: error,
-                totalBeats: this.#state.totalBeats,
-            });
-            this.#emitError(heartbeatError);
-            throw heartbeatError;
-        }
+        this.#lastAck = false;
+        this.debug("Sending heartbeat");
+        onHeartbeat();
     }
 
-    async #handleMissedAck(): Promise<void> {
-        this.#state.missedAcks++;
-
-        this.#emitDebug("Missed heartbeat acknowledgement", {
-            missedAcks: this.#state.missedAcks,
+    async #handleMissedHeartbeat(): Promise<void> {
+        this.#missedAcks++;
+        this.debug("Missed heartbeat acknowledgement", {
+            missedAcks: this.#missedAcks,
             maxMissedAcks: this.#maxMissedAcks,
         });
 
-        await this.#gateway.reconnect();
+        await this.gateway.reconnect();
 
-        if (this.#state.missedAcks >= this.#maxMissedAcks) {
-            const error = new HeartbeatError(
+        if (this.#missedAcks >= this.#maxMissedAcks) {
+            this.destroy();
+            throw new GatewayError(
                 `Maximum missed heartbeats (${this.#maxMissedAcks}) exceeded`,
                 ErrorCodes.HeartbeatMaxMissedError,
-                {
-                    missedAcks: this.#state.missedAcks,
-                    maxMissedAcks: this.#maxMissedAcks,
-                    totalBeats: this.#state.totalBeats,
-                },
             );
-            this.#emitError(error);
-            this.cleanup();
-            throw error;
         }
-    }
-
-    #emitError(error: HeartbeatError): void {
-        this.#gateway.emit(
-            "error",
-            Logger.error(error.message, {
-                component: "HeartbeatManager",
-                code: error.code,
-                details: error.details,
-                stack: error.stack,
-            }),
-        );
-    }
-
-    #emitDebug(message: string, details?: Record<string, unknown>): void {
-        this.#gateway.emit(
-            "debug",
-            Logger.debug(message, {
-                component: "HeartbeatManager",
-                details,
-            }),
-        );
     }
 }

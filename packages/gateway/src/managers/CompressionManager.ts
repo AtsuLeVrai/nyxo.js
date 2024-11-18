@@ -1,20 +1,13 @@
-import { Logger } from "@nyxjs/logger";
 import zlib from "zlib-sync";
-import type { Gateway } from "../Gateway.js";
-import { BaseError, ErrorCodes } from "../errors/index.js";
+import { ErrorCodes, GatewayError } from "../GatewayError.js";
+import { BaseManager } from "./BaseManager.js";
 
-export class CompressionError extends BaseError {}
-
-export class CompressionManager {
-    static FLUSH_MARKER = Buffer.from([0x00, 0x00, 0xff, 0xff]);
-    static MAX_CHUNK_SIZE = 2 * 1024 * 1024;
-
-    readonly #gateway: Gateway;
+export class CompressionManager extends BaseManager {
+    readonly #maxChunkSize = 2 * 1024 * 1024;
+    readonly #flushMarker = Buffer.from([0x00, 0x00, 0xff, 0xff]);
+    readonly #chunkSize = 64 * 1024;
+    readonly #windowBits = 15;
     #inflator: zlib.Inflate | null = null;
-
-    constructor(gateway: Gateway) {
-        this.#gateway = gateway;
-    }
 
     initializeZlib(): void {
         try {
@@ -22,95 +15,48 @@ export class CompressionManager {
                 this.destroy();
             }
 
-            this.#inflator = new zlib.Inflate({ chunkSize: 65_535, windowBits: 15 });
-            this.#emitDebug("Zlib inflator initialized");
-        } catch (error) {
-            const compressionError = new CompressionError(
-                "Failed to initialize Zlib inflator",
-                ErrorCodes.CompressionInitError,
-                { originalError: error },
-                error as Error,
-            );
+            this.#inflator = new zlib.Inflate({
+                chunkSize: this.#chunkSize,
+                windowBits: this.#windowBits,
+            });
 
-            this.#emitError(compressionError);
-            throw compressionError;
+            this.debug("Zlib inflator initialized");
+        } catch (error) {
+            throw new GatewayError("Failed to initialize Zlib inflator", ErrorCodes.CompressionInitError, {
+                cause: error,
+            });
         }
     }
 
     decompressZlib(data: Buffer): Buffer {
-        this.#validateInput(data);
+        if (!Buffer.isBuffer(data)) {
+            throw new GatewayError("Input must be a Buffer", ErrorCodes.CompressionInvalidData, {
+                details: { type: typeof data },
+            });
+        }
+
+        if (data.length > this.#maxChunkSize) {
+            throw new GatewayError("Input data exceeds maximum chunk size", ErrorCodes.CompressionMaxSizeError, {
+                details: { dataSize: data.length, maxSize: this.#maxChunkSize },
+            });
+        }
 
         if (!this.#inflator) {
-            const error = new CompressionError(
+            throw new GatewayError(
                 "Inflator not initialized. Call initializeZlib() first",
                 ErrorCodes.CompressionInitError,
-                { dataSize: data.length },
+                { details: { dataSize: data.length } },
             );
-            this.#emitError(error);
-            throw error;
         }
 
-        try {
-            return this.#performDecompression(data);
-        } catch (error) {
-            const compressionError = new CompressionError(
-                "Failed to decompress Zlib data",
-                ErrorCodes.CompressionDecompressError,
-                {
-                    dataSize: data.length,
-                    originalError: error,
-                },
-                error as Error,
-            );
-
-            this.#emitError(compressionError);
-            throw compressionError;
-        }
-    }
-
-    destroy(): void {
-        if (this.#inflator) {
-            try {
-                this.#inflator = null;
-            } catch (error) {
-                const compressionError = new CompressionError(
-                    "Failed to destroy Zlib inflator",
-                    ErrorCodes.CompressionInflatorError,
-                    { originalError: error },
-                    error as Error,
-                );
-
-                this.#emitError(compressionError);
-                throw compressionError;
-            }
-        }
-    }
-
-    #validateInput(data: Buffer): void {
-        if (!Buffer.isBuffer(data)) {
-            throw new CompressionError("Input must be a Buffer", ErrorCodes.CompressionInvalidData, {
-                type: typeof data,
-            });
-        }
-
-        if (data.length > CompressionManager.MAX_CHUNK_SIZE) {
-            throw new CompressionError("Input data exceeds maximum chunk size", ErrorCodes.CompressionMaxSizeError, {
-                dataSize: data.length,
-                maxSize: CompressionManager.MAX_CHUNK_SIZE,
-            });
-        }
-    }
-
-    #performDecompression(data: Buffer): Buffer {
-        const shouldFlush = this.#shouldFlushData(data);
-
+        const shouldFlush = this.shouldFlushData(data);
         if (!shouldFlush) {
             return Buffer.alloc(0);
         }
 
         this.#inflator?.push(data, shouldFlush && zlib.Z_SYNC_FLUSH);
 
-        if (this.#inflator && this.#inflator?.err < 0) {
+        if (this.#inflator?.err && this.#inflator.err < 0) {
             throw new Error(`Zlib inflation error: ${this.#inflator.msg}`);
         }
 
@@ -118,33 +64,24 @@ export class CompressionManager {
         return Buffer.isBuffer(result) ? result : Buffer.alloc(0);
     }
 
-    #shouldFlushData(data: Buffer): boolean {
-        if (data.length < CompressionManager.FLUSH_MARKER.length) {
+    destroy(): void {
+        if (this.#inflator) {
+            try {
+                this.#inflator = null;
+            } catch (error) {
+                throw new GatewayError("Failed to destroy Zlib inflator", ErrorCodes.CompressionInflatorError, {
+                    cause: error,
+                });
+            }
+        }
+    }
+
+    shouldFlushData(data: Buffer): boolean {
+        if (data.length < this.#flushMarker.length) {
             return false;
         }
 
-        const startIndex = data.length - CompressionManager.FLUSH_MARKER.length;
-        return data.subarray(startIndex).equals(CompressionManager.FLUSH_MARKER);
-    }
-
-    #emitError(error: CompressionError): void {
-        this.#gateway.emit(
-            "error",
-            Logger.error(error.message, {
-                component: "CompressionManager",
-                code: error.code,
-                details: error.details,
-                stack: error.stack,
-            }),
-        );
-    }
-
-    #emitDebug(message: string): void {
-        this.#gateway.emit(
-            "debug",
-            Logger.debug(message, {
-                component: "CompressionManager",
-            }),
-        );
+        const startIndex = data.length - this.#flushMarker.length;
+        return data.subarray(startIndex).equals(this.#flushMarker);
     }
 }

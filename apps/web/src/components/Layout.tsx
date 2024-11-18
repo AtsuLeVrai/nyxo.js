@@ -56,7 +56,7 @@ function NavLink({ href, icon: Icon, label, external }: NavItem) {
 
 function Header() {
     return (
-        <header className="bg-neutral-800 bg-opacity-90 p-4 flex justify-between items-center backdrop-blur-sm">
+        <header className="flex items-center justify-between bg-neutral-800 bg-opacity-90 p-4 backdrop-blur-sm">
             <div className="flex items-center space-x-4">
                 <Image
                     src={nyxIconTransparent}
@@ -64,7 +64,7 @@ function Header() {
                     width={40}
                     height={40}
                 />
-                <h1 className="text-2xl font-bold">Nyx.js</h1>
+                <h1 className="font-bold text-2xl">Nyx.js</h1>
             </div>
             <nav>
                 <ul className="flex space-x-6">
@@ -81,7 +81,7 @@ function Header() {
 
 function Sidebar() {
     return (
-        <motion.aside className="bg-neutral-800 p-4 flex flex-col overflow-hidden">
+        <motion.aside className="flex flex-col overflow-hidden bg-neutral-800 p-4">
             <AnimatePresence>
                 <SidebarContent />
             </AnimatePresence>
@@ -97,7 +97,7 @@ type LayoutProps = {
 
 export function Layout({ header = true, sidebar = true, children }: LayoutProps) {
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex min-h-screen flex-col">
             {header && <Header />}
             <div className="flex flex-1">
                 {sidebar && <Sidebar />}

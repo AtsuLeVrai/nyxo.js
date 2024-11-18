@@ -8,13 +8,7 @@
     },
     "files": {
         "ignoreUnknown": false,
-        "ignore": [
-            "**/coverage/**",
-            "**/dist/**",
-            "**/node_modules/**",
-            "**/.next/**",
-            ".next/types/**/*.ts"
-        ]
+        "ignore": ["**/coverage/**", "**/dist/**", "**/node_modules/**", "**/.next/**", ".next/types/**/*.ts"]
     },
     "formatter": {
         "enabled": true,
@@ -26,23 +20,11 @@
         "lineWidth": 100,
         "attributePosition": "multiline",
         "bracketSpacing": true,
-        "ignore": [
-            "**/coverage/**",
-            "**/dist/**",
-            "**/node_modules/**",
-            "**/.next/**",
-            ".next/types/**/*.ts"
-        ]
+        "ignore": ["**/coverage/**", "**/dist/**", "**/node_modules/**", "**/.next/**", ".next/types/**/*.ts"]
     },
     "organizeImports": {
         "enabled": true,
-        "ignore": [
-            "**/coverage/**",
-            "**/dist/**",
-            "**/node_modules/**",
-            "**/.next/**",
-            ".next/types/**/*.ts"
-        ]
+        "ignore": ["**/coverage/**", "**/dist/**", "**/node_modules/**", "**/.next/**", ".next/types/**/*.ts"]
     },
     "linter": {
         "enabled": true,
@@ -52,6 +34,7 @@
                 "useLiteralKeys": "off"
             },
             "nursery": {
+                "all": true,
                 "noEnum": "off",
                 "noRestrictedImports": "off"
             },
@@ -64,12 +47,6 @@
                 "noArrayIndexKey": "info"
             }
         },
-        "ignore": [
-            "**/coverage/**",
-            "**/dist/**",
-            "**/node_modules/**",
-            "**/.next/**",
-            ".next/types/**/*.ts"
-        ]
+        "ignore": ["**/coverage/**", "**/dist/**", "**/node_modules/**", "**/.next/**", ".next/types/**/*.ts"]
     }
 }

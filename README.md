@@ -102,7 +102,7 @@ This monorepo is managed with **Nx** for high-performance builds and efficient p
 Each command can be run individually on packages using the workspace syntax:
 
 ```bash
-pnpm run check --filter=@nyxjs/core
+pnpm run check -p @nyxjs/core
 ```
 
 For development, the most commonly used commands are `setup`, `dev`, and `build`.

@@ -20,9 +20,9 @@ function DocSection({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className={`bg-neutral-800 rounded-lg p-6 ${className}`}
+            className={`rounded-lg bg-neutral-800 p-6 ${className}`}
         >
-            <h2 className="text-xl font-semibold mb-4">{title}</h2>
+            <h2 className="mb-4 font-semibold text-xl">{title}</h2>
             {children}
         </motion.div>
     );
@@ -47,14 +47,14 @@ export default function DocPage() {
             <div className="flex-1">
                 {/* Main content */}
                 <main className="flex-1 p-6 lg:p-10">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="mx-auto max-w-4xl">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5 }}
                         >
-                            <h1 className="text-4xl font-bold mb-6">Documentation</h1>
-                            <p className="text-xl text-gray-300 mb-8">
+                            <h1 className="mb-6 font-bold text-4xl">Documentation</h1>
+                            <p className="mb-8 text-gray-300 text-xl">
                                 Learn how to build powerful Discord bots with Nyx.js. Find comprehensive guides, API
                                 references, and examples.
                             </p>
@@ -74,7 +74,7 @@ export default function DocPage() {
                                     >
                                         {({ tokens, getLineProps, getTokenProps }) => (
                                             <pre
-                                                className={`bg-neutral-900 p-4 rounded-lg mt-4 ${jetbrainsMono.className}`}
+                                                className={`mt-4 rounded-lg bg-neutral-900 p-4 ${jetbrainsMono.className}`}
                                             >
                                                 {tokens.map((line, i) => (
                                                     <div
@@ -105,7 +105,7 @@ export default function DocPage() {
                                     >
                                         {({ tokens, getLineProps, getTokenProps }) => (
                                             <pre
-                                                className={`bg-neutral-900 p-4 rounded-lg mt-4 ${jetbrainsMono.className}`}
+                                                className={`mt-4 rounded-lg bg-neutral-900 p-4 ${jetbrainsMono.className}`}
                                             >
                                                 {tokens.map((line, i) => (
                                                     <div
