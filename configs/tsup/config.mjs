@@ -7,6 +7,7 @@ export function createTsupConfig(entry = ["src/index.ts"], options = {}) {
         target: "esnext",
         platform: "node",
         treeshake: true,
+        legacyOutput: true,
         minify: process.env.NODE_ENV === "production",
         splitting: false,
         sourcemap: true,

@@ -4,18 +4,18 @@
   "packageManager": "pnpm@9.14.2",
   "private": true,
   "scripts": {
-    "dev": "nx run-many --target=dev --all",
-    "build": "nx run-many --target=build --all",
-    "clean": "nx run-many --target=clean --all",
-    "format": "nx run-many --target=format --all",
-    "lint": "nx run-many --target=lint --all",
-    "check": "nx run-many --target=check --all",
-    "graph": "nx graph",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "format": "turbo run format",
+    "lint": "turbo run lint",
+    "check": "turbo run check",
+    "type-check": "turbo run type-check",
     "prepare": "husky"
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "nx": "^20.1.2",
+    "turbo": "^2.3.0",
     "typescript": "^5.6.3"
   },
   "engines": {

@@ -8,10 +8,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": [
-      "**/dist/**",
-      "**/node_modules/**"
-    ]
+    "ignore": ["**/dist/**", "**/node_modules/**"]
   },
   "formatter": {
     "enabled": true,
@@ -23,29 +20,25 @@
     "lineWidth": 100,
     "attributePosition": "multiline",
     "bracketSpacing": true,
-    "ignore": [
-      "**/dist/**",
-      "**/node_modules/**"
-    ]
+    "ignore": ["**/dist/**", "**/node_modules/**"]
   },
   "organizeImports": {
     "enabled": true,
-    "ignore": [
-      "**/dist/**",
-      "**/node_modules/**"
-    ]
+    "ignore": ["**/dist/**", "**/node_modules/**"]
   },
   "linter": {
     "enabled": true,
     "rules": {
       "all": true,
       "nursery": {
-        "all": true
+        "all": true,
+        "noEnum": "off"
+      },
+      "performance": {
+        "noReExportAll": "off",
+        "noBarrelFile": "off"
       }
     },
-    "ignore": [
-      "**/dist/**",
-      "**/node_modules/**"
-    ]
+    "ignore": ["**/dist/**", "**/node_modules/**"]
   }
 }

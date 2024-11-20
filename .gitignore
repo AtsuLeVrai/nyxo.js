@@ -83,7 +83,3 @@ Thumbs.db
 /typings
 *.tsbuildinfo
 .node_repl_history
-
-# Nx specific
-.nx/cache
-.nx/workspace-data
