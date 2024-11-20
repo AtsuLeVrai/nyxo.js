@@ -14,26 +14,32 @@ build
 node_modules
 .pnp
 .pnp.js
+bower_components
+jspm_packages
+web_modules
 
 # Environment
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Testing
 coverage
 testem.log
+*.lcov
+.nyc_output
 
 # IDEs and editors
-.idea
+.idea/
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
+*.swp
+*.swo
+.history
 
 # IDE - VSCode
 .vscode/*
@@ -41,14 +47,33 @@ testem.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+*.code-workspace
 
 # Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 libpeerconnection.log
 logs
+*.log
 /connect.lock
+
+# Cache and temp files
+.eslintcache
+.stylelintcache
+.temp
+.cache
+.parcel-cache
+.rts2_cache_cjs
+.rts2_cache_es
+.rts2_cache_umd
+.rollup.cache
+
+# Build tools
+.gradle
+.maven
+.dart_tool
 
 # Misc
 .DS_Store
@@ -56,6 +81,8 @@ logs
 Thumbs.db
 .sass-cache
 /typings
+*.tsbuildinfo
+.node_repl_history
 
 # Nx specific
 .nx/cache

@@ -1,54 +1,68 @@
 {
-    "extends": "./node_modules/nx/schemas/nx-schema.json",
-    "affected": {
-        "defaultBase": "main"
-    },
-    "tasksRunnerOptions": {
-        "default": {
-            "runner": "nx/tasks-runners/default",
-            "options": {
-                "cacheableOperations": ["build", "lint", "test", "test:coverage", "type-check"]
-            }
-        }
-    },
-    "targetDefaults": {
-        "build": {
-            "dependsOn": ["^build", "clean"],
-            "inputs": [
-                "production",
-                "^production",
-                "{projectRoot}/src/**/*.ts",
-                "{projectRoot}/src/**/*.tsx",
-                "{projectRoot}/tsup.config.ts",
-                "{projectRoot}/package.json"
-            ],
-            "outputs": ["{projectRoot}/dist"]
-        },
-        "dev": {
-            "dependsOn": ["^build"],
-            "inputs": ["development", "^development", "{projectRoot}/src/**/*.ts", "{projectRoot}/src/**/*.tsx"]
-        },
-        "test": {
-            "dependsOn": ["^build"],
-            "inputs": [
-                "test",
-                "^test",
-                "{projectRoot}/src/**/*.ts",
-                "{projectRoot}/src/**/*.tsx",
-                "{projectRoot}/tests/**/*.ts",
-                "{projectRoot}/tests/**/*.tsx",
-                "{projectRoot}/vitest.config.ts"
-            ]
-        },
-        "lint": {
-            "inputs": ["default", "{workspaceRoot}/.eslintrc.json", "{projectRoot}/**/*.ts", "{projectRoot}/**/*.tsx"]
-        }
-    },
-    "namedInputs": {
-        "default": ["{projectRoot}/**/*", "sharedGlobals"],
-        "production": ["default", "!{projectRoot}/**/*.test.ts", "!{projectRoot}/**/*.spec.ts"],
-        "development": ["default", "!{projectRoot}/**/*.test.ts", "!{projectRoot}/**/*.spec.ts"],
-        "test": ["default", "{projectRoot}/tests/**/*"],
-        "sharedGlobals": []
+  "extends": "./node_modules/nx/schemas/nx-schema.json",
+  "affected": {
+    "defaultBase": "main"
+  },
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "nx/tasks-runners/default",
+      "options": {
+        "cacheableOperations": [
+          "build",
+          "lint",
+          "check"
+        ]
+      }
     }
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build",
+        "clean"
+      ],
+      "inputs": [
+        "production",
+        "^production",
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/src/**/*.tsx",
+        "{projectRoot}/tsup.config.ts",
+        "{projectRoot}/package.json"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ]
+    },
+    "dev": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "development",
+        "^development",
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/src/**/*.tsx"
+      ]
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{projectRoot}/**/*.ts",
+        "{projectRoot}/**/*.tsx"
+      ]
+    }
+  },
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.test.ts",
+      "!{projectRoot}/**/*.spec.ts"
+    ],
+    "sharedGlobals": []
+  }
 }

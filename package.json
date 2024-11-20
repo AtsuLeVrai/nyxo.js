@@ -1,32 +1,25 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/source",
-  "packageManager": "pnpm@9.13.2",
+  "packageManager": "pnpm@9.14.2",
   "private": true,
   "scripts": {
-    "setup": "pnpm install -r && pnpm run build",
     "dev": "nx run-many --target=dev --all",
-    "start": "nx run-many --target=start --all",
     "build": "nx run-many --target=build --all",
     "clean": "nx run-many --target=clean --all",
     "format": "nx run-many --target=format --all",
     "lint": "nx run-many --target=lint --all",
     "check": "nx run-many --target=check --all",
-    "test": "nx run-many --target=test --all",
-    "test:watch": "nx run-many --target=test:watch --all",
-    "test:bench": "nx run-many --target=test:bench --all",
-    "test:coverage": "nx run-many --target=test:coverage --all",
-    "type-check": "nx run-many --target=type-check --all",
-    "validate": "nx run-many --target=validate --all",
     "graph": "nx graph",
     "prepare": "husky"
   },
   "devDependencies": {
-    "husky": "^9.1.6",
+    "husky": "^9.1.7",
     "nx": "^20.1.2",
     "typescript": "^5.6.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "pnpm": ">=9"
   }
 }
