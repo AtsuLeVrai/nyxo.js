@@ -1,7 +1,6 @@
 export type Snowflake = string;
 export type Integer = number;
-export type Iso8601 = `${number}-${number}-${number}T${number}:${number}:${number}.${number}Z`;
-export type ImageData = `data:image/${"jpeg" | "png" | "gif"};base64,${string}`;
+export type Iso8601 = string;
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#message-formatting-guild-navigation-types}

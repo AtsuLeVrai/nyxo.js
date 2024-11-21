@@ -28,7 +28,7 @@ export interface TextInputEntity {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-default-value-structure}
  */
-export interface SelectMenuDefaultValueEntity {
+export interface SelectMenuDefaultValue {
   id: Snowflake;
   type: "user" | "role" | "channel";
 }
@@ -36,7 +36,7 @@ export interface SelectMenuDefaultValueEntity {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure}
  */
-export interface SelectMenuOptionEntity {
+export interface SelectMenuOption {
   label: string;
   value: string;
   description?: string;
@@ -55,10 +55,10 @@ export interface SelectMenuEntity {
     | ComponentType.MentionableSelect
     | ComponentType.ChannelSelect;
   custom_id: string;
-  options?: SelectMenuOptionEntity[];
+  options?: SelectMenuOption[];
   channel_types?: ChannelType[];
   placeholder?: string;
-  default_values?: SelectMenuDefaultValueEntity[];
+  default_values?: SelectMenuDefaultValue[];
   min_values?: Integer;
   max_values?: Integer;
   disabled?: boolean;
@@ -90,12 +90,14 @@ export interface ButtonEntity {
   disabled?: boolean;
 }
 
+export type ComponentEntity = ButtonEntity | SelectMenuEntity | TextInputEntity;
+
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#action-rows}
  */
 export interface ActionRowEntity {
   type: ComponentType.ActionRow;
-  components: (ButtonEntity | SelectMenuEntity | TextInputEntity)[];
+  components: ComponentEntity[];
 }
 
 /**

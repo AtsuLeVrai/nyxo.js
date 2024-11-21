@@ -8,7 +8,7 @@ import type {
 } from "./applications-commands.js";
 import type { ApplicationIntegrationType } from "./applications.js";
 import type { ChannelEntity } from "./channels.js";
-import type { ActionRowEntity, ComponentType, SelectMenuOptionEntity } from "./components.js";
+import type { ActionRowEntity, ComponentType, SelectMenuOption } from "./components.js";
 import type { EntitlementEntity } from "./entitlements.js";
 import type { GuildEntity, GuildMemberEntity } from "./guilds.js";
 import type {
@@ -162,7 +162,7 @@ export interface InteractionModalSubmitData {
 export interface InteractionMessageComponentData {
   custom_id: string;
   component_type: ComponentType;
-  values?: SelectMenuOptionEntity[];
+  values?: SelectMenuOption[];
   resolved?: InteractionResolvedData;
 }
 

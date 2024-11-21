@@ -19,7 +19,7 @@ export interface AuditLogChangeEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
  */
-export interface AuditLogEntryInfo {
+export interface AuditLogEntryInfoEntity {
   application_id?: Snowflake;
   auto_moderation_rule_name?: string;
   auto_moderation_rule_trigger_type?: string;
@@ -115,7 +115,7 @@ export interface AuditLogEntryEntity {
   user_id: Snowflake | null;
   id: Snowflake;
   action_type: AuditLogEvent;
-  options?: AuditLogEntryInfo;
+  options?: AuditLogEntryInfoEntity;
   reason?: string;
 }
 

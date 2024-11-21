@@ -110,7 +110,7 @@ export interface IntegrationAccountEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors}
  */
-export enum IntegrationExpireBehavior {
+export enum IntegrationExpirationBehavior {
   RemoveRole = 0,
   Kick = 1,
 }
@@ -126,7 +126,7 @@ export interface IntegrationEntity {
   syncing?: boolean;
   role_id?: Snowflake;
   enable_emoticons?: boolean;
-  expire_behavior?: IntegrationExpireBehavior;
+  expire_behavior?: IntegrationExpirationBehavior;
   expire_grace_period?: Integer;
   user?: UserEntity;
   account: IntegrationAccountEntity;
@@ -202,7 +202,7 @@ export interface GuildPreviewEntity {
   splash: string | null;
   discovery_splash: string | null;
   emojis: EmojiEntity[];
-  features: GuildFeatures[];
+  features: GuildFeature[];
   approximate_member_count: Integer;
   approximate_presence_count: Integer;
   description: string | null;
@@ -212,7 +212,7 @@ export interface GuildPreviewEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
  */
-export enum GuildFeatures {
+export enum GuildFeature {
   AnimatedBanner = "ANIMATED_BANNER",
   AnimatedIcon = "ANIMATED_ICON",
   ApplicationCommandPermissionsV2 = "APPLICATION_COMMAND_PERMISSIONS_V2",
@@ -338,7 +338,7 @@ export interface GuildEntity {
   explicit_content_filter: ExplicitContentFilterLevel;
   roles: RoleEntity[];
   emojis: EmojiEntity[];
-  features: GuildFeatures[];
+  features: GuildFeature[];
   mfa_level: MfaLevel;
   application_id?: Snowflake;
   system_channel_id: Snowflake | null;
