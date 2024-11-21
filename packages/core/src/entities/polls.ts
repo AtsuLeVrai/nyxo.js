@@ -44,7 +44,7 @@ export enum LayoutType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-create-request-object-poll-create-request-object-structure}
  */
-export interface PollCreateRequest {
+export interface PollCreateRequestEntity {
   question: PollMediaEntity;
   answers: PollAnswerEntity[];
   duration?: Integer;
