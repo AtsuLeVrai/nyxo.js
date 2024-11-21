@@ -50,6 +50,6 @@ export function quote(text: string): `> ${string}` {
   return `> ${text}`;
 }
 
-export function inlineQuote(text: string): `> ${string}` {
-  return `> ${text}`;
+export function quoteBlock(text: string): `>>> ${string}` {
+  return `>>> ${text}`;
 }
