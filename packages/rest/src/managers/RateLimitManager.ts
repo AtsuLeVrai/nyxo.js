@@ -63,13 +63,13 @@ export class RateLimitManager {
     request: RequestOptions,
     headers: Record<string, string>,
   ): void {
-    const limit = headers["X-RateLimit-Limit"];
-    const remaining = headers["X-RateLimit-Remaining"];
-    const reset = headers["X-RateLimit-Reset"];
-    const resetAfter = headers["X-RateLimit-Reset-After"];
-    const bucket = headers["X-RateLimit-Bucket"];
-    const global = headers["X-RateLimit-Global"];
-    const scope = headers["X-RateLimit-Scope"] as RateLimitData["scope"];
+    const limit = headers["x-ratelimit-limit"];
+    const remaining = headers["x-ratelimit-remaining"];
+    const reset = headers["x-ratelimit-reset"];
+    const resetAfter = headers["x-ratelimit-reset-after"];
+    const bucket = headers["x-ratelimit-bucket"];
+    const global = headers["x-ratelimit-global"];
+    const scope = headers["x-ratelimit-scope"] as RateLimitData["scope"];
 
     if (!bucket) {
       return;

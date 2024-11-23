@@ -48,6 +48,7 @@
   "dependencies": {
     "@nyxjs/core": "workspace:*",
     "@nyxjs/store": "workspace:*",
+    "form-data": "^4.0.1",
     "minizlib": "^3.0.1",
     "undici": "^6.21.0"
   },
@@ -61,6 +62,6 @@
     "typescript": "^5.7.2"
   },
   "peerDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^5.7.2"
   }
 }

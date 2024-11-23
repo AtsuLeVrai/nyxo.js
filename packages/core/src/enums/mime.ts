@@ -19,6 +19,8 @@ export enum MimeType {
   Mp3 = "audio/mpeg",
   OggAudio = "audio/ogg",
   Avif = "image/avif",
+  Gif = "image/gif",
+  Webp = "image/webp",
   Jpeg = "image/jpeg",
   Png = "image/png",
   Svg = "image/svg+xml",
@@ -31,4 +33,5 @@ export enum MimeType {
   Html = "text/html",
   Javascript = "text/javascript",
   TextXml = "text/xml",
+  OctetStream = "application/octet-stream",
 }
