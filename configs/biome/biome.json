@@ -12,15 +12,33 @@
   },
   "formatter": {
     "enabled": true,
-    "useEditorconfig": true,
+    "useEditorconfig": false,
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
-    "lineWidth": 100,
+    "lineWidth": 80,
     "attributePosition": "multiline",
     "bracketSpacing": true,
     "ignore": ["**/dist/**", "**/node_modules/**"]
+  },
+  "javascript": {
+    "formatter": {
+      "arrowParentheses": "always",
+      "bracketSameLine": false,
+      "enabled": true,
+      "jsxQuoteStyle": "double",
+      "quoteProperties": "asNeeded",
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    },
+    "assists": {
+      "enabled": true
+    },
+    "linter": {
+      "enabled": true
+    }
   },
   "organizeImports": {
     "enabled": true,

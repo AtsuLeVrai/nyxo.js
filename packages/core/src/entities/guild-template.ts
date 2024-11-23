@@ -1,6 +1,6 @@
 import type { Integer, Iso8601, Snowflake } from "../formatting/index.js";
-import type { GuildEntity } from "./guilds.js";
-import type { UserEntity } from "./users.js";
+import type { GuildEntity } from "./guild.js";
+import type { UserEntity } from "./user.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-template#guild-template-object-guild-template-structure}

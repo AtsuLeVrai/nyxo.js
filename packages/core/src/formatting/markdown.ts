@@ -34,7 +34,10 @@ export function subText(text: string): `-# ${string}` {
   return `-# ${text}`;
 }
 
-export function link(text: string, url: string | URL): `[${string}](${string})` {
+export function link(
+  text: string,
+  url: string | URL,
+): `[${string}](${string})` {
   return `[${text}](${url instanceof URL ? url.toString() : url})`;
 }
 
@@ -42,7 +45,10 @@ export function code(text: string): `\`${string}\`` {
   return `\`${text}\``;
 }
 
-export function codeBlock(text: string, language?: string): `\`\`\`${string}\n${string}\n\`\`\`` {
+export function codeBlock(
+  text: string,
+  language?: string,
+): `\`\`\`${string}\n${string}\n\`\`\`` {
   return `\`\`\`${language ?? ""}\n${text}\n\`\`\``;
 }
 

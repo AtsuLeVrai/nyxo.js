@@ -1,0 +1,327 @@
+import type {
+  ApplicationCommandEntity,
+  GuildApplicationCommandPermissionEntity,
+  Snowflake,
+} from "@nyxjs/core";
+import type { Rest } from "../core/index.js";
+
+interface EditCommandPermissionsOptions {
+  permissions: ApplicationCommandPermissionEntity[];
+}
+
+interface CreateCommandOptions {
+  name: string;
+  description?: string;
+  options?: ApplicationCommandOptionEntity[];
+  default_member_permissions?: string;
+  dm_permission?: boolean;
+  type?: number;
+  nsfw?: boolean;
+}
+
+interface ApplicationCommandPermissionEntity {
+  id: Snowflake;
+  type: number;
+  permission: boolean;
+}
+
+interface ApplicationCommandOptionEntity {
+  type: number;
+  name: string;
+  description: string;
+  required?: boolean;
+  choices?: ApplicationCommandOptionChoiceEntity[];
+  options?: ApplicationCommandOptionEntity[];
+}
+
+interface ApplicationCommandOptionChoiceEntity {
+  name: string;
+  value: string | number;
+}
+
+export class ApplicationCommandsRoutes {
+  static routes = {
+    base: (applicationId: Snowflake): `/applications/${Snowflake}/commands` => {
+      return `/applications/${applicationId}/commands` as const;
+    },
+    command: (
+      applicationId: Snowflake,
+      commandId: Snowflake,
+    ): `/applications/${Snowflake}/commands/${Snowflake}` => {
+      return `/applications/${applicationId}/commands/${commandId}` as const;
+    },
+    guildCommands: (
+      applicationId: Snowflake,
+      guildId: Snowflake,
+    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands` => {
+      return `/applications/${applicationId}/guilds/${guildId}/commands` as const;
+    },
+    guildCommand: (
+      applicationId: Snowflake,
+      guildId: Snowflake,
+      commandId: Snowflake,
+    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}` => {
+      return `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}` as const;
+    },
+    guildCommandsPermissions: (
+      applicationId: Snowflake,
+      guildId: Snowflake,
+    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/permissions` => {
+      return `/applications/${applicationId}/guilds/${guildId}/commands/permissions` as const;
+    },
+    guildCommandPermissions: (
+      applicationId: Snowflake,
+      guildId: Snowflake,
+      commandId: Snowflake,
+    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}/permissions` => {
+      return `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const;
+    },
+  } as const;
+
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-commands}
+   */
+  getGlobalCommands(
+    applicationId: Snowflake,
+    withLocalizations = false,
+  ): Promise<ApplicationCommandEntity[]> {
+    return this.#rest.get(
+      ApplicationCommandsRoutes.routes.base(applicationId),
+      {
+        query: { with_localizations: withLocalizations },
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command}
+   */
+  createGlobalCommand(
+    applicationId: Snowflake,
+    options: CreateCommandOptions,
+  ): Promise<ApplicationCommandEntity> {
+    return this.#rest.post(
+      ApplicationCommandsRoutes.routes.base(applicationId),
+      {
+        body: JSON.stringify(options),
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-command}
+   */
+  getGlobalCommand(
+    applicationId: Snowflake,
+    commandId: Snowflake,
+  ): Promise<ApplicationCommandEntity> {
+    return this.#rest.get(
+      ApplicationCommandsRoutes.routes.command(applicationId, commandId),
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command}
+   */
+  editGlobalCommand(
+    applicationId: Snowflake,
+    commandId: Snowflake,
+    options: Partial<CreateCommandOptions>,
+  ): Promise<ApplicationCommandEntity> {
+    return this.#rest.patch(
+      ApplicationCommandsRoutes.routes.command(applicationId, commandId),
+      {
+        body: JSON.stringify(options),
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-global-application-command}
+   */
+  deleteGlobalCommand(
+    applicationId: Snowflake,
+    commandId: Snowflake,
+  ): Promise<void> {
+    return this.#rest.delete(
+      ApplicationCommandsRoutes.routes.command(applicationId, commandId),
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands}
+   */
+  bulkOverwriteGlobalCommands(
+    applicationId: Snowflake,
+    commands: CreateCommandOptions[],
+  ): Promise<ApplicationCommandEntity[]> {
+    return this.#rest.put(
+      ApplicationCommandsRoutes.routes.base(applicationId),
+      {
+        body: JSON.stringify(commands),
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-commands}
+   */
+  getGuildCommands(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    withLocalizations = false,
+  ): Promise<ApplicationCommandEntity[]> {
+    return this.#rest.get(
+      ApplicationCommandsRoutes.routes.guildCommands(applicationId, guildId),
+      {
+        query: { with_localizations: withLocalizations },
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command}
+   */
+  createGuildCommand(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    options: CreateCommandOptions,
+  ): Promise<ApplicationCommandEntity> {
+    return this.#rest.post(
+      ApplicationCommandsRoutes.routes.guildCommands(applicationId, guildId),
+      {
+        body: JSON.stringify(options),
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command}
+   */
+  getGuildCommand(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commandId: Snowflake,
+  ): Promise<ApplicationCommandEntity> {
+    return this.#rest.get(
+      ApplicationCommandsRoutes.routes.guildCommand(
+        applicationId,
+        guildId,
+        commandId,
+      ),
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command}
+   */
+  editGuildCommand(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commandId: Snowflake,
+    options: Partial<CreateCommandOptions>,
+  ): Promise<ApplicationCommandEntity> {
+    return this.#rest.patch(
+      ApplicationCommandsRoutes.routes.guildCommand(
+        applicationId,
+        guildId,
+        commandId,
+      ),
+      {
+        body: JSON.stringify(options),
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-guild-application-command}
+   */
+  deleteGuildCommand(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commandId: Snowflake,
+  ): Promise<void> {
+    return this.#rest.delete(
+      ApplicationCommandsRoutes.routes.guildCommand(
+        applicationId,
+        guildId,
+        commandId,
+      ),
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-guild-application-commands}
+   */
+  bulkOverwriteGuildCommands(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commands: CreateCommandOptions[],
+  ): Promise<ApplicationCommandEntity[]> {
+    return this.#rest.put(
+      ApplicationCommandsRoutes.routes.guildCommands(applicationId, guildId),
+      {
+        body: JSON.stringify(commands),
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command-permissions}
+   */
+  getGuildCommandsPermissions(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+  ): Promise<GuildApplicationCommandPermissionEntity[]> {
+    return this.#rest.get(
+      ApplicationCommandsRoutes.routes.guildCommandsPermissions(
+        applicationId,
+        guildId,
+      ),
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-application-command-permissions}
+   */
+  getCommandPermissions(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commandId: Snowflake,
+  ): Promise<GuildApplicationCommandPermissionEntity> {
+    return this.#rest.get(
+      ApplicationCommandsRoutes.routes.guildCommandPermissions(
+        applicationId,
+        guildId,
+        commandId,
+      ),
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions}
+   */
+  editCommandPermissions(
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commandId: Snowflake,
+    options: EditCommandPermissionsOptions,
+  ): Promise<GuildApplicationCommandPermissionEntity> {
+    return this.#rest.put(
+      ApplicationCommandsRoutes.routes.guildCommandPermissions(
+        applicationId,
+        guildId,
+        commandId,
+      ),
+      {
+        body: JSON.stringify(options),
+      },
+    );
+  }
+}
