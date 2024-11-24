@@ -1,23 +1,25 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface InstallParams {
-  scopes: string[];
-  permissions: string;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum}
+ */
+export type ActivityLocationKind = "gc" | "pc";
 
-interface IntegrationTypeConfig {
-  oauth2_install_params?: InstallParams;
-}
-
-interface ActivityLocation {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-object}
+ */
+export interface ActivityLocation {
   id: string;
-  kind: "gc" | "pc";
+  kind: ActivityLocationKind;
   channel_id: Snowflake;
-  guild_id?: Snowflake;
+  guild_id?: Snowflake | null;
 }
 
-interface ActivityInstance {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-instance-object}
+ */
+export interface ActivityInstance {
   application_id: Snowflake;
   instance_id: string;
   launch_id: Snowflake;
@@ -25,23 +27,29 @@ interface ActivityInstance {
   users: Snowflake[];
 }
 
-interface ModifyApplicationOptions {
-  custom_install_url?: string;
-  description?: string;
-  role_connections_verification_url?: string;
-  install_params?: InstallParams;
-  integration_types_config?: Record<string, IntegrationTypeConfig>;
-  flags?: number;
-  icon?: string | null;
-  cover_image?: string | null;
-  interactions_endpoint_url?: string;
-  tags?: string[];
-  event_webhooks_url?: string;
-  event_webhooks_status?: number;
-  event_webhooks_types?: string[];
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
+ */
+export type ModifyApplicationOptions = Partial<
+  Pick<
+    ApplicationEntity,
+    | "custom_install_url"
+    | "description"
+    | "role_connections_verification_url"
+    | "install_params"
+    | "integration_types_config"
+    | "flags"
+    | "icon"
+    | "cover_image"
+    | "interactions_endpoint_url"
+    | "tags"
+    | "event_webhooks_url"
+    | "event_webhooks_types"
+    | "event_webhooks_status"
+  >
+>;
 
-export class ApplicationRoutes {
+export class ApplicationRouter {
   static routes = {
     currentApplication: "/applications/@me" as const,
 
@@ -63,7 +71,7 @@ export class ApplicationRoutes {
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(ApplicationRoutes.routes.currentApplication);
+    return this.#rest.get(ApplicationRouter.routes.currentApplication);
   }
 
   /**
@@ -72,7 +80,7 @@ export class ApplicationRoutes {
   modifyCurrentApplication(
     options: ModifyApplicationOptions,
   ): Promise<ApplicationEntity> {
-    return this.#rest.patch(ApplicationRoutes.routes.currentApplication, {
+    return this.#rest.patch(ApplicationRouter.routes.currentApplication, {
       body: JSON.stringify(options),
     });
   }
@@ -85,7 +93,7 @@ export class ApplicationRoutes {
     instanceId: string,
   ): Promise<ActivityInstance> {
     return this.#rest.get(
-      ApplicationRoutes.routes.activityInstance(applicationId, instanceId),
+      ApplicationRouter.routes.activityInstance(applicationId, instanceId),
     );
   }
 }

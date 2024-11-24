@@ -1,31 +1,36 @@
-import type {
-  AutoModerationActionEntity,
-  AutoModerationRuleEntity,
-  AutoModerationRuleTriggerMetadata,
-  Snowflake,
-} from "@nyxjs/core";
+import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface CreateAutoModerationRuleOptions {
-  name: string;
-  event_type: number;
-  trigger_type: number;
-  trigger_metadata?: AutoModerationRuleTriggerMetadata;
-  actions: AutoModerationActionEntity[];
-  enabled?: boolean;
-  exempt_roles?: Snowflake[];
-  exempt_channels?: Snowflake[];
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule-json-params}
+ */
+export type CreateAutoModerationRuleOptions = Pick<
+  AutoModerationRuleEntity,
+  | "name"
+  | "event_type"
+  | "trigger_type"
+  | "trigger_metadata"
+  | "actions"
+  | "enabled"
+  | "exempt_roles"
+  | "exempt_channels"
+>;
 
-interface ModifyAutoModerationRuleOptions {
-  name?: string;
-  event_type?: number;
-  trigger_metadata?: AutoModerationRuleTriggerMetadata;
-  actions?: AutoModerationActionEntity[];
-  enabled?: boolean;
-  exempt_roles?: Snowflake[];
-  exempt_channels?: Snowflake[];
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule-json-params}
+ */
+export type ModifyAutoModerationRuleOptions = Partial<
+  Pick<
+    AutoModerationRuleEntity,
+    | "name"
+    | "event_type"
+    | "trigger_metadata"
+    | "actions"
+    | "enabled"
+    | "exempt_roles"
+    | "exempt_channels"
+  >
+>;
 
 export class AutoModerationRoutes {
   static routes = {

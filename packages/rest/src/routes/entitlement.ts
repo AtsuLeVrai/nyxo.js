@@ -1,21 +1,30 @@
-import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
+import type { EntitlementEntity, Integer, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
+ */
+export interface ListEntitlementQuery {
+  user_id?: Snowflake;
+  sku_ids?: string;
+  before?: Snowflake;
+  after?: Snowflake;
+  limit?: Integer;
+  guild_id?: Snowflake;
+  exclude_ended?: boolean;
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
+ */
 export enum EntitlementOwnerType {
   Guild = 1,
   User = 2,
 }
 
-interface ListEntitlements {
-  user_id?: Snowflake;
-  sku_ids?: string;
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: number;
-  guild_id?: Snowflake;
-  exclude_ended?: boolean;
-}
-
+/**
+ * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
+ */
 interface CreateTestEntitlement {
   sku_id: string;
   owner_id: string;
@@ -54,7 +63,7 @@ export class EntitlementRoutes {
    */
   list(
     applicationId: Snowflake,
-    query?: ListEntitlements,
+    query?: ListEntitlementQuery,
   ): Promise<EntitlementEntity[]> {
     return this.#rest.get(
       EntitlementRoutes.routes.entitlements(applicationId),

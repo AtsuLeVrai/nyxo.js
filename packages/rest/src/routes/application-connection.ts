@@ -4,7 +4,7 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-export class ApplicationConnectionRoutes {
+export class ApplicationConnectionRouter {
   static routes = {
     base: (
       applicationId: Snowflake,
@@ -26,7 +26,7 @@ export class ApplicationConnectionRoutes {
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
     return this.#rest.get(
-      ApplicationConnectionRoutes.routes.base(applicationId),
+      ApplicationConnectionRouter.routes.base(applicationId),
     );
   }
 
@@ -38,7 +38,7 @@ export class ApplicationConnectionRoutes {
     metadata: ApplicationRoleConnectionMetadataEntity[],
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
     return this.#rest.put(
-      ApplicationConnectionRoutes.routes.base(applicationId),
+      ApplicationConnectionRouter.routes.base(applicationId),
       {
         body: JSON.stringify(metadata),
       },

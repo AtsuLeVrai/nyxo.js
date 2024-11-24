@@ -1,45 +1,38 @@
 import type {
   ApplicationCommandEntity,
+  ApplicationCommandPermissionEntity,
   GuildApplicationCommandPermissionEntity,
   Snowflake,
 } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface EditCommandPermissionsOptions {
+/**
+ * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions-json-params}
+ */
+export interface EditCommandPermissionsOptions {
   permissions: ApplicationCommandPermissionEntity[];
 }
 
-interface CreateCommandOptions {
-  name: string;
-  description?: string;
-  options?: ApplicationCommandOptionEntity[];
-  default_member_permissions?: string;
-  dm_permission?: boolean;
-  type?: number;
-  nsfw?: boolean;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command-json-params}
+ */
+export type CreateCommandOptions = Pick<
+  ApplicationCommandEntity,
+  | "name"
+  | "name_localizations"
+  | "description"
+  | "description_localizations"
+  | "options"
+  | "default_member_permissions"
+  | "dm_permission"
+  | "default_permission"
+  | "integration_types"
+  | "contexts"
+  | "type"
+  | "nsfw"
+>;
 
-interface ApplicationCommandPermissionEntity {
-  id: Snowflake;
-  type: number;
-  permission: boolean;
-}
-
-interface ApplicationCommandOptionEntity {
-  type: number;
-  name: string;
-  description: string;
-  required?: boolean;
-  choices?: ApplicationCommandOptionChoiceEntity[];
-  options?: ApplicationCommandOptionEntity[];
-}
-
-interface ApplicationCommandOptionChoiceEntity {
-  name: string;
-  value: string | number;
-}
-
-export class ApplicationCommandsRoutes {
+export class ApplicationCommandsRouter {
   static routes = {
     base: (applicationId: Snowflake): `/applications/${Snowflake}/commands` => {
       return `/applications/${applicationId}/commands` as const;
@@ -92,7 +85,7 @@ export class ApplicationCommandsRoutes {
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
     return this.#rest.get(
-      ApplicationCommandsRoutes.routes.base(applicationId),
+      ApplicationCommandsRouter.routes.base(applicationId),
       {
         query: { with_localizations: withLocalizations },
       },
@@ -107,7 +100,7 @@ export class ApplicationCommandsRoutes {
     options: CreateCommandOptions,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.post(
-      ApplicationCommandsRoutes.routes.base(applicationId),
+      ApplicationCommandsRouter.routes.base(applicationId),
       {
         body: JSON.stringify(options),
       },
@@ -122,7 +115,7 @@ export class ApplicationCommandsRoutes {
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.get(
-      ApplicationCommandsRoutes.routes.command(applicationId, commandId),
+      ApplicationCommandsRouter.routes.command(applicationId, commandId),
     );
   }
 
@@ -135,7 +128,7 @@ export class ApplicationCommandsRoutes {
     options: Partial<CreateCommandOptions>,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.patch(
-      ApplicationCommandsRoutes.routes.command(applicationId, commandId),
+      ApplicationCommandsRouter.routes.command(applicationId, commandId),
       {
         body: JSON.stringify(options),
       },
@@ -150,7 +143,7 @@ export class ApplicationCommandsRoutes {
     commandId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      ApplicationCommandsRoutes.routes.command(applicationId, commandId),
+      ApplicationCommandsRouter.routes.command(applicationId, commandId),
     );
   }
 
@@ -162,7 +155,7 @@ export class ApplicationCommandsRoutes {
     commands: CreateCommandOptions[],
   ): Promise<ApplicationCommandEntity[]> {
     return this.#rest.put(
-      ApplicationCommandsRoutes.routes.base(applicationId),
+      ApplicationCommandsRouter.routes.base(applicationId),
       {
         body: JSON.stringify(commands),
       },
@@ -178,7 +171,7 @@ export class ApplicationCommandsRoutes {
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
     return this.#rest.get(
-      ApplicationCommandsRoutes.routes.guildCommands(applicationId, guildId),
+      ApplicationCommandsRouter.routes.guildCommands(applicationId, guildId),
       {
         query: { with_localizations: withLocalizations },
       },
@@ -194,7 +187,7 @@ export class ApplicationCommandsRoutes {
     options: CreateCommandOptions,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.post(
-      ApplicationCommandsRoutes.routes.guildCommands(applicationId, guildId),
+      ApplicationCommandsRouter.routes.guildCommands(applicationId, guildId),
       {
         body: JSON.stringify(options),
       },
@@ -210,7 +203,7 @@ export class ApplicationCommandsRoutes {
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.get(
-      ApplicationCommandsRoutes.routes.guildCommand(
+      ApplicationCommandsRouter.routes.guildCommand(
         applicationId,
         guildId,
         commandId,
@@ -228,7 +221,7 @@ export class ApplicationCommandsRoutes {
     options: Partial<CreateCommandOptions>,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.patch(
-      ApplicationCommandsRoutes.routes.guildCommand(
+      ApplicationCommandsRouter.routes.guildCommand(
         applicationId,
         guildId,
         commandId,
@@ -248,7 +241,7 @@ export class ApplicationCommandsRoutes {
     commandId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      ApplicationCommandsRoutes.routes.guildCommand(
+      ApplicationCommandsRouter.routes.guildCommand(
         applicationId,
         guildId,
         commandId,
@@ -265,7 +258,7 @@ export class ApplicationCommandsRoutes {
     commands: CreateCommandOptions[],
   ): Promise<ApplicationCommandEntity[]> {
     return this.#rest.put(
-      ApplicationCommandsRoutes.routes.guildCommands(applicationId, guildId),
+      ApplicationCommandsRouter.routes.guildCommands(applicationId, guildId),
       {
         body: JSON.stringify(commands),
       },
@@ -280,7 +273,7 @@ export class ApplicationCommandsRoutes {
     guildId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity[]> {
     return this.#rest.get(
-      ApplicationCommandsRoutes.routes.guildCommandsPermissions(
+      ApplicationCommandsRouter.routes.guildCommandsPermissions(
         applicationId,
         guildId,
       ),
@@ -296,7 +289,7 @@ export class ApplicationCommandsRoutes {
     commandId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity> {
     return this.#rest.get(
-      ApplicationCommandsRoutes.routes.guildCommandPermissions(
+      ApplicationCommandsRouter.routes.guildCommandPermissions(
         applicationId,
         guildId,
         commandId,
@@ -314,7 +307,7 @@ export class ApplicationCommandsRoutes {
     options: EditCommandPermissionsOptions,
   ): Promise<GuildApplicationCommandPermissionEntity> {
     return this.#rest.put(
-      ApplicationCommandsRoutes.routes.guildCommandPermissions(
+      ApplicationCommandsRouter.routes.guildCommandPermissions(
         applicationId,
         guildId,
         commandId,
