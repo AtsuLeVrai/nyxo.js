@@ -1,8 +1,8 @@
 import { MimeType } from "@nyxjs/core";
-import { BrotliDecompress, Gunzip } from "minizlib";
-import { type Dispatcher, Pool, RetryAgent, type RetryHandler } from "undici";
+import { Pool, RetryAgent, type RetryHandler } from "undici";
 import { HttpMethod, HttpStatusCode, JsonErrorCode } from "../enums/index.js";
-import { RateLimitManager } from "../managers/index.js";
+import { RateLimitManager } from "../managers/RateLimitManager.js";
+import { RequestHandler } from "../managers/index.js";
 import {
   ApplicationCommandsRouter,
   ApplicationConnectionRouter,
@@ -30,355 +30,32 @@ import {
   VoiceRouter,
   WebhookRouter,
 } from "../routes/index.js";
-import type {
-  RateLimitResponseEntity,
-  RequestOptions,
-  RestOptions,
-  RouteLike,
-} from "../types/index.js";
+import type { RequestOptions, RestOptions, RouteLike } from "../types/index.js";
 
 export class Rest {
-  #options: RestOptions;
+  static readonly #routerInstances = new WeakMap<
+    Rest,
+    Map<string, () => unknown>
+  >();
   readonly #pool: Pool;
   readonly #retryAgent: RetryAgent;
-  readonly #rateLimit = new RateLimitManager();
+  readonly #rateLimit: RateLimitManager;
+  readonly #requestHandler: RequestHandler;
+  readonly #options: RestOptions;
+  readonly #activeRequests = new Set<Promise<unknown>>();
   readonly #abortController = new AbortController();
-  readonly #activeRequests: Set<Promise<unknown>> = new Set();
   #isDestroyed = false;
-
-  #applications: ApplicationRouter | null = null;
-  #applicationCommands: ApplicationCommandsRouter | null = null;
-  #applicationConnections: ApplicationConnectionRouter | null = null;
-  #auditLogs: AuditLogRouter | null = null;
-  #autoModeration: AutoModerationRouter | null = null;
-  #channels: ChannelRouter | null = null;
-  #emojis: EmojiRouter | null = null;
-  #entitlements: EntitlementRouter | null = null;
-  #gateway: GatewayRouter | null = null;
-  #guilds: GuildRouter | null = null;
-  #guildTemplates: GuildTemplateRouter | null = null;
-  #interactions: InteractionRouter | null = null;
-  #invites: InviteRouter | null = null;
-  #messages: MessageRouter | null = null;
-  #oauth2: OAuth2Router | null = null;
-  #polls: PollRouter | null = null;
-  #scheduledEvents: ScheduledEventRouter | null = null;
-  #skus: SkuRouter | null = null;
-  #soundboards: SoundboardRouter | null = null;
-  #stageInstances: StageInstanceRouter | null = null;
-  #stickers: StickerRouter | null = null;
-  #subscriptions: SubscriptionRouter | null = null;
-  #users: UserRouter | null = null;
-  #voices: VoiceRouter | null = null;
-  #webhooks: WebhookRouter | null = null;
 
   constructor(options: RestOptions) {
     this.#options = options;
     this.#pool = this.#createPool();
     this.#retryAgent = this.#createRetryAgent();
-    this.#abortController.signal.addEventListener("abort", async () => {
-      await this.#cleanupRequests();
-    });
-  }
+    this.#rateLimit = new RateLimitManager();
+    this.#requestHandler = new RequestHandler();
 
-  get applications(): ApplicationRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
+    Rest.#routerInstances.set(this, new Map());
 
-    if (!this.#applications) {
-      this.#applications = new ApplicationRouter(this);
-    }
-
-    return this.#applications;
-  }
-
-  get applicationCommands(): ApplicationCommandsRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#applicationCommands) {
-      this.#applicationCommands = new ApplicationCommandsRouter(this);
-    }
-
-    return this.#applicationCommands;
-  }
-
-  get applicationConnections(): ApplicationConnectionRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#applicationConnections) {
-      this.#applicationConnections = new ApplicationConnectionRouter(this);
-    }
-
-    return this.#applicationConnections;
-  }
-
-  get auditLogs(): AuditLogRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#auditLogs) {
-      this.#auditLogs = new AuditLogRouter(this);
-    }
-
-    return this.#auditLogs;
-  }
-
-  get autoModeration(): AutoModerationRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#autoModeration) {
-      this.#autoModeration = new AutoModerationRouter(this);
-    }
-
-    return this.#autoModeration;
-  }
-
-  get channels(): ChannelRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#channels) {
-      this.#channels = new ChannelRouter(this);
-    }
-
-    return this.#channels;
-  }
-
-  get emojis(): EmojiRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#emojis) {
-      this.#emojis = new EmojiRouter(this);
-    }
-
-    return this.#emojis;
-  }
-
-  get entitlements(): EntitlementRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#entitlements) {
-      this.#entitlements = new EntitlementRouter(this);
-    }
-
-    return this.#entitlements;
-  }
-
-  get gateway(): GatewayRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#gateway) {
-      this.#gateway = new GatewayRouter(this);
-    }
-
-    return this.#gateway;
-  }
-
-  get guilds(): GuildRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#guilds) {
-      this.#guilds = new GuildRouter(this);
-    }
-
-    return this.#guilds;
-  }
-
-  get guildTemplates(): GuildTemplateRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#guildTemplates) {
-      this.#guildTemplates = new GuildTemplateRouter(this);
-    }
-
-    return this.#guildTemplates;
-  }
-
-  get interactions(): InteractionRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#interactions) {
-      this.#interactions = new InteractionRouter(this);
-    }
-
-    return this.#interactions;
-  }
-
-  get invites(): InviteRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#invites) {
-      this.#invites = new InviteRouter(this);
-    }
-
-    return this.#invites;
-  }
-
-  get messages(): MessageRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#messages) {
-      this.#messages = new MessageRouter(this);
-    }
-
-    return this.#messages;
-  }
-
-  get oauth2(): OAuth2Router {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#oauth2) {
-      this.#oauth2 = new OAuth2Router(this);
-    }
-
-    return this.#oauth2;
-  }
-
-  get polls(): PollRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#polls) {
-      this.#polls = new PollRouter(this);
-    }
-
-    return this.#polls;
-  }
-
-  get scheduledEvents(): ScheduledEventRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#scheduledEvents) {
-      this.#scheduledEvents = new ScheduledEventRouter(this);
-    }
-
-    return this.#scheduledEvents;
-  }
-
-  get skus(): SkuRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#skus) {
-      this.#skus = new SkuRouter(this);
-    }
-
-    return this.#skus;
-  }
-
-  get soundboards(): SoundboardRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#soundboards) {
-      this.#soundboards = new SoundboardRouter(this);
-    }
-
-    return this.#soundboards;
-  }
-
-  get stageInstances(): StageInstanceRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#stageInstances) {
-      this.#stageInstances = new StageInstanceRouter(this);
-    }
-
-    return this.#stageInstances;
-  }
-
-  get stickers(): StickerRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#stickers) {
-      this.#stickers = new StickerRouter(this);
-    }
-
-    return this.#stickers;
-  }
-
-  get subscriptions(): SubscriptionRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#subscriptions) {
-      this.#subscriptions = new SubscriptionRouter(this);
-    }
-
-    return this.#subscriptions;
-  }
-
-  get users(): UserRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#users) {
-      this.#users = new UserRouter(this);
-    }
-
-    return this.#users;
-  }
-
-  get voices(): VoiceRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#voices) {
-      this.#voices = new VoiceRouter(this);
-    }
-
-    return this.#voices;
-  }
-
-  get webhooks(): WebhookRouter {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
-    }
-
-    if (!this.#webhooks) {
-      this.#webhooks = new WebhookRouter(this);
-    }
-
-    return this.#webhooks;
+    this.#setupAbortListener();
   }
 
   get isDestroyed(): boolean {
@@ -386,9 +63,110 @@ export class Rest {
   }
 
   get baseUrl(): URL {
-    return new URL(
-      `https://discord.com/api/v${this.#options.version.toString()}`,
+    return new URL(`https://discord.com/api/v${this.#options.version}`);
+  }
+
+  get applications(): ApplicationRouter {
+    return this.#getRouter("applications", ApplicationRouter);
+  }
+
+  get applicationCommands(): ApplicationCommandsRouter {
+    return this.#getRouter("applicationCommands", ApplicationCommandsRouter);
+  }
+
+  get applicationConnections(): ApplicationConnectionRouter {
+    return this.#getRouter(
+      "applicationConnections",
+      ApplicationConnectionRouter,
     );
+  }
+
+  get auditLogs(): AuditLogRouter {
+    return this.#getRouter("auditLogs", AuditLogRouter);
+  }
+
+  get autoModeration(): AutoModerationRouter {
+    return this.#getRouter("autoModeration", AutoModerationRouter);
+  }
+
+  get channels(): ChannelRouter {
+    return this.#getRouter("channels", ChannelRouter);
+  }
+
+  get emojis(): EmojiRouter {
+    return this.#getRouter("emojis", EmojiRouter);
+  }
+
+  get entitlements(): EntitlementRouter {
+    return this.#getRouter("entitlements", EntitlementRouter);
+  }
+
+  get gateway(): GatewayRouter {
+    return this.#getRouter("gateway", GatewayRouter);
+  }
+
+  get guilds(): GuildRouter {
+    return this.#getRouter("guilds", GuildRouter);
+  }
+
+  get guildTemplates(): GuildTemplateRouter {
+    return this.#getRouter("guildTemplates", GuildTemplateRouter);
+  }
+
+  get interactions(): InteractionRouter {
+    return this.#getRouter("interactions", InteractionRouter);
+  }
+
+  get invites(): InviteRouter {
+    return this.#getRouter("invites", InviteRouter);
+  }
+
+  get messages(): MessageRouter {
+    return this.#getRouter("messages", MessageRouter);
+  }
+
+  get oauth2(): OAuth2Router {
+    return this.#getRouter("oauth2", OAuth2Router);
+  }
+
+  get polls(): PollRouter {
+    return this.#getRouter("polls", PollRouter);
+  }
+
+  get scheduledEvents(): ScheduledEventRouter {
+    return this.#getRouter("scheduledEvents", ScheduledEventRouter);
+  }
+
+  get skus(): SkuRouter {
+    return this.#getRouter("skus", SkuRouter);
+  }
+
+  get soundboards(): SoundboardRouter {
+    return this.#getRouter("soundboards", SoundboardRouter);
+  }
+
+  get stageInstances(): StageInstanceRouter {
+    return this.#getRouter("stageInstances", StageInstanceRouter);
+  }
+
+  get stickers(): StickerRouter {
+    return this.#getRouter("stickers", StickerRouter);
+  }
+
+  get subscriptions(): SubscriptionRouter {
+    return this.#getRouter("subscriptions", SubscriptionRouter);
+  }
+
+  get users(): UserRouter {
+    return this.#getRouter("users", UserRouter);
+  }
+
+  get voices(): VoiceRouter {
+    return this.#getRouter("voices", VoiceRouter);
+  }
+
+  get webhooks(): WebhookRouter {
+    return this.#getRouter("webhooks", WebhookRouter);
   }
 
   get<T = unknown>(
@@ -426,6 +204,27 @@ export class Rest {
     return this.request<T>({ method: HttpMethod.Delete, path, ...options });
   }
 
+  async request<T = unknown>(options: RequestOptions): Promise<T> {
+    this.#checkDestroyed();
+
+    const requestAbortController = new AbortController();
+    const cleanup = () => requestAbortController.abort();
+    this.#abortController.signal.addEventListener("abort", cleanup);
+
+    const requestPromise = this.#executeRequest<T>(
+      options,
+      requestAbortController.signal,
+    );
+    this.#activeRequests.add(requestPromise);
+
+    try {
+      return await requestPromise;
+    } finally {
+      this.#activeRequests.delete(requestPromise);
+      this.#abortController.signal.removeEventListener("abort", cleanup);
+    }
+  }
+
   async destroy(): Promise<void> {
     if (this.#isDestroyed) {
       return;
@@ -440,89 +239,37 @@ export class Rest {
       this.#rateLimit.destroy();
       await Promise.all([this.#pool.close(), this.#retryAgent.close()]);
       this.#activeRequests.clear();
-      this.#applications = null;
-      this.#applicationCommands = null;
-      this.#applicationConnections = null;
-      this.#auditLogs = null;
-      this.#autoModeration = null;
-      this.#channels = null;
-      this.#emojis = null;
-      this.#entitlements = null;
-      this.#gateway = null;
-      this.#guilds = null;
-      this.#guildTemplates = null;
-      this.#interactions = null;
-      this.#invites = null;
-      this.#messages = null;
-      this.#oauth2 = null;
-      this.#polls = null;
-      this.#scheduledEvents = null;
-      this.#skus = null;
-      this.#soundboards = null;
-      this.#stageInstances = null;
-      this.#stickers = null;
-      this.#subscriptions = null;
-      this.#users = null;
-      this.#voices = null;
-      this.#webhooks = null;
+      Rest.#routerInstances.delete(this);
     }
   }
 
-  async request<T = unknown>(request: RequestOptions): Promise<T> {
+  #getRouter<T = unknown>(key: string, RouterClass: new (rest: Rest) => T): T {
+    this.#checkDestroyed();
+
+    const instances = Rest.#routerInstances.get(this);
+    if (!instances) {
+      throw new Error("Router instances not initialized");
+    }
+
+    let router = instances.get(key) as T | undefined;
+    if (!router) {
+      router = new RouterClass(this);
+      instances.set(key, router as () => unknown);
+    }
+
+    return router;
+  }
+
+  #checkDestroyed(): void {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
+  }
 
-    const requestAbortController = new AbortController();
-    this.#abortController.signal.addEventListener("abort", () => {
-      requestAbortController.abort();
+  #setupAbortListener(): void {
+    this.#abortController.signal.addEventListener("abort", async () => {
+      await this.#cleanupRequests();
     });
-
-    const waitTime = this.#rateLimit.isRateLimited(request);
-    if (waitTime) {
-      const timeoutPromise = new Promise((resolve) => {
-        const timeout = setTimeout(resolve, waitTime);
-        requestAbortController.signal.addEventListener("abort", () => {
-          clearTimeout(timeout);
-        });
-      });
-
-      try {
-        await timeoutPromise;
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") {
-          throw new Error("Request aborted during rate limit wait");
-        }
-        throw error;
-      }
-    }
-
-    const headers: Record<string, string> = {
-      authorization: `${this.#options.authType} ${this.#options.token}`,
-      "accept-encoding": "br, gzip",
-      "content-type": request.headers?.["content-type"] ?? MimeType.Json,
-      "user-agent":
-        this.#options.userAgent ??
-        "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
-      ...request.headers,
-    };
-
-    if (request.reason) {
-      headers["x-audit-log-reason"] = encodeURIComponent(request.reason);
-    }
-
-    const requestPromise = this.#retryAgent
-      .request({
-        method: request.method,
-        path: this.baseUrl.pathname + request.path,
-        headers,
-        body: request.body,
-        signal: requestAbortController.signal,
-        query: request.query as Record<string, unknown>,
-      })
-      .then((response) => this.#handleResponse<T>(response, request));
-
-    return this.#trackRequest(requestPromise);
   }
 
   async #cleanupRequests(): Promise<void> {
@@ -530,98 +277,49 @@ export class Rest {
     this.#activeRequests.clear();
   }
 
-  async #trackRequest<T>(requestPromise: Promise<T>): Promise<T> {
-    this.#activeRequests.add(requestPromise);
-    try {
-      return await requestPromise;
-    } finally {
-      this.#activeRequests.delete(requestPromise);
-    }
-  }
-
-  async #handleResponse<T = unknown>(
-    response: Dispatcher.ResponseData,
-    request: RequestOptions,
+  async #executeRequest<T>(
+    options: RequestOptions,
+    signal: AbortSignal,
   ): Promise<T> {
-    if (this.#isDestroyed) {
-      throw new Error(
-        "Rest client has been destroyed during response handling",
-      );
+    // Handle rate limits using the RateLimitManager
+    for (const waitTime of this.#rateLimit.waitForRateLimit(options)) {
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
-    this.#rateLimit.handleRateLimit(
-      request,
-      response.headers as Record<string, string>,
+    const headers = this.#buildHeaders(options);
+    const response = await this.#retryAgent.request({
+      method: options.method,
+      path: this.baseUrl.pathname + options.path,
+      headers,
+      body: options.body,
+      signal,
+      query: options.query as Record<string, unknown>,
+    });
+
+    // Use RequestHandler for response processing
+    return this.#requestHandler.handleResponse<T>(
+      response,
+      options,
+      this.#rateLimit,
     );
-
-    if (response.statusCode !== HttpStatusCode.Ok) {
-      if (
-        [
-          HttpStatusCode.Unauthorized,
-          HttpStatusCode.Forbidden,
-          HttpStatusCode.TooManyRequests,
-        ].includes(response.statusCode)
-      ) {
-        this.#rateLimit.handleInvalidRequest();
-      }
-
-      if (response.statusCode === HttpStatusCode.TooManyRequests) {
-        const rateLimitError =
-          (await response.body.json()) as RateLimitResponseEntity;
-        this.#rateLimit.handleRateLimitError(rateLimitError);
-        throw new Error(`Rate limited: ${rateLimitError.message}`);
-      }
-
-      throw new Error(
-        `HTTP Error ${response.statusCode}: ${JSON.stringify(await response.body.json())}`,
-      );
-    }
-
-    const contentType = response.headers["content-type"] as string;
-    const encoding = response.headers["content-encoding"] as string;
-
-    if (contentType?.includes(MimeType.Json)) {
-      const buffer = Buffer.from(await response.body.arrayBuffer());
-      const decompressed = await this.#decompressResponse(buffer, encoding);
-      return JSON.parse(decompressed.toString());
-    }
-
-    return response.body.arrayBuffer() as T;
   }
 
-  async #decompressResponse(
-    data: Buffer,
-    encoding: "br" | "gzip" | string,
-  ): Promise<Buffer> {
-    if (!encoding) {
-      return data;
+  #buildHeaders(options: RequestOptions): Record<string, string> {
+    const headers: Record<string, string> = {
+      authorization: `${this.#options.authType} ${this.#options.token}`,
+      "accept-encoding": "br, gzip",
+      "content-type": options.headers?.["content-type"] ?? MimeType.Json,
+      "user-agent":
+        this.#options.userAgent ??
+        "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
+      ...options.headers,
+    };
+
+    if (options.reason) {
+      headers["x-audit-log-reason"] = encodeURIComponent(options.reason);
     }
 
-    return new Promise<Buffer>((resolve, reject) => {
-      let stream: BrotliDecompress | Gunzip;
-      switch (encoding) {
-        case "br": {
-          stream = new BrotliDecompress({ level: 11 });
-          break;
-        }
-
-        case "gzip": {
-          stream = new Gunzip({ level: 9 });
-          break;
-        }
-
-        default: {
-          resolve(data);
-          return;
-        }
-      }
-
-      const chunks: Buffer[] = [];
-      stream.on("data", (chunk) => chunks.push(chunk));
-      stream.on("end", () => resolve(Buffer.concat(chunks)));
-      stream.on("error", reject);
-      stream.end(data);
-    });
+    return headers;
   }
 
   #createPool(): Pool {
