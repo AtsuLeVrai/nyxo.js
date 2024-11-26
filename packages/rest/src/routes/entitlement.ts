@@ -31,7 +31,7 @@ interface CreateTestEntitlement {
   owner_type: EntitlementOwnerType;
 }
 
-export class EntitlementRoutes {
+export class EntitlementRouter {
   static routes = {
     entitlements: (
       applicationId: Snowflake,
@@ -66,7 +66,7 @@ export class EntitlementRoutes {
     query?: ListEntitlementQuery,
   ): Promise<EntitlementEntity[]> {
     return this.#rest.get(
-      EntitlementRoutes.routes.entitlements(applicationId),
+      EntitlementRouter.routes.entitlements(applicationId),
       {
         query,
       },
@@ -78,7 +78,7 @@ export class EntitlementRoutes {
    */
   consume(applicationId: Snowflake, entitlementId: Snowflake): Promise<void> {
     return this.#rest.post(
-      EntitlementRoutes.routes.consume(applicationId, entitlementId),
+      EntitlementRouter.routes.consume(applicationId, entitlementId),
     );
   }
 
@@ -90,7 +90,7 @@ export class EntitlementRoutes {
     test: CreateTestEntitlement,
   ): Promise<EntitlementEntity> {
     return this.#rest.post(
-      EntitlementRoutes.routes.entitlements(applicationId),
+      EntitlementRouter.routes.entitlements(applicationId),
       {
         body: JSON.stringify(test),
       },
@@ -105,7 +105,7 @@ export class EntitlementRoutes {
     entitlementId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      EntitlementRoutes.routes.entitlement(applicationId, entitlementId),
+      EntitlementRouter.routes.entitlement(applicationId, entitlementId),
     );
   }
 }

@@ -2,27 +2,33 @@ import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 import type { ImageData } from "../types/index.js";
 
-interface SoundboardSend {
-  sound_id: Snowflake;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params}
+ */
+export interface SoundboardSend
+  extends Pick<SoundboardSoundEntity, "sound_id"> {
   source_guild_id?: Snowflake;
 }
 
-interface SoundboardCreate {
-  name: string;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound-json-params}
+ */
+export interface SoundboardCreate
+  extends Pick<
+    SoundboardSoundEntity,
+    "name" | "volume" | "emoji_id" | "emoji_name"
+  > {
   sound: ImageData;
-  volume?: number;
-  emoji_id?: Snowflake;
-  emoji_name?: string;
 }
 
-interface SoundboardModify {
-  name?: string;
-  volume?: number;
-  emoji_id?: Snowflake;
-  emoji_name?: string;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params}
+ */
+export type SoundboardModify = Partial<
+  Pick<SoundboardSoundEntity, "name" | "volume" | "emoji_id" | "emoji_name">
+>;
 
-export class SoundboardRoutes {
+export class SoundboardRouter {
   static routes = {
     defaultSounds: "/soundboard-default-sounds" as const,
     guildSounds: (
@@ -53,7 +59,7 @@ export class SoundboardRoutes {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound}
    */
   sendSound(channelId: Snowflake, options: SoundboardSend): Promise<void> {
-    return this.#rest.post(SoundboardRoutes.routes.sendSound(channelId), {
+    return this.#rest.post(SoundboardRouter.routes.sendSound(channelId), {
       body: JSON.stringify(options),
     });
   }
@@ -62,7 +68,7 @@ export class SoundboardRoutes {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   listDefaultSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.#rest.get(SoundboardRoutes.routes.defaultSounds);
+    return this.#rest.get(SoundboardRouter.routes.defaultSounds);
   }
 
   /**
@@ -71,7 +77,7 @@ export class SoundboardRoutes {
   listGuildSounds(
     guildId: Snowflake,
   ): Promise<{ items: SoundboardSoundEntity[] }> {
-    return this.#rest.get(SoundboardRoutes.routes.guildSounds(guildId));
+    return this.#rest.get(SoundboardRouter.routes.guildSounds(guildId));
   }
 
   /**
@@ -81,7 +87,7 @@ export class SoundboardRoutes {
     guildId: Snowflake,
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.get(SoundboardRoutes.routes.guildSound(guildId, soundId));
+    return this.#rest.get(SoundboardRouter.routes.guildSound(guildId, soundId));
   }
 
   /**
@@ -92,7 +98,7 @@ export class SoundboardRoutes {
     options: SoundboardCreate,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.post(SoundboardRoutes.routes.guildSounds(guildId), {
+    return this.#rest.post(SoundboardRouter.routes.guildSounds(guildId), {
       body: JSON.stringify(options),
       reason,
     });
@@ -108,7 +114,7 @@ export class SoundboardRoutes {
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
     return this.#rest.patch(
-      SoundboardRoutes.routes.guildSound(guildId, soundId),
+      SoundboardRouter.routes.guildSound(guildId, soundId),
       {
         body: JSON.stringify(options),
         reason,
@@ -125,7 +131,7 @@ export class SoundboardRoutes {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      SoundboardRoutes.routes.guildSound(guildId, soundId),
+      SoundboardRouter.routes.guildSound(guildId, soundId),
       {
         reason,
       },

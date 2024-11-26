@@ -6,28 +6,48 @@ import type {
 import type { Rest } from "../core/index.js";
 import type { ImageData } from "../types/index.js";
 
-interface GetEvents {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-query-string-params}
+ */
+export interface GetEvents {
   with_user_count?: boolean;
 }
 
-interface GetUsers {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params}
+ */
+export interface GetUsers {
   limit?: number;
   with_member?: boolean;
   before?: Snowflake;
   after?: Snowflake;
 }
 
-interface Create
-  extends Omit<
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
+ */
+export interface Create
+  extends Pick<
     GuildScheduledEventEntity,
-    "id" | "guild_id" | "creator_id" | "creator" | "user_count"
+    | "channel_id"
+    | "entity_metadata"
+    | "name"
+    | "privacy_level"
+    | "scheduled_start_time"
+    | "scheduled_end_time"
+    | "description"
+    | "entity_type"
+    | "recurrence_rule"
   > {
   image?: ImageData;
 }
 
-interface Modify extends Partial<Create> {}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
+ */
+export type Modify = Partial<Create>;
 
-export class ScheduledEventRoutes {
+export class ScheduledEventRouter {
   static routes = {
     events: (guildId: Snowflake): `/guilds/${Snowflake}/scheduled-events` => {
       return `/guilds/${guildId}/scheduled-events` as const;
@@ -59,7 +79,7 @@ export class ScheduledEventRoutes {
     guildId: Snowflake,
     query?: GetEvents,
   ): Promise<GuildScheduledEventEntity[]> {
-    return this.#rest.get(ScheduledEventRoutes.routes.events(guildId), {
+    return this.#rest.get(ScheduledEventRouter.routes.events(guildId), {
       query,
     });
   }
@@ -72,7 +92,7 @@ export class ScheduledEventRoutes {
     event: Create,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    return this.#rest.post(ScheduledEventRoutes.routes.events(guildId), {
+    return this.#rest.post(ScheduledEventRouter.routes.events(guildId), {
       body: JSON.stringify(event),
       reason,
     });
@@ -86,7 +106,7 @@ export class ScheduledEventRoutes {
     eventId: Snowflake,
     withUserCount?: boolean,
   ): Promise<GuildScheduledEventEntity> {
-    return this.#rest.get(ScheduledEventRoutes.routes.event(guildId, eventId), {
+    return this.#rest.get(ScheduledEventRouter.routes.event(guildId, eventId), {
       query: { with_user_count: withUserCount },
     });
   }
@@ -101,7 +121,7 @@ export class ScheduledEventRoutes {
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
     return this.#rest.patch(
-      ScheduledEventRoutes.routes.event(guildId, eventId),
+      ScheduledEventRouter.routes.event(guildId, eventId),
       {
         body: JSON.stringify(modify),
         reason,
@@ -114,7 +134,7 @@ export class ScheduledEventRoutes {
    */
   delete(guildId: Snowflake, eventId: Snowflake): Promise<void> {
     return this.#rest.delete(
-      ScheduledEventRoutes.routes.event(guildId, eventId),
+      ScheduledEventRouter.routes.event(guildId, eventId),
     );
   }
 
@@ -126,7 +146,7 @@ export class ScheduledEventRoutes {
     eventId: Snowflake,
     query?: GetUsers,
   ): Promise<GuildScheduledEventUserEntity[]> {
-    return this.#rest.get(ScheduledEventRoutes.routes.users(guildId, eventId), {
+    return this.#rest.get(ScheduledEventRouter.routes.users(guildId, eventId), {
       query,
     });
   }

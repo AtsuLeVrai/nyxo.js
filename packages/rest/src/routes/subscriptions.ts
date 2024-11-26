@@ -1,14 +1,17 @@
-import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
+import type { Integer, Snowflake, SubscriptionEntity } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface SubscriptionQuery {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/subscription#query-string-params}
+ */
+export interface SubscriptionQuery {
   before?: Snowflake;
   after?: Snowflake;
-  limit?: number;
+  limit?: Integer;
   user_id?: Snowflake;
 }
 
-export class SubscriptionRoutes {
+export class SubscriptionRouter {
   static routes = {
     skuSubscriptions: (
       skuId: Snowflake,
@@ -36,7 +39,7 @@ export class SubscriptionRoutes {
     skuId: Snowflake,
     query?: SubscriptionQuery,
   ): Promise<SubscriptionEntity[]> {
-    return this.#rest.get(SubscriptionRoutes.routes.skuSubscriptions(skuId), {
+    return this.#rest.get(SubscriptionRouter.routes.skuSubscriptions(skuId), {
       query,
     });
   }
@@ -49,7 +52,7 @@ export class SubscriptionRoutes {
     subscriptionId: Snowflake,
   ): Promise<SubscriptionEntity> {
     return this.#rest.get(
-      SubscriptionRoutes.routes.skuSubscription(skuId, subscriptionId),
+      SubscriptionRouter.routes.skuSubscription(skuId, subscriptionId),
     );
   }
 }

@@ -4,31 +4,31 @@ import { type Dispatcher, Pool, RetryAgent, type RetryHandler } from "undici";
 import { HttpMethod, HttpStatusCode, JsonErrorCode } from "../enums/index.js";
 import { RateLimitManager } from "../managers/index.js";
 import {
-  ApplicationCommandsRoutes,
-  ApplicationConnectionRoutes,
-  ApplicationRoutes,
-  AuditLogRoutes,
-  AutoModerationRoutes,
-  ChannelRoutes,
-  EmojiRoutes,
-  EntitlementRoutes,
-  GatewayRoutes,
-  GuildRoutes,
-  GuildTemplateRoutes,
-  InteractionRoutes,
-  InviteRoutes,
-  MessageRoutes,
-  OAuth2Routes,
-  PollRoutes,
-  ScheduledEventRoutes,
-  SkuRoutes,
-  SoundboardRoutes,
-  StageInstanceRoutes,
-  StickerRoutes,
-  SubscriptionRoutes,
-  UserRoutes,
-  VoiceRoutes,
-  WebhookRoutes,
+  ApplicationCommandsRouter,
+  ApplicationConnectionRouter,
+  ApplicationRouter,
+  AuditLogRouter,
+  AutoModerationRouter,
+  ChannelRouter,
+  EmojiRouter,
+  EntitlementRouter,
+  GatewayRouter,
+  GuildRouter,
+  GuildTemplateRouter,
+  InteractionRouter,
+  InviteRouter,
+  MessageRouter,
+  OAuth2Router,
+  PollRouter,
+  ScheduledEventRouter,
+  SkuRouter,
+  SoundboardRouter,
+  StageInstanceRouter,
+  StickerRouter,
+  SubscriptionRouter,
+  UserRouter,
+  VoiceRouter,
+  WebhookRouter,
 } from "../routes/index.js";
 import type {
   RateLimitResponseEntity,
@@ -46,31 +46,31 @@ export class Rest {
   readonly #activeRequests: Set<Promise<unknown>> = new Set();
   #isDestroyed = false;
 
-  #applications: ApplicationRoutes | null = null;
-  #applicationCommands: ApplicationCommandsRoutes | null = null;
-  #applicationConnections: ApplicationConnectionRoutes | null = null;
-  #auditLogs: AuditLogRoutes | null = null;
-  #autoModeration: AutoModerationRoutes | null = null;
-  #channels: ChannelRoutes | null = null;
-  #emojis: EmojiRoutes | null = null;
-  #entitlements: EntitlementRoutes | null = null;
-  #gateway: GatewayRoutes | null = null;
-  #guilds: GuildRoutes | null = null;
-  #guildTemplates: GuildTemplateRoutes | null = null;
-  #interactions: InteractionRoutes | null = null;
-  #invites: InviteRoutes | null = null;
-  #messages: MessageRoutes | null = null;
-  #oauth2: OAuth2Routes | null = null;
-  #polls: PollRoutes | null = null;
-  #scheduledEvents: ScheduledEventRoutes | null = null;
-  #skus: SkuRoutes | null = null;
-  #soundboards: SoundboardRoutes | null = null;
-  #stageInstances: StageInstanceRoutes | null = null;
-  #stickers: StickerRoutes | null = null;
-  #subscriptions: SubscriptionRoutes | null = null;
-  #users: UserRoutes | null = null;
-  #voices: VoiceRoutes | null = null;
-  #webhooks: WebhookRoutes | null = null;
+  #applications: ApplicationRouter | null = null;
+  #applicationCommands: ApplicationCommandsRouter | null = null;
+  #applicationConnections: ApplicationConnectionRouter | null = null;
+  #auditLogs: AuditLogRouter | null = null;
+  #autoModeration: AutoModerationRouter | null = null;
+  #channels: ChannelRouter | null = null;
+  #emojis: EmojiRouter | null = null;
+  #entitlements: EntitlementRouter | null = null;
+  #gateway: GatewayRouter | null = null;
+  #guilds: GuildRouter | null = null;
+  #guildTemplates: GuildTemplateRouter | null = null;
+  #interactions: InteractionRouter | null = null;
+  #invites: InviteRouter | null = null;
+  #messages: MessageRouter | null = null;
+  #oauth2: OAuth2Router | null = null;
+  #polls: PollRouter | null = null;
+  #scheduledEvents: ScheduledEventRouter | null = null;
+  #skus: SkuRouter | null = null;
+  #soundboards: SoundboardRouter | null = null;
+  #stageInstances: StageInstanceRouter | null = null;
+  #stickers: StickerRouter | null = null;
+  #subscriptions: SubscriptionRouter | null = null;
+  #users: UserRouter | null = null;
+  #voices: VoiceRouter | null = null;
+  #webhooks: WebhookRouter | null = null;
 
   constructor(options: RestOptions) {
     this.#options = options;
@@ -81,301 +81,301 @@ export class Rest {
     });
   }
 
-  get applications(): ApplicationRoutes {
+  get applications(): ApplicationRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#applications) {
-      this.#applications = new ApplicationRoutes(this);
+      this.#applications = new ApplicationRouter(this);
     }
 
     return this.#applications;
   }
 
-  get applicationCommands(): ApplicationCommandsRoutes {
+  get applicationCommands(): ApplicationCommandsRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#applicationCommands) {
-      this.#applicationCommands = new ApplicationCommandsRoutes(this);
+      this.#applicationCommands = new ApplicationCommandsRouter(this);
     }
 
     return this.#applicationCommands;
   }
 
-  get applicationConnections(): ApplicationConnectionRoutes {
+  get applicationConnections(): ApplicationConnectionRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#applicationConnections) {
-      this.#applicationConnections = new ApplicationConnectionRoutes(this);
+      this.#applicationConnections = new ApplicationConnectionRouter(this);
     }
 
     return this.#applicationConnections;
   }
 
-  get auditLogs(): AuditLogRoutes {
+  get auditLogs(): AuditLogRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#auditLogs) {
-      this.#auditLogs = new AuditLogRoutes(this);
+      this.#auditLogs = new AuditLogRouter(this);
     }
 
     return this.#auditLogs;
   }
 
-  get autoModeration(): AutoModerationRoutes {
+  get autoModeration(): AutoModerationRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#autoModeration) {
-      this.#autoModeration = new AutoModerationRoutes(this);
+      this.#autoModeration = new AutoModerationRouter(this);
     }
 
     return this.#autoModeration;
   }
 
-  get channels(): ChannelRoutes {
+  get channels(): ChannelRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#channels) {
-      this.#channels = new ChannelRoutes(this);
+      this.#channels = new ChannelRouter(this);
     }
 
     return this.#channels;
   }
 
-  get emojis(): EmojiRoutes {
+  get emojis(): EmojiRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#emojis) {
-      this.#emojis = new EmojiRoutes(this);
+      this.#emojis = new EmojiRouter(this);
     }
 
     return this.#emojis;
   }
 
-  get entitlements(): EntitlementRoutes {
+  get entitlements(): EntitlementRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#entitlements) {
-      this.#entitlements = new EntitlementRoutes(this);
+      this.#entitlements = new EntitlementRouter(this);
     }
 
     return this.#entitlements;
   }
 
-  get gateway(): GatewayRoutes {
+  get gateway(): GatewayRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#gateway) {
-      this.#gateway = new GatewayRoutes(this);
+      this.#gateway = new GatewayRouter(this);
     }
 
     return this.#gateway;
   }
 
-  get guilds(): GuildRoutes {
+  get guilds(): GuildRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#guilds) {
-      this.#guilds = new GuildRoutes(this);
+      this.#guilds = new GuildRouter(this);
     }
 
     return this.#guilds;
   }
 
-  get guildTemplates(): GuildTemplateRoutes {
+  get guildTemplates(): GuildTemplateRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#guildTemplates) {
-      this.#guildTemplates = new GuildTemplateRoutes(this);
+      this.#guildTemplates = new GuildTemplateRouter(this);
     }
 
     return this.#guildTemplates;
   }
 
-  get interactions(): InteractionRoutes {
+  get interactions(): InteractionRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#interactions) {
-      this.#interactions = new InteractionRoutes(this);
+      this.#interactions = new InteractionRouter(this);
     }
 
     return this.#interactions;
   }
 
-  get invites(): InviteRoutes {
+  get invites(): InviteRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#invites) {
-      this.#invites = new InviteRoutes(this);
+      this.#invites = new InviteRouter(this);
     }
 
     return this.#invites;
   }
 
-  get messages(): MessageRoutes {
+  get messages(): MessageRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#messages) {
-      this.#messages = new MessageRoutes(this);
+      this.#messages = new MessageRouter(this);
     }
 
     return this.#messages;
   }
 
-  get oauth2(): OAuth2Routes {
+  get oauth2(): OAuth2Router {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#oauth2) {
-      this.#oauth2 = new OAuth2Routes(this);
+      this.#oauth2 = new OAuth2Router(this);
     }
 
     return this.#oauth2;
   }
 
-  get polls(): PollRoutes {
+  get polls(): PollRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#polls) {
-      this.#polls = new PollRoutes(this);
+      this.#polls = new PollRouter(this);
     }
 
     return this.#polls;
   }
 
-  get scheduledEvents(): ScheduledEventRoutes {
+  get scheduledEvents(): ScheduledEventRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#scheduledEvents) {
-      this.#scheduledEvents = new ScheduledEventRoutes(this);
+      this.#scheduledEvents = new ScheduledEventRouter(this);
     }
 
     return this.#scheduledEvents;
   }
 
-  get skus(): SkuRoutes {
+  get skus(): SkuRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#skus) {
-      this.#skus = new SkuRoutes(this);
+      this.#skus = new SkuRouter(this);
     }
 
     return this.#skus;
   }
 
-  get soundboards(): SoundboardRoutes {
+  get soundboards(): SoundboardRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#soundboards) {
-      this.#soundboards = new SoundboardRoutes(this);
+      this.#soundboards = new SoundboardRouter(this);
     }
 
     return this.#soundboards;
   }
 
-  get stageInstances(): StageInstanceRoutes {
+  get stageInstances(): StageInstanceRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#stageInstances) {
-      this.#stageInstances = new StageInstanceRoutes(this);
+      this.#stageInstances = new StageInstanceRouter(this);
     }
 
     return this.#stageInstances;
   }
 
-  get stickers(): StickerRoutes {
+  get stickers(): StickerRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#stickers) {
-      this.#stickers = new StickerRoutes(this);
+      this.#stickers = new StickerRouter(this);
     }
 
     return this.#stickers;
   }
 
-  get subscriptions(): SubscriptionRoutes {
+  get subscriptions(): SubscriptionRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#subscriptions) {
-      this.#subscriptions = new SubscriptionRoutes(this);
+      this.#subscriptions = new SubscriptionRouter(this);
     }
 
     return this.#subscriptions;
   }
 
-  get users(): UserRoutes {
+  get users(): UserRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#users) {
-      this.#users = new UserRoutes(this);
+      this.#users = new UserRouter(this);
     }
 
     return this.#users;
   }
 
-  get voices(): VoiceRoutes {
+  get voices(): VoiceRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#voices) {
-      this.#voices = new VoiceRoutes(this);
+      this.#voices = new VoiceRouter(this);
     }
 
     return this.#voices;
   }
 
-  get webhooks(): WebhookRoutes {
+  get webhooks(): WebhookRouter {
     if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
 
     if (!this.#webhooks) {
-      this.#webhooks = new WebhookRoutes(this);
+      this.#webhooks = new WebhookRouter(this);
     }
 
     return this.#webhooks;

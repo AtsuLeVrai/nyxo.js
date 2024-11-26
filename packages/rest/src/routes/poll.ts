@@ -1,12 +1,27 @@
-import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
+import type {
+  Integer,
+  MessageEntity,
+  Snowflake,
+  UserEntity,
+} from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface GetVotersQuery {
-  after?: Snowflake;
-  limit?: number;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body}
+ */
+export interface PollVotersResponse {
+  users: UserEntity[];
 }
 
-export class PollRoutes {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-query-string-params}
+ */
+export interface GetVotersQuery {
+  after?: Snowflake;
+  limit?: Integer;
+}
+
+export class PollRouter {
   static routes = {
     channelPolls: (
       channelId: Snowflake,
@@ -37,9 +52,9 @@ export class PollRoutes {
     messageId: Snowflake,
     answerId: number,
     query?: GetVotersQuery,
-  ): Promise<{ users: UserEntity[] }> {
+  ): Promise<PollVotersResponse> {
     return this.#rest.get(
-      PollRoutes.routes.channelPolls(channelId, messageId, answerId),
+      PollRouter.routes.channelPolls(channelId, messageId, answerId),
       {
         query: {
           after: query?.after,
@@ -53,6 +68,6 @@ export class PollRoutes {
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
    */
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
-    return this.#rest.post(PollRoutes.routes.expirePoll(channelId, messageId));
+    return this.#rest.post(PollRouter.routes.expirePoll(channelId, messageId));
   }
 }

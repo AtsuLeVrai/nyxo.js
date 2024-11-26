@@ -6,25 +6,37 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface TokenExchange {
+/**
+ * @see {@link https://discord.com/developers/docs/topics/oauth2#authorization-code-grant-redirect-url-example}
+ */
+export interface TokenExchange {
   grant_type: "authorization_code";
   code: string;
   redirect_uri: string;
 }
 
-interface TokenRefresh {
+/**
+ * @see {@link https://discord.com/developers/docs/topics/oauth2#authorization-code-grant-access-token-response}
+ */
+export interface TokenRefresh {
   grant_type: "refresh_token";
   refresh_token: string;
 }
 
-interface TokenRevoke {
+/**
+ * @see {@link https://discord.com/developers/docs/topics/oauth2#authorization-code-grant-token-revocation-example}
+ */
+export interface TokenRevoke {
   token: string;
   token_type_hint?: "access_token" | "refresh_token";
 }
 
-interface ClientCredentials {
+/**
+ * @see {@link https://discord.com/developers/docs/topics/oauth2#client-credentials-grant}
+ */
+export interface ClientCredentials {
   grant_type: "client_credentials";
-  scope?: string;
+  scope?: OAuth2Scope;
 }
 
 /**
@@ -37,7 +49,7 @@ interface AuthorizationEntity {
   user?: UserEntity;
 }
 
-export class OAuth2Routes {
+export class OAuth2Router {
   static routes = {
     authorize: "https://discord.com/oauth2/authorize" as const,
     token: "/oauth2/token" as const,
@@ -62,7 +74,7 @@ export class OAuth2Routes {
     refresh_token: string;
     scope: string;
   }> {
-    return this.#rest.post(OAuth2Routes.routes.token, {
+    return this.#rest.post(OAuth2Router.routes.token, {
       body: JSON.stringify(options),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -80,7 +92,7 @@ export class OAuth2Routes {
     refresh_token: string;
     scope: string;
   }> {
-    return this.#rest.post(OAuth2Routes.routes.token, {
+    return this.#rest.post(OAuth2Router.routes.token, {
       body: JSON.stringify(options),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -92,7 +104,7 @@ export class OAuth2Routes {
    * @see {@link https://discord.com/developers/docs/topics/oauth2#authorization-code-grant-token-revocation}
    */
   revokeToken(options: TokenRevoke): Promise<void> {
-    return this.#rest.post(OAuth2Routes.routes.tokenRevoke, {
+    return this.#rest.post(OAuth2Router.routes.tokenRevoke, {
       body: JSON.stringify(options),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -109,7 +121,7 @@ export class OAuth2Routes {
     expires_in: number;
     scope: string;
   }> {
-    return this.#rest.post(OAuth2Routes.routes.token, {
+    return this.#rest.post(OAuth2Router.routes.token, {
       body: JSON.stringify(options),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -121,13 +133,13 @@ export class OAuth2Routes {
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(OAuth2Routes.routes.currentApplication);
+    return this.#rest.get(OAuth2Router.routes.currentApplication);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
    */
   getCurrentAuthorization(): Promise<AuthorizationEntity> {
-    return this.#rest.get(OAuth2Routes.routes.currentAuthorization);
+    return this.#rest.get(OAuth2Router.routes.currentAuthorization);
   }
 }

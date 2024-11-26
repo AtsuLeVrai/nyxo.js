@@ -5,13 +5,16 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface GetInviteQuery {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}
+ */
+export interface GetInviteQuery {
   with_counts?: boolean;
   with_expiration?: boolean;
   guild_scheduled_event_id?: Snowflake;
 }
 
-export class InviteRoutes {
+export class InviteRouter {
   static routes = {
     base: "/invites",
     invite: (code: string): `/invites/${string}` => {
@@ -32,7 +35,7 @@ export class InviteRoutes {
     code: string,
     query?: GetInviteQuery,
   ): Promise<InviteEntity & InviteMetadataEntity> {
-    return this.#rest.get(InviteRoutes.routes.invite(code), {
+    return this.#rest.get(InviteRouter.routes.invite(code), {
       query,
     });
   }
@@ -41,7 +44,7 @@ export class InviteRoutes {
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.#rest.delete(InviteRoutes.routes.invite(code), {
+    return this.#rest.delete(InviteRouter.routes.invite(code), {
       reason,
     });
   }

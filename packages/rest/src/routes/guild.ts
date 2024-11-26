@@ -2,10 +2,13 @@ import type {
   BanEntity,
   ChannelEntity,
   GuildEntity,
+  GuildFeature,
   GuildMemberEntity,
   GuildOnboardingEntity,
+  Integer,
   IntegrationEntity,
   InviteEntity,
+  LocaleKey,
   RoleEntity,
   Snowflake,
   VoiceRegionEntity,
@@ -14,50 +17,71 @@ import type {
 import type { Rest } from "../core/index.js";
 import type { ImageData } from "../types/index.js";
 
-interface CreateGuild {
-  name: string;
-  region?: string | null;
-  icon?: ImageData;
-  verification_level?: number;
-  default_message_notifications?: number;
-  explicit_content_filter?: number;
-  roles?: RoleEntity[];
-  channels?: Partial<ChannelEntity>[];
-  afk_channel_id?: Snowflake;
-  afk_timeout?: number;
-  system_channel_id?: Snowflake;
-  system_channel_flags?: number;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
+ */
+export interface CreateGuild
+  extends Pick<
+    GuildEntity,
+    | "name"
+    | "region"
+    | "icon"
+    | "verification_level"
+    | "default_message_notifications"
+    | "explicit_content_filter"
+    | "roles"
+    | "afk_channel_id"
+    | "afk_timeout"
+    | "system_channel_id"
+    | "system_channel_flags"
+  > {
+  channels: Partial<ChannelEntity>[];
 }
 
-interface ModifyGuild extends Partial<CreateGuild> {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-json-params}
+ */
+export interface ModifyGuild extends Partial<CreateGuild> {
   owner_id?: Snowflake;
   splash?: ImageData | null;
   discovery_splash?: ImageData | null;
   banner?: ImageData | null;
   rules_channel_id?: Snowflake | null;
   public_updates_channel_id?: Snowflake | null;
-  preferred_locale?: string;
-  features?: string[];
+  preferred_locale?: LocaleKey;
+  features?: GuildFeature[];
   description?: string | null;
   premium_progress_bar_enabled?: boolean;
   safety_alerts_channel_id?: Snowflake | null;
 }
 
-interface GetGuildQuery {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-query-string-params}
+ */
+export interface GetGuildQuery {
   with_counts?: boolean;
 }
 
-interface GetMembersQuery {
-  limit?: number;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params}
+ */
+export interface GetMembersQuery {
+  limit?: Integer;
   after?: Snowflake;
 }
 
-interface SearchMembersQuery {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#search-guild-members-query-string-params}
+ */
+export interface SearchMembersQuery {
   query: string;
-  limit?: number;
+  limit?: Integer;
 }
 
-interface AddMember {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member-json-params}
+ */
+export interface AddMember {
   access_token: string;
   nick?: string;
   roles?: Snowflake[];
@@ -65,51 +89,81 @@ interface AddMember {
   deaf?: boolean;
 }
 
-interface ModifyMember {
-  nick?: string | null;
-  roles?: Snowflake[] | null;
-  mute?: boolean | null;
-  deaf?: boolean | null;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params}
+ */
+export interface ModifyMember
+  extends Partial<
+    Pick<
+      GuildMemberEntity,
+      | "nick"
+      | "roles"
+      | "mute"
+      | "deaf"
+      | "communication_disabled_until"
+      | "flags"
+    >
+  > {
   channel_id?: Snowflake | null;
-  communication_disabled_until?: string | null;
-  flags?: number | null;
 }
 
-interface ModifyCurrentMember {
-  nick?: string | null;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#modify-current-member-json-params}
+ */
+export type ModifyCurrentMember = Partial<Pick<GuildMemberEntity, "nick">>;
 
-interface CreateRole {
-  name?: string;
-  permissions?: string;
-  color?: number;
-  hoist?: boolean;
-  icon?: ImageData | null;
-  unicode_emoji?: string | null;
-  mentionable?: boolean;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role-json-params}
+ */
+export type CreateRole = Pick<
+  RoleEntity,
+  | "name"
+  | "permissions"
+  | "color"
+  | "hoist"
+  | "icon"
+  | "unicode_emoji"
+  | "mentionable"
+>;
 
-interface ModifyRolePositions {
-  id: Snowflake;
-  position?: number | null;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params}
+ */
+export type ModifyRolePositions = Pick<RoleEntity, "id" | "position">;
 
-interface GetPruneQuery {
-  days?: number;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params}
+ */
+export interface GetPruneQuery {
+  days?: Integer;
   include_roles?: string;
 }
 
-interface BeginPrune {
-  days?: number;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#begin-guild-prune-json-params}
+ */
+export interface BeginPrune {
+  days?: Integer;
   compute_prune_count?: boolean;
   include_roles?: Snowflake[];
+  /**
+   * @deprecated Use `include_roles` instead
+   */
+  reason?: string;
 }
 
-interface BanCreate {
-  delete_message_seconds?: number;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-ban-json-params}
+ */
+export interface BanCreate {
+  /**
+   * @deprecated Use `delete_message_seconds` instead
+   */
+  delete_message_days?: Integer;
+  delete_message_seconds?: Integer;
 }
 
-export class GuildRoutes {
+export class GuildRouter {
   static routes = {
     guilds: "/guilds",
     guild: (guildId: Snowflake): `/guilds/${Snowflake}` => {
@@ -218,17 +272,17 @@ export class GuildRoutes {
   }
 
   create(guild: CreateGuild): Promise<GuildEntity> {
-    return this.#rest.post(GuildRoutes.routes.guilds, {
+    return this.#rest.post(GuildRouter.routes.guilds, {
       body: JSON.stringify(guild),
     });
   }
 
   get(guildId: Snowflake, query?: GetGuildQuery): Promise<GuildEntity> {
-    return this.#rest.get(GuildRoutes.routes.guild(guildId), { query });
+    return this.#rest.get(GuildRouter.routes.guild(guildId), { query });
   }
 
   getPreview(guildId: Snowflake): Promise<GuildEntity> {
-    return this.#rest.get(GuildRoutes.routes.guildPreview(guildId));
+    return this.#rest.get(GuildRouter.routes.guildPreview(guildId));
   }
 
   modify(
@@ -236,18 +290,18 @@ export class GuildRoutes {
     guild: ModifyGuild,
     reason?: string,
   ): Promise<GuildEntity> {
-    return this.#rest.patch(GuildRoutes.routes.guild(guildId), {
+    return this.#rest.patch(GuildRouter.routes.guild(guildId), {
       body: JSON.stringify(guild),
       reason,
     });
   }
 
   delete(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(GuildRoutes.routes.guild(guildId));
+    return this.#rest.delete(GuildRouter.routes.guild(guildId));
   }
 
   getChannels(guildId: Snowflake): Promise<ChannelEntity[]> {
-    return this.#rest.get(GuildRoutes.routes.guildChannels(guildId));
+    return this.#rest.get(GuildRouter.routes.guildChannels(guildId));
   }
 
   createChannel(
@@ -255,7 +309,7 @@ export class GuildRoutes {
     channel: Partial<ChannelEntity>,
     reason?: string,
   ): Promise<ChannelEntity> {
-    return this.#rest.post(GuildRoutes.routes.guildChannels(guildId), {
+    return this.#rest.post(GuildRouter.routes.guildChannels(guildId), {
       body: JSON.stringify(channel),
       reason,
     });
@@ -265,20 +319,20 @@ export class GuildRoutes {
     guildId: Snowflake,
     channels: { id: Snowflake; position?: number | null }[],
   ): Promise<void> {
-    return this.#rest.patch(GuildRoutes.routes.guildChannels(guildId), {
+    return this.#rest.patch(GuildRouter.routes.guildChannels(guildId), {
       body: JSON.stringify(channels),
     });
   }
 
   getMember(guildId: Snowflake, userId: Snowflake): Promise<GuildMemberEntity> {
-    return this.#rest.get(GuildRoutes.routes.guildMember(guildId, userId));
+    return this.#rest.get(GuildRouter.routes.guildMember(guildId, userId));
   }
 
   listMembers(
     guildId: Snowflake,
     query?: GetMembersQuery,
   ): Promise<GuildMemberEntity[]> {
-    return this.#rest.get(GuildRoutes.routes.guildMembers(guildId), { query });
+    return this.#rest.get(GuildRouter.routes.guildMembers(guildId), { query });
   }
 
   searchMembers(
@@ -286,7 +340,7 @@ export class GuildRoutes {
     query: SearchMembersQuery,
   ): Promise<GuildMemberEntity[]> {
     return this.#rest.get(
-      `${GuildRoutes.routes.guildMembers(guildId)}/search`,
+      `${GuildRouter.routes.guildMembers(guildId)}/search`,
       {
         query,
       },
@@ -298,7 +352,7 @@ export class GuildRoutes {
     userId: Snowflake,
     member: AddMember,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.put(GuildRoutes.routes.guildMember(guildId, userId), {
+    return this.#rest.put(GuildRouter.routes.guildMember(guildId, userId), {
       body: JSON.stringify(member),
     });
   }
@@ -309,7 +363,7 @@ export class GuildRoutes {
     member: ModifyMember,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.patch(GuildRoutes.routes.guildMember(guildId, userId), {
+    return this.#rest.patch(GuildRouter.routes.guildMember(guildId, userId), {
       body: JSON.stringify(member),
       reason,
     });
@@ -320,7 +374,7 @@ export class GuildRoutes {
     member: ModifyCurrentMember,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.patch(GuildRoutes.routes.guildCurrentMember(guildId), {
+    return this.#rest.patch(GuildRouter.routes.guildCurrentMember(guildId), {
       body: JSON.stringify(member),
       reason,
     });
@@ -333,7 +387,7 @@ export class GuildRoutes {
     reason?: string,
   ): Promise<void> {
     return this.#rest.put(
-      GuildRoutes.routes.guildMemberRole(guildId, userId, roleId),
+      GuildRouter.routes.guildMemberRole(guildId, userId, roleId),
       { reason },
     );
   }
@@ -345,7 +399,7 @@ export class GuildRoutes {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      GuildRoutes.routes.guildMemberRole(guildId, userId, roleId),
+      GuildRouter.routes.guildMemberRole(guildId, userId, roleId),
       { reason },
     );
   }
@@ -355,17 +409,17 @@ export class GuildRoutes {
     userId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(GuildRoutes.routes.guildMember(guildId, userId), {
+    return this.#rest.delete(GuildRouter.routes.guildMember(guildId, userId), {
       reason,
     });
   }
 
   getBans(guildId: Snowflake): Promise<BanEntity[]> {
-    return this.#rest.get(GuildRoutes.routes.guildBans(guildId));
+    return this.#rest.get(GuildRouter.routes.guildBans(guildId));
   }
 
   getBan(guildId: Snowflake, userId: Snowflake): Promise<BanEntity> {
-    return this.#rest.get(GuildRoutes.routes.guildBan(guildId, userId));
+    return this.#rest.get(GuildRouter.routes.guildBan(guildId, userId));
   }
 
   createBan(
@@ -374,7 +428,7 @@ export class GuildRoutes {
     ban: BanCreate,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.put(GuildRoutes.routes.guildBan(guildId, userId), {
+    return this.#rest.put(GuildRouter.routes.guildBan(guildId, userId), {
       body: JSON.stringify(ban),
       reason,
     });
@@ -385,17 +439,17 @@ export class GuildRoutes {
     userId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(GuildRoutes.routes.guildBan(guildId, userId), {
+    return this.#rest.delete(GuildRouter.routes.guildBan(guildId, userId), {
       reason,
     });
   }
 
   getRoles(guildId: Snowflake): Promise<RoleEntity[]> {
-    return this.#rest.get(GuildRoutes.routes.guildRoles(guildId));
+    return this.#rest.get(GuildRouter.routes.guildRoles(guildId));
   }
 
   getRole(guildId: Snowflake, roleId: Snowflake): Promise<RoleEntity> {
-    return this.#rest.get(GuildRoutes.routes.guildRole(guildId, roleId));
+    return this.#rest.get(GuildRouter.routes.guildRole(guildId, roleId));
   }
 
   createRole(
@@ -403,7 +457,7 @@ export class GuildRoutes {
     role: CreateRole,
     reason?: string,
   ): Promise<RoleEntity> {
-    return this.#rest.post(GuildRoutes.routes.guildRoles(guildId), {
+    return this.#rest.post(GuildRouter.routes.guildRoles(guildId), {
       body: JSON.stringify(role),
       reason,
     });
@@ -413,7 +467,7 @@ export class GuildRoutes {
     guildId: Snowflake,
     roles: ModifyRolePositions[],
   ): Promise<RoleEntity[]> {
-    return this.#rest.patch(GuildRoutes.routes.guildRoles(guildId), {
+    return this.#rest.patch(GuildRouter.routes.guildRoles(guildId), {
       body: JSON.stringify(roles),
     });
   }
@@ -424,7 +478,7 @@ export class GuildRoutes {
     role: Partial<CreateRole>,
     reason?: string,
   ): Promise<RoleEntity> {
-    return this.#rest.patch(GuildRoutes.routes.guildRole(guildId, roleId), {
+    return this.#rest.patch(GuildRouter.routes.guildRole(guildId, roleId), {
       body: JSON.stringify(role),
       reason,
     });
@@ -435,7 +489,7 @@ export class GuildRoutes {
     roleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(GuildRoutes.routes.guildRole(guildId, roleId), {
+    return this.#rest.delete(GuildRouter.routes.guildRole(guildId, roleId), {
       reason,
     });
   }
@@ -444,7 +498,7 @@ export class GuildRoutes {
     guildId: Snowflake,
     query?: GetPruneQuery,
   ): Promise<{ pruned: number }> {
-    return this.#rest.get(GuildRoutes.routes.guildPrune(guildId), { query });
+    return this.#rest.get(GuildRouter.routes.guildPrune(guildId), { query });
   }
 
   beginPrune(
@@ -452,7 +506,7 @@ export class GuildRoutes {
     prune: BeginPrune,
     reason?: string,
   ): Promise<{ pruned: number | null }> {
-    return this.#rest.post(GuildRoutes.routes.guildPrune(guildId), {
+    return this.#rest.post(GuildRouter.routes.guildPrune(guildId), {
       body: JSON.stringify(prune),
       reason,
     });
@@ -462,21 +516,21 @@ export class GuildRoutes {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-voice-regions}
    */
   getVoiceRegions(guildId: Snowflake): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(GuildRoutes.routes.guildRegions(guildId));
+    return this.#rest.get(GuildRouter.routes.guildRegions(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-invites}
    */
   getInvites(guildId: Snowflake): Promise<InviteEntity[]> {
-    return this.#rest.get(GuildRoutes.routes.guildInvites(guildId));
+    return this.#rest.get(GuildRouter.routes.guildInvites(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-integrations}
    */
   getIntegrations(guildId: Snowflake): Promise<IntegrationEntity[]> {
-    return this.#rest.get(GuildRoutes.routes.guildIntegrations(guildId));
+    return this.#rest.get(GuildRouter.routes.guildIntegrations(guildId));
   }
 
   /**
@@ -488,7 +542,7 @@ export class GuildRoutes {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      GuildRoutes.routes.guildIntegration(guildId, integrationId),
+      GuildRouter.routes.guildIntegration(guildId, integrationId),
       { reason },
     );
   }
@@ -499,7 +553,7 @@ export class GuildRoutes {
   getWidgetSettings(
     guildId: Snowflake,
   ): Promise<{ enabled: boolean; channel_id: Snowflake | null }> {
-    return this.#rest.get(GuildRoutes.routes.guildWidgetSettings(guildId));
+    return this.#rest.get(GuildRouter.routes.guildWidgetSettings(guildId));
   }
 
   /**
@@ -510,7 +564,7 @@ export class GuildRoutes {
     widget: { enabled: boolean; channel_id: Snowflake | null },
     reason?: string,
   ): Promise<{ enabled: boolean; channel_id: Snowflake | null }> {
-    return this.#rest.patch(GuildRoutes.routes.guildWidgetSettings(guildId), {
+    return this.#rest.patch(GuildRouter.routes.guildWidgetSettings(guildId), {
       body: JSON.stringify(widget),
       reason,
     });
@@ -527,7 +581,7 @@ export class GuildRoutes {
     members: Partial<GuildMemberEntity>[];
     presence_count: number;
   }> {
-    return this.#rest.get(GuildRoutes.routes.guildWidget(guildId));
+    return this.#rest.get(GuildRouter.routes.guildWidget(guildId));
   }
 
   /**
@@ -536,7 +590,7 @@ export class GuildRoutes {
   getVanityUrl(
     guildId: Snowflake,
   ): Promise<{ code: string | null; uses: number }> {
-    return this.#rest.get(GuildRoutes.routes.guildVanityUrl(guildId));
+    return this.#rest.get(GuildRouter.routes.guildVanityUrl(guildId));
   }
 
   /**
@@ -546,7 +600,7 @@ export class GuildRoutes {
     guildId: Snowflake,
     style?: "shield" | "banner1" | "banner2" | "banner3" | "banner4",
   ): Promise<Buffer> {
-    return this.#rest.get(GuildRoutes.routes.guildWidgetImage(guildId), {
+    return this.#rest.get(GuildRouter.routes.guildWidgetImage(guildId), {
       query: { style },
     });
   }
@@ -555,7 +609,7 @@ export class GuildRoutes {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-welcome-screen}
    */
   getWelcomeScreen(guildId: Snowflake): Promise<WelcomeScreenEntity> {
-    return this.#rest.get(GuildRoutes.routes.guildWelcomeScreen(guildId));
+    return this.#rest.get(GuildRouter.routes.guildWelcomeScreen(guildId));
   }
 
   /**
@@ -566,7 +620,7 @@ export class GuildRoutes {
     welcomeScreen: Partial<WelcomeScreenEntity>,
     reason?: string,
   ): Promise<WelcomeScreenEntity> {
-    return this.#rest.patch(GuildRoutes.routes.guildWelcomeScreen(guildId), {
+    return this.#rest.patch(GuildRouter.routes.guildWelcomeScreen(guildId), {
       body: JSON.stringify(welcomeScreen),
       reason,
     });
@@ -576,7 +630,7 @@ export class GuildRoutes {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-onboarding}
    */
   getOnboarding(guildId: Snowflake): Promise<GuildOnboardingEntity> {
-    return this.#rest.get(GuildRoutes.routes.guildOnboarding(guildId));
+    return this.#rest.get(GuildRouter.routes.guildOnboarding(guildId));
   }
 
   /**
@@ -587,7 +641,7 @@ export class GuildRoutes {
     onboarding: GuildOnboardingEntity,
     reason?: string,
   ): Promise<GuildOnboardingEntity> {
-    return this.#rest.put(GuildRoutes.routes.guildOnboarding(guildId), {
+    return this.#rest.put(GuildRouter.routes.guildOnboarding(guildId), {
       body: JSON.stringify(onboarding),
       reason,
     });
@@ -601,7 +655,7 @@ export class GuildRoutes {
     level: number,
     reason?: string,
   ): Promise<number> {
-    return this.#rest.post(GuildRoutes.routes.guildMfa(guildId), {
+    return this.#rest.post(GuildRouter.routes.guildMfa(guildId), {
       body: JSON.stringify({ level }),
       reason,
     });

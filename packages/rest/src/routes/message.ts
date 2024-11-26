@@ -1,48 +1,64 @@
 import type {
-  ActionRowEntity,
-  AllowedMentionsEntity,
-  AttachmentEntity,
-  EmbedEntity,
+  Integer,
   MessageEntity,
-  MessageReferenceEntity,
-  PollCreateRequestEntity,
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 import type { ImageData } from "../types/index.js";
 
-interface MessageCreate {
-  content?: string;
-  nonce?: string | number;
-  tts?: boolean;
-  embeds?: EmbedEntity[];
-  allowed_mentions?: AllowedMentionsEntity;
-  message_reference?: MessageReferenceEntity;
-  components?: ActionRowEntity[];
+/**
+ * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params}
+ */
+export interface MessageCreate
+  extends Partial<
+    Pick<
+      MessageEntity,
+      | "content"
+      | "nonce"
+      | "tts"
+      | "embeds"
+      | "message_reference"
+      | "components"
+      | "attachments"
+      | "flags"
+      | "poll"
+    >
+  > {
   sticker_ids?: Snowflake[];
   files?: ImageData[];
   payload_json?: string;
-  attachments?: AttachmentEntity[];
-  flags?: number;
   enforce_nonce?: boolean;
-  poll?: PollCreateRequestEntity;
 }
 
-interface MessageQuery {
+/**
+ * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params}
+ */
+export interface MessageQuery {
   around?: Snowflake;
   before?: Snowflake;
   after?: Snowflake;
-  limit?: number;
+  limit?: Integer;
 }
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-reaction-types}
+ */
+export enum ReactionType {
+  Normal = 0,
+  Burst = 1,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-query-string-params}
+ */
 interface GetReactionsQuery {
-  type?: number;
+  type?: ReactionType;
   after?: Snowflake;
-  limit?: number;
+  limit?: Integer;
 }
 
-export class MessageRoutes {
+export class MessageRouter {
   static routes = {
     channelMessages: (
       channelId: Snowflake,
@@ -96,7 +112,7 @@ export class MessageRoutes {
     channelId: Snowflake,
     query?: MessageQuery,
   ): Promise<MessageEntity[]> {
-    return this.#rest.get(MessageRoutes.routes.channelMessages(channelId), {
+    return this.#rest.get(MessageRouter.routes.channelMessages(channelId), {
       query,
     });
   }
@@ -109,7 +125,7 @@ export class MessageRoutes {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      MessageRoutes.routes.channelMessage(channelId, messageId),
+      MessageRouter.routes.channelMessage(channelId, messageId),
     );
   }
 
@@ -120,7 +136,7 @@ export class MessageRoutes {
     channelId: Snowflake,
     options: MessageCreate,
   ): Promise<MessageEntity> {
-    return this.#rest.post(MessageRoutes.routes.channelMessages(channelId), {
+    return this.#rest.post(MessageRouter.routes.channelMessages(channelId), {
       body: JSON.stringify(options),
     });
   }
@@ -133,7 +149,7 @@ export class MessageRoutes {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.post(
-      MessageRoutes.routes.crosspost(channelId, messageId),
+      MessageRouter.routes.crosspost(channelId, messageId),
     );
   }
 
@@ -146,7 +162,7 @@ export class MessageRoutes {
     emoji: string,
   ): Promise<void> {
     return this.#rest.put(
-      MessageRoutes.routes.userReaction(channelId, messageId, emoji),
+      MessageRouter.routes.userReaction(channelId, messageId, emoji),
     );
   }
 
@@ -159,7 +175,7 @@ export class MessageRoutes {
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRoutes.routes.userReaction(channelId, messageId, emoji),
+      MessageRouter.routes.userReaction(channelId, messageId, emoji),
     );
   }
 
@@ -173,7 +189,7 @@ export class MessageRoutes {
     userId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRoutes.routes.userReaction(channelId, messageId, emoji, userId),
+      MessageRouter.routes.userReaction(channelId, messageId, emoji, userId),
     );
   }
 
@@ -187,7 +203,7 @@ export class MessageRoutes {
     query?: GetReactionsQuery,
   ): Promise<UserEntity[]> {
     return this.#rest.get(
-      MessageRoutes.routes.reactions(channelId, messageId, emoji),
+      MessageRouter.routes.reactions(channelId, messageId, emoji),
       { query },
     );
   }
@@ -200,7 +216,7 @@ export class MessageRoutes {
     messageId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRoutes.routes.reactions(channelId, messageId, ""),
+      MessageRouter.routes.reactions(channelId, messageId, ""),
     );
   }
 
@@ -213,7 +229,7 @@ export class MessageRoutes {
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRoutes.routes.reactions(channelId, messageId, emoji),
+      MessageRouter.routes.reactions(channelId, messageId, emoji),
     );
   }
 
@@ -226,7 +242,7 @@ export class MessageRoutes {
     options: Partial<MessageCreate>,
   ): Promise<MessageEntity> {
     return this.#rest.patch(
-      MessageRoutes.routes.channelMessage(channelId, messageId),
+      MessageRouter.routes.channelMessage(channelId, messageId),
       {
         body: JSON.stringify(options),
       },
@@ -242,7 +258,7 @@ export class MessageRoutes {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRoutes.routes.channelMessage(channelId, messageId),
+      MessageRouter.routes.channelMessage(channelId, messageId),
       { reason },
     );
   }
@@ -255,7 +271,7 @@ export class MessageRoutes {
     messageIds: Snowflake[],
     reason?: string,
   ): Promise<void> {
-    return this.#rest.post(MessageRoutes.routes.bulkDelete(channelId), {
+    return this.#rest.post(MessageRouter.routes.bulkDelete(channelId), {
       body: JSON.stringify({ messages: messageIds }),
       reason,
     });

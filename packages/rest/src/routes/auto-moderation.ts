@@ -32,7 +32,7 @@ export type ModifyAutoModerationRuleOptions = Partial<
   >
 >;
 
-export class AutoModerationRoutes {
+export class AutoModerationRouter {
   static routes = {
     base: (
       guildId: Snowflake,
@@ -60,7 +60,7 @@ export class AutoModerationRoutes {
   listAutoModerationRules(
     guildId: Snowflake,
   ): Promise<AutoModerationRuleEntity[]> {
-    return this.#rest.get(AutoModerationRoutes.routes.base(guildId));
+    return this.#rest.get(AutoModerationRouter.routes.base(guildId));
   }
 
   /**
@@ -70,7 +70,7 @@ export class AutoModerationRoutes {
     guildId: Snowflake,
     ruleId: Snowflake,
   ): Promise<AutoModerationRuleEntity> {
-    return this.#rest.get(AutoModerationRoutes.routes.rule(guildId, ruleId));
+    return this.#rest.get(AutoModerationRouter.routes.rule(guildId, ruleId));
   }
 
   /**
@@ -80,7 +80,7 @@ export class AutoModerationRoutes {
     guildId: Snowflake,
     options: CreateAutoModerationRuleOptions,
   ): Promise<AutoModerationRuleEntity> {
-    return this.#rest.post(AutoModerationRoutes.routes.base(guildId), {
+    return this.#rest.post(AutoModerationRouter.routes.base(guildId), {
       body: JSON.stringify(options),
     });
   }
@@ -93,7 +93,7 @@ export class AutoModerationRoutes {
     ruleId: Snowflake,
     options: ModifyAutoModerationRuleOptions,
   ): Promise<AutoModerationRuleEntity> {
-    return this.#rest.patch(AutoModerationRoutes.routes.rule(guildId, ruleId), {
+    return this.#rest.patch(AutoModerationRouter.routes.rule(guildId, ruleId), {
       body: JSON.stringify(options),
     });
   }
@@ -105,6 +105,6 @@ export class AutoModerationRoutes {
     guildId: Snowflake,
     ruleId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(AutoModerationRoutes.routes.rule(guildId, ruleId));
+    return this.#rest.delete(AutoModerationRouter.routes.rule(guildId, ruleId));
   }
 }

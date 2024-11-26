@@ -5,18 +5,25 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface ModifyCurrentVoiceStateOptions {
-  channel_id?: Snowflake;
-  suppress?: boolean;
-  request_to_speak_timestamp?: string | null;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state-json-params}
+ */
+export type ModifyCurrentVoiceStateOptions = Partial<
+  Pick<
+    VoiceStateEntity,
+    "channel_id" | "suppress" | "request_to_speak_timestamp"
+  >
+>;
 
-interface ModifyUserVoiceStateOptions {
-  channel_id: Snowflake;
-  suppress?: boolean;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state-json-params}
+ */
+export type ModifyUserVoiceStateOptions = Pick<
+  VoiceStateEntity,
+  "channel_id" | "suppress"
+>;
 
-export class VoiceRoutes {
+export class VoiceRouter {
   static routes = {
     base: "/voice",
     regions: "/voice/regions",
@@ -43,14 +50,14 @@ export class VoiceRoutes {
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
   getVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(VoiceRoutes.routes.regions);
+    return this.#rest.get(VoiceRouter.routes.regions);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
   getCurrentVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceRoutes.routes.guildVoiceState(guildId));
+    return this.#rest.get(VoiceRouter.routes.guildVoiceState(guildId));
   }
 
   /**
@@ -60,7 +67,7 @@ export class VoiceRoutes {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceRoutes.routes.userVoiceState(guildId, userId));
+    return this.#rest.get(VoiceRouter.routes.userVoiceState(guildId, userId));
   }
 
   /**
@@ -70,7 +77,7 @@ export class VoiceRoutes {
     guildId: Snowflake,
     options: ModifyCurrentVoiceStateOptions,
   ): Promise<void> {
-    return this.#rest.patch(VoiceRoutes.routes.guildVoiceState(guildId), {
+    return this.#rest.patch(VoiceRouter.routes.guildVoiceState(guildId), {
       body: JSON.stringify(options),
     });
   }
@@ -84,7 +91,7 @@ export class VoiceRoutes {
     options: ModifyUserVoiceStateOptions,
   ): Promise<void> {
     return this.#rest.patch(
-      VoiceRoutes.routes.userVoiceState(guildId, userId),
+      VoiceRouter.routes.userVoiceState(guildId, userId),
       {
         body: JSON.stringify(options),
       },

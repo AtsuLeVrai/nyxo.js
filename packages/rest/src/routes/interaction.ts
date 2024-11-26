@@ -10,11 +10,17 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
+/**
+ * @todo Verify all the types in `InteractionResponseOptions`.
+ */
 interface InteractionResponseOptions {
   type: number;
   data?: InteractionCallbackDataOptions;
 }
 
+/**
+ * @todo Verify all the types in `InteractionCallbackDataOptions`.
+ */
 interface InteractionCallbackDataOptions {
   tts?: boolean;
   content?: string;
@@ -26,7 +32,7 @@ interface InteractionCallbackDataOptions {
   poll?: PollCreateRequestEntity;
 }
 
-export class InteractionRoutes {
+export class InteractionRouter {
   static routes = {
     createResponse: (
       interactionId: Snowflake,
@@ -104,7 +110,7 @@ export class InteractionRoutes {
     withResponse = false,
   ): Promise<InteractionCallbackEntity | undefined> {
     return this.#rest.post(
-      InteractionRoutes.routes.createResponse(interactionId, interactionToken),
+      InteractionRouter.routes.createResponse(interactionId, interactionToken),
       {
         body: JSON.stringify(options),
         query: { with_response: withResponse },
@@ -120,7 +126,7 @@ export class InteractionRoutes {
     interactionToken: string,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      InteractionRoutes.routes.getOriginalResponse(
+      InteractionRouter.routes.getOriginalResponse(
         applicationId,
         interactionToken,
       ),
@@ -136,7 +142,7 @@ export class InteractionRoutes {
     options: Partial<InteractionCallbackDataOptions>,
   ): Promise<MessageEntity> {
     return this.#rest.patch(
-      InteractionRoutes.routes.editOriginalResponse(
+      InteractionRouter.routes.editOriginalResponse(
         applicationId,
         interactionToken,
       ),
@@ -154,7 +160,7 @@ export class InteractionRoutes {
     interactionToken: string,
   ): Promise<void> {
     return this.#rest.delete(
-      InteractionRoutes.routes.deleteOriginalResponse(
+      InteractionRouter.routes.deleteOriginalResponse(
         applicationId,
         interactionToken,
       ),
@@ -170,7 +176,7 @@ export class InteractionRoutes {
     options: InteractionCallbackDataOptions,
   ): Promise<MessageEntity> {
     return this.#rest.post(
-      InteractionRoutes.routes.createFollowupMessage(
+      InteractionRouter.routes.createFollowupMessage(
         applicationId,
         interactionToken,
       ),
@@ -189,7 +195,7 @@ export class InteractionRoutes {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      InteractionRoutes.routes.getFollowupMessage(
+      InteractionRouter.routes.getFollowupMessage(
         applicationId,
         interactionToken,
         messageId,
@@ -207,7 +213,7 @@ export class InteractionRoutes {
     options: Partial<InteractionCallbackDataOptions>,
   ): Promise<MessageEntity> {
     return this.#rest.patch(
-      InteractionRoutes.routes.editFollowupMessage(
+      InteractionRouter.routes.editFollowupMessage(
         applicationId,
         interactionToken,
         messageId,
@@ -227,7 +233,7 @@ export class InteractionRoutes {
     messageId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      InteractionRoutes.routes.deleteFollowupMessage(
+      InteractionRouter.routes.deleteFollowupMessage(
         applicationId,
         interactionToken,
         messageId,

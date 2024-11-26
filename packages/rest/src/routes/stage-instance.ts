@@ -1,24 +1,26 @@
-import type {
-  Snowflake,
-  StageInstanceEntity,
-  StageInstancePrivacyLevel,
-} from "@nyxjs/core";
+import type { Snowflake, StageInstanceEntity } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
-interface StageInstanceCreate {
-  channel_id: Snowflake;
-  topic: string;
-  privacy_level?: StageInstancePrivacyLevel;
+/**
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params}
+ */
+export interface StageInstanceCreate
+  extends Pick<
+    StageInstanceEntity,
+    "channel_id" | "topic" | "privacy_level" | "guild_scheduled_event_id"
+  > {
   send_start_notification?: boolean;
-  guild_scheduled_event_id?: Snowflake;
 }
 
-interface StageInstanceModify {
-  topic?: string;
-  privacy_level?: StageInstancePrivacyLevel;
-}
+/**
+ * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}
+ */
+export type StageInstanceModify = Pick<
+  StageInstanceEntity,
+  "topic" | "privacy_level"
+>;
 
-export class StageInstanceRoutes {
+export class StageInstanceRouter {
   static routes = {
     stageInstances: "/stage-instances" as const,
     stageInstance: (channelId: Snowflake): `/stage-instances/${Snowflake}` => {
@@ -39,7 +41,7 @@ export class StageInstanceRoutes {
     options: StageInstanceCreate,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    return this.#rest.post(StageInstanceRoutes.routes.stageInstances, {
+    return this.#rest.post(StageInstanceRouter.routes.stageInstances, {
       body: JSON.stringify(options),
       reason,
     });
@@ -49,7 +51,7 @@ export class StageInstanceRoutes {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
    */
   getStageInstance(channelId: Snowflake): Promise<StageInstanceEntity> {
-    return this.#rest.get(StageInstanceRoutes.routes.stageInstance(channelId));
+    return this.#rest.get(StageInstanceRouter.routes.stageInstance(channelId));
   }
 
   /**
@@ -61,7 +63,7 @@ export class StageInstanceRoutes {
     reason?: string,
   ): Promise<StageInstanceEntity> {
     return this.#rest.patch(
-      StageInstanceRoutes.routes.stageInstance(channelId),
+      StageInstanceRouter.routes.stageInstance(channelId),
       {
         body: JSON.stringify(options),
         reason,
@@ -74,7 +76,7 @@ export class StageInstanceRoutes {
    */
   deleteStageInstance(channelId: Snowflake, reason?: string): Promise<void> {
     return this.#rest.delete(
-      StageInstanceRoutes.routes.stageInstance(channelId),
+      StageInstanceRouter.routes.stageInstance(channelId),
       {
         reason,
       },
