@@ -1,5 +1,5 @@
 import type { EntitlementEntity, Integer, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
@@ -31,7 +31,7 @@ interface CreateTestEntitlement {
   owner_type: EntitlementOwnerType;
 }
 
-export class EntitlementRouter {
+export class EntitlementRouter extends Router {
   static routes = {
     entitlements: (
       applicationId: Snowflake,
@@ -52,12 +52,6 @@ export class EntitlementRouter {
     },
   } as const;
 
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements}
    */
@@ -65,19 +59,16 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     query?: ListEntitlementQuery,
   ): Promise<EntitlementEntity[]> {
-    return this.#rest.get(
-      EntitlementRouter.routes.entitlements(applicationId),
-      {
-        query,
-      },
-    );
+    return this.get(EntitlementRouter.routes.entitlements(applicationId), {
+      query,
+    });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement}
    */
   consume(applicationId: Snowflake, entitlementId: Snowflake): Promise<void> {
-    return this.#rest.post(
+    return this.post(
       EntitlementRouter.routes.consume(applicationId, entitlementId),
     );
   }
@@ -89,12 +80,9 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     test: CreateTestEntitlement,
   ): Promise<EntitlementEntity> {
-    return this.#rest.post(
-      EntitlementRouter.routes.entitlements(applicationId),
-      {
-        body: JSON.stringify(test),
-      },
-    );
+    return this.post(EntitlementRouter.routes.entitlements(applicationId), {
+      body: JSON.stringify(test),
+    });
   }
 
   /**
@@ -104,7 +92,7 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     entitlementId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       EntitlementRouter.routes.entitlement(applicationId, entitlementId),
     );
   }

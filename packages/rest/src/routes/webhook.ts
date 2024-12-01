@@ -4,8 +4,8 @@ import type {
   Snowflake,
   WebhookEntity,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
 import type { ImageData } from "../types/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook-json-params}
@@ -37,7 +37,7 @@ export interface WebhookExecute
   applied_tags?: Snowflake[];
 }
 
-export class WebhookRouter {
+export class WebhookRouter extends Router {
   static routes = {
     channelWebhooks: (
       channelId: Snowflake,
@@ -65,12 +65,6 @@ export class WebhookRouter {
     },
   } as const;
 
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook}
    */
@@ -79,7 +73,7 @@ export class WebhookRouter {
     options: WebhookCreate,
     reason?: string,
   ): Promise<WebhookEntity> {
-    return this.#rest.post(WebhookRouter.routes.channelWebhooks(channelId), {
+    return this.post(WebhookRouter.routes.channelWebhooks(channelId), {
       body: JSON.stringify(options),
       reason,
     });
@@ -89,21 +83,21 @@ export class WebhookRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
    */
   getChannelWebhooks(channelId: Snowflake): Promise<WebhookEntity[]> {
-    return this.#rest.get(WebhookRouter.routes.channelWebhooks(channelId));
+    return this.get(WebhookRouter.routes.channelWebhooks(channelId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
    */
   getGuildWebhooks(guildId: Snowflake): Promise<WebhookEntity[]> {
-    return this.#rest.get(WebhookRouter.routes.guildWebhooks(guildId));
+    return this.get(WebhookRouter.routes.guildWebhooks(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
    */
   getWebhook(webhookId: Snowflake): Promise<WebhookEntity> {
-    return this.#rest.get(WebhookRouter.routes.webhook(webhookId));
+    return this.get(WebhookRouter.routes.webhook(webhookId));
   }
 
   /**
@@ -113,9 +107,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
   ): Promise<WebhookEntity> {
-    return this.#rest.get(
-      WebhookRouter.routes.webhookWithToken(webhookId, token),
-    );
+    return this.get(WebhookRouter.routes.webhookWithToken(webhookId, token));
   }
 
   /**
@@ -126,7 +118,7 @@ export class WebhookRouter {
     options: WebhookModify,
     reason?: string,
   ): Promise<WebhookEntity> {
-    return this.#rest.patch(WebhookRouter.routes.webhook(webhookId), {
+    return this.patch(WebhookRouter.routes.webhook(webhookId), {
       body: JSON.stringify(options),
       reason,
     });
@@ -141,20 +133,17 @@ export class WebhookRouter {
     options: Omit<WebhookModify, "channel_id">,
     reason?: string,
   ): Promise<WebhookEntity> {
-    return this.#rest.patch(
-      WebhookRouter.routes.webhookWithToken(webhookId, token),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
-    );
+    return this.patch(WebhookRouter.routes.webhookWithToken(webhookId, token), {
+      body: JSON.stringify(options),
+      reason,
+    });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
    */
   deleteWebhook(webhookId: Snowflake, reason?: string): Promise<void> {
-    return this.#rest.delete(WebhookRouter.routes.webhook(webhookId), {
+    return this.delete(WebhookRouter.routes.webhook(webhookId), {
       reason,
     });
   }
@@ -167,7 +156,7 @@ export class WebhookRouter {
     token: string,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       WebhookRouter.routes.webhookWithToken(webhookId, token),
       {
         reason,
@@ -183,16 +172,13 @@ export class WebhookRouter {
     token: string,
     options: WebhookExecute & { wait?: boolean; thread_id?: Snowflake },
   ): Promise<WebhookEntity | undefined> {
-    return this.#rest.post(
-      WebhookRouter.routes.webhookWithToken(webhookId, token),
-      {
-        body: JSON.stringify(options),
-        query: {
-          wait: options.wait,
-          thread_id: options.thread_id,
-        },
+    return this.post(WebhookRouter.routes.webhookWithToken(webhookId, token), {
+      body: JSON.stringify(options),
+      query: {
+        wait: options.wait,
+        thread_id: options.thread_id,
       },
-    );
+    });
   }
 
   /**
@@ -204,7 +190,7 @@ export class WebhookRouter {
     messageId: Snowflake,
     threadId?: Snowflake,
   ): Promise<WebhookEntity> {
-    return this.#rest.get(
+    return this.get(
       WebhookRouter.routes.webhookMessage(webhookId, token, messageId),
       {
         query: { thread_id: threadId },
@@ -221,7 +207,7 @@ export class WebhookRouter {
     messageId: Snowflake,
     options: Partial<WebhookExecute> & { thread_id?: Snowflake },
   ): Promise<WebhookEntity> {
-    return this.#rest.patch(
+    return this.patch(
       WebhookRouter.routes.webhookMessage(webhookId, token, messageId),
       {
         body: JSON.stringify(options),
@@ -239,7 +225,7 @@ export class WebhookRouter {
     messageId: Snowflake,
     threadId?: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       WebhookRouter.routes.webhookMessage(webhookId, token, messageId),
       {
         query: { thread_id: threadId },

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/source",
-  "packageManager": "pnpm@9.14.2",
+  "packageManager": "pnpm@9.14.4",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "turbo": "^2.3.2",
+    "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   },
   "engines": {

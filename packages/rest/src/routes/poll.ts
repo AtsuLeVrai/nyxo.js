@@ -4,7 +4,7 @@ import type {
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body}
@@ -21,7 +21,7 @@ export interface GetVotersQuery {
   limit?: Integer;
 }
 
-export class PollRouter {
+export class PollRouter extends Router {
   static routes = {
     channelPolls: (
       channelId: Snowflake,
@@ -38,12 +38,6 @@ export class PollRouter {
     },
   } as const;
 
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
    */
@@ -53,7 +47,7 @@ export class PollRouter {
     answerId: number,
     query?: GetVotersQuery,
   ): Promise<PollVotersResponse> {
-    return this.#rest.get(
+    return this.get(
       PollRouter.routes.channelPolls(channelId, messageId, answerId),
       {
         query: {
@@ -68,6 +62,6 @@ export class PollRouter {
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
    */
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
-    return this.#rest.post(PollRouter.routes.expirePoll(channelId, messageId));
+    return this.post(PollRouter.routes.expirePoll(channelId, messageId));
   }
 }

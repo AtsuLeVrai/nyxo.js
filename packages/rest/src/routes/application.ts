@@ -1,5 +1,5 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum}
@@ -49,7 +49,7 @@ export type ModifyApplicationOptions = Partial<
   >
 >;
 
-export class ApplicationRouter {
+export class ApplicationRouter extends Router {
   static routes = {
     currentApplication: "/applications/@me" as const,
 
@@ -61,17 +61,11 @@ export class ApplicationRouter {
     },
   } as const;
 
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(ApplicationRouter.routes.currentApplication);
+    return this.get(ApplicationRouter.routes.currentApplication);
   }
 
   /**
@@ -80,7 +74,7 @@ export class ApplicationRouter {
   modifyCurrentApplication(
     options: ModifyApplicationOptions,
   ): Promise<ApplicationEntity> {
-    return this.#rest.patch(ApplicationRouter.routes.currentApplication, {
+    return this.patch(ApplicationRouter.routes.currentApplication, {
       body: JSON.stringify(options),
     });
   }
@@ -92,7 +86,7 @@ export class ApplicationRouter {
     applicationId: Snowflake,
     instanceId: string,
   ): Promise<ActivityInstance> {
-    return this.#rest.get(
+    return this.get(
       ApplicationRouter.routes.activityInstance(applicationId, instanceId),
     );
   }

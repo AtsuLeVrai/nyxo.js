@@ -1,3 +1,16 @@
+export enum AuthType {
+  Bot = "Bot",
+  Bearer = "Bearer",
+}
+
+export enum HttpMethod {
+  Get = "GET",
+  Post = "POST",
+  Put = "PUT",
+  Patch = "PATCH",
+  Delete = "DELETE",
+}
+
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes}
  */

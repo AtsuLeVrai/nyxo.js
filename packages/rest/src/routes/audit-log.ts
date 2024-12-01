@@ -4,7 +4,7 @@ import type {
   Integer,
   Snowflake,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params}
@@ -17,18 +17,12 @@ export interface GetGuildAuditLogOptions {
   limit?: Integer;
 }
 
-export class AuditLogRouter {
+export class AuditLogRouter extends Router {
   static routes = {
     guildAuditLogs: (guildId: Snowflake): `/guilds/${Snowflake}/audit-logs` => {
       return `/guilds/${guildId}/audit-logs` as const;
     },
   } as const;
-
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log}
@@ -37,7 +31,7 @@ export class AuditLogRouter {
     guildId: Snowflake,
     options?: GetGuildAuditLogOptions,
   ): Promise<AuditLogEntity> {
-    return this.#rest.get(AuditLogRouter.routes.guildAuditLogs(guildId), {
+    return this.get(AuditLogRouter.routes.guildAuditLogs(guildId), {
       query: options,
     });
   }

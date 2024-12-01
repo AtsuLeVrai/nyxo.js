@@ -1,6 +1,6 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
 import type { ImageData } from "../types/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params}
@@ -34,7 +34,7 @@ export interface ApplicationEmojiModify {
   name: string;
 }
 
-export class EmojiRouter {
+export class EmojiRouter extends Router {
   static routes = {
     guildEmojis: (guildId: Snowflake): `/guilds/${Snowflake}/emojis` => {
       return `/guilds/${guildId}/emojis` as const;
@@ -58,24 +58,18 @@ export class EmojiRouter {
     },
   } as const;
 
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
    */
   listGuildEmojis(guildId: Snowflake): Promise<EmojiEntity[]> {
-    return this.#rest.get(EmojiRouter.routes.guildEmojis(guildId));
+    return this.get(EmojiRouter.routes.guildEmojis(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji}
    */
   getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): Promise<EmojiEntity> {
-    return this.#rest.get(EmojiRouter.routes.guildEmoji(guildId, emojiId));
+    return this.get(EmojiRouter.routes.guildEmoji(guildId, emojiId));
   }
 
   /**
@@ -86,7 +80,7 @@ export class EmojiRouter {
     options: GuildEmojiCreate,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.#rest.post(EmojiRouter.routes.guildEmojis(guildId), {
+    return this.post(EmojiRouter.routes.guildEmojis(guildId), {
       body: JSON.stringify(options),
       reason,
     });
@@ -101,7 +95,7 @@ export class EmojiRouter {
     options: GuildEmojiModify,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.#rest.patch(EmojiRouter.routes.guildEmoji(guildId, emojiId), {
+    return this.patch(EmojiRouter.routes.guildEmoji(guildId, emojiId), {
       body: JSON.stringify(options),
       reason,
     });
@@ -115,7 +109,7 @@ export class EmojiRouter {
     emojiId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(EmojiRouter.routes.guildEmoji(guildId, emojiId), {
+    return this.delete(EmojiRouter.routes.guildEmoji(guildId, emojiId), {
       reason,
     });
   }
@@ -126,7 +120,7 @@ export class EmojiRouter {
   listApplicationEmojis(
     applicationId: Snowflake,
   ): Promise<{ items: EmojiEntity[] }> {
-    return this.#rest.get(EmojiRouter.routes.applicationEmojis(applicationId));
+    return this.get(EmojiRouter.routes.applicationEmojis(applicationId));
   }
 
   /**
@@ -136,7 +130,7 @@ export class EmojiRouter {
     applicationId: Snowflake,
     emojiId: Snowflake,
   ): Promise<EmojiEntity> {
-    return this.#rest.get(
+    return this.get(
       EmojiRouter.routes.applicationEmoji(applicationId, emojiId),
     );
   }
@@ -148,12 +142,9 @@ export class EmojiRouter {
     applicationId: Snowflake,
     options: ApplicationEmojiCreate,
   ): Promise<EmojiEntity> {
-    return this.#rest.post(
-      EmojiRouter.routes.applicationEmojis(applicationId),
-      {
-        body: JSON.stringify(options),
-      },
-    );
+    return this.post(EmojiRouter.routes.applicationEmojis(applicationId), {
+      body: JSON.stringify(options),
+    });
   }
 
   /**
@@ -164,7 +155,7 @@ export class EmojiRouter {
     emojiId: Snowflake,
     options: ApplicationEmojiModify,
   ): Promise<EmojiEntity> {
-    return this.#rest.patch(
+    return this.patch(
       EmojiRouter.routes.applicationEmoji(applicationId, emojiId),
       {
         body: JSON.stringify(options),
@@ -179,7 +170,7 @@ export class EmojiRouter {
     applicationId: Snowflake,
     emojiId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       EmojiRouter.routes.applicationEmoji(applicationId, emojiId),
     );
   }

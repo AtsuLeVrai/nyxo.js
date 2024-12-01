@@ -14,6 +14,7 @@ export * from "./invite.js";
 export * from "./message.js";
 export * from "./oauth2.js";
 export * from "./poll.js";
+export * from "./router.js";
 export * from "./scheduled-event.js";
 export * from "./sku.js";
 export * from "./soundboard.js";

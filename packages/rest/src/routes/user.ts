@@ -8,8 +8,8 @@ import type {
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
 import type { ImageData } from "../types/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params}
@@ -44,7 +44,7 @@ export interface CreateGroupDmOptions {
   nicks: Record<Snowflake, string>;
 }
 
-export class UserRouter {
+export class UserRouter extends Router {
   static routes = {
     base: "/users",
     me: "/users/@me",
@@ -69,31 +69,25 @@ export class UserRouter {
     },
   } as const;
 
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   getCurrentUser(): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.routes.me);
+    return this.get(UserRouter.routes.me);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
   getUser(userId: Snowflake): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.routes.user(userId));
+    return this.get(UserRouter.routes.user(userId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
   modifyCurrentUser(options: ModifyUserOptions): Promise<UserEntity> {
-    return this.#rest.patch(UserRouter.routes.me, {
+    return this.patch(UserRouter.routes.me, {
       body: JSON.stringify(options),
     });
   }
@@ -102,7 +96,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   getCurrentUserGuilds(query?: GetUserGuildQuery): Promise<GuildEntity[]> {
-    return this.#rest.get(UserRouter.routes.guilds, {
+    return this.get(UserRouter.routes.guilds, {
       query,
     });
   }
@@ -111,21 +105,21 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.#rest.get(UserRouter.routes.guildMember(guildId));
+    return this.get(UserRouter.routes.guildMember(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(UserRouter.routes.leaveGuild(guildId));
+    return this.delete(UserRouter.routes.leaveGuild(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDm(options: CreateDmOptions): Promise<ChannelEntity> {
-    return this.#rest.post(UserRouter.routes.channels, {
+    return this.post(UserRouter.routes.channels, {
       body: JSON.stringify(options),
     });
   }
@@ -134,7 +128,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
   createGroupDm(options: CreateGroupDmOptions): Promise<ChannelEntity> {
-    return this.#rest.post(UserRouter.routes.channels, {
+    return this.post(UserRouter.routes.channels, {
       body: JSON.stringify(options),
     });
   }
@@ -143,7 +137,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   getCurrentUserConnections(): Promise<ConnectionEntity[]> {
-    return this.#rest.get(UserRouter.routes.connections);
+    return this.get(UserRouter.routes.connections);
   }
 
   /**
@@ -152,7 +146,7 @@ export class UserRouter {
   getCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.get(UserRouter.routes.applicationRole(applicationId));
+    return this.get(UserRouter.routes.applicationRole(applicationId));
   }
 
   /**
@@ -162,7 +156,7 @@ export class UserRouter {
     applicationId: Snowflake,
     connection: Partial<ApplicationRoleConnectionEntity>,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.put(UserRouter.routes.applicationRole(applicationId), {
+    return this.put(UserRouter.routes.applicationRole(applicationId), {
       body: JSON.stringify(connection),
     });
   }

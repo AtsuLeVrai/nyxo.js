@@ -1,5 +1,5 @@
 import type { Integer } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { Router } from "./router.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway#session-start-limit-object-session-start-limit-structure}
@@ -26,29 +26,23 @@ export interface GatewayBotResponse extends GatewayResponse {
   session_start_limit: SessionStartLimit;
 }
 
-export class GatewayRouter {
+export class GatewayRouter extends Router {
   static routes = {
     gateway: "/gateway" as const,
     gatewayBot: "/gateway/bot" as const,
   } as const;
 
-  readonly #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
    */
   getGateway(): Promise<GatewayResponse> {
-    return this.#rest.get(GatewayRouter.routes.gateway);
+    return this.get(GatewayRouter.routes.gateway);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot}
    */
   getGatewayBot(): Promise<GatewayBotResponse> {
-    return this.#rest.get(GatewayRouter.routes.gatewayBot);
+    return this.get(GatewayRouter.routes.gatewayBot);
   }
 }
