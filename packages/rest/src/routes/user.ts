@@ -45,7 +45,7 @@ export interface CreateGroupDmOptions {
 }
 
 export class UserRouter extends Router {
-  static routes = {
+  static readonly routes = {
     base: "/users",
     me: "/users/@me",
     guilds: "/users/@me/guilds",
@@ -68,6 +68,16 @@ export class UserRouter extends Router {
       return `/users/@me/applications/${applicationId}/role-connection` as const;
     },
   } as const;
+  static readonly USERNAME_MIN_LENGTH = 2;
+  static readonly USERNAME_MAX_LENGTH = 32;
+  static readonly NICKNAME_MIN_LENGTH = 1;
+  static readonly NICKNAME_MAX_LENGTH = 32;
+  static readonly GROUP_DM_MAX = 10;
+  static readonly GUILDS_LIMIT_DEFAULT = 200;
+  static readonly GUILDS_LIMIT_MAX = 200;
+  static readonly PLATFORM_NAME_MAX_LENGTH = 50;
+  static readonly PLATFORM_USERNAME_MAX_LENGTH = 100;
+  static readonly METADATA_VALUE_MAX_LENGTH = 100;
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
@@ -87,6 +97,30 @@ export class UserRouter extends Router {
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
   modifyCurrentUser(options: ModifyUserOptions): Promise<UserEntity> {
+    if (options.username) {
+      const username = options.username.trim();
+      if (
+        username.length < UserRouter.USERNAME_MIN_LENGTH ||
+        username.length > UserRouter.USERNAME_MAX_LENGTH
+      ) {
+        throw new Error(
+          `Username must be between ${UserRouter.USERNAME_MIN_LENGTH} and ${UserRouter.USERNAME_MAX_LENGTH} characters`,
+        );
+      }
+
+      if (
+        username.includes("@") ||
+        username.includes("#") ||
+        username.includes(":") ||
+        username.includes("```") ||
+        username.toLowerCase().includes("discord") ||
+        username.toLowerCase() === "everyone" ||
+        username.toLowerCase() === "here"
+      ) {
+        throw new Error("Username contains forbidden characters or words");
+      }
+    }
+
     return this.patch(UserRouter.routes.me, {
       body: JSON.stringify(options),
     });
@@ -96,6 +130,15 @@ export class UserRouter extends Router {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   getCurrentUserGuilds(query?: GetUserGuildQuery): Promise<GuildEntity[]> {
+    if (
+      query?.limit &&
+      (query.limit < 1 || query.limit > UserRouter.GUILDS_LIMIT_MAX)
+    ) {
+      throw new Error(
+        `Limit must be between 1 and ${UserRouter.GUILDS_LIMIT_MAX}`,
+      );
+    }
+
     return this.get(UserRouter.routes.guilds, {
       query,
     });
@@ -128,6 +171,13 @@ export class UserRouter extends Router {
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
   createGroupDm(options: CreateGroupDmOptions): Promise<ChannelEntity> {
+    // Group DM limit is enforced by Discord but we add the validation here too
+    if (options.access_tokens.length > UserRouter.GROUP_DM_MAX) {
+      throw new Error(
+        `Cannot create group DM with more than ${UserRouter.GROUP_DM_MAX} users`,
+      );
+    }
+
     return this.post(UserRouter.routes.channels, {
       body: JSON.stringify(options),
     });
@@ -156,6 +206,35 @@ export class UserRouter extends Router {
     applicationId: Snowflake,
     connection: Partial<ApplicationRoleConnectionEntity>,
   ): Promise<ApplicationRoleConnectionEntity> {
+    if (
+      connection.platform_name &&
+      connection.platform_name.length > UserRouter.PLATFORM_NAME_MAX_LENGTH
+    ) {
+      throw new Error(
+        `Platform name cannot exceed ${UserRouter.PLATFORM_NAME_MAX_LENGTH} characters`,
+      );
+    }
+
+    if (
+      connection.platform_username &&
+      connection.platform_username.length >
+        UserRouter.PLATFORM_USERNAME_MAX_LENGTH
+    ) {
+      throw new Error(
+        `Platform username cannot exceed ${UserRouter.PLATFORM_USERNAME_MAX_LENGTH} characters`,
+      );
+    }
+
+    if (connection.metadata) {
+      for (const [key, value] of Object.entries(connection.metadata)) {
+        if (String(value).length > UserRouter.METADATA_VALUE_MAX_LENGTH) {
+          throw new Error(
+            `Metadata value for key '${key}' cannot exceed ${UserRouter.METADATA_VALUE_MAX_LENGTH} characters`,
+          );
+        }
+      }
+    }
+
     return this.put(UserRouter.routes.applicationRole(applicationId), {
       body: JSON.stringify(connection),
     });

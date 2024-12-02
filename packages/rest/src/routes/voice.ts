@@ -24,7 +24,7 @@ export type ModifyUserVoiceStateOptions = Pick<
 >;
 
 export class VoiceRouter extends Router {
-  static routes = {
+  static readonly routes = {
     base: "/voice",
     regions: "/voice/regions",
     guildVoiceState: (
@@ -67,10 +67,28 @@ export class VoiceRouter extends Router {
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state}
    */
-  modifyCurrentVoiceState(
+  async modifyCurrentVoiceState(
     guildId: Snowflake,
     options: ModifyCurrentVoiceStateOptions,
   ): Promise<void> {
+    if (options.channel_id) {
+      const currentState = await this.getCurrentVoiceState(guildId);
+
+      if (currentState.channel_id !== options.channel_id) {
+        throw new Error("User must already be in the specified channel");
+      }
+    }
+
+    if (options.request_to_speak_timestamp) {
+      const timestamp = new Date(options.request_to_speak_timestamp).getTime();
+      const now = Date.now();
+      if (timestamp < now) {
+        throw new Error(
+          "request_to_speak_timestamp must be a present or future time",
+        );
+      }
+    }
+
     return this.patch(VoiceRouter.routes.guildVoiceState(guildId), {
       body: JSON.stringify(options),
     });
@@ -79,11 +97,16 @@ export class VoiceRouter extends Router {
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state}
    */
-  modifyUserVoiceState(
+  async modifyUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
     options: ModifyUserVoiceStateOptions,
   ): Promise<void> {
+    const currentState = await this.getUserVoiceState(guildId, userId);
+    if (currentState.channel_id !== options.channel_id) {
+      throw new Error("User must already be in the specified channel");
+    }
+
     return this.patch(VoiceRouter.routes.userVoiceState(guildId, userId), {
       body: JSON.stringify(options),
     });

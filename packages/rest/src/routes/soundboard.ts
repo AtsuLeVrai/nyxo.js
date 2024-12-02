@@ -29,7 +29,14 @@ export type SoundboardModify = Partial<
 >;
 
 export class SoundboardRouter extends Router {
-  static routes = {
+  static readonly NAME_MIN_LENGTH = 2;
+  static readonly NAME_MAX_LENGTH = 32;
+  static readonly VOLUME_MIN = 0;
+  static readonly VOLUME_MAX = 1;
+  static readonly FILE_MAX_SIZE = 512 * 1024;
+  static readonly MAX_DURATION = 5.2;
+
+  static readonly routes = {
     defaultSounds: "/soundboard-default-sounds" as const,
     guildSounds: (
       guildId: Snowflake,
@@ -48,6 +55,30 @@ export class SoundboardRouter extends Router {
       return `/channels/${channelId}/send-soundboard-sound` as const;
     },
   } as const;
+
+  validateName(name: string): void {
+    if (
+      !name ||
+      name.length < SoundboardRouter.NAME_MIN_LENGTH ||
+      name.length > SoundboardRouter.NAME_MAX_LENGTH
+    ) {
+      throw new Error(
+        `Name must be between ${SoundboardRouter.NAME_MIN_LENGTH} and ${SoundboardRouter.NAME_MAX_LENGTH} characters`,
+      );
+    }
+  }
+
+  validateVolume(volume?: number): void {
+    if (
+      volume !== undefined &&
+      (volume < SoundboardRouter.VOLUME_MIN ||
+        volume > SoundboardRouter.VOLUME_MAX)
+    ) {
+      throw new Error(
+        `Volume must be between ${SoundboardRouter.VOLUME_MIN} and ${SoundboardRouter.VOLUME_MAX}`,
+      );
+    }
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound}
@@ -92,6 +123,9 @@ export class SoundboardRouter extends Router {
     options: SoundboardCreate,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
+    this.validateName(options.name);
+    this.validateVolume(options.volume);
+
     return this.post(SoundboardRouter.routes.guildSounds(guildId), {
       body: JSON.stringify(options),
       reason,
@@ -107,6 +141,13 @@ export class SoundboardRouter extends Router {
     options: SoundboardModify,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
+    if (options.name) {
+      this.validateName(options.name);
+    }
+    if (options.volume) {
+      this.validateVolume(options.volume);
+    }
+
     return this.patch(SoundboardRouter.routes.guildSound(guildId, soundId), {
       body: JSON.stringify(options),
       reason,

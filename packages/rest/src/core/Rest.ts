@@ -1,7 +1,8 @@
-import { Readable } from "node:stream";
+import { type FileHandle, open, stat } from "node:fs/promises";
+import { basename } from "node:path";
 import { MimeType } from "@nyxjs/core";
 import FormData from "form-data";
-import { BrotliDecompress, Gunzip } from "minizlib";
+import { BrotliDecompress, Gunzip, Inflate, type Unzip } from "minizlib";
 import { type Dispatcher, Pool, RetryAgent } from "undici";
 import {
   ApplicationCommandRouter,
@@ -37,18 +38,16 @@ import type {
   RequestOptions,
   RestOptions,
 } from "../types/index.js";
-import { HttpMethod, HttpStatusCode, JsonErrorCode } from "../utils/index.js";
+import {
+  CompressionMethod,
+  HttpMethod,
+  HttpStatusCode,
+  JsonErrorCode,
+} from "../utils/index.js";
 
 export class Rest {
-  static readonly #BASE_URL = "https://discord.com/api";
+  static readonly #BASE_URL = "https://discord.com";
   static readonly #MAX_FILE_SIZE = 25 * 1024 * 1024;
-  static readonly #ALLOWED_EXTENSIONS = [
-    "jpg",
-    "jpeg",
-    "png",
-    "webp",
-    "gif",
-  ] as const;
 
   readonly applications = new ApplicationRouter(this);
   readonly applicationCommands = new ApplicationCommandRouter(this);
@@ -86,24 +85,30 @@ export class Rest {
     this.#pool = new Pool(Rest.#BASE_URL, {
       connections: 4,
       pipelining: 1,
-      ...options.pool,
+      allowH2: true,
+      connectTimeout: 30000,
+      keepAliveTimeout: 4000,
+      keepAliveMaxTimeout: 600000,
+      maxHeaderSize: 16384,
+      headersTimeout: 300000,
+      bodyTimeout: 300000,
     });
 
     this.#retryAgent = new RetryAgent(this.#pool, {
-      retryAfter: true,
-      maxRetries: this.#options.retries,
-      maxTimeout: this.#options.timeout,
+      maxRetries: 3,
+      maxTimeout: 5000,
+      minTimeout: 1000,
       timeoutFactor: 2,
+      retryAfter: true,
       methods: Object.values(HttpMethod),
       statusCodes: Object.values(HttpStatusCode).map(Number),
-      errorCodes: Object.values(JsonErrorCode).map(String),
+      errorCodes: Object.values(JsonErrorCode).map((code) => code.toString()),
     });
   }
 
   async request<T>(options: RequestOptions): Promise<T> {
     const controller = new AbortController();
     const signal = options.signal ?? controller.signal;
-    const timeout = setTimeout(() => controller.abort(), this.#options.timeout);
 
     try {
       const rateLimit = this.#rateLimits.get(options.path);
@@ -116,13 +121,12 @@ export class Rest {
         Array.isArray(requestOptions.files) &&
         requestOptions.files.length > 0
       ) {
-        await this.#validateFiles(requestOptions.files);
         requestOptions = await this.#prepareMultipartRequest(requestOptions);
       }
 
       const response = await this.#retryAgent.request({
         ...requestOptions,
-        path: `/v${this.#options.version}${requestOptions.path}`,
+        path: `/api/v${this.#options.version}${requestOptions.path}`,
         headers: this.#buildHeaders(requestOptions),
         signal,
       });
@@ -133,11 +137,6 @@ export class Rest {
         throw error;
       }
       throw new Error("Unknown error occurred");
-    } finally {
-      clearTimeout(timeout);
-      if (!options.signal) {
-        controller.abort();
-      }
     }
   }
 
@@ -222,48 +221,60 @@ export class Rest {
   async #decompressResponse(
     response: Dispatcher.ResponseData,
   ): Promise<Buffer> {
-    const contentEncoding = response.headers["content-encoding"];
-    if (!contentEncoding) {
+    const contentEncoding = response.headers["content-encoding"] as
+      | CompressionMethod
+      | undefined;
+
+    if (
+      !(
+        contentEncoding && this.#options.compression?.includes(contentEncoding)
+      ) ||
+      contentEncoding === CompressionMethod.Identity
+    ) {
       return Buffer.from(await response.body.arrayBuffer());
     }
 
-    const buffer = await response.body.arrayBuffer();
-    const source = Readable.from(Buffer.from(buffer));
+    const arrayBuffer = await response.body.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    let decompressor: Gunzip | BrotliDecompress;
+    let decompressor: Unzip | Gunzip | Inflate | BrotliDecompress;
     switch (contentEncoding) {
-      case "gzip":
+      case CompressionMethod.Gzip:
         decompressor = new Gunzip({ level: 9 });
         break;
-      case "br":
+      case CompressionMethod.Deflate:
+        decompressor = new Inflate({ level: 9 });
+        break;
+      case CompressionMethod.Brotli:
         decompressor = new BrotliDecompress({ level: 11 });
         break;
       default:
-        return Buffer.from(buffer);
+        return buffer;
     }
 
-    const chunks: Buffer[] = [];
-    source.pipe(decompressor);
-
     return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
       decompressor
-        .on("data", (chunk: Buffer) => chunks.push(chunk))
+        .on("data", (chunk) => chunks.push(chunk))
+        .on("end", () => resolve(Buffer.concat(chunks)))
         .on("error", reject)
-        .on("end", () => {
-          resolve(Buffer.concat(chunks));
-        });
+        .end(buffer);
     });
   }
 
   #buildHeaders(options: RequestOptions): Record<string, string> {
     const headers: Record<string, string> = {
       authorization: `${this.#options.authType} ${this.#options.token}`,
-      "accept-encoding": "br, gzip",
       "user-agent":
         this.#options.userAgent ??
         "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
+      "content-type": MimeType.Json,
       ...options.headers,
     };
+
+    if (this.#options.compression && this.#options.compression.length > 0) {
+      headers["accept-encoding"] = this.#options.compression.join(", ");
+    }
 
     if (options.reason) {
       headers["x-audit-log-reason"] = encodeURIComponent(options.reason);
@@ -296,6 +307,7 @@ export class Rest {
   ): Promise<RequestOptions> {
     const form = new FormData();
     let files = options.files;
+
     if (!files) {
       throw new Error("No files provided");
     }
@@ -310,43 +322,56 @@ export class Rest {
         throw new Error("Invalid file provided");
       }
 
-      const buffer = await file.arrayBuffer();
-      form.append(
-        files.length === 1 ? "file" : `files[${i}]`,
-        new Blob([buffer], { type: this.#getContentType(file.name) }),
-        file.name,
-      );
+      let buffer: Buffer;
+      let filename: string;
+      let contentType: string;
+
+      if (typeof file === "string") {
+        let fileHandle: FileHandle | undefined;
+        try {
+          const stats = await stat(file);
+          if (stats.size > Rest.#MAX_FILE_SIZE) {
+            throw new Error(
+              `File size exceeds the maximum limit of ${Rest.#MAX_FILE_SIZE} bytes`,
+            );
+          }
+
+          fileHandle = await open(file);
+          buffer = await fileHandle.readFile();
+          filename = basename(file);
+          contentType = "application/octet-stream";
+        } finally {
+          await fileHandle?.close();
+        }
+      } else if (file instanceof File) {
+        if (file.size > Rest.#MAX_FILE_SIZE) {
+          throw new Error(
+            `File size exceeds the maximum limit of ${Rest.#MAX_FILE_SIZE} bytes`,
+          );
+        }
+        buffer = Buffer.from(await file.arrayBuffer());
+        filename = file.name;
+        contentType = file.type;
+      } else {
+        throw new Error(`Unsupported file type for file at index ${i}`);
+      }
+
+      form.append(files.length === 1 ? "file" : `files[${i}]`, buffer, {
+        knownLength: buffer.length,
+        contentType,
+        filename,
+      });
     }
 
     if (options.body) {
-      form.append("payload_json", JSON.stringify(options.body));
+      form.append("payload_json", options.body);
     }
 
     return {
       ...options,
-      body: form,
-      headers: {
-        ...options.headers,
-        "content-type": MimeType.FormData,
-      },
+      body: form.getBuffer(),
+      headers: form.getHeaders(options.headers),
     };
-  }
-
-  #getContentType(filename: string): string {
-    const ext = filename.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "jpg":
-      case "jpeg":
-        return MimeType.Jpeg;
-      case "png":
-        return MimeType.Png;
-      case "gif":
-        return MimeType.Gif;
-      case "webp":
-        return MimeType.Webp;
-      default:
-        return MimeType.OctetStream;
-    }
   }
 
   #updateRateLimit(path: string, data: Partial<RateLimitData>): void {
@@ -371,30 +396,5 @@ export class Rest {
   async #waitForRateLimit(rateLimit: RateLimitData): Promise<void> {
     const delay = Math.max(0, rateLimit.reset * 1000 - Date.now());
     await new Promise((resolve) => setTimeout(resolve, delay));
-  }
-
-  async #validateFiles(files: File[]): Promise<void> {
-    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    if (totalSize > Rest.#MAX_FILE_SIZE) {
-      throw new Error(
-        `Total file size exceeds ${Rest.#MAX_FILE_SIZE / 1024 / 1024}MB`,
-      );
-    }
-
-    for (const file of files) {
-      const extension = file.name.split(".").pop()?.toLowerCase();
-      if (
-        !(
-          extension &&
-          Rest.#ALLOWED_EXTENSIONS.includes(
-            extension as "jpg" | "jpeg" | "png" | "webp" | "gif",
-          )
-        )
-      ) {
-        throw new Error(
-          `Invalid file type: ${extension}. Allowed: ${Rest.#ALLOWED_EXTENSIONS.join(", ")}`,
-        );
-      }
-    }
   }
 }

@@ -1,5 +1,5 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
-import type { ImageData } from "../types/index.js";
+import type { FileType } from "../types/index.js";
 import { Router } from "./router.js";
 
 /**
@@ -7,7 +7,7 @@ import { Router } from "./router.js";
  */
 export interface StickerCreate
   extends Pick<StickerEntity, "name" | "description" | "tags"> {
-  file: ImageData;
+  file: FileType;
 }
 
 /**
@@ -19,7 +19,17 @@ export type StickerModify = Pick<
 >;
 
 export class StickerRouter extends Router {
-  static routes = {
+  static readonly NAME_MIN_LENGTH = 2;
+  static readonly NAME_MAX_LENGTH = 30;
+  static readonly DESCRIPTION_MIN_LENGTH = 2;
+  static readonly DESCRIPTION_MAX_LENGTH = 100;
+  static readonly TAGS_MAX_LENGTH = 200;
+  static readonly FILE_MAX_SIZE = 512 * 1024;
+  static readonly ANIMATED_MAX_LENGTH = 5;
+  static readonly MAX_SIZE = 320;
+  static readonly DEFAULT_STICKER_SLOTS = 5;
+
+  static readonly routes = {
     sticker: (stickerId: Snowflake): `/stickers/${Snowflake}` => {
       return `/stickers/${stickerId}` as const;
     },
@@ -37,6 +47,37 @@ export class StickerRouter extends Router {
       return `/guilds/${guildId}/stickers/${stickerId}` as const;
     },
   } as const;
+
+  validateName(name: string): void {
+    if (
+      name.length < StickerRouter.NAME_MIN_LENGTH ||
+      name.length > StickerRouter.NAME_MAX_LENGTH
+    ) {
+      throw new Error(
+        `Sticker name must be between ${StickerRouter.NAME_MIN_LENGTH} and ${StickerRouter.NAME_MAX_LENGTH} characters`,
+      );
+    }
+  }
+
+  validateDescription(description?: string | null): void {
+    if (
+      description &&
+      (description.length < StickerRouter.DESCRIPTION_MIN_LENGTH ||
+        description.length > StickerRouter.DESCRIPTION_MAX_LENGTH)
+    ) {
+      throw new Error(
+        `Sticker description must be between ${StickerRouter.DESCRIPTION_MIN_LENGTH} and ${StickerRouter.DESCRIPTION_MAX_LENGTH} characters`,
+      );
+    }
+  }
+
+  validateTags(tags: string): void {
+    if (tags.length > StickerRouter.TAGS_MAX_LENGTH) {
+      throw new Error(
+        `Sticker tags cannot exceed ${StickerRouter.TAGS_MAX_LENGTH} characters`,
+      );
+    }
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
@@ -84,6 +125,10 @@ export class StickerRouter extends Router {
     options: StickerCreate,
     reason?: string,
   ): Promise<StickerEntity> {
+    this.validateName(options.name);
+    this.validateDescription(options.description);
+    this.validateTags(options.tags);
+
     return this.post(StickerRouter.routes.guildStickers(guildId), {
       body: JSON.stringify(options),
       reason,
@@ -99,6 +144,16 @@ export class StickerRouter extends Router {
     options: StickerModify,
     reason?: string,
   ): Promise<StickerEntity> {
+    if (options.name) {
+      this.validateName(options.name);
+    }
+    if (options.description) {
+      this.validateDescription(options.description);
+    }
+    if (options.tags) {
+      this.validateTags(options.tags);
+    }
+
     return this.patch(StickerRouter.routes.guildSticker(guildId, stickerId), {
       body: JSON.stringify(options),
       reason,

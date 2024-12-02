@@ -11,6 +11,13 @@ export enum HttpMethod {
   Delete = "DELETE",
 }
 
+export enum CompressionMethod {
+  Gzip = "gzip",
+  Deflate = "deflate",
+  Brotli = "br",
+  Identity = "identity",
+}
+
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes}
  */

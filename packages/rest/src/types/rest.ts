@@ -1,6 +1,11 @@
-import type { ApiVersion, Integer } from "@nyxjs/core";
+import type { ApiVersion } from "@nyxjs/core";
 import type { Dispatcher, Pool } from "undici";
-import type { AuthType, HttpMethod, JsonErrorCode } from "../utils/index.js";
+import type {
+  AuthType,
+  CompressionMethod,
+  HttpMethod,
+  JsonErrorCode,
+} from "../utils/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure}
@@ -43,6 +48,7 @@ export interface RateLimitData {
 }
 
 export type PathLike = `/${string}`;
+export type FileType = File | string;
 
 export interface RequestOptions
   extends Omit<
@@ -52,7 +58,7 @@ export interface RequestOptions
   method: HttpMethod;
   path: PathLike;
   headers?: Record<string, string>;
-  files?: File | File[];
+  files?: FileType | FileType[];
   reason?: string;
 }
 
@@ -64,7 +70,5 @@ export interface RestOptions {
   authType: AuthType;
   userAgent?: DiscordUserAgent;
   pool?: Partial<Pool.Options>;
-  retries?: Integer;
-  timeout?: Integer;
-  signal?: AbortSignal;
+  compression?: CompressionMethod[];
 }
