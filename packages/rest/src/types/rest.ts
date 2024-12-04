@@ -1,11 +1,6 @@
 import type { ApiVersion } from "@nyxjs/core";
-import type { Dispatcher, Pool } from "undici";
-import type {
-  AuthType,
-  CompressionMethod,
-  HttpMethod,
-  JsonErrorCode,
-} from "../utils/index.js";
+import type { Dispatcher } from "undici";
+import type { AuthType, HttpMethod, JsonErrorCode } from "../utils/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/rate-limits#exceeding-a-rate-limit-rate-limit-response-structure}
@@ -69,6 +64,5 @@ export interface RestOptions {
   version: ApiVersion;
   authType: AuthType;
   userAgent?: DiscordUserAgent;
-  pool?: Partial<Pool.Options>;
-  compression?: CompressionMethod[];
+  compress?: boolean;
 }

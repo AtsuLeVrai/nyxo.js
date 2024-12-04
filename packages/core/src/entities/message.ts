@@ -1,4 +1,3 @@
-import type { MimeType } from "../enums/index.js";
 import type { Integer, Iso8601, Snowflake } from "../formatting/index.js";
 import type { BitFieldResolvable } from "../utils/index.js";
 import type {
@@ -67,7 +66,7 @@ export interface AttachmentEntity {
   filename: string;
   title?: string;
   description?: string;
-  content_type?: MimeType;
+  content_type?: string;
   size: Integer;
   url: string;
   proxy_url: string;
