@@ -2,168 +2,33 @@ import type {
   BanEntity,
   ChannelEntity,
   GuildEntity,
-  GuildFeature,
   GuildMemberEntity,
   GuildOnboardingEntity,
-  Integer,
   IntegrationEntity,
   InviteEntity,
-  LocaleKey,
   RoleEntity,
   Snowflake,
   VoiceRegionEntity,
   WelcomeScreenEntity,
 } from "@nyxjs/core";
-import type { ImageData } from "../types/index.js";
-import { Router } from "./router.js";
+import type {
+  AddMemberEntity,
+  BanCreateEntity,
+  BeginPruneEntity,
+  CreateGuildEntity,
+  CreateRoleEntity,
+  GetGuildQueryEntity,
+  GetMembersQueryEntity,
+  GetPruneQueryEntity,
+  ModifyCurrentMemberEntity,
+  ModifyGuildEntity,
+  ModifyMemberEntity,
+  ModifyRolePositionsEntity,
+  SearchMembersQueryEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
- */
-export interface CreateGuild
-  extends Pick<
-    GuildEntity,
-    | "name"
-    | "region"
-    | "icon"
-    | "verification_level"
-    | "default_message_notifications"
-    | "explicit_content_filter"
-    | "roles"
-    | "afk_channel_id"
-    | "afk_timeout"
-    | "system_channel_id"
-    | "system_channel_flags"
-  > {
-  channels: Partial<ChannelEntity>[];
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-json-params}
- */
-export interface ModifyGuild extends Partial<CreateGuild> {
-  owner_id?: Snowflake;
-  splash?: ImageData | null;
-  discovery_splash?: ImageData | null;
-  banner?: ImageData | null;
-  rules_channel_id?: Snowflake | null;
-  public_updates_channel_id?: Snowflake | null;
-  preferred_locale?: LocaleKey;
-  features?: GuildFeature[];
-  description?: string | null;
-  premium_progress_bar_enabled?: boolean;
-  safety_alerts_channel_id?: Snowflake | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-query-string-params}
- */
-export interface GetGuildQuery {
-  with_counts?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params}
- */
-export interface GetMembersQuery {
-  limit?: Integer;
-  after?: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#search-guild-members-query-string-params}
- */
-export interface SearchMembersQuery {
-  query: string;
-  limit?: Integer;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member-json-params}
- */
-export interface AddMember {
-  access_token: string;
-  nick?: string;
-  roles?: Snowflake[];
-  mute?: boolean;
-  deaf?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params}
- */
-export interface ModifyMember
-  extends Partial<
-    Pick<
-      GuildMemberEntity,
-      | "nick"
-      | "roles"
-      | "mute"
-      | "deaf"
-      | "communication_disabled_until"
-      | "flags"
-    >
-  > {
-  channel_id?: Snowflake | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#modify-current-member-json-params}
- */
-export type ModifyCurrentMember = Partial<Pick<GuildMemberEntity, "nick">>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role-json-params}
- */
-export type CreateRole = Pick<
-  RoleEntity,
-  | "name"
-  | "permissions"
-  | "color"
-  | "hoist"
-  | "icon"
-  | "unicode_emoji"
-  | "mentionable"
->;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params}
- */
-export type ModifyRolePositions = Pick<RoleEntity, "id" | "position">;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params}
- */
-export interface GetPruneQuery {
-  days?: Integer;
-  include_roles?: string;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#begin-guild-prune-json-params}
- */
-export interface BeginPrune {
-  days?: Integer;
-  compute_prune_count?: boolean;
-  include_roles?: Snowflake[];
-  /**
-   * @deprecated Use `include_roles` instead
-   */
-  reason?: string;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-ban-json-params}
- */
-export interface BanCreate {
-  /**
-   * @deprecated Use `delete_message_seconds` instead
-   */
-  delete_message_days?: Integer;
-  delete_message_seconds?: Integer;
-}
-
-export class GuildRouter extends Router {
+export class GuildRouter extends BaseRouter {
   static routes = {
     guilds: "/guilds",
     guild: (guildId: Snowflake): `/guilds/${Snowflake}` => {
@@ -265,13 +130,16 @@ export class GuildRouter extends Router {
     },
   } as const;
 
-  create(guild: CreateGuild): Promise<GuildEntity> {
+  create(guild: CreateGuildEntity): Promise<GuildEntity> {
     return this.post(GuildRouter.routes.guilds, {
       body: JSON.stringify(guild),
     });
   }
 
-  getGuild(guildId: Snowflake, query?: GetGuildQuery): Promise<GuildEntity> {
+  getGuild(
+    guildId: Snowflake,
+    query?: GetGuildQueryEntity,
+  ): Promise<GuildEntity> {
     return this.get(GuildRouter.routes.guild(guildId), { query });
   }
 
@@ -281,7 +149,7 @@ export class GuildRouter extends Router {
 
   modify(
     guildId: Snowflake,
-    guild: ModifyGuild,
+    guild: ModifyGuildEntity,
     reason?: string,
   ): Promise<GuildEntity> {
     return this.patch(GuildRouter.routes.guild(guildId), {
@@ -324,14 +192,14 @@ export class GuildRouter extends Router {
 
   listMembers(
     guildId: Snowflake,
-    query?: GetMembersQuery,
+    query?: GetMembersQueryEntity,
   ): Promise<GuildMemberEntity[]> {
     return this.get(GuildRouter.routes.guildMembers(guildId), { query });
   }
 
   searchMembers(
     guildId: Snowflake,
-    query: SearchMembersQuery,
+    query: SearchMembersQueryEntity,
   ): Promise<GuildMemberEntity[]> {
     return this.get(`${GuildRouter.routes.guildMembers(guildId)}/search`, {
       query,
@@ -341,7 +209,7 @@ export class GuildRouter extends Router {
   addMember(
     guildId: Snowflake,
     userId: Snowflake,
-    member: AddMember,
+    member: AddMemberEntity,
   ): Promise<GuildMemberEntity> {
     return this.put(GuildRouter.routes.guildMember(guildId, userId), {
       body: JSON.stringify(member),
@@ -351,7 +219,7 @@ export class GuildRouter extends Router {
   modifyMember(
     guildId: Snowflake,
     userId: Snowflake,
-    member: ModifyMember,
+    member: ModifyMemberEntity,
     reason?: string,
   ): Promise<GuildMemberEntity> {
     return this.patch(GuildRouter.routes.guildMember(guildId, userId), {
@@ -362,7 +230,7 @@ export class GuildRouter extends Router {
 
   modifyCurrentMember(
     guildId: Snowflake,
-    member: ModifyCurrentMember,
+    member: ModifyCurrentMemberEntity,
     reason?: string,
   ): Promise<GuildMemberEntity> {
     return this.patch(GuildRouter.routes.guildCurrentMember(guildId), {
@@ -416,7 +284,7 @@ export class GuildRouter extends Router {
   createBan(
     guildId: Snowflake,
     userId: Snowflake,
-    ban: BanCreate,
+    ban: BanCreateEntity,
     reason?: string,
   ): Promise<void> {
     return this.put(GuildRouter.routes.guildBan(guildId, userId), {
@@ -445,7 +313,7 @@ export class GuildRouter extends Router {
 
   createRole(
     guildId: Snowflake,
-    role: CreateRole,
+    role: CreateRoleEntity,
     reason?: string,
   ): Promise<RoleEntity> {
     return this.post(GuildRouter.routes.guildRoles(guildId), {
@@ -456,7 +324,7 @@ export class GuildRouter extends Router {
 
   modifyRolePositions(
     guildId: Snowflake,
-    roles: ModifyRolePositions[],
+    roles: ModifyRolePositionsEntity[],
   ): Promise<RoleEntity[]> {
     return this.patch(GuildRouter.routes.guildRoles(guildId), {
       body: JSON.stringify(roles),
@@ -466,7 +334,7 @@ export class GuildRouter extends Router {
   modifyRole(
     guildId: Snowflake,
     roleId: Snowflake,
-    role: Partial<CreateRole>,
+    role: Partial<CreateRoleEntity>,
     reason?: string,
   ): Promise<RoleEntity> {
     return this.patch(GuildRouter.routes.guildRole(guildId, roleId), {
@@ -487,14 +355,14 @@ export class GuildRouter extends Router {
 
   getPruneCount(
     guildId: Snowflake,
-    query?: GetPruneQuery,
+    query?: GetPruneQueryEntity,
   ): Promise<{ pruned: number }> {
     return this.get(GuildRouter.routes.guildPrune(guildId), { query });
   }
 
   beginPrune(
     guildId: Snowflake,
-    prune: BeginPrune,
+    prune: BeginPruneEntity,
     reason?: string,
   ): Promise<{ pruned: number | null }> {
     return this.post(GuildRouter.routes.guildPrune(guildId), {

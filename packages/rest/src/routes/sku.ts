@@ -1,7 +1,7 @@
 import type { SkuEntity, Snowflake } from "@nyxjs/core";
-import { Router } from "./router.js";
+import { BaseRouter } from "./base.js";
 
-export class SkuRouter extends Router {
+export class SkuRouter extends BaseRouter {
   static routes = {
     applicationSkus: (
       applicationId: Snowflake,

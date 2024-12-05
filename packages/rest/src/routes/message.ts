@@ -1,64 +1,12 @@
+import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
 import type {
-  Integer,
-  MessageEntity,
-  Snowflake,
-  UserEntity,
-} from "@nyxjs/core";
-import type { FileType } from "../types/index.js";
-import { Router } from "./router.js";
+  GetReactionsQueryEntity,
+  MessageCreateEntity,
+  MessageQueryEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params}
- */
-export interface MessageCreate
-  extends Partial<
-    Pick<
-      MessageEntity,
-      | "content"
-      | "nonce"
-      | "tts"
-      | "embeds"
-      | "message_reference"
-      | "components"
-      | "attachments"
-      | "flags"
-      | "poll"
-    >
-  > {
-  sticker_ids?: Snowflake[];
-  files?: FileType[];
-  payload_json?: string;
-  enforce_nonce?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params}
- */
-export interface MessageQuery {
-  around?: Snowflake;
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: Integer;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-reaction-types}
- */
-export enum ReactionType {
-  Normal = 0,
-  Burst = 1,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-query-string-params}
- */
-export interface GetReactionsQuery {
-  type?: ReactionType;
-  after?: Snowflake;
-  limit?: Integer;
-}
-
-export class MessageRouter extends Router {
+export class MessageRouter extends BaseRouter {
   static readonly routes = {
     channelMessages: (
       channelId: Snowflake,
@@ -110,7 +58,7 @@ export class MessageRouter extends Router {
    */
   getMessages(
     channelId: Snowflake,
-    query?: MessageQuery,
+    query?: MessageQueryEntity,
   ): Promise<MessageEntity[]> {
     return this.get(MessageRouter.routes.channelMessages(channelId), {
       query,
@@ -132,7 +80,7 @@ export class MessageRouter extends Router {
    */
   createMessage(
     channelId: Snowflake,
-    options: Omit<MessageCreate, "payload_json">,
+    options: Omit<MessageCreateEntity, "payload_json">,
   ): Promise<MessageEntity> {
     if (
       options.content &&
@@ -224,7 +172,7 @@ export class MessageRouter extends Router {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-    query?: GetReactionsQuery,
+    query?: GetReactionsQueryEntity,
   ): Promise<UserEntity[]> {
     return this.get(
       MessageRouter.routes.reactions(channelId, messageId, emoji),
@@ -263,7 +211,7 @@ export class MessageRouter extends Router {
   editMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-    options: Partial<MessageCreate>,
+    options: Partial<MessageCreateEntity>,
   ): Promise<MessageEntity> {
     if (
       options.content &&

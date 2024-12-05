@@ -1,34 +1,12 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
-import type { ImageData } from "../types/index.js";
-import { Router } from "./router.js";
+import type {
+  SoundboardCreateEntity,
+  SoundboardModifyEntity,
+  SoundboardSendEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params}
- */
-export interface SoundboardSend
-  extends Pick<SoundboardSoundEntity, "sound_id"> {
-  source_guild_id?: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound-json-params}
- */
-export interface SoundboardCreate
-  extends Pick<
-    SoundboardSoundEntity,
-    "name" | "volume" | "emoji_id" | "emoji_name"
-  > {
-  sound: ImageData;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params}
- */
-export type SoundboardModify = Partial<
-  Pick<SoundboardSoundEntity, "name" | "volume" | "emoji_id" | "emoji_name">
->;
-
-export class SoundboardRouter extends Router {
+export class SoundboardRouter extends BaseRouter {
   static readonly NAME_MIN_LENGTH = 2;
   static readonly NAME_MAX_LENGTH = 32;
   static readonly VOLUME_MIN = 0;
@@ -83,7 +61,10 @@ export class SoundboardRouter extends Router {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound}
    */
-  sendSound(channelId: Snowflake, options: SoundboardSend): Promise<void> {
+  sendSound(
+    channelId: Snowflake,
+    options: SoundboardSendEntity,
+  ): Promise<void> {
     return this.post(SoundboardRouter.routes.sendSound(channelId), {
       body: JSON.stringify(options),
     });
@@ -120,7 +101,7 @@ export class SoundboardRouter extends Router {
    */
   createGuildSound(
     guildId: Snowflake,
-    options: SoundboardCreate,
+    options: SoundboardCreateEntity,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
     this.validateName(options.name);
@@ -138,7 +119,7 @@ export class SoundboardRouter extends Router {
   modifyGuildSound(
     guildId: Snowflake,
     soundId: Snowflake,
-    options: SoundboardModify,
+    options: SoundboardModifyEntity,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
     if (options.name) {

@@ -1,38 +1,11 @@
 import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type {
+  CreateAutoModerationRuleOptionsEntity,
+  ModifyAutoModerationRuleOptionsEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule-json-params}
- */
-export type CreateAutoModerationRuleOptions = Pick<
-  AutoModerationRuleEntity,
-  | "name"
-  | "event_type"
-  | "trigger_type"
-  | "trigger_metadata"
-  | "actions"
-  | "enabled"
-  | "exempt_roles"
-  | "exempt_channels"
->;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule-json-params}
- */
-export type ModifyAutoModerationRuleOptions = Partial<
-  Pick<
-    AutoModerationRuleEntity,
-    | "name"
-    | "event_type"
-    | "trigger_metadata"
-    | "actions"
-    | "enabled"
-    | "exempt_roles"
-    | "exempt_channels"
-  >
->;
-
-export class AutoModerationRouter extends Router {
+export class AutoModerationRouter extends BaseRouter {
   static routes = {
     base: (
       guildId: Snowflake,
@@ -72,7 +45,7 @@ export class AutoModerationRouter extends Router {
    */
   createAutoModerationRule(
     guildId: Snowflake,
-    options: CreateAutoModerationRuleOptions,
+    options: CreateAutoModerationRuleOptionsEntity,
   ): Promise<AutoModerationRuleEntity> {
     return this.post(AutoModerationRouter.routes.base(guildId), {
       body: JSON.stringify(options),
@@ -85,7 +58,7 @@ export class AutoModerationRouter extends Router {
   modifyAutoModerationRule(
     guildId: Snowflake,
     ruleId: Snowflake,
-    options: ModifyAutoModerationRuleOptions,
+    options: ModifyAutoModerationRuleOptionsEntity,
   ): Promise<AutoModerationRuleEntity> {
     return this.patch(AutoModerationRouter.routes.rule(guildId, ruleId), {
       body: JSON.stringify(options),

@@ -1,38 +1,15 @@
 import type {
-  ActionRowEntity,
-  AllowedMentionsEntity,
-  AttachmentEntity,
-  EmbedEntity,
   InteractionCallbackEntity,
   MessageEntity,
-  PollCreateRequestEntity,
   Snowflake,
 } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type {
+  InteractionCallbackDataOptionsEntity,
+  InteractionResponseOptionsEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @todo Verify all the types in `InteractionResponseOptions`.
- */
-interface InteractionResponseOptions {
-  type: number;
-  data?: InteractionCallbackDataOptions;
-}
-
-/**
- * @todo Verify all the types in `InteractionCallbackDataOptions`.
- */
-interface InteractionCallbackDataOptions {
-  tts?: boolean;
-  content?: string;
-  embeds?: EmbedEntity[];
-  allowed_mentions?: AllowedMentionsEntity;
-  flags?: number;
-  components?: ActionRowEntity[];
-  attachments?: Partial<AttachmentEntity>[];
-  poll?: PollCreateRequestEntity;
-}
-
-export class InteractionRouter extends Router {
+export class InteractionRouter extends BaseRouter {
   static routes = {
     createResponse: (
       interactionId: Snowflake,
@@ -100,7 +77,7 @@ export class InteractionRouter extends Router {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: InteractionResponseOptions,
+    options: InteractionResponseOptionsEntity,
     withResponse = false,
   ): Promise<InteractionCallbackEntity | undefined> {
     return this.post(
@@ -133,7 +110,7 @@ export class InteractionRouter extends Router {
   editOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-    options: Partial<InteractionCallbackDataOptions>,
+    options: Partial<InteractionCallbackDataOptionsEntity>,
   ): Promise<MessageEntity> {
     return this.patch(
       InteractionRouter.routes.editOriginalResponse(
@@ -167,7 +144,7 @@ export class InteractionRouter extends Router {
   createFollowupMessage(
     applicationId: Snowflake,
     interactionToken: string,
-    options: InteractionCallbackDataOptions,
+    options: InteractionCallbackDataOptionsEntity,
   ): Promise<MessageEntity> {
     return this.post(
       InteractionRouter.routes.createFollowupMessage(
@@ -204,7 +181,7 @@ export class InteractionRouter extends Router {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-    options: Partial<InteractionCallbackDataOptions>,
+    options: Partial<InteractionCallbackDataOptionsEntity>,
   ): Promise<MessageEntity> {
     return this.patch(
       InteractionRouter.routes.editFollowupMessage(

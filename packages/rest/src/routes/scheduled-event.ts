@@ -3,51 +3,15 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type { ImageData } from "../types/index.js";
-import { Router } from "./router.js";
+import type {
+  CreateEventEntity,
+  GetEventsQueryEntity,
+  GetUsersQueryEntity,
+  ModifyEventEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-query-string-params}
- */
-export interface GetEvents {
-  with_user_count?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params}
- */
-export interface GetUsers {
-  limit?: number;
-  with_member?: boolean;
-  before?: Snowflake;
-  after?: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
- */
-export interface Create
-  extends Pick<
-    GuildScheduledEventEntity,
-    | "channel_id"
-    | "entity_metadata"
-    | "name"
-    | "privacy_level"
-    | "scheduled_start_time"
-    | "scheduled_end_time"
-    | "description"
-    | "entity_type"
-    | "recurrence_rule"
-  > {
-  image?: ImageData;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
- */
-export type Modify = Partial<Create>;
-
-export class ScheduledEventRouter extends Router {
+export class ScheduledEventRouter extends BaseRouter {
   static routes = {
     events: (guildId: Snowflake): `/guilds/${Snowflake}/scheduled-events` => {
       return `/guilds/${guildId}/scheduled-events` as const;
@@ -71,7 +35,7 @@ export class ScheduledEventRouter extends Router {
    */
   listEvents(
     guildId: Snowflake,
-    query?: GetEvents,
+    query?: GetEventsQueryEntity,
   ): Promise<GuildScheduledEventEntity[]> {
     return this.get(ScheduledEventRouter.routes.events(guildId), {
       query,
@@ -83,7 +47,7 @@ export class ScheduledEventRouter extends Router {
    */
   createEvent(
     guildId: Snowflake,
-    event: Create,
+    event: CreateEventEntity,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
     return this.post(ScheduledEventRouter.routes.events(guildId), {
@@ -111,7 +75,7 @@ export class ScheduledEventRouter extends Router {
   modifyEvent(
     guildId: Snowflake,
     eventId: Snowflake,
-    modify: Modify,
+    modify: ModifyEventEntity,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
     return this.patch(ScheduledEventRouter.routes.event(guildId, eventId), {
@@ -133,7 +97,7 @@ export class ScheduledEventRouter extends Router {
   getUsers(
     guildId: Snowflake,
     eventId: Snowflake,
-    query?: GetUsers,
+    query?: GetUsersQueryEntity,
   ): Promise<GuildScheduledEventUserEntity[]> {
     return this.get(ScheduledEventRouter.routes.users(guildId, eventId), {
       query,

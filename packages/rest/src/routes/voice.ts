@@ -3,27 +3,13 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type {
+  ModifyCurrentVoiceStateOptionsEntity,
+  ModifyUserVoiceStateOptionsEntity,
+} from "../types/voice.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state-json-params}
- */
-export type ModifyCurrentVoiceStateOptions = Partial<
-  Pick<
-    VoiceStateEntity,
-    "channel_id" | "suppress" | "request_to_speak_timestamp"
-  >
->;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state-json-params}
- */
-export type ModifyUserVoiceStateOptions = Pick<
-  VoiceStateEntity,
-  "channel_id" | "suppress"
->;
-
-export class VoiceRouter extends Router {
+export class VoiceRouter extends BaseRouter {
   static readonly routes = {
     base: "/voice",
     regions: "/voice/regions",
@@ -69,7 +55,7 @@ export class VoiceRouter extends Router {
    */
   async modifyCurrentVoiceState(
     guildId: Snowflake,
-    options: ModifyCurrentVoiceStateOptions,
+    options: ModifyCurrentVoiceStateOptionsEntity,
   ): Promise<void> {
     if (options.channel_id) {
       const currentState = await this.getCurrentVoiceState(guildId);
@@ -100,7 +86,7 @@ export class VoiceRouter extends Router {
   async modifyUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
-    options: ModifyUserVoiceStateOptions,
+    options: ModifyUserVoiceStateOptionsEntity,
   ): Promise<void> {
     const currentState = await this.getUserVoiceState(guildId, userId);
     if (currentState.channel_id !== options.channel_id) {

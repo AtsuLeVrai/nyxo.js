@@ -4,28 +4,13 @@ import {
   type StageInstanceEntity,
   StageInstancePrivacyLevel,
 } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type {
+  StageInstanceCreateEntity,
+  StageInstanceModifyEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params}
- */
-export interface StageInstanceCreate
-  extends Pick<
-    StageInstanceEntity,
-    "channel_id" | "topic" | "privacy_level" | "guild_scheduled_event_id"
-  > {
-  send_start_notification?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}
- */
-export type StageInstanceModify = Pick<
-  StageInstanceEntity,
-  "topic" | "privacy_level"
->;
-
-export class StageInstanceRouter extends Router {
+export class StageInstanceRouter extends BaseRouter {
   static readonly MODERATOR_PERMISSIONS = [
     BitwisePermissionFlags.ManageChannels,
     BitwisePermissionFlags.MuteMembers,
@@ -67,7 +52,7 @@ export class StageInstanceRouter extends Router {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
    */
   createStageInstance(
-    options: StageInstanceCreate,
+    options: StageInstanceCreateEntity,
     reason?: string,
   ): Promise<StageInstanceEntity> {
     this.validateTopic(options.topic);
@@ -95,7 +80,7 @@ export class StageInstanceRouter extends Router {
    */
   modifyStageInstance(
     channelId: Snowflake,
-    options: StageInstanceModify,
+    options: StageInstanceModifyEntity,
     reason?: string,
   ): Promise<StageInstanceEntity> {
     if (options.topic) {

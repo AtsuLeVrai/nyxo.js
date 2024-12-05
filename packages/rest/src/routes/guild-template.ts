@@ -1,27 +1,12 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
-import type { ImageData } from "../types/index.js";
-import { Router } from "./router.js";
+import type {
+  CreateFromTemplateEntity,
+  CreateTemplateEntity,
+  ModifyTemplateEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template-json-params}
- */
-export interface CreateFromTemplate extends Pick<GuildTemplateEntity, "name"> {
-  icon?: ImageData;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-template-json-params}
- */
-export type CreateTemplate = Pick<GuildTemplateEntity, "name" | "description">;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-template#modify-guild-template-json-params}
- */
-export type ModifyTemplate = Partial<
-  Pick<GuildTemplateEntity, "name" | "description">
->;
-
-export class GuildTemplateRouter extends Router {
+export class GuildTemplateRouter extends BaseRouter {
   static routes = {
     templates: "/guilds/templates",
     template: (code: string): `/guilds/templates/${string}` => {
@@ -50,7 +35,7 @@ export class GuildTemplateRouter extends Router {
    */
   createGuildFrom(
     code: string,
-    options: CreateFromTemplate,
+    options: CreateFromTemplateEntity,
   ): Promise<GuildEntity> {
     return this.post(GuildTemplateRouter.routes.template(code), {
       body: JSON.stringify(options),
@@ -69,7 +54,7 @@ export class GuildTemplateRouter extends Router {
    */
   create(
     guildId: Snowflake,
-    options: CreateTemplate,
+    options: CreateTemplateEntity,
   ): Promise<GuildTemplateEntity> {
     return this.post(GuildTemplateRouter.routes.guildTemplates(guildId), {
       body: JSON.stringify(options),
@@ -89,7 +74,7 @@ export class GuildTemplateRouter extends Router {
   modify(
     guildId: Snowflake,
     code: string,
-    options: ModifyTemplate,
+    options: ModifyTemplateEntity,
   ): Promise<GuildTemplateEntity> {
     return this.patch(GuildTemplateRouter.routes.guildTemplate(guildId, code), {
       body: JSON.stringify(options),

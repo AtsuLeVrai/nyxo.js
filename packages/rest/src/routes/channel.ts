@@ -1,102 +1,22 @@
 import type {
   ChannelEntity,
   FollowedChannelEntity,
-  Integer,
   InviteEntity,
-  InviteTargetType,
   MessageEntity,
-  OverwriteEntity,
   Snowflake,
   ThreadMemberEntity,
-  ThreadMetadataEntity,
 } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type {
+  CreateChannelInviteOptionsEntity,
+  EditChannelPermissionsOptionsEntity,
+  GetArchivedThreadsResponseEntity,
+  ModifyChannelOptionsEntity,
+  StartThreadFromMessageOptionsEntity,
+  StartThreadWithoutMessageOptionsEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message-json-params}
- */
-export type StartThreadFromMessageOptions = Pick<
-  ChannelEntity & ThreadMetadataEntity,
-  "auto_archive_duration" | "rate_limit_per_user" | "name"
->;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params}
- */
-export type StartThreadWithoutMessageOptions = Pick<
-  ChannelEntity & ThreadMetadataEntity,
-  | "auto_archive_duration"
-  | "rate_limit_per_user"
-  | "name"
-  | "type"
-  | "invitable"
->;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params}
- */
-export type EditChannelPermissionsOptions = Pick<
-  OverwriteEntity,
-  "type" | "allow" | "deny"
->;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-group-dm}
- * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel}
- * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-thread}
- */
-export type ModifyChannelOptions = Pick<
-  ChannelEntity & ThreadMetadataEntity,
-  | "name"
-  | "icon"
-  | "type"
-  | "position"
-  | "topic"
-  | "nsfw"
-  | "rate_limit_per_user"
-  | "bitrate"
-  | "user_limit"
-  | "permission_overwrites"
-  | "parent_id"
-  | "rtc_region"
-  | "video_quality_mode"
-  | "default_auto_archive_duration"
-  | "flags"
-  | "available_tags"
-  | "default_reaction_emoji"
-  | "default_thread_rate_limit_per_user"
-  | "default_sort_order"
-  | "default_forum_layout"
-  | "applied_tags"
-  | "archived"
-  | "auto_archive_duration"
-  | "locked"
-  | "invitable"
->;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#create-channel-invite-json-params}
- */
-export interface CreateChannelInviteOptions {
-  max_age?: Integer;
-  max_uses?: Integer;
-  temporary?: boolean;
-  unique?: boolean;
-  target_type?: InviteTargetType;
-  target_user_id?: Snowflake;
-  target_application_id?: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads-response-body}
- */
-export interface GetArchivedThreadsResponse {
-  threads: ChannelEntity[];
-  members: ThreadMemberEntity[];
-  has_more: boolean;
-}
-
-export class ChannelRouter extends Router {
+export class ChannelRouter extends BaseRouter {
   static routes = {
     base: (channelId: Snowflake): `/channels/${Snowflake}` => {
       return `/channels/${channelId}` as const;
@@ -180,7 +100,7 @@ export class ChannelRouter extends Router {
    */
   modifyChannel(
     channelId: Snowflake,
-    options: ModifyChannelOptions,
+    options: ModifyChannelOptionsEntity,
   ): Promise<ChannelEntity> {
     return this.patch(ChannelRouter.routes.base(channelId), {
       body: JSON.stringify(options),
@@ -200,7 +120,7 @@ export class ChannelRouter extends Router {
   editChannelPermissions(
     channelId: Snowflake,
     overwriteId: Snowflake,
-    permissions: EditChannelPermissionsOptions,
+    permissions: EditChannelPermissionsOptionsEntity,
   ): Promise<void> {
     return this.put(ChannelRouter.routes.permissions(channelId, overwriteId), {
       body: JSON.stringify(permissions),
@@ -219,7 +139,7 @@ export class ChannelRouter extends Router {
    */
   createChannelInvite(
     channelId: Snowflake,
-    options: CreateChannelInviteOptions = {},
+    options: CreateChannelInviteOptionsEntity = {},
   ): Promise<InviteEntity> {
     return this.post(ChannelRouter.routes.invites(channelId), {
       body: JSON.stringify(options),
@@ -255,7 +175,7 @@ export class ChannelRouter extends Router {
   startThreadFromMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-    options: StartThreadFromMessageOptions,
+    options: StartThreadFromMessageOptionsEntity,
   ): Promise<ChannelEntity> {
     return this.post(
       ChannelRouter.routes.messageThreads(channelId, messageId),
@@ -270,7 +190,7 @@ export class ChannelRouter extends Router {
    */
   startThreadWithoutMessage(
     channelId: Snowflake,
-    options: StartThreadWithoutMessageOptions,
+    options: StartThreadWithoutMessageOptionsEntity,
   ): Promise<ChannelEntity> {
     return this.post(ChannelRouter.routes.threads(channelId), {
       body: JSON.stringify(options),
@@ -320,7 +240,7 @@ export class ChannelRouter extends Router {
    */
   listPublicArchivedThreads(
     channelId: Snowflake,
-  ): Promise<GetArchivedThreadsResponse> {
+  ): Promise<GetArchivedThreadsResponseEntity> {
     return this.get(ChannelRouter.routes.publicArchivedThreads(channelId));
   }
 
@@ -329,7 +249,7 @@ export class ChannelRouter extends Router {
    */
   listPrivateArchivedThreads(
     channelId: Snowflake,
-  ): Promise<GetArchivedThreadsResponse> {
+  ): Promise<GetArchivedThreadsResponseEntity> {
     return this.get(ChannelRouter.routes.privateArchivedThreads(channelId));
   }
 
@@ -338,7 +258,7 @@ export class ChannelRouter extends Router {
    */
   listJoinedPrivateArchivedThreads(
     channelId: Snowflake,
-  ): Promise<GetArchivedThreadsResponse> {
+  ): Promise<GetArchivedThreadsResponseEntity> {
     return this.get(
       ChannelRouter.routes.joinedPrivateArchivedThreads(channelId),
     );

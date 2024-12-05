@@ -1,38 +1,15 @@
 import type {
   ApplicationCommandEntity,
-  ApplicationCommandPermissionEntity,
   GuildApplicationCommandPermissionEntity,
   Snowflake,
 } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type {
+  CreateCommandOptionsEntity,
+  EditCommandPermissionsOptionsEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions-json-params}
- */
-export interface EditCommandPermissionsOptions {
-  permissions: ApplicationCommandPermissionEntity[];
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command-json-params}
- */
-export type CreateCommandOptions = Pick<
-  ApplicationCommandEntity,
-  | "name"
-  | "name_localizations"
-  | "description"
-  | "description_localizations"
-  | "options"
-  | "default_member_permissions"
-  | "dm_permission"
-  | "default_permission"
-  | "integration_types"
-  | "contexts"
-  | "type"
-  | "nsfw"
->;
-
-export class ApplicationCommandRouter extends Router {
+export class ApplicationCommandRouter extends BaseRouter {
   static routes = {
     base: (applicationId: Snowflake): `/applications/${Snowflake}/commands` => {
       return `/applications/${applicationId}/commands` as const;
@@ -88,7 +65,7 @@ export class ApplicationCommandRouter extends Router {
    */
   createGlobalCommand(
     applicationId: Snowflake,
-    options: CreateCommandOptions,
+    options: CreateCommandOptionsEntity,
   ): Promise<ApplicationCommandEntity> {
     return this.post(ApplicationCommandRouter.routes.base(applicationId), {
       body: JSON.stringify(options),
@@ -113,7 +90,7 @@ export class ApplicationCommandRouter extends Router {
   editGlobalCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-    options: Partial<CreateCommandOptions>,
+    options: Partial<CreateCommandOptionsEntity>,
   ): Promise<ApplicationCommandEntity> {
     return this.patch(
       ApplicationCommandRouter.routes.command(applicationId, commandId),
@@ -140,7 +117,7 @@ export class ApplicationCommandRouter extends Router {
    */
   bulkOverwriteGlobalCommands(
     applicationId: Snowflake,
-    commands: CreateCommandOptions[],
+    commands: CreateCommandOptionsEntity[],
   ): Promise<ApplicationCommandEntity[]> {
     return this.put(ApplicationCommandRouter.routes.base(applicationId), {
       body: JSON.stringify(commands),
@@ -169,7 +146,7 @@ export class ApplicationCommandRouter extends Router {
   createGuildCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
-    options: CreateCommandOptions,
+    options: CreateCommandOptionsEntity,
   ): Promise<ApplicationCommandEntity> {
     return this.post(
       ApplicationCommandRouter.routes.guildCommands(applicationId, guildId),
@@ -203,7 +180,7 @@ export class ApplicationCommandRouter extends Router {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: Partial<CreateCommandOptions>,
+    options: Partial<CreateCommandOptionsEntity>,
   ): Promise<ApplicationCommandEntity> {
     return this.patch(
       ApplicationCommandRouter.routes.guildCommand(
@@ -240,7 +217,7 @@ export class ApplicationCommandRouter extends Router {
   bulkOverwriteGuildCommands(
     applicationId: Snowflake,
     guildId: Snowflake,
-    commands: CreateCommandOptions[],
+    commands: CreateCommandOptionsEntity[],
   ): Promise<ApplicationCommandEntity[]> {
     return this.put(
       ApplicationCommandRouter.routes.guildCommands(applicationId, guildId),
@@ -289,7 +266,7 @@ export class ApplicationCommandRouter extends Router {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: EditCommandPermissionsOptions,
+    options: EditCommandPermissionsOptionsEntity,
   ): Promise<GuildApplicationCommandPermissionEntity> {
     return this.put(
       ApplicationCommandRouter.routes.guildCommandPermissions(

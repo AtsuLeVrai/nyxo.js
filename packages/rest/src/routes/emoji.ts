@@ -1,40 +1,13 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
-import type { ImageData } from "../types/index.js";
-import { Router } from "./router.js";
+import type {
+  ApplicationEmojiCreateEntity,
+  ApplicationEmojiModifyEntity,
+  GuildEmojiCreateEntity,
+  GuildEmojiModifyEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params}
- */
-export interface GuildEmojiCreate {
-  name: string;
-  image: ImageData;
-  roles?: Snowflake[];
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji-json-params}
- */
-export interface GuildEmojiModify {
-  name?: string;
-  roles?: Snowflake[] | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji-json-params}
- */
-export interface ApplicationEmojiCreate {
-  name: string;
-  image: ImageData;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params}
- */
-export interface ApplicationEmojiModify {
-  name: string;
-}
-
-export class EmojiRouter extends Router {
+export class EmojiRouter extends BaseRouter {
   static routes = {
     guildEmojis: (guildId: Snowflake): `/guilds/${Snowflake}/emojis` => {
       return `/guilds/${guildId}/emojis` as const;
@@ -77,7 +50,7 @@ export class EmojiRouter extends Router {
    */
   createGuildEmoji(
     guildId: Snowflake,
-    options: GuildEmojiCreate,
+    options: GuildEmojiCreateEntity,
     reason?: string,
   ): Promise<EmojiEntity> {
     return this.post(EmojiRouter.routes.guildEmojis(guildId), {
@@ -92,7 +65,7 @@ export class EmojiRouter extends Router {
   modifyGuildEmoji(
     guildId: Snowflake,
     emojiId: Snowflake,
-    options: GuildEmojiModify,
+    options: GuildEmojiModifyEntity,
     reason?: string,
   ): Promise<EmojiEntity> {
     return this.patch(EmojiRouter.routes.guildEmoji(guildId, emojiId), {
@@ -140,7 +113,7 @@ export class EmojiRouter extends Router {
    */
   createApplicationEmoji(
     applicationId: Snowflake,
-    options: ApplicationEmojiCreate,
+    options: ApplicationEmojiCreateEntity,
   ): Promise<EmojiEntity> {
     return this.post(EmojiRouter.routes.applicationEmojis(applicationId), {
       body: JSON.stringify(options),
@@ -153,7 +126,7 @@ export class EmojiRouter extends Router {
   modifyApplicationEmoji(
     applicationId: Snowflake,
     emojiId: Snowflake,
-    options: ApplicationEmojiModify,
+    options: ApplicationEmojiModifyEntity,
   ): Promise<EmojiEntity> {
     return this.patch(
       EmojiRouter.routes.applicationEmoji(applicationId, emojiId),

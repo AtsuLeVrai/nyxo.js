@@ -1,48 +1,13 @@
+import type { EmbedEntity, Snowflake, WebhookEntity } from "@nyxjs/core";
 import type {
-  AllowedMentionsEntity,
-  AttachmentEntity,
-  EmbedEntity,
-  MessageEntity,
-  Snowflake,
-  WebhookEntity,
-} from "@nyxjs/core";
-import type { FileType, ImageData } from "../types/index.js";
-import { Router } from "./router.js";
+  EditWebhookMessageOptionsEntity,
+  WebhookCreateEntity,
+  WebhookExecuteOptionsEntity,
+  WebhookModifyEntity,
+} from "../types/webhook.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook-json-params}
- */
-export interface WebhookCreate extends Pick<WebhookEntity, "name"> {
-  avatar?: ImageData | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params}
- */
-export interface WebhookModify
-  extends Partial<Pick<WebhookEntity, "name" | "channel_id">> {
-  avatar?: ImageData | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params}
- */
-export interface WebhookExecute
-  extends Pick<
-    MessageEntity,
-    "content" | "tts" | "embeds" | "components" | "flags" | "poll"
-  > {
-  username?: string;
-  avatar_url?: string;
-  allowed_mentions?: AllowedMentionsEntity;
-  files?: FileType[];
-  payload_json?: string;
-  attachments?: Partial<AttachmentEntity>[];
-  thread_name?: string;
-  applied_tags?: Snowflake[];
-}
-
-export class WebhookRouter extends Router {
+export class WebhookRouter extends BaseRouter {
   static readonly NAME_MIN_LENGTH = 1;
   static readonly NAME_MAX_LENGTH = 80;
   static readonly CONTENT_MAX_LENGTH = 2000;
@@ -82,7 +47,7 @@ export class WebhookRouter extends Router {
    */
   createWebhook(
     channelId: Snowflake,
-    options: WebhookCreate,
+    options: WebhookCreateEntity,
     reason?: string,
   ): Promise<WebhookEntity> {
     this.validateWebhookName(options.name);
@@ -129,7 +94,7 @@ export class WebhookRouter extends Router {
    */
   modifyWebhook(
     webhookId: Snowflake,
-    options: WebhookModify,
+    options: WebhookModifyEntity,
     reason?: string,
   ): Promise<WebhookEntity> {
     if (options.name) {
@@ -148,7 +113,7 @@ export class WebhookRouter extends Router {
   modifyWebhookWithToken(
     webhookId: Snowflake,
     token: string,
-    options: Omit<WebhookModify, "channel_id">,
+    options: Omit<WebhookModifyEntity, "channel_id">,
     reason?: string,
   ): Promise<WebhookEntity> {
     if (options.name) {
@@ -192,7 +157,7 @@ export class WebhookRouter extends Router {
   executeWebhook(
     webhookId: Snowflake,
     token: string,
-    options: WebhookExecute & { wait?: boolean; thread_id?: Snowflake },
+    options: WebhookExecuteOptionsEntity,
   ): Promise<WebhookEntity | undefined> {
     this.validateContent(options.content);
     this.validateEmbeds(options.embeds);
@@ -242,7 +207,7 @@ export class WebhookRouter extends Router {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    options: Partial<WebhookExecute> & { thread_id?: Snowflake },
+    options: EditWebhookMessageOptionsEntity,
   ): Promise<WebhookEntity> {
     this.validateContent(options.content);
     this.validateEmbeds(options.embeds);

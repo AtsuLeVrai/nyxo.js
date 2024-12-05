@@ -48,6 +48,7 @@
   "dependencies": {
     "@nyxjs/core": "workspace:*",
     "@nyxjs/store": "workspace:*",
+    "eventemitter3": "^5.0.1",
     "form-data": "^4.0.1",
     "minizlib": "^3.0.1",
     "undici": "^6.21.0"

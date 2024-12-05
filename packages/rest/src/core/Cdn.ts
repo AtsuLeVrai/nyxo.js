@@ -1,50 +1,16 @@
-export const IMAGE_FORMAT = {
-  jpeg: "jpg",
-  jpg: "jpg",
-  png: "png",
-  webp: "webp",
-  gif: "gif",
-  lottie: "json",
-} as const;
-
-export const IMAGE_SIZE = {
-  size16: 16,
-  size32: 32,
-  size64: 64,
-  size128: 128,
-  size256: 256,
-  size512: 512,
-  size1024: 1024,
-  size2048: 2048,
-  size4096: 4096,
-} as const;
-
-export type ImageFormat = (typeof IMAGE_FORMAT)[keyof typeof IMAGE_FORMAT];
-export type ImageSize = (typeof IMAGE_SIZE)[keyof typeof IMAGE_SIZE];
-
-export interface BaseImageOptions {
-  format?: ImageFormat;
-  size?: ImageSize;
-}
-
-export interface AnimatedImageOptions extends BaseImageOptions {
-  animated?: boolean;
-}
-
-interface SignedAttachmentParameters {
-  ex: string;
-  is: string;
-  hm: string;
-}
-
-interface AttachmentOptions extends BaseImageOptions {
-  signedParameters?: SignedAttachmentParameters;
-}
-
-interface StickerFormatOptions {
-  format: "png" | "lottie" | "gif";
-  useMediaUrl?: boolean;
-}
+import type { Integer, Snowflake } from "@nyxjs/core";
+import {
+  type AnimatedImageOptionsEntity,
+  type AttachmentOptionsEntity,
+  type BaseImageOptionsEntity,
+  type CdnEntity,
+  IMAGE_FORMAT,
+  IMAGE_SIZE,
+  type ImageFormat,
+  type ImageSize,
+  type SignedAttachmentParametersEntity,
+  type StickerFormatOptionsEntity,
+} from "../types/index.js";
 
 const BASE_URL = "https://cdn.discordapp.com";
 const MEDIA_URL = "https://media.discordapp.net";
@@ -52,7 +18,7 @@ const DEFAULT_FORMAT: ImageFormat = "png";
 const VALID_FORMATS: Set<string> = new Set(Object.values(IMAGE_FORMAT));
 const VALID_SIZES: Set<number> = new Set(Object.values(IMAGE_SIZE));
 
-function validateId(id: string | number, name = "ID"): string {
+function validateId(id: Snowflake | number, name = "ID"): string {
   const stringId = id.toString();
   if (!/^\d+$/.test(stringId)) {
     throw new Error(`Invalid ${name}: ${id}`);
@@ -88,7 +54,7 @@ function isAnimated(hash: string): boolean {
 
 function buildUrl(
   parts: string[],
-  options?: BaseImageOptions,
+  options?: BaseImageOptionsEntity,
   baseUrl: string = BASE_URL,
 ): string {
   if (options) {
@@ -106,19 +72,22 @@ function buildUrl(
   return url.toString();
 }
 
-function getExtension(hash: string, options?: AnimatedImageOptions): string {
+function getExtension(
+  hash: string,
+  options?: AnimatedImageOptionsEntity,
+): string {
   if ((isAnimated(hash) || options?.animated) && !options?.format) {
     return "gif";
   }
   return options?.format ?? DEFAULT_FORMAT;
 }
 
-export const Cdn = {
+export const Cdn: CdnEntity = {
   attachment(
-    channelId: string | number,
-    attachmentId: string | number,
+    channelId: Snowflake | number,
+    attachmentId: Snowflake | number,
     filename: string,
-    options?: AttachmentOptions,
+    options?: AttachmentOptionsEntity,
   ): string {
     const cId = validateId(channelId, "Channel ID");
     const aId = validateId(attachmentId, "Attachment ID");
@@ -150,7 +119,7 @@ export const Cdn = {
     return discrim % 5;
   },
 
-  getNewSystemAvatarIndex(userId: string): number {
+  getNewSystemAvatarIndex(userId: Snowflake): number {
     return Number((BigInt(userId) >> 22n) % 6n);
   },
 
@@ -161,16 +130,19 @@ export const Cdn = {
     ) as ImageSize;
   },
 
-  emoji(emojiId: string | number, options?: AnimatedImageOptions): string {
+  emoji(
+    emojiId: Snowflake | number,
+    options?: AnimatedImageOptionsEntity,
+  ): string {
     const id = validateId(emojiId, "Emoji ID");
     const extension = options?.animated ? "gif" : getExtension("", options);
     return buildUrl(["emojis", `${id}.${extension}`], options);
   },
 
   guildIcon(
-    guildId: string | number,
+    guildId: Snowflake | number,
     hash: string,
-    options?: AnimatedImageOptions,
+    options?: AnimatedImageOptionsEntity,
   ): string {
     const id = validateId(guildId, "Guild ID");
     validateHash(hash);
@@ -179,9 +151,9 @@ export const Cdn = {
   },
 
   guildSplash(
-    guildId: string | number,
+    guildId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(guildId, "Guild ID");
     validateHash(hash);
@@ -192,9 +164,9 @@ export const Cdn = {
   },
 
   guildDiscoverySplash(
-    guildId: string | number,
+    guildId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(guildId, "Guild ID");
     validateHash(hash);
@@ -209,9 +181,9 @@ export const Cdn = {
   },
 
   userAvatar(
-    userId: string | number,
+    userId: Snowflake | number,
     hash: string,
-    options?: AnimatedImageOptions,
+    options?: AnimatedImageOptionsEntity,
   ): string {
     const id = validateId(userId, "User ID");
     validateHash(hash);
@@ -225,9 +197,9 @@ export const Cdn = {
   },
 
   userBanner(
-    userId: string | number,
+    userId: Snowflake | number,
     hash: string,
-    options?: AnimatedImageOptions,
+    options?: AnimatedImageOptionsEntity,
   ): string {
     const id = validateId(userId, "User ID");
     validateHash(hash);
@@ -236,10 +208,10 @@ export const Cdn = {
   },
 
   guildMemberAvatar(
-    guildId: string | number,
-    userId: string | number,
+    guildId: Snowflake | number,
+    userId: Snowflake | number,
     hash: string,
-    options?: AnimatedImageOptions,
+    options?: AnimatedImageOptionsEntity,
   ): string {
     const gId = validateId(guildId, "Guild ID");
     const uId = validateId(userId, "User ID");
@@ -252,10 +224,10 @@ export const Cdn = {
   },
 
   guildMemberBanner(
-    guildId: string | number,
-    userId: string | number,
+    guildId: Snowflake | number,
+    userId: Snowflake | number,
     hash: string,
-    options?: AnimatedImageOptions,
+    options?: AnimatedImageOptionsEntity,
   ): string {
     const gId = validateId(guildId, "Guild ID");
     const uId = validateId(userId, "User ID");
@@ -268,9 +240,9 @@ export const Cdn = {
   },
 
   applicationIcon(
-    applicationId: string | number,
+    applicationId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(applicationId, "Application ID");
     validateHash(hash);
@@ -281,9 +253,9 @@ export const Cdn = {
   },
 
   applicationCover(
-    applicationId: string | number,
+    applicationId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(applicationId, "Application ID");
     validateHash(hash);
@@ -294,9 +266,9 @@ export const Cdn = {
   },
 
   applicationAsset(
-    applicationId: string | number,
+    applicationId: Snowflake | number,
     assetId: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(applicationId, "Application ID");
     return buildUrl(
@@ -306,10 +278,10 @@ export const Cdn = {
   },
 
   achievementIcon(
-    applicationId: string | number,
-    achievementId: string | number,
+    applicationId: Snowflake | number,
+    achievementId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const appId = validateId(applicationId, "Application ID");
     const achId = validateId(achievementId, "Achievement ID");
@@ -328,9 +300,9 @@ export const Cdn = {
   },
 
   storePageAsset(
-    applicationId: string | number,
-    assetId: string,
-    options?: BaseImageOptions,
+    applicationId: Snowflake | number,
+    assetId: Snowflake,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(applicationId, "Application ID");
     return buildUrl(
@@ -345,8 +317,8 @@ export const Cdn = {
   },
 
   stickerPackBanner(
-    bannerAssetId: string | number,
-    options?: BaseImageOptions,
+    bannerAssetId: Snowflake | number,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(bannerAssetId, "Banner Asset ID");
     return buildUrl(
@@ -361,9 +333,9 @@ export const Cdn = {
   },
 
   teamIcon(
-    teamId: string | number,
+    teamId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(teamId, "Team ID");
     validateHash(hash);
@@ -373,7 +345,10 @@ export const Cdn = {
     );
   },
 
-  sticker(stickerId: string | number, options?: StickerFormatOptions): string {
+  sticker(
+    stickerId: Snowflake | number,
+    options?: StickerFormatOptionsEntity,
+  ): string {
     const id = validateId(stickerId, "Sticker ID");
     const format = options?.format || "png";
 
@@ -381,7 +356,7 @@ export const Cdn = {
       return buildUrl(["stickers", `${id}.gif`], undefined, MEDIA_URL);
     }
 
-    if (format === "lottie") {
+    if (format === "json") {
       return buildUrl(["stickers", `${id}.json`]);
     }
 
@@ -389,9 +364,9 @@ export const Cdn = {
   },
 
   roleIcon(
-    roleId: string | number,
+    roleId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(roleId, "Role ID");
     validateHash(hash);
@@ -402,9 +377,9 @@ export const Cdn = {
   },
 
   guildScheduledEventCover(
-    eventId: string | number,
+    eventId: Snowflake | number,
     hash: string,
-    options?: BaseImageOptions,
+    options?: BaseImageOptionsEntity,
   ): string {
     const id = validateId(eventId, "Event ID");
     validateHash(hash);
@@ -414,7 +389,7 @@ export const Cdn = {
     );
   },
 
-  avatarDecoration(assetId: string | number): string {
+  avatarDecoration(assetId: Snowflake | Integer): string {
     const id = validateId(assetId, "Asset ID");
     return buildUrl(["avatar-decoration-presets", `${id}.png`]);
   },
@@ -423,7 +398,7 @@ export const Cdn = {
     expirationTimestamp: number,
     issuedTimestamp: number,
     signature: string,
-  ): SignedAttachmentParameters {
+  ): SignedAttachmentParametersEntity {
     return {
       ex: expirationTimestamp.toString(16),
       is: issuedTimestamp.toString(16),
@@ -456,7 +431,9 @@ export const Cdn = {
     }
   },
 
-  extractSignedParameters(url: string): SignedAttachmentParameters | null {
+  extractSignedParameters(
+    url: string,
+  ): SignedAttachmentParametersEntity | null {
     const parsedUrl = new URL(url);
     const ex = parsedUrl.searchParams.get("ex");
     const is = parsedUrl.searchParams.get("is");

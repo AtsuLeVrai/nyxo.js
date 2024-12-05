@@ -4,47 +4,18 @@ import type {
   ConnectionEntity,
   GuildEntity,
   GuildMemberEntity,
-  Integer,
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
-import type { ImageData } from "../types/index.js";
-import { Router } from "./router.js";
+import type {
+  CreateDmOptionsEntity,
+  CreateGroupDmOptionsEntity,
+  GetUserGuildQueryEntity,
+  ModifyUserOptionsEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params}
- */
-export interface GetUserGuildQuery {
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: Integer;
-  with_counts?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
- */
-export interface ModifyUserOptions extends Pick<UserEntity, "username"> {
-  avatar?: ImageData | null;
-  banner?: ImageData | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#create-dm-json-params}
- */
-export interface CreateDmOptions {
-  recipient_id: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params}
- */
-export interface CreateGroupDmOptions {
-  access_tokens: string[];
-  nicks: Record<Snowflake, string>;
-}
-
-export class UserRouter extends Router {
+export class UserRouter extends BaseRouter {
   static readonly routes = {
     base: "/users",
     me: "/users/@me",
@@ -96,7 +67,7 @@ export class UserRouter extends Router {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
-  modifyCurrentUser(options: ModifyUserOptions): Promise<UserEntity> {
+  modifyCurrentUser(options: ModifyUserOptionsEntity): Promise<UserEntity> {
     if (options.username) {
       const username = options.username.trim();
       if (
@@ -129,7 +100,9 @@ export class UserRouter extends Router {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
-  getCurrentUserGuilds(query?: GetUserGuildQuery): Promise<GuildEntity[]> {
+  getCurrentUserGuilds(
+    query?: GetUserGuildQueryEntity,
+  ): Promise<GuildEntity[]> {
     if (
       query?.limit &&
       (query.limit < 1 || query.limit > UserRouter.GUILDS_LIMIT_MAX)
@@ -161,7 +134,7 @@ export class UserRouter extends Router {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
-  createDm(options: CreateDmOptions): Promise<ChannelEntity> {
+  createDm(options: CreateDmOptionsEntity): Promise<ChannelEntity> {
     return this.post(UserRouter.routes.channels, {
       body: JSON.stringify(options),
     });
@@ -170,7 +143,7 @@ export class UserRouter extends Router {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
-  createGroupDm(options: CreateGroupDmOptions): Promise<ChannelEntity> {
+  createGroupDm(options: CreateGroupDmOptionsEntity): Promise<ChannelEntity> {
     // Group DM limit is enforced by Discord but we add the validation here too
     if (options.access_tokens.length > UserRouter.GROUP_DM_MAX) {
       throw new Error(

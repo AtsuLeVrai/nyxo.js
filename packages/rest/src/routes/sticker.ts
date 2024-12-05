@@ -1,24 +1,11 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
-import type { FileType } from "../types/index.js";
-import { Router } from "./router.js";
+import type {
+  StickerCreateEntity,
+  StickerModifyEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker-form-params}
- */
-export interface StickerCreate
-  extends Pick<StickerEntity, "name" | "description" | "tags"> {
-  file: FileType;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params}
- */
-export type StickerModify = Pick<
-  StickerEntity,
-  "name" | "description" | "tags"
->;
-
-export class StickerRouter extends Router {
+export class StickerRouter extends BaseRouter {
   static readonly NAME_MIN_LENGTH = 2;
   static readonly NAME_MAX_LENGTH = 30;
   static readonly DESCRIPTION_MIN_LENGTH = 2;
@@ -122,7 +109,7 @@ export class StickerRouter extends Router {
    */
   createGuildSticker(
     guildId: Snowflake,
-    options: StickerCreate,
+    options: StickerCreateEntity,
     reason?: string,
   ): Promise<StickerEntity> {
     this.validateName(options.name);
@@ -141,7 +128,7 @@ export class StickerRouter extends Router {
   modifyGuildSticker(
     guildId: Snowflake,
     stickerId: Snowflake,
-    options: StickerModify,
+    options: StickerModifyEntity,
     reason?: string,
   ): Promise<StickerEntity> {
     if (options.name) {

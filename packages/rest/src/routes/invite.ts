@@ -1,20 +1,8 @@
-import type {
-  InviteEntity,
-  InviteMetadataEntity,
-  Snowflake,
-} from "@nyxjs/core";
-import { Router } from "./router.js";
+import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
+import type { GetInviteQueryEntity } from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}
- */
-export interface GetInviteQuery {
-  with_counts?: boolean;
-  with_expiration?: boolean;
-  guild_scheduled_event_id?: Snowflake;
-}
-
-export class InviteRouter extends Router {
+export class InviteRouter extends BaseRouter {
   static routes = {
     base: "/invites",
     invite: (code: string): `/invites/${string}` => {
@@ -27,7 +15,7 @@ export class InviteRouter extends Router {
    */
   getInvite(
     code: string,
-    query?: GetInviteQuery,
+    query?: GetInviteQueryEntity,
   ): Promise<InviteEntity & InviteMetadataEntity> {
     return this.get(InviteRouter.routes.invite(code), {
       query,

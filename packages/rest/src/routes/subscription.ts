@@ -1,17 +1,8 @@
-import type { Integer, Snowflake, SubscriptionEntity } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
+import type { SubscriptionQueryEntity } from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions}
- */
-export interface SubscriptionQuery {
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: Integer;
-  user_id?: Snowflake;
-}
-
-export class SubscriptionRouter extends Router {
+export class SubscriptionRouter extends BaseRouter {
   static readonly DEFAULT_LIMIT = 50;
   static readonly MAX_LIMIT = 100;
   static readonly MIN_LIMIT = 1;
@@ -36,7 +27,7 @@ export class SubscriptionRouter extends Router {
    */
   listSkuSubscriptions(
     skuId: Snowflake,
-    query?: SubscriptionQuery,
+    query?: SubscriptionQueryEntity,
   ): Promise<SubscriptionEntity[]> {
     if (
       query?.limit &&

@@ -1,37 +1,11 @@
-import type { EntitlementEntity, Integer, Snowflake } from "@nyxjs/core";
-import { Router } from "./router.js";
+import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
+import type {
+  CreateTestEntitlementEntity,
+  ListEntitlementQueryEntity,
+} from "../types/index.js";
+import { BaseRouter } from "./base.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
- */
-export interface ListEntitlementQuery {
-  user_id?: Snowflake;
-  sku_ids?: string;
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: Integer;
-  guild_id?: Snowflake;
-  exclude_ended?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
- */
-export enum EntitlementOwnerType {
-  Guild = 1,
-  User = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
- */
-interface CreateTestEntitlement {
-  sku_id: string;
-  owner_id: string;
-  owner_type: EntitlementOwnerType;
-}
-
-export class EntitlementRouter extends Router {
+export class EntitlementRouter extends BaseRouter {
   static routes = {
     entitlements: (
       applicationId: Snowflake,
@@ -57,7 +31,7 @@ export class EntitlementRouter extends Router {
    */
   list(
     applicationId: Snowflake,
-    query?: ListEntitlementQuery,
+    query?: ListEntitlementQueryEntity,
   ): Promise<EntitlementEntity[]> {
     return this.get(EntitlementRouter.routes.entitlements(applicationId), {
       query,
@@ -78,7 +52,7 @@ export class EntitlementRouter extends Router {
    */
   createTest(
     applicationId: Snowflake,
-    test: CreateTestEntitlement,
+    test: CreateTestEntitlementEntity,
   ): Promise<EntitlementEntity> {
     return this.post(EntitlementRouter.routes.entitlements(applicationId), {
       body: JSON.stringify(test),

@@ -1,9 +1,9 @@
-export enum AuthType {
+export enum AuthTypeFlag {
   Bot = "Bot",
   Bearer = "Bearer",
 }
 
-export enum HttpMethod {
+export enum HttpMethodFlag {
   Get = "GET",
   Post = "POST",
   Put = "PUT",
