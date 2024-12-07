@@ -3,6 +3,7 @@
 ## 1. Interfaces and Classes
 
 ### Main Pattern - Entity and Implementation
+
 ```typescript
 // Data interface (Entity)
 interface UserEntity {
@@ -21,8 +22,10 @@ class User implements UserEntity {
 ```
 
 ### Interface Rules
+
 - Use `Entity` suffix for pure data interfaces
 - Keep simple names for behavioral interfaces
+
 ```typescript
 // Data interface
 interface MessageEntity { ... }
@@ -34,8 +37,10 @@ interface Sendable {
 ```
 
 ### Class Rules
+
 - No prefix/suffix for main implementations
 - `Base` prefix for abstract classes
+
 ```typescript
 // Concrete classes
 class User { ... }
@@ -49,9 +54,10 @@ abstract class BaseHandler { ... }
 ## 2. Types
 
 ### Simple Types
+
 ```typescript
 // Custom primitive types
-type Snowflake = string;
+type SnowflakeManager = string;
 type Integer = number;
 
 // Union types
@@ -60,6 +66,7 @@ type ConnectionStatus = 'online' | 'offline' | 'away';
 ```
 
 ### Generic Types
+
 ```typescript
 // Descriptive suffix for use case
 type BitFieldResolvable<T> = T | bigint | string;
@@ -72,8 +79,10 @@ type DataWrapper<T> = {
 ## 3. Enums
 
 ### Flags (Bit Collections)
+
 - Use `Flags` suffix for bit enums
 - Singular names for each flag
+
 ```typescript
 enum PermissionFlags {
     CreateInstantInvite = 1 << 0,
@@ -83,8 +92,10 @@ enum PermissionFlags {
 ```
 
 ### States and Types
+
 - No suffix for state/type enums
 - Descriptive names
+
 ```typescript
 enum Premium {
     None,
@@ -102,13 +113,18 @@ enum ConnectionVisibility {
 ## 4. Functions
 
 ### Formatting
+
 ```typescript
 // 'format' prefix for formatting functions
-function formatUser(userId: Snowflake): string { ... }
-function formatTimestamp(date: Date): string { ... }
+function formatUser(userId: SnowflakeManager): string { ...
+}
+
+function formatTimestamp(date: Date): string { ...
+}
 ```
 
 ### Validation
+
 ```typescript
 // 'is' prefix for validation functions
 function isValidSnowflake(value: string): boolean { ... }
@@ -116,47 +132,64 @@ function isExpired(timestamp: number): boolean { ... }
 ```
 
 ### Utilities
+
 ```typescript
 // Action verbs for utilities
-function parseSnowflake(snowflake: Snowflake): Date { ... }
-function calculatePermissions(flags: PermissionFlags[]): bigint { ... }
+function parseSnowflake(snowflake: SnowflakeManager): Date { ...
+}
+
+function calculatePermissions(flags: PermissionFlags[]): bigint { ...
+}
 ```
 
 ## 5. Managers
 
 ### Management Classes
+
 - `Manager` suffix for management classes
+
 ```typescript
 class BitFieldManager<T> { ... }
 class CacheManager { ... }
 ```
 
 ### Collections and Registries
+
 - `Registry` suffix for registries
 - `Collection` suffix for specialized collections
+
 ```typescript
-class CommandRegistry { ... }
-class UserCollection extends Collection<Snowflake, User> { ... }
+class CommandRegistry {
+...
+}
+
+class UserCollection extends Collection<SnowflakeManager, User> {
+...
+}
 ```
 
 ## 6. General Best Practices
 
 ### Casing
+
 - `PascalCase` for types, interfaces, classes, and enums
 - `camelCase` for functions, methods, and properties
 - `SCREAMING_SNAKE_CASE` for constants
 
 ### Prefixes to Avoid
+
 - ❌ `I` for interfaces
 - ❌ `T` for types (except generics)
 - ❌ `E` for enums
 
 ### Suffixes to Use Sparingly
+
 - `Entity` only for data interfaces
 - `Manager` only for management classes
 - `Factory` only for object creation classes
 
 ### Documentation
+
 ```typescript
 /**
  * Interface description
@@ -164,7 +197,7 @@ class UserCollection extends Collection<Snowflake, User> { ... }
  */
 interface MessageEntity {
     /** Unique message identifier */
-    id: Snowflake;
+    id: SnowflakeManager;
     /** Message content */
     content: string;
 }
@@ -173,6 +206,7 @@ interface MessageEntity {
 ## 7. Imports and Exports
 
 ### Organization
+
 ```typescript
 // Named exports for types and interfaces
 export interface UserEntity { ... }
@@ -183,6 +217,7 @@ export default class User { ... }
 ```
 
 ### Grouping
+
 ```typescript
 // index.ts for grouping exports
 export * from './entities/index.js';
@@ -193,6 +228,7 @@ export { default as User } from './User.js';
 ## 8. File Structure
 
 ### File Organization
+
 - One class/interface per file (when possible)
 - Group related functionality in directories
 - Use `index.ts` files for exports
@@ -201,9 +237,11 @@ export { default as User } from './User.js';
 ## 9. Additional Tips
 
 ### Type Safety
+
 - Prefer interfaces for public APIs
 - Use type aliases for complex types
 - Leverage union types for better type safety
+
 ```typescript
 // Good
 type Status = 'pending' | 'success' | 'error';
@@ -213,8 +251,10 @@ type Status = string;
 ```
 
 ### Nullable Properties
+
 - Be explicit about nullable properties
 - Use optional chaining when appropriate
+
 ```typescript
 interface UserProfile {
     name: string;            // Required
@@ -224,12 +264,14 @@ interface UserProfile {
 ```
 
 ### Generic Naming
+
 - Use descriptive names for generics
 - Common conventions:
     - `T` for generic type
     - `K` for keys
     - `V` for values
     - `E` for elements
+
 ```typescript
 interface Dictionary<K extends string, V> {
     get(key: K): V | undefined;
