@@ -1,5 +1,32 @@
 import type { ApiVersion } from "@nyxjs/core";
-import type { Dispatcher } from "undici";
+import type { Dispatcher, Pool, ProxyAgent } from "undici";
+import type {
+  ApplicationCommandRouter,
+  ApplicationConnectionRouter,
+  ApplicationRouter,
+  AuditLogRouter,
+  AutoModerationRouter,
+  ChannelRouter,
+  EmojiRouter,
+  EntitlementRouter,
+  GatewayRouter,
+  GuildRouter,
+  GuildTemplateRouter,
+  InteractionRouter,
+  InviteRouter,
+  MessageRouter,
+  OAuth2Router,
+  PollRouter,
+  ScheduledEventRouter,
+  SkuRouter,
+  SoundboardRouter,
+  StageInstanceRouter,
+  StickerRouter,
+  SubscriptionRouter,
+  UserRouter,
+  VoiceRouter,
+  WebhookRouter,
+} from "../routes/index.js";
 import type {
   AuthTypeFlag,
   HttpMethodFlag,
@@ -67,53 +94,98 @@ export interface RouteEntity
 
 export interface RestOptionsEntity {
   token: string;
-  version: ApiVersion.V10;
-  authType: AuthTypeFlag;
+  version?: ApiVersion.V10;
+  /**
+   * @default {@link AuthTypeFlag.Bot}
+   */
+  authType?: AuthTypeFlag;
   userAgent?: DiscordUserAgent;
   compress?: boolean;
+  maxRetries?: number;
+  baseRetryDelay?: number;
+  timeout?: number;
+  rateLimitRetryLimit?: number;
+  maxConcurrentRequests?: number;
+  proxy?: ProxyAgent.Options;
+  pool?: Pool.Options;
 }
 
 export interface RestEventMap {
   debug: [message: string];
   warn: [message: string];
   error: [error: Error];
-  apiRequest: [ApiRequestEventData];
-  rateLimitHit: [RateLimitHitEventData];
+  apiRequest: [data: ApiRequestEventEntity];
+  rateLimitHit: [data: RateLimitHitEventEntity];
+  requestRetry: [data: RequestRetryEventEntity];
+  responseReceived: [data: ResponseReceivedEventEntity];
+  proxyUpdate: [data: NonNullable<RestOptionsEntity["proxy"]> | null];
 }
 
-export interface ApiRequestEventData {
+export interface ApiRequestEventEntity {
   method: HttpMethodFlag;
   path: string;
   status: number;
   responseTime: number;
+  attempt: number;
 }
 
-export interface RateLimitHitEventData {
+export interface RateLimitHitEventEntity {
   bucket: string;
   resetAfter: number;
   limit: number;
   scope: RateLimitScope;
 }
 
-export interface BatchRequestOptions<T> {
-  requests: Array<{
-    method: HttpMethodFlag;
-    path: PathLike;
-    options?: Omit<RouteEntity, "method" | "path">;
-  }>;
-  concurrency?: number;
-  abortOnError?: boolean;
-  onProgress?: (completed: number, total: number, result?: T) => void;
+export interface RequestRetryEventEntity {
+  error: Error;
+  attempt: number;
+  maxAttempts: number;
 }
 
-export interface BatchRequestResult<T> {
-  results: (T | Error)[];
-  successful: T[];
-  failed: Error[];
-  timings: {
-    total: number;
-    average: number;
-    fastest: number;
-    slowest: number;
-  };
+export interface ResponseReceivedEventEntity {
+  method: HttpMethodFlag;
+  path: string;
+  status: number;
+  headers: Record<string, string | string[] | undefined>;
 }
+
+export interface StatsEventEntity {
+  activeRequests: number;
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  bucketSize: number;
+  globalRateLimit: number | null;
+  lastRequestTime: number | null;
+  successRate: number;
+}
+
+export type RouterDefinitions = {
+  applications: ApplicationRouter;
+  commands: ApplicationCommandRouter;
+  connections: ApplicationConnectionRouter;
+  auditLogs: AuditLogRouter;
+  autoModeration: AutoModerationRouter;
+  channels: ChannelRouter;
+  emojis: EmojiRouter;
+  entitlements: EntitlementRouter;
+  gateway: GatewayRouter;
+  guilds: GuildRouter;
+  templates: GuildTemplateRouter;
+  interactions: InteractionRouter;
+  invites: InviteRouter;
+  messages: MessageRouter;
+  oauth2: OAuth2Router;
+  polls: PollRouter;
+  scheduledEvents: ScheduledEventRouter;
+  skus: SkuRouter;
+  soundboards: SoundboardRouter;
+  stages: StageInstanceRouter;
+  stickers: StickerRouter;
+  subscriptions: SubscriptionRouter;
+  users: UserRouter;
+  voice: VoiceRouter;
+  webhooks: WebhookRouter;
+};
+
+export type RouterKey = keyof RouterDefinitions;

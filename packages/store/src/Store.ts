@@ -471,8 +471,9 @@ export class Store<K, V> extends Map<K, V> {
   ): ToReturnType<K, V, F, typeof options> {
     const array = this.#getArray();
     switch (format) {
-      case "array":
+      case "array": {
         return array as ToReturnType<K, V, F, typeof options>;
+      }
 
       case "object": {
         const obj: Record<string, V> = {};
@@ -482,8 +483,9 @@ export class Store<K, V> extends Map<K, V> {
         return obj as ToReturnType<K, V, F, typeof options>;
       }
 
-      case "map":
+      case "map": {
         return new Map(this) as ToReturnType<K, V, F, typeof options>;
+      }
 
       case "set": {
         if (options?.property) {
@@ -494,16 +496,18 @@ export class Store<K, V> extends Map<K, V> {
         return new Set(array) as ToReturnType<K, V, F, typeof options>;
       }
 
-      case "pairs":
+      case "pairs": {
         return Array.from(this.entries()) as ToReturnType<
           K,
           V,
           F,
           typeof options
         >;
+      }
 
-      default:
+      default: {
         throw new Error(`Invalid format: ${format}`);
+      }
     }
   }
 
