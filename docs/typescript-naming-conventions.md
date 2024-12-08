@@ -13,8 +13,9 @@ interface UserEntity {
 
 // Implementation class (Business Logic)
 class User implements UserEntity {
-    constructor(private data: UserEntity) {}
-    
+    constructor(private data: UserEntity) {
+    }
+
     getDisplayName(): string {
         return this.data.username;
     }
@@ -28,7 +29,9 @@ class User implements UserEntity {
 
 ```typescript
 // Data interface
-interface MessageEntity { ... }
+interface MessageEntity {
+    ...
+}
 
 // Behavioral interface
 interface Sendable {
@@ -43,12 +46,22 @@ interface Sendable {
 
 ```typescript
 // Concrete classes
-class User { ... }
-class Message { ... }
+class User {
+...
+}
+
+class Message {
+...
+}
 
 // Abstract classes
-abstract class BaseCommand { ... }
-abstract class BaseHandler { ... }
+abstract class BaseCommand {
+...
+}
+
+abstract class BaseHandler {
+...
+}
 ```
 
 ## 2. Types
@@ -57,7 +70,7 @@ abstract class BaseHandler { ... }
 
 ```typescript
 // Custom primitive types
-type SnowflakeManager = string;
+type Snowflake = string;
 type Integer = number;
 
 // Union types
@@ -116,7 +129,7 @@ enum ConnectionVisibility {
 
 ```typescript
 // 'format' prefix for formatting functions
-function formatUser(userId: SnowflakeManager): string { ...
+function formatUser(userId: Snowflake): string { ...
 }
 
 function formatTimestamp(date: Date): string { ...
@@ -127,15 +140,18 @@ function formatTimestamp(date: Date): string { ...
 
 ```typescript
 // 'is' prefix for validation functions
-function isValidSnowflake(value: string): boolean { ... }
-function isExpired(timestamp: number): boolean { ... }
+function isValidSnowflake(value: string): boolean { ...
+}
+
+function isExpired(timestamp: number): boolean { ...
+}
 ```
 
 ### Utilities
 
 ```typescript
 // Action verbs for utilities
-function parseSnowflake(snowflake: SnowflakeManager): Date { ...
+function parseSnowflake(snowflake: Snowflake): Date { ...
 }
 
 function calculatePermissions(flags: PermissionFlags[]): bigint { ...
@@ -149,8 +165,13 @@ function calculatePermissions(flags: PermissionFlags[]): bigint { ...
 - `Manager` suffix for management classes
 
 ```typescript
-class BitFieldManager<T> { ... }
-class CacheManager { ... }
+class BitFieldManager<T> {
+...
+}
+
+class CacheManager {
+...
+}
 ```
 
 ### Collections and Registries
@@ -163,7 +184,7 @@ class CommandRegistry {
 ...
 }
 
-class UserCollection extends Collection<SnowflakeManager, User> {
+class UserCollection extends Collection<Snowflake, User> {
 ...
 }
 ```
@@ -197,7 +218,7 @@ class UserCollection extends Collection<SnowflakeManager, User> {
  */
 interface MessageEntity {
     /** Unique message identifier */
-    id: SnowflakeManager;
+    id: Snowflake;
     /** Message content */
     content: string;
 }
@@ -209,11 +230,16 @@ interface MessageEntity {
 
 ```typescript
 // Named exports for types and interfaces
-export interface UserEntity { ... }
+export interface UserEntity {
+    ...
+}
+
 export type UserRole = 'admin' | 'user';
 
 // Default export for the main class of the file
-export default class User { ... }
+export default class User {
+...
+}
 ```
 
 ### Grouping
@@ -222,7 +248,7 @@ export default class User { ... }
 // index.ts for grouping exports
 export * from './entities/index.js';
 export * from './managers/index.js';
-export { default as User } from './User.js';
+export {default as User} from './User.js';
 ```
 
 ## 8. File Structure
@@ -275,6 +301,7 @@ interface UserProfile {
 ```typescript
 interface Dictionary<K extends string, V> {
     get(key: K): V | undefined;
+
     set(key: K, value: V): void;
 }
 ```
