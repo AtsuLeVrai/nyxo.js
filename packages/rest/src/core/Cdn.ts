@@ -64,7 +64,7 @@ function buildUrl(
 
   const url = new URL(parts.join("/"), baseUrl);
 
-  // biome-ignore lint/style/useExplicitLengthCheck: <explanation>
+  // biome-ignore lint/style/useExplicitLengthCheck: problem with the type checker
   if (options?.size && options.size > 0) {
     url.searchParams.set("size", options.size.toString());
   }

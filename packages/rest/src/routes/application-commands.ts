@@ -9,43 +9,71 @@ import type {
 } from "../types/index.js";
 import { BaseRouter } from "./base.js";
 
+export interface ApplicationCommandRoutes {
+  readonly base: (
+    applicationId: Snowflake,
+  ) => `/applications/${Snowflake}/commands`;
+  readonly command: (
+    applicationId: Snowflake,
+    commandId: Snowflake,
+  ) => `/applications/${Snowflake}/commands/${Snowflake}`;
+  readonly guildCommands: (
+    applicationId: Snowflake,
+    guildId: Snowflake,
+  ) => `/applications/${Snowflake}/guilds/${Snowflake}/commands`;
+  readonly guildCommand: (
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commandId: Snowflake,
+  ) => `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}`;
+  readonly guildCommandsPermissions: (
+    applicationId: Snowflake,
+    guildId: Snowflake,
+  ) => `/applications/${Snowflake}/guilds/${Snowflake}/commands/permissions`;
+  readonly guildCommandPermissions: (
+    applicationId: Snowflake,
+    guildId: Snowflake,
+    commandId: Snowflake,
+  ) => `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}/permissions`;
+}
+
 export class ApplicationCommandRouter extends BaseRouter {
-  static routes = {
-    base: (applicationId: Snowflake): `/applications/${Snowflake}/commands` => {
-      return `/applications/${applicationId}/commands` as const;
-    },
-    command: (
-      applicationId: Snowflake,
-      commandId: Snowflake,
-    ): `/applications/${Snowflake}/commands/${Snowflake}` => {
-      return `/applications/${applicationId}/commands/${commandId}` as const;
-    },
-    guildCommands: (
-      applicationId: Snowflake,
-      guildId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands` => {
-      return `/applications/${applicationId}/guilds/${guildId}/commands` as const;
-    },
+  static readonly MAX_OPTIONS_PER_COMMAND = 25;
+  static readonly MAX_NAME_LENGTH = 32;
+  static readonly MAX_DESCRIPTION_LENGTH = 100;
+  static readonly MAX_CHOICES_PER_OPTION = 25;
+  static readonly MAX_PERMISSION_OVERWRITES = 100;
+  static readonly BULK_COMMAND_CREATE_LIMIT = 200;
+  static readonly MIN_NAME_CHARACTERS_LENGTH = 1;
+  static readonly MIN_DESCRIPTION_CHARACTERS_LENGTH = 1;
+  static readonly NAME_REGEX = /^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u;
+
+  static readonly ROUTES: ApplicationCommandRoutes = {
+    base: (applicationId: Snowflake) =>
+      `/applications/${applicationId}/commands` as const,
+
+    command: (applicationId: Snowflake, commandId: Snowflake) =>
+      `/applications/${applicationId}/commands/${commandId}` as const,
+
+    guildCommands: (applicationId: Snowflake, guildId: Snowflake) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands` as const,
+
     guildCommand: (
       applicationId: Snowflake,
       guildId: Snowflake,
       commandId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}` => {
-      return `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}` as const;
-    },
-    guildCommandsPermissions: (
-      applicationId: Snowflake,
-      guildId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/permissions` => {
-      return `/applications/${applicationId}/guilds/${guildId}/commands/permissions` as const;
-    },
+    ) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}` as const,
+
+    guildCommandsPermissions: (applicationId: Snowflake, guildId: Snowflake) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands/permissions` as const,
+
     guildCommandPermissions: (
       applicationId: Snowflake,
       guildId: Snowflake,
       commandId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}/permissions` => {
-      return `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const;
-    },
+    ) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const,
   } as const;
 
   /**
@@ -55,7 +83,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
-    return this.get(ApplicationCommandRouter.routes.base(applicationId), {
+    return this.get(ApplicationCommandRouter.ROUTES.base(applicationId), {
       query: { with_localizations: withLocalizations },
     });
   }
@@ -67,7 +95,8 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     options: CreateCommandOptionsEntity,
   ): Promise<ApplicationCommandEntity> {
-    return this.post(ApplicationCommandRouter.routes.base(applicationId), {
+    this.#validateCommandOptions(options);
+    return this.post(ApplicationCommandRouter.ROUTES.base(applicationId), {
       body: JSON.stringify(options),
     });
   }
@@ -80,7 +109,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
     return this.get(
-      ApplicationCommandRouter.routes.command(applicationId, commandId),
+      ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
   }
 
@@ -92,11 +121,13 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
     options: Partial<CreateCommandOptionsEntity>,
   ): Promise<ApplicationCommandEntity> {
+    if (options.name || options.description) {
+      this.#validateCommandOptions(options as CreateCommandOptionsEntity);
+    }
+
     return this.patch(
-      ApplicationCommandRouter.routes.command(applicationId, commandId),
-      {
-        body: JSON.stringify(options),
-      },
+      ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -108,7 +139,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
   ): Promise<void> {
     return this.delete(
-      ApplicationCommandRouter.routes.command(applicationId, commandId),
+      ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
   }
 
@@ -119,7 +150,17 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     commands: CreateCommandOptionsEntity[],
   ): Promise<ApplicationCommandEntity[]> {
-    return this.put(ApplicationCommandRouter.routes.base(applicationId), {
+    if (commands.length > ApplicationCommandRouter.BULK_COMMAND_CREATE_LIMIT) {
+      throw new Error(
+        `Cannot create more than ${ApplicationCommandRouter.BULK_COMMAND_CREATE_LIMIT} commands at once`,
+      );
+    }
+
+    for (const cmd of commands.values()) {
+      this.#validateCommandOptions(cmd);
+    }
+
+    return this.put(ApplicationCommandRouter.ROUTES.base(applicationId), {
       body: JSON.stringify(commands),
     });
   }
@@ -133,7 +174,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
     return this.get(
-      ApplicationCommandRouter.routes.guildCommands(applicationId, guildId),
+      ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
         query: { with_localizations: withLocalizations },
       },
@@ -148,8 +189,9 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     options: CreateCommandOptionsEntity,
   ): Promise<ApplicationCommandEntity> {
+    this.#validateCommandOptions(options);
     return this.post(
-      ApplicationCommandRouter.routes.guildCommands(applicationId, guildId),
+      ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
         body: JSON.stringify(options),
       },
@@ -165,7 +207,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
     return this.get(
-      ApplicationCommandRouter.routes.guildCommand(
+      ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
         guildId,
         commandId,
@@ -182,8 +224,12 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
     options: Partial<CreateCommandOptionsEntity>,
   ): Promise<ApplicationCommandEntity> {
+    if (options.name || options.description) {
+      this.#validateCommandOptions(options as CreateCommandOptionsEntity);
+    }
+
     return this.patch(
-      ApplicationCommandRouter.routes.guildCommand(
+      ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
         guildId,
         commandId,
@@ -203,7 +249,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
   ): Promise<void> {
     return this.delete(
-      ApplicationCommandRouter.routes.guildCommand(
+      ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
         guildId,
         commandId,
@@ -219,8 +265,18 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commands: CreateCommandOptionsEntity[],
   ): Promise<ApplicationCommandEntity[]> {
+    if (commands.length > ApplicationCommandRouter.BULK_COMMAND_CREATE_LIMIT) {
+      throw new Error(
+        `Cannot create more than ${ApplicationCommandRouter.BULK_COMMAND_CREATE_LIMIT} commands at once`,
+      );
+    }
+
+    for (const cmd of commands.values()) {
+      this.#validateCommandOptions(cmd);
+    }
+
     return this.put(
-      ApplicationCommandRouter.routes.guildCommands(applicationId, guildId),
+      ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
         body: JSON.stringify(commands),
       },
@@ -235,7 +291,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity[]> {
     return this.get(
-      ApplicationCommandRouter.routes.guildCommandsPermissions(
+      ApplicationCommandRouter.ROUTES.guildCommandsPermissions(
         applicationId,
         guildId,
       ),
@@ -251,7 +307,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity> {
     return this.get(
-      ApplicationCommandRouter.routes.guildCommandPermissions(
+      ApplicationCommandRouter.ROUTES.guildCommandPermissions(
         applicationId,
         guildId,
         commandId,
@@ -268,8 +324,17 @@ export class ApplicationCommandRouter extends BaseRouter {
     commandId: Snowflake,
     options: EditCommandPermissionsOptionsEntity,
   ): Promise<GuildApplicationCommandPermissionEntity> {
+    if (
+      options.permissions.length >
+      ApplicationCommandRouter.MAX_PERMISSION_OVERWRITES
+    ) {
+      throw new Error(
+        `Cannot add more than ${ApplicationCommandRouter.MAX_PERMISSION_OVERWRITES} permission overwrites`,
+      );
+    }
+
     return this.put(
-      ApplicationCommandRouter.routes.guildCommandPermissions(
+      ApplicationCommandRouter.ROUTES.guildCommandPermissions(
         applicationId,
         guildId,
         commandId,
@@ -278,5 +343,124 @@ export class ApplicationCommandRouter extends BaseRouter {
         body: JSON.stringify(options),
       },
     );
+  }
+
+  #validateCommandOptions(options: CreateCommandOptionsEntity): void {
+    if (options.name) {
+      if (!ApplicationCommandRouter.NAME_REGEX.test(options.name)) {
+        throw new Error(
+          "Command name must match the regex pattern: ^[-_\\p{L}\\p{N}\\p{sc=Deva}\\p{sc=Thai}]{1,32}$",
+        );
+      }
+
+      if (
+        options.name.length <
+          ApplicationCommandRouter.MIN_NAME_CHARACTERS_LENGTH ||
+        options.name.length > ApplicationCommandRouter.MAX_NAME_LENGTH
+      ) {
+        throw new Error(
+          `Command name must be between ${ApplicationCommandRouter.MIN_NAME_CHARACTERS_LENGTH} and ${ApplicationCommandRouter.MAX_NAME_LENGTH} characters`,
+        );
+      }
+    }
+
+    if (options.name_localizations) {
+      for (const [locale, localizedName] of Object.entries(
+        options.name_localizations,
+      )) {
+        if (
+          localizedName &&
+          !ApplicationCommandRouter.NAME_REGEX.test(localizedName)
+        ) {
+          throw new Error(
+            `Localized name for ${locale} must match the regex pattern: ^[-_\\p{L}\\p{N}\\p{sc=Deva}\\p{sc=Thai}]{1,32}$`,
+          );
+        }
+      }
+    }
+
+    if (
+      options.description &&
+      (options.description.length <
+        ApplicationCommandRouter.MIN_DESCRIPTION_CHARACTERS_LENGTH ||
+        options.description.length >
+          ApplicationCommandRouter.MAX_DESCRIPTION_LENGTH)
+    ) {
+      throw new Error(
+        `Command description must be between ${ApplicationCommandRouter.MIN_DESCRIPTION_CHARACTERS_LENGTH} and ${ApplicationCommandRouter.MAX_DESCRIPTION_LENGTH} characters`,
+      );
+    }
+
+    if (options.description_localizations) {
+      for (const [locale, localizedDesc] of Object.entries(
+        options.description_localizations,
+      )) {
+        if (
+          localizedDesc &&
+          (localizedDesc.length <
+            ApplicationCommandRouter.MIN_DESCRIPTION_CHARACTERS_LENGTH ||
+            localizedDesc.length >
+              ApplicationCommandRouter.MAX_DESCRIPTION_LENGTH)
+        ) {
+          throw new Error(
+            `Localized description for ${locale} must be between ${ApplicationCommandRouter.MIN_DESCRIPTION_CHARACTERS_LENGTH} and ${ApplicationCommandRouter.MAX_DESCRIPTION_LENGTH} characters`,
+          );
+        }
+      }
+    }
+
+    if (options.options) {
+      if (
+        options.options.length >
+        ApplicationCommandRouter.MAX_OPTIONS_PER_COMMAND
+      ) {
+        throw new Error(
+          `Commands can have a maximum of ${ApplicationCommandRouter.MAX_OPTIONS_PER_COMMAND} options`,
+        );
+      }
+
+      let foundOptional = false;
+      for (const option of options.options) {
+        if (foundOptional && option.required) {
+          throw new Error(
+            "Required options must be listed before optional options",
+          );
+        }
+        if (!option.required) {
+          foundOptional = true;
+        }
+
+        if (option.choices && option.autocomplete) {
+          throw new Error(
+            "Cannot have both choices and autocomplete enabled for an option",
+          );
+        }
+
+        if (
+          option.choices &&
+          option.choices?.length >
+            ApplicationCommandRouter.MAX_CHOICES_PER_OPTION
+        ) {
+          throw new Error(
+            `Options can have a maximum of ${ApplicationCommandRouter.MAX_CHOICES_PER_OPTION} choices`,
+          );
+        }
+
+        if (option.name_localizations) {
+          for (const [locale, localizedName] of Object.entries(
+            option.name_localizations,
+          )) {
+            if (
+              localizedName &&
+              !ApplicationCommandRouter.NAME_REGEX.test(localizedName)
+            ) {
+              throw new Error(
+                `Localized option name for ${locale} must match the regex pattern: ^[-_\\p{L}\\p{N}\\p{sc=Deva}\\p{sc=Thai}]{1,32}$`,
+              );
+            }
+          }
+        }
+      }
+    }
   }
 }

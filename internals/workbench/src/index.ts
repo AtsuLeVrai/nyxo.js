@@ -1,4 +1,4 @@
-import { Rest } from "@nyxjs/rest";
+import { HttpMethodFlag, Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
 
 const { parsed: env } = config({ debug: true });
@@ -9,6 +9,7 @@ if (!env?.DISCORD_TOKEN) {
 
 const rest = new Rest({
   token: env.DISCORD_TOKEN,
+  compress: true,
 });
 
 rest.on("debug", console.log);
@@ -21,11 +22,12 @@ rest.on("responseReceived", console.log);
 rest.on("proxyUpdate", console.log);
 
 rest
-  .getRouter("gateway")
-  .getGatewayBot()
+  .request({
+    path: "/users/@me",
+    method: HttpMethodFlag.Get,
+  })
   .then(console.log)
   .catch(console.error);
-
 async function runBenchmark(iterations: number): Promise<void> {
   const restTimes: bigint[] = [];
 

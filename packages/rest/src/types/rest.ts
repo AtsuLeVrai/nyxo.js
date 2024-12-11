@@ -1,5 +1,5 @@
 import type { ApiVersion } from "@nyxjs/core";
-import type { Dispatcher, Pool, ProxyAgent } from "undici";
+import type { Dispatcher, Pool, ProxyAgent, RetryHandler } from "undici";
 import type {
   ApplicationCommandRouter,
   ApplicationConnectionRouter,
@@ -108,20 +108,21 @@ export interface RestOptionsEntity {
   maxConcurrentRequests?: number;
   proxy?: ProxyAgent.Options;
   pool?: Pool.Options;
+  retry?: RetryHandler.RetryOptions;
 }
 
 export interface RestEventMap {
   debug: [message: string];
   warn: [message: string];
   error: [error: Error];
-  apiRequest: [data: ApiRequestEventEntity];
-  rateLimitHit: [data: RateLimitHitEventEntity];
-  requestRetry: [data: RequestRetryEventEntity];
-  responseReceived: [data: ResponseReceivedEventEntity];
+  apiRequest: [data: ApiRequest];
+  rateLimitHit: [data: RateLimitHit];
+  requestRetry: [data: RequestRetry];
+  responseReceived: [data: ResponseReceived];
   proxyUpdate: [data: NonNullable<RestOptionsEntity["proxy"]> | null];
 }
 
-export interface ApiRequestEventEntity {
+export interface ApiRequest {
   method: HttpMethodFlag;
   path: string;
   status: number;
@@ -129,35 +130,24 @@ export interface ApiRequestEventEntity {
   attempt: number;
 }
 
-export interface RateLimitHitEventEntity {
+export interface RateLimitHit {
   bucket: string;
   resetAfter: number;
   limit: number;
   scope: RateLimitScope;
 }
 
-export interface RequestRetryEventEntity {
+export interface RequestRetry {
   error: Error;
   attempt: number;
   maxAttempts: number;
 }
 
-export interface ResponseReceivedEventEntity {
+export interface ResponseReceived {
   method: HttpMethodFlag;
   path: string;
   status: number;
   headers: Record<string, string | string[] | undefined>;
-}
-
-export interface StatsEventEntity {
-  activeRequests: number;
-  totalRequests: number;
-  successfulRequests: number;
-  failedRequests: number;
-  bucketSize: number;
-  globalRateLimit: number | null;
-  lastRequestTime: number | null;
-  successRate: number;
 }
 
 export type RouterDefinitions = {
