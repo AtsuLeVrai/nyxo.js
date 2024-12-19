@@ -44,7 +44,7 @@ export class ApplicationRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
    */
-  modifyCurrentApplication(
+  editCurrentApplication(
     options: ModifyApplicationOptionsEntity,
   ): Promise<ApplicationEntity> {
     this.#validateModificationOptions(options);

@@ -4,8 +4,8 @@ import type { RateLimitEntity, RateLimitScope } from "../types/index.js";
 import { HttpStatusCode } from "../utils/index.js";
 
 export class RateLimiter {
-  static readonly #MAX_QUEUE_SIZE = 1000;
-  static readonly #RATE_LIMIT_HEADERS = {
+  static readonly MAX_QUEUE_SIZE = 1000;
+  static readonly RATE_LIMIT_HEADERS = {
     BUCKET: "x-ratelimit-bucket",
     LIMIT: "x-ratelimit-limit",
     REMAINING: "x-ratelimit-remaining",
@@ -222,7 +222,7 @@ export class RateLimiter {
   }
 
   #handleGlobalRateLimitHeader(headers: Record<string, string>): void {
-    const retryAfter = headers[RateLimiter.#RATE_LIMIT_HEADERS.RETRY_AFTER];
+    const retryAfter = headers[RateLimiter.RATE_LIMIT_HEADERS.RETRY_AFTER];
     if (!retryAfter) {
       return;
     }
@@ -242,7 +242,7 @@ export class RateLimiter {
   #extractRateLimitData(
     headers: Record<string, string>,
   ): RateLimitEntity | null {
-    const h = RateLimiter.#RATE_LIMIT_HEADERS;
+    const h = RateLimiter.RATE_LIMIT_HEADERS;
     const bucket = headers[h.BUCKET];
     if (!bucket) {
       return null;
@@ -272,7 +272,7 @@ export class RateLimiter {
     },
   ): void {
     const queue = this.#requestQueue.get(bucket) ?? [];
-    if (queue.length >= RateLimiter.#MAX_QUEUE_SIZE) {
+    if (queue.length >= RateLimiter.MAX_QUEUE_SIZE) {
       throw new Error("Rate limit queue is full");
     }
     queue.push(entry);

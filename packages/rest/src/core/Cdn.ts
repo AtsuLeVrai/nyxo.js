@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "@nyxjs/core";
+import { type Integer, type Snowflake, SnowflakeManager } from "@nyxjs/core";
 import {
   type AnimatedImageOptionsEntity,
   type AttachmentOptionsEntity,
@@ -20,7 +20,7 @@ const VALID_SIZES: Set<number> = new Set(Object.values(IMAGE_SIZE));
 
 function validateId(id: Snowflake | number, name = "ID"): string {
   const stringId = id.toString();
-  if (!/^\d+$/.test(stringId)) {
+  if (!SnowflakeManager.isValid(stringId)) {
     throw new Error(`Invalid ${name}: ${id}`);
   }
   return stringId;
@@ -95,7 +95,7 @@ export const Cdn: CdnEntity = {
     const path = ["attachments", cId, aId, encodeURIComponent(filename)];
     const url = new URL(path.join("/"), BASE_URL);
 
-    // biome-ignore lint/style/useExplicitLengthCheck: <explanation>
+    // biome-ignore lint/style/useExplicitLengthCheck: problem with the type checker
     if (options?.size && options?.size > 0) {
       validateSize(options.size);
       url.searchParams.set("size", options.size.toString());

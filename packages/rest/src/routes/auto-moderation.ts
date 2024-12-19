@@ -15,7 +15,6 @@ export interface AutoModerationRoutes {
   readonly base: (
     guildId: Snowflake,
   ) => `/guilds/${Snowflake}/auto-moderation/rules`;
-
   readonly rule: (
     guildId: Snowflake,
     ruleId: Snowflake,
@@ -70,13 +69,16 @@ export class AutoModerationRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule}
    */
-  createAutoModerationRule(
+  async createAutoModerationRule(
     guildId: Snowflake,
     options: CreateAutoModerationRuleOptionsEntity,
+    reason?: string,
   ): Promise<AutoModerationRuleEntity> {
-    this.#validateAutoModerationRule(options);
+    const existingRules = await this.listAutoModerationRules(guildId);
+    this.#validateAutoModerationRule(options, existingRules);
     return this.post(AutoModerationRouter.ROUTES.base(guildId), {
       body: JSON.stringify(options),
+      reason,
     });
   }
 
@@ -87,10 +89,12 @@ export class AutoModerationRouter extends BaseRouter {
     guildId: Snowflake,
     ruleId: Snowflake,
     options: ModifyAutoModerationRuleOptionsEntity,
+    reason?: string,
   ): Promise<AutoModerationRuleEntity> {
     this.#validateAutoModerationRule(options);
     return this.patch(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {
       body: JSON.stringify(options),
+      reason,
     });
   }
 
@@ -100,14 +104,18 @@ export class AutoModerationRouter extends BaseRouter {
   deleteAutoModerationRule(
     guildId: Snowflake,
     ruleId: Snowflake,
+    reason?: string,
   ): Promise<void> {
-    return this.delete(AutoModerationRouter.ROUTES.rule(guildId, ruleId));
+    return this.delete(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {
+      reason,
+    });
   }
 
   #validateAutoModerationRule(
     rule:
       | CreateAutoModerationRuleOptionsEntity
       | ModifyAutoModerationRuleOptionsEntity,
+    existingRules?: AutoModerationRuleEntity[],
   ): void {
     if (
       rule.exempt_roles &&
@@ -129,6 +137,82 @@ export class AutoModerationRouter extends BaseRouter {
     }
 
     if (rule.trigger_metadata && "trigger_type" in rule) {
+      if (existingRules) {
+        const ruleCountByType = existingRules.reduce(
+          (counts, rule) => {
+            counts[rule.trigger_type] = (counts[rule.trigger_type] || 0) + 1;
+            return counts;
+          },
+          {} as Record<number, number>,
+        );
+
+        switch (rule.trigger_type) {
+          case AutoModerationRuleTriggerType.Keyword: {
+            if (
+              (ruleCountByType[AutoModerationRuleTriggerType.Keyword] || 0) >=
+              AutoModerationRouter.MAX_RULES_PER_TRIGGER_KEYWORD
+            ) {
+              throw new Error(
+                `Cannot create more than ${AutoModerationRouter.MAX_RULES_PER_TRIGGER_KEYWORD} keyword rules`,
+              );
+            }
+            break;
+          }
+
+          case AutoModerationRuleTriggerType.Spam: {
+            if (
+              (ruleCountByType[AutoModerationRuleTriggerType.Spam] || 0) >=
+              AutoModerationRouter.MAX_RULES_PER_TRIGGER_SPAM
+            ) {
+              throw new Error(
+                `Cannot create more than ${AutoModerationRouter.MAX_RULES_PER_TRIGGER_SPAM} spam rules`,
+              );
+            }
+            break;
+          }
+
+          case AutoModerationRuleTriggerType.KeywordPreset: {
+            if (
+              (ruleCountByType[AutoModerationRuleTriggerType.KeywordPreset] ||
+                0) >= AutoModerationRouter.MAX_RULES_PER_TRIGGER_KEYWORD_PRESET
+            ) {
+              throw new Error(
+                `Cannot create more than ${AutoModerationRouter.MAX_RULES_PER_TRIGGER_KEYWORD_PRESET} keyword preset rules`,
+              );
+            }
+            break;
+          }
+
+          case AutoModerationRuleTriggerType.MentionSpam: {
+            if (
+              (ruleCountByType[AutoModerationRuleTriggerType.MentionSpam] ||
+                0) >= AutoModerationRouter.MAX_RULES_PER_TRIGGER_MENTION_SPAM
+            ) {
+              throw new Error(
+                `Cannot create more than ${AutoModerationRouter.MAX_RULES_PER_TRIGGER_MENTION_SPAM} mention spam rules`,
+              );
+            }
+            break;
+          }
+
+          case AutoModerationRuleTriggerType.MemberProfile: {
+            if (
+              (ruleCountByType[AutoModerationRuleTriggerType.MemberProfile] ||
+                0) >= AutoModerationRouter.MAX_RULES_PER_TRIGGER_MEMBER_PROFILE
+            ) {
+              throw new Error(
+                `Cannot create more than ${AutoModerationRouter.MAX_RULES_PER_TRIGGER_MEMBER_PROFILE} member profile rules`,
+              );
+            }
+            break;
+          }
+
+          default: {
+            throw new Error(`Invalid trigger type: ${rule.trigger_type}`);
+          }
+        }
+      }
+
       this.#validateTriggerMetadata(rule.trigger_metadata, rule.trigger_type);
     }
 

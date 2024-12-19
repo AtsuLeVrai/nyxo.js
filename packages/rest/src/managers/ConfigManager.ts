@@ -9,19 +9,19 @@ import {
 } from "../utils/index.js";
 
 export class ConfigManager {
-  static readonly #DEFAULT_VERSION: ApiVersion.V10 = ApiVersion.V10;
-  static readonly #DEFAULT_AUTH_TYPE = AuthTypeFlag.Bot;
-  static readonly #DEFAULT_MAX_RETRIES = 3;
-  static readonly #DEFAULT_BASE_RETRY_DELAY = 1000;
-  static readonly #DEFAULT_TIMEOUT = 15000;
-  static readonly #DEFAULT_RATE_LIMIT_RETRY = 3;
-  static readonly #DEFAULT_MAX_CONCURRENT = 10;
-  static readonly #DEFAULT_USER_AGENT =
+  static readonly USER_AGENT_REGEX = /^DiscordBot \(https?:\/\/.*?, [\d.]+\)$/;
+  static readonly DEFAULT_VERSION: ApiVersion.V10 = ApiVersion.V10;
+  static readonly DEFAULT_AUTH_TYPE = AuthTypeFlag.Bot;
+  static readonly DEFAULT_MAX_RETRIES = 3;
+  static readonly DEFAULT_BASE_RETRY_DELAY = 1000;
+  static readonly DEFAULT_TIMEOUT = 15000;
+  static readonly DEFAULT_RATE_LIMIT_RETRY = 3;
+  static readonly DEFAULT_MAX_CONCURRENT = 10;
+  static readonly DEFAULT_USER_AGENT =
     "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)";
-  static readonly #MAX_TIMEOUT = 30000;
-  static readonly #RETRY_STATUS_CODES =
+  static readonly MAX_TIMEOUT = 30000;
+  static readonly RETRY_STATUS_CODES =
     Object.values(HttpStatusCode).map(Number);
-
   readonly options: Required<RestOptionsEntity>;
   retryAgent: RetryAgent;
   readonly #rest: Rest;
@@ -92,15 +92,15 @@ export class ConfigManager {
 
   #mergeOptions(options: RestOptionsEntity): Required<RestOptionsEntity> {
     return {
-      version: ConfigManager.#DEFAULT_VERSION,
-      authType: ConfigManager.#DEFAULT_AUTH_TYPE,
-      maxRetries: ConfigManager.#DEFAULT_MAX_RETRIES,
-      baseRetryDelay: ConfigManager.#DEFAULT_BASE_RETRY_DELAY,
-      timeout: ConfigManager.#DEFAULT_TIMEOUT,
-      rateLimitRetryLimit: ConfigManager.#DEFAULT_RATE_LIMIT_RETRY,
-      maxConcurrentRequests: ConfigManager.#DEFAULT_MAX_CONCURRENT,
+      version: ConfigManager.DEFAULT_VERSION,
+      authType: ConfigManager.DEFAULT_AUTH_TYPE,
+      maxRetries: ConfigManager.DEFAULT_MAX_RETRIES,
+      baseRetryDelay: ConfigManager.DEFAULT_BASE_RETRY_DELAY,
+      timeout: ConfigManager.DEFAULT_TIMEOUT,
+      rateLimitRetryLimit: ConfigManager.DEFAULT_RATE_LIMIT_RETRY,
+      maxConcurrentRequests: ConfigManager.DEFAULT_MAX_CONCURRENT,
       compress: true,
-      userAgent: ConfigManager.#DEFAULT_USER_AGENT,
+      userAgent: ConfigManager.DEFAULT_USER_AGENT,
       ...options,
       proxy: options.proxy ?? { uri: "" },
       pool: this.#getPoolOptions(options),
@@ -112,7 +112,7 @@ export class ConfigManager {
     return {
       allowH2: true,
       connections:
-        options.maxConcurrentRequests ?? ConfigManager.#DEFAULT_MAX_CONCURRENT,
+        options.maxConcurrentRequests ?? ConfigManager.DEFAULT_MAX_CONCURRENT,
       keepAliveTimeout: 30000,
       keepAliveMaxTimeout: 60000,
       connect: {
@@ -121,7 +121,7 @@ export class ConfigManager {
         secureOptions: 0x40000000,
         keepAlive: true,
         keepAliveInitialDelay: 60000,
-        timeout: options.timeout ?? ConfigManager.#DEFAULT_TIMEOUT,
+        timeout: options.timeout ?? ConfigManager.DEFAULT_TIMEOUT,
       },
       ...options.pool,
     };
@@ -129,13 +129,13 @@ export class ConfigManager {
 
   #getRetryOptions(options: RestOptionsEntity): RetryHandler.RetryOptions {
     return {
-      maxRetries: options.maxRetries ?? ConfigManager.#DEFAULT_MAX_RETRIES,
+      maxRetries: options.maxRetries ?? ConfigManager.DEFAULT_MAX_RETRIES,
       minTimeout:
-        options.baseRetryDelay ?? ConfigManager.#DEFAULT_BASE_RETRY_DELAY,
-      maxTimeout: ConfigManager.#MAX_TIMEOUT,
+        options.baseRetryDelay ?? ConfigManager.DEFAULT_BASE_RETRY_DELAY,
+      maxTimeout: ConfigManager.MAX_TIMEOUT,
       timeoutFactor: 2,
       methods: Object.values(HttpMethodFlag),
-      statusCodes: ConfigManager.#RETRY_STATUS_CODES,
+      statusCodes: ConfigManager.RETRY_STATUS_CODES,
       retryAfter: true,
       ...options.retry,
     };
@@ -184,10 +184,10 @@ export class ConfigManager {
 
     if (
       options.timeout &&
-      (options.timeout < 0 || options.timeout > ConfigManager.#MAX_TIMEOUT)
+      (options.timeout < 0 || options.timeout > ConfigManager.MAX_TIMEOUT)
     ) {
       throw new Error(
-        `Timeout must be between 0 and ${ConfigManager.#MAX_TIMEOUT}`,
+        `Timeout must be between 0 and ${ConfigManager.MAX_TIMEOUT}`,
       );
     }
 
@@ -207,7 +207,7 @@ export class ConfigManager {
   }
 
   #isValidUserAgent(userAgent: string): boolean {
-    return /^DiscordBot \(https?:\/\/.*?, [\d.]+\)$/.test(userAgent);
+    return ConfigManager.USER_AGENT_REGEX.test(userAgent);
   }
 
   #createPool(): Pool {

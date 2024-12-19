@@ -36,7 +36,7 @@ export class MessageRouter extends BaseRouter {
       channelId: Snowflake,
       messageId: Snowflake,
       emoji: string,
-      userId: Snowflake = "@me",
+      userId: Snowflake = "@me" as Snowflake,
     ): `/channels/${Snowflake}/messages/${Snowflake}/reactions/${string}/${Snowflake}` => {
       return `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/${userId}` as const;
     },

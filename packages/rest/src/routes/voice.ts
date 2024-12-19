@@ -4,40 +4,43 @@ import type {
   VoiceStateEntity,
 } from "@nyxjs/core";
 import type {
-  ModifyCurrentVoiceStateOptionsEntity,
-  ModifyUserVoiceStateOptionsEntity,
+  ModifyCurrentUserVoiceStateOptions,
+  ModifyUserVoiceStateOptions,
 } from "../types/voice.js";
 import { BaseRouter } from "./base.js";
 
+export interface VoiceRoutes {
+  readonly voiceRegions: "/voice/regions";
+  readonly currentUserVoiceState: (
+    guildId: Snowflake,
+  ) => `/guilds/${Snowflake}/voice-states/@me`;
+  readonly userVoiceState: (
+    guildId: Snowflake,
+    userId: Snowflake,
+  ) => `/guilds/${Snowflake}/voice-states/${Snowflake}`;
+}
+
 export class VoiceRouter extends BaseRouter {
-  static readonly routes = {
-    base: "/voice",
-    regions: "/voice/regions",
-    guildVoiceState: (
-      guildId: Snowflake,
-    ): `/guilds/${Snowflake}/voice-states/@me` => {
-      return `/guilds/${guildId}/voice-states/@me` as const;
-    },
-    userVoiceState: (
-      guildId: Snowflake,
-      userId: Snowflake,
-    ): `/guilds/${Snowflake}/voice-states/${Snowflake}` => {
-      return `/guilds/${guildId}/voice-states/${userId}` as const;
-    },
+  static readonly ROUTES: VoiceRoutes = {
+    voiceRegions: "/voice/regions",
+    currentUserVoiceState: (guildId) =>
+      `/guilds/${guildId}/voice-states/@me` as const,
+    userVoiceState: (guildId, userId) =>
+      `/guilds/${guildId}/voice-states/${userId}` as const,
   } as const;
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
-  getVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.get(VoiceRouter.routes.regions);
+  listVoiceRegions(): Promise<VoiceRegionEntity[]> {
+    return this.get(VoiceRouter.ROUTES.voiceRegions);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
-  getCurrentVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
-    return this.get(VoiceRouter.routes.guildVoiceState(guildId));
+  getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
+    return this.get(VoiceRouter.ROUTES.currentUserVoiceState(guildId));
   }
 
   /**
@@ -47,35 +50,33 @@ export class VoiceRouter extends BaseRouter {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<VoiceStateEntity> {
-    return this.get(VoiceRouter.routes.userVoiceState(guildId, userId));
+    return this.get(VoiceRouter.ROUTES.userVoiceState(guildId, userId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state}
    */
-  async modifyCurrentVoiceState(
+  async modifyCurrentUserVoiceState(
     guildId: Snowflake,
-    options: ModifyCurrentVoiceStateOptionsEntity,
+    options: ModifyCurrentUserVoiceStateOptions,
   ): Promise<void> {
     if (options.channel_id) {
-      const currentState = await this.getCurrentVoiceState(guildId);
-
+      const currentState = await this.getCurrentUserVoiceState(guildId);
       if (currentState.channel_id !== options.channel_id) {
-        throw new Error("User must already be in the specified channel");
+        throw new Error("User must already be in the specified stage channel");
       }
     }
 
     if (options.request_to_speak_timestamp) {
       const timestamp = new Date(options.request_to_speak_timestamp).getTime();
-      const now = Date.now();
-      if (timestamp < now) {
+      if (timestamp < Date.now()) {
         throw new Error(
           "request_to_speak_timestamp must be a present or future time",
         );
       }
     }
 
-    return this.patch(VoiceRouter.routes.guildVoiceState(guildId), {
+    return this.patch(VoiceRouter.ROUTES.currentUserVoiceState(guildId), {
       body: JSON.stringify(options),
     });
   }
@@ -86,14 +87,14 @@ export class VoiceRouter extends BaseRouter {
   async modifyUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
-    options: ModifyUserVoiceStateOptionsEntity,
+    options: ModifyUserVoiceStateOptions,
   ): Promise<void> {
     const currentState = await this.getUserVoiceState(guildId, userId);
     if (currentState.channel_id !== options.channel_id) {
-      throw new Error("User must already be in the specified channel");
+      throw new Error("User must already be in the specified stage channel");
     }
 
-    return this.patch(VoiceRouter.routes.userVoiceState(guildId, userId), {
+    return this.patch(VoiceRouter.ROUTES.userVoiceState(guildId, userId), {
       body: JSON.stringify(options),
     });
   }

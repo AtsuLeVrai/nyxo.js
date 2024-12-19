@@ -167,7 +167,12 @@ export class RequestHandler {
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       const decompressor = new Gunzip({
-        level: 1,
+        level: 4,
+        async: true,
+        flush: 2,
+        finishFlush: 4,
+        objectMode: false,
+        strategy: 0,
       });
 
       decompressor

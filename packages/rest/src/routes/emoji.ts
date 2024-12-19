@@ -7,58 +7,70 @@ import type {
 } from "../types/index.js";
 import { BaseRouter } from "./base.js";
 
+export interface EmojiRoutes {
+  readonly guildBase: (guildId: Snowflake) => `/guilds/${Snowflake}/emojis`;
+  readonly guildEmoji: (
+    guildId: Snowflake,
+    emojiId: Snowflake,
+  ) => `/guilds/${Snowflake}/emojis/${Snowflake}`;
+  readonly applicationBase: (
+    applicationId: Snowflake,
+  ) => `/applications/${Snowflake}/emojis`;
+  readonly applicationEmoji: (
+    applicationId: Snowflake,
+    emojiId: Snowflake,
+  ) => `/applications/${Snowflake}/emojis/${Snowflake}`;
+}
+
 export class EmojiRouter extends BaseRouter {
-  static routes = {
-    guildEmojis: (guildId: Snowflake): `/guilds/${Snowflake}/emojis` => {
-      return `/guilds/${guildId}/emojis` as const;
-    },
-    guildEmoji: (
-      guildId: Snowflake,
-      emojiId: Snowflake,
-    ): `/guilds/${Snowflake}/emojis/${Snowflake}` => {
-      return `/guilds/${guildId}/emojis/${emojiId}` as const;
-    },
-    applicationEmojis: (
-      applicationId: Snowflake,
-    ): `/applications/${Snowflake}/emojis` => {
-      return `/applications/${applicationId}/emojis` as const;
-    },
-    applicationEmoji: (
-      applicationId: Snowflake,
-      emojiId: Snowflake,
-    ): `/applications/${Snowflake}/emojis/${Snowflake}` => {
-      return `/applications/${applicationId}/emojis/${emojiId}` as const;
-    },
+  static readonly MAX_LIMIT_NAME_LENGTH_MIN = 1;
+  static readonly MAX_LIMIT_NAME_LENGTH_MAX = 32;
+  static readonly MAX_EMOJI_COUNT_GUILD_NORMAL = 50;
+  static readonly MAX_EMOJI_COUNT_GUILD_PREMIUM = 25;
+  static readonly MAX_EMOJI_COUNT_APPLICATION = 2000;
+  static readonly MAX_ROLES = 20;
+
+  static readonly ROUTES: EmojiRoutes = {
+    guildBase: (guildId) => `/guilds/${guildId}/emojis` as const,
+    guildEmoji: (guildId, emojiId) =>
+      `/guilds/${guildId}/emojis/${emojiId}` as const,
+    applicationBase: (applicationId) =>
+      `/applications/${applicationId}/emojis` as const,
+    applicationEmoji: (applicationId, emojiId) =>
+      `/applications/${applicationId}/emojis/${emojiId}` as const,
   } as const;
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
    */
   listGuildEmojis(guildId: Snowflake): Promise<EmojiEntity[]> {
-    return this.get(EmojiRouter.routes.guildEmojis(guildId));
+    return this.get(EmojiRouter.ROUTES.guildBase(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji}
    */
   getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): Promise<EmojiEntity> {
-    return this.get(EmojiRouter.routes.guildEmoji(guildId, emojiId));
+    return this.get(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji}
    */
-  createGuildEmoji(
+  async createGuildEmoji(
     guildId: Snowflake,
     options: GuildEmojiCreateEntity,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.post(EmojiRouter.routes.guildEmojis(guildId), {
+    this.#validateEmojiCreate(options);
+    const isAnimated = options.image.startsWith("data:image/gif;");
+    await this.#validateEmojiLimits(guildId, undefined, isAnimated);
+
+    return this.post(EmojiRouter.ROUTES.guildBase(guildId), {
       body: JSON.stringify(options),
       reason,
     });
   }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji}
    */
@@ -68,7 +80,9 @@ export class EmojiRouter extends BaseRouter {
     options: GuildEmojiModifyEntity,
     reason?: string,
   ): Promise<EmojiEntity> {
-    return this.patch(EmojiRouter.routes.guildEmoji(guildId, emojiId), {
+    this.#validateEmojiModify(options);
+
+    return this.patch(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
       body: JSON.stringify(options),
       reason,
     });
@@ -82,7 +96,7 @@ export class EmojiRouter extends BaseRouter {
     emojiId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(EmojiRouter.routes.guildEmoji(guildId, emojiId), {
+    return this.delete(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
       reason,
     });
   }
@@ -93,7 +107,7 @@ export class EmojiRouter extends BaseRouter {
   listApplicationEmojis(
     applicationId: Snowflake,
   ): Promise<{ items: EmojiEntity[] }> {
-    return this.get(EmojiRouter.routes.applicationEmojis(applicationId));
+    return this.get(EmojiRouter.ROUTES.applicationBase(applicationId));
   }
 
   /**
@@ -104,19 +118,24 @@ export class EmojiRouter extends BaseRouter {
     emojiId: Snowflake,
   ): Promise<EmojiEntity> {
     return this.get(
-      EmojiRouter.routes.applicationEmoji(applicationId, emojiId),
+      EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
     );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji}
    */
-  createApplicationEmoji(
+  async createApplicationEmoji(
     applicationId: Snowflake,
     options: ApplicationEmojiCreateEntity,
+    reason?: string,
   ): Promise<EmojiEntity> {
-    return this.post(EmojiRouter.routes.applicationEmojis(applicationId), {
+    this.#validateEmojiCreate(options);
+    await this.#validateEmojiLimits(undefined, applicationId);
+
+    return this.post(EmojiRouter.ROUTES.applicationBase(applicationId), {
       body: JSON.stringify(options),
+      reason,
     });
   }
 
@@ -127,11 +146,15 @@ export class EmojiRouter extends BaseRouter {
     applicationId: Snowflake,
     emojiId: Snowflake,
     options: ApplicationEmojiModifyEntity,
+    reason?: string,
   ): Promise<EmojiEntity> {
+    this.#validateEmojiModify(options);
+
     return this.patch(
-      EmojiRouter.routes.applicationEmoji(applicationId, emojiId),
+      EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
       {
         body: JSON.stringify(options),
+        reason,
       },
     );
   }
@@ -142,9 +165,101 @@ export class EmojiRouter extends BaseRouter {
   deleteApplicationEmoji(
     applicationId: Snowflake,
     emojiId: Snowflake,
+    reason?: string,
   ): Promise<void> {
     return this.delete(
-      EmojiRouter.routes.applicationEmoji(applicationId, emojiId),
+      EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
+      {
+        reason,
+      },
     );
+  }
+
+  async #validateEmojiLimits(
+    guildId?: Snowflake,
+    applicationId?: Snowflake,
+    isAnimated?: boolean,
+  ): Promise<void> {
+    if (guildId) {
+      const existingEmojis = await this.listGuildEmojis(guildId);
+      const normalEmojis = existingEmojis.filter(
+        (emoji) => !emoji.animated,
+      ).length;
+      const premiumEmojis = existingEmojis.filter(
+        (emoji) => emoji.animated,
+      ).length;
+
+      if (isAnimated) {
+        if (premiumEmojis >= EmojiRouter.MAX_EMOJI_COUNT_GUILD_PREMIUM) {
+          throw new Error(
+            `Cannot exceed ${EmojiRouter.MAX_EMOJI_COUNT_GUILD_PREMIUM} premium emojis per guild`,
+          );
+        }
+      } else if (normalEmojis >= EmojiRouter.MAX_EMOJI_COUNT_GUILD_NORMAL) {
+        throw new Error(
+          `Cannot exceed ${EmojiRouter.MAX_EMOJI_COUNT_GUILD_NORMAL} normal emojis per guild`,
+        );
+      }
+    }
+
+    if (applicationId) {
+      const existingEmojis = await this.listApplicationEmojis(applicationId);
+      if (
+        existingEmojis.items.length >= EmojiRouter.MAX_EMOJI_COUNT_APPLICATION
+      ) {
+        throw new Error(
+          `Cannot exceed ${EmojiRouter.MAX_EMOJI_COUNT_APPLICATION} emojis per application`,
+        );
+      }
+    }
+  }
+
+  #validateEmojiCreate(
+    options: GuildEmojiCreateEntity | ApplicationEmojiCreateEntity,
+  ): void {
+    if (!options.name) {
+      throw new Error("Emoji name is required");
+    }
+
+    if (!options.image) {
+      throw new Error("Emoji image is required");
+    }
+
+    this.#validateEmojiName(options.name);
+
+    if (
+      "roles" in options &&
+      options.roles &&
+      options.roles.length > EmojiRouter.MAX_ROLES
+    ) {
+      throw new Error(`Cannot exceed ${EmojiRouter.MAX_ROLES} roles per emoji`);
+    }
+  }
+
+  #validateEmojiModify(
+    options: GuildEmojiModifyEntity | ApplicationEmojiModifyEntity,
+  ): void {
+    if (options.name) {
+      this.#validateEmojiName(options.name);
+    }
+
+    if (
+      "roles" in options &&
+      options.roles &&
+      options.roles.length > EmojiRouter.MAX_ROLES
+    ) {
+      throw new Error(`Cannot exceed ${EmojiRouter.MAX_ROLES} roles per emoji`);
+    }
+  }
+
+  #validateEmojiName(name: string): void {
+    if (
+      name.length < EmojiRouter.MAX_LIMIT_NAME_LENGTH_MIN ||
+      name.length > EmojiRouter.MAX_LIMIT_NAME_LENGTH_MAX
+    ) {
+      throw new Error(
+        `Emoji name must be between ${EmojiRouter.MAX_LIMIT_NAME_LENGTH_MIN} and ${EmojiRouter.MAX_LIMIT_NAME_LENGTH_MAX} characters`,
+      );
+    }
   }
 }

@@ -11,6 +11,7 @@ export interface ListEntitlementQueryEntity {
   limit?: Integer;
   guild_id?: Snowflake;
   exclude_ended?: boolean;
+  exclude_deleted?: boolean;
 }
 
 /**

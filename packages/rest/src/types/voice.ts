@@ -1,19 +1,18 @@
-import type { VoiceStateEntity } from "@nyxjs/core";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state-json-params}
  */
-export type ModifyCurrentVoiceStateOptionsEntity = Partial<
-  Pick<
-    VoiceStateEntity,
-    "channel_id" | "suppress" | "request_to_speak_timestamp"
-  >
->;
+export interface ModifyCurrentUserVoiceStateOptions {
+  channel_id?: Snowflake;
+  suppress?: boolean;
+  request_to_speak_timestamp?: string;
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state-json-params}
  */
-export type ModifyUserVoiceStateOptionsEntity = Pick<
-  VoiceStateEntity,
-  "channel_id" | "suppress"
->;
+export interface ModifyUserVoiceStateOptions {
+  channel_id: Snowflake;
+  suppress?: boolean;
+}

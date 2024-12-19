@@ -30,7 +30,7 @@ import {
 import type { RouterDefinitions, RouterKey } from "../types/index.js";
 
 export class RouterManager {
-  static readonly #ROUTER_CACHE_SIZE = 50;
+  static readonly ROUTER_CACHE_SIZE = 50;
 
   readonly #rest: Rest;
   readonly #routers = new Map<string, BaseRouter>();
@@ -144,7 +144,7 @@ export class RouterManager {
   }
 
   #addToCache(key: string, router: BaseRouter): void {
-    if (this.#routers.size >= RouterManager.#ROUTER_CACHE_SIZE) {
+    if (this.#routers.size >= RouterManager.ROUTER_CACHE_SIZE) {
       const [oldestKey] = this.#routers.keys();
       if (!oldestKey) {
         this.#rest.emit("warn", "Router cache is full but no router to remove");

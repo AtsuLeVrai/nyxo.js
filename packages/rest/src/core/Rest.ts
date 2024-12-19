@@ -18,21 +18,20 @@ import type {
 import { HttpMethodFlag } from "../utils/index.js";
 
 export class Rest extends EventEmitter<RestEventMap> {
-  readonly #configManager: ConfigManager;
-  readonly #fileHandler: FileHandler;
-  readonly #rateLimiter: RateLimiter;
-  readonly #requestHandler: RequestHandler;
-  readonly #routerManager: RouterManager;
+  readonly configManager: ConfigManager;
+  readonly fileHandler: FileHandler;
+  readonly rateLimiter: RateLimiter;
+  readonly requestHandler: RequestHandler;
+  readonly routerManager: RouterManager;
   #isDestroyed = false;
 
   constructor(options: RestOptionsEntity) {
     super();
-
-    this.#configManager = new ConfigManager(this, options);
-    this.#fileHandler = new FileHandler(this);
-    this.#rateLimiter = new RateLimiter(this);
-    this.#requestHandler = new RequestHandler(this, this.#configManager);
-    this.#routerManager = new RouterManager(this);
+    this.configManager = new ConfigManager(this, options);
+    this.fileHandler = new FileHandler(this);
+    this.rateLimiter = new RateLimiter(this);
+    this.requestHandler = new RequestHandler(this, this.configManager);
+    this.routerManager = new RouterManager(this);
   }
 
   get destroyed(): boolean {
@@ -101,27 +100,27 @@ export class Rest extends EventEmitter<RestEventMap> {
 
   updateProxy(proxyOptions: ProxyAgent.Options | null): void {
     this.#ensureNotDestroyed();
-    this.#configManager.updateProxy(proxyOptions);
+    this.configManager.updateProxy(proxyOptions);
   }
 
   getConfig(): Required<RestOptionsEntity> {
     this.#ensureNotDestroyed();
-    return this.#configManager.options;
+    return this.configManager.options;
   }
 
   processFiles(options: RouteEntity): Promise<RouteEntity> {
     this.#ensureNotDestroyed();
-    return this.#fileHandler.handleFiles(options);
+    return this.fileHandler.handleFiles(options);
   }
 
   async checkRateLimit(path: string): Promise<void> {
     this.#ensureNotDestroyed();
-    await this.#rateLimiter.checkRateLimits(path);
+    await this.rateLimiter.checkRateLimits(path);
   }
 
   updateRateLimits(headers: Record<string, string>, statusCode: number): void {
     this.#ensureNotDestroyed();
-    this.#rateLimiter.updateRateLimits(headers, statusCode);
+    this.rateLimiter.updateRateLimits(headers, statusCode);
   }
 
   async request<T>(options: RouteEntity): Promise<T> {
@@ -133,27 +132,27 @@ export class Rest extends EventEmitter<RestEventMap> {
       requestOptions = await this.processFiles(requestOptions);
     }
 
-    return this.#requestHandler.execute<T>(requestOptions);
+    return this.requestHandler.execute<T>(requestOptions);
   }
 
   getRouter<K extends RouterKey>(key: K): RouterDefinitions[K] {
     this.#ensureNotDestroyed();
-    return this.#routerManager.getRouter(key);
+    return this.routerManager.getRouter(key);
   }
 
   hasRouter(key: RouterKey): boolean {
     this.#ensureNotDestroyed();
-    return this.#routerManager.hasRouter(key);
+    return this.routerManager.hasRouter(key);
   }
 
   getAvailableRouters(): RouterKey[] {
     this.#ensureNotDestroyed();
-    return this.#routerManager.getAvailableRouters();
+    return this.routerManager.getAvailableRouters();
   }
 
   clearRouters(): void {
     this.#ensureNotDestroyed();
-    this.#routerManager.clearRouters();
+    this.routerManager.clearRouters();
   }
 
   async destroy(): Promise<void> {
@@ -166,13 +165,13 @@ export class Rest extends EventEmitter<RestEventMap> {
 
     try {
       await Promise.all([
-        this.#configManager.destroy(),
-        this.#requestHandler.destroy(),
-        this.#routerManager.destroy(),
+        this.configManager.destroy(),
+        this.requestHandler.destroy(),
+        this.routerManager.destroy(),
       ]);
 
-      this.#fileHandler.destroy();
-      this.#rateLimiter.destroy();
+      this.fileHandler.destroy();
+      this.rateLimiter.destroy();
 
       this.removeAllListeners();
       this.emit("debug", "Rest client cleanup completed");

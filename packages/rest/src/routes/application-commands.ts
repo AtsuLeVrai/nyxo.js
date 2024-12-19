@@ -91,7 +91,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command}
    */
-  createGlobalCommand(
+  createGlobalApplicationCommand(
     applicationId: Snowflake,
     options: CreateCommandOptionsEntity,
   ): Promise<ApplicationCommandEntity> {
@@ -104,7 +104,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-command}
    */
-  getGlobalCommand(
+  getGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
@@ -116,7 +116,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command}
    */
-  editGlobalCommand(
+  editGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
     options: Partial<CreateCommandOptionsEntity>,
@@ -134,7 +134,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-global-application-command}
    */
-  deleteGlobalCommand(
+  deleteGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<void> {
@@ -146,7 +146,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands}
    */
-  bulkOverwriteGlobalCommands(
+  bulkOverwriteGlobalApplicationCommands(
     applicationId: Snowflake,
     commands: CreateCommandOptionsEntity[],
   ): Promise<ApplicationCommandEntity[]> {
@@ -168,7 +168,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-commands}
    */
-  getGuildCommands(
+  getGuildApplicationCommands(
     applicationId: Snowflake,
     guildId: Snowflake,
     withLocalizations = false,
@@ -184,7 +184,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command}
    */
-  createGuildCommand(
+  createGuildApplicationCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
     options: CreateCommandOptionsEntity,
@@ -201,7 +201,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command}
    */
-  getGuildCommand(
+  getGuildApplicationCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
@@ -218,7 +218,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command}
    */
-  editGuildCommand(
+  editGuildApplicationCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
@@ -243,7 +243,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-guild-application-command}
    */
-  deleteGuildCommand(
+  deleteGuildApplicationCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
@@ -260,7 +260,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-guild-application-commands}
    */
-  bulkOverwriteGuildCommands(
+  bulkOverwriteGuildApplicationCommands(
     applicationId: Snowflake,
     guildId: Snowflake,
     commands: CreateCommandOptionsEntity[],
@@ -286,7 +286,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command-permissions}
    */
-  getGuildCommandsPermissions(
+  getGuildApplicationCommandPermissions(
     applicationId: Snowflake,
     guildId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity[]> {
@@ -301,7 +301,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-application-command-permissions}
    */
-  getCommandPermissions(
+  getApplicationCommandPermissions(
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
@@ -318,7 +318,7 @@ export class ApplicationCommandRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions}
    */
-  editCommandPermissions(
+  editApplicationCommandPermissions(
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,

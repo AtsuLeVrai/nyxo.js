@@ -1,307 +1,412 @@
-# TypeScript Naming Conventions Guide
+# TypeScript Naming and Style Guide
 
-## 1. Interfaces and Classes
+## Table of Contents
 
-### Main Pattern - Entity and Implementation
+1. [Interfaces](#1-interfaces)
+2. [Classes](#2-classes)
+3. [Types](#3-types)
+4. [Functions](#4-functions)
+5. [Advanced Patterns](#5-advanced-patterns)
+6. [File Structure](#6-file-structure)
+7. [Constants and Enums](#7-constants-and-enums)
+8. [Best Practices](#8-best-practices)
+
+## 1. Interfaces
+
+### Data Interfaces (Entities)
 
 ```typescript
-// Data interface (Entity)
+// ✅ Use Entity suffix for data structures
 interface UserEntity {
     id: string;
     username: string;
+    createdAt: Date;
 }
 
-// Implementation class (Business Logic)
-class User implements UserEntity {
-    constructor(private data: UserEntity) {
-    }
-
-    getDisplayName(): string {
-        return this.data.username;
-    }
+// ✅ Use Response suffix for API responses
+interface UserResponse {
+    data: UserEntity;
+    meta: ResponseMetadata;
 }
-```
 
-### Interface Rules
-
-- Use `Entity` suffix for pure data interfaces
-- Keep simple names for behavioral interfaces
-
-```typescript
-// Data interface
-interface MessageEntity {
+// ❌ Avoid
+interface IUser {
     ...
-}
-
-// Behavioral interface
-interface Sendable {
-    send(): Promise<void>;
-}
+}  // Don't use I prefix
+interface UserInterface {
+    ...
+}  // Don't use Interface suffix
 ```
 
-### Class Rules
-
-- No prefix/suffix for main implementations
-- `Base` prefix for abstract classes
+### Behavioral Interfaces
 
 ```typescript
-// Concrete classes
-class User {
-...
+// ✅ Use clear, action-oriented names
+interface Searchable {
+    search(query: string): Promise<Result[]>;
 }
 
-class Message {
-...
+interface Cacheable {
+    getCacheKey(): string;
+
+    getTTL(): number;
 }
 
-// Abstract classes
-abstract class BaseCommand {
-...
-}
-
-abstract class BaseHandler {
-...
+// ✅ Use Handler suffix for event handlers
+interface EventHandler {
+    handleEvent(event: Event): void;
 }
 ```
 
-## 2. Types
+## 2. Classes
+
+### Private Members Convention
+
+```typescript
+// ❌ Avoid using the 'private' keyword
+class BadExample {
+    private data: string;  // Only TypeScript privacy
+    private process(): void {
+    }
+}
+
+// ✅ Use # for private members
+class GoodExample {
+    #data: string;  // Runtime privacy
+    #cache: Map<string, any>;
+
+    constructor(initialData: string) {
+        this.#data = initialData;
+        this.#cache = new Map();
+    }
+
+    #process(): void {
+        // Private method implementation
+    }
+}
+```
+
+### Class Implementation
+
+```typescript
+class UserService implements Cacheable {
+    #repository: UserRepository;
+    #cache: Map<string, User>;
+
+    constructor(repository: UserRepository) {
+        this.#repository = repository;
+        this.#cache = new Map();
+    }
+
+    async findById(id: string): Promise<User> {
+        // Check cache first
+        const cached = this.#cache.get(id);
+        if (cached) return cached;
+
+        // Fetch from repository
+        const user = await this.#repository.findById(id);
+        this.#cache.set(id, user);
+        return user;
+    }
+
+    #validateUser(user: User): void {
+        if (!user.email) {
+            throw new ValidationError('Email is required');
+        }
+    }
+}
+```
+
+### Abstract Classes
+
+```typescript
+// ✅ Use Base prefix for abstract classes
+abstract class BaseRepository<T> {
+    abstract find(id: string): Promise<T>;
+
+    #validateId(id: string): void {
+        if (!id) throw new Error('ID is required');
+    }
+}
+
+// ✅ Error classes with Error suffix
+class ValidationError extends Error {
+    constructor(
+        message: string,
+        public readonly field: string
+    ) {
+        super(message);
+    }
+}
+```
+
+## 3. Types
 
 ### Simple Types
 
 ```typescript
-// Custom primitive types
-type Snowflake = string;
-type Integer = number;
+// ✅ Domain-specific primitives
+type UserId = string;
+type Amount = number;
+type Email = string;
 
-// Union types
-type UserRole = 'admin' | 'user';
-type ConnectionStatus = 'online' | 'offline' | 'away';
+// ✅ Union types with clear intent
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type Theme = 'light' | 'dark' | 'system';
+
+// ✅ Complex types with descriptive names
+type HttpHeaders = Record<string, string | string[]>;
+type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 ```
 
 ### Generic Types
 
 ```typescript
-// Descriptive suffix for use case
-type BitFieldResolvable<T> = T | bigint | string;
-type DataWrapper<T> = {
-    data: T;
-    metadata: Record<string, unknown>;
-};
-```
+// ✅ Clear generic constraints
+type Nullable<T> = T | null;
+type Optional<T> = T | undefined;
 
-## 3. Enums
+// ✅ Function types
+type AsyncCallback<T, R> = (item: T) => Promise<R>;
+type ErrorHandler = (error: Error) => void;
 
-### Flags (Bit Collections)
-
-- Use `Flags` suffix for bit enums
-- Singular names for each flag
-
-```typescript
-enum PermissionFlags {
-    CreateInstantInvite = 1 << 0,
-    KickMembers = 1 << 1,
-    // ...
-}
-```
-
-### States and Types
-
-- No suffix for state/type enums
-- Descriptive names
-
-```typescript
-enum Premium {
-    None,
-    Basic,
-    Standard,
-    Pro
-}
-
-enum ConnectionVisibility {
-    None,
-    Everyone
-}
+// Common generic naming conventions:
+// T: Type
+// K: Key
+// V: Value
+// E: Element
+// P: Property
+// R: Return type
+// S: State
 ```
 
 ## 4. Functions
 
-### Formatting
+### Validation Functions
 
 ```typescript
-// 'format' prefix for formatting functions
-function formatUser(userId: Snowflake): string { ...
+// ✅ Use 'is' prefix for type guards
+function isValidEmail(value: string): value is Email { ...
 }
 
-function formatTimestamp(date: Date): string { ...
+function isNonEmptyArray<T>(value: T[]): value is [T, ...T[]] { ...
+}
+
+// ✅ Use 'validate' prefix for complex validation
+function validateUserInput(input: unknown): UserEntity { ...
 }
 ```
 
-### Validation
+### Formatting Functions
 
 ```typescript
-// 'is' prefix for validation functions
-function isValidSnowflake(value: string): boolean { ...
+// ✅ Use 'format' prefix for string formatting
+function formatCurrency(amount: number, currency: string): string { ...
 }
 
-function isExpired(timestamp: number): boolean { ...
+function formatPhoneNumber(phone: string, countryCode: string): string { ...
+}
+
+// ✅ Use 'to' prefix for type conversion
+function toInt(value: string): number { ...
+}
+
+function toBoolean(value: unknown): boolean { ...
 }
 ```
 
-### Utilities
+### Utility Functions
 
 ```typescript
-// Action verbs for utilities
-function parseSnowflake(snowflake: Snowflake): Date { ...
+// ✅ Use clear action verbs
+function mergePaths(...paths: string[]): string { ...
 }
 
-function calculatePermissions(flags: PermissionFlags[]): bigint { ...
+function deduplicate<T>(array: T[]): T[] { ...
+}
+
+// ✅ Use 'ensure' prefix for guarantees
+function ensureArray<T>(value: T | T[]): T[] { ...
+}
+
+function ensureError(value: unknown): Error { ...
 }
 ```
 
-## 5. Managers
+## 5. Advanced Patterns
 
-### Management Classes
-
-- `Manager` suffix for management classes
+### State Management
 
 ```typescript
-class BitFieldManager<T> {
-...
+interface UserState {
+    current: User | null;
+    loading: boolean;
+    error?: Error;
 }
 
-class CacheManager {
-...
+type UserAction =
+    | { type: 'LOAD_USER' }
+    | { type: 'SET_USER'; payload: User }
+    | { type: 'SET_ERROR'; payload: Error };
+
+class UserStore {
+    #state: UserState;
+    #listeners: Set<(state: UserState) => void>;
+
+    constructor() {
+        this.#state = {current: null, loading: false};
+        this.#listeners = new Set();
+    }
 }
 ```
 
-### Collections and Registries
-
-- `Registry` suffix for registries
-- `Collection` suffix for specialized collections
+### Factory Pattern
 
 ```typescript
-class CommandRegistry {
-...
-}
+class NotificationFactory {
+    #providers: Map<string, NotificationProvider>;
 
-class UserCollection extends Collection<Snowflake, User> {
-...
+    create(type: 'email' | 'sms'): NotificationService {
+        const provider = this.#providers.get(type);
+        if (!provider) throw new Error(`Unknown type: ${type}`);
+        return new NotificationService(provider);
+    }
 }
 ```
 
-## 6. General Best Practices
+## 6. File Structure
 
-### Casing
+### Directory Organization
 
-- `PascalCase` for types, interfaces, classes, and enums
-- `camelCase` for functions, methods, and properties
-- `SCREAMING_SNAKE_CASE` for constants
+```
+src/
+├── core/
+│   ├── types.ts
+│   ├── interfaces.ts
+│   └── constants.ts
+├── features/
+│   ├── user/
+│   │   ├── types.ts
+│   │   ├── user.entity.ts
+│   │   ├── user.service.ts
+│   │   ├── user.repository.ts
+│   │   └── index.ts
+│   └── auth/
+│       ├── auth.service.ts
+│       └── index.ts
+└── utils/
+    ├── validation.ts
+    └── formatting.ts
+```
 
-### Prefixes to Avoid
+### Module Exports
 
-- ❌ `I` for interfaces
-- ❌ `T` for types (except generics)
-- ❌ `E` for enums
+```typescript
+// ✅ Barrel exports in index.ts
+export * from './interfaces';
+export * from './types';
+export {User} from './user.entity';
+export {UserService} from './user.service';
+```
 
-### Suffixes to Use Sparingly
+## 7. Constants and Enums
 
-- `Entity` only for data interfaces
-- `Manager` only for management classes
-- `Factory` only for object creation classes
+### Constants
+
+```typescript
+// ✅ Use SCREAMING_SNAKE_CASE for true constants
+const MAX_RETRY_ATTEMPTS = 3;
+const DEFAULT_TIMEOUT_MS = 5000;
+
+// ✅ Use PascalCase for enum-like objects
+const HttpStatus = {
+    OK: 200,
+    Created: 201,
+    BadRequest: 400,
+} as const;
+```
+
+### Enums
+
+```typescript
+// ✅ Use singular for enum name, plural for values
+enum Permission {
+    None = 0,
+    Read = 1 << 0,
+    Write = 1 << 1,
+    Delete = 1 << 2,
+}
+
+// ✅ Use Flag suffix for bitfields
+enum UserFlags {
+    None = 0,
+    Premium = 1 << 0,
+    Verified = 1 << 1,
+}
+```
+
+## 8. Best Practices
+
+### Type Safety
+
+```typescript
+// ✅ Use branded types for type safety
+type Brand<K, T> = K & { __brand: T };
+type UserId = Brand<string, 'UserId'>;
+
+// ✅ Use const assertions for literal types
+const Colors = {
+    Primary: '#007bff',
+    Success: '#28a745',
+} as const;
+```
+
+### Error Handling
+
+```typescript
+type Result<T, E = Error> =
+    | { success: true; data: T }
+    | { success: false; error: E };
+
+class NetworkError extends Error {
+    constructor(
+        message: string,
+        public readonly statusCode: number,
+        public readonly retryable: boolean
+    ) {
+        super(message);
+    }
+}
+```
 
 ### Documentation
 
 ```typescript
 /**
- * Interface description
- * @see {@link https://api-docs.example.com/reference}
+ * Represents a user in the system
+ * @implements {Searchable} - Allows user search
+ * @implements {Cacheable} - Enables caching
  */
-interface MessageEntity {
-    /** Unique message identifier */
-    id: Snowflake;
-    /** Message content */
-    content: string;
+interface UserEntity extends Searchable, Cacheable {
+    /** Unique identifier for the user */
+    id: UserId;
+    /** Email address (must be unique) */
+    email: Email;
 }
 ```
 
-## 7. Imports and Exports
-
-### Organization
+### Testing
 
 ```typescript
-// Named exports for types and interfaces
-export interface UserEntity {
-    ...
-}
-
-export type UserRole = 'admin' | 'user';
-
-// Default export for the main class of the file
-export default class User {
-...
-}
-```
-
-### Grouping
-
-```typescript
-// index.ts for grouping exports
-export * from './entities/index.js';
-export * from './managers/index.js';
-export {default as User} from './User.js';
-```
-
-## 8. File Structure
-
-### File Organization
-
-- One class/interface per file (when possible)
-- Group related functionality in directories
-- Use `index.ts` files for exports
-- Keep imports clean and organized
-
-## 9. Additional Tips
-
-### Type Safety
-
-- Prefer interfaces for public APIs
-- Use type aliases for complex types
-- Leverage union types for better type safety
-
-```typescript
-// Good
-type Status = 'pending' | 'success' | 'error';
-
-// Avoid
-type Status = string;
-```
-
-### Nullable Properties
-
-- Be explicit about nullable properties
-- Use optional chaining when appropriate
-
-```typescript
-interface UserProfile {
-    name: string;            // Required
-    avatar: string | null;   // Can be null
-    bio?: string;           // Optional
-}
-```
-
-### Generic Naming
-
-- Use descriptive names for generics
-- Common conventions:
-    - `T` for generic type
-    - `K` for keys
-    - `V` for values
-    - `E` for elements
-
-```typescript
-interface Dictionary<K extends string, V> {
-    get(key: K): V | undefined;
-
-    set(key: K, value: V): void;
-}
+describe('UserService', () => {
+    describe('createUser', () => {
+        it('should create a new user with valid input', async () => {
+            const service = new UserService(mockRepository);
+            const result = await service.createUser(validInput);
+            expect(result.success).toBe(true);
+        });
+    });
+});
 ```

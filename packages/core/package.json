@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@microsoft/api-extractor": "^7.48.0",
+    "@microsoft/api-extractor": "^7.48.1",
     "@nyxjs/configs": "workspace:*",
     "@types/node": "^22.10.2",
     "rimraf": "^6.0.1",

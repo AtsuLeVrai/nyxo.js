@@ -6,9 +6,9 @@ import type { Rest } from "../core/Rest.js";
 import type { FileEntity, RouteEntity } from "../types/index.js";
 
 export class FileHandler {
-  static readonly #MAX_FILE_SIZE = 25 * 1024 * 1024;
-  static readonly #MAX_FILES = 10;
-  static readonly #ALLOWED_EXTENSIONS = new Set([
+  static readonly MAX_FILE_SIZE = 25 * 1024 * 1024;
+  static readonly MAX_FILES = 10;
+  static readonly ALLOWED_EXTENSIONS = new Set([
     ".jpg",
     ".jpeg",
     ".png",
@@ -45,9 +45,9 @@ export class FileHandler {
       ? options.files
       : [options.files];
 
-    if (files.length > FileHandler.#MAX_FILES) {
+    if (files.length > FileHandler.MAX_FILES) {
       throw new Error(
-        `Maximum number of files (${FileHandler.#MAX_FILES}) exceeded`,
+        `Maximum number of files (${FileHandler.MAX_FILES}) exceeded`,
       );
     }
 
@@ -101,14 +101,14 @@ export class FileHandler {
         const size = await this.#getFileSize(file);
         totalSize += size;
 
-        if (size > FileHandler.#MAX_FILE_SIZE) {
+        if (size > FileHandler.MAX_FILE_SIZE) {
           throw new Error(
-            `File size ${size} bytes exceeds maximum size ${FileHandler.#MAX_FILE_SIZE} bytes`,
+            `File size ${size} bytes exceeds maximum size ${FileHandler.MAX_FILE_SIZE} bytes`,
           );
         }
 
         const extension = this.#getFileExtension(file);
-        if (!FileHandler.#ALLOWED_EXTENSIONS.has(extension.toLowerCase())) {
+        if (!FileHandler.ALLOWED_EXTENSIONS.has(extension.toLowerCase())) {
           throw new Error(`File extension ${extension} is not allowed`);
         }
       } catch (error) {
@@ -120,7 +120,7 @@ export class FileHandler {
       }
     }
 
-    if (totalSize > FileHandler.#MAX_FILE_SIZE * FileHandler.#MAX_FILES) {
+    if (totalSize > FileHandler.MAX_FILE_SIZE * FileHandler.MAX_FILES) {
       throw new Error(
         `Total file size ${totalSize} bytes exceeds maximum allowed`,
       );
@@ -206,9 +206,9 @@ export class FileHandler {
         throw new Error("Path does not point to a file");
       }
 
-      if (stats.size > FileHandler.#MAX_FILE_SIZE) {
+      if (stats.size > FileHandler.MAX_FILE_SIZE) {
         throw new Error(
-          `File too large: max size is ${FileHandler.#MAX_FILE_SIZE} bytes`,
+          `File too large: max size is ${FileHandler.MAX_FILE_SIZE} bytes`,
         );
       }
 
@@ -235,9 +235,9 @@ export class FileHandler {
     contentType: string;
   }> {
     try {
-      if (file.size > FileHandler.#MAX_FILE_SIZE) {
+      if (file.size > FileHandler.MAX_FILE_SIZE) {
         throw new Error(
-          `File too large: max size is ${FileHandler.#MAX_FILE_SIZE} bytes`,
+          `File too large: max size is ${FileHandler.MAX_FILE_SIZE} bytes`,
         );
       }
 
