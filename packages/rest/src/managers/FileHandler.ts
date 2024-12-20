@@ -1,39 +1,24 @@
 import { open, stat } from "node:fs/promises";
-import { basename, extname } from "node:path";
+import { basename } from "node:path";
 import FormData from "form-data";
 import { lookup } from "mime-types";
-import type { Rest } from "../core/Rest.js";
+import type { Rest } from "../core/index.js";
 import type { FileEntity, RouteEntity } from "../types/index.js";
 
 export class FileHandler {
-  static readonly MAX_FILE_SIZE = 25 * 1024 * 1024;
+  static readonly DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024;
+  static readonly TIER_1_MAX_FILE_SIZE = 25 * 1024 * 1024;
+  static readonly TIER_2_MAX_FILE_SIZE = 50 * 1024 * 1024;
+  static readonly TIER_3_MAX_FILE_SIZE = 100 * 1024 * 1024;
   static readonly MAX_FILES = 10;
-  static readonly ALLOWED_EXTENSIONS = new Set([
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
-    ".mp3",
-    ".ogg",
-    ".wav",
-    ".mp4",
-    ".mov",
-    ".doc",
-    ".docx",
-    ".pdf",
-    ".txt",
-    ".csv",
-    ".xls",
-    ".xlsx",
-    ".json",
-  ]);
 
   readonly #rest: Rest;
+  #maxFileSize: number;
   #isDestroyed = false;
 
-  constructor(rest: Rest) {
+  constructor(rest: Rest, boostTier = 0) {
     this.#rest = rest;
+    this.#maxFileSize = this.#getMaxFileSizeForTier(boostTier);
   }
 
   async handleFiles(options: RouteEntity): Promise<RouteEntity> {
@@ -61,11 +46,11 @@ export class FileHandler {
       }
 
       if (options.body) {
-        if (typeof options.body === "object") {
-          form.append("payload_json", JSON.stringify(options.body));
-        } else {
-          form.append("payload_json", options.body);
-        }
+        const payload =
+          typeof options.body === "string"
+            ? options.body
+            : JSON.stringify(options.body);
+        form.append("payload_json", payload);
       }
 
       return {
@@ -85,8 +70,25 @@ export class FileHandler {
     }
   }
 
+  setBoostTier(tier: number): void {
+    this.#maxFileSize = this.#getMaxFileSizeForTier(tier);
+  }
+
   destroy(): void {
     this.#isDestroyed = true;
+  }
+
+  #getMaxFileSizeForTier(tier: number): number {
+    switch (tier) {
+      case 1:
+        return FileHandler.TIER_1_MAX_FILE_SIZE;
+      case 2:
+        return FileHandler.TIER_2_MAX_FILE_SIZE;
+      case 3:
+        return FileHandler.TIER_3_MAX_FILE_SIZE;
+      default:
+        return FileHandler.DEFAULT_MAX_FILE_SIZE;
+    }
   }
 
   async #validateFiles(files: Array<FileEntity | undefined>): Promise<void> {
@@ -101,15 +103,10 @@ export class FileHandler {
         const size = await this.#getFileSize(file);
         totalSize += size;
 
-        if (size > FileHandler.MAX_FILE_SIZE) {
+        if (size > this.#maxFileSize) {
           throw new Error(
-            `File size ${size} bytes exceeds maximum size ${FileHandler.MAX_FILE_SIZE} bytes`,
+            `File size ${size} bytes exceeds maximum size ${this.#maxFileSize} bytes`,
           );
-        }
-
-        const extension = this.#getFileExtension(file);
-        if (!FileHandler.ALLOWED_EXTENSIONS.has(extension.toLowerCase())) {
-          throw new Error(`File extension ${extension} is not allowed`);
         }
       } catch (error) {
         this.#rest.emit(
@@ -120,9 +117,10 @@ export class FileHandler {
       }
     }
 
-    if (totalSize > FileHandler.MAX_FILE_SIZE * FileHandler.MAX_FILES) {
+    const maxTotalSize = this.#maxFileSize * FileHandler.MAX_FILES;
+    if (totalSize > maxTotalSize) {
       throw new Error(
-        `Total file size ${totalSize} bytes exceeds maximum allowed`,
+        `Total file size ${totalSize} bytes exceeds maximum allowed ${maxTotalSize} bytes`,
       );
     }
   }
@@ -134,16 +132,6 @@ export class FileHandler {
     }
     if (file instanceof File) {
       return file.size;
-    }
-    throw new Error("Invalid file type");
-  }
-
-  #getFileExtension(file: FileEntity): string {
-    if (typeof file === "string") {
-      return extname(file);
-    }
-    if (file instanceof File) {
-      return extname(file.name);
     }
     throw new Error("Invalid file type");
   }
@@ -206,9 +194,9 @@ export class FileHandler {
         throw new Error("Path does not point to a file");
       }
 
-      if (stats.size > FileHandler.MAX_FILE_SIZE) {
+      if (stats.size > this.#maxFileSize) {
         throw new Error(
-          `File too large: max size is ${FileHandler.MAX_FILE_SIZE} bytes`,
+          `File too large: max size is ${this.#maxFileSize} bytes`,
         );
       }
 
@@ -216,7 +204,8 @@ export class FileHandler {
       try {
         const buffer = await handle.readFile();
         const filename = basename(filePath);
-        const contentType = lookup(filename) || "application/octet-stream";
+        const contentType =
+          String(lookup(filename)) ?? "application/octet-stream";
 
         return { buffer, filename, contentType };
       } finally {
@@ -235,9 +224,9 @@ export class FileHandler {
     contentType: string;
   }> {
     try {
-      if (file.size > FileHandler.MAX_FILE_SIZE) {
+      if (file.size > this.#maxFileSize) {
         throw new Error(
-          `File too large: max size is ${FileHandler.MAX_FILE_SIZE} bytes`,
+          `File too large: max size is ${this.#maxFileSize} bytes`,
         );
       }
 
@@ -246,7 +235,7 @@ export class FileHandler {
         buffer,
         filename: file.name,
         contentType:
-          file.type || lookup(file.name) || "application/octet-stream",
+          file.type ?? lookup(file.name) ?? "application/octet-stream",
       };
     } catch (error) {
       throw new Error(

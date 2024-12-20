@@ -5,11 +5,38 @@ import {
   AutoModerationRuleTriggerType,
   type Snowflake,
 } from "@nyxjs/core";
-import type {
-  CreateAutoModerationRuleOptionsEntity,
-  ModifyAutoModerationRuleOptionsEntity,
-} from "../types/index.js";
 import { BaseRouter } from "./base.js";
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule-json-params}
+ */
+export type CreateAutoModerationRuleOptionsEntity = Pick<
+  AutoModerationRuleEntity,
+  | "name"
+  | "event_type"
+  | "trigger_type"
+  | "trigger_metadata"
+  | "actions"
+  | "enabled"
+  | "exempt_roles"
+  | "exempt_channels"
+>;
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule-json-params}
+ */
+export type ModifyAutoModerationRuleOptionsEntity = Partial<
+  Pick<
+    AutoModerationRuleEntity,
+    | "name"
+    | "event_type"
+    | "trigger_metadata"
+    | "actions"
+    | "enabled"
+    | "exempt_roles"
+    | "exempt_channels"
+  >
+>;
 
 export interface AutoModerationRoutes {
   readonly base: (

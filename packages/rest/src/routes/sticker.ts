@@ -1,9 +1,22 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
-import type {
-  StickerCreateEntity,
-  StickerModifyEntity,
-} from "../types/index.js";
+import type { FileEntity } from "../types/index.js";
 import { BaseRouter } from "./base.js";
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker-form-params}
+ */
+export interface StickerCreateEntity
+  extends Pick<StickerEntity, "name" | "description" | "tags"> {
+  file: FileEntity;
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params}
+ */
+export type StickerModifyEntity = Pick<
+  StickerEntity,
+  "name" | "description" | "tags"
+>;
 
 export class StickerRouter extends BaseRouter {
   static readonly NAME_MIN_LENGTH = 2;

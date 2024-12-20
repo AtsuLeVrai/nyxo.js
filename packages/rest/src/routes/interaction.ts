@@ -1,13 +1,36 @@
 import type {
+  ActionRowEntity,
+  AllowedMentionsEntity,
+  AttachmentEntity,
+  EmbedEntity,
   InteractionCallbackEntity,
   MessageEntity,
+  PollCreateRequestEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type {
-  InteractionCallbackDataOptionsEntity,
-  InteractionResponseOptionsEntity,
-} from "../types/index.js";
 import { BaseRouter } from "./base.js";
+
+/**
+ * @todo Verify all the types in `InteractionResponseOptions`.
+ */
+export interface InteractionResponseOptionsEntity {
+  type: number;
+  data?: InteractionCallbackDataOptionsEntity;
+}
+
+/**
+ * @todo Verify all the types in `InteractionCallbackDataOptions`.
+ */
+export interface InteractionCallbackDataOptionsEntity {
+  tts?: boolean;
+  content?: string;
+  embeds?: EmbedEntity[];
+  allowed_mentions?: AllowedMentionsEntity;
+  flags?: number;
+  components?: ActionRowEntity[];
+  attachments?: Partial<AttachmentEntity>[];
+  poll?: PollCreateRequestEntity;
+}
 
 export class InteractionRouter extends BaseRouter {
   static routes = {

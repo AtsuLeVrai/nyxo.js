@@ -3,13 +3,49 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type {
-  CreateEventEntity,
-  GetEventsQueryEntity,
-  GetUsersQueryEntity,
-  ModifyEventEntity,
-} from "../types/index.js";
+import type { ImageData } from "../types/index.js";
 import { BaseRouter } from "./base.js";
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-query-string-params}
+ */
+export interface GetEventsQueryEntity {
+  with_user_count?: boolean;
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params}
+ */
+export interface GetUsersQueryEntity {
+  limit?: number;
+  with_member?: boolean;
+  before?: Snowflake;
+  after?: Snowflake;
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
+ */
+export interface CreateEventEntity
+  extends Pick<
+    GuildScheduledEventEntity,
+    | "channel_id"
+    | "entity_metadata"
+    | "name"
+    | "privacy_level"
+    | "scheduled_start_time"
+    | "scheduled_end_time"
+    | "description"
+    | "entity_type"
+    | "recurrence_rule"
+  > {
+  image?: ImageData;
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
+ */
+export type ModifyEventEntity = Partial<CreateEventEntity>;
 
 export class ScheduledEventRouter extends BaseRouter {
   static routes = {

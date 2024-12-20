@@ -1,9 +1,25 @@
-import type { MessageEntity, Snowflake } from "@nyxjs/core";
 import type {
-  GetVotersQueryEntity,
-  PollVotersResponseEntity,
-} from "../types/index.js";
+  Integer,
+  MessageEntity,
+  Snowflake,
+  UserEntity,
+} from "@nyxjs/core";
 import { BaseRouter } from "./base.js";
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body}
+ */
+export interface PollVotersResponseEntity {
+  users: UserEntity[];
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-query-string-params}
+ */
+export interface GetVotersQueryEntity {
+  after?: Snowflake;
+  limit?: Integer;
+}
 
 export class PollRouter extends BaseRouter {
   static routes = {

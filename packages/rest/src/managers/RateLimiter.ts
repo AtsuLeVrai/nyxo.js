@@ -1,10 +1,19 @@
 import { Store } from "@nyxjs/store";
 import type { Rest } from "../core/index.js";
 import type { RateLimitEntity, RateLimitScope } from "../types/index.js";
-import { HttpStatusCode } from "../utils/index.js";
+import { HttpStatusCode } from "../types/index.js";
 
 export class RateLimiter {
   static readonly MAX_QUEUE_SIZE = 1000;
+  static readonly MAX_GLOBAL_REQUESTS = 50;
+  static readonly MAX_INVALID_REQUESTS = 10000;
+  static readonly INVALID_REQUEST_WINDOW = 600000;
+  static readonly GLOBAL_RESET_INTERVAL = 1000;
+  static readonly SHARED_RATE_LIMIT_PATHS = new Set([
+    /^\/guilds\/\d+\/emojis/,
+    /^\/channels\/\d+\/messages\/\d+\/reactions/,
+  ]);
+
   static readonly RATE_LIMIT_HEADERS = {
     BUCKET: "x-ratelimit-bucket",
     LIMIT: "x-ratelimit-limit",
@@ -17,14 +26,19 @@ export class RateLimiter {
   } as const;
 
   readonly #rest: Rest;
+  readonly #bucketHashes = new Store<string, string>();
   #globalRateLimit: number | null = null;
+  #globalRequestCounter = 0;
+  #globalResetTimeout: NodeJS.Timeout | null = null;
+  #invalidRequestCount = 0;
+  #lastInvalidRequestReset = Date.now();
   #isDestroyed = false;
 
   readonly #rateLimitBuckets = new Store<
     string,
     Omit<RateLimitEntity, "bucket">
   >();
-  readonly #requestQueue = new Map<
+  readonly #requestQueue = new Store<
     string,
     Array<{
       resolve: () => void;
@@ -35,6 +49,7 @@ export class RateLimiter {
 
   constructor(rest: Rest) {
     this.#rest = rest;
+    this.#startGlobalResetInterval();
   }
 
   async checkRateLimits(path: string): Promise<void> {
@@ -42,17 +57,34 @@ export class RateLimiter {
       throw new Error("RateLimiter has been destroyed");
     }
 
-    const bucketKey = this.#getBucketKey(path);
+    if (this.#isInvalidRequestLimited()) {
+      throw new Error("Invalid request rate limit exceeded");
+    }
 
-    if (this.#isGloballyRateLimited()) {
+    if (
+      !path.startsWith("/interactions") &&
+      this.#globalRequestCounter >= RateLimiter.MAX_GLOBAL_REQUESTS
+    ) {
       await this.#handleGlobalRateLimit();
       return;
     }
 
+    const bucketKey = this.#getBucketKey(path);
     const rateLimit = this.#rateLimitBuckets.get(bucketKey);
+
     if (this.#isBucketRateLimited(rateLimit)) {
+      if (rateLimit.scope === "shared") {
+        this.#rest.emit(
+          "debug",
+          `Hit shared rate limit for bucket: ${bucketKey}`,
+        );
+      }
       await this.#handleBucketRateLimit(bucketKey, rateLimit);
       return;
+    }
+
+    if (!path.startsWith("/interactions")) {
+      this.#globalRequestCounter++;
     }
 
     if (rateLimit) {
@@ -61,7 +93,18 @@ export class RateLimiter {
   }
 
   updateRateLimits(headers: Record<string, string>, statusCode: number): void {
+    if (this.#isDestroyed) {
+      return;
+    }
+
+    if (this.#isErrorStatus(statusCode)) {
+      this.incrementInvalidRequestCount(statusCode);
+    }
+
     if (statusCode === HttpStatusCode.TooManyRequests) {
+      if (headers[RateLimiter.RATE_LIMIT_HEADERS.SCOPE] === "shared") {
+        this.#rest.emit("debug", "Received shared rate limit response");
+      }
       this.#handleGlobalRateLimitHeader(headers);
       return;
     }
@@ -83,6 +126,11 @@ export class RateLimiter {
       scope,
     });
 
+    const bucketHash = headers[RateLimiter.RATE_LIMIT_HEADERS.BUCKET];
+    if (bucketHash) {
+      this.#bucketHashes.set(bucket, bucketHash);
+    }
+
     this.#processQueue(bucket);
 
     if (global) {
@@ -99,15 +147,38 @@ export class RateLimiter {
     }
   }
 
+  incrementInvalidRequestCount(statusCode: number): void {
+    if (this.#isErrorStatus(statusCode)) {
+      this.#invalidRequestCount++;
+
+      const now = Date.now();
+      if (
+        now - this.#lastInvalidRequestReset >=
+        RateLimiter.INVALID_REQUEST_WINDOW
+      ) {
+        this.#invalidRequestCount = 1;
+        this.#lastInvalidRequestReset = now;
+      }
+    }
+  }
+
   destroy(): void {
     if (this.#isDestroyed) {
       return;
     }
 
     this.#isDestroyed = true;
+    if (this.#globalResetTimeout) {
+      clearInterval(this.#globalResetTimeout);
+      this.#globalResetTimeout = null;
+    }
+
     this.#rateLimitBuckets.clear();
     this.#requestQueue.clear();
+    this.#bucketHashes.clear();
     this.#globalRateLimit = null;
+    this.#invalidRequestCount = 0;
+    this.#globalRequestCounter = 0;
 
     for (const queue of this.#requestQueue.values()) {
       for (const request of queue) {
@@ -116,28 +187,47 @@ export class RateLimiter {
     }
   }
 
+  #startGlobalResetInterval(): void {
+    this.#globalResetTimeout = setInterval(() => {
+      this.#globalRequestCounter = 0;
+    }, RateLimiter.GLOBAL_RESET_INTERVAL);
+  }
+
   #getBucketKey(path: string): string {
+    for (const pattern of RateLimiter.SHARED_RATE_LIMIT_PATHS) {
+      if (pattern.test(path)) {
+        return `shared:${path}`;
+      }
+    }
+
     const routes = {
       channels: /^\/channels\/(\d+)/,
       guilds: /^\/guilds\/(\d+)/,
       webhooks: /^\/webhooks\/(\d+)/,
-      reactions: /^\/channels\/\d+\/messages\/\d+\/reactions\/([^/]+)/,
-      messages: /^\/channels\/\d+\/messages\/(\d+)/,
     };
 
     for (const [type, regex] of Object.entries(routes)) {
       const match = path.match(regex);
       if (match) {
         const [, id] = match;
-        return `${type}:${id}:${path}`;
+        const hash = this.#bucketHashes.get(`${type}:${id}`);
+        return hash ? `${type}:${id}:${hash}` : `${type}:${id}:${path}`;
       }
     }
 
     return path;
   }
 
-  #isGloballyRateLimited(): boolean {
-    return this.#globalRateLimit !== null && Date.now() < this.#globalRateLimit;
+  #isErrorStatus(statusCode: number): boolean {
+    return (
+      statusCode === HttpStatusCode.Unauthorized ||
+      statusCode === HttpStatusCode.Forbidden ||
+      statusCode === HttpStatusCode.TooManyRequests
+    );
+  }
+
+  #isInvalidRequestLimited(): boolean {
+    return this.#invalidRequestCount >= RateLimiter.MAX_INVALID_REQUESTS;
   }
 
   #isBucketRateLimited(
@@ -194,33 +284,6 @@ export class RateLimiter {
     }
   }
 
-  #updateBucket(bucket: string, data: Omit<RateLimitEntity, "bucket">): void {
-    this.#rateLimitBuckets.set(bucket, {
-      ...data,
-      reset: Number(data.reset),
-      resetAfter: Number(data.resetAfter),
-      remaining: Number(data.remaining),
-      limit: Number(data.limit),
-    });
-
-    this.#rest.emit(
-      "debug",
-      `Updated bucket ${bucket}: ${data.remaining}/${data.limit} remaining`,
-    );
-  }
-
-  #updateBucketRemaining(
-    bucket: string,
-    rateLimit: Omit<RateLimitEntity, "bucket">,
-  ): void {
-    if (rateLimit.remaining > 0) {
-      this.#rateLimitBuckets.set(bucket, {
-        ...rateLimit,
-        remaining: rateLimit.remaining - 1,
-      });
-    }
-  }
-
   #handleGlobalRateLimitHeader(headers: Record<string, string>): void {
     const retryAfter = headers[RateLimiter.RATE_LIMIT_HEADERS.RETRY_AFTER];
     if (!retryAfter) {
@@ -261,6 +324,33 @@ export class RateLimiter {
     }
 
     return { bucket, reset, resetAfter, remaining, limit, global, scope };
+  }
+
+  #updateBucket(bucket: string, data: Omit<RateLimitEntity, "bucket">): void {
+    this.#rateLimitBuckets.set(bucket, {
+      ...data,
+      reset: Number(data.reset),
+      resetAfter: Number(data.resetAfter),
+      remaining: Number(data.remaining),
+      limit: Number(data.limit),
+    });
+
+    this.#rest.emit(
+      "debug",
+      `Updated bucket ${bucket}: ${data.remaining}/${data.limit} remaining`,
+    );
+  }
+
+  #updateBucketRemaining(
+    bucket: string,
+    rateLimit: Omit<RateLimitEntity, "bucket">,
+  ): void {
+    if (rateLimit.remaining > 0) {
+      this.#rateLimitBuckets.set(bucket, {
+        ...rateLimit,
+        remaining: rateLimit.remaining - 1,
+      });
+    }
   }
 
   #addToQueue(

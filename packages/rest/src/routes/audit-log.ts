@@ -1,10 +1,21 @@
+import type { Integer } from "@nyxjs/core";
 import {
   type AuditLogEntity,
   AuditLogEvent,
   type Snowflake,
 } from "@nyxjs/core";
-import type { GetGuildAuditLogOptionsEntity } from "../types/index.js";
 import { BaseRouter } from "./base.js";
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params}
+ */
+export interface GetGuildAuditLogOptionsEntity {
+  user_id?: Snowflake;
+  action_type?: AuditLogEvent;
+  before?: Snowflake;
+  after?: Snowflake;
+  limit?: Integer;
+}
 
 export interface AuditLogRoutes {
   readonly guildAuditLogs: (

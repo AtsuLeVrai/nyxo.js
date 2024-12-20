@@ -1,3 +1,4 @@
+import { Store } from "@nyxjs/store";
 import type { Rest } from "../core/Rest.js";
 import {
   ApplicationCommandRouter,
@@ -31,10 +32,11 @@ import type { RouterDefinitions, RouterKey } from "../types/index.js";
 
 export class RouterManager {
   static readonly ROUTER_CACHE_SIZE = 50;
+  static readonly ROUTER_INIT_TIMEOUT = 5000;
 
   readonly #rest: Rest;
-  readonly #routers = new Map<string, BaseRouter>();
-  readonly #routerDefinitions: Record<string, BaseRouter>;
+  readonly #routers = new Store<RouterKey, BaseRouter>();
+  readonly #routerDefinitions: Record<string, new (rest: Rest) => BaseRouter>;
   #isDestroyed = false;
 
   constructor(rest: Rest) {
@@ -50,15 +52,25 @@ export class RouterManager {
     this.#rest.emit("debug", `Getting router for key: ${key}`);
 
     if (!this.#routers.has(key)) {
-      const routerCreator = this.#routerDefinitions[key];
-      if (!routerCreator) {
+      const RouterClass = this.#routerDefinitions[key];
+      if (!RouterClass) {
         const error = new Error(`Router not found for key: ${key}`);
         this.#rest.emit("error", error);
         throw error;
       }
 
-      this.#addToCache(key, routerCreator);
-      this.#rest.emit("debug", `Created new router instance for key: ${key}`);
+      try {
+        this.#createRouter(key, RouterClass);
+        this.#rest.emit("debug", `Created new router instance for key: ${key}`);
+      } catch (error) {
+        this.#rest.emit(
+          "error",
+          new Error(
+            `Failed to create router ${key}: ${error instanceof Error ? error.message : String(error)}`,
+          ),
+        );
+        throw error;
+      }
     }
 
     return this.#routers.get(key) as RouterDefinitions[K];
@@ -70,6 +82,11 @@ export class RouterManager {
     }
 
     this.#rest.emit("debug", "Clearing all routers");
+    for (const router of this.#routers.values()) {
+      if ("destroy" in router && typeof router.destroy === "function") {
+        router.destroy();
+      }
+    }
     this.#routers.clear();
   }
 
@@ -106,9 +123,14 @@ export class RouterManager {
       throw new Error("RouterManager has been destroyed");
     }
 
-    if (!this.#routers.has(key)) {
+    const router = this.#routers.get(key);
+    if (!router) {
       this.#rest.emit("debug", `Router ${key} not found in cache`);
       return false;
+    }
+
+    if ("destroy" in router && typeof router.destroy === "function") {
+      router.destroy();
     }
 
     this.#routers.delete(key);
@@ -124,26 +146,59 @@ export class RouterManager {
     this.#isDestroyed = true;
     this.#rest.emit("debug", "Destroying RouterManager");
 
+    const destroyPromises: Promise<void>[] = [];
+
     for (const [key, router] of this.#routers.entries()) {
       try {
         if ("destroy" in router && typeof router.destroy === "function") {
-          await router.destroy();
+          destroyPromises.push(
+            Promise.resolve(router.destroy()).catch((error) => {
+              this.#rest.emit(
+                "error",
+                new Error(
+                  `Failed to destroy router ${key}: ${error instanceof Error ? error.message : String(error)}`,
+                ),
+              );
+            }),
+          );
         }
         this.#rest.emit("debug", `Destroyed router: ${key}`);
       } catch (error) {
         this.#rest.emit(
           "error",
           new Error(
-            `Failed to destroy router ${key}: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to initiate destroy for router ${key}: ${error instanceof Error ? error.message : String(error)}`,
           ),
         );
       }
     }
 
+    try {
+      await Promise.race([
+        Promise.all(destroyPromises),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Router destroy timeout")),
+            RouterManager.ROUTER_INIT_TIMEOUT,
+          ),
+        ),
+      ]);
+    } catch (error) {
+      this.#rest.emit(
+        "error",
+        new Error(
+          `Error during router cleanup: ${error instanceof Error ? error.message : String(error)}`,
+        ),
+      );
+    }
+
     this.#routers.clear();
   }
 
-  #addToCache(key: string, router: BaseRouter): void {
+  #createRouter(
+    key: RouterKey,
+    RouterClass: new (rest: Rest) => BaseRouter,
+  ): void {
     if (this.#routers.size >= RouterManager.ROUTER_CACHE_SIZE) {
       const [oldestKey] = this.#routers.keys();
       if (!oldestKey) {
@@ -151,41 +206,47 @@ export class RouterManager {
         return;
       }
 
-      this.#routers.delete(oldestKey);
+      this.removeCachedRouter(oldestKey);
       this.#rest.emit("debug", `Removed oldest router ${oldestKey} from cache`);
     }
 
+    const router = new RouterClass(this.#rest);
     this.#routers.set(key, router);
   }
 
-  #initializeRouterDefinitions(): Record<RouterKey, BaseRouter> {
+  #initializeRouterDefinitions(): Record<
+    string,
+    new (
+      rest: Rest,
+    ) => BaseRouter
+  > {
     try {
       return {
-        applications: new ApplicationRouter(this.#rest),
-        commands: new ApplicationCommandRouter(this.#rest),
-        connections: new ApplicationConnectionRouter(this.#rest),
-        auditLogs: new AuditLogRouter(this.#rest),
-        autoModeration: new AutoModerationRouter(this.#rest),
-        channels: new ChannelRouter(this.#rest),
-        emojis: new EmojiRouter(this.#rest),
-        entitlements: new EntitlementRouter(this.#rest),
-        gateway: new GatewayRouter(this.#rest),
-        guilds: new GuildRouter(this.#rest),
-        templates: new GuildTemplateRouter(this.#rest),
-        interactions: new InteractionRouter(this.#rest),
-        invites: new InviteRouter(this.#rest),
-        messages: new MessageRouter(this.#rest),
-        oauth2: new OAuth2Router(this.#rest),
-        polls: new PollRouter(this.#rest),
-        scheduledEvents: new ScheduledEventRouter(this.#rest),
-        skus: new SkuRouter(this.#rest),
-        soundboards: new SoundboardRouter(this.#rest),
-        stages: new StageInstanceRouter(this.#rest),
-        stickers: new StickerRouter(this.#rest),
-        subscriptions: new SubscriptionRouter(this.#rest),
-        users: new UserRouter(this.#rest),
-        voice: new VoiceRouter(this.#rest),
-        webhooks: new WebhookRouter(this.#rest),
+        applications: ApplicationRouter,
+        commands: ApplicationCommandRouter,
+        connections: ApplicationConnectionRouter,
+        auditLogs: AuditLogRouter,
+        autoModeration: AutoModerationRouter,
+        channels: ChannelRouter,
+        emojis: EmojiRouter,
+        entitlements: EntitlementRouter,
+        gateway: GatewayRouter,
+        guilds: GuildRouter,
+        templates: GuildTemplateRouter,
+        interactions: InteractionRouter,
+        invites: InviteRouter,
+        messages: MessageRouter,
+        oauth2: OAuth2Router,
+        polls: PollRouter,
+        scheduledEvents: ScheduledEventRouter,
+        skus: SkuRouter,
+        soundboards: SoundboardRouter,
+        stages: StageInstanceRouter,
+        stickers: StickerRouter,
+        subscriptions: SubscriptionRouter,
+        users: UserRouter,
+        voice: VoiceRouter,
+        webhooks: WebhookRouter,
       };
     } catch (error) {
       const initError = new Error(

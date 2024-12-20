@@ -6,22 +6,49 @@ import {
   AuthTypeFlag,
   HttpMethodFlag,
   HttpStatusCode,
-} from "../utils/index.js";
+} from "../types/index.js";
 
 export class ConfigManager {
-  static readonly USER_AGENT_REGEX = /^DiscordBot \(https?:\/\/.*?, [\d.]+\)$/;
-  static readonly DEFAULT_VERSION: ApiVersion.V10 = ApiVersion.V10;
-  static readonly DEFAULT_AUTH_TYPE = AuthTypeFlag.Bot;
-  static readonly DEFAULT_MAX_RETRIES = 3;
-  static readonly DEFAULT_BASE_RETRY_DELAY = 1000;
-  static readonly DEFAULT_TIMEOUT = 15000;
-  static readonly DEFAULT_RATE_LIMIT_RETRY = 3;
-  static readonly DEFAULT_MAX_CONCURRENT = 10;
+  static readonly CURRENT_API_VERSION = ApiVersion.V10;
+  static readonly SUPPORTED_API_VERSIONS = new Set([
+    ApiVersion.V9,
+    ApiVersion.V10,
+  ]);
+  static readonly USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
   static readonly DEFAULT_USER_AGENT =
     "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)";
+  static readonly DEFAULT_TIMEOUT = 15000;
   static readonly MAX_TIMEOUT = 30000;
-  static readonly RETRY_STATUS_CODES =
-    Object.values(HttpStatusCode).map(Number);
+  static readonly DEFAULT_MAX_RETRIES = 3;
+  static readonly DEFAULT_BASE_RETRY_DELAY = 1000;
+  static readonly MIN_RETRY_DELAY = 500;
+  static readonly MAX_RETRY_DELAY = 15000;
+  static readonly DEFAULT_RATE_LIMIT_RETRY = 3;
+  static readonly DEFAULT_MAX_CONCURRENT = 10;
+  static readonly DEFAULT_AUTH_TYPE = AuthTypeFlag.Bot;
+  static readonly DEFAULT_COMPRESS = true;
+
+  static readonly DEFAULT_POOL_OPTIONS: Pool.Options = {
+    allowH2: true,
+    connections: ConfigManager.DEFAULT_MAX_CONCURRENT,
+    keepAliveTimeout: 30000,
+    keepAliveMaxTimeout: 60000,
+    connect: {
+      rejectUnauthorized: true,
+      ALPNProtocols: ["h2", "http/1.1"],
+      secureOptions: 0x40000000,
+      keepAlive: true,
+      keepAliveInitialDelay: 60000,
+      timeout: ConfigManager.DEFAULT_TIMEOUT,
+    },
+  };
+
+  static readonly RETRY_STATUS_CODES = [
+    HttpStatusCode.TooManyRequests,
+    HttpStatusCode.ServerError,
+    HttpStatusCode.GatewayUnavailable,
+  ];
+
   readonly options: Required<RestOptionsEntity>;
   retryAgent: RetryAgent;
   readonly #rest: Rest;
@@ -60,7 +87,7 @@ export class ConfigManager {
       .catch((error) => {
         this.#rest.emit(
           "error",
-          new Error(`Failed to update proxy: ${error.message}`),
+          new Error(`Failed to update proxy: ${this.#getErrorMessage(error)}`),
         );
         throw error;
       });
@@ -77,13 +104,12 @@ export class ConfigManager {
     try {
       await this.#cleanupProxy();
       await Promise.all([this.retryAgent.close(), this.#pool.destroy()]);
-
       this.#rest.emit("debug", "Configuration cleanup completed");
     } catch (error) {
       this.#rest.emit(
         "error",
         new Error(
-          `Failed to cleanup configuration: ${error instanceof Error ? error.message : String(error)}`,
+          `Failed to cleanup configuration: ${this.#getErrorMessage(error)}`,
         ),
       );
       throw error;
@@ -91,40 +117,79 @@ export class ConfigManager {
   }
 
   #mergeOptions(options: RestOptionsEntity): Required<RestOptionsEntity> {
+    const version = options.version ?? ConfigManager.CURRENT_API_VERSION;
+    if (!ConfigManager.SUPPORTED_API_VERSIONS.has(version)) {
+      throw new Error(
+        `API version ${version} is not supported. Supported versions: ${Array.from(ConfigManager.SUPPORTED_API_VERSIONS).join(", ")}`,
+      );
+    }
+
     return {
-      version: ConfigManager.DEFAULT_VERSION,
-      authType: ConfigManager.DEFAULT_AUTH_TYPE,
-      maxRetries: ConfigManager.DEFAULT_MAX_RETRIES,
-      baseRetryDelay: ConfigManager.DEFAULT_BASE_RETRY_DELAY,
-      timeout: ConfigManager.DEFAULT_TIMEOUT,
-      rateLimitRetryLimit: ConfigManager.DEFAULT_RATE_LIMIT_RETRY,
-      maxConcurrentRequests: ConfigManager.DEFAULT_MAX_CONCURRENT,
-      compress: true,
-      userAgent: ConfigManager.DEFAULT_USER_AGENT,
-      ...options,
+      token: options.token,
+      version,
+      authType: options.authType ?? ConfigManager.DEFAULT_AUTH_TYPE,
+      maxRetries: this.#validateNumber(
+        options.maxRetries,
+        ConfigManager.DEFAULT_MAX_RETRIES,
+        "maxRetries",
+        1,
+      ),
+      baseRetryDelay: this.#validateNumber(
+        options.baseRetryDelay,
+        ConfigManager.DEFAULT_BASE_RETRY_DELAY,
+        "baseRetryDelay",
+        ConfigManager.MIN_RETRY_DELAY,
+        ConfigManager.MAX_RETRY_DELAY,
+      ),
+      timeout: this.#validateNumber(
+        options.timeout,
+        ConfigManager.DEFAULT_TIMEOUT,
+        "timeout",
+        1000,
+        ConfigManager.MAX_TIMEOUT,
+      ),
+      rateLimitRetryLimit: this.#validateNumber(
+        options.rateLimitRetryLimit,
+        ConfigManager.DEFAULT_RATE_LIMIT_RETRY,
+        "rateLimitRetryLimit",
+        0,
+      ),
+      maxConcurrentRequests: this.#validateNumber(
+        options.maxConcurrentRequests,
+        ConfigManager.DEFAULT_MAX_CONCURRENT,
+        "maxConcurrentRequests",
+        1,
+      ),
+      userAgent: options.userAgent ?? ConfigManager.DEFAULT_USER_AGENT,
+      compress: options.compress ?? ConfigManager.DEFAULT_COMPRESS,
       proxy: options.proxy ?? { uri: "" },
-      pool: this.#getPoolOptions(options),
+      pool: { ...ConfigManager.DEFAULT_POOL_OPTIONS, ...options.pool },
       retry: this.#getRetryOptions(options),
     } as Required<RestOptionsEntity>;
   }
 
-  #getPoolOptions(options: RestOptionsEntity): Pool.Options {
-    return {
-      allowH2: true,
-      connections:
-        options.maxConcurrentRequests ?? ConfigManager.DEFAULT_MAX_CONCURRENT,
-      keepAliveTimeout: 30000,
-      keepAliveMaxTimeout: 60000,
-      connect: {
-        rejectUnauthorized: true,
-        ALPNProtocols: ["h2", "http/1.1"],
-        secureOptions: 0x40000000,
-        keepAlive: true,
-        keepAliveInitialDelay: 60000,
-        timeout: options.timeout ?? ConfigManager.DEFAULT_TIMEOUT,
-      },
-      ...options.pool,
-    };
+  #validateNumber(
+    value: number | undefined,
+    defaultValue: number,
+    name: string,
+    min?: number,
+    max?: number,
+  ): number {
+    const resolvedValue = value ?? defaultValue;
+
+    if (!Number.isFinite(resolvedValue)) {
+      throw new Error(`${name} must be a finite number`);
+    }
+
+    if (min !== undefined && resolvedValue < min) {
+      throw new Error(`${name} must be at least ${min}`);
+    }
+
+    if (max !== undefined && resolvedValue > max) {
+      throw new Error(`${name} must not exceed ${max}`);
+    }
+
+    return resolvedValue;
   }
 
   #getRetryOptions(options: RestOptionsEntity): RetryHandler.RetryOptions {
@@ -150,7 +215,7 @@ export class ConfigManager {
         this.#rest.emit(
           "error",
           new Error(
-            `Failed to close proxy agent: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to close proxy agent: ${this.#getErrorMessage(error)}`,
           ),
         );
       }
@@ -175,32 +240,57 @@ export class ConfigManager {
     this.options.proxy = { uri: "" };
   }
 
-  #validateConfiguration(options: Partial<RestOptionsEntity>): void {
+  #validateConfiguration(options: RestOptionsEntity): void {
     this.#rest.emit("debug", "Validating configuration");
 
     if (options.userAgent && !this.#isValidUserAgent(options.userAgent)) {
-      throw new Error("Invalid user agent format");
-    }
-
-    if (
-      options.timeout &&
-      (options.timeout < 0 || options.timeout > ConfigManager.MAX_TIMEOUT)
-    ) {
       throw new Error(
-        `Timeout must be between 0 and ${ConfigManager.MAX_TIMEOUT}`,
+        "Invalid user agent format. Must match: DiscordBot (url, version)",
       );
     }
 
-    if (options.maxRetries && options.maxRetries < 0) {
-      throw new Error("Max retries cannot be negative");
+    // Token is required
+    if (!options.token) {
+      throw new Error("Token is required");
     }
 
-    if (options.baseRetryDelay && options.baseRetryDelay < 0) {
-      throw new Error("Base retry delay cannot be negative");
+    // Auth type must be valid
+    if (
+      options.authType &&
+      !Object.values(AuthTypeFlag).includes(options.authType)
+    ) {
+      throw new Error("Invalid auth type");
     }
 
-    if (options.maxConcurrentRequests && options.maxConcurrentRequests < 1) {
-      throw new Error("Max concurrent requests must be at least 1");
+    this.#validateNumber(
+      options.timeout,
+      ConfigManager.DEFAULT_TIMEOUT,
+      "timeout",
+      1000,
+      ConfigManager.MAX_TIMEOUT,
+    );
+    this.#validateNumber(
+      options.maxRetries,
+      ConfigManager.DEFAULT_MAX_RETRIES,
+      "maxRetries",
+      0,
+    );
+    this.#validateNumber(
+      options.baseRetryDelay,
+      ConfigManager.DEFAULT_BASE_RETRY_DELAY,
+      "baseRetryDelay",
+      ConfigManager.MIN_RETRY_DELAY,
+      ConfigManager.MAX_RETRY_DELAY,
+    );
+    this.#validateNumber(
+      options.maxConcurrentRequests,
+      ConfigManager.DEFAULT_MAX_CONCURRENT,
+      "maxConcurrentRequests",
+      1,
+    );
+
+    if (options.proxy && !options.proxy.uri) {
+      throw new Error("Proxy URI must be provided when using proxy");
     }
 
     this.#rest.emit("debug", "Configuration validated successfully");
@@ -211,8 +301,8 @@ export class ConfigManager {
   }
 
   #createPool(): Pool {
-    const options = this.#getPoolOptions(this.options);
-    return new Pool("https://discord.com", options);
+    const poolOptions = this.options.pool ?? ConfigManager.DEFAULT_POOL_OPTIONS;
+    return new Pool("https://discord.com", poolOptions);
   }
 
   #createProxyAgent(): ProxyAgent | null {
@@ -220,17 +310,22 @@ export class ConfigManager {
       return null;
     }
 
-    const options: ProxyAgent.Options = {
+    return new ProxyAgent({
       allowH2: true,
       ...this.options.proxy,
-    };
-
-    return new ProxyAgent(options);
+    });
   }
 
   #createRetryAgent(): RetryAgent {
     const agent = this.#proxyAgent ?? this.#pool;
     const options = this.#getRetryOptions(this.options);
     return new RetryAgent(agent, options);
+  }
+
+  #getErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 }

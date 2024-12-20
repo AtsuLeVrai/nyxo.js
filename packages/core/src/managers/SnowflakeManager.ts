@@ -30,8 +30,7 @@ export class SnowflakeManager {
   static readonly MAX_INCREMENT = 4095;
   static readonly MAX_PROCESS_ID = 31;
   static readonly MAX_WORKER_ID = 31;
-  static readonly DEFAULT_BATCH_SIZE = 100;
-  static #incrementCounter = 0;
+
   readonly #id: Snowflake;
   readonly #epoch: number;
 
@@ -56,19 +55,14 @@ export class SnowflakeManager {
     try {
       const timestamp =
         Number(BigInt(value) >> 22n) + SnowflakeManager.DISCORD_EPOCH;
-
       if (
         timestamp < SnowflakeManager.DISCORD_EPOCH ||
         timestamp > Date.now()
       ) {
         throw new Error("Invalid Snowflake: Timestamp out of valid range");
       }
-
       return value as Snowflake;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
+    } catch (_error) {
       throw new Error("Invalid Snowflake: Failed to parse value");
     }
   }
@@ -78,285 +72,6 @@ export class SnowflakeManager {
       return SnowflakeManager.toSnowflake(value);
     } catch {
       return null;
-    }
-  }
-
-  static assertSnowflake(value: unknown): asserts value is Snowflake {
-    if (typeof value !== "string" || !SnowflakeManager.isValid(value)) {
-      throw new Error(`Expected Snowflake, got ${typeof value}`);
-    }
-  }
-
-  static generateSequential(
-    count: number,
-    options: SnowflakeOptions = {},
-  ): Snowflake[] {
-    const results: Snowflake[] = [];
-    const baseTimestamp = Date.now();
-    const timestampStep = 1; // 1ms between each snowflake
-
-    for (let i = 0; i < count; i++) {
-      const timestamp = baseTimestamp + i * timestampStep;
-      results.push(
-        new SnowflakeManager(timestamp, {
-          ...options,
-          increment:
-            SnowflakeManager.#incrementCounter++ %
-            SnowflakeManager.MAX_INCREMENT,
-        }).toString(),
-      );
-    }
-
-    return results;
-  }
-
-  static createBulk(
-    options: {
-      startTime?: Date | number;
-      endTime?: Date | number;
-      count?: number;
-      distribution?: "uniform" | "random";
-      workerId?: number;
-      processId?: number;
-    } = {},
-  ): Snowflake[] {
-    const {
-      startTime = new Date(Date.now() - 24 * 60 * 60 * 1000), // Default to last 24 hours
-      endTime = new Date(),
-      count = SnowflakeManager.DEFAULT_BATCH_SIZE,
-      distribution = "uniform",
-      workerId = 1,
-      processId = 1,
-    } = options;
-
-    const start = startTime instanceof Date ? startTime.getTime() : startTime;
-    const end = endTime instanceof Date ? endTime.getTime() : endTime;
-    const results: Snowflake[] = [];
-
-    if (distribution === "uniform") {
-      const step = Math.floor((end - start) / (count - 1));
-      for (let i = 0; i < count; i++) {
-        const timestamp = start + step * i;
-        results.push(
-          new SnowflakeManager(timestamp, {
-            workerId,
-            processId,
-            increment: Math.floor(
-              Math.random() * SnowflakeManager.MAX_INCREMENT,
-            ),
-          }).toString(),
-        );
-      }
-    } else {
-      for (let i = 0; i < count; i++) {
-        const timestamp = start + Math.floor(Math.random() * (end - start));
-        results.push(
-          new SnowflakeManager(timestamp, {
-            workerId,
-            processId,
-            increment: Math.floor(
-              Math.random() * SnowflakeManager.MAX_INCREMENT,
-            ),
-          }).toString(),
-        );
-      }
-    }
-
-    return results.sort((a, b) => Number(BigInt(a) - BigInt(b)));
-  }
-
-  static batch(count: number, options: SnowflakeOptions = {}): Snowflake[] {
-    const results: Snowflake[] = [];
-    const baseIncrement = options.increment ?? 0;
-
-    for (let i = 0; i < count; i++) {
-      results.push(
-        new SnowflakeManager(Date.now(), {
-          ...options,
-          increment: (baseIncrement + i) % SnowflakeManager.MAX_INCREMENT,
-        }).toString(),
-      );
-    }
-
-    return results;
-  }
-
-  static getTimeDifference(
-    first: SnowflakeResolvable,
-    second: SnowflakeResolvable,
-  ): number {
-    const firstTimestamp = new SnowflakeManager(first).getTimestamp();
-    const secondTimestamp = new SnowflakeManager(second).getTimestamp();
-    return Math.abs(firstTimestamp - secondTimestamp);
-  }
-
-  static isInTimeRange(
-    snowflake: SnowflakeResolvable,
-    start: number | Date,
-    end: number | Date = Date.now(),
-  ): boolean {
-    const timestamp = new SnowflakeManager(snowflake).getTimestamp();
-    const startTime = start instanceof Date ? start.getTime() : start;
-    const endTime = end instanceof Date ? end.getTime() : end;
-    return timestamp >= startTime && timestamp <= endTime;
-  }
-
-  static filterByTimeRange(
-    snowflakes: SnowflakeResolvable[],
-    start: number | Date,
-    end: number | Date = Date.now(),
-  ): Snowflake[] {
-    return snowflakes
-      .filter((snowflake) =>
-        SnowflakeManager.isInTimeRange(snowflake, start, end),
-      )
-      .map((snowflake) => new SnowflakeManager(snowflake).toString());
-  }
-
-  static getTimestampFrom(snowflake: string): number {
-    if (!SnowflakeManager.isValid(snowflake)) {
-      throw new Error("Invalid snowflake format");
-    }
-    return Number(BigInt(snowflake) >> 22n) + SnowflakeManager.DISCORD_EPOCH;
-  }
-
-  static isNewerThan(
-    snowflake: SnowflakeResolvable,
-    timestamp: number | Date,
-  ): boolean {
-    const snowflakeTime = new SnowflakeManager(snowflake).getTimestamp();
-    const compareTime =
-      timestamp instanceof Date ? timestamp.getTime() : timestamp;
-    return snowflakeTime > compareTime;
-  }
-
-  static fromDateString(
-    dateString: string,
-    options: SnowflakeOptions = {},
-  ): SnowflakeManager {
-    const timestamp = new Date(dateString).getTime();
-    if (Number.isNaN(timestamp)) {
-      throw new Error("Invalid date string");
-    }
-    return new SnowflakeManager(timestamp, options);
-  }
-
-  static generateRange(
-    start: number | Date,
-    end: number | Date,
-    options: SnowflakeOptions & { count?: number } = {},
-  ): Snowflake[] {
-    const startTime = start instanceof Date ? start.getTime() : start;
-    const endTime = end instanceof Date ? end.getTime() : end;
-    const count = options.count || 10;
-
-    const step = Math.floor((endTime - startTime) / (count - 1));
-    const results: Snowflake[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const timestamp = startTime + step * i;
-      results.push(new SnowflakeManager(timestamp, options).toString());
-    }
-
-    return results;
-  }
-
-  static createTimeWindowSnowflakes(
-    options: {
-      windowSize?: number;
-      count?: number;
-      endTime?: Date | number;
-      workerId?: number;
-      processId?: number;
-    } = {},
-  ): Snowflake[] {
-    const {
-      windowSize = 60 * 60 * 1000, // Default 1 hour
-      count = 10,
-      endTime = Date.now(),
-      workerId = 1,
-      processId = 1,
-    } = options;
-
-    const end = endTime instanceof Date ? endTime.getTime() : endTime;
-    const start = end - windowSize;
-
-    return SnowflakeManager.createBulk({
-      startTime: start,
-      endTime: end,
-      count,
-      workerId,
-      processId,
-      distribution: "uniform",
-    });
-  }
-
-  static findClosestTo(
-    timestamp: number | Date,
-    snowflakes: SnowflakeResolvable[],
-  ): Snowflake {
-    const targetTime =
-      timestamp instanceof Date ? timestamp.getTime() : timestamp;
-
-    return snowflakes
-      .map((snowflake) => new SnowflakeManager(snowflake))
-      .reduce((closest, current) => {
-        const closestDiff = Math.abs(closest.getTimestamp() - targetTime);
-        const currentDiff = Math.abs(current.getTimestamp() - targetTime);
-        return currentDiff < closestDiff ? current : closest;
-      })
-      .toString();
-  }
-
-  static resolve(
-    resolvable: SnowflakeResolvable,
-    options: SnowflakeOptions = {},
-  ): Snowflake {
-    try {
-      if (resolvable instanceof SnowflakeManager) {
-        return resolvable.toString();
-      }
-
-      if (typeof resolvable === "bigint") {
-        const snowflake = resolvable.toString();
-        if (SnowflakeManager.isValid(snowflake)) {
-          return SnowflakeManager.toSnowflake(snowflake);
-        }
-        throw new Error("Invalid bigint value for Snowflake");
-      }
-
-      if (resolvable instanceof Date) {
-        return new SnowflakeManager(resolvable.getTime(), options).toString();
-      }
-
-      if (typeof resolvable === "number") {
-        if (resolvable < 0 || !Number.isInteger(resolvable)) {
-          throw new Error("Invalid timestamp value");
-        }
-        return new SnowflakeManager(resolvable, options).toString();
-      }
-
-      if (typeof resolvable === "string") {
-        if (SnowflakeManager.isValid(resolvable)) {
-          return SnowflakeManager.toSnowflake(resolvable);
-        }
-
-        if (/^\d+$/.test(resolvable)) {
-          const numericValue = BigInt(resolvable);
-          if (SnowflakeManager.isValid(numericValue.toString())) {
-            return SnowflakeManager.toSnowflake(numericValue.toString());
-          }
-        }
-
-        throw new Error("Invalid string value for Snowflake");
-      }
-
-      throw new Error("Unresolvable snowflake value");
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to resolve Snowflake: ${error.message}`);
-      }
-      throw new Error("Failed to resolve Snowflake: Unknown error");
     }
   }
 
@@ -375,55 +90,41 @@ export class SnowflakeManager {
     }
   }
 
-  static min(timestamp: number | Date = Date.now()): SnowflakeManager {
-    return SnowflakeManager.fromTimestamp(timestamp, {
-      workerId: 0,
-      processId: 0,
-      increment: 0,
-    });
-  }
+  static resolve(
+    resolvable: SnowflakeResolvable,
+    options: SnowflakeOptions = {},
+  ): Snowflake {
+    if (resolvable instanceof SnowflakeManager) {
+      return resolvable.toString();
+    }
 
-  static max(timestamp: number | Date = Date.now()): SnowflakeManager {
-    return SnowflakeManager.fromTimestamp(timestamp, {
-      workerId: SnowflakeManager.MAX_WORKER_ID,
-      processId: SnowflakeManager.MAX_PROCESS_ID,
-      increment: SnowflakeManager.MAX_INCREMENT,
-    });
-  }
+    if (resolvable instanceof Date) {
+      return new SnowflakeManager(resolvable.getTime(), options).toString();
+    }
 
-  getFormattedDate(locale = "en-US"): string {
-    return this.toDate().toLocaleDateString(locale, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  }
+    if (typeof resolvable === "bigint") {
+      const snowflake = resolvable.toString();
+      if (SnowflakeManager.isValid(snowflake)) {
+        return SnowflakeManager.toSnowflake(snowflake);
+      }
+      throw new Error("Invalid bigint value for Snowflake");
+    }
 
-  getAge(): number {
-    return Date.now() - this.getTimestamp();
-  }
+    if (typeof resolvable === "number") {
+      if (resolvable < 0 || !Number.isInteger(resolvable)) {
+        throw new Error("Invalid timestamp value");
+      }
+      return new SnowflakeManager(resolvable, options).toString();
+    }
 
-  getAgeInSeconds(): number {
-    return Math.floor(this.getAge() / 1000);
-  }
+    if (
+      typeof resolvable === "string" &&
+      SnowflakeManager.isValid(resolvable)
+    ) {
+      return SnowflakeManager.toSnowflake(resolvable);
+    }
 
-  isMin(): boolean {
-    return (
-      this.getWorkerId() === 0 &&
-      this.getProcessId() === 0 &&
-      this.getIncrement() === 0
-    );
-  }
-
-  isMax(): boolean {
-    return (
-      this.getWorkerId() === SnowflakeManager.MAX_WORKER_ID &&
-      this.getProcessId() === SnowflakeManager.MAX_PROCESS_ID &&
-      this.getIncrement() === SnowflakeManager.MAX_INCREMENT
-    );
+    throw new Error("Invalid Snowflake value");
   }
 
   toString(): Snowflake {
@@ -454,13 +155,6 @@ export class SnowflakeManager {
     return Number(this.toBigInt() & 0xfffn);
   }
 
-  toJson(): { id: string } & SnowflakeEntity {
-    return {
-      id: this.toString(),
-      ...this.deconstruct(),
-    };
-  }
-
   deconstruct(): SnowflakeEntity {
     return {
       timestamp: this.getTimestamp(),
@@ -474,7 +168,6 @@ export class SnowflakeManager {
   compare(other: SnowflakeResolvable): number {
     const thisId = this.toBigInt();
     const otherId = new SnowflakeManager(other).toBigInt();
-
     if (thisId === otherId) {
       return 0;
     }
@@ -491,57 +184,6 @@ export class SnowflakeManager {
 
   equals(other: SnowflakeResolvable): boolean {
     return this.compare(other) === 0;
-  }
-
-  getRelativeAge(): string {
-    const age = this.getAge();
-    const seconds = Math.floor(age / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) {
-      return `${days} day${days === 1 ? "" : "s"} ago`;
-    }
-    if (hours > 0) {
-      return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-    }
-    if (minutes > 0) {
-      return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
-    }
-    return `${seconds} second${seconds === 1 ? "" : "s"} ago`;
-  }
-
-  isWithinLast(duration: number): boolean {
-    return this.getAge() <= duration;
-  }
-
-  getNextSnowflake(options: SnowflakeOptions = {}): Snowflake {
-    const timestamp = this.getTimestamp();
-    const nextIncrement =
-      (this.getIncrement() + 1) % SnowflakeManager.MAX_INCREMENT;
-
-    return new SnowflakeManager(timestamp, {
-      workerId: this.getWorkerId(),
-      processId: this.getProcessId(),
-      increment: nextIncrement,
-      ...options,
-    }).toString();
-  }
-
-  getPreviousSnowflake(options: SnowflakeOptions = {}): Snowflake {
-    const timestamp = this.getTimestamp();
-    const prevIncrement =
-      this.getIncrement() === 0
-        ? SnowflakeManager.MAX_INCREMENT
-        : this.getIncrement() - 1;
-
-    return new SnowflakeManager(timestamp, {
-      workerId: this.getWorkerId(),
-      processId: this.getProcessId(),
-      increment: prevIncrement,
-      ...options,
-    }).toString();
   }
 
   #resolveId(
@@ -573,7 +215,6 @@ export class SnowflakeManager {
     options: SnowflakeOptions = {},
   ): Snowflake {
     const { workerId = 0, processId = 0, increment = 0 } = options;
-
     this.#validateComponents(workerId, processId, increment);
 
     const timestampBits = BigInt(timestamp - this.#epoch) << 22n;

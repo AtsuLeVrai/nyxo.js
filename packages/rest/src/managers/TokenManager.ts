@@ -1,4 +1,4 @@
-import { AuthTypeFlag } from "./constants.js";
+import { AuthTypeFlag } from "../types/index.js";
 
 export interface TokenEntity {
   id: string;
