@@ -37,5 +37,4 @@ export enum Locale {
 }
 
 export type LocaleKey = `${Locale}`;
-
 export type AvailableLocale = Record<LocaleKey, string>;

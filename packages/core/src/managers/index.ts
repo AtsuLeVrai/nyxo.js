@@ -1,2 +1,2 @@
-export * from "./BitFieldManager.js";
-export * from "./SnowflakeManager.js";
+export * from "./bit-field.manager.js";
+export * from "./snowflake.manager.js";

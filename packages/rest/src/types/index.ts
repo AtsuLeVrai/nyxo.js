@@ -1,2 +1,2 @@
-export * from "./cdn.js";
-export * from "./rest.js";
+export * from "./cdn.type.js";
+export * from "./rest.type.js";

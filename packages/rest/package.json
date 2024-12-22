@@ -51,7 +51,8 @@
     "eventemitter3": "^5.0.1",
     "form-data": "^4.0.1",
     "minizlib": "^3.0.1",
-    "undici": "^6.21.0"
+    "undici": "^6.21.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
