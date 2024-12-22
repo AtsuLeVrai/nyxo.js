@@ -35,7 +35,11 @@ export class ApplicationConnectionRouter extends BaseRouter {
       .max(5)
       .safeParse(metadata);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.put(ApplicationConnectionRouter.ROUTES.base(applicationId), {

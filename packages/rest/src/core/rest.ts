@@ -38,11 +38,6 @@ export class Rest extends EventEmitter<RestEventMap> {
     this.rateLimiter = new RateLimiterManager(this);
     this.requestHandler = new RequestManager(this, this.configManager);
     this.routerManager = new RouterManager(this);
-
-    this.emit(
-      "debug",
-      `Rest client created with API version ${options.version}`,
-    );
   }
 
   get destroyed(): boolean {

@@ -4,45 +4,20 @@ import type {
   ConnectionEntity,
   GuildEntity,
   GuildMemberEntity,
-  Integer,
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-import type { ImageData } from "../types/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params}
- */
-export interface GetUserGuildQueryEntity {
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: Integer;
-  with_counts?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
- */
-export interface ModifyUserOptionsEntity extends Pick<UserEntity, "username"> {
-  avatar?: ImageData | null;
-  banner?: ImageData | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#create-dm-json-params}
- */
-export interface CreateDmOptionsEntity {
-  recipient_id: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params}
- */
-export interface CreateGroupDmOptionsEntity {
-  access_tokens: string[];
-  nicks: Record<Snowflake, string>;
-}
+import {
+  type CreateGroupDmEntity,
+  CreateGroupDmSchema,
+  type GetCurrentUserGuildsQueryEntity,
+  GetCurrentUserGuildsQuerySchema,
+  type ModifyCurrentUserEntity,
+  ModifyCurrentUserSchema,
+  type UpdateCurrentUserApplicationRoleConnectionEntity,
+  UpdateCurrentUserApplicationRoleConnectionSchema,
+} from "../schemas/index.js";
 
 export class UserRouter extends BaseRouter {
   static readonly routes = {
@@ -52,32 +27,22 @@ export class UserRouter extends BaseRouter {
     channels: "/users/@me/channels",
     connections: "/users/@me/connections",
     user: (userId: Snowflake): `/users/${Snowflake}` => {
-      return `/users/${userId}` as const;
+      return `/users/${userId}`;
     },
     guildMember: (
       guildId: Snowflake,
     ): `/users/@me/guilds/${Snowflake}/member` => {
-      return `/users/@me/guilds/${guildId}/member` as const;
+      return `/users/@me/guilds/${guildId}/member`;
     },
     leaveGuild: (guildId: Snowflake): `/users/@me/guilds/${Snowflake}` => {
-      return `/users/@me/guilds/${guildId}` as const;
+      return `/users/@me/guilds/${guildId}`;
     },
     applicationRole: (
       applicationId: Snowflake,
     ): `/users/@me/applications/${Snowflake}/role-connection` => {
-      return `/users/@me/applications/${applicationId}/role-connection` as const;
+      return `/users/@me/applications/${applicationId}/role-connection`;
     },
   } as const;
-  static readonly USERNAME_MIN_LENGTH = 2;
-  static readonly USERNAME_MAX_LENGTH = 32;
-  static readonly NICKNAME_MIN_LENGTH = 1;
-  static readonly NICKNAME_MAX_LENGTH = 32;
-  static readonly GROUP_DM_MAX = 10;
-  static readonly GUILDS_LIMIT_DEFAULT = 200;
-  static readonly GUILDS_LIMIT_MAX = 200;
-  static readonly PLATFORM_NAME_MAX_LENGTH = 50;
-  static readonly PLATFORM_USERNAME_MAX_LENGTH = 100;
-  static readonly METADATA_VALUE_MAX_LENGTH = 100;
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
@@ -96,33 +61,18 @@ export class UserRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
-  modifyCurrentUser(options: ModifyUserOptionsEntity): Promise<UserEntity> {
-    if (options.username) {
-      const username = options.username.trim();
-      if (
-        username.length < UserRouter.USERNAME_MIN_LENGTH ||
-        username.length > UserRouter.USERNAME_MAX_LENGTH
-      ) {
-        throw new Error(
-          `Username must be between ${UserRouter.USERNAME_MIN_LENGTH} and ${UserRouter.USERNAME_MAX_LENGTH} characters`,
-        );
-      }
-
-      if (
-        username.includes("@") ||
-        username.includes("#") ||
-        username.includes(":") ||
-        username.includes("```") ||
-        username.toLowerCase().includes("discord") ||
-        username.toLowerCase() === "everyone" ||
-        username.toLowerCase() === "here"
-      ) {
-        throw new Error("Username contains forbidden characters or words");
-      }
+  modifyCurrentUser(options: ModifyCurrentUserEntity): Promise<UserEntity> {
+    const result = ModifyCurrentUserSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.patch(UserRouter.routes.me, {
-      body: JSON.stringify(options),
+      body: JSON.stringify(result.data),
     });
   }
 
@@ -130,19 +80,19 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   getCurrentUserGuilds(
-    query?: GetUserGuildQueryEntity,
+    query: GetCurrentUserGuildsQueryEntity = {},
   ): Promise<GuildEntity[]> {
-    if (
-      query?.limit &&
-      (query.limit < 1 || query.limit > UserRouter.GUILDS_LIMIT_MAX)
-    ) {
+    const result = GetCurrentUserGuildsQuerySchema.safeParse(query);
+    if (!result.success) {
       throw new Error(
-        `Limit must be between 1 and ${UserRouter.GUILDS_LIMIT_MAX}`,
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
       );
     }
 
     return this.get(UserRouter.routes.guilds, {
-      query,
+      query: result.data,
     });
   }
 
@@ -163,25 +113,27 @@ export class UserRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
-  createDm(options: CreateDmOptionsEntity): Promise<ChannelEntity> {
+  createDm(recipientId: Snowflake): Promise<ChannelEntity> {
     return this.post(UserRouter.routes.channels, {
-      body: JSON.stringify(options),
+      body: JSON.stringify({ recipient_id: recipientId }),
     });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
-  createGroupDm(options: CreateGroupDmOptionsEntity): Promise<ChannelEntity> {
-    // Group DM limit is enforced by Discord but we add the validation here too
-    if (options.access_tokens.length > UserRouter.GROUP_DM_MAX) {
+  createGroupDm(options: CreateGroupDmEntity): Promise<ChannelEntity> {
+    const result = CreateGroupDmSchema.safeParse(options);
+    if (!result.success) {
       throw new Error(
-        `Cannot create group DM with more than ${UserRouter.GROUP_DM_MAX} users`,
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
       );
     }
 
     return this.post(UserRouter.routes.channels, {
-      body: JSON.stringify(options),
+      body: JSON.stringify(result.data),
     });
   }
 
@@ -206,39 +158,20 @@ export class UserRouter extends BaseRouter {
    */
   updateCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
-    connection: Partial<ApplicationRoleConnectionEntity>,
+    connection: UpdateCurrentUserApplicationRoleConnectionEntity,
   ): Promise<ApplicationRoleConnectionEntity> {
-    if (
-      connection.platform_name &&
-      connection.platform_name.length > UserRouter.PLATFORM_NAME_MAX_LENGTH
-    ) {
+    const result =
+      UpdateCurrentUserApplicationRoleConnectionSchema.safeParse(connection);
+    if (!result.success) {
       throw new Error(
-        `Platform name cannot exceed ${UserRouter.PLATFORM_NAME_MAX_LENGTH} characters`,
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
       );
-    }
-
-    if (
-      connection.platform_username &&
-      connection.platform_username.length >
-        UserRouter.PLATFORM_USERNAME_MAX_LENGTH
-    ) {
-      throw new Error(
-        `Platform username cannot exceed ${UserRouter.PLATFORM_USERNAME_MAX_LENGTH} characters`,
-      );
-    }
-
-    if (connection.metadata) {
-      for (const [key, value] of Object.entries(connection.metadata)) {
-        if (String(value).length > UserRouter.METADATA_VALUE_MAX_LENGTH) {
-          throw new Error(
-            `Metadata value for key '${key}' cannot exceed ${UserRouter.METADATA_VALUE_MAX_LENGTH} characters`,
-          );
-        }
-      }
     }
 
     return this.put(UserRouter.routes.applicationRole(applicationId), {
-      body: JSON.stringify(connection),
+      body: JSON.stringify(result.data),
     });
   }
 }

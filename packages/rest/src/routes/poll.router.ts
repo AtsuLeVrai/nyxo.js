@@ -1,40 +1,25 @@
-import type {
-  Integer,
-  MessageEntity,
-  Snowflake,
-  UserEntity,
-} from "@nyxjs/core";
+import type { MessageEntity, Snowflake } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body}
- */
-export interface PollVotersResponseEntity {
-  users: UserEntity[];
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-query-string-params}
- */
-export interface GetVotersQueryEntity {
-  after?: Snowflake;
-  limit?: Integer;
-}
+import {
+  type GetAnswerVotersQueryEntity,
+  GetAnswerVotersQuerySchema,
+  type PollVotersResponseEntity,
+} from "../schemas/index.js";
 
 export class PollRouter extends BaseRouter {
-  static routes = {
+  static ROUTES = {
     channelPolls: (
       channelId: Snowflake,
       messageId: Snowflake,
       answerId: number,
     ): `/channels/${Snowflake}/polls/${Snowflake}/answers/${number}` => {
-      return `/channels/${channelId}/polls/${messageId}/answers/${answerId}` as const;
+      return `/channels/${channelId}/polls/${messageId}/answers/${answerId}`;
     },
     expirePoll: (
       channelId: Snowflake,
       messageId: Snowflake,
     ): `/channels/${Snowflake}/polls/${Snowflake}/expire` => {
-      return `/channels/${channelId}/polls/${messageId}/expire` as const;
+      return `/channels/${channelId}/polls/${messageId}/expire`;
     },
   } as const;
 
@@ -45,15 +30,21 @@ export class PollRouter extends BaseRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     answerId: number,
-    query?: GetVotersQueryEntity,
+    query: GetAnswerVotersQueryEntity = {},
   ): Promise<PollVotersResponseEntity> {
+    const result = GetAnswerVotersQuerySchema.safeParse(query);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.get(
-      PollRouter.routes.channelPolls(channelId, messageId, answerId),
+      PollRouter.ROUTES.channelPolls(channelId, messageId, answerId),
       {
-        query: {
-          after: query?.after,
-          limit: query?.limit,
-        },
+        query: result.data,
       },
     );
   }
@@ -62,6 +53,6 @@ export class PollRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
    */
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
-    return this.post(PollRouter.routes.expirePoll(channelId, messageId));
+    return this.post(PollRouter.ROUTES.expirePoll(channelId, messageId));
   }
 }

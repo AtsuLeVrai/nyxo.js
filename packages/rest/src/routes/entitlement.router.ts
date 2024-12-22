@@ -1,67 +1,28 @@
-import type { EntitlementEntity, Integer, Snowflake } from "@nyxjs/core";
+import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
- */
-export interface ListEntitlementQueryEntity {
-  user_id?: Snowflake;
-  sku_ids?: string;
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: Integer;
-  guild_id?: Snowflake;
-  exclude_ended?: boolean;
-  exclude_deleted?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
- */
-export enum EntitlementOwner {
-  Guild = 1,
-  User = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
- */
-export interface CreateTestEntitlementEntity {
-  sku_id: string;
-  owner_id: string;
-  owner_type: EntitlementOwner;
-}
-
-export interface EntitlementRoutes {
-  readonly entitlements: (
-    applicationId: Snowflake,
-  ) => `/applications/${Snowflake}/entitlements`;
-  readonly entitlement: (
-    applicationId: Snowflake,
-    entitlementId: Snowflake,
-  ) => `/applications/${Snowflake}/entitlements/${Snowflake}`;
-  readonly consume: (
-    applicationId: Snowflake,
-    entitlementId: Snowflake,
-  ) => `/applications/${Snowflake}/entitlements/${Snowflake}/consume`;
-}
+import {
+  type CreateTestEntitlementEntity,
+  CreateTestEntitlementSchema,
+  type ListEntitlementQueryEntity,
+  ListEntitlementsQuerySchema,
+} from "../schemas/index.js";
 
 export class EntitlementRouter extends BaseRouter {
-  static readonly DEFAULT_LIST_LIMIT = 100;
-  static readonly MIN_LIST_LIMIT = 1;
-  static readonly MAX_LIST_LIMIT = 100;
-  static readonly DEFAULT_EXCLUDE_ENDED = false;
-  static readonly DEFAULT_EXCLUDE_DELETED = true;
-
-  static readonly ROUTES: EntitlementRoutes = {
-    entitlements: (applicationId) =>
-      `/applications/${applicationId}/entitlements` as const,
-
-    entitlement: (applicationId, entitlementId) =>
-      `/applications/${applicationId}/entitlements/${entitlementId}` as const,
-
-    consume: (applicationId, entitlementId) =>
-      `/applications/${applicationId}/entitlements/${entitlementId}/consume` as const,
+  static readonly ROUTES = {
+    entitlements: (
+      applicationId: Snowflake,
+    ): `/applications/${Snowflake}/entitlements` =>
+      `/applications/${applicationId}/entitlements`,
+    entitlement: (
+      applicationId: Snowflake,
+      entitlementId: Snowflake,
+    ): `/applications/${Snowflake}/entitlements/${Snowflake}` =>
+      `/applications/${applicationId}/entitlements/${entitlementId}`,
+    consume: (
+      applicationId: Snowflake,
+      entitlementId: Snowflake,
+    ): `/applications/${Snowflake}/entitlements/${Snowflake}/consume` =>
+      `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
   } as const;
 
   /**
@@ -69,11 +30,19 @@ export class EntitlementRouter extends BaseRouter {
    */
   listEntitlements(
     applicationId: Snowflake,
-    query?: ListEntitlementQueryEntity,
+    query: ListEntitlementQueryEntity = {},
   ): Promise<EntitlementEntity[]> {
-    this.#validateListQuery(query);
+    const result = ListEntitlementsQuerySchema.safeParse(query);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.get(EntitlementRouter.ROUTES.entitlements(applicationId), {
-      query,
+      query: result.data,
     });
   }
 
@@ -108,9 +77,17 @@ export class EntitlementRouter extends BaseRouter {
     applicationId: Snowflake,
     test: CreateTestEntitlementEntity,
   ): Promise<EntitlementEntity> {
-    this.#validateTestEntitlement(test);
+    const result = CreateTestEntitlementSchema.safeParse(test);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.post(EntitlementRouter.ROUTES.entitlements(applicationId), {
-      body: JSON.stringify(test),
+      body: JSON.stringify(result.data),
     });
   }
 
@@ -124,41 +101,5 @@ export class EntitlementRouter extends BaseRouter {
     return this.delete(
       EntitlementRouter.ROUTES.entitlement(applicationId, entitlementId),
     );
-  }
-
-  #validateListQuery(query?: ListEntitlementQueryEntity): void {
-    if (!query) {
-      return;
-    }
-
-    if (
-      query.limit !== undefined &&
-      (query.limit < EntitlementRouter.MIN_LIST_LIMIT ||
-        query.limit > EntitlementRouter.MAX_LIST_LIMIT)
-    ) {
-      throw new Error(
-        `Limit must be between ${EntitlementRouter.MIN_LIST_LIMIT} and ${EntitlementRouter.MAX_LIST_LIMIT}`,
-      );
-    }
-
-    if (query.exclude_ended === undefined) {
-      query.exclude_ended = EntitlementRouter.DEFAULT_EXCLUDE_ENDED;
-    }
-
-    if (query.exclude_deleted === undefined) {
-      query.exclude_deleted = EntitlementRouter.DEFAULT_EXCLUDE_DELETED;
-    }
-  }
-
-  #validateTestEntitlement(test: CreateTestEntitlementEntity): void {
-    if (!test.sku_id) {
-      throw new Error("sku_id is required");
-    }
-    if (!test.owner_id) {
-      throw new Error("owner_id is required");
-    }
-    if (test.owner_type !== 1 && test.owner_type !== 2) {
-      throw new Error("owner_type must be 1 (guild) or 2 (user)");
-    }
   }
 }

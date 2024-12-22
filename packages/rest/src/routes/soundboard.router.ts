@@ -1,94 +1,53 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-import type { ImageData } from "../types/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params}
- */
-export interface SoundboardSendEntity
-  extends Pick<SoundboardSoundEntity, "sound_id"> {
-  source_guild_id?: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound-json-params}
- */
-export interface SoundboardCreateEntity
-  extends Pick<
-    SoundboardSoundEntity,
-    "name" | "volume" | "emoji_id" | "emoji_name"
-  > {
-  sound: ImageData;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params}
- */
-export type SoundboardModifyEntity = Partial<
-  Pick<SoundboardSoundEntity, "name" | "volume" | "emoji_id" | "emoji_name">
->;
+import {
+  type CreateGuildSoundboardSoundEntity,
+  CreateGuildSoundboardSoundSchema,
+  type ListGuildSoundboardSoundsResponse,
+  type ModifyGuildSoundboardSoundEntity,
+  type SendSoundboardSoundEntity,
+  SendSoundboardSoundSchema,
+} from "../schemas/index.js";
 
 export class SoundboardRouter extends BaseRouter {
-  static readonly NAME_MIN_LENGTH = 2;
-  static readonly NAME_MAX_LENGTH = 32;
-  static readonly VOLUME_MIN = 0;
-  static readonly VOLUME_MAX = 1;
-  static readonly FILE_MAX_SIZE = 512 * 1024;
-  static readonly MAX_DURATION = 5.2;
-
-  static readonly routes = {
-    defaultSounds: "/soundboard-default-sounds" as const,
+  static readonly ROUTES = {
+    defaultSounds: "/soundboard-default-sounds",
     guildSounds: (
       guildId: Snowflake,
     ): `/guilds/${Snowflake}/soundboard-sounds` => {
-      return `/guilds/${guildId}/soundboard-sounds` as const;
+      return `/guilds/${guildId}/soundboard-sounds`;
     },
     guildSound: (
       guildId: Snowflake,
       soundId: Snowflake,
     ): `/guilds/${Snowflake}/soundboard-sounds/${Snowflake}` => {
-      return `/guilds/${guildId}/soundboard-sounds/${soundId}` as const;
+      return `/guilds/${guildId}/soundboard-sounds/${soundId}`;
     },
     sendSound: (
       channelId: Snowflake,
     ): `/channels/${Snowflake}/send-soundboard-sound` => {
-      return `/channels/${channelId}/send-soundboard-sound` as const;
+      return `/channels/${channelId}/send-soundboard-sound`;
     },
   } as const;
-
-  validateName(name: string): void {
-    if (
-      !name ||
-      name.length < SoundboardRouter.NAME_MIN_LENGTH ||
-      name.length > SoundboardRouter.NAME_MAX_LENGTH
-    ) {
-      throw new Error(
-        `Name must be between ${SoundboardRouter.NAME_MIN_LENGTH} and ${SoundboardRouter.NAME_MAX_LENGTH} characters`,
-      );
-    }
-  }
-
-  validateVolume(volume?: number): void {
-    if (
-      volume !== undefined &&
-      (volume < SoundboardRouter.VOLUME_MIN ||
-        volume > SoundboardRouter.VOLUME_MAX)
-    ) {
-      throw new Error(
-        `Volume must be between ${SoundboardRouter.VOLUME_MIN} and ${SoundboardRouter.VOLUME_MAX}`,
-      );
-    }
-  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound}
    */
   sendSound(
     channelId: Snowflake,
-    options: SoundboardSendEntity,
+    options: SendSoundboardSoundEntity,
   ): Promise<void> {
-    return this.post(SoundboardRouter.routes.sendSound(channelId), {
-      body: JSON.stringify(options),
+    const result = SendSoundboardSoundSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
+    return this.post(SoundboardRouter.ROUTES.sendSound(channelId), {
+      body: JSON.stringify(result.data),
     });
   }
 
@@ -96,7 +55,7 @@ export class SoundboardRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   listDefaultSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.get(SoundboardRouter.routes.defaultSounds);
+    return this.get(SoundboardRouter.ROUTES.defaultSounds);
   }
 
   /**
@@ -104,8 +63,8 @@ export class SoundboardRouter extends BaseRouter {
    */
   listGuildSounds(
     guildId: Snowflake,
-  ): Promise<{ items: SoundboardSoundEntity[] }> {
-    return this.get(SoundboardRouter.routes.guildSounds(guildId));
+  ): Promise<ListGuildSoundboardSoundsResponse> {
+    return this.get(SoundboardRouter.ROUTES.guildSounds(guildId));
   }
 
   /**
@@ -115,7 +74,7 @@ export class SoundboardRouter extends BaseRouter {
     guildId: Snowflake,
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
-    return this.get(SoundboardRouter.routes.guildSound(guildId, soundId));
+    return this.get(SoundboardRouter.ROUTES.guildSound(guildId, soundId));
   }
 
   /**
@@ -123,14 +82,20 @@ export class SoundboardRouter extends BaseRouter {
    */
   createGuildSound(
     guildId: Snowflake,
-    options: SoundboardCreateEntity,
+    options: CreateGuildSoundboardSoundEntity,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    this.validateName(options.name);
-    this.validateVolume(options.volume);
+    const result = CreateGuildSoundboardSoundSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
 
-    return this.post(SoundboardRouter.routes.guildSounds(guildId), {
-      body: JSON.stringify(options),
+    return this.post(SoundboardRouter.ROUTES.guildSounds(guildId), {
+      body: JSON.stringify(result.data),
       reason,
     });
   }
@@ -141,18 +106,20 @@ export class SoundboardRouter extends BaseRouter {
   modifyGuildSound(
     guildId: Snowflake,
     soundId: Snowflake,
-    options: SoundboardModifyEntity,
+    options: ModifyGuildSoundboardSoundEntity,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    if (options.name) {
-      this.validateName(options.name);
-    }
-    if (options.volume) {
-      this.validateVolume(options.volume);
+    const result = CreateGuildSoundboardSoundSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
-    return this.patch(SoundboardRouter.routes.guildSound(guildId, soundId), {
-      body: JSON.stringify(options),
+    return this.patch(SoundboardRouter.ROUTES.guildSound(guildId, soundId), {
+      body: JSON.stringify(result.data),
       reason,
     });
   }
@@ -165,7 +132,7 @@ export class SoundboardRouter extends BaseRouter {
     soundId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(SoundboardRouter.routes.guildSound(guildId, soundId), {
+    return this.delete(SoundboardRouter.ROUTES.guildSound(guildId, soundId), {
       reason,
     });
   }

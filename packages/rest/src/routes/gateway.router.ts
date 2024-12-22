@@ -26,15 +26,10 @@ export interface GatewayBotResponseEntity extends GatewayResponseEntity {
   session_start_limit: SessionStartLimitEntity;
 }
 
-export interface GatewayRoutes {
-  readonly gateway: "/gateway";
-  readonly gatewayBot: "/gateway/bot";
-}
-
 export class GatewayRouter extends BaseRouter {
-  static readonly ROUTES: GatewayRoutes = {
-    gateway: "/gateway" as const,
-    gatewayBot: "/gateway/bot" as const,
+  static readonly ROUTES = {
+    gateway: "/gateway",
+    gatewayBot: "/gateway/bot",
   } as const;
 
   /**

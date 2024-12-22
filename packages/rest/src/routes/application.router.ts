@@ -31,7 +31,11 @@ export class ApplicationRouter extends BaseRouter {
   ): Promise<ApplicationEntity> {
     const result = EditCurrentApplicationSchema.safeParse(options);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.patch(ApplicationRouter.ROUTES.currentApplication, {

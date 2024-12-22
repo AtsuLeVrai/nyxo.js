@@ -4,42 +4,25 @@ import type {
   VoiceStateEntity,
 } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state-json-params}
- */
-export interface ModifyCurrentUserVoiceStateOptions {
-  channel_id?: Snowflake;
-  suppress?: boolean;
-  request_to_speak_timestamp?: string;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state-json-params}
- */
-export interface ModifyUserVoiceStateOptions {
-  channel_id: Snowflake;
-  suppress?: boolean;
-}
-
-export interface VoiceRoutes {
-  readonly voiceRegions: "/voice/regions";
-  readonly currentUserVoiceState: (
-    guildId: Snowflake,
-  ) => `/guilds/${Snowflake}/voice-states/@me`;
-  readonly userVoiceState: (
-    guildId: Snowflake,
-    userId: Snowflake,
-  ) => `/guilds/${Snowflake}/voice-states/${Snowflake}`;
-}
+import {
+  type ModifyCurrentUserVoiceStateEntity,
+  ModifyCurrentUserVoiceStateSchema,
+  type ModifyUserVoiceStateEntity,
+  ModifyUserVoiceStateSchema,
+} from "../schemas/index.js";
 
 export class VoiceRouter extends BaseRouter {
-  static readonly ROUTES: VoiceRoutes = {
+  static readonly ROUTES = {
     voiceRegions: "/voice/regions",
-    currentUserVoiceState: (guildId) =>
-      `/guilds/${guildId}/voice-states/@me` as const,
-    userVoiceState: (guildId, userId) =>
-      `/guilds/${guildId}/voice-states/${userId}` as const,
+    currentUserVoiceState: (
+      guildId: Snowflake,
+    ): `/guilds/${Snowflake}/voice-states/@me` =>
+      `/guilds/${guildId}/voice-states/@me`,
+    userVoiceState: (
+      guildId: Snowflake,
+      userId: Snowflake,
+    ): `/guilds/${Snowflake}/voice-states/${Snowflake}` =>
+      `/guilds/${guildId}/voice-states/${userId}`,
   } as const;
 
   /**
@@ -69,46 +52,43 @@ export class VoiceRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state}
    */
-  async modifyCurrentUserVoiceState(
+  modifyCurrentUserVoiceState(
     guildId: Snowflake,
-    options: ModifyCurrentUserVoiceStateOptions,
+    options: ModifyCurrentUserVoiceStateEntity,
   ): Promise<void> {
-    if (options.channel_id) {
-      const currentState = await this.getCurrentUserVoiceState(guildId);
-      if (currentState.channel_id !== options.channel_id) {
-        throw new Error("User must already be in the specified stage channel");
-      }
-    }
-
-    if (options.request_to_speak_timestamp) {
-      const timestamp = new Date(options.request_to_speak_timestamp).getTime();
-      if (timestamp < Date.now()) {
-        throw new Error(
-          "request_to_speak_timestamp must be a present or future time",
-        );
-      }
+    const result = ModifyCurrentUserVoiceStateSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.patch(VoiceRouter.ROUTES.currentUserVoiceState(guildId), {
-      body: JSON.stringify(options),
+      body: JSON.stringify(result.data),
     });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state}
    */
-  async modifyUserVoiceState(
+  modifyUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
-    options: ModifyUserVoiceStateOptions,
+    options: ModifyUserVoiceStateEntity,
   ): Promise<void> {
-    const currentState = await this.getUserVoiceState(guildId, userId);
-    if (currentState.channel_id !== options.channel_id) {
-      throw new Error("User must already be in the specified stage channel");
+    const result = ModifyUserVoiceStateSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.patch(VoiceRouter.ROUTES.userVoiceState(guildId, userId), {
-      body: JSON.stringify(options),
+      body: JSON.stringify(result.data),
     });
   }
 }

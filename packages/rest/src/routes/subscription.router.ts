@@ -1,33 +1,22 @@
-import type { Integer, Snowflake, SubscriptionEntity } from "@nyxjs/core";
+import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions}
- */
-export interface SubscriptionQueryEntity {
-  before?: Snowflake;
-  after?: Snowflake;
-  limit?: Integer;
-  user_id?: Snowflake;
-}
+import {
+  type SubscriptionQueryEntity,
+  SubscriptionQuerySchema,
+} from "../schemas/index.js";
 
 export class SubscriptionRouter extends BaseRouter {
-  static readonly DEFAULT_LIMIT = 50;
-  static readonly MAX_LIMIT = 100;
-  static readonly MIN_LIMIT = 1;
-
-  static readonly routes = {
+  static readonly ROUTES = {
     skuSubscriptions: (
       skuId: Snowflake,
     ): `/skus/${Snowflake}/subscriptions` => {
-      return `/skus/${skuId}/subscriptions` as const;
+      return `/skus/${skuId}/subscriptions`;
     },
-
     skuSubscription: (
       skuId: Snowflake,
       subscriptionId: Snowflake,
     ): `/skus/${Snowflake}/subscriptions/${Snowflake}` => {
-      return `/skus/${skuId}/subscriptions/${subscriptionId}` as const;
+      return `/skus/${skuId}/subscriptions/${subscriptionId}`;
     },
   } as const;
 
@@ -36,27 +25,19 @@ export class SubscriptionRouter extends BaseRouter {
    */
   listSkuSubscriptions(
     skuId: Snowflake,
-    query?: SubscriptionQueryEntity,
+    query: SubscriptionQueryEntity = {},
   ): Promise<SubscriptionEntity[]> {
-    if (
-      query?.limit &&
-      (query.limit < SubscriptionRouter.MIN_LIMIT ||
-        query.limit > SubscriptionRouter.MAX_LIMIT)
-    ) {
+    const result = SubscriptionQuerySchema.safeParse(query);
+    if (!result.success) {
       throw new Error(
-        `Limit must be between ${SubscriptionRouter.MIN_LIMIT} and ${SubscriptionRouter.MAX_LIMIT}`,
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
       );
     }
 
-    if (query?.before && query?.after) {
-      throw new Error("Cannot specify both before and after parameters");
-    }
-
-    return this.get(SubscriptionRouter.routes.skuSubscriptions(skuId), {
-      query: {
-        ...query,
-        limit: query?.limit || SubscriptionRouter.DEFAULT_LIMIT,
-      },
+    return this.get(SubscriptionRouter.ROUTES.skuSubscriptions(skuId), {
+      query: result.data,
     });
   }
 
@@ -68,7 +49,7 @@ export class SubscriptionRouter extends BaseRouter {
     subscriptionId: Snowflake,
   ): Promise<SubscriptionEntity> {
     return this.get(
-      SubscriptionRouter.routes.skuSubscription(skuId, subscriptionId),
+      SubscriptionRouter.ROUTES.skuSubscription(skuId, subscriptionId),
     );
   }
 }

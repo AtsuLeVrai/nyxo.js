@@ -72,7 +72,11 @@ export class ApplicationCommandRouter extends BaseRouter {
   ): Promise<ApplicationCommandEntity> {
     const result = CreateGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.post(ApplicationCommandRouter.ROUTES.base(applicationId), {
@@ -102,7 +106,11 @@ export class ApplicationCommandRouter extends BaseRouter {
   ): Promise<ApplicationCommandEntity> {
     const result = EditGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.patch(
@@ -135,7 +143,11 @@ export class ApplicationCommandRouter extends BaseRouter {
       .max(200)
       .safeParse(commands);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.put(ApplicationCommandRouter.ROUTES.base(applicationId), {
@@ -169,7 +181,11 @@ export class ApplicationCommandRouter extends BaseRouter {
   ): Promise<ApplicationCommandEntity> {
     const result = CreateGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.post(
@@ -208,7 +224,11 @@ export class ApplicationCommandRouter extends BaseRouter {
   ): Promise<ApplicationCommandEntity> {
     const result = EditGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.patch(
@@ -253,7 +273,11 @@ export class ApplicationCommandRouter extends BaseRouter {
       .max(200)
       .safeParse(commands);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.put(
@@ -307,7 +331,11 @@ export class ApplicationCommandRouter extends BaseRouter {
   ): Promise<GuildApplicationCommandPermissionEntity> {
     const result = EditApplicationCommandPermissionsSchema.safeParse(options);
     if (!result.success) {
-      throw new Error(result.error.errors.join(", "));
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
     return this.put(
