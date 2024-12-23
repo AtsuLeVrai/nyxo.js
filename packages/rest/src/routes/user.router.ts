@@ -21,27 +21,17 @@ import {
 
 export class UserRouter extends BaseRouter {
   static readonly routes = {
-    base: "/users",
-    me: "/users/@me",
-    guilds: "/users/@me/guilds",
-    channels: "/users/@me/channels",
-    connections: "/users/@me/connections",
-    user: (userId: Snowflake): `/users/${Snowflake}` => {
-      return `/users/${userId}`;
-    },
-    guildMember: (
-      guildId: Snowflake,
-    ): `/users/@me/guilds/${Snowflake}/member` => {
-      return `/users/@me/guilds/${guildId}/member`;
-    },
-    leaveGuild: (guildId: Snowflake): `/users/@me/guilds/${Snowflake}` => {
-      return `/users/@me/guilds/${guildId}`;
-    },
-    applicationRole: (
-      applicationId: Snowflake,
-    ): `/users/@me/applications/${Snowflake}/role-connection` => {
-      return `/users/@me/applications/${applicationId}/role-connection`;
-    },
+    base: "/users" as const,
+    me: "/users/@me" as const,
+    guilds: "/users/@me/guilds" as const,
+    channels: "/users/@me/channels" as const,
+    connections: "/users/@me/connections" as const,
+    user: (userId: Snowflake) => `/users/${userId}` as const,
+    guildMember: (guildId: Snowflake) =>
+      `/users/@me/guilds/${guildId}/member` as const,
+    leaveGuild: (guildId: Snowflake) => `/users/@me/guilds/${guildId}` as const,
+    applicationRole: (applicationId: Snowflake) =>
+      `/users/@me/applications/${applicationId}/role-connection` as const,
   } as const;
 
   /**

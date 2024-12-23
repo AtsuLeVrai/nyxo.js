@@ -1,35 +1,13 @@
-import type { Integer } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/events/gateway#session-start-limit-object-session-start-limit-structure}
- */
-export interface SessionStartLimitEntity {
-  total: Integer;
-  remaining: Integer;
-  reset_after: Integer;
-  max_concurrency: Integer;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-example-response}
- */
-export interface GatewayResponseEntity {
-  url: string;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot-json-response}
- */
-export interface GatewayBotResponseEntity extends GatewayResponseEntity {
-  shards: Integer;
-  session_start_limit: SessionStartLimitEntity;
-}
+import type {
+  GatewayBotResponseEntity,
+  GatewayResponseEntity,
+} from "../schemas/index.js";
 
 export class GatewayRouter extends BaseRouter {
   static readonly ROUTES = {
-    gateway: "/gateway",
-    gatewayBot: "/gateway/bot",
+    gateway: "/gateway" as const,
+    gatewayBot: "/gateway/bot" as const,
   } as const;
 
   /**

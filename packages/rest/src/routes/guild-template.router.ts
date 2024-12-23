@@ -11,32 +11,25 @@ import {
 
 export class GuildTemplateRouter extends BaseRouter {
   static ROUTES = {
-    templates: "/guilds/templates",
-    template: (code: string): `/guilds/templates/${string}` => {
-      return `/guilds/templates/${code}`;
-    },
-    guildTemplates: (guildId: Snowflake): `/guilds/${Snowflake}/templates` => {
-      return `/guilds/${guildId}/templates`;
-    },
-    guildTemplate: (
-      guildId: Snowflake,
-      code: string,
-    ): `/guilds/${Snowflake}/templates/${string}` => {
-      return `/guilds/${guildId}/templates/${code}`;
-    },
+    templates: "/guilds/templates" as const,
+    template: (code: string) => `/guilds/templates/${code}` as const,
+    guildTemplates: (guildId: Snowflake) =>
+      `/guilds/${guildId}/templates` as const,
+    guildTemplate: (guildId: Snowflake, code: string) =>
+      `/guilds/${guildId}/templates/${code}` as const,
   } as const;
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
-  getTemplate(code: string): Promise<GuildTemplateEntity> {
+  getGuildTemplate(code: string): Promise<GuildTemplateEntity> {
     return this.get(GuildTemplateRouter.ROUTES.template(code));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template}
    */
-  createGuildFrom(
+  createGuildFromGuildTemplate(
     code: string,
     options: CreateGuildFromGuildTemplateEntity,
   ): Promise<GuildEntity> {
@@ -57,14 +50,14 @@ export class GuildTemplateRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
-  getTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
+  getGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
     return this.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-template}
    */
-  create(
+  createGuildTemplate(
     guildId: Snowflake,
     options: CreateGuildTemplateEntity,
   ): Promise<GuildTemplateEntity> {
@@ -85,14 +78,17 @@ export class GuildTemplateRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#sync-guild-template}
    */
-  sync(guildId: Snowflake, code: string): Promise<GuildTemplateEntity> {
+  syncGuildTemplate(
+    guildId: Snowflake,
+    code: string,
+  ): Promise<GuildTemplateEntity> {
     return this.put(GuildTemplateRouter.ROUTES.guildTemplate(guildId, code));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#modify-guild-template}
    */
-  modify(
+  modifyGuildTemplate(
     guildId: Snowflake,
     code: string,
     options: ModifyGuildTemplateEntity,
@@ -114,7 +110,7 @@ export class GuildTemplateRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#delete-guild-template}
    */
-  deleteTemplate(
+  deleteGuildTemplate(
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {

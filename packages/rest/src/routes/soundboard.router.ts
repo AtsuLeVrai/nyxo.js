@@ -11,29 +11,19 @@ import {
 
 export class SoundboardRouter extends BaseRouter {
   static readonly ROUTES = {
-    defaultSounds: "/soundboard-default-sounds",
-    guildSounds: (
-      guildId: Snowflake,
-    ): `/guilds/${Snowflake}/soundboard-sounds` => {
-      return `/guilds/${guildId}/soundboard-sounds`;
-    },
-    guildSound: (
-      guildId: Snowflake,
-      soundId: Snowflake,
-    ): `/guilds/${Snowflake}/soundboard-sounds/${Snowflake}` => {
-      return `/guilds/${guildId}/soundboard-sounds/${soundId}`;
-    },
-    sendSound: (
-      channelId: Snowflake,
-    ): `/channels/${Snowflake}/send-soundboard-sound` => {
-      return `/channels/${channelId}/send-soundboard-sound`;
-    },
+    defaultSounds: "/soundboard-default-sounds" as const,
+    guildSounds: (guildId: Snowflake) =>
+      `/guilds/${guildId}/soundboard-sounds` as const,
+    guildSound: (guildId: Snowflake, soundId: Snowflake) =>
+      `/guilds/${guildId}/soundboard-sounds/${soundId}` as const,
+    sendSound: (channelId: Snowflake) =>
+      `/channels/${channelId}/send-soundboard-sound` as const,
   } as const;
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound}
    */
-  sendSound(
+  sendSoundboardSound(
     channelId: Snowflake,
     options: SendSoundboardSoundEntity,
   ): Promise<void> {
@@ -54,14 +44,14 @@ export class SoundboardRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
-  listDefaultSounds(): Promise<SoundboardSoundEntity[]> {
+  listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
     return this.get(SoundboardRouter.ROUTES.defaultSounds);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds}
    */
-  listGuildSounds(
+  listGuildSoundboardSounds(
     guildId: Snowflake,
   ): Promise<ListGuildSoundboardSoundsResponse> {
     return this.get(SoundboardRouter.ROUTES.guildSounds(guildId));
@@ -70,7 +60,7 @@ export class SoundboardRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#get-guild-soundboard-sound}
    */
-  getGuildSound(
+  getGuildSoundboardSound(
     guildId: Snowflake,
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
@@ -80,7 +70,7 @@ export class SoundboardRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound}
    */
-  createGuildSound(
+  createGuildSoundboardSound(
     guildId: Snowflake,
     options: CreateGuildSoundboardSoundEntity,
     reason?: string,
@@ -103,7 +93,7 @@ export class SoundboardRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound}
    */
-  modifyGuildSound(
+  modifyGuildSoundboardSound(
     guildId: Snowflake,
     soundId: Snowflake,
     options: ModifyGuildSoundboardSoundEntity,
@@ -127,7 +117,7 @@ export class SoundboardRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound}
    */
-  deleteGuildSound(
+  deleteGuildSoundboardSound(
     guildId: Snowflake,
     soundId: Snowflake,
     reason?: string,

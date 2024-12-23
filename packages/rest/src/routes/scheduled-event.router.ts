@@ -4,90 +4,56 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-import type { ImageData } from "../types/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-query-string-params}
- */
-export interface GetEventsQueryEntity {
-  with_user_count?: boolean;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params}
- */
-export interface GetUsersQueryEntity {
-  limit?: number;
-  with_member?: boolean;
-  before?: Snowflake;
-  after?: Snowflake;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
- */
-export interface CreateEventEntity
-  extends Pick<
-    GuildScheduledEventEntity,
-    | "channel_id"
-    | "entity_metadata"
-    | "name"
-    | "privacy_level"
-    | "scheduled_start_time"
-    | "scheduled_end_time"
-    | "description"
-    | "entity_type"
-    | "recurrence_rule"
-  > {
-  image?: ImageData;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
- */
-export type ModifyEventEntity = Partial<CreateEventEntity>;
+import {
+  type CreateGuildScheduledEventEntity,
+  CreateGuildScheduledEventSchema,
+  type GetGuildScheduledEventUsersQueryEntity,
+  GetGuildScheduledEventUsersQuerySchema,
+  type ModifyGuildScheduledEventEntity,
+  ModifyGuildScheduledEventSchema,
+} from "../schemas/index.js";
 
 export class ScheduledEventRouter extends BaseRouter {
-  static routes = {
-    events: (guildId: Snowflake): `/guilds/${Snowflake}/scheduled-events` => {
-      return `/guilds/${guildId}/scheduled-events` as const;
-    },
-    event: (
-      guildId: Snowflake,
-      eventId: Snowflake,
-    ): `/guilds/${Snowflake}/scheduled-events/${Snowflake}` => {
-      return `/guilds/${guildId}/scheduled-events/${eventId}` as const;
-    },
-    users: (
-      guildId: Snowflake,
-      eventId: Snowflake,
-    ): `/guilds/${Snowflake}/scheduled-events/${Snowflake}/users` => {
-      return `/guilds/${guildId}/scheduled-events/${eventId}/users` as const;
-    },
+  static ROUTES = {
+    events: (guildId: Snowflake) =>
+      `/guilds/${guildId}/scheduled-events` as const,
+    event: (guildId: Snowflake, eventId: Snowflake) =>
+      `/guilds/${guildId}/scheduled-events/${eventId}` as const,
+    users: (guildId: Snowflake, eventId: Snowflake) =>
+      `/guilds/${guildId}/scheduled-events/${eventId}/users` as const,
   } as const;
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild}
    */
-  listEvents(
+  listScheduledEventsForGuild(
     guildId: Snowflake,
-    query?: GetEventsQueryEntity,
+    withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
-    return this.get(ScheduledEventRouter.routes.events(guildId), {
-      query,
+    return this.get(ScheduledEventRouter.ROUTES.events(guildId), {
+      query: { with_user_count: withUserCount },
     });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event}
    */
-  createEvent(
+  createGuildScheduledEvent(
     guildId: Snowflake,
-    event: CreateEventEntity,
+    event: CreateGuildScheduledEventEntity,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    return this.post(ScheduledEventRouter.routes.events(guildId), {
-      body: JSON.stringify(event),
+    const result = CreateGuildScheduledEventSchema.safeParse(event);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
+    return this.post(ScheduledEventRouter.ROUTES.events(guildId), {
+      body: JSON.stringify(result.data),
       reason,
     });
   }
@@ -95,12 +61,12 @@ export class ScheduledEventRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event}
    */
-  getEvent(
+  getGuildScheduledEvent(
     guildId: Snowflake,
     eventId: Snowflake,
-    withUserCount?: boolean,
+    withUserCount = false,
   ): Promise<GuildScheduledEventEntity> {
-    return this.get(ScheduledEventRouter.routes.event(guildId, eventId), {
+    return this.get(ScheduledEventRouter.ROUTES.event(guildId, eventId), {
       query: { with_user_count: withUserCount },
     });
   }
@@ -108,14 +74,23 @@ export class ScheduledEventRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event}
    */
-  modifyEvent(
+  modifyGuildScheduledEvent(
     guildId: Snowflake,
     eventId: Snowflake,
-    modify: ModifyEventEntity,
+    modify: ModifyGuildScheduledEventEntity,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    return this.patch(ScheduledEventRouter.routes.event(guildId, eventId), {
-      body: JSON.stringify(modify),
+    const result = ModifyGuildScheduledEventSchema.safeParse(modify);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
+    return this.patch(ScheduledEventRouter.ROUTES.event(guildId, eventId), {
+      body: JSON.stringify(result.data),
       reason,
     });
   }
@@ -123,20 +98,32 @@ export class ScheduledEventRouter extends BaseRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event}
    */
-  deleteEvent(guildId: Snowflake, eventId: Snowflake): Promise<void> {
-    return this.delete(ScheduledEventRouter.routes.event(guildId, eventId));
+  deleteGuildScheduledEvent(
+    guildId: Snowflake,
+    eventId: Snowflake,
+  ): Promise<void> {
+    return this.delete(ScheduledEventRouter.ROUTES.event(guildId, eventId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users}
    */
-  getUsers(
+  getGuildScheduledEventUsers(
     guildId: Snowflake,
     eventId: Snowflake,
-    query?: GetUsersQueryEntity,
+    query?: GetGuildScheduledEventUsersQueryEntity,
   ): Promise<GuildScheduledEventUserEntity[]> {
-    return this.get(ScheduledEventRouter.routes.users(guildId, eventId), {
-      query,
+    const result = GetGuildScheduledEventUsersQuerySchema.safeParse(query);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
+    return this.get(ScheduledEventRouter.ROUTES.users(guildId, eventId), {
+      query: result.data,
     });
   }
 }

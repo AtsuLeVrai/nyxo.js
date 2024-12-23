@@ -7,7 +7,7 @@ import {
 
 export class InviteRouter extends BaseRouter {
   static readonly ROUTES = {
-    invite: (code: string): `/invites/${string}` => `/invites/${code}`,
+    invite: (code: string) => `/invites/${code}` as const,
   } as const;
 
   /**

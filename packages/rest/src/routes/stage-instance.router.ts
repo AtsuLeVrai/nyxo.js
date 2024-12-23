@@ -9,10 +9,9 @@ import {
 
 export class StageInstanceRouter extends BaseRouter {
   static readonly ROUTES = {
-    stageInstances: "/stage-instances",
-    stageInstance: (channelId: Snowflake): `/stage-instances/${Snowflake}` => {
-      return `/stage-instances/${channelId}`;
-    },
+    stageInstances: "/stage-instances" as const,
+    stageInstance: (channelId: Snowflake) =>
+      `/stage-instances/${channelId}` as const,
   } as const;
 
   /**

@@ -12,15 +12,10 @@ export class PollRouter extends BaseRouter {
       channelId: Snowflake,
       messageId: Snowflake,
       answerId: number,
-    ): `/channels/${Snowflake}/polls/${Snowflake}/answers/${number}` => {
-      return `/channels/${channelId}/polls/${messageId}/answers/${answerId}`;
-    },
-    expirePoll: (
-      channelId: Snowflake,
-      messageId: Snowflake,
-    ): `/channels/${Snowflake}/polls/${Snowflake}/expire` => {
-      return `/channels/${channelId}/polls/${messageId}/expire`;
-    },
+    ) =>
+      `/channels/${channelId}/polls/${messageId}/answers/${answerId}` as const,
+    expirePoll: (channelId: Snowflake, messageId: Snowflake) =>
+      `/channels/${channelId}/polls/${messageId}/expire` as const,
   } as const;
 
   /**

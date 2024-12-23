@@ -9,12 +9,9 @@ import {
 
 export class AutoModerationRouter extends BaseRouter {
   static readonly ROUTES = {
-    base: (guildId: Snowflake): `/guilds/${Snowflake}/auto-moderation/rules` =>
+    base: (guildId: Snowflake) =>
       `/guilds/${guildId}/auto-moderation/rules` as const,
-    rule: (
-      guildId: Snowflake,
-      ruleId: Snowflake,
-    ): `/guilds/${Snowflake}/auto-moderation/rules/${Snowflake}` =>
+    rule: (guildId: Snowflake, ruleId: Snowflake) =>
       `/guilds/${guildId}/auto-moderation/rules/${ruleId}` as const,
   } as const;
 

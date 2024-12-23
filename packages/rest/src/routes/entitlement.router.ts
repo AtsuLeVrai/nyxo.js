@@ -9,20 +9,12 @@ import {
 
 export class EntitlementRouter extends BaseRouter {
   static readonly ROUTES = {
-    entitlements: (
-      applicationId: Snowflake,
-    ): `/applications/${Snowflake}/entitlements` =>
-      `/applications/${applicationId}/entitlements`,
-    entitlement: (
-      applicationId: Snowflake,
-      entitlementId: Snowflake,
-    ): `/applications/${Snowflake}/entitlements/${Snowflake}` =>
-      `/applications/${applicationId}/entitlements/${entitlementId}`,
-    consume: (
-      applicationId: Snowflake,
-      entitlementId: Snowflake,
-    ): `/applications/${Snowflake}/entitlements/${Snowflake}/consume` =>
-      `/applications/${applicationId}/entitlements/${entitlementId}/consume`,
+    entitlements: (applicationId: Snowflake) =>
+      `/applications/${applicationId}/entitlements` as const,
+    entitlement: (applicationId: Snowflake, entitlementId: Snowflake) =>
+      `/applications/${applicationId}/entitlements/${entitlementId}` as const,
+    consume: (applicationId: Snowflake, entitlementId: Snowflake) =>
+      `/applications/${applicationId}/entitlements/${entitlementId}/consume` as const,
   } as const;
 
   /**

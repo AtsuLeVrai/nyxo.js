@@ -13,16 +13,11 @@ import {
 
 export class VoiceRouter extends BaseRouter {
   static readonly ROUTES = {
-    voiceRegions: "/voice/regions",
-    currentUserVoiceState: (
-      guildId: Snowflake,
-    ): `/guilds/${Snowflake}/voice-states/@me` =>
-      `/guilds/${guildId}/voice-states/@me`,
-    userVoiceState: (
-      guildId: Snowflake,
-      userId: Snowflake,
-    ): `/guilds/${Snowflake}/voice-states/${Snowflake}` =>
-      `/guilds/${guildId}/voice-states/${userId}`,
+    voiceRegions: "/voice/regions" as const,
+    currentUserVoiceState: (guildId: Snowflake) =>
+      `/guilds/${guildId}/voice-states/@me` as const,
+    userVoiceState: (guildId: Snowflake, userId: Snowflake) =>
+      `/guilds/${guildId}/voice-states/${userId}` as const,
   } as const;
 
   /**

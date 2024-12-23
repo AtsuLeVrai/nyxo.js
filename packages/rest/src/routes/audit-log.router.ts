@@ -7,8 +7,8 @@ import {
 
 export class AuditLogRouter extends BaseRouter {
   static readonly ROUTES = {
-    guildAuditLogs: (guildId: Snowflake): `/guilds/${Snowflake}/audit-logs` =>
-      `/guilds/${guildId}/audit-logs`,
+    guildAuditLogs: (guildId: Snowflake) =>
+      `/guilds/${guildId}/audit-logs` as const,
   } as const;
 
   /**

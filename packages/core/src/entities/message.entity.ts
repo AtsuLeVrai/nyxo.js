@@ -39,7 +39,11 @@ export interface AllowedMentionsEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#allowed-mentions-object-allowed-mention-types}
  */
-export type AllowedMentionType = "roles" | "users" | "everyone";
+export enum AllowedMentionType {
+  RoleMentions = "roles",
+  UserMentions = "users",
+  EveryoneMentions = "everyone",
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#channel-mention-object-channel-mention-structure}

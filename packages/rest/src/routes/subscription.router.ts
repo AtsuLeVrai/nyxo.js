@@ -7,17 +7,10 @@ import {
 
 export class SubscriptionRouter extends BaseRouter {
   static readonly ROUTES = {
-    skuSubscriptions: (
-      skuId: Snowflake,
-    ): `/skus/${Snowflake}/subscriptions` => {
-      return `/skus/${skuId}/subscriptions`;
-    },
-    skuSubscription: (
-      skuId: Snowflake,
-      subscriptionId: Snowflake,
-    ): `/skus/${Snowflake}/subscriptions/${Snowflake}` => {
-      return `/skus/${skuId}/subscriptions/${subscriptionId}`;
-    },
+    skuSubscriptions: (skuId: Snowflake) =>
+      `/skus/${skuId}/subscriptions` as const,
+    skuSubscription: (skuId: Snowflake, subscriptionId: Snowflake) =>
+      `/skus/${skuId}/subscriptions/${subscriptionId}` as const,
   } as const;
 
   /**

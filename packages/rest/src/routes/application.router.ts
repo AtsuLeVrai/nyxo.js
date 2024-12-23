@@ -8,12 +8,9 @@ import {
 
 export class ApplicationRouter extends BaseRouter {
   static ROUTES = {
-    currentApplication: "/applications/@me",
-    activityInstance: (
-      applicationId: Snowflake,
-      instanceId: string,
-    ): `/applications/${Snowflake}/activity-instances/${string}` =>
-      `/applications/${applicationId}/activity-instances/${instanceId}`,
+    currentApplication: "/applications/@me" as const,
+    activityInstance: (applicationId: Snowflake, instanceId: string) =>
+      `/applications/${applicationId}/activity-instances/${instanceId}` as const,
   } as const;
 
   /**

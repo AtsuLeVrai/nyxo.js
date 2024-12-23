@@ -20,35 +20,26 @@ import {
 
 export class ApplicationCommandRouter extends BaseRouter {
   static readonly ROUTES = {
-    base: (applicationId: Snowflake): `/applications/${Snowflake}/commands` =>
-      `/applications/${applicationId}/commands`,
-    command: (
-      applicationId: Snowflake,
-      commandId: Snowflake,
-    ): `/applications/${Snowflake}/commands/${Snowflake}` =>
-      `/applications/${applicationId}/commands/${commandId}`,
-    guildCommands: (
-      applicationId: Snowflake,
-      guildId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands` =>
-      `/applications/${applicationId}/guilds/${guildId}/commands`,
+    base: (applicationId: Snowflake) =>
+      `/applications/${applicationId}/commands` as const,
+    command: (applicationId: Snowflake, commandId: Snowflake) =>
+      `/applications/${applicationId}/commands/${commandId}` as const,
+    guildCommands: (applicationId: Snowflake, guildId: Snowflake) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands` as const,
     guildCommand: (
       applicationId: Snowflake,
       guildId: Snowflake,
       commandId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}` =>
-      `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}`,
-    guildCommandsPermissions: (
-      applicationId: Snowflake,
-      guildId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/permissions` =>
-      `/applications/${applicationId}/guilds/${guildId}/commands/permissions`,
+    ) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}` as const,
+    guildCommandsPermissions: (applicationId: Snowflake, guildId: Snowflake) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands/permissions` as const,
     guildCommandPermissions: (
       applicationId: Snowflake,
       guildId: Snowflake,
       commandId: Snowflake,
-    ): `/applications/${Snowflake}/guilds/${Snowflake}/commands/${Snowflake}/permissions` =>
-      `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions`,
+    ) =>
+      `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const,
   } as const;
 
   /**

@@ -3,10 +3,8 @@ import { BaseRouter } from "../base/index.js";
 
 export class SkuRouter extends BaseRouter {
   static readonly ROUTES = {
-    applicationSkus: (
-      applicationId: Snowflake,
-    ): `/applications/${Snowflake}/skus` =>
-      `/applications/${applicationId}/skus`,
+    applicationSkus: (applicationId: Snowflake) =>
+      `/applications/${applicationId}/skus` as const,
   } as const;
 
   /**

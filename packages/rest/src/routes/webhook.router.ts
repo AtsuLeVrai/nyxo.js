@@ -1,90 +1,38 @@
-import type {
-  AllowedMentionsEntity,
-  AttachmentEntity,
-  EmbedEntity,
-  MessageEntity,
-  Snowflake,
-  WebhookEntity,
-} from "@nyxjs/core";
+import type { Snowflake, WebhookEntity } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-import type { FileEntity, ImageData } from "../types/index.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook-json-params}
- */
-export interface WebhookCreateEntity extends Pick<WebhookEntity, "name"> {
-  avatar?: ImageData | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params}
- */
-export interface WebhookModifyEntity
-  extends Partial<Pick<WebhookEntity, "name" | "channel_id">> {
-  avatar?: ImageData | null;
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params}
- */
-export interface WebhookExecuteEntity
-  extends Pick<
-    MessageEntity,
-    "content" | "tts" | "embeds" | "components" | "flags" | "poll"
-  > {
-  username?: string;
-  avatar_url?: string;
-  allowed_mentions?: AllowedMentionsEntity;
-  files?: FileEntity[];
-  payload_json?: string;
-  attachments?: Partial<AttachmentEntity>[];
-  thread_name?: string;
-  applied_tags?: Snowflake[];
-}
-
-export interface WebhookExecuteOptionsEntity extends WebhookExecuteEntity {
-  wait?: boolean;
-  thread_id?: Snowflake;
-}
-
-export interface EditWebhookMessageOptionsEntity
-  extends Partial<WebhookExecuteEntity> {
-  thread_id?: Snowflake;
-}
+import {
+  type CreateWebhookEntity,
+  CreateWebhookSchema,
+  type EditWebhookMessageEntity,
+  EditWebhookMessageSchema,
+  type ExecuteWebhookEntity,
+  type ExecuteWebhookQueryEntity,
+  ExecuteWebhookQuerySchema,
+  ExecuteWebhookSchema,
+  type GetWebhookMessageQueryEntity,
+  GetWebhookMessageQuerySchema,
+  type ModifyWebhookEntity,
+  ModifyWebhookSchema,
+} from "../schemas/index.js";
 
 export class WebhookRouter extends BaseRouter {
-  static readonly NAME_MIN_LENGTH = 1;
-  static readonly NAME_MAX_LENGTH = 80;
-  static readonly CONTENT_MAX_LENGTH = 2000;
-  static readonly EMBEDS_MAX = 10;
-  static readonly EMBEDS_TOTAL_CHARS = 6000;
-  static readonly INVALID_USERNAME_SUBSTRINGS = ["clyde", "discord"];
-
-  static readonly routes = {
-    channelWebhooks: (
-      channelId: Snowflake,
-    ): `/channels/${Snowflake}/webhooks` => {
-      return `/channels/${channelId}/webhooks` as const;
-    },
-    guildWebhooks: (guildId: Snowflake): `/guilds/${Snowflake}/webhooks` => {
-      return `/guilds/${guildId}/webhooks` as const;
-    },
-    webhook: (webhookId: Snowflake): `/webhooks/${Snowflake}` => {
-      return `/webhooks/${webhookId}` as const;
-    },
-    webhookWithToken: (
-      webhookId: Snowflake,
-      token: string,
-    ): `/webhooks/${Snowflake}/${string}` => {
-      return `/webhooks/${webhookId}/${token}` as const;
-    },
+  static readonly ROUTES = {
+    channelWebhooks: (channelId: Snowflake) =>
+      `/channels/${channelId}/webhooks` as const,
+    guildWebhooks: (guildId: Snowflake) =>
+      `/guilds/${guildId}/webhooks` as const,
+    webhook: (webhookId: Snowflake) => `/webhooks/${webhookId}` as const,
+    webhookWithToken: (webhookId: Snowflake, token: string) =>
+      `/webhooks/${webhookId}/${token}` as const,
+    webhookWithTokenSlack: (webhookId: Snowflake, token: string) =>
+      `/webhooks/${webhookId}/${token}/slack` as const,
+    webhookWithTokenGithub: (webhookId: Snowflake, token: string) =>
+      `/webhooks/${webhookId}/${token}/github` as const,
     webhookMessage: (
       webhookId: Snowflake,
       token: string,
       messageId: Snowflake,
-    ): `/webhooks/${Snowflake}/${string}/messages/${Snowflake}` => {
-      return `/webhooks/${webhookId}/${token}/messages/${messageId}` as const;
-    },
+    ) => `/webhooks/${webhookId}/${token}/messages/${messageId}` as const,
   } as const;
 
   /**
@@ -92,13 +40,20 @@ export class WebhookRouter extends BaseRouter {
    */
   createWebhook(
     channelId: Snowflake,
-    options: WebhookCreateEntity,
+    options: CreateWebhookEntity,
     reason?: string,
   ): Promise<WebhookEntity> {
-    this.validateWebhookName(options.name);
+    const result = CreateWebhookSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
 
-    return this.post(WebhookRouter.routes.channelWebhooks(channelId), {
-      body: JSON.stringify(options),
+    return this.post(WebhookRouter.ROUTES.channelWebhooks(channelId), {
+      body: JSON.stringify(result.data),
       reason,
     });
   }
@@ -107,21 +62,21 @@ export class WebhookRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
    */
   getChannelWebhooks(channelId: Snowflake): Promise<WebhookEntity[]> {
-    return this.get(WebhookRouter.routes.channelWebhooks(channelId));
+    return this.get(WebhookRouter.ROUTES.channelWebhooks(channelId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
    */
   getGuildWebhooks(guildId: Snowflake): Promise<WebhookEntity[]> {
-    return this.get(WebhookRouter.routes.guildWebhooks(guildId));
+    return this.get(WebhookRouter.ROUTES.guildWebhooks(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
    */
   getWebhook(webhookId: Snowflake): Promise<WebhookEntity> {
-    return this.get(WebhookRouter.routes.webhook(webhookId));
+    return this.get(WebhookRouter.ROUTES.webhook(webhookId));
   }
 
   /**
@@ -131,7 +86,7 @@ export class WebhookRouter extends BaseRouter {
     webhookId: Snowflake,
     token: string,
   ): Promise<WebhookEntity> {
-    return this.get(WebhookRouter.routes.webhookWithToken(webhookId, token));
+    return this.get(WebhookRouter.ROUTES.webhookWithToken(webhookId, token));
   }
 
   /**
@@ -139,15 +94,20 @@ export class WebhookRouter extends BaseRouter {
    */
   modifyWebhook(
     webhookId: Snowflake,
-    options: WebhookModifyEntity,
+    options: ModifyWebhookEntity,
     reason?: string,
   ): Promise<WebhookEntity> {
-    if (options.name) {
-      this.validateWebhookName(options.name);
+    const result = ModifyWebhookSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
-    return this.patch(WebhookRouter.routes.webhook(webhookId), {
-      body: JSON.stringify(options),
+    return this.patch(WebhookRouter.ROUTES.webhook(webhookId), {
+      body: JSON.stringify(result.data),
       reason,
     });
   }
@@ -158,15 +118,20 @@ export class WebhookRouter extends BaseRouter {
   modifyWebhookWithToken(
     webhookId: Snowflake,
     token: string,
-    options: Omit<WebhookModifyEntity, "channel_id">,
+    options: Omit<ModifyWebhookEntity, "channel_id">,
     reason?: string,
   ): Promise<WebhookEntity> {
-    if (options.name) {
-      this.validateWebhookName(options.name);
+    const result = ModifyWebhookSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
     }
 
-    return this.patch(WebhookRouter.routes.webhookWithToken(webhookId, token), {
-      body: JSON.stringify(options),
+    return this.patch(WebhookRouter.ROUTES.webhookWithToken(webhookId, token), {
+      body: JSON.stringify(result.data),
       reason,
     });
   }
@@ -175,7 +140,7 @@ export class WebhookRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
    */
   deleteWebhook(webhookId: Snowflake, reason?: string): Promise<void> {
-    return this.delete(WebhookRouter.routes.webhook(webhookId), {
+    return this.delete(WebhookRouter.ROUTES.webhook(webhookId), {
       reason,
     });
   }
@@ -189,7 +154,7 @@ export class WebhookRouter extends BaseRouter {
     reason?: string,
   ): Promise<void> {
     return this.delete(
-      WebhookRouter.routes.webhookWithToken(webhookId, token),
+      WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
       {
         reason,
       },
@@ -202,30 +167,78 @@ export class WebhookRouter extends BaseRouter {
   executeWebhook(
     webhookId: Snowflake,
     token: string,
-    options: WebhookExecuteOptionsEntity,
+    options: ExecuteWebhookEntity,
+    query: ExecuteWebhookQueryEntity = {},
   ): Promise<WebhookEntity | undefined> {
-    this.validateContent(options.content);
-    this.validateEmbeds(options.embeds);
+    const result = ExecuteWebhookSchema.safeParse(options);
+    const resultQuery = ExecuteWebhookQuerySchema.safeParse(query);
+    if (!(result.success && resultQuery.success)) {
+      const errors = [
+        ...(result.success ? [] : result.error.errors),
+        ...(resultQuery.success ? [] : resultQuery.error.errors),
+      ];
 
-    const hasContent = Boolean(
-      options.content ||
-        options.embeds?.length > 0 ||
-        (options.files && options.files.length > 0) ||
-        options.poll,
-    );
-    if (!hasContent) {
       throw new Error(
-        "At least one of content, embeds, files or poll must be provided",
+        errors.map((e) => `[${e.path.join(".")}] ${e.message}`).join(", "),
       );
     }
 
-    return this.post(WebhookRouter.routes.webhookWithToken(webhookId, token), {
-      body: JSON.stringify(options),
-      query: {
-        wait: options.wait,
-        thread_id: options.thread_id,
-      },
+    const { files, ...rest } = result.data;
+    return this.post(WebhookRouter.ROUTES.webhookWithToken(webhookId, token), {
+      body: JSON.stringify(rest),
+      query: resultQuery.data,
+      files,
     });
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook}
+   */
+  executeSlackCompatibleWebhook(
+    webhookId: Snowflake,
+    token: string,
+    query: ExecuteWebhookQueryEntity = {},
+  ): Promise<void> {
+    const result = ExecuteWebhookQuerySchema.safeParse(query);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
+    return this.post(
+      WebhookRouter.ROUTES.webhookWithTokenSlack(webhookId, token),
+      {
+        query: result.data,
+      },
+    );
+  }
+
+  /**
+   * @see {@link https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook-query-string-params}
+   */
+  executeGithubCompatibleWebhook(
+    webhookId: Snowflake,
+    token: string,
+    query: ExecuteWebhookQueryEntity = {},
+  ): Promise<void> {
+    const result = ExecuteWebhookQuerySchema.safeParse(query);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
+    return this.post(
+      WebhookRouter.ROUTES.webhookWithTokenGithub(webhookId, token),
+      {
+        query: result.data,
+      },
+    );
   }
 
   /**
@@ -235,12 +248,21 @@ export class WebhookRouter extends BaseRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    threadId?: Snowflake,
+    query: GetWebhookMessageQueryEntity = {},
   ): Promise<WebhookEntity> {
+    const result = GetWebhookMessageQuerySchema.safeParse(query);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.get(
-      WebhookRouter.routes.webhookMessage(webhookId, token, messageId),
+      WebhookRouter.ROUTES.webhookMessage(webhookId, token, messageId),
       {
-        query: { thread_id: threadId },
+        query: result.data,
       },
     );
   }
@@ -252,16 +274,29 @@ export class WebhookRouter extends BaseRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    options: EditWebhookMessageOptionsEntity,
+    options: EditWebhookMessageEntity,
+    query: GetWebhookMessageQueryEntity = {},
   ): Promise<WebhookEntity> {
-    this.validateContent(options.content);
-    this.validateEmbeds(options.embeds);
+    const result = EditWebhookMessageSchema.safeParse(query);
+    const resultQuery = GetWebhookMessageQuerySchema.safeParse(query);
+    if (!(result.success && resultQuery.success)) {
+      const errors = [
+        ...(result.success ? [] : result.error.errors),
+        ...(resultQuery.success ? [] : resultQuery.error.errors),
+      ];
 
+      throw new Error(
+        errors.map((e) => `[${e.path.join(".")}] ${e.message}`).join(", "),
+      );
+    }
+
+    const { files, ...rest } = options;
     return this.patch(
-      WebhookRouter.routes.webhookMessage(webhookId, token, messageId),
+      WebhookRouter.ROUTES.webhookMessage(webhookId, token, messageId),
       {
-        body: JSON.stringify(options),
-        query: { thread_id: options.thread_id },
+        body: JSON.stringify(rest),
+        query: resultQuery.data,
+        files,
       },
     );
   }
@@ -273,66 +308,22 @@ export class WebhookRouter extends BaseRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    threadId?: Snowflake,
+    query: GetWebhookMessageQueryEntity = {},
   ): Promise<void> {
+    const result = GetWebhookMessageQuerySchema.safeParse(query);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.delete(
-      WebhookRouter.routes.webhookMessage(webhookId, token, messageId),
+      WebhookRouter.ROUTES.webhookMessage(webhookId, token, messageId),
       {
-        query: { thread_id: threadId },
+        query: result.data,
       },
     );
-  }
-
-  validateWebhookName(name?: string | null): void {
-    if (!name) {
-      return;
-    }
-
-    const webhookName = name.trim();
-    if (
-      webhookName.length < WebhookRouter.NAME_MIN_LENGTH ||
-      webhookName.length > WebhookRouter.NAME_MAX_LENGTH
-    ) {
-      throw new Error(
-        `Webhook name must be between ${WebhookRouter.NAME_MIN_LENGTH} and ${WebhookRouter.NAME_MAX_LENGTH} characters`,
-      );
-    }
-
-    const lowerName = webhookName.toLowerCase();
-    if (
-      WebhookRouter.INVALID_USERNAME_SUBSTRINGS.some((sub) =>
-        lowerName.includes(sub),
-      )
-    ) {
-      throw new Error("Webhook name contains forbidden words (clyde, discord)");
-    }
-  }
-
-  validateContent(content?: string): void {
-    if (content && content.length > WebhookRouter.CONTENT_MAX_LENGTH) {
-      throw new Error(
-        `Content cannot exceed ${WebhookRouter.CONTENT_MAX_LENGTH} characters`,
-      );
-    }
-  }
-
-  validateEmbeds(embeds?: EmbedEntity[]): void {
-    if (embeds) {
-      if (embeds.length > WebhookRouter.EMBEDS_MAX) {
-        throw new Error(
-          `Cannot have more than ${WebhookRouter.EMBEDS_MAX} embeds`,
-        );
-      }
-
-      const totalChars = embeds.reduce(
-        (acc, embed) => acc + JSON.stringify(embed).length,
-        0,
-      );
-      if (totalChars > WebhookRouter.EMBEDS_TOTAL_CHARS) {
-        throw new Error(
-          `Total embed characters cannot exceed ${WebhookRouter.EMBEDS_TOTAL_CHARS}`,
-        );
-      }
-    }
   }
 }

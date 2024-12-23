@@ -37,8 +37,8 @@
     "url": "https://github.com/3tatsu"
   },
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup && rimraf .tsup",
+    "dev": "cross-env NODE_ENV=development tsup --watch",
+    "build": "cross-env NODE_ENV=production tsup && rimraf .tsup",
     "clean": "rimraf dist",
     "format": "biome format --write .",
     "lint": "biome lint --write --unsafe .",
@@ -50,6 +50,7 @@
     "@microsoft/api-extractor": "^7.48.1",
     "@nyxjs/configs": "workspace:*",
     "@types/node": "^22.10.2",
+    "cross-env": "^7.0.3",
     "rimraf": "^6.0.1",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"

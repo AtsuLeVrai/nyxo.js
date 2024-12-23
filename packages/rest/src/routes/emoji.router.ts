@@ -13,22 +13,13 @@ import {
 
 export class EmojiRouter extends BaseRouter {
   static readonly ROUTES = {
-    guildBase: (guildId: Snowflake): `/guilds/${Snowflake}/emojis` =>
-      `/guilds/${guildId}/emojis`,
-    guildEmoji: (
-      guildId: Snowflake,
-      emojiId: Snowflake,
-    ): `/guilds/${Snowflake}/emojis/${Snowflake}` =>
-      `/guilds/${guildId}/emojis/${emojiId}`,
-    applicationBase: (
-      applicationId: Snowflake,
-    ): `/applications/${Snowflake}/emojis` =>
-      `/applications/${applicationId}/emojis`,
-    applicationEmoji: (
-      applicationId: Snowflake,
-      emojiId: Snowflake,
-    ): `/applications/${Snowflake}/emojis/${Snowflake}` =>
-      `/applications/${applicationId}/emojis/${emojiId}`,
+    guildBase: (guildId: Snowflake) => `/guilds/${guildId}/emojis` as const,
+    guildEmoji: (guildId: Snowflake, emojiId: Snowflake) =>
+      `/guilds/${guildId}/emojis/${emojiId}` as const,
+    applicationBase: (applicationId: Snowflake) =>
+      `/applications/${applicationId}/emojis` as const,
+    applicationEmoji: (applicationId: Snowflake, emojiId: Snowflake) =>
+      `/applications/${applicationId}/emojis/${emojiId}` as const,
   } as const;
 
   /**

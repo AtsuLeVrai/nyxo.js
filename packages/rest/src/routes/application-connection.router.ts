@@ -8,10 +8,8 @@ import { ApplicationRoleConnectionMetadataSchema } from "../schemas/index.js";
 
 export class ApplicationConnectionRouter extends BaseRouter {
   static readonly ROUTES = {
-    base: (
-      applicationId: Snowflake,
-    ): `/applications/${Snowflake}/role-connections/metadata` =>
-      `/applications/${applicationId}/role-connections/metadata`,
+    base: (applicationId: Snowflake) =>
+      `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
 
   /**
