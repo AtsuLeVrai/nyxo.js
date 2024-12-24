@@ -1,97 +1,56 @@
 import type {
-  ActionRowEntity,
-  AllowedMentionsEntity,
-  AttachmentEntity,
-  EmbedEntity,
   InteractionCallbackEntity,
   MessageEntity,
-  PollCreateRequestEntity,
   Snowflake,
 } from "@nyxjs/core";
 import { BaseRouter } from "../base/index.js";
-
-/**
- * @todo Verify all the types in `InteractionResponseOptions`.
- */
-export interface InteractionResponseOptionsEntity {
-  type: number;
-  data?: InteractionCallbackDataOptionsEntity;
-}
-
-/**
- * @todo Verify all the types in `InteractionCallbackDataOptions`.
- */
-export interface InteractionCallbackDataOptionsEntity {
-  tts?: boolean;
-  content?: string;
-  embeds?: EmbedEntity[];
-  allowed_mentions?: AllowedMentionsEntity;
-  flags?: number;
-  components?: ActionRowEntity[];
-  attachments?: Partial<AttachmentEntity>[];
-  poll?: PollCreateRequestEntity;
-}
+import {
+  type FollowupMessageEntity,
+  FollowupMessageSchema,
+  type InteractionCallbackDataEntity,
+  InteractionCallbackDataSchema,
+  type InteractionResponseEntity,
+  InteractionResponseSchema,
+} from "../schemas/index.js";
 
 export class InteractionRouter extends BaseRouter {
-  static routes = {
-    createResponse: (
-      interactionId: Snowflake,
-      interactionToken: string,
-    ): `/interactions/${Snowflake}/${string}/callback` => {
-      return `/interactions/${interactionId}/${interactionToken}/callback` as const;
-    },
-
-    getOriginalResponse: (
-      applicationId: Snowflake,
-      interactionToken: string,
-    ): `/webhooks/${Snowflake}/${string}/messages/@original` => {
-      return `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const;
-    },
-
+  static ROUTES = {
+    createResponse: (interactionId: Snowflake, interactionToken: string) =>
+      `/interactions/${interactionId}/${interactionToken}/callback` as const,
+    getOriginalResponse: (applicationId: Snowflake, interactionToken: string) =>
+      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
     editOriginalResponse: (
       applicationId: Snowflake,
       interactionToken: string,
-    ): `/webhooks/${Snowflake}/${string}/messages/@original` => {
-      return `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const;
-    },
-
+    ) =>
+      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
     deleteOriginalResponse: (
       applicationId: Snowflake,
       interactionToken: string,
-    ): `/webhooks/${Snowflake}/${string}/messages/@original` => {
-      return `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const;
-    },
-
+    ) =>
+      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
     createFollowupMessage: (
       applicationId: Snowflake,
       interactionToken: string,
-    ): `/webhooks/${Snowflake}/${string}` => {
-      return `/webhooks/${applicationId}/${interactionToken}` as const;
-    },
-
+    ) => `/webhooks/${applicationId}/${interactionToken}` as const,
     getFollowupMessage: (
       applicationId: Snowflake,
       interactionToken: string,
       messageId: Snowflake,
-    ): `/webhooks/${Snowflake}/${string}/messages/${Snowflake}` => {
-      return `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const;
-    },
-
+    ) =>
+      `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
     editFollowupMessage: (
       applicationId: Snowflake,
       interactionToken: string,
       messageId: Snowflake,
-    ): `/webhooks/${Snowflake}/${string}/messages/${Snowflake}` => {
-      return `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const;
-    },
-
+    ) =>
+      `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
     deleteFollowupMessage: (
       applicationId: Snowflake,
       interactionToken: string,
       messageId: Snowflake,
-    ): `/webhooks/${Snowflake}/${string}/messages/${Snowflake}` => {
-      return `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const;
-    },
+    ) =>
+      `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
   } as const;
 
   /**
@@ -100,13 +59,22 @@ export class InteractionRouter extends BaseRouter {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: InteractionResponseOptionsEntity,
+    options: InteractionResponseEntity,
     withResponse = false,
   ): Promise<InteractionCallbackEntity | undefined> {
+    const result = InteractionResponseSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.post(
-      InteractionRouter.routes.createResponse(interactionId, interactionToken),
+      InteractionRouter.ROUTES.createResponse(interactionId, interactionToken),
       {
-        body: JSON.stringify(options),
+        body: JSON.stringify(result.data),
         query: { with_response: withResponse },
       },
     );
@@ -120,7 +88,7 @@ export class InteractionRouter extends BaseRouter {
     interactionToken: string,
   ): Promise<MessageEntity> {
     return this.get(
-      InteractionRouter.routes.getOriginalResponse(
+      InteractionRouter.ROUTES.getOriginalResponse(
         applicationId,
         interactionToken,
       ),
@@ -133,15 +101,24 @@ export class InteractionRouter extends BaseRouter {
   editOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-    options: Partial<InteractionCallbackDataOptionsEntity>,
+    options: Partial<InteractionCallbackDataEntity>,
   ): Promise<MessageEntity> {
+    const result = InteractionCallbackDataSchema.partial().safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.patch(
-      InteractionRouter.routes.editOriginalResponse(
+      InteractionRouter.ROUTES.editOriginalResponse(
         applicationId,
         interactionToken,
       ),
       {
-        body: JSON.stringify(options),
+        body: JSON.stringify(result.data),
       },
     );
   }
@@ -154,7 +131,7 @@ export class InteractionRouter extends BaseRouter {
     interactionToken: string,
   ): Promise<void> {
     return this.delete(
-      InteractionRouter.routes.deleteOriginalResponse(
+      InteractionRouter.ROUTES.deleteOriginalResponse(
         applicationId,
         interactionToken,
       ),
@@ -167,15 +144,24 @@ export class InteractionRouter extends BaseRouter {
   createFollowupMessage(
     applicationId: Snowflake,
     interactionToken: string,
-    options: InteractionCallbackDataOptionsEntity,
+    options: FollowupMessageEntity,
   ): Promise<MessageEntity> {
+    const result = FollowupMessageSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.post(
-      InteractionRouter.routes.createFollowupMessage(
+      InteractionRouter.ROUTES.createFollowupMessage(
         applicationId,
         interactionToken,
       ),
       {
-        body: JSON.stringify(options),
+        body: JSON.stringify(result.data),
       },
     );
   }
@@ -189,7 +175,7 @@ export class InteractionRouter extends BaseRouter {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.get(
-      InteractionRouter.routes.getFollowupMessage(
+      InteractionRouter.ROUTES.getFollowupMessage(
         applicationId,
         interactionToken,
         messageId,
@@ -204,16 +190,25 @@ export class InteractionRouter extends BaseRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-    options: Partial<InteractionCallbackDataOptionsEntity>,
+    options: Partial<InteractionCallbackDataEntity>,
   ): Promise<MessageEntity> {
+    const result = InteractionCallbackDataSchema.partial().safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.patch(
-      InteractionRouter.routes.editFollowupMessage(
+      InteractionRouter.ROUTES.editFollowupMessage(
         applicationId,
         interactionToken,
         messageId,
       ),
       {
-        body: JSON.stringify(options),
+        body: JSON.stringify(result.data),
       },
     );
   }
@@ -227,7 +222,7 @@ export class InteractionRouter extends BaseRouter {
     messageId: Snowflake,
   ): Promise<void> {
     return this.delete(
-      InteractionRouter.routes.deleteFollowupMessage(
+      InteractionRouter.ROUTES.deleteFollowupMessage(
         applicationId,
         interactionToken,
         messageId,

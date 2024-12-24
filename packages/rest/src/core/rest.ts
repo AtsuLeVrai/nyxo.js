@@ -8,36 +8,43 @@ import {
   RequestManager,
   RouterManager,
 } from "../managers/index.js";
-import type {
-  PathLike,
-  RestEventMap,
-  RestOptionsEntity,
-  RouteEntity,
-  RouterDefinitions,
-  RouterKey,
+import {
+  type AuthTypeFlag,
+  HttpMethodFlag,
+  type PathLike,
+  type RestEventMap,
+  type RestOptionsEntity,
+  type RouteEntity,
+  type RouterDefinitions,
+  type RouterKey,
 } from "../types/index.js";
-import { HttpMethodFlag } from "../types/index.js";
 
 export class Rest extends EventEmitter<RestEventMap> {
   static readonly CDN_URL = "https://cdn.discordapp.com";
   static readonly MEDIA_URL = "https://media.discordapp.net";
   static readonly API_URL = "https://discord.com/api";
+
   readonly configManager: ConfigManager;
   readonly fileHandler: FileHandlerManager;
   readonly rateLimiter: RateLimiterManager;
   readonly requestHandler: RequestManager;
   readonly routerManager: RouterManager;
+
   #isDestroyed = false;
   #retryOnRateLimit = true;
 
   constructor(options: RestOptionsEntity) {
     super();
-
-    this.configManager = new ConfigManager(this, options);
+    this.configManager = new ConfigManager(this, {
+      ...options,
+      token: options.token,
+    });
     this.fileHandler = new FileHandlerManager(this);
     this.rateLimiter = new RateLimiterManager(this);
     this.requestHandler = new RequestManager(this, this.configManager);
     this.routerManager = new RouterManager(this);
+
+    this.emit("debug", "Rest client initialized successfully");
   }
 
   get destroyed(): boolean {
@@ -50,6 +57,7 @@ export class Rest extends EventEmitter<RestEventMap> {
 
   setRetryOnRateLimit(retry: boolean): void {
     this.#retryOnRateLimit = retry;
+    this.emit("debug", `Rate limit retry ${retry ? "enabled" : "disabled"}`);
   }
 
   setCompression(enabled: boolean): void {
@@ -96,7 +104,7 @@ export class Rest extends EventEmitter<RestEventMap> {
     return this.request<T>({
       ...options,
       method: HttpMethodFlag.Post,
-      path: path,
+      path,
     });
   }
 
@@ -108,7 +116,7 @@ export class Rest extends EventEmitter<RestEventMap> {
     return this.request<T>({
       ...options,
       method: HttpMethodFlag.Put,
-      path: path,
+      path,
     });
   }
 
@@ -120,7 +128,7 @@ export class Rest extends EventEmitter<RestEventMap> {
     return this.request<T>({
       ...options,
       method: HttpMethodFlag.Patch,
-      path: path,
+      path,
     });
   }
 
@@ -132,7 +140,7 @@ export class Rest extends EventEmitter<RestEventMap> {
     return this.request<T>({
       ...options,
       method: HttpMethodFlag.Delete,
-      path: path,
+      path,
     });
   }
 
@@ -151,19 +159,24 @@ export class Rest extends EventEmitter<RestEventMap> {
     return this.routerManager.getAvailableRouters();
   }
 
+  getCachedRouters(): RouterKey[] {
+    this.#ensureNotDestroyed();
+    return this.routerManager.getCachedRouters();
+  }
+
   clearRouters(): void {
     this.#ensureNotDestroyed();
     this.routerManager.clearRouters();
   }
 
-  updateProxy(proxyOptions: ProxyAgent.Options | null): void {
+  isCachedRouter(key: RouterKey): boolean {
     this.#ensureNotDestroyed();
-    this.configManager.updateProxy(proxyOptions);
+    return this.routerManager.isCached(key);
   }
 
-  getConfig(): Required<RestOptionsEntity> {
+  removeCachedRouter(key: RouterKey): boolean {
     this.#ensureNotDestroyed();
-    return this.configManager.options;
+    return this.routerManager.removeCachedRouter(key);
   }
 
   processFiles(options: RouteEntity): Promise<RouteEntity> {
@@ -188,6 +201,21 @@ export class Rest extends EventEmitter<RestEventMap> {
     this.rateLimiter.updateRateLimits(headers, statusCode);
   }
 
+  updateProxy(proxyOptions: ProxyAgent.Options | null): void {
+    this.#ensureNotDestroyed();
+    this.configManager.updateProxy(proxyOptions);
+  }
+
+  getConfig(): Required<RestOptionsEntity> {
+    this.#ensureNotDestroyed();
+    return this.configManager.options;
+  }
+
+  setAuthType(authType: AuthTypeFlag): void {
+    this.#ensureNotDestroyed();
+    this.configManager.options.authType = authType;
+  }
+
   async destroy(): Promise<void> {
     if (this.#isDestroyed) {
       return;
@@ -201,18 +229,16 @@ export class Rest extends EventEmitter<RestEventMap> {
         this.configManager.destroy(),
         this.requestHandler.destroy(),
         this.routerManager.destroy(),
+        this.rateLimiter.destroy(),
       ]);
 
       this.fileHandler.destroy();
-      this.rateLimiter.destroy();
-
       this.removeAllListeners();
 
       this.emit("debug", "Rest client cleanup completed successfully");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-
       this.emit(
         "error",
         new Error(`Failed to cleanup Rest client: ${errorMessage}`),

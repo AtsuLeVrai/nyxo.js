@@ -57,6 +57,61 @@ importers:
         specifier: ^5.7.2
         version: 5.7.2
 
+  packages/gateway:
+    dependencies:
+      '@nyxjs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nyxjs/rest':
+        specifier: workspace:*
+        version: link:../rest
+      '@nyxjs/store':
+        specifier: workspace:*
+        version: link:../store
+      erlpack:
+        specifier: ^0.1.4
+        version: 0.1.4
+      eventemitter3:
+        specifier: ^5.0.1
+        version: 5.0.1
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
+      zlib-sync:
+        specifier: ^0.1.9
+        version: 0.1.9
+      zstd-codec:
+        specifier: ^0.1.5
+        version: 0.1.5
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 1.9.4
+        version: 1.9.4
+      '@microsoft/api-extractor':
+        specifier: ^7.48.1
+        version: 7.48.1(@types/node@22.10.2)
+      '@nyxjs/configs':
+        specifier: workspace:*
+        version: link:../../configs
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.10.2
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.5.13
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsup:
+        specifier: ^8.3.5
+        version: 8.3.5(@microsoft/api-extractor@7.48.1(@types/node@22.10.2))(@swc/core@1.9.1(@swc/helpers@0.5.13))(jiti@1.21.6)(postcss@8.4.49)(tsx@4.19.2)(typescript@5.7.2)(yaml@2.6.0)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.7.2
+
   packages/rest:
     dependencies:
       '@nyxjs/core':
@@ -731,6 +786,9 @@ packages:
   '@types/node@22.10.2':
     resolution: {integrity: sha512-Xxr6BBRCAOQixvonOye19wnzyDiUtTeqldOOmj3CkeblonbccA12PFwlufvRdrpjXxqnmUaeiU5EOA+7s5diUQ==}
 
+  '@types/ws@8.5.13':
+    resolution: {integrity: sha512-osM/gWBTPKgHV8XkTunnegTRIsvF6owmf5w+JtAfOw472dptdm0dlGv4xCt6GwQRcC2XVOvvRE/0bAoQcL2QkA==}
+
   ajv-draft-04@1.0.0:
     resolution: {integrity: sha512-mv00Te6nmYbRp5DCwclxtt7yV/joXJPGS7nM+97GdxvuttCOfgI3K4U25zboyeX0O+myI8ERluxQe5wljMmVIw==}
     peerDependencies:
@@ -780,6 +838,9 @@ packages:
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
+
+  bindings@1.5.0:
+    resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
 
   brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
@@ -854,6 +915,9 @@ packages:
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
 
+  erlpack@0.1.4:
+    resolution: {integrity: sha512-CJYbkEvsB5FqCCu2tLxF1eYKi28PvemC12oqzJ9oO6mDFrFO9G9G7nNJUHhiAyyL9zfXTOJx/tOcrQk+ncD65w==}
+
   esbuild@0.23.1:
     resolution: {integrity: sha512-VVNz/9Sa0bs5SELtn3f7qhJCDPCF5oMEl5cO9/SSinpE9hbPVvxbd572HH5AKiP7WD8INO53GgfDDhRjkylHEg==}
     engines: {node: '>=18'}
@@ -877,6 +941,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  file-uri-to-path@1.0.0:
+    resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
 
   foreground-child@3.3.0:
     resolution: {integrity: sha512-Ld2g8rrAyMYFXBhEqMz8ZAHBi4J4uS1i/CxGMDnjyFWddMXLVcDp051DZfu+t7+ab7Wv6SMqpWmyFIj5UbfFvg==}
@@ -1025,6 +1092,9 @@ packages:
 
   mz@2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
+
+  nan@2.22.0:
+    resolution: {integrity: sha512-nbajikzWTMwsW+eSsNm3QwlOs7het9gGJU5dDZzRTQGk03vyBOauxgI4VakDzE0PtsGTmXPsXTbbjVhRwR5mpw==}
 
   nanoid@3.3.8:
     resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
@@ -1321,6 +1391,18 @@ packages:
     resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
     engines: {node: '>=12'}
 
+  ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   yallist@4.0.0:
     resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
 
@@ -1329,8 +1411,14 @@ packages:
     engines: {node: '>= 14'}
     hasBin: true
 
+  zlib-sync@0.1.9:
+    resolution: {integrity: sha512-DinB43xCjVwIBDpaIvQqHbmDsnYnSt6HJ/yiB2MZQGTqgPcwBSZqLkimXwK8BvdjQ/MaZysb5uEenImncqvCqQ==}
+
   zod@3.24.1:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
+
+  zstd-codec@0.1.5:
+    resolution: {integrity: sha512-v3fyjpK8S/dpY/X5WxqTK3IoCnp/ZOLxn144GZVlNUjtwAchzrVo03h+oMATFhCIiJ5KTr4V3vDQQYz4RU684g==}
 
 snapshots:
 
@@ -1742,6 +1830,10 @@ snapshots:
     dependencies:
       undici-types: 6.20.0
 
+  '@types/ws@8.5.13':
+    dependencies:
+      '@types/node': 22.10.2
+
   ajv-draft-04@1.0.0(ajv@8.13.0):
     optionalDependencies:
       ajv: 8.13.0
@@ -1783,6 +1875,10 @@ snapshots:
   asynckit@0.4.0: {}
 
   balanced-match@1.0.2: {}
+
+  bindings@1.5.0:
+    dependencies:
+      file-uri-to-path: 1.0.0
 
   brace-expansion@1.1.11:
     dependencies:
@@ -1841,6 +1937,11 @@ snapshots:
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
+
+  erlpack@0.1.4:
+    dependencies:
+      bindings: 1.5.0
+      nan: 2.22.0
 
   esbuild@0.23.1:
     optionalDependencies:
@@ -1905,6 +2006,8 @@ snapshots:
   fdir@6.4.2(picomatch@4.0.2):
     optionalDependencies:
       picomatch: 4.0.2
+
+  file-uri-to-path@1.0.0: {}
 
   foreground-child@3.3.0:
     dependencies:
@@ -2044,6 +2147,8 @@ snapshots:
       any-promise: 1.3.0
       object-assign: 4.1.1
       thenify-all: 1.6.0
+
+  nan@2.22.0: {}
 
   nanoid@3.3.8:
     optional: true
@@ -2330,9 +2435,17 @@ snapshots:
       string-width: 5.1.2
       strip-ansi: 7.1.0
 
+  ws@8.18.0: {}
+
   yallist@4.0.0: {}
 
   yaml@2.6.0:
     optional: true
 
+  zlib-sync@0.1.9:
+    dependencies:
+      nan: 2.22.0
+
   zod@3.24.1: {}
+
+  zstd-codec@0.1.5: {}

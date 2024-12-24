@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@nyxjs/configs/tsconfig/base",
+  "compilerOptions": {
+    "tsBuildInfoFile": "dist/.tsbuildinfo",
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*", "zstd-codec.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

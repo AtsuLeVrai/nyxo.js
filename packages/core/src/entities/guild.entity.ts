@@ -210,6 +210,14 @@ export interface GuildPreviewEntity {
 }
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object}
+ */
+export interface UnavailableGuildEntity {
+  id: Snowflake;
+  unavailable: true;
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
  */
 export enum GuildFeature {

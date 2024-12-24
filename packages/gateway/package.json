@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/gateway",
+  "version": "1.0.0",
+  "description": "Efficient WebSocket and Shard Management for Nyx.js",
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/3tatsu/nyx.js",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/3tatsu/nyx.js/issues"
+  },
+  "author": {
+    "name": "3tatsu",
+    "url": "https://github.com/3tatsu"
+  },
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development tsup --watch",
+    "build": "cross-env NODE_ENV=production tsup && rimraf .tsup",
+    "clean": "rimraf dist",
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
+    "@nyxjs/store": "workspace:*",
+    "erlpack": "^0.1.4",
+    "eventemitter3": "^5.0.1",
+    "ws": "^8.18.0",
+    "zlib-sync": "^0.1.9",
+    "zstd-codec": "^0.1.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@microsoft/api-extractor": "^7.48.1",
+    "@nyxjs/configs": "workspace:*",
+    "@types/node": "^22.10.2",
+    "@types/ws": "^8.5.13",
+    "cross-env": "^7.0.3",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
