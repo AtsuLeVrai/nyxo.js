@@ -1,150 +1,130 @@
 import erlpack from "erlpack";
 import { EncodingType, type PayloadEntity } from "../types/index.js";
 
+interface ProcessOptions {
+  validateEtfKeys?: boolean;
+  processBigInts?: boolean;
+}
+
 export class EncodingManager {
-  #encodingType: EncodingType;
+  static readonly ENCODING_TYPES = ["json", "etf"] as const;
+  static readonly DEFAULT_ENCODING: EncodingType.Json =
+    EncodingType.Json as const;
 
-  constructor(encodingType: EncodingType = EncodingType.Json) {
-    if (!Object.values(EncodingType).includes(encodingType)) {
-      throw new Error(`Unsupported encoding type: ${encodingType}`);
-    }
+  readonly #encoding: EncodingType;
 
-    this.#encodingType = encodingType;
+  constructor(encoding: EncodingType = EncodingManager.DEFAULT_ENCODING) {
+    this.#validateEncodingType(encoding);
+    this.#encoding = encoding;
+  }
+
+  get encodingType(): EncodingType {
+    return this.#encoding;
   }
 
   encode(data: PayloadEntity): Buffer | string {
     try {
-      let encodedData = {} as Buffer | string;
-
-      switch (this.#encodingType) {
-        case "json": {
-          const processedData = this.#processBigInt(data);
-          encodedData = JSON.stringify(processedData);
-          break;
-        }
-
-        case "etf": {
-          if (data.d && typeof data.d === "object") {
-            this.#validateEtfKeys(data.d);
-          }
-
-          const processedData = this.#processBigInt(data);
-          encodedData = erlpack.pack(processedData);
-          break;
-        }
-
+      switch (this.#encoding) {
+        case "json":
+          return this.#encodeJson(data);
+        case "etf":
+          return this.#encodeEtf(data);
         default:
-          throw new Error(`Unsupported encoding type: ${this.#encodingType}`);
+          throw new Error(`Invalid encoding type: ${this.#encoding}`);
       }
-
-      return encodedData;
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : String(error));
+      throw this.#wrapError("Encoding failed", error);
     }
   }
 
   decode(data: Buffer | string): PayloadEntity {
     try {
-      let decodedData = {} as PayloadEntity;
-
-      switch (this.#encodingType) {
-        case "json": {
-          decodedData = Buffer.isBuffer(data)
-            ? JSON.parse(data.toString("utf-8"))
-            : JSON.parse(data);
-          break;
-        }
-
-        case "etf": {
-          decodedData = erlpack.unpack(
-            Buffer.isBuffer(data) ? data : Buffer.from(data),
-          );
-          break;
-        }
-
+      switch (this.#encoding) {
+        case "json":
+          return this.#decodeJson(data);
+        case "etf":
+          return this.#decodeEtf(data);
         default:
-          throw new Error(`Unsupported encoding type: ${this.#encodingType}`);
+          throw new Error(`Invalid encoding type: ${this.#encoding}`);
       }
-
-      return decodedData;
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : String(error));
+      throw this.#wrapError("Decoding failed", error);
     }
   }
 
-  getEncodingType(): EncodingType {
-    return this.#encodingType;
+  #encodeJson(data: PayloadEntity): string {
+    const processed = this.#processData(data, {
+      processBigInts: true,
+    });
+
+    return JSON.stringify(processed);
   }
 
-  setEncodingType(type: EncodingType): void {
-    if (!Object.values(EncodingType).includes(type)) {
-      throw new Error(`Unsupported encoding type: ${type}`);
-    }
-    this.#encodingType = type;
+  #decodeJson(data: Buffer | string): PayloadEntity {
+    const strData = typeof data === "string" ? data : data.toString("utf-8");
+    return JSON.parse(strData) as PayloadEntity;
   }
 
-  #validateEtfKeys(data: unknown): void {
-    if (data === null || data === undefined) {
-      return;
-    }
+  #encodeEtf(data: PayloadEntity): Buffer {
+    const processed = this.#processData(data, {
+      validateEtfKeys: true,
+      processBigInts: true,
+    });
 
-    this.#validateEtfArray(data);
-    this.#validateEtfObject(data);
+    return erlpack.pack(processed);
   }
 
-  #validateEtfArray(data: unknown): void {
-    if (!Array.isArray(data)) {
-      return;
-    }
-
-    for (const item of data) {
-      if (this.#isObject(item)) {
-        this.#validateEtfKeys(item);
-      }
-    }
+  #decodeEtf(data: Buffer | string): PayloadEntity {
+    const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    return erlpack.unpack(bufferData) as PayloadEntity;
   }
 
-  #validateEtfObject(data: unknown): void {
-    if (!this.#isObject(data) || Array.isArray(data)) {
-      return;
-    }
-
-    for (const [key, value] of Object.entries(data)) {
-      if (typeof key !== "string") {
-        throw new Error("ETF encoding requires string keys");
-      }
-
-      if (this.#isObject(value)) {
-        this.#validateEtfKeys(value);
-      }
-    }
-  }
-
-  #isObject(value: unknown): value is object {
-    return typeof value === "object" && value !== null;
-  }
-
-  #processBigInt(data: unknown): unknown {
+  #processData(data: unknown, options: ProcessOptions = {}): unknown {
     if (data === null || data === undefined) {
       return data;
     }
 
-    if (typeof data === "bigint") {
+    if (options.processBigInts && typeof data === "bigint") {
       return data.toString();
     }
 
     if (Array.isArray(data)) {
-      return data.map((item) => this.#processBigInt(item));
+      return data.map((item) => this.#processData(item, options));
     }
 
-    if (typeof data === "object") {
-      const processed: { [key: string]: unknown } = {};
+    if (this.#isObject(data)) {
+      const processed: Record<string, unknown> = {};
+
       for (const [key, value] of Object.entries(data)) {
-        processed[key] = this.#processBigInt(value);
+        if (options.validateEtfKeys && typeof key !== "string") {
+          throw new Error("ETF encoding requires string keys");
+        }
+
+        processed[key] = this.#processData(value, options);
       }
+
       return processed;
     }
 
     return data;
+  }
+
+  #validateEncodingType(encoding: EncodingType): void {
+    if (!EncodingManager.ENCODING_TYPES.includes(encoding)) {
+      throw new Error(
+        `Invalid encoding type: ${encoding}. Supported types: ${EncodingManager.ENCODING_TYPES.join(", ")}`,
+      );
+    }
+  }
+
+  #isObject(
+    value: unknown,
+  ): value is Record<string | number | symbol, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
+  #wrapError(message: string, error: unknown): Error {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return new Error(`${message}: ${errorMessage}`);
   }
 }

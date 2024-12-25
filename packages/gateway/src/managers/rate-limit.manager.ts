@@ -7,51 +7,58 @@ import type {
 } from "../types/index.js";
 
 export class RateLimitManager {
+  static readonly DEFAULT_MAX_TOKENS = 120;
+  static readonly DEFAULT_REFILL_INTERVAL = 60_000;
+  static readonly DEFAULT_IDENTIFY_INTERVAL = 5_000;
+  static readonly DEFAULT_MAX_CONCURRENT_IDENTIFIES = 1;
+
   readonly #maxTokens: number;
   readonly #refillInterval: number;
   readonly #identifyInterval: number;
   readonly #maxConcurrentIdentifies: number;
+  readonly #buckets = new Store<string, RateLimitBucket>();
+  readonly #identifyQueue: RateLimitIdentifyQueueItem[] = [];
 
-  #buckets: Store<string, RateLimitBucket> = new Store();
-  #identifyQueue: RateLimitIdentifyQueueItem[] = [];
   #processingIdentify = false;
+  #identifyProcessor: NodeJS.Timeout | null = null;
 
   constructor(options: RateLimitOptions = {}) {
-    this.#maxTokens = options.maxTokens ?? 120;
-    this.#refillInterval = options.refillInterval ?? 60000;
-    this.#identifyInterval = options.identifyInterval ?? 5000;
-    this.#maxConcurrentIdentifies = options.maxConcurrentIdentifies ?? 1;
+    this.#maxTokens = options.maxTokens ?? RateLimitManager.DEFAULT_MAX_TOKENS;
+    this.#refillInterval =
+      options.refillInterval ?? RateLimitManager.DEFAULT_REFILL_INTERVAL;
+    this.#identifyInterval =
+      options.identifyInterval ?? RateLimitManager.DEFAULT_IDENTIFY_INTERVAL;
+    this.#maxConcurrentIdentifies =
+      options.maxConcurrentIdentifies ??
+      RateLimitManager.DEFAULT_MAX_CONCURRENT_IDENTIFIES;
   }
 
   async acquire(bucketId: string): Promise<void> {
     const bucket = this.#getOrCreateBucket(bucketId);
 
     if (bucket.blocked) {
-      throw new Error(
-        `Bucket ${bucketId} is currently blocked due to rate limit`,
-      );
+      throw new Error(`Bucket ${bucketId} is blocked due to rate limit`);
     }
 
     this.#refillBucket(bucket);
 
     if (bucket.tokens <= 0) {
       bucket.blocked = true;
-      const waitTime = this.#calculateWaitTime(bucket);
-      await this.#wait(waitTime);
-      bucket.blocked = false;
-      this.#refillBucket(bucket);
+      try {
+        await this.#waitForRefill(bucket);
+        this.#refillBucket(bucket);
+      } finally {
+        bucket.blocked = false;
+      }
     }
 
     bucket.tokens--;
   }
 
   async acquireIdentify(shardId: number): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       this.#identifyQueue.push({ shardId, resolve, reject });
-
-      if (!this.#processingIdentify) {
-        this.#processIdentifyQueue();
-      }
+      this.#processIdentifyQueue().catch(reject);
     });
   }
 
@@ -81,19 +88,6 @@ export class RateLimitManager {
     };
   }
 
-  resetBucket(bucketId: string): void {
-    const bucket = this.#getOrCreateBucket(bucketId);
-    bucket.tokens = this.#maxTokens;
-    bucket.lastRefill = Date.now();
-    bucket.blocked = false;
-  }
-
-  resetAll(): void {
-    this.#buckets.clear();
-    this.#identifyQueue = [];
-    this.#processingIdentify = false;
-  }
-
   getStats(): RateLimitStats {
     return {
       buckets: this.#buckets.size,
@@ -102,38 +96,20 @@ export class RateLimitManager {
     };
   }
 
-  async #processIdentifyQueue(): Promise<void> {
-    if (this.#processingIdentify || this.#identifyQueue.length === 0) {
-      return;
+  resetBucket(bucketId: string): void {
+    const bucket = this.#getOrCreateBucket(bucketId);
+    this.#resetBucketState(bucket);
+  }
+
+  destroy(): void {
+    if (this.#identifyProcessor) {
+      clearTimeout(this.#identifyProcessor);
+      this.#identifyProcessor = null;
     }
 
-    this.#processingIdentify = true;
-
-    try {
-      const batch = this.#identifyQueue.splice(
-        0,
-        this.#maxConcurrentIdentifies,
-      );
-
-      for (const { resolve } of batch) {
-        resolve();
-      }
-
-      await this.#wait(this.#identifyInterval);
-    } catch (error) {
-      const current = this.#identifyQueue[0];
-      if (current) {
-        current.reject(
-          error instanceof Error ? error : new Error(String(error)),
-        );
-      }
-    } finally {
-      this.#processingIdentify = false;
-
-      if (this.#identifyQueue.length > 0) {
-        await this.#processIdentifyQueue();
-      }
-    }
+    this.#buckets.clear();
+    this.#identifyQueue.splice(0, this.#identifyQueue.length);
+    this.#processingIdentify = false;
   }
 
   #getOrCreateBucket(bucketId: string): RateLimitBucket {
@@ -154,14 +130,55 @@ export class RateLimitManager {
   #refillBucket(bucket: RateLimitBucket): void {
     const now = Date.now();
     const timePassed = now - bucket.lastRefill;
+    const intervalsPassed = Math.floor(timePassed / this.#refillInterval);
 
-    if (timePassed >= this.#refillInterval) {
-      const intervals = Math.floor(timePassed / this.#refillInterval);
+    if (intervalsPassed > 0) {
       bucket.tokens = Math.min(
         this.#maxTokens,
-        bucket.tokens + this.#maxTokens * intervals,
+        bucket.tokens + this.#maxTokens * intervalsPassed,
       );
       bucket.lastRefill = now - (timePassed % this.#refillInterval);
+    }
+  }
+
+  #resetBucketState(bucket: RateLimitBucket): void {
+    bucket.tokens = this.#maxTokens;
+    bucket.lastRefill = Date.now();
+    bucket.blocked = false;
+  }
+
+  async #processIdentifyQueue(): Promise<void> {
+    if (this.#processingIdentify || this.#identifyQueue.length === 0) {
+      return;
+    }
+
+    this.#processingIdentify = true;
+
+    try {
+      while (this.#identifyQueue.length > 0) {
+        const batch = this.#identifyQueue.splice(
+          0,
+          this.#maxConcurrentIdentifies,
+        );
+
+        await Promise.all(
+          batch.map((item) => {
+            try {
+              item.resolve();
+            } catch (error) {
+              item.reject(
+                error instanceof Error ? error : new Error(String(error)),
+              );
+            }
+          }),
+        );
+
+        if (this.#identifyQueue.length > 0) {
+          await this.#wait(this.#identifyInterval);
+        }
+      }
+    } finally {
+      this.#processingIdentify = false;
     }
   }
 
@@ -171,7 +188,14 @@ export class RateLimitManager {
     return Math.max(0, this.#refillInterval - timeSinceLastRefill);
   }
 
+  async #waitForRefill(bucket: RateLimitBucket): Promise<void> {
+    const waitTime = this.#calculateWaitTime(bucket);
+    await this.#wait(waitTime);
+  }
+
   #wait(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+      this.#identifyProcessor = setTimeout(resolve, ms);
+    });
   }
 }

@@ -11,9 +11,8 @@ import {
   type SignedAttachmentParametersEntity,
   type StickerFormatOptionsEntity,
 } from "../types/index.js";
+import { Rest } from "./rest.js";
 
-const BASE_URL = "https://cdn.discordapp.com";
-const MEDIA_URL = "https://media.discordapp.net";
 const DEFAULT_FORMAT: ImageFormat = "png";
 const VALID_FORMATS: Set<string> = new Set(Object.values(IMAGE_FORMAT));
 const VALID_SIZES: Set<number> = new Set(Object.values(IMAGE_SIZE));
@@ -55,7 +54,7 @@ function isAnimated(hash: string): boolean {
 function buildUrl(
   parts: string[],
   options?: BaseImageOptionsEntity,
-  baseUrl: string = BASE_URL,
+  baseUrl: string = Rest.CDN_URL,
 ): string {
   if (options) {
     validateSize(options.size);
@@ -93,7 +92,7 @@ export const Cdn: CdnEntity = {
     const aId = validateId(attachmentId, "Attachment ID");
 
     const path = ["attachments", cId, aId, encodeURIComponent(filename)];
-    const url = new URL(path.join("/"), BASE_URL);
+    const url = new URL(path.join("/"), Rest.CDN_URL);
 
     // biome-ignore lint/style/useExplicitLengthCheck: problem with the type checker
     if (options?.size && options?.size > 0) {
@@ -353,7 +352,7 @@ export const Cdn: CdnEntity = {
     const format = options?.format || "png";
 
     if (format === "gif" && options?.useMediaUrl) {
-      return buildUrl(["stickers", `${id}.gif`], undefined, MEDIA_URL);
+      return buildUrl(["stickers", `${id}.gif`], undefined, Rest.MEDIA_URL);
     }
 
     if (format === "json") {

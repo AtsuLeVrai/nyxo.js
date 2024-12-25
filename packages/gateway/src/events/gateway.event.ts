@@ -11,14 +11,6 @@ export interface UpdateVoiceStateEntity {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-buttons}
- */
-export interface ActivityButtonEntity {
-  label: string;
-  url: string;
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-status-types}
  */
 export enum UpdatePresenceStatusType {

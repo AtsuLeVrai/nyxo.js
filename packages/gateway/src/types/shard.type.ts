@@ -1,5 +1,3 @@
-import type { Integer } from "@nyxjs/core";
-
 export interface ShardInfo {
   shardId: number;
   totalShards: number;
@@ -10,5 +8,5 @@ export interface ShardInfo {
 export interface ShardOptions {
   shardCount?: number;
   maxConcurrency?: number;
-  shard?: [shardId: Integer, numShards: Integer] | "auto";
+  shard?: boolean;
 }

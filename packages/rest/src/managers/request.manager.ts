@@ -1,93 +1,57 @@
 import { Gunzip } from "minizlib";
 import type { Dispatcher } from "undici";
-import type { Rest } from "../core/index.js";
 import type {
   JsonErrorEntity,
   JsonErrorResponseEntity,
   RateLimitResponseEntity,
-  RequestRetry,
   RouteEntity,
 } from "../types/index.js";
 import { HttpStatusCode, JsonErrorCode } from "../types/index.js";
 import { ConfigManager } from "./config.manager.js";
+import type { RestRateLimitManager } from "./rate-limiter.manager.js";
 
 export class RequestManager {
-  static readonly REQUEST_TIMEOUT = 15000;
-  static readonly MAX_RETRY_COUNT = 3;
-  static readonly MIN_RETRY_DELAY = 500;
-  static readonly MAX_RETRY_DELAY = 15000;
-  readonly #rest: Rest;
+  static readonly REQUEST_CONFIG = {
+    TIMEOUT: 15_000,
+    MAX_RETRIES: 3,
+    MIN_RETRY_DELAY: 500,
+    MAX_RETRY_DELAY: 15_000,
+  } as const;
+
   readonly #configManager: ConfigManager;
+  readonly #rateLimitManager: RestRateLimitManager;
   readonly #pendingRequests = new Set<string>();
   readonly #retryableErrors = new Set([
     JsonErrorCode.CloudflareError,
     JsonErrorCode.ServiceResourceRateLimited,
     JsonErrorCode.ApiResourceOverloaded,
   ]);
+
   #isDestroyed = false;
 
-  constructor(rest: Rest, configManager: ConfigManager) {
-    this.#rest = rest;
+  constructor(
+    rateLimitManager: RestRateLimitManager,
+    configManager: ConfigManager,
+  ) {
+    this.#rateLimitManager = rateLimitManager;
     this.#configManager = configManager;
   }
 
-  async execute<T>(options: RouteEntity): Promise<T> {
-    if (this.#isDestroyed) {
-      throw new Error("RequestManager has been destroyed");
-    }
+  get isGlobalRateLimit(): boolean {
+    return (
+      this.#pendingRequests.size > RequestManager.REQUEST_CONFIG.MAX_RETRIES
+    );
+  }
 
-    const startTime = Date.now();
+  async execute<T>(options: RouteEntity): Promise<T> {
+    this.#validateManagerState();
+
     const requestId = this.#generateRequestId(options);
-    let attempt = 1;
+    const attempt = 1;
 
     try {
       this.#pendingRequests.add(requestId);
-
-      while (attempt <= this.#configManager.options.maxRetries) {
-        try {
-          const response = await this.#executeWithTimeout(options);
-
-          this.#handleRateLimitHeaders(
-            response.headers as Record<string, string>,
-            response.statusCode,
-          );
-
-          this.#rest.emit("responseReceived", {
-            method: options.method,
-            path: options.path,
-            status: response.statusCode,
-            headers: response.headers,
-          });
-
-          const result = await this.#processResponse<T>(response);
-          const responseTime = Date.now() - startTime;
-
-          this.#rest.emit("apiRequest", {
-            method: options.method,
-            path: options.path,
-            status: response.statusCode,
-            responseTime,
-            attempt,
-          });
-
-          return result;
-        } catch (error) {
-          const shouldRetry = this.#shouldRetry(error as Error, attempt);
-          if (!shouldRetry) {
-            throw this.#enhanceError(error as Error);
-          }
-
-          const retryDelay = this.#calculateRetryDelay(attempt, error as Error);
-          this.#emitRetry(error as Error, attempt);
-
-          await this.#wait(retryDelay);
-          attempt++;
-        }
-      }
-
-      throw new Error(
-        `Maximum retry attempts (${this.#configManager.options.maxRetries}) exceeded`,
-      );
+      return await this.#executeWithRetries<T>(options, attempt);
     } finally {
       this.#pendingRequests.delete(requestId);
     }
@@ -101,42 +65,46 @@ export class RequestManager {
     this.#isDestroyed = true;
 
     if (this.#pendingRequests.size > 0) {
-      this.#rest.emit(
-        "debug",
-        `Waiting for ${this.#pendingRequests.size} pending requests to complete`,
-      );
-
-      const maxWaitTime = RequestManager.REQUEST_TIMEOUT;
-      const checkInterval = 100;
-
-      try {
-        await Promise.race([
-          new Promise<void>((resolve) => {
-            const interval = setInterval(() => {
-              if (this.#pendingRequests.size === 0) {
-                clearInterval(interval);
-                resolve();
-              }
-            }, checkInterval);
-          }),
-          new Promise<void>((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Request cleanup timeout")),
-              maxWaitTime,
-            ),
-          ),
-        ]);
-      } catch (error) {
-        this.#rest.emit("error", error as Error);
-      }
+      await Promise.race([
+        this.#waitForPendingRequests(),
+        this.#createTimeoutPromise(),
+      ]);
     }
   }
 
-  #handleRateLimitHeaders(
-    headers: Record<string, string>,
-    statusCode: number,
-  ): void {
-    this.#rest.updateRateLimits(headers, statusCode);
+  async #executeWithRetries<T>(
+    options: RouteEntity,
+    attempt: number,
+  ): Promise<T> {
+    let attemptCount = attempt;
+    while (attemptCount <= this.#configManager.options.maxRetries) {
+      try {
+        const response = await this.#executeWithTimeout(options);
+
+        this.#rateLimitManager.updateRateLimits(
+          response.headers as Record<string, string>,
+          response.statusCode,
+        );
+
+        return await this.#processResponse<T>(response);
+      } catch (error) {
+        const shouldRetry = this.#shouldRetry(error as Error, attemptCount);
+        if (!shouldRetry) {
+          throw this.#enhanceError(error as Error);
+        }
+
+        const retryDelay = this.#calculateRetryDelay(
+          attemptCount,
+          error as Error,
+        );
+        await this.#wait(retryDelay);
+        attemptCount++;
+      }
+    }
+
+    throw new Error(
+      `Maximum retry attempts (${this.#configManager.options.maxRetries}) exceeded`,
+    );
   }
 
   async #executeWithTimeout(
@@ -150,28 +118,33 @@ export class RequestManager {
     }, timeout);
 
     try {
-      const normalizedPath = options.path.startsWith("/")
-        ? options.path
-        : `/${options.path}`;
-
-      const response = await this.#configManager.retryAgent.request({
-        origin: "https://discord.com",
-        path: `/api/v${this.#configManager.options.version}${normalizedPath}`,
-        method: options.method,
-        headers: this.#buildHeaders(options),
-        body: options.body,
-        query: options.query,
-        signal: controller.signal,
-      });
-
-      if (!response.body) {
-        throw new Error("Response body is null");
-      }
-
-      return response;
+      return await this.#executeRequest(options, controller.signal);
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  async #executeRequest(
+    options: RouteEntity,
+    signal: AbortSignal,
+  ): Promise<Dispatcher.ResponseData> {
+    const normalizedPath = this.#normalizePath(options.path);
+
+    const response = await this.#configManager.retryAgent.request({
+      origin: "https://discord.com",
+      path: `/api/v${this.#configManager.options.version}${normalizedPath}`,
+      method: options.method,
+      headers: this.#buildHeaders(options),
+      body: options.body,
+      query: options.query,
+      signal,
+    });
+
+    if (!response.body) {
+      throw new Error("Response body is null");
+    }
+
+    return response;
   }
 
   async #processResponse<T>(response: Dispatcher.ResponseData): Promise<T> {
@@ -185,93 +158,7 @@ export class RequestManager {
       );
     }
 
-    if (response.headers["content-type"]?.includes("application/json")) {
-      try {
-        return JSON.parse(data.toString()) as T;
-      } catch (error) {
-        throw new Error(
-          `Failed to parse JSON response: ${(error as Error).message}`,
-        );
-      }
-    }
-
-    return data as unknown as T;
-  }
-
-  #isSuccessResponse(statusCode: number): boolean {
-    return statusCode >= 200 && statusCode < 300;
-  }
-
-  async #decompressResponse(
-    response: Dispatcher.ResponseData,
-  ): Promise<Buffer> {
-    const buffer = Buffer.from(await response.body.arrayBuffer());
-
-    if (
-      !this.#configManager.options.compress ||
-      response.headers["content-encoding"] !== "gzip"
-    ) {
-      return buffer;
-    }
-
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      const decompressor = new Gunzip({
-        level: 4,
-        async: true,
-        flush: 2,
-        finishFlush: 4,
-        objectMode: false,
-        strategy: 0,
-      });
-
-      decompressor
-        .on("data", (chunk) => chunks.push(chunk))
-        .on("end", () => resolve(Buffer.concat(chunks)))
-        .on("error", reject)
-        .end(buffer);
-    });
-  }
-
-  #handleErrorResponse(
-    statusCode: number,
-    data: Buffer,
-    headers: Record<string, string>,
-  ): Promise<never> {
-    const content = data.toString();
-
-    try {
-      if (statusCode === HttpStatusCode.TooManyRequests) {
-        const error = JSON.parse(content) as RateLimitResponseEntity;
-        const scope = headers["x-ratelimit-scope"] ?? "user";
-        throw new Error(
-          `Rate limit exceeded (${scope}), retry after ${error.retry_after} seconds` +
-            `${error.global ? " (Global)" : ""}`,
-        );
-      }
-
-      const errorData = JSON.parse(content);
-
-      if (this.#isJsonErrorResponse(errorData)) {
-        throw new Error(
-          `Discord API Error ${errorData.code}: ${errorData.message}`,
-        );
-      }
-
-      if (this.#isDetailedJsonError(errorData)) {
-        const details = JSON.stringify(errorData.errors, null, 2);
-        throw new Error(
-          `Discord API Error ${errorData.code}: ${errorData.message}\nDetails: ${details}`,
-        );
-      }
-
-      throw new Error(`HTTP ${statusCode}: ${content}`);
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        throw new Error(`HTTP ${statusCode}: ${content}`);
-      }
-      throw error;
-    }
+    return this.#parseResponseData<T>(response, data);
   }
 
   #buildHeaders(options: RouteEntity): Record<string, string> {
@@ -293,16 +180,117 @@ export class RequestManager {
     return { ...headers, ...options.headers };
   }
 
+  async #decompressResponse(
+    response: Dispatcher.ResponseData,
+  ): Promise<Buffer> {
+    const buffer = Buffer.from(await response.body.arrayBuffer());
+
+    if (
+      !this.#configManager.options.compress ||
+      response.headers["content-encoding"] !== "gzip"
+    ) {
+      return buffer;
+    }
+
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const gunzip = new Gunzip({
+        level: 4,
+        async: true,
+        flush: 2,
+        finishFlush: 4,
+        objectMode: false,
+        strategy: 0,
+      });
+
+      gunzip
+        .on("data", (chunk) => chunks.push(chunk))
+        .on("end", () => resolve(Buffer.concat(chunks)))
+        .on("error", reject)
+        .end(buffer);
+    });
+  }
+
+  async #parseResponseData<T>(
+    response: Dispatcher.ResponseData,
+    data: Buffer,
+  ): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      if (response.headers["content-type"]?.includes("application/json")) {
+        try {
+          resolve(JSON.parse(data.toString()) as T);
+        } catch (error) {
+          reject(
+            new Error(
+              `Failed to parse JSON response: ${(error as Error).message}`,
+            ),
+          );
+        }
+      }
+
+      resolve(data as unknown as T);
+    });
+  }
+
+  async #handleErrorResponse(
+    statusCode: number,
+    data: Buffer,
+    headers: Record<string, string>,
+  ): Promise<never> {
+    return new Promise((_, reject) => {
+      const content = data.toString();
+
+      try {
+        if (statusCode === HttpStatusCode.TooManyRequests) {
+          this.#handleRateLimitError(content, headers);
+        }
+
+        const errorData = JSON.parse(content);
+        this.#handleJsonError(errorData);
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          reject(new Error(`HTTP ${statusCode}: ${content}`));
+        }
+        reject(error);
+      }
+    });
+  }
+
+  #handleRateLimitError(
+    content: string,
+    headers: Record<string, string>,
+  ): never {
+    const error = JSON.parse(content) as RateLimitResponseEntity;
+    const scope = headers["x-ratelimit-scope"] ?? "user";
+    throw new Error(
+      `Rate limit exceeded (${scope}), retry after ${error.retry_after} seconds` +
+        `${error.global ? " (Global)" : ""}`,
+    );
+  }
+
+  #handleJsonError(errorData: unknown): never {
+    if (this.#isJsonErrorResponse(errorData)) {
+      throw new Error(
+        `Discord API Error ${errorData.code}: ${errorData.message}`,
+      );
+    }
+
+    if (this.#isDetailedJsonError(errorData)) {
+      const details = JSON.stringify(errorData.errors, null, 2);
+      throw new Error(
+        `Discord API Error ${errorData.code}: ${errorData.message}\nDetails: ${details}`,
+      );
+    }
+
+    throw new Error("Unknown API error format");
+  }
+
   #shouldRetry(error: Error, attempt: number): boolean {
     if (attempt >= this.#configManager.options.maxRetries) {
       return false;
     }
 
-    if (
-      error.message.includes("ETIMEDOUT") ||
-      error.message.includes("ECONNRESET") ||
-      error.message.includes("ECONNREFUSED")
-    ) {
+    if (this.#isNetworkError(error)) {
       return true;
     }
 
@@ -312,23 +300,18 @@ export class RequestManager {
     }
 
     const statusCode = this.#extractStatusCode(error.message);
-    if (statusCode && ConfigManager.RETRY_STATUS_CODES.includes(statusCode)) {
-      if (statusCode === HttpStatusCode.TooManyRequests) {
-        const isGlobal = error.message.includes("(Global)");
-        return !isGlobal;
-      }
-      return true;
-    }
-
-    return false;
+    return this.#isRetryableStatusCode(statusCode);
   }
 
   #calculateRetryDelay(attempt: number, error: Error): number {
     const baseDelay = this.#configManager.options.baseRetryDelay;
-
     const retryAfter = this.#extractRetryAfter(error);
+
     if (retryAfter) {
-      return Math.min(retryAfter * 1000, RequestManager.MAX_RETRY_DELAY);
+      return Math.min(
+        retryAfter * 1000,
+        RequestManager.REQUEST_CONFIG.MAX_RETRY_DELAY,
+      );
     }
 
     const exponentialDelay = baseDelay * 2 ** (attempt - 1);
@@ -336,18 +319,34 @@ export class RequestManager {
     const delay = exponentialDelay + jitter;
 
     return Math.min(
-      Math.max(delay, RequestManager.MIN_RETRY_DELAY),
-      RequestManager.MAX_RETRY_DELAY,
+      Math.max(delay, RequestManager.REQUEST_CONFIG.MIN_RETRY_DELAY),
+      RequestManager.REQUEST_CONFIG.MAX_RETRY_DELAY,
     );
   }
 
-  #extractRetryAfter(error: Error): number | null {
-    try {
-      const match = error.message.match(/retry after (\d+(\.\d+)?)/i);
-      return match ? Number.parseFloat(String(match[1])) : null;
-    } catch {
-      return null;
+  #isNetworkError(error: Error): boolean {
+    return (
+      error.message.includes("ETIMEDOUT") ||
+      error.message.includes("ECONNRESET") ||
+      error.message.includes("ECONNREFUSED")
+    );
+  }
+
+  #isRetryableStatusCode(statusCode: number | null): boolean {
+    if (!statusCode) {
+      return false;
     }
+
+    if (statusCode === HttpStatusCode.TooManyRequests) {
+      return !this.isGlobalRateLimit;
+    }
+
+    return ConfigManager.RETRY_STATUS_CODES.includes(statusCode);
+  }
+
+  #extractRetryAfter(error: Error): number | null {
+    const match = error.message.match(/retry after (\d+(\.\d+)?)/i);
+    return match ? Number.parseFloat(String(match[1])) : null;
   }
 
   #extractErrorCode(message: string): JsonErrorCode | null {
@@ -355,14 +354,18 @@ export class RequestManager {
     return match ? (Number(match[1]) as JsonErrorCode) : null;
   }
 
+  #extractStatusCode(message: string): number | null {
+    const match = message.match(/HTTP (\d{3})/);
+    return match ? Number.parseInt(String(match[1]), 10) : null;
+  }
+
   #isJsonErrorResponse(data: unknown): data is JsonErrorResponseEntity {
     return (
-      typeof data === "object" &&
-      data !== null &&
+      this.#isObject(data) &&
       "code" in data &&
       "message" in data &&
-      typeof (data as JsonErrorResponseEntity).code === "number" &&
-      typeof (data as JsonErrorResponseEntity).message === "string"
+      typeof data.code === "number" &&
+      typeof data.message === "string"
     );
   }
 
@@ -370,13 +373,55 @@ export class RequestManager {
     return (
       this.#isJsonErrorResponse(data) &&
       "errors" in data &&
-      typeof (data as JsonErrorEntity).errors === "object"
+      this.#isObject(data.errors)
     );
   }
 
-  #extractStatusCode(message: string): number | null {
-    const match = message.match(/HTTP (\d{3})/);
-    return match ? Number.parseInt(String(match[1]), 10) : null;
+  #isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+  }
+
+  #isSuccessResponse(statusCode: number): boolean {
+    return statusCode >= 200 && statusCode < 300;
+  }
+
+  #normalizePath(path: string): string {
+    return path.startsWith("/") ? path : `/${path}`;
+  }
+
+  #generateRequestId(options: RouteEntity): string {
+    return `${options.method}:${options.path}:${Date.now()}`;
+  }
+
+  #validateManagerState(): void {
+    if (this.#isDestroyed) {
+      throw new Error("RequestManager has been destroyed");
+    }
+  }
+
+  async #waitForPendingRequests(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const checkInterval = 100;
+      const interval = setInterval(() => {
+        if (this.#pendingRequests.size === 0) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, checkInterval);
+    });
+  }
+
+  #createTimeoutPromise(): Promise<never> {
+    return new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Request cleanup timeout")),
+        RequestManager.REQUEST_CONFIG.TIMEOUT,
+      ),
+    );
+  }
+
+  #wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   #enhanceError(error: Error): Error {
@@ -386,7 +431,6 @@ export class RequestManager {
     if (error.message.includes("Missing Access")) {
       return new Error("Missing permissions for this request");
     }
-
     if (error.message.includes("50035")) {
       return new Error(
         `Invalid form body. Check your request data: ${error.message}`,
@@ -395,25 +439,6 @@ export class RequestManager {
     if (error.message.includes("40001")) {
       return new Error("Unauthorized. Check your token.");
     }
-
     return error;
-  }
-
-  #generateRequestId(options: RouteEntity): string {
-    return `${options.method}:${options.path}:${Date.now()}`;
-  }
-
-  #wait(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  #emitRetry(error: Error, attempt: number): void {
-    const retryEvent: RequestRetry = {
-      error,
-      attempt,
-      maxAttempts: this.#configManager.options.maxRetries,
-    };
-
-    this.#rest.emit("requestRetry", retryEvent);
   }
 }

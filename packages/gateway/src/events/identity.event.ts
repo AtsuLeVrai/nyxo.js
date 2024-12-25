@@ -1,5 +1,5 @@
 import type { Integer } from "@nyxjs/core";
-import type { GatewayIntentsBits } from "../enums/index.js";
+import type { GatewayIntentsBits } from "../types/index.js";
 import type { UpdatePresenceEntity } from "./gateway.event.js";
 
 /**

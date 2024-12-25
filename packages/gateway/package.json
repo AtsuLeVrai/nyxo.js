@@ -51,9 +51,9 @@
     "@nyxjs/store": "workspace:*",
     "erlpack": "^0.1.4",
     "eventemitter3": "^5.0.1",
+    "fzstd": "^0.1.1",
     "ws": "^8.18.0",
-    "zlib-sync": "^0.1.9",
-    "zstd-codec": "^0.1.5"
+    "zlib-sync": "^0.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -64,9 +64,6 @@
     "cross-env": "^7.0.3",
     "rimraf": "^6.0.1",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.2"
-  },
-  "peerDependencies": {
     "typescript": "^5.7.2"
   }
 }

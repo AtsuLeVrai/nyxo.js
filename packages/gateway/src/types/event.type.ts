@@ -15,7 +15,6 @@ import type {
   UserEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import { GatewayOpcodes } from "../enums/index.js";
 import type {
   AutoModerationActionExecutionEntity,
   ChannelPinsUpdateEntity,
@@ -63,20 +62,23 @@ import type {
   ThreadMemberUpdateEntity,
   ThreadMembersUpdateEntity,
   TypingEntity,
+  UpdatePresenceEntity,
+  UpdateVoiceStateEntity,
   VoiceChannelEffectSendEntity,
   VoiceServerUpdateEntity,
   WebhookUpdateEntity,
 } from "../events/index.js";
+import { type GatewayCloseCodes, GatewayOpcodes } from "./gateway.type.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
  */
 export interface GatewayReceiveEventsMap {
-  HELLO: HelloEntity;
+  [GatewayOpcodes.Hello]: HelloEntity;
   READY: ReadyEntity;
   RESUMED: boolean;
-  RECONNECT: number;
-  INVALID_SESSION: boolean;
+  [GatewayOpcodes.Reconnect]: number;
+  [GatewayOpcodes.InvalidSession]: boolean;
   APPLICATION_COMMAND_PERMISSIONS_UPDATE: GuildApplicationCommandPermissionEntity;
   AUTO_MODERATION_RULE_CREATE: AutoModerationRuleEntity;
   AUTO_MODERATION_RULE_UPDATE: AutoModerationRuleEntity;
@@ -163,8 +165,8 @@ export interface GatewaySendEventsMap {
   [GatewayOpcodes.Heartbeat]: Integer | null;
   [GatewayOpcodes.RequestGuildMembers]: RequestGuildMembersEntity;
   [GatewayOpcodes.RequestSoundboardSounds]: RequestSoundboardSoundsEntity;
-  [GatewayOpcodes.VoiceStateUpdate]: VoiceStateEntity;
-  [GatewayOpcodes.PresenceUpdate]: PresenceEntity;
+  [GatewayOpcodes.VoiceStateUpdate]: UpdateVoiceStateEntity;
+  [GatewayOpcodes.PresenceUpdate]: UpdatePresenceEntity;
 }
 
 export interface GatewayEventsMap<
@@ -172,6 +174,7 @@ export interface GatewayEventsMap<
 > {
   debug: [message: string];
   warn: [message: string];
-  error: [error: Error | string];
+  error: [error: Error];
+  close: [code: GatewayCloseCodes, reason: string];
   dispatch: [event: T, data: GatewayReceiveEventsMap[T]];
 }

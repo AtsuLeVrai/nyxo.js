@@ -1,76 +1,56 @@
 import { open, stat } from "node:fs/promises";
 import { basename } from "node:path";
+import { PremiumTier } from "@nyxjs/core";
 import FormData from "form-data";
-import { lookup } from "mime-types";
-import type { Rest } from "../core/index.js";
-import type { FileEntity, RouteEntity } from "../types/index.js";
+import { contentType } from "mime-types";
+import type {
+  FileEntity,
+  FileInputEntity,
+  RouteEntity,
+} from "../types/index.js";
 
 export class FileHandlerManager {
-  static readonly DEFAULT_MAX_FILE_SIZE = 10 * 1024 * 1024;
-  static readonly TIER_1_MAX_FILE_SIZE = 25 * 1024 * 1024;
-  static readonly TIER_2_MAX_FILE_SIZE = 50 * 1024 * 1024;
-  static readonly TIER_3_MAX_FILE_SIZE = 100 * 1024 * 1024;
-  static readonly MAX_FILES = 10;
+  static readonly FILE_LIMITS = {
+    DEFAULT: 10 * 1024 * 1024, // 10MB
+    TIER_1: 25 * 1024 * 1024, // 25MB
+    TIER_2: 50 * 1024 * 1024, // 50MB
+    TIER_3: 100 * 1024 * 1024, // 100MB
+    MAX_FILES: 10,
+  } as const;
 
-  readonly #rest: Rest;
   #maxFileSize: number;
   #isDestroyed = false;
 
-  constructor(rest: Rest, boostTier = 0) {
-    this.#rest = rest;
+  constructor(boostTier: PremiumTier = PremiumTier.None) {
     this.#maxFileSize = this.#getMaxFileSizeForTier(boostTier);
   }
 
   async handleFiles(options: RouteEntity): Promise<RouteEntity> {
-    if (this.#isDestroyed) {
-      throw new Error("FileHandlerManager has been destroyed");
+    this.#validateManagerState();
+
+    if (!options.files) {
+      return options;
     }
 
     const files = Array.isArray(options.files)
       ? options.files
       : [options.files];
 
-    if (files.length > FileHandlerManager.MAX_FILES) {
-      throw new Error(
-        `Maximum number of files (${FileHandlerManager.MAX_FILES}) exceeded`,
-      );
-    }
+    await this.#validateFiles(files);
+    const form = await this.#createFormDataWithFiles(files, options.body);
 
-    const form = new FormData();
-
-    try {
-      await this.#validateFiles(files);
-
-      for (let i = 0; i < files.length; i++) {
-        await this.#processFile(form, i, files.length, files[i]);
-      }
-
-      if (options.body) {
-        const payload =
-          typeof options.body === "string"
-            ? options.body
-            : JSON.stringify(options.body);
-        form.append("payload_json", payload);
-      }
-
-      return {
-        ...options,
-        body: form.getBuffer(),
-        headers: {
-          ...form.getHeaders(options.headers),
-          "Content-Length": form.getLengthSync().toString(),
-        },
-      };
-    } catch (error) {
-      this.#rest.emit(
-        "error",
-        error instanceof Error ? error : new Error(String(error)),
-      );
-      throw error;
-    }
+    return {
+      ...options,
+      body: form.getBuffer(),
+      headers: {
+        ...form.getHeaders(options.headers),
+        "content-length": form.getLengthSync().toString(),
+      },
+    };
   }
 
-  setBoostTier(tier: number): void {
+  setBoostTier(tier: PremiumTier): void {
+    this.#validateManagerState();
     this.#maxFileSize = this.#getMaxFileSizeForTier(tier);
   }
 
@@ -78,46 +58,53 @@ export class FileHandlerManager {
     this.#isDestroyed = true;
   }
 
-  #getMaxFileSizeForTier(tier: number): number {
+  #getMaxFileSizeForTier(tier: PremiumTier): number {
+    const { DEFAULT, TIER_1, TIER_2, TIER_3 } = FileHandlerManager.FILE_LIMITS;
+
     switch (tier) {
-      case 1:
-        return FileHandlerManager.TIER_1_MAX_FILE_SIZE;
-      case 2:
-        return FileHandlerManager.TIER_2_MAX_FILE_SIZE;
-      case 3:
-        return FileHandlerManager.TIER_3_MAX_FILE_SIZE;
+      case PremiumTier.Tier1:
+        return TIER_1;
+      case PremiumTier.Tier2:
+        return TIER_2;
+      case PremiumTier.Tier3:
+        return TIER_3;
       default:
-        return FileHandlerManager.DEFAULT_MAX_FILE_SIZE;
+        return DEFAULT;
+    }
+  }
+
+  #validateManagerState(): void {
+    if (this.#isDestroyed) {
+      throw new Error("FileHandlerManager has been destroyed");
     }
   }
 
   async #validateFiles(files: Array<FileEntity | undefined>): Promise<void> {
+    const validFiles = files.filter(
+      (file): file is FileEntity => file !== undefined,
+    );
+
+    if (validFiles.length > FileHandlerManager.FILE_LIMITS.MAX_FILES) {
+      throw new Error(
+        `Maximum number of files (${FileHandlerManager.FILE_LIMITS.MAX_FILES}) exceeded`,
+      );
+    }
+
     let totalSize = 0;
 
-    for (const file of files) {
-      if (!file) {
-        continue;
-      }
+    for (const file of validFiles) {
+      const size = await this.#getFileSize(file);
+      totalSize += size;
 
-      try {
-        const size = await this.#getFileSize(file);
-        totalSize += size;
-
-        if (size > this.#maxFileSize) {
-          throw new Error(
-            `File size ${size} bytes exceeds maximum size ${this.#maxFileSize} bytes`,
-          );
-        }
-      } catch (error) {
-        this.#rest.emit(
-          "error",
-          error instanceof Error ? error : new Error(String(error)),
+      if (size > this.#maxFileSize) {
+        throw new Error(
+          `File size ${size} bytes exceeds maximum size ${this.#maxFileSize} bytes`,
         );
-        throw error;
       }
     }
 
-    const maxTotalSize = this.#maxFileSize * FileHandlerManager.MAX_FILES;
+    const maxTotalSize =
+      this.#maxFileSize * FileHandlerManager.FILE_LIMITS.MAX_FILES;
     if (totalSize > maxTotalSize) {
       throw new Error(
         `Total file size ${totalSize} bytes exceeds maximum allowed ${maxTotalSize} bytes`,
@@ -125,15 +112,22 @@ export class FileHandlerManager {
     }
   }
 
-  async #getFileSize(file: FileEntity): Promise<number> {
-    if (typeof file === "string") {
-      const stats = await stat(file);
-      return stats.size;
+  async #createFormDataWithFiles(
+    files: Array<FileEntity | undefined>,
+    body?: unknown,
+  ): Promise<FormData> {
+    const form = new FormData();
+
+    for (let i = 0; i < files.length; i++) {
+      await this.#processFile(form, i, files.length, files[i]);
     }
-    if (file instanceof File) {
-      return file.size;
+
+    if (body !== undefined) {
+      const payload = typeof body === "string" ? body : JSON.stringify(body);
+      form.append("payload_json", payload);
     }
-    throw new Error("Invalid file type");
+
+    return form;
   }
 
   async #processFile(
@@ -146,47 +140,29 @@ export class FileHandlerManager {
       return;
     }
 
-    try {
-      const { buffer, filename, contentType } = await this.#getFileData(file);
-      const fieldName = totalFiles === 1 ? "file" : `files[${index}]`;
+    const fileData = await this.#getFileData(file);
+    const fieldName = totalFiles === 1 ? "file" : `files[${index}]`;
 
-      this.#rest.emit("debug", `Processing file ${filename} (${contentType})`);
-
-      form.append(fieldName, buffer, {
-        filename,
-        contentType,
-        knownLength: buffer.length,
-      });
-    } catch (error) {
-      this.#rest.emit(
-        "error",
-        new Error(
-          `Failed to process file at index ${index}: ${error instanceof Error ? error.message : String(error)}`,
-        ),
-      );
-      throw error;
-    }
+    form.append(fieldName, fileData.buffer, {
+      filename: fileData.filename,
+      contentType: fileData.contentType,
+      knownLength: fileData.buffer.length,
+    });
   }
 
-  #getFileData(file: FileEntity): Promise<{
-    buffer: Buffer;
-    filename: string;
-    contentType: string;
-  }> {
+  #getFileData(file: FileEntity): Promise<FileInputEntity> {
     if (typeof file === "string") {
       return this.#handleFilePathInput(file);
     }
+
     if (file instanceof File) {
       return this.#handleFileInput(file);
     }
+
     throw new Error("Invalid file type");
   }
 
-  async #handleFilePathInput(filePath: string): Promise<{
-    buffer: Buffer;
-    filename: string;
-    contentType: string;
-  }> {
+  async #handleFilePathInput(filePath: string): Promise<FileInputEntity> {
     try {
       const stats = await stat(filePath);
 
@@ -204,10 +180,12 @@ export class FileHandlerManager {
       try {
         const buffer = await handle.readFile();
         const filename = basename(filePath);
-        const contentType =
-          String(lookup(filename)) ?? "application/octet-stream";
 
-        return { buffer, filename, contentType };
+        return {
+          buffer,
+          filename,
+          contentType: contentType(filename) || "application/octet-stream",
+        };
       } finally {
         await handle.close();
       }
@@ -218,11 +196,7 @@ export class FileHandlerManager {
     }
   }
 
-  async #handleFileInput(file: File): Promise<{
-    buffer: Buffer;
-    filename: string;
-    contentType: string;
-  }> {
+  async #handleFileInput(file: File): Promise<FileInputEntity> {
     try {
       if (file.size > this.#maxFileSize) {
         throw new Error(
@@ -235,12 +209,25 @@ export class FileHandlerManager {
         buffer,
         filename: file.name,
         contentType:
-          file.type ?? lookup(file.name) ?? "application/octet-stream",
+          file.type || contentType(file.name) || "application/octet-stream",
       };
     } catch (error) {
       throw new Error(
         `Failed to process File object: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+  }
+
+  async #getFileSize(file: FileEntity): Promise<number> {
+    if (typeof file === "string") {
+      const stats = await stat(file);
+      return stats.size;
+    }
+
+    if (file instanceof File) {
+      return file.size;
+    }
+
+    throw new Error("Invalid file type");
   }
 }

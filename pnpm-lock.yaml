@@ -74,15 +74,15 @@ importers:
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1
+      fzstd:
+        specifier: ^0.1.1
+        version: 0.1.1
       ws:
         specifier: ^8.18.0
         version: 8.18.0
       zlib-sync:
         specifier: ^0.1.9
         version: 0.1.9
-      zstd-codec:
-        specifier: ^0.1.5
-        version: 0.1.5
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -120,12 +120,12 @@ importers:
       '@nyxjs/store':
         specifier: workspace:*
         version: link:../store
-      eventemitter3:
-        specifier: ^5.0.1
-        version: 5.0.1
       form-data:
         specifier: ^4.0.1
         version: 4.0.1
+      mime-types:
+        specifier: ^2.1.35
+        version: 2.1.35
       minizlib:
         specifier: ^3.0.1
         version: 3.0.1
@@ -880,8 +880,8 @@ packages:
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
-  consola@3.3.0:
-    resolution: {integrity: sha512-kxltocVQCwQNFvw40dlVRYeAkAvtYjMFZYNlOcsF5wExPpGwPxMwgx4IfDJvBRPtBpnQwItd5WkTaR0ZwT/TmQ==}
+  consola@3.3.1:
+    resolution: {integrity: sha512-GyKnPG3/I+a4RtJxgHquJXWr70g9I3c4NT3dvqh0LPHQP2nZFQBOBszb7a5u/pGzqr40AKplQA6UxM1BSynSXg==}
     engines: {node: ^14.18.0 || >=16.10.0}
 
   cross-env@7.0.3:
@@ -964,6 +964,9 @@ packages:
 
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
+
+  fzstd@0.1.1:
+    resolution: {integrity: sha512-dkuVSOKKwh3eas5VkJy1AW1vFpet8TA/fGmVA5krThl8YcOVE/8ZIoEA1+U1vEn5ckxxhLirSdY837azmbaNHA==}
 
   get-tsconfig@4.8.1:
     resolution: {integrity: sha512-k9PN+cFBmaLWtVz29SkUoqU5O0slLuHJXt/2P+tMVFT+phsSGXGkp9t3rQIqdz0e+06EHNGs3oM6ZX1s2zHxRg==}
@@ -1416,9 +1419,6 @@ packages:
 
   zod@3.24.1:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
-
-  zstd-codec@0.1.5:
-    resolution: {integrity: sha512-v3fyjpK8S/dpY/X5WxqTK3IoCnp/ZOLxn144GZVlNUjtwAchzrVo03h+oMATFhCIiJ5KTr4V3vDQQYz4RU684g==}
 
 snapshots:
 
@@ -1914,7 +1914,7 @@ snapshots:
 
   concat-map@0.0.1: {}
 
-  consola@3.3.0: {}
+  consola@3.3.1: {}
 
   cross-env@7.0.3:
     dependencies:
@@ -2030,6 +2030,8 @@ snapshots:
     optional: true
 
   function-bind@1.1.2: {}
+
+  fzstd@0.1.1: {}
 
   get-tsconfig@4.8.1:
     dependencies:
@@ -2338,7 +2340,7 @@ snapshots:
       bundle-require: 5.1.0(esbuild@0.24.2)
       cac: 6.7.14
       chokidar: 4.0.3
-      consola: 3.3.0
+      consola: 3.3.1
       debug: 4.4.0
       esbuild: 0.24.2
       joycon: 3.1.1
@@ -2447,5 +2449,3 @@ snapshots:
       nan: 2.22.0
 
   zod@3.24.1: {}
-
-  zstd-codec@0.1.5: {}

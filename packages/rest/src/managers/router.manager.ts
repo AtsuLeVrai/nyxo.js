@@ -30,13 +30,17 @@ import {
 } from "../routes/index.js";
 import type { RouterDefinitions, RouterKey } from "../types/index.js";
 
+type RouterConstructor = new (rest: Rest) => BaseRouter;
+
 export class RouterManager {
-  static readonly ROUTER_CACHE_SIZE = 50;
-  static readonly ROUTER_INIT_TIMEOUT = 5000;
+  static readonly CACHE_CONFIG = {
+    MAX_SIZE: 50,
+    INIT_TIMEOUT: 5000,
+  } as const;
 
   readonly #rest: Rest;
   readonly #routers = new Store<RouterKey, BaseRouter>();
-  readonly #routerDefinitions: Record<string, new (rest: Rest) => BaseRouter>;
+  readonly #routerDefinitions: Record<string, RouterConstructor>;
   #isDestroyed = false;
 
   constructor(rest: Rest) {
@@ -45,96 +49,52 @@ export class RouterManager {
   }
 
   getRouter<K extends RouterKey>(key: K): RouterDefinitions[K] {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
-    }
-
-    this.#rest.emit("debug", `Getting router for key: ${key}`);
+    this.#validateManagerState();
 
     if (!this.#routers.has(key)) {
-      const RouterClass = this.#routerDefinitions[key];
-      if (!RouterClass) {
-        const error = new Error(`Router not found for key: ${key}`);
-        this.#rest.emit("error", error);
-        throw error;
-      }
-
-      try {
-        this.#createRouter(key, RouterClass);
-        this.#rest.emit("debug", `Created new router instance for key: ${key}`);
-      } catch (error) {
-        this.#rest.emit(
-          "error",
-          new Error(
-            `Failed to create router ${key}: ${error instanceof Error ? error.message : String(error)}`,
-          ),
-        );
-        throw error;
-      }
+      const RouterClass = this.#getRouterClass(key);
+      this.#createRouter(key, RouterClass);
     }
 
     return this.#routers.get(key) as RouterDefinitions[K];
   }
 
-  clearRouters(): void {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
-    }
-
-    this.#rest.emit("debug", "Clearing all routers");
-    for (const router of this.#routers.values()) {
-      if ("destroy" in router && typeof router.destroy === "function") {
-        router.destroy();
-      }
-    }
-    this.#routers.clear();
-  }
-
   hasRouter(key: RouterKey): boolean {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
-    }
+    this.#validateManagerState();
     return key in this.#routerDefinitions;
   }
 
   getAvailableRouters(): RouterKey[] {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
-    }
+    this.#validateManagerState();
     return Object.keys(this.#routerDefinitions) as RouterKey[];
   }
 
   getCachedRouters(): RouterKey[] {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
-    }
+    this.#validateManagerState();
     return Array.from(this.#routers.keys()) as RouterKey[];
   }
 
   isCached(key: RouterKey): boolean {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
-    }
+    this.#validateManagerState();
     return this.#routers.has(key);
   }
 
+  clearRouters(): void {
+    this.#validateManagerState();
+    this.#destroyAllRouters();
+    this.#routers.clear();
+  }
+
   removeCachedRouter(key: RouterKey): boolean {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
-    }
+    this.#validateManagerState();
 
     const router = this.#routers.get(key);
     if (!router) {
-      this.#rest.emit("debug", `Router ${key} not found in cache`);
       return false;
     }
 
-    if ("destroy" in router && typeof router.destroy === "function") {
-      router.destroy();
-    }
-
+    this.#destroyRouter(router);
     this.#routers.delete(key);
-    this.#rest.emit("debug", `Removed router ${key} from cache`);
     return true;
   }
 
@@ -144,116 +104,105 @@ export class RouterManager {
     }
 
     this.#isDestroyed = true;
-    this.#rest.emit("debug", "Destroying RouterManager");
-
-    const destroyPromises: Promise<void>[] = [];
-
-    for (const [key, router] of this.#routers.entries()) {
-      try {
-        if ("destroy" in router && typeof router.destroy === "function") {
-          destroyPromises.push(
-            Promise.resolve(router.destroy()).catch((error) => {
-              this.#rest.emit(
-                "error",
-                new Error(
-                  `Failed to destroy router ${key}: ${error instanceof Error ? error.message : String(error)}`,
-                ),
-              );
-            }),
-          );
-        }
-        this.#rest.emit("debug", `Destroyed router: ${key}`);
-      } catch (error) {
-        this.#rest.emit(
-          "error",
-          new Error(
-            `Failed to initiate destroy for router ${key}: ${error instanceof Error ? error.message : String(error)}`,
-          ),
-        );
-      }
-    }
 
     try {
       await Promise.race([
-        Promise.all(destroyPromises),
-        new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Router destroy timeout")),
-            RouterManager.ROUTER_INIT_TIMEOUT,
-          ),
-        ),
+        this.#destroyAllRoutersWithTimeout(),
+        this.#createTimeoutPromise(),
       ]);
-    } catch (error) {
-      this.#rest.emit(
-        "error",
-        new Error(
-          `Error during router cleanup: ${error instanceof Error ? error.message : String(error)}`,
-        ),
-      );
+    } finally {
+      this.#routers.clear();
     }
-
-    this.#routers.clear();
   }
 
-  #createRouter(
-    key: RouterKey,
-    RouterClass: new (rest: Rest) => BaseRouter,
-  ): void {
-    if (this.#routers.size >= RouterManager.ROUTER_CACHE_SIZE) {
-      const [oldestKey] = this.#routers.keys();
-      if (!oldestKey) {
-        this.#rest.emit("warn", "Router cache is full but no router to remove");
-        return;
-      }
-
-      this.removeCachedRouter(oldestKey);
-      this.#rest.emit("debug", `Removed oldest router ${oldestKey} from cache`);
+  #validateManagerState(): void {
+    if (this.#isDestroyed) {
+      throw new Error("RouterManager has been destroyed");
     }
+  }
 
+  #getRouterClass(key: RouterKey): RouterConstructor {
+    const RouterClass = this.#routerDefinitions[key];
+    if (!RouterClass) {
+      throw new Error(`Router not found for key: ${key}`);
+    }
+    return RouterClass;
+  }
+
+  #createRouter(key: RouterKey, RouterClass: RouterConstructor): void {
+    this.#ensureCacheLimit();
     const router = new RouterClass(this.#rest);
     this.#routers.set(key, router);
   }
 
-  #initializeRouterDefinitions(): Record<
-    string,
-    new (
-      rest: Rest,
-    ) => BaseRouter
-  > {
-    try {
-      return {
-        applications: ApplicationRouter,
-        commands: ApplicationCommandRouter,
-        connections: ApplicationConnectionRouter,
-        auditLogs: AuditLogRouter,
-        autoModeration: AutoModerationRouter,
-        channels: ChannelRouter,
-        emojis: EmojiRouter,
-        entitlements: EntitlementRouter,
-        gateway: GatewayRouter,
-        guilds: GuildRouter,
-        templates: GuildTemplateRouter,
-        interactions: InteractionRouter,
-        invites: InviteRouter,
-        messages: MessageRouter,
-        oauth2: OAuth2Router,
-        polls: PollRouter,
-        scheduledEvents: ScheduledEventRouter,
-        skus: SkuRouter,
-        soundboards: SoundboardRouter,
-        stages: StageInstanceRouter,
-        stickers: StickerRouter,
-        subscriptions: SubscriptionRouter,
-        users: UserRouter,
-        voice: VoiceRouter,
-        webhooks: WebhookRouter,
-      };
-    } catch (error) {
-      const initError = new Error(
-        `Failed to initialize router definitions: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      this.#rest.emit("error", initError);
-      throw initError;
+  #ensureCacheLimit(): void {
+    if (this.#routers.size >= RouterManager.CACHE_CONFIG.MAX_SIZE) {
+      const [oldestKey] = this.#routers.keys();
+      if (oldestKey) {
+        this.removeCachedRouter(oldestKey);
+      }
     }
+  }
+
+  #destroyRouter(router: BaseRouter): void {
+    if ("destroy" in router && typeof router.destroy === "function") {
+      router.destroy();
+    }
+  }
+
+  async #destroyAllRoutersWithTimeout(): Promise<void> {
+    const destroyPromises = Array.from(this.#routers.values()).map((router) => {
+      if ("destroy" in router && typeof router.destroy === "function") {
+        return Promise.resolve(router.destroy());
+      }
+      return Promise.resolve();
+    });
+
+    await Promise.all(destroyPromises);
+  }
+
+  #createTimeoutPromise(): Promise<never> {
+    return new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Router destroy timeout")),
+        RouterManager.CACHE_CONFIG.INIT_TIMEOUT,
+      ),
+    );
+  }
+
+  #destroyAllRouters(): void {
+    for (const router of this.#routers.values()) {
+      this.#destroyRouter(router);
+    }
+  }
+
+  #initializeRouterDefinitions(): Record<string, RouterConstructor> {
+    return {
+      applications: ApplicationRouter,
+      commands: ApplicationCommandRouter,
+      connections: ApplicationConnectionRouter,
+      auditLogs: AuditLogRouter,
+      autoModeration: AutoModerationRouter,
+      channels: ChannelRouter,
+      emojis: EmojiRouter,
+      entitlements: EntitlementRouter,
+      gateway: GatewayRouter,
+      guilds: GuildRouter,
+      templates: GuildTemplateRouter,
+      interactions: InteractionRouter,
+      invites: InviteRouter,
+      messages: MessageRouter,
+      oauth2: OAuth2Router,
+      polls: PollRouter,
+      scheduledEvents: ScheduledEventRouter,
+      skus: SkuRouter,
+      soundboards: SoundboardRouter,
+      stages: StageInstanceRouter,
+      stickers: StickerRouter,
+      subscriptions: SubscriptionRouter,
+      users: UserRouter,
+      voice: VoiceRouter,
+      webhooks: WebhookRouter,
+    };
   }
 }
