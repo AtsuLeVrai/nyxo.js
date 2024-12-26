@@ -1,28 +1,9 @@
 import type { ApiVersion, PremiumTier } from "@nyxjs/core";
-import type { Dispatcher, Pool, ProxyAgent, RetryHandler } from "undici";
+import type { Pool, ProxyAgent, RetryHandler } from "undici";
 
-/**
- * @see {@link https://discord.com/developers/docs/reference#image-data}
- */
-export type ImageData =
-  `data:image/${"jpeg" | "png" | "webp"};base64,${string}`;
-export type PathLike = `/${string}`;
-export type FileEntity = File | string;
 export type DiscordUserAgent = `DiscordBot (${string}, ${string})`;
 
-export interface RouteEntity
-  extends Omit<
-    Dispatcher.RequestOptions,
-    "origin" | "path" | "method" | "headers"
-  > {
-  method: HttpMethodFlag;
-  path: PathLike;
-  headers?: Record<string, string>;
-  files?: FileEntity | FileEntity[];
-  reason?: string;
-}
-
-export interface RestOptionsEntity {
+export interface RestOptions {
   token: string;
   /**
    * @default {@link ApiVersion.V10}
@@ -38,8 +19,6 @@ export interface RestOptionsEntity {
   maxRetries?: number;
   baseRetryDelay?: number;
   timeout?: number;
-  rateLimitRetryLimit?: number;
-  maxConcurrentRequests?: number;
   proxy?: ProxyAgent.Options;
   pool?: Pool.Options;
   retry?: RetryHandler.RetryOptions;

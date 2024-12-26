@@ -6,7 +6,7 @@ export class ShardManager {
   static readonly LARGE_GUILD_THRESHOLD = 150_000;
 
   readonly #shardStore = new Store<number, ShardInfo>();
-  readonly #buckets = new Map<number, number[]>();
+  readonly #buckets = new Store<number, number[]>();
   readonly #autoMode: boolean;
 
   #shardCount: number;
@@ -210,8 +210,8 @@ export class ShardManager {
       .map(([id]) => id);
   }
 
-  #groupShardsByBucket(shardIds: number[]): Map<number, number[]> {
-    const bucketMap = new Map<number, number[]>();
+  #groupShardsByBucket(shardIds: number[]): Store<number, number[]> {
+    const bucketMap = new Store<number, number[]>();
 
     for (const shardId of shardIds) {
       const bucket = this.#getBucketId(shardId);

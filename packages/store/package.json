@@ -7,14 +7,14 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "files": ["dist"],
-  "main": "./dist/index.js",
-  "module": "./dist/esm/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "engines": {
@@ -38,7 +38,7 @@
   },
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsup --watch",
-    "build": "cross-env NODE_ENV=production tsup && rimraf .tsup",
+    "build": "cross-env NODE_ENV=production tsup && rimraf -g -v .tsup dist/*.d.cts",
     "clean": "rimraf dist",
     "format": "biome format --write .",
     "lint": "biome lint --write --unsafe .",

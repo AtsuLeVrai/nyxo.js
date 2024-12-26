@@ -328,7 +328,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       `Setting up heartbeat (interval: ${interval}ms, calculated jitter: ${jitter}, initial jitter delay: ${initialDelay}ms)`,
     );
 
-    await this.#wait(initialDelay);
+    // await this.#wait(initialDelay);
     await this.#sendHeartbeat();
 
     this.#state.heartbeatInterval = setInterval(() => {

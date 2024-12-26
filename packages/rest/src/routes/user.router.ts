@@ -20,7 +20,7 @@ import {
 } from "../schemas/index.js";
 
 export class UserRouter extends BaseRouter {
-  static readonly routes = {
+  static readonly ROUTES = {
     base: "/users" as const,
     me: "/users/@me" as const,
     guilds: "/users/@me/guilds" as const,
@@ -38,14 +38,14 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   getCurrentUser(): Promise<UserEntity> {
-    return this.get(UserRouter.routes.me);
+    return this.get(UserRouter.ROUTES.me);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
   getUser(userId: Snowflake): Promise<UserEntity> {
-    return this.get(UserRouter.routes.user(userId));
+    return this.get(UserRouter.ROUTES.user(userId));
   }
 
   /**
@@ -61,7 +61,7 @@ export class UserRouter extends BaseRouter {
       );
     }
 
-    return this.patch(UserRouter.routes.me, {
+    return this.patch(UserRouter.ROUTES.me, {
       body: JSON.stringify(result.data),
     });
   }
@@ -81,7 +81,7 @@ export class UserRouter extends BaseRouter {
       );
     }
 
-    return this.get(UserRouter.routes.guilds, {
+    return this.get(UserRouter.ROUTES.guilds, {
       query: result.data,
     });
   }
@@ -90,21 +90,21 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.get(UserRouter.routes.guildMember(guildId));
+    return this.get(UserRouter.ROUTES.guildMember(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.delete(UserRouter.routes.leaveGuild(guildId));
+    return this.delete(UserRouter.ROUTES.leaveGuild(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDm(recipientId: Snowflake): Promise<ChannelEntity> {
-    return this.post(UserRouter.routes.channels, {
+    return this.post(UserRouter.ROUTES.channels, {
       body: JSON.stringify({ recipient_id: recipientId }),
     });
   }
@@ -122,7 +122,7 @@ export class UserRouter extends BaseRouter {
       );
     }
 
-    return this.post(UserRouter.routes.channels, {
+    return this.post(UserRouter.ROUTES.channels, {
       body: JSON.stringify(result.data),
     });
   }
@@ -131,7 +131,7 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   getCurrentUserConnections(): Promise<ConnectionEntity[]> {
-    return this.get(UserRouter.routes.connections);
+    return this.get(UserRouter.ROUTES.connections);
   }
 
   /**
@@ -140,7 +140,7 @@ export class UserRouter extends BaseRouter {
   getCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.get(UserRouter.routes.applicationRole(applicationId));
+    return this.get(UserRouter.ROUTES.applicationRole(applicationId));
   }
 
   /**
@@ -160,7 +160,7 @@ export class UserRouter extends BaseRouter {
       );
     }
 
-    return this.put(UserRouter.routes.applicationRole(applicationId), {
+    return this.put(UserRouter.ROUTES.applicationRole(applicationId), {
       body: JSON.stringify(result.data),
     });
   }

@@ -7,18 +7,18 @@ export function createTsupConfig(entry = ["src/index.ts"], options = {}) {
         target: "esnext",
         platform: "node",
         treeshake: true,
-        legacyOutput: true,
+        legacyOutput: false,
         splitting: false,
         sourcemap: process.env.NODE_ENV === "development",
         clean: true,
         tsconfig: "tsconfig.json",
-        experimentalDts: {
-            entry: entry,
-        },
         outDir: "dist",
         skipNodeModulesBundle: true,
         noExternal: options.noExternal ?? [],
         external: options.external ?? [],
+        experimentalDts: {
+            entry: entry,
+        },
         ...options,
     });
 }

@@ -32,7 +32,7 @@ export type ModifyChannelGroupDmEntity = z.infer<
   typeof ModifyChannelGroupDmSchema
 >;
 
-const OverwriteSchema: z.ZodType<OverwriteEntity> = z
+export const OverwriteSchema: z.ZodType<OverwriteEntity> = z
   .object({
     id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX),
     type: z.nativeEnum(OverwriteType),
@@ -41,7 +41,7 @@ const OverwriteSchema: z.ZodType<OverwriteEntity> = z
   })
   .strict();
 
-const ForumTagSchema: z.ZodType<ForumTagEntity> = z
+export const ForumTagSchema: z.ZodType<ForumTagEntity> = z
   .object({
     id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX),
     name: z.string().max(20),

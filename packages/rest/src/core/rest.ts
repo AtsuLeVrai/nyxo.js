@@ -12,7 +12,7 @@ import {
   type AuthTypeFlag,
   HttpMethodFlag,
   type PathLike,
-  type RestOptionsEntity,
+  type RestOptions,
   type RouteEntity,
   type RouterDefinitions,
   type RouterKey,
@@ -33,16 +33,14 @@ export class Rest {
   private retryOnRateLimit = true;
   private isDestroyed = false;
 
-  constructor(options: RestOptionsEntity) {
+  constructor(options: RestOptions) {
     this.#validateOptions(options);
 
     this.token = new TokenManager(options.token);
-
     this.config = new ConfigManager({
       ...options,
       token: this.token.value,
     });
-
     this.file = new FileHandlerManager();
     this.rateLimit = new RestRateLimitManager();
     this.request = new RequestManager(this.rateLimit, this.config);
@@ -206,7 +204,7 @@ export class Rest {
     await this.config.updateProxy(proxyOptions);
   }
 
-  getConfig(): Required<RestOptionsEntity> {
+  getConfig(): Required<RestOptions> {
     this.#validateClientState();
     return this.config.options;
   }
@@ -233,7 +231,7 @@ export class Rest {
     }
   }
 
-  #validateOptions(options: RestOptionsEntity): void {
+  #validateOptions(options: RestOptions): void {
     if (!options.token) {
       throw new Error("Token is required");
     }

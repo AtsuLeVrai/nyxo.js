@@ -24,7 +24,7 @@ import {
   SnowflakeManager,
 } from "@nyxjs/core";
 import { z } from "zod";
-import type { FileEntity } from "../types/index.js";
+import type { FileType } from "../types/index.js";
 
 export const GetChannelMessagesQuerySchema = z
   .object({
@@ -214,7 +214,7 @@ export const CreateMessageSchema = z
       .array(z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX))
       .max(3)
       .optional(),
-    files: z.custom<FileEntity>().optional(),
+    files: z.custom<FileType>().optional(),
     /**
      * @deprecated Use `files` instead
      */

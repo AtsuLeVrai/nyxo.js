@@ -1,10 +1,10 @@
 import { ApiVersion } from "@nyxjs/core";
 import { Pool, ProxyAgent, RetryAgent, type RetryHandler } from "undici";
-import type { RestOptionsEntity } from "../types/index.js";
 import {
   AuthTypeFlag,
   HttpMethodFlag,
   HttpStatusCode,
+  type RestOptions,
 } from "../types/index.js";
 
 export class ConfigManager {
@@ -52,14 +52,14 @@ export class ConfigManager {
     },
   } as const;
 
-  readonly options: Required<RestOptionsEntity>;
+  readonly options: Required<RestOptions>;
   retryAgent: RetryAgent;
 
   readonly #pool: Pool;
   #proxyAgent: ProxyAgent | null = null;
   #isDestroyed = false;
 
-  constructor(options: RestOptionsEntity) {
+  constructor(options: RestOptions) {
     this.#validateConfiguration(options);
     this.options = this.#mergeOptions(options);
 
@@ -100,7 +100,7 @@ export class ConfigManager {
     }
   }
 
-  #mergeOptions(options: RestOptionsEntity): Required<RestOptionsEntity> {
+  #mergeOptions(options: RestOptions): Required<RestOptions> {
     const version = this.#validateApiVersion(
       options.version ?? ConfigManager.API.CURRENT_VERSION,
     );
@@ -129,24 +129,12 @@ export class ConfigManager {
         1000,
         ConfigManager.TIMEOUTS.MAX,
       ),
-      rateLimitRetryLimit: this.#validateNumber(
-        options.rateLimitRetryLimit,
-        ConfigManager.DEFAULTS.RATE_LIMIT_RETRY,
-        "rateLimitRetryLimit",
-        0,
-      ),
-      maxConcurrentRequests: this.#validateNumber(
-        options.maxConcurrentRequests,
-        ConfigManager.DEFAULTS.MAX_CONCURRENT,
-        "maxConcurrentRequests",
-        1,
-      ),
       userAgent: options.userAgent ?? ConfigManager.API.DEFAULT_USER_AGENT,
       compress: options.compress ?? ConfigManager.DEFAULTS.COMPRESS,
       proxy: options.proxy ?? { uri: "" },
       pool: { ...ConfigManager.DEFAULT_POOL_OPTIONS, ...options.pool },
       retry: this.#getRetryOptions(options),
-    } as Required<RestOptionsEntity>;
+    } as Required<RestOptions>;
   }
 
   #validateManagerState(): void {
@@ -155,7 +143,7 @@ export class ConfigManager {
     }
   }
 
-  #validateConfiguration(options: RestOptionsEntity): void {
+  #validateConfiguration(options: RestOptions): void {
     if (!options.token) {
       throw new Error("Token is required");
     }
@@ -214,7 +202,7 @@ export class ConfigManager {
     return resolvedValue;
   }
 
-  #getRetryOptions(options: RestOptionsEntity): RetryHandler.RetryOptions {
+  #getRetryOptions(options: RestOptions): RetryHandler.RetryOptions {
     return {
       maxRetries: options.maxRetries ?? ConfigManager.DEFAULTS.MAX_RETRIES,
       minTimeout:

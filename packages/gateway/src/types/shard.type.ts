@@ -9,4 +9,5 @@ export interface ShardOptions {
   shardCount?: number;
   maxConcurrency?: number;
   shard?: boolean;
+  recommendedShards?: number;
 }

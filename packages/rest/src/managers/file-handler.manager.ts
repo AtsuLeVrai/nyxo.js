@@ -3,11 +3,7 @@ import { basename } from "node:path";
 import { PremiumTier } from "@nyxjs/core";
 import FormData from "form-data";
 import { contentType } from "mime-types";
-import type {
-  FileEntity,
-  FileInputEntity,
-  RouteEntity,
-} from "../types/index.js";
+import type { FileInput, FileType, RouteEntity } from "../types/index.js";
 
 export class FileHandlerManager {
   static readonly FILE_LIMITS = {
@@ -79,9 +75,9 @@ export class FileHandlerManager {
     }
   }
 
-  async #validateFiles(files: Array<FileEntity | undefined>): Promise<void> {
+  async #validateFiles(files: Array<FileType | undefined>): Promise<void> {
     const validFiles = files.filter(
-      (file): file is FileEntity => file !== undefined,
+      (file): file is FileType => file !== undefined,
     );
 
     if (validFiles.length > FileHandlerManager.FILE_LIMITS.MAX_FILES) {
@@ -113,7 +109,7 @@ export class FileHandlerManager {
   }
 
   async #createFormDataWithFiles(
-    files: Array<FileEntity | undefined>,
+    files: Array<FileType | undefined>,
     body?: unknown,
   ): Promise<FormData> {
     const form = new FormData();
@@ -134,7 +130,7 @@ export class FileHandlerManager {
     form: FormData,
     index: number,
     totalFiles: number,
-    file?: FileEntity,
+    file?: FileType,
   ): Promise<void> {
     if (!file) {
       return;
@@ -150,7 +146,7 @@ export class FileHandlerManager {
     });
   }
 
-  #getFileData(file: FileEntity): Promise<FileInputEntity> {
+  #getFileData(file: FileType): Promise<FileInput> {
     if (typeof file === "string") {
       return this.#handleFilePathInput(file);
     }
@@ -162,7 +158,7 @@ export class FileHandlerManager {
     throw new Error("Invalid file type");
   }
 
-  async #handleFilePathInput(filePath: string): Promise<FileInputEntity> {
+  async #handleFilePathInput(filePath: string): Promise<FileInput> {
     try {
       const stats = await stat(filePath);
 
@@ -196,7 +192,7 @@ export class FileHandlerManager {
     }
   }
 
-  async #handleFileInput(file: File): Promise<FileInputEntity> {
+  async #handleFileInput(file: File): Promise<FileInput> {
     try {
       if (file.size > this.#maxFileSize) {
         throw new Error(
@@ -218,7 +214,7 @@ export class FileHandlerManager {
     }
   }
 
-  async #getFileSize(file: FileEntity): Promise<number> {
+  async #getFileSize(file: FileType): Promise<number> {
     if (typeof file === "string") {
       const stats = await stat(file);
       return stats.size;

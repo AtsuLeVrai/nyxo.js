@@ -268,7 +268,7 @@ export class RequestManager {
     );
   }
 
-  #handleJsonError(errorData: unknown): never {
+  #handleJsonError(errorData: JsonErrorCode): never {
     if (this.#isJsonErrorResponse(errorData)) {
       throw new Error(
         `Discord API Error ${errorData.code}: ${errorData.message}`,
