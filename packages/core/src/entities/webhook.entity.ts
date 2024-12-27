@@ -1,5 +1,5 @@
 import type { Snowflake } from "../managers/index.js";
-import type { ChannelEntity } from "./channel.entity.js";
+import type { AnyChannelEntity } from "./channel.entity.js";
 import type { GuildEntity } from "./guild.entity.js";
 import type { UserEntity } from "./user.entity.js";
 
@@ -26,6 +26,6 @@ export interface WebhookEntity {
   token?: string;
   application_id: Snowflake | null;
   source_guild?: Partial<GuildEntity>;
-  source_channel?: Partial<ChannelEntity>;
+  source_channel?: Partial<AnyChannelEntity>;
   url?: string;
 }

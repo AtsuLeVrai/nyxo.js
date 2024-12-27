@@ -217,7 +217,6 @@ export class Rest {
     this.isDestroyed = true;
 
     this.rateLimit.destroy();
-    this.file.destroy();
     await Promise.all([
       this.config.destroy(),
       this.request.destroy(),

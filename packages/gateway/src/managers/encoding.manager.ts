@@ -4,18 +4,19 @@ import { EncodingType, type PayloadEntity } from "../types/index.js";
 interface ProcessOptions {
   validateEtfKeys?: boolean;
   processBigInts?: boolean;
+  validateSnowflakes?: boolean;
 }
 
 export class EncodingManager {
-  static readonly ENCODING_TYPES = ["json", "etf"] as const;
-  static readonly DEFAULT_ENCODING: EncodingType.Json =
-    EncodingType.Json as const;
+  static readonly VALID_ENCODING_TYPES = new Set<EncodingType>([
+    EncodingType.Json,
+    EncodingType.Etf,
+  ]);
 
   readonly #encoding: EncodingType;
 
-  constructor(encoding: EncodingType = EncodingManager.DEFAULT_ENCODING) {
-    this.#validateEncodingType(encoding);
-    this.#encoding = encoding;
+  constructor(encoding: EncodingType = EncodingType.Json) {
+    this.#encoding = this.#validateEncodingType(encoding);
   }
 
   get encodingType(): EncodingType {
@@ -33,7 +34,9 @@ export class EncodingManager {
           throw new Error(`Invalid encoding type: ${this.#encoding}`);
       }
     } catch (error) {
-      throw this.#wrapError("Encoding failed", error);
+      throw new Error(
+        `Encoding failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -48,13 +51,16 @@ export class EncodingManager {
           throw new Error(`Invalid encoding type: ${this.#encoding}`);
       }
     } catch (error) {
-      throw this.#wrapError("Decoding failed", error);
+      throw new Error(
+        `Decoding failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   #encodeJson(data: PayloadEntity): string {
     const processed = this.#processData(data, {
       processBigInts: true,
+      validateSnowflakes: true,
     });
 
     return JSON.stringify(processed);
@@ -62,21 +68,38 @@ export class EncodingManager {
 
   #decodeJson(data: Buffer | string): PayloadEntity {
     const strData = typeof data === "string" ? data : data.toString("utf-8");
-    return JSON.parse(strData) as PayloadEntity;
+    const payload = JSON.parse(strData);
+
+    if (!this.#isValidPayload(payload)) {
+      throw new Error("Invalid payload structure");
+    }
+
+    return payload;
   }
 
   #encodeEtf(data: PayloadEntity): Buffer {
     const processed = this.#processData(data, {
       validateEtfKeys: true,
       processBigInts: true,
+      validateSnowflakes: true,
     });
 
-    return erlpack.pack(processed);
+    try {
+      return erlpack.pack(processed);
+    } catch {
+      throw new Error("ETF encoding failed - check key types");
+    }
   }
 
   #decodeEtf(data: Buffer | string): PayloadEntity {
     const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    return erlpack.unpack(bufferData) as PayloadEntity;
+    const payload = erlpack.unpack(bufferData);
+
+    if (!this.#isValidPayload(payload)) {
+      throw new Error("Invalid ETF payload structure");
+    }
+
+    return payload;
   }
 
   #processData(data: unknown, options: ProcessOptions = {}): unknown {
@@ -109,22 +132,33 @@ export class EncodingManager {
     return data;
   }
 
-  #validateEncodingType(encoding: EncodingType): void {
-    if (!EncodingManager.ENCODING_TYPES.includes(encoding)) {
+  #validateEncodingType(encoding: EncodingType): EncodingType {
+    if (!EncodingManager.VALID_ENCODING_TYPES.has(encoding)) {
       throw new Error(
-        `Invalid encoding type: ${encoding}. Supported types: ${EncodingManager.ENCODING_TYPES.join(", ")}`,
+        `Invalid encoding type: ${encoding}. Must be one of: ${[...EncodingManager.VALID_ENCODING_TYPES].join(", ")}`,
       );
     }
+
+    return encoding;
+  }
+
+  #isValidPayload(value: unknown): value is PayloadEntity {
+    if (!this.#isObject(value)) {
+      return false;
+    }
+
+    const hasRequiredFields = "op" in value && "d" in value;
+    const hasValidTypes =
+      typeof value.op === "number" &&
+      (value.s === null || typeof value.s === "number") &&
+      (value.t === null || typeof value.t === "string");
+
+    return hasRequiredFields && hasValidTypes;
   }
 
   #isObject(
     value: unknown,
   ): value is Record<string | number | symbol, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
-  }
-
-  #wrapError(message: string, error: unknown): Error {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Error(`${message}: ${errorMessage}`);
   }
 }

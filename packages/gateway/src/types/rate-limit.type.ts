@@ -13,6 +13,8 @@ export interface RateLimitOptions {
 
 export interface RateLimitIdentifyQueueItem {
   shardId: number;
+  bucket: number;
+  timestamp: number;
   resolve: () => void;
   reject: (error: Error) => void;
 }

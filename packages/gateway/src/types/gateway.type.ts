@@ -50,7 +50,7 @@ export interface GatewayOptions extends ShardOptions, RateLimitOptions {
   version?: ApiVersion.V10;
   compress?: CompressionType;
   encoding?: EncodingType;
-  intents: GatewayIntentsBits[];
+  intents: GatewayIntentsBits[] | number;
   largeThreshold?: Integer;
   presence?: UpdatePresenceEntity;
 }

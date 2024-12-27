@@ -1,7 +1,10 @@
 import type { LocaleKey, OAuth2Scope } from "../enums/index.js";
 import type { Integer, Iso8601 } from "../formatting/index.js";
 import type { Snowflake } from "../managers/index.js";
-import type { ChannelEntity } from "./channel.entity.js";
+import type {
+  GuildStageVoiceChannelEntity,
+  GuildVoiceChannelEntity,
+} from "./channel.entity.js";
 import type { EmojiEntity } from "./emoji.entity.js";
 import type { RoleEntity } from "./role.entity.js";
 import type { StickerEntity } from "./sticker.entity.js";
@@ -187,7 +190,7 @@ export interface GuildWidgetEntity {
   id: Snowflake;
   name: string;
   instant_invite: string | null;
-  channels: Partial<ChannelEntity>[];
+  channels: Partial<GuildVoiceChannelEntity | GuildStageVoiceChannelEntity>[];
   members: Partial<UserEntity>[];
   presence_count: Integer;
 }

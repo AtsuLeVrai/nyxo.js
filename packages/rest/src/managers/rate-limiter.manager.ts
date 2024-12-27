@@ -48,15 +48,11 @@ export class RestRateLimitManager {
   #invalidRequestCount = 0;
   #lastInvalidRequestReset = Date.now();
 
-  #isDestroyed = false;
-
   constructor() {
     this.#startGlobalResetInterval();
   }
 
   async checkRateLimits(path: string): Promise<void> {
-    this.#validateManagerState();
-
     if (this.#isInvalidRequestLimited()) {
       throw new Error("Invalid request rate limit exceeded");
     }
@@ -81,10 +77,6 @@ export class RestRateLimitManager {
   }
 
   updateRateLimits(headers: Record<string, string>, statusCode: number): void {
-    if (this.#isDestroyed) {
-      return;
-    }
-
     if (this.#isErrorStatusCode(statusCode)) {
       this.incrementInvalidRequestCount();
     }
@@ -117,12 +109,6 @@ export class RestRateLimitManager {
   }
 
   destroy(): void {
-    if (this.#isDestroyed) {
-      return;
-    }
-
-    this.#isDestroyed = true;
-
     if (this.#globalResetTimeout) {
       clearInterval(this.#globalResetTimeout);
       this.#globalResetTimeout = null;
@@ -131,12 +117,6 @@ export class RestRateLimitManager {
     this.#clearStores();
     this.#resetCounters();
     this.#rejectPendingRequests();
-  }
-
-  #validateManagerState(): void {
-    if (this.#isDestroyed) {
-      throw new Error("RestRateLimitManager has been destroyed");
-    }
   }
 
   #startGlobalResetInterval(): void {

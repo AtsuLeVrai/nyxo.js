@@ -10,8 +10,13 @@ interface DecompressionContext {
 
 export class CompressionManager {
   static readonly ZLIB_FLUSH_BYTES = Buffer.from([0x00, 0x00, 0xff, 0xff]);
-  static readonly CHUNK_SIZE = 64 * 1024;
+  static readonly MAX_COMPRESSION_SIZE = 1024 * 1024 * 100;
+  static readonly CHUNK_SIZE = 128 * 1024;
   static readonly ZLIB_WINDOW_BITS = 15;
+  static readonly VALID_COMPRESSION_TYPES = new Set<CompressionType>([
+    CompressionType.ZlibStream,
+    CompressionType.ZstdStream,
+  ]);
 
   readonly #compressionType: CompressionType | null;
   readonly #context: DecompressionContext = {
@@ -21,6 +26,7 @@ export class CompressionManager {
   };
 
   #initialized = false;
+  #totalProcessed = 0;
 
   constructor(compressionType: CompressionType | null = null) {
     this.#compressionType = this.#validateCompressionType(compressionType);
@@ -43,7 +49,9 @@ export class CompressionManager {
       await this.#setupDecompressor();
       this.#initialized = true;
     } catch (error) {
-      throw this.#wrapError("Failed to initialize compression", error);
+      throw new Error(
+        `Failed to initialize compression: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -58,11 +66,17 @@ export class CompressionManager {
 
     try {
       const buffer = Buffer.from(data);
+      this.#totalProcessed += buffer.length;
+
+      if (this.#totalProcessed > CompressionManager.MAX_COMPRESSION_SIZE) {
+        this.destroy();
+        throw new Error("Processed data limit exceeded");
+      }
 
       switch (this.#compressionType) {
-        case "zlib-stream":
+        case CompressionType.ZlibStream:
           return this.#decompressZlib(buffer);
-        case "zstd-stream":
+        case CompressionType.ZstdStream:
           return this.#decompressZstd(buffer);
         default:
           throw new Error(
@@ -70,13 +84,16 @@ export class CompressionManager {
           );
       }
     } catch (error) {
-      throw this.#wrapError("Decompression failed", error);
+      throw new Error(
+        `Decompression failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
   destroy(): void {
     this.#resetContext();
     this.#initialized = false;
+    this.#totalProcessed = 0;
   }
 
   #decompressZlib(data: Buffer): Buffer {
@@ -106,13 +123,19 @@ export class CompressionManager {
 
     this.#context.chunks = [];
 
-    this.#context.zstdStream.push(new Uint8Array(data));
+    try {
+      this.#context.zstdStream.push(new Uint8Array(data));
 
-    if (this.#context.chunks.length === 0) {
-      return Buffer.alloc(0);
+      if (this.#context.chunks.length === 0) {
+        return Buffer.alloc(0);
+      }
+
+      return this.#combineChunks(this.#context.chunks);
+    } catch (error) {
+      throw new Error(
+        `ZSTD decompression error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
-
-    return this.#combineChunks(this.#context.chunks);
   }
 
   async #setupDecompressor(): Promise<void> {
@@ -121,7 +144,7 @@ export class CompressionManager {
         this.#resetContext();
 
         switch (this.#compressionType) {
-          case "zlib-stream": {
+          case CompressionType.ZlibStream: {
             this.#context.zlibInflate = new zlib.Inflate({
               chunkSize: CompressionManager.CHUNK_SIZE,
               windowBits: CompressionManager.ZLIB_WINDOW_BITS,
@@ -132,12 +155,11 @@ export class CompressionManager {
                 `Zlib initialization failed: ${this.#context.zlibInflate?.msg}`,
               );
             }
-
             resolve();
             break;
           }
 
-          case "zstd-stream": {
+          case CompressionType.ZstdStream: {
             this.#context.zstdStream = new Decompress((chunk) => {
               try {
                 this.#context.chunks.push(chunk);
@@ -150,7 +172,6 @@ export class CompressionManager {
             if (!this.#context.zstdStream) {
               throw new Error("Zstd initialization failed");
             }
-
             resolve();
             break;
           }
@@ -161,7 +182,7 @@ export class CompressionManager {
         }
       } catch (error) {
         this.#resetContext();
-        reject(this.#wrapError("Failed to setup decompressor", error));
+        reject(error);
       }
     });
   }
@@ -173,12 +194,10 @@ export class CompressionManager {
       return null;
     }
 
-    const validTypes: CompressionType[] = [
-      CompressionType.ZstdStream,
-      CompressionType.ZlibStream,
-    ];
-    if (!validTypes.includes(type)) {
-      throw new Error(`Invalid compression type: ${type}`);
+    if (!CompressionManager.VALID_COMPRESSION_TYPES.has(type)) {
+      throw new Error(
+        `Invalid compression type: ${type}. Must be one of: ${[...CompressionManager.VALID_COMPRESSION_TYPES].join(", ")}`,
+      );
     }
 
     return type;
@@ -213,10 +232,5 @@ export class CompressionManager {
     this.#context.zlibInflate = null;
     this.#context.zstdStream = null;
     this.#context.chunks = [];
-  }
-
-  #wrapError(message: string, error: unknown): Error {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Error(`${message}: ${errorMessage}`);
   }
 }

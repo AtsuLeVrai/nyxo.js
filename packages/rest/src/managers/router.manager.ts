@@ -41,7 +41,6 @@ export class RouterManager {
   readonly #rest: Rest;
   readonly #routers = new Store<RouterKey, BaseRouter>();
   readonly #routerDefinitions: Record<string, RouterConstructor>;
-  #isDestroyed = false;
 
   constructor(rest: Rest) {
     this.#rest = rest;
@@ -49,8 +48,6 @@ export class RouterManager {
   }
 
   getRouter<K extends RouterKey>(key: K): RouterDefinitions[K] {
-    this.#validateManagerState();
-
     if (!this.#routers.has(key)) {
       const RouterClass = this.#getRouterClass(key);
       this.#createRouter(key, RouterClass);
@@ -60,34 +57,27 @@ export class RouterManager {
   }
 
   hasRouter(key: RouterKey): boolean {
-    this.#validateManagerState();
     return key in this.#routerDefinitions;
   }
 
   getAvailableRouters(): RouterKey[] {
-    this.#validateManagerState();
     return Object.keys(this.#routerDefinitions) as RouterKey[];
   }
 
   getCachedRouters(): RouterKey[] {
-    this.#validateManagerState();
     return Array.from(this.#routers.keys()) as RouterKey[];
   }
 
   isCached(key: RouterKey): boolean {
-    this.#validateManagerState();
     return this.#routers.has(key);
   }
 
   clearRouters(): void {
-    this.#validateManagerState();
     this.#destroyAllRouters();
     this.#routers.clear();
   }
 
   removeCachedRouter(key: RouterKey): boolean {
-    this.#validateManagerState();
-
     const router = this.#routers.get(key);
     if (!router) {
       return false;
@@ -99,12 +89,6 @@ export class RouterManager {
   }
 
   async destroy(): Promise<void> {
-    if (this.#isDestroyed) {
-      return;
-    }
-
-    this.#isDestroyed = true;
-
     try {
       await Promise.race([
         this.#destroyAllRoutersWithTimeout(),
@@ -112,12 +96,6 @@ export class RouterManager {
       ]);
     } finally {
       this.#routers.clear();
-    }
-  }
-
-  #validateManagerState(): void {
-    if (this.#isDestroyed) {
-      throw new Error("RouterManager has been destroyed");
     }
   }
 

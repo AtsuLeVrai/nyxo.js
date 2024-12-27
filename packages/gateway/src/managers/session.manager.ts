@@ -9,6 +9,12 @@ interface SessionState {
   shardId?: number;
   lastIdentifyTime: number;
   identifyDelay: number;
+  lastHeartbeatAck: number | null;
+  lastHeartbeatSent: number | null;
+  heartbeatInterval?: number;
+  status: "connecting" | "ready" | "resuming" | "disconnected";
+  version?: number;
+  encoding?: string;
 }
 
 export class SessionManager {
@@ -23,15 +29,52 @@ export class SessionManager {
   }
 
   get startLimit(): Readonly<SessionStartLimitEntity> | null {
-    return this.#startLimit;
+    return this.#startLimit ? { ...this.#startLimit } : null;
+  }
+
+  hasSession(sessionId: string): boolean {
+    return this.#sessions.has(sessionId);
   }
 
   updateStartLimit(limit: SessionStartLimitEntity): void {
+    if (!this.#validateStartLimit(limit)) {
+      throw new Error("Invalid session start limit");
+    }
+
     this.#startLimit = { ...limit };
     this.#scheduleRateLimitReset();
   }
 
-  async createSession(shardId?: number): Promise<string> {
+  registerSession(
+    sessionId: string,
+    shardId?: number,
+    version?: number,
+    encoding?: string,
+  ): void {
+    if (this.#sessions.has(sessionId)) {
+      throw new Error("Session already exists");
+    }
+
+    this.#sessions.set(sessionId, {
+      sessionId,
+      sequence: -1,
+      resumeGatewayUrl: "",
+      shardId,
+      version,
+      encoding,
+      lastIdentifyTime: Date.now(),
+      identifyDelay: SessionManager.DEFAULT_IDENTIFY_DELAY,
+      lastHeartbeatAck: null,
+      lastHeartbeatSent: null,
+      status: "connecting",
+    });
+  }
+
+  async createSession(
+    shardId?: number,
+    version?: number,
+    encoding?: string,
+  ): Promise<string> {
     this.#validateCanCreateSession();
     await this.#enforceIdentifyRateLimit();
 
@@ -39,14 +82,20 @@ export class SessionManager {
       this.#validateConcurrentShardSession(shardId);
     }
 
-    const sessionId = this.#generateSessionId();
+    const sessionId = `session_${Date.now()}_${crypto.randomUUID()}`;
+
     this.#sessions.set(sessionId, {
       sessionId,
       sequence: -1,
       resumeGatewayUrl: "",
       shardId,
+      version,
+      encoding,
       lastIdentifyTime: Date.now(),
       identifyDelay: SessionManager.DEFAULT_IDENTIFY_DELAY,
+      lastHeartbeatAck: null,
+      lastHeartbeatSent: null,
+      status: "connecting",
     });
 
     if (this.#startLimit) {
@@ -60,13 +109,22 @@ export class SessionManager {
     sessionId: string,
     resumeGatewayUrl: string,
     sequence = -1,
+    heartbeatInterval?: number,
   ): void {
     const session = this.#getSessionOrThrow(sessionId);
+
+    if (session.status === "ready") {
+      throw new Error("Session already authenticated");
+    }
 
     session.resumeGatewayUrl = resumeGatewayUrl;
     if (sequence >= 0) {
       session.sequence = sequence;
     }
+    if (heartbeatInterval) {
+      session.heartbeatInterval = heartbeatInterval;
+    }
+    session.status = "ready";
   }
 
   updateSequence(sessionId: string, sequence: number): void {
@@ -74,6 +132,29 @@ export class SessionManager {
 
     if (sequence > session.sequence) {
       session.sequence = sequence;
+    }
+  }
+
+  updateHeartbeat(sessionId: string, sent: boolean, ack?: boolean): void {
+    const session = this.#getSessionOrThrow(sessionId);
+    const now = Date.now();
+
+    if (sent) {
+      session.lastHeartbeatSent = now;
+    }
+    if (ack) {
+      session.lastHeartbeatAck = now;
+    }
+
+    if (sent && session.lastHeartbeatSent && session.lastHeartbeatAck) {
+      const timeSinceLastAck = now - session.lastHeartbeatAck;
+      if (
+        session.heartbeatInterval &&
+        timeSinceLastAck > session.heartbeatInterval * 2
+      ) {
+        session.status = "disconnected";
+        throw new Error("Session heartbeat timed out");
+      }
     }
   }
 
@@ -93,7 +174,23 @@ export class SessionManager {
 
   canResumeSession(sessionId: string): boolean {
     const session = this.#sessions.get(sessionId);
-    return Boolean(session?.resumeGatewayUrl && session.sequence >= 0);
+    if (!session) {
+      return false;
+    }
+
+    /**
+     * @remarks
+     * A session can be resumed if:
+     * 1. It has a resume_gateway_url (received in READY)
+     * 2. It has a valid sequence number
+     * 3. Its last heartbeat was acknowledged
+     */
+    return Boolean(
+      session.resumeGatewayUrl &&
+        session.sequence >= 0 &&
+        session.lastHeartbeatAck &&
+        session.status !== "disconnected",
+    );
   }
 
   getSessionsByShard(shardId: number): SessionInfo[] {
@@ -126,6 +223,20 @@ export class SessionManager {
     }
     this.#sessions.clear();
     this.#startLimit = null;
+  }
+
+  #validateStartLimit(limit: SessionStartLimitEntity): boolean {
+    return Boolean(
+      limit &&
+        typeof limit.total === "number" &&
+        typeof limit.remaining === "number" &&
+        typeof limit.reset_after === "number" &&
+        typeof limit.max_concurrency === "number" &&
+        limit.total > 0 &&
+        limit.remaining >= 0 &&
+        limit.reset_after >= 0 &&
+        limit.max_concurrency > 0,
+    );
   }
 
   #validateCanCreateSession(): void {
@@ -161,7 +272,6 @@ export class SessionManager {
     }
 
     const timeSinceLastIdentify = Date.now() - lastSession.lastIdentifyTime;
-
     if (timeSinceLastIdentify < lastSession.identifyDelay) {
       await new Promise((resolve) =>
         setTimeout(resolve, lastSession.identifyDelay - timeSinceLastIdentify),
@@ -202,9 +312,5 @@ export class SessionManager {
       throw new Error(`Session ${sessionId} not found`);
     }
     return session;
-  }
-
-  #generateSessionId(): string {
-    return `session_${Date.now()}_${crypto.randomUUID()}`;
   }
 }

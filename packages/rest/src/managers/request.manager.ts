@@ -27,8 +27,6 @@ export class RequestManager {
     JsonErrorCode.ApiResourceOverloaded,
   ]);
 
-  #isDestroyed = false;
-
   constructor(
     rateLimitManager: RestRateLimitManager,
     configManager: ConfigManager,
@@ -44,8 +42,6 @@ export class RequestManager {
   }
 
   async execute<T>(options: RouteEntity): Promise<T> {
-    this.#validateManagerState();
-
     const requestId = this.#generateRequestId(options);
     const attempt = 1;
 
@@ -58,12 +54,6 @@ export class RequestManager {
   }
 
   async destroy(): Promise<void> {
-    if (this.#isDestroyed) {
-      return;
-    }
-
-    this.#isDestroyed = true;
-
     if (this.#pendingRequests.size > 0) {
       await Promise.race([
         this.#waitForPendingRequests(),
@@ -97,6 +87,7 @@ export class RequestManager {
           attemptCount,
           error as Error,
         );
+
         await this.#wait(retryDelay);
         attemptCount++;
       }
@@ -391,12 +382,6 @@ export class RequestManager {
 
   #generateRequestId(options: RouteEntity): string {
     return `${options.method}:${options.path}:${Date.now()}`;
-  }
-
-  #validateManagerState(): void {
-    if (this.#isDestroyed) {
-      throw new Error("RequestManager has been destroyed");
-    }
   }
 
   async #waitForPendingRequests(): Promise<void> {

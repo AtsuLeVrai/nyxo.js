@@ -1,6 +1,6 @@
 import type { Integer, Iso8601 } from "../formatting/index.js";
 import type { ApplicationEntity } from "./application.entity.js";
-import type { ChannelEntity } from "./channel.entity.js";
+import type { AnyChannelEntity } from "./channel.entity.js";
 import type { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
 import type { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
 import type { UserEntity } from "./user.entity.js";
@@ -50,7 +50,7 @@ export interface InviteEntity {
   type: InviteType;
   code: string;
   guild?: Partial<GuildEntity>;
-  channel: Partial<ChannelEntity> | null;
+  channel: Partial<AnyChannelEntity> | null;
   inviter?: UserEntity;
   target_type?: InviteTargetType;
   target_user?: UserEntity;

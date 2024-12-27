@@ -15,15 +15,12 @@ export class FileHandlerManager {
   } as const;
 
   #maxFileSize: number;
-  #isDestroyed = false;
 
   constructor(boostTier: PremiumTier = PremiumTier.None) {
     this.#maxFileSize = this.#getMaxFileSizeForTier(boostTier);
   }
 
   async handleFiles(options: RouteEntity): Promise<RouteEntity> {
-    this.#validateManagerState();
-
     if (!options.files) {
       return options;
     }
@@ -46,12 +43,7 @@ export class FileHandlerManager {
   }
 
   setBoostTier(tier: PremiumTier): void {
-    this.#validateManagerState();
     this.#maxFileSize = this.#getMaxFileSizeForTier(tier);
-  }
-
-  destroy(): void {
-    this.#isDestroyed = true;
   }
 
   #getMaxFileSizeForTier(tier: PremiumTier): number {
@@ -66,12 +58,6 @@ export class FileHandlerManager {
         return TIER_3;
       default:
         return DEFAULT;
-    }
-  }
-
-  #validateManagerState(): void {
-    if (this.#isDestroyed) {
-      throw new Error("FileHandlerManager has been destroyed");
     }
   }
 

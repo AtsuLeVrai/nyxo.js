@@ -57,7 +57,6 @@ export class ConfigManager {
 
   readonly #pool: Pool;
   #proxyAgent: ProxyAgent | null = null;
-  #isDestroyed = false;
 
   constructor(options: RestOptions) {
     this.#validateConfiguration(options);
@@ -69,8 +68,6 @@ export class ConfigManager {
   }
 
   async updateProxy(proxyOptions: ProxyAgent.Options | null): Promise<void> {
-    this.#validateManagerState();
-
     await this.#cleanupProxy();
 
     if (proxyOptions) {
@@ -83,12 +80,6 @@ export class ConfigManager {
   }
 
   async destroy(): Promise<void> {
-    if (this.#isDestroyed) {
-      return;
-    }
-
-    this.#isDestroyed = true;
-
     try {
       await Promise.race([
         this.#cleanupProxy(),
@@ -135,12 +126,6 @@ export class ConfigManager {
       pool: { ...ConfigManager.DEFAULT_POOL_OPTIONS, ...options.pool },
       retry: this.#getRetryOptions(options),
     } as Required<RestOptions>;
-  }
-
-  #validateManagerState(): void {
-    if (this.#isDestroyed) {
-      throw new Error("ConfigManager has been destroyed");
-    }
   }
 
   #validateConfiguration(options: RestOptions): void {

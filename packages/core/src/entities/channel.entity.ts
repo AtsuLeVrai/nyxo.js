@@ -165,3 +165,253 @@ export interface ChannelEntity {
   default_sort_order?: SortOrderType | null;
   default_forum_layout?: ForumLayoutType;
 }
+
+/**
+ * Guild Text Channel - {@link ChannelType.GuildText}
+ */
+export interface GuildTextChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "nsfw"
+    | "last_message_id"
+    | "rate_limit_per_user"
+    | "parent_id"
+    | "last_pin_timestamp"
+    | "default_auto_archive_duration"
+    | "permissions"
+    | "flags"
+  > {
+  type: ChannelType.GuildText;
+  guild_id: Snowflake;
+}
+
+/**
+ * DM Channel - {@link ChannelType.Dm}
+ */
+export interface DmChannelEntity
+  extends Pick<
+    ChannelEntity,
+    "id" | "type" | "last_message_id" | "recipients" | "last_pin_timestamp"
+  > {
+  type: ChannelType.Dm;
+  recipients: UserEntity[];
+}
+
+/**
+ * Guild Voice Channel - {@link ChannelType.GuildVoice}
+ */
+export interface GuildVoiceChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "bitrate"
+    | "user_limit"
+    | "parent_id"
+    | "rtc_region"
+    | "video_quality_mode"
+    | "flags"
+  > {
+  type: ChannelType.GuildVoice;
+  guild_id: Snowflake;
+  bitrate: Integer;
+  user_limit: Integer;
+}
+
+/**
+ * Group DM Channel - {@link ChannelType.GroupDm}
+ */
+export interface GroupDmChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "name"
+    | "last_message_id"
+    | "recipients"
+    | "icon"
+    | "owner_id"
+    | "application_id"
+    | "managed"
+  > {
+  type: ChannelType.GroupDm;
+  recipients: UserEntity[];
+  owner_id: Snowflake;
+}
+
+/**
+ * Guild Category Channel - {@link ChannelType.GuildCategory}
+ */
+export interface GuildCategoryChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "nsfw"
+    | "flags"
+  > {
+  type: ChannelType.GuildCategory;
+  guild_id: Snowflake;
+}
+
+/**
+ * Guild Announcement Channel - {@link ChannelType.GuildAnnouncement}
+ */
+export interface GuildAnnouncementChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "nsfw"
+    | "last_message_id"
+    | "parent_id"
+    | "default_auto_archive_duration"
+    | "flags"
+  > {
+  type: ChannelType.GuildAnnouncement;
+  guild_id: Snowflake;
+}
+
+/**
+ * Thread Channel Base - {@link ChannelType.AnnouncementThread}, {@link ChannelType.PublicThread}, {@link ChannelType.PrivateThread}
+ */
+export interface ThreadChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "name"
+    | "member_count"
+    | "message_count"
+    | "thread_metadata"
+    | "member"
+    | "rate_limit_per_user"
+    | "parent_id"
+    | "owner_id"
+    | "last_message_id"
+    | "flags"
+    | "total_message_sent"
+    | "applied_tags"
+  > {
+  type:
+    | ChannelType.AnnouncementThread
+    | ChannelType.PublicThread
+    | ChannelType.PrivateThread;
+  guild_id: Snowflake;
+  thread_metadata: ThreadMetadataEntity;
+  parent_id: Snowflake;
+}
+
+/**
+ * Guild Stage Voice Channel - {@link ChannelType.GuildStageVoice}
+ */
+export interface GuildStageVoiceChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "bitrate"
+    | "user_limit"
+    | "parent_id"
+    | "rtc_region"
+    | "topic"
+    | "flags"
+  > {
+  type: ChannelType.GuildStageVoice;
+  guild_id: Snowflake;
+  bitrate: Integer;
+  user_limit: Integer;
+}
+
+/**
+ * Guild Forum Channel - {@link ChannelType.GuildForum}
+ */
+export interface GuildForumChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "nsfw"
+    | "rate_limit_per_user"
+    | "parent_id"
+    | "flags"
+    | "available_tags"
+    | "default_reaction_emoji"
+    | "default_thread_rate_limit_per_user"
+    | "default_sort_order"
+    | "default_forum_layout"
+  > {
+  type: ChannelType.GuildForum;
+  guild_id: Snowflake;
+  available_tags: ForumTagEntity[];
+}
+
+/**
+ * Guild Media Channel - {@link ChannelType.GuildMedia}
+ */
+export interface GuildMediaChannelEntity
+  extends Pick<
+    ChannelEntity,
+    | "id"
+    | "type"
+    | "guild_id"
+    | "position"
+    | "permission_overwrites"
+    | "name"
+    | "topic"
+    | "nsfw"
+    | "rate_limit_per_user"
+    | "parent_id"
+    | "flags"
+    | "available_tags"
+    | "default_reaction_emoji"
+    | "default_thread_rate_limit_per_user"
+    | "default_sort_order"
+  > {
+  type: ChannelType.GuildMedia;
+  guild_id: Snowflake;
+  available_tags: ForumTagEntity[];
+}
+
+// Export union type of all channel types
+export type AnyChannelEntity =
+  | GuildTextChannelEntity
+  | DmChannelEntity
+  | GuildVoiceChannelEntity
+  | GroupDmChannelEntity
+  | GuildCategoryChannelEntity
+  | GuildAnnouncementChannelEntity
+  | ThreadChannelEntity
+  | GuildStageVoiceChannelEntity
+  | GuildForumChannelEntity
+  | GuildMediaChannelEntity;

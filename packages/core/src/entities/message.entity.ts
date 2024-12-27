@@ -4,7 +4,7 @@ import type {
   ApplicationEntity,
   ApplicationIntegrationType,
 } from "./application.entity.js";
-import type { ChannelEntity, ChannelType } from "./channel.entity.js";
+import type { ChannelType, ThreadChannelEntity } from "./channel.entity.js";
 import type { EmojiEntity } from "./emoji.entity.js";
 import type {
   InteractionResolvedData,
@@ -400,7 +400,7 @@ export interface MessageEntity {
     | ModalSubmitInteractionMetadataEntity;
   /** @deprecated Deprecated in favor of interaction_metadata */
   interaction?: MessageInteractionEntity;
-  thread?: ChannelEntity;
+  thread?: ThreadChannelEntity;
   components?: ActionRowEntity[];
   sticker_items?: StickerItemEntity[];
   /** @deprecated Deprecated the stickers sent with the message */

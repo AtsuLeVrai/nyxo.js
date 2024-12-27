@@ -27,7 +27,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/3tatsu/nyx.js",
-    "directory": "packages/core"
+    "directory": "packages/gateway"
   },
   "bugs": {
     "url": "https://github.com/3tatsu/nyx.js/issues"

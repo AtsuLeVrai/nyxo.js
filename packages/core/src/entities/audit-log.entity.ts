@@ -1,7 +1,7 @@
 import type { Snowflake } from "../managers/index.js";
 import type { ApplicationCommandEntity } from "./application-commands.entity.js";
 import type { AutoModerationRuleEntity } from "./auto-moderation.entity.js";
-import type { ChannelEntity } from "./channel.entity.js";
+import type { ThreadChannelEntity } from "./channel.entity.js";
 import type { IntegrationEntity } from "./guild.entity.js";
 import type { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
 import type { UserEntity } from "./user.entity.js";
@@ -160,7 +160,7 @@ export interface AuditLogEntity {
   auto_moderation_rules: AutoModerationRuleEntity[];
   guild_scheduled_events: GuildScheduledEventEntity[];
   integrations: Partial<IntegrationEntity>[];
-  threads: ChannelEntity[];
+  threads: ThreadChannelEntity[];
   users: UserEntity[];
   webhooks: WebhookEntity[];
 }

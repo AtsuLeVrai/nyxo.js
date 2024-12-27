@@ -23,7 +23,6 @@ import {
   EncodingType,
   GatewayCloseCodes,
   type GatewayEventsMap,
-  type GatewayIntentsBits,
   GatewayOpcodes,
   type GatewayOptions,
   type GatewayReceiveEventsMap,
@@ -40,6 +39,7 @@ interface ConnectionState {
   heartbeatInterval: NodeJS.Timeout | null;
   heartbeatsMissed: number;
   lastHeartbeatAck: boolean;
+  jitter: number;
 }
 
 export class Gateway extends EventEmitter<GatewayEventsMap> {
@@ -52,7 +52,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   readonly #version: ApiVersion.V10;
   readonly #encoding: EncodingType;
   readonly #compress: CompressionType | null;
-  readonly #intents: BitFieldManager<GatewayIntentsBits>;
+  readonly #intents: BitFieldManager<number>;
   readonly #largeThreshold: number;
   readonly #presence?: UpdatePresenceEntity;
 
@@ -67,6 +67,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     heartbeatInterval: null,
     heartbeatsMissed: 0,
     lastHeartbeatAck: true,
+    jitter: Math.random(),
   };
 
   readonly #shardManager: ShardManager;
@@ -78,6 +79,10 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   constructor(rest: Rest, options: GatewayOptions) {
     super();
 
+    if (!options.intents) {
+      throw new Error("You must specify intents when identifying");
+    }
+
     this.#rest = rest;
     this.#token = options.token ?? rest.token.value;
     this.#version = options.version ?? ApiVersion.V10;
@@ -88,9 +93,13 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       options.largeThreshold ?? Gateway.DEFAULT_LARGE_THRESHOLD;
     this.#presence = options.presence;
 
-    this.#shardManager = new ShardManager(options);
     this.#sessionManager = new SessionManager();
     this.#rateLimitManager = new RateLimitManager(options);
+    this.#shardManager = new ShardManager(
+      this.#sessionManager,
+      this.#rateLimitManager,
+      options,
+    );
     this.#compressionManager = new CompressionManager(this.#compress);
     this.#encodingManager = new EncodingManager(this.#encoding);
   }
@@ -110,6 +119,16 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   async connect(): Promise<void> {
     try {
       const gatewayInfo = await this.#fetchGatewayBot();
+
+      if (!this.#shardManager.isInitialized) {
+        this.#shardManager.initialize(
+          gatewayInfo.shards,
+          gatewayInfo.session_start_limit.max_concurrency,
+        );
+      }
+
+      this.#sessionManager.updateStartLimit(gatewayInfo.session_start_limit);
+
       await this.#initializeConnection(gatewayInfo);
     } catch (error) {
       this.emit(
@@ -166,25 +185,10 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   async #initializeConnection(
     gatewayInfo: GatewayBotResponseEntity,
   ): Promise<void> {
-    this.#sessionManager.updateStartLimit(gatewayInfo.session_start_limit);
-
-    if (this.#shardManager.isAutoMode) {
-      this.#state.wsUrl = gatewayInfo.url;
-      if (!this.#shardManager.isInitialized) {
-        this.#shardManager.initialize(
-          gatewayInfo.shards,
-          gatewayInfo.session_start_limit.max_concurrency,
-        );
-      }
-    }
-
-    const wsUrl = await this.#buildGatewayUrl(
-      this.#state.wsUrl ?? gatewayInfo.url,
-    );
+    const wsUrl = await this.#buildGatewayUrl(gatewayInfo.url);
+    this.#state.wsUrl = wsUrl;
 
     this.#ws = new WebSocket(wsUrl);
-    this.#state.sessionId = await this.#sessionManager.createSession(0);
-
     await this.#setupWebSocket();
   }
 
@@ -230,6 +234,9 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   async #handlePayload(payload: PayloadEntity): Promise<void> {
     if (payload.s !== null) {
       this.#state.lastSequenceNumber = payload.s;
+      if (this.#state.sessionId) {
+        this.#sessionManager.updateSequence(this.#state.sessionId, payload.s);
+      }
     }
 
     switch (payload.op) {
@@ -309,26 +316,71 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     this.#state.sessionId = data.session_id;
     this.#state.resumeUrl = data.resume_gateway_url;
 
-    if (this.#shardManager.isAutoMode) {
+    if (!this.#sessionManager.hasSession(data.session_id)) {
+      const currentShard = this.#shardManager.isEnabled
+        ? this.#shardManager.getNextShardToSpawn()
+        : undefined;
+
+      this.#sessionManager.registerSession(
+        data.session_id,
+        currentShard ?? 0,
+        data.v,
+        this.#encoding,
+      );
+    }
+
+    this.#sessionManager.updateSession(
+      data.session_id,
+      data.resume_gateway_url,
+      this.#state.lastSequenceNumber,
+      this.#state.heartbeatsMissed,
+    );
+
+    if (this.#shardManager.isEnabled) {
       const shardId = this.#shardManager.getNextShardToSpawn();
       if (shardId !== null) {
         this.#shardManager.updateShardStatus(shardId, "ready");
+
+        for (const guild of data.guilds) {
+          if ("id" in guild) {
+            this.#shardManager.addGuildToShard(guild.id);
+          }
+        }
+      }
+    } else {
+      for (const guild of data.guilds) {
+        if ("id" in guild) {
+          this.#shardManager.addGuildToShard(guild.id);
+        }
       }
     }
+
+    this.#state.reconnectAttempts = 0;
+    this.#state.isReconnecting = false;
+
+    const debugMessage = [
+      `🤖 ${data.user.username} (${data.application.id})`,
+      `📡 Session ${data.session_id}`,
+      `🌐 v${data.v} | ${data.guilds.length} guilds`,
+      data.shard ? `✨ Shard [${data.shard}]` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    this.emit("debug", debugMessage);
   }
 
   async #setupHeartbeat(interval: number): Promise<void> {
     this.#clearHeartbeat();
 
-    const jitter = Math.random();
-    const initialDelay = Math.floor(interval * jitter);
+    const jitterDelay = Math.floor(interval * this.#state.jitter);
 
     this.emit(
       "debug",
-      `Setting up heartbeat (interval: ${interval}ms, calculated jitter: ${jitter}, initial jitter delay: ${initialDelay}ms)`,
+      `Setting up heartbeat (interval: ${interval}ms, jitter: ${this.#state.jitter}, delay: ${jitterDelay}ms)`,
     );
 
-    await this.#wait(initialDelay);
+    await this.#wait(jitterDelay);
     await this.#sendHeartbeat();
 
     this.#state.heartbeatInterval = setInterval(() => {
@@ -358,27 +410,35 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       s: null,
       t: null,
     });
+
+    if (this.#state.sessionId) {
+      this.#sessionManager.updateHeartbeat(this.#state.sessionId, true);
+    }
   }
 
   #handleHeartbeatAck(): void {
     this.#state.lastHeartbeatAck = true;
     this.#state.heartbeatsMissed = 0;
+
+    if (this.#state.sessionId) {
+      this.#sessionManager.updateHeartbeat(this.#state.sessionId, false, true);
+    }
   }
 
   async #identify(): Promise<void> {
     const payload: IdentifyEntity = {
       token: this.#token,
+      compress: Boolean(this.#compress),
+      large_threshold: this.#largeThreshold,
+      intents: Number(this.#intents.valueOf()),
       properties: {
         os: process.platform,
         browser: "nyx.js",
         device: "nyx.js",
       },
-      compress: Boolean(this.#compress),
-      large_threshold: this.#largeThreshold,
-      intents: Number(this.#intents.valueOf()),
     };
 
-    if (this.#shardManager.isAutoMode) {
+    if (this.#shardManager.isEnabled) {
       const shardId = this.#shardManager.getNextShardToSpawn();
       if (shardId !== null) {
         payload.shard = [shardId, this.#shardManager.totalShards];

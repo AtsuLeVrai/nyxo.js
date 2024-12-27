@@ -18,9 +18,11 @@ export class RateLimitManager {
   readonly #maxConcurrentIdentifies: number;
   readonly #buckets = new Store<string, RateLimitBucket>();
   readonly #identifyQueue: RateLimitIdentifyQueueItem[] = [];
+  readonly #bucketLastIdentify = new Store<number, number>();
 
   #processingIdentify = false;
   #identifyProcessor: NodeJS.Timeout | null = null;
+  #globalTokensUsed = 0;
 
   constructor(options: RateLimitOptions = {}) {
     this.#maxTokens = options.maxTokens ?? RateLimitManager.DEFAULT_MAX_TOKENS;
@@ -31,11 +33,18 @@ export class RateLimitManager {
     this.#maxConcurrentIdentifies =
       options.maxConcurrentIdentifies ??
       RateLimitManager.DEFAULT_MAX_CONCURRENT_IDENTIFIES;
+
+    setInterval(() => {
+      this.#globalTokensUsed = 0;
+    }, this.#refillInterval);
   }
 
   async acquire(bucketId: string): Promise<void> {
-    const bucket = this.#getOrCreateBucket(bucketId);
+    if (!this.#checkGlobalLimit()) {
+      throw new Error("Global rate limit exceeded");
+    }
 
+    const bucket = this.#getOrCreateBucket(bucketId);
     if (bucket.blocked) {
       throw new Error(`Bucket ${bucketId} is blocked due to rate limit`);
     }
@@ -53,11 +62,31 @@ export class RateLimitManager {
     }
 
     bucket.tokens--;
+    this.#globalTokensUsed++;
   }
 
   async acquireIdentify(shardId: number): Promise<void> {
+    if (!Number.isInteger(shardId) || shardId < 0) {
+      throw new Error(`Invalid shard ID: ${shardId}`);
+    }
+
+    const bucket = shardId % this.#maxConcurrentIdentifies;
+    const lastIdentifyTime = this.#bucketLastIdentify.get(bucket) ?? 0;
+    const now = Date.now();
+
+    if (now - lastIdentifyTime < this.#identifyInterval) {
+      const waitTime = this.#identifyInterval - (now - lastIdentifyTime);
+      await this.#wait(waitTime);
+    }
+
     return new Promise<void>((resolve, reject) => {
-      this.#identifyQueue.push({ shardId, resolve, reject });
+      this.#identifyQueue.push({
+        shardId,
+        resolve,
+        reject,
+        bucket,
+        timestamp: Date.now(),
+      });
       this.#processIdentifyQueue().catch(reject);
     });
   }
@@ -69,7 +98,7 @@ export class RateLimitManager {
     }
 
     this.#refillBucket(bucket);
-    return bucket.tokens <= 0;
+    return bucket.tokens <= 0 || !this.#checkGlobalLimit();
   }
 
   getBucketInfo(
@@ -109,7 +138,13 @@ export class RateLimitManager {
 
     this.#buckets.clear();
     this.#identifyQueue.splice(0, this.#identifyQueue.length);
+    this.#bucketLastIdentify.clear();
     this.#processingIdentify = false;
+    this.#globalTokensUsed = 0;
+  }
+
+  #checkGlobalLimit(): boolean {
+    return this.#globalTokensUsed < this.#maxTokens;
   }
 
   #getOrCreateBucket(bucketId: string): RateLimitBucket {
@@ -153,28 +188,37 @@ export class RateLimitManager {
     }
 
     this.#processingIdentify = true;
+    const now = Date.now();
 
     try {
-      while (this.#identifyQueue.length > 0) {
-        const batch = this.#identifyQueue.splice(
-          0,
-          this.#maxConcurrentIdentifies,
-        );
+      const buckets = new Store<number, RateLimitIdentifyQueueItem[]>();
 
-        await Promise.all(
-          batch.map((item) => {
-            try {
-              item.resolve();
-            } catch (error) {
-              item.reject(
-                error instanceof Error ? error : new Error(String(error)),
-              );
-            }
-          }),
-        );
+      for (const item of this.#identifyQueue) {
+        const items = buckets.get(item.bucket) ?? [];
+        items.push(item);
+        buckets.set(item.bucket, items);
+      }
 
-        if (this.#identifyQueue.length > 0) {
-          await this.#wait(this.#identifyInterval);
+      for (const [bucket, items] of Array.from(buckets.entries()).sort(
+        (a, b) => a[0] - b[0],
+      )) {
+        const lastIdentifyTime = this.#bucketLastIdentify.get(bucket) ?? 0;
+
+        if (now - lastIdentifyTime < this.#identifyInterval) {
+          await this.#wait(this.#identifyInterval - (now - lastIdentifyTime));
+        }
+
+        for (const item of items) {
+          try {
+            this.#bucketLastIdentify.set(bucket, Date.now());
+            item.resolve();
+            this.#identifyQueue.splice(this.#identifyQueue.indexOf(item), 1);
+            await this.#wait(this.#identifyInterval);
+          } catch (error) {
+            item.reject(
+              error instanceof Error ? error : new Error(String(error)),
+            );
+          }
         }
       }
     } finally {

@@ -1,5 +1,4 @@
 import {
-  type ChannelEntity,
   ChannelFlags,
   ChannelType,
   DefaultMessageNotificationLevel,
@@ -17,6 +16,7 @@ import {
   SnowflakeManager,
   SortOrderType,
   SystemChannelFlags,
+  type ThreadChannelEntity,
   type ThreadMemberEntity,
   VerificationLevel,
   VideoQualityMode,
@@ -229,7 +229,7 @@ export type ModifyGuildChannelPositionsEntity = z.infer<
  * @see {@link https://discord.com/developers/docs/resources/guild#list-active-guild-threads-response-body}
  */
 export interface ListActiveGuildThreadsEntity {
-  threads: ChannelEntity[];
+  threads: ThreadChannelEntity[];
   members: ThreadMemberEntity[];
 }
 
