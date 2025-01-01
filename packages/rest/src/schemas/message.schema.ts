@@ -40,10 +40,8 @@ export const CreateMessageSchema = z
     message_reference: MessageReferenceSchema.optional(),
     components: ActionRowSchema.optional(),
     sticker_ids: z.array(SnowflakeSchema).max(3).optional(),
-    files: z.custom<FileType>().optional(),
-    /**
-     * @deprecated Use `files` instead
-     */
+    files: z.custom<FileType | FileType[]>().optional(),
+    /** @deprecated Do not use `payload_json`. This is done automatically! */
     payload_json: z.string().optional(),
     attachments: z.array(AttachmentSchema).max(10).optional(),
     flags: z

@@ -9,6 +9,7 @@ interface ProcessOptions {
 
 export class EncodingManager {
   static readonly VALID_ENCODING_TYPES = new Set<EncodingType>(["json", "etf"]);
+  static readonly MAX_PAYLOAD_SIZE = 4096;
 
   readonly #encoding: EncodingType;
 
@@ -22,14 +23,21 @@ export class EncodingManager {
 
   encode(data: PayloadEntity): Buffer | string {
     try {
+      let processed: Buffer | string;
+
       switch (this.#encoding) {
         case "json":
-          return this.#encodeJson(data);
+          processed = this.#encodeJson(data);
+          break;
         case "etf":
-          return this.#encodeEtf(data);
+          processed = this.#encodeEtf(data);
+          break;
         default:
           throw new Error(`Invalid encoding type: ${this.#encoding}`);
       }
+
+      this.#validatePayloadSize(processed);
+      return processed;
     } catch (error) {
       throw new Error(
         `Encoding failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -39,6 +47,8 @@ export class EncodingManager {
 
   decode(data: Buffer | string): PayloadEntity {
     try {
+      this.#validatePayloadSize(data);
+
       switch (this.#encoding) {
         case "json":
           return this.#decodeJson(data);
@@ -97,6 +107,15 @@ export class EncodingManager {
     }
 
     return payload;
+  }
+
+  #validatePayloadSize(data: Buffer | string): void {
+    const size = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
+    if (size > EncodingManager.MAX_PAYLOAD_SIZE) {
+      throw new Error(
+        `Payload size of ${size} bytes exceeds maximum size of ${EncodingManager.MAX_PAYLOAD_SIZE} bytes`,
+      );
+    }
   }
 
   #processData(data: unknown, options: ProcessOptions = {}): unknown {

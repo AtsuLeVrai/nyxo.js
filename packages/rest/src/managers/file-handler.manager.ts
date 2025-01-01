@@ -3,7 +3,13 @@ import { basename } from "node:path";
 import { PremiumTier } from "@nyxjs/core";
 import FormData from "form-data";
 import { contentType } from "mime-types";
-import type { FileInput, FileType, RouteEntity } from "../types/index.js";
+import type { FileType, RouteEntity } from "../types/index.js";
+
+interface FileInput {
+  buffer: Buffer;
+  filename: string;
+  contentType: string;
+}
 
 export class FileHandlerManager {
   static readonly FILE_LIMITS = {
@@ -30,7 +36,10 @@ export class FileHandlerManager {
       : [options.files];
 
     await this.#validateFiles(files);
-    const form = await this.#createFormDataWithFiles(files, options.body);
+    const form = await this.#createFormDataWithFiles(
+      files,
+      options.body as Buffer | string,
+    );
 
     return {
       ...options,
@@ -96,7 +105,7 @@ export class FileHandlerManager {
 
   async #createFormDataWithFiles(
     files: Array<FileType | undefined>,
-    body?: unknown,
+    body?: Buffer | string,
   ): Promise<FormData> {
     const form = new FormData();
 

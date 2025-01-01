@@ -32,9 +32,7 @@ export type ModifyChannelGroupDmEntity = z.infer<
   typeof ModifyChannelGroupDmSchema
 >;
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel}
- */
+/** @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel} */
 export const ModifyChannelGuildChannelSchema = z
   .object({
     name: z.string().min(1).max(100),

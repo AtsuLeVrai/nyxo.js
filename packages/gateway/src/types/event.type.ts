@@ -72,7 +72,7 @@ import { type GatewayCloseCodes, GatewayOpcodes } from "./gateway.type.js";
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
  */
-export interface GatewayReceiveEventsMap {
+export interface GatewayReceiveEvents {
   [GatewayOpcodes.hello]: HelloEntity;
   READY: ReadyEntity;
   RESUMED: boolean;
@@ -158,7 +158,7 @@ export interface GatewayReceiveEventsMap {
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#send-events}
  */
-export interface GatewaySendEventsMap {
+export interface GatewaySendEvents {
   [GatewayOpcodes.identify]: IdentifyEntity;
   [GatewayOpcodes.resume]: ResumeEntity;
   [GatewayOpcodes.heartbeat]: number | null;
@@ -168,14 +168,14 @@ export interface GatewaySendEventsMap {
   [GatewayOpcodes.presenceUpdate]: UpdatePresenceEntity;
 }
 
-export interface GatewayEventsMap<
-  T extends keyof GatewayReceiveEventsMap = keyof GatewayReceiveEventsMap,
+export interface GatewayEvents<
+  T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents,
 > {
   debug: [message: string];
   warn: [message: string];
   error: [error: Error];
   close: [code: GatewayCloseCodes];
-  dispatch: [event: T, data: GatewayReceiveEventsMap[T]];
+  dispatch: [event: T, data: GatewayReceiveEvents[T]];
   connecting: [attempt: number];
   connected: [];
   reconnecting: [attempt: number];

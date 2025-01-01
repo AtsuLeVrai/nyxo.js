@@ -1,5 +1,3 @@
-import { AuthTypeFlag } from "../types/index.js";
-
 interface TokenEntity {
   id: string;
   timestamp: string;
@@ -7,19 +5,14 @@ interface TokenEntity {
 }
 
 interface ParsedTokenEntity {
-  type: AuthTypeFlag;
   parts: TokenEntity;
   value: string;
   botId?: string;
   timestamp?: number;
 }
 
-const TOKEN_PATTERNS: Record<AuthTypeFlag, RegExp> = {
-  [AuthTypeFlag.bot]: /^[\w-]{20,}\.[\w-]{6}\.[\w-]{27,}$/,
-  [AuthTypeFlag.bearer]: /^[a-zA-Z0-9_-]{30,}$/,
-} as const;
-
 export class TokenManager {
+  static readonly TOKEN_PATTERN = /^[\w-]{20,}\.[\w-]{6}\.[\w-]{27,}$/;
   static readonly EXPIRATION = {
     days: 7,
     milliseconds: 7 * 24 * 60 * 60 * 1000,
@@ -70,11 +63,8 @@ export class TokenManager {
     return input.trim();
   }
 
-  static isValidToken(
-    input: string,
-    type: AuthTypeFlag = AuthTypeFlag.bot,
-  ): boolean {
-    return TOKEN_PATTERNS[type].test(input);
+  static isValidToken(input: string): boolean {
+    return TokenManager.TOKEN_PATTERN.test(input);
   }
 
   static formatToken(
@@ -97,17 +87,11 @@ export class TokenManager {
   static parseToken(input: string): ParsedTokenEntity | null {
     try {
       const token = TokenManager.normalizeToken(input);
-      const type = TokenManager.#getTokenType(token);
-
-      if (!type) {
-        return null;
-      }
 
       const parts = TokenManager.#extractTokenParts(token);
-      const enrichedData = TokenManager.#enrichTokenData(type, parts);
+      const enrichedData = TokenManager.#enrichTokenData(parts);
 
       return {
-        type,
         parts,
         value: token,
         ...enrichedData,
@@ -125,26 +109,12 @@ export class TokenManager {
     return TokenManager.isValidToken(first) && first === second;
   }
 
-  static #getTokenType(token: string): AuthTypeFlag | null {
-    const match = Object.entries(TOKEN_PATTERNS).find(([, pattern]) =>
-      pattern.test(token),
-    );
-    return (match?.[0] as AuthTypeFlag) ?? null;
-  }
-
   static #extractTokenParts(token: string): TokenEntity {
     const [id = "", timestamp = "", hash = ""] = token.split(".");
     return { id, timestamp, hash };
   }
 
-  static #enrichTokenData(
-    type: AuthTypeFlag,
-    parts: TokenEntity,
-  ): Partial<ParsedTokenEntity> {
-    if (type !== AuthTypeFlag.bot) {
-      return {};
-    }
-
+  static #enrichTokenData(parts: TokenEntity): Partial<ParsedTokenEntity> {
     try {
       return {
         botId: atob(parts.id),

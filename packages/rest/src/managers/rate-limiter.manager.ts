@@ -1,19 +1,25 @@
-import { Store } from "@nyxjs/store";
-import type {
-  QueueEntry,
-  RateLimitData,
-  RateLimitScope,
-} from "../types/index.js";
-import { HttpStatusCode } from "../types/index.js";
+import type { Dispatcher } from "undici";
 
-export class RestRateLimitManager {
-  static readonly PATHS = {
-    SHARED: new Set([
-      /^\/guilds\/\d+\/emojis/,
-      /^\/channels\/\d+\/messages\/\d+\/reactions/,
-    ]),
-    EXCLUDED: new Set(["/interactions"]),
-  } as const;
+type RateLimitScope = "user" | "global" | "shared";
+
+interface BucketInfo {
+  hash: string;
+  limit: number;
+  remaining: number;
+  reset: number;
+  resetAfter: number;
+  scope: RateLimitScope;
+}
+
+interface MajorParameter {
+  regex: RegExp;
+  param: string;
+}
+
+export class RateLimitManager {
+  static readonly GLOBAL_LIMIT = 50;
+  static readonly INVALID_LIMIT = 10_000;
+  static readonly INVALID_WINDOW = 600_000;
 
   static readonly HEADERS = {
     BUCKET: "x-ratelimit-bucket",
@@ -26,334 +32,165 @@ export class RestRateLimitManager {
     RETRY_AFTER: "retry-after",
   } as const;
 
-  static readonly LIMITS = {
-    MAX_QUEUE_SIZE: 1000,
-    MAX_GLOBAL_REQUESTS: 50,
-    MAX_INVALID_REQUESTS: 10000,
-    INVALID_REQUEST_WINDOW: 600_000,
-    GLOBAL_RESET_INTERVAL: 1000,
-  } as const;
+  readonly #buckets = new Map<string, BucketInfo>();
+  readonly #routeToBucket = new Map<string, string>();
 
-  readonly #bucketHashes = new Store<string, string>();
-  readonly #requestQueue = new Store<string, QueueEntry[]>();
-  readonly #rateLimitBuckets = new Store<
-    string,
-    Omit<RateLimitData, "bucket">
-  >();
+  #globalReset: number | null = null;
+  #globalRemaining = RateLimitManager.GLOBAL_LIMIT;
+  #lastGlobalReset = Date.now();
 
-  #globalRateLimit: number | null = null;
-  #globalRequestCounter = 0;
-  #globalResetTimeout: NodeJS.Timeout | null = null;
+  #invalidCount = 0;
+  #lastInvalidReset = Date.now();
 
-  #invalidRequestCount = 0;
-  #lastInvalidRequestReset = Date.now();
-
-  constructor() {
-    this.#startGlobalResetInterval();
+  get globalReset(): number | null {
+    return this.#globalReset;
   }
 
-  async checkRateLimits(path: string): Promise<void> {
-    if (this.#isInvalidRequestLimited()) {
-      throw new Error("Invalid request rate limit exceeded");
+  async checkRateLimit(
+    path: string,
+    method: Dispatcher.HttpMethod,
+  ): Promise<void> {
+    this.#checkInvalidLimit();
+
+    if (!this.#isExcludedRoute(path)) {
+      await this.#checkGlobalRateLimit();
     }
 
-    if (this.#isGloballyLimited(path)) {
-      await this.#handleGlobalRateLimit();
-      return;
+    const routeKey = this.#getRouteKey(path, method);
+    const bucketHash = this.#routeToBucket.get(routeKey);
+
+    if (bucketHash) {
+      const bucket = this.#buckets.get(bucketHash);
+      if (bucket) {
+        if (bucket.remaining <= 0) {
+          const delay = bucket.reset * 1000 - Date.now();
+          if (delay > 0) {
+            await this.#wait(delay);
+          }
+          bucket.remaining = bucket.limit;
+        }
+
+        bucket.remaining--;
+        this.#buckets.set(bucketHash, bucket);
+      }
     }
 
-    const bucketKey = this.#getBucketKey(path);
-    const rateLimit = this.#rateLimitBuckets.get(bucketKey);
-    if (this.#isBucketRateLimited(rateLimit)) {
-      await this.#handleBucketRateLimit(bucketKey, rateLimit);
-      return;
-    }
-
-    this.#incrementGlobalCounter(path);
-
-    if (rateLimit) {
-      this.#updateBucketRemaining(bucketKey, rateLimit);
+    if (!this.#isExcludedRoute(path)) {
+      this.#globalRemaining--;
     }
   }
 
-  updateRateLimits(headers: Record<string, string>, statusCode: number): void {
+  updateRateLimit(
+    path: string,
+    method: string,
+    headers: Record<string, string>,
+    statusCode: number,
+  ): void {
+    const h = RateLimitManager.HEADERS;
+
     if (this.#isErrorStatusCode(statusCode)) {
-      this.incrementInvalidRequestCount();
+      this.#incrementInvalidCount();
+      if (statusCode === 429 && headers[h.GLOBAL]) {
+        const retryAfter = Number(headers[h.RETRY_AFTER]) * 1000;
+        this.#globalReset = Date.now() + retryAfter;
+        return;
+      }
     }
 
-    if (statusCode === HttpStatusCode.tooManyRequests) {
-      this.#handleGlobalRateLimitHeader(headers);
+    const bucketHash = headers[h.BUCKET];
+    if (!bucketHash) {
       return;
     }
 
-    const rateLimitData = this.#extractRateLimitData(headers);
-    if (!rateLimitData) {
-      return;
-    }
+    const routeKey = this.#getRouteKey(path, method);
+    this.#routeToBucket.set(routeKey, bucketHash);
 
-    this.#updateBucketData(rateLimitData, headers);
-    this.#processQueue(rateLimitData.bucket);
-  }
-
-  incrementInvalidRequestCount(): void {
-    this.#invalidRequestCount++;
-    const now = Date.now();
-
-    if (
-      now - this.#lastInvalidRequestReset >=
-      RestRateLimitManager.LIMITS.INVALID_REQUEST_WINDOW
-    ) {
-      this.#invalidRequestCount = 1;
-      this.#lastInvalidRequestReset = now;
-    }
+    this.#buckets.set(bucketHash, {
+      hash: bucketHash,
+      limit: Number(headers[h.LIMIT]) || 0,
+      remaining: Number(headers[h.REMAINING]) || 0,
+      reset: Number(headers[h.RESET]) || 0,
+      resetAfter: Number(headers[h.RESET_AFTER]) || 0,
+      scope: (headers[h.SCOPE] as RateLimitScope) || "user",
+    });
   }
 
   destroy(): void {
-    if (this.#globalResetTimeout) {
-      clearInterval(this.#globalResetTimeout);
-      this.#globalResetTimeout = null;
+    this.#buckets.clear();
+    this.#routeToBucket.clear();
+    this.#globalReset = null;
+    this.#globalRemaining = RateLimitManager.GLOBAL_LIMIT;
+    this.#invalidCount = 0;
+  }
+
+  async #checkGlobalRateLimit(): Promise<void> {
+    if (Date.now() - this.#lastGlobalReset >= 1000) {
+      this.#globalRemaining = RateLimitManager.GLOBAL_LIMIT;
+      this.#lastGlobalReset = Date.now();
     }
 
-    this.#clearStores();
-    this.#resetCounters();
-    this.#rejectPendingRequests();
+    if (this.#globalRemaining <= 0) {
+      const delay = Math.max(0, 1000 - (Date.now() - this.#lastGlobalReset));
+      await this.#wait(delay);
+      this.#globalRemaining = RateLimitManager.GLOBAL_LIMIT;
+    }
   }
 
-  #startGlobalResetInterval(): void {
-    this.#globalResetTimeout = setInterval(() => {
-      this.#globalRequestCounter = 0;
-    }, RestRateLimitManager.LIMITS.GLOBAL_RESET_INTERVAL);
-  }
+  #getRouteKey(path: string, method: string): string {
+    const SharedRoutes: RegExp[] = [
+      /^\/guilds\/\d+\/emojis/,
+      /^\/channels\/\d+\/messages\/\d+\/reactions/,
+    ];
 
-  #getBucketKey(path: string): string {
-    for (const pattern of RestRateLimitManager.PATHS.SHARED) {
+    for (const pattern of SharedRoutes) {
       if (pattern.test(path)) {
         return `shared:${path}`;
       }
     }
 
-    const routes = {
-      channels: /^\/channels\/(\d+)/,
-      guilds: /^\/guilds\/(\d+)/,
-      webhooks: /^\/webhooks\/(\d+)/,
-    };
+    const MajorParameters: MajorParameter[] = [
+      { regex: /^\/channels\/(\d+)/, param: "channel_id" },
+      { regex: /^\/guilds\/(\d+)/, param: "guild_id" },
+      { regex: /^\/webhooks\/(\d+)/, param: "webhook_id" },
+    ];
 
-    for (const [type, regex] of Object.entries(routes)) {
+    let routeKey = path;
+    for (const { regex, param } of MajorParameters) {
       const match = path.match(regex);
       if (match) {
-        const [, id] = match;
-        const hash = this.#bucketHashes.get(`${type}:${id}`);
-        return hash ? `${type}:${id}:${hash}` : `${type}:${id}:${path}`;
+        routeKey = path.replace(String(match[1]), `{${param}}`);
+        break;
       }
     }
 
-    return path;
+    return `${method}:${routeKey}`;
   }
 
-  #isGloballyLimited(path: string): boolean {
-    return (
-      !path.startsWith("/interactions") &&
-      this.#globalRequestCounter >=
-        RestRateLimitManager.LIMITS.MAX_GLOBAL_REQUESTS
-    );
+  #isExcludedRoute(path: string): path is string {
+    return path.includes("/interactions");
   }
 
-  async #handleGlobalRateLimit(): Promise<void> {
-    if (!this.#globalRateLimit) {
-      return;
-    }
-
-    const delay = this.#globalRateLimit - Date.now();
-    if (delay <= 0) {
-      this.#globalRateLimit = null;
-      return;
-    }
-
-    await this.#wait(delay);
-    this.#globalRateLimit = null;
+  #isErrorStatusCode(statusCode: number): boolean {
+    return statusCode === 401 || statusCode === 403 || statusCode === 429;
   }
 
-  #isBucketRateLimited(
-    rateLimit?: Omit<RateLimitData, "bucket">,
-  ): rateLimit is RateLimitData {
-    if (!rateLimit) {
-      return false;
-    }
-    return rateLimit.remaining === 0 && Date.now() < rateLimit.reset * 1000;
-  }
-
-  async #handleBucketRateLimit(
-    bucket: string,
-    rateLimit: Omit<RateLimitData, "bucket">,
-  ): Promise<void> {
-    const resetTime = rateLimit.reset * 1000;
+  #checkInvalidLimit(): void {
     const now = Date.now();
+    if (now - this.#lastInvalidReset >= RateLimitManager.INVALID_WINDOW) {
+      this.#invalidCount = 0;
+      this.#lastInvalidReset = now;
+    }
 
-    if (now < resetTime) {
-      const delay = resetTime - now;
-      if (delay > 0) {
-        await new Promise<void>((resolve, reject) => {
-          const queueEntry: QueueEntry = {
-            resolve,
-            reject,
-            addedAt: Date.now(),
-          };
-          this.#addToQueue(bucket, queueEntry);
-        });
-      }
+    if (this.#invalidCount >= RateLimitManager.INVALID_LIMIT) {
+      throw new Error("Invalid request limit exceeded (10,000 per 10 minutes)");
     }
   }
 
-  #addToQueue(bucket: string, entry: QueueEntry): void {
-    const queue = this.#requestQueue.get(bucket) ?? [];
-
-    if (queue.length >= RestRateLimitManager.LIMITS.MAX_QUEUE_SIZE) {
-      throw new Error("Rate limit queue is full");
-    }
-
-    queue.push(entry);
-    this.#requestQueue.set(bucket, queue);
-  }
-
-  #processQueue(bucket: string): void {
-    const queue = this.#requestQueue.get(bucket);
-    if (!queue || queue?.length === 0) {
-      return;
-    }
-
-    const rateLimit = this.#rateLimitBuckets.get(bucket);
-    if (!rateLimit || rateLimit.remaining === 0) {
-      return;
-    }
-
-    while (queue.length > 0 && rateLimit.remaining > 0) {
-      const entry = queue.shift();
-      if (entry) {
-        entry.resolve();
-        rateLimit.remaining--;
-      }
-    }
-
-    if (queue.length === 0) {
-      this.#requestQueue.delete(bucket);
-    } else {
-      this.#requestQueue.set(bucket, queue);
-    }
-
-    this.#rateLimitBuckets.set(bucket, rateLimit);
-  }
-
-  #extractRateLimitData(headers: Record<string, string>): RateLimitData | null {
-    const h = RestRateLimitManager.HEADERS;
-    const bucket = headers[h.BUCKET];
-
-    if (!bucket) {
-      return null;
-    }
-
-    const values = {
-      reset: Number(headers[h.RESET]),
-      resetAfter: Number(headers[h.RESET_AFTER]),
-      remaining: Number(headers[h.REMAINING]),
-      limit: Number(headers[h.LIMIT]),
-    };
-
-    if (Object.values(values).some(Number.isNaN)) {
-      return null;
-    }
-
-    return {
-      ...values,
-      bucket,
-      global: Boolean(headers[h.GLOBAL]),
-      scope: headers[h.SCOPE] as RateLimitScope,
-    };
-  }
-
-  #clearStores(): void {
-    this.#rateLimitBuckets.clear();
-    this.#requestQueue.clear();
-    this.#bucketHashes.clear();
-  }
-
-  #resetCounters(): void {
-    this.#globalRateLimit = null;
-    this.#invalidRequestCount = 0;
-    this.#globalRequestCounter = 0;
-  }
-
-  #rejectPendingRequests(): void {
-    for (const queue of this.#requestQueue.values()) {
-      for (const request of queue) {
-        request.reject(new Error("RestRateLimitManager is being destroyed"));
-      }
-    }
-  }
-
-  #handleGlobalRateLimitHeader(headers: Record<string, string>): void {
-    const retryAfter = headers[RestRateLimitManager.HEADERS.RETRY_AFTER];
-    if (!retryAfter) {
-      return;
-    }
-
-    const retryMs = Number(retryAfter) * 1000;
-    this.#globalRateLimit = Date.now() + retryMs;
-  }
-
-  #updateBucketData(
-    rateLimitData: RateLimitData,
-    headers: Record<string, string>,
-  ): void {
-    const { bucket, ...data } = rateLimitData;
-
-    this.#rateLimitBuckets.set(bucket, {
-      ...data,
-      reset: Number(data.reset),
-      resetAfter: Number(data.resetAfter),
-      remaining: Number(data.remaining),
-      limit: Number(data.limit),
-    });
-
-    const bucketHash = headers[RestRateLimitManager.HEADERS.BUCKET];
-    if (bucketHash) {
-      this.#bucketHashes.set(bucket, bucketHash);
-    }
-  }
-
-  #updateBucketRemaining(
-    bucket: string,
-    rateLimit: Omit<RateLimitData, "bucket">,
-  ): void {
-    if (rateLimit.remaining > 0) {
-      this.#rateLimitBuckets.set(bucket, {
-        ...rateLimit,
-        remaining: rateLimit.remaining - 1,
-      });
-    }
+  #incrementInvalidCount(): void {
+    this.#invalidCount++;
   }
 
   #wait(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  #isErrorStatusCode(statusCode: number): boolean {
-    return (
-      statusCode === HttpStatusCode.unauthorized ||
-      statusCode === HttpStatusCode.forbidden ||
-      statusCode === HttpStatusCode.tooManyRequests
-    );
-  }
-
-  #isInvalidRequestLimited(): boolean {
-    return (
-      this.#invalidRequestCount >=
-      RestRateLimitManager.LIMITS.MAX_INVALID_REQUESTS
-    );
-  }
-
-  #incrementGlobalCounter(path: string): void {
-    if (!RestRateLimitManager.PATHS.EXCLUDED.has(path)) {
-      this.#globalRequestCounter++;
-    }
   }
 }

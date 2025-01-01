@@ -1,104 +1,112 @@
 import type { ApiVersion, PremiumTier } from "@nyxjs/core";
 import type { ProxyAgent } from "undici";
 import {
-  ConfigManager,
   FileHandlerManager,
+  RateLimitManager,
   RequestManager,
-  RestRateLimitManager,
-  RouterManager,
   TokenManager,
 } from "../managers/index.js";
 import {
-  type AuthTypeFlag,
-  HttpMethodFlag,
-  type PathLike,
-  type RestOptions,
-  type RouteEntity,
-  type RouterDefinitions,
-  type RouterKey,
-} from "../types/index.js";
+  ApplicationCommandRouter,
+  ApplicationConnectionRouter,
+  ApplicationRouter,
+  AuditLogRouter,
+  AutoModerationRouter,
+  ChannelRouter,
+  EmojiRouter,
+  EntitlementRouter,
+  GatewayRouter,
+  GuildRouter,
+  GuildTemplateRouter,
+  InteractionRouter,
+  InviteRouter,
+  MessageRouter,
+  OAuth2Router,
+  PollRouter,
+  ScheduledEventRouter,
+  SkuRouter,
+  SoundboardRouter,
+  StageInstanceRouter,
+  StickerRouter,
+  SubscriptionRouter,
+  UserRouter,
+  VoiceRouter,
+  WebhookRouter,
+} from "../routes/index.js";
+import type { PathLike, RestOptions, RouteEntity } from "../types/index.js";
 
 export class Rest {
   static readonly CDN_URL = "https://cdn.discordapp.com";
   static readonly MEDIA_URL = "https://media.discordapp.net";
   static readonly API_URL = "https://discord.com/api";
 
-  readonly config: ConfigManager;
-  readonly file: FileHandlerManager;
-  readonly rateLimit: RestRateLimitManager;
-  readonly request: RequestManager;
-  readonly router: RouterManager;
+  readonly options: RestOptions;
   readonly token: TokenManager;
+  readonly fileManager: FileHandlerManager;
+  readonly rateLimitManager: RateLimitManager;
+  readonly requestManager: RequestManager;
 
-  private retryOnRateLimit = true;
-  private isDestroyed = false;
+  readonly applications = new ApplicationRouter(this);
+  readonly commands = new ApplicationCommandRouter(this);
+  readonly connections = new ApplicationConnectionRouter(this);
+  readonly auditLogs = new AuditLogRouter(this);
+  readonly autoModeration = new AutoModerationRouter(this);
+  readonly channels = new ChannelRouter(this);
+  readonly emojis = new EmojiRouter(this);
+  readonly entitlements = new EntitlementRouter(this);
+  readonly gateway = new GatewayRouter(this);
+  readonly guilds = new GuildRouter(this);
+  readonly templates = new GuildTemplateRouter(this);
+  readonly interactions = new InteractionRouter(this);
+  readonly invites = new InviteRouter(this);
+  readonly messages = new MessageRouter(this);
+  readonly oauth2 = new OAuth2Router(this);
+  readonly polls = new PollRouter(this);
+  readonly scheduledEvents = new ScheduledEventRouter(this);
+  readonly skus = new SkuRouter(this);
+  readonly soundboards = new SoundboardRouter(this);
+  readonly stages = new StageInstanceRouter(this);
+  readonly stickers = new StickerRouter(this);
+  readonly subscriptions = new SubscriptionRouter(this);
+  readonly users = new UserRouter(this);
+  readonly voice = new VoiceRouter(this);
+  readonly webhooks = new WebhookRouter(this);
+
+  #isDestroyed = false;
 
   constructor(options: RestOptions) {
-    this.#validateOptions(options);
+    this.options = options;
 
     this.token = new TokenManager(options.token);
-    this.config = new ConfigManager({
-      ...options,
-      token: this.token.value,
-    });
-    this.file = new FileHandlerManager();
-    this.rateLimit = new RestRateLimitManager();
-    this.request = new RequestManager(this.rateLimit, this.config);
-    this.router = new RouterManager(this);
+    this.fileManager = new FileHandlerManager();
+    this.rateLimitManager = new RateLimitManager();
+    this.requestManager = new RequestManager(
+      this.options,
+      this.rateLimitManager,
+      this.fileManager,
+    );
   }
 
   get destroyed(): boolean {
-    return this.isDestroyed;
+    return this.#isDestroyed;
   }
 
   get apiVersion(): ApiVersion {
-    return this.config.options.version;
-  }
-
-  setRetryOnRateLimit(retry: boolean): void {
-    this.#validateClientState();
-    this.retryOnRateLimit = retry;
-  }
-
-  setCompression(enabled: boolean): void {
-    this.#validateClientState();
-    this.config.options.useCompression = enabled;
-  }
-
-  setAuthType(authType: AuthTypeFlag): void {
-    this.#validateClientState();
-    this.config.options.authType = authType;
+    return this.options.version ?? 10;
   }
 
   setBoostTier(tier: PremiumTier): void {
     this.#validateClientState();
-    this.file.setBoostTier(tier);
-  }
-
-  async makeRequest<T>(options: RouteEntity): Promise<T> {
-    this.#validateClientState();
-
-    const path = this.#normalizePath(options.path);
-    const finalOptions = { ...options, path };
-
-    if (!path.startsWith("/interactions")) {
-      await this.checkRateLimit(path);
-    }
-
-    if (finalOptions.files) {
-      return this.request.execute<T>(await this.processFiles(finalOptions));
-    }
-
-    return this.request.execute<T>(finalOptions);
+    this.fileManager.setBoostTier(tier);
   }
 
   get<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.makeRequest<T>({
+    return this.requestManager.execute<T>({
       ...options,
-      method: HttpMethodFlag.get,
+      method: "GET",
       path,
     });
   }
@@ -107,9 +115,9 @@ export class Rest {
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.makeRequest<T>({
+    return this.requestManager.execute<T>({
       ...options,
-      method: HttpMethodFlag.post,
+      method: "POST",
       path,
     });
   }
@@ -118,9 +126,9 @@ export class Rest {
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.makeRequest<T>({
+    return this.requestManager.execute<T>({
       ...options,
-      method: HttpMethodFlag.put,
+      method: "PUT",
       path,
     });
   }
@@ -129,9 +137,9 @@ export class Rest {
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.makeRequest<T>({
+    return this.requestManager.execute<T>({
       ...options,
-      method: HttpMethodFlag.patch,
+      method: "PATCH",
       path,
     });
   }
@@ -140,103 +148,42 @@ export class Rest {
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.makeRequest<T>({
+    return this.requestManager.execute<T>({
       ...options,
-      method: HttpMethodFlag.delete,
+      method: "DELETE",
       path,
     });
   }
 
-  getRouter<K extends RouterKey>(key: K): RouterDefinitions[K] {
-    this.#validateClientState();
-    return this.router.getRouter(key);
-  }
-
-  hasRouter(key: RouterKey): boolean {
-    this.#validateClientState();
-    return this.router.hasRouter(key);
-  }
-
-  getAvailableRouters(): RouterKey[] {
-    this.#validateClientState();
-    return this.router.getAvailableRouters();
-  }
-
-  getCachedRouters(): RouterKey[] {
-    this.#validateClientState();
-    return this.router.getCachedRouters();
-  }
-
-  clearRouters(): void {
-    this.#validateClientState();
-    this.router.clearRouters();
-  }
-
-  isCachedRouter(key: RouterKey): boolean {
-    this.#validateClientState();
-    return this.router.isCached(key);
-  }
-
-  removeCachedRouter(key: RouterKey): boolean {
-    this.#validateClientState();
-    return this.router.removeCachedRouter(key);
-  }
-
   processFiles(options: RouteEntity): Promise<RouteEntity> {
     this.#validateClientState();
-    return this.file.handleFiles(options);
-  }
-
-  async checkRateLimit(path: string): Promise<void> {
-    this.#validateClientState();
-    if (this.retryOnRateLimit) {
-      await this.rateLimit.checkRateLimits(path);
-    }
-  }
-
-  updateRateLimits(headers: Record<string, string>, statusCode: number): void {
-    this.#validateClientState();
-    this.rateLimit.updateRateLimits(headers, statusCode);
+    return this.fileManager.handleFiles(options);
   }
 
   async updateProxy(proxyOptions: ProxyAgent.Options | null): Promise<void> {
     this.#validateClientState();
-    await this.config.updateProxy(proxyOptions);
+    await this.requestManager.updateProxy(proxyOptions);
   }
 
-  getConfig(): Required<RestOptions> {
+  getConfig(): RestOptions {
     this.#validateClientState();
-    return this.config.options;
+    return this.options;
   }
 
   async destroy(): Promise<void> {
-    if (this.isDestroyed) {
+    if (this.#isDestroyed) {
       return;
     }
 
-    this.isDestroyed = true;
+    this.#isDestroyed = true;
 
-    this.rateLimit.destroy();
-    await Promise.all([
-      this.config.destroy(),
-      this.request.destroy(),
-      this.router.destroy(),
-    ]);
+    this.rateLimitManager.destroy();
+    await this.requestManager.destroy();
   }
 
   #validateClientState(): void {
-    if (this.isDestroyed) {
+    if (this.#isDestroyed) {
       throw new Error("Rest client has been destroyed");
     }
-  }
-
-  #validateOptions(options: RestOptions): void {
-    if (!options.token) {
-      throw new Error("Token is required");
-    }
-  }
-
-  #normalizePath(path: string): PathLike {
-    return path.startsWith("/") ? (path as PathLike) : `/${path}`;
   }
 }

@@ -2,12 +2,6 @@ import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
 import type { CompressionType } from "../types/index.js";
 
-interface DecompressionContext {
-  zlibInflate: zlib.Inflate | null;
-  zstdStream: Decompress | null;
-  chunks: Uint8Array[];
-}
-
 export class CompressionManager {
   static readonly ZLIB_FLUSH_BYTES = Buffer.from([0x00, 0x00, 0xff, 0xff]);
   static readonly CHUNK_SIZE = 128 * 1024;
@@ -18,11 +12,9 @@ export class CompressionManager {
   ]);
 
   readonly #compressionType: CompressionType;
-  readonly #context: DecompressionContext = {
-    zlibInflate: null,
-    zstdStream: null,
-    chunks: [],
-  };
+  #zlibInflate: zlib.Inflate | null = null;
+  #zstdStream: Decompress | null = null;
+  #chunks: Uint8Array[] = [];
 
   constructor(compressionType: CompressionType) {
     this.#compressionType = this.#validateCompressionType(compressionType);
@@ -34,14 +26,14 @@ export class CompressionManager {
 
       switch (this.#compressionType) {
         case "zlib-stream": {
-          this.#context.zlibInflate = new zlib.Inflate({
+          this.#zlibInflate = new zlib.Inflate({
             chunkSize: CompressionManager.CHUNK_SIZE,
             windowBits: CompressionManager.ZLIB_WINDOW_BITS,
           });
 
-          if (!this.#context.zlibInflate || this.#context.zlibInflate.err) {
+          if (!this.#zlibInflate || this.#zlibInflate.err) {
             throw new Error(
-              `Zlib initialization failed: ${this.#context.zlibInflate?.msg}`,
+              `Zlib initialization failed: ${this.#zlibInflate?.msg}`,
             );
           }
 
@@ -49,15 +41,15 @@ export class CompressionManager {
         }
 
         case "zstd-stream": {
-          this.#context.zstdStream = new Decompress((chunk) => {
+          this.#zstdStream = new Decompress((chunk) => {
             try {
-              this.#context.chunks.push(chunk);
+              this.#chunks.push(chunk);
             } catch {
               this.destroy();
             }
           });
 
-          if (!this.#context.zstdStream) {
+          if (!this.#zstdStream) {
             throw new Error("Zstd initialization failed");
           }
 
@@ -89,13 +81,13 @@ export class CompressionManager {
   }
 
   destroy(): void {
-    this.#context.zlibInflate = null;
-    this.#context.zstdStream = null;
-    this.#context.chunks = [];
+    this.#zlibInflate = null;
+    this.#zstdStream = null;
+    this.#chunks = [];
   }
 
   #decompressZlib(data: Buffer): Buffer {
-    if (!this.#context.zlibInflate) {
+    if (!this.#zlibInflate) {
       throw new Error("Zlib decompressor not initialized");
     }
 
@@ -104,31 +96,31 @@ export class CompressionManager {
       return Buffer.alloc(0);
     }
 
-    this.#context.zlibInflate.push(data, shouldFlush && zlib.Z_SYNC_FLUSH);
+    this.#zlibInflate.push(data, shouldFlush && zlib.Z_SYNC_FLUSH);
 
-    if (this.#context.zlibInflate.err < 0) {
-      throw new Error(`Zlib inflation error: ${this.#context.zlibInflate.msg}`);
+    if (this.#zlibInflate.err < 0) {
+      throw new Error(`Zlib inflation error: ${this.#zlibInflate.msg}`);
     }
 
-    const result = this.#context.zlibInflate.result;
+    const result = this.#zlibInflate.result;
     return Buffer.isBuffer(result) ? result : Buffer.from(result ?? []);
   }
 
   #decompressZstd(data: Buffer): Buffer {
-    if (!this.#context.zstdStream) {
+    if (!this.#zstdStream) {
       throw new Error("Zstd decompressor not initialized");
     }
 
-    this.#context.chunks = [];
+    this.#chunks = [];
 
     try {
-      this.#context.zstdStream.push(new Uint8Array(data));
+      this.#zstdStream.push(new Uint8Array(data));
 
-      if (this.#context.chunks.length === 0) {
+      if (this.#chunks.length === 0) {
         return Buffer.alloc(0);
       }
 
-      return this.#combineChunks(this.#context.chunks);
+      return this.#combineChunks(this.#chunks);
     } catch (error) {
       throw new Error(
         `ZSTD decompression error: ${error instanceof Error ? error.message : String(error)}`,

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/extractor",
+  "version": "1.0.0-private",
+  "private": true,
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/3tatsu/nyx.js",
+    "directory": "internals/extractor"
+  },
+  "bugs": {
+    "url": "https://github.com/3tatsu/nyx.js/issues"
+  },
+  "author": {
+    "name": "3tatsu",
+    "url": "https://github.com/3tatsu"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe ."
+  },
+  "dependencies": {
+    "puppeteer": "^23.11.1",
+    "turndown": "^7.2.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4"
+  }
+}

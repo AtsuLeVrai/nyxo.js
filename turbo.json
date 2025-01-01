@@ -1,67 +1,32 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "ui": "tui",
+  "ui": "stream",
   "tasks": {
     "dev": {
       "cache": false,
       "persistent": true,
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "tsup.config.ts",
-        ".env*"
-      ]
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", ".env*"]
     },
     "build": {
-      "dependsOn": [
-        "^build",
-        "clean"
-      ],
-      "outputs": [
-        "dist/**"
-      ],
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "tsup.config.ts",
-        "package.json"
-      ]
+      "dependsOn": ["^build", "clean"],
+      "outputs": ["dist/**"],
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "package.json"]
     },
     "clean": {
       "cache": false
     },
     "format": {
-      "inputs": [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.js",
-        "**/*.jsx",
-        "**/*.json"
-      ],
+      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json"],
       "outputs": []
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ],
-      "inputs": [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.js",
-        "**/*.jsx"
-      ],
+      "dependsOn": ["^lint"],
+      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
       "outputs": []
     },
     "check": {
-      "dependsOn": [
-        "^check"
-      ],
-      "inputs": [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.js",
-        "**/*.jsx"
-      ],
+      "dependsOn": ["^check"],
+      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
       "outputs": []
     },
     "type-check": {

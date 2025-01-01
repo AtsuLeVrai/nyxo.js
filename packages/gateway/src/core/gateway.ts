@@ -21,10 +21,11 @@ import {
   type CompressionType,
   type EncodingType,
   GatewayCloseCodes,
-  type GatewayEventsMap,
+  type GatewayEvents,
   GatewayOpcodes,
   type GatewayOptions,
-  type GatewayReceiveEventsMap,
+  type GatewayReceiveEvents,
+  type GatewaySendEvents,
   type PayloadEntity,
 } from "../types/index.js";
 
@@ -42,7 +43,7 @@ interface ConnectionState {
   activeShard: number | null;
 }
 
-export class Gateway extends EventEmitter<GatewayEventsMap> {
+export class Gateway extends EventEmitter<GatewayEvents> {
   static readonly DEFAULT_LARGE_THRESHOLD = 50;
   static readonly BACKOFF_SCHEDULE = [1000, 5000, 10000];
   static readonly ZOMBIED_CONNECTION_THRESHOLD = 2;
@@ -122,8 +123,8 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       this.emit("connecting", this.#state.reconnectAttempts);
 
       const [gatewayInfo, guilds] = await Promise.all([
-        this.#rest.getRouter("gateway").getGatewayBot(),
-        this.#rest.getRouter("users").getCurrentUserGuilds(),
+        this.#rest.gateway.getGatewayBot(),
+        this.#rest.users.getCurrentUserGuilds(),
       ]);
 
       if (
@@ -158,22 +159,12 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
 
   updatePresence(presence: UpdatePresenceEntity): void {
     this.emit("debug", `Updating presence: ${JSON.stringify(presence)}`);
-    this.#sendPayload({
-      op: GatewayOpcodes.presenceUpdate,
-      d: presence,
-      s: null,
-      t: null,
-    });
+    this.#sendPayload(GatewayOpcodes.presenceUpdate, presence);
   }
 
   updateVoiceState(options: UpdateVoiceStateEntity): void {
     this.emit("debug", `Updating voice state for guild ${options.guild_id}`);
-    this.#sendPayload({
-      op: GatewayOpcodes.voiceStateUpdate,
-      d: options,
-      s: null,
-      t: null,
-    });
+    this.#sendPayload(GatewayOpcodes.voiceStateUpdate, options);
   }
 
   requestGuildMembers(options: RequestGuildMembersEntity): void {
@@ -181,12 +172,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       "debug",
       `Requesting guild members for guild ${options.guild_id}`,
     );
-    this.#sendPayload({
-      op: GatewayOpcodes.requestGuildMembers,
-      d: options,
-      s: null,
-      t: null,
-    });
+    this.#sendPayload(GatewayOpcodes.requestGuildMembers, options);
   }
 
   destroy(code: GatewayCloseCodes = 4000): void {
@@ -278,7 +264,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
 
     this.emit(
       "dispatch",
-      payload.t as keyof GatewayReceiveEventsMap,
+      payload.t as keyof GatewayReceiveEvents,
       payload.d as never,
     );
   }
@@ -373,12 +359,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     this.#state.lastHeartbeatSent = Date.now();
     this.emit("heartbeat", this.#state.sequence);
 
-    this.#sendPayload({
-      op: GatewayOpcodes.heartbeat,
-      d: this.#state.sequence,
-      s: null,
-      t: null,
-    });
+    this.#sendPayload(GatewayOpcodes.heartbeat, this.#state.sequence);
   }
 
   #handleHeartbeatAck(): void {
@@ -415,12 +396,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       payload.presence = this.#presence;
     }
 
-    this.#sendPayload({
-      op: GatewayOpcodes.identify,
-      d: payload,
-      s: null,
-      t: null,
-    });
+    this.#sendPayload(GatewayOpcodes.identify, payload);
   }
 
   #sendResume(): void {
@@ -434,12 +410,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       seq: this.#state.sequence,
     };
 
-    this.#sendPayload({
-      op: GatewayOpcodes.resume,
-      d: payload,
-      s: null,
-      t: null,
-    });
+    this.#sendPayload(GatewayOpcodes.resume, payload);
   }
 
   async #handleClose(code: number): Promise<void> {
@@ -535,14 +506,23 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     return `${baseUrl}?${params.toString()}`;
   }
 
-  #sendPayload(payload: PayloadEntity): void {
+  #sendPayload<T extends keyof GatewaySendEvents>(
+    opcode: T,
+    data: GatewaySendEvents[T],
+  ): void {
     if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
       throw new Error("No active WebSocket connection");
     }
 
     try {
-      const data = this.#encodingManager.encode(payload);
-      this.#ws.send(data);
+      const payload: PayloadEntity = {
+        op: opcode,
+        d: data,
+        s: this.#state.sequence,
+        t: null,
+      };
+
+      this.#ws.send(this.#encodingManager.encode(payload));
       this.emit("debug", `Sent payload with op ${payload.op}`);
     } catch (error) {
       throw this.#wrapError("Failed to send payload", error);

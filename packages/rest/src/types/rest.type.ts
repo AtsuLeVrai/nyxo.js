@@ -1,46 +1,15 @@
-import type { PremiumTier } from "@nyxjs/core";
 import type { Pool, ProxyAgent, RetryHandler } from "undici";
 
 export type DiscordUserAgent = `DiscordBot (${string}, ${string})`;
 
 export interface RestOptions {
   token: string;
-  /**
-   * @default {@link ApiVersion.v10}
-   */
   version?: 10;
-  /**
-   * @default {@link AuthTypeFlag.bot}
-   */
-  authType?: AuthTypeFlag;
   userAgent?: DiscordUserAgent;
-  useCompression?: boolean;
-  boostTier?: PremiumTier;
-  maxRetries?: number;
-  baseRetryDelay?: number;
-  timeout?: number;
   proxy?: ProxyAgent.Options;
   pool?: Pool.Options;
   retry?: RetryHandler.RetryOptions;
 }
-
-export const AuthTypeFlag = {
-  bot: "Bot",
-  bearer: "Bearer",
-} as const;
-
-export type AuthTypeFlag = (typeof AuthTypeFlag)[keyof typeof AuthTypeFlag];
-
-export const HttpMethodFlag = {
-  get: "GET",
-  post: "POST",
-  put: "PUT",
-  patch: "PATCH",
-  delete: "DELETE",
-} as const;
-
-export type HttpMethodFlag =
-  (typeof HttpMethodFlag)[keyof typeof HttpMethodFlag];
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes}

@@ -1,53 +1,54 @@
-import { Gunzip } from "minizlib";
-import type { Dispatcher } from "undici";
+import { type Dispatcher, Pool, ProxyAgent, RetryAgent } from "undici";
 import type {
   JsonErrorEntity,
-  JsonErrorResponseEntity,
-  RateLimitResponseEntity,
+  RestOptions,
   RouteEntity,
 } from "../types/index.js";
-import { HttpStatusCode, JsonErrorCode } from "../types/index.js";
-import { ConfigManager } from "./config.manager.js";
-import type { RestRateLimitManager } from "./rate-limiter.manager.js";
+import type { FileHandlerManager } from "./file-handler.manager.js";
+import type { RateLimitManager } from "./rate-limiter.manager.js";
 
 export class RequestManager {
-  static readonly REQUEST_CONFIG = {
-    TIMEOUT: 15_000,
-    MAX_RETRIES: 3,
-    MIN_RETRY_DELAY: 500,
-    MAX_RETRY_DELAY: 15_000,
-  } as const;
-
-  readonly #configManager: ConfigManager;
-  readonly #rateLimitManager: RestRateLimitManager;
+  #retryAgent: RetryAgent;
+  #proxyAgent: ProxyAgent | null = null;
+  readonly #pool: Pool;
+  readonly #options: Required<RestOptions>;
+  readonly #rateLimitManager: RateLimitManager;
+  readonly #fileHandlerManager: FileHandlerManager;
   readonly #pendingRequests = new Set<string>();
-  readonly #retryableErrors = new Set([
-    JsonErrorCode.cloudflareError,
-    JsonErrorCode.serviceResourceRateLimited,
-    JsonErrorCode.apiResourceOverloaded,
-  ]);
 
   constructor(
-    rateLimitManager: RestRateLimitManager,
-    configManager: ConfigManager,
+    options: RestOptions,
+    rateLimitManager: RateLimitManager,
+    fileHandlerManager: FileHandlerManager,
   ) {
+    this.#options = this.#mergeOptions(options);
     this.#rateLimitManager = rateLimitManager;
-    this.#configManager = configManager;
+    this.#fileHandlerManager = fileHandlerManager;
+    this.#proxyAgent = this.#createProxyAgent();
+    this.#pool = this.#createPool();
+    this.#retryAgent = this.#createRetryAgent();
   }
 
   get isGlobalRateLimit(): boolean {
-    return (
-      this.#pendingRequests.size > RequestManager.REQUEST_CONFIG.MAX_RETRIES
-    );
+    return this.#pendingRequests.size > Number(this.#options.retry.maxRetries);
   }
 
   async execute<T>(options: RouteEntity): Promise<T> {
     const requestId = this.#generateRequestId(options);
-    const attempt = 1;
 
     try {
       this.#pendingRequests.add(requestId);
-      return await this.#executeWithRetries<T>(options, attempt);
+
+      let response: Dispatcher.ResponseData;
+      if (options.files) {
+        response = await this.#executeWithTimeout(
+          await this.#fileHandlerManager.handleFiles(options),
+        );
+      } else {
+        response = await this.#executeWithTimeout(options);
+      }
+
+      return await this.#processResponse<T>(response);
     } finally {
       this.#pendingRequests.delete(requestId);
     }
@@ -56,52 +57,36 @@ export class RequestManager {
   async destroy(): Promise<void> {
     if (this.#pendingRequests.size > 0) {
       await Promise.race([
-        this.#waitForPendingRequests(),
-        this.#createTimeoutPromise(),
+        this.#proxyAgent?.close(),
+        this.#retryAgent.close(),
+        this.#pool.destroy(),
       ]);
     }
   }
 
-  async #executeWithRetries<T>(
-    options: RouteEntity,
-    attempt: number,
-  ): Promise<T> {
-    let attemptCount = attempt;
-    while (attemptCount <= this.#configManager.options.maxRetries) {
-      try {
-        const response = await this.#executeWithTimeout(options);
-
-        this.#rateLimitManager.updateRateLimits(
-          response.headers as Record<string, string>,
-          response.statusCode,
-        );
-
-        return await this.#processResponse<T>(response);
-      } catch (error) {
-        const shouldRetry = this.#shouldRetry(error as Error, attemptCount);
-        if (!shouldRetry) {
-          throw this.#enhanceError(error as Error);
-        }
-
-        const retryDelay = this.#calculateRetryDelay(
-          attemptCount,
-          error as Error,
-        );
-
-        await this.#wait(retryDelay);
-        attemptCount++;
-      }
+  async updateProxy(proxyOptions: ProxyAgent.Options | null): Promise<void> {
+    if (this.#proxyAgent) {
+      await this.#proxyAgent.close();
     }
 
-    throw new Error(
-      `Maximum retry attempts (${this.#configManager.options.maxRetries}) exceeded`,
-    );
+    if (proxyOptions) {
+      this.#options.proxy = proxyOptions;
+      this.#proxyAgent = new ProxyAgent({
+        allowH2: true,
+        ...proxyOptions,
+      });
+    } else {
+      this.#proxyAgent = null;
+      this.#options.proxy = { uri: "" };
+    }
+
+    this.#retryAgent = this.#createRetryAgent();
   }
 
   async #executeWithTimeout(
     options: RouteEntity,
   ): Promise<Dispatcher.ResponseData> {
-    const timeout = this.#configManager.options.timeout;
+    const timeout = this.#options.retry.maxTimeout;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
@@ -109,274 +94,80 @@ export class RequestManager {
     }, timeout);
 
     try {
-      return await this.#executeRequest(options, controller.signal);
+      const path = this.#normalizePath(options.path);
+      await this.#rateLimitManager.checkRateLimit(path, options.method);
+
+      const response = await this.#retryAgent.request({
+        origin: "https://discord.com",
+        path: `/api/v${this.#options.version}${path}`,
+        headers: this.#buildHeaders(options),
+        signal: controller.signal,
+        method: options.method,
+        body: options.body,
+        query: options.query,
+        reset: options.reset,
+        bodyTimeout: options.bodyTimeout,
+        blocking: options.blocking,
+        headersTimeout: options.headersTimeout,
+        throwOnError: options.throwOnError,
+        opaque: options.opaque,
+        onInfo: options.onInfo,
+        responseHeader: options.responseHeader,
+        highWaterMark: options.highWaterMark ?? 65536,
+        idempotent: options.idempotent,
+        upgrade: options.upgrade,
+        expectContinue: options.expectContinue,
+        maxRedirections: options.maxRedirections,
+        redirectionLimitReached: options.redirectionLimitReached,
+      });
+
+      this.#rateLimitManager.updateRateLimit(
+        path,
+        options.method,
+        response.headers as Record<string, string>,
+        response.statusCode,
+      );
+
+      return response;
     } finally {
       clearTimeout(timeoutId);
     }
   }
 
-  async #executeRequest(
-    options: RouteEntity,
-    signal: AbortSignal,
-  ): Promise<Dispatcher.ResponseData> {
-    const normalizedPath = this.#normalizePath(options.path);
-
-    const response = await this.#configManager.retryAgent.request({
-      origin: "https://discord.com",
-      path: `/api/v${this.#configManager.options.version}${normalizedPath}`,
-      method: options.method,
-      headers: this.#buildHeaders(options),
-      body: options.body,
-      query: options.query,
-      signal,
-    });
-
-    if (!response.body) {
-      throw new Error("Response body is null");
-    }
-
-    return response;
-  }
-
   async #processResponse<T>(response: Dispatcher.ResponseData): Promise<T> {
-    const data = await this.#decompressResponse(response);
+    const data = Buffer.from(await response.body.arrayBuffer());
 
     if (!this.#isSuccessResponse(response.statusCode)) {
-      await this.#handleErrorResponse(
-        response.statusCode,
-        data,
-        response.headers as Record<string, string>,
+      const error: JsonErrorEntity = JSON.parse(data.toString());
+      throw new Error(
+        `${error.code}: ${error.message}\n${JSON.stringify(error.errors, null, 2)}`,
       );
     }
 
-    return this.#parseResponseData<T>(response, data);
+    if (response.headers["content-type"]?.includes("application/json")) {
+      try {
+        return JSON.parse(data.toString());
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : String(error));
+      }
+    }
+
+    return data as unknown as T;
   }
 
   #buildHeaders(options: RouteEntity): Record<string, string> {
     const headers: Record<string, string> = {
-      authorization: `${this.#configManager.options.authType} ${this.#configManager.options.token}`,
-      "user-agent": this.#configManager.options.userAgent,
+      authorization: `Bot ${this.#options.token}`,
+      "user-agent": this.#options.userAgent,
       "content-type": "application/json",
       "x-ratelimit-precision": "millisecond",
     };
-
-    if (this.#configManager.options.useCompression) {
-      headers["accept-encoding"] = "gzip";
-    }
 
     if (options.reason) {
       headers["x-audit-log-reason"] = encodeURIComponent(options.reason);
     }
 
     return { ...headers, ...options.headers };
-  }
-
-  async #decompressResponse(
-    response: Dispatcher.ResponseData,
-  ): Promise<Buffer> {
-    const buffer = Buffer.from(await response.body.arrayBuffer());
-
-    if (
-      !this.#configManager.options.useCompression ||
-      response.headers["content-encoding"] !== "gzip"
-    ) {
-      return buffer;
-    }
-
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      const gunzip = new Gunzip({
-        level: 4,
-        async: true,
-        flush: 2,
-        finishFlush: 4,
-        objectMode: false,
-        strategy: 0,
-      });
-
-      gunzip
-        .on("data", (chunk) => chunks.push(chunk))
-        .on("end", () => resolve(Buffer.concat(chunks)))
-        .on("error", reject)
-        .end(buffer);
-    });
-  }
-
-  async #parseResponseData<T>(
-    response: Dispatcher.ResponseData,
-    data: Buffer,
-  ): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-      if (response.headers["content-type"]?.includes("application/json")) {
-        try {
-          resolve(JSON.parse(data.toString()) as T);
-        } catch (error) {
-          reject(
-            new Error(
-              `Failed to parse JSON response: ${(error as Error).message}`,
-            ),
-          );
-        }
-      }
-
-      resolve(data as unknown as T);
-    });
-  }
-
-  async #handleErrorResponse(
-    statusCode: number,
-    data: Buffer,
-    headers: Record<string, string>,
-  ): Promise<never> {
-    return new Promise((_, reject) => {
-      const content = data.toString();
-
-      try {
-        if (statusCode === HttpStatusCode.tooManyRequests) {
-          this.#handleRateLimitError(content, headers);
-        }
-
-        const errorData = JSON.parse(content);
-        this.#handleJsonError(errorData);
-      } catch (error) {
-        if (error instanceof SyntaxError) {
-          reject(new Error(`HTTP ${statusCode}: ${content}`));
-        }
-        reject(error);
-      }
-    });
-  }
-
-  #handleRateLimitError(
-    content: string,
-    headers: Record<string, string>,
-  ): never {
-    const error = JSON.parse(content) as RateLimitResponseEntity;
-    const scope = headers["x-ratelimit-scope"] ?? "user";
-    throw new Error(
-      `Rate limit exceeded (${scope}), retry after ${error.retry_after} seconds` +
-        `${error.global ? " (Global)" : ""}`,
-    );
-  }
-
-  #handleJsonError(errorData: JsonErrorCode): never {
-    if (this.#isJsonErrorResponse(errorData)) {
-      throw new Error(
-        `Discord API Error ${errorData.code}: ${errorData.message}`,
-      );
-    }
-
-    if (this.#isDetailedJsonError(errorData)) {
-      const details = JSON.stringify(errorData.errors, null, 2);
-      throw new Error(
-        `Discord API Error ${errorData.code}: ${errorData.message}\nDetails: ${details}`,
-      );
-    }
-
-    throw new Error("Unknown API error format");
-  }
-
-  #shouldRetry(error: Error, attempt: number): boolean {
-    if (attempt >= this.#configManager.options.maxRetries) {
-      return false;
-    }
-
-    if (this.#isNetworkError(error)) {
-      return true;
-    }
-
-    const errorCode = this.#extractErrorCode(error.message);
-    if (
-      errorCode &&
-      this.#retryableErrors.has(errorCode as 40333 | 40062 | 130000)
-    ) {
-      return true;
-    }
-
-    const statusCode = this.#extractStatusCode(error.message);
-    return this.#isRetryableStatusCode(statusCode);
-  }
-
-  #calculateRetryDelay(attempt: number, error: Error): number {
-    const baseDelay = this.#configManager.options.baseRetryDelay;
-    const retryAfter = this.#extractRetryAfter(error);
-
-    if (retryAfter) {
-      return Math.min(
-        retryAfter * 1000,
-        RequestManager.REQUEST_CONFIG.MAX_RETRY_DELAY,
-      );
-    }
-
-    const exponentialDelay = baseDelay * 2 ** (attempt - 1);
-    const jitter = Math.random() * 100;
-    const delay = exponentialDelay + jitter;
-
-    return Math.min(
-      Math.max(delay, RequestManager.REQUEST_CONFIG.MIN_RETRY_DELAY),
-      RequestManager.REQUEST_CONFIG.MAX_RETRY_DELAY,
-    );
-  }
-
-  #isNetworkError(error: Error): boolean {
-    return (
-      error.message.includes("ETIMEDOUT") ||
-      error.message.includes("ECONNRESET") ||
-      error.message.includes("ECONNREFUSED")
-    );
-  }
-
-  #isRetryableStatusCode(
-    statusCode: number | null,
-  ): statusCode is 500 | 429 | 502 {
-    if (!statusCode) {
-      return false;
-    }
-
-    if (statusCode === HttpStatusCode.tooManyRequests) {
-      return !this.isGlobalRateLimit;
-    }
-
-    return ConfigManager.RETRY_STATUS_CODES.includes(
-      statusCode as 500 | 429 | 502,
-    );
-  }
-
-  #extractRetryAfter(error: Error): number | null {
-    const match = error.message.match(/retry after (\d+(\.\d+)?)/i);
-    return match ? Number.parseFloat(String(match[1])) : null;
-  }
-
-  #extractErrorCode(message: string): JsonErrorCode | null {
-    const match = message.match(/Error (\d+):/);
-    return match ? (Number(match[1]) as JsonErrorCode) : null;
-  }
-
-  #extractStatusCode(message: string): number | null {
-    const match = message.match(/HTTP (\d{3})/);
-    return match ? Number.parseInt(String(match[1]), 10) : null;
-  }
-
-  #isJsonErrorResponse(data: unknown): data is JsonErrorResponseEntity {
-    return (
-      this.#isObject(data) &&
-      "code" in data &&
-      "message" in data &&
-      typeof data.code === "number" &&
-      typeof data.message === "string"
-    );
-  }
-
-  #isDetailedJsonError(data: unknown): data is JsonErrorEntity {
-    return (
-      this.#isJsonErrorResponse(data) &&
-      "errors" in data &&
-      this.#isObject(data.errors)
-    );
-  }
-
-  #isObject(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null;
   }
 
   #isSuccessResponse(statusCode: number): boolean {
@@ -391,46 +182,61 @@ export class RequestManager {
     return `${options.method}:${options.path}:${Date.now()}`;
   }
 
-  async #waitForPendingRequests(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      const checkInterval = 100;
-      const interval = setInterval(() => {
-        if (this.#pendingRequests.size === 0) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, checkInterval);
-    });
+  #createPool(): Pool {
+    return new Pool("https://discord.com", this.#options.pool);
   }
 
-  #createTimeoutPromise(): Promise<never> {
-    return new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error("Request cleanup timeout")),
-        RequestManager.REQUEST_CONFIG.TIMEOUT,
-      ),
-    );
+  #createProxyAgent(): ProxyAgent | null {
+    if (!this.#options.proxy?.uri) {
+      return null;
+    }
+
+    return new ProxyAgent(this.#options.proxy);
   }
 
-  #wait(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  #createRetryAgent(): RetryAgent {
+    const agent = this.#proxyAgent ?? this.#pool;
+    return new RetryAgent(agent, this.#options.retry);
   }
 
-  #enhanceError(error: Error): Error {
-    if (error.message.includes("Invalid Form Body")) {
-      return new Error(`Invalid request format: ${error.message}`);
-    }
-    if (error.message.includes("Missing Access")) {
-      return new Error("Missing permissions for this request");
-    }
-    if (error.message.includes("50035")) {
-      return new Error(
-        `Invalid form body. Check your request data: ${error.message}`,
-      );
-    }
-    if (error.message.includes("40001")) {
-      return new Error("Unauthorized. Check your token.");
-    }
-    return error;
+  #mergeOptions(options: RestOptions): Required<RestOptions> {
+    return {
+      token: options.token,
+      version: options.version ?? 10,
+      userAgent:
+        options.userAgent ??
+        "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
+      proxy: {
+        allowH2: true,
+        uri: "",
+        ...options.proxy,
+      },
+      retry: {
+        retryAfter: true,
+        maxRetries: 3,
+        minTimeout: 100,
+        maxTimeout: 15000,
+        timeoutFactor: 2,
+        ...options.retry,
+      },
+      pool: {
+        allowH2: true,
+        maxConcurrentStreams: 1000,
+        keepAliveTimeout: 10000,
+        keepAliveMaxTimeout: 30000,
+        bodyTimeout: 8000,
+        headersTimeout: 8000,
+        connect: {
+          rejectUnauthorized: true,
+          ALPNProtocols: ["h2"],
+          secureOptions: 0x40000000,
+          keepAlive: true,
+          keepAliveInitialDelay: 10000,
+          timeout: 5000,
+          noDelay: true,
+        },
+        ...options.pool,
+      },
+    };
   }
 }
