@@ -202,7 +202,7 @@ function validateUserInput(input: unknown): UserEntity { ...
 ### Formatting Functions
 
 ```typescript
-// ✅ Use 'format' prefix for string formatting
+// ✅ Use 'format' prefix for string markdown
 function formatCurrency(amount: number, currency: string): string { ...
 }
 

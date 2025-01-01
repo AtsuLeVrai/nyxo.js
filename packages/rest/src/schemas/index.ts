@@ -1,6 +1,5 @@
 export * from "./application.schema.js";
 export * from "./application-commands.schema.js";
-export * from "./application-connection.schema.js";
 export * from "./audit-log.schema.js";
 export * from "./auto-moderation.schema.js";
 export * from "./channel.schema.js";

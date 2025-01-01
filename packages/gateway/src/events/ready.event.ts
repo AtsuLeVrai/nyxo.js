@@ -1,7 +1,6 @@
 import type {
   ApiVersion,
   ApplicationEntity,
-  Integer,
   UnavailableGuildEntity,
   UserEntity,
 } from "@nyxjs/core";
@@ -15,6 +14,6 @@ export interface ReadyEntity {
   guilds: UnavailableGuildEntity[];
   session_id: string;
   resume_gateway_url: string;
-  shard?: [shardId: Integer, numShards: Integer];
+  shard?: [shardId: number, numShards: number];
   application: Pick<ApplicationEntity, "id" | "flags">;
 }

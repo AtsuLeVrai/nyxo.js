@@ -1,5 +1,5 @@
 import erlpack from "erlpack";
-import { EncodingType, type PayloadEntity } from "../types/index.js";
+import type { EncodingType, PayloadEntity } from "../types/index.js";
 
 interface ProcessOptions {
   validateEtfKeys?: boolean;
@@ -8,14 +8,11 @@ interface ProcessOptions {
 }
 
 export class EncodingManager {
-  static readonly VALID_ENCODING_TYPES = new Set<EncodingType>([
-    EncodingType.Json,
-    EncodingType.Etf,
-  ]);
+  static readonly VALID_ENCODING_TYPES = new Set<EncodingType>(["json", "etf"]);
 
   readonly #encoding: EncodingType;
 
-  constructor(encoding: EncodingType = EncodingType.Json) {
+  constructor(encoding: EncodingType) {
     this.#encoding = this.#validateEncodingType(encoding);
   }
 

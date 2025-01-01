@@ -1,121 +1,100 @@
-import type { ApiVersion, Integer } from "@nyxjs/core";
 import type { UpdatePresenceEntity } from "../events/index.js";
-import type {
-  GatewayReceiveEventsMap,
-  GatewaySendEventsMap,
-} from "./event.type.js";
 import type { RateLimitOptions } from "./rate-limit.type.js";
-import type { ShardOptions } from "./shard.type.js";
 
-export enum CompressionType {
-  ZlibStream = "zlib-stream",
-  ZstdStream = "zstd-stream",
-}
-
-export enum EncodingType {
-  Json = "json",
-  Etf = "etf",
-}
+export type CompressionType = "zlib-stream" | "zstd-stream";
+export type EncodingType = "json" | "etf";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#payload-structure}
  */
-export type PayloadEntity<
-  T extends keyof GatewayReceiveEventsMap | keyof GatewaySendEventsMap =
-    | keyof GatewayReceiveEventsMap
-    | keyof GatewaySendEventsMap,
-> = T extends keyof GatewayReceiveEventsMap
-  ? {
-      op: GatewayOpcodes;
-      d: GatewayReceiveEventsMap[T];
-      s: Integer;
-      t: T;
-    }
-  : T extends keyof GatewaySendEventsMap
-    ? {
-        op: T;
-        d: GatewaySendEventsMap[T];
-        s: null;
-        t: null;
-      }
-    : {
-        op: GatewayOpcodes;
-        d: object | number | null;
-        s: Integer | null;
-        t: string | null;
-      };
+export interface PayloadEntity {
+  op: GatewayOpcodes;
+  d: object | number | null;
+  s: number | null;
+  t: string | null;
+}
 
-export interface GatewayOptions extends ShardOptions, RateLimitOptions {
-  token?: string;
-  version?: ApiVersion.V10;
+export interface GatewayOptions extends RateLimitOptions {
+  token: string;
+  version?: 10;
   compress?: CompressionType;
   encoding?: EncodingType;
   intents: GatewayIntentsBits[] | number;
-  largeThreshold?: Integer;
+  largeThreshold?: number;
   presence?: UpdatePresenceEntity;
+  shard?: boolean;
 }
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway#list-of-intents}
  */
-export enum GatewayIntentsBits {
-  Guilds = 1 << 0,
-  GuildMembers = 1 << 1,
-  GuildModeration = 1 << 2,
-  GuildExpressions = 1 << 3,
-  GuildIntegrations = 1 << 4,
-  GuildWebhooks = 1 << 5,
-  GuildInvites = 1 << 6,
-  GuildVoiceStates = 1 << 7,
-  GuildPresences = 1 << 8,
-  GuildMessages = 1 << 9,
-  GuildMessageReactions = 1 << 10,
-  GuildMessageTyping = 1 << 11,
-  DirectMessages = 1 << 12,
-  DirectMessageReactions = 1 << 13,
-  DirectMessageTyping = 1 << 14,
-  MessageContent = 1 << 15,
-  GuildScheduledEvents = 1 << 16,
-  AutoModerationConfiguration = 1 << 20,
-  AutoModerationExecution = 1 << 21,
-  GuildMessagePolls = 1 << 24,
-  DirectMessagePolls = 1 << 25,
-}
+export const GatewayIntentsBits = {
+  guilds: 1 << 0,
+  guildMembers: 1 << 1,
+  guildModeration: 1 << 2,
+  guildExpressions: 1 << 3,
+  guildIntegrations: 1 << 4,
+  guildWebhooks: 1 << 5,
+  guildInvites: 1 << 6,
+  guildVoiceStates: 1 << 7,
+  guildPresences: 1 << 8,
+  guildMessages: 1 << 9,
+  guildMessageReactions: 1 << 10,
+  guildMessageTyping: 1 << 11,
+  directMessages: 1 << 12,
+  directMessageReactions: 1 << 13,
+  directMessageTyping: 1 << 14,
+  messageContent: 1 << 15,
+  guildScheduledEvents: 1 << 16,
+  autoModerationConfiguration: 1 << 20,
+  autoModerationExecution: 1 << 21,
+  guildMessagePolls: 1 << 24,
+  directMessagePolls: 1 << 25,
+} as const;
+
+export type GatewayIntentsBits =
+  (typeof GatewayIntentsBits)[keyof typeof GatewayIntentsBits];
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-opcodes}
  */
-export enum GatewayOpcodes {
-  Dispatch = 0,
-  Heartbeat = 1,
-  Identify = 2,
-  PresenceUpdate = 3,
-  VoiceStateUpdate = 4,
-  Resume = 6,
-  Reconnect = 7,
-  RequestGuildMembers = 8,
-  InvalidSession = 9,
-  Hello = 10,
-  HeartbeatAck = 11,
-  RequestSoundboardSounds = 31,
-}
+export const GatewayOpcodes = {
+  dispatch: 0,
+  heartbeat: 1,
+  identify: 2,
+  presenceUpdate: 3,
+  voiceStateUpdate: 4,
+  resume: 6,
+  reconnect: 7,
+  requestGuildMembers: 8,
+  invalidSession: 9,
+  hello: 10,
+  heartbeatAck: 11,
+  requestSoundboardSounds: 31,
+} as const;
+
+export type GatewayOpcodes =
+  (typeof GatewayOpcodes)[keyof typeof GatewayOpcodes];
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes}
  */
-export enum GatewayCloseCodes {
-  UnknownError = 4000,
-  UnknownOpcode = 4001,
-  DecodeError = 4002,
-  NotAuthenticated = 4003,
-  AuthenticationFailed = 4004,
-  AlreadyAuthenticated = 4005,
-  InvalidSeq = 4007,
-  RateLimited = 4008,
-  SessionTimedOut = 4009,
-  InvalidShard = 4010,
-  ShardingRequired = 4011,
-  InvalidApiVersion = 4012,
-  InvalidIntents = 4013,
-  DisallowedIntents = 4014,
-}
+export const GatewayCloseCodes = {
+  unknownError: 4000,
+  unknownOpcode: 4001,
+  decodeError: 4002,
+  notAuthenticated: 4003,
+  authenticationFailed: 4004,
+  alreadyAuthenticated: 4005,
+  invalidSeq: 4007,
+  rateLimited: 4008,
+  sessionTimedOut: 4009,
+  invalidShard: 4010,
+  shardingRequired: 4011,
+  invalidApiVersion: 4012,
+  invalidIntents: 4013,
+  disallowedIntents: 4014,
+} as const;
+
+export type GatewayCloseCodes =
+  (typeof GatewayCloseCodes)[keyof typeof GatewayCloseCodes];

@@ -1,6 +1,6 @@
 import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
-import { CompressionType } from "../types/index.js";
+import type { CompressionType } from "../types/index.js";
 
 interface DecompressionContext {
   zlibInflate: zlib.Inflate | null;
@@ -10,44 +10,64 @@ interface DecompressionContext {
 
 export class CompressionManager {
   static readonly ZLIB_FLUSH_BYTES = Buffer.from([0x00, 0x00, 0xff, 0xff]);
-  static readonly MAX_COMPRESSION_SIZE = 1024 * 1024 * 100;
   static readonly CHUNK_SIZE = 128 * 1024;
   static readonly ZLIB_WINDOW_BITS = 15;
   static readonly VALID_COMPRESSION_TYPES = new Set<CompressionType>([
-    CompressionType.ZlibStream,
-    CompressionType.ZstdStream,
+    "zlib-stream",
+    "zstd-stream",
   ]);
 
-  readonly #compressionType: CompressionType | null;
+  readonly #compressionType: CompressionType;
   readonly #context: DecompressionContext = {
     zlibInflate: null,
     zstdStream: null,
     chunks: [],
   };
 
-  #initialized = false;
-  #totalProcessed = 0;
-
-  constructor(compressionType: CompressionType | null = null) {
+  constructor(compressionType: CompressionType) {
     this.#compressionType = this.#validateCompressionType(compressionType);
   }
 
-  get compressionType(): CompressionType | null {
-    return this.#compressionType;
-  }
-
-  get isInitialized(): boolean {
-    return this.#initialized;
-  }
-
-  async initializeCompression(): Promise<void> {
-    if (this.#initialized || !this.#compressionType) {
-      return;
-    }
-
+  initializeCompression(): void {
     try {
-      await this.#setupDecompressor();
-      this.#initialized = true;
+      this.destroy();
+
+      switch (this.#compressionType) {
+        case "zlib-stream": {
+          this.#context.zlibInflate = new zlib.Inflate({
+            chunkSize: CompressionManager.CHUNK_SIZE,
+            windowBits: CompressionManager.ZLIB_WINDOW_BITS,
+          });
+
+          if (!this.#context.zlibInflate || this.#context.zlibInflate.err) {
+            throw new Error(
+              `Zlib initialization failed: ${this.#context.zlibInflate?.msg}`,
+            );
+          }
+
+          break;
+        }
+
+        case "zstd-stream": {
+          this.#context.zstdStream = new Decompress((chunk) => {
+            try {
+              this.#context.chunks.push(chunk);
+            } catch {
+              this.destroy();
+            }
+          });
+
+          if (!this.#context.zstdStream) {
+            throw new Error("Zstd initialization failed");
+          }
+
+          break;
+        }
+
+        default: {
+          throw new Error("Invalid compression type");
+        }
+      }
     } catch (error) {
       throw new Error(
         `Failed to initialize compression: ${error instanceof Error ? error.message : String(error)}`,
@@ -55,45 +75,23 @@ export class CompressionManager {
     }
   }
 
-  async decompress(data: Buffer | Uint8Array): Promise<Buffer> {
+  decompress(data: Buffer | Uint8Array): Buffer {
     if (!this.#compressionType) {
       return Buffer.from(data);
     }
 
-    if (!this.#initialized) {
-      await this.initializeCompression();
+    const buffer = Buffer.from(data);
+    if (this.#compressionType === "zlib-stream") {
+      return this.#decompressZlib(buffer);
     }
 
-    try {
-      const buffer = Buffer.from(data);
-      this.#totalProcessed += buffer.length;
-
-      if (this.#totalProcessed > CompressionManager.MAX_COMPRESSION_SIZE) {
-        this.destroy();
-        throw new Error("Processed data limit exceeded");
-      }
-
-      switch (this.#compressionType) {
-        case CompressionType.ZlibStream:
-          return this.#decompressZlib(buffer);
-        case CompressionType.ZstdStream:
-          return this.#decompressZstd(buffer);
-        default:
-          throw new Error(
-            `Unsupported compression type: ${this.#compressionType}`,
-          );
-      }
-    } catch (error) {
-      throw new Error(
-        `Decompression failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
+    return this.#decompressZstd(buffer);
   }
 
   destroy(): void {
-    this.#resetContext();
-    this.#initialized = false;
-    this.#totalProcessed = 0;
+    this.#context.zlibInflate = null;
+    this.#context.zstdStream = null;
+    this.#context.chunks = [];
   }
 
   #decompressZlib(data: Buffer): Buffer {
@@ -138,62 +136,7 @@ export class CompressionManager {
     }
   }
 
-  async #setupDecompressor(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.#resetContext();
-
-        switch (this.#compressionType) {
-          case CompressionType.ZlibStream: {
-            this.#context.zlibInflate = new zlib.Inflate({
-              chunkSize: CompressionManager.CHUNK_SIZE,
-              windowBits: CompressionManager.ZLIB_WINDOW_BITS,
-            });
-
-            if (!this.#context.zlibInflate || this.#context.zlibInflate.err) {
-              throw new Error(
-                `Zlib initialization failed: ${this.#context.zlibInflate?.msg}`,
-              );
-            }
-            resolve();
-            break;
-          }
-
-          case CompressionType.ZstdStream: {
-            this.#context.zstdStream = new Decompress((chunk) => {
-              try {
-                this.#context.chunks.push(chunk);
-              } catch (error) {
-                this.#resetContext();
-                reject(error);
-              }
-            });
-
-            if (!this.#context.zstdStream) {
-              throw new Error("Zstd initialization failed");
-            }
-            resolve();
-            break;
-          }
-
-          default: {
-            resolve();
-          }
-        }
-      } catch (error) {
-        this.#resetContext();
-        reject(error);
-      }
-    });
-  }
-
-  #validateCompressionType(
-    type: CompressionType | null,
-  ): CompressionType | null {
-    if (type === null) {
-      return null;
-    }
-
+  #validateCompressionType(type: CompressionType): CompressionType {
     if (!CompressionManager.VALID_COMPRESSION_TYPES.has(type)) {
       throw new Error(
         `Invalid compression type: ${type}. Must be one of: ${[...CompressionManager.VALID_COMPRESSION_TYPES].join(", ")}`,
@@ -226,11 +169,5 @@ export class CompressionManager {
     }
 
     return Buffer.from(combined);
-  }
-
-  #resetContext(): void {
-    this.#context.zlibInflate = null;
-    this.#context.zstdStream = null;
-    this.#context.chunks = [];
   }
 }

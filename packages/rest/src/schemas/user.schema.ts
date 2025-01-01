@@ -1,58 +1,56 @@
-import { SnowflakeManager } from "@nyxjs/core";
+import { SnowflakeSchema } from "@nyxjs/core";
 import { z } from "zod";
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
+ */
 export const ModifyCurrentUserSchema = z
   .object({
     username: z.string().optional(),
     avatar: z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
-      .optional()
-      .nullable(),
+      .nullish(),
     banner: z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
-      .optional()
-      .nullable(),
+      .nullish(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
- */
 export type ModifyCurrentUserEntity = z.infer<typeof ModifyCurrentUserSchema>;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params}
+ */
 export const GetCurrentUserGuildsQuerySchema = z
   .object({
-    before: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).optional(),
-    after: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).optional(),
+    before: SnowflakeSchema.optional(),
+    after: SnowflakeSchema.optional(),
     limit: z.number().int().default(200).optional(),
     with_counts: z.boolean().default(false).optional(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params}
- */
 export type GetCurrentUserGuildsQueryEntity = z.infer<
   typeof GetCurrentUserGuildsQuerySchema
 >;
 
-export const CreateGroupDmSchema = z
-  .object({
-    access_tokens: z.array(z.string()).min(2).max(10),
-    nicks: z.record(
-      z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX),
-      z.string(),
-    ),
-  })
-  .strict();
-
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params}
  */
+export const CreateGroupDmSchema = z
+  .object({
+    access_tokens: z.array(z.string()).min(2).max(10),
+    nicks: z.record(SnowflakeSchema, z.string()),
+  })
+  .strict();
+
 export type CreateGroupDmEntity = z.infer<typeof CreateGroupDmSchema>;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params}
+ */
 export const UpdateCurrentUserApplicationRoleConnectionSchema = z
   .object({
     platform_name: z.string().max(50).optional(),
@@ -61,9 +59,6 @@ export const UpdateCurrentUserApplicationRoleConnectionSchema = z
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params}
- */
 export type UpdateCurrentUserApplicationRoleConnectionEntity = z.infer<
   typeof UpdateCurrentUserApplicationRoleConnectionSchema
 >;

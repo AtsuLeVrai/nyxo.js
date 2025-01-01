@@ -22,9 +22,9 @@ export class RequestManager {
   readonly #rateLimitManager: RestRateLimitManager;
   readonly #pendingRequests = new Set<string>();
   readonly #retryableErrors = new Set([
-    JsonErrorCode.CloudflareError,
-    JsonErrorCode.ServiceResourceRateLimited,
-    JsonErrorCode.ApiResourceOverloaded,
+    JsonErrorCode.cloudflareError,
+    JsonErrorCode.serviceResourceRateLimited,
+    JsonErrorCode.apiResourceOverloaded,
   ]);
 
   constructor(
@@ -160,7 +160,7 @@ export class RequestManager {
       "x-ratelimit-precision": "millisecond",
     };
 
-    if (this.#configManager.options.compress) {
+    if (this.#configManager.options.useCompression) {
       headers["accept-encoding"] = "gzip";
     }
 
@@ -177,7 +177,7 @@ export class RequestManager {
     const buffer = Buffer.from(await response.body.arrayBuffer());
 
     if (
-      !this.#configManager.options.compress ||
+      !this.#configManager.options.useCompression ||
       response.headers["content-encoding"] !== "gzip"
     ) {
       return buffer;
@@ -232,7 +232,7 @@ export class RequestManager {
       const content = data.toString();
 
       try {
-        if (statusCode === HttpStatusCode.TooManyRequests) {
+        if (statusCode === HttpStatusCode.tooManyRequests) {
           this.#handleRateLimitError(content, headers);
         }
 
@@ -286,7 +286,10 @@ export class RequestManager {
     }
 
     const errorCode = this.#extractErrorCode(error.message);
-    if (errorCode && this.#retryableErrors.has(errorCode)) {
+    if (
+      errorCode &&
+      this.#retryableErrors.has(errorCode as 40333 | 40062 | 130000)
+    ) {
       return true;
     }
 
@@ -323,16 +326,20 @@ export class RequestManager {
     );
   }
 
-  #isRetryableStatusCode(statusCode: number | null): boolean {
+  #isRetryableStatusCode(
+    statusCode: number | null,
+  ): statusCode is 500 | 429 | 502 {
     if (!statusCode) {
       return false;
     }
 
-    if (statusCode === HttpStatusCode.TooManyRequests) {
+    if (statusCode === HttpStatusCode.tooManyRequests) {
       return !this.isGlobalRateLimit;
     }
 
-    return ConfigManager.RETRY_STATUS_CODES.includes(statusCode);
+    return ConfigManager.RETRY_STATUS_CODES.includes(
+      statusCode as 500 | 429 | 502,
+    );
   }
 
   #extractRetryAfter(error: Error): number | null {

@@ -15,8 +15,8 @@ interface ParsedTokenEntity {
 }
 
 const TOKEN_PATTERNS: Record<AuthTypeFlag, RegExp> = {
-  [AuthTypeFlag.Bot]: /^[\w-]{20,}\.[\w-]{6}\.[\w-]{27,}$/,
-  [AuthTypeFlag.Bearer]: /^[a-zA-Z0-9_-]{30,}$/,
+  [AuthTypeFlag.bot]: /^[\w-]{20,}\.[\w-]{6}\.[\w-]{27,}$/,
+  [AuthTypeFlag.bearer]: /^[a-zA-Z0-9_-]{30,}$/,
 } as const;
 
 export class TokenManager {
@@ -72,7 +72,7 @@ export class TokenManager {
 
   static isValidToken(
     input: string,
-    type: AuthTypeFlag = AuthTypeFlag.Bot,
+    type: AuthTypeFlag = AuthTypeFlag.bot,
   ): boolean {
     return TOKEN_PATTERNS[type].test(input);
   }
@@ -141,7 +141,7 @@ export class TokenManager {
     type: AuthTypeFlag,
     parts: TokenEntity,
   ): Partial<ParsedTokenEntity> {
-    if (type !== AuthTypeFlag.Bot) {
+    if (type !== AuthTypeFlag.bot) {
       return {};
     }
 

@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#request-guild-members-request-guild-members-structure}
@@ -6,7 +6,7 @@ import type { Integer, Snowflake } from "@nyxjs/core";
 export interface RequestGuildMembersEntity {
   guild_id: Snowflake;
   query?: string;
-  limit: Integer;
+  limit: number;
   presences?: boolean;
   user_ids?: Snowflake | Snowflake[];
   nonce?: string;

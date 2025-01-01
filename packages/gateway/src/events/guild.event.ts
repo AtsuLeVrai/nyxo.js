@@ -7,8 +7,6 @@ import type {
   GuildMemberEntity,
   GuildMemberFlags,
   GuildScheduledEventEntity,
-  Integer,
-  Iso8601,
   RoleEntity,
   Snowflake,
   SoundboardSoundEntity,
@@ -83,8 +81,8 @@ export type GuildRoleCreateEntity = GuildRoleUpdateEntity;
 export interface GuildMembersChunkEntity {
   guild_id: Snowflake;
   members: GuildMemberEntity[];
-  chunk_index: Integer;
-  chunk_count: Integer;
+  chunk_index: number;
+  chunk_count: number;
   not_found?: Snowflake[];
   presences?: PresenceEntity[];
   nonce?: string;
@@ -100,12 +98,12 @@ export interface GuildMemberUpdateEntity {
   nick?: string | null;
   avatar: string | null;
   banner: string | null;
-  joined_at: Iso8601 | null;
-  premium_since?: Iso8601 | null;
+  joined_at: string | null;
+  premium_since?: string | null;
   deaf?: boolean;
   mute?: boolean;
   pending?: boolean;
-  communication_disabled_until?: Iso8601 | null;
+  communication_disabled_until?: string | null;
   flags?: GuildMemberFlags;
   avatar_decoration_data?: AvatarDecorationDataEntity | null;
 }
@@ -175,10 +173,10 @@ export interface GuildAuditLogEntryCreateEntity extends AuditLogEntryEntity {
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-create-guild-create-extra-fields}
  */
 export interface GuildCreateEntity extends GuildEntity {
-  joined_at: Iso8601;
+  joined_at: string;
   large: boolean;
   unavailable?: boolean;
-  member_count: Integer;
+  member_count: number;
   voice_states: Partial<VoiceStateEntity>[];
   members: GuildMemberEntity[];
   channels: ChannelEntity[];

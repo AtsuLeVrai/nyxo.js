@@ -1,4 +1,3 @@
-import type { Integer } from "@nyxjs/core";
 import type { GatewayIntentsBits } from "../types/index.js";
 import type { UpdatePresenceEntity } from "./gateway.event.js";
 
@@ -18,8 +17,8 @@ export interface IdentifyEntity {
   token: string;
   properties: IdentifyConnectionPropertiesEntity;
   compress?: boolean;
-  large_threshold?: Integer;
-  shard?: [shardId: Integer, numShards: Integer];
+  large_threshold?: number;
+  shard?: [shardId: number, numShards: number];
   presence?: UpdatePresenceEntity;
   intents: GatewayIntentsBits;
 }

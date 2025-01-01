@@ -1,21 +1,7 @@
-import type { Store } from "./Store.js";
+import type { Store } from "./store.js";
 
-export enum DataFormat {
-  Array = "array",
-  Object = "object",
-  Map = "map",
-  Set = "set",
-  Pairs = "pairs",
-}
-
-export enum SetOperation {
-  Union = "union",
-  Difference = "difference",
-  Intersection = "intersection",
-}
-
+export type SetOperation = "union" | "difference" | "intersection";
 export type ToFormat = "array" | "object" | "map" | "set" | "pairs";
-export type NonNullableValue<T> = T extends null | undefined ? never : T;
 export type StoreKey = string | number | symbol;
 export type StoreValue = unknown;
 export type StorePredicate<K, V> =
@@ -24,19 +10,19 @@ export type StorePredicate<K, V> =
 export type ToReturnType<
   K,
   V,
-  F extends DataFormat,
+  F extends ToFormat,
   O extends ConversionOptions<V> | undefined,
-> = F extends DataFormat.Array
+> = F extends "array"
   ? V[]
-  : F extends DataFormat.Object
+  : F extends "object"
     ? Record<string, V>
-    : F extends DataFormat.Map
+    : F extends "map"
       ? Map<K, V>
-      : F extends DataFormat.Set
+      : F extends "set"
         ? O extends { property: keyof V }
           ? Set<V[O["property"]]>
           : Set<V>
-        : F extends DataFormat.Pairs
+        : F extends "pairs"
           ? [K, V][]
           : never;
 

@@ -1,5 +1,5 @@
 import { ApiVersion, BitFieldManager } from "@nyxjs/core";
-import type { GatewayBotResponseEntity, Rest } from "@nyxjs/rest";
+import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type {
@@ -15,12 +15,11 @@ import {
   CompressionManager,
   EncodingManager,
   RateLimitManager,
-  SessionManager,
   ShardManager,
 } from "../managers/index.js";
 import {
   type CompressionType,
-  EncodingType,
+  type EncodingType,
   GatewayCloseCodes,
   type GatewayEventsMap,
   GatewayOpcodes,
@@ -32,14 +31,15 @@ import {
 interface ConnectionState {
   reconnectAttempts: number;
   isReconnecting: boolean;
-  lastSequenceNumber: number;
+  sequence: number;
   sessionId: string | null;
-  wsUrl: string | null;
   resumeUrl: string | null;
   heartbeatInterval: NodeJS.Timeout | null;
   heartbeatsMissed: number;
   lastHeartbeatAck: boolean;
-  jitter: number;
+  lastPing: number | null;
+  lastHeartbeatSent: number | null;
+  activeShard: number | null;
 }
 
 export class Gateway extends EventEmitter<GatewayEventsMap> {
@@ -49,29 +49,30 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
 
   readonly #rest: Rest;
   readonly #token: string;
-  readonly #version: ApiVersion.V10;
+  readonly #version: ApiVersion = ApiVersion.v10;
   readonly #encoding: EncodingType;
-  readonly #compress: CompressionType | null;
+  readonly #compress: CompressionType;
   readonly #intents: BitFieldManager<number>;
   readonly #largeThreshold: number;
+  #isSharding: boolean;
   readonly #presence?: UpdatePresenceEntity;
 
   #ws: WebSocket | null = null;
   #state: ConnectionState = {
     reconnectAttempts: 0,
     isReconnecting: false,
-    lastSequenceNumber: -1,
+    sequence: -1,
     sessionId: null,
-    wsUrl: null,
     resumeUrl: null,
     heartbeatInterval: null,
     heartbeatsMissed: 0,
     lastHeartbeatAck: true,
-    jitter: Math.random(),
+    lastPing: null,
+    lastHeartbeatSent: null,
+    activeShard: null,
   };
 
   readonly #shardManager: ShardManager;
-  readonly #sessionManager: SessionManager;
   readonly #rateLimitManager: RateLimitManager;
   readonly #compressionManager: CompressionManager;
   readonly #encodingManager: EncodingManager;
@@ -84,24 +85,24 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     }
 
     this.#rest = rest;
-    this.#token = options.token ?? rest.token.value;
-    this.#version = options.version ?? ApiVersion.V10;
-    this.#encoding = options.encoding ?? EncodingType.Json;
-    this.#compress = options.compress ?? null;
+    this.#token = options.token;
+    this.#version = options.version ?? ApiVersion.v10;
+    this.#encoding = options.encoding ?? "etf";
+    this.#compress = options.compress ?? "zstd-stream";
     this.#intents = BitFieldManager.combine(options.intents);
     this.#largeThreshold =
       options.largeThreshold ?? Gateway.DEFAULT_LARGE_THRESHOLD;
     this.#presence = options.presence;
+    this.#isSharding = options.shard ?? false;
 
-    this.#sessionManager = new SessionManager();
     this.#rateLimitManager = new RateLimitManager(options);
-    this.#shardManager = new ShardManager(
-      this.#sessionManager,
-      this.#rateLimitManager,
-      options,
-    );
+    this.#shardManager = new ShardManager(this.#rateLimitManager);
     this.#compressionManager = new CompressionManager(this.#compress);
     this.#encodingManager = new EncodingManager(this.#encoding);
+  }
+
+  get ping(): number {
+    return this.#state.lastPing ?? -1;
   }
 
   get sessionId(): string | null {
@@ -109,27 +110,43 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   }
 
   get sequence(): number {
-    return this.#state.lastSequenceNumber;
+    return this.#state.sequence;
   }
 
-  get readyState(): number {
+  get readyState(): 0 | 1 | 2 | 3 {
     return this.#ws?.readyState ?? WebSocket.CLOSED;
   }
 
   async connect(): Promise<void> {
     try {
-      const gatewayInfo = await this.#fetchGatewayBot();
+      this.emit("connecting", this.#state.reconnectAttempts);
 
-      if (!this.#shardManager.isInitialized) {
-        this.#shardManager.initialize(
+      const [gatewayInfo, guilds] = await Promise.all([
+        this.#rest.getRouter("gateway").getGatewayBot(),
+        this.#rest.getRouter("users").getCurrentUserGuilds(),
+      ]);
+
+      if (
+        this.#isSharding &&
+        this.#shardManager.isBotShardingRequired(guilds.length)
+      ) {
+        this.emit("debug", `Initializing sharding for ${guilds.length} guilds`);
+
+        await this.#shardManager.spawnShards(
           gatewayInfo.shards,
           gatewayInfo.session_start_limit.max_concurrency,
         );
+      } else {
+        this.#isSharding = false;
+        const warningMessage =
+          `Sharding not necessary: Total guilds (${guilds.length}) do not exceed sharding threshold. ` +
+          `Sharding is typically recommended when a bot is in ${ShardManager.MAX_GUILDS_PER_SHARD} or more guilds.`;
+
+        this.emit("warn", warningMessage);
       }
 
-      this.#sessionManager.updateStartLimit(gatewayInfo.session_start_limit);
-
-      await this.#initializeConnection(gatewayInfo);
+      this.#initializeWebSocket(gatewayInfo.url);
+      this.emit("connected");
     } catch (error) {
       this.emit(
         "error",
@@ -142,7 +159,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   updatePresence(presence: UpdatePresenceEntity): void {
     this.emit("debug", `Updating presence: ${JSON.stringify(presence)}`);
     this.#sendPayload({
-      op: GatewayOpcodes.PresenceUpdate,
+      op: GatewayOpcodes.presenceUpdate,
       d: presence,
       s: null,
       t: null,
@@ -152,7 +169,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   updateVoiceState(options: UpdateVoiceStateEntity): void {
     this.emit("debug", `Updating voice state for guild ${options.guild_id}`);
     this.#sendPayload({
-      op: GatewayOpcodes.VoiceStateUpdate,
+      op: GatewayOpcodes.voiceStateUpdate,
       d: options,
       s: null,
       t: null,
@@ -165,16 +182,16 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       `Requesting guild members for guild ${options.guild_id}`,
     );
     this.#sendPayload({
-      op: GatewayOpcodes.RequestGuildMembers,
+      op: GatewayOpcodes.requestGuildMembers,
       d: options,
       s: null,
       t: null,
     });
   }
 
-  async destroy(code: number = GatewayCloseCodes.UnknownError): Promise<void> {
+  destroy(code: GatewayCloseCodes = 4000): void {
     this.emit("debug", `Destroying connection with code ${code}`);
-    await this.#cleanup();
+    this.#cleanup();
 
     if (this.#ws) {
       this.#ws.close(code);
@@ -182,115 +199,69 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     }
   }
 
-  async #initializeConnection(
-    gatewayInfo: GatewayBotResponseEntity,
-  ): Promise<void> {
-    const wsUrl = await this.#buildGatewayUrl(gatewayInfo.url);
-    this.#state.wsUrl = wsUrl;
-
-    this.#ws = new WebSocket(wsUrl);
-    await this.#setupWebSocket();
+  isHealthy(): boolean {
+    return (
+      this.readyState === WebSocket.OPEN &&
+      this.#state.heartbeatsMissed < Gateway.ZOMBIED_CONNECTION_THRESHOLD &&
+      this.ping < 30000
+    );
   }
 
-  async #setupWebSocket(): Promise<void> {
-    if (!this.#ws) {
-      throw new Error("No WebSocket instance available");
-    }
+  #initializeWebSocket(url: string): void {
+    const wsUrl = this.#buildGatewayUrl(url);
+    this.#ws = new WebSocket(wsUrl);
 
-    return new Promise((resolve, reject) => {
-      if (!this.#ws) {
-        return reject(new Error("WebSocket not initialized"));
-      }
-
-      this.#ws.on("open", () => {
-        this.emit("debug", "WebSocket connection established");
-        resolve();
-      });
-
-      this.#ws.on("message", async (data: Buffer) => {
-        try {
-          const payload = await this.#processIncomingData(data);
-          await this.#handlePayload(payload);
-        } catch (error) {
-          this.emit(
-            "error",
-            this.#wrapError("Failed to process message", error),
-          );
-        }
-      });
-
-      this.#ws.on("close", async (code: number) => {
-        this.emit("close", code, this.#getCloseCodeDescription(code));
-        await this.#handleClose(code);
-      });
-
-      this.#ws.on("error", (error: Error) => {
-        this.emit("error", error);
-        reject(error);
-      });
+    this.#ws.on("open", () =>
+      this.emit("debug", `WebSocket connection established to ${wsUrl}`),
+    );
+    this.#ws.on("error", (error) => this.emit("error", error));
+    this.#ws.on("message", (data: Buffer) => this.#handleMessage(data));
+    this.#ws.on("close", async (code: GatewayCloseCodes) => {
+      this.emit("close", code);
+      await this.#handleClose(code);
     });
   }
 
-  async #handlePayload(payload: PayloadEntity): Promise<void> {
-    if (payload.s !== null) {
-      this.#state.lastSequenceNumber = payload.s;
-      if (this.#state.sessionId) {
-        this.#sessionManager.updateSequence(this.#state.sessionId, payload.s);
+  #handleMessage(data: Buffer): Promise<void> | void {
+    try {
+      let processedData = data;
+      if (this.#compress) {
+        processedData = this.#compressionManager.decompress(data);
       }
-    }
 
-    switch (payload.op) {
-      case GatewayOpcodes.Dispatch:
-        this.#handleDispatch(payload);
-        break;
-
-      case GatewayOpcodes.Hello:
-        await this.#handleHello(payload);
-        break;
-
-      case GatewayOpcodes.Heartbeat:
-        await this.#sendHeartbeat();
-        break;
-
-      case GatewayOpcodes.HeartbeatAck:
-        this.#handleHeartbeatAck();
-        break;
-
-      case GatewayOpcodes.InvalidSession:
-        await this.#handleInvalidSession(payload.d as boolean);
-        break;
-
-      case GatewayOpcodes.Reconnect:
-        await this.#handleReconnect();
-        break;
-
-      default:
-        this.emit("debug", `Unhandled payload op: ${payload.op}`);
+      const payload = this.#encodingManager.decode(processedData);
+      return this.#handlePayload(payload);
+    } catch (error) {
+      this.emit("error", this.#wrapError("Failed to process message", error));
     }
   }
 
-  async #handleHello(payload: PayloadEntity): Promise<void> {
-    const { heartbeat_interval } = payload.d as HelloEntity;
-
-    if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
-      throw new Error("Connection not ready for HELLO");
+  #handlePayload(payload: PayloadEntity): Promise<void> | void {
+    if (payload.s !== null) {
+      this.#state.sequence = payload.s;
     }
 
-    try {
-      await this.#setupHeartbeat(heartbeat_interval);
+    switch (payload.op) {
+      case GatewayOpcodes.dispatch:
+        return this.#handleDispatch(payload);
 
-      if (
-        this.#state.sessionId &&
-        this.#sessionManager.canResumeSession(this.#state.sessionId)
-      ) {
-        this.#sendResume();
-      } else {
-        await this.#identify();
-      }
-    } catch (error) {
-      this.emit("error", this.#wrapError("Failed to handle HELLO", error));
-      await this.destroy();
-      throw error;
+      case GatewayOpcodes.hello:
+        return this.#handleHello(payload.d as HelloEntity);
+
+      case GatewayOpcodes.heartbeat:
+        return this.#sendHeartbeat();
+
+      case GatewayOpcodes.heartbeatAck:
+        return this.#handleHeartbeatAck();
+
+      case GatewayOpcodes.invalidSession:
+        return this.#handleInvalidSession(Boolean(payload.d));
+
+      case GatewayOpcodes.reconnect:
+        return this.#handleReconnect();
+
+      default:
+        this.emit("debug", `Unhandled payload op: ${payload.op}`);
     }
   }
 
@@ -312,44 +283,58 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     );
   }
 
+  async #handleHello(hello: HelloEntity): Promise<void> {
+    if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
+      throw new Error("No active WebSocket connection");
+    }
+
+    this.#setupHeartbeat(hello.heartbeat_interval);
+
+    if (this.#state.sessionId && this.#state.sequence > -1) {
+      this.#sendResume();
+    } else if (this.#isSharding) {
+      const nextShard = this.#shardManager.getNextShardToSpawn();
+      if (nextShard !== null) {
+        await this.#identify(nextShard);
+        this.#shardManager.updateShardStatus(nextShard, "connecting");
+      }
+    } else {
+      await this.#identify();
+    }
+  }
+
+  #setupHeartbeat(interval: number): void {
+    this.#clearHeartbeat();
+
+    const jitter = Math.random();
+    const jitterDelay = Math.floor(interval * jitter);
+
+    this.emit(
+      "debug",
+      `Setting up heartbeat (interval: ${interval}ms, jitter: ${jitter}, delay: ${jitterDelay}ms)`,
+    );
+
+    setTimeout(() => {
+      this.#sendHeartbeat();
+      this.#state.heartbeatInterval = setInterval(() => {
+        this.#sendHeartbeat();
+      }, interval);
+    }, jitterDelay);
+  }
+
   #handleReady(data: ReadyEntity): void {
     this.#state.sessionId = data.session_id;
     this.#state.resumeUrl = data.resume_gateway_url;
 
-    if (!this.#sessionManager.hasSession(data.session_id)) {
-      const currentShard = this.#shardManager.isEnabled
-        ? this.#shardManager.getNextShardToSpawn()
-        : undefined;
+    this.emit("sessionStart", data.session_id);
 
-      this.#sessionManager.registerSession(
-        data.session_id,
-        currentShard ?? 0,
-        data.v,
-        this.#encoding,
-      );
-    }
-
-    this.#sessionManager.updateSession(
-      data.session_id,
-      data.resume_gateway_url,
-      this.#state.lastSequenceNumber,
-      this.#state.heartbeatsMissed,
-    );
-
-    if (this.#shardManager.isEnabled) {
+    if (this.#isSharding) {
       const shardId = this.#shardManager.getNextShardToSpawn();
       if (shardId !== null) {
+        this.emit("shardReady", shardId);
         this.#shardManager.updateShardStatus(shardId, "ready");
 
         for (const guild of data.guilds) {
-          if ("id" in guild) {
-            this.#shardManager.addGuildToShard(guild.id);
-          }
-        }
-      }
-    } else {
-      for (const guild of data.guilds) {
-        if ("id" in guild) {
           this.#shardManager.addGuildToShard(guild.id);
         }
       }
@@ -370,62 +355,44 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     this.emit("debug", debugMessage);
   }
 
-  async #setupHeartbeat(interval: number): Promise<void> {
-    this.#clearHeartbeat();
-
-    const jitterDelay = Math.floor(interval * this.#state.jitter);
-
-    this.emit(
-      "debug",
-      `Setting up heartbeat (interval: ${interval}ms, jitter: ${this.#state.jitter}, delay: ${jitterDelay}ms)`,
-    );
-
-    await this.#wait(jitterDelay);
-    await this.#sendHeartbeat();
-
-    this.#state.heartbeatInterval = setInterval(() => {
-      this.#sendHeartbeat().catch((error) => {
-        this.emit("error", this.#wrapError("Failed to send heartbeat", error));
-      });
-    }, interval);
-  }
-
-  async #sendHeartbeat(): Promise<void> {
+  #sendHeartbeat(): void {
     if (!this.#state.lastHeartbeatAck) {
       this.#state.heartbeatsMissed++;
+      this.emit("heartbeatTimeout", this.#state.heartbeatsMissed);
 
       if (
         this.#state.heartbeatsMissed >= Gateway.ZOMBIED_CONNECTION_THRESHOLD
       ) {
         this.emit("debug", "Connection appears to be zombied, reconnecting");
-        await this.destroy();
+        this.destroy();
         return;
       }
     }
 
     this.#state.lastHeartbeatAck = false;
+    this.#state.lastHeartbeatSent = Date.now();
+    this.emit("heartbeat", this.#state.sequence);
+
     this.#sendPayload({
-      op: GatewayOpcodes.Heartbeat,
-      d: this.#state.lastSequenceNumber,
+      op: GatewayOpcodes.heartbeat,
+      d: this.#state.sequence,
       s: null,
       t: null,
     });
-
-    if (this.#state.sessionId) {
-      this.#sessionManager.updateHeartbeat(this.#state.sessionId, true);
-    }
   }
 
   #handleHeartbeatAck(): void {
+    const now = Date.now();
+    if (this.#state.lastHeartbeatSent) {
+      this.#state.lastPing = now - this.#state.lastHeartbeatSent;
+      this.emit("heartbeatAck", this.#state.lastPing);
+    }
+
     this.#state.lastHeartbeatAck = true;
     this.#state.heartbeatsMissed = 0;
-
-    if (this.#state.sessionId) {
-      this.#sessionManager.updateHeartbeat(this.#state.sessionId, false, true);
-    }
   }
 
-  async #identify(): Promise<void> {
+  async #identify(currentShard: number | null = null): Promise<void> {
     const payload: IdentifyEntity = {
       token: this.#token,
       compress: Boolean(this.#compress),
@@ -438,12 +405,10 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       },
     };
 
-    if (this.#shardManager.isEnabled) {
-      const shardId = this.#shardManager.getNextShardToSpawn();
-      if (shardId !== null) {
-        payload.shard = [shardId, this.#shardManager.totalShards];
-        await this.#rateLimitManager.acquireIdentify(shardId);
-      }
+    if (this.#isSharding && currentShard) {
+      this.#state.activeShard = currentShard;
+      payload.shard = [currentShard, this.#shardManager.totalShards];
+      await this.#rateLimitManager.acquireIdentify(currentShard);
     }
 
     if (this.#presence) {
@@ -451,7 +416,7 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     }
 
     this.#sendPayload({
-      op: GatewayOpcodes.Identify,
+      op: GatewayOpcodes.identify,
       d: payload,
       s: null,
       t: null,
@@ -466,11 +431,11 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     const payload: ResumeEntity = {
       token: this.#token,
       session_id: this.#state.sessionId,
-      seq: this.#state.lastSequenceNumber,
+      seq: this.#state.sequence,
     };
 
     this.#sendPayload({
-      op: GatewayOpcodes.Resume,
+      op: GatewayOpcodes.resume,
       d: payload,
       s: null,
       t: null,
@@ -479,6 +444,15 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
 
   async #handleClose(code: number): Promise<void> {
     this.#clearHeartbeat();
+
+    if (this.#state.sessionId) {
+      this.emit("sessionEnd", this.#state.sessionId, code);
+    }
+
+    const activeShard = this.#state.activeShard;
+    if (this.#isSharding && activeShard) {
+      this.emit("shardDisconnect", activeShard, code);
+    }
 
     if (this.#shouldResume(code)) {
       await this.#handleResume();
@@ -494,13 +468,14 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
       return;
     }
 
+    const activeShard = this.#state.activeShard;
+    if (this.#isSharding && activeShard) {
+      this.emit("shardResume", activeShard);
+    }
+
     try {
       await this.#waitForBackoff();
-
-      const wsUrl = await this.#buildGatewayUrl(this.#state.resumeUrl);
-      this.#ws = new WebSocket(wsUrl);
-
-      await this.#setupWebSocket();
+      this.#initializeWebSocket(this.#state.resumeUrl);
       this.#sendResume();
     } catch (error) {
       this.emit("error", this.#wrapError("Failed to resume", error));
@@ -514,8 +489,17 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     }
 
     this.#state.isReconnecting = true;
+    const activeShard = this.#state.activeShard;
+
+    if (this.#isSharding && activeShard) {
+      this.emit("shardReconnecting", activeShard);
+      this.#shardManager.updateShardStatus(activeShard, "idle");
+    }
+
+    this.emit("reconnecting", this.#state.reconnectAttempts);
+
     try {
-      await this.#cleanup();
+      this.#cleanup();
       await this.#waitForBackoff();
       await this.connect();
     } catch (error) {
@@ -526,27 +510,18 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
   }
 
   async #handleInvalidSession(resumable: boolean): Promise<void> {
-    if (
-      resumable &&
-      this.#state.sessionId &&
-      this.#sessionManager.canResumeSession(this.#state.sessionId)
-    ) {
+    this.emit("sessionInvalid", resumable);
+
+    if (resumable) {
       await this.#handleResume();
     } else {
-      this.#invalidateSession();
+      this.#state.sessionId = null;
+      this.#state.sequence = -1;
       await this.#handleReconnect();
     }
   }
 
-  async #fetchGatewayBot(): Promise<GatewayBotResponseEntity> {
-    try {
-      return await this.#rest.getRouter("gateway").getGatewayBot();
-    } catch (error) {
-      throw this.#wrapError("Failed to fetch gateway information", error);
-    }
-  }
-
-  async #buildGatewayUrl(baseUrl: string): Promise<string> {
+  #buildGatewayUrl(baseUrl: string): string {
     const params = new URLSearchParams({
       v: String(this.#version),
       encoding: this.#encoding,
@@ -554,20 +529,10 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
 
     if (this.#compress) {
       params.append("compress", this.#compress);
-      await this.#compressionManager.initializeCompression();
+      this.#compressionManager.initializeCompression();
     }
 
     return `${baseUrl}?${params.toString()}`;
-  }
-
-  async #processIncomingData(data: Buffer): Promise<PayloadEntity> {
-    let processedData = data;
-
-    if (this.#compress) {
-      processedData = await this.#compressionManager.decompress(data);
-    }
-
-    return this.#encodingManager.decode(processedData);
   }
 
   #sendPayload(payload: PayloadEntity): void {
@@ -584,30 +549,25 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     }
   }
 
-  async #cleanup(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      try {
-        this.emit("debug", "Cleaning up connection resources");
+  #cleanup(): void {
+    try {
+      this.emit("debug", "Cleaning up connection resources");
 
-        this.#clearHeartbeat();
+      this.#clearHeartbeat();
 
-        if (this.#ws) {
-          this.#ws.removeAllListeners();
-          this.#ws = null;
-        }
-
-        this.#state.lastHeartbeatAck = true;
-        this.#state.heartbeatsMissed = 0;
-
-        this.#compressionManager.destroy();
-        this.#rateLimitManager.destroy();
-        this.#sessionManager.destroy();
-
-        resolve();
-      } catch (error) {
-        reject(this.#wrapError("Failed to cleanup resources", error));
+      if (this.#ws) {
+        this.#ws.removeAllListeners();
+        this.#ws = null;
       }
-    });
+
+      this.#state.lastHeartbeatAck = true;
+      this.#state.heartbeatsMissed = 0;
+
+      this.#compressionManager.destroy();
+      this.#rateLimitManager.destroy();
+    } catch (error) {
+      throw this.#wrapError("Failed to cleanup resources", error);
+    }
   }
 
   #clearHeartbeat(): void {
@@ -617,26 +577,23 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
     }
   }
 
-  #invalidateSession(): void {
-    if (this.#state.sessionId) {
-      this.#sessionManager.deleteSession(this.#state.sessionId);
-      this.#state.sessionId = null;
-    }
-    this.#state.lastSequenceNumber = -1;
-  }
-
   #shouldResume(closeCode: number): boolean {
     const nonResumableCodes = [
-      GatewayCloseCodes.AuthenticationFailed,
-      GatewayCloseCodes.InvalidShard,
-      GatewayCloseCodes.ShardingRequired,
-      GatewayCloseCodes.InvalidApiVersion,
-      GatewayCloseCodes.InvalidIntents,
-      GatewayCloseCodes.DisallowedIntents,
+      GatewayCloseCodes.authenticationFailed,
+      GatewayCloseCodes.invalidShard,
+      GatewayCloseCodes.shardingRequired,
+      GatewayCloseCodes.invalidApiVersion,
+      GatewayCloseCodes.invalidIntents,
+      GatewayCloseCodes.disallowedIntents,
     ];
 
     const isClean = closeCode === 1000 || closeCode === 1001;
-    return !(isClean || nonResumableCodes.includes(closeCode));
+    return !(
+      isClean ||
+      nonResumableCodes.includes(
+        closeCode as 4004 | 4010 | 4011 | 4012 | 4013 | 4014,
+      )
+    );
   }
 
   async #waitForBackoff(): Promise<void> {
@@ -663,10 +620,6 @@ export class Gateway extends EventEmitter<GatewayEventsMap> {
 
   async #wait(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  #getCloseCodeDescription(code: number): string {
-    return GatewayCloseCodes[code] ?? "Unknown close code";
   }
 
   #wrapError(message: string, error: unknown): Error {

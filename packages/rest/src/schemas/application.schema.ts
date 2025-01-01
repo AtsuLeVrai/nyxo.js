@@ -2,9 +2,8 @@ import {
   ApplicationEventWebhookStatus,
   ApplicationFlags,
   ApplicationIntegrationType,
-  type ApplicationIntegrationTypeConfigurationEntity,
-  type InstallParamsEntity,
-  OAuth2Scope,
+  ApplicationIntegrationTypeConfigurationSchema,
+  InstallParamsSchema,
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
@@ -12,10 +11,7 @@ import { z } from "zod";
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum}
  */
-export enum ActivityLocationKind {
-  GuildChannel = "gc",
-  PrivateChannel = "pc",
-}
+export type ActivityLocationKind = "gc" | "pc";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-object}
@@ -38,20 +34,9 @@ export interface ActivityInstanceEntity {
   users: Snowflake[];
 }
 
-const InstallParamsSchema: z.ZodType<InstallParamsEntity> = z
-  .object({
-    scopes: z.array(z.nativeEnum(OAuth2Scope)),
-    permissions: z.string(),
-  })
-  .strict();
-
-const ApplicationIntegrationTypeConfigurationSchema: z.ZodType<ApplicationIntegrationTypeConfigurationEntity> =
-  z
-    .object({
-      oauth2_install_params: InstallParamsSchema.optional(),
-    })
-    .strict();
-
+/**
+ * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
+ */
 export const EditCurrentApplicationSchema = z
   .object({
     custom_install_url: z.string().url().optional(),
@@ -66,9 +51,9 @@ export const EditCurrentApplicationSchema = z
       .optional(),
     flags: z
       .union([
-        z.literal(ApplicationFlags.GatewayPresenceLimited),
-        z.literal(ApplicationFlags.GatewayGuildMembersLimited),
-        z.literal(ApplicationFlags.GatewayMessageContentLimited),
+        z.literal(ApplicationFlags.gatewayPresenceLimited),
+        z.literal(ApplicationFlags.gatewayGuildMembersLimited),
+        z.literal(ApplicationFlags.gatewayMessageContentLimited),
       ])
       .optional(),
     icon: z
@@ -84,17 +69,14 @@ export const EditCurrentApplicationSchema = z
     event_webhooks_url: z.string().url().optional(),
     event_webhooks_status: z
       .union([
-        z.literal(ApplicationEventWebhookStatus.Disabled),
-        z.literal(ApplicationEventWebhookStatus.Enabled),
+        z.literal(ApplicationEventWebhookStatus.disabled),
+        z.literal(ApplicationEventWebhookStatus.enabled),
       ])
       .optional(),
     event_webhooks_types: z.array(z.string()).optional(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
- */
 export type EditCurrentApplicationEntity = z.infer<
   typeof EditCurrentApplicationSchema
 >;

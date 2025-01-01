@@ -5,7 +5,6 @@ import type {
   GuildApplicationCommandPermissionEntity,
   GuildEntity,
   GuildScheduledEventEntity,
-  Integer,
   InteractionEntity,
   SoundboardSoundEntity,
   StageInstanceEntity,
@@ -74,11 +73,11 @@ import { type GatewayCloseCodes, GatewayOpcodes } from "./gateway.type.js";
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
  */
 export interface GatewayReceiveEventsMap {
-  [GatewayOpcodes.Hello]: HelloEntity;
+  [GatewayOpcodes.hello]: HelloEntity;
   READY: ReadyEntity;
   RESUMED: boolean;
-  [GatewayOpcodes.Reconnect]: number;
-  [GatewayOpcodes.InvalidSession]: boolean;
+  [GatewayOpcodes.reconnect]: number;
+  [GatewayOpcodes.invalidSession]: boolean;
   APPLICATION_COMMAND_PERMISSIONS_UPDATE: GuildApplicationCommandPermissionEntity;
   AUTO_MODERATION_RULE_CREATE: AutoModerationRuleEntity;
   AUTO_MODERATION_RULE_UPDATE: AutoModerationRuleEntity;
@@ -160,13 +159,13 @@ export interface GatewayReceiveEventsMap {
  * @see {@link https://discord.com/developers/docs/events/gateway-events#send-events}
  */
 export interface GatewaySendEventsMap {
-  [GatewayOpcodes.Identify]: IdentifyEntity;
-  [GatewayOpcodes.Resume]: ResumeEntity;
-  [GatewayOpcodes.Heartbeat]: Integer | null;
-  [GatewayOpcodes.RequestGuildMembers]: RequestGuildMembersEntity;
-  [GatewayOpcodes.RequestSoundboardSounds]: RequestSoundboardSoundsEntity;
-  [GatewayOpcodes.VoiceStateUpdate]: UpdateVoiceStateEntity;
-  [GatewayOpcodes.PresenceUpdate]: UpdatePresenceEntity;
+  [GatewayOpcodes.identify]: IdentifyEntity;
+  [GatewayOpcodes.resume]: ResumeEntity;
+  [GatewayOpcodes.heartbeat]: number | null;
+  [GatewayOpcodes.requestGuildMembers]: RequestGuildMembersEntity;
+  [GatewayOpcodes.requestSoundboardSounds]: RequestSoundboardSoundsEntity;
+  [GatewayOpcodes.voiceStateUpdate]: UpdateVoiceStateEntity;
+  [GatewayOpcodes.presenceUpdate]: UpdatePresenceEntity;
 }
 
 export interface GatewayEventsMap<
@@ -175,6 +174,19 @@ export interface GatewayEventsMap<
   debug: [message: string];
   warn: [message: string];
   error: [error: Error];
-  close: [code: GatewayCloseCodes, reason: string];
+  close: [code: GatewayCloseCodes];
   dispatch: [event: T, data: GatewayReceiveEventsMap[T]];
+  connecting: [attempt: number];
+  connected: [];
+  reconnecting: [attempt: number];
+  heartbeat: [sequence: number];
+  heartbeatAck: [latency: number];
+  heartbeatTimeout: [missedHeartbeats: number];
+  sessionStart: [sessionId: string];
+  sessionEnd: [sessionId: string, code: number];
+  sessionInvalid: [resumable: boolean];
+  shardReady: [shardId: number];
+  shardReconnecting: [shardId: number];
+  shardResume: [shardId: number];
+  shardDisconnect: [shardId: number, code: number];
 }

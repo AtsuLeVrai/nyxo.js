@@ -1,4 +1,10 @@
-export type Snowflake = string;
+import { z } from "zod";
+
+export const SnowflakeSchema = z
+  .string()
+  .refine((value) => SnowflakeManager.isValid(value));
+
+export type Snowflake = z.infer<typeof SnowflakeSchema>;
 
 export type SnowflakeResolvable =
   | string

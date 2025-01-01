@@ -1,4 +1,4 @@
-import type { EmojiEntity, Integer, Snowflake } from "@nyxjs/core";
+import type { EmojiEntity, Snowflake } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-server-update-voice-server-update-event-fields}
@@ -12,10 +12,13 @@ export interface VoiceServerUpdateEntity {
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-channel-effect-send-animation-types}
  */
-export enum VoiceChannelEffectSendAnimationType {
-  Premium = 0,
-  Basic = 1,
-}
+export const VoiceChannelEffectSendAnimationType = {
+  premium: 0,
+  basic: 1,
+} as const;
+
+export type VoiceChannelEffectSendAnimationType =
+  (typeof VoiceChannelEffectSendAnimationType)[keyof typeof VoiceChannelEffectSendAnimationType];
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-channel-effect-send-voice-channel-effect-send-event-fields}
@@ -25,8 +28,8 @@ export interface VoiceChannelEffectSendEntity {
   guild_id: Snowflake;
   user_id: Snowflake;
   emoji?: EmojiEntity | null;
-  animation_type?: VoiceChannelEffectSendAnimationType | number;
-  animation_id?: Integer;
-  sound_id?: Snowflake | Integer;
+  animation_type?: VoiceChannelEffectSendAnimationType;
+  animation_id?: number;
+  sound_id?: Snowflake | number;
   sound_volume?: number;
 }

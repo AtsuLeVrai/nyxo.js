@@ -1,60 +1,77 @@
-import type { Integer } from "../formatting/index.js";
-import type { Snowflake } from "../managers/index.js";
-import type { UserEntity } from "./user.entity.js";
+import { z } from "zod";
+import { SnowflakeSchema } from "../managers/index.js";
+import { UserSchema } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-format-types}
  */
-export enum StickerFormatType {
-  Png = 1,
-  Apng = 2,
-  Lottie = 3,
-  Gif = 4,
-}
+export const StickerFormatType = {
+  png: 1,
+  apng: 2,
+  lottie: 3,
+  gif: 4,
+} as const;
+
+export type StickerFormatType =
+  (typeof StickerFormatType)[keyof typeof StickerFormatType];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-types}
  */
-export enum StickerType {
-  Standard = 1,
-  Guild = 2,
-}
+export const StickerType = {
+  standard: 1,
+  guild: 2,
+} as const;
+
+export type StickerType = (typeof StickerType)[keyof typeof StickerType];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-structure}
  */
-export interface StickerEntity {
-  id: Snowflake;
-  pack_id?: Snowflake;
-  name: string;
-  description: string | null;
-  tags: string;
-  type: StickerType;
-  format_type: StickerFormatType;
-  available?: boolean;
-  guild_id?: Snowflake;
-  user?: UserEntity;
-  sort_value?: Integer;
-}
+export const StickerSchema = z
+  .object({
+    id: SnowflakeSchema,
+    pack_id: SnowflakeSchema.optional(),
+    name: z.string(),
+    description: z.string().nullable(),
+    tags: z.array(z.string()).transform((value) => value.join(",")),
+    type: z.nativeEnum(StickerType),
+    format_type: z.nativeEnum(StickerFormatType),
+    available: z.boolean().optional(),
+    guild_id: SnowflakeSchema.optional(),
+    user: UserSchema.optional(),
+    sort_value: z.number().int().optional(),
+  })
+  .strict();
+
+export type StickerEntity = z.infer<typeof StickerSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-pack-object-sticker-pack-structure}
  */
-export interface StickerPackEntity {
-  id: Snowflake;
-  stickers: StickerEntity[];
-  name: string;
-  sku_id: Snowflake;
-  cover_sticker_id?: Snowflake;
-  description: string;
-  banner_asset_id?: Snowflake;
-}
+export const StickerPackSchema = z
+  .object({
+    id: SnowflakeSchema,
+    stickers: z.array(StickerSchema),
+    name: z.string(),
+    sku_id: SnowflakeSchema,
+    cover_sticker_id: SnowflakeSchema.optional(),
+    description: z.string(),
+    banner_asset_id: SnowflakeSchema.optional(),
+  })
+  .strict();
+
+export type StickerPackEntity = z.infer<typeof StickerPackSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-item-object-sticker-item-structure}
  */
-export interface StickerItemEntity {
-  format_type: StickerFormatType;
-  id: Snowflake;
-  name: string;
-}
+export const StickerItemSchema = z
+  .object({
+    id: SnowflakeSchema,
+    name: z.string(),
+    format_type: z.nativeEnum(StickerFormatType),
+  })
+  .strict();
+
+export type StickerItemEntity = z.infer<typeof StickerItemSchema>;

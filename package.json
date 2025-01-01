@@ -3,6 +3,7 @@
   "name": "@nyxjs/source",
   "packageManager": "pnpm@9.15.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -14,7 +15,9 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "husky": "^9.1.7",
+    "tsup": "^8.3.5",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   },

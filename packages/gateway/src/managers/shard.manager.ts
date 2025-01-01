@@ -1,7 +1,6 @@
 import { Store } from "@nyxjs/store";
-import type { ShardInfo, ShardOptions } from "../types/index.js";
+import type { ShardInfo, ShardStatus } from "../types/index.js";
 import type { RateLimitManager } from "./rate-limit.manager.js";
-import type { SessionManager } from "./session.manager.js";
 
 export class ShardManager {
   static readonly MAX_GUILDS_PER_SHARD = 2500;
@@ -9,124 +8,51 @@ export class ShardManager {
 
   readonly #shardStore = new Store<number, ShardInfo>();
   readonly #buckets = new Store<number, number[]>();
-  readonly #enabled: boolean;
-  readonly #sessionManager: SessionManager;
   readonly #rateLimitManager: RateLimitManager;
 
-  #shardCount: number;
-  #maxConcurrency: number;
-  #initialized = false;
+  #totalShards = 1;
+  #maxConcurrency = 1;
   #largeBotSharding = false;
 
-  constructor(
-    sessionManager: SessionManager,
-    rateLimitManager: RateLimitManager,
-    options: ShardOptions = {},
-  ) {
-    this.#sessionManager = sessionManager;
+  constructor(rateLimitManager: RateLimitManager) {
     this.#rateLimitManager = rateLimitManager;
-    this.#shardCount = options.shardCount ?? 1;
-    this.#maxConcurrency = options.maxConcurrency ?? 1;
-    this.#enabled = options.shard ?? false;
-  }
-
-  get isEnabled(): boolean {
-    return this.#enabled;
   }
 
   get totalShards(): number {
-    return this.#shardCount;
+    return this.#totalShards;
   }
 
   get maxConcurrency(): number {
     return this.#maxConcurrency;
   }
 
-  get isInitialized(): boolean {
-    return this.#initialized;
-  }
-
   get isLargeBot(): boolean {
     return this.#largeBotSharding;
   }
 
-  initialize(recommendedShards?: number, maxConcurrency?: number): void {
-    if (this.#initialized) {
-      throw new Error("ShardManager is already initialized");
-    }
+  async spawnShards(
+    recommendedShards: number,
+    maxConcurrency: number,
+  ): Promise<void> {
+    this.#totalShards = recommendedShards;
+    this.#maxConcurrency = maxConcurrency;
 
-    if (this.#enabled && recommendedShards) {
-      if (
-        this.#largeBotSharding &&
-        this.#shardCount % recommendedShards !== 0
-      ) {
-        throw new Error(
-          `For large bots, shard count (${this.#shardCount}) must be a multiple of the recommended shards (${recommendedShards})`,
-        );
+    for (let shardId = 0; shardId < this.#totalShards; shardId++) {
+      this.#shardStore.set(shardId, {
+        shardId,
+        totalShards: this.#totalShards,
+        guildIds: [],
+        status: "idle",
+      });
+
+      const bucket = this.#getBucketId(shardId);
+      if (!this.#buckets.has(bucket)) {
+        this.#buckets.set(bucket, []);
       }
-      this.#shardCount = recommendedShards;
+      this.#buckets.get(bucket)?.push(shardId);
     }
 
-    if (maxConcurrency) {
-      this.#maxConcurrency = maxConcurrency;
-    }
-
-    this.#initializeShards();
-    this.#initialized = true;
-  }
-
-  calculateShardId(guildId: string): number {
-    if (!this.#initialized) {
-      throw new Error(
-        "ShardManager must be initialized before calculating shard IDs",
-      );
-    }
-
-    try {
-      const bigIntGuildId = BigInt(guildId);
-      return Number((bigIntGuildId >> BigInt(22)) % BigInt(this.#shardCount));
-    } catch (error) {
-      throw new Error(
-        `Failed to calculate shard ID: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  validateShardCount(guildCount: number, recommendedShards?: number): boolean {
-    if (guildCount >= ShardManager.LARGE_GUILD_THRESHOLD) {
-      this.#largeBotSharding = true;
-
-      if (!recommendedShards) {
-        throw new Error("Sharding is required for large bots");
-      }
-
-      return this.#shardCount % recommendedShards === 0;
-    }
-
-    const minimumShards = Math.ceil(
-      guildCount / ShardManager.MAX_GUILDS_PER_SHARD,
-    );
-    return this.#shardCount >= minimumShards;
-  }
-
-  async spawnShards(): Promise<void> {
-    if (!this.#initialized) {
-      throw new Error(
-        "ShardManager must be initialized before spawning shards",
-      );
-    }
-
-    const buckets = new Map<number, number[]>();
-
-    for (let shardId = 0; shardId < this.#shardCount; shardId++) {
-      const bucket = shardId % this.#maxConcurrency;
-      if (!buckets.has(bucket)) {
-        buckets.set(bucket, []);
-      }
-      buckets.get(bucket)?.push(shardId);
-    }
-
-    for (const [, shards] of Array.from(buckets.entries()).sort(
+    for (const [, shards] of Array.from(this.#buckets.entries()).sort(
       (a, b) => a[0] - b[0],
     )) {
       if (!shards) {
@@ -136,11 +62,37 @@ export class ShardManager {
       await Promise.all(
         shards.map(async (shardId) => {
           await this.#rateLimitManager.acquireIdentify(shardId);
-          await this.#sessionManager.createSession(shardId);
           this.updateShardStatus(shardId, "connecting");
         }),
       );
     }
+  }
+
+  calculateShardId(guildId: string): number {
+    try {
+      const bigIntGuildId = BigInt(guildId);
+      return Number((bigIntGuildId >> BigInt(22)) % BigInt(this.#totalShards));
+    } catch (error) {
+      throw new Error(
+        `Failed to calculate shard ID: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  isBotShardingRequired(guildCount: number): boolean {
+    return guildCount >= ShardManager.MAX_GUILDS_PER_SHARD;
+  }
+
+  validateShardCount(guildCount: number, recommendedShards?: number): boolean {
+    if (guildCount >= ShardManager.LARGE_GUILD_THRESHOLD) {
+      this.#largeBotSharding = true;
+
+      if (!recommendedShards) {
+        throw new Error("Sharding is required for large bots");
+      }
+    }
+
+    return true;
   }
 
   addGuildToShard(guildId: string): void {
@@ -177,10 +129,6 @@ export class ShardManager {
   }
 
   getNextShardToSpawn(): number | null {
-    if (!this.#initialized) {
-      return null;
-    }
-
     const idleShards = this.#getIdleShards();
     if (idleShards.length === 0) {
       return null;
@@ -223,10 +171,7 @@ export class ShardManager {
     );
   }
 
-  updateShardStatus(
-    shardId: number,
-    status: "connecting" | "ready" | "disconnected" | "idle",
-  ): void {
+  updateShardStatus(shardId: number, status: ShardStatus): void {
     const shard = this.#getShardOrThrow(shardId);
     shard.status = status;
   }
@@ -234,25 +179,7 @@ export class ShardManager {
   reset(): void {
     this.#shardStore.clear();
     this.#buckets.clear();
-    this.#initialized = false;
     this.#largeBotSharding = false;
-  }
-
-  #initializeShards(): void {
-    for (let shardId = 0; shardId < this.#shardCount; shardId++) {
-      this.#shardStore.set(shardId, {
-        shardId,
-        totalShards: this.#shardCount,
-        guildIds: [],
-        status: "idle",
-      });
-
-      const bucket = this.#getBucketId(shardId);
-      if (!this.#buckets.has(bucket)) {
-        this.#buckets.set(bucket, []);
-      }
-      this.#buckets.get(bucket)?.push(shardId);
-    }
   }
 
   #getBucketId(shardId: number): number {
@@ -261,7 +188,7 @@ export class ShardManager {
 
   #validateShardId(shardId: number): boolean {
     return (
-      Number.isInteger(shardId) && shardId >= 0 && shardId < this.#shardCount
+      Number.isInteger(shardId) && shardId >= 0 && shardId < this.#totalShards
     );
   }
 

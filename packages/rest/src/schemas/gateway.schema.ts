@@ -1,13 +1,11 @@
-import type { Integer } from "@nyxjs/core";
-
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway#session-start-limit-object-session-start-limit-structure}
  */
 export interface SessionStartLimitEntity {
-  total: Integer;
-  remaining: Integer;
-  reset_after: Integer;
-  max_concurrency: Integer;
+  total: number;
+  remaining: number;
+  reset_after: number;
+  max_concurrency: number;
 }
 
 /**
@@ -21,6 +19,6 @@ export interface GatewayResponseEntity {
  * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot-json-response}
  */
 export interface GatewayBotResponseEntity extends GatewayResponseEntity {
-  shards: Integer;
+  shards: number;
   session_start_limit: SessionStartLimitEntity;
 }

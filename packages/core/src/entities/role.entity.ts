@@ -1,39 +1,49 @@
-import type { Integer } from "../formatting/index.js";
-import type { Snowflake } from "../managers/index.js";
+import { z } from "zod";
+import { SnowflakeSchema } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-flags}
  */
-export enum RoleFlags {
-  InPrompt = 1 << 0,
-}
+export const RoleFlags = {
+  inPrompt: 1 << 0,
+} as const;
+
+export type RoleFlags = (typeof RoleFlags)[keyof typeof RoleFlags];
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-tags-structure}
  */
-export interface RoleTagsEntity {
-  bot_id?: Snowflake;
-  integration_id?: Snowflake;
-  premium_subscriber?: null;
-  subscription_listing_id?: Snowflake;
-  available_for_purchase?: null;
-  guild_connections?: null;
-}
+export const RoleTagsSchema = z
+  .object({
+    bot_id: SnowflakeSchema.optional(),
+    integration_id: SnowflakeSchema.optional(),
+    premium_subscriber: z.null().optional(),
+    subscription_listing_id: SnowflakeSchema.optional(),
+    available_for_purchase: z.null().optional(),
+    guild_connections: z.null().optional(),
+  })
+  .strict();
+
+export type RoleTagsEntity = z.infer<typeof RoleTagsSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-structure}
  */
-export interface RoleEntity {
-  id: Snowflake;
-  name: string;
-  color: Integer;
-  hoist: boolean;
-  icon?: string | null;
-  unicode_emoji?: string | null;
-  position: Integer;
-  permissions: string;
-  managed: boolean;
-  mentionable: boolean;
-  tags?: RoleTagsEntity;
-  flags: RoleFlags;
-}
+export const RoleSchema = z
+  .object({
+    id: SnowflakeSchema,
+    name: z.string(),
+    color: z.number().int(),
+    hoist: z.boolean(),
+    icon: z.string().nullish(),
+    unicode_emoji: z.string().emoji().nullish(),
+    position: z.number().int(),
+    permissions: z.string(),
+    managed: z.boolean(),
+    mentionable: z.boolean(),
+    tags: RoleTagsSchema.optional(),
+    flags: z.nativeEnum(RoleFlags),
+  })
+  .strict();
+
+export type RoleEntity = z.infer<typeof RoleSchema>;

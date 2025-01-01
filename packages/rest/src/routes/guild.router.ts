@@ -56,7 +56,7 @@ import {
   ModifyGuildWidgetSettingsSchema,
   type SearchGuildMembersQueryEntity,
   SearchGuildMembersQuerySchema,
-  WidgetStyleOptions,
+  type WidgetStyleOptions,
 } from "../schemas/guild.schema.js";
 
 export class GuildRouter extends BaseRouter {
@@ -737,7 +737,7 @@ export class GuildRouter extends BaseRouter {
    */
   getGuildWidgetImage(
     guildId: Snowflake,
-    style: WidgetStyleOptions = WidgetStyleOptions.Shield,
+    style: WidgetStyleOptions = "shield",
   ): Promise<Buffer> {
     return this.get(GuildRouter.ROUTES.guildWidgetImage(guildId), {
       query: { style },

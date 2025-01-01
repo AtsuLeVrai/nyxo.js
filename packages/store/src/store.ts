@@ -1,20 +1,20 @@
-import {
-  type AggregateOptions,
-  type AsyncFilterOptions,
-  type AsyncMapOptions,
-  DataFormat,
-  type LoadAsyncOptions,
-  type PersistedStoreData,
-  type SearchOptions,
+import type {
+  AggregateOptions,
+  AsyncFilterOptions,
+  AsyncMapOptions,
+  LoadAsyncOptions,
+  PersistedStoreData,
+  SearchOptions,
   SetOperation,
-  type SliceOptions,
-  type StoreKey,
-  type StorePredicate,
-  type StoreValue,
-  type ToOptions,
-  type ToReturnType,
-  type TransformOptions,
-} from "./types.js";
+  SliceOptions,
+  StoreKey,
+  StorePredicate,
+  StoreValue,
+  ToFormat,
+  ToOptions,
+  ToReturnType,
+  TransformOptions,
+} from "./store.type.js";
 
 export class Store<K, V> extends Map<K, V> {
   #array: V[] | null = null;
@@ -220,17 +220,17 @@ export class Store<K, V> extends Map<K, V> {
     return array.slice(options.start, options.end);
   }
 
-  to<F extends DataFormat>(
+  to<F extends ToFormat>(
     format: F,
     options?: ToOptions<V>,
   ): ToReturnType<K, V, F, typeof options> {
     const array = this.#getArray();
     switch (format) {
-      case DataFormat.Array: {
+      case "array": {
         return array as ToReturnType<K, V, F, typeof options>;
       }
 
-      case DataFormat.Object: {
+      case "object": {
         const obj: Record<string, V> = {};
         for (const [key, value] of this) {
           obj[String(key)] = value;
@@ -238,11 +238,11 @@ export class Store<K, V> extends Map<K, V> {
         return obj as ToReturnType<K, V, F, typeof options>;
       }
 
-      case DataFormat.Map: {
+      case "map": {
         return new Map(this) as ToReturnType<K, V, F, typeof options>;
       }
 
-      case DataFormat.Set: {
+      case "set": {
         if (options?.property) {
           return new Set(
             array.map((v) => v[options.property as keyof V]),
@@ -251,7 +251,7 @@ export class Store<K, V> extends Map<K, V> {
         return new Set(array) as ToReturnType<K, V, F, typeof options>;
       }
 
-      case DataFormat.Pairs: {
+      case "pairs": {
         return Array.from(this.entries()) as ToReturnType<
           K,
           V,
@@ -270,7 +270,7 @@ export class Store<K, V> extends Map<K, V> {
     const newStore = new Store<K, V>();
 
     switch (operation) {
-      case SetOperation.Union: {
+      case "union": {
         for (const [key, value] of this) {
           newStore.set(key, value);
         }
@@ -280,7 +280,7 @@ export class Store<K, V> extends Map<K, V> {
         break;
       }
 
-      case SetOperation.Difference: {
+      case "difference": {
         for (const [key, value] of this) {
           if (!other.has(key)) {
             newStore.set(key, value);
@@ -289,7 +289,7 @@ export class Store<K, V> extends Map<K, V> {
         break;
       }
 
-      case SetOperation.Intersection: {
+      case "intersection": {
         for (const [key, value] of this) {
           if (other.has(key)) {
             newStore.set(key, value);

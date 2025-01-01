@@ -1,10 +1,4 @@
-import type {
-  ChannelEntity,
-  Integer,
-  Iso8601,
-  Snowflake,
-  ThreadMemberEntity,
-} from "@nyxjs/core";
+import type { ChannelEntity, Snowflake, ThreadMemberEntity } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#channel-pins-update-channel-pins-update-event-fields}
@@ -12,7 +6,7 @@ import type {
 export interface ChannelPinsUpdateEntity {
   guild_id?: Snowflake;
   channel_id: Snowflake;
-  last_pin_timestamp?: Iso8601 | null;
+  last_pin_timestamp?: string | null;
 }
 
 /**
@@ -21,7 +15,7 @@ export interface ChannelPinsUpdateEntity {
 export interface ThreadMembersUpdateEntity {
   id: Snowflake;
   guild_id: Snowflake;
-  member_count: Integer;
+  member_count: number;
   added_members?: ThreadMemberEntity[];
   removed_member_ids?: Snowflake[];
 }

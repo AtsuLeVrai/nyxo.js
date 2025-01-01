@@ -1,22 +1,22 @@
-import { SnowflakeManager } from "@nyxjs/core";
+import { SnowflakeSchema } from "@nyxjs/core";
 import { z } from "zod";
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
+ */
 export const ListEntitlementsQuerySchema = z
   .object({
-    user_id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).optional(),
+    user_id: SnowflakeSchema.optional(),
     sku_ids: z.string().optional(),
-    before: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).optional(),
-    after: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).optional(),
+    before: SnowflakeSchema.optional(),
+    after: SnowflakeSchema.optional(),
     limit: z.number().int().min(1).max(100).default(100).optional(),
-    guild_id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).optional(),
+    guild_id: SnowflakeSchema.optional(),
     exclude_ended: z.boolean().default(false).optional(),
     exclude_deleted: z.boolean().default(true).optional(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
- */
 export type ListEntitlementQueryEntity = z.infer<
   typeof ListEntitlementsQuerySchema
 >;
@@ -24,11 +24,17 @@ export type ListEntitlementQueryEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
  */
-export enum EntitlementOwnerType {
-  Guild = 1,
-  User = 2,
-}
+export const EntitlementOwnerType = {
+  guild: 1,
+  user: 2,
+} as const;
 
+export type EntitlementOwnerType =
+  (typeof EntitlementOwnerType)[keyof typeof EntitlementOwnerType];
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
+ */
 export const CreateTestEntitlementSchema = z
   .object({
     sku_id: z.string(),
@@ -37,9 +43,6 @@ export const CreateTestEntitlementSchema = z
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
- */
 export type CreateTestEntitlementEntity = z.infer<
   typeof CreateTestEntitlementSchema
 >;

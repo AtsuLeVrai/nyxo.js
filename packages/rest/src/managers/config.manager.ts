@@ -9,8 +9,8 @@ import {
 
 export class ConfigManager {
   static readonly API = {
-    CURRENT_VERSION: ApiVersion.V10,
-    SUPPORTED_VERSIONS: new Set([ApiVersion.V10]),
+    CURRENT_VERSION: ApiVersion.v10,
+    SUPPORTED_VERSIONS: new Set([ApiVersion.v10]),
     USER_AGENT_PATTERN: /^DiscordBot \((.+), ([0-9.]+)\)$/,
     DEFAULT_USER_AGENT: "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
   } as const;
@@ -27,14 +27,14 @@ export class ConfigManager {
     BASE_RETRY_DELAY: 1_000,
     RATE_LIMIT_RETRY: 3,
     MAX_CONCURRENT: 10,
-    AUTH_TYPE: AuthTypeFlag.Bot,
-    COMPRESS: true,
+    AUTH_TYPE: AuthTypeFlag.bot,
+    COMPRESSION: true,
   } as const;
 
   static readonly RETRY_STATUS_CODES = [
-    HttpStatusCode.TooManyRequests,
-    HttpStatusCode.ServerError,
-    HttpStatusCode.GatewayUnavailable,
+    HttpStatusCode.tooManyRequests,
+    HttpStatusCode.serverError,
+    HttpStatusCode.gatewayUnavailable,
   ] as const;
 
   static readonly DEFAULT_POOL_OPTIONS: Pool.Options = {
@@ -121,7 +121,8 @@ export class ConfigManager {
         ConfigManager.TIMEOUTS.MAX,
       ),
       userAgent: options.userAgent ?? ConfigManager.API.DEFAULT_USER_AGENT,
-      compress: options.compress ?? ConfigManager.DEFAULTS.COMPRESS,
+      useCompression:
+        options.useCompression ?? ConfigManager.DEFAULTS.COMPRESSION,
       proxy: options.proxy ?? { uri: "" },
       pool: { ...ConfigManager.DEFAULT_POOL_OPTIONS, ...options.pool },
       retry: this.#getRetryOptions(options),
@@ -152,7 +153,7 @@ export class ConfigManager {
   }
 
   #validateApiVersion(version: ApiVersion): ApiVersion {
-    if (!ConfigManager.API.SUPPORTED_VERSIONS.has(version)) {
+    if (!ConfigManager.API.SUPPORTED_VERSIONS.has(version as 10)) {
       const supported = Array.from(ConfigManager.API.SUPPORTED_VERSIONS).join(
         ", ",
       );

@@ -81,7 +81,7 @@ export class RestRateLimitManager {
       this.incrementInvalidRequestCount();
     }
 
-    if (statusCode === HttpStatusCode.TooManyRequests) {
+    if (statusCode === HttpStatusCode.tooManyRequests) {
       this.#handleGlobalRateLimitHeader(headers);
       return;
     }
@@ -338,9 +338,9 @@ export class RestRateLimitManager {
 
   #isErrorStatusCode(statusCode: number): boolean {
     return (
-      statusCode === HttpStatusCode.Unauthorized ||
-      statusCode === HttpStatusCode.Forbidden ||
-      statusCode === HttpStatusCode.TooManyRequests
+      statusCode === HttpStatusCode.unauthorized ||
+      statusCode === HttpStatusCode.forbidden ||
+      statusCode === HttpStatusCode.tooManyRequests
     );
   }
 

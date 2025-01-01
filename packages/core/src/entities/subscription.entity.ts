@@ -1,27 +1,49 @@
-import type { Iso8601 } from "../formatting/index.js";
-import type { Snowflake } from "../managers/index.js";
+import { z } from "zod";
+import { SnowflakeSchema } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-statuses}
  */
-export enum SubscriptionStatus {
-  Active = 0,
-  Ending = 1,
-  Inactive = 2,
-}
+export const SubscriptionStatus = {
+  active: 0,
+  ending: 1,
+  inactive: 2,
+} as const;
+
+export type SubscriptionStatus =
+  (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-object}
  */
-export interface SubscriptionEntity {
-  id: Snowflake;
-  user_id: Snowflake;
-  sku_ids: Snowflake[];
-  entitlement_ids: Snowflake[];
-  renewal_sku_ids: Snowflake[] | null;
-  current_period_start: Iso8601;
-  current_period_end: Iso8601;
-  status: SubscriptionStatus;
-  canceled_at: Iso8601 | null;
-  country?: string;
-}
+export const SubscriptionSchema = z
+  .object({
+    id: SnowflakeSchema,
+    user_id: SnowflakeSchema,
+    sku_ids: z.array(SnowflakeSchema),
+    entitlement_ids: z.array(SnowflakeSchema),
+    renewal_sku_ids: z.array(SnowflakeSchema).nullable(),
+    current_period_start: z.string().datetime(),
+    current_period_end: z.string().datetime(),
+    status: z.nativeEnum(SubscriptionStatus),
+    canceled_at: z.string().datetime().nullable(),
+    country: z.string().length(2).optional(), // ISO3166-1 alpha-2 country code
+  })
+  .strict()
+  .refine(
+    (data) => {
+      if (data.status === 1 && !data.canceled_at) {
+        return false;
+      }
+
+      const start = new Date(data.current_period_start);
+      const end = new Date(data.current_period_end);
+      return end > start;
+    },
+    {
+      message:
+        "Invalid subscription state: ENDING status requires canceled_at date and end period must be after start period",
+    },
+  );
+
+export type SubscriptionEntity = z.infer<typeof SubscriptionSchema>;

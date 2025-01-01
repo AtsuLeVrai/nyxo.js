@@ -1,21 +1,25 @@
-import type { Integer, Iso8601 } from "../formatting/index.js";
-import type { Snowflake } from "../managers/index.js";
-import type { GuildEntity } from "./guild.entity.js";
-import type { UserEntity } from "./user.entity.js";
+import { z } from "zod";
+import { SnowflakeSchema } from "../managers/index.js";
+import { GuildSchema } from "./guild.entity.js";
+import { UserSchema } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-template#guild-template-object}
  */
-export interface GuildTemplateEntity {
-  code: string;
-  name: string;
-  description: string | null;
-  usage_count: Integer;
-  creator_id: Snowflake;
-  creator: UserEntity;
-  created_at: Iso8601;
-  updated_at: Iso8601;
-  source_guild_id: Snowflake;
-  serialized_source_guild: Partial<GuildEntity>;
-  is_dirty: boolean | null;
-}
+export const GuildTemplateSchema = z
+  .object({
+    code: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    usage_count: z.number().int(),
+    creator_id: SnowflakeSchema,
+    creator: UserSchema,
+    created_at: z.string().datetime(),
+    updated_at: z.string().datetime(),
+    source_guild_id: SnowflakeSchema,
+    serialized_source_guild: GuildSchema.partial(),
+    is_dirty: z.boolean().nullable(),
+  })
+  .strict();
+
+export type GuildTemplateEntity = z.infer<typeof GuildTemplateSchema>;

@@ -3,13 +3,13 @@ import {
   type ChannelEntity,
   ChannelFlags,
   ChannelType,
-  type DefaultReactionEntity,
+  DefaultReactionSchema,
   ForumLayoutType,
-  type ForumTagEntity,
+  ForumTagSchema,
   InviteTargetType,
-  type OverwriteEntity,
+  OverwriteSchema,
   OverwriteType,
-  SnowflakeManager,
+  SnowflakeSchema,
   SortOrderType,
   type ThreadMemberEntity,
   VideoQualityMode,
@@ -18,6 +18,9 @@ import { z } from "zod";
 import { CreateMessageSchema } from "./message.schema.js";
 import { CreateGroupDmSchema } from "./user.schema.js";
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-group-dm}
+ */
 export const ModifyChannelGroupDmSchema = z
   .object({
     name: z.string().min(1).max(100),
@@ -25,46 +28,20 @@ export const ModifyChannelGroupDmSchema = z
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-group-dm}
- */
 export type ModifyChannelGroupDmEntity = z.infer<
   typeof ModifyChannelGroupDmSchema
 >;
 
-export const OverwriteSchema: z.ZodType<OverwriteEntity> = z
-  .object({
-    id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX),
-    type: z.nativeEnum(OverwriteType),
-    allow: z.nativeEnum(BitwisePermissionFlags),
-    deny: z.nativeEnum(BitwisePermissionFlags),
-  })
-  .strict();
-
-export const ForumTagSchema: z.ZodType<ForumTagEntity> = z
-  .object({
-    id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX),
-    name: z.string().max(20),
-    moderated: z.boolean(),
-    emoji_id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).nullable(),
-    emoji_name: z.string().nullable(),
-  })
-  .strict();
-
-const DefaultRactionEmojiSchema: z.ZodType<DefaultReactionEntity> = z
-  .object({
-    emoji_id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).nullable(),
-    emoji_name: z.string().nullable(),
-  })
-  .strict();
-
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel}
+ */
 export const ModifyChannelGuildChannelSchema = z
   .object({
     name: z.string().min(1).max(100),
     type: z.union([
-      z.literal(ChannelType.GuildText),
-      z.literal(ChannelType.GuildAnnouncement),
-      z.literal(ChannelType.AnnouncementThread),
+      z.literal(ChannelType.guildText),
+      z.literal(ChannelType.guildAnnouncement),
+      z.literal(ChannelType.announcementThread),
     ]),
     position: z.number().int().nullable(),
     topic: z.string().max(1024).max(4096).nullable(),
@@ -73,31 +50,31 @@ export const ModifyChannelGuildChannelSchema = z
     bitrate: z.number().int().min(8000).nullable(),
     user_limit: z.number().int().min(0).max(99).max(10000).nullable(),
     permission_overwrites: z.array(OverwriteSchema).nullable(),
-    parent_id: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).nullable(),
+    parent_id: SnowflakeSchema.nullable(),
     rtc_region: z.string().nullable(),
     video_quality_mode: z.nativeEnum(VideoQualityMode).nullable(),
     default_auto_archive_duration: z.number().int().nullable(),
     flags: z
       .union([
-        z.literal(ChannelFlags.RequireTag),
-        z.literal(ChannelFlags.HideMediaDownloadOptions),
+        z.literal(ChannelFlags.requireTag),
+        z.literal(ChannelFlags.hideMediaDownloadOptions),
       ])
       .optional(),
     available_tags: z.array(ForumTagSchema).max(20).optional(),
-    default_reaction_emoji: DefaultRactionEmojiSchema.optional().nullable(),
+    default_reaction_emoji: DefaultReactionSchema.nullish(),
     default_thread_rate_limit_per_user: z.number().int().optional(),
-    default_sort_order: z.nativeEnum(SortOrderType).optional().nullable(),
+    default_sort_order: z.nativeEnum(SortOrderType).nullish(),
     default_forum_layout: z.nativeEnum(ForumLayoutType).optional(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel}
- */
 export type ModifyChannelGuildChannelEntity = z.infer<
   typeof ModifyChannelGuildChannelSchema
 >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-thread}
+ */
 export const ModifyChannelThreadSchema = z
   .object({
     name: z.string().min(1).max(100),
@@ -111,36 +88,33 @@ export const ModifyChannelThreadSchema = z
     locked: z.boolean(),
     invitable: z.boolean(),
     rate_limit_per_user: z.number().int().max(21600).nullable(),
-    flags: z.literal(ChannelFlags.Pinned),
-    applied_tags: z
-      .array(z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX))
-      .max(5)
-      .optional(),
+    flags: z.literal(ChannelFlags.pinned),
+    applied_tags: z.array(SnowflakeSchema).max(5).optional(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-thread}
- */
 export type ModifyChannelThreadEntity = z.infer<
   typeof ModifyChannelThreadSchema
 >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params}
+ */
 export const EditChannelPermissionsSchema = z
   .object({
-    allow: z.nativeEnum(BitwisePermissionFlags).optional().nullable(),
-    deny: z.nativeEnum(BitwisePermissionFlags).optional().nullable(),
+    allow: z.nativeEnum(BitwisePermissionFlags).nullish(),
+    deny: z.nativeEnum(BitwisePermissionFlags).nullish(),
     type: z.nativeEnum(OverwriteType),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params}
- */
 export type EditChannelPermissionsEntity = z.infer<
   typeof EditChannelPermissionsSchema
 >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#create-channel-invite-json-params}
+ */
 export const CreateChannelInviteSchema = z
   .object({
     max_age: z.number().int().min(0).max(604800).default(86400).optional(),
@@ -148,33 +122,27 @@ export const CreateChannelInviteSchema = z
     temporary: z.boolean().default(false).optional(),
     unique: z.boolean().default(false).optional(),
     target_type: z.nativeEnum(InviteTargetType).optional(),
-    target_user_id: z
-      .string()
-      .regex(SnowflakeManager.SNOWFLAKE_REGEX)
-      .optional(),
-    target_application_id: z
-      .string()
-      .regex(SnowflakeManager.SNOWFLAKE_REGEX)
-      .optional(),
+    target_user_id: SnowflakeSchema.optional(),
+    target_application_id: SnowflakeSchema.optional(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#create-channel-invite-json-params}
- */
 export type CreateChannelInviteEntity = z.infer<
   typeof CreateChannelInviteSchema
 >;
 
-export const AddGroupDmRecipientSchema = CreateGroupDmSchema;
-
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#group-dm-add-recipient-json-params}
  */
+export const AddGroupDmRecipientSchema = CreateGroupDmSchema;
+
 export type AddGroupDmRecipientEntity = z.infer<
   typeof AddGroupDmRecipientSchema
 >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message-json-params}
+ */
 export const StartThreadFromMessageSchema = z
   .object({
     name: z.string().min(1).max(100),
@@ -186,41 +154,42 @@ export const StartThreadFromMessageSchema = z
         z.literal(10080),
       ])
       .optional(),
-    rate_limit_per_user: z.number().int().max(21600).optional().nullable(),
+    rate_limit_per_user: z.number().int().max(21600).nullish(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message-json-params}
- */
 export type StartThreadFromMessageEntity = z.infer<
   typeof StartThreadFromMessageSchema
 >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params}
+ */
 export const StartThreadWithoutMessageSchema =
   StartThreadFromMessageSchema.merge(
     z
       .object({
         type: z
           .union([
-            z.literal(ChannelType.AnnouncementThread),
-            z.literal(ChannelType.PrivateThread),
-            z.literal(ChannelType.PublicThread),
+            z.literal(ChannelType.announcementThread),
+            z.literal(ChannelType.privateThread),
+            z.literal(ChannelType.publicThread),
           ])
-          .default(ChannelType.PrivateThread)
+          .default(ChannelType.privateThread)
           .optional(),
         invitable: z.boolean().optional(),
       })
       .strict(),
   );
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params}
- */
 export type StartThreadWithoutMessageEntity = z.infer<
   typeof StartThreadWithoutMessageSchema
 >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-jsonform-params}
+ * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-forum-and-media-thread-message-params-object}
+ */
 export const StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema =
   CreateMessageSchema.pick({
     content: true,
@@ -247,45 +216,40 @@ export const StartThreadInForumOrMediaChannelSchema = CreateMessageSchema.pick({
           z.literal(10080),
         ])
         .optional(),
-      rate_limit_per_user: z.number().int().max(21600).optional().nullable(),
+      rate_limit_per_user: z.number().int().max(21600).nullish(),
       message: StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
-      applied_tags: z
-        .array(z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX))
-        .optional(),
+      applied_tags: z.array(SnowflakeSchema).optional(),
     }),
   )
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-jsonform-params}
- */
 export type StartThreadInForumOrMediaChannelEntity = z.infer<
   typeof StartThreadInForumOrMediaChannelSchema
 >;
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-forum-and-media-thread-message-params-object}
- */
 export type StartThreadInForumOrMediaChannelForumAndMediaThreadMessageEntity =
   z.infer<
     typeof StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema
   >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members-query-string-params}
+ */
 export const ListThreadMembersQuerySchema = z
   .object({
     with_member: z.boolean().optional(),
-    after: z.string().regex(SnowflakeManager.SNOWFLAKE_REGEX).optional(),
+    after: SnowflakeSchema.optional(),
     limit: z.number().int().min(1).max(100).default(100).optional(),
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members-query-string-params}
- */
 export type ListThreadMembersQueryEntity = z.infer<
   typeof ListThreadMembersQuerySchema
 >;
 
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params}
+ */
 export const ListPublicArchivedThreadsQuerySchema = z
   .object({
     before: z.string().datetime().optional(),
@@ -293,9 +257,6 @@ export const ListPublicArchivedThreadsQuerySchema = z
   })
   .strict();
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params}
- */
 export type ListPublicArchivedThreadsQueryEntity = z.infer<
   typeof ListPublicArchivedThreadsQuerySchema
 >;

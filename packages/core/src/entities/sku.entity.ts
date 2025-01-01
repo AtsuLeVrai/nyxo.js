@@ -1,32 +1,41 @@
-import type { Snowflake } from "../managers/index.js";
+import { z } from "zod";
+import { SnowflakeSchema } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-flags}
  */
-export enum SkuFlags {
-  Available = 1 << 2,
-  GuildSubscription = 1 << 7,
-  UserSubscription = 1 << 8,
-}
+export const SkuFlags = {
+  available: 1 << 2,
+  guildSubscription: 1 << 7,
+  userSubscription: 1 << 8,
+} as const;
+
+export type SkuFlags = (typeof SkuFlags)[keyof typeof SkuFlags];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-types}
  */
-export enum SkuType {
-  Durable = 2,
-  Consumable = 3,
-  Subscription = 5,
-  SubscriptionGroup = 6,
-}
+export const SkuType = {
+  durable: 2,
+  consumable: 3,
+  subscription: 5,
+  subscriptionGroup: 6,
+} as const;
+
+export type SkuType = (typeof SkuType)[keyof typeof SkuType];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-structure}
  */
-export interface SkuEntity {
-  id: Snowflake;
-  type: SkuType;
-  application_id: Snowflake;
-  name: string;
-  slug: string;
-  flags: SkuFlags;
-}
+export const SkuSchema = z
+  .object({
+    id: SnowflakeSchema,
+    type: z.nativeEnum(SkuType),
+    application_id: SnowflakeSchema,
+    name: z.string(),
+    slug: z.string(),
+    flags: z.nativeEnum(SkuFlags),
+  })
+  .strict();
+
+export type SkuEntity = z.infer<typeof SkuSchema>;

@@ -1,4 +1,4 @@
-import { type Integer, type Snowflake, SnowflakeManager } from "@nyxjs/core";
+import { type Snowflake, SnowflakeManager } from "@nyxjs/core";
 import {
   type AnimatedImageOptionsEntity,
   type AttachmentOptionsEntity,
@@ -388,7 +388,7 @@ export const Cdn: CdnEntity = {
     );
   },
 
-  avatarDecoration(assetId: Snowflake | Integer): string {
+  avatarDecoration(assetId: Snowflake | number): string {
     const id = validateId(assetId, "Asset ID");
     return buildUrl(["avatar-decoration-presets", `${id}.png`]);
   },

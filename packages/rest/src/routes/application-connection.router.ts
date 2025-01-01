@@ -1,10 +1,10 @@
-import type {
-  ApplicationRoleConnectionMetadataEntity,
-  Snowflake,
+import {
+  type ApplicationRoleConnectionMetadataEntity,
+  ApplicationRoleConnectionMetadataSchema,
+  type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
 import { BaseRouter } from "../base/index.js";
-import { ApplicationRoleConnectionMetadataSchema } from "../schemas/index.js";
 
 export class ApplicationConnectionRouter extends BaseRouter {
   static readonly ROUTES = {

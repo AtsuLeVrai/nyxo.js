@@ -1,4 +1,4 @@
-import type { Integer, Snowflake, UserEntity } from "@nyxjs/core";
+import type { Snowflake, UserEntity } from "@nyxjs/core";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-buttons}
@@ -11,17 +11,19 @@ export interface ActivityButtonsEntity {
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-flags}
  */
-export enum ActivityFlags {
-  Instance = 1 << 0,
-  Join = 1 << 1,
-  Spectate = 1 << 2,
-  JoinRequest = 1 << 3,
-  Sync = 1 << 4,
-  Play = 1 << 5,
-  PartyPrivacyFriends = 1 << 6,
-  PartyPrivacyVoiceChannel = 1 << 7,
-  Embedded = 1 << 8,
-}
+export const ActivityFlags = {
+  instance: 1 << 0,
+  join: 1 << 1,
+  spectate: 1 << 2,
+  joinRequest: 1 << 3,
+  sync: 1 << 4,
+  play: 1 << 5,
+  partyPrivacyFriends: 1 << 6,
+  partyPrivacyVoiceChannel: 1 << 7,
+  embedded: 1 << 8,
+} as const;
+
+export type ActivityFlags = (typeof ActivityFlags)[keyof typeof ActivityFlags];
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-secrets}
@@ -47,7 +49,7 @@ export interface ActivityAssetImageEntity {
  */
 export interface ActivityPartyEntity {
   id?: string;
-  size?: [currentSize: Integer, maxSize: Integer];
+  size?: [currentSize: number, maxSize: number];
 }
 
 /**
@@ -63,21 +65,23 @@ export interface ActivityEmojiEntity {
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-timestamps}
  */
 export interface ActivityTimestampsEntity {
-  start?: Integer;
-  end?: Integer;
+  start?: number;
+  end?: number;
 }
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-types}
  */
-export enum ActivityType {
-  Game = 0,
-  Streaming = 1,
-  Listening = 2,
-  Watching = 3,
-  Custom = 4,
-  Competing = 5,
-}
+export const ActivityType = {
+  game: 0,
+  streaming: 1,
+  listening: 2,
+  watching: 3,
+  custom: 4,
+  competing: 5,
+} as const;
+
+export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-structure}
@@ -86,7 +90,7 @@ export interface ActivityEntity {
   name: string;
   type: ActivityType;
   url?: string | null;
-  created_at: Integer;
+  created_at: number;
   timestamps?: ActivityTimestampsEntity;
   application_id?: Snowflake;
   details?: string | null;

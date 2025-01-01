@@ -1,4 +1,4 @@
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "@nyxjs/core";
 
 export const IMAGE_FORMAT = {
   jpeg: "jpg",
@@ -8,6 +8,8 @@ export const IMAGE_FORMAT = {
   gif: "gif",
   lottie: "json",
 } as const;
+
+export type ImageFormat = (typeof IMAGE_FORMAT)[keyof typeof IMAGE_FORMAT];
 
 export const IMAGE_SIZE = {
   size16: 16,
@@ -21,7 +23,6 @@ export const IMAGE_SIZE = {
   size4096: 4096,
 } as const;
 
-export type ImageFormat = (typeof IMAGE_FORMAT)[keyof typeof IMAGE_FORMAT];
 export type ImageSize = (typeof IMAGE_SIZE)[keyof typeof IMAGE_SIZE];
 
 export interface BaseImageOptionsEntity {
@@ -66,7 +67,7 @@ export interface CdnEntity {
     options?: AnimatedImageOptionsEntity,
   ) => string;
   defaultUserAvatar: (discriminator: number | string) => string;
-  avatarDecoration: (assetId: Snowflake | Integer) => string;
+  avatarDecoration: (assetId: Snowflake | number) => string;
   guildIcon: (
     guildId: Snowflake | number,
     hash: string,

@@ -16,7 +16,7 @@ export class FileHandlerManager {
 
   #maxFileSize: number;
 
-  constructor(boostTier: PremiumTier = PremiumTier.None) {
+  constructor(boostTier: PremiumTier = PremiumTier.none) {
     this.#maxFileSize = this.#getMaxFileSizeForTier(boostTier);
   }
 
@@ -50,11 +50,11 @@ export class FileHandlerManager {
     const { DEFAULT, TIER_1, TIER_2, TIER_3 } = FileHandlerManager.FILE_LIMITS;
 
     switch (tier) {
-      case PremiumTier.Tier1:
+      case PremiumTier.tier1:
         return TIER_1;
-      case PremiumTier.Tier2:
+      case PremiumTier.tier2:
         return TIER_2;
-      case PremiumTier.Tier3:
+      case PremiumTier.tier3:
         return TIER_3;
       default:
         return DEFAULT;

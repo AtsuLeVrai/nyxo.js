@@ -1,4 +1,5 @@
-import type { Integer, Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "@nyxjs/core";
+import type { ActivityEntity } from "./presence.event.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-voice-state-gateway-voice-state-update-structure}
@@ -13,20 +14,19 @@ export interface UpdateVoiceStateEntity {
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-status-types}
  */
-export enum UpdatePresenceStatusType {
-  Online = "online",
-  Dnd = "dnd",
-  Idle = "idle",
-  Invisible = "invisible",
-  Offline = "offline",
-}
+export type UpdatePresenceStatusType =
+  | "online"
+  | "dnd"
+  | "idle"
+  | "invisible"
+  | "offline";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-gateway-presence-update-structure}
  */
 export interface UpdatePresenceEntity {
-  since: Integer | null;
-  activities: object[];
+  since: number | null;
+  activities: ActivityEntity[];
   status: UpdatePresenceStatusType;
   afk: boolean;
 }

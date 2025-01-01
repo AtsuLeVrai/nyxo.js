@@ -1,8 +1,6 @@
 import type {
   ApplicationEntity,
-  Integer,
   InviteTargetType,
-  Iso8601,
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
@@ -22,14 +20,14 @@ export interface InviteDeleteEntity {
 export interface InviteCreateEntity {
   channel_id: Snowflake;
   code: string;
-  created_at: Iso8601;
+  created_at: string;
   guild_id?: Snowflake;
   inviter?: UserEntity;
-  max_age: Integer;
-  max_uses: Integer;
+  max_age: number;
+  max_uses: number;
   target_type?: InviteTargetType;
   target_user?: UserEntity;
   target_application?: Partial<ApplicationEntity>;
   temporary: boolean;
-  uses: Integer;
+  uses: number;
 }

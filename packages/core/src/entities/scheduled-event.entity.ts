@@ -1,134 +1,188 @@
-import type { Integer, Iso8601 } from "../formatting/index.js";
-import type { Snowflake } from "../managers/index.js";
-import type { GuildMemberEntity } from "./guild.entity.js";
-import type { UserEntity } from "./user.entity.js";
+import { z } from "zod";
+import { SnowflakeSchema } from "../managers/index.js";
+import { GuildMemberSchema } from "./guild.entity.js";
+import { UserSchema } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-month}
  */
-export enum GuildScheduledEventRecurrenceRuleMonth {
-  January = 1,
-  February = 2,
-  March = 3,
-  April = 4,
-  May = 5,
-  June = 6,
-  July = 7,
-  August = 8,
-  September = 9,
-  October = 10,
-  November = 11,
-  December = 12,
-}
+export const GuildScheduledEventRecurrenceRuleMonth = {
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12,
+} as const;
 
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-nweekday-structure}
- */
-export interface GuildScheduledEventRecurrenceRuleNWeekdayEntity {
-  n: 1 | 2 | 3 | 4 | 5;
-  day: GuildScheduledEventRecurrenceRuleWeekday;
-}
+export type GuildScheduledEventRecurrenceRuleMonth =
+  (typeof GuildScheduledEventRecurrenceRuleMonth)[keyof typeof GuildScheduledEventRecurrenceRuleMonth];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-weekday}
  */
-export enum GuildScheduledEventRecurrenceRuleWeekday {
-  Monday = 0,
-  Tuesday = 1,
-  Wednesday = 2,
-  Thursday = 3,
-  Friday = 4,
-  Saturday = 5,
-  Sunday = 6,
-}
+export const GuildScheduledEventRecurrenceRuleWeekday = {
+  monday: 0,
+  tuesday: 1,
+  wednesday: 2,
+  thursday: 3,
+  friday: 4,
+  saturday: 5,
+  sunday: 6,
+};
+
+export type GuildScheduledEventRecurrenceRuleWeekday =
+  (typeof GuildScheduledEventRecurrenceRuleWeekday)[keyof typeof GuildScheduledEventRecurrenceRuleWeekday];
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-nweekday-structure}
+ */
+export const GuildScheduledEventRecurrenceRuleNWeekdaySchema = z
+  .object({
+    n: z.number().int().min(1).max(5),
+    day: z.nativeEnum(GuildScheduledEventRecurrenceRuleWeekday),
+  })
+  .strict();
+
+export type GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.infer<
+  typeof GuildScheduledEventRecurrenceRuleNWeekdaySchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-frequency}
  */
-export enum GuildScheduledEventRecurrenceRuleFrequency {
-  Yearly = 0,
-  Monthly = 1,
-  Weekly = 2,
-  Daily = 3,
-}
+export const GuildScheduledEventRecurrenceRuleFrequency = {
+  yearly: 0,
+  monthly: 1,
+  weekly: 2,
+  daily: 3,
+};
+
+export type GuildScheduledEventRecurrenceRuleFrequency =
+  (typeof GuildScheduledEventRecurrenceRuleFrequency)[keyof typeof GuildScheduledEventRecurrenceRuleFrequency];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-structure}
  */
-export interface GuildScheduledEventRecurrenceRuleEntity {
-  start: Iso8601;
-  end: Iso8601 | null;
-  frequency: GuildScheduledEventRecurrenceRuleFrequency;
-  interval: Integer;
-  by_weekday: GuildScheduledEventRecurrenceRuleWeekday[] | null;
-  by_n_weekday: GuildScheduledEventRecurrenceRuleNWeekdayEntity[] | null;
-  by_month: GuildScheduledEventRecurrenceRuleMonth[] | null;
-  by_month_day: Integer[] | null;
-  by_year_day: Integer[] | null;
-  count: Integer | null;
-}
+export const GuildScheduledEventRecurrenceRuleSchema = z
+  .object({
+    start: z.string().datetime(),
+    end: z.string().datetime().nullable(),
+    frequency: z.nativeEnum(GuildScheduledEventRecurrenceRuleFrequency),
+    interval: z.number().int().positive(),
+    by_weekday: z
+      .array(z.nativeEnum(GuildScheduledEventRecurrenceRuleWeekday))
+      .nullable(),
+    by_n_weekday: z
+      .array(GuildScheduledEventRecurrenceRuleNWeekdaySchema)
+      .nullable(),
+    by_month: z
+      .array(z.nativeEnum(GuildScheduledEventRecurrenceRuleMonth))
+      .nullable(),
+    by_month_day: z.array(z.number().int()).nullable(),
+    by_year_day: z.array(z.number().int()).nullable(),
+    count: z.number().int().positive().nullable(),
+  })
+  .strict();
+
+export type GuildScheduledEventRecurrenceRuleEntity = z.infer<
+  typeof GuildScheduledEventRecurrenceRuleSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-user-object-guild-scheduled-event-user-structure}
  */
-export interface GuildScheduledEventUserEntity {
-  guild_scheduled_event_id: Snowflake;
-  user: UserEntity;
-  member?: GuildMemberEntity;
-}
+export const GuildScheduledEventUserSchema = z
+  .object({
+    guild_scheduled_event_id: SnowflakeSchema,
+    user: UserSchema,
+    member: GuildMemberSchema.optional(),
+  })
+  .strict();
+
+export type GuildScheduledEventUserEntity = z.infer<
+  typeof GuildScheduledEventUserSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-metadata}
  */
-export interface GuildScheduledEventEntityMetadata {
-  location?: string;
-}
+export const GuildScheduledEventEntityMetadataSchema = z
+  .object({
+    location: z.string().min(1).max(100).optional(),
+  })
+  .strict();
+
+export type GuildScheduledEventEntityMetadata = z.infer<
+  typeof GuildScheduledEventEntityMetadataSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status}
  */
-export enum GuildScheduledEventStatus {
-  Scheduled = 1,
-  Active = 2,
-  Completed = 3,
-  Canceled = 4,
-}
+export const GuildScheduledEventStatus = {
+  scheduled: 1,
+  active: 2,
+  completed: 3,
+  canceled: 4,
+} as const;
+
+export type GuildScheduledEventStatus =
+  (typeof GuildScheduledEventStatus)[keyof typeof GuildScheduledEventStatus];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
  */
-export enum GuildScheduledEventType {
-  StageInstance = 1,
-  Voice = 2,
-  External = 3,
-}
+export const GuildScheduledEventType = {
+  stageInstance: 1,
+  voice: 2,
+  external: 3,
+} as const;
+
+export type GuildScheduledEventType =
+  (typeof GuildScheduledEventType)[keyof typeof GuildScheduledEventType];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level}
  */
-export enum GuildScheduledEventPrivacyLevel {
-  GuildOnly = 2,
-}
+export const GuildScheduledEventPrivacyLevel = {
+  guildOnly: 2,
+} as const;
+
+export type GuildScheduledEventPrivacyLevel =
+  (typeof GuildScheduledEventPrivacyLevel)[keyof typeof GuildScheduledEventPrivacyLevel];
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-structure}
  */
-export interface GuildScheduledEventEntity {
-  id: Snowflake;
-  guild_id: Snowflake;
-  channel_id?: Snowflake | null;
-  creator_id?: Snowflake | null;
-  name: string;
-  description?: string | null;
-  scheduled_start_time: Iso8601;
-  scheduled_end_time?: Iso8601 | null;
-  privacy_level: GuildScheduledEventPrivacyLevel;
-  status: GuildScheduledEventStatus;
-  entity_type: GuildScheduledEventType;
-  entity_id: Snowflake | null;
-  entity_metadata?: GuildScheduledEventEntityMetadata | null;
-  creator?: UserEntity;
-  user_count?: Integer;
-  image?: string | null;
-  recurrence_rule: GuildScheduledEventRecurrenceRuleEntity | null;
-}
+export const GuildScheduledEventSchema = z
+  .object({
+    id: SnowflakeSchema,
+    guild_id: SnowflakeSchema,
+    channel_id: SnowflakeSchema.nullish(),
+    creator_id: SnowflakeSchema.nullish(),
+    name: z.string().min(1).max(100),
+    description: z.string().min(1).max(1000).nullish(),
+    scheduled_start_time: z.string().datetime(),
+    scheduled_end_time: z.string().datetime().nullish(),
+    privacy_level: z.nativeEnum(GuildScheduledEventPrivacyLevel),
+    status: z.nativeEnum(GuildScheduledEventStatus),
+    entity_type: z.nativeEnum(GuildScheduledEventType),
+    entity_id: SnowflakeSchema.nullable(),
+    entity_metadata: GuildScheduledEventEntityMetadataSchema.nullable(),
+    creator: UserSchema.optional(),
+    user_count: z.number().int().optional(),
+    image: z.string().nullish(),
+    recurrence_rule: GuildScheduledEventRecurrenceRuleSchema.nullable(),
+  })
+  .strict();
+
+export type GuildScheduledEventEntity = z.infer<
+  typeof GuildScheduledEventSchema
+>;

@@ -51,7 +51,7 @@ export class Rest {
     return this.isDestroyed;
   }
 
-  get apiVersion(): ApiVersion.V10 {
+  get apiVersion(): ApiVersion {
     return this.config.options.version;
   }
 
@@ -62,7 +62,7 @@ export class Rest {
 
   setCompression(enabled: boolean): void {
     this.#validateClientState();
-    this.config.options.compress = enabled;
+    this.config.options.useCompression = enabled;
   }
 
   setAuthType(authType: AuthTypeFlag): void {
@@ -98,7 +98,7 @@ export class Rest {
   ): Promise<T> {
     return this.makeRequest<T>({
       ...options,
-      method: HttpMethodFlag.Get,
+      method: HttpMethodFlag.get,
       path,
     });
   }
@@ -109,7 +109,7 @@ export class Rest {
   ): Promise<T> {
     return this.makeRequest<T>({
       ...options,
-      method: HttpMethodFlag.Post,
+      method: HttpMethodFlag.post,
       path,
     });
   }
@@ -120,7 +120,7 @@ export class Rest {
   ): Promise<T> {
     return this.makeRequest<T>({
       ...options,
-      method: HttpMethodFlag.Put,
+      method: HttpMethodFlag.put,
       path,
     });
   }
@@ -131,7 +131,7 @@ export class Rest {
   ): Promise<T> {
     return this.makeRequest<T>({
       ...options,
-      method: HttpMethodFlag.Patch,
+      method: HttpMethodFlag.patch,
       path,
     });
   }
@@ -142,7 +142,7 @@ export class Rest {
   ): Promise<T> {
     return this.makeRequest<T>({
       ...options,
-      method: HttpMethodFlag.Delete,
+      method: HttpMethodFlag.delete,
       path,
     });
   }
