@@ -1,23 +1,29 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type ActivityInstanceEntity,
   type EditCurrentApplicationEntity,
   EditCurrentApplicationSchema,
 } from "../schemas/index.js";
 
-export class ApplicationRouter extends BaseRouter {
+export class ApplicationRouter {
   static ROUTES = {
     currentApplication: "/applications/@me" as const,
     activityInstance: (applicationId: Snowflake, instanceId: string) =>
       `/applications/${applicationId}/activity-instances/${instanceId}` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.get(ApplicationRouter.ROUTES.currentApplication);
+    return this.#rest.get(ApplicationRouter.ROUTES.currentApplication);
   }
 
   /**
@@ -35,7 +41,7 @@ export class ApplicationRouter extends BaseRouter {
       );
     }
 
-    return this.patch(ApplicationRouter.ROUTES.currentApplication, {
+    return this.#rest.patch(ApplicationRouter.ROUTES.currentApplication, {
       body: JSON.stringify(result.data),
     });
   }
@@ -47,7 +53,7 @@ export class ApplicationRouter extends BaseRouter {
     applicationId: Snowflake,
     instanceId: string,
   ): Promise<ActivityInstanceEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationRouter.ROUTES.activityInstance(applicationId, instanceId),
     );
   }

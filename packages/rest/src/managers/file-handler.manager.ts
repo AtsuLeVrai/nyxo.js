@@ -11,13 +11,15 @@ interface FileInput {
   contentType: string;
 }
 
+type FileLimits = Record<keyof typeof PremiumTier, number>;
+
 export class FileHandlerManager {
-  static readonly FILE_LIMITS = {
-    DEFAULT: 10 * 1024 * 1024, // 10MB
-    TIER_1: 25 * 1024 * 1024, // 25MB
-    TIER_2: 50 * 1024 * 1024, // 50MB
-    TIER_3: 100 * 1024 * 1024, // 100MB
-    MAX_FILES: 10,
+  readonly #maxFiles = 10;
+  readonly #fileLimits: FileLimits = {
+    none: 10 * 1024 * 1024, // 10MB
+    tier1: 25 * 1024 * 1024, // 25MB
+    tier2: 50 * 1024 * 1024, // 50MB
+    tier3: 100 * 1024 * 1024, // 100MB
   } as const;
 
   #maxFileSize: number;
@@ -56,17 +58,15 @@ export class FileHandlerManager {
   }
 
   #getMaxFileSizeForTier(tier: PremiumTier): number {
-    const { DEFAULT, TIER_1, TIER_2, TIER_3 } = FileHandlerManager.FILE_LIMITS;
-
     switch (tier) {
       case PremiumTier.tier1:
-        return TIER_1;
+        return this.#fileLimits.tier1;
       case PremiumTier.tier2:
-        return TIER_2;
+        return this.#fileLimits.tier2;
       case PremiumTier.tier3:
-        return TIER_3;
+        return this.#fileLimits.tier3;
       default:
-        return DEFAULT;
+        return this.#fileLimits.none;
     }
   }
 
@@ -75,10 +75,8 @@ export class FileHandlerManager {
       (file): file is FileType => file !== undefined,
     );
 
-    if (validFiles.length > FileHandlerManager.FILE_LIMITS.MAX_FILES) {
-      throw new Error(
-        `Maximum number of files (${FileHandlerManager.FILE_LIMITS.MAX_FILES}) exceeded`,
-      );
+    if (validFiles.length > this.#maxFiles) {
+      throw new Error(`Maximum number of files (${this.#maxFiles}) exceeded`);
     }
 
     let totalSize = 0;
@@ -94,8 +92,7 @@ export class FileHandlerManager {
       }
     }
 
-    const maxTotalSize =
-      this.#maxFileSize * FileHandlerManager.FILE_LIMITS.MAX_FILES;
+    const maxTotalSize = this.#maxFileSize * this.#maxFiles;
     if (totalSize > maxTotalSize) {
       throw new Error(
         `Total file size ${totalSize} bytes exceeds maximum allowed ${maxTotalSize} bytes`,

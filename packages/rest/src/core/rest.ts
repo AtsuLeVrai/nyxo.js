@@ -1,10 +1,10 @@
 import type { ApiVersion, PremiumTier } from "@nyxjs/core";
+import { EventEmitter } from "eventemitter3";
 import type { ProxyAgent } from "undici";
 import {
   FileHandlerManager,
   RateLimitManager,
   RequestManager,
-  TokenManager,
 } from "../managers/index.js";
 import {
   ApplicationCommandRouter,
@@ -33,18 +33,18 @@ import {
   VoiceRouter,
   WebhookRouter,
 } from "../routes/index.js";
-import type { PathLike, RestOptions, RouteEntity } from "../types/index.js";
+import type {
+  DestroyOptions,
+  PathLike,
+  RestEvents,
+  RestOptions,
+  RouteEntity,
+} from "../types/index.js";
 
-export class Rest {
+export class Rest extends EventEmitter<RestEvents> {
   static readonly CDN_URL = "https://cdn.discordapp.com";
   static readonly MEDIA_URL = "https://media.discordapp.net";
   static readonly API_URL = "https://discord.com/api";
-
-  readonly options: RestOptions;
-  readonly token: TokenManager;
-  readonly fileManager: FileHandlerManager;
-  readonly rateLimitManager: RateLimitManager;
-  readonly requestManager: RequestManager;
 
   readonly applications = new ApplicationRouter(this);
   readonly commands = new ApplicationCommandRouter(this);
@@ -72,50 +72,49 @@ export class Rest {
   readonly voice = new VoiceRouter(this);
   readonly webhooks = new WebhookRouter(this);
 
-  #isDestroyed = false;
+  readonly options: RestOptions;
+
+  readonly #fileManager: FileHandlerManager;
+  readonly #rateLimitManager: RateLimitManager;
+  readonly #requestManager: RequestManager;
 
   constructor(options: RestOptions) {
+    super();
     this.options = options;
-
-    this.token = new TokenManager(options.token);
-    this.fileManager = new FileHandlerManager();
-    this.rateLimitManager = new RateLimitManager();
-    this.requestManager = new RequestManager(
+    this.#fileManager = new FileHandlerManager();
+    this.#rateLimitManager = new RateLimitManager();
+    this.#requestManager = new RequestManager(
       this.options,
-      this.rateLimitManager,
-      this.fileManager,
+      this.#rateLimitManager,
+      this.#fileManager,
     );
-  }
 
-  get destroyed(): boolean {
-    return this.#isDestroyed;
+    this.#forwardEvents(this.#rateLimitManager, this.#requestManager);
   }
 
   get apiVersion(): ApiVersion {
     return this.options.version ?? 10;
   }
 
-  setBoostTier(tier: PremiumTier): void {
-    this.#validateClientState();
-    this.fileManager.setBoostTier(tier);
+  get globalReset(): number | null {
+    return this.#rateLimitManager.globalReset;
   }
 
   get<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.requestManager.execute<T>({
+    return this.#requestManager.execute<T>({
       ...options,
       method: "GET",
       path,
     });
   }
-
   post<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.requestManager.execute<T>({
+    return this.#requestManager.execute<T>({
       ...options,
       method: "POST",
       path,
@@ -126,7 +125,7 @@ export class Rest {
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.requestManager.execute<T>({
+    return this.#requestManager.execute<T>({
       ...options,
       method: "PUT",
       path,
@@ -137,7 +136,7 @@ export class Rest {
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.requestManager.execute<T>({
+    return this.#requestManager.execute<T>({
       ...options,
       method: "PATCH",
       path,
@@ -148,42 +147,48 @@ export class Rest {
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
   ): Promise<T> {
-    return this.requestManager.execute<T>({
+    return this.#requestManager.execute<T>({
       ...options,
       method: "DELETE",
       path,
     });
   }
 
-  processFiles(options: RouteEntity): Promise<RouteEntity> {
-    this.#validateClientState();
-    return this.fileManager.handleFiles(options);
+  setBoostTier(tier: PremiumTier): void {
+    this.#fileManager.setBoostTier(tier);
   }
 
-  async updateProxy(proxyOptions: ProxyAgent.Options | null): Promise<void> {
-    this.#validateClientState();
-    await this.requestManager.updateProxy(proxyOptions);
+  processFiles(options: RouteEntity): Promise<RouteEntity> {
+    return this.#fileManager.handleFiles(options);
+  }
+
+  async updateProxy(proxyOptions?: ProxyAgent.Options): Promise<void> {
+    await this.#requestManager.updateProxy(proxyOptions);
   }
 
   getConfig(): RestOptions {
-    this.#validateClientState();
     return this.options;
   }
 
-  async destroy(): Promise<void> {
-    if (this.#isDestroyed) {
-      return;
-    }
-
-    this.#isDestroyed = true;
-
-    this.rateLimitManager.destroy();
-    await this.requestManager.destroy();
+  async destroy(options: DestroyOptions = {}): Promise<void> {
+    await this.#requestManager.destroy(options);
+    this.#rateLimitManager.destroy();
+    this.removeAllListeners();
   }
 
-  #validateClientState(): void {
-    if (this.#isDestroyed) {
-      throw new Error("Rest client has been destroyed");
+  #forwardEvents(...emitters: EventEmitter<RestEvents>[]): void {
+    const restEvents: (keyof RestEvents)[] = [
+      "request",
+      "rateLimit",
+      "response",
+    ];
+
+    for (const emitter of emitters) {
+      for (const event of restEvents) {
+        emitter.on(event, (...args) => {
+          return this.emit(event, ...args);
+        });
+      }
     }
   }
 }

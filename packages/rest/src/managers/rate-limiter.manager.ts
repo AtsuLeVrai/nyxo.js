@@ -1,4 +1,7 @@
+import { Store } from "@nyxjs/store";
+import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
+import type { RestEvents } from "../types/index.js";
 
 type RateLimitScope = "user" | "global" | "shared";
 
@@ -9,6 +12,8 @@ interface BucketInfo {
   reset: number;
   resetAfter: number;
   scope: RateLimitScope;
+  isEmoji: boolean;
+  guildId?: string;
 }
 
 interface MajorParameter {
@@ -16,31 +21,50 @@ interface MajorParameter {
   param: string;
 }
 
-export class RateLimitManager {
+interface InvalidRequestTracker {
+  count: number;
+  lastReset: number;
+  windowSize: number;
+  maxRequests: number;
+}
+
+interface EmojiRateLimit {
+  remaining: number;
+  reset: number;
+}
+
+export class RateLimitManager extends EventEmitter<RestEvents> {
   static readonly GLOBAL_LIMIT = 50;
   static readonly INVALID_LIMIT = 10_000;
   static readonly INVALID_WINDOW = 600_000;
+  static readonly EMOJI_RATE_LIMIT = 30;
+  static readonly EMOJI_RATE_RESET = 60_000;
 
   static readonly HEADERS = {
-    BUCKET: "x-ratelimit-bucket",
-    LIMIT: "x-ratelimit-limit",
-    REMAINING: "x-ratelimit-remaining",
-    RESET: "x-ratelimit-reset",
-    RESET_AFTER: "x-ratelimit-reset-after",
-    GLOBAL: "x-ratelimit-global",
-    SCOPE: "x-ratelimit-scope",
-    RETRY_AFTER: "retry-after",
+    bucket: "x-ratelimit-bucket",
+    limit: "x-ratelimit-limit",
+    remaining: "x-ratelimit-remaining",
+    reset: "x-ratelimit-reset",
+    resetAfter: "x-ratelimit-reset-after",
+    global: "x-ratelimit-global",
+    scope: "x-ratelimit-scope",
+    retryAfter: "retry-after",
   } as const;
 
-  readonly #buckets = new Map<string, BucketInfo>();
-  readonly #routeToBucket = new Map<string, string>();
+  readonly #buckets = new Store<string, BucketInfo>();
+  readonly #routeToBucket = new Store<string, string>();
+  readonly #emojiGuildLimits = new Store<string, EmojiRateLimit>();
 
   #globalReset: number | null = null;
   #globalRemaining = RateLimitManager.GLOBAL_LIMIT;
   #lastGlobalReset = Date.now();
 
-  #invalidCount = 0;
-  #lastInvalidReset = Date.now();
+  readonly #invalidRequests: InvalidRequestTracker = {
+    count: 0,
+    lastReset: Date.now(),
+    windowSize: RateLimitManager.INVALID_WINDOW,
+    maxRequests: RateLimitManager.INVALID_LIMIT,
+  };
 
   get globalReset(): number | null {
     return this.#globalReset;
@@ -56,6 +80,13 @@ export class RateLimitManager {
       await this.#checkGlobalRateLimit();
     }
 
+    if (this.#isEmojiRoute(path)) {
+      const guildId = this.#extractGuildId(path);
+      if (guildId) {
+        await this.#checkEmojiRateLimit(guildId);
+      }
+    }
+
     const routeKey = this.#getRouteKey(path, method);
     const bucketHash = this.#routeToBucket.get(routeKey);
 
@@ -63,10 +94,21 @@ export class RateLimitManager {
       const bucket = this.#buckets.get(bucketHash);
       if (bucket) {
         if (bucket.remaining <= 0) {
-          const delay = bucket.reset * 1000 - Date.now();
+          const now = Date.now();
+          const delay = Math.max(0, bucket.reset * 1000 - now);
+
           if (delay > 0) {
+            this.emit(
+              "rateLimit",
+              path,
+              method,
+              delay,
+              bucket.limit,
+              bucket.remaining,
+            );
             await this.#wait(delay);
           }
+
           bucket.remaining = bucket.limit;
         }
 
@@ -90,14 +132,36 @@ export class RateLimitManager {
 
     if (this.#isErrorStatusCode(statusCode)) {
       this.#incrementInvalidCount();
-      if (statusCode === 429 && headers[h.GLOBAL]) {
-        const retryAfter = Number(headers[h.RETRY_AFTER]) * 1000;
-        this.#globalReset = Date.now() + retryAfter;
-        return;
+
+      if (statusCode === 429) {
+        if (headers[h.global]) {
+          const retryAfter = Number(headers[h.retryAfter]) * 1000;
+          this.#globalReset = Date.now() + retryAfter;
+
+          this.emit(
+            "globalRateLimitUpdate",
+            this.#globalRemaining,
+            this.#globalReset,
+            RateLimitManager.GLOBAL_LIMIT,
+          );
+
+          return;
+        }
+
+        if (this.#isEmojiRoute(path)) {
+          const guildId = this.#extractGuildId(path);
+          if (guildId) {
+            const retryAfter = Number(headers[h.retryAfter]) * 1000;
+            this.#emojiGuildLimits.set(guildId, {
+              remaining: 0,
+              reset: Date.now() + retryAfter,
+            });
+          }
+        }
       }
     }
 
-    const bucketHash = headers[h.BUCKET];
+    const bucketHash = headers[h.bucket];
     if (!bucketHash) {
       return;
     }
@@ -107,11 +171,15 @@ export class RateLimitManager {
 
     this.#buckets.set(bucketHash, {
       hash: bucketHash,
-      limit: Number(headers[h.LIMIT]) || 0,
-      remaining: Number(headers[h.REMAINING]) || 0,
-      reset: Number(headers[h.RESET]) || 0,
-      resetAfter: Number(headers[h.RESET_AFTER]) || 0,
-      scope: (headers[h.SCOPE] as RateLimitScope) || "user",
+      limit: Number(headers[h.limit]) || 0,
+      remaining: Number(headers[h.remaining]) || 0,
+      reset: Number(headers[h.reset]) || 0,
+      resetAfter: Number(headers[h.resetAfter]) || 0,
+      scope: (headers[h.scope] as RateLimitScope) || "user",
+      isEmoji: this.#isEmojiRoute(path),
+      guildId: this.#isEmojiRoute(path)
+        ? this.#extractGuildId(path)
+        : undefined,
     });
   }
 
@@ -120,19 +188,94 @@ export class RateLimitManager {
     this.#routeToBucket.clear();
     this.#globalReset = null;
     this.#globalRemaining = RateLimitManager.GLOBAL_LIMIT;
-    this.#invalidCount = 0;
+    this.#invalidRequests.count = 0;
+    this.#invalidRequests.lastReset = Date.now();
+    this.#emojiGuildLimits.clear();
+    this.removeAllListeners();
+  }
+
+  #isEmojiRoute(path: string): boolean {
+    return path.includes("/emojis");
+  }
+
+  #extractGuildId(path: string): string | undefined {
+    const match = path.match(/\/guilds\/(\d+)/);
+    return match?.[1];
+  }
+
+  async #checkEmojiRateLimit(guildId: string): Promise<void> {
+    const limit = this.#emojiGuildLimits.get(guildId);
+
+    if (!limit) {
+      this.#emojiGuildLimits.set(guildId, {
+        remaining: RateLimitManager.EMOJI_RATE_LIMIT - 1,
+        reset: Date.now() + RateLimitManager.EMOJI_RATE_RESET,
+      });
+      return;
+    }
+
+    if (Date.now() >= limit.reset) {
+      this.#emojiGuildLimits.set(guildId, {
+        remaining: RateLimitManager.EMOJI_RATE_LIMIT - 1,
+        reset: Date.now() + RateLimitManager.EMOJI_RATE_RESET,
+      });
+      return;
+    }
+
+    if (limit.remaining <= 0) {
+      const delay = limit.reset - Date.now();
+      await this.#wait(delay);
+      this.#emojiGuildLimits.set(guildId, {
+        remaining: RateLimitManager.EMOJI_RATE_LIMIT - 1,
+        reset: Date.now() + RateLimitManager.EMOJI_RATE_RESET,
+      });
+    } else {
+      limit.remaining--;
+      this.#emojiGuildLimits.set(guildId, limit);
+    }
   }
 
   async #checkGlobalRateLimit(): Promise<void> {
-    if (Date.now() - this.#lastGlobalReset >= 1000) {
+    const now = Date.now();
+
+    if (this.#globalReset && now < this.#globalReset) {
+      const delay = this.#globalReset - now;
+      await this.#wait(delay);
+      this.#globalReset = null;
       this.#globalRemaining = RateLimitManager.GLOBAL_LIMIT;
-      this.#lastGlobalReset = Date.now();
+      return;
+    }
+
+    if (now - this.#lastGlobalReset >= 1000) {
+      this.#globalRemaining = RateLimitManager.GLOBAL_LIMIT;
+      this.#lastGlobalReset = now;
     }
 
     if (this.#globalRemaining <= 0) {
-      const delay = Math.max(0, 1000 - (Date.now() - this.#lastGlobalReset));
+      const delay = Math.max(0, 1000 - (now - this.#lastGlobalReset));
       await this.#wait(delay);
       this.#globalRemaining = RateLimitManager.GLOBAL_LIMIT;
+    }
+  }
+
+  #checkInvalidLimit(): void {
+    const now = Date.now();
+
+    if (
+      now - this.#invalidRequests.lastReset >=
+      this.#invalidRequests.windowSize
+    ) {
+      this.#invalidRequests.count = 0;
+      this.#invalidRequests.lastReset = now;
+      return;
+    }
+
+    if (this.#invalidRequests.count >= this.#invalidRequests.maxRequests) {
+      throw new Error(
+        `Invalid request limit exceeded (${this.#invalidRequests.maxRequests} per ${
+          this.#invalidRequests.windowSize / 60000
+        } minutes)`,
+      );
     }
   }
 
@@ -166,7 +309,7 @@ export class RateLimitManager {
     return `${method}:${routeKey}`;
   }
 
-  #isExcludedRoute(path: string): path is string {
+  #isExcludedRoute(path: string): boolean {
     return path.includes("/interactions");
   }
 
@@ -174,20 +317,8 @@ export class RateLimitManager {
     return statusCode === 401 || statusCode === 403 || statusCode === 429;
   }
 
-  #checkInvalidLimit(): void {
-    const now = Date.now();
-    if (now - this.#lastInvalidReset >= RateLimitManager.INVALID_WINDOW) {
-      this.#invalidCount = 0;
-      this.#lastInvalidReset = now;
-    }
-
-    if (this.#invalidCount >= RateLimitManager.INVALID_LIMIT) {
-      throw new Error("Invalid request limit exceeded (10,000 per 10 minutes)");
-    }
-  }
-
   #incrementInvalidCount(): void {
-    this.#invalidCount++;
+    this.#invalidRequests.count++;
   }
 
   #wait(ms: number): Promise<void> {

@@ -1,5 +1,5 @@
 import type { Snowflake, StageInstanceEntity } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type CreateStageInstanceEntity,
   CreateStageInstanceSchema,
@@ -7,12 +7,18 @@ import {
   ModifyStageInstanceSchema,
 } from "../schemas/index.js";
 
-export class StageInstanceRouter extends BaseRouter {
+export class StageInstanceRouter {
   static readonly ROUTES = {
     stageInstances: "/stage-instances" as const,
     stageInstance: (channelId: Snowflake) =>
       `/stage-instances/${channelId}` as const,
   } as const;
+
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
@@ -30,7 +36,7 @@ export class StageInstanceRouter extends BaseRouter {
       );
     }
 
-    return this.post(StageInstanceRouter.ROUTES.stageInstances, {
+    return this.#rest.post(StageInstanceRouter.ROUTES.stageInstances, {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -40,7 +46,7 @@ export class StageInstanceRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
    */
   getStageInstance(channelId: Snowflake): Promise<StageInstanceEntity> {
-    return this.get(StageInstanceRouter.ROUTES.stageInstance(channelId));
+    return this.#rest.get(StageInstanceRouter.ROUTES.stageInstance(channelId));
   }
 
   /**
@@ -60,18 +66,24 @@ export class StageInstanceRouter extends BaseRouter {
       );
     }
 
-    return this.patch(StageInstanceRouter.ROUTES.stageInstance(channelId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.#rest.patch(
+      StageInstanceRouter.ROUTES.stageInstance(channelId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
    */
   deleteStageInstance(channelId: Snowflake, reason?: string): Promise<void> {
-    return this.delete(StageInstanceRouter.ROUTES.stageInstance(channelId), {
-      reason,
-    });
+    return this.#rest.delete(
+      StageInstanceRouter.ROUTES.stageInstance(channelId),
+      {
+        reason,
+      },
+    );
   }
 }

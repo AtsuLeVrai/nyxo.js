@@ -1,4 +1,5 @@
 import { type Snowflake, SnowflakeManager } from "@nyxjs/core";
+import { SignedUrlManager } from "../managers/index.js";
 import {
   type AnimatedImageOptionsEntity,
   type AttachmentOptionsEntity,
@@ -8,7 +9,6 @@ import {
   IMAGE_SIZE,
   type ImageFormat,
   type ImageSize,
-  type SignedAttachmentParametersEntity,
   type StickerFormatOptionsEntity,
 } from "../types/index.js";
 import { Rest } from "./rest.js";
@@ -16,6 +16,9 @@ import { Rest } from "./rest.js";
 const DEFAULT_FORMAT: ImageFormat = "png";
 const VALID_FORMATS: Set<string> = new Set(Object.values(IMAGE_FORMAT));
 const VALID_SIZES: Set<number> = new Set(Object.values(IMAGE_SIZE));
+const signedUrlManager = new SignedUrlManager(
+  process.env.DISCORD_SIGNING_KEY ?? "",
+);
 
 function validateId(id: Snowflake | number, name = "ID"): string {
   const stringId = id.toString();
@@ -63,8 +66,8 @@ function buildUrl(
 
   const url = new URL(parts.join("/"), baseUrl);
 
-  // biome-ignore lint/style/useExplicitLengthCheck: problem with the type checker
-  if (options?.size && options.size > 0) {
+  // biome-ignore lint/style/useExplicitLengthCheck: This is a valid check
+  if (options?.size && options?.size > 0 && options.size > 0) {
     url.searchParams.set("size", options.size.toString());
   }
 
@@ -94,17 +97,14 @@ export const Cdn: CdnEntity = {
     const path = ["attachments", cId, aId, encodeURIComponent(filename)];
     const url = new URL(path.join("/"), Rest.CDN_URL);
 
-    // biome-ignore lint/style/useExplicitLengthCheck: problem with the type checker
+    // biome-ignore lint/style/useExplicitLengthCheck: This is a valid check
     if (options?.size && options?.size > 0) {
       validateSize(options.size);
       url.searchParams.set("size", options.size.toString());
     }
 
-    if (options?.signedParameters) {
-      const { ex, is, hm } = options.signedParameters;
-      url.searchParams.set("ex", ex);
-      url.searchParams.set("is", is);
-      url.searchParams.set("hm", hm);
+    if (options?.signed) {
+      return signedUrlManager.signUrl(url.toString());
     }
 
     return url.toString();
@@ -136,6 +136,38 @@ export const Cdn: CdnEntity = {
     const id = validateId(emojiId, "Emoji ID");
     const extension = options?.animated ? "gif" : getExtension("", options);
     return buildUrl(["emojis", `${id}.${extension}`], options);
+  },
+
+  userAvatar(
+    userId: Snowflake | number,
+    hash: string,
+    options?: AnimatedImageOptionsEntity,
+  ): string {
+    const id = validateId(userId, "User ID");
+    validateHash(hash);
+    const extension = getExtension(hash, options);
+    return buildUrl(["avatars", id, `${hash}.${extension}`], options);
+  },
+
+  defaultUserAvatar(discriminator: number | string): string {
+    const index = Cdn.getDefaultAvatarIndex(discriminator);
+    return buildUrl(["embed/avatars", `${index}.png`]);
+  },
+
+  userBanner(
+    userId: Snowflake | number,
+    hash: string,
+    options?: AnimatedImageOptionsEntity,
+  ): string {
+    const id = validateId(userId, "User ID");
+    validateHash(hash);
+    const extension = getExtension(hash, options);
+    return buildUrl(["banners", id, `${hash}.${extension}`], options);
+  },
+
+  avatarDecoration(assetId: Snowflake | number): string {
+    const id = validateId(assetId, "Asset ID");
+    return buildUrl(["avatar-decoration-presets", `${id}.png`]);
   },
 
   guildIcon(
@@ -179,33 +211,6 @@ export const Cdn: CdnEntity = {
     );
   },
 
-  userAvatar(
-    userId: Snowflake | number,
-    hash: string,
-    options?: AnimatedImageOptionsEntity,
-  ): string {
-    const id = validateId(userId, "User ID");
-    validateHash(hash);
-    const extension = getExtension(hash, options);
-    return buildUrl(["avatars", id, `${hash}.${extension}`], options);
-  },
-
-  defaultUserAvatar(discriminator: number | string): string {
-    const index = Cdn.getDefaultAvatarIndex(discriminator);
-    return buildUrl(["embed/avatars", `${index}.png`]);
-  },
-
-  userBanner(
-    userId: Snowflake | number,
-    hash: string,
-    options?: AnimatedImageOptionsEntity,
-  ): string {
-    const id = validateId(userId, "User ID");
-    validateHash(hash);
-    const extension = getExtension(hash, options);
-    return buildUrl(["banners", id, `${hash}.${extension}`], options);
-  },
-
   guildMemberAvatar(
     guildId: Snowflake | number,
     userId: Snowflake | number,
@@ -234,6 +239,19 @@ export const Cdn: CdnEntity = {
     const extension = getExtension(hash, options);
     return buildUrl(
       ["guilds", gId, "users", uId, "banners", `${hash}.${extension}`],
+      options,
+    );
+  },
+
+  guildScheduledEventCover(
+    eventId: Snowflake | number,
+    hash: string,
+    options?: BaseImageOptionsEntity,
+  ): string {
+    const id = validateId(eventId, "Event ID");
+    validateHash(hash);
+    return buildUrl(
+      ["guild-events", id, `${hash}.${options?.format || DEFAULT_FORMAT}`],
       options,
     );
   },
@@ -331,19 +349,6 @@ export const Cdn: CdnEntity = {
     );
   },
 
-  teamIcon(
-    teamId: Snowflake | number,
-    hash: string,
-    options?: BaseImageOptionsEntity,
-  ): string {
-    const id = validateId(teamId, "Team ID");
-    validateHash(hash);
-    return buildUrl(
-      ["team-icons", id, `${hash}.${options?.format || DEFAULT_FORMAT}`],
-      options,
-    );
-  },
-
   sticker(
     stickerId: Snowflake | number,
     options?: StickerFormatOptionsEntity,
@@ -362,6 +367,19 @@ export const Cdn: CdnEntity = {
     return buildUrl(["stickers", `${id}.png`]);
   },
 
+  teamIcon(
+    teamId: Snowflake | number,
+    hash: string,
+    options?: BaseImageOptionsEntity,
+  ): string {
+    const id = validateId(teamId, "Team ID");
+    validateHash(hash);
+    return buildUrl(
+      ["team-icons", id, `${hash}.${options?.format || DEFAULT_FORMAT}`],
+      options,
+    );
+  },
+
   roleIcon(
     roleId: Snowflake | number,
     hash: string,
@@ -373,74 +391,5 @@ export const Cdn: CdnEntity = {
       ["role-icons", id, `${hash}.${options?.format || DEFAULT_FORMAT}`],
       options,
     );
-  },
-
-  guildScheduledEventCover(
-    eventId: Snowflake | number,
-    hash: string,
-    options?: BaseImageOptionsEntity,
-  ): string {
-    const id = validateId(eventId, "Event ID");
-    validateHash(hash);
-    return buildUrl(
-      ["guild-events", id, `${hash}.${options?.format || DEFAULT_FORMAT}`],
-      options,
-    );
-  },
-
-  avatarDecoration(assetId: Snowflake | number): string {
-    const id = validateId(assetId, "Asset ID");
-    return buildUrl(["avatar-decoration-presets", `${id}.png`]);
-  },
-
-  createSignedParameters(
-    expirationTimestamp: number,
-    issuedTimestamp: number,
-    signature: string,
-  ): SignedAttachmentParametersEntity {
-    return {
-      ex: expirationTimestamp.toString(16),
-      is: issuedTimestamp.toString(16),
-      hm: signature,
-    };
-  },
-
-  isSignedAttachmentUrl(url: string): boolean {
-    try {
-      const parsedUrl = new URL(url);
-      return (
-        parsedUrl.searchParams.has("ex") &&
-        parsedUrl.searchParams.has("is") &&
-        parsedUrl.searchParams.has("hm")
-      );
-    } catch {
-      return false;
-    }
-  },
-
-  cleanSignedUrl(url: string): string {
-    try {
-      const parsedUrl = new URL(url);
-      parsedUrl.searchParams.delete("ex");
-      parsedUrl.searchParams.delete("is");
-      parsedUrl.searchParams.delete("hm");
-      return parsedUrl.toString();
-    } catch {
-      return url;
-    }
-  },
-
-  extractSignedParameters(
-    url: string,
-  ): SignedAttachmentParametersEntity | null {
-    const parsedUrl = new URL(url);
-    const ex = parsedUrl.searchParams.get("ex");
-    const is = parsedUrl.searchParams.get("is");
-    const hm = parsedUrl.searchParams.get("hm");
-
-    if (ex && is && hm) {
-      return { ex, is, hm };
-    }
-    return null;
   },
 };

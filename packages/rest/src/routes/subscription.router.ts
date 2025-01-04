@@ -1,17 +1,23 @@
 import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type SubscriptionQueryEntity,
   SubscriptionQuerySchema,
 } from "../schemas/index.js";
 
-export class SubscriptionRouter extends BaseRouter {
+export class SubscriptionRouter {
   static readonly ROUTES = {
     skuSubscriptions: (skuId: Snowflake) =>
       `/skus/${skuId}/subscriptions` as const,
     skuSubscription: (skuId: Snowflake, subscriptionId: Snowflake) =>
       `/skus/${skuId}/subscriptions/${subscriptionId}` as const,
   } as const;
+
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions}
@@ -29,7 +35,7 @@ export class SubscriptionRouter extends BaseRouter {
       );
     }
 
-    return this.get(SubscriptionRouter.ROUTES.skuSubscriptions(skuId), {
+    return this.#rest.get(SubscriptionRouter.ROUTES.skuSubscriptions(skuId), {
       query: result.data,
     });
   }
@@ -41,7 +47,7 @@ export class SubscriptionRouter extends BaseRouter {
     skuId: Snowflake,
     subscriptionId: Snowflake,
   ): Promise<SubscriptionEntity> {
-    return this.get(
+    return this.#rest.get(
       SubscriptionRouter.ROUTES.skuSubscription(skuId, subscriptionId),
     );
   }

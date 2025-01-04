@@ -3,7 +3,7 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type CreateGuildScheduledEventEntity,
   CreateGuildScheduledEventSchema,
@@ -13,7 +13,7 @@ import {
   ModifyGuildScheduledEventSchema,
 } from "../schemas/index.js";
 
-export class ScheduledEventRouter extends BaseRouter {
+export class ScheduledEventRouter {
   static ROUTES = {
     events: (guildId: Snowflake) =>
       `/guilds/${guildId}/scheduled-events` as const,
@@ -23,6 +23,12 @@ export class ScheduledEventRouter extends BaseRouter {
       `/guilds/${guildId}/scheduled-events/${eventId}/users` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild}
    */
@@ -30,7 +36,7 @@ export class ScheduledEventRouter extends BaseRouter {
     guildId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
-    return this.get(ScheduledEventRouter.ROUTES.events(guildId), {
+    return this.#rest.get(ScheduledEventRouter.ROUTES.events(guildId), {
       query: { with_user_count: withUserCount },
     });
   }
@@ -52,7 +58,7 @@ export class ScheduledEventRouter extends BaseRouter {
       );
     }
 
-    return this.post(ScheduledEventRouter.ROUTES.events(guildId), {
+    return this.#rest.post(ScheduledEventRouter.ROUTES.events(guildId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -66,7 +72,7 @@ export class ScheduledEventRouter extends BaseRouter {
     eventId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity> {
-    return this.get(ScheduledEventRouter.ROUTES.event(guildId, eventId), {
+    return this.#rest.get(ScheduledEventRouter.ROUTES.event(guildId, eventId), {
       query: { with_user_count: withUserCount },
     });
   }
@@ -89,10 +95,13 @@ export class ScheduledEventRouter extends BaseRouter {
       );
     }
 
-    return this.patch(ScheduledEventRouter.ROUTES.event(guildId, eventId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.#rest.patch(
+      ScheduledEventRouter.ROUTES.event(guildId, eventId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+    );
   }
 
   /**
@@ -102,7 +111,9 @@ export class ScheduledEventRouter extends BaseRouter {
     guildId: Snowflake,
     eventId: Snowflake,
   ): Promise<void> {
-    return this.delete(ScheduledEventRouter.ROUTES.event(guildId, eventId));
+    return this.#rest.delete(
+      ScheduledEventRouter.ROUTES.event(guildId, eventId),
+    );
   }
 
   /**
@@ -122,7 +133,7 @@ export class ScheduledEventRouter extends BaseRouter {
       );
     }
 
-    return this.get(ScheduledEventRouter.ROUTES.users(guildId, eventId), {
+    return this.#rest.get(ScheduledEventRouter.ROUTES.users(guildId, eventId), {
       query: result.data,
     });
   }

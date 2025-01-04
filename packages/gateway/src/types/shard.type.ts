@@ -1,8 +1,14 @@
-export type ShardStatus = "connecting" | "ready" | "disconnected" | "idle";
-
-export interface ShardInfo {
+export interface ShardSession {
   shardId: number;
-  totalShards: number;
-  guildIds: string[];
-  status: ShardStatus;
+  numShards: number;
+  sessionIndex?: number;
+  largeThreshold?: number;
+}
+
+export interface ShardingConfig {
+  totalShards?: number | "auto";
+  sessions?: ShardSession[];
+  shardList?: number[];
+  spawnTimeout?: number;
+  handoffStrategy?: "immediate" | "graceful";
 }

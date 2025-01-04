@@ -1,12 +1,12 @@
 import type { MessageEntity, Snowflake } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type GetAnswerVotersQueryEntity,
   GetAnswerVotersQuerySchema,
   type PollVotersResponseEntity,
 } from "../schemas/index.js";
 
-export class PollRouter extends BaseRouter {
+export class PollRouter {
   static ROUTES = {
     channelPolls: (
       channelId: Snowflake,
@@ -17,6 +17,12 @@ export class PollRouter extends BaseRouter {
     expirePoll: (channelId: Snowflake, messageId: Snowflake) =>
       `/channels/${channelId}/polls/${messageId}/expire` as const,
   } as const;
+
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
@@ -36,7 +42,7 @@ export class PollRouter extends BaseRouter {
       );
     }
 
-    return this.get(
+    return this.#rest.get(
       PollRouter.ROUTES.channelPolls(channelId, messageId, answerId),
       {
         query: result.data,
@@ -48,6 +54,6 @@ export class PollRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
    */
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
-    return this.post(PollRouter.ROUTES.expirePoll(channelId, messageId));
+    return this.#rest.post(PollRouter.ROUTES.expirePoll(channelId, messageId));
   }
 }

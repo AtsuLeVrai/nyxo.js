@@ -1,5 +1,10 @@
 import erlpack from "erlpack";
-import type { EncodingType, PayloadEntity } from "../types/index.js";
+import { EventEmitter } from "eventemitter3";
+import type {
+  EncodingType,
+  GatewayEvents,
+  PayloadEntity,
+} from "../types/index.js";
 
 interface ProcessOptions {
   validateEtfKeys?: boolean;
@@ -7,60 +12,129 @@ interface ProcessOptions {
   validateSnowflakes?: boolean;
 }
 
-export class EncodingManager {
-  static readonly VALID_ENCODING_TYPES = new Set<EncodingType>(["json", "etf"]);
-  static readonly MAX_PAYLOAD_SIZE = 4096;
+interface EncodingErrorDetails {
+  encoding: EncodingType;
+  payloadSize: number;
+  operation: "encode" | "decode";
+  dataType: string;
+}
 
-  readonly #encoding: EncodingType;
+export class EncodingError extends Error {
+  readonly code: string;
+  readonly details: EncodingErrorDetails;
+  readonly error?: string;
 
-  constructor(encoding: EncodingType) {
-    this.#encoding = this.#validateEncodingType(encoding);
+  constructor(message: string, details: EncodingErrorDetails, error?: unknown) {
+    super(message);
+    this.name = "EncodingError";
+    this.code = "ENCODING_ERROR";
+    this.details = details;
+    this.error = error instanceof Error ? error.message : String(error);
+  }
+
+  override toString(): string {
+    const { encoding, payloadSize, operation, dataType } = this.details;
+    return `EncodingError: ${this.message}
+    - Encoding Type: ${encoding}
+    - Operation: ${operation}
+    - Payload Size: ${payloadSize} bytes
+    - Data Type: ${dataType}`;
+  }
+}
+
+export class EncodingManager extends EventEmitter<GatewayEvents> {
+  #lastProcessedSize = 0;
+  readonly #maxPayloadSize = 4096;
+
+  readonly #encodingType: EncodingType;
+
+  constructor(encodingType: EncodingType) {
+    super();
+    this.#encodingType = encodingType;
   }
 
   get encodingType(): EncodingType {
-    return this.#encoding;
+    return this.#encodingType;
   }
 
   encode(data: PayloadEntity): Buffer | string {
+    const dataType = Array.isArray(data) ? "array" : typeof data;
+
     try {
-      let processed: Buffer | string;
-
-      switch (this.#encoding) {
-        case "json":
-          processed = this.#encodeJson(data);
-          break;
-        case "etf":
-          processed = this.#encodeEtf(data);
-          break;
-        default:
-          throw new Error(`Invalid encoding type: ${this.#encoding}`);
-      }
-
-      this.#validatePayloadSize(processed);
-      return processed;
-    } catch (error) {
-      throw new Error(
-        `Encoding failed: ${error instanceof Error ? error.message : String(error)}`,
+      this.emit(
+        "debug",
+        `[Gateway:Encoding] Starting encoding process - Type: ${this.#encodingType}, Data Type: ${dataType}`,
       );
+
+      const result =
+        this.#encodingType === "json"
+          ? this.#encodeJson(data)
+          : this.#encodeEtf(data);
+
+      const size = Buffer.isBuffer(result)
+        ? result.length
+        : Buffer.byteLength(result);
+
+      this.#validatePayloadSize(size);
+      this.#lastProcessedSize = size;
+
+      this.emit(
+        "debug",
+        `[Gateway:Encoding] Successfully encoded data - Size: ${size} bytes`,
+      );
+      return result;
+    } catch (error) {
+      const encodingError = new EncodingError(
+        "Encoding failed",
+        {
+          encoding: this.#encodingType,
+          payloadSize: this.#lastProcessedSize,
+          operation: "encode",
+          dataType: dataType,
+        },
+        error,
+      );
+
+      this.emit("error", encodingError);
+      throw encodingError;
     }
   }
 
   decode(data: Buffer | string): PayloadEntity {
     try {
-      this.#validatePayloadSize(data);
+      const size = Buffer.isBuffer(data)
+        ? data.length
+        : Buffer.byteLength(data);
 
-      switch (this.#encoding) {
-        case "json":
-          return this.#decodeJson(data);
-        case "etf":
-          return this.#decodeEtf(data);
-        default:
-          throw new Error(`Invalid encoding type: ${this.#encoding}`);
-      }
-    } catch (error) {
-      throw new Error(
-        `Decoding failed: ${error instanceof Error ? error.message : String(error)}`,
+      this.emit(
+        "debug",
+        `[Gateway:Encoding] Starting decoding process - Type: ${this.#encodingType}, Size: ${size} bytes`,
       );
+
+      const result =
+        this.#encodingType === "json"
+          ? this.#decodeJson(data)
+          : this.#decodeEtf(data);
+
+      this.emit(
+        "debug",
+        `[Gateway:Encoding] Successfully decoded data - Opcode: ${result.op}`,
+      );
+      return result;
+    } catch (error) {
+      const encodingError = new EncodingError(
+        "Decoding failed",
+        {
+          encoding: this.#encodingType,
+          payloadSize: this.#lastProcessedSize,
+          operation: "decode",
+          dataType: Buffer.isBuffer(data) ? "buffer" : typeof data,
+        },
+        error,
+      );
+
+      this.emit("error", encodingError);
+      throw encodingError;
     }
   }
 
@@ -75,10 +149,10 @@ export class EncodingManager {
 
   #decodeJson(data: Buffer | string): PayloadEntity {
     const strData = typeof data === "string" ? data : data.toString("utf-8");
-    const payload = JSON.parse(strData);
+    const payload: PayloadEntity = JSON.parse(strData);
 
     if (!this.#isValidPayload(payload)) {
-      throw new Error("Invalid payload structure");
+      throw new Error("Invalid JSON payload structure");
     }
 
     return payload;
@@ -91,16 +165,12 @@ export class EncodingManager {
       validateSnowflakes: true,
     });
 
-    try {
-      return erlpack.pack(processed);
-    } catch {
-      throw new Error("ETF encoding failed - check key types");
-    }
+    return erlpack.pack(processed);
   }
 
   #decodeEtf(data: Buffer | string): PayloadEntity {
     const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    const payload = erlpack.unpack(bufferData);
+    const payload: PayloadEntity = erlpack.unpack(bufferData);
 
     if (!this.#isValidPayload(payload)) {
       throw new Error("Invalid ETF payload structure");
@@ -109,11 +179,10 @@ export class EncodingManager {
     return payload;
   }
 
-  #validatePayloadSize(data: Buffer | string): void {
-    const size = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
-    if (size > EncodingManager.MAX_PAYLOAD_SIZE) {
+  #validatePayloadSize(size: number): void {
+    if (size > this.#maxPayloadSize) {
       throw new Error(
-        `Payload size of ${size} bytes exceeds maximum size of ${EncodingManager.MAX_PAYLOAD_SIZE} bytes`,
+        `Payload size of ${size} bytes exceeds maximum size of ${this.#maxPayloadSize} bytes`,
       );
     }
   }
@@ -136,6 +205,10 @@ export class EncodingManager {
 
       for (const [key, value] of Object.entries(data)) {
         if (options.validateEtfKeys && typeof key !== "string") {
+          this.emit(
+            "debug",
+            "[Gateway:Encoding] Invalid ETF key type detected",
+          );
           throw new Error("ETF encoding requires string keys");
         }
 
@@ -146,16 +219,6 @@ export class EncodingManager {
     }
 
     return data;
-  }
-
-  #validateEncodingType(encoding: EncodingType): EncodingType {
-    if (!EncodingManager.VALID_ENCODING_TYPES.has(encoding)) {
-      throw new Error(
-        `Invalid encoding type: ${encoding}. Must be one of: ${[...EncodingManager.VALID_ENCODING_TYPES].join(", ")}`,
-      );
-    }
-
-    return encoding;
   }
 
   #isValidPayload(value: unknown): value is PayloadEntity {

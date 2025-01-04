@@ -3,7 +3,7 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type ModifyCurrentUserVoiceStateEntity,
   ModifyCurrentUserVoiceStateSchema,
@@ -11,7 +11,7 @@ import {
   ModifyUserVoiceStateSchema,
 } from "../schemas/index.js";
 
-export class VoiceRouter extends BaseRouter {
+export class VoiceRouter {
   static readonly ROUTES = {
     voiceRegions: "/voice/regions" as const,
     currentUserVoiceState: (guildId: Snowflake) =>
@@ -20,18 +20,24 @@ export class VoiceRouter extends BaseRouter {
       `/guilds/${guildId}/voice-states/${userId}` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
   listVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.get(VoiceRouter.ROUTES.voiceRegions);
+    return this.#rest.get(VoiceRouter.ROUTES.voiceRegions);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
   getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
-    return this.get(VoiceRouter.ROUTES.currentUserVoiceState(guildId));
+    return this.#rest.get(VoiceRouter.ROUTES.currentUserVoiceState(guildId));
   }
 
   /**
@@ -41,7 +47,7 @@ export class VoiceRouter extends BaseRouter {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<VoiceStateEntity> {
-    return this.get(VoiceRouter.ROUTES.userVoiceState(guildId, userId));
+    return this.#rest.get(VoiceRouter.ROUTES.userVoiceState(guildId, userId));
   }
 
   /**
@@ -60,7 +66,7 @@ export class VoiceRouter extends BaseRouter {
       );
     }
 
-    return this.patch(VoiceRouter.ROUTES.currentUserVoiceState(guildId), {
+    return this.#rest.patch(VoiceRouter.ROUTES.currentUserVoiceState(guildId), {
       body: JSON.stringify(result.data),
     });
   }
@@ -82,8 +88,11 @@ export class VoiceRouter extends BaseRouter {
       );
     }
 
-    return this.patch(VoiceRouter.ROUTES.userVoiceState(guildId, userId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.patch(
+      VoiceRouter.ROUTES.userVoiceState(guildId, userId),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 }

@@ -118,19 +118,22 @@ export interface ApplicationCommandOptionEntity {
   autocomplete?: boolean;
 }
 
+export const APPLICATION_COMMAND_NAME_REGEX =
+  /^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u;
+
 export const ApplicationCommandOptionSchema: z.ZodType<ApplicationCommandOptionEntity> =
   z.lazy(() =>
     z
       .object({
         type: z.nativeEnum(ApplicationCommandOptionType),
-        name: z
-          .string()
-          .min(1)
-          .max(32)
-          .regex(/^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u),
-        name_localizations: z.record(z.string()).nullish(),
+        name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+        name_localizations: createAvailableLocaleSchema(
+          z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+        ).nullish(),
         description: z.string().min(1).max(100),
-        description_localizations: z.record(z.string()).nullish(),
+        description_localizations: createAvailableLocaleSchema(
+          z.string().min(1).max(100),
+        ).nullish(),
         required: z.boolean().optional(),
         choices: z
           .array(ApplicationCommandOptionChoiceSchema)
@@ -172,17 +175,9 @@ export const ApplicationCommandSchema = z
       .default(ApplicationCommandType.chatInput),
     application_id: SnowflakeSchema,
     guild_id: SnowflakeSchema.optional(),
-    name: z
-      .string()
-      .min(1)
-      .max(32)
-      .regex(/^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u),
+    name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
     name_localizations: createAvailableLocaleSchema(
-      z
-        .string()
-        .min(1)
-        .max(32)
-        .regex(/^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u),
+      z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
     ).nullish(),
     description: z.string().min(1).max(100),
     description_localizations: createAvailableLocaleSchema(

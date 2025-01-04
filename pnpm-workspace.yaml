@@ -1,7 +1,6 @@
 packages:
   - 'internals/*'
   - 'packages/*'
-  - 'configs'
 exclude:
   - '**/dist'
   - '**/test'

@@ -1,5 +1,5 @@
 import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type CreateAutoModerationRuleEntity,
   CreateAutoModerationRuleSchema,
@@ -7,7 +7,7 @@ import {
   ModifyAutoModerationRuleSchema,
 } from "../schemas/index.js";
 
-export class AutoModerationRouter extends BaseRouter {
+export class AutoModerationRouter {
   static readonly ROUTES = {
     base: (guildId: Snowflake) =>
       `/guilds/${guildId}/auto-moderation/rules` as const,
@@ -15,13 +15,19 @@ export class AutoModerationRouter extends BaseRouter {
       `/guilds/${guildId}/auto-moderation/rules/${ruleId}` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#list-auto-moderation-rules-for-guild}
    */
   listAutoModerationRules(
     guildId: Snowflake,
   ): Promise<AutoModerationRuleEntity[]> {
-    return this.get(AutoModerationRouter.ROUTES.base(guildId));
+    return this.#rest.get(AutoModerationRouter.ROUTES.base(guildId));
   }
 
   /**
@@ -31,7 +37,7 @@ export class AutoModerationRouter extends BaseRouter {
     guildId: Snowflake,
     ruleId: Snowflake,
   ): Promise<AutoModerationRuleEntity> {
-    return this.get(AutoModerationRouter.ROUTES.rule(guildId, ruleId));
+    return this.#rest.get(AutoModerationRouter.ROUTES.rule(guildId, ruleId));
   }
 
   /**
@@ -51,7 +57,7 @@ export class AutoModerationRouter extends BaseRouter {
       );
     }
 
-    return this.post(AutoModerationRouter.ROUTES.base(guildId), {
+    return this.#rest.post(AutoModerationRouter.ROUTES.base(guildId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -75,7 +81,7 @@ export class AutoModerationRouter extends BaseRouter {
       );
     }
 
-    return this.patch(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {
+    return this.#rest.patch(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -89,8 +95,11 @@ export class AutoModerationRouter extends BaseRouter {
     ruleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {
-      reason,
-    });
+    return this.#rest.delete(
+      AutoModerationRouter.ROUTES.rule(guildId, ruleId),
+      {
+        reason,
+      },
+    );
   }
 }

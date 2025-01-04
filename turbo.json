@@ -4,7 +4,9 @@
   "tasks": {
     "dev": {
       "cache": false,
-      "persistent": true,
+      "persistent": false,
+      "dependsOn": ["^dev", "clean"],
+      "outputs": ["dist/**"],
       "inputs": ["src/**/*.ts", "src/**/*.tsx", ".env*"]
     },
     "build": {

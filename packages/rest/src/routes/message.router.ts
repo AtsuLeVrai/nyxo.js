@@ -1,5 +1,5 @@
 import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type BulkDeleteMessagesEntity,
   BulkDeleteMessagesSchema,
@@ -13,7 +13,7 @@ import {
   GetReactionsQuerySchema,
 } from "../schemas/index.js";
 
-export class MessageRouter extends BaseRouter {
+export class MessageRouter {
   static readonly ROUTES = {
     channelMessages: (channelId: Snowflake) =>
       `/channels/${channelId}/messages` as const,
@@ -34,6 +34,12 @@ export class MessageRouter extends BaseRouter {
       `/channels/${channelId}/messages/bulk-delete` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-messages}
    */
@@ -50,7 +56,7 @@ export class MessageRouter extends BaseRouter {
       );
     }
 
-    return this.get(MessageRouter.ROUTES.channelMessages(channelId), {
+    return this.#rest.get(MessageRouter.ROUTES.channelMessages(channelId), {
       query: result.data,
     });
   }
@@ -62,7 +68,9 @@ export class MessageRouter extends BaseRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.get(MessageRouter.ROUTES.channelMessage(channelId, messageId));
+    return this.#rest.get(
+      MessageRouter.ROUTES.channelMessage(channelId, messageId),
+    );
   }
 
   /**
@@ -82,7 +90,7 @@ export class MessageRouter extends BaseRouter {
     }
 
     const { files, ...rest } = result.data;
-    return this.post(MessageRouter.ROUTES.channelMessages(channelId), {
+    return this.#rest.post(MessageRouter.ROUTES.channelMessages(channelId), {
       body: JSON.stringify(rest),
       files: files,
     });
@@ -95,7 +103,9 @@ export class MessageRouter extends BaseRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.post(MessageRouter.ROUTES.crosspost(channelId, messageId));
+    return this.#rest.post(
+      MessageRouter.ROUTES.crosspost(channelId, messageId),
+    );
   }
 
   /**
@@ -106,7 +116,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.put(
+    return this.#rest.put(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
     );
   }
@@ -119,7 +129,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
     );
   }
@@ -133,7 +143,7 @@ export class MessageRouter extends BaseRouter {
     emoji: string,
     userId: Snowflake,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji, userId),
     );
   }
@@ -156,7 +166,7 @@ export class MessageRouter extends BaseRouter {
       );
     }
 
-    return this.get(
+    return this.#rest.get(
       MessageRouter.ROUTES.reactions(channelId, messageId, emoji),
       { query: result.data },
     );
@@ -169,7 +179,7 @@ export class MessageRouter extends BaseRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.reactions(channelId, messageId, ""),
     );
   }
@@ -182,7 +192,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.reactions(channelId, messageId, emoji),
     );
   }
@@ -205,7 +215,7 @@ export class MessageRouter extends BaseRouter {
     }
 
     const { files, ...rest } = result.data;
-    return this.patch(
+    return this.#rest.patch(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       {
         body: JSON.stringify(rest),
@@ -222,7 +232,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       { reason },
     );
@@ -245,7 +255,7 @@ export class MessageRouter extends BaseRouter {
       );
     }
 
-    return this.post(MessageRouter.ROUTES.bulkDelete(channelId), {
+    return this.#rest.post(MessageRouter.ROUTES.bulkDelete(channelId), {
       body: JSON.stringify(result.data),
       reason,
     });

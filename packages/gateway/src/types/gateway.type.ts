@@ -1,5 +1,5 @@
 import type { UpdatePresenceEntity } from "../events/index.js";
-import type { RateLimitOptions } from "./rate-limit.type.js";
+import type { ShardingConfig } from "./shard.type.js";
 
 export type CompressionType = "zlib-stream" | "zstd-stream";
 export type EncodingType = "json" | "etf";
@@ -14,7 +14,7 @@ export interface PayloadEntity {
   t: string | null;
 }
 
-export interface GatewayOptions extends RateLimitOptions {
+export interface GatewayOptions {
   token: string;
   version?: 10;
   compress?: CompressionType;
@@ -22,7 +22,7 @@ export interface GatewayOptions extends RateLimitOptions {
   intents: GatewayIntentsBits[] | number;
   largeThreshold?: number;
   presence?: UpdatePresenceEntity;
-  shard?: boolean;
+  shard?: ShardingConfig;
 }
 
 /**

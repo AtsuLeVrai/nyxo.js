@@ -1,17 +1,22 @@
+import { ApiVersion } from "@nyxjs/core";
+import { EventEmitter } from "eventemitter3";
 import { type Dispatcher, Pool, ProxyAgent, RetryAgent } from "undici";
 import type {
+  DestroyOptions,
   JsonErrorEntity,
+  RestEvents,
   RestOptions,
   RouteEntity,
 } from "../types/index.js";
 import type { FileHandlerManager } from "./file-handler.manager.js";
 import type { RateLimitManager } from "./rate-limiter.manager.js";
 
-export class RequestManager {
+export class RequestManager extends EventEmitter<RestEvents> {
   #retryAgent: RetryAgent;
   #proxyAgent: ProxyAgent | null = null;
   readonly #pool: Pool;
-  readonly #options: Required<RestOptions>;
+  readonly #options: Omit<Required<RestOptions>, "proxy"> &
+    Partial<Pick<RestOptions, "proxy">>;
   readonly #rateLimitManager: RateLimitManager;
   readonly #fileHandlerManager: FileHandlerManager;
   readonly #pendingRequests = new Set<string>();
@@ -21,6 +26,7 @@ export class RequestManager {
     rateLimitManager: RateLimitManager,
     fileHandlerManager: FileHandlerManager,
   ) {
+    super();
     this.#options = this.#mergeOptions(options);
     this.#rateLimitManager = rateLimitManager;
     this.#fileHandlerManager = fileHandlerManager;
@@ -29,24 +35,27 @@ export class RequestManager {
     this.#retryAgent = this.#createRetryAgent();
   }
 
-  get isGlobalRateLimit(): boolean {
-    return this.#pendingRequests.size > Number(this.#options.retry.maxRetries);
-  }
-
   async execute<T>(options: RouteEntity): Promise<T> {
     const requestId = this.#generateRequestId(options);
 
     try {
       this.#pendingRequests.add(requestId);
+      this.emit("request", options.path, options.method, requestId, options);
 
-      let response: Dispatcher.ResponseData;
-      if (options.files) {
-        response = await this.#executeWithTimeout(
-          await this.#fileHandlerManager.handleFiles(options),
-        );
-      } else {
-        response = await this.#executeWithTimeout(options);
-      }
+      const dataToExecute = options.files
+        ? await this.#fileHandlerManager.handleFiles(options)
+        : options;
+
+      const response = await this.#executeWithTimeout(dataToExecute, requestId);
+
+      this.emit(
+        "response",
+        options.path,
+        options.method,
+        response.statusCode,
+        Date.now(),
+        requestId,
+      );
 
       return await this.#processResponse<T>(response);
     } finally {
@@ -54,17 +63,43 @@ export class RequestManager {
     }
   }
 
-  async destroy(): Promise<void> {
-    if (this.#pendingRequests.size > 0) {
+  async destroy(options: DestroyOptions = {}): Promise<void> {
+    const { timeout = 5000, force = false } = options;
+
+    if (this.#pendingRequests.size > 0 && !force) {
+      await new Promise<void>((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (this.#pendingRequests.size === 0) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 100);
+
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve();
+        }, timeout);
+      });
+    }
+
+    try {
       await Promise.race([
-        this.#proxyAgent?.close(),
-        this.#retryAgent.close(),
-        this.#pool.destroy(),
+        Promise.all([
+          this.#proxyAgent?.close(),
+          this.#retryAgent.close(),
+          this.#pool.destroy(),
+        ]),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Destroy timeout")), timeout),
+        ),
       ]);
+    } finally {
+      this.#pendingRequests.clear();
+      this.removeAllListeners();
     }
   }
 
-  async updateProxy(proxyOptions: ProxyAgent.Options | null): Promise<void> {
+  async updateProxy(proxyOptions?: ProxyAgent.Options): Promise<void> {
     if (this.#proxyAgent) {
       await this.#proxyAgent.close();
     }
@@ -85,6 +120,7 @@ export class RequestManager {
 
   async #executeWithTimeout(
     options: RouteEntity,
+    requestId: string,
   ): Promise<Dispatcher.ResponseData> {
     const timeout = this.#options.retry.maxTimeout;
     const controller = new AbortController();
@@ -93,32 +129,19 @@ export class RequestManager {
       throw new Error(`Request timeout after ${timeout}ms: ${options.path}`);
     }, timeout);
 
+    const startTime = Date.now();
+    this.emit("request", options.path, options.method, requestId, options);
+
     try {
       const path = this.#normalizePath(options.path);
       await this.#rateLimitManager.checkRateLimit(path, options.method);
 
       const response = await this.#retryAgent.request({
+        ...options,
         origin: "https://discord.com",
         path: `/api/v${this.#options.version}${path}`,
         headers: this.#buildHeaders(options),
         signal: controller.signal,
-        method: options.method,
-        body: options.body,
-        query: options.query,
-        reset: options.reset,
-        bodyTimeout: options.bodyTimeout,
-        blocking: options.blocking,
-        headersTimeout: options.headersTimeout,
-        throwOnError: options.throwOnError,
-        opaque: options.opaque,
-        onInfo: options.onInfo,
-        responseHeader: options.responseHeader,
-        highWaterMark: options.highWaterMark ?? 65536,
-        idempotent: options.idempotent,
-        upgrade: options.upgrade,
-        expectContinue: options.expectContinue,
-        maxRedirections: options.maxRedirections,
-        redirectionLimitReached: options.redirectionLimitReached,
       });
 
       this.#rateLimitManager.updateRateLimit(
@@ -126,6 +149,15 @@ export class RequestManager {
         options.method,
         response.headers as Record<string, string>,
         response.statusCode,
+      );
+
+      this.emit(
+        "response",
+        options.path,
+        options.method,
+        response.statusCode,
+        Date.now() - startTime,
+        requestId,
       );
 
       return response;
@@ -187,7 +219,7 @@ export class RequestManager {
   }
 
   #createProxyAgent(): ProxyAgent | null {
-    if (!this.#options.proxy?.uri) {
+    if (!this.#options.proxy) {
       return null;
     }
 
@@ -199,18 +231,17 @@ export class RequestManager {
     return new RetryAgent(agent, this.#options.retry);
   }
 
-  #mergeOptions(options: RestOptions): Required<RestOptions> {
+  #mergeOptions(
+    options: RestOptions,
+  ): Omit<Required<RestOptions>, "proxy"> &
+    Partial<Pick<RestOptions, "proxy">> {
     return {
+      proxy: undefined,
       token: options.token,
-      version: options.version ?? 10,
+      version: options.version ?? ApiVersion.v10,
       userAgent:
         options.userAgent ??
         "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
-      proxy: {
-        allowH2: true,
-        uri: "",
-        ...options.proxy,
-      },
       retry: {
         retryAfter: true,
         maxRetries: 3,
@@ -221,7 +252,7 @@ export class RequestManager {
       },
       pool: {
         allowH2: true,
-        maxConcurrentStreams: 1000,
+        maxConcurrentStreams: 100,
         keepAliveTimeout: 10000,
         keepAliveMaxTimeout: 30000,
         bodyTimeout: 8000,

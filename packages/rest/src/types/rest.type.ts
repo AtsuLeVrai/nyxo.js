@@ -1,6 +1,38 @@
 import type { Pool, ProxyAgent, RetryHandler } from "undici";
+import type { RouteEntity } from "./request.type.js";
 
+/**
+ * @see {@link https://discord.com/developers/docs/reference#user-agent}
+ */
 export type DiscordUserAgent = `DiscordBot (${string}, ${string})`;
+
+export interface RestEvents {
+  request: [
+    path: string,
+    method: string,
+    requestId: string,
+    options?: RouteEntity,
+  ];
+  response: [
+    path: string,
+    method: string,
+    statusCode: number,
+    latency: number,
+    requestId: string,
+  ];
+  rateLimit: [
+    path: string,
+    method: string,
+    timeout: number,
+    limit: number,
+    remaining: number,
+  ];
+  globalRateLimitUpdate: [
+    remaining: number,
+    resetTimestamp: number,
+    limit: number,
+  ];
+}
 
 export interface RestOptions {
   token: string;
@@ -9,6 +41,11 @@ export interface RestOptions {
   proxy?: ProxyAgent.Options;
   pool?: Pool.Options;
   retry?: RetryHandler.RetryOptions;
+}
+
+export interface DestroyOptions {
+  timeout?: number;
+  force?: boolean;
 }
 
 /**

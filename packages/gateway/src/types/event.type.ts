@@ -144,7 +144,7 @@ export interface GatewayReceiveEvents {
   VOICE_STATE_UPDATE: VoiceStateEntity;
   VOICE_SERVER_UPDATE: VoiceServerUpdateEntity;
   WEBHOOKS_UPDATE: WebhookUpdateEntity;
-  INTERATION_CREATE: InteractionEntity;
+  INTERACTION_CREATE: InteractionEntity;
   STAGE_INSTANCE_CREATE: StageInstanceEntity;
   STAGE_INSTANCE_UPDATE: StageInstanceEntity;
   STAGE_INSTANCE_DELETE: StageInstanceEntity;
@@ -168,6 +168,34 @@ export interface GatewaySendEvents {
   [GatewayOpcodes.presenceUpdate]: UpdatePresenceEntity;
 }
 
+export interface HeartbeatTimeoutDetails {
+  missedCount: number;
+  maxAllowed: number;
+  lastAckTime: string;
+}
+
+export interface HeartbeatDetails {
+  sequence: number;
+  timestamp: string;
+}
+
+export interface HeartbeatInitDetails {
+  interval: number;
+  jitter: number;
+  jitterDelay: number;
+}
+
+export interface HeartbeatAckDetails {
+  latency: number;
+  timestamp: string;
+  sequence: number;
+}
+
+export type HeartbeatDestroyDetails = {
+  totalBeats: number;
+  avgLatency: number;
+};
+
 export interface GatewayEvents<
   T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents,
 > {
@@ -179,12 +207,21 @@ export interface GatewayEvents<
   connecting: [attempt: number];
   connected: [];
   reconnecting: [attempt: number];
-  heartbeat: [sequence: number];
-  heartbeatAck: [latency: number];
-  heartbeatTimeout: [missedHeartbeats: number];
+
+  // Heartbeat events
+  heartbeat: [details: HeartbeatDetails];
+  heartbeatInit: [details: HeartbeatInitDetails];
+  heartbeatAck: [details: HeartbeatAckDetails];
+  heartbeatTimeout: [details: HeartbeatTimeoutDetails];
+  heartbeatDestroy: [details: HeartbeatDestroyDetails];
+  heartbeatSequence: [sequence: number];
+
+  // Session events
   sessionStart: [sessionId: string];
   sessionEnd: [sessionId: string, code: number];
   sessionInvalid: [resumable: boolean];
+
+  // Shard events
   shardReady: [shardId: number];
   shardReconnecting: [shardId: number];
   shardResume: [shardId: number];

@@ -29,9 +29,9 @@ const APPLICATION_COMMAND_NAME_REGEX =
  */
 export const CreateGlobalApplicationCommandSchema = z
   .object({
-    name: z.string().min(1).min(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+    name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
     name_localizations: createAvailableLocaleSchema(
-      z.string().min(1).min(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+      z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
     ).nullish(),
     description: z.string().min(1).max(100).optional(),
     description_localizations: createAvailableLocaleSchema(

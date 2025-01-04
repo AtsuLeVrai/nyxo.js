@@ -4,7 +4,7 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type CreateGlobalApplicationCommandEntity,
   CreateGlobalApplicationCommandSchema,
@@ -18,7 +18,7 @@ import {
   EditGuildApplicationCommandSchema,
 } from "../schemas/index.js";
 
-export class ApplicationCommandRouter extends BaseRouter {
+export class ApplicationCommandRouter {
   static readonly ROUTES = {
     base: (applicationId: Snowflake) =>
       `/applications/${applicationId}/commands` as const,
@@ -42,6 +42,12 @@ export class ApplicationCommandRouter extends BaseRouter {
       `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-commands}
    */
@@ -49,7 +55,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
-    return this.get(ApplicationCommandRouter.ROUTES.base(applicationId), {
+    return this.#rest.get(ApplicationCommandRouter.ROUTES.base(applicationId), {
       query: { with_localizations: withLocalizations },
     });
   }
@@ -70,9 +76,12 @@ export class ApplicationCommandRouter extends BaseRouter {
       );
     }
 
-    return this.post(ApplicationCommandRouter.ROUTES.base(applicationId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.post(
+      ApplicationCommandRouter.ROUTES.base(applicationId),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 
   /**
@@ -82,7 +91,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
   }
@@ -104,7 +113,7 @@ export class ApplicationCommandRouter extends BaseRouter {
       );
     }
 
-    return this.patch(
+    return this.#rest.patch(
       ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
       { body: JSON.stringify(result.data) },
     );
@@ -117,7 +126,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
   }
@@ -141,7 +150,7 @@ export class ApplicationCommandRouter extends BaseRouter {
       );
     }
 
-    return this.put(ApplicationCommandRouter.ROUTES.base(applicationId), {
+    return this.#rest.put(ApplicationCommandRouter.ROUTES.base(applicationId), {
       body: JSON.stringify(result.data),
     });
   }
@@ -154,7 +163,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
         query: { with_localizations: withLocalizations },
@@ -179,7 +188,7 @@ export class ApplicationCommandRouter extends BaseRouter {
       );
     }
 
-    return this.post(
+    return this.#rest.post(
       ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
         body: JSON.stringify(result.data),
@@ -195,7 +204,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
         guildId,
@@ -222,7 +231,7 @@ export class ApplicationCommandRouter extends BaseRouter {
       );
     }
 
-    return this.patch(
+    return this.#rest.patch(
       ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
         guildId,
@@ -242,7 +251,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<void> {
-    return this.delete(
+    return this.#rest.delete(
       ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
         guildId,
@@ -271,7 +280,7 @@ export class ApplicationCommandRouter extends BaseRouter {
       );
     }
 
-    return this.put(
+    return this.#rest.put(
       ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
         body: JSON.stringify(result.data),
@@ -286,7 +295,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity[]> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommandsPermissions(
         applicationId,
         guildId,
@@ -302,7 +311,7 @@ export class ApplicationCommandRouter extends BaseRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity> {
-    return this.get(
+    return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommandPermissions(
         applicationId,
         guildId,
@@ -329,7 +338,7 @@ export class ApplicationCommandRouter extends BaseRouter {
       );
     }
 
-    return this.put(
+    return this.#rest.put(
       ApplicationCommandRouter.ROUTES.guildCommandPermissions(
         applicationId,
         guildId,

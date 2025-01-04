@@ -42,6 +42,7 @@ export interface SignedAttachmentParametersEntity {
 
 export interface AttachmentOptionsEntity extends BaseImageOptionsEntity {
   signedParameters?: SignedAttachmentParametersEntity;
+  signed?: boolean;
 }
 
 export interface StickerFormatOptionsEntity {
@@ -151,14 +152,4 @@ export interface CdnEntity {
   getDefaultAvatarIndex: (discriminator: number | string) => number;
   getNewSystemAvatarIndex: (userId: Snowflake) => number;
   getNearestValidSize: (size: number) => ImageSize;
-  createSignedParameters: (
-    expirationTimestamp: number,
-    issuedTimestamp: number,
-    signature: string,
-  ) => SignedAttachmentParametersEntity;
-  isSignedAttachmentUrl: (url: string) => boolean;
-  cleanSignedUrl: (url: string) => string;
-  extractSignedParameters: (
-    url: string,
-  ) => SignedAttachmentParametersEntity | null;
 }

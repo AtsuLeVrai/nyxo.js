@@ -1,16 +1,22 @@
 import type { SkuEntity, Snowflake } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 
-export class SkuRouter extends BaseRouter {
+export class SkuRouter {
   static readonly ROUTES = {
     applicationSkus: (applicationId: Snowflake) =>
       `/applications/${applicationId}/skus` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/sku#list-skus}
    */
   listSkus(applicationId: Snowflake): Promise<SkuEntity[]> {
-    return this.get(SkuRouter.ROUTES.applicationSkus(applicationId));
+    return this.#rest.get(SkuRouter.ROUTES.applicationSkus(applicationId));
   }
 }

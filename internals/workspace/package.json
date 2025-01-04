@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/extractor",
+  "name": "@nyxjs/workspace",
   "version": "1.0.0-private",
   "private": true,
   "readme": "README.md",
@@ -13,7 +13,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/3tatsu/nyx.js",
-    "directory": "internals/extractor"
+    "directory": "internals/workspace"
   },
   "bugs": {
     "url": "https://github.com/3tatsu/nyx.js/issues"
@@ -23,16 +23,24 @@
     "url": "https://github.com/3tatsu"
   },
   "scripts": {
-    "start": "node src/index.js",
+    "start": "cross-env NODE_ENV=production tsx src/index.ts",
+    "dev": "cross-env NODE_ENV=development tsx src/index.ts --watch",
     "format": "biome format --write .",
     "lint": "biome lint --write --unsafe .",
     "check": "biome check --write --unsafe ."
   },
   "dependencies": {
-    "puppeteer": "^23.11.1",
-    "turndown": "^7.2.0"
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/gateway": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
+    "@nyxjs/store": "workspace:*"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4"
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^22.10.5",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }

@@ -4,13 +4,19 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 
-export class ApplicationConnectionRouter extends BaseRouter {
+export class ApplicationConnectionRouter {
   static readonly ROUTES = {
     base: (applicationId: Snowflake) =>
       `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
+
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records}
@@ -18,7 +24,9 @@ export class ApplicationConnectionRouter extends BaseRouter {
   getApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.get(ApplicationConnectionRouter.ROUTES.base(applicationId));
+    return this.#rest.get(
+      ApplicationConnectionRouter.ROUTES.base(applicationId),
+    );
   }
 
   /**
@@ -40,8 +48,11 @@ export class ApplicationConnectionRouter extends BaseRouter {
       );
     }
 
-    return this.put(ApplicationConnectionRouter.ROUTES.base(applicationId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.put(
+      ApplicationConnectionRouter.ROUTES.base(applicationId),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 }

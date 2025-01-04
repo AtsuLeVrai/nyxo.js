@@ -1,5 +1,5 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type CreateGuildFromGuildTemplateEntity,
   CreateGuildFromGuildTemplateSchema,
@@ -9,7 +9,7 @@ import {
   ModifyStageInstanceSchema,
 } from "../schemas/index.js";
 
-export class GuildTemplateRouter extends BaseRouter {
+export class GuildTemplateRouter {
   static ROUTES = {
     templates: "/guilds/templates" as const,
     template: (code: string) => `/guilds/templates/${code}` as const,
@@ -19,11 +19,17 @@ export class GuildTemplateRouter extends BaseRouter {
       `/guilds/${guildId}/templates/${code}` as const,
   } as const;
 
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
   getGuildTemplate(code: string): Promise<GuildTemplateEntity> {
-    return this.get(GuildTemplateRouter.ROUTES.template(code));
+    return this.#rest.get(GuildTemplateRouter.ROUTES.template(code));
   }
 
   /**
@@ -42,7 +48,7 @@ export class GuildTemplateRouter extends BaseRouter {
       );
     }
 
-    return this.post(GuildTemplateRouter.ROUTES.template(code), {
+    return this.#rest.post(GuildTemplateRouter.ROUTES.template(code), {
       body: JSON.stringify(result.data),
     });
   }
@@ -51,7 +57,7 @@ export class GuildTemplateRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
   getGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
-    return this.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
+    return this.#rest.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
   }
 
   /**
@@ -70,7 +76,7 @@ export class GuildTemplateRouter extends BaseRouter {
       );
     }
 
-    return this.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
+    return this.#rest.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
       body: JSON.stringify(result.data),
     });
   }
@@ -82,7 +88,9 @@ export class GuildTemplateRouter extends BaseRouter {
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {
-    return this.put(GuildTemplateRouter.ROUTES.guildTemplate(guildId, code));
+    return this.#rest.put(
+      GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
+    );
   }
 
   /**
@@ -102,9 +110,12 @@ export class GuildTemplateRouter extends BaseRouter {
       );
     }
 
-    return this.patch(GuildTemplateRouter.ROUTES.guildTemplate(guildId, code), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.patch(
+      GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 
   /**
@@ -114,6 +125,8 @@ export class GuildTemplateRouter extends BaseRouter {
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {
-    return this.delete(GuildTemplateRouter.ROUTES.guildTemplate(guildId, code));
+    return this.#rest.delete(
+      GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
+    );
   }
 }

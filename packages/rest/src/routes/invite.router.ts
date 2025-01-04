@@ -1,14 +1,20 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type GetInviteQueryEntity,
   GetInviteQuerySchema,
 } from "../schemas/index.js";
 
-export class InviteRouter extends BaseRouter {
+export class InviteRouter {
   static readonly ROUTES = {
     invite: (code: string) => `/invites/${code}` as const,
   } as const;
+
+  #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
@@ -26,7 +32,7 @@ export class InviteRouter extends BaseRouter {
       );
     }
 
-    return this.get(InviteRouter.ROUTES.invite(code), {
+    return this.#rest.get(InviteRouter.ROUTES.invite(code), {
       query: result.data,
     });
   }
@@ -35,7 +41,7 @@ export class InviteRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.delete(InviteRouter.ROUTES.invite(code), {
+    return this.#rest.delete(InviteRouter.ROUTES.invite(code), {
       reason,
     });
   }
