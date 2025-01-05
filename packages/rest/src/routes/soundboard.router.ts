@@ -8,6 +8,7 @@ import {
   type SendSoundboardSoundEntity,
   SendSoundboardSoundSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class SoundboardRouter {
   static readonly ROUTES = {
@@ -32,7 +33,7 @@ export class SoundboardRouter {
   sendSoundboardSound(
     channelId: Snowflake,
     options: SendSoundboardSoundEntity,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     const result = SendSoundboardSoundSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -50,7 +51,9 @@ export class SoundboardRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
-  listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
+  listDefaultSoundboardSounds(): Promise<
+    HttpResponse<SoundboardSoundEntity[]>
+  > {
     return this.#rest.get(SoundboardRouter.ROUTES.defaultSounds);
   }
 
@@ -59,7 +62,7 @@ export class SoundboardRouter {
    */
   listGuildSoundboardSounds(
     guildId: Snowflake,
-  ): Promise<ListGuildSoundboardSoundsResponse> {
+  ): Promise<HttpResponse<ListGuildSoundboardSoundsResponse>> {
     return this.#rest.get(SoundboardRouter.ROUTES.guildSounds(guildId));
   }
 
@@ -69,7 +72,7 @@ export class SoundboardRouter {
   getGuildSoundboardSound(
     guildId: Snowflake,
     soundId: Snowflake,
-  ): Promise<SoundboardSoundEntity> {
+  ): Promise<HttpResponse<SoundboardSoundEntity>> {
     return this.#rest.get(SoundboardRouter.ROUTES.guildSound(guildId, soundId));
   }
 
@@ -80,7 +83,7 @@ export class SoundboardRouter {
     guildId: Snowflake,
     options: CreateGuildSoundboardSoundEntity,
     reason?: string,
-  ): Promise<SoundboardSoundEntity> {
+  ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = CreateGuildSoundboardSoundSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -104,7 +107,7 @@ export class SoundboardRouter {
     soundId: Snowflake,
     options: ModifyGuildSoundboardSoundEntity,
     reason?: string,
-  ): Promise<SoundboardSoundEntity> {
+  ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = CreateGuildSoundboardSoundSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -130,7 +133,7 @@ export class SoundboardRouter {
     guildId: Snowflake,
     soundId: Snowflake,
     reason?: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       SoundboardRouter.ROUTES.guildSound(guildId, soundId),
       {

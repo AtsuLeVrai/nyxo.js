@@ -6,6 +6,7 @@ import {
   type ListEntitlementQueryEntity,
   ListEntitlementsQuerySchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class EntitlementRouter {
   static readonly ROUTES = {
@@ -29,7 +30,7 @@ export class EntitlementRouter {
   listEntitlements(
     applicationId: Snowflake,
     query: ListEntitlementQueryEntity = {},
-  ): Promise<EntitlementEntity[]> {
+  ): Promise<HttpResponse<EntitlementEntity[]>> {
     const result = ListEntitlementsQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
@@ -53,7 +54,7 @@ export class EntitlementRouter {
   getEntitlement(
     applicationId: Snowflake,
     entitlementId: Snowflake,
-  ): Promise<EntitlementEntity> {
+  ): Promise<HttpResponse<EntitlementEntity>> {
     return this.#rest.get(
       EntitlementRouter.ROUTES.entitlement(applicationId, entitlementId),
     );
@@ -65,7 +66,7 @@ export class EntitlementRouter {
   consumeEntitlement(
     applicationId: Snowflake,
     entitlementId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.post(
       EntitlementRouter.ROUTES.consume(applicationId, entitlementId),
     );
@@ -77,7 +78,7 @@ export class EntitlementRouter {
   createTestEntitlement(
     applicationId: Snowflake,
     test: CreateTestEntitlementEntity,
-  ): Promise<EntitlementEntity> {
+  ): Promise<HttpResponse<EntitlementEntity>> {
     const result = CreateTestEntitlementSchema.safeParse(test);
     if (!result.success) {
       throw new Error(
@@ -101,7 +102,7 @@ export class EntitlementRouter {
   deleteTestEntitlement(
     applicationId: Snowflake,
     entitlementId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       EntitlementRouter.ROUTES.entitlement(applicationId, entitlementId),
     );

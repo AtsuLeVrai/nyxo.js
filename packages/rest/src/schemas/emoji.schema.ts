@@ -1,4 +1,4 @@
-import { SnowflakeSchema } from "@nyxjs/core";
+import { type EmojiEntity, SnowflakeSchema } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
@@ -25,6 +25,13 @@ export const ModifyGuildEmojiSchema = z
   .strict();
 
 export type ModifyGuildEmojiEntity = z.infer<typeof ModifyGuildEmojiSchema>;
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/emoji#list-application-emojis}
+ */
+export interface ListApplicationEmojisEntity {
+  items: EmojiEntity[];
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji-json-params}

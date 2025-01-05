@@ -4,6 +4,7 @@ import {
   type GetInviteQueryEntity,
   GetInviteQuerySchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class InviteRouter {
   static readonly ROUTES = {
@@ -22,7 +23,7 @@ export class InviteRouter {
   getInvite(
     code: string,
     query: GetInviteQueryEntity = {},
-  ): Promise<InviteEntity & InviteMetadataEntity> {
+  ): Promise<HttpResponse<InviteEntity & InviteMetadataEntity>> {
     const result = GetInviteQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
@@ -40,7 +41,10 @@ export class InviteRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
-  deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
+  deleteInvite(
+    code: string,
+    reason?: string,
+  ): Promise<HttpResponse<InviteEntity>> {
     return this.#rest.delete(InviteRouter.ROUTES.invite(code), {
       reason,
     });

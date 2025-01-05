@@ -5,6 +5,7 @@ import {
   type EditCurrentApplicationEntity,
   EditCurrentApplicationSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class ApplicationRouter {
   static ROUTES = {
@@ -22,7 +23,7 @@ export class ApplicationRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
-  getCurrentApplication(): Promise<ApplicationEntity> {
+  getCurrentApplication(): Promise<HttpResponse<ApplicationEntity>> {
     return this.#rest.get(ApplicationRouter.ROUTES.currentApplication);
   }
 
@@ -31,7 +32,7 @@ export class ApplicationRouter {
    */
   editCurrentApplication(
     options: EditCurrentApplicationEntity,
-  ): Promise<ApplicationEntity> {
+  ): Promise<HttpResponse<ApplicationEntity>> {
     const result = EditCurrentApplicationSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -52,7 +53,7 @@ export class ApplicationRouter {
   getApplicationActivityInstance(
     applicationId: Snowflake,
     instanceId: string,
-  ): Promise<ActivityInstanceEntity> {
+  ): Promise<HttpResponse<ActivityInstanceEntity>> {
     return this.#rest.get(
       ApplicationRouter.ROUTES.activityInstance(applicationId, instanceId),
     );

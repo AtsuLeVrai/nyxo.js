@@ -4,6 +4,7 @@ import {
   type GetGuildAuditLogQueryEntity,
   GetGuildAuditLogQuerySchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class AuditLogRouter {
   static readonly ROUTES = {
@@ -23,7 +24,7 @@ export class AuditLogRouter {
   getGuildAuditLog(
     guildId: Snowflake,
     options: GetGuildAuditLogQueryEntity = {},
-  ): Promise<AuditLogEntity> {
+  ): Promise<HttpResponse<AuditLogEntity>> {
     const result = GetGuildAuditLogQuerySchema.safeParse(options);
     if (!result.success) {
       throw new Error(

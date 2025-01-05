@@ -4,6 +4,7 @@ import {
   type SubscriptionQueryEntity,
   SubscriptionQuerySchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class SubscriptionRouter {
   static readonly ROUTES = {
@@ -25,7 +26,7 @@ export class SubscriptionRouter {
   listSkuSubscriptions(
     skuId: Snowflake,
     query: SubscriptionQueryEntity = {},
-  ): Promise<SubscriptionEntity[]> {
+  ): Promise<HttpResponse<SubscriptionEntity[]>> {
     const result = SubscriptionQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
@@ -46,7 +47,7 @@ export class SubscriptionRouter {
   getSkuSubscription(
     skuId: Snowflake,
     subscriptionId: Snowflake,
-  ): Promise<SubscriptionEntity> {
+  ): Promise<HttpResponse<SubscriptionEntity>> {
     return this.#rest.get(
       SubscriptionRouter.ROUTES.skuSubscription(skuId, subscriptionId),
     );

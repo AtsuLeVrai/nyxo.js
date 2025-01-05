@@ -5,6 +5,7 @@ import {
 } from "@nyxjs/core";
 import { z } from "zod";
 import type { Rest } from "../rest.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class ApplicationConnectionRouter {
   static readonly ROUTES = {
@@ -23,7 +24,7 @@ export class ApplicationConnectionRouter {
    */
   getApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
-  ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
+  ): Promise<HttpResponse<ApplicationRoleConnectionMetadataEntity[]>> {
     return this.#rest.get(
       ApplicationConnectionRouter.ROUTES.base(applicationId),
     );
@@ -35,7 +36,7 @@ export class ApplicationConnectionRouter {
   updateApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
     metadata: ApplicationRoleConnectionMetadataEntity[],
-  ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
+  ): Promise<HttpResponse<ApplicationRoleConnectionMetadataEntity[]>> {
     const result = z
       .array(ApplicationRoleConnectionMetadataSchema)
       .max(5)

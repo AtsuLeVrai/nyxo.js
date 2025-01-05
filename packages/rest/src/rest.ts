@@ -36,6 +36,7 @@ import {
 import type {
   CacheOptions,
   FileType,
+  HttpResponse,
   PathLike,
   RestEvents,
   RestOptions,
@@ -298,7 +299,7 @@ export class Rest extends EventEmitter<RestEvents> {
     return this.#cache;
   }
 
-  async request<T>(options: RouteEntity): Promise<T> {
+  async request<T>(options: RouteEntity): Promise<HttpResponse<T>> {
     const requestId = this.#generateRequestId(options);
 
     try {
@@ -308,7 +309,10 @@ export class Rest extends EventEmitter<RestEvents> {
         const cacheKey = this.#cache.generateKey(options.path, options.method);
         const cached = this.#cache.get<T>(cacheKey);
         if (cached) {
-          return cached;
+          return {
+            data: cached,
+            cached: true,
+          };
         }
       }
 
@@ -319,23 +323,48 @@ export class Rest extends EventEmitter<RestEvents> {
         : options;
 
       const response = await this.#httpService.request(preparedOptions);
-      const body = Buffer.from(await response.body.arrayBuffer());
-      const data = JSON.parse(body.toString());
 
       this.#rateLimitService.processHeaders(
         options.path,
         options.method,
         response.headers as Record<string, string>,
         response.statusCode,
-        data,
       );
+
+      const contentType = response.headers["content-type"];
+      if (!contentType?.includes("application/json")) {
+        throw new Error(
+          `Expected content-type application/json but received ${contentType}`,
+        );
+      }
+
+      const body = Buffer.from(await response.body.arrayBuffer());
+      let data: unknown;
+
+      try {
+        data = JSON.parse(body.toString());
+      } catch {
+        throw new Error("Failed to parse response body");
+      }
+
+      if (data === null || data === undefined) {
+        throw new Error("Response data is null or undefined");
+      }
 
       if (this.#cache.shouldCache(options.path, options.method)) {
         const cacheKey = this.#cache.generateKey(options.path, options.method);
         this.#cache.set(cacheKey, data);
       }
 
-      return data as T;
+      return {
+        data: data as T,
+        headers: response.headers,
+        status: response.statusCode,
+        context: response.context,
+        opaque: response.opaque,
+        trailers: response.trailers,
+        cached: false,
+      };
     } finally {
       this.#pendingRequests.delete(requestId);
     }
@@ -344,7 +373,7 @@ export class Rest extends EventEmitter<RestEvents> {
   get<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
-  ): Promise<T> {
+  ): Promise<HttpResponse<T>> {
     return this.request<T>({
       ...options,
       method: "GET",
@@ -355,7 +384,7 @@ export class Rest extends EventEmitter<RestEvents> {
   post<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
-  ): Promise<T> {
+  ): Promise<HttpResponse<T>> {
     return this.request<T>({
       ...options,
       method: "POST",
@@ -366,7 +395,7 @@ export class Rest extends EventEmitter<RestEvents> {
   put<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
-  ): Promise<T> {
+  ): Promise<HttpResponse<T>> {
     return this.request<T>({
       ...options,
       method: "PUT",
@@ -377,7 +406,7 @@ export class Rest extends EventEmitter<RestEvents> {
   patch<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
-  ): Promise<T> {
+  ): Promise<HttpResponse<T>> {
     return this.request<T>({
       ...options,
       method: "PATCH",
@@ -388,7 +417,7 @@ export class Rest extends EventEmitter<RestEvents> {
   delete<T>(
     path: PathLike,
     options: Omit<RouteEntity, "method" | "path"> = {},
-  ): Promise<T> {
+  ): Promise<HttpResponse<T>> {
     return this.request<T>({
       ...options,
       method: "DELETE",

@@ -6,7 +6,6 @@ import type {
   BucketInfo,
   EmojiRateLimit,
   GlobalRateLimit,
-  JsonErrorEntity,
   RateLimitScope,
   RestEvents,
 } from "../types/index.js";
@@ -76,7 +75,6 @@ export class RateLimitService extends EventEmitter<RestEvents> {
     method: string,
     headers: Record<string, string>,
     statusCode: number,
-    body?: JsonErrorEntity,
   ): void {
     const h = RateLimitConstants.headers;
 
@@ -116,10 +114,6 @@ export class RateLimitService extends EventEmitter<RestEvents> {
             });
           }
         }
-      } else {
-        throw new Error(
-          `Request failed with status code ${statusCode}: ${JSON.stringify(body)}`,
-        );
       }
     }
 

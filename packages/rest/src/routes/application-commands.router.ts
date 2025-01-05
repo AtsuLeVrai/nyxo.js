@@ -17,6 +17,7 @@ import {
   type EditGuildApplicationCommandEntity,
   EditGuildApplicationCommandSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class ApplicationCommandRouter {
   static readonly ROUTES = {
@@ -54,7 +55,7 @@ export class ApplicationCommandRouter {
   getGlobalCommands(
     applicationId: Snowflake,
     withLocalizations = false,
-  ): Promise<ApplicationCommandEntity[]> {
+  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     return this.#rest.get(ApplicationCommandRouter.ROUTES.base(applicationId), {
       query: { with_localizations: withLocalizations },
     });
@@ -66,7 +67,7 @@ export class ApplicationCommandRouter {
   createGlobalApplicationCommand(
     applicationId: Snowflake,
     options: CreateGlobalApplicationCommandEntity,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -90,7 +91,7 @@ export class ApplicationCommandRouter {
   getGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<HttpResponse<ApplicationCommandEntity>> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
@@ -103,7 +104,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
     options: EditGlobalApplicationCommandEntity,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -125,7 +126,7 @@ export class ApplicationCommandRouter {
   deleteGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
@@ -137,7 +138,7 @@ export class ApplicationCommandRouter {
   bulkOverwriteGlobalApplicationCommands(
     applicationId: Snowflake,
     commands: CreateGlobalApplicationCommandEntity[],
-  ): Promise<ApplicationCommandEntity[]> {
+  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     const result = z
       .array(CreateGlobalApplicationCommandSchema)
       .max(200)
@@ -162,7 +163,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     withLocalizations = false,
-  ): Promise<ApplicationCommandEntity[]> {
+  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
@@ -178,7 +179,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     options: CreateGuildApplicationCommandEntity,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -203,7 +204,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<HttpResponse<ApplicationCommandEntity>> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
@@ -221,7 +222,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
     options: EditGuildApplicationCommandEntity,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -250,7 +251,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
@@ -267,7 +268,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commands: CreateGlobalApplicationCommandEntity[],
-  ): Promise<ApplicationCommandEntity[]> {
+  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     const result = z
       .array(CreateGlobalApplicationCommandSchema)
       .max(200)
@@ -294,7 +295,7 @@ export class ApplicationCommandRouter {
   getGuildApplicationCommandPermissions(
     applicationId: Snowflake,
     guildId: Snowflake,
-  ): Promise<GuildApplicationCommandPermissionEntity[]> {
+  ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity[]>> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommandsPermissions(
         applicationId,
@@ -310,7 +311,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-  ): Promise<GuildApplicationCommandPermissionEntity> {
+  ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommandPermissions(
         applicationId,
@@ -328,7 +329,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
     options: EditApplicationCommandPermissionsEntity,
-  ): Promise<GuildApplicationCommandPermissionEntity> {
+  ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
     const result = EditApplicationCommandPermissionsSchema.safeParse(options);
     if (!result.success) {
       throw new Error(

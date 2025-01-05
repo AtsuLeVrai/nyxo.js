@@ -6,6 +6,7 @@ import {
   type ModifyStageInstanceEntity,
   ModifyStageInstanceSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class StageInstanceRouter {
   static readonly ROUTES = {
@@ -26,7 +27,7 @@ export class StageInstanceRouter {
   createStageInstance(
     options: CreateStageInstanceEntity,
     reason?: string,
-  ): Promise<StageInstanceEntity> {
+  ): Promise<HttpResponse<StageInstanceEntity>> {
     const result = CreateStageInstanceSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -45,7 +46,9 @@ export class StageInstanceRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
    */
-  getStageInstance(channelId: Snowflake): Promise<StageInstanceEntity> {
+  getStageInstance(
+    channelId: Snowflake,
+  ): Promise<HttpResponse<StageInstanceEntity>> {
     return this.#rest.get(StageInstanceRouter.ROUTES.stageInstance(channelId));
   }
 
@@ -56,7 +59,7 @@ export class StageInstanceRouter {
     channelId: Snowflake,
     options: ModifyStageInstanceEntity,
     reason?: string,
-  ): Promise<StageInstanceEntity> {
+  ): Promise<HttpResponse<StageInstanceEntity>> {
     const result = ModifyStageInstanceSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -78,7 +81,10 @@ export class StageInstanceRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
    */
-  deleteStageInstance(channelId: Snowflake, reason?: string): Promise<void> {
+  deleteStageInstance(
+    channelId: Snowflake,
+    reason?: string,
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       StageInstanceRouter.ROUTES.stageInstance(channelId),
       {

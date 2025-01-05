@@ -1,45 +1,49 @@
 {
-  "$schema": "https://turbo.build/schema.json",
-  "ui": "stream",
+  "$schema": "https://turbo.build/schema.v2.json",
+  "ui": "tui",
+  "globalDependencies": [".env", "tsconfig.json", "biome.json"],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "DISCORD_TOKEN",
+    "API_VERSION",
+    "GATEWAY_VERSION"
+  ],
   "tasks": {
-    "dev": {
-      "cache": false,
-      "persistent": false,
-      "dependsOn": ["^dev", "clean"],
-      "outputs": ["dist/**"],
-      "inputs": ["src/**/*.ts", "src/**/*.tsx", ".env*"]
-    },
     "build": {
-      "dependsOn": ["^build", "clean"],
+      "dependsOn": ["^build"],
       "outputs": ["dist/**"],
-      "inputs": ["src/**/*.ts", "src/**/*.tsx", "package.json"]
+      "env": ["NODE_ENV"],
+      "cache": true
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
     },
     "clean": {
       "cache": false
     },
     "format": {
-      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json"],
-      "outputs": []
+      "outputs": [],
+      "cache": false
     },
     "lint": {
-      "dependsOn": ["^lint"],
-      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-      "outputs": []
+      "outputs": [],
+      "cache": true
     },
     "check": {
-      "dependsOn": ["^check"],
-      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-      "outputs": []
+      "dependsOn": ["lint", "type-check"],
+      "outputs": [],
+      "cache": true
     },
     "type-check": {
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "tests/**/*.ts",
-        "tests/**/*.tsx",
-        "tsconfig.json"
-      ],
-      "outputs": []
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": true
+    },
+    "//#clean": {
+      "cache": false
     }
   }
 }

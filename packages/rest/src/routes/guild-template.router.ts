@@ -8,6 +8,7 @@ import {
   type ModifyGuildTemplateEntity,
   ModifyStageInstanceSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class GuildTemplateRouter {
   static ROUTES = {
@@ -28,7 +29,7 @@ export class GuildTemplateRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
-  getGuildTemplate(code: string): Promise<GuildTemplateEntity> {
+  getGuildTemplate(code: string): Promise<HttpResponse<GuildTemplateEntity>> {
     return this.#rest.get(GuildTemplateRouter.ROUTES.template(code));
   }
 
@@ -38,7 +39,7 @@ export class GuildTemplateRouter {
   createGuildFromGuildTemplate(
     code: string,
     options: CreateGuildFromGuildTemplateEntity,
-  ): Promise<GuildEntity> {
+  ): Promise<HttpResponse<GuildEntity>> {
     const result = CreateGuildFromGuildTemplateSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -56,7 +57,9 @@ export class GuildTemplateRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
-  getGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
+  getGuildTemplates(
+    guildId: Snowflake,
+  ): Promise<HttpResponse<GuildTemplateEntity[]>> {
     return this.#rest.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
   }
 
@@ -66,7 +69,7 @@ export class GuildTemplateRouter {
   createGuildTemplate(
     guildId: Snowflake,
     options: CreateGuildTemplateEntity,
-  ): Promise<GuildTemplateEntity> {
+  ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = CreateGuildTemplateSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -87,7 +90,7 @@ export class GuildTemplateRouter {
   syncGuildTemplate(
     guildId: Snowflake,
     code: string,
-  ): Promise<GuildTemplateEntity> {
+  ): Promise<HttpResponse<GuildTemplateEntity>> {
     return this.#rest.put(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
     );
@@ -100,7 +103,7 @@ export class GuildTemplateRouter {
     guildId: Snowflake,
     code: string,
     options: ModifyGuildTemplateEntity,
-  ): Promise<GuildTemplateEntity> {
+  ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = ModifyStageInstanceSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -124,7 +127,7 @@ export class GuildTemplateRouter {
   deleteGuildTemplate(
     guildId: Snowflake,
     code: string,
-  ): Promise<GuildTemplateEntity> {
+  ): Promise<HttpResponse<GuildTemplateEntity>> {
     return this.#rest.delete(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
     );

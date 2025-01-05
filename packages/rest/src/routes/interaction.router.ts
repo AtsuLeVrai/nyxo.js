@@ -12,6 +12,7 @@ import {
   type InteractionResponseEntity,
   InteractionResponseSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class InteractionRouter {
   static ROUTES = {
@@ -67,7 +68,7 @@ export class InteractionRouter {
     interactionToken: string,
     options: InteractionResponseEntity,
     withResponse = true,
-  ): Promise<InteractionCallbackEntity | undefined> {
+  ): Promise<HttpResponse<InteractionCallbackEntity | undefined>> {
     const result = InteractionResponseSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -92,7 +93,7 @@ export class InteractionRouter {
   getOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     return this.#rest.get(
       InteractionRouter.ROUTES.getOriginalResponse(
         applicationId,
@@ -108,7 +109,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     options: Partial<InteractionCallbackDataEntity>,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataSchema.partial().safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -135,7 +136,7 @@ export class InteractionRouter {
   deleteOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       InteractionRouter.ROUTES.deleteOriginalResponse(
         applicationId,
@@ -151,7 +152,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     options: FollowupMessageEntity,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     const result = FollowupMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -179,7 +180,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     return this.#rest.get(
       InteractionRouter.ROUTES.getFollowupMessage(
         applicationId,
@@ -197,7 +198,7 @@ export class InteractionRouter {
     interactionToken: string,
     messageId: Snowflake,
     options: Partial<InteractionCallbackDataEntity>,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataSchema.partial().safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -226,7 +227,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       InteractionRouter.ROUTES.deleteFollowupMessage(
         applicationId,

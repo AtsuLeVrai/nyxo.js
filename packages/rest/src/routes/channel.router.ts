@@ -9,6 +9,8 @@ import type {
 import { z } from "zod";
 import type { Rest } from "../rest.js";
 import {
+  type AddGroupDmRecipientEntity,
+  AddGroupDmRecipientSchema,
   type CreateChannelInviteEntity,
   CreateChannelInviteSchema,
   type EditChannelPermissionsEntity,
@@ -33,6 +35,7 @@ import {
   type StartThreadWithoutMessageEntity,
   StartThreadWithoutMessageSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class ChannelRouter {
   static readonly ROUTES = {
@@ -76,7 +79,7 @@ export class ChannelRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel}
    */
-  getChannel(channelId: Snowflake): Promise<ChannelEntity> {
+  getChannel(channelId: Snowflake): Promise<HttpResponse<ChannelEntity>> {
     return this.#rest.get(ChannelRouter.ROUTES.base(channelId));
   }
 
@@ -90,7 +93,7 @@ export class ChannelRouter {
       | ModifyChannelThreadEntity
       | ModifyChannelGroupDmEntity,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<HttpResponse<ChannelEntity>> {
     const result = z
       .union([
         ModifyChannelGuildChannelSchema,
@@ -115,7 +118,10 @@ export class ChannelRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#deleteclose-channel}
    */
-  deleteChannel(channelId: Snowflake, reason?: string): Promise<ChannelEntity> {
+  deleteChannel(
+    channelId: Snowflake,
+    reason?: string,
+  ): Promise<HttpResponse<ChannelEntity>> {
     return this.#rest.delete(ChannelRouter.ROUTES.base(channelId), {
       reason,
     });
@@ -129,7 +135,7 @@ export class ChannelRouter {
     overwriteId: Snowflake,
     permissions: EditChannelPermissionsEntity,
     reason?: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     const result = EditChannelPermissionsSchema.safeParse(permissions);
     if (!result.success) {
       throw new Error(
@@ -151,7 +157,9 @@ export class ChannelRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-invites}
    */
-  getChannelInvites(channelId: Snowflake): Promise<InviteEntity[]> {
+  getChannelInvites(
+    channelId: Snowflake,
+  ): Promise<HttpResponse<InviteEntity[]>> {
     return this.#rest.get(ChannelRouter.ROUTES.invites(channelId));
   }
 
@@ -162,7 +170,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     options: CreateChannelInviteEntity,
     reason?: string,
-  ): Promise<InviteEntity> {
+  ): Promise<HttpResponse<InviteEntity>> {
     const result = CreateChannelInviteSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -185,7 +193,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     overwriteId: Snowflake,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<HttpResponse<ChannelEntity>> {
     return this.#rest.delete(
       ChannelRouter.ROUTES.permissions(channelId, overwriteId),
       {
@@ -201,7 +209,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     webhookChannelId: Snowflake,
     reason?: string,
-  ): Promise<FollowedChannelEntity> {
+  ): Promise<HttpResponse<FollowedChannelEntity>> {
     return this.#rest.post(ChannelRouter.ROUTES.followers(channelId), {
       body: JSON.stringify({ webhook_channel_id: webhookChannelId }),
       reason,
@@ -211,14 +219,16 @@ export class ChannelRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#trigger-typing-indicator}
    */
-  triggerTypingIndicator(channelId: Snowflake): Promise<void> {
+  triggerTypingIndicator(channelId: Snowflake): Promise<HttpResponse<void>> {
     return this.#rest.post(ChannelRouter.ROUTES.typing(channelId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
    */
-  getPinnedMessages(channelId: Snowflake): Promise<MessageEntity[]> {
+  getPinnedMessages(
+    channelId: Snowflake,
+  ): Promise<HttpResponse<MessageEntity[]>> {
     return this.#rest.get(ChannelRouter.ROUTES.pins(channelId));
   }
 
@@ -229,7 +239,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     reason?: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.put(
       ChannelRouter.ROUTES.pinnedMessage(channelId, messageId),
       {
@@ -245,7 +255,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     reason?: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       ChannelRouter.ROUTES.pinnedMessage(channelId, messageId),
       {
@@ -260,13 +270,19 @@ export class ChannelRouter {
   groupDmAddRecipient(
     channelId: Snowflake,
     userId: Snowflake,
-    options: {
-      access_token: string;
-      nick?: string;
-    },
-  ): Promise<void> {
+    options: AddGroupDmRecipientEntity,
+  ): Promise<HttpResponse<void>> {
+    const result = AddGroupDmRecipientSchema.safeParse(options);
+    if (!result.success) {
+      throw new Error(
+        result.error.errors
+          .map((e) => `[${e.path.join(".")}] ${e.message}`)
+          .join(", "),
+      );
+    }
+
     return this.#rest.put(ChannelRouter.ROUTES.recipients(channelId, userId), {
-      body: JSON.stringify(options),
+      body: JSON.stringify(result.data),
     });
   }
 
@@ -276,7 +292,7 @@ export class ChannelRouter {
   groupDmRemoveRecipient(
     channelId: Snowflake,
     userId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       ChannelRouter.ROUTES.recipients(channelId, userId),
     );
@@ -290,7 +306,7 @@ export class ChannelRouter {
     messageId: Snowflake,
     options: StartThreadFromMessageEntity,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadFromMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -316,7 +332,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     options: StartThreadWithoutMessageEntity,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadWithoutMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -344,7 +360,7 @@ export class ChannelRouter {
       | StartThreadInForumOrMediaChannelEntity
       | StartThreadInForumOrMediaChannelForumAndMediaThreadMessageEntity,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<HttpResponse<ChannelEntity>> {
     const result = z
       .union([
         StartThreadInForumOrMediaChannelSchema,
@@ -371,21 +387,24 @@ export class ChannelRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#join-thread}
    */
-  joinThread(channelId: Snowflake): Promise<void> {
+  joinThread(channelId: Snowflake): Promise<HttpResponse<void>> {
     return this.#rest.put(ChannelRouter.ROUTES.threadMember(channelId, "@me"));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#add-thread-member}
    */
-  addThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
+  addThreadMember(
+    channelId: Snowflake,
+    userId: Snowflake,
+  ): Promise<HttpResponse<void>> {
     return this.#rest.put(ChannelRouter.ROUTES.threadMember(channelId, userId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#leave-thread}
    */
-  leaveThread(channelId: Snowflake): Promise<void> {
+  leaveThread(channelId: Snowflake): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       ChannelRouter.ROUTES.threadMember(channelId, "@me"),
     );
@@ -394,7 +413,10 @@ export class ChannelRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#remove-thread-member}
    */
-  removeThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
+  removeThreadMember(
+    channelId: Snowflake,
+    userId: Snowflake,
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       ChannelRouter.ROUTES.threadMember(channelId, userId),
     );
@@ -407,7 +429,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     userId: Snowflake,
     withMember = false,
-  ): Promise<ThreadMemberEntity> {
+  ): Promise<HttpResponse<ThreadMemberEntity>> {
     return this.#rest.get(
       ChannelRouter.ROUTES.threadMember(channelId, userId),
       {
@@ -422,7 +444,7 @@ export class ChannelRouter {
   listThreadMembers(
     channelId: Snowflake,
     options: ListThreadMembersQueryEntity = {},
-  ): Promise<ThreadMemberEntity[]> {
+  ): Promise<HttpResponse<ThreadMemberEntity[]>> {
     const result = ListThreadMembersQuerySchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -443,7 +465,7 @@ export class ChannelRouter {
   listPublicArchivedThreads(
     channelId: Snowflake,
     options: ListPublicArchivedThreadsQueryEntity = {},
-  ): Promise<ListPublicArchivedThreadsResponse> {
+  ): Promise<HttpResponse<ListPublicArchivedThreadsResponse>> {
     const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -467,7 +489,7 @@ export class ChannelRouter {
   listPrivateArchivedThreads(
     channelId: Snowflake,
     options: ListPublicArchivedThreadsQueryEntity = {},
-  ): Promise<ListPublicArchivedThreadsResponse> {
+  ): Promise<HttpResponse<ListPublicArchivedThreadsResponse>> {
     const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -491,7 +513,7 @@ export class ChannelRouter {
   listJoinedPrivateArchivedThreads(
     channelId: Snowflake,
     options: ListPublicArchivedThreadsQueryEntity = {},
-  ): Promise<ListPublicArchivedThreadsResponse> {
+  ): Promise<HttpResponse<ListPublicArchivedThreadsResponse>> {
     const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
     if (!result.success) {
       throw new Error(

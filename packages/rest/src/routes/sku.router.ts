@@ -1,5 +1,6 @@
 import type { SkuEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class SkuRouter {
   static readonly ROUTES = {
@@ -16,7 +17,7 @@ export class SkuRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/sku#list-skus}
    */
-  listSkus(applicationId: Snowflake): Promise<SkuEntity[]> {
+  listSkus(applicationId: Snowflake): Promise<HttpResponse<SkuEntity[]>> {
     return this.#rest.get(SkuRouter.ROUTES.applicationSkus(applicationId));
   }
 }

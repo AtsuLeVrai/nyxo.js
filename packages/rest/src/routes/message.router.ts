@@ -12,6 +12,7 @@ import {
   type GetReactionsQueryEntity,
   GetReactionsQuerySchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class MessageRouter {
   static readonly ROUTES = {
@@ -46,7 +47,7 @@ export class MessageRouter {
   getMessages(
     channelId: Snowflake,
     query?: GetChannelMessagesQueryEntity,
-  ): Promise<MessageEntity[]> {
+  ): Promise<HttpResponse<MessageEntity[]>> {
     const result = GetChannelMessagesQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
@@ -67,7 +68,7 @@ export class MessageRouter {
   getMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     return this.#rest.get(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
     );
@@ -79,7 +80,7 @@ export class MessageRouter {
   createMessage(
     channelId: Snowflake,
     options: CreateMessageEntity,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     const result = CreateMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -102,7 +103,7 @@ export class MessageRouter {
   crosspostMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     return this.#rest.post(
       MessageRouter.ROUTES.crosspost(channelId, messageId),
     );
@@ -115,7 +116,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.put(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
     );
@@ -128,7 +129,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
     );
@@ -142,7 +143,7 @@ export class MessageRouter {
     messageId: Snowflake,
     emoji: string,
     userId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji, userId),
     );
@@ -156,7 +157,7 @@ export class MessageRouter {
     messageId: Snowflake,
     emoji: string,
     query: GetReactionsQueryEntity = {},
-  ): Promise<UserEntity[]> {
+  ): Promise<HttpResponse<UserEntity[]>> {
     const result = GetReactionsQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
@@ -178,7 +179,7 @@ export class MessageRouter {
   deleteAllReactions(
     channelId: Snowflake,
     messageId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       MessageRouter.ROUTES.reactions(channelId, messageId, ""),
     );
@@ -191,7 +192,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       MessageRouter.ROUTES.reactions(channelId, messageId, emoji),
     );
@@ -204,7 +205,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     options: EditMessageEntity,
-  ): Promise<MessageEntity> {
+  ): Promise<HttpResponse<MessageEntity>> {
     const result = EditMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -231,7 +232,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     reason?: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       { reason },
@@ -245,7 +246,7 @@ export class MessageRouter {
     channelId: Snowflake,
     options: BulkDeleteMessagesEntity,
     reason?: string,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     const result = BulkDeleteMessagesSchema.safeParse(options);
     if (!result.success) {
       throw new Error(

@@ -5,6 +5,7 @@ import {
   GetAnswerVotersQuerySchema,
   type PollVotersResponseEntity,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class PollRouter {
   static ROUTES = {
@@ -32,7 +33,7 @@ export class PollRouter {
     messageId: Snowflake,
     answerId: number,
     query: GetAnswerVotersQueryEntity = {},
-  ): Promise<PollVotersResponseEntity> {
+  ): Promise<HttpResponse<PollVotersResponseEntity>> {
     const result = GetAnswerVotersQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
@@ -53,7 +54,10 @@ export class PollRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
    */
-  endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
+  endPoll(
+    channelId: Snowflake,
+    messageId: Snowflake,
+  ): Promise<HttpResponse<MessageEntity>> {
     return this.#rest.post(PollRouter.ROUTES.expirePoll(channelId, messageId));
   }
 }

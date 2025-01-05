@@ -106,13 +106,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
       if (this.#isSharding) {
         await this.#shardManager.spawn(
-          guilds.length,
-          gatewayInfo.session_start_limit.max_concurrency,
-          gatewayInfo.shards,
+          guilds.data.length,
+          gatewayInfo.data.session_start_limit.max_concurrency,
+          gatewayInfo.data.shards,
         );
       }
 
-      await this.#initializeWebSocket(gatewayInfo.url);
+      await this.#initializeWebSocket(gatewayInfo.data.url);
       this.emit("connected");
     } catch (error) {
       this.emit(

@@ -18,6 +18,7 @@ import {
   type UpdateCurrentUserApplicationRoleConnectionEntity,
   UpdateCurrentUserApplicationRoleConnectionSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class UserRouter {
   static readonly ROUTES = {
@@ -43,21 +44,23 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
-  getCurrentUser(): Promise<UserEntity> {
+  getCurrentUser(): Promise<HttpResponse<UserEntity>> {
     return this.#rest.get(UserRouter.ROUTES.me);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
-  getUser(userId: Snowflake): Promise<UserEntity> {
+  getUser(userId: Snowflake): Promise<HttpResponse<UserEntity>> {
     return this.#rest.get(UserRouter.ROUTES.user(userId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
-  modifyCurrentUser(options: ModifyCurrentUserEntity): Promise<UserEntity> {
+  modifyCurrentUser(
+    options: ModifyCurrentUserEntity,
+  ): Promise<HttpResponse<UserEntity>> {
     const result = ModifyCurrentUserSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -77,7 +80,7 @@ export class UserRouter {
    */
   getCurrentUserGuilds(
     query: GetCurrentUserGuildsQueryEntity = {},
-  ): Promise<GuildEntity[]> {
+  ): Promise<HttpResponse<GuildEntity[]>> {
     const result = GetCurrentUserGuildsQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
@@ -95,21 +98,23 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
-  getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
+  getCurrentUserGuildMember(
+    guildId: Snowflake,
+  ): Promise<HttpResponse<GuildMemberEntity>> {
     return this.#rest.get(UserRouter.ROUTES.guildMember(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
-  leaveGuild(guildId: Snowflake): Promise<void> {
+  leaveGuild(guildId: Snowflake): Promise<HttpResponse<void>> {
     return this.#rest.delete(UserRouter.ROUTES.leaveGuild(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
-  createDm(recipientId: Snowflake): Promise<ChannelEntity> {
+  createDm(recipientId: Snowflake): Promise<HttpResponse<ChannelEntity>> {
     return this.#rest.post(UserRouter.ROUTES.channels, {
       body: JSON.stringify({ recipient_id: recipientId }),
     });
@@ -118,7 +123,9 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
-  createGroupDm(options: CreateGroupDmEntity): Promise<ChannelEntity> {
+  createGroupDm(
+    options: CreateGroupDmEntity,
+  ): Promise<HttpResponse<ChannelEntity>> {
     const result = CreateGroupDmSchema.safeParse(options);
     if (!result.success) {
       throw new Error(
@@ -136,7 +143,7 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
-  getCurrentUserConnections(): Promise<ConnectionEntity[]> {
+  getCurrentUserConnections(): Promise<HttpResponse<ConnectionEntity[]>> {
     return this.#rest.get(UserRouter.ROUTES.connections);
   }
 
@@ -145,7 +152,7 @@ export class UserRouter {
    */
   getCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
-  ): Promise<ApplicationRoleConnectionEntity> {
+  ): Promise<HttpResponse<ApplicationRoleConnectionEntity>> {
     return this.#rest.get(UserRouter.ROUTES.applicationRole(applicationId));
   }
 
@@ -155,7 +162,7 @@ export class UserRouter {
   updateCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
     connection: UpdateCurrentUserApplicationRoleConnectionEntity,
-  ): Promise<ApplicationRoleConnectionEntity> {
+  ): Promise<HttpResponse<ApplicationRoleConnectionEntity>> {
     const result =
       UpdateCurrentUserApplicationRoleConnectionSchema.safeParse(connection);
     if (!result.success) {

@@ -12,6 +12,7 @@ import {
   type ModifyGuildScheduledEventEntity,
   ModifyGuildScheduledEventSchema,
 } from "../schemas/index.js";
+import type { HttpResponse } from "../types/index.js";
 
 export class ScheduledEventRouter {
   static ROUTES = {
@@ -35,7 +36,7 @@ export class ScheduledEventRouter {
   listScheduledEventsForGuild(
     guildId: Snowflake,
     withUserCount = false,
-  ): Promise<GuildScheduledEventEntity[]> {
+  ): Promise<HttpResponse<GuildScheduledEventEntity[]>> {
     return this.#rest.get(ScheduledEventRouter.ROUTES.events(guildId), {
       query: { with_user_count: withUserCount },
     });
@@ -48,7 +49,7 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     event: CreateGuildScheduledEventEntity,
     reason?: string,
-  ): Promise<GuildScheduledEventEntity> {
+  ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = CreateGuildScheduledEventSchema.safeParse(event);
     if (!result.success) {
       throw new Error(
@@ -71,7 +72,7 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     eventId: Snowflake,
     withUserCount = false,
-  ): Promise<GuildScheduledEventEntity> {
+  ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     return this.#rest.get(ScheduledEventRouter.ROUTES.event(guildId, eventId), {
       query: { with_user_count: withUserCount },
     });
@@ -85,7 +86,7 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     modify: ModifyGuildScheduledEventEntity,
     reason?: string,
-  ): Promise<GuildScheduledEventEntity> {
+  ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = ModifyGuildScheduledEventSchema.safeParse(modify);
     if (!result.success) {
       throw new Error(
@@ -110,7 +111,7 @@ export class ScheduledEventRouter {
   deleteGuildScheduledEvent(
     guildId: Snowflake,
     eventId: Snowflake,
-  ): Promise<void> {
+  ): Promise<HttpResponse<void>> {
     return this.#rest.delete(
       ScheduledEventRouter.ROUTES.event(guildId, eventId),
     );
@@ -123,7 +124,7 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     eventId: Snowflake,
     query?: GetGuildScheduledEventUsersQueryEntity,
-  ): Promise<GuildScheduledEventUserEntity[]> {
+  ): Promise<HttpResponse<GuildScheduledEventUserEntity[]>> {
     const result = GetGuildScheduledEventUsersQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(
