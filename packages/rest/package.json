@@ -52,7 +52,6 @@
     "eventemitter3": "^5.0.1",
     "form-data": "^4.0.1",
     "mime-types": "^2.1.35",
-    "type-fest": "^4.31.0",
     "undici": "^6.21.0",
     "zod": "^3.24.1"
   },

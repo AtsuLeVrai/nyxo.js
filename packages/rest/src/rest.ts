@@ -1,5 +1,3 @@
-import { ApiVersion } from "@nyxjs/core";
-import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import { HttpConstants } from "./constants/index.js";
 import {
@@ -30,11 +28,13 @@ import {
   WebhookRouter,
 } from "./routes/index.js";
 import {
+  CacheService,
   FileProcessorService,
   HttpService,
   RateLimitService,
 } from "./services/index.js";
 import type {
+  CacheOptions,
   FileType,
   PathLike,
   RestEvents,
@@ -43,11 +43,6 @@ import type {
 } from "./types/index.js";
 import { FileValidatorService } from "./validators/index.js";
 
-interface RequestCacheEntry {
-  data: unknown;
-  timestamp: number;
-}
-
 export class Rest extends EventEmitter<RestEvents> {
   readonly #options: Required<Omit<RestOptions, "proxy">> &
     Pick<RestOptions, "proxy">;
@@ -55,6 +50,7 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly #rateLimitService: RateLimitService;
   readonly #validator: FileValidatorService;
   readonly #processor: FileProcessorService;
+  readonly #cache: CacheService;
 
   #applications: ApplicationRouter | null = null;
   #commands: ApplicationCommandRouter | null = null;
@@ -82,7 +78,6 @@ export class Rest extends EventEmitter<RestEvents> {
   #voice: VoiceRouter | null = null;
   #webhooks: WebhookRouter | null = null;
   readonly #pendingRequests = new Set<string>();
-  readonly #requestCache = new Store<string, RequestCacheEntry>();
 
   constructor(options: RestOptions) {
     super();
@@ -92,6 +87,9 @@ export class Rest extends EventEmitter<RestEvents> {
     this.#rateLimitService = new RateLimitService();
     this.#validator = new FileValidatorService();
     this.#processor = new FileProcessorService();
+    this.#cache = new CacheService(
+      this.#options.cache as Required<CacheOptions>,
+    );
 
     this.#setupEventForwarding(this.#httpService, this.#rateLimitService);
   }
@@ -296,16 +294,8 @@ export class Rest extends EventEmitter<RestEvents> {
     return this.#webhooks;
   }
 
-  clearCache(): void {
-    this.#requestCache.clear();
-  }
-
-  getPendingRequestsCount(): number {
-    return this.#pendingRequests.size;
-  }
-
-  getCacheSize(): number {
-    return this.#requestCache.size;
+  get cache(): CacheService {
+    return this.#cache;
   }
 
   async request<T>(options: RouteEntity): Promise<T> {
@@ -314,8 +304,9 @@ export class Rest extends EventEmitter<RestEvents> {
     try {
       this.#pendingRequests.add(requestId);
 
-      if (options.method === "GET") {
-        const cached = this.#checkCache<T>(options.path);
+      if (this.#cache.shouldCache(options.path, options.method)) {
+        const cacheKey = this.#cache.generateKey(options.path, options.method);
+        const cached = this.#cache.get<T>(cacheKey);
         if (cached) {
           return cached;
         }
@@ -328,19 +319,20 @@ export class Rest extends EventEmitter<RestEvents> {
         : options;
 
       const response = await this.#httpService.request(preparedOptions);
+      const body = Buffer.from(await response.body.arrayBuffer());
+      const data = JSON.parse(body.toString());
 
-      await this.#rateLimitService.processHeaders(
+      this.#rateLimitService.processHeaders(
         options.path,
         options.method,
         response.headers as Record<string, string>,
         response.statusCode,
+        data,
       );
 
-      const body = Buffer.from(await response.body.arrayBuffer());
-      const data = JSON.parse(body.toString());
-
-      if (options.method === "GET") {
-        this.#setCache(options.path, data);
+      if (this.#cache.shouldCache(options.path, options.method)) {
+        const cacheKey = this.#cache.generateKey(options.path, options.method);
+        this.#cache.set(cacheKey, data);
       }
 
       return data as T;
@@ -407,7 +399,7 @@ export class Rest extends EventEmitter<RestEvents> {
   async destroy(): Promise<void> {
     await this.#httpService.destroy();
     this.#rateLimitService.destroy();
-    this.#requestCache.clear();
+    this.#cache.clear();
     this.removeAllListeners();
   }
 
@@ -476,28 +468,6 @@ export class Rest extends EventEmitter<RestEvents> {
     return `${options.method}:${options.path}:${Date.now()}:${Math.random().toString(36)}`;
   }
 
-  #checkCache<T>(path: string): T | null {
-    const cached = this.#requestCache.get(path);
-    if (!cached) {
-      return null;
-    }
-
-    const lifetime = this.#options.cacheLifetime ?? 60_000;
-    if (Date.now() - cached.timestamp > lifetime) {
-      this.#requestCache.delete(path);
-      return null;
-    }
-
-    return cached.data as T;
-  }
-
-  #setCache(path: string, data: unknown): void {
-    this.#requestCache.set(path, {
-      data,
-      timestamp: Date.now(),
-    });
-  }
-
   #normalizePath(path: string): PathLike {
     const stringPath = path.toString();
     return (
@@ -510,10 +480,19 @@ export class Rest extends EventEmitter<RestEvents> {
   ): Required<Omit<RestOptions, "proxy">> & Pick<RestOptions, "proxy"> {
     return {
       token: config.token,
-      version: config.version ?? ApiVersion.v10,
-      cacheLifetime: config.cacheLifetime ?? 60_000,
-      userAgent: config.userAgent ?? HttpConstants.defaultUserAgent,
       proxy: config.proxy,
+      version: config.version ?? HttpConstants.defaultApiVersion,
+      userAgent: config.userAgent ?? HttpConstants.defaultUserAgent,
+      cache: {
+        lifetime: 60_000,
+        maxSize: 1000,
+        shouldCache: (_, method): method is "GET" => method === "GET",
+        keyGenerator: (path, method): string => `${method}:${path}`,
+        enableSweeping: true,
+        sweepInterval: 300_000,
+        disabled: false,
+        ...config.cache,
+      },
       retry: {
         retryAfter: true,
         maxRetries: 3,

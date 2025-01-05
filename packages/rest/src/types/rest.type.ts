@@ -1,4 +1,6 @@
 import type { Dispatcher, Pool, ProxyAgent, RetryHandler } from "undici";
+import type { JsonErrorCode } from "../constants/index.js";
+import type { CacheOptions } from "./cache.type.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#user-agent}
@@ -16,7 +18,7 @@ export type FileType = File | string;
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-example-json-error-response}
  */
 export interface JsonErrorEntity {
-  code: number;
+  code: JsonErrorCode;
   message: string;
   errors?: Record<string, unknown>;
 }
@@ -31,11 +33,11 @@ export interface RouteEntity
 export interface RestOptions {
   token: string;
   version?: 10;
-  cacheLifetime?: number;
   userAgent?: DiscordUserAgent;
   proxy?: ProxyAgent.Options;
   pool?: Pool.Options;
   retry?: RetryHandler.RetryOptions;
+  cache?: CacheOptions;
 }
 
 export interface RestEvents {

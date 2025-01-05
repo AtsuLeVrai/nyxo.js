@@ -6,6 +6,7 @@ import type {
   BucketInfo,
   EmojiRateLimit,
   GlobalRateLimit,
+  JsonErrorEntity,
   RateLimitScope,
   RestEvents,
 } from "../types/index.js";
@@ -75,100 +76,90 @@ export class RateLimitService extends EventEmitter<RestEvents> {
     method: string,
     headers: Record<string, string>,
     statusCode: number,
-  ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const h = RateLimitConstants.headers;
+    body?: JsonErrorEntity,
+  ): void {
+    const h = RateLimitConstants.headers;
 
-        if (this.#isErrorStatus(statusCode)) {
-          this.#invalidRequests.count++;
+    if (this.#isErrorStatus(statusCode)) {
+      this.#invalidRequests.count++;
 
-          if (statusCode === 429) {
-            if (headers[h.global]) {
-              const retryAfter = Number(headers[h.retryAfter]) * 1000;
-              if (Number.isNaN(retryAfter)) {
-                return reject(
-                  new Error("Invalid retry_after value in headers"),
-                );
-              }
+      if (statusCode === 429) {
+        if (headers[h.global]) {
+          const retryAfter = Number(headers[h.retryAfter]) * 1000;
+          if (Number.isNaN(retryAfter)) {
+            throw new Error("Invalid retry_after value in headers");
+          }
 
-              this.#global.reset = Date.now() + retryAfter;
-              this.emit(
-                "globalRateLimit",
-                this.#global.remaining,
-                this.#global.reset,
-                RateLimitConstants.global.requestsPerSeconds,
+          this.#global.reset = Date.now() + retryAfter;
+          this.emit(
+            "globalRateLimit",
+            this.#global.remaining,
+            this.#global.reset,
+            RateLimitConstants.global.requestsPerSeconds,
+          );
+          return;
+        }
+
+        if (this.#isEmojiRoute(path)) {
+          const guildId = this.#extractGuildId(path);
+          if (guildId) {
+            const retryAfter = Number(headers[h.retryAfter]) * 1000;
+            if (Number.isNaN(retryAfter)) {
+              throw new Error(
+                "Invalid retry_after value in headers for emoji route",
               );
-              return resolve();
             }
 
-            if (this.#isEmojiRoute(path)) {
-              const guildId = this.#extractGuildId(path);
-              if (guildId) {
-                const retryAfter = Number(headers[h.retryAfter]) * 1000;
-                if (Number.isNaN(retryAfter)) {
-                  return reject(
-                    new Error(
-                      "Invalid retry_after value in headers for emoji route",
-                    ),
-                  );
-                }
-
-                this.#emojiLimits.set(guildId, {
-                  remaining: 0,
-                  reset: Date.now() + retryAfter,
-                });
-              }
-            }
+            this.#emojiLimits.set(guildId, {
+              remaining: 0,
+              reset: Date.now() + retryAfter,
+            });
           }
         }
-
-        const bucketHash = headers[h.bucket];
-        if (!bucketHash) {
-          return resolve();
-        }
-
-        const routeKey = this.#generateRouteKey(path, method);
-        if (!routeKey) {
-          return reject(new Error("Failed to generate route key"));
-        }
-
-        this.#bucketService.mapRouteToBucket(routeKey, bucketHash);
-
-        const limit = Number(headers[h.limit]);
-        const remaining = Number(headers[h.remaining]);
-        const reset = Number(headers[h.reset]);
-        const resetAfter = Number(headers[h.resetAfter]);
-
-        if (
-          [limit, remaining, reset, resetAfter].some((val) => Number.isNaN(val))
-        ) {
-          return reject(new Error("Invalid rate limit values in headers"));
-        }
-
-        const bucketInfo: BucketInfo = {
-          hash: bucketHash,
-          limit: limit || 0,
-          remaining: remaining || 0,
-          reset: reset || 0,
-          resetAfter: resetAfter || 0,
-          scope: (headers[h.scope] as RateLimitScope) || "user",
-          isEmoji: this.#isEmojiRoute(path),
-          guildId: this.#isEmojiRoute(path)
-            ? this.#extractGuildId(path)
-            : undefined,
-        };
-
-        this.#bucketService.setBucket(bucketHash, bucketInfo);
-        resolve();
-      } catch (error) {
-        reject(
-          error instanceof Error
-            ? error
-            : new Error("Unknown error in processHeaders"),
+      } else {
+        throw new Error(
+          `Request failed with status code ${statusCode}: ${JSON.stringify(body)}`,
         );
       }
-    });
+    }
+
+    const bucketHash = headers[h.bucket];
+    if (!bucketHash) {
+      return;
+    }
+
+    const routeKey = this.#generateRouteKey(path, method);
+    if (!routeKey) {
+      throw new Error("Failed to generate route key");
+    }
+
+    this.#bucketService.mapRouteToBucket(routeKey, bucketHash);
+
+    const limit = Number(headers[h.limit]);
+    const remaining = Number(headers[h.remaining]);
+    const reset = Number(headers[h.reset]);
+    const resetAfter = Number(headers[h.resetAfter]);
+
+    if (
+      [limit, remaining, reset, resetAfter].some((val) => Number.isNaN(val))
+    ) {
+      throw new Error("Invalid rate limit values in headers");
+    }
+
+    const bucketInfo: BucketInfo = {
+      hash: bucketHash,
+      limit: limit || 0,
+      remaining: remaining || 0,
+      reset: reset || 0,
+      resetAfter: resetAfter || 0,
+      scope: (headers[h.scope] as RateLimitScope) || "user",
+      isEmoji: this.#isEmojiRoute(path),
+      guildId: this.#isEmojiRoute(path)
+        ? this.#extractGuildId(path)
+        : undefined,
+    };
+
+    this.#bucketService.setBucket(bucketHash, bucketInfo);
   }
 
   destroy(): void {
@@ -305,7 +296,7 @@ export class RateLimitService extends EventEmitter<RestEvents> {
   }
 
   #isErrorStatus(statusCode: number): boolean {
-    return statusCode === 401 || statusCode === 403 || statusCode === 429;
+    return statusCode >= 400;
   }
 
   #extractGuildId(path: string): string | undefined {

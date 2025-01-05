@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { defineConfig } from "tsup";
+import {readFileSync} from "node:fs";
+import {resolve} from "node:path";
+import {defineConfig} from "tsup";
 
 /**
  * Loads dependencies from package.json
@@ -66,27 +66,6 @@ export function createTsupConfig(entry = ["src/index.ts"], options = {}) {
     shims: true,
     skipNodeModulesBundle: true,
     external: loadDependencies(),
-
-    /**
-     * Configures esbuild options
-     * @param {Object} esbuildOptions - Esbuild configuration options
-     * @param {Object} _context - Build context
-     */
-    esbuildOptions(esbuildOptions, _context) {
-      Object.assign(esbuildOptions, {
-        keepNames: !isProduction,
-        jsx: "transform",
-        banner: {
-          js: '"use strict";',
-        },
-        define: {
-          "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
-          "Symbol.metadata": "Symbol.metadata",
-          ...options.define,
-        },
-      });
-    },
-
     esbuildPlugins: [...(options.additionalPlugins || [])],
 
     /**

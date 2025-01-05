@@ -69,9 +69,6 @@ importers:
 
   packages/core:
     dependencies:
-      type-fest:
-        specifier: ^4.31.0
-        version: 4.31.0
       zod:
         specifier: ^3.24.1
         version: 3.24.1
@@ -130,9 +127,6 @@ importers:
       fzstd:
         specifier: ^0.1.1
         version: 0.1.1
-      type-fest:
-        specifier: ^4.31.0
-        version: 4.31.0
       utf-8-validate:
         specifier: ^6.0.5
         version: 6.0.5
@@ -194,9 +188,6 @@ importers:
       mime-types:
         specifier: ^2.1.35
         version: 2.1.35
-      type-fest:
-        specifier: ^4.31.0
-        version: 4.31.0
       undici:
         specifier: ^6.21.0
         version: 6.21.0
@@ -239,10 +230,6 @@ importers:
         version: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(terser@5.37.0)
 
   packages/store:
-    dependencies:
-      type-fest:
-        specifier: ^4.31.0
-        version: 4.31.0
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -1798,10 +1785,6 @@ packages:
     resolution: {integrity: sha512-DUHWQAcC8BTiUZDRzAYGvpSpGLiaOQPfYXlCieQbwUvmml/LRGIe3raKdrOPOoiX0DYlzxs2nH6BoWJoZrj8hA==}
     hasBin: true
 
-  type-fest@4.31.0:
-    resolution: {integrity: sha512-yCxltHW07Nkhv/1F6wWBr8kz+5BGMfP+RbRSYFnegVb0qV/UMT0G0ElBloPVerqn4M2ZV80Ir1FtCcYv1cT6vQ==}
-    engines: {node: '>=16'}
-
   typescript@5.4.2:
     resolution: {integrity: sha512-+2/g0Fds1ERlP6JsakQQDXjZdZMM+rqpamFZJEKh4kwTIn3iDkgKtby0CeNd5ATNZ4Ry1ax15TMx0W2V+miizQ==}
     engines: {node: '>=14.17'}
@@ -3233,8 +3216,6 @@ snapshots:
       turbo-linux-arm64: 2.3.3
       turbo-windows-64: 2.3.3
       turbo-windows-arm64: 2.3.3
-
-  type-fest@4.31.0: {}
 
   typescript@5.4.2: {}
 
