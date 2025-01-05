@@ -1,30 +1,3 @@
-import type { UpdatePresenceEntity } from "../events/index.js";
-import type { ShardingConfig } from "./shard.type.js";
-
-export type CompressionType = "zlib-stream" | "zstd-stream";
-export type EncodingType = "json" | "etf";
-
-/**
- * @see {@link https://discord.com/developers/docs/events/gateway-events#payload-structure}
- */
-export interface PayloadEntity {
-  op: GatewayOpcodes;
-  d: object | number | null;
-  s: number | null;
-  t: string | null;
-}
-
-export interface GatewayOptions {
-  token: string;
-  version?: 10;
-  compress?: CompressionType;
-  encoding?: EncodingType;
-  intents: GatewayIntentsBits[] | number;
-  largeThreshold?: number;
-  presence?: UpdatePresenceEntity;
-  shard?: ShardingConfig;
-}
-
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway#list-of-intents}
  */

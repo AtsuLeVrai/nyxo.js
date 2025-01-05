@@ -1,13 +1,18 @@
-import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import { EmojiSchema, SnowflakeSchema } from "@nyxjs/core";
+import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-server-update-voice-server-update-event-fields}
  */
-export interface VoiceServerUpdateEntity {
-  token: string;
-  guild_id: Snowflake;
-  endpoint: string | null;
-}
+export const VoiceServerUpdateSchema = z
+  .object({
+    token: z.string(),
+    guild_id: SnowflakeSchema,
+    endpoint: z.string().nullable(),
+  })
+  .strict();
+
+export type VoiceServerUpdateEntity = z.infer<typeof VoiceServerUpdateSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-channel-effect-send-animation-types}
@@ -23,13 +28,21 @@ export type VoiceChannelEffectSendAnimationType =
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-channel-effect-send-voice-channel-effect-send-event-fields}
  */
-export interface VoiceChannelEffectSendEntity {
-  channel_id: Snowflake;
-  guild_id: Snowflake;
-  user_id: Snowflake;
-  emoji?: EmojiEntity | null;
-  animation_type?: VoiceChannelEffectSendAnimationType;
-  animation_id?: number;
-  sound_id?: Snowflake | number;
-  sound_volume?: number;
-}
+export const VoiceChannelEffectSendSchema = z
+  .object({
+    channel_id: SnowflakeSchema,
+    guild_id: SnowflakeSchema,
+    user_id: SnowflakeSchema,
+    emoji: EmojiSchema.nullish(),
+    animation_type: z
+      .nativeEnum(VoiceChannelEffectSendAnimationType)
+      .optional(),
+    animation_id: z.number().int().optional(),
+    sound_id: z.union([SnowflakeSchema, z.number()]).nullish(),
+    sound_volume: z.number().optional(),
+  })
+  .strict();
+
+export type VoiceChannelEffectSendEntity = z.infer<
+  typeof VoiceChannelEffectSendSchema
+>;

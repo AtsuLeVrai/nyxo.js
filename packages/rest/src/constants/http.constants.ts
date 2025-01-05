@@ -18,6 +18,8 @@ export const HttpConstants = {
   },
 } as const;
 
+export type HttpConstants = typeof HttpConstants;
+
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#http-http-response-codes}
  */

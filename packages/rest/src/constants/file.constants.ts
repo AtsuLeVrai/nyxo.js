@@ -19,3 +19,5 @@ export const FileConstants = {
     "application/pdf",
   ],
 } as const;
+
+export type FileConstants = (typeof FileConstants)[keyof typeof FileConstants];

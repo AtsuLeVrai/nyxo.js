@@ -1,32 +1,46 @@
-import type { Snowflake } from "@nyxjs/core";
-import type { ActivityEntity } from "./presence.event.js";
+import { SnowflakeSchema } from "@nyxjs/core";
+import { z } from "zod";
+import { ActivitySchema } from "./presence.event.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-voice-state-gateway-voice-state-update-structure}
  */
-export interface UpdateVoiceStateEntity {
-  guild_id: Snowflake;
-  channel_id: Snowflake | null;
-  self_mute: boolean;
-  self_deaf: boolean;
-}
+export const UpdateVoiceStateSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    channel_id: SnowflakeSchema.nullable(),
+    self_mute: z.boolean(),
+    self_deaf: z.boolean(),
+  })
+  .strict();
+
+export type UpdateVoiceStateEntity = z.infer<typeof UpdateVoiceStateSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-status-types}
  */
-export type UpdatePresenceStatusType =
-  | "online"
-  | "dnd"
-  | "idle"
-  | "invisible"
-  | "offline";
+export const UpdatePresenceStatusTypeSchema = z.union([
+  z.literal("online"),
+  z.literal("dnd"),
+  z.literal("idle"),
+  z.literal("invisible"),
+  z.literal("offline"),
+]);
+
+export type UpdatePresenceStatusType = z.infer<
+  typeof UpdatePresenceStatusTypeSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-gateway-presence-update-structure}
  */
-export interface UpdatePresenceEntity {
-  since: number | null;
-  activities: ActivityEntity[];
-  status: UpdatePresenceStatusType;
-  afk: boolean;
-}
+export const UpdatePresenceSchema = z
+  .object({
+    since: z.number().nullable(),
+    activities: z.array(ActivitySchema),
+    status: UpdatePresenceStatusTypeSchema,
+    afk: z.boolean(),
+  })
+  .strict();
+
+export type UpdatePresenceEntity = z.infer<typeof UpdatePresenceSchema>;

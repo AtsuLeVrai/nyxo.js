@@ -1,19 +1,22 @@
-import type {
+import {
   ApiVersion,
-  ApplicationEntity,
-  UnavailableGuildEntity,
-  UserEntity,
+  ApplicationSchema,
+  UnavailableGuildSchema,
+  UserSchema,
 } from "@nyxjs/core";
+import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#ready-ready-event-fields}
  */
-export interface ReadyEntity {
-  v: ApiVersion;
-  user: UserEntity;
-  guilds: UnavailableGuildEntity[];
-  session_id: string;
-  resume_gateway_url: string;
-  shard?: [shardId: number, numShards: number];
-  application: Pick<ApplicationEntity, "id" | "flags">;
-}
+export const ReadySchema = z.object({
+  v: z.nativeEnum(ApiVersion).default(ApiVersion.v10),
+  user: UserSchema,
+  guilds: z.array(UnavailableGuildSchema),
+  session_id: z.string(),
+  resume_gateway_url: z.string(),
+  shard: z.tuple([z.number().int(), z.number().int()]),
+  application: ApplicationSchema.pick({ id: true, flags: true }),
+});
+
+export type ReadyEntity = z.infer<typeof ReadySchema>;

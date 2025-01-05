@@ -14,6 +14,7 @@ import type {
   UserEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
+import { GatewayOpcodes } from "../constants/index.js";
 import type {
   AutoModerationActionExecutionEntity,
   ChannelPinsUpdateEntity,
@@ -67,7 +68,7 @@ import type {
   VoiceServerUpdateEntity,
   WebhookUpdateEntity,
 } from "../events/index.js";
-import { type GatewayCloseCodes, GatewayOpcodes } from "./gateway.type.js";
+import type { ShardStats } from "../schemas/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
@@ -168,62 +169,24 @@ export interface GatewaySendEvents {
   [GatewayOpcodes.presenceUpdate]: UpdatePresenceEntity;
 }
 
-export interface HeartbeatTimeoutDetails {
-  missedCount: number;
-  maxAllowed: number;
-  lastAckTime: string;
-}
-
-export interface HeartbeatDetails {
-  sequence: number;
-  timestamp: string;
-}
-
-export interface HeartbeatInitDetails {
-  interval: number;
-  jitter: number;
-  jitterDelay: number;
-}
-
-export interface HeartbeatAckDetails {
-  latency: number;
-  timestamp: string;
-  sequence: number;
-}
-
-export type HeartbeatDestroyDetails = {
-  totalBeats: number;
-  avgLatency: number;
-};
-
-export interface GatewayEvents<
-  T extends keyof GatewayReceiveEvents = keyof GatewayReceiveEvents,
-> {
-  debug: [message: string];
-  warn: [message: string];
-  error: [error: Error];
-  close: [code: GatewayCloseCodes];
-  dispatch: [event: T, data: GatewayReceiveEvents[T]];
-  connecting: [attempt: number];
-  connected: [];
-  reconnecting: [attempt: number];
-
-  // Heartbeat events
-  heartbeat: [details: HeartbeatDetails];
-  heartbeatInit: [details: HeartbeatInitDetails];
-  heartbeatAck: [details: HeartbeatAckDetails];
-  heartbeatTimeout: [details: HeartbeatTimeoutDetails];
-  heartbeatDestroy: [details: HeartbeatDestroyDetails];
-  heartbeatSequence: [sequence: number];
-
-  // Session events
-  sessionStart: [sessionId: string];
-  sessionEnd: [sessionId: string, code: number];
-  sessionInvalid: [resumable: boolean];
-
-  // Shard events
-  shardReady: [shardId: number];
-  shardReconnecting: [shardId: number];
-  shardResume: [shardId: number];
-  shardDisconnect: [shardId: number, code: number];
+export interface GatewayEvents {
+  shardSpawn: (shardId: number) => void;
+  shardReady: (shardId: number) => void;
+  shardDisconnect: (shardId: number) => void;
+  shardReconnect: (shardId: number) => void;
+  shardResume: (shardId: number) => void;
+  statsUpdate: (stats: ShardStats) => void;
+  connecting: (attempt: number) => void;
+  connected: () => void;
+  reconnecting: (attempt: number) => void;
+  dispatch: <K extends keyof GatewayReceiveEvents>(
+    event: K,
+    data: GatewayReceiveEvents[K],
+  ) => void;
+  sessionStart: (sessionId: string, data: ReadyEntity) => void;
+  sessionEnd: (sessionId: string, code: number) => void;
+  sessionInvalid: (resumable: boolean) => void;
+  close: (code: number) => void;
+  debug: (message: string) => void;
+  warn: (message: string) => void;
 }

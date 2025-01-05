@@ -14,6 +14,250 @@ const measurePerformance = async <T>(
 };
 
 describe("Store", () => {
+  describe("Add Method", () => {
+    interface TestItem {
+      id: number;
+      name: string;
+      metadata?: {
+        tags?: string[];
+        category?: string;
+      };
+    }
+
+    let store: Store<string, TestItem>;
+
+    beforeEach(() => {
+      store = new Store<string, TestItem>();
+    });
+
+    test("should add new items correctly", () => {
+      const item = { id: 1, name: "Test" };
+      store.add("test", item);
+      expect(store.get("test")).toEqual(item);
+    });
+
+    test("should merge objects when adding to existing key", () => {
+      // Premier ajout
+      store.add("user", { id: 1, name: "Alice" });
+
+      // Deuxième ajout avec fusion
+      store.add("user", { metadata: { tags: ["admin"] } });
+
+      expect(store.get("user")).toEqual({
+        id: 1,
+        name: "Alice",
+        metadata: { tags: ["admin"] },
+      });
+    });
+
+    test("should handle nested object merging", () => {
+      // Ajout initial avec metadata
+      store.add("user", {
+        id: 1,
+        name: "Alice",
+        metadata: { tags: ["user"], category: "standard" },
+      });
+
+      // Mise à jour partielle de metadata
+      store.add("user", {
+        metadata: { tags: ["user", "admin"] },
+      });
+
+      expect(store.get("user")).toEqual({
+        id: 1,
+        name: "Alice",
+        metadata: { tags: ["user", "admin"], category: "standard" },
+      });
+    });
+
+    test("should replace non-object values", () => {
+      store.add("user", { id: 1, name: "Alice" });
+      store.add("user", { id: 2, name: "Bob" });
+
+      expect(store.get("user")).toEqual({
+        id: 2,
+        name: "Bob",
+      });
+    });
+
+    test("should handle nested object merging", () => {
+      store.add("user", {
+        id: 1,
+        name: "Alice",
+        metadata: { tags: ["user"], category: "standard" },
+      });
+
+      store.add("user", {
+        metadata: { tags: ["user", "admin"] },
+      });
+
+      const result = store.get("user");
+      expect(result).toBeDefined();
+      expect(result?.metadata?.category).toBe("standard");
+      expect(result?.metadata?.tags).toEqual(["user", "admin"]);
+    });
+
+    test("should trigger array sync after add", () => {
+      store.add("user1", { id: 1, name: "Alice" });
+      store.add("user2", { id: 2, name: "Bob" });
+
+      const values = store.to("array");
+      expect(values).toHaveLength(2);
+      expect(values).toContainEqual({ id: 1, name: "Alice" });
+      expect(values).toContainEqual({ id: 2, name: "Bob" });
+    });
+
+    test("should return this for method chaining", () => {
+      const result = store
+        .add("user1", { id: 1, name: "Alice" })
+        .add("user2", { id: 2, name: "Bob" });
+
+      expect(result).toBe(store);
+      expect(store.size).toBe(2);
+    });
+
+    test("should add new items correctly", () => {
+      const item = { id: 1, name: "Test" };
+      store.add("test", item);
+      expect(store.get("test")).toEqual(item);
+    });
+
+    test("should merge objects when adding to existing key", () => {
+      // Premier ajout
+      store.add("user", { id: 1, name: "Alice" });
+
+      // Deuxième ajout avec fusion
+      store.add("user", { metadata: { tags: ["admin"] } });
+
+      expect(store.get("user")).toEqual({
+        id: 1,
+        name: "Alice",
+        metadata: { tags: ["admin"] },
+      });
+    });
+
+    test("should handle nested object merging", () => {
+      // Ajout initial avec metadata
+      store.add("user", {
+        id: 1,
+        name: "Alice",
+        metadata: { tags: ["user"], category: "standard" },
+      });
+
+      // Mise à jour partielle de metadata
+      store.add("user", {
+        metadata: { tags: ["user", "admin"] },
+      });
+
+      const result = store.get("user");
+      expect(result).toBeDefined();
+      expect(result?.metadata?.category).toBe("standard");
+      expect(result?.metadata?.tags).toEqual(["user", "admin"]);
+    });
+
+    test("should replace non-object values", () => {
+      store.add("user", { id: 1, name: "Alice" });
+      store.add("user", { id: 2, name: "Bob" });
+
+      expect(store.get("user")).toEqual({
+        id: 2,
+        name: "Bob",
+      });
+    });
+
+    test("should trigger array sync after add", () => {
+      store.add("user1", { id: 1, name: "Alice" });
+      store.add("user2", { id: 2, name: "Bob" });
+
+      const values = store.to("array");
+      expect(values).toHaveLength(2);
+      expect(values).toContainEqual({ id: 1, name: "Alice" });
+      expect(values).toContainEqual({ id: 2, name: "Bob" });
+    });
+
+    test("should return this for method chaining", () => {
+      const result = store
+        .add("user1", { id: 1, name: "Alice" })
+        .add("user2", { id: 2, name: "Bob" });
+
+      expect(result).toBe(store);
+      expect(store.size).toBe(2);
+    });
+  });
+
+  describe("Remove Method", () => {
+    interface TestItem {
+      id: number;
+      name: string;
+      metadata?: {
+        tags?: string[];
+        category?: string;
+      };
+      extra?: string;
+    }
+
+    let store: Store<string, TestItem>;
+
+    beforeEach(() => {
+      store = new Store<string, TestItem>();
+      store.set("user", {
+        id: 1,
+        name: "Alice",
+        metadata: {
+          tags: ["admin"],
+          category: "staff",
+        },
+        extra: "test",
+      });
+    });
+
+    test("should remove specified properties", () => {
+      store.remove("user", ["extra", "metadata"]);
+
+      expect(store.get("user")).toEqual({
+        id: 1,
+        name: "Alice",
+      });
+    });
+
+    test("should handle non-existent properties", () => {
+      store.remove("user", ["nonexistent"]);
+
+      expect(store.get("user")).toEqual({
+        id: 1,
+        name: "Alice",
+        metadata: {
+          tags: ["admin"],
+          category: "staff",
+        },
+        extra: "test",
+      });
+    });
+
+    test("should handle non-existent keys", () => {
+      store.remove("nonexistent", ["name"]);
+      expect(store.size).toBe(1);
+    });
+
+    test("should return this for method chaining", () => {
+      const result = store
+        .remove("user", ["extra"])
+        .remove("user", ["metadata"]);
+
+      expect(result).toBe(store);
+      expect(store.get("user")).toEqual({
+        id: 1,
+        name: "Alice",
+      });
+    });
+
+    test("should handle non-object values", () => {
+      store.set("number", 42 as unknown as TestItem);
+      store.remove("number", ["toString"]);
+      expect(store.get("number")).toBe(42);
+    });
+  });
+
   describe("Basic Operations", () => {
     let store: Store<string, number>;
 

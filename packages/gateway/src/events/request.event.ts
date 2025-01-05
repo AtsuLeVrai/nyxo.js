@@ -1,20 +1,33 @@
-import type { Snowflake } from "@nyxjs/core";
+import { SnowflakeSchema } from "@nyxjs/core";
+import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#request-guild-members-request-guild-members-structure}
  */
-export interface RequestGuildMembersEntity {
-  guild_id: Snowflake;
-  query?: string;
-  limit: number;
-  presences?: boolean;
-  user_ids?: Snowflake | Snowflake[];
-  nonce?: string;
-}
+export const RequestGuildMembersSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    query: z.string().optional(),
+    limit: z.number().int(),
+    presences: z.boolean().optional(),
+    user_ids: z.union([SnowflakeSchema, z.array(SnowflakeSchema)]).optional(),
+    nonce: z.string().optional(),
+  })
+  .strict();
+
+export type RequestGuildMembersEntity = z.infer<
+  typeof RequestGuildMembersSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#request-soundboard-sounds-request-soundboard-sounds-structure}
  */
-export interface RequestSoundboardSoundsEntity {
-  guild_ids: Snowflake[];
-}
+export const RequestSoundboardSoundsSchema = z
+  .object({
+    guild_ids: z.array(SnowflakeSchema),
+  })
+  .strict();
+
+export type RequestSoundboardSoundsEntity = z.infer<
+  typeof RequestSoundboardSoundsSchema
+>;

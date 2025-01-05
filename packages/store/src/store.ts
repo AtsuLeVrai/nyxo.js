@@ -36,6 +36,45 @@ export class Store<K, V> extends Map<K, V> {
     return new Store<K, V>(entries);
   }
 
+  add(key: K, value: V | Partial<V>): this {
+    if (this.has(key)) {
+      const existingValue = this.get(key) as V;
+      if (typeof existingValue === "object" && typeof value === "object") {
+        const mergedValue = this.#deepMerge(existingValue, value) as V;
+        this.set(key, mergedValue);
+      } else {
+        this.set(key, value as V);
+      }
+    } else {
+      this.set(key, value as V);
+    }
+    return this;
+  }
+
+  remove(key: K, paths: (keyof V | string)[] | string | keyof V): this {
+    if (!this.has(key)) {
+      return this;
+    }
+
+    const pathsArray = Array.isArray(paths) ? paths : [paths];
+
+    const value = this.get(key) as V;
+    if (typeof value !== "object" || value === null) {
+      return this;
+    }
+
+    const newValue = { ...value } as Record<string, unknown>;
+
+    for (const path of pathsArray) {
+      if (Object.prototype.hasOwnProperty.call(newValue, path)) {
+        delete newValue[path as string];
+      }
+    }
+
+    this.set(key, newValue as V);
+    return this;
+  }
+
   find(
     predicate: StorePredicate<K, V>,
     options?: SearchOptions,
@@ -539,5 +578,46 @@ export class Store<K, V> extends Map<K, V> {
   #syncArray(): void {
     this.#array = Array.from(this.values());
     this.#lastUpdate = Date.now();
+  }
+
+  #deepMerge(target: V, source: V | Partial<V>): V {
+    if (source === undefined) {
+      return target;
+    }
+
+    if (source === null) {
+      return source as V;
+    }
+
+    if (typeof source !== "object" || Array.isArray(source)) {
+      return source as V;
+    }
+
+    const merged = { ...target } as Record<string, unknown>;
+
+    for (const key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        const sourceValue = source[key as keyof typeof source];
+        const targetValue = target[key as keyof V];
+
+        if (
+          sourceValue &&
+          targetValue &&
+          typeof sourceValue === "object" &&
+          typeof targetValue === "object" &&
+          !Array.isArray(sourceValue) &&
+          !Array.isArray(targetValue)
+        ) {
+          merged[key] = this.#deepMerge(
+            targetValue as V,
+            sourceValue as Partial<V>,
+          );
+        } else if (sourceValue !== undefined) {
+          merged[key] = sourceValue;
+        }
+      }
+    }
+
+    return merged as V;
   }
 }

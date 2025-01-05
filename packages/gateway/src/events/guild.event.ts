@@ -1,188 +1,267 @@
-import type {
-  AuditLogEntryEntity,
-  AvatarDecorationDataEntity,
-  ChannelEntity,
-  EmojiEntity,
-  GuildEntity,
-  GuildMemberEntity,
-  GuildMemberFlags,
-  GuildScheduledEventEntity,
-  RoleEntity,
-  Snowflake,
-  SoundboardSoundEntity,
-  StageInstanceEntity,
-  StickerEntity,
-  UserEntity,
-  VoiceStateEntity,
+import {
+  AnyChannelSchema,
+  AnyThreadChannelSchema,
+  AuditLogEntrySchema,
+  AvatarDecorationDataSchema,
+  EmojiSchema,
+  GuildMemberSchema,
+  GuildScheduledEventSchema,
+  GuildSchema,
+  RoleSchema,
+  SnowflakeSchema,
+  SoundboardSoundSchema,
+  StageInstanceSchema,
+  StickerSchema,
+  UserSchema,
+  VoiceStateSchema,
 } from "@nyxjs/core";
-import type { UpdatePresenceEntity } from "./gateway.event.js";
-import type { PresenceEntity } from "./presence.event.js";
+import { z } from "zod";
+import { UpdatePresenceSchema } from "./gateway.event.js";
+import { PresenceSchema } from "./presence.event.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#soundboard-sounds-soundboard-sounds-event-fields}
  */
-export interface SoundboardSoundsEntity {
-  soundboard_sounds: SoundboardSoundEntity[];
-  guild_id: Snowflake;
-}
+export const SoundboardSoundsSchema = z
+  .object({
+    soundboard_sounds: z.array(SoundboardSoundSchema),
+    guild_id: SnowflakeSchema,
+  })
+  .strict();
+
+export type SoundboardSoundsEntity = z.infer<typeof SoundboardSoundsSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sounds-update-guild-soundboard-sounds-update-event-fields}
  */
-export type GuildSoundboardSoundsUpdateEntity = SoundboardSoundsEntity;
+export const GuildSoundboardSoundsUpdateSchema = SoundboardSoundsSchema;
+
+export type GuildSoundboardSoundsUpdateEntity = z.infer<
+  typeof GuildSoundboardSoundsUpdateSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sound-delete-guild-soundboard-sound-delete-event-fields}
  */
-export interface GuildSoundboardSoundDeleteEntity {
-  sound_id: Snowflake;
-  guild_id: Snowflake;
-}
+export const GuildSoundboardSoundDeleteSchema = z
+  .object({
+    sound_id: SnowflakeSchema,
+    guild_id: SnowflakeSchema,
+  })
+  .strict();
+
+export type GuildSoundboardSoundDeleteEntity = z.infer<
+  typeof GuildSoundboardSoundDeleteSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-user-remove-guild-scheduled-event-user-remove-event-fields}
  */
-export interface GuildScheduledEventUserRemoveEntity {
-  guild_scheduled_event_id: Snowflake;
-  user_id: Snowflake;
-  guild_id: Snowflake;
-}
+export const GuildScheduledEventUserRemoveSchema = z
+  .object({
+    guild_scheduled_event_id: SnowflakeSchema,
+    user_id: SnowflakeSchema,
+    guild_id: SnowflakeSchema,
+  })
+  .strict();
+
+export type GuildScheduledEventUserRemoveEntity = z.infer<
+  typeof GuildScheduledEventUserRemoveSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-user-add-guild-scheduled-event-user-add-event-fields}
  */
-export type GuildScheduledEventUserAddEntity =
-  GuildScheduledEventUserRemoveEntity;
+export const GuildScheduledEventUserAddSchema =
+  GuildScheduledEventUserRemoveSchema;
+
+export type GuildScheduledEventUserAddEntity = z.infer<
+  typeof GuildScheduledEventUserAddSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-delete-guild-role-delete-event-fields}
  */
-export interface GuildRoleDeleteEntity {
-  role_id: Snowflake;
-  guild_id: Snowflake;
-}
+export const GuildRoleDeleteSchema = z
+  .object({
+    role_id: SnowflakeSchema,
+    guild_id: SnowflakeSchema,
+  })
+  .strict();
+
+export type GuildRoleDeleteEntity = z.infer<typeof GuildRoleDeleteSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-update-guild-role-update-event-fields}
  */
-export interface GuildRoleUpdateEntity {
-  guild_id: Snowflake;
-  role: RoleEntity;
-}
+export const GuildRoleUpdateSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    role: RoleSchema,
+  })
+  .strict();
+
+export type GuildRoleUpdateEntity = z.infer<typeof GuildRoleUpdateSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-create-guild-role-create-event-fields}
  */
-export type GuildRoleCreateEntity = GuildRoleUpdateEntity;
+export const GuildRoleCreateSchema = GuildRoleUpdateSchema;
+
+export type GuildRoleCreateEntity = z.infer<typeof GuildRoleCreateSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-members-chunk-guild-members-chunk-event-fields}
  */
-export interface GuildMembersChunkEntity {
-  guild_id: Snowflake;
-  members: GuildMemberEntity[];
-  chunk_index: number;
-  chunk_count: number;
-  not_found?: Snowflake[];
-  presences?: PresenceEntity[];
-  nonce?: string;
-}
+export const GuildMembersChunkSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    members: z.array(GuildMemberSchema),
+    chunk_index: z.number(),
+    chunk_count: z.number(),
+    not_found: z.array(SnowflakeSchema).optional(),
+    presences: z.array(PresenceSchema).optional(),
+    nonce: z.string().optional(),
+  })
+  .strict();
+
+export type GuildMembersChunkEntity = z.infer<typeof GuildMembersChunkSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-update-guild-member-update-event-fields}
  */
-export interface GuildMemberUpdateEntity {
-  guild_id: Snowflake;
-  roles: Snowflake[];
-  user: UserEntity;
-  nick?: string | null;
-  avatar: string | null;
-  banner: string | null;
-  joined_at: string | null;
-  premium_since?: string | null;
-  deaf?: boolean;
-  mute?: boolean;
-  pending?: boolean;
-  communication_disabled_until?: string | null;
-  flags?: GuildMemberFlags;
-  avatar_decoration_data?: AvatarDecorationDataEntity | null;
-}
+export const GuildMemberUpdateSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    roles: z.array(SnowflakeSchema),
+    user: UserSchema,
+    nick: z.string().nullish(),
+    avatar: z.string().nullable(),
+    banner: z.string().nullable(),
+    joined_at: z.string().nullable(),
+    premium_since: z.string().nullish(),
+    deaf: z.boolean().optional(),
+    mute: z.boolean().optional(),
+    pending: z.boolean().optional(),
+    communication_disabled_until: z.string().nullish(),
+    flags: z.number().optional(),
+    avatar_decoration_data: AvatarDecorationDataSchema.nullish(),
+  })
+  .strict();
+
+export type GuildMemberUpdateEntity = z.infer<typeof GuildMemberUpdateSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-remove-guild-member-remove-event-fields}
  */
-export interface GuildMemberRemoveEntity {
-  guild_id: Snowflake;
-  user: UserEntity;
-}
+export const GuildMemberRemoveSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    user: UserSchema,
+  })
+  .strict();
+
+export type GuildMemberRemoveEntity = z.infer<typeof GuildMemberRemoveSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-add-guild-member-add-extra-fields}
  */
-export interface GuildMemberAddEntity extends GuildMemberEntity {
-  guild_id: Snowflake;
-}
+export const GuildMemberAddSchema = GuildMemberSchema.extend({
+  guild_id: SnowflakeSchema,
+}).strict();
+
+export type GuildMemberAddEntity = z.infer<typeof GuildMemberAddSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-integrations-update-guild-integrations-update-event-fields}
  */
-export interface GuildIntegrationsUpdateEntity {
-  guild_id: Snowflake;
-}
+export const GuildIntegrationsUpdateSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+  })
+  .strict();
+
+export type GuildIntegrationsUpdateEntity = z.infer<
+  typeof GuildIntegrationsUpdateSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-stickers-update-guild-stickers-update-event-fields}
  */
-export interface GuildStickersUpdateEntity {
-  guild_id: Snowflake;
-  stickers: StickerEntity[];
-}
+export const GuildStickersUpdateSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    stickers: z.array(StickerSchema),
+  })
+  .strict();
+
+export type GuildStickersUpdateEntity = z.infer<
+  typeof GuildStickersUpdateSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-emojis-update-guild-emojis-update-event-fields}
  */
-export interface GuildEmojisUpdateEntity {
-  guild_id: Snowflake;
-  emojis: EmojiEntity[];
-}
+export const GuildEmojisUpdateSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    emojis: z.array(EmojiSchema),
+  })
+  .strict();
+
+export type GuildEmojisUpdateEntity = z.infer<typeof GuildEmojisUpdateSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-ban-remove-guild-ban-remove-event-fields}
  */
-export interface GuildBanRemoveEntity {
-  guild_id: Snowflake;
-  user: UserEntity;
-}
+export const GuildBanRemoveSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    user: UserSchema,
+  })
+  .strict();
+
+export type GuildBanRemoveEntity = z.infer<typeof GuildBanRemoveSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-ban-add-guild-ban-add-event-fields}
  */
-export interface GuildBanAddEntity {
-  guild_id: Snowflake;
-  user: UserEntity;
-}
+export const GuildBanAddSchema = z
+  .object({
+    guild_id: SnowflakeSchema,
+    user: UserSchema,
+  })
+  .strict();
+
+export type GuildBanAddEntity = z.infer<typeof GuildBanAddSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-audit-log-entry-create-guild-audit-log-entry-create-event-extra-fields}
  */
-export interface GuildAuditLogEntryCreateEntity extends AuditLogEntryEntity {
-  guild_id: Snowflake;
-}
+export const GuildAuditLogEntryCreateSchema = AuditLogEntrySchema.extend({
+  guild_id: SnowflakeSchema,
+}).strict();
+
+export type GuildAuditLogEntryCreateEntity = z.infer<
+  typeof GuildAuditLogEntryCreateSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-create-guild-create-extra-fields}
  */
-export interface GuildCreateEntity extends GuildEntity {
-  joined_at: string;
-  large: boolean;
-  unavailable?: boolean;
-  member_count: number;
-  voice_states: Partial<VoiceStateEntity>[];
-  members: GuildMemberEntity[];
-  channels: ChannelEntity[];
-  threads: ChannelEntity[];
-  presences: Partial<UpdatePresenceEntity>[];
-  stage_instances: StageInstanceEntity[];
-  guild_scheduled_events: GuildScheduledEventEntity[];
-  soundboard_sounds: SoundboardSoundEntity[];
-}
+export const GuildCreateSchema = GuildSchema.extend({
+  joined_at: z.string(),
+  large: z.boolean(),
+  unavailable: z.boolean().optional(),
+  member_count: z.number(),
+  voice_states: z.array(VoiceStateSchema.partial()),
+  members: z.array(GuildMemberSchema),
+  channels: z.array(AnyChannelSchema),
+  threads: z.array(AnyThreadChannelSchema),
+  presences: z.array(UpdatePresenceSchema.partial()),
+  stage_instances: z.array(StageInstanceSchema),
+  guild_scheduled_events: z.array(GuildScheduledEventSchema),
+  soundboard_sounds: z.array(SoundboardSoundSchema),
+}).strict();
+
+export type GuildCreateEntity = z.infer<typeof GuildCreateSchema>;
