@@ -10,7 +10,7 @@ export const EmojiSchema = z
     id: SnowflakeSchema.nullable(),
     name: z.string().nullable(),
     roles: z.array(SnowflakeSchema).optional(),
-    user: UserSchema.optional(),
+    user: z.lazy(() => UserSchema).optional(),
     require_colons: z.boolean().optional(),
     managed: z.boolean().optional(),
     animated: z.boolean().optional(),

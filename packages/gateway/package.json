@@ -54,6 +54,7 @@
     "erlpack": "^0.1.4",
     "eventemitter3": "^5.0.1",
     "fzstd": "^0.1.1",
+    "type-fest": "^4.31.0",
     "utf-8-validate": "^6.0.5",
     "ws": "^8.18.0",
     "zlib-sync": "^0.1.9"

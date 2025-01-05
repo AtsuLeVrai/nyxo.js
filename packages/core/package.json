@@ -47,6 +47,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "type-fest": "^4.31.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

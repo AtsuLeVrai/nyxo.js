@@ -1,5 +1,5 @@
 import type { SkuEntity, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import type { Rest } from "../rest.js";
 
 export class SkuRouter {
   static readonly ROUTES = {

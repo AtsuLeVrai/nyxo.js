@@ -191,7 +191,9 @@ export const ApplicationCommandSchema = z
     integration_types: z
       .array(z.nativeEnum(ApplicationIntegrationType))
       .optional(),
-    contexts: z.array(z.nativeEnum(InteractionContextType)).nullish(),
+    contexts: z
+      .array(z.lazy(() => z.nativeEnum(InteractionContextType)))
+      .nullish(),
     version: SnowflakeSchema,
     handler: z.nativeEnum(ApplicationCommandEntryPointType).optional(),
   })

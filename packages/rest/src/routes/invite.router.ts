@@ -1,5 +1,5 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import type { Rest } from "../rest.js";
 import {
   type GetInviteQueryEntity,
   GetInviteQuerySchema,

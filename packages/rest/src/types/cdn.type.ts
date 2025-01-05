@@ -1,29 +1,5 @@
 import type { Snowflake } from "@nyxjs/core";
-
-export const IMAGE_FORMAT = {
-  jpeg: "jpg",
-  jpg: "jpg",
-  png: "png",
-  webp: "webp",
-  gif: "gif",
-  lottie: "json",
-} as const;
-
-export type ImageFormat = (typeof IMAGE_FORMAT)[keyof typeof IMAGE_FORMAT];
-
-export const IMAGE_SIZE = {
-  size16: 16,
-  size32: 32,
-  size64: 64,
-  size128: 128,
-  size256: 256,
-  size512: 512,
-  size1024: 1024,
-  size2048: 2048,
-  size4096: 4096,
-} as const;
-
-export type ImageSize = (typeof IMAGE_SIZE)[keyof typeof IMAGE_SIZE];
+import type { ImageFormat, ImageSize } from "../constants/index.js";
 
 export interface BaseImageOptionsEntity {
   format?: ImageFormat;
@@ -42,7 +18,9 @@ export interface SignedAttachmentParametersEntity {
 
 export interface AttachmentOptionsEntity extends BaseImageOptionsEntity {
   signedParameters?: SignedAttachmentParametersEntity;
-  signed?: boolean;
+  signed?: {
+    signingKey: string;
+  };
 }
 
 export interface StickerFormatOptionsEntity {
@@ -152,4 +130,13 @@ export interface CdnEntity {
   getDefaultAvatarIndex: (discriminator: number | string) => number;
   getNewSystemAvatarIndex: (userId: Snowflake) => number;
   getNearestValidSize: (size: number) => ImageSize;
+  signUrl: (url: string, signingKey: string) => string;
+  createSignedParameters: (
+    path: string,
+    signingKey: string,
+    expiryTimestamp: number,
+    issuedTimestamp: number,
+  ) => SignedAttachmentParametersEntity;
+  verifySignedUrl: (url: string, signingKey: string) => boolean;
+  refreshSignedUrl: (url: string, signingKey: string) => string;
 }

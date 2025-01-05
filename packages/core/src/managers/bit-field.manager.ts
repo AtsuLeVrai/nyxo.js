@@ -7,10 +7,11 @@ export type BitFieldResolvable<T> =
 
 export class BitFieldManager<T> {
   static readonly BIGINT_REGEX = /^-?\d+$/;
+  static readonly BINARY_REGEX = /^[01]+$/;
   static readonly MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
   static readonly DEFAULT_RADIX = 16;
 
-  readonly #bitfield: bigint;
+  #bitfield: bigint;
   readonly #frozen: boolean;
 
   constructor(value: BitFieldResolvable<T> = 0n, frozen = false) {
@@ -22,11 +23,12 @@ export class BitFieldManager<T> {
     return new BitFieldManager(value);
   }
 
-  static fromBinary(binary: string): BitFieldManager<unknown> {
-    if (!/^[01]+$/.test(binary)) {
+  static fromBinary<F>(binary: string): BitFieldManager<F> {
+    if (!BitFieldManager.BINARY_REGEX.test(binary)) {
       throw new Error("Invalid binary string");
     }
-    return new BitFieldManager(BigInt(`0b${binary}`));
+
+    return new BitFieldManager<F>(BigInt(`0b${binary}`));
   }
 
   static isValid(value: unknown): value is bigint {
@@ -56,6 +58,23 @@ export class BitFieldManager<T> {
         ~0n,
       ),
     );
+  }
+
+  static xor<F>(...bitfields: BitFieldResolvable<F>[]): BitFieldManager<F> {
+    return new BitFieldManager<F>(
+      bitfields.reduce<bigint>(
+        (acc, bf) => acc ^ new BitFieldManager(bf).valueOf(),
+        0n,
+      ),
+    );
+  }
+
+  static deserialize<F>(value: string): BitFieldManager<F> {
+    try {
+      return new BitFieldManager<F>(BigInt(value));
+    } catch {
+      throw new Error("Invalid serialized BitField");
+    }
   }
 
   has(val: T): boolean {
@@ -147,7 +166,7 @@ export class BitFieldManager<T> {
 
   toJson(): { bitfield: string; flags: string[] } {
     return {
-      bitfield: this.#bitfield.toString(),
+      bitfield: this.serialize(),
       flags: this.toArray().map((bit) => bit.toString()),
     };
   }
@@ -172,14 +191,23 @@ export class BitFieldManager<T> {
     return this.#bitfield.toString(2);
   }
 
+  toNumber(): number {
+    return Number(this.#bitfield);
+  }
+
   valueOf(): bigint {
     return this.#bitfield;
   }
 
   rotateLeft(n: number): BitFieldManager<T> {
+    if (!Number.isInteger(n)) {
+      throw new TypeError("Rotation amount must be an integer");
+    }
+
     if (n < 0) {
       return this.rotateRight(-n);
     }
+
     const bits = BigInt(n);
     const newValue =
       (this.#bitfield << bits) | (this.#bitfield >> (64n - bits));
@@ -214,15 +242,36 @@ export class BitFieldManager<T> {
     if (this.#bitfield === 0n) {
       return 64;
     }
-    let count = 0;
-    let value = this.#bitfield;
 
-    while ((value & 1n) === 0n) {
-      value >>= 1n;
-      count++;
+    return Number((this.#bitfield & -this.#bitfield).toString(2).length - 1);
+  }
+
+  getMostSignificantBit(): bigint {
+    if (this.#bitfield === 0n) {
+      return 0n;
     }
 
-    return count;
+    return 1n << BigInt(64 - this.leadingZeros() - 1);
+  }
+
+  bitLength(): number {
+    return 64 - this.leadingZeros();
+  }
+
+  isBitSet(position: number): position is number {
+    if (!Number.isInteger(position) || position < 0 || position >= 64) {
+      throw new RangeError("Bit position must be between 0 and 63");
+    }
+
+    return (this.#bitfield & (1n << BigInt(position))) !== 0n;
+  }
+
+  serialize(): string {
+    return this.#bitfield.toString();
+  }
+
+  *[Symbol.iterator](): Iterator<bigint> {
+    yield* this.toArray();
   }
 
   #resolve(value: BitFieldResolvable<T> | BitFieldResolvable<T>[]): bigint {
@@ -284,11 +333,7 @@ export class BitFieldManager<T> {
   }
 
   #setBitfield(value: bigint): void {
-    Object.defineProperty(this, "#bitfield", {
-      value: this.#validateBigInt(value),
-      writable: true,
-      configurable: false,
-    });
+    this.#bitfield = this.#validateBigInt(value);
   }
 
   #ensureUnfrozen(): void {

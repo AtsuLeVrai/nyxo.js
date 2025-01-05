@@ -189,7 +189,7 @@ export const ChannelSchema = z
     bitrate: z.number().int().optional(),
     user_limit: z.number().int().optional(),
     rate_limit_per_user: z.number().int().optional(),
-    recipients: z.array(UserSchema).optional(),
+    recipients: z.array(z.lazy(() => UserSchema)).optional(),
     icon: z.string().nullish(),
     owner_id: SnowflakeSchema.optional(),
     application_id: SnowflakeSchema.optional(),
@@ -212,8 +212,8 @@ export const ChannelSchema = z
       .optional(),
     permissions: z.string().optional(),
     flags: z
-      .array(z.nativeEnum(ChannelFlags))
-      .transform((flags) => BitFieldManager.combine(flags)),
+      .nativeEnum(ChannelFlags)
+      .transform((value) => new BitFieldManager<ChannelFlags>(value)),
     total_message_sent: z.number().int().optional(),
     available_tags: z.array(ForumTagSchema).optional(),
     applied_tags: z.array(SnowflakeSchema).optional(),
@@ -254,7 +254,7 @@ export type GuildTextChannelEntity = z.infer<typeof GuildTextChannelSchema>;
  */
 export const DmChannelSchema = ChannelSchema.extend({
   type: z.literal(ChannelType.dm),
-  recipients: z.array(UserSchema),
+  recipients: z.array(z.lazy(() => UserSchema)),
 })
   .strict()
   .omit({
@@ -311,7 +311,7 @@ export type GuildVoiceChannelEntity = z.infer<typeof GuildVoiceChannelSchema>;
  */
 export const GroupDmChannelSchema = ChannelSchema.extend({
   type: z.literal(ChannelType.groupDm),
-  recipients: z.array(UserSchema),
+  recipients: z.array(z.lazy(() => UserSchema)),
   owner_id: SnowflakeSchema,
 })
   .strict()

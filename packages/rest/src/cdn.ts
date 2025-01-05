@@ -1,24 +1,18 @@
+import { createHmac } from "node:crypto";
 import { type Snowflake, SnowflakeManager } from "@nyxjs/core";
-import { SignedUrlManager } from "../managers/index.js";
-import {
-  type AnimatedImageOptionsEntity,
-  type AttachmentOptionsEntity,
-  type BaseImageOptionsEntity,
-  type CdnEntity,
-  IMAGE_FORMAT,
-  IMAGE_SIZE,
-  type ImageFormat,
-  type ImageSize,
-  type StickerFormatOptionsEntity,
-} from "../types/index.js";
-import { Rest } from "./rest.js";
+import { HttpConstants, ImageFormat, ImageSize } from "./constants/index.js";
+import type {
+  AnimatedImageOptionsEntity,
+  AttachmentOptionsEntity,
+  BaseImageOptionsEntity,
+  CdnEntity,
+  SignedAttachmentParametersEntity,
+  StickerFormatOptionsEntity,
+} from "./types/index.js";
 
 const DEFAULT_FORMAT: ImageFormat = "png";
-const VALID_FORMATS: Set<string> = new Set(Object.values(IMAGE_FORMAT));
-const VALID_SIZES: Set<number> = new Set(Object.values(IMAGE_SIZE));
-const signedUrlManager = new SignedUrlManager(
-  process.env.DISCORD_SIGNING_KEY ?? "",
-);
+const VALID_FORMATS: Set<string> = new Set(Object.values(ImageFormat));
+const VALID_SIZES: Set<number> = new Set(Object.values(ImageSize));
 
 function validateId(id: Snowflake | number, name = "ID"): string {
   const stringId = id.toString();
@@ -57,7 +51,7 @@ function isAnimated(hash: string): boolean {
 function buildUrl(
   parts: string[],
   options?: BaseImageOptionsEntity,
-  baseUrl: string = Rest.CDN_URL,
+  baseUrl: string = HttpConstants.urls.cdn,
 ): string {
   if (options) {
     validateSize(options.size);
@@ -84,6 +78,20 @@ function getExtension(
   return options?.format ?? DEFAULT_FORMAT;
 }
 
+function extractSignedParameters(
+  url: URL,
+): SignedAttachmentParametersEntity | null {
+  const ex = url.searchParams.get("ex");
+  const is = url.searchParams.get("is");
+  const hm = url.searchParams.get("hm");
+
+  if (!(ex && is && hm)) {
+    return null;
+  }
+
+  return { ex, is, hm };
+}
+
 export const Cdn: CdnEntity = {
   attachment(
     channelId: Snowflake | number,
@@ -95,7 +103,7 @@ export const Cdn: CdnEntity = {
     const aId = validateId(attachmentId, "Attachment ID");
 
     const path = ["attachments", cId, aId, encodeURIComponent(filename)];
-    const url = new URL(path.join("/"), Rest.CDN_URL);
+    const url = new URL(path.join("/"), HttpConstants.urls.cdn);
 
     // biome-ignore lint/style/useExplicitLengthCheck: This is a valid check
     if (options?.size && options?.size > 0) {
@@ -104,7 +112,7 @@ export const Cdn: CdnEntity = {
     }
 
     if (options?.signed) {
-      return signedUrlManager.signUrl(url.toString());
+      return Cdn.signUrl(url.toString(), options.signed.signingKey);
     }
 
     return url.toString();
@@ -357,7 +365,11 @@ export const Cdn: CdnEntity = {
     const format = options?.format || "png";
 
     if (format === "gif" && options?.useMediaUrl) {
-      return buildUrl(["stickers", `${id}.gif`], undefined, Rest.MEDIA_URL);
+      return buildUrl(
+        ["stickers", `${id}.gif`],
+        undefined,
+        HttpConstants.urls.media,
+      );
     }
 
     if (format === "json") {
@@ -391,5 +403,78 @@ export const Cdn: CdnEntity = {
       ["role-icons", id, `${hash}.${options?.format || DEFAULT_FORMAT}`],
       options,
     );
+  },
+
+  signUrl(url: string, signingKey: string): string {
+    const parsedUrl = new URL(url);
+    const path = parsedUrl.pathname;
+
+    const now = Math.floor(Date.now() / 1000);
+    const expiry = now + 300;
+
+    const params = Cdn.createSignedParameters(path, signingKey, expiry, now);
+
+    parsedUrl.searchParams.set("ex", params.ex);
+    parsedUrl.searchParams.set("is", params.is);
+    parsedUrl.searchParams.set("hm", params.hm);
+
+    return parsedUrl.toString();
+  },
+
+  createSignedParameters(
+    path: string,
+    signingKey: string,
+    expiryTimestamp: number,
+    issuedTimestamp: number,
+  ): SignedAttachmentParametersEntity {
+    const ex = expiryTimestamp.toString(16);
+    const is = issuedTimestamp.toString(16);
+
+    const message = `${path}?ex=${ex}&is=${is}`;
+    const hmac = createHmac("sha256", signingKey).update(message).digest("hex");
+
+    return {
+      ex,
+      is,
+      hm: hmac,
+    };
+  },
+
+  verifySignedUrl(url: string, signingKey: string): boolean {
+    try {
+      const parsedUrl = new URL(url);
+      const params = extractSignedParameters(parsedUrl);
+
+      if (!params) {
+        return false;
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      const expiry = Number.parseInt(params.ex, 16);
+      if (now > expiry) {
+        return false;
+      }
+
+      const expectedParams = Cdn.createSignedParameters(
+        parsedUrl.pathname,
+        signingKey,
+        expiry,
+        Number.parseInt(params.is, 16),
+      );
+
+      return params.hm === expectedParams.hm;
+    } catch {
+      return false;
+    }
+  },
+
+  refreshSignedUrl(url: string, signingKey: string): string {
+    const parsedUrl = new URL(url);
+
+    parsedUrl.searchParams.delete("ex");
+    parsedUrl.searchParams.delete("is");
+    parsedUrl.searchParams.delete("hm");
+
+    return this.signUrl(parsedUrl.toString(), signingKey);
   },
 };

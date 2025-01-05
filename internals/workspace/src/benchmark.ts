@@ -196,7 +196,7 @@ export class BenchmarkManager extends EventEmitter {
         pid: process.pid,
         uptime: Math.round(process.uptime() * 100) / 100,
         version: process.version,
-        env: process.env.NODE_ENV || "development",
+        env: process.env.NODE_ENV ?? "development",
         title: process.title,
         memoryUsage: process.memoryUsage(),
       },

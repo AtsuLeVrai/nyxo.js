@@ -3,7 +3,7 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import type { Rest } from "../rest.js";
 import {
   type ModifyCurrentUserVoiceStateEntity,
   ModifyCurrentUserVoiceStateSchema,

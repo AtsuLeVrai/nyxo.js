@@ -1,5 +1,5 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import type { Rest } from "../rest.js";
 import {
   type CreateGuildSoundboardSoundEntity,
   CreateGuildSoundboardSoundSchema,

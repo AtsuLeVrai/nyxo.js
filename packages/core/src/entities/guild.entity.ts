@@ -40,7 +40,7 @@ export const GuildOnboardingPromptOptionSchema = z
     id: SnowflakeSchema,
     channel_ids: z.array(SnowflakeSchema),
     role_ids: z.array(SnowflakeSchema),
-    emoji: EmojiSchema.optional(),
+    emoji: z.lazy(() => EmojiSchema).optional(),
     emoji_id: SnowflakeSchema.optional(),
     emoji_name: z.string().optional(),
     emoji_animated: z.boolean().optional(),
@@ -121,7 +121,7 @@ export type WelcomeScreenEntity = z.infer<typeof WelcomeScreenSchema>;
 export const BanSchema = z
   .object({
     reason: z.string().nullable(),
-    user: UserSchema,
+    user: z.lazy(() => UserSchema),
   })
   .strict();
 
@@ -136,7 +136,7 @@ export const IntegrationApplicationSchema = z
     name: z.string(),
     icon: z.string().nullable(),
     description: z.string(),
-    bot: UserSchema.optional(),
+    bot: z.lazy(() => UserSchema).optional(),
   })
   .strict();
 
@@ -186,7 +186,7 @@ export const IntegrationSchema = z
     enable_emoticons: z.boolean().optional(),
     expire_behavior: z.nativeEnum(IntegrationExpirationBehavior).optional(),
     expire_grace_period: z.number().int().optional(),
-    user: UserSchema.optional(),
+    user: z.lazy(() => UserSchema).optional(),
     account: IntegrationAccountSchema,
     synced_at: z.string().datetime().optional(),
     subscriber_count: z.number().int().optional(),
@@ -221,7 +221,7 @@ export type GuildMemberFlags =
  */
 export const GuildMemberSchema = z
   .object({
-    user: UserSchema,
+    user: z.lazy(() => UserSchema),
     nick: z.string().nullish(),
     avatar: z.string().nullish(),
     banner: z.string().nullish(),
@@ -234,7 +234,7 @@ export const GuildMemberSchema = z
     pending: z.boolean().optional(),
     permissions: z.string().optional(),
     communication_disabled_until: z.string().datetime().nullish(),
-    avatar_decoration_data: AvatarDecorationDataSchema.nullish(),
+    avatar_decoration_data: z.lazy(() => AvatarDecorationDataSchema).nullish(),
   })
   .strict();
 
@@ -268,7 +268,7 @@ export const GuildWidgetSchema = z
         z.lazy(() => GuildStageVoiceChannelSchema.partial()),
       ]),
     ),
-    members: z.array(UserSchema),
+    members: z.array(z.lazy(() => UserSchema)),
     presence_count: z.number().int(),
   })
   .strict();
@@ -323,12 +323,12 @@ export const GuildPreviewSchema = z
     icon: z.string().nullable(),
     splash: z.string().nullable(),
     discovery_splash: z.string().nullable(),
-    emojis: z.array(EmojiSchema),
+    emojis: z.array(z.lazy(() => EmojiSchema)),
     features: z.array(z.nativeEnum(GuildFeature)),
     approximate_member_count: z.number().int(),
     approximate_presence_count: z.number().int(),
     description: z.string().nullable(),
-    stickers: z.array(StickerSchema),
+    stickers: z.array(z.lazy(() => StickerSchema)),
   })
   .strict();
 
@@ -458,7 +458,7 @@ export const GuildSchema = z
     ),
     explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel),
     roles: z.array(RoleSchema),
-    emojis: z.array(EmojiSchema),
+    emojis: z.array(z.lazy(() => EmojiSchema)),
     features: z.array(z.nativeEnum(GuildFeature)),
     mfa_level: z.nativeEnum(MfaLevel),
     application_id: SnowflakeSchema.optional(),
@@ -480,7 +480,7 @@ export const GuildSchema = z
     approximate_presence_count: z.number().int().optional(),
     welcome_screen: WelcomeScreenSchema.optional(),
     nsfw_level: z.nativeEnum(NsfwLevel),
-    stickers: z.array(StickerSchema).optional(),
+    stickers: z.array(z.lazy(() => StickerSchema)).optional(),
     premium_progress_bar_enabled: z.boolean(),
     safety_alerts_channel_id: SnowflakeSchema.nullable(),
   })

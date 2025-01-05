@@ -4,7 +4,7 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import type { Rest } from "../core/index.js";
+import type { Rest } from "../rest.js";
 import {
   type CreateGlobalApplicationCommandEntity,
   CreateGlobalApplicationCommandSchema,

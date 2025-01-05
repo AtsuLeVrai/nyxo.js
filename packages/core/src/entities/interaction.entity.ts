@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BitwisePermissionFlags, LocaleKeySchema } from "../enums/index.js";
-import { SnowflakeSchema } from "../managers/index.js";
+import { BitFieldManager, SnowflakeSchema } from "../managers/index.js";
 import {
   ApplicationCommandOptionSchema,
   ApplicationCommandOptionType,
@@ -78,7 +78,7 @@ export const InteractionCallbackResourceSchema = z
   .object({
     type: z.nativeEnum(InteractionCallbackType),
     activity_instance: InteractionCallbackActivityInstanceSchema.optional(),
-    message: MessageSchema.optional(),
+    message: z.lazy(() => MessageSchema).optional(),
   })
   .strict();
 
@@ -139,11 +139,23 @@ export const InteractionCallbackMessagesSchema = z
   .object({
     tts: z.boolean().optional(),
     content: z.string().optional(),
-    embeds: z.array(EmbedSchema).max(10).optional(),
-    allowed_mentions: AllowedMentionsSchema.optional(),
-    flags: z.nativeEnum(MessageFlags).optional(),
+    embeds: z
+      .array(z.lazy(() => EmbedSchema))
+      .max(10)
+      .optional(),
+    allowed_mentions: z.lazy(() => AllowedMentionsSchema).optional(),
+    flags: z
+      .lazy(() =>
+        z.union([
+          z.literal(MessageFlags.suppressEmbeds),
+          z.literal(MessageFlags.ephemeral),
+          z.literal(MessageFlags.suppressNotifications),
+        ]),
+      )
+      .transform((value) => new BitFieldManager<MessageFlags>(value))
+      .optional(),
     components: z.array(ActionRowSchema).optional(),
-    attachments: AttachmentSchema.optional(),
+    attachments: z.lazy(() => AttachmentSchema).optional(),
     poll: PollCreateRequestSchema.optional(),
   })
   .strict()
@@ -272,8 +284,18 @@ export const InteractionResolvedDataSchema = z
         }),
       )
       .optional(),
-    messages: z.map(SnowflakeSchema, MessageSchema.partial()).optional(),
-    attachments: z.map(SnowflakeSchema, AttachmentSchema).optional(),
+    messages: z
+      .map(
+        SnowflakeSchema,
+        z.lazy(() => MessageSchema.partial()),
+      )
+      .optional(),
+    attachments: z
+      .map(
+        SnowflakeSchema,
+        z.lazy(() => AttachmentSchema),
+      )
+      .optional(),
   })
   .strict();
 
@@ -392,7 +414,7 @@ export const InteractionSchema = z
     user: UserSchema.optional(),
     token: z.string(),
     version: z.literal(1),
-    message: MessageSchema.optional(),
+    message: z.lazy(() => MessageSchema).optional(),
     app_permissions: z.nativeEnum(BitwisePermissionFlags),
     locale: LocaleKeySchema.optional(),
     guild_locale: LocaleKeySchema.optional(),

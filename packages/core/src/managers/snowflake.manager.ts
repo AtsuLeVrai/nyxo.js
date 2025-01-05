@@ -34,6 +34,11 @@ export class SnowflakeManager {
   static readonly MAX_INCREMENT = 4095;
   static readonly MAX_PROCESS_ID = 31;
   static readonly MAX_WORKER_ID = 31;
+  static readonly MAX_SNOWFLAKE = 2n ** 64n - 1n;
+  static readonly TIMESTAMP_SHIFT = 22n;
+  static readonly WORKER_BITS = 0x3e0000n;
+  static readonly PROCESS_BITS = 0x1f000n;
+  static readonly INCREMENT_BITS = 0xfffn;
 
   readonly #id: Snowflake;
   readonly #epoch: number;
@@ -41,6 +46,13 @@ export class SnowflakeManager {
   constructor(snowflake: SnowflakeResolvable, options: SnowflakeOptions = {}) {
     this.#epoch = options.epoch ?? SnowflakeManager.DISCORD_EPOCH;
     this.#id = this.#resolveId(snowflake, options);
+  }
+
+  static from(
+    snowflake: SnowflakeResolvable,
+    options: SnowflakeOptions = {},
+  ): SnowflakeManager {
+    return new SnowflakeManager(snowflake, options);
   }
 
   static fromTimestamp(
@@ -51,84 +63,40 @@ export class SnowflakeManager {
     return new SnowflakeManager(time, options);
   }
 
-  static toSnowflake(value: string): Snowflake {
-    if (!SnowflakeManager.SNOWFLAKE_REGEX.test(value)) {
-      throw new Error("Invalid Snowflake format: Must be 17-19 digits");
-    }
-
-    try {
-      const timestamp =
-        Number(BigInt(value) >> 22n) + SnowflakeManager.DISCORD_EPOCH;
-      if (
-        timestamp < SnowflakeManager.DISCORD_EPOCH ||
-        timestamp > Date.now()
-      ) {
-        throw new Error("Invalid Snowflake: Timestamp out of valid range");
-      }
-      return value as Snowflake;
-    } catch (_error) {
-      throw new Error("Invalid Snowflake: Failed to parse value");
-    }
-  }
-
-  static toSnowflakeSafe(value: string): Snowflake | null {
-    try {
-      return SnowflakeManager.toSnowflake(value);
-    } catch {
-      return null;
-    }
-  }
-
   static isValid(
     snowflake: string,
     epoch: number = SnowflakeManager.DISCORD_EPOCH,
   ): snowflake is Snowflake {
-    try {
-      if (!SnowflakeManager.SNOWFLAKE_REGEX.test(snowflake)) {
-        return false;
-      }
-      const timestamp = Number(BigInt(snowflake) >> 22n) + epoch;
-      return timestamp >= epoch && timestamp <= Date.now();
-    } catch {
-      return false;
-    }
+    return SnowflakeManager.#validateSnowflake(snowflake, epoch);
   }
 
   static resolve(
     resolvable: SnowflakeResolvable,
     options: SnowflakeOptions = {},
   ): Snowflake {
-    if (resolvable instanceof SnowflakeManager) {
-      return resolvable.toString();
-    }
+    return new SnowflakeManager(resolvable, options).toString();
+  }
 
-    if (resolvable instanceof Date) {
-      return new SnowflakeManager(resolvable.getTime(), options).toString();
-    }
-
-    if (typeof resolvable === "bigint") {
-      const snowflake = resolvable.toString();
-      if (SnowflakeManager.isValid(snowflake)) {
-        return SnowflakeManager.toSnowflake(snowflake);
+  static #validateSnowflake(
+    value: string,
+    epoch: number = SnowflakeManager.DISCORD_EPOCH,
+  ): boolean {
+    try {
+      if (!SnowflakeManager.SNOWFLAKE_REGEX.test(value)) {
+        return false;
       }
-      throw new Error("Invalid bigint value for Snowflake");
-    }
 
-    if (typeof resolvable === "number") {
-      if (resolvable < 0 || !Number.isInteger(resolvable)) {
-        throw new Error("Invalid timestamp value");
+      const snowflakeValue = BigInt(value);
+      if (snowflakeValue > SnowflakeManager.MAX_SNOWFLAKE) {
+        return false;
       }
-      return new SnowflakeManager(resolvable, options).toString();
-    }
 
-    if (
-      typeof resolvable === "string" &&
-      SnowflakeManager.isValid(resolvable)
-    ) {
-      return SnowflakeManager.toSnowflake(resolvable);
+      const timestamp =
+        Number(snowflakeValue >> SnowflakeManager.TIMESTAMP_SHIFT) + epoch;
+      return timestamp >= epoch && timestamp <= Date.now();
+    } catch {
+      return false;
     }
-
-    throw new Error("Invalid Snowflake value");
   }
 
   toString(): Snowflake {
@@ -144,19 +112,21 @@ export class SnowflakeManager {
   }
 
   getTimestamp(): number {
-    return Number(this.toBigInt() >> 22n) + this.#epoch;
+    return (
+      Number(this.toBigInt() >> SnowflakeManager.TIMESTAMP_SHIFT) + this.#epoch
+    );
   }
 
   getWorkerId(): number {
-    return Number((this.toBigInt() & 0x3e0000n) >> 17n);
+    return Number((this.toBigInt() & SnowflakeManager.WORKER_BITS) >> 17n);
   }
 
   getProcessId(): number {
-    return Number((this.toBigInt() & 0x1f000n) >> 12n);
+    return Number((this.toBigInt() & SnowflakeManager.PROCESS_BITS) >> 12n);
   }
 
   getIncrement(): number {
-    return Number(this.toBigInt() & 0xfffn);
+    return Number(this.toBigInt() & SnowflakeManager.INCREMENT_BITS);
   }
 
   deconstruct(): SnowflakeEntity {
@@ -172,9 +142,11 @@ export class SnowflakeManager {
   compare(other: SnowflakeResolvable): number {
     const thisId = this.toBigInt();
     const otherId = new SnowflakeManager(other).toBigInt();
+
     if (thisId === otherId) {
       return 0;
     }
+
     return thisId > otherId ? 1 : -1;
   }
 
@@ -203,7 +175,20 @@ export class SnowflakeManager {
     }
 
     if (typeof snowflake === "bigint") {
-      return snowflake.toString() as Snowflake;
+      const stringValue = snowflake.toString();
+      if (!SnowflakeManager.isValid(stringValue, this.#epoch)) {
+        throw new Error("Invalid bigint snowflake value");
+      }
+
+      return stringValue as Snowflake;
+    }
+
+    if (typeof snowflake === "number") {
+      if (snowflake < 0 || !Number.isInteger(snowflake)) {
+        throw new Error("Invalid timestamp value");
+      }
+
+      return this.#generate(snowflake, options);
     }
 
     const stringValue = String(snowflake);
@@ -218,6 +203,10 @@ export class SnowflakeManager {
     timestamp: number = Date.now(),
     options: SnowflakeOptions = {},
   ): Snowflake {
+    if (timestamp < this.#epoch) {
+      throw new Error("Timestamp cannot be before epoch");
+    }
+
     const { workerId = 0, processId = 0, increment = 0 } = options;
     this.#validateComponents(workerId, processId, increment);
 
@@ -239,19 +228,31 @@ export class SnowflakeManager {
     processId: number,
     increment: number,
   ): void {
-    if (workerId < 0 || workerId > SnowflakeManager.MAX_WORKER_ID) {
+    if (
+      !Number.isInteger(workerId) ||
+      workerId < 0 ||
+      workerId > SnowflakeManager.MAX_WORKER_ID
+    ) {
       throw new Error(
-        `Worker ID must be between 0 and ${SnowflakeManager.MAX_WORKER_ID}`,
+        `Worker ID must be an integer between 0 and ${SnowflakeManager.MAX_WORKER_ID}`,
       );
     }
-    if (processId < 0 || processId > SnowflakeManager.MAX_PROCESS_ID) {
+    if (
+      !Number.isInteger(processId) ||
+      processId < 0 ||
+      processId > SnowflakeManager.MAX_PROCESS_ID
+    ) {
       throw new Error(
-        `Process ID must be between 0 and ${SnowflakeManager.MAX_PROCESS_ID}`,
+        `Process ID must be an integer between 0 and ${SnowflakeManager.MAX_PROCESS_ID}`,
       );
     }
-    if (increment < 0 || increment > SnowflakeManager.MAX_INCREMENT) {
+    if (
+      !Number.isInteger(increment) ||
+      increment < 0 ||
+      increment > SnowflakeManager.MAX_INCREMENT
+    ) {
       throw new Error(
-        `Increment must be between 0 and ${SnowflakeManager.MAX_INCREMENT}`,
+        `Increment must be an integer between 0 and ${SnowflakeManager.MAX_INCREMENT}`,
       );
     }
   }

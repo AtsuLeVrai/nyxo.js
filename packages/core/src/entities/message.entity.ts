@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { type Snowflake, SnowflakeSchema } from "../managers/index.js";
+import {
+  BitFieldManager,
+  type Snowflake,
+  SnowflakeSchema,
+} from "../managers/index.js";
 import {
   type ApplicationEntity,
   ApplicationIntegrationType,
@@ -114,7 +118,10 @@ export const AttachmentSchema = z
     ephemeral: z.boolean().optional(),
     duration_secs: z.number().optional(),
     waveform: z.string().optional(),
-    flags: z.nativeEnum(AttachmentFlags).optional(),
+    flags: z
+      .nativeEnum(AttachmentFlags)
+      .transform((value) => new BitFieldManager(value))
+      .optional(),
   })
   .strict();
 
@@ -554,7 +561,10 @@ export const MessageSchema: z.ZodObject<z.ZodRawShape> = z
       .lazy(() => MessageSchema)
       .nullable()
       .optional(),
-    flags: z.nativeEnum(MessageFlags).optional(),
+    flags: z
+      .nativeEnum(MessageFlags)
+      .transform((value) => new BitFieldManager<MessageFlags>(value))
+      .optional(),
     interaction_metadata: z
       .union([
         ApplicationCommandInteractionMetadataSchema,
@@ -596,24 +606,23 @@ export interface MessageSnapshotEntity {
 }
 
 // @ts-expect-error Zod does not like circular references
-export const MessageSnapshotSchema: z.ZodType<MessageSnapshotEntity> = z.lazy(
-  () =>
-    z
-      .object({
-        message: (MessageSchema as unknown as z.ZodObject<z.ZodRawShape>).pick({
-          type: true,
-          content: true,
-          embeds: true,
-          attachments: true,
-          timestamp: true,
-          edited_timestamp: true,
-          flags: true,
-          mentions: true,
-          mention_roles: true,
-          stickers: true,
-          sticker_items: true,
-          components: true,
-        }),
-      })
-      .strict(),
+export const MessageSnapshotSchema: z.ZodObject<z.ZodRawShape> = z.lazy(() =>
+  z
+    .object({
+      message: MessageSchema.pick({
+        type: true,
+        content: true,
+        embeds: true,
+        attachments: true,
+        timestamp: true,
+        edited_timestamp: true,
+        flags: true,
+        mentions: true,
+        mention_roles: true,
+        stickers: true,
+        sticker_items: true,
+        components: true,
+      }),
+    })
+    .strict(),
 );

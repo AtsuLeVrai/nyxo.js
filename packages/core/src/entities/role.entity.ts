@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
+import { BitFieldManager, SnowflakeSchema } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-flags}
@@ -42,7 +42,9 @@ export const RoleSchema = z
     managed: z.boolean(),
     mentionable: z.boolean(),
     tags: RoleTagsSchema.optional(),
-    flags: z.nativeEnum(RoleFlags),
+    flags: z
+      .nativeEnum(RoleFlags)
+      .transform((value) => new BitFieldManager<RoleFlags>(value)),
   })
   .strict();
 

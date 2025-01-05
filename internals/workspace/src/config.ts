@@ -28,4 +28,5 @@ export const GATEWAY_OPTIONS: GatewayOptions = {
 
 export const REST_OPTIONS: RestOptions = {
   token: TOKEN,
+  cacheLifetime: 0,
 };

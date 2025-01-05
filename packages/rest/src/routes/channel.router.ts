@@ -7,7 +7,7 @@ import type {
   ThreadMemberEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
-import type { Rest } from "../core/index.js";
+import type { Rest } from "../rest.js";
 import {
   type CreateChannelInviteEntity,
   CreateChannelInviteSchema,

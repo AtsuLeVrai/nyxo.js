@@ -39,7 +39,7 @@ export const StickerSchema = z
     format_type: z.nativeEnum(StickerFormatType),
     available: z.boolean().optional(),
     guild_id: SnowflakeSchema.optional(),
-    user: UserSchema.optional(),
+    user: z.lazy(() => UserSchema).optional(),
     sort_value: z.number().int().optional(),
   })
   .strict();
