@@ -33,7 +33,6 @@
       "cache": true
     },
     "check": {
-      "dependsOn": ["lint", "type-check"],
       "outputs": [],
       "cache": true
     },

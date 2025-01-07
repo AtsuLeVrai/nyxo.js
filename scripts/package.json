@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/scripts",
+  "version": "1.0.0-private",
+  "private": true,
+  "description": "Scripts for Nyx.js",
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@microsoft/api-extractor": "^7.48.1",
+    "@swc/core": "^1.10.6",
+    "rollup": "^4.30.1",
+    "rollup-plugin-swc3": "^0.12.1",
+    "typescript": "^5.7.2"
+  }
+}

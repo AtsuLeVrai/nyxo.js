@@ -1,6 +1,5 @@
 import type { Dispatcher, Pool, ProxyAgent, RetryHandler } from "undici";
 import type { JsonErrorCode } from "../constants/index.js";
-import type { CacheOptions } from "./cache.type.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#user-agent}
@@ -37,29 +36,32 @@ export interface RestOptions {
   proxy?: ProxyAgent.Options;
   pool?: Pool.Options;
   retry?: RetryHandler.RetryOptions;
-  cache?: CacheOptions;
 }
 
 export interface RestEvents {
-  globalRateLimit: [remaining: number, resetTimestamp: number, limit: number];
-  request: [
+  globalRateLimit: (
+    remaining: number,
+    resetTimestamp: number,
+    limit: number,
+  ) => void;
+  request: (
     path: string,
     method: string,
     requestId: string,
     options?: RouteEntity,
-  ];
-  response: [
+  ) => void;
+  response: (
     path: string,
     method: string,
     statusCode: number,
     latency: number,
     requestId: string,
-  ];
-  rateLimit: [
+  ) => void;
+  rateLimit: (
     path: string,
     method: string,
     timeout: number,
     limit: number,
     remaining: number,
-  ];
+  ) => void;
 }

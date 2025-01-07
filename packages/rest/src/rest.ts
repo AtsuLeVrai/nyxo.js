@@ -28,13 +28,11 @@ import {
   WebhookRouter,
 } from "./routes/index.js";
 import {
-  CacheService,
   FileProcessorService,
   HttpService,
   RateLimitService,
 } from "./services/index.js";
 import type {
-  CacheOptions,
   FileType,
   HttpResponse,
   PathLike,
@@ -51,7 +49,6 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly #rateLimitService: RateLimitService;
   readonly #validator: FileValidatorService;
   readonly #processor: FileProcessorService;
-  readonly #cache: CacheService;
 
   #applications: ApplicationRouter | null = null;
   #commands: ApplicationCommandRouter | null = null;
@@ -88,9 +85,6 @@ export class Rest extends EventEmitter<RestEvents> {
     this.#rateLimitService = new RateLimitService();
     this.#validator = new FileValidatorService();
     this.#processor = new FileProcessorService();
-    this.#cache = new CacheService(
-      this.#options.cache as Required<CacheOptions>,
-    );
 
     this.#setupEventForwarding(this.#httpService, this.#rateLimitService);
   }
@@ -295,27 +289,11 @@ export class Rest extends EventEmitter<RestEvents> {
     return this.#webhooks;
   }
 
-  get cache(): CacheService {
-    return this.#cache;
-  }
-
   async request<T>(options: RouteEntity): Promise<HttpResponse<T>> {
     const requestId = this.#generateRequestId(options);
 
     try {
       this.#pendingRequests.add(requestId);
-
-      if (this.#cache.shouldCache(options.path, options.method)) {
-        const cacheKey = this.#cache.generateKey(options.path, options.method);
-        const cached = this.#cache.get<T>(cacheKey);
-        if (cached) {
-          return {
-            data: cached,
-            cached: true,
-          };
-        }
-      }
-
       await this.#rateLimitService.checkRateLimit(options.path, options.method);
 
       const preparedOptions = options.files
@@ -349,11 +327,6 @@ export class Rest extends EventEmitter<RestEvents> {
 
       if (data === null || data === undefined) {
         throw new Error("Response data is null or undefined");
-      }
-
-      if (this.#cache.shouldCache(options.path, options.method)) {
-        const cacheKey = this.#cache.generateKey(options.path, options.method);
-        this.#cache.set(cacheKey, data);
       }
 
       return {
@@ -428,7 +401,6 @@ export class Rest extends EventEmitter<RestEvents> {
   async destroy(): Promise<void> {
     await this.#httpService.destroy();
     this.#rateLimitService.destroy();
-    this.#cache.clear();
     this.removeAllListeners();
   }
 
@@ -512,16 +484,6 @@ export class Rest extends EventEmitter<RestEvents> {
       proxy: config.proxy,
       version: config.version ?? HttpConstants.defaultApiVersion,
       userAgent: config.userAgent ?? HttpConstants.defaultUserAgent,
-      cache: {
-        lifetime: 60_000,
-        maxSize: 1000,
-        shouldCache: (_, method): method is "GET" => method === "GET",
-        keyGenerator: (path, method): string => `${method}:${path}`,
-        enableSweeping: true,
-        sweepInterval: 300_000,
-        disabled: false,
-        ...config.cache,
-      },
       retry: {
         retryAfter: true,
         maxRetries: 3,

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/source",
-  "packageManager": "pnpm@9.15.2",
+  "packageManager": "pnpm@9.15.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -19,7 +19,6 @@
     "@vitest/coverage-v8": "2.1.8",
     "@vitest/ui": "2.1.8",
     "husky": "^9.1.7",
-    "tsup": "^8.3.5",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
