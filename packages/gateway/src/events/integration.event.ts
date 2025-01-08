@@ -1,31 +1,31 @@
-import { IntegrationSchema, SnowflakeSchema } from "@nyxjs/core";
+import { IntegrationEntity, Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-delete-integration-delete-event-fields}
  */
-export const IntegrationDeleteSchema = z
+export const IntegrationDeleteEntity = z
   .object({
-    id: SnowflakeSchema,
-    guild_id: SnowflakeSchema,
-    application_id: SnowflakeSchema.optional(),
+    id: Snowflake,
+    guild_id: Snowflake,
+    application_id: Snowflake.optional(),
   })
   .strict();
 
-export type IntegrationDeleteEntity = z.infer<typeof IntegrationDeleteSchema>;
+export type IntegrationDeleteEntity = z.infer<typeof IntegrationDeleteEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-update-integration-update-event-additional-fields}
  */
-export const IntegrationUpdateSchema = IntegrationSchema.extend({
-  guild_id: SnowflakeSchema,
+export const IntegrationUpdateEntity = IntegrationEntity.extend({
+  guild_id: Snowflake,
 }).strict();
 
-export type IntegrationUpdateEntity = z.infer<typeof IntegrationUpdateSchema>;
+export type IntegrationUpdateEntity = z.infer<typeof IntegrationUpdateEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-create-integration-create-event-additional-fields}
  */
-export const IntegrationCreateSchema = IntegrationUpdateSchema;
+export const IntegrationCreateEntity = IntegrationUpdateEntity;
 
-export type IntegrationCreateEntity = z.infer<typeof IntegrationCreateSchema>;
+export type IntegrationCreateEntity = z.infer<typeof IntegrationCreateEntity>;

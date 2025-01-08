@@ -9,14 +9,10 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateGroupDmEntity,
-  CreateGroupDmSchema,
-  type GetCurrentUserGuildsQueryEntity,
-  GetCurrentUserGuildsQuerySchema,
-  type ModifyCurrentUserEntity,
-  ModifyCurrentUserSchema,
-  type UpdateCurrentUserApplicationRoleConnectionEntity,
-  UpdateCurrentUserApplicationRoleConnectionSchema,
+  CreateGroupDmEntity,
+  GetCurrentUserGuildsQueryEntity,
+  ModifyCurrentUserEntity,
+  UpdateCurrentUserApplicationRoleConnectionEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -61,7 +57,7 @@ export class UserRouter {
   modifyCurrentUser(
     options: ModifyCurrentUserEntity,
   ): Promise<HttpResponse<UserEntity>> {
-    const result = ModifyCurrentUserSchema.safeParse(options);
+    const result = ModifyCurrentUserEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -81,7 +77,7 @@ export class UserRouter {
   getCurrentUserGuilds(
     query: GetCurrentUserGuildsQueryEntity = {},
   ): Promise<HttpResponse<GuildEntity[]>> {
-    const result = GetCurrentUserGuildsQuerySchema.safeParse(query);
+    const result = GetCurrentUserGuildsQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -126,7 +122,7 @@ export class UserRouter {
   createGroupDm(
     options: CreateGroupDmEntity,
   ): Promise<HttpResponse<ChannelEntity>> {
-    const result = CreateGroupDmSchema.safeParse(options);
+    const result = CreateGroupDmEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -164,7 +160,7 @@ export class UserRouter {
     connection: UpdateCurrentUserApplicationRoleConnectionEntity,
   ): Promise<HttpResponse<ApplicationRoleConnectionEntity>> {
     const result =
-      UpdateCurrentUserApplicationRoleConnectionSchema.safeParse(connection);
+      UpdateCurrentUserApplicationRoleConnectionEntity.safeParse(connection);
     if (!result.success) {
       throw new Error(
         result.error.errors

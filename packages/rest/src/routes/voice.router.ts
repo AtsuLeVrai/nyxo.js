@@ -5,10 +5,8 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type ModifyCurrentUserVoiceStateEntity,
-  ModifyCurrentUserVoiceStateSchema,
-  type ModifyUserVoiceStateEntity,
-  ModifyUserVoiceStateSchema,
+  ModifyCurrentUserVoiceStateEntity,
+  ModifyUserVoiceStateEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -60,7 +58,7 @@ export class VoiceRouter {
     guildId: Snowflake,
     options: ModifyCurrentUserVoiceStateEntity,
   ): Promise<HttpResponse<void>> {
-    const result = ModifyCurrentUserVoiceStateSchema.safeParse(options);
+    const result = ModifyCurrentUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -82,7 +80,7 @@ export class VoiceRouter {
     userId: Snowflake,
     options: ModifyUserVoiceStateEntity,
   ): Promise<HttpResponse<void>> {
-    const result = ModifyUserVoiceStateSchema.safeParse(options);
+    const result = ModifyUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

@@ -1,42 +1,42 @@
 import {
-  ApplicationSchema,
+  ApplicationEntity,
   InviteTargetType,
-  SnowflakeSchema,
-  UserSchema,
+  Snowflake,
+  UserEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#invite-delete-invite-delete-event-fields}
  */
-export const InviteDeleteSchema = z
+export const InviteDeleteEntity = z
   .object({
-    channel_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
+    channel_id: Snowflake,
+    guild_id: Snowflake.optional(),
     code: z.string(),
   })
   .strict();
 
-export type InviteDeleteEntity = z.infer<typeof InviteDeleteSchema>;
+export type InviteDeleteEntity = z.infer<typeof InviteDeleteEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#invite-create-invite-create-event-fields}
  */
-export const InviteCreateSchema = z
+export const InviteCreateEntity = z
   .object({
-    channel_id: SnowflakeSchema,
+    channel_id: Snowflake,
     code: z.string(),
     created_at: z.string(),
-    guild_id: SnowflakeSchema.optional(),
-    inviter: UserSchema.optional(),
+    guild_id: Snowflake.optional(),
+    inviter: UserEntity.optional(),
     max_age: z.number().int(),
     max_uses: z.number().int(),
     target_type: z.nativeEnum(InviteTargetType).optional(),
-    target_user: UserSchema.optional(),
-    target_application: ApplicationSchema.partial().optional(),
+    target_user: UserEntity.optional(),
+    target_application: ApplicationEntity.partial().optional(),
     temporary: z.boolean(),
     uses: z.number().int(),
   })
   .strict();
 
-export type InviteCreateEntity = z.infer<typeof InviteCreateSchema>;
+export type InviteCreateEntity = z.infer<typeof InviteCreateEntity>;

@@ -1,9 +1,6 @@
 import type { AuditLogEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
-import {
-  type GetGuildAuditLogQueryEntity,
-  GetGuildAuditLogQuerySchema,
-} from "../schemas/index.js";
+import { GetGuildAuditLogQueryEntity } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
 export class AuditLogRouter {
@@ -25,7 +22,7 @@ export class AuditLogRouter {
     guildId: Snowflake,
     options: GetGuildAuditLogQueryEntity = {},
   ): Promise<HttpResponse<AuditLogEntity>> {
-    const result = GetGuildAuditLogQuerySchema.safeParse(options);
+    const result = GetGuildAuditLogQueryEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

@@ -1,9 +1,6 @@
 import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
-import {
-  type SubscriptionQueryEntity,
-  SubscriptionQuerySchema,
-} from "../schemas/index.js";
+import { SubscriptionQueryEntity } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
 export class SubscriptionRouter {
@@ -27,7 +24,7 @@ export class SubscriptionRouter {
     skuId: Snowflake,
     query: SubscriptionQueryEntity = {},
   ): Promise<HttpResponse<SubscriptionEntity[]>> {
-    const result = SubscriptionQuerySchema.safeParse(query);
+    const result = SubscriptionQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors

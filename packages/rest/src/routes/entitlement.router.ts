@@ -1,10 +1,8 @@
 import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateTestEntitlementEntity,
-  CreateTestEntitlementSchema,
-  type ListEntitlementQueryEntity,
-  ListEntitlementsQuerySchema,
+  CreateTestEntitlementEntity,
+  ListEntitlementQueryEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -31,7 +29,7 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     query: ListEntitlementQueryEntity = {},
   ): Promise<HttpResponse<EntitlementEntity[]>> {
-    const result = ListEntitlementsQuerySchema.safeParse(query);
+    const result = ListEntitlementQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -79,7 +77,7 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     test: CreateTestEntitlementEntity,
   ): Promise<HttpResponse<EntitlementEntity>> {
-    const result = CreateTestEntitlementSchema.safeParse(test);
+    const result = CreateTestEntitlementEntity.safeParse(test);
     if (!result.success) {
       throw new Error(
         result.error.errors

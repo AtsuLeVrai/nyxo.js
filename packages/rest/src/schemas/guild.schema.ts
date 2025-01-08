@@ -1,26 +1,25 @@
 import {
   type AnyThreadChannelEntity,
-  ChannelSchema,
+  ChannelEntity,
   DefaultMessageNotificationLevel,
   ExplicitContentFilterLevel,
   GuildFeature,
   GuildMemberFlags,
   GuildOnboardingMode,
-  GuildOnboardingPromptSchema,
-  RoleSchema,
-  type Snowflake,
-  SnowflakeSchema,
+  GuildOnboardingPromptEntity,
+  RoleEntity,
+  Snowflake,
   SystemChannelFlags,
   type ThreadMemberEntity,
   VerificationLevel,
-  WelcomeScreenChannelSchema,
+  WelcomeScreenChannelEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
  */
-export const CreateGuildSchema = z
+export const CreateGuildEntity = z
   .object({
     name: z.string().min(2).max(100),
     region: z.string().nullish(),
@@ -35,21 +34,21 @@ export const CreateGuildSchema = z
     explicit_content_filter: z
       .nativeEnum(ExplicitContentFilterLevel)
       .optional(),
-    roles: z.array(RoleSchema).optional(),
-    channels: z.array(ChannelSchema.partial()).optional(),
-    afk_channel_id: SnowflakeSchema.optional(),
+    roles: z.array(RoleEntity).optional(),
+    channels: z.array(ChannelEntity.partial()).optional(),
+    afk_channel_id: Snowflake.optional(),
     afk_timeout: z.number().optional(),
-    system_channel_id: SnowflakeSchema.optional(),
+    system_channel_id: Snowflake.optional(),
     system_channel_flags: z.nativeEnum(SystemChannelFlags).optional(),
   })
   .strict();
 
-export type CreateGuildEntity = z.infer<typeof CreateGuildSchema>;
+export type CreateGuildEntity = z.infer<typeof CreateGuildEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-json-params}
  */
-export const ModifyGuildSchema = z
+export const ModifyGuildEntity = z
   .object({
     name: z.string().min(2).max(100).optional(),
     /** @deprecated */
@@ -59,13 +58,13 @@ export const ModifyGuildSchema = z
       .nativeEnum(DefaultMessageNotificationLevel)
       .nullish(),
     explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel).nullish(),
-    afk_channel_id: SnowflakeSchema.nullish(),
+    afk_channel_id: Snowflake.nullish(),
     afk_timeout: z.number().optional(),
     icon: z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
       .nullish(),
-    owner_id: SnowflakeSchema.optional(),
+    owner_id: Snowflake.optional(),
     splash: z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
@@ -78,43 +77,43 @@ export const ModifyGuildSchema = z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
       .nullish(),
-    system_channel_id: SnowflakeSchema.nullish(),
+    system_channel_id: Snowflake.nullish(),
     system_channel_flags: z.nativeEnum(SystemChannelFlags).optional(),
-    rules_channel_id: SnowflakeSchema.nullish(),
-    public_updates_channel_id: SnowflakeSchema.nullish(),
+    rules_channel_id: Snowflake.nullish(),
+    public_updates_channel_id: Snowflake.nullish(),
     preferred_locale: z.string().optional(),
     features: z.array(z.nativeEnum(GuildFeature)).optional(),
     description: z.string().nullish(),
     premium_progress_bar_enabled: z.boolean().optional(),
-    safety_alerts_channel_id: SnowflakeSchema.nullish(),
+    safety_alerts_channel_id: Snowflake.nullish(),
   })
   .strict();
 
-export type ModifyGuildEntity = z.infer<typeof ModifyGuildSchema>;
+export type ModifyGuildEntity = z.infer<typeof ModifyGuildEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
  */
-export const CreateGuildChannelSchema = ChannelSchema;
+export const CreateGuildChannelEntity = ChannelEntity;
 
-export type CreateGuildChannelEntity = z.infer<typeof CreateGuildChannelSchema>;
+export type CreateGuildChannelEntity = z.infer<typeof CreateGuildChannelEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions}
  */
-export const ModifyGuildChannelPositionsSchema = z.array(
+export const ModifyGuildChannelPositionsEntity = z.array(
   z
     .object({
-      id: SnowflakeSchema,
+      id: Snowflake,
       position: z.number().nullish(),
       lock_permissions: z.boolean().optional(),
-      parent_id: SnowflakeSchema.nullish(),
+      parent_id: Snowflake.nullish(),
     })
     .strict(),
 );
 
 export type ModifyGuildChannelPositionsEntity = z.infer<
-  typeof ModifyGuildChannelPositionsSchema
+  typeof ModifyGuildChannelPositionsEntity
 >;
 
 /**
@@ -128,21 +127,21 @@ export interface ListActiveGuildThreadsEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params}
  */
-export const ListGuildMembersQuerySchema = z
+export const ListGuildMembersQueryEntity = z
   .object({
     limit: z.number().min(1).max(1000).default(1).optional(),
-    after: SnowflakeSchema.optional(),
+    after: Snowflake.optional(),
   })
   .strict();
 
 export type ListGuildMembersQueryEntity = z.infer<
-  typeof ListGuildMembersQuerySchema
+  typeof ListGuildMembersQueryEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#search-guild-members-query-string-params}
  */
-export const SearchGuildMembersQuerySchema = z
+export const SearchGuildMembersQueryEntity = z
   .object({
     query: z.string(),
     limit: z.number().min(1).max(1000).default(1).optional(),
@@ -150,58 +149,58 @@ export const SearchGuildMembersQuerySchema = z
   .strict();
 
 export type SearchGuildMembersQueryEntity = z.infer<
-  typeof SearchGuildMembersQuerySchema
+  typeof SearchGuildMembersQueryEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member-json-params}
  */
-export const AddGuildMemberSchema = z
+export const AddGuildMemberEntity = z
   .object({
     access_token: z.string(),
     nick: z.string().optional(),
-    roles: z.array(SnowflakeSchema).optional(),
+    roles: z.array(Snowflake).optional(),
     mute: z.boolean().optional(),
     deaf: z.boolean().optional(),
   })
   .strict();
 
-export type AddGuildMemberEntity = z.infer<typeof AddGuildMemberSchema>;
+export type AddGuildMemberEntity = z.infer<typeof AddGuildMemberEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params}
  */
-export const ModifyGuildMemberSchema = z
+export const ModifyGuildMemberEntity = z
   .object({
     nick: z.string().nullish(),
-    roles: z.array(SnowflakeSchema).optional(),
+    roles: z.array(Snowflake).optional(),
     mute: z.boolean().optional(),
     deaf: z.boolean().optional(),
-    channel_id: SnowflakeSchema.nullish(),
+    channel_id: Snowflake.nullish(),
     communication_disabled_until: z.string().datetime().optional(),
     flags: z.nativeEnum(GuildMemberFlags).optional(),
   })
   .strict();
 
-export type ModifyGuildMemberEntity = z.infer<typeof ModifyGuildMemberSchema>;
+export type ModifyGuildMemberEntity = z.infer<typeof ModifyGuildMemberEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-bans-query-string-params}
  */
-export const GetGuildBansQuerySchema = z
+export const GetGuildBansQueryEntity = z
   .object({
     limit: z.number().min(1).max(1000).default(1000).optional(),
-    before: SnowflakeSchema.optional(),
-    after: SnowflakeSchema.optional(),
+    before: Snowflake.optional(),
+    after: Snowflake.optional(),
   })
   .strict();
 
-export type GetGuildBansQueryEntity = z.infer<typeof GetGuildBansQuerySchema>;
+export type GetGuildBansQueryEntity = z.infer<typeof GetGuildBansQueryEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-ban-json-params}
  */
-export const CreateGuildBanSchema = z
+export const CreateGuildBanEntity = z
   .object({
     /** @deprecated */
     delete_message_days: z.number().min(0).max(7).optional(),
@@ -209,19 +208,19 @@ export const CreateGuildBanSchema = z
   })
   .strict();
 
-export type CreateGuildBanEntity = z.infer<typeof CreateGuildBanSchema>;
+export type CreateGuildBanEntity = z.infer<typeof CreateGuildBanEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-json-params}
  */
-export const BulkGuildBanSchema = z
+export const BulkGuildBanEntity = z
   .object({
-    user_ids: z.array(SnowflakeSchema).max(200),
+    user_ids: z.array(Snowflake).max(200),
     delete_message_seconds: z.number().min(0).max(604800).default(0).optional(),
   })
   .strict();
 
-export type BulkGuildBanEntity = z.infer<typeof BulkGuildBanSchema>;
+export type BulkGuildBanEntity = z.infer<typeof BulkGuildBanEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-bulk-ban-response}
@@ -234,7 +233,7 @@ export interface BulkGuildBanResponseEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role-json-params}
  */
-export const CreateGuildRoleSchema = z
+export const CreateGuildRoleEntity = z
   .object({
     name: z.string().max(100).default("new role"),
     permissions: z.string(),
@@ -249,35 +248,35 @@ export const CreateGuildRoleSchema = z
   })
   .strict();
 
-export type CreateGuildRoleEntity = z.infer<typeof CreateGuildRoleSchema>;
+export type CreateGuildRoleEntity = z.infer<typeof CreateGuildRoleEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params}
  */
-export const ModifyGuildRolePositionsSchema = z.array(
+export const ModifyGuildRolePositionsEntity = z.array(
   z
     .object({
-      id: SnowflakeSchema,
+      id: Snowflake,
       position: z.number().int().nullish(),
     })
     .strict(),
 );
 
 export type ModifyGuildRolePositionsEntity = z.infer<
-  typeof ModifyGuildRolePositionsSchema
+  typeof ModifyGuildRolePositionsEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-json-params}
  */
-export const ModifyGuildRoleSchema = CreateGuildRoleSchema.partial().nullable();
+export const ModifyGuildRoleEntity = CreateGuildRoleEntity.partial().nullable();
 
-export type ModifyGuildRoleEntity = z.infer<typeof ModifyGuildRoleSchema>;
+export type ModifyGuildRoleEntity = z.infer<typeof ModifyGuildRoleEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params}
  */
-export const GetGuildPruneCountQuerySchema = z
+export const GetGuildPruneCountQueryEntity = z
   .object({
     days: z.number().min(1).max(30).default(7).optional(),
     include_roles: z.string().optional(),
@@ -285,23 +284,23 @@ export const GetGuildPruneCountQuerySchema = z
   .strict();
 
 export type GetGuildPruneCountQueryEntity = z.infer<
-  typeof GetGuildPruneCountQuerySchema
+  typeof GetGuildPruneCountQueryEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#begin-guild-prune-json-params}
  */
-export const BeginGuildPruneSchema = z
+export const BeginGuildPruneEntity = z
   .object({
     days: z.number().min(1).max(30).default(7),
     compute_prune_count: z.boolean().default(true),
-    include_roles: z.array(SnowflakeSchema),
+    include_roles: z.array(Snowflake),
     /** @deprecated */
     reason: z.string().optional(),
   })
   .strict();
 
-export type BeginGuildPruneEntity = z.infer<typeof BeginGuildPruneSchema>;
+export type BeginGuildPruneEntity = z.infer<typeof BeginGuildPruneEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget-image-widget-style-options}
@@ -316,44 +315,44 @@ export type WidgetStyleOptions =
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-widget-json-params}
  */
-export const ModifyGuildWidgetSettingsSchema = z
+export const ModifyGuildWidgetSettingsEntity = z
   .object({
     enabled: z.boolean(),
-    channel_id: SnowflakeSchema.nullable(),
+    channel_id: Snowflake.nullable(),
   })
   .strict();
 
 export type ModifyGuildWidgetSettingsEntity = z.infer<
-  typeof ModifyGuildWidgetSettingsSchema
+  typeof ModifyGuildWidgetSettingsEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-welcome-screen-json-params}
  */
-export const ModifyGuildWelcomeScreenSchema = z
+export const ModifyGuildWelcomeScreenEntity = z
   .object({
     enabled: z.boolean().nullish(),
-    welcome_channels: z.array(WelcomeScreenChannelSchema).nullish(),
+    welcome_channels: z.array(WelcomeScreenChannelEntity).nullish(),
     description: z.string().nullish(),
   })
   .strict();
 
 export type ModifyGuildWelcomeScreenEntity = z.infer<
-  typeof ModifyGuildWelcomeScreenSchema
+  typeof ModifyGuildWelcomeScreenEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-onboarding}
  */
-export const ModifyGuildOnboardingSchema = z
+export const ModifyGuildOnboardingEntity = z
   .object({
-    prompts: z.array(GuildOnboardingPromptSchema),
-    default_channel_ids: z.array(SnowflakeSchema),
+    prompts: z.array(GuildOnboardingPromptEntity),
+    default_channel_ids: z.array(Snowflake),
     enabled: z.boolean(),
     mode: z.nativeEnum(GuildOnboardingMode),
   })
   .strict();
 
 export type ModifyGuildOnboardingEntity = z.infer<
-  typeof ModifyGuildOnboardingSchema
+  typeof ModifyGuildOnboardingEntity
 >;

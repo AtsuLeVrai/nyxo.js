@@ -1,39 +1,36 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-types}
  */
-export const EntitlementType = {
-  purchase: 1,
-  premiumSubscription: 2,
-  developerGift: 3,
-  testModePurchase: 4,
-  freePurchase: 5,
-  userGift: 6,
-  premiumPurchase: 7,
-  applicationSubscription: 8,
-} as const;
-
-export type EntitlementType =
-  (typeof EntitlementType)[keyof typeof EntitlementType];
+export enum EntitlementType {
+  Purchase = 1,
+  PremiumSubscription = 2,
+  DeveloperGift = 3,
+  TestModePurchase = 4,
+  FreePurchase = 5,
+  UserGift = 6,
+  PremiumPurchase = 7,
+  ApplicationSubscription = 8,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-structure}
  */
-export const EntitlementSchema = z
+export const EntitlementEntity = z
   .object({
-    id: SnowflakeSchema,
-    sku_id: SnowflakeSchema,
-    application_id: SnowflakeSchema,
-    user_id: SnowflakeSchema.optional(),
+    id: Snowflake,
+    sku_id: Snowflake,
+    application_id: Snowflake,
+    user_id: Snowflake.optional(),
     type: z.nativeEnum(EntitlementType),
     deleted: z.boolean(),
     starts_at: z.string().datetime().nullable(),
     ends_at: z.string().datetime().nullable(),
-    guild_id: SnowflakeSchema.optional(),
+    guild_id: Snowflake.optional(),
     consumed: z.boolean().optional(),
   })
   .strict();
 
-export type EntitlementEntity = z.infer<typeof EntitlementSchema>;
+export type EntitlementEntity = z.infer<typeof EntitlementEntity>;

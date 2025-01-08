@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { EmojiSchema } from "./emoji.entity.js";
+import { EmojiEntity } from "./emoji.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-answer-count-object-structure}
  */
-export const PollAnswerCountSchema = z
+export const PollAnswerCountEntity = z
   .object({
     id: z.number().int(),
     count: z.number().int(),
@@ -12,28 +12,28 @@ export const PollAnswerCountSchema = z
   })
   .strict();
 
-export type PollAnswerCountEntity = z.infer<typeof PollAnswerCountSchema>;
+export type PollAnswerCountEntity = z.infer<typeof PollAnswerCountEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-results-object-structure}
  */
-export const PollResultsSchema = z
+export const PollResultsEntity = z
   .object({
     is_finalized: z.boolean(),
-    answer_counts: z.array(PollAnswerCountSchema),
+    answer_counts: z.array(PollAnswerCountEntity),
   })
   .strict();
 
-export type PollResultsEntity = z.infer<typeof PollResultsSchema>;
+export type PollResultsEntity = z.infer<typeof PollResultsEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-media-object-poll-media-object-structure}
  */
-export const PollMediaSchema = z
+export const PollMediaEntity = z
   .object({
     text: z.string().min(1).max(300).optional(),
     emoji: z
-      .union([EmojiSchema.pick({ id: true }), EmojiSchema.pick({ name: true })])
+      .union([EmojiEntity.pick({ id: true }), EmojiEntity.pick({ name: true })])
       .optional(),
   })
   .strict()
@@ -46,37 +46,37 @@ export const PollMediaSchema = z
     }
   });
 
-export type PollMediaEntity = z.infer<typeof PollMediaSchema>;
+export type PollMediaEntity = z.infer<typeof PollMediaEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-answer-object-poll-answer-object-structure}
  */
-export const PollAnswerSchema = z
+export const PollAnswerEntity = z
   .object({
     answer_id: z.number().int(),
-    poll_media: PollMediaSchema.sourceType().extend({
+    poll_media: PollMediaEntity.sourceType().extend({
       text: z.string().min(1).max(55).optional(),
     }),
   })
   .strict();
 
+export type PollAnswerEntity = z.infer<typeof PollAnswerEntity>;
+
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#layout-type}
  */
-export const LayoutType = {
-  default: 1,
-} as const;
-
-export type LayoutType = (typeof LayoutType)[keyof typeof LayoutType];
+export enum LayoutType {
+  Default = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-create-request-object-poll-create-request-object-structure}
  */
-export const PollCreateRequestSchema = z
+export const PollCreateRequestEntity = z
   .object({
-    question: PollMediaSchema,
+    question: PollMediaEntity,
     answers: z
-      .array(PollAnswerSchema.omit({ answer_id: true }))
+      .array(PollAnswerEntity.omit({ answer_id: true }))
       .min(1)
       .max(10),
     duration: z
@@ -90,24 +90,24 @@ export const PollCreateRequestSchema = z
     layout_type: z
       .nativeEnum(LayoutType)
       .optional()
-      .default(LayoutType.default),
+      .default(LayoutType.Default),
   })
   .strict();
 
-export type PollCreateRequestEntity = z.infer<typeof PollCreateRequestSchema>;
+export type PollCreateRequestEntity = z.infer<typeof PollCreateRequestEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-object-poll-object-structure}
  */
-export const PollSchema = z
+export const PollEntity = z
   .object({
-    question: PollMediaSchema,
-    answers: z.array(PollAnswerSchema).min(1).max(10),
+    question: PollMediaEntity,
+    answers: z.array(PollAnswerEntity).min(1).max(10),
     expiry: z.string().datetime().nullable(),
     allow_multiselect: z.boolean(),
     layout_type: z.nativeEnum(LayoutType),
-    results: PollResultsSchema.optional(),
+    results: PollResultsEntity.optional(),
   })
   .strict();
 
-export type PollEntity = z.infer<typeof PollSchema>;
+export type PollEntity = z.infer<typeof PollEntity>;

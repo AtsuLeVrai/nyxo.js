@@ -1,11 +1,9 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateGuildStickerEntity,
-  CreateGuildStickerSchema,
+  CreateGuildStickerEntity,
   type ListStickerPacksResponseEntity,
-  type ModifyGuildStickerEntity,
-  ModifyGuildStickerSchema,
+  ModifyGuildStickerEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -76,7 +74,7 @@ export class StickerRouter {
     options: CreateGuildStickerEntity,
     reason?: string,
   ): Promise<HttpResponse<StickerEntity>> {
-    const result = CreateGuildStickerSchema.safeParse(options);
+    const result = CreateGuildStickerEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -102,7 +100,7 @@ export class StickerRouter {
     options: ModifyGuildStickerEntity,
     reason?: string,
   ): Promise<HttpResponse<StickerEntity>> {
-    const result = ModifyGuildStickerSchema.safeParse(options);
+    const result = ModifyGuildStickerEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

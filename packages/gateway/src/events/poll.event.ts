@@ -1,26 +1,26 @@
-import { SnowflakeSchema } from "@nyxjs/core";
+import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-remove-message-poll-vote-remove-fields}
  */
-export const MessagePollVoteRemoveSchema = z
+export const MessagePollVoteRemoveEntity = z
   .object({
-    user_id: SnowflakeSchema,
-    channel_id: SnowflakeSchema,
-    message_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
+    user_id: Snowflake,
+    channel_id: Snowflake,
+    message_id: Snowflake,
+    guild_id: Snowflake.optional(),
     answer_id: z.number(),
   })
   .strict();
 
 export type MessagePollVoteRemoveEntity = z.infer<
-  typeof MessagePollVoteRemoveSchema
+  typeof MessagePollVoteRemoveEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-add-message-poll-vote-add-fields}
  */
-export const MessagePollVoteAddSchema = MessagePollVoteRemoveSchema;
+export const MessagePollVoteAddEntity = MessagePollVoteRemoveEntity;
 
-export type MessagePollVoteAddEntity = z.infer<typeof MessagePollVoteAddSchema>;
+export type MessagePollVoteAddEntity = z.infer<typeof MessagePollVoteAddEntity>;

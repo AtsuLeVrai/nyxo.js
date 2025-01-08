@@ -12,7 +12,7 @@ export interface ListStickerPacksResponseEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker-form-params}
  */
-export const CreateGuildStickerSchema = z
+export const CreateGuildStickerEntity = z
   .object({
     name: z.string().min(2).max(30),
     description: z.string().min(2).max(100),
@@ -21,12 +21,12 @@ export const CreateGuildStickerSchema = z
   })
   .strict();
 
-export type CreateGuildStickerEntity = z.infer<typeof CreateGuildStickerSchema>;
+export type CreateGuildStickerEntity = z.infer<typeof CreateGuildStickerEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params}
  */
-export const ModifyGuildStickerSchema = z
+export const ModifyGuildStickerEntity = z
   .object({
     name: z.string().min(2).max(30).optional(),
     description: z.string().min(2).max(100).nullish(),
@@ -34,4 +34,4 @@ export const ModifyGuildStickerSchema = z
   })
   .strict();
 
-export type ModifyGuildStickerEntity = z.infer<typeof ModifyGuildStickerSchema>;
+export type ModifyGuildStickerEntity = z.infer<typeof ModifyGuildStickerEntity>;

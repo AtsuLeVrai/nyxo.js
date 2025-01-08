@@ -1,41 +1,36 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 import { ChannelType } from "./channel.entity.js";
-import { EmojiSchema } from "./emoji.entity.js";
+import { EmojiEntity } from "./emoji.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#component-object-component-types}
  */
-export const ComponentType = {
-  actionRow: 1,
-  button: 2,
-  stringSelect: 3,
-  textInput: 4,
-  userSelect: 5,
-  roleSelect: 6,
-  mentionableSelect: 7,
-  channelSelect: 8,
-} as const;
-
-export type ComponentType = (typeof ComponentType)[keyof typeof ComponentType];
+export enum ComponentType {
+  ActionRow = 1,
+  Button = 2,
+  StringSelect = 3,
+  TextInput = 4,
+  UserSelect = 5,
+  RoleSelect = 6,
+  MentionableSelect = 7,
+  ChannelSelect = 8,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#text-input-object-text-input-styles}
  */
-export const TextInputStyle = {
-  short: 1,
-  paragraph: 2,
-} as const;
-
-export type TextInputStyle =
-  (typeof TextInputStyle)[keyof typeof TextInputStyle];
+export enum TextInputStyle {
+  Short = 1,
+  Paragraph = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#text-input-object-text-input-structure}
  */
-export const TextInputSchema = z
+export const TextInputEntity = z
   .object({
-    type: z.literal(ComponentType.textInput),
+    type: z.literal(ComponentType.TextInput),
     custom_id: z.string().max(100),
     style: z.nativeEnum(TextInputStyle),
     label: z.string().max(45),
@@ -47,31 +42,31 @@ export const TextInputSchema = z
   })
   .strict();
 
-export type TextInputEntity = z.infer<typeof TextInputSchema>;
+export type TextInputEntity = z.infer<typeof TextInputEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-default-value-structure}
  */
-export const SelectMenuDefaultValueSchema = z
+export const SelectMenuDefaultValueEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     type: z.union([z.literal("user"), z.literal("role"), z.literal("channel")]),
   })
   .strict();
 
 export type SelectMenuDefaultValueEntity = z.infer<
-  typeof SelectMenuDefaultValueSchema
+  typeof SelectMenuDefaultValueEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure}
  */
-export const SelectMenuOptionSchema = z
+export const SelectMenuOptionEntity = z
   .object({
     label: z.string(),
     value: z.string(),
     description: z.string().optional(),
-    emoji: EmojiSchema.pick({
+    emoji: EmojiEntity.pick({
       id: true,
       name: true,
       animated: true,
@@ -80,91 +75,89 @@ export const SelectMenuOptionSchema = z
   })
   .strict();
 
-export type SelectMenuOptionEntity = z.infer<typeof SelectMenuOptionSchema>;
+export type SelectMenuOptionEntity = z.infer<typeof SelectMenuOptionEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
  */
-export const SelectMenuBaseSchema = z
+export const SelectMenuBaseEntity = z
   .object({
     custom_id: z.string().max(100),
     placeholder: z.string().max(150).optional(),
     min_values: z.number().int().min(0).max(25).optional().default(1),
     max_values: z.number().int().min(1).max(25).optional().default(1),
     disabled: z.boolean().optional(),
-    default_values: z.array(SelectMenuDefaultValueSchema).optional(),
+    default_values: z.array(SelectMenuDefaultValueEntity).optional(),
   })
   .strict();
 
-export type SelectMenuBaseEntity = z.infer<typeof SelectMenuBaseSchema>;
+export type SelectMenuBaseEntity = z.infer<typeof SelectMenuBaseEntity>;
 
-export const StringSelectMenuSchema = SelectMenuBaseSchema.extend({
-  type: z.literal(ComponentType.stringSelect),
-  options: z.array(SelectMenuOptionSchema).min(1).max(25),
+export const StringSelectMenuEntity = SelectMenuBaseEntity.extend({
+  type: z.literal(ComponentType.StringSelect),
+  options: z.array(SelectMenuOptionEntity).min(1).max(25),
 }).strict();
 
-export type StringSelectMenuEntity = z.infer<typeof StringSelectMenuSchema>;
+export type StringSelectMenuEntity = z.infer<typeof StringSelectMenuEntity>;
 
-export const ChannelSelectMenuSchema = SelectMenuBaseSchema.extend({
-  type: z.literal(ComponentType.channelSelect),
+export const ChannelSelectMenuEntity = SelectMenuBaseEntity.extend({
+  type: z.literal(ComponentType.ChannelSelect),
   channel_types: z.nativeEnum(ChannelType).optional(),
 }).strict();
 
-export type ChannelSelectMenuEntity = z.infer<typeof ChannelSelectMenuSchema>;
+export type ChannelSelectMenuEntity = z.infer<typeof ChannelSelectMenuEntity>;
 
-export const UserSelectMenuSchema = SelectMenuBaseSchema.extend({
-  type: z.literal(ComponentType.userSelect),
+export const UserSelectMenuEntity = SelectMenuBaseEntity.extend({
+  type: z.literal(ComponentType.UserSelect),
 }).strict();
 
-export type UserSelectMenuEntity = z.infer<typeof UserSelectMenuSchema>;
+export type UserSelectMenuEntity = z.infer<typeof UserSelectMenuEntity>;
 
-export const RoleSelectMenuSchema = SelectMenuBaseSchema.extend({
-  type: z.literal(ComponentType.roleSelect),
+export const RoleSelectMenuEntity = SelectMenuBaseEntity.extend({
+  type: z.literal(ComponentType.RoleSelect),
 }).strict();
 
-export type RoleSelectMenuEntity = z.infer<typeof RoleSelectMenuSchema>;
+export type RoleSelectMenuEntity = z.infer<typeof RoleSelectMenuEntity>;
 
-export const MentionableSelectMenuSchema = SelectMenuBaseSchema.extend({
-  type: z.literal(ComponentType.mentionableSelect),
+export const MentionableSelectMenuEntity = SelectMenuBaseEntity.extend({
+  type: z.literal(ComponentType.MentionableSelect),
 }).strict();
 
 export type MentionableSelectMenuEntity = z.infer<
-  typeof MentionableSelectMenuSchema
+  typeof MentionableSelectMenuEntity
 >;
 
-export const SelectMenuSchema = z.discriminatedUnion("type", [
-  StringSelectMenuSchema,
-  ChannelSelectMenuSchema,
-  UserSelectMenuSchema,
-  RoleSelectMenuSchema,
-  MentionableSelectMenuSchema,
+export const SelectMenuEntity = z.discriminatedUnion("type", [
+  StringSelectMenuEntity,
+  ChannelSelectMenuEntity,
+  UserSelectMenuEntity,
+  RoleSelectMenuEntity,
+  MentionableSelectMenuEntity,
 ]);
 
-export type SelectMenuEntity = z.infer<typeof SelectMenuSchema>;
+export type SelectMenuEntity = z.infer<typeof SelectMenuEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-styles}
  */
-export const ButtonStyle = {
-  primary: 1,
-  secondary: 2,
-  success: 3,
-  danger: 4,
-  link: 5,
-  premium: 6,
-} as const;
-
-export type ButtonStyle = (typeof ButtonStyle)[keyof typeof ButtonStyle];
+export enum ButtonStyle {
+  Primary = 1,
+  Secondary = 2,
+  Success = 3,
+  Danger = 4,
+  Link = 5,
+  Premium = 6,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-structure}
  */
-export const ButtonSchema = z
+export const ButtonEntity = z
   .object({
-    type: z.literal(ComponentType.button),
+    type: z.literal(ComponentType.Button),
     style: z.nativeEnum(ButtonStyle),
     label: z.string().max(80).optional(),
-    emoji: EmojiSchema.pick({
+    emoji: EmojiEntity.pick({
       name: true,
       id: true,
       animated: true,
@@ -176,22 +169,22 @@ export const ButtonSchema = z
   })
   .strict()
   .superRefine((button, ctx) => {
-    if (button.style === ButtonStyle.link && !button.url) {
+    if (button.style === ButtonStyle.Link && !button.url) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Link buttons must have a url",
       });
-    } else if (button.style === ButtonStyle.link && button.custom_id) {
+    } else if (button.style === ButtonStyle.Link && button.custom_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Link buttons cannot have a custom_id",
       });
-    } else if (button.style === ButtonStyle.premium && !button.sku_id) {
+    } else if (button.style === ButtonStyle.Premium && !button.sku_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Premium buttons must have a sku_id",
       });
-    } else if (button.style !== ButtonStyle.link && !button.custom_id) {
+    } else if (button.style !== ButtonStyle.Link && !button.custom_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Non-link buttons must have a custom_id",
@@ -199,23 +192,23 @@ export const ButtonSchema = z
     }
   });
 
-export type ButtonEntity = z.infer<typeof ButtonSchema>;
+export type ButtonEntity = z.infer<typeof ButtonEntity>;
 
-export const ComponentSchema = z.discriminatedUnion("type", [
-  ButtonSchema.sourceType(),
-  TextInputSchema,
-  ...SelectMenuSchema.options,
+export const ComponentEntity = z.discriminatedUnion("type", [
+  ButtonEntity.sourceType(),
+  TextInputEntity,
+  ...SelectMenuEntity.options,
 ]);
 
-export type ComponentEntity = z.infer<typeof ComponentSchema>;
+export type ComponentEntity = z.infer<typeof ComponentEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#action-rows}
  */
-export const ActionRowSchema = z
+export const ActionRowEntity = z
   .object({
-    type: z.literal(ComponentType.actionRow),
-    components: z.array(ComponentSchema).max(5),
+    type: z.literal(ComponentType.ActionRow),
+    components: z.array(ComponentEntity).max(5),
   })
   .strict()
   .superRefine((row, ctx) => {
@@ -246,4 +239,4 @@ export const ActionRowSchema = z
     }
   });
 
-export type ActionRowEntity = z.infer<typeof ActionRowSchema>;
+export type ActionRowEntity = z.infer<typeof ActionRowEntity>;

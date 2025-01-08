@@ -1,11 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
-import {
-  type CompressionOptions,
-  CompressionOptionsSchema,
-  type CompressionType,
-} from "../schemas/index.js";
+import { CompressionOptions, type CompressionType } from "../schemas/index.js";
 import type { GatewayEvents } from "../types/index.js";
 
 export class CompressionService extends EventEmitter<GatewayEvents> {
@@ -18,7 +14,7 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
 
   constructor(options: Partial<CompressionOptions> = {}) {
     super();
-    this.#options = CompressionOptionsSchema.parse(options);
+    this.#options = CompressionOptions.parse(options);
   }
 
   get compressionType(): CompressionType | undefined {

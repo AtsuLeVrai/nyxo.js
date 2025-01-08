@@ -5,7 +5,7 @@ import type { FileValidationResult } from "../types/index.js";
 export class FileValidatorService {
   #maxFileSize: number;
 
-  constructor(boostTier: PremiumTier = PremiumTier.none) {
+  constructor(boostTier: PremiumTier = PremiumTier.None) {
     this.#maxFileSize = FileConstants.limits[boostTier];
   }
 

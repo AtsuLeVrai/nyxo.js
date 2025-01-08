@@ -1,15 +1,11 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateApplicationEmojiEntity,
-  CreateApplicationEmojiSchema,
-  type CreateGuildEmojiEntity,
-  CreateGuildEmojiSchema,
+  CreateApplicationEmojiEntity,
+  CreateGuildEmojiEntity,
   type ListApplicationEmojisEntity,
-  type ModifyApplicationEmojiEntity,
-  ModifyApplicationEmojiSchema,
-  type ModifyGuildEmojiEntity,
-  ModifyGuildEmojiSchema,
+  ModifyApplicationEmojiEntity,
+  ModifyGuildEmojiEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -55,7 +51,7 @@ export class EmojiRouter {
     options: CreateGuildEmojiEntity,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
-    const result = CreateGuildEmojiSchema.safeParse(options);
+    const result = CreateGuildEmojiEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -78,7 +74,7 @@ export class EmojiRouter {
     options: ModifyGuildEmojiEntity,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
-    const result = ModifyGuildEmojiSchema.safeParse(options);
+    const result = ModifyGuildEmojiEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -135,7 +131,7 @@ export class EmojiRouter {
     options: CreateApplicationEmojiEntity,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
-    const result = CreateApplicationEmojiSchema.safeParse(options);
+    const result = CreateApplicationEmojiEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -159,7 +155,7 @@ export class EmojiRouter {
     options: ModifyApplicationEmojiEntity,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
-    const result = ModifyApplicationEmojiSchema.safeParse(options);
+    const result = ModifyApplicationEmojiEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

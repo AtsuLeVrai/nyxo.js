@@ -1,12 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import { GatewayOpcodes } from "../constants/index.js";
 import type { Gateway } from "../gateway.js";
-import {
-  type HeartbeatMetrics,
-  HeartbeatMetricsSchema,
-  type HeartbeatOptions,
-  HeartbeatOptionsSchema,
-} from "../schemas/index.js";
+import { HeartbeatMetrics, HeartbeatOptions } from "../schemas/index.js";
 import type { GatewayEvents } from "../types/index.js";
 
 export class HeartbeatService extends EventEmitter<GatewayEvents> {
@@ -28,7 +23,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
   constructor(gateway: Gateway, options: Partial<HeartbeatOptions> = {}) {
     super();
     this.#gateway = gateway;
-    this.#options = HeartbeatOptionsSchema.parse(options);
+    this.#options = HeartbeatOptions.parse(options);
   }
 
   get metrics(): HeartbeatMetrics {
@@ -43,7 +38,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       averageLatency: this.#calculateAverageLatency(),
     };
 
-    return HeartbeatMetricsSchema.parse(metrics);
+    return HeartbeatMetrics.parse(metrics);
   }
 
   get isRunning(): boolean {
@@ -143,7 +138,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       `[Gateway:Heartbeat] Sending - Sequence: ${this.#sequence}`,
     );
 
-    this.#gateway.send(GatewayOpcodes.heartbeat, this.#sequence);
+    this.#gateway.send(GatewayOpcodes.Heartbeat, this.#sequence);
   }
 
   #initializeHeartbeat(): void {

@@ -1,13 +1,10 @@
 import erlpack from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import {
-  type EncodingOptions,
-  EncodingOptionsSchema,
+  EncodingOptions,
   type EncodingType,
-  type PayloadEntity,
-  PayloadSchema,
-  type ProcessOptions,
-  ProcessOptionsSchema,
+  PayloadEntity,
+  ProcessOptions,
 } from "../schemas/index.js";
 import type { GatewayEvents } from "../types/index.js";
 
@@ -16,7 +13,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
 
   constructor(options: Partial<EncodingOptions> = {}) {
     super();
-    this.#options = EncodingOptionsSchema.parse(options);
+    this.#options = EncodingOptions.parse(options);
   }
 
   get encodingType(): EncodingType {
@@ -96,7 +93,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
       this.#options.jsonReviver,
     );
 
-    if (this.#options.validateKeys && !PayloadSchema.parse(payload)) {
+    if (this.#options.validateKeys && !PayloadEntity.parse(payload)) {
       throw new Error("Invalid JSON payload structure");
     }
 
@@ -107,7 +104,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
     const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
     const payload: PayloadEntity = erlpack.unpack(bufferData);
 
-    if (this.#options.validateKeys && !PayloadSchema.parse(payload)) {
+    if (this.#options.validateKeys && !PayloadEntity.parse(payload)) {
       throw new Error("Invalid ETF payload structure");
     }
 
@@ -123,7 +120,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
   }
 
   #processData(data: unknown, options: ProcessOptions = {}): unknown {
-    const validatedOptions = ProcessOptionsSchema.parse(options);
+    const validatedOptions = ProcessOptions.parse(options);
 
     if (data === null || data === undefined) {
       return data;

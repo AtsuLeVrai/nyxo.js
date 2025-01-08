@@ -1,28 +1,17 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
-import { ApplicationCommandSchema } from "./application-commands.entity.js";
-import { AutoModerationRuleSchema } from "./auto-moderation.entity.js";
-import { AnyThreadChannelSchema } from "./channel.entity.js";
-import { IntegrationSchema } from "./guild.entity.js";
-import { GuildScheduledEventSchema } from "./scheduled-event.entity.js";
-import { UserSchema } from "./user.entity.js";
-import { WebhookSchema } from "./webhook.entity.js";
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
- */
-export const AuditLogOverwriteType = {
-  role: "0",
-  member: "1",
-} as const;
-
-export type AuditLogOverwriteType =
-  (typeof AuditLogOverwriteType)[keyof typeof AuditLogOverwriteType];
+import { Snowflake } from "../managers/index.js";
+import { ApplicationCommandEntity } from "./application-commands.entity.js";
+import { AutoModerationRuleEntity } from "./auto-moderation.entity.js";
+import { AnyThreadChannelEntity } from "./channel.entity.js";
+import { IntegrationEntity } from "./guild.entity.js";
+import { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
+import { UserEntity } from "./user.entity.js";
+import { WebhookEntity } from "./webhook.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object}
  */
-export const AuditLogChangeSchema = z
+export const AuditLogChangeEntity = z
   .object({
     key: z.string(),
     new_value: z.unknown().optional(),
@@ -30,27 +19,27 @@ export const AuditLogChangeSchema = z
   })
   .strict();
 
-export type AuditLogChangeEntity = z.infer<typeof AuditLogChangeSchema>;
+export type AuditLogChangeEntity = z.infer<typeof AuditLogChangeEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-exceptions}
  */
-export const AuditLogCommandPermissionChangeSchema = z
+export const AuditLogCommandPermissionChangeEntity = z
   .object({
-    key: SnowflakeSchema,
+    key: Snowflake,
     old_value: z.record(z.unknown()),
     new_value: z.record(z.unknown()),
   })
   .strict();
 
 export type AuditLogCommandPermissionChangeEntity = z.infer<
-  typeof AuditLogCommandPermissionChangeSchema
+  typeof AuditLogCommandPermissionChangeEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-exceptions}
  */
-export const AuditLogRoleChangeSchema = z
+export const AuditLogRoleChangeEntity = z
   .object({
     key: z.union([z.literal("$add"), z.literal("$remove")]),
     new_value: z.array(
@@ -62,141 +51,139 @@ export const AuditLogRoleChangeSchema = z
   })
   .strict();
 
-export type AuditLogRoleChangeEntity = z.infer<typeof AuditLogRoleChangeSchema>;
+export type AuditLogRoleChangeEntity = z.infer<typeof AuditLogRoleChangeEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
  */
-export const AuditLogEntryInfoSchema = z
+export const AuditLogEntryInfoEntity = z
   .object({
-    application_id: SnowflakeSchema.optional(),
+    application_id: Snowflake.optional(),
     auto_moderation_rule_name: z.string().optional(),
     auto_moderation_rule_trigger_type: z.string().optional(),
-    channel_id: SnowflakeSchema.optional(),
+    channel_id: Snowflake.optional(),
     count: z.string().optional(),
     delete_member_days: z.string().optional(),
-    id: SnowflakeSchema.optional(),
+    id: Snowflake.optional(),
     members_removed: z.string().optional(),
-    message_id: SnowflakeSchema.optional(),
+    message_id: Snowflake.optional(),
     role_name: z.string().optional(),
-    type: z.nativeEnum(AuditLogOverwriteType).optional(),
+    type: z.union([z.literal("0"), z.literal("1")]).optional(),
     integration_type: z.string().optional(),
   })
   .strict();
 
-export type AuditLogEntryInfoEntity = z.infer<typeof AuditLogEntryInfoSchema>;
+export type AuditLogEntryInfoEntity = z.infer<typeof AuditLogEntryInfoEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-audit-log-events}
  */
-export const AuditLogEvent = {
-  guildUpdate: 1,
-  channelCreate: 10,
-  channelUpdate: 11,
-  channelDelete: 12,
-  channelOverwriteCreate: 13,
-  channelOverwriteUpdate: 14,
-  channelOverwriteDelete: 15,
-  memberKick: 20,
-  memberPrune: 21,
-  memberBanAdd: 22,
-  memberBanRemove: 23,
-  memberUpdate: 24,
-  memberRoleUpdate: 25,
-  memberMove: 26,
-  memberDisconnect: 27,
-  botAdd: 28,
-  roleCreate: 30,
-  roleUpdate: 31,
-  roleDelete: 32,
-  inviteCreate: 40,
-  inviteUpdate: 41,
-  inviteDelete: 42,
-  webhookCreate: 50,
-  webhookUpdate: 51,
-  webhookDelete: 52,
-  emojiCreate: 60,
-  emojiUpdate: 61,
-  emojiDelete: 62,
-  messageDelete: 72,
-  messageBulkDelete: 73,
-  messagePin: 74,
-  messageUnpin: 75,
-  integrationCreate: 80,
-  integrationUpdate: 81,
-  integrationDelete: 82,
-  stageInstanceCreate: 83,
-  stageInstanceUpdate: 84,
-  stageInstanceDelete: 85,
-  stickerCreate: 90,
-  stickerUpdate: 91,
-  stickerDelete: 92,
-  guildScheduledEventCreate: 100,
-  guildScheduledEventUpdate: 101,
-  guildScheduledEventDelete: 102,
-  threadCreate: 110,
-  threadUpdate: 111,
-  threadDelete: 112,
-  applicationCommandPermissionUpdate: 121,
-  soundboardSoundCreate: 130,
-  soundboardSoundUpdate: 131,
-  soundboardSoundDelete: 132,
-  autoModerationRuleCreate: 140,
-  autoModerationRuleUpdate: 141,
-  autoModerationRuleDelete: 142,
-  autoModerationBlockMessage: 143,
-  autoModerationFlagToChannel: 144,
-  autoModerationUserCommunicationDisabled: 145,
-  creatorMonetizationRequestCreated: 150,
-  creatorMonetizationTermsAccepted: 151,
-  onboardingPromptCreate: 163,
-  onboardingPromptUpdate: 164,
-  onboardingPromptDelete: 165,
-  onboardingCreate: 166,
-  onboardingUpdate: 167,
-  homeSettingsCreate: 190,
-  homeSettingsUpdate: 191,
-} as const;
-
-export type AuditLogEvent = (typeof AuditLogEvent)[keyof typeof AuditLogEvent];
+export enum AuditLogEvent {
+  GuildUpdate = 1,
+  ChannelCreate = 10,
+  ChannelUpdate = 11,
+  ChannelDelete = 12,
+  ChannelOverwriteCreate = 13,
+  ChannelOverwriteUpdate = 14,
+  ChannelOverwriteDelete = 15,
+  MemberKick = 20,
+  MemberPrune = 21,
+  MemberBanAdd = 22,
+  MemberBanRemove = 23,
+  MemberUpdate = 24,
+  MemberRoleUpdate = 25,
+  MemberMove = 26,
+  MemberDisconnect = 27,
+  BotAdd = 28,
+  RoleCreate = 30,
+  RoleUpdate = 31,
+  RoleDelete = 32,
+  InviteCreate = 40,
+  InviteUpdate = 41,
+  InviteDelete = 42,
+  WebhookCreate = 50,
+  WebhookUpdate = 51,
+  WebhookDelete = 52,
+  EmojiCreate = 60,
+  EmojiUpdate = 61,
+  EmojiDelete = 62,
+  MessageDelete = 72,
+  MessageBulkDelete = 73,
+  MessagePin = 74,
+  MessageUnpin = 75,
+  IntegrationCreate = 80,
+  IntegrationUpdate = 81,
+  IntegrationDelete = 82,
+  StageInstanceCreate = 83,
+  StageInstanceUpdate = 84,
+  StageInstanceDelete = 85,
+  StickerCreate = 90,
+  StickerUpdate = 91,
+  StickerDelete = 92,
+  GuildScheduledEventCreate = 100,
+  GuildScheduledEventUpdate = 101,
+  GuildScheduledEventDelete = 102,
+  ThreadCreate = 110,
+  ThreadUpdate = 111,
+  ThreadDelete = 112,
+  ApplicationCommandPermissionUpdate = 121,
+  SoundboardSoundCreate = 130,
+  SoundboardSoundUpdate = 131,
+  SoundboardSoundDelete = 132,
+  AutoModerationRuleCreate = 140,
+  AutoModerationRuleUpdate = 141,
+  AutoModerationRuleDelete = 142,
+  AutoModerationBlockMessage = 143,
+  AutoModerationFlagToChannel = 144,
+  AutoModerationUserCommunicationDisabled = 145,
+  CreatorMonetizationRequestCreated = 150,
+  CreatorMonetizationTermsAccepted = 151,
+  OnboardingPromptCreate = 163,
+  OnboardingPromptUpdate = 164,
+  OnboardingPromptDelete = 165,
+  OnboardingCreate = 166,
+  OnboardingUpdate = 167,
+  HomeSettingsCreate = 190,
+  HomeSettingsUpdate = 191,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object}
  */
-export const AuditLogEntrySchema = z
+export const AuditLogEntryEntity = z
   .object({
     target_id: z.string().nullable(),
     changes: z
       .union([
-        z.array(AuditLogChangeSchema),
-        z.array(AuditLogCommandPermissionChangeSchema),
-        z.array(AuditLogRoleChangeSchema),
+        z.array(AuditLogChangeEntity),
+        z.array(AuditLogCommandPermissionChangeEntity),
+        z.array(AuditLogRoleChangeEntity),
       ])
       .optional(),
-    user_id: SnowflakeSchema.nullable(),
-    id: SnowflakeSchema,
+    user_id: Snowflake.nullable(),
+    id: Snowflake,
     action_type: z.nativeEnum(AuditLogEvent),
-    options: AuditLogEntryInfoSchema.optional(),
+    options: AuditLogEntryInfoEntity.optional(),
     reason: z.string().optional(),
   })
   .strict();
 
-export type AuditLogEntryEntity = z.infer<typeof AuditLogEntrySchema>;
+export type AuditLogEntryEntity = z.infer<typeof AuditLogEntryEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-object}
  */
-export const AuditLogSchema = z
+export const AuditLogEntity = z
   .object({
-    application_commands: z.array(ApplicationCommandSchema),
-    audit_log_entries: z.array(AuditLogEntrySchema),
-    auto_moderation_rules: z.array(AutoModerationRuleSchema),
-    guild_scheduled_events: z.array(GuildScheduledEventSchema),
-    integrations: z.array(IntegrationSchema.partial()),
-    threads: z.array(AnyThreadChannelSchema),
-    users: z.array(UserSchema),
-    webhooks: z.array(WebhookSchema),
+    application_commands: z.array(ApplicationCommandEntity),
+    audit_log_entries: z.array(AuditLogEntryEntity),
+    auto_moderation_rules: z.array(AutoModerationRuleEntity),
+    guild_scheduled_events: z.array(GuildScheduledEventEntity),
+    integrations: z.array(IntegrationEntity.partial()),
+    threads: z.array(AnyThreadChannelEntity),
+    users: z.array(UserEntity),
+    webhooks: z.array(WebhookEntity),
   })
   .strict();
 
-export type AuditLogEntity = z.infer<typeof AuditLogSchema>;
+export type AuditLogEntity = z.infer<typeof AuditLogEntity>;

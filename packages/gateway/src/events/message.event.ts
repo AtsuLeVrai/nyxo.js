@@ -1,9 +1,9 @@
 import {
-  EmojiSchema,
-  GuildMemberSchema,
-  MessageSchema,
-  SnowflakeSchema,
-  UserSchema,
+  EmojiEntity,
+  GuildMemberEntity,
+  MessageEntity,
+  Snowflake,
+  UserEntity,
 } from "@nyxjs/core";
 import { ReactionTypeFlag } from "@nyxjs/rest";
 import { z } from "zod";
@@ -11,46 +11,46 @@ import { z } from "zod";
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-emoji-message-reaction-remove-emoji-event-fields}
  */
-export const MessageReactionRemoveEmojiSchema = z
+export const MessageReactionRemoveEmojiEntity = z
   .object({
-    channel_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
-    message_id: SnowflakeSchema,
-    emoji: EmojiSchema.partial(),
+    channel_id: Snowflake,
+    guild_id: Snowflake.optional(),
+    message_id: Snowflake,
+    emoji: EmojiEntity.partial(),
   })
   .strict();
 
 export type MessageReactionRemoveEmojiEntity = z.infer<
-  typeof MessageReactionRemoveEmojiSchema
+  typeof MessageReactionRemoveEmojiEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-all-message-reaction-remove-all-event-fields}
  */
-export const MessageReactionRemoveAllSchema = z
+export const MessageReactionRemoveAllEntity = z
   .object({
-    channel_id: SnowflakeSchema,
-    message_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
+    channel_id: Snowflake,
+    message_id: Snowflake,
+    guild_id: Snowflake.optional(),
   })
   .strict();
 
 export type MessageReactionRemoveAllEntity = z.infer<
-  typeof MessageReactionRemoveAllSchema
+  typeof MessageReactionRemoveAllEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-message-reaction-remove-event-fields}
  */
-export const MessageReactionRemoveSchema = z
+export const MessageReactionRemoveEntity = z
   .object({
-    user_id: SnowflakeSchema,
-    channel_id: SnowflakeSchema,
-    message_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
+    user_id: Snowflake,
+    channel_id: Snowflake,
+    message_id: Snowflake,
+    guild_id: Snowflake.optional(),
     emoji: z.union([
-      EmojiSchema.pick({ id: true, name: true }),
-      EmojiSchema.pick({ id: true, name: true, animated: true }),
+      EmojiEntity.pick({ id: true, name: true }),
+      EmojiEntity.pick({ id: true, name: true, animated: true }),
     ]),
     burst: z.boolean(),
     type: z.nativeEnum(ReactionTypeFlag),
@@ -58,71 +58,71 @@ export const MessageReactionRemoveSchema = z
   .strict();
 
 export type MessageReactionRemoveEntity = z.infer<
-  typeof MessageReactionRemoveSchema
+  typeof MessageReactionRemoveEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-add-message-reaction-add-event-fields}
  */
-export const MessageReactionAddSchema = z
+export const MessageReactionAddEntity = z
   .object({
-    user_id: SnowflakeSchema,
-    channel_id: SnowflakeSchema,
-    message_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
-    member: GuildMemberSchema.optional(),
+    user_id: Snowflake,
+    channel_id: Snowflake,
+    message_id: Snowflake,
+    guild_id: Snowflake.optional(),
+    member: GuildMemberEntity.optional(),
     emoji: z.union([
-      EmojiSchema.pick({ id: true, name: true }),
-      EmojiSchema.pick({ id: true, name: true, animated: true }),
+      EmojiEntity.pick({ id: true, name: true }),
+      EmojiEntity.pick({ id: true, name: true, animated: true }),
     ]),
-    message_author_id: SnowflakeSchema.optional(),
+    message_author_id: Snowflake.optional(),
     burst: z.boolean(),
     burst_colors: z.array(z.string()).optional(),
     type: z.nativeEnum(ReactionTypeFlag),
   })
   .strict();
 
-export type MessageReactionAddEntity = z.infer<typeof MessageReactionAddSchema>;
+export type MessageReactionAddEntity = z.infer<typeof MessageReactionAddEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-delete-bulk-message-delete-bulk-event-fields}
  */
-export const MessageDeleteBulkSchema = z
+export const MessageDeleteBulkEntity = z
   .object({
-    ids: z.array(SnowflakeSchema),
-    channel_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
+    ids: z.array(Snowflake),
+    channel_id: Snowflake,
+    guild_id: Snowflake.optional(),
   })
   .strict();
 
-export type MessageDeleteBulkEntity = z.infer<typeof MessageDeleteBulkSchema>;
+export type MessageDeleteBulkEntity = z.infer<typeof MessageDeleteBulkEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-delete-message-delete-event-fields}
  */
-export const MessageDeleteSchema = z
+export const MessageDeleteEntity = z
   .object({
-    id: SnowflakeSchema,
-    channel_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
+    id: Snowflake,
+    channel_id: Snowflake,
+    guild_id: Snowflake.optional(),
   })
   .strict();
 
-export type MessageDeleteEntity = z.infer<typeof MessageDeleteSchema>;
+export type MessageDeleteEntity = z.infer<typeof MessageDeleteEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-create-message-create-extra-fields}
  */
-export const MessageCreateSchema = MessageSchema.omit({
+export const MessageCreateEntity = MessageEntity.omit({
   mentions: true,
 })
   .extend({
-    guild_id: SnowflakeSchema.optional(),
-    member: GuildMemberSchema.partial().optional(),
+    guild_id: Snowflake.optional(),
+    member: GuildMemberEntity.partial().optional(),
     mentions: z
-      .array(z.union([UserSchema, GuildMemberSchema.partial()]))
+      .array(z.union([UserEntity, GuildMemberEntity.partial()]))
       .optional(),
   })
   .strict();
 
-export type MessageCreateEntity = z.infer<typeof MessageCreateSchema>;
+export type MessageCreateEntity = z.infer<typeof MessageCreateEntity>;

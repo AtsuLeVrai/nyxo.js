@@ -1,20 +1,20 @@
 import {
-  GuildScheduledEventEntityMetadataSchema,
+  GuildScheduledEventEntityMetadataEntity,
   GuildScheduledEventPrivacyLevel,
-  GuildScheduledEventRecurrenceRuleSchema,
+  GuildScheduledEventRecurrenceRuleEntity,
   GuildScheduledEventStatus,
   GuildScheduledEventType,
-  SnowflakeSchema,
+  Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
  */
-export const CreateGuildScheduledEventSchema = z
+export const CreateGuildScheduledEventEntity = z
   .object({
-    channel_id: SnowflakeSchema.optional(),
-    entity_metadata: GuildScheduledEventEntityMetadataSchema.optional(),
+    channel_id: Snowflake.optional(),
+    entity_metadata: GuildScheduledEventEntityMetadataEntity.optional(),
     name: z.string().min(1).max(100),
     privacy_level: z.nativeEnum(GuildScheduledEventPrivacyLevel),
     scheduled_start_time: z.string().datetime(),
@@ -25,19 +25,19 @@ export const CreateGuildScheduledEventSchema = z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
       .optional(),
-    recurrence_rule: GuildScheduledEventRecurrenceRuleSchema.optional(),
+    recurrence_rule: GuildScheduledEventRecurrenceRuleEntity.optional(),
   })
   .strict();
 
 export type CreateGuildScheduledEventEntity = z.infer<
-  typeof CreateGuildScheduledEventSchema
+  typeof CreateGuildScheduledEventEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
  */
-export const ModifyGuildScheduledEventSchema =
-  CreateGuildScheduledEventSchema.partial().merge(
+export const ModifyGuildScheduledEventEntity =
+  CreateGuildScheduledEventEntity.partial().merge(
     z
       .object({
         status: z.nativeEnum(GuildScheduledEventStatus).optional(),
@@ -46,21 +46,21 @@ export const ModifyGuildScheduledEventSchema =
   );
 
 export type ModifyGuildScheduledEventEntity = z.infer<
-  typeof ModifyGuildScheduledEventSchema
+  typeof ModifyGuildScheduledEventEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params}
  */
-export const GetGuildScheduledEventUsersQuerySchema = z
+export const GetGuildScheduledEventUsersQueryEntity = z
   .object({
     limit: z.number().max(100).default(100).optional(),
     with_member: z.boolean().default(false).optional(),
-    before: SnowflakeSchema.optional(),
-    after: SnowflakeSchema.optional(),
+    before: Snowflake.optional(),
+    after: Snowflake.optional(),
   })
   .strict();
 
 export type GetGuildScheduledEventUsersQueryEntity = z.infer<
-  typeof GetGuildScheduledEventUsersQuerySchema
+  typeof GetGuildScheduledEventUsersQueryEntity
 >;

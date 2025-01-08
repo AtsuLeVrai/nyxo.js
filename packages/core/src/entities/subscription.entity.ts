@@ -1,28 +1,25 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-statuses}
  */
-export const SubscriptionStatus = {
-  active: 0,
-  ending: 1,
-  inactive: 2,
-} as const;
-
-export type SubscriptionStatus =
-  (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
+export enum SubscriptionStatus {
+  Active = 0,
+  Ending = 1,
+  Inactive = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-object}
  */
-export const SubscriptionSchema = z
+export const SubscriptionEntity = z
   .object({
-    id: SnowflakeSchema,
-    user_id: SnowflakeSchema,
-    sku_ids: z.array(SnowflakeSchema),
-    entitlement_ids: z.array(SnowflakeSchema),
-    renewal_sku_ids: z.array(SnowflakeSchema).nullable(),
+    id: Snowflake,
+    user_id: Snowflake,
+    sku_ids: z.array(Snowflake),
+    entitlement_ids: z.array(Snowflake),
+    renewal_sku_ids: z.array(Snowflake).nullable(),
     current_period_start: z.string().datetime(),
     current_period_end: z.string().datetime(),
     status: z.nativeEnum(SubscriptionStatus),
@@ -46,4 +43,4 @@ export const SubscriptionSchema = z
     },
   );
 
-export type SubscriptionEntity = z.infer<typeof SubscriptionSchema>;
+export type SubscriptionEntity = z.infer<typeof SubscriptionEntity>;

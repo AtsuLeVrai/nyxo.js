@@ -1,37 +1,33 @@
 import { z } from "zod";
-import { BitFieldManager, SnowflakeSchema } from "../managers/index.js";
+import { BitFieldManager, Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-flags}
  */
-export const SkuFlags = {
-  available: 1 << 2,
-  guildSubscription: 1 << 7,
-  userSubscription: 1 << 8,
-} as const;
-
-export type SkuFlags = (typeof SkuFlags)[keyof typeof SkuFlags];
+export enum SkuFlags {
+  Available = 1 << 2,
+  GuildSubscription = 1 << 7,
+  UserSubscription = 1 << 8,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-types}
  */
-export const SkuType = {
-  durable: 2,
-  consumable: 3,
-  subscription: 5,
-  subscriptionGroup: 6,
-} as const;
-
-export type SkuType = (typeof SkuType)[keyof typeof SkuType];
+export enum SkuType {
+  Durable = 2,
+  Consumable = 3,
+  Subscription = 5,
+  SubscriptionGroup = 6,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-structure}
  */
-export const SkuSchema = z
+export const SkuEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     type: z.nativeEnum(SkuType),
-    application_id: SnowflakeSchema,
+    application_id: Snowflake,
     name: z.string(),
     slug: z.string(),
     flags: z
@@ -40,4 +36,4 @@ export const SkuSchema = z
   })
   .strict();
 
-export type SkuEntity = z.infer<typeof SkuSchema>;
+export type SkuEntity = z.infer<typeof SkuEntity>;

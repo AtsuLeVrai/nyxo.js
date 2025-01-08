@@ -1,13 +1,10 @@
 import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
-import { ShardStatus } from "../constants/index.js";
 import {
-  type ShardOptions,
-  ShardOptionsSchema,
-  type ShardSession,
-  ShardSessionSchema,
-  type ShardStats,
-  ShardStatsSchema,
+  ShardOptions,
+  ShardSession,
+  ShardStats,
+  ShardStatus,
 } from "../schemas/index.js";
 import type { GatewayEvents } from "../types/index.js";
 
@@ -34,7 +31,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
   constructor(options: Partial<ShardOptions> = {}) {
     super();
     this.#startTime = Date.now();
-    this.#options = ShardOptionsSchema.parse(options);
+    this.#options = ShardOptions.parse(options);
     this.#stats = this.#createInitialStats();
 
     if (this.#options.validateConfiguration) {
@@ -52,7 +49,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
 
   get connectedShards(): number {
     return Array.from(this.#shards.values()).filter(
-      (s) => s.status === ShardStatus.connected,
+      (s) => s.status === "connected",
     ).length;
   }
 
@@ -70,7 +67,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
 
   get averageLatency(): number {
     const connectedShards = Array.from(this.#shards.values()).filter(
-      (s) => s.status === ShardStatus.connected,
+      (s) => s.status === "connected",
     );
     if (connectedShards.length === 0) {
       return 0;
@@ -224,7 +221,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
       ),
     };
 
-    return ShardStatsSchema.parse(stats);
+    return ShardStats.parse(stats);
   }
 
   #startMonitoring(): void {
@@ -284,10 +281,10 @@ export class ShardService extends EventEmitter<GatewayEvents> {
         : Array.from({ length: totalShards }, (_, i) => i);
 
     return shardList.map((shardId) =>
-      ShardSessionSchema.parse({
+      ShardSession.parse({
         shardId,
         numShards: totalShards,
-        status: ShardStatus.idle,
+        status: "idle",
         latency: 0,
         guildCount: 0,
         connectAttempts: 0,
@@ -372,7 +369,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
       await this.#gracefulHandoff(shardKey);
     }
 
-    session.status = ShardStatus.connecting;
+    session.status = "connected";
     session.connectAttempts++;
     session.connectedAt = Date.now();
 
@@ -481,7 +478,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
       return;
     }
 
-    session.status = ShardStatus.disconnected;
+    session.status = "disconnected";
     session.disconnectedAt = Date.now();
     session.isActive = false;
 

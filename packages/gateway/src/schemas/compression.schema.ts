@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-export const CompressionTypeSchema = z.union([
+export const CompressionType = z.union([
   z.literal("zlib-stream"),
   z.literal("zstd-stream"),
 ]);
 
-export type CompressionType = z.infer<typeof CompressionTypeSchema>;
+export type CompressionType = z.infer<typeof CompressionType>;
 
-export const CompressionOptionsSchema = z
+export const CompressionOptions = z
   .object({
-    compressionType: CompressionTypeSchema.optional(),
+    compressionType: CompressionType.optional(),
     zlibChunkSize: z
       .number()
       .int()
@@ -46,4 +46,4 @@ export const CompressionOptionsSchema = z
   })
   .strict();
 
-export type CompressionOptions = z.infer<typeof CompressionOptionsSchema>;
+export type CompressionOptions = z.infer<typeof CompressionOptions>;

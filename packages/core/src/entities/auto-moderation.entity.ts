@@ -1,97 +1,85 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-keyword-matching-strategies}
  */
-export const AutoModerationKeywordMatchType = {
-  prefix: "prefix",
-  suffix: "suffix",
-  anywhere: "anywhere",
-  wholeWord: "whole_word",
-} as const;
-
-export type AutoModerationKeywordMatchType =
-  (typeof AutoModerationKeywordMatchType)[keyof typeof AutoModerationKeywordMatchType];
+export enum AutoModerationKeywordMatchType {
+  Prefix = "prefix",
+  Suffix = "suffix",
+  Anywhere = "anywhere",
+  WholeWord = "whole_word",
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata-field-limits}
  */
-export const AutoModerationRuleLimit = {
-  maxKeywordFilter: 1000,
-  maxKeywordLength: 60,
-  maxRegexPatterns: 10,
-  maxRegexLength: 260,
-  maxAllowListKeyword: 100,
-  maxAllowListPreset: 1000,
-} as const;
-
-export type AutoModerationRuleLimit =
-  (typeof AutoModerationRuleLimit)[keyof typeof AutoModerationRuleLimit];
+export enum AutoModerationRuleLimit {
+  MaxKeywordFilter = 1000,
+  MaxKeywordLength = 60,
+  MaxRegexPatterns = 10,
+  MaxRegexLength = 260,
+  MaxAllowListKeyword = 100,
+  MaxAllowListPreset = 1000,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
  */
-export const AutoModerationMaxRuleType = {
-  keyboard: 6,
-  spam: 1,
-  keywordPreset: 1,
-  mentionSpam: 1,
-  memberProfile: 1,
-} as const;
-
-export type AutoModerationMaxRuleType =
-  (typeof AutoModerationMaxRuleType)[keyof typeof AutoModerationMaxRuleType];
+export enum AutoModerationMaxRuleType {
+  Keyboard = 6,
+  Spam = 1,
+  KeywordPreset = 1,
+  MentionSpam = 1,
+  MemberProfile = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata}
  */
-export const AutoModerationRegexMetadataSchema = z
+export const AutoModerationRegexMetadataEntity = z
   .object({
     pattern: z.string().max(260),
     valid: z.boolean(),
   })
   .strict();
 
-export type AutoModerationRegexMetadata = z.infer<
-  typeof AutoModerationRegexMetadataSchema
+export type AutoModerationRegexMetadataEntity = z.infer<
+  typeof AutoModerationRegexMetadataEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-metadata}
  */
-export const AutoModerationActionMetadataSchema = z
+export const AutoModerationActionMetadataEntity = z
   .object({
-    channel_id: SnowflakeSchema,
+    channel_id: Snowflake,
     duration_seconds: z.number().int().max(2419200),
     custom_message: z.string().max(150).optional(),
   })
   .strict();
 
-export type AutoModerationActionMetadata = z.infer<
-  typeof AutoModerationActionMetadataSchema
+export type AutoModerationActionMetadataEntity = z.infer<
+  typeof AutoModerationActionMetadataEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types}
  */
-export const AutoModerationActionType = {
-  blockMessage: 1,
-  sendAlertMessage: 2,
-  timeout: 3,
-  blockMemberInteraction: 4,
-} as const;
-
-export type AutoModerationActionType =
-  (typeof AutoModerationActionType)[keyof typeof AutoModerationActionType];
+export enum AutoModerationActionType {
+  BlockMessage = 1,
+  SendAlertMessage = 2,
+  Timeout = 3,
+  BlockMemberInteraction = 4,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-auto-moderation-action-structure}
  */
-export const AutoModerationActionSchema = z
+export const AutoModerationActionEntity = z
   .object({
     type: z.nativeEnum(AutoModerationActionType),
-    metadata: AutoModerationActionMetadataSchema.optional(),
+    metadata: AutoModerationActionMetadataEntity.optional(),
   })
   .strict()
   .refine((data) => {
@@ -107,36 +95,30 @@ export const AutoModerationActionSchema = z
   });
 
 export type AutoModerationActionEntity = z.infer<
-  typeof AutoModerationActionSchema
+  typeof AutoModerationActionEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types}
  */
-export const AutoModerationEventType = {
-  messageSend: 1,
-  memberUpdate: 2,
-} as const;
-
-export type AutoModerationEventType =
-  (typeof AutoModerationEventType)[keyof typeof AutoModerationEventType];
+export enum AutoModerationEventType {
+  MessageSend = 1,
+  MemberUpdate = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-keyword-preset-types}
  */
-export const AutoModerationKeywordPresetType = {
-  profanity: 1,
-  sexualContent: 2,
-  slurs: 3,
-} as const;
-
-export type AutoModerationKeywordPresetType =
-  (typeof AutoModerationKeywordPresetType)[keyof typeof AutoModerationKeywordPresetType];
+export enum AutoModerationKeywordPresetType {
+  Profanity = 1,
+  SexualContent = 2,
+  Slurs = 3,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata}
  */
-export const AutoModerationRuleTriggerMetadataSchema = z
+export const AutoModerationRuleTriggerMetadataEntity = z
   .object({
     keyword_filter: z.array(z.string().max(60)).max(1000).optional(),
     regex_patterns: z.array(z.string().max(260)).max(10).optional(),
@@ -147,50 +129,47 @@ export const AutoModerationRuleTriggerMetadataSchema = z
   })
   .strict();
 
-export type AutoModerationRuleTriggerMetadata = z.infer<
-  typeof AutoModerationRuleTriggerMetadataSchema
+export type AutoModerationRuleTriggerMetadataEntity = z.infer<
+  typeof AutoModerationRuleTriggerMetadataEntity
 >;
 
-export const AutoModerationRuleTriggerMetadataWithValidationSchema =
-  AutoModerationRuleTriggerMetadataSchema.extend({
-    regex_validation: z.array(AutoModerationRegexMetadataSchema).optional(),
+export const AutoModerationRuleTriggerMetadataWithValidationEntity =
+  AutoModerationRuleTriggerMetadataEntity.extend({
+    regex_validation: z.array(AutoModerationRegexMetadataEntity).optional(),
     keyword_match_type: z.nativeEnum(AutoModerationKeywordMatchType).optional(),
   }).strict();
 
-export type AutoModerationRuleTriggerMetadataWithValidation = z.infer<
-  typeof AutoModerationRuleTriggerMetadataWithValidationSchema
+export type AutoModerationRuleTriggerMetadataWithValidationEntity = z.infer<
+  typeof AutoModerationRuleTriggerMetadataWithValidationEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
  */
-export const AutoModerationRuleTriggerType = {
-  keyword: 1,
-  spam: 3,
-  keywordPreset: 4,
-  mentionSpam: 5,
-  memberProfile: 6,
-} as const;
-
-export type AutoModerationRuleTriggerType =
-  (typeof AutoModerationRuleTriggerType)[keyof typeof AutoModerationRuleTriggerType];
+export enum AutoModerationRuleTriggerType {
+  Keyword = 1,
+  Spam = 3,
+  KeywordPreset = 4,
+  MentionSpam = 5,
+  MemberProfile = 6,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-auto-moderation-rule-structure}
  */
-export const AutoModerationRuleSchema = z
+export const AutoModerationRuleEntity = z
   .object({
-    id: SnowflakeSchema,
-    guild_id: SnowflakeSchema,
+    id: Snowflake,
+    guild_id: Snowflake,
     name: z.string(),
-    creator_id: SnowflakeSchema,
+    creator_id: Snowflake,
     event_type: z.nativeEnum(AutoModerationEventType),
     trigger_type: z.nativeEnum(AutoModerationRuleTriggerType),
-    trigger_metadata: AutoModerationRuleTriggerMetadataSchema,
-    actions: z.array(AutoModerationActionSchema).max(3),
+    trigger_metadata: AutoModerationRuleTriggerMetadataEntity,
+    actions: z.array(AutoModerationActionEntity).max(3),
     enabled: z.boolean(),
-    exempt_roles: z.array(SnowflakeSchema).max(20),
-    exempt_channels: z.array(SnowflakeSchema).max(50),
+    exempt_roles: z.array(Snowflake).max(20),
+    exempt_channels: z.array(Snowflake).max(50),
   })
   .strict()
   .superRefine((data, ctx) => {
@@ -222,4 +201,4 @@ export const AutoModerationRuleSchema = z
     }
   });
 
-export type AutoModerationRuleEntity = z.infer<typeof AutoModerationRuleSchema>;
+export type AutoModerationRuleEntity = z.infer<typeof AutoModerationRuleEntity>;

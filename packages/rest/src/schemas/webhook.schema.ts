@@ -1,11 +1,11 @@
-import { SnowflakeSchema } from "@nyxjs/core";
+import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { CreateMessageSchema } from "./message.schema.js";
+import { CreateMessageEntity } from "./message.schema.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook-json-params}
  */
-export const CreateWebhookSchema = z
+export const CreateWebhookEntity = z
   .object({
     name: z.string().min(1).max(80),
     avatar: z
@@ -15,42 +15,42 @@ export const CreateWebhookSchema = z
   })
   .strict();
 
-export type CreateWebhookEntity = z.infer<typeof CreateWebhookSchema>;
+export type CreateWebhookEntity = z.infer<typeof CreateWebhookEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params}
  */
-export const ModifyWebhookSchema = z
+export const ModifyWebhookEntity = z
   .object({
     name: z.string().min(1).max(80).optional(),
     avatar: z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
       .nullish(),
-    channel_id: SnowflakeSchema.optional(),
+    channel_id: Snowflake.optional(),
   })
   .strict();
 
-export type ModifyWebhookEntity = z.infer<typeof ModifyWebhookSchema>;
+export type ModifyWebhookEntity = z.infer<typeof ModifyWebhookEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-query-string-params}
  */
-export const ExecuteWebhookQuerySchema = z
+export const ExecuteWebhookQueryEntity = z
   .object({
     wait: z.boolean().default(false).optional(),
-    thread_id: SnowflakeSchema.optional(),
+    thread_id: Snowflake.optional(),
   })
   .strict();
 
 export type ExecuteWebhookQueryEntity = z.infer<
-  typeof ExecuteWebhookQuerySchema
+  typeof ExecuteWebhookQueryEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params}
  */
-export const ExecuteWebhookSchema = CreateMessageSchema.pick({
+export const ExecuteWebhookEntity = CreateMessageEntity.pick({
   content: true,
   tts: true,
   embeds: true,
@@ -67,28 +67,28 @@ export const ExecuteWebhookSchema = CreateMessageSchema.pick({
       username: z.string().optional(),
       avatar_url: z.string().optional(),
       thread_name: z.string().optional(),
-      applied_tags: z.array(SnowflakeSchema).optional(),
+      applied_tags: z.array(Snowflake).optional(),
     })
     .strict(),
 );
 
-export type ExecuteWebhookEntity = z.infer<typeof ExecuteWebhookSchema>;
+export type ExecuteWebhookEntity = z.infer<typeof ExecuteWebhookEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-message-query-string-params}
  */
-export const GetWebhookMessageQuerySchema = ExecuteWebhookQuerySchema.pick({
+export const GetWebhookMessageQueryEntity = ExecuteWebhookQueryEntity.pick({
   thread_id: true,
 });
 
 export type GetWebhookMessageQueryEntity = z.infer<
-  typeof GetWebhookMessageQuerySchema
+  typeof GetWebhookMessageQueryEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message-jsonform-params}
  */
-export const EditWebhookMessageSchema = ExecuteWebhookSchema.pick({
+export const EditWebhookMessageEntity = ExecuteWebhookEntity.pick({
   content: true,
   embeds: true,
   allowed_mentions: true,
@@ -99,4 +99,4 @@ export const EditWebhookMessageSchema = ExecuteWebhookSchema.pick({
   poll: true,
 });
 
-export type EditWebhookMessageEntity = z.infer<typeof EditWebhookMessageSchema>;
+export type EditWebhookMessageEntity = z.infer<typeof EditWebhookMessageEntity>;

@@ -1,5 +1,7 @@
 import type { Snowflake } from "@nyxjs/core";
-import type { ImageFormat, ImageSize } from "../constants/index.js";
+
+export type ImageFormat = "jpg" | "png" | "webp" | "gif" | "json";
+export type ImageSize = 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096;
 
 export interface BaseImageOptionsEntity {
   format?: ImageFormat;
@@ -129,7 +131,6 @@ export interface CdnEntity {
   ) => string;
   getDefaultAvatarIndex: (discriminator: number | string) => number;
   getNewSystemAvatarIndex: (userId: Snowflake) => number;
-  getNearestValidSize: (size: number) => ImageSize;
   signUrl: (url: string, signingKey: string) => string;
   createSignedParameters: (
     path: string,

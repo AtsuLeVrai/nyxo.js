@@ -1,16 +1,11 @@
 import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type BulkDeleteMessagesEntity,
-  BulkDeleteMessagesSchema,
-  type CreateMessageEntity,
-  CreateMessageSchema,
-  type EditMessageEntity,
-  EditMessageSchema,
-  type GetChannelMessagesQueryEntity,
-  GetChannelMessagesQuerySchema,
-  type GetReactionsQueryEntity,
-  GetReactionsQuerySchema,
+  BulkDeleteMessagesEntity,
+  CreateMessageEntity,
+  EditMessageEntity,
+  GetChannelMessagesQueryEntity,
+  GetReactionsQueryEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -48,7 +43,7 @@ export class MessageRouter {
     channelId: Snowflake,
     query?: GetChannelMessagesQueryEntity,
   ): Promise<HttpResponse<MessageEntity[]>> {
-    const result = GetChannelMessagesQuerySchema.safeParse(query);
+    const result = GetChannelMessagesQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -81,7 +76,7 @@ export class MessageRouter {
     channelId: Snowflake,
     options: CreateMessageEntity,
   ): Promise<HttpResponse<MessageEntity>> {
-    const result = CreateMessageSchema.safeParse(options);
+    const result = CreateMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -158,7 +153,7 @@ export class MessageRouter {
     emoji: string,
     query: GetReactionsQueryEntity = {},
   ): Promise<HttpResponse<UserEntity[]>> {
-    const result = GetReactionsQuerySchema.safeParse(query);
+    const result = GetReactionsQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -206,7 +201,7 @@ export class MessageRouter {
     messageId: Snowflake,
     options: EditMessageEntity,
   ): Promise<HttpResponse<MessageEntity>> {
-    const result = EditMessageSchema.safeParse(options);
+    const result = EditMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -247,7 +242,7 @@ export class MessageRouter {
     options: BulkDeleteMessagesEntity,
     reason?: string,
   ): Promise<HttpResponse<void>> {
-    const result = BulkDeleteMessagesSchema.safeParse(options);
+    const result = BulkDeleteMessagesEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

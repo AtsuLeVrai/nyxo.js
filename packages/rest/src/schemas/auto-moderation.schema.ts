@@ -1,43 +1,43 @@
 import {
-  AutoModerationActionSchema,
+  AutoModerationActionEntity,
   AutoModerationEventType,
-  AutoModerationRuleTriggerMetadataSchema,
+  AutoModerationRuleTriggerMetadataEntity,
   AutoModerationRuleTriggerType,
-  SnowflakeSchema,
+  Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule-json-params}
  */
-export const CreateAutoModerationRuleSchema = z
+export const CreateAutoModerationRuleEntity = z
   .object({
     name: z.string(),
     event_type: z.nativeEnum(AutoModerationEventType),
     trigger_type: z.nativeEnum(AutoModerationRuleTriggerType),
-    trigger_metadata: AutoModerationRuleTriggerMetadataSchema.optional(),
-    actions: z.array(AutoModerationActionSchema),
+    trigger_metadata: AutoModerationRuleTriggerMetadataEntity.optional(),
+    actions: z.array(AutoModerationActionEntity),
     enabled: z.boolean().default(false).optional(),
-    exempt_roles: z.array(SnowflakeSchema).max(20).optional(),
-    exempt_channels: z.array(SnowflakeSchema).max(50).optional(),
+    exempt_roles: z.array(Snowflake).max(20).optional(),
+    exempt_channels: z.array(Snowflake).max(50).optional(),
   })
   .strict();
 
 export type CreateAutoModerationRuleEntity = z.infer<
-  typeof CreateAutoModerationRuleSchema
+  typeof CreateAutoModerationRuleEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule-json-params}
  */
 
-export const ModifyAutoModerationRuleSchema =
-  CreateAutoModerationRuleSchema.omit({
+export const ModifyAutoModerationRuleEntity =
+  CreateAutoModerationRuleEntity.omit({
     trigger_type: true,
   })
     .strict()
     .partial();
 
 export type ModifyAutoModerationRuleEntity = z.infer<
-  typeof ModifyAutoModerationRuleSchema
+  typeof ModifyAutoModerationRuleEntity
 >;

@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
-import { GuildMemberSchema } from "./guild.entity.js";
+import { Snowflake } from "../managers/index.js";
+import { GuildMemberEntity } from "./guild.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#voice-region-object-voice-region-structure}
  */
-export const VoiceRegionSchema = z
+export const VoiceRegionEntity = z
   .object({
     id: z.string(),
     name: z.string(),
@@ -15,18 +15,18 @@ export const VoiceRegionSchema = z
   })
   .strict();
 
-export type VoiceRegionEntity = z.infer<typeof VoiceRegionSchema>;
+export type VoiceRegionEntity = z.infer<typeof VoiceRegionEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/voice#voice-state-object-voice-state-structure}
  */
-export const VoiceStateSchema = z
+export const VoiceStateEntity = z
   .object({
-    guild_id: SnowflakeSchema.optional(),
-    channel_id: SnowflakeSchema.nullable(),
-    user_id: SnowflakeSchema,
-    member: GuildMemberSchema.optional(),
-    session_id: SnowflakeSchema,
+    guild_id: Snowflake.optional(),
+    channel_id: Snowflake.nullable(),
+    user_id: Snowflake,
+    member: GuildMemberEntity.optional(),
+    session_id: Snowflake,
     deaf: z.boolean(),
     mute: z.boolean(),
     self_deaf: z.boolean(),
@@ -38,4 +38,4 @@ export const VoiceStateSchema = z
   })
   .strict();
 
-export type VoiceStateEntity = z.infer<typeof VoiceStateSchema>;
+export type VoiceStateEntity = z.infer<typeof VoiceStateEntity>;

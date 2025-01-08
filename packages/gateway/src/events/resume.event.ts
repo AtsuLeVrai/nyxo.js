@@ -3,7 +3,7 @@ import { z } from "zod";
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#resume-resume-structure}
  */
-export const ResumeSchema = z
+export const ResumeEntity = z
   .object({
     token: z.string(),
     session_id: z.string(),
@@ -11,4 +11,4 @@ export const ResumeSchema = z
   })
   .strict();
 
-export type ResumeEntity = z.infer<typeof ResumeSchema>;
+export type ResumeEntity = z.infer<typeof ResumeEntity>;

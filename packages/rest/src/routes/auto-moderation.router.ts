@@ -1,10 +1,8 @@
 import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateAutoModerationRuleEntity,
-  CreateAutoModerationRuleSchema,
-  type ModifyAutoModerationRuleEntity,
-  ModifyAutoModerationRuleSchema,
+  CreateAutoModerationRuleEntity,
+  ModifyAutoModerationRuleEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -49,7 +47,7 @@ export class AutoModerationRouter {
     options: CreateAutoModerationRuleEntity,
     reason?: string,
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
-    const result = CreateAutoModerationRuleSchema.safeParse(options);
+    const result = CreateAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -73,7 +71,7 @@ export class AutoModerationRouter {
     options: ModifyAutoModerationRuleEntity,
     reason?: string,
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
-    const result = ModifyAutoModerationRuleSchema.safeParse(options);
+    const result = ModifyAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

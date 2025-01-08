@@ -74,11 +74,11 @@ import type { ShardStats } from "../schemas/index.js";
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
  */
 export interface GatewayReceiveEvents {
-  [GatewayOpcodes.hello]: HelloEntity;
+  [GatewayOpcodes.Hello]: HelloEntity;
   READY: ReadyEntity;
   RESUMED: boolean;
-  [GatewayOpcodes.reconnect]: number;
-  [GatewayOpcodes.invalidSession]: boolean;
+  [GatewayOpcodes.Reconnect]: number;
+  [GatewayOpcodes.InvalidSession]: boolean;
   APPLICATION_COMMAND_PERMISSIONS_UPDATE: GuildApplicationCommandPermissionEntity;
   AUTO_MODERATION_RULE_CREATE: AutoModerationRuleEntity;
   AUTO_MODERATION_RULE_UPDATE: AutoModerationRuleEntity;
@@ -160,13 +160,13 @@ export interface GatewayReceiveEvents {
  * @see {@link https://discord.com/developers/docs/events/gateway-events#send-events}
  */
 export interface GatewaySendEvents {
-  [GatewayOpcodes.identify]: IdentifyEntity;
-  [GatewayOpcodes.resume]: ResumeEntity;
-  [GatewayOpcodes.heartbeat]: number | null;
-  [GatewayOpcodes.requestGuildMembers]: RequestGuildMembersEntity;
-  [GatewayOpcodes.requestSoundboardSounds]: RequestSoundboardSoundsEntity;
-  [GatewayOpcodes.voiceStateUpdate]: UpdateVoiceStateEntity;
-  [GatewayOpcodes.presenceUpdate]: UpdatePresenceEntity;
+  [GatewayOpcodes.Identify]: IdentifyEntity;
+  [GatewayOpcodes.Resume]: ResumeEntity;
+  [GatewayOpcodes.Heartbeat]: number | null;
+  [GatewayOpcodes.RequestGuildMembers]: RequestGuildMembersEntity;
+  [GatewayOpcodes.RequestSoundboardSounds]: RequestSoundboardSoundsEntity;
+  [GatewayOpcodes.VoiceStateUpdate]: UpdateVoiceStateEntity;
+  [GatewayOpcodes.PresenceUpdate]: UpdatePresenceEntity;
 }
 
 export interface GatewayEvents {

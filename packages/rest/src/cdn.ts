@@ -1,18 +1,17 @@
 import { createHmac } from "node:crypto";
 import { type Snowflake, SnowflakeManager } from "@nyxjs/core";
-import { HttpConstants, ImageFormat, ImageSize } from "./constants/index.js";
+import { HttpConstants } from "./constants/index.js";
 import type {
   AnimatedImageOptionsEntity,
   AttachmentOptionsEntity,
   BaseImageOptionsEntity,
   CdnEntity,
+  ImageFormat,
   SignedAttachmentParametersEntity,
   StickerFormatOptionsEntity,
 } from "./types/index.js";
 
 const DEFAULT_FORMAT: ImageFormat = "png";
-const VALID_FORMATS: Set<string> = new Set(Object.values(ImageFormat));
-const VALID_SIZES: Set<number> = new Set(Object.values(ImageSize));
 
 function validateId(id: Snowflake | number, name = "ID"): string {
   const stringId = id.toString();
@@ -28,22 +27,6 @@ function validateHash(hash: string): void {
   }
 }
 
-function validateSize(size?: number): void {
-  if (size !== undefined && !VALID_SIZES.has(size)) {
-    throw new Error(
-      `Invalid size. Must be one of: ${Array.from(VALID_SIZES).join(", ")}`,
-    );
-  }
-}
-
-function validateFormat(format?: string): void {
-  if (format && !VALID_FORMATS.has(format)) {
-    throw new Error(
-      `Invalid format. Must be one of: ${Array.from(VALID_FORMATS).join(", ")}`,
-    );
-  }
-}
-
 function isAnimated(hash: string): boolean {
   return hash.startsWith("a_");
 }
@@ -53,11 +36,6 @@ function buildUrl(
   options?: BaseImageOptionsEntity,
   baseUrl: string = HttpConstants.urls.cdn,
 ): string {
-  if (options) {
-    validateSize(options.size);
-    validateFormat(options.format);
-  }
-
   const url = new URL(parts.join("/"), baseUrl);
 
   // biome-ignore lint/style/useExplicitLengthCheck: This is a valid check
@@ -107,7 +85,6 @@ export const Cdn: CdnEntity = {
 
     // biome-ignore lint/style/useExplicitLengthCheck: This is a valid check
     if (options?.size && options?.size > 0) {
-      validateSize(options.size);
       url.searchParams.set("size", options.size.toString());
     }
 
@@ -128,13 +105,6 @@ export const Cdn: CdnEntity = {
 
   getNewSystemAvatarIndex(userId: Snowflake): number {
     return Number((BigInt(userId) >> 22n) % 6n);
-  },
-
-  getNearestValidSize(size: number): ImageSize {
-    const validSizes = Array.from(VALID_SIZES).sort((a, b) => a - b);
-    return validSizes.reduce((prev, curr) =>
-      Math.abs(curr - size) < Math.abs(prev - size) ? curr : prev,
-    ) as ImageSize;
   },
 
   emoji(

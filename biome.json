@@ -61,7 +61,8 @@
     "rules": {
       "all": true,
       "nursery": {
-        "all": true
+        "all": true,
+        "noEnum": "off"
       },
       "performance": {
         "noReExportAll": "off",

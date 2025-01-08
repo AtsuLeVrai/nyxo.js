@@ -1,9 +1,6 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
-import {
-  type GetInviteQueryEntity,
-  GetInviteQuerySchema,
-} from "../schemas/index.js";
+import { GetInviteQueryEntity } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
 export class InviteRouter {
@@ -24,7 +21,7 @@ export class InviteRouter {
     code: string,
     query: GetInviteQueryEntity = {},
   ): Promise<HttpResponse<InviteEntity & InviteMetadataEntity>> {
-    const result = GetInviteQuerySchema.safeParse(query);
+    const result = GetInviteQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors

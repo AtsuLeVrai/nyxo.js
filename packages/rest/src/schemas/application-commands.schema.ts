@@ -1,43 +1,41 @@
 import {
-  ApplicationCommandOptionSchema,
-  ApplicationCommandPermissionSchema,
+  APPLICATION_COMMAND_NAME_REGEX,
+  ApplicationCommandOptionEntity,
+  ApplicationCommandPermissionEntity,
   ApplicationCommandType,
   ApplicationIntegrationType,
   InteractionContextType,
-  createAvailableLocaleSchema,
+  createAvailableLocale,
 } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions-json-params}
  */
-export const EditApplicationCommandPermissionsSchema = z
+export const EditApplicationCommandPermissionsEntity = z
   .object({
-    permissions: z.array(ApplicationCommandPermissionSchema).max(100),
+    permissions: z.array(ApplicationCommandPermissionEntity).max(100),
   })
   .strict();
 
 export type EditApplicationCommandPermissionsEntity = z.infer<
-  typeof EditApplicationCommandPermissionsSchema
+  typeof EditApplicationCommandPermissionsEntity
 >;
-
-const APPLICATION_COMMAND_NAME_REGEX =
-  /[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}/u;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command-json-params}
  */
-export const CreateGlobalApplicationCommandSchema = z
+export const CreateGlobalApplicationCommandEntity = z
   .object({
     name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-    name_localizations: createAvailableLocaleSchema(
+    name_localizations: createAvailableLocale(
       z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
     ).nullish(),
     description: z.string().min(1).max(100).optional(),
-    description_localizations: createAvailableLocaleSchema(
+    description_localizations: createAvailableLocale(
       z.string().min(1).max(100),
     ).nullish(),
-    options: z.array(ApplicationCommandOptionSchema).max(25).optional(),
+    options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
     default_member_permissions: z.string().nullish(),
     /**
      * @deprecated User `contexts instead`
@@ -50,53 +48,53 @@ export const CreateGlobalApplicationCommandSchema = z
     contexts: z.array(z.nativeEnum(InteractionContextType)).optional(),
     type: z
       .nativeEnum(ApplicationCommandType)
-      .default(ApplicationCommandType.chatInput)
+      .default(ApplicationCommandType.ChatInput)
       .optional(),
     nsfw: z.boolean().optional(),
   })
   .strict();
 
 export type CreateGlobalApplicationCommandEntity = z.infer<
-  typeof CreateGlobalApplicationCommandSchema
+  typeof CreateGlobalApplicationCommandEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command-json-params}
  */
-export const EditGlobalApplicationCommandSchema =
-  CreateGlobalApplicationCommandSchema.omit({
+export const EditGlobalApplicationCommandEntity =
+  CreateGlobalApplicationCommandEntity.omit({
     type: true,
   })
     .strict()
     .partial();
 
 export type EditGlobalApplicationCommandEntity = z.infer<
-  typeof EditGlobalApplicationCommandSchema
+  typeof EditGlobalApplicationCommandEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command-json-params}
  */
-export const CreateGuildApplicationCommandSchema =
-  CreateGlobalApplicationCommandSchema.omit({
+export const CreateGuildApplicationCommandEntity =
+  CreateGlobalApplicationCommandEntity.omit({
     integration_types: true,
     contexts: true,
   }).strict();
 
 export type CreateGuildApplicationCommandEntity = z.infer<
-  typeof CreateGuildApplicationCommandSchema
+  typeof CreateGuildApplicationCommandEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command-json-params}
  */
-export const EditGuildApplicationCommandSchema =
-  CreateGuildApplicationCommandSchema.omit({
+export const EditGuildApplicationCommandEntity =
+  CreateGuildApplicationCommandEntity.omit({
     type: true,
   })
     .strict()
     .partial();
 
 export type EditGuildApplicationCommandEntity = z.infer<
-  typeof EditGuildApplicationCommandSchema
+  typeof EditGuildApplicationCommandEntity
 >;

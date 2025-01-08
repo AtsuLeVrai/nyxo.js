@@ -1,10 +1,6 @@
 import { z } from "zod";
-import {
-  type AvailableLocale,
-  AvailableLocaleSchema,
-  createAvailableLocaleSchema,
-} from "../enums/index.js";
-import { SnowflakeSchema } from "../managers/index.js";
+import { AvailableLocale, createAvailableLocale } from "../enums/index.js";
+import { Snowflake } from "../managers/index.js";
 import { ApplicationIntegrationType } from "./application.entity.js";
 import { ChannelType } from "./channel.entity.js";
 import { InteractionContextType } from "./interaction.entity.js";
@@ -12,28 +8,25 @@ import { InteractionContextType } from "./interaction.entity.js";
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permission-type}
  */
-export const ApplicationCommandPermissionType = {
-  role: 1,
-  user: 2,
-  channel: 3,
-} as const;
-
-export type ApplicationCommandPermissionType =
-  (typeof ApplicationCommandPermissionType)[keyof typeof ApplicationCommandPermissionType];
+export enum ApplicationCommandPermissionType {
+  Role = 1,
+  User = 2,
+  Channel = 3,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permissions-structure}
  */
-export const ApplicationCommandPermissionSchema = z
+export const ApplicationCommandPermissionEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     type: z.nativeEnum(ApplicationCommandPermissionType),
     permission: z.boolean(),
   })
   .strict();
 
 export type ApplicationCommandPermissionEntity = z.infer<
-  typeof ApplicationCommandPermissionSchema
+  typeof ApplicationCommandPermissionEntity
 >;
 
 /**
@@ -41,10 +34,10 @@ export type ApplicationCommandPermissionEntity = z.infer<
  */
 export const GuildApplicationCommandPermissionSchema = z
   .object({
-    id: SnowflakeSchema,
-    application_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema,
-    permissions: z.array(ApplicationCommandPermissionSchema),
+    id: Snowflake,
+    application_id: Snowflake,
+    guild_id: Snowflake,
+    permissions: z.array(ApplicationCommandPermissionEntity),
   })
   .strict();
 
@@ -55,13 +48,10 @@ export type GuildApplicationCommandPermissionEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-entry-point-command-handler-types}
  */
-export const ApplicationCommandEntryPointType = {
-  appHandler: 1,
-  discordLaunchActivity: 2,
-} as const;
-
-export type ApplicationCommandEntryPointType =
-  (typeof ApplicationCommandEntryPointType)[keyof typeof ApplicationCommandEntryPointType];
+export enum ApplicationCommandEntryPointType {
+  AppHandler = 1,
+  DiscordLaunchActivity = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-choice-structure}
@@ -69,7 +59,7 @@ export type ApplicationCommandEntryPointType =
 export const ApplicationCommandOptionChoiceSchema = z
   .object({
     name: z.string().min(1).max(100),
-    name_localizations: AvailableLocaleSchema.nullish(),
+    name_localizations: AvailableLocale.nullish(),
     value: z.union([z.string(), z.number()]),
   })
   .strict();
@@ -81,22 +71,19 @@ export type ApplicationCommandOptionChoiceEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type}
  */
-export const ApplicationCommandOptionType = {
-  subCommand: 1,
-  subCommandGroup: 2,
-  string: 3,
-  integer: 4,
-  boolean: 5,
-  user: 6,
-  channel: 7,
-  role: 8,
-  mentionable: 9,
-  number: 10,
-  attachment: 11,
-} as const;
-
-export type ApplicationCommandOptionType =
-  (typeof ApplicationCommandOptionType)[keyof typeof ApplicationCommandOptionType];
+export enum ApplicationCommandOptionType {
+  SubCommand = 1,
+  SubCommandGroup = 2,
+  String = 3,
+  Integer = 4,
+  Boolean = 5,
+  User = 6,
+  Channel = 7,
+  Role = 8,
+  Mentionable = 9,
+  Number = 10,
+  Attachment = 11,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
@@ -121,17 +108,17 @@ export interface ApplicationCommandOptionEntity {
 export const APPLICATION_COMMAND_NAME_REGEX =
   /^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u;
 
-export const ApplicationCommandOptionSchema: z.ZodType<ApplicationCommandOptionEntity> =
+export const ApplicationCommandOptionEntity: z.ZodType<ApplicationCommandOptionEntity> =
   z.lazy(() =>
     z
       .object({
         type: z.nativeEnum(ApplicationCommandOptionType),
         name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-        name_localizations: createAvailableLocaleSchema(
+        name_localizations: createAvailableLocale(
           z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
         ).nullish(),
         description: z.string().min(1).max(100),
-        description_localizations: createAvailableLocaleSchema(
+        description_localizations: createAvailableLocale(
           z.string().min(1).max(100),
         ).nullish(),
         required: z.boolean().optional(),
@@ -139,7 +126,7 @@ export const ApplicationCommandOptionSchema: z.ZodType<ApplicationCommandOptionE
           .array(ApplicationCommandOptionChoiceSchema)
           .max(25)
           .optional(),
-        options: z.array(ApplicationCommandOptionSchema).max(25).optional(),
+        options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
         channel_types: z.array(z.nativeEnum(ChannelType)).optional(),
         min_value: z.number().int().optional(),
         max_value: z.number().int().optional(),
@@ -153,37 +140,34 @@ export const ApplicationCommandOptionSchema: z.ZodType<ApplicationCommandOptionE
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-types}
  */
-export const ApplicationCommandType = {
-  chatInput: 1,
-  user: 2,
-  message: 3,
-  primaryEntryPoint: 4,
-} as const;
-
-export type ApplicationCommandType =
-  (typeof ApplicationCommandType)[keyof typeof ApplicationCommandType];
+export enum ApplicationCommandType {
+  ChatInput = 1,
+  User = 2,
+  Message = 3,
+  PrimaryEntryPoint = 4,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
  */
-export const ApplicationCommandSchema = z
+export const ApplicationCommandEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     type: z
       .nativeEnum(ApplicationCommandType)
       .optional()
-      .default(ApplicationCommandType.chatInput),
-    application_id: SnowflakeSchema,
-    guild_id: SnowflakeSchema.optional(),
+      .default(ApplicationCommandType.ChatInput),
+    application_id: Snowflake,
+    guild_id: Snowflake.optional(),
     name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-    name_localizations: createAvailableLocaleSchema(
+    name_localizations: createAvailableLocale(
       z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
     ).nullish(),
     description: z.string().min(1).max(100),
-    description_localizations: createAvailableLocaleSchema(
+    description_localizations: createAvailableLocale(
       z.string().min(1).max(100),
     ).nullish(),
-    options: z.array(ApplicationCommandOptionSchema).max(25).optional(),
+    options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
     default_member_permissions: z.string().nullable(),
     dm_permission: z.boolean().optional(),
     default_permission: z.boolean().nullish(),
@@ -194,9 +178,9 @@ export const ApplicationCommandSchema = z
     contexts: z
       .array(z.lazy(() => z.nativeEnum(InteractionContextType)))
       .nullish(),
-    version: SnowflakeSchema,
+    version: Snowflake,
     handler: z.nativeEnum(ApplicationCommandEntryPointType).optional(),
   })
   .strict();
 
-export type ApplicationCommandEntity = z.infer<typeof ApplicationCommandSchema>;
+export type ApplicationCommandEntity = z.infer<typeof ApplicationCommandEntity>;

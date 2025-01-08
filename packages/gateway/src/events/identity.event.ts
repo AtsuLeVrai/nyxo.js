@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { UpdatePresenceSchema } from "./gateway.event.js";
+import { UpdatePresenceEntity } from "./gateway.event.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#identify-identify-connection-properties}
  */
-export const IdentifyConnectionPropertiesSchema = z
+export const IdentifyConnectionPropertiesEntity = z
   .object({
     os: z.string(),
     browser: z.string(),
@@ -13,22 +13,22 @@ export const IdentifyConnectionPropertiesSchema = z
   .strict();
 
 export type IdentifyConnectionPropertiesEntity = z.infer<
-  typeof IdentifyConnectionPropertiesSchema
+  typeof IdentifyConnectionPropertiesEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#identify-identify-structure}
  */
-export const IdentifySchema = z
+export const IdentifyEntity = z
   .object({
     token: z.string(),
-    properties: IdentifyConnectionPropertiesSchema,
+    properties: IdentifyConnectionPropertiesEntity,
     compress: z.boolean().optional(),
     large_threshold: z.number().optional(),
     shard: z.tuple([z.number(), z.number()]).optional(),
-    presence: UpdatePresenceSchema.optional(),
+    presence: UpdatePresenceEntity.optional(),
     intents: z.number().int(),
   })
   .strict();
 
-export type IdentifyEntity = z.infer<typeof IdentifySchema>;
+export type IdentifyEntity = z.infer<typeof IdentifyEntity>;

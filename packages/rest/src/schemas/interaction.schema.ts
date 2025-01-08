@@ -1,8 +1,8 @@
 import { InteractionCallbackType } from "@nyxjs/core";
 import { z } from "zod";
-import { CreateMessageSchema } from "./message.schema.js";
+import { CreateMessageEntity } from "./message.schema.js";
 
-export const InteractionCallbackDataSchema = CreateMessageSchema.pick({
+export const InteractionCallbackDataEntity = CreateMessageEntity.pick({
   tts: true,
   content: true,
   embeds: true,
@@ -14,20 +14,20 @@ export const InteractionCallbackDataSchema = CreateMessageSchema.pick({
 }).strict();
 
 export type InteractionCallbackDataEntity = z.infer<
-  typeof InteractionCallbackDataSchema
+  typeof InteractionCallbackDataEntity
 >;
 
-export const InteractionResponseSchema = z
+export const InteractionResponseEntity = z
   .object({
     type: z.nativeEnum(InteractionCallbackType),
-    data: InteractionCallbackDataSchema.optional(),
+    data: InteractionCallbackDataEntity.optional(),
   })
   .strict();
 
 export type InteractionResponseEntity = z.infer<
-  typeof InteractionResponseSchema
+  typeof InteractionResponseEntity
 >;
 
-export const FollowupMessageSchema = InteractionCallbackDataSchema;
+export const FollowupMessageEntity = InteractionCallbackDataEntity;
 
-export type FollowupMessageEntity = z.infer<typeof FollowupMessageSchema>;
+export type FollowupMessageEntity = z.infer<typeof FollowupMessageEntity>;

@@ -16,7 +16,7 @@ const paths = {
 };
 
 function getExternals() {
-  const pkg = JSON.parse(readFileSync(paths.package, "utf-8"));
+  const pkg = JSON.parse(readFileSync(paths.package, "utf-8").toString());
   return [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),

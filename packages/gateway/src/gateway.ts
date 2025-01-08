@@ -7,17 +7,13 @@ import {
   GatewayCloseCodes,
   type GatewayEvents,
   GatewayOpcodes,
-  type GatewayOptions,
-  GatewayOptionsSchema,
+  GatewayOptions,
   type GatewayReceiveEvents,
   type GatewaySendEvents,
-  type GatewayStats,
-  GatewayStatsSchema,
+  GatewayStats,
   type HelloEntity,
-  type IdentifyEntity,
-  IdentifySchema,
-  type PayloadEntity,
-  PayloadSchema,
+  IdentifyEntity,
+  PayloadEntity,
   type ReadyEntity,
   type RequestGuildMembersEntity,
   type ResumeEntity,
@@ -54,7 +50,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   constructor(rest: Rest, options: GatewayOptions) {
     super();
     this.#rest = rest;
-    this.#options = GatewayOptionsSchema.parse(options);
+    this.#options = GatewayOptions.parse(options);
     this.#compressionService = new CompressionService(
       this.#options.compression,
     );
@@ -103,7 +99,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       missedHeartbeats: this.#heartbeatService.metrics.missedHeartbeats,
     };
 
-    return GatewayStatsSchema.parse(stats);
+    return GatewayStats.parse(stats);
   }
 
   async connect(): Promise<void> {
@@ -131,7 +127,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       "debug",
       `[Gateway] Updating presence: ${JSON.stringify(presence)}`,
     );
-    this.send(GatewayOpcodes.presenceUpdate, presence);
+    this.send(GatewayOpcodes.PresenceUpdate, presence);
   }
 
   updateVoiceState(options: UpdateVoiceStateEntity): void {
@@ -139,7 +135,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       "debug",
       `[Gateway] Updating voice state for guild ${options.guild_id}`,
     );
-    this.send(GatewayOpcodes.voiceStateUpdate, options);
+    this.send(GatewayOpcodes.VoiceStateUpdate, options);
   }
 
   requestGuildMembers(options: RequestGuildMembersEntity): void {
@@ -147,7 +143,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       "debug",
       `[Gateway] Requesting guild members for guild ${options.guild_id}`,
     );
-    this.send(GatewayOpcodes.requestGuildMembers, options);
+    this.send(GatewayOpcodes.RequestGuildMembers, options);
   }
 
   send<T extends keyof GatewaySendEvents>(
@@ -166,7 +162,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     };
 
     if (this.#options.validatePayloads) {
-      PayloadSchema.parse(payload);
+      PayloadEntity.parse(payload);
     }
 
     this.#ws.send(this.#encodingService.encode(payload));
@@ -235,7 +231,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const payload = this.#encodingService.decode(processedData);
 
     if (this.#options.validatePayloads) {
-      PayloadSchema.parse(payload);
+      PayloadEntity.parse(payload);
     }
 
     this.#receivedPayloads++;
@@ -248,29 +244,29 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     switch (payload.op) {
-      case GatewayOpcodes.dispatch:
+      case GatewayOpcodes.Dispatch:
         this.#handleDispatch(payload);
         break;
 
-      case GatewayOpcodes.hello:
+      case GatewayOpcodes.Hello:
         this.#handleHello(payload.d as HelloEntity);
         break;
 
-      case GatewayOpcodes.heartbeat:
+      case GatewayOpcodes.Heartbeat:
         this.#heartbeatService.sendHeartbeat();
         break;
 
-      case GatewayOpcodes.heartbeatAck:
+      case GatewayOpcodes.HeartbeatAck:
         this.#heartbeatService.ackHeartbeat();
         break;
 
-      case GatewayOpcodes.invalidSession:
+      case GatewayOpcodes.InvalidSession:
         this.#handleInvalidSession(Boolean(payload.d)).catch((error) => {
           throw error;
         });
         break;
 
-      case GatewayOpcodes.reconnect:
+      case GatewayOpcodes.Reconnect:
         this.#handleReconnect().catch((error) => {
           throw error;
         });
@@ -349,7 +345,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       payload.presence = this.#options.presence;
     }
 
-    this.send(GatewayOpcodes.identify, IdentifySchema.parse(payload));
+    this.send(GatewayOpcodes.Identify, IdentifyEntity.parse(payload));
   }
 
   #sendResume(): void {
@@ -363,7 +359,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       seq: this.sequence,
     };
 
-    this.send(GatewayOpcodes.resume, payload);
+    this.send(GatewayOpcodes.Resume, payload);
   }
 
   async #handleClose(code: number): Promise<void> {
@@ -445,12 +441,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   #shouldResume(closeCode: number): boolean {
     const nonResumableCodes = [
-      GatewayCloseCodes.authenticationFailed,
-      GatewayCloseCodes.invalidShard,
-      GatewayCloseCodes.shardingRequired,
-      GatewayCloseCodes.invalidApiVersion,
-      GatewayCloseCodes.invalidIntents,
-      GatewayCloseCodes.disallowedIntents,
+      GatewayCloseCodes.AuthenticationFailed,
+      GatewayCloseCodes.InvalidShard,
+      GatewayCloseCodes.ShardingRequired,
+      GatewayCloseCodes.InvalidApiVersion,
+      GatewayCloseCodes.InvalidIntents,
+      GatewayCloseCodes.DisallowedIntents,
     ];
 
     const isClean = closeCode === 1000 || closeCode === 1001;

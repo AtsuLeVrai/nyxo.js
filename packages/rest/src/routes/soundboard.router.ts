@@ -1,12 +1,10 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateGuildSoundboardSoundEntity,
-  CreateGuildSoundboardSoundSchema,
-  type ListGuildSoundboardSoundsResponse,
-  type ModifyGuildSoundboardSoundEntity,
-  type SendSoundboardSoundEntity,
-  SendSoundboardSoundSchema,
+  CreateGuildSoundboardSoundEntity,
+  type ListGuildSoundboardSoundsResponseEntity,
+  ModifyGuildSoundboardSoundEntity,
+  SendSoundboardSoundEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -34,7 +32,7 @@ export class SoundboardRouter {
     channelId: Snowflake,
     options: SendSoundboardSoundEntity,
   ): Promise<HttpResponse<void>> {
-    const result = SendSoundboardSoundSchema.safeParse(options);
+    const result = SendSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -62,7 +60,7 @@ export class SoundboardRouter {
    */
   listGuildSoundboardSounds(
     guildId: Snowflake,
-  ): Promise<HttpResponse<ListGuildSoundboardSoundsResponse>> {
+  ): Promise<HttpResponse<ListGuildSoundboardSoundsResponseEntity>> {
     return this.#rest.get(SoundboardRouter.ROUTES.guildSounds(guildId));
   }
 
@@ -84,7 +82,7 @@ export class SoundboardRouter {
     options: CreateGuildSoundboardSoundEntity,
     reason?: string,
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
-    const result = CreateGuildSoundboardSoundSchema.safeParse(options);
+    const result = CreateGuildSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -108,7 +106,7 @@ export class SoundboardRouter {
     options: ModifyGuildSoundboardSoundEntity,
     reason?: string,
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
-    const result = CreateGuildSoundboardSoundSchema.safeParse(options);
+    const result = ModifyGuildSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

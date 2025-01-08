@@ -1,16 +1,16 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
-import { UserSchema } from "./user.entity.js";
+import { Snowflake } from "../managers/index.js";
+import { UserEntity } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#emoji-object}
  */
-export const EmojiSchema = z
+export const EmojiEntity = z
   .object({
-    id: SnowflakeSchema.nullable(),
+    id: Snowflake.nullable(),
     name: z.string().nullable(),
-    roles: z.array(SnowflakeSchema).optional(),
-    user: z.lazy(() => UserSchema).optional(),
+    roles: z.array(Snowflake).optional(),
+    user: z.lazy(() => UserEntity).optional(),
     require_colons: z.boolean().optional(),
     managed: z.boolean().optional(),
     animated: z.boolean().optional(),
@@ -18,4 +18,4 @@ export const EmojiSchema = z
   })
   .strict();
 
-export type EmojiEntity = z.infer<typeof EmojiSchema>;
+export type EmojiEntity = z.infer<typeof EmojiEntity>;

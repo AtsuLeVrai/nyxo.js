@@ -5,12 +5,9 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type FollowupMessageEntity,
-  FollowupMessageSchema,
-  type InteractionCallbackDataEntity,
-  InteractionCallbackDataSchema,
-  type InteractionResponseEntity,
-  InteractionResponseSchema,
+  FollowupMessageEntity,
+  InteractionCallbackDataEntity,
+  InteractionResponseEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -69,7 +66,7 @@ export class InteractionRouter {
     options: InteractionResponseEntity,
     withResponse = true,
   ): Promise<HttpResponse<InteractionCallbackEntity | undefined>> {
-    const result = InteractionResponseSchema.safeParse(options);
+    const result = InteractionResponseEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -110,7 +107,7 @@ export class InteractionRouter {
     interactionToken: string,
     options: Partial<InteractionCallbackDataEntity>,
   ): Promise<HttpResponse<MessageEntity>> {
-    const result = InteractionCallbackDataSchema.partial().safeParse(options);
+    const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -153,7 +150,7 @@ export class InteractionRouter {
     interactionToken: string,
     options: FollowupMessageEntity,
   ): Promise<HttpResponse<MessageEntity>> {
-    const result = FollowupMessageSchema.safeParse(options);
+    const result = FollowupMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -199,7 +196,7 @@ export class InteractionRouter {
     messageId: Snowflake,
     options: Partial<InteractionCallbackDataEntity>,
   ): Promise<HttpResponse<MessageEntity>> {
-    const result = InteractionCallbackDataSchema.partial().safeParse(options);
+    const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

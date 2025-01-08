@@ -17,45 +17,27 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type AddGuildMemberEntity,
-  AddGuildMemberSchema,
-  type BeginGuildPruneEntity,
-  BeginGuildPruneSchema,
-  type BulkGuildBanEntity,
+  AddGuildMemberEntity,
+  BeginGuildPruneEntity,
+  BulkGuildBanEntity,
   type BulkGuildBanResponseEntity,
-  type CreateGuildBanEntity,
-  CreateGuildBanSchema,
-  type CreateGuildChannelEntity,
-  CreateGuildChannelSchema,
-  type CreateGuildEntity,
-  type CreateGuildRoleEntity,
-  CreateGuildRoleSchema,
-  CreateGuildSchema,
-  type GetGuildBansQueryEntity,
-  GetGuildBansQuerySchema,
-  type GetGuildPruneCountQueryEntity,
-  GetGuildPruneCountQuerySchema,
+  CreateGuildBanEntity,
+  CreateGuildChannelEntity,
+  CreateGuildEntity,
+  CreateGuildRoleEntity,
+  GetGuildBansQueryEntity,
+  GetGuildPruneCountQueryEntity,
   type ListActiveGuildThreadsEntity,
-  type ListGuildMembersQueryEntity,
-  ListGuildMembersQuerySchema,
-  type ModifyGuildChannelPositionsEntity,
-  ModifyGuildChannelPositionsSchema,
-  type ModifyGuildEntity,
-  type ModifyGuildMemberEntity,
-  ModifyGuildMemberSchema,
-  type ModifyGuildOnboardingEntity,
-  ModifyGuildOnboardingSchema,
-  type ModifyGuildRoleEntity,
-  type ModifyGuildRolePositionsEntity,
-  ModifyGuildRolePositionsSchema,
-  ModifyGuildRoleSchema,
-  ModifyGuildSchema,
-  type ModifyGuildWelcomeScreenEntity,
-  ModifyGuildWelcomeScreenSchema,
-  type ModifyGuildWidgetSettingsEntity,
-  ModifyGuildWidgetSettingsSchema,
-  type SearchGuildMembersQueryEntity,
-  SearchGuildMembersQuerySchema,
+  ListGuildMembersQueryEntity,
+  ModifyGuildChannelPositionsEntity,
+  ModifyGuildEntity,
+  ModifyGuildMemberEntity,
+  ModifyGuildOnboardingEntity,
+  ModifyGuildRoleEntity,
+  ModifyGuildRolePositionsEntity,
+  ModifyGuildWelcomeScreenEntity,
+  ModifyGuildWidgetSettingsEntity,
+  SearchGuildMembersQueryEntity,
   type WidgetStyleOptions,
 } from "../schemas/guild.schema.js";
 import type { HttpResponse } from "../types/index.js";
@@ -123,7 +105,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
    */
   createGuild(options: CreateGuildEntity): Promise<HttpResponse<GuildEntity>> {
-    const result = CreateGuildSchema.safeParse(options);
+    const result = CreateGuildEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -164,7 +146,7 @@ export class GuildRouter {
     options: ModifyGuildEntity,
     reason?: string,
   ): Promise<HttpResponse<GuildEntity>> {
-    const result = ModifyGuildSchema.safeParse(options);
+    const result = ModifyGuildEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -201,7 +183,7 @@ export class GuildRouter {
     options: CreateGuildChannelEntity,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
-    const result = CreateGuildChannelSchema.safeParse(options);
+    const result = CreateGuildChannelEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -223,7 +205,7 @@ export class GuildRouter {
     guildId: Snowflake,
     options: ModifyGuildChannelPositionsEntity,
   ): Promise<HttpResponse<void>> {
-    const result = ModifyGuildChannelPositionsSchema.safeParse(options);
+    const result = ModifyGuildChannelPositionsEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -263,7 +245,7 @@ export class GuildRouter {
     guildId: Snowflake,
     query: ListGuildMembersQueryEntity = {},
   ): Promise<HttpResponse<GuildMemberEntity[]>> {
-    const result = ListGuildMembersQuerySchema.safeParse(query);
+    const result = ListGuildMembersQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -284,7 +266,7 @@ export class GuildRouter {
     guildId: Snowflake,
     query: SearchGuildMembersQueryEntity,
   ): Promise<HttpResponse<GuildMemberEntity[]>> {
-    const result = SearchGuildMembersQuerySchema.safeParse(query);
+    const result = SearchGuildMembersQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -306,7 +288,7 @@ export class GuildRouter {
     userId: Snowflake,
     options: AddGuildMemberEntity,
   ): Promise<HttpResponse<GuildMemberEntity>> {
-    const result = AddGuildMemberSchema.safeParse(options);
+    const result = AddGuildMemberEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -329,7 +311,7 @@ export class GuildRouter {
     options: ModifyGuildMemberEntity,
     reason?: string,
   ): Promise<HttpResponse<GuildMemberEntity>> {
-    const result = ModifyGuildMemberSchema.safeParse(options);
+    const result = ModifyGuildMemberEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -426,7 +408,7 @@ export class GuildRouter {
     guildId: Snowflake,
     query: GetGuildBansQueryEntity = {},
   ): Promise<HttpResponse<BanEntity[]>> {
-    const result = GetGuildBansQuerySchema.safeParse(query);
+    const result = GetGuildBansQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -459,7 +441,7 @@ export class GuildRouter {
     options: CreateGuildBanEntity,
     reason?: string,
   ): Promise<HttpResponse<void>> {
-    const result = CreateGuildBanSchema.safeParse(options);
+    const result = CreateGuildBanEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -495,7 +477,7 @@ export class GuildRouter {
     options: BulkGuildBanEntity,
     reason?: string,
   ): Promise<HttpResponse<BulkGuildBanResponseEntity>> {
-    const result = CreateGuildBanSchema.safeParse(options);
+    const result = BulkGuildBanEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -535,7 +517,7 @@ export class GuildRouter {
     options: CreateGuildRoleEntity,
     reason?: string,
   ): Promise<HttpResponse<RoleEntity>> {
-    const result = CreateGuildRoleSchema.safeParse(options);
+    const result = CreateGuildRoleEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -557,7 +539,7 @@ export class GuildRouter {
     guildId: Snowflake,
     options: ModifyGuildRolePositionsEntity,
   ): Promise<HttpResponse<RoleEntity[]>> {
-    const result = ModifyGuildRolePositionsSchema.safeParse(options);
+    const result = ModifyGuildRolePositionsEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -580,7 +562,7 @@ export class GuildRouter {
     options: ModifyGuildRoleEntity,
     reason?: string,
   ): Promise<HttpResponse<RoleEntity>> {
-    const result = ModifyGuildRoleSchema.safeParse(options);
+    const result = ModifyGuildRoleEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -629,7 +611,7 @@ export class GuildRouter {
     guildId: Snowflake,
     query: GetGuildPruneCountQueryEntity = {},
   ): Promise<HttpResponse<{ pruned: number }>> {
-    const result = GetGuildPruneCountQuerySchema.safeParse(query);
+    const result = GetGuildPruneCountQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -651,7 +633,7 @@ export class GuildRouter {
     options: BeginGuildPruneEntity,
     reason?: string,
   ): Promise<HttpResponse<{ pruned: number | null }>> {
-    const result = BeginGuildPruneSchema.safeParse(options);
+    const result = BeginGuildPruneEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -724,7 +706,7 @@ export class GuildRouter {
     options: ModifyGuildWidgetSettingsEntity,
     reason?: string,
   ): Promise<HttpResponse<GuildWidgetSettingsEntity>> {
-    const result = ModifyGuildWidgetSettingsSchema.safeParse(options);
+    const result = ModifyGuildWidgetSettingsEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -786,7 +768,7 @@ export class GuildRouter {
     options: ModifyGuildWelcomeScreenEntity,
     reason?: string,
   ): Promise<HttpResponse<WelcomeScreenEntity>> {
-    const result = ModifyGuildWelcomeScreenSchema.safeParse(options);
+    const result = ModifyGuildWelcomeScreenEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -818,7 +800,7 @@ export class GuildRouter {
     options: ModifyGuildOnboardingEntity,
     reason?: string,
   ): Promise<HttpResponse<GuildOnboardingEntity>> {
-    const result = ModifyGuildOnboardingSchema.safeParse(options);
+    const result = ModifyGuildOnboardingEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

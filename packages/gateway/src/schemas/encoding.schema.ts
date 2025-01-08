@@ -1,13 +1,10 @@
 import { z } from "zod";
 
-export const EncodingTypeSchema = z.union([
-  z.literal("json"),
-  z.literal("etf"),
-]);
+export const EncodingType = z.union([z.literal("json"), z.literal("etf")]);
 
-export type EncodingType = z.infer<typeof EncodingTypeSchema>;
+export type EncodingType = z.infer<typeof EncodingType>;
 
-export const ProcessOptionsSchema = z
+export const ProcessOptions = z
   .object({
     validateEtfKeys: z.boolean().optional(),
     processBigInts: z.boolean().optional(),
@@ -15,11 +12,11 @@ export const ProcessOptionsSchema = z
   })
   .strict();
 
-export type ProcessOptions = z.infer<typeof ProcessOptionsSchema>;
+export type ProcessOptions = z.infer<typeof ProcessOptions>;
 
-export const EncodingOptionsSchema = z
+export const EncodingOptions = z
   .object({
-    encodingType: EncodingTypeSchema.default("etf"),
+    encodingType: EncodingType.default("etf"),
     maxPayloadSize: z.number().int().positive().default(4096),
     allowBigInts: z.boolean().default(true),
     validateKeys: z.boolean().default(true),
@@ -40,4 +37,4 @@ export const EncodingOptionsSchema = z
   })
   .strict();
 
-export type EncodingOptions = z.infer<typeof EncodingOptionsSchema>;
+export type EncodingOptions = z.infer<typeof EncodingOptions>;

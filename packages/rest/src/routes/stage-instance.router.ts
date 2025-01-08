@@ -1,10 +1,8 @@
 import type { Snowflake, StageInstanceEntity } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateStageInstanceEntity,
-  CreateStageInstanceSchema,
-  type ModifyStageInstanceEntity,
-  ModifyStageInstanceSchema,
+  CreateStageInstanceEntity,
+  ModifyStageInstanceEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -28,7 +26,7 @@ export class StageInstanceRouter {
     options: CreateStageInstanceEntity,
     reason?: string,
   ): Promise<HttpResponse<StageInstanceEntity>> {
-    const result = CreateStageInstanceSchema.safeParse(options);
+    const result = CreateStageInstanceEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -60,7 +58,7 @@ export class StageInstanceRouter {
     options: ModifyStageInstanceEntity,
     reason?: string,
   ): Promise<HttpResponse<StageInstanceEntity>> {
-    const result = ModifyStageInstanceSchema.safeParse(options);
+    const result = ModifyStageInstanceEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

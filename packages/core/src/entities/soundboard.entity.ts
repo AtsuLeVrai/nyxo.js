@@ -1,21 +1,21 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
-import { UserSchema } from "./user.entity.js";
+import { Snowflake } from "../managers/index.js";
+import { UserEntity } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#soundboard-sound-object-soundboard-sound-structure}
  */
-export const SoundboardSoundSchema = z
+export const SoundboardSoundEntity = z
   .object({
     name: z.string(),
-    sound_id: SnowflakeSchema,
+    sound_id: Snowflake,
     volume: z.number().min(0).max(1),
-    emoji_id: SnowflakeSchema.nullable(),
+    emoji_id: Snowflake.nullable(),
     emoji_name: z.string().nullable(),
-    guild_id: SnowflakeSchema.optional(),
+    guild_id: Snowflake.optional(),
     available: z.boolean(),
-    user: UserSchema.optional(),
+    user: UserEntity.optional(),
   })
   .strict();
 
-export type SoundboardSoundEntity = z.infer<typeof SoundboardSoundSchema>;
+export type SoundboardSoundEntity = z.infer<typeof SoundboardSoundEntity>;

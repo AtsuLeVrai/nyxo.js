@@ -6,16 +6,11 @@ import type {
 import { z } from "zod";
 import type { Rest } from "../rest.js";
 import {
-  type CreateGlobalApplicationCommandEntity,
-  CreateGlobalApplicationCommandSchema,
-  type CreateGuildApplicationCommandEntity,
-  CreateGuildApplicationCommandSchema,
-  type EditApplicationCommandPermissionsEntity,
-  EditApplicationCommandPermissionsSchema,
-  type EditGlobalApplicationCommandEntity,
-  EditGlobalApplicationCommandSchema,
-  type EditGuildApplicationCommandEntity,
-  EditGuildApplicationCommandSchema,
+  CreateGlobalApplicationCommandEntity,
+  CreateGuildApplicationCommandEntity,
+  EditApplicationCommandPermissionsEntity,
+  EditGlobalApplicationCommandEntity,
+  EditGuildApplicationCommandEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -68,7 +63,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     options: CreateGlobalApplicationCommandEntity,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
-    const result = CreateGlobalApplicationCommandSchema.safeParse(options);
+    const result = CreateGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -105,7 +100,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditGlobalApplicationCommandEntity,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
-    const result = EditGlobalApplicationCommandSchema.safeParse(options);
+    const result = EditGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -140,7 +135,7 @@ export class ApplicationCommandRouter {
     commands: CreateGlobalApplicationCommandEntity[],
   ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     const result = z
-      .array(CreateGlobalApplicationCommandSchema)
+      .array(CreateGlobalApplicationCommandEntity)
       .max(200)
       .safeParse(commands);
     if (!result.success) {
@@ -180,7 +175,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     options: CreateGuildApplicationCommandEntity,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
-    const result = CreateGuildApplicationCommandSchema.safeParse(options);
+    const result = CreateGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -223,7 +218,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditGuildApplicationCommandEntity,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
-    const result = EditGuildApplicationCommandSchema.safeParse(options);
+    const result = EditGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -270,7 +265,7 @@ export class ApplicationCommandRouter {
     commands: CreateGlobalApplicationCommandEntity[],
   ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     const result = z
-      .array(CreateGlobalApplicationCommandSchema)
+      .array(CreateGlobalApplicationCommandEntity)
       .max(200)
       .safeParse(commands);
     if (!result.success) {
@@ -330,7 +325,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditApplicationCommandPermissionsEntity,
   ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
-    const result = EditApplicationCommandPermissionsSchema.safeParse(options);
+    const result = EditApplicationCommandPermissionsEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

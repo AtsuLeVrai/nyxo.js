@@ -9,31 +9,19 @@ import type {
 import { z } from "zod";
 import type { Rest } from "../rest.js";
 import {
-  type AddGroupDmRecipientEntity,
-  AddGroupDmRecipientSchema,
-  type CreateChannelInviteEntity,
-  CreateChannelInviteSchema,
-  type EditChannelPermissionsEntity,
-  EditChannelPermissionsSchema,
-  type ListPublicArchivedThreadsQueryEntity,
-  ListPublicArchivedThreadsQuerySchema,
-  type ListPublicArchivedThreadsResponse,
-  type ListThreadMembersQueryEntity,
-  ListThreadMembersQuerySchema,
-  type ModifyChannelGroupDmEntity,
-  ModifyChannelGroupDmSchema,
-  type ModifyChannelGuildChannelEntity,
-  ModifyChannelGuildChannelSchema,
-  type ModifyChannelThreadEntity,
-  ModifyChannelThreadSchema,
-  type StartThreadFromMessageEntity,
-  StartThreadFromMessageSchema,
-  type StartThreadInForumOrMediaChannelEntity,
-  type StartThreadInForumOrMediaChannelForumAndMediaThreadMessageEntity,
-  StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
-  StartThreadInForumOrMediaChannelSchema,
-  type StartThreadWithoutMessageEntity,
-  StartThreadWithoutMessageSchema,
+  AddGroupDmRecipientEntity,
+  CreateChannelInviteEntity,
+  EditChannelPermissionsEntity,
+  ListPublicArchivedThreadsQueryEntity,
+  type ListPublicArchivedThreadsResponseEntity,
+  ListThreadMembersQueryEntity,
+  ModifyChannelGroupDmEntity,
+  ModifyChannelGuildChannelEntity,
+  ModifyChannelThreadEntity,
+  StartThreadFromMessageEntity,
+  StartThreadInForumOrMediaChannelEntity,
+  StartThreadInForumOrMediaChannelForumAndMediaThreadMessageEntity,
+  StartThreadWithoutMessageEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -96,9 +84,9 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = z
       .union([
-        ModifyChannelGuildChannelSchema,
-        ModifyChannelThreadSchema,
-        ModifyChannelGroupDmSchema,
+        ModifyChannelGuildChannelEntity,
+        ModifyChannelThreadEntity,
+        ModifyChannelGroupDmEntity,
       ])
       .safeParse(options);
     if (!result.success) {
@@ -136,7 +124,7 @@ export class ChannelRouter {
     permissions: EditChannelPermissionsEntity,
     reason?: string,
   ): Promise<HttpResponse<void>> {
-    const result = EditChannelPermissionsSchema.safeParse(permissions);
+    const result = EditChannelPermissionsEntity.safeParse(permissions);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -171,7 +159,7 @@ export class ChannelRouter {
     options: CreateChannelInviteEntity,
     reason?: string,
   ): Promise<HttpResponse<InviteEntity>> {
-    const result = CreateChannelInviteSchema.safeParse(options);
+    const result = CreateChannelInviteEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -272,7 +260,7 @@ export class ChannelRouter {
     userId: Snowflake,
     options: AddGroupDmRecipientEntity,
   ): Promise<HttpResponse<void>> {
-    const result = AddGroupDmRecipientSchema.safeParse(options);
+    const result = AddGroupDmRecipientEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -307,7 +295,7 @@ export class ChannelRouter {
     options: StartThreadFromMessageEntity,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
-    const result = StartThreadFromMessageSchema.safeParse(options);
+    const result = StartThreadFromMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -333,7 +321,7 @@ export class ChannelRouter {
     options: StartThreadWithoutMessageEntity,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
-    const result = StartThreadWithoutMessageSchema.safeParse(options);
+    const result = StartThreadWithoutMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -363,8 +351,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = z
       .union([
-        StartThreadInForumOrMediaChannelSchema,
-        StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
+        StartThreadInForumOrMediaChannelEntity,
+        StartThreadInForumOrMediaChannelForumAndMediaThreadMessageEntity,
       ])
       .safeParse(options);
     if (!result.success) {
@@ -445,7 +433,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     options: ListThreadMembersQueryEntity = {},
   ): Promise<HttpResponse<ThreadMemberEntity[]>> {
-    const result = ListThreadMembersQuerySchema.safeParse(options);
+    const result = ListThreadMembersQueryEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -465,8 +453,8 @@ export class ChannelRouter {
   listPublicArchivedThreads(
     channelId: Snowflake,
     options: ListPublicArchivedThreadsQueryEntity = {},
-  ): Promise<HttpResponse<ListPublicArchivedThreadsResponse>> {
-    const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
+  ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
+    const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -489,8 +477,8 @@ export class ChannelRouter {
   listPrivateArchivedThreads(
     channelId: Snowflake,
     options: ListPublicArchivedThreadsQueryEntity = {},
-  ): Promise<HttpResponse<ListPublicArchivedThreadsResponse>> {
-    const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
+  ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
+    const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -513,8 +501,8 @@ export class ChannelRouter {
   listJoinedPrivateArchivedThreads(
     channelId: Snowflake,
     options: ListPublicArchivedThreadsQueryEntity = {},
-  ): Promise<HttpResponse<ListPublicArchivedThreadsResponse>> {
-    const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
+  ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
+    const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

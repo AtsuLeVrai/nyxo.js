@@ -1,55 +1,55 @@
 import { z } from "zod";
 import { BitwisePermissionFlags } from "../enums/index.js";
-import { BitFieldManager, SnowflakeSchema } from "../managers/index.js";
-import { GuildMemberSchema } from "./guild.entity.js";
-import { UserSchema } from "./user.entity.js";
+import { BitFieldManager, Snowflake } from "../managers/index.js";
+import { GuildMemberEntity } from "./guild.entity.js";
+import { UserEntity } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#forum-tag-object-forum-tag-structure}
  */
-export const ForumTagSchema = z
+export const ForumTagEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     name: z.string(),
     moderated: z.boolean(),
-    emoji_id: SnowflakeSchema.nullable(),
+    emoji_id: Snowflake.nullable(),
     emoji_name: z.string().nullable(),
   })
   .strict();
 
-export type ForumTagEntity = z.infer<typeof ForumTagSchema>;
+export type ForumTagEntity = z.infer<typeof ForumTagEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#default-reaction-object}
  */
-export const DefaultReactionSchema = z
+export const DefaultReactionEntity = z
   .object({
-    emoji_id: SnowflakeSchema.nullable(),
+    emoji_id: Snowflake.nullable(),
     emoji_name: z.string().nullable(),
   })
   .strict();
 
-export type DefaultReactionEntity = z.infer<typeof DefaultReactionSchema>;
+export type DefaultReactionEntity = z.infer<typeof DefaultReactionEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#thread-member-object}
  */
-export const ThreadMemberSchema = z
+export const ThreadMemberEntity = z
   .object({
-    id: SnowflakeSchema.optional(),
-    user_id: SnowflakeSchema.optional(),
+    id: Snowflake.optional(),
+    user_id: Snowflake.optional(),
     join_timestamp: z.string().datetime(),
     flags: z.number().int(),
-    member: z.lazy(() => GuildMemberSchema.optional()),
+    member: z.lazy(() => GuildMemberEntity.optional()),
   })
   .strict();
 
-export type ThreadMemberEntity = z.infer<typeof ThreadMemberSchema>;
+export type ThreadMemberEntity = z.infer<typeof ThreadMemberEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#thread-metadata-object}
  */
-export const ThreadMetadataSchema = z
+export const ThreadMetadataEntity = z
   .object({
     archived: z.boolean(),
     auto_archive_duration: z.union([
@@ -65,24 +65,22 @@ export const ThreadMetadataSchema = z
   })
   .strict();
 
-export type ThreadMetadataEntity = z.infer<typeof ThreadMetadataSchema>;
+export type ThreadMetadataEntity = z.infer<typeof ThreadMetadataEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#overwrite-object-overwrite-structure}
  */
-export const OverwriteType = {
-  role: 0,
-  member: 1,
-} as const;
-
-export type OverwriteType = (typeof OverwriteType)[keyof typeof OverwriteType];
+export enum OverwriteType {
+  Role = 0,
+  Member = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#overwrite-object}
  */
-export const OverwriteSchema = z
+export const OverwriteEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     type: z.nativeEnum(OverwriteType),
     allow: z
       .array(z.nativeEnum(BitwisePermissionFlags))
@@ -93,115 +91,103 @@ export const OverwriteSchema = z
   })
   .strict();
 
-export type OverwriteEntity = z.infer<typeof OverwriteSchema>;
+export type OverwriteEntity = z.infer<typeof OverwriteEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#followed-channel-object}
  */
-export const FollowedChannelSchema = z
+export const FollowedChannelEntity = z
   .object({
-    channel_id: SnowflakeSchema,
-    webhook_id: SnowflakeSchema,
+    channel_id: Snowflake,
+    webhook_id: Snowflake,
   })
   .strict();
 
-export type FollowedChannelEntity = z.infer<typeof FollowedChannelSchema>;
+export type FollowedChannelEntity = z.infer<typeof FollowedChannelEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-forum-layout-types}
  */
-export const ForumLayoutType = {
-  notSet: 0,
-  listView: 1,
-  galleryView: 2,
-} as const;
-
-export type ForumLayoutType =
-  (typeof ForumLayoutType)[keyof typeof ForumLayoutType];
+export enum ForumLayoutType {
+  NotSet = 0,
+  ListView = 1,
+  GalleryView = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-sort-order-types}
  */
-export const SortOrderType = {
-  latestActivity: 0,
-  creationDate: 1,
-} as const;
-
-export type SortOrderType = (typeof SortOrderType)[keyof typeof SortOrderType];
+export enum SortOrderType {
+  LatestActivity = 0,
+  CreationDate = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-flags}
  */
-export const ChannelFlags = {
-  pinned: 1 << 1,
-  requireTag: 1 << 4,
-  hideMediaDownloadOptions: 1 << 15,
-} as const;
-
-export type ChannelFlags = (typeof ChannelFlags)[keyof typeof ChannelFlags];
+export enum ChannelFlags {
+  Pinned = 1 << 1,
+  RequireTag = 1 << 4,
+  HideMediaDownloadOptions = 1 << 15,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes}
  */
-export const VideoQualityMode = {
-  auto: 1,
-  full: 2,
-} as const;
-
-export type VideoQualityMode =
-  (typeof VideoQualityMode)[keyof typeof VideoQualityMode];
+export enum VideoQualityMode {
+  Auto = 1,
+  Full = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
  */
-export const ChannelType = {
-  guildText: 0,
-  dm: 1,
-  guildVoice: 2,
-  groupDm: 3,
-  guildCategory: 4,
-  guildAnnouncement: 5,
-  announcementThread: 10,
-  publicThread: 11,
-  privateThread: 12,
-  guildStageVoice: 13,
-  guildDirectory: 14,
-  guildForum: 15,
-  guildMedia: 16,
-} as const;
-
-export type ChannelType = (typeof ChannelType)[keyof typeof ChannelType];
+export enum ChannelType {
+  GuildText = 0,
+  Dm = 1,
+  GuildVoice = 2,
+  GroupDm = 3,
+  GuildCategory = 4,
+  GuildAnnouncement = 5,
+  AnnouncementThread = 10,
+  PublicThread = 11,
+  PrivateThread = 12,
+  GuildStageVoice = 13,
+  GuildDirectory = 14,
+  GuildForum = 15,
+  GuildMedia = 16,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-structure}
  */
-export const ChannelSchema = z
+export const ChannelEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     type: z.nativeEnum(ChannelType),
-    guild_id: SnowflakeSchema.optional(),
+    guild_id: Snowflake.optional(),
     position: z.number().int().optional(),
-    permission_overwrites: z.array(OverwriteSchema).optional(),
+    permission_overwrites: z.array(OverwriteEntity).optional(),
     name: z.string().nullish(),
     topic: z.string().nullish(),
     nsfw: z.boolean().optional(),
-    last_message_id: SnowflakeSchema.nullish(),
+    last_message_id: Snowflake.nullish(),
     bitrate: z.number().int().optional(),
     user_limit: z.number().int().optional(),
     rate_limit_per_user: z.number().int().optional(),
-    recipients: z.array(z.lazy(() => UserSchema)).optional(),
+    recipients: z.array(z.lazy(() => UserEntity)).optional(),
     icon: z.string().nullish(),
-    owner_id: SnowflakeSchema.optional(),
-    application_id: SnowflakeSchema.optional(),
+    owner_id: Snowflake.optional(),
+    application_id: Snowflake.optional(),
     managed: z.boolean().optional(),
-    parent_id: SnowflakeSchema.nullish(),
+    parent_id: Snowflake.nullish(),
     last_pin_timestamp: z.string().datetime().nullish(),
     rtc_region: z.string().nullish(),
     video_quality_mode: z.nativeEnum(VideoQualityMode).optional(),
     message_count: z.number().int().optional(),
     member_count: z.number().int().optional(),
-    thread_metadata: ThreadMetadataSchema.optional(),
-    member: ThreadMemberSchema.optional(),
+    thread_metadata: ThreadMetadataEntity.optional(),
+    member: ThreadMemberEntity.optional(),
     default_auto_archive_duration: z
       .union([
         z.literal(60),
@@ -215,23 +201,23 @@ export const ChannelSchema = z
       .nativeEnum(ChannelFlags)
       .transform((value) => new BitFieldManager<ChannelFlags>(value)),
     total_message_sent: z.number().int().optional(),
-    available_tags: z.array(ForumTagSchema).optional(),
-    applied_tags: z.array(SnowflakeSchema).optional(),
-    default_reaction_emoji: DefaultReactionSchema.nullish(),
+    available_tags: z.array(ForumTagEntity).optional(),
+    applied_tags: z.array(Snowflake).optional(),
+    default_reaction_emoji: DefaultReactionEntity.nullish(),
     default_thread_rate_limit_per_user: z.number().int().optional(),
     default_sort_order: z.nativeEnum(SortOrderType).nullish(),
     default_forum_layout: z.nativeEnum(ForumLayoutType).optional(),
   })
   .strict();
 
-export type ChannelEntity = z.infer<typeof ChannelSchema>;
+export type ChannelEntity = z.infer<typeof ChannelEntity>;
 
 /**
- * Guild Text Channel - {@link ChannelType.guildText}
+ * Guild Text Channel - {@link ChannelType.GuildText}
  */
-export const GuildTextChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.guildText),
-  guild_id: SnowflakeSchema,
+export const GuildTextChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GuildText),
+  guild_id: Snowflake,
 })
   .strict()
   .omit({
@@ -247,14 +233,14 @@ export const GuildTextChannelSchema = ChannelSchema.extend({
     available_tags: true,
   });
 
-export type GuildTextChannelEntity = z.infer<typeof GuildTextChannelSchema>;
+export type GuildTextChannelEntity = z.infer<typeof GuildTextChannelEntity>;
 
 /**
- * DM Channel - {@link ChannelType.dm}
+ * DM Channel - {@link ChannelType.Dm}
  */
-export const DmChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.dm),
-  recipients: z.array(z.lazy(() => UserSchema)),
+export const DmChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.Dm),
+  recipients: z.array(z.lazy(() => UserEntity)),
 })
   .strict()
   .omit({
@@ -275,14 +261,14 @@ export const DmChannelSchema = ChannelSchema.extend({
     available_tags: true,
   });
 
-export type DmChannelEntity = z.infer<typeof DmChannelSchema>;
+export type DmChannelEntity = z.infer<typeof DmChannelEntity>;
 
 /**
- * Guild Voice Channel - {@link ChannelType.guildVoice}
+ * Guild Voice Channel - {@link ChannelType.GuildVoice}
  */
-export const GuildVoiceChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.guildVoice),
-  guild_id: SnowflakeSchema,
+export const GuildVoiceChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GuildVoice),
+  guild_id: Snowflake,
   bitrate: z.number().int(),
   user_limit: z.number().int(),
 })
@@ -304,15 +290,15 @@ export const GuildVoiceChannelSchema = ChannelSchema.extend({
     default_forum_layout: true,
   });
 
-export type GuildVoiceChannelEntity = z.infer<typeof GuildVoiceChannelSchema>;
+export type GuildVoiceChannelEntity = z.infer<typeof GuildVoiceChannelEntity>;
 
 /**
- * Group DM Channel - {@link ChannelType.groupDm}
+ * Group DM Channel - {@link ChannelType.GroupDm}
  */
-export const GroupDmChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.groupDm),
-  recipients: z.array(z.lazy(() => UserSchema)),
-  owner_id: SnowflakeSchema,
+export const GroupDmChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GroupDm),
+  recipients: z.array(z.lazy(() => UserEntity)),
+  owner_id: Snowflake,
 })
   .strict()
   .omit({
@@ -332,14 +318,14 @@ export const GroupDmChannelSchema = ChannelSchema.extend({
     available_tags: true,
   });
 
-export type GroupDmChannelEntity = z.infer<typeof GroupDmChannelSchema>;
+export type GroupDmChannelEntity = z.infer<typeof GroupDmChannelEntity>;
 
 /**
- * Guild Category Channel - {@link ChannelType.guildCategory}
+ * Guild Category Channel - {@link ChannelType.GuildCategory}
  */
-export const GuildCategoryChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.guildCategory),
-  guild_id: SnowflakeSchema,
+export const GuildCategoryChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GuildCategory),
+  guild_id: Snowflake,
 })
   .strict()
   .omit({
@@ -366,15 +352,15 @@ export const GuildCategoryChannelSchema = ChannelSchema.extend({
   });
 
 export type GuildCategoryChannelEntity = z.infer<
-  typeof GuildCategoryChannelSchema
+  typeof GuildCategoryChannelEntity
 >;
 
 /**
- * Guild Announcement Channel - {@link ChannelType.guildAnnouncement}
+ * Guild Announcement Channel - {@link ChannelType.GuildAnnouncement}
  */
-export const GuildAnnouncementChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.guildAnnouncement),
-  guild_id: SnowflakeSchema,
+export const GuildAnnouncementChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GuildAnnouncement),
+  guild_id: Snowflake,
 })
   .strict()
   .omit({
@@ -401,17 +387,17 @@ export const GuildAnnouncementChannelSchema = ChannelSchema.extend({
   });
 
 export type GuildAnnouncementChannelEntity = z.infer<
-  typeof GuildAnnouncementChannelSchema
+  typeof GuildAnnouncementChannelEntity
 >;
 
 /**
- * Thread Channel Base - {@link ChannelType.publicThread}
+ * Thread Channel Base - {@link ChannelType.PublicThread}
  */
-export const PublicThreadChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.publicThread),
-  guild_id: SnowflakeSchema,
-  thread_metadata: ThreadMetadataSchema,
-  parent_id: SnowflakeSchema,
+export const PublicThreadChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.PublicThread),
+  guild_id: Snowflake,
+  thread_metadata: ThreadMetadataEntity,
+  parent_id: Snowflake,
 })
   .strict()
   .omit({
@@ -430,48 +416,48 @@ export const PublicThreadChannelSchema = ChannelSchema.extend({
   });
 
 export type PublicThreadChannelEntity = z.infer<
-  typeof PublicThreadChannelSchema
+  typeof PublicThreadChannelEntity
 >;
 
 /**
- * Thread Channel Base - {@link ChannelType.privateThread}
+ * Thread Channel Base - {@link ChannelType.PrivateThread}
  */
-export const PrivateThreadChannelSchema = PublicThreadChannelSchema.extend({
-  type: z.literal(ChannelType.privateThread),
+export const PrivateThreadChannelEntity = PublicThreadChannelEntity.extend({
+  type: z.literal(ChannelType.PrivateThread),
 });
 
 export type PrivateThreadChannelEntity = z.infer<
-  typeof PrivateThreadChannelSchema
+  typeof PrivateThreadChannelEntity
 >;
 
 /**
- * Thread Channel Base - {@link ChannelType.announcementThread}
+ * Thread Channel Base - {@link ChannelType.AnnouncementThread}
  */
-export const AnnouncementThreadChannelSchema = PublicThreadChannelSchema.extend(
+export const AnnouncementThreadChannelEntity = PublicThreadChannelEntity.extend(
   {
-    type: z.literal(ChannelType.announcementThread),
+    type: z.literal(ChannelType.AnnouncementThread),
   },
 );
 
 export type AnnouncementThreadChannelEntity = z.infer<
-  typeof AnnouncementThreadChannelSchema
+  typeof AnnouncementThreadChannelEntity
 >;
 
 // Export union type of all thread channel types
-export const AnyThreadChannelSchema = z.union([
-  PublicThreadChannelSchema,
-  PrivateThreadChannelSchema,
-  AnnouncementThreadChannelSchema,
+export const AnyThreadChannelEntity = z.union([
+  PublicThreadChannelEntity,
+  PrivateThreadChannelEntity,
+  AnnouncementThreadChannelEntity,
 ]);
 
-export type AnyThreadChannelEntity = z.infer<typeof AnyThreadChannelSchema>;
+export type AnyThreadChannelEntity = z.infer<typeof AnyThreadChannelEntity>;
 
 /**
- * Guild Stage Voice Channel - {@link ChannelType.guildStageVoice}
+ * Guild Stage Voice Channel - {@link ChannelType.GuildStageVoice}
  */
-export const GuildStageVoiceChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.guildStageVoice),
-  guild_id: SnowflakeSchema,
+export const GuildStageVoiceChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GuildStageVoice),
+  guild_id: Snowflake,
   bitrate: z.number().int(),
   user_limit: z.number().int(),
 })
@@ -497,16 +483,16 @@ export const GuildStageVoiceChannelSchema = ChannelSchema.extend({
   });
 
 export type GuildStageVoiceChannelEntity = z.infer<
-  typeof GuildStageVoiceChannelSchema
+  typeof GuildStageVoiceChannelEntity
 >;
 
 /**
- * Guild Forum Channel - {@link ChannelType.guildForum}
+ * Guild Forum Channel - {@link ChannelType.GuildForum}
  */
-export const GuildForumChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.guildForum),
-  guild_id: SnowflakeSchema,
-  available_tags: z.array(ForumTagSchema),
+export const GuildForumChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GuildForum),
+  guild_id: Snowflake,
+  available_tags: z.array(ForumTagEntity),
 })
   .strict()
   .omit({
@@ -526,15 +512,15 @@ export const GuildForumChannelSchema = ChannelSchema.extend({
     last_message_id: true,
   });
 
-export type GuildForumChannelEntity = z.infer<typeof GuildForumChannelSchema>;
+export type GuildForumChannelEntity = z.infer<typeof GuildForumChannelEntity>;
 
 /**
- * Guild Media Channel - {@link ChannelType.guildMedia}
+ * Guild Media Channel - {@link ChannelType.GuildMedia}
  */
-export const GuildMediaChannelSchema = ChannelSchema.extend({
-  type: z.literal(ChannelType.guildMedia),
-  guild_id: SnowflakeSchema,
-  available_tags: z.array(ForumTagSchema),
+export const GuildMediaChannelEntity = ChannelEntity.extend({
+  type: z.literal(ChannelType.GuildMedia),
+  guild_id: Snowflake,
+  available_tags: z.array(ForumTagEntity),
 })
   .strict()
   .omit({
@@ -555,22 +541,22 @@ export const GuildMediaChannelSchema = ChannelSchema.extend({
     default_forum_layout: true,
   });
 
-export type GuildMediaChannelEntity = z.infer<typeof GuildMediaChannelSchema>;
+export type GuildMediaChannelEntity = z.infer<typeof GuildMediaChannelEntity>;
 
 // Export union type of all channel types
-export const AnyChannelSchema = z.discriminatedUnion("type", [
-  GuildTextChannelSchema,
-  DmChannelSchema,
-  GuildVoiceChannelSchema,
-  GroupDmChannelSchema,
-  GuildCategoryChannelSchema,
-  GuildAnnouncementChannelSchema,
-  PublicThreadChannelSchema,
-  PrivateThreadChannelSchema,
-  AnnouncementThreadChannelSchema,
-  GuildStageVoiceChannelSchema,
-  GuildForumChannelSchema,
-  GuildMediaChannelSchema,
+export const AnyChannelEntity = z.discriminatedUnion("type", [
+  GuildTextChannelEntity,
+  DmChannelEntity,
+  GuildVoiceChannelEntity,
+  GroupDmChannelEntity,
+  GuildCategoryChannelEntity,
+  GuildAnnouncementChannelEntity,
+  PublicThreadChannelEntity,
+  PrivateThreadChannelEntity,
+  AnnouncementThreadChannelEntity,
+  GuildStageVoiceChannelEntity,
+  GuildForumChannelEntity,
+  GuildMediaChannelEntity,
 ]);
 
-export type AnyChannelEntity = z.infer<typeof AnyChannelSchema>;
+export type AnyChannelEntity = z.infer<typeof AnyChannelEntity>;

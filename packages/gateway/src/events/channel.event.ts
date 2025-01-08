@@ -1,57 +1,57 @@
 import {
-  AnyThreadChannelSchema,
-  SnowflakeSchema,
-  ThreadMemberSchema,
+  AnyThreadChannelEntity,
+  Snowflake,
+  ThreadMemberEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#channel-pins-update-channel-pins-update-event-fields}
  */
-export const ChannelPinsUpdateSchema = z.object({
-  guild_id: SnowflakeSchema.optional(),
-  channel_id: SnowflakeSchema,
+export const ChannelPinsUpdateEntity = z.object({
+  guild_id: Snowflake.optional(),
+  channel_id: Snowflake,
   last_pin_timestamp: z.string().nullish(),
 });
 
-export type ChannelPinsUpdateEntity = z.infer<typeof ChannelPinsUpdateSchema>;
+export type ChannelPinsUpdateEntity = z.infer<typeof ChannelPinsUpdateEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-members-update-thread-members-update-event-fields}
  */
-export const ThreadMembersUpdateSchema = z
+export const ThreadMembersUpdateEntity = z
   .object({
-    id: SnowflakeSchema,
-    guild_id: SnowflakeSchema,
+    id: Snowflake,
+    guild_id: Snowflake,
     member_count: z.number(),
-    added_members: z.array(ThreadMemberSchema).optional(),
-    removed_member_ids: z.array(SnowflakeSchema).optional(),
+    added_members: z.array(ThreadMemberEntity).optional(),
+    removed_member_ids: z.array(Snowflake).optional(),
   })
   .strict();
 
 export type ThreadMembersUpdateEntity = z.infer<
-  typeof ThreadMembersUpdateSchema
+  typeof ThreadMembersUpdateEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-member-update-thread-member-update-event-extra-fields}
  */
-export const ThreadMemberUpdateSchema = ThreadMemberSchema.extend({
-  guild_id: SnowflakeSchema,
+export const ThreadMemberUpdateEntity = ThreadMemberEntity.extend({
+  guild_id: Snowflake,
 }).strict();
 
-export type ThreadMemberUpdateEntity = z.infer<typeof ThreadMemberUpdateSchema>;
+export type ThreadMemberUpdateEntity = z.infer<typeof ThreadMemberUpdateEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-list-sync-thread-list-sync-event-fields}
  */
-export const ThreadListSyncSchema = z
+export const ThreadListSyncEntity = z
   .object({
-    guild_id: SnowflakeSchema,
-    channel_ids: z.array(SnowflakeSchema).optional(),
-    threads: z.array(AnyThreadChannelSchema),
-    members: z.array(ThreadMemberSchema),
+    guild_id: Snowflake,
+    channel_ids: z.array(Snowflake).optional(),
+    threads: z.array(AnyThreadChannelEntity),
+    members: z.array(ThreadMemberEntity),
   })
   .strict();
 
-export type ThreadListSyncEntity = z.infer<typeof ThreadListSyncSchema>;
+export type ThreadListSyncEntity = z.infer<typeof ThreadListSyncEntity>;

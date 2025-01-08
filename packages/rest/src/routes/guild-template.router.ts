@@ -1,12 +1,9 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateGuildFromGuildTemplateEntity,
-  CreateGuildFromGuildTemplateSchema,
-  type CreateGuildTemplateEntity,
-  CreateGuildTemplateSchema,
-  type ModifyGuildTemplateEntity,
-  ModifyStageInstanceSchema,
+  CreateGuildFromGuildTemplateEntity,
+  CreateGuildTemplateEntity,
+  ModifyGuildTemplateEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -40,7 +37,7 @@ export class GuildTemplateRouter {
     code: string,
     options: CreateGuildFromGuildTemplateEntity,
   ): Promise<HttpResponse<GuildEntity>> {
-    const result = CreateGuildFromGuildTemplateSchema.safeParse(options);
+    const result = CreateGuildFromGuildTemplateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -70,7 +67,7 @@ export class GuildTemplateRouter {
     guildId: Snowflake,
     options: CreateGuildTemplateEntity,
   ): Promise<HttpResponse<GuildTemplateEntity>> {
-    const result = CreateGuildTemplateSchema.safeParse(options);
+    const result = CreateGuildTemplateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -104,7 +101,7 @@ export class GuildTemplateRouter {
     code: string,
     options: ModifyGuildTemplateEntity,
   ): Promise<HttpResponse<GuildTemplateEntity>> {
-    const result = ModifyStageInstanceSchema.safeParse(options);
+    const result = ModifyGuildTemplateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors

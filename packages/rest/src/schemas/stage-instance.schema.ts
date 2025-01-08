@@ -1,36 +1,34 @@
-import { SnowflakeSchema, StageInstancePrivacyLevel } from "@nyxjs/core";
+import { Snowflake, StageInstancePrivacyLevel } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params}
  */
-export const CreateStageInstanceSchema = z
+export const CreateStageInstanceEntity = z
   .object({
-    channel_id: SnowflakeSchema,
+    channel_id: Snowflake,
     topic: z.string().min(1).max(120),
     privacy_level: z
       .nativeEnum(StageInstancePrivacyLevel)
-      .default(StageInstancePrivacyLevel.guildOnly)
+      .default(StageInstancePrivacyLevel.GuildOnly)
       .optional(),
     send_start_notification: z.boolean().optional(),
-    guild_scheduled_event_id: SnowflakeSchema.optional(),
+    guild_scheduled_event_id: Snowflake.optional(),
   })
   .strict();
 
 export type CreateStageInstanceEntity = z.infer<
-  typeof CreateStageInstanceSchema
+  typeof CreateStageInstanceEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}
  */
-export const ModifyStageInstanceSchema = CreateStageInstanceSchema.pick({
+export const ModifyStageInstanceEntity = CreateStageInstanceEntity.pick({
   topic: true,
   privacy_level: true,
-})
-  .strict()
-  .partial();
+}).partial();
 
 export type ModifyStageInstanceEntity = z.infer<
-  typeof ModifyStageInstanceSchema
+  typeof ModifyStageInstanceEntity
 >;

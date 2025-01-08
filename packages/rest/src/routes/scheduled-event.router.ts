@@ -5,12 +5,9 @@ import type {
 } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type CreateGuildScheduledEventEntity,
-  CreateGuildScheduledEventSchema,
-  type GetGuildScheduledEventUsersQueryEntity,
-  GetGuildScheduledEventUsersQuerySchema,
-  type ModifyGuildScheduledEventEntity,
-  ModifyGuildScheduledEventSchema,
+  CreateGuildScheduledEventEntity,
+  GetGuildScheduledEventUsersQueryEntity,
+  ModifyGuildScheduledEventEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -50,7 +47,7 @@ export class ScheduledEventRouter {
     event: CreateGuildScheduledEventEntity,
     reason?: string,
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
-    const result = CreateGuildScheduledEventSchema.safeParse(event);
+    const result = CreateGuildScheduledEventEntity.safeParse(event);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -87,7 +84,7 @@ export class ScheduledEventRouter {
     modify: ModifyGuildScheduledEventEntity,
     reason?: string,
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
-    const result = ModifyGuildScheduledEventSchema.safeParse(modify);
+    const result = ModifyGuildScheduledEventEntity.safeParse(modify);
     if (!result.success) {
       throw new Error(
         result.error.errors
@@ -125,7 +122,7 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     query?: GetGuildScheduledEventUsersQueryEntity,
   ): Promise<HttpResponse<GuildScheduledEventUserEntity[]>> {
-    const result = GetGuildScheduledEventUsersQuerySchema.safeParse(query);
+    const result = GetGuildScheduledEventUsersQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors

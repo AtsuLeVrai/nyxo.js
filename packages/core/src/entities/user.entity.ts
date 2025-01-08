@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { SnowflakeSchema } from "../managers/index.js";
-import { IntegrationSchema } from "./guild.entity.js";
+import { Snowflake } from "../managers/index.js";
+import { IntegrationEntity } from "./guild.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure}
  */
-export const ApplicationRoleConnectionSchema = z
+export const ApplicationRoleConnectionEntity = z
   .object({
     platform_name: z.string().max(50).nullable(),
     platform_username: z.string().max(100).nullable(),
@@ -14,62 +14,56 @@ export const ApplicationRoleConnectionSchema = z
   .strict();
 
 export type ApplicationRoleConnectionEntity = z.infer<
-  typeof ApplicationRoleConnectionSchema
+  typeof ApplicationRoleConnectionEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#connection-object-visibility-types}
  */
-export const ConnectionVisibility = {
-  none: 0,
-  everyone: 1,
-} as const;
-
-export type ConnectionVisibility =
-  (typeof ConnectionVisibility)[keyof typeof ConnectionVisibility];
+export enum ConnectionVisibility {
+  None = 0,
+  Everyone = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#connection-object-services}
  */
-export const ConnectionService = {
-  amazonMusic: "amazon-music",
-  battlenet: "battlenet",
-  bungie: "bungie",
-  domain: "domain",
-  ebay: "ebay",
-  epicGames: "epicgames",
-  facebook: "facebook",
-  gitHub: "github",
-  instagram: "instagram",
-  leagueOfLegends: "leagueoflegends",
-  payPal: "paypal",
-  playStation: "playstation",
-  reddit: "reddit",
-  riotGames: "riotgames",
-  roblox: "roblox",
-  spotify: "spotify",
-  skype: "skype",
-  steam: "steam",
-  tikTok: "tiktok",
-  twitch: "twitch",
-  twitter: "twitter",
-  xbox: "xbox",
-  youTube: "youtube",
-} as const;
-
-export type ConnectionService =
-  (typeof ConnectionService)[keyof typeof ConnectionService];
+export enum ConnectionService {
+  AmazonMusic = "amazon-music",
+  Battlenet = "battlenet",
+  Bungiev = "bungie",
+  Domain = "domain",
+  Ebay = "ebay",
+  EpicGames = "epicgames",
+  Facebook = "facebook",
+  GitHub = "github",
+  Instagram = "instagram",
+  LeagueOfLegends = "leagueoflegends",
+  PayPal = "paypal",
+  PlayStation = "playstation",
+  Reddit = "reddit",
+  RiotGames = "riotgames",
+  Roblox = "roblox",
+  Spotify = "spotify",
+  Skype = "skype",
+  Steam = "steam",
+  TikTok = "tiktok",
+  Twitch = "twitch",
+  Twitter = "twitter",
+  Xbox = "xbox",
+  YouTube = "youtube",
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#connection-object-connection-structure}
  */
-export const ConnectionSchema = z
+export const ConnectionEntity = z
   .object({
     id: z.string(),
     name: z.string(),
     type: z.nativeEnum(ConnectionService),
     revoked: z.boolean().optional(),
-    integrations: z.array(z.lazy(() => IntegrationSchema.partial())).optional(),
+    integrations: z.array(z.lazy(() => IntegrationEntity.partial())).optional(),
     verified: z.boolean(),
     friend_sync: z.boolean(),
     show_activity: z.boolean(),
@@ -78,56 +72,52 @@ export const ConnectionSchema = z
   })
   .strict();
 
-export type ConnectionEntity = z.infer<typeof ConnectionSchema>;
+export type ConnectionEntity = z.infer<typeof ConnectionEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure}
  */
-export const AvatarDecorationDataSchema = z
+export const AvatarDecorationDataEntity = z
   .object({
     asset: z.string(),
-    sku_id: SnowflakeSchema,
+    sku_id: Snowflake,
   })
   .strict();
 
 export type AvatarDecorationDataEntity = z.infer<
-  typeof AvatarDecorationDataSchema
+  typeof AvatarDecorationDataEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types}
  */
-export const PremiumType = {
-  none: 0,
-  nitroClassic: 1,
-  nitro: 2,
-  nitroBasic: 3,
-} as const;
-
-export type PremiumType = (typeof PremiumType)[keyof typeof PremiumType];
+export enum PremiumType {
+  None = 0,
+  NitroClassic = 1,
+  Nitro = 2,
+  NitroBasic = 3,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
  */
-export const UserFlags = {
-  staff: 1 << 0,
-  partner: 1 << 1,
-  hypeSquad: 1 << 2,
-  bugHunterLevel1: 1 << 3,
-  hypeSquadOnlineHouse1: 1 << 6,
-  hypeSquadOnlineHouse2: 1 << 7,
-  hypeSquadOnlineHouse3: 1 << 8,
-  premiumEarlySupporter: 1 << 9,
-  teamPseudoUser: 1 << 10,
-  bugHunterLevel2: 1 << 14,
-  verifiedBot: 1 << 16,
-  verifiedDeveloper: 1 << 17,
-  certifiedModerator: 1 << 18,
-  botHttpInteractions: 1 << 19,
-  activeDeveloper: 1 << 22,
-} as const;
-
-export type UserFlags = (typeof UserFlags)[keyof typeof UserFlags];
+export enum UserFlags {
+  Staff = 1 << 0,
+  Partner = 1 << 1,
+  HypeSquad = 1 << 2,
+  BugHunterLevel1 = 1 << 3,
+  HypeSquadOnlineHouse1 = 1 << 6,
+  HypeSquadOnlineHouse2 = 1 << 7,
+  HypeSquadOnlineHouse3 = 1 << 8,
+  PremiumEarlySupporter = 1 << 9,
+  TeamPseudoUser = 1 << 10,
+  BugHunterLevel2 = 1 << 14,
+  VerifiedBot = 1 << 16,
+  VerifiedDeveloper = 1 << 17,
+  CertifiedModerator = 1 << 18,
+  BotHttpInteractions = 1 << 19,
+  ActiveDeveloper = 1 << 22,
+}
 
 function isUsernameValid(value: string): value is string {
   const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];
@@ -145,9 +135,9 @@ function isUsernameValid(value: string): value is string {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-structure}
  */
-export const UserSchema = z
+export const UserEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     username: z.string().min(2).max(32).refine(isUsernameValid),
     discriminator: z.string(),
     global_name: z.string().nullable(),
@@ -163,8 +153,8 @@ export const UserSchema = z
     flags: z.nativeEnum(UserFlags).optional(),
     premium_type: z.nativeEnum(PremiumType).optional(),
     public_flags: z.nativeEnum(UserFlags).optional(),
-    avatar_decoration_data: AvatarDecorationDataSchema.nullish(),
+    avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
   })
   .strict();
 
-export type UserEntity = z.infer<typeof UserSchema>;
+export type UserEntity = z.infer<typeof UserEntity>;

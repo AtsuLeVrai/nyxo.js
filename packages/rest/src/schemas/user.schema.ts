@@ -1,10 +1,10 @@
-import { SnowflakeSchema } from "@nyxjs/core";
+import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
  */
-export const ModifyCurrentUserSchema = z
+export const ModifyCurrentUserEntity = z
   .object({
     username: z.string().optional(),
     avatar: z
@@ -18,40 +18,40 @@ export const ModifyCurrentUserSchema = z
   })
   .strict();
 
-export type ModifyCurrentUserEntity = z.infer<typeof ModifyCurrentUserSchema>;
+export type ModifyCurrentUserEntity = z.infer<typeof ModifyCurrentUserEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params}
  */
-export const GetCurrentUserGuildsQuerySchema = z
+export const GetCurrentUserGuildsQueryEntity = z
   .object({
-    before: SnowflakeSchema.optional(),
-    after: SnowflakeSchema.optional(),
+    before: Snowflake.optional(),
+    after: Snowflake.optional(),
     limit: z.number().int().default(200).optional(),
     with_counts: z.boolean().default(false).optional(),
   })
   .strict();
 
 export type GetCurrentUserGuildsQueryEntity = z.infer<
-  typeof GetCurrentUserGuildsQuerySchema
+  typeof GetCurrentUserGuildsQueryEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params}
  */
-export const CreateGroupDmSchema = z
+export const CreateGroupDmEntity = z
   .object({
     access_tokens: z.array(z.string()).min(2).max(10),
-    nicks: z.record(SnowflakeSchema, z.string()),
+    nicks: z.record(Snowflake, z.string()),
   })
   .strict();
 
-export type CreateGroupDmEntity = z.infer<typeof CreateGroupDmSchema>;
+export type CreateGroupDmEntity = z.infer<typeof CreateGroupDmEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params}
  */
-export const UpdateCurrentUserApplicationRoleConnectionSchema = z
+export const UpdateCurrentUserApplicationRoleConnectionEntity = z
   .object({
     platform_name: z.string().max(50).optional(),
     platform_username: z.string().max(100).optional(),
@@ -60,5 +60,5 @@ export const UpdateCurrentUserApplicationRoleConnectionSchema = z
   .strict();
 
 export type UpdateCurrentUserApplicationRoleConnectionEntity = z.infer<
-  typeof UpdateCurrentUserApplicationRoleConnectionSchema
+  typeof UpdateCurrentUserApplicationRoleConnectionEntity
 >;

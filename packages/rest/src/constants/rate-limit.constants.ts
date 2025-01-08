@@ -31,6 +31,3 @@ export const RateLimitConstants = {
     /^\/channels\/\d+\/messages\/\d+\/reactions/,
   ],
 } as const;
-
-export type RateLimitConstants =
-  (typeof RateLimitConstants)[keyof typeof RateLimitConstants];

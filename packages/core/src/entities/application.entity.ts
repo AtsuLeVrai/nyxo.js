@@ -1,98 +1,89 @@
 import { z } from "zod";
 import { OAuth2Scope } from "../enums/index.js";
-import { SnowflakeSchema } from "../managers/index.js";
-import { GuildSchema } from "./guild.entity.js";
-import { TeamSchema } from "./team.entity.js";
-import { UserSchema } from "./user.entity.js";
+import { Snowflake } from "../managers/index.js";
+import { GuildEntity } from "./guild.entity.js";
+import { TeamEntity } from "./team.entity.js";
+import { UserEntity } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#install-params-object-install-params-structure}
  */
-export const InstallParamsSchema = z
+export const InstallParamsEntity = z
   .object({
     scopes: z.array(z.nativeEnum(OAuth2Scope)),
     permissions: z.string(),
   })
   .strict();
 
-export type InstallParamsEntity = z.infer<typeof InstallParamsSchema>;
+export type InstallParamsEntity = z.infer<typeof InstallParamsEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-flags}
  */
-export const ApplicationFlags = {
-  applicationAutoModerationRuleCreateBadge: 1 << 6,
-  gatewayPresence: 1 << 12,
-  gatewayPresenceLimited: 1 << 13,
-  gatewayGuildMembers: 1 << 14,
-  gatewayGuildMembersLimited: 1 << 15,
-  verificationPendingGuildLimit: 1 << 16,
-  embedded: 1 << 17,
-  gatewayMessageContent: 1 << 18,
-  gatewayMessageContentLimited: 1 << 19,
-  applicationCommandBadge: 1 << 23,
-} as const;
-
-export type ApplicationFlags =
-  (typeof ApplicationFlags)[keyof typeof ApplicationFlags];
+export enum ApplicationFlags {
+  ApplicationAutoModerationRuleCreateBadge = 1 << 6,
+  GatewayPresence = 1 << 12,
+  GatewayPresenceLimited = 1 << 13,
+  GatewayGuildMembers = 1 << 14,
+  GatewayGuildMembersLimited = 1 << 15,
+  VerificationPendingGuildLimit = 1 << 16,
+  Embedded = 1 << 17,
+  GatewayMessageContent = 1 << 18,
+  GatewayMessageContentLimited = 1 << 19,
+  ApplicationCommandBadge = 1 << 23,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-event-webhook-status}
  */
-export const ApplicationEventWebhookStatus = {
-  disabled: 1,
-  enabled: 2,
-  disabledByDiscord: 3,
-} as const;
-
-export type ApplicationEventWebhookStatus =
-  (typeof ApplicationEventWebhookStatus)[keyof typeof ApplicationEventWebhookStatus];
+export enum ApplicationEventWebhookStatus {
+  Disabled = 1,
+  Enabled = 2,
+  DisabledByDiscord = 3,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object}
  */
-export const ApplicationIntegrationTypeConfigurationSchema = z
+export const ApplicationIntegrationTypeConfigurationEntity = z
   .object({
-    oauth2_install_params: InstallParamsSchema.optional(),
+    oauth2_install_params: InstallParamsEntity.optional(),
   })
   .strict();
 
 export type ApplicationIntegrationTypeConfigurationEntity = z.infer<
-  typeof ApplicationIntegrationTypeConfigurationSchema
+  typeof ApplicationIntegrationTypeConfigurationEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-types}
  */
-export const ApplicationIntegrationType = {
-  guildInstall: 0,
-  userInstall: 1,
-} as const;
-
-export type ApplicationIntegrationType =
-  (typeof ApplicationIntegrationType)[keyof typeof ApplicationIntegrationType];
+export enum ApplicationIntegrationType {
+  GuildInstall = 0,
+  UserInstall = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-structure}
  */
-export const ApplicationSchema = z
+export const ApplicationEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     name: z.string(),
     icon: z.string().nullable(),
     description: z.string(),
     rpc_origins: z.array(z.string()).optional(),
     bot_public: z.boolean(),
     bot_require_code_grant: z.boolean(),
-    bot: UserSchema.optional(),
+    bot: UserEntity.optional(),
     terms_of_service_url: z.string().url().optional(),
     privacy_policy_url: z.string().url().optional(),
-    owner: UserSchema.optional(),
+    owner: UserEntity.optional(),
     verify_key: z.string(),
-    team: TeamSchema.nullable(),
-    guild_id: SnowflakeSchema.optional(),
-    guild: GuildSchema.partial().optional(),
-    primary_sku_id: SnowflakeSchema.optional(),
+    team: TeamEntity.nullable(),
+    guild_id: Snowflake.optional(),
+    guild: GuildEntity.partial().optional(),
+    primary_sku_id: Snowflake.optional(),
     slug: z.string().url().optional(),
     cover_image: z.string().optional(),
     flags: z.nativeEnum(ApplicationFlags),
@@ -105,13 +96,13 @@ export const ApplicationSchema = z
     event_webhooks_status: z.nativeEnum(ApplicationEventWebhookStatus),
     event_webhooks_types: z.array(z.string()).optional(),
     tags: z.array(z.string()).max(5).optional(),
-    install_params: InstallParamsSchema.optional(),
+    install_params: InstallParamsEntity.optional(),
     integration_types_config: z.record(
       z.nativeEnum(ApplicationIntegrationType),
-      ApplicationIntegrationTypeConfigurationSchema,
+      ApplicationIntegrationTypeConfigurationEntity,
     ),
     custom_install_url: z.string().url().optional(),
   })
   .strict();
 
-export type ApplicationEntity = z.infer<typeof ApplicationSchema>;
+export type ApplicationEntity = z.infer<typeof ApplicationEntity>;

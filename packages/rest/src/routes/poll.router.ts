@@ -1,8 +1,7 @@
 import type { MessageEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
-  type GetAnswerVotersQueryEntity,
-  GetAnswerVotersQuerySchema,
+  GetAnswerVotersQueryEntity,
   type PollVotersResponseEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
@@ -34,7 +33,7 @@ export class PollRouter {
     answerId: number,
     query: GetAnswerVotersQueryEntity = {},
   ): Promise<HttpResponse<PollVotersResponseEntity>> {
-    const result = GetAnswerVotersQuerySchema.safeParse(query);
+    const result = GetAnswerVotersQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(
         result.error.errors

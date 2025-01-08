@@ -2,8 +2,8 @@ import {
   ApplicationEventWebhookStatus,
   ApplicationFlags,
   ApplicationIntegrationType,
-  ApplicationIntegrationTypeConfigurationSchema,
-  InstallParamsSchema,
+  ApplicationIntegrationTypeConfigurationEntity,
+  InstallParamsEntity,
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
@@ -37,23 +37,23 @@ export interface ActivityInstanceEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
  */
-export const EditCurrentApplicationSchema = z
+export const EditCurrentApplicationEntity = z
   .object({
     custom_install_url: z.string().url().optional(),
     description: z.string().optional(),
     role_connections_verification_url: z.string().url().optional(),
-    install_params: InstallParamsSchema.optional(),
+    install_params: InstallParamsEntity.optional(),
     integration_types_config: z
       .record(
         z.nativeEnum(ApplicationIntegrationType),
-        ApplicationIntegrationTypeConfigurationSchema,
+        ApplicationIntegrationTypeConfigurationEntity,
       )
       .optional(),
     flags: z
       .union([
-        z.literal(ApplicationFlags.gatewayPresenceLimited),
-        z.literal(ApplicationFlags.gatewayGuildMembersLimited),
-        z.literal(ApplicationFlags.gatewayMessageContentLimited),
+        z.literal(ApplicationFlags.GatewayPresenceLimited),
+        z.literal(ApplicationFlags.GatewayGuildMembersLimited),
+        z.literal(ApplicationFlags.GatewayMessageContentLimited),
       ])
       .optional(),
     icon: z
@@ -69,8 +69,8 @@ export const EditCurrentApplicationSchema = z
     event_webhooks_url: z.string().url().optional(),
     event_webhooks_status: z
       .union([
-        z.literal(ApplicationEventWebhookStatus.disabled),
-        z.literal(ApplicationEventWebhookStatus.enabled),
+        z.literal(ApplicationEventWebhookStatus.Disabled),
+        z.literal(ApplicationEventWebhookStatus.Enabled),
       ])
       .optional(),
     event_webhooks_types: z.array(z.string()).optional(),
@@ -78,5 +78,5 @@ export const EditCurrentApplicationSchema = z
   .strict();
 
 export type EditCurrentApplicationEntity = z.infer<
-  typeof EditCurrentApplicationSchema
+  typeof EditCurrentApplicationEntity
 >;

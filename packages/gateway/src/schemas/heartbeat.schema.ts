@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const HeartbeatMetricsSchema = z
+export const HeartbeatMetrics = z
   .object({
     latency: z.number().nonnegative(),
     lastAck: z.number().nonnegative(),
@@ -13,9 +13,9 @@ export const HeartbeatMetricsSchema = z
   })
   .strict();
 
-export type HeartbeatMetrics = z.infer<typeof HeartbeatMetricsSchema>;
+export type HeartbeatMetrics = z.infer<typeof HeartbeatMetrics>;
 
-export const HeartbeatOptionsSchema = z
+export const HeartbeatOptions = z
   .object({
     initialInterval: z.number().nonnegative().default(0),
     useJitter: z.boolean().default(true),
@@ -39,4 +39,4 @@ export const HeartbeatOptionsSchema = z
     path: ["maxJitter"],
   });
 
-export type HeartbeatOptions = z.infer<typeof HeartbeatOptionsSchema>;
+export type HeartbeatOptions = z.infer<typeof HeartbeatOptions>;

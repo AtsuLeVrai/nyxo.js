@@ -1,47 +1,41 @@
 import { z } from "zod";
-import { LocaleKeySchema, OAuth2Scope } from "../enums/index.js";
-import { SnowflakeSchema } from "../managers/index.js";
+import { LocaleKey, OAuth2Scope } from "../enums/index.js";
+import { Snowflake } from "../managers/index.js";
 import {
-  GuildStageVoiceChannelSchema,
-  GuildVoiceChannelSchema,
+  GuildStageVoiceChannelEntity,
+  GuildVoiceChannelEntity,
 } from "./channel.entity.js";
-import { EmojiSchema } from "./emoji.entity.js";
-import { RoleSchema } from "./role.entity.js";
-import { StickerSchema } from "./sticker.entity.js";
-import { AvatarDecorationDataSchema, UserSchema } from "./user.entity.js";
+import { EmojiEntity } from "./emoji.entity.js";
+import { RoleEntity } from "./role.entity.js";
+import { StickerEntity } from "./sticker.entity.js";
+import { AvatarDecorationDataEntity, UserEntity } from "./user.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types}
  */
-export const GuildOnboardingPromptType = {
-  multipleChoice: 0,
-  dropdown: 1,
-} as const;
-
-export type GuildOnboardingPromptType =
-  (typeof GuildOnboardingPromptType)[keyof typeof GuildOnboardingPromptType];
+export enum GuildOnboardingPromptType {
+  MultipleChoice = 0,
+  Dropdown = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-mode}
  */
-export const GuildOnboardingMode = {
-  default: 0,
-  advanced: 1,
-} as const;
-
-export type GuildOnboardingMode =
-  (typeof GuildOnboardingMode)[keyof typeof GuildOnboardingMode];
+export enum GuildOnboardingMode {
+  Default = 0,
+  Advanced = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure}
  */
-export const GuildOnboardingPromptOptionSchema = z
+export const GuildOnboardingPromptOptionEntity = z
   .object({
-    id: SnowflakeSchema,
-    channel_ids: z.array(SnowflakeSchema),
-    role_ids: z.array(SnowflakeSchema),
-    emoji: z.lazy(() => EmojiSchema).optional(),
-    emoji_id: SnowflakeSchema.optional(),
+    id: Snowflake,
+    channel_ids: z.array(Snowflake),
+    role_ids: z.array(Snowflake),
+    emoji: z.lazy(() => EmojiEntity).optional(),
+    emoji_id: Snowflake.optional(),
     emoji_name: z.string().optional(),
     emoji_animated: z.boolean().optional(),
     title: z.string(),
@@ -50,17 +44,17 @@ export const GuildOnboardingPromptOptionSchema = z
   .strict();
 
 export type GuildOnboardingPromptOptionEntity = z.infer<
-  typeof GuildOnboardingPromptOptionSchema
+  typeof GuildOnboardingPromptOptionEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure}
  */
-export const GuildOnboardingPromptSchema = z
+export const GuildOnboardingPromptEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     type: z.nativeEnum(GuildOnboardingPromptType),
-    options: z.array(GuildOnboardingPromptOptionSchema),
+    options: z.array(GuildOnboardingPromptOptionEntity),
     title: z.string(),
     single_select: z.boolean(),
     required: z.boolean(),
@@ -69,110 +63,107 @@ export const GuildOnboardingPromptSchema = z
   .strict();
 
 export type GuildOnboardingPromptEntity = z.infer<
-  typeof GuildOnboardingPromptSchema
+  typeof GuildOnboardingPromptEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-guild-onboarding-structure}
  */
-export const GuildOnboardingSchema = z
+export const GuildOnboardingEntity = z
   .object({
-    guild_id: SnowflakeSchema,
-    prompts: z.array(GuildOnboardingPromptSchema),
-    default_channel_ids: z.array(SnowflakeSchema),
+    guild_id: Snowflake,
+    prompts: z.array(GuildOnboardingPromptEntity),
+    default_channel_ids: z.array(Snowflake),
     enabled: z.boolean(),
     mode: z.nativeEnum(GuildOnboardingMode),
   })
   .strict();
 
-export type GuildOnboardingEntity = z.infer<typeof GuildOnboardingSchema>;
+export type GuildOnboardingEntity = z.infer<typeof GuildOnboardingEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-channel-structure}
  */
-export const WelcomeScreenChannelSchema = z
+export const WelcomeScreenChannelEntity = z
   .object({
-    channel_id: SnowflakeSchema,
+    channel_id: Snowflake,
     description: z.string(),
-    emoji_id: SnowflakeSchema.nullable(),
+    emoji_id: Snowflake.nullable(),
     emoji_name: z.string().nullable(),
   })
   .strict();
 
 export type WelcomeScreenChannelEntity = z.infer<
-  typeof WelcomeScreenChannelSchema
+  typeof WelcomeScreenChannelEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-structure}
  */
-export const WelcomeScreenSchema = z
+export const WelcomeScreenEntity = z
   .object({
     description: z.string().nullable(),
-    welcome_channels: z.array(WelcomeScreenChannelSchema),
+    welcome_channels: z.array(WelcomeScreenChannelEntity),
   })
   .strict();
 
-export type WelcomeScreenEntity = z.infer<typeof WelcomeScreenSchema>;
+export type WelcomeScreenEntity = z.infer<typeof WelcomeScreenEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#ban-object-ban-structure}
  */
-export const BanSchema = z
+export const BanEntity = z
   .object({
     reason: z.string().nullable(),
-    user: z.lazy(() => UserSchema),
+    user: z.lazy(() => UserEntity),
   })
   .strict();
 
-export type BanEntity = z.infer<typeof BanSchema>;
+export type BanEntity = z.infer<typeof BanEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-application-object-integration-application-structure}
  */
-export const IntegrationApplicationSchema = z
+export const IntegrationApplicationEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     name: z.string(),
     icon: z.string().nullable(),
     description: z.string(),
-    bot: z.lazy(() => UserSchema).optional(),
+    bot: z.lazy(() => UserEntity).optional(),
   })
   .strict();
 
 export type IntegrationApplicationEntity = z.infer<
-  typeof IntegrationApplicationSchema
+  typeof IntegrationApplicationEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-account-object-integration-account-structure}
  */
-export const IntegrationAccountSchema = z
+export const IntegrationAccountEntity = z
   .object({
     id: z.string(),
     name: z.string(),
   })
   .strict();
 
-export type IntegrationAccountEntity = z.infer<typeof IntegrationAccountSchema>;
+export type IntegrationAccountEntity = z.infer<typeof IntegrationAccountEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors}
  */
-export const IntegrationExpirationBehavior = {
-  removeRole: 0,
-  kick: 1,
-} as const;
-
-export type IntegrationExpirationBehavior =
-  (typeof IntegrationExpirationBehavior)[keyof typeof IntegrationExpirationBehavior];
+export enum IntegrationExpirationBehavior {
+  RemoveRole = 0,
+  Kick = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure}
  */
-export const IntegrationSchema = z
+export const IntegrationEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     name: z.string(),
     type: z.union([
       z.literal("twitch"),
@@ -182,50 +173,47 @@ export const IntegrationSchema = z
     ]),
     enabled: z.boolean(),
     syncing: z.boolean().optional(),
-    role_id: SnowflakeSchema.optional(),
+    role_id: Snowflake.optional(),
     enable_emoticons: z.boolean().optional(),
     expire_behavior: z.nativeEnum(IntegrationExpirationBehavior).optional(),
     expire_grace_period: z.number().int().optional(),
-    user: z.lazy(() => UserSchema).optional(),
-    account: IntegrationAccountSchema,
+    user: z.lazy(() => UserEntity).optional(),
+    account: IntegrationAccountEntity,
     synced_at: z.string().datetime().optional(),
     subscriber_count: z.number().int().optional(),
     revoked: z.boolean().optional(),
-    application: IntegrationApplicationSchema.optional(),
+    application: IntegrationApplicationEntity.optional(),
     scopes: z.nativeEnum(OAuth2Scope).optional(),
   })
   .strict();
 
-export type IntegrationEntity = z.infer<typeof IntegrationSchema>;
+export type IntegrationEntity = z.infer<typeof IntegrationEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags}
  */
-export const GuildMemberFlags = {
-  didRejoin: 1 << 0,
-  completedOnboarding: 1 << 1,
-  bypassesVerification: 1 << 2,
-  startedOnboarding: 1 << 3,
-  isGuest: 1 << 4,
-  startedHomeActions: 1 << 5,
-  completedHomeActions: 1 << 6,
-  autoModQuarantinedUsername: 1 << 7,
-  dmSettingsUpsellAcknowledged: 1 << 9,
-} as const;
-
-export type GuildMemberFlags =
-  (typeof GuildMemberFlags)[keyof typeof GuildMemberFlags];
+export enum GuildMemberFlags {
+  DidRejoin = 1 << 0,
+  CompletedOnboarding = 1 << 1,
+  BypassesVerification = 1 << 2,
+  StartedOnboarding = 1 << 3,
+  IsGuest = 1 << 4,
+  StartedHomeActions = 1 << 5,
+  CompletedHomeActions = 1 << 6,
+  AutoModQuarantinedUsername = 1 << 7,
+  DmSettingsUpsellAcknowledged = 1 << 9,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-structure}
  */
-export const GuildMemberSchema = z
+export const GuildMemberEntity = z
   .object({
-    user: z.lazy(() => UserSchema),
+    user: z.lazy(() => UserEntity),
     nick: z.string().nullish(),
     avatar: z.string().nullish(),
     banner: z.string().nullish(),
-    roles: z.array(SnowflakeSchema),
+    roles: z.array(Snowflake),
     joined_at: z.string().datetime(),
     premium_since: z.string().datetime().nullish(),
     deaf: z.boolean(),
@@ -234,221 +222,200 @@ export const GuildMemberSchema = z
     pending: z.boolean().optional(),
     permissions: z.string().optional(),
     communication_disabled_until: z.string().datetime().nullish(),
-    avatar_decoration_data: z.lazy(() => AvatarDecorationDataSchema).nullish(),
+    avatar_decoration_data: z.lazy(() => AvatarDecorationDataEntity).nullish(),
   })
   .strict();
 
-export type GuildMemberEntity = z.infer<typeof GuildMemberSchema>;
+export type GuildMemberEntity = z.infer<typeof GuildMemberEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-settings-object-guild-widget-settings-structure}
  */
-export const GuildWidgetSettingsSchema = z
+export const GuildWidgetSettingsEntity = z
   .object({
     enabled: z.boolean(),
-    channel_id: SnowflakeSchema.nullable(),
+    channel_id: Snowflake.nullable(),
   })
   .strict();
 
 export type GuildWidgetSettingsEntity = z.infer<
-  typeof GuildWidgetSettingsSchema
+  typeof GuildWidgetSettingsEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure}
  */
-export const GuildWidgetSchema = z
+export const GuildWidgetEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     name: z.string(),
     instant_invite: z.string().nullable(),
     channels: z.array(
       z.union([
-        z.lazy(() => GuildVoiceChannelSchema.partial()),
-        z.lazy(() => GuildStageVoiceChannelSchema.partial()),
+        z.lazy(() => GuildVoiceChannelEntity.partial()),
+        z.lazy(() => GuildStageVoiceChannelEntity.partial()),
       ]),
     ),
-    members: z.array(z.lazy(() => UserSchema)),
+    members: z.array(z.lazy(() => UserEntity)),
     presence_count: z.number().int(),
   })
   .strict();
 
-export type GuildWidgetEntity = z.infer<typeof GuildWidgetSchema>;
+export type GuildWidgetEntity = z.infer<typeof GuildWidgetEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
  */
-export const GuildFeature = {
-  animatedBanner: "ANIMATED_BANNER",
-  animatedIcon: "ANIMATED_ICON",
-  applicationCommandPermissionsV2: "APPLICATION_COMMAND_PERMISSIONS_V2",
-  autoModeration: "AUTO_MODERATION",
-  banner: "BANNER",
-  community: "COMMUNITY",
-  creatorMonetizableProvisional: "CREATOR_MONETIZABLE_PROVISIONAL",
-  creatorStorePage: "CREATOR_STORE_PAGE",
-  developerSupportServer: "DEVELOPER_SUPPORT_SERVER",
-  discoverable: "DISCOVERABLE",
-  featurable: "FEATURABLE",
-  invitesDisabled: "INVITES_DISABLED",
-  inviteSplash: "INVITE_SPLASH",
-  memberVerificationGateEnabled: "MEMBER_VERIFICATION_GATE_ENABLED",
-  moreSoundboard: "MORE_SOUNDBOARD",
-  moreStickers: "MORE_STICKERS",
-  news: "NEWS",
-  partnered: "PARTNERED",
-  previewEnabled: "PREVIEW_ENABLED",
-  raidAlertsDisabled: "RAID_ALERTS_DISABLED",
-  roleIcons: "ROLE_ICONS",
-  roleSubscriptionsAvailableForPurchase:
-    "ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE",
-  roleSubscriptionsEnabled: "ROLE_SUBSCRIPTIONS_ENABLED",
-  soundboard: "SOUNDBOARD",
-  ticketedEventsEnabled: "TICKETED_EVENTS_ENABLED",
-  vanityUrl: "VANITY_URL",
-  verified: "VERIFIED",
-  vipRegions: "VIP_REGIONS",
-  welcomeScreenEnabled: "WELCOME_SCREEN_ENABLED",
-} as const;
-
-export type GuildFeature = (typeof GuildFeature)[keyof typeof GuildFeature];
+export enum GuildFeature {
+  AnimatedBanner = "ANIMATED_BANNER",
+  AnimatedIcon = "ANIMATED_ICON",
+  ApplicationCommandPermissionsV2 = "APPLICATION_COMMAND_PERMISSIONS_V2",
+  AutoModeration = "AUTO_MODERATION",
+  Banner = "BANNER",
+  Community = "COMMUNITY",
+  CreatorMonetizableProvisional = "CREATOR_MONETIZABLE_PROVISIONAL",
+  CreatorStorePage = "CREATOR_STORE_PAGE",
+  DeveloperSupportServer = "DEVELOPER_SUPPORT_SERVER",
+  Discoverable = "DISCOVERABLE",
+  Featurable = "FEATURABLE",
+  InvitesDisabled = "INVITES_DISABLED",
+  InviteSplash = "INVITE_SPLASH",
+  MemberVerificationGateEnabled = "MEMBER_VERIFICATION_GATE_ENABLED",
+  MoreSoundboard = "MORE_SOUNDBOARD",
+  MoreStickers = "MORE_STICKERS",
+  News = "NEWS",
+  Partnered = "PARTNERED",
+  PreviewEnabled = "PREVIEW_ENABLED",
+  RaidAlertsDisabled = "RAID_ALERTS_DISABLED",
+  RoleIcons = "ROLE_ICONS",
+  RoleSubscriptionsAvailableForPurchase = "ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE",
+  RoleSubscriptionsEnabled = "ROLE_SUBSCRIPTIONS_ENABLED",
+  Soundboard = "SOUNDBOARD",
+  TicketedEventsEnabled = "TICKETED_EVENTS_ENABLED",
+  VanityUrl = "VANITY_URL",
+  Verified = "VERIFIED",
+  VipRegions = "VIP_REGIONS",
+  WelcomeScreenEnabled = "WELCOME_SCREEN_ENABLED",
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-preview-object-guild-preview-structure}
  */
-export const GuildPreviewSchema = z
+export const GuildPreviewEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     name: z.string(),
     icon: z.string().nullable(),
     splash: z.string().nullable(),
     discovery_splash: z.string().nullable(),
-    emojis: z.array(z.lazy(() => EmojiSchema)),
+    emojis: z.array(z.lazy(() => EmojiEntity)),
     features: z.array(z.nativeEnum(GuildFeature)),
     approximate_member_count: z.number().int(),
     approximate_presence_count: z.number().int(),
     description: z.string().nullable(),
-    stickers: z.array(z.lazy(() => StickerSchema)),
+    stickers: z.array(z.lazy(() => StickerEntity)),
   })
   .strict();
 
-export type GuildPreviewEntity = z.infer<typeof GuildPreviewSchema>;
+export type GuildPreviewEntity = z.infer<typeof GuildPreviewEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object}
  */
-export const UnavailableGuildSchema = z
+export const UnavailableGuildEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     unavailable: z.literal(true),
   })
   .strict();
 
-export type UnavailableGuildEntity = z.infer<typeof UnavailableGuildSchema>;
+export type UnavailableGuildEntity = z.infer<typeof UnavailableGuildEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags}
  */
-export const SystemChannelFlags = {
-  suppressJoinNotifications: 1 << 0,
-  suppressPremiumSubscriptions: 1 << 1,
-  suppressGuildReminderNotifications: 1 << 2,
-  suppressJoinNotificationReplies: 1 << 3,
-  suppressRoleSubscriptionPurchaseNotifications: 1 << 4,
-  suppressRoleSubscriptionPurchaseNotificationReplies: 1 << 5,
-} as const;
-
-export type SystemChannelFlags =
-  (typeof SystemChannelFlags)[keyof typeof SystemChannelFlags];
+export enum SystemChannelFlags {
+  SuppressJoinNotifications = 1 << 0,
+  SuppressPremiumSubscriptions = 1 << 1,
+  SuppressGuildReminderNotifications = 1 << 2,
+  SuppressJoinNotificationReplies = 1 << 3,
+  SuppressRoleSubscriptionPurchaseNotifications = 1 << 4,
+  SuppressRoleSubscriptionPurchaseNotificationReplies = 1 << 5,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-premium-tier}
  */
-export const PremiumTier = {
-  none: 0,
-  tier1: 1,
-  tier2: 2,
-  tier3: 3,
-} as const;
-
-export type PremiumTier = (typeof PremiumTier)[keyof typeof PremiumTier];
+export enum PremiumTier {
+  None = 0,
+  Tier1 = 1,
+  Tier2 = 2,
+  Tier3 = 3,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-nsfw-level}
  */
-export const NsfwLevel = {
-  default: 0,
-  explicit: 1,
-  safe: 2,
-  ageRestricted: 3,
-} as const;
-
-export type NsfwLevel = (typeof NsfwLevel)[keyof typeof NsfwLevel];
+export enum NsfwLevel {
+  Default = 0,
+  Explicit = 1,
+  Safe = 2,
+  AgeRestricted = 3,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-verification-level}
  */
-export const VerificationLevel = {
-  none: 0,
-  low: 1,
-  medium: 2,
-  high: 3,
-  veryHigh: 4,
-} as const;
-
-export type VerificationLevel =
-  (typeof VerificationLevel)[keyof typeof VerificationLevel];
+export enum VerificationLevel {
+  None = 0,
+  Low = 1,
+  Medium = 2,
+  High = 3,
+  VeryHigh = 4,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mfa-level}
  */
-export const MfaLevel = {
-  none: 0,
-  elevated: 1,
-} as const;
-
-export type MfaLevel = (typeof MfaLevel)[keyof typeof MfaLevel];
+export enum MfaLevel {
+  None = 0,
+  Elevated = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level}
  */
-export const ExplicitContentFilterLevel = {
-  disabled: 0,
-  membersWithoutRoles: 1,
-  allMembers: 2,
-} as const;
-
-export type ExplicitContentFilterLevel =
-  (typeof ExplicitContentFilterLevel)[keyof typeof ExplicitContentFilterLevel];
+export enum ExplicitContentFilterLevel {
+  Disabled = 0,
+  MembersWithoutRoles = 1,
+  AllMembers = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level}
  */
-export const DefaultMessageNotificationLevel = {
-  allMessages: 0,
-  onlyMentions: 1,
-} as const;
-
-export type DefaultMessageNotificationLevel =
-  (typeof DefaultMessageNotificationLevel)[keyof typeof DefaultMessageNotificationLevel];
+export enum DefaultMessageNotificationLevel {
+  AllMessages = 0,
+  OnlyMentions = 1,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-structure}
  */
-export const GuildSchema = z
+export const GuildEntity = z
   .object({
-    id: SnowflakeSchema,
+    id: Snowflake,
     name: z.string(),
     icon: z.string().nullable(),
     icon_hash: z.string().nullish(),
     splash: z.string().nullable(),
     discovery_splash: z.string().nullable(),
     owner: z.boolean().optional(),
-    owner_id: SnowflakeSchema,
+    owner_id: Snowflake,
     permissions: z.string().optional(),
     /** @deprecated Voice region id for the guild (deprecated) */
     region: z.string().nullish(),
-    afk_channel_id: SnowflakeSchema.nullable(),
+    afk_channel_id: Snowflake.nullable(),
     afk_timeout: z.number().int(),
     widget_enabled: z.boolean().optional(),
     widget_channel_id: z.string().nullish(),
@@ -457,14 +424,14 @@ export const GuildSchema = z
       DefaultMessageNotificationLevel,
     ),
     explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel),
-    roles: z.array(RoleSchema),
-    emojis: z.array(z.lazy(() => EmojiSchema)),
+    roles: z.array(RoleEntity),
+    emojis: z.array(z.lazy(() => EmojiEntity)),
     features: z.array(z.nativeEnum(GuildFeature)),
     mfa_level: z.nativeEnum(MfaLevel),
-    application_id: SnowflakeSchema.optional(),
-    system_channel_id: SnowflakeSchema.nullable(),
+    application_id: Snowflake.optional(),
+    system_channel_id: Snowflake.nullable(),
     system_channel_flags: z.nativeEnum(SystemChannelFlags),
-    rules_channel_id: SnowflakeSchema.nullable(),
+    rules_channel_id: Snowflake.nullable(),
     max_presences: z.number().int().nullish(),
     max_members: z.number().int(),
     vanity_url_code: z.string().nullable(),
@@ -472,18 +439,18 @@ export const GuildSchema = z
     banner: z.string().nullable(),
     premium_tier: z.nativeEnum(PremiumTier),
     premium_subscription_count: z.number().int().optional(),
-    preferred_locale: LocaleKeySchema,
-    public_updates_channel_id: SnowflakeSchema.nullable(),
+    preferred_locale: LocaleKey,
+    public_updates_channel_id: Snowflake.nullable(),
     max_video_channel_users: z.number().int().optional(),
     max_stage_video_channel_users: z.number().int().optional(),
     approximate_member_count: z.number().int().optional(),
     approximate_presence_count: z.number().int().optional(),
-    welcome_screen: WelcomeScreenSchema.optional(),
+    welcome_screen: WelcomeScreenEntity.optional(),
     nsfw_level: z.nativeEnum(NsfwLevel),
-    stickers: z.array(z.lazy(() => StickerSchema)).optional(),
+    stickers: z.array(z.lazy(() => StickerEntity)).optional(),
     premium_progress_bar_enabled: z.boolean(),
-    safety_alerts_channel_id: SnowflakeSchema.nullable(),
+    safety_alerts_channel_id: Snowflake.nullable(),
   })
   .strict();
 
-export type GuildEntity = z.infer<typeof GuildSchema>;
+export type GuildEntity = z.infer<typeof GuildEntity>;

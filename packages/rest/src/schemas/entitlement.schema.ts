@@ -1,41 +1,38 @@
-import { SnowflakeSchema } from "@nyxjs/core";
+import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
  */
-export const ListEntitlementsQuerySchema = z
+export const ListEntitlementQueryEntity = z
   .object({
-    user_id: SnowflakeSchema.optional(),
+    user_id: Snowflake.optional(),
     sku_ids: z.string().optional(),
-    before: SnowflakeSchema.optional(),
-    after: SnowflakeSchema.optional(),
+    before: Snowflake.optional(),
+    after: Snowflake.optional(),
     limit: z.number().int().min(1).max(100).default(100).optional(),
-    guild_id: SnowflakeSchema.optional(),
+    guild_id: Snowflake.optional(),
     exclude_ended: z.boolean().default(false).optional(),
     exclude_deleted: z.boolean().default(true).optional(),
   })
   .strict();
 
 export type ListEntitlementQueryEntity = z.infer<
-  typeof ListEntitlementsQuerySchema
+  typeof ListEntitlementQueryEntity
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
  */
-export const EntitlementOwnerType = {
-  guild: 1,
-  user: 2,
-} as const;
-
-export type EntitlementOwnerType =
-  (typeof EntitlementOwnerType)[keyof typeof EntitlementOwnerType];
+export enum EntitlementOwnerType {
+  Guild = 1,
+  User = 2,
+}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
  */
-export const CreateTestEntitlementSchema = z
+export const CreateTestEntitlementEntity = z
   .object({
     sku_id: z.string(),
     owner_id: z.string(),
@@ -44,5 +41,5 @@ export const CreateTestEntitlementSchema = z
   .strict();
 
 export type CreateTestEntitlementEntity = z.infer<
-  typeof CreateTestEntitlementSchema
+  typeof CreateTestEntitlementEntity
 >;

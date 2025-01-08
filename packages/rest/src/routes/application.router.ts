@@ -2,8 +2,7 @@ import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
 import type { Rest } from "../rest.js";
 import {
   type ActivityInstanceEntity,
-  type EditCurrentApplicationEntity,
-  EditCurrentApplicationSchema,
+  EditCurrentApplicationEntity,
 } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -33,7 +32,7 @@ export class ApplicationRouter {
   editCurrentApplication(
     options: EditCurrentApplicationEntity,
   ): Promise<HttpResponse<ApplicationEntity>> {
-    const result = EditCurrentApplicationSchema.safeParse(options);
+    const result = EditCurrentApplicationEntity.safeParse(options);
     if (!result.success) {
       throw new Error(
         result.error.errors
