@@ -1,8 +1,8 @@
 import { EventEmitter } from "eventemitter3";
-import { GatewayOpcodes } from "../constants/index.js";
 import type { Gateway } from "../gateway.js";
-import { HeartbeatMetrics, HeartbeatOptions } from "../schemas/index.js";
+import { HeartbeatOptions } from "../schemas/index.js";
 import type { GatewayEvents } from "../types/index.js";
+import { GatewayOpcodes } from "../types/index.js";
 
 export class HeartbeatService extends EventEmitter<GatewayEvents> {
   #latency = 0;
@@ -11,7 +11,6 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
   #missedHeartbeats = 0;
   #sequence = 0;
   #totalBeats = 0;
-  #startTime = Date.now();
   #latencyHistory: number[] = [];
   #intervalMs = 0;
   #isAcked = true;
@@ -26,23 +25,24 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     this.#options = HeartbeatOptions.parse(options);
   }
 
-  get metrics(): HeartbeatMetrics {
-    const metrics = {
-      latency: this.#latency,
-      lastAck: this.#lastAck,
-      lastSend: this.#lastSend,
-      sequence: this.#sequence,
-      missedHeartbeats: this.#missedHeartbeats,
-      totalBeats: this.#totalBeats,
-      uptime: Date.now() - this.#startTime,
-      averageLatency: this.#calculateAverageLatency(),
-    };
-
-    return HeartbeatMetrics.parse(metrics);
-  }
-
   get isRunning(): boolean {
     return this.#interval !== null;
+  }
+
+  get latency(): number {
+    return this.#latency;
+  }
+
+  get lastAck(): number {
+    return this.#lastAck;
+  }
+
+  get sequence(): number {
+    return this.#sequence;
+  }
+
+  get missedHeartbeats(): number {
+    return this.#missedHeartbeats;
   }
 
   get currentOptions(): Readonly<Required<HeartbeatOptions>> {
@@ -54,7 +54,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       throw new Error("Cannot start heartbeat with invalid interval");
     }
 
-    this.stop();
+    this.destroy();
     this.#intervalMs = interval;
 
     if (this.#options.useJitter) {
@@ -72,7 +72,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     }
   }
 
-  stop(): void {
+  destroy(): void {
     if (this.#interval) {
       clearInterval(this.#interval);
       this.#interval = null;
@@ -82,11 +82,16 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
         "[Gateway:Heartbeat] Stopped - Connection maintenance halted",
       );
     }
-  }
 
-  destroy(): void {
-    this.stop();
-    this.#resetMetrics();
+    this.#latency = 0;
+    this.#lastAck = 0;
+    this.#lastSend = 0;
+    this.#missedHeartbeats = 0;
+    this.#sequence = 0;
+    this.#totalBeats = 0;
+    this.#isAcked = true;
+    this.#intervalMs = 0;
+    this.#latencyHistory = [];
 
     this.emit("debug", "[Gateway:Heartbeat] Destroyed - All metrics reset");
   }
@@ -110,16 +115,12 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     this.#lastAck = now;
     this.#missedHeartbeats = 0;
 
-    if (this.#options.monitorLatency) {
-      this.#updateLatency(now);
-    }
+    this.#updateLatency(now);
 
-    if (this.#options.logMetrics) {
-      this.emit(
-        "debug",
-        `[Gateway:Heartbeat] Acknowledged - Latency: ${this.#latency}ms, Sequence: ${this.#sequence}`,
-      );
-    }
+    this.emit(
+      "debug",
+      `[Gateway:Heartbeat] Acknowledged - Latency: ${this.#latency}ms, Sequence: ${this.#sequence}`,
+    );
   }
 
   sendHeartbeat(): void {
@@ -179,31 +180,10 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     }
   }
 
-  #calculateAverageLatency(): number {
-    if (this.#latencyHistory.length === 0) {
-      return 0;
-    }
-    const sum = this.#latencyHistory.reduce((acc, val) => acc + val, 0);
-    return Math.round(sum / this.#latencyHistory.length);
-  }
-
   #calculateJitter(): number {
     return (
       this.#options.minJitter +
       Math.random() * (this.#options.maxJitter - this.#options.minJitter)
     );
-  }
-
-  #resetMetrics(): void {
-    this.#latency = 0;
-    this.#lastAck = 0;
-    this.#lastSend = 0;
-    this.#missedHeartbeats = 0;
-    this.#sequence = 0;
-    this.#totalBeats = 0;
-    this.#isAcked = true;
-    this.#intervalMs = 0;
-    this.#latencyHistory = [];
-    this.#startTime = Date.now();
   }
 }

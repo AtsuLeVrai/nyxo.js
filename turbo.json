@@ -16,13 +16,18 @@
       "env": ["NODE_ENV"],
       "cache": true
     },
-    "dev": {
-      "dependsOn": ["^build"],
+    "build:watch": {
+      "dependsOn": ["^build:watch"],
+      "outputs": ["dist/**"],
+      "env": ["NODE_ENV"],
       "cache": false,
       "persistent": true
     },
-    "clean": {
-      "cache": false
+    "build:prod": {
+      "dependsOn": ["^build:prod"],
+      "outputs": ["dist/**"],
+      "env": ["NODE_ENV"],
+      "cache": true
     },
     "format": {
       "outputs": [],

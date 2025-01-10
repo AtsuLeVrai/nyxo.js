@@ -1,8 +1,7 @@
 import { ApiVersion } from "@nyxjs/core";
-import WebSocket from "ws";
 import { z } from "zod";
-import { GatewayIntentsBits, GatewayOpcodes } from "../constants/index.js";
 import { UpdatePresenceEntity } from "../events/index.js";
+import { GatewayIntentsBits, GatewayOpcodes } from "../types/index.js";
 import { CompressionOptions } from "./compression.schema.js";
 import { EncodingOptions } from "./encoding.schema.js";
 import { HeartbeatOptions } from "./heartbeat.schema.js";
@@ -22,34 +21,12 @@ export const PayloadEntity = z
 
 export type PayloadEntity = z.infer<typeof PayloadEntity>;
 
-export const GatewayStats = z
-  .object({
-    ping: z.number().nonnegative(),
-    lastHeartbeat: z.number().nullable(),
-    sessionId: z.string().nullable(),
-    sequence: z.number().nonnegative(),
-    reconnectAttempts: z.number().nonnegative(),
-    uptime: z.number().nonnegative(),
-    readyState: z.union([
-      z.literal(WebSocket.CONNECTING),
-      z.literal(WebSocket.OPEN),
-      z.literal(WebSocket.CLOSING),
-      z.literal(WebSocket.CLOSED),
-    ]),
-    receivedPayloads: z.number().nonnegative(),
-    sentPayloads: z.number().nonnegative(),
-    missedHeartbeats: z.number().nonnegative(),
-  })
-  .strict();
-
-export type GatewayStats = z.infer<typeof GatewayStats>;
-
 export const GatewayOptions = z
   .object({
-    token: z.string().min(1),
+    token: z.string(),
     intents: z.union([
       z.array(z.nativeEnum(GatewayIntentsBits)),
-      z.number().positive(),
+      z.number().int(),
     ]),
     version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
     presence: UpdatePresenceEntity.optional(),
@@ -58,11 +35,7 @@ export const GatewayOptions = z
     heartbeat: HeartbeatOptions.optional(),
     shard: ShardOptions.optional(),
     largeThreshold: z.number().int().min(50).max(250).default(50),
-    monitorStats: z.boolean().default(true),
-    validatePayloads: z.boolean().default(true),
     maxReconnectAttempts: z.number().int().positive().default(5),
-    reconnectDelay: z.number().int().positive().default(5000),
-    autoReconnect: z.boolean().default(true),
   })
   .strict()
   .refine(

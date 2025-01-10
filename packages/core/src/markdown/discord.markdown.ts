@@ -212,18 +212,15 @@ export function formatCustomEmoji(
 /**
  * @see {@link https://discord.com/developers/docs/reference#message-formatting-timestamp-styles}
  */
-export const TimestampStyle = {
-  shortTime: "t",
-  longTime: "T",
-  shortDate: "d",
-  longDate: "D",
-  shortDateTime: "f",
-  longDateTime: "F",
-  relativeTime: "R",
-} as const;
-
-export type TimestampStyle =
-  (typeof TimestampStyle)[keyof typeof TimestampStyle];
+export enum TimestampStyle {
+  ShortTime = "t",
+  LongTime = "T",
+  ShortDate = "d",
+  LongDate = "D",
+  ShortDateTime = "f",
+  LongDateTime = "F",
+  RelativeTime = "R",
+}
 
 export type FormattedTimestamp =
   | `<t:${number}>`

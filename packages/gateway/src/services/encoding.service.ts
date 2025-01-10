@@ -42,7 +42,12 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
     const size = Buffer.isBuffer(result)
       ? result.length
       : Buffer.byteLength(result);
-    this.#validatePayloadSize(size);
+
+    if (size > this.#options.maxPayloadSize) {
+      throw new Error(
+        `Payload size ${size} bytes exceeds maximum ${this.#options.maxPayloadSize} bytes`,
+      );
+    }
 
     this.emit(
       "debug",
@@ -109,14 +114,6 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
     }
 
     return payload;
-  }
-
-  #validatePayloadSize(size: number): void {
-    if (size > this.#options.maxPayloadSize) {
-      throw new Error(
-        `Payload size ${size} bytes exceeds maximum ${this.#options.maxPayloadSize} bytes`,
-      );
-    }
   }
 
   #processData(data: unknown, options: ProcessOptions = {}): unknown {

@@ -14,7 +14,6 @@ import type {
   UserEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import { GatewayOpcodes } from "../constants/index.js";
 import type {
   AutoModerationActionExecutionEntity,
   ChannelPinsUpdateEntity,
@@ -68,7 +67,7 @@ import type {
   VoiceServerUpdateEntity,
   WebhookUpdateEntity,
 } from "../events/index.js";
-import type { ShardStats } from "../schemas/index.js";
+import { GatewayOpcodes } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
@@ -175,7 +174,6 @@ export interface GatewayEvents {
   shardDisconnect: (shardId: number) => void;
   shardReconnect: (shardId: number) => void;
   shardResume: (shardId: number) => void;
-  statsUpdate: (stats: ShardStats) => void;
   connecting: (attempt: number) => void;
   connected: () => void;
   reconnecting: (attempt: number) => void;

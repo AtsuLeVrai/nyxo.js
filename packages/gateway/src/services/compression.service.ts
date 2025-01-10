@@ -18,7 +18,7 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
   }
 
   get compressionType(): CompressionType | undefined {
-    return this.#options.compressionType;
+    return this.#options.type;
   }
 
   get isInitialized(): boolean {
@@ -38,11 +38,11 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
   }
 
   get isZlib(): boolean {
-    return this.#options.compressionType === "zlib-stream";
+    return this.#options.type === "zlib-stream";
   }
 
   get isZstd(): boolean {
-    return this.#options.compressionType === "zstd-stream";
+    return this.#options.type === "zstd-stream";
   }
 
   get currentOptions(): Readonly<CompressionOptions> {
@@ -90,9 +90,28 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
     }
 
     const buffer = Buffer.from(data);
-    return this.isZlib
+    const decompressed = this.isZlib
       ? this.#decompressZlib(buffer)
       : this.#decompressZstd(buffer);
+
+    const newMemoryUsage = this.#totalMemoryUsage + decompressed.length;
+    if (
+      this.#options.maxTotalMemory &&
+      newMemoryUsage > this.#options.maxTotalMemory
+    ) {
+      throw new Error(
+        `Memory limit exceeded: ${this.#formatBytes(newMemoryUsage)} > ${this.#formatBytes(this.#options.maxTotalMemory)}`,
+      );
+    }
+
+    this.#totalMemoryUsage = newMemoryUsage;
+
+    this.emit(
+      "debug",
+      `[Gateway:Compression] Decompressed ${buffer.length} bytes to ${decompressed.length} bytes`,
+    );
+
+    return decompressed;
   }
 
   destroy(): void {
@@ -150,16 +169,6 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
       if (!shouldFlush) {
         return Buffer.alloc(0);
       }
-    }
-
-    const newMemoryUsage = this.#totalMemoryUsage + data.length;
-    if (
-      this.#options.maxTotalMemory &&
-      newMemoryUsage > this.#options.maxTotalMemory
-    ) {
-      throw new Error(
-        `Memory limit exceeded: ${this.#formatBytes(newMemoryUsage)} > ${this.#formatBytes(this.#options.maxTotalMemory)}`,
-      );
     }
 
     this.#zlibInflate.push(data, zlib.Z_SYNC_FLUSH);

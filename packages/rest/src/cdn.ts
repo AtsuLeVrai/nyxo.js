@@ -1,6 +1,5 @@
 import { createHmac } from "node:crypto";
 import { type Snowflake, SnowflakeManager } from "@nyxjs/core";
-import { HttpConstants } from "./constants/index.js";
 import type {
   AnimatedImageOptionsEntity,
   AttachmentOptionsEntity,
@@ -34,7 +33,7 @@ function isAnimated(hash: string): boolean {
 function buildUrl(
   parts: string[],
   options?: BaseImageOptionsEntity,
-  baseUrl: string = HttpConstants.urls.cdn,
+  baseUrl = "https://cdn.discordapp.com",
 ): string {
   const url = new URL(parts.join("/"), baseUrl);
 
@@ -81,7 +80,7 @@ export const Cdn: CdnEntity = {
     const aId = validateId(attachmentId, "Attachment ID");
 
     const path = ["attachments", cId, aId, encodeURIComponent(filename)];
-    const url = new URL(path.join("/"), HttpConstants.urls.cdn);
+    const url = new URL(path.join("/"), "https://cdn.discordapp.com");
 
     // biome-ignore lint/style/useExplicitLengthCheck: This is a valid check
     if (options?.size && options?.size > 0) {
@@ -338,7 +337,7 @@ export const Cdn: CdnEntity = {
       return buildUrl(
         ["stickers", `${id}.gif`],
         undefined,
-        HttpConstants.urls.media,
+        "https://media.discordapp.net",
       );
     }
 

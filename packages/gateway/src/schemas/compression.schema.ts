@@ -9,7 +9,7 @@ export type CompressionType = z.infer<typeof CompressionType>;
 
 export const CompressionOptions = z
   .object({
-    compressionType: CompressionType.optional(),
+    type: CompressionType.optional(),
     zlibChunkSize: z
       .number()
       .int()

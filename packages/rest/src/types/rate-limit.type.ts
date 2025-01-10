@@ -1,23 +1,29 @@
 export type RateLimitScope = "user" | "global" | "shared";
 
-export interface BucketInfo {
+export interface RateLimitBucket {
   hash: string;
   limit: number;
   remaining: number;
-  reset: number;
-  resetAfter: number;
+  reset: number; // Epoch time
+  resetAfter: number; // Seconds
   scope: RateLimitScope;
-  isEmoji: boolean;
-  guildId?: string;
+  sharedRoute?: string; // For shared buckets
 }
 
-export interface EmojiRateLimit {
+export interface RateLimitEvent {
+  bucketHash?: string;
+  timeToReset: number;
+  limit: number;
   remaining: number;
-  reset: number;
+  method: string;
+  path: string;
+  global: boolean;
+  scope: RateLimitScope;
+  retryAfter?: number;
 }
 
-export interface GlobalRateLimit {
-  remaining: number;
-  reset: number | null;
-  lastReset: number;
+export interface CloudflareAnalytics {
+  status: number;
+  timestamp: number;
+  path: string;
 }

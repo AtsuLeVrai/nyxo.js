@@ -10,10 +10,9 @@ import {
   GatewayOptions,
   type GatewayReceiveEvents,
   type GatewaySendEvents,
-  GatewayStats,
   type HelloEntity,
   IdentifyEntity,
-  PayloadEntity,
+  type PayloadEntity,
   type ReadyEntity,
   type RequestGuildMembersEntity,
   type ResumeEntity,
@@ -43,7 +42,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #resumeUrl: string | null = null;
   #reconnectAttempts = 0;
   #isReconnecting = false;
-  #startTime = Date.now();
   #receivedPayloads = 0;
   #sentPayloads = 0;
 
@@ -70,7 +68,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   get ping(): number {
-    return this.#heartbeatService.metrics.latency;
+    return this.#heartbeatService.latency;
   }
 
   get sessionId(): string | null {
@@ -78,28 +76,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   get sequence(): number {
-    return this.#heartbeatService.metrics.sequence;
+    return this.#heartbeatService.sequence;
   }
 
   get readyState(): 0 | 1 | 2 | 3 {
     return this.#ws?.readyState ?? WebSocket.CLOSED;
-  }
-
-  get currentStats(): GatewayStats {
-    const stats: GatewayStats = {
-      ping: this.ping,
-      lastHeartbeat: this.#heartbeatService.metrics.lastAck,
-      sessionId: this.#sessionId,
-      sequence: this.sequence,
-      reconnectAttempts: this.#reconnectAttempts,
-      uptime: Date.now() - this.#startTime,
-      readyState: this.readyState,
-      receivedPayloads: this.#receivedPayloads,
-      sentPayloads: this.#sentPayloads,
-      missedHeartbeats: this.#heartbeatService.metrics.missedHeartbeats,
-    };
-
-    return GatewayStats.parse(stats);
   }
 
   async connect(): Promise<void> {
@@ -161,10 +142,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       t: null,
     };
 
-    if (this.#options.validatePayloads) {
-      PayloadEntity.parse(payload);
-    }
-
     this.#ws.send(this.#encodingService.encode(payload));
     this.#sentPayloads++;
     this.emit("debug", `[Gateway] Sent payload with op ${opcode}`);
@@ -183,7 +160,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   isHealthy(): boolean {
     return (
       this.readyState === WebSocket.OPEN &&
-      this.#heartbeatService.metrics.missedHeartbeats <
+      this.#heartbeatService.missedHeartbeats <
         Gateway.ZOMBIED_CONNECTION_THRESHOLD &&
       this.ping < 30000
     );
@@ -229,10 +206,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     const payload = this.#encodingService.decode(processedData);
-
-    if (this.#options.validatePayloads) {
-      PayloadEntity.parse(payload);
-    }
 
     this.#receivedPayloads++;
     this.#handlePayload(payload);
@@ -332,7 +305,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         browser: "nyx.js",
         device: "nyx.js",
       },
-      compress: Boolean(this.#options.compression?.compressionType),
+      compress: Boolean(this.#options.compression?.type),
       large_threshold: this.#options.largeThreshold,
       intents: BitFieldManager.combine(this.#options.intents).toNumber(),
     };
@@ -403,7 +376,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     try {
       this.#cleanup();
 
-      if (!this.#options.autoReconnect) {
+      if (!this.#options.heartbeat?.autoReconnect) {
         this.emit(
           "debug",
           "[Gateway] Auto reconnect disabled, stopping reconnection attempt",

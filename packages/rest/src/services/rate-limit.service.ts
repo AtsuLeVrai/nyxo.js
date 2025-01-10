@@ -1,300 +1,287 @@
 import { setTimeout } from "node:timers/promises";
-import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
-import { RateLimitConstants } from "../constants/index.js";
 import type {
-  BucketInfo,
-  EmojiRateLimit,
-  GlobalRateLimit,
+  CloudflareAnalytics,
+  HttpStatusCode,
+  RateLimitBucket,
   RateLimitScope,
   RestEvents,
 } from "../types/index.js";
-import { BucketService } from "./bucket.service.js";
 
 export class RateLimitService extends EventEmitter<RestEvents> {
-  readonly #bucketService = new BucketService();
-  readonly #emojiLimits = new Store<string, EmojiRateLimit>();
+  #buckets = new Map<string, RateLimitBucket>();
+  #routesToBuckets = new Map<string, string>();
+  #invalidRequestsCount = 0;
+  #invalidRequestsResetTime = Date.now();
+  #globalReset: number | null = null;
+  #cloudflareAnalytics: CloudflareAnalytics[] = [];
+  readonly #cloudflareWindow = 600_000;
+  readonly #headers = {
+    limit: "x-ratelimit-limit",
+    remaining: "x-ratelimit-remaining",
+    reset: "x-ratelimit-reset",
+    resetAfter: "x-ratelimit-reset-after",
+    bucket: "x-ratelimit-bucket",
+    scope: "x-ratelimit-scope",
+    global: "x-ratelimit-global",
+    retryAfter: "retry-after",
+  } as const;
 
-  #global: GlobalRateLimit = {
-    remaining: RateLimitConstants.global.requestsPerSeconds,
-    reset: null,
-    lastReset: Date.now(),
-  };
+  readonly #sharedRoutes = new Map<RegExp, string>([
+    [/^\/guilds\/\d+\/emojis/, "emoji"],
+    [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
+    [/^\/guilds\/\d+\/channels/, "guild-channels"],
+    [/^\/guilds\/\d+\/members/, "guild-members"],
+  ]);
 
-  #invalidRequests = {
-    count: 0,
-    lastReset: Date.now(),
-    windowSize: RateLimitConstants.invalidRequest.windowSize,
-    maxRequests: RateLimitConstants.invalidRequest.maxRequests,
-  };
-
-  async checkRateLimit(path: string, method: string): Promise<void> {
-    this.#checkInvalidRequestLimit();
-
-    if (!this.#isExcludedRoute(path)) {
-      await this.#checkGlobalRateLimit();
-    }
-
-    if (this.#isEmojiRoute(path)) {
-      const guildId = this.#extractGuildId(path);
-      if (guildId) {
-        await this.#checkEmojiRateLimit(guildId);
-      }
-    }
-
-    const routeKey = this.#generateRouteKey(path, method);
-    const bucket = this.#bucketService.getBucketByRoute(routeKey);
-
-    if (bucket && bucket.remaining <= 0) {
-      const now = Date.now();
-      const delay = Math.max(0, bucket.reset * 1000 - now);
-
-      if (delay > 0) {
-        this.emit(
-          "rateLimit",
-          path,
-          method,
-          delay,
-          bucket.limit,
-          bucket.remaining,
-        );
-        await setTimeout(delay);
-      }
-
-      bucket.remaining = bucket.limit;
-      this.#bucketService.setBucket(bucket.hash, bucket);
-    }
-
-    if (!this.#isExcludedRoute(path)) {
-      this.#global.remaining--;
-    }
-  }
+  readonly #majorParams = [
+    { regex: /^\/guilds\/(\d+)/, param: "guild_id" },
+    { regex: /^\/channels\/(\d+)/, param: "channel_id" },
+    { regex: /^\/webhooks\/(\d+)/, param: "webhook_id" },
+  ];
 
   processHeaders(
-    path: string,
     method: string,
+    path: string,
     headers: Record<string, string>,
-    statusCode: number,
+    status: HttpStatusCode,
   ): void {
-    const h = RateLimitConstants.headers;
+    this.#trackCloudflareAnalytics(status, path);
 
-    if (this.#isErrorStatus(statusCode)) {
-      this.#invalidRequests.count++;
-
-      if (statusCode === 429) {
-        if (headers[h.global]) {
-          const retryAfter = Number(headers[h.retryAfter]) * 1000;
-          if (Number.isNaN(retryAfter)) {
-            throw new Error("Invalid retry_after value in headers");
-          }
-
-          this.#global.reset = Date.now() + retryAfter;
-          this.emit(
-            "globalRateLimit",
-            this.#global.remaining,
-            this.#global.reset,
-            RateLimitConstants.global.requestsPerSeconds,
-          );
-          return;
-        }
-
-        if (this.#isEmojiRoute(path)) {
-          const guildId = this.#extractGuildId(path);
-          if (guildId) {
-            const retryAfter = Number(headers[h.retryAfter]) * 1000;
-            if (Number.isNaN(retryAfter)) {
-              throw new Error(
-                "Invalid retry_after value in headers for emoji route",
-              );
-            }
-
-            this.#emojiLimits.set(guildId, {
-              remaining: 0,
-              reset: Date.now() + retryAfter,
-            });
-          }
-        }
-      }
+    if (status === 401 || status === 403 || status === 429) {
+      this.#trackInvalidRequest();
     }
 
-    const bucketHash = headers[h.bucket];
-    if (!bucketHash) {
+    if (status === 403 && headers["cf-ray"]) {
+      this.emit("cloudflareBan", {
+        path,
+        analytics: this.#getCloudflareAnalytics(),
+        recommendedWaitTime: 600_000,
+      });
       return;
     }
 
-    const routeKey = this.#generateRouteKey(path, method);
-    if (!routeKey) {
-      throw new Error("Failed to generate route key");
+    if (status === 429) {
+      const retryAfter = Number(headers[this.#headers.retryAfter]) * 1000;
+      const isGlobal = headers[this.#headers.global] === "true";
+      const scope = (headers[this.#headers.scope] as RateLimitScope) || "user";
+
+      if (isGlobal) {
+        this.#globalReset = Date.now() + retryAfter;
+      }
+
+      this.emit("rateLimited", {
+        timeToReset: retryAfter,
+        limit: -1,
+        remaining: 0,
+        method,
+        path,
+        global: isGlobal,
+        scope,
+        retryAfter,
+      });
+
+      return;
     }
 
-    this.#bucketService.mapRouteToBucket(routeKey, bucketHash);
-
-    const limit = Number(headers[h.limit]);
-    const remaining = Number(headers[h.remaining]);
-    const reset = Number(headers[h.reset]);
-    const resetAfter = Number(headers[h.resetAfter]);
-
-    if (
-      [limit, remaining, reset, resetAfter].some((val) => Number.isNaN(val))
-    ) {
-      throw new Error("Invalid rate limit values in headers");
+    const bucketId = headers[this.#headers.bucket];
+    if (!bucketId) {
+      return;
     }
 
-    const bucketInfo: BucketInfo = {
-      hash: bucketHash,
-      limit: limit || 0,
-      remaining: remaining || 0,
-      reset: reset || 0,
-      resetAfter: resetAfter || 0,
-      scope: (headers[h.scope] as RateLimitScope) || "user",
-      isEmoji: this.#isEmojiRoute(path),
-      guildId: this.#isEmojiRoute(path)
-        ? this.#extractGuildId(path)
-        : undefined,
+    const routeKey = this.#generateRouteKey(method, path);
+    const bucket: RateLimitBucket = {
+      hash: bucketId,
+      limit: Number(headers[this.#headers.limit]),
+      remaining: Number(headers[this.#headers.remaining]),
+      reset: Number(headers[this.#headers.reset]),
+      resetAfter: Number(headers[this.#headers.resetAfter]),
+      scope: (headers[this.#headers.scope] as RateLimitScope) || "user",
+      sharedRoute: this.#getSharedRoute(path),
     };
 
-    this.#bucketService.setBucket(bucketHash, bucketInfo);
+    this.#buckets.set(bucketId, bucket);
+    this.#routesToBuckets.set(routeKey, bucketId);
+  }
+
+  async checkRateLimit(method: string, path: string): Promise<void> {
+    if (this.#isCloudflareBlocked()) {
+      throw new Error(
+        "Currently banned by Cloudflare. Please wait before retrying.",
+      );
+    }
+
+    if (this.#globalReset && Date.now() < this.#globalReset) {
+      const timeToReset = this.#globalReset - Date.now();
+      throw new Error(`Global rate limit, retry in ${timeToReset}ms`);
+    }
+
+    if (this.#isInvalidRequestLimitExceeded()) {
+      throw new Error("Invalid request limit exceeded (10,000 per 10 minutes)");
+    }
+
+    const routeKey = this.#generateRouteKey(method, path);
+    const bucketId = this.#routesToBuckets.get(routeKey);
+    if (!bucketId) {
+      return;
+    }
+
+    const bucket = this.#buckets.get(bucketId);
+    if (!bucket) {
+      return;
+    }
+
+    if (bucket.remaining <= 0) {
+      const now = Date.now();
+      const reset = bucket.reset * 1000;
+      const timeToReset = Math.max(0, reset - now);
+
+      if (timeToReset > 0) {
+        this.emit("rateLimited", {
+          bucketHash: bucket.hash,
+          timeToReset,
+          limit: bucket.limit,
+          remaining: bucket.remaining,
+          method,
+          path,
+          global: false,
+          scope: bucket.scope,
+        });
+
+        await setTimeout(timeToReset);
+      }
+    }
   }
 
   destroy(): void {
-    this.#bucketService.clear();
-    this.#emojiLimits.clear();
-    this.#global = {
-      remaining: RateLimitConstants.global.requestsPerSeconds,
-      reset: null,
-      lastReset: Date.now(),
-    };
-    this.#invalidRequests = {
-      count: 0,
-      lastReset: Date.now(),
-      windowSize: RateLimitConstants.invalidRequest.windowSize,
-      maxRequests: RateLimitConstants.invalidRequest.maxRequests,
-    };
+    this.#buckets.clear();
+    this.#routesToBuckets.clear();
+    this.#invalidRequestsCount = 0;
+    this.#globalReset = null;
+    this.#cloudflareAnalytics = [];
     this.removeAllListeners();
   }
 
-  #generateRouteKey(path: string, method: string): string {
-    for (const pattern of RateLimitConstants.sharedRoutes) {
-      if (pattern.test(path)) {
-        return `shared:${path}`;
-      }
-    }
-
-    let routeKey = path;
-    for (const { regex, param } of RateLimitConstants.majorParameters) {
-      const match = path.match(regex);
-      if (match) {
-        routeKey = path.replace(String(match[1]), `{${param}}`);
-        break;
-      }
-    }
-
-    return `${method}:${routeKey}`;
-  }
-
-  async #checkGlobalRateLimit(): Promise<void> {
+  #trackCloudflareAnalytics(status: number, path: string): void {
     const now = Date.now();
 
-    if (this.#global.reset && now < this.#global.reset) {
-      const delay = this.#global.reset - now;
-      await setTimeout(delay);
-      this.#resetGlobalLimit();
-      return;
-    }
+    this.#cloudflareAnalytics = this.#cloudflareAnalytics.filter(
+      (data) => now - data.timestamp < this.#cloudflareWindow,
+    );
 
-    if (
-      now - this.#global.lastReset >=
-      RateLimitConstants.global.resetInterval
-    ) {
-      this.#resetGlobalLimit();
-    }
+    this.#cloudflareAnalytics.push({
+      status,
+      timestamp: now,
+      path,
+    });
 
-    if (this.#global.remaining <= 0) {
-      const delay = Math.max(
-        0,
-        RateLimitConstants.global.resetInterval -
-          (now - this.#global.lastReset),
-      );
-      await setTimeout(delay);
-      this.#resetGlobalLimit();
+    const errorCount = this.#cloudflareAnalytics.filter(
+      (data) => data.status === 403 || data.status === 429,
+    ).length;
+
+    if (errorCount >= 50) {
+      this.emit("cloudflareWarning", {
+        errorCount,
+        timeWindow: this.#cloudflareWindow,
+        mostAffectedRoutes: this.#getMostAffectedRoutes(),
+      });
     }
   }
 
-  #resetGlobalLimit(): void {
-    this.#global = {
-      remaining: RateLimitConstants.global.requestsPerSeconds,
-      reset: null,
-      lastReset: Date.now(),
+  #isCloudflareBlocked(): boolean {
+    const now = Date.now();
+    const recentErrors = this.#cloudflareAnalytics
+      .filter((data) => now - data.timestamp < 60_000)
+      .filter((data) => data.status === 403 || data.status === 429).length;
+
+    return recentErrors >= 10;
+  }
+
+  #getMostAffectedRoutes(): Array<{ path: string; count: number }> {
+    const routeCounts = new Map<string, number>();
+
+    for (const data of this.#cloudflareAnalytics) {
+      const count = (routeCounts.get(data.path) || 0) + 1;
+      routeCounts.set(data.path, count);
+    }
+
+    return Array.from(routeCounts.entries())
+      .map(([path, count]) => ({ path, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }
+
+  #getCloudflareAnalytics(): {
+    total: number;
+    errors: number;
+    lastMinute: number;
+    mostAffectedRoutes: Array<{ path: string; count: number }>;
+  } {
+    const now = Date.now();
+    return {
+      total: this.#cloudflareAnalytics.length,
+      errors: this.#cloudflareAnalytics.filter((d) => d.status >= 400).length,
+      lastMinute: this.#cloudflareAnalytics.filter(
+        (d) => now - d.timestamp < 60_000,
+      ).length,
+      mostAffectedRoutes: this.#getMostAffectedRoutes(),
     };
   }
 
-  async #checkEmojiRateLimit(guildId: string): Promise<void> {
-    const limit = this.#emojiLimits.get(guildId);
+  #generateRouteKey(method: string, path: string): string {
+    for (const [pattern, identifier] of this.#sharedRoutes) {
+      if (pattern.test(path)) {
+        return `shared:${identifier}`;
+      }
+    }
+
+    let normalizedPath = path;
+    for (const { regex, param } of this.#majorParams) {
+      const match = path.match(regex);
+      if (match) {
+        normalizedPath = normalizedPath.replace(String(match[1]), `{${param}}`);
+      }
+    }
+
+    return `${method}:${normalizedPath}`;
+  }
+
+  #trackInvalidRequest(): void {
     const now = Date.now();
 
-    if (!limit) {
-      this.#emojiLimits.set(guildId, {
-        remaining: RateLimitConstants.emoji.maxRequests - 1,
-        reset: now + RateLimitConstants.emoji.resetInterval,
-      });
-      return;
+    if (now - this.#invalidRequestsResetTime >= 600_000) {
+      this.#invalidRequestsCount = 0;
+      this.#invalidRequestsResetTime = now;
     }
 
-    if (now >= limit.reset) {
-      this.#emojiLimits.set(guildId, {
-        remaining: RateLimitConstants.emoji.maxRequests - 1,
-        reset: now + RateLimitConstants.emoji.resetInterval,
-      });
-      return;
-    }
+    this.#invalidRequestsCount++;
 
-    if (limit.remaining <= 0) {
-      const delay = limit.reset - now;
-      await setTimeout(delay);
-      this.#emojiLimits.set(guildId, {
-        remaining: RateLimitConstants.emoji.maxRequests - 1,
-        reset: now + RateLimitConstants.emoji.resetInterval,
+    if (this.#invalidRequestsCount >= 8000) {
+      this.emit("invalidRequestWarning", {
+        count: this.#invalidRequestsCount,
+        max: 10000,
       });
-    } else {
-      limit.remaining--;
-      this.#emojiLimits.set(guildId, limit);
     }
   }
 
-  #checkInvalidRequestLimit(): void {
+  #isInvalidRequestLimitExceeded(): boolean {
     const now = Date.now();
-    if (
-      now - this.#invalidRequests.lastReset >=
-      this.#invalidRequests.windowSize
-    ) {
-      this.#invalidRequests.count = 0;
-      this.#invalidRequests.lastReset = now;
-      return;
+
+    if (now - this.#invalidRequestsResetTime >= 600_000) {
+      this.#invalidRequestsCount = 0;
+      this.#invalidRequestsResetTime = now;
+      return false;
     }
 
-    if (this.#invalidRequests.count >= this.#invalidRequests.maxRequests) {
-      throw new Error(
-        `Invalid request limit exceeded (${this.#invalidRequests.maxRequests} per ${
-          this.#invalidRequests.windowSize / 60000
-        } minutes)`,
-      );
+    return this.#invalidRequestsCount >= 10_000;
+  }
+
+  #getSharedRoute(path: string): string | undefined {
+    for (const [pattern, identifier] of this.#sharedRoutes) {
+      if (pattern.test(path)) {
+        return identifier;
+      }
     }
-  }
-
-  #isEmojiRoute(path: string): boolean {
-    return path.includes("/emojis");
-  }
-
-  #isExcludedRoute(path: string): boolean {
-    return path.includes("/interactions");
-  }
-
-  #isErrorStatus(statusCode: number): boolean {
-    return statusCode >= 400;
-  }
-
-  #extractGuildId(path: string): string | undefined {
-    const match = path.match(/\/guilds\/(\d+)/);
-    return match?.[1];
+    return undefined;
   }
 }

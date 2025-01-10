@@ -1,46 +1,21 @@
 import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
-import {
-  ShardOptions,
-  ShardSession,
-  ShardStats,
-  ShardStatus,
-} from "../schemas/index.js";
+import { ShardOptions, ShardSession } from "../schemas/index.js";
 import type { GatewayEvents } from "../types/index.js";
 
 export class ShardService extends EventEmitter<GatewayEvents> {
-  static readonly RECOMMENDED_GUILD_THRESHOLD = 1000;
-  static readonly LARGE_GUILD_MEMBER_COUNT = 250;
-  static readonly DEFAULT_LARGE_THRESHOLD_SHARD0 = 250;
-  static readonly DEFAULT_LARGE_THRESHOLD_OTHER = 50;
-  static readonly MAX_CONCURRENCY_HARD_LIMIT = 16;
-  static readonly IDENTIFY_BUCKET_INTERVAL = 5100;
-
   #guildCount = 0;
   #recommendedShards = 1;
   #maxConcurrency = 1;
   #currentShardIndex = 0;
   #shards: Store<string, ShardSession> = new Store();
   #buckets: Store<number, Store<number, ShardSession[]>> = new Store();
-  #monitorInterval: NodeJS.Timeout | null = null;
 
-  #stats: ShardStats;
   readonly #options: ShardOptions;
-  readonly #startTime: number;
 
   constructor(options: Partial<ShardOptions> = {}) {
     super();
-    this.#startTime = Date.now();
     this.#options = ShardOptions.parse(options);
-    this.#stats = this.#createInitialStats();
-
-    if (this.#options.validateConfiguration) {
-      this.#validateConfiguration();
-    }
-
-    if (this.#options.monitorEnabled) {
-      this.#startMonitoring();
-    }
   }
 
   get totalShards(): number {
@@ -53,33 +28,12 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     ).length;
   }
 
-  get currentStats(): Readonly<ShardStats> {
-    return Object.freeze({ ...this.#stats });
-  }
-
   get currentOptions(): Readonly<Required<ShardOptions>> {
     return Object.freeze({ ...this.#options });
   }
 
   get isFullyConnected(): boolean {
     return this.connectedShards === this.totalShards;
-  }
-
-  get averageLatency(): number {
-    const connectedShards = Array.from(this.#shards.values()).filter(
-      (s) => s.status === "connected",
-    );
-    if (connectedShards.length === 0) {
-      return 0;
-    }
-    return (
-      connectedShards.reduce((sum, shard) => sum + shard.latency, 0) /
-      connectedShards.length
-    );
-  }
-
-  get uptimeMs(): number {
-    return Date.now() - this.#startTime;
   }
 
   static calculateBucketId(shardId: number, maxConcurrency: number): number {
@@ -116,16 +70,13 @@ export class ShardService extends EventEmitter<GatewayEvents> {
       throw new Error("No shards available");
     }
 
-    // Récupère la session correspondante à l'index courant
     const session = sessions[this.#currentShardIndex];
     if (!session) {
       throw new Error(`No shard found at index ${this.#currentShardIndex}`);
     }
 
-    // Incrémente l'index et revient à 0 si on dépasse la longueur
     this.#currentShardIndex = (this.#currentShardIndex + 1) % sessions.length;
 
-    // Retourne le tuple [shardId, numShards] pour l'identification
     return [session.shardId, session.numShards];
   }
 
@@ -164,7 +115,6 @@ export class ShardService extends EventEmitter<GatewayEvents> {
 
   destroy(): void {
     this.emit("debug", "[Gateway:ShardService] Destroying shard service");
-    this.#stopMonitoring();
 
     for (const [shardId] of this.#shards) {
       this.#destroyShard(Number.parseInt(shardId));
@@ -172,106 +122,11 @@ export class ShardService extends EventEmitter<GatewayEvents> {
 
     this.#shards.clear();
     this.#buckets.clear();
-    this.#stats = this.#createInitialStats();
   }
 
   updateGuildCount(count: number): void {
     this.#guildCount = count;
     this.emit("debug", `[Gateway:ShardService] Updated guild count: ${count}`);
-  }
-
-  #validateConfiguration(): void {
-    if (this.#options.maxConcurrency < 1) {
-      throw new Error("Concurrency must be at least 1");
-    }
-
-    if (
-      this.#options.maxConcurrency > ShardService.MAX_CONCURRENCY_HARD_LIMIT
-    ) {
-      throw new Error(
-        `Concurrency cannot exceed ${ShardService.MAX_CONCURRENCY_HARD_LIMIT}`,
-      );
-    }
-
-    if (this.#options.spawnTimeout < 0) {
-      throw new Error("Spawn timeout must be non-negative");
-    }
-
-    if (this.#options.maxGuildsPerShard < 1) {
-      throw new Error("Max guilds per shard must be at least 1");
-    }
-  }
-
-  #createInitialStats(): ShardStats {
-    const stats: ShardStats = {
-      totalShards: 0,
-      connectedShards: 0,
-      activeShards: 0,
-      totalGuilds: 0,
-      averageLatency: 0,
-      guildsPerShard: 0,
-      uptimeMs: 0,
-      memoryUsage: 0,
-      status: Object.values(ShardStatus).reduce(
-        (acc, status) => {
-          acc[status] = 0;
-          return acc;
-        },
-        {} as Record<ShardStatus, number>,
-      ),
-    };
-
-    return ShardStats.parse(stats);
-  }
-
-  #startMonitoring(): void {
-    if (this.#monitorInterval) {
-      this.#stopMonitoring();
-    }
-
-    this.#monitorInterval = setInterval(
-      () => this.#updateStats(),
-      this.#options.monitorInterval,
-    );
-
-    this.emit("debug", "[Gateway:ShardService] Monitoring started");
-  }
-
-  #stopMonitoring(): void {
-    if (this.#monitorInterval) {
-      clearInterval(this.#monitorInterval);
-      this.#monitorInterval = null;
-      this.emit("debug", "[Gateway:ShardService] Monitoring stopped");
-    }
-  }
-
-  #updateStats(): void {
-    const shards = Array.from(this.#shards.values());
-    const statusCounts = Object.values(ShardStatus).reduce(
-      (acc, status) => {
-        acc[status] = shards.filter((s) => s.status === status).length;
-        return acc;
-      },
-      {} as Record<ShardStatus, number>,
-    );
-
-    this.#stats = {
-      totalShards: this.totalShards,
-      connectedShards: this.connectedShards,
-      activeShards: shards.filter((s) => s.isActive).length,
-      totalGuilds: shards.reduce((sum, shard) => sum + shard.guildCount, 0),
-      averageLatency: this.averageLatency,
-      guildsPerShard: Math.ceil(
-        this.#stats.totalGuilds / Math.max(1, this.totalShards),
-      ),
-      uptimeMs: this.uptimeMs,
-      memoryUsage: process.memoryUsage().heapUsed,
-      status: statusCounts,
-    };
-
-    if (this.#options.collectMetrics) {
-      this.emit("statsUpdate", this.#stats);
-    }
   }
 
   #createShardSessions(totalShards: number): ShardSession[] {
@@ -280,31 +135,16 @@ export class ShardService extends EventEmitter<GatewayEvents> {
         ? this.#options.shardList
         : Array.from({ length: totalShards }, (_, i) => i);
 
-    return shardList.map((shardId) =>
-      ShardSession.parse({
+    return shardList.map((shardId) => {
+      const data: ShardSession = {
         shardId,
         numShards: totalShards,
         status: "idle",
-        latency: 0,
         guildCount: 0,
-        connectAttempts: 0,
-        reconnectAttempts: 0,
-        largeThreshold:
-          shardId === 0
-            ? ShardService.DEFAULT_LARGE_THRESHOLD_SHARD0
-            : ShardService.DEFAULT_LARGE_THRESHOLD_OTHER,
-        maxReconnectAttempts: this.#options.maxReconnectAttempts,
-        isActive: false,
-        stats: {
-          receivedPackets: 0,
-          sentPackets: 0,
-          errors: 0,
-          zombieConnections: 0,
-          avgHeartbeatLatency: 0,
-          totalGuildMembers: 0,
-        },
-      }),
-    );
+      };
+
+      return ShardSession.parse(data);
+    });
   }
 
   #createBuckets(sessions: ShardSession[]): void {
@@ -362,17 +202,9 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     this.#validateShardSession(session);
     const shardKey = this.#getShardKey(session.shardId);
 
-    if (
-      this.#shards.has(shardKey) &&
-      this.#options.handoffStrategy === "graceful"
-    ) {
-      await this.#gracefulHandoff(shardKey);
-    }
+    await this.#gracefulHandoff(shardKey);
 
     session.status = "connected";
-    session.connectAttempts++;
-    session.connectedAt = Date.now();
-
     this.emit("shardSpawn", session.shardId);
     this.#shards.set(shardKey, session);
   }
@@ -479,8 +311,6 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     }
 
     session.status = "disconnected";
-    session.disconnectedAt = Date.now();
-    session.isActive = false;
 
     this.#shards.delete(shardKey);
     this.emit("shardDisconnect", shardId);
