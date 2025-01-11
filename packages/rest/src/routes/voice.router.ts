@@ -3,6 +3,7 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   ModifyCurrentUserVoiceStateEntity,
@@ -60,11 +61,8 @@ export class VoiceRouter {
   ): Promise<HttpResponse<void>> {
     const result = ModifyCurrentUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(VoiceRouter.ROUTES.currentUserVoiceState(guildId), {
@@ -82,11 +80,8 @@ export class VoiceRouter {
   ): Promise<HttpResponse<void>> {
     const result = ModifyUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(

@@ -1,4 +1,5 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import { GetInviteQueryEntity } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
@@ -23,11 +24,8 @@ export class InviteRouter {
   ): Promise<HttpResponse<InviteEntity & InviteMetadataEntity>> {
     const result = GetInviteQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(InviteRouter.ROUTES.invite(code), {

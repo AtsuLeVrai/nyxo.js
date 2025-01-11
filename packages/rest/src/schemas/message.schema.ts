@@ -19,7 +19,7 @@ export const GetChannelMessagesQueryEntity = z
     around: Snowflake.optional(),
     before: Snowflake.optional(),
     after: Snowflake.optional(),
-    limit: z.number().int().min(1).max(100).default(50).optional(),
+    limit: z.number().int().min(1).max(100).optional().default(50),
   })
   .strict();
 
@@ -72,7 +72,7 @@ export const GetReactionsQueryEntity = z
   .object({
     type: z.nativeEnum(ReactionTypeFlag).optional(),
     after: Snowflake.optional(),
-    limit: z.number().int().min(1).max(100).default(25).optional(),
+    limit: z.number().int().min(1).max(100).optional().default(25),
   })
   .strict();
 

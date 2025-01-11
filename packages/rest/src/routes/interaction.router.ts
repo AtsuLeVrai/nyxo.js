@@ -3,6 +3,7 @@ import type {
   MessageEntity,
   Snowflake,
 } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   FollowupMessageEntity,
@@ -68,11 +69,8 @@ export class InteractionRouter {
   ): Promise<HttpResponse<InteractionCallbackEntity | undefined>> {
     const result = InteractionResponseEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -109,11 +107,8 @@ export class InteractionRouter {
   ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(
@@ -152,11 +147,8 @@ export class InteractionRouter {
   ): Promise<HttpResponse<MessageEntity>> {
     const result = FollowupMessageEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -198,11 +190,8 @@ export class InteractionRouter {
   ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(

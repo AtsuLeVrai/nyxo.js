@@ -115,10 +115,10 @@ export type EditChannelPermissionsEntity = z.infer<
  */
 export const CreateChannelInviteEntity = z
   .object({
-    max_age: z.number().int().min(0).max(604800).default(86400).optional(),
-    max_uses: z.number().int().min(0).max(100).default(0).optional(),
-    temporary: z.boolean().default(false).optional(),
-    unique: z.boolean().default(false).optional(),
+    max_age: z.number().int().min(0).max(604800).optional().default(86400),
+    max_uses: z.number().int().min(0).max(100).optional().default(0),
+    temporary: z.boolean().optional().default(false),
+    unique: z.boolean().optional().default(false),
     target_type: z.nativeEnum(InviteTargetType).optional(),
     target_user_id: Snowflake.optional(),
     target_application_id: Snowflake.optional(),
@@ -173,8 +173,8 @@ export const StartThreadWithoutMessageEntity =
             z.literal(ChannelType.PrivateThread),
             z.literal(ChannelType.PublicThread),
           ])
-          .default(ChannelType.PrivateThread)
-          .optional(),
+          .optional()
+          .default(ChannelType.PrivateThread),
         invitable: z.boolean().optional(),
       })
       .strict(),
@@ -237,7 +237,7 @@ export const ListThreadMembersQueryEntity = z
   .object({
     with_member: z.boolean().optional(),
     after: Snowflake.optional(),
-    limit: z.number().int().min(1).max(100).default(100).optional(),
+    limit: z.number().int().min(1).max(100).optional().default(100),
   })
   .strict();
 

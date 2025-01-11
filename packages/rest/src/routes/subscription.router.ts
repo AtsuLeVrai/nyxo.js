@@ -1,4 +1,6 @@
 import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
+import type { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import { SubscriptionQueryEntity } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
@@ -22,15 +24,12 @@ export class SubscriptionRouter {
    */
   listSkuSubscriptions(
     skuId: Snowflake,
-    query: SubscriptionQueryEntity = {},
+    query: z.input<typeof SubscriptionQueryEntity> = {},
   ): Promise<HttpResponse<SubscriptionEntity[]>> {
     const result = SubscriptionQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(SubscriptionRouter.ROUTES.skuSubscriptions(skuId), {

@@ -1,4 +1,5 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateGuildFromGuildTemplateEntity,
@@ -39,11 +40,8 @@ export class GuildTemplateRouter {
   ): Promise<HttpResponse<GuildEntity>> {
     const result = CreateGuildFromGuildTemplateEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(GuildTemplateRouter.ROUTES.template(code), {
@@ -69,11 +67,8 @@ export class GuildTemplateRouter {
   ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = CreateGuildTemplateEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
@@ -103,11 +98,8 @@ export class GuildTemplateRouter {
   ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = ModifyGuildTemplateEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(

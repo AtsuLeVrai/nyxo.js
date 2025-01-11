@@ -17,7 +17,7 @@ export const CreateAutoModerationRuleEntity = z
     trigger_type: z.nativeEnum(AutoModerationRuleTriggerType),
     trigger_metadata: AutoModerationRuleTriggerMetadataEntity.optional(),
     actions: z.array(AutoModerationActionEntity),
-    enabled: z.boolean().default(false).optional(),
+    enabled: z.boolean().optional().default(false),
     exempt_roles: z.array(Snowflake).max(20).optional(),
     exempt_channels: z.array(Snowflake).max(50).optional(),
   })

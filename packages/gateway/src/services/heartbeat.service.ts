@@ -1,99 +1,126 @@
 import { EventEmitter } from "eventemitter3";
+import type { z } from "zod";
+import { fromError } from "zod-validation-error";
+import { HeartbeatError } from "../errors/index.js";
 import type { Gateway } from "../gateway.js";
 import { HeartbeatOptions } from "../schemas/index.js";
-import type { GatewayEvents } from "../types/index.js";
+import type {
+  GatewayEvents,
+  HeartbeatState,
+  HeartbeatStats,
+} from "../types/index.js";
 import { GatewayOpcodes } from "../types/index.js";
 
 export class HeartbeatService extends EventEmitter<GatewayEvents> {
-  #latency = 0;
-  #lastAck = 0;
-  #lastSend = 0;
-  #missedHeartbeats = 0;
-  #sequence = 0;
-  #totalBeats = 0;
-  #latencyHistory: number[] = [];
-  #intervalMs = 0;
-  #isAcked = true;
+  #stats: HeartbeatStats = {
+    latency: 0,
+    latencyHistory: [],
+    missedHeartbeats: 0,
+    totalBeats: 0,
+    sequence: 0,
+    lastAck: 0,
+    lastSend: 0,
+  };
+
+  #state: HeartbeatState = {
+    intervalMs: 0,
+    isAcked: true,
+    isReconnecting: false,
+    retryAttempts: 0,
+  };
+
   #interval: NodeJS.Timeout | null = null;
+  #reconnectTimeout: NodeJS.Timeout | null = null;
 
   readonly #gateway: Gateway;
-  readonly #options: HeartbeatOptions;
+  readonly #options: z.output<typeof HeartbeatOptions>;
 
-  constructor(gateway: Gateway, options: Partial<HeartbeatOptions> = {}) {
+  constructor(
+    gateway: Gateway,
+    options: z.input<typeof HeartbeatOptions> = {},
+  ) {
     super();
     this.#gateway = gateway;
-    this.#options = HeartbeatOptions.parse(options);
+    try {
+      this.#options = HeartbeatOptions.parse(options);
+    } catch (error) {
+      throw HeartbeatError.validationError(fromError(error).message);
+    }
   }
 
   get isRunning(): boolean {
     return this.#interval !== null;
   }
 
+  get isReconnecting(): boolean {
+    return this.#state.isReconnecting;
+  }
+
   get latency(): number {
-    return this.#latency;
+    return this.#stats.latency;
   }
 
   get lastAck(): number {
-    return this.#lastAck;
+    return this.#stats.lastAck;
   }
 
   get sequence(): number {
-    return this.#sequence;
+    return this.#stats.sequence;
   }
 
   get missedHeartbeats(): number {
-    return this.#missedHeartbeats;
+    return this.#stats.missedHeartbeats;
   }
 
-  get currentOptions(): Readonly<Required<HeartbeatOptions>> {
-    return Object.freeze({ ...this.#options });
+  get averageLatency(): number {
+    if (this.#stats.latencyHistory.length === 0) {
+      return 0;
+    }
+    const sum = this.#stats.latencyHistory.reduce((a, b) => a + b, 0);
+    return Math.round(sum / this.#stats.latencyHistory.length);
   }
 
   start(interval: number): void {
     if (interval <= 0) {
-      throw new Error("Cannot start heartbeat with invalid interval");
+      throw HeartbeatError.invalidInterval(interval);
     }
 
-    this.destroy();
-    this.#intervalMs = interval;
+    if (this.isRunning) {
+      throw HeartbeatError.alreadyRunning();
+    }
 
-    if (this.#options.useJitter) {
-      const jitter = this.#calculateJitter();
-      const jitterDelay = Math.floor(interval * jitter);
+    this.#cleanupTimers();
+    this.#state.intervalMs = interval;
 
-      this.emit(
-        "debug",
-        `[Gateway:Heartbeat] Starting - Interval: ${interval}ms, Initial delay: ${jitterDelay}ms, Jitter: ${jitter.toFixed(4)}`,
+    const initialDelay = this.#options.useJitter
+      ? Math.floor(interval * this.#calculateJitter())
+      : this.#options.initialInterval;
+
+    this.emit(
+      "debug",
+      `[Gateway:Heartbeat] Starting - Interval: ${interval}ms, Initial delay: ${initialDelay}ms`,
+    );
+
+    setTimeout(() => {
+      this.sendHeartbeat();
+      this.#interval = setInterval(
+        () => this.sendHeartbeat(),
+        this.#state.intervalMs,
       );
-
-      setTimeout(() => this.#initializeHeartbeat(), jitterDelay);
-    } else {
-      this.#initializeHeartbeat();
-    }
+    }, initialDelay);
   }
 
   destroy(): void {
-    if (this.#interval) {
-      clearInterval(this.#interval);
-      this.#interval = null;
+    this.#cleanupTimers();
+    this.#resetStats();
+    this.#state = {
+      intervalMs: 0,
+      isAcked: true,
+      isReconnecting: false,
+      retryAttempts: 0,
+    };
 
-      this.emit(
-        "debug",
-        "[Gateway:Heartbeat] Stopped - Connection maintenance halted",
-      );
-    }
-
-    this.#latency = 0;
-    this.#lastAck = 0;
-    this.#lastSend = 0;
-    this.#missedHeartbeats = 0;
-    this.#sequence = 0;
-    this.#totalBeats = 0;
-    this.#isAcked = true;
-    this.#intervalMs = 0;
-    this.#latencyHistory = [];
-
-    this.emit("debug", "[Gateway:Heartbeat] Destroyed - All metrics reset");
+    this.emit("debug", "[Gateway:Heartbeat] Destroyed - All state reset");
   }
 
   updateSequence(sequence: number): void {
@@ -101,82 +128,128 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       sequence < this.#options.minSequence ||
       sequence > this.#options.maxSequence
     ) {
-      throw new Error(`Invalid sequence number: ${sequence}`);
+      throw HeartbeatError.invalidSequence(
+        sequence,
+        this.#options.minSequence,
+        this.#options.maxSequence,
+      );
     }
 
-    this.#sequence = sequence;
-
+    this.#stats.sequence = sequence;
     this.emit("debug", `[Gateway:Heartbeat] Sequence updated: ${sequence}`);
   }
 
   ackHeartbeat(): void {
     const now = Date.now();
-    this.#isAcked = true;
-    this.#lastAck = now;
-    this.#missedHeartbeats = 0;
+    this.#state.isAcked = true;
+    this.#stats.lastAck = now;
+    this.#stats.missedHeartbeats = 0;
+    this.#state.retryAttempts = 0;
+    this.#state.isReconnecting = false;
 
     this.#updateLatency(now);
 
     this.emit(
       "debug",
-      `[Gateway:Heartbeat] Acknowledged - Latency: ${this.#latency}ms, Sequence: ${this.#sequence}`,
+      `[Gateway:Heartbeat] Acknowledged - Latency: ${this.#stats.latency}ms, Sequence: ${this.#stats.sequence}`,
     );
   }
 
   sendHeartbeat(): void {
-    this.#lastSend = Date.now();
-    this.#totalBeats++;
+    this.#stats.lastSend = Date.now();
+    this.#stats.totalBeats++;
 
-    if (!this.#isAcked) {
+    if (!this.#state.isAcked) {
       this.#handleMissedHeartbeat();
       return;
     }
 
-    this.#isAcked = false;
+    this.#state.isAcked = false;
 
     this.emit(
       "debug",
-      `[Gateway:Heartbeat] Sending - Sequence: ${this.#sequence}`,
+      `[Gateway:Heartbeat] Sending - Sequence: ${this.#stats.sequence}, Total beats: ${this.#stats.totalBeats}`,
     );
 
-    this.#gateway.send(GatewayOpcodes.Heartbeat, this.#sequence);
-  }
-
-  #initializeHeartbeat(): void {
-    this.sendHeartbeat();
-    this.#interval = setInterval(() => this.sendHeartbeat(), this.#intervalMs);
-  }
-
-  #handleMissedHeartbeat(): void {
-    this.#missedHeartbeats++;
-
-    this.emit(
-      "debug",
-      `[Gateway:Heartbeat] Missed beat - Count: ${this.#missedHeartbeats}/${this.#options.maxMissedHeartbeats}`,
-    );
-
-    if (this.#missedHeartbeats >= this.#options.maxMissedHeartbeats) {
-      this.emit("warn", "[Gateway:Heartbeat] Zombie connection detected");
-
-      if (this.#options.resetOnZombie) {
-        this.destroy();
+    try {
+      this.#gateway.send(GatewayOpcodes.Heartbeat, this.#stats.sequence);
+    } catch {
+      if (this.#options.retryOnFail) {
+        this.#handleSendError();
       }
     }
   }
 
-  #updateLatency(now: number): void {
-    this.#latency = now - this.#lastSend;
-    this.#latencyHistory.push(this.#latency);
+  #handleMissedHeartbeat(): void {
+    this.#stats.missedHeartbeats++;
 
-    if (this.#latencyHistory.length > 100) {
-      this.#latencyHistory.shift();
+    this.emit(
+      "debug",
+      `[Gateway:Heartbeat] Missed beat - Count: ${this.#stats.missedHeartbeats}/${this.#options.maxMissedHeartbeats}`,
+    );
+
+    if (
+      this.#stats.missedHeartbeats >= this.#options.maxMissedHeartbeats &&
+      this.#options.resetOnZombie
+    ) {
+      this.destroy();
+
+      if (this.#options.autoReconnect) {
+        this.#handleReconnect();
+      }
+    }
+  }
+
+  #handleSendError(): void {
+    this.#state.retryAttempts++;
+    const backoff = Math.min(
+      1000 * 2 ** (this.#state.retryAttempts - 1),
+      30000,
+    );
+
+    this.emit(
+      "debug",
+      `[Gateway:Heartbeat] Retry attempt ${this.#state.retryAttempts} in ${backoff}ms`,
+    );
+
+    this.#reconnectTimeout = setTimeout(() => {
+      if (this.#state.retryAttempts < 5) {
+        this.sendHeartbeat();
+      } else {
+        this.destroy();
+      }
+    }, backoff);
+  }
+
+  #handleReconnect(): void {
+    if (this.#state.isReconnecting) {
+      return;
     }
 
-    if (this.#latency > this.#options.maxLatency) {
-      this.emit(
-        "warn",
-        `[Gateway:Heartbeat] High latency detected: ${this.#latency}ms`,
+    this.#state.isReconnecting = true;
+    this.emit("debug", "[Gateway:Heartbeat] Attempting to reconnect");
+
+    setTimeout(() => {
+      if (this.#state.intervalMs > 0) {
+        this.start(this.#state.intervalMs);
+      }
+    }, 1000);
+  }
+
+  #updateLatency(now: number): void {
+    this.#stats.latency = now - this.#stats.lastSend;
+    this.#stats.latencyHistory.push(this.#stats.latency);
+
+    if (this.#stats.latencyHistory.length > 100) {
+      this.#stats.latencyHistory.shift();
+    }
+
+    if (this.#stats.latency > this.#options.maxLatency) {
+      const warn = HeartbeatError.highLatency(
+        this.#stats.latency,
+        this.#options.maxLatency,
       );
+      this.emit("warn", warn.message);
     }
   }
 
@@ -185,5 +258,29 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       this.#options.minJitter +
       Math.random() * (this.#options.maxJitter - this.#options.minJitter)
     );
+  }
+
+  #cleanupTimers(): void {
+    if (this.#interval) {
+      clearInterval(this.#interval);
+      this.#interval = null;
+    }
+
+    if (this.#reconnectTimeout) {
+      clearTimeout(this.#reconnectTimeout);
+      this.#reconnectTimeout = null;
+    }
+  }
+
+  #resetStats(): void {
+    this.#stats = {
+      latency: 0,
+      latencyHistory: [],
+      missedHeartbeats: 0,
+      totalBeats: 0,
+      sequence: 0,
+      lastAck: 0,
+      lastSend: 0,
+    };
   }
 }

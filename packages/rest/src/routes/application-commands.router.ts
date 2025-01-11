@@ -4,6 +4,7 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateGlobalApplicationCommandEntity,
@@ -65,11 +66,8 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -102,11 +100,8 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(
@@ -139,11 +134,8 @@ export class ApplicationCommandRouter {
       .max(200)
       .safeParse(commands);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(ApplicationCommandRouter.ROUTES.base(applicationId), {
@@ -177,11 +169,8 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -220,11 +209,8 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(
@@ -269,11 +255,8 @@ export class ApplicationCommandRouter {
       .max(200)
       .safeParse(commands);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(
@@ -327,11 +310,8 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
     const result = EditApplicationCommandPermissionsEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(

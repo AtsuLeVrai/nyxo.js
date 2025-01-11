@@ -1,4 +1,5 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateGuildStickerEntity,
@@ -76,11 +77,8 @@ export class StickerRouter {
   ): Promise<HttpResponse<StickerEntity>> {
     const result = CreateGuildStickerEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     const { file, ...rest } = result.data;
@@ -102,11 +100,8 @@ export class StickerRouter {
   ): Promise<HttpResponse<StickerEntity>> {
     const result = ModifyGuildStickerEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(

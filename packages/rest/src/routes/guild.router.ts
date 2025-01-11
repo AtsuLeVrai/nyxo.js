@@ -15,6 +15,8 @@ import type {
   VoiceRegionEntity,
   WelcomeScreenEntity,
 } from "@nyxjs/core";
+import type { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   AddGuildMemberEntity,
@@ -107,11 +109,8 @@ export class GuildRouter {
   createGuild(options: CreateGuildEntity): Promise<HttpResponse<GuildEntity>> {
     const result = CreateGuildEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(GuildRouter.ROUTES.guilds, {
@@ -148,11 +147,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<GuildEntity>> {
     const result = ModifyGuildEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guild(guildId), {
@@ -185,11 +181,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = CreateGuildChannelEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(GuildRouter.ROUTES.guildChannels(guildId), {
@@ -207,11 +200,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<void>> {
     const result = ModifyGuildChannelPositionsEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guildChannels(guildId), {
@@ -243,15 +233,12 @@ export class GuildRouter {
    */
   listGuildMembers(
     guildId: Snowflake,
-    query: ListGuildMembersQueryEntity = {},
+    query: z.input<typeof ListGuildMembersQueryEntity> = {},
   ): Promise<HttpResponse<GuildMemberEntity[]>> {
     const result = ListGuildMembersQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(GuildRouter.ROUTES.guildMembers(guildId), {
@@ -268,11 +255,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<GuildMemberEntity[]>> {
     const result = SearchGuildMembersQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(GuildRouter.ROUTES.searchMembers(guildId), {
@@ -290,11 +274,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<GuildMemberEntity>> {
     const result = AddGuildMemberEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(GuildRouter.ROUTES.guildMember(guildId, userId), {
@@ -313,11 +294,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<GuildMemberEntity>> {
     const result = ModifyGuildMemberEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guildMember(guildId, userId), {
@@ -406,15 +384,12 @@ export class GuildRouter {
    */
   getGuildBans(
     guildId: Snowflake,
-    query: GetGuildBansQueryEntity = {},
+    query: z.input<typeof GetGuildBansQueryEntity> = {},
   ): Promise<HttpResponse<BanEntity[]>> {
     const result = GetGuildBansQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(GuildRouter.ROUTES.guildBans(guildId), {
@@ -443,11 +418,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<void>> {
     const result = CreateGuildBanEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(GuildRouter.ROUTES.guildBan(guildId, userId), {
@@ -479,11 +451,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<BulkGuildBanResponseEntity>> {
     const result = BulkGuildBanEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(GuildRouter.ROUTES.bulkBan(guildId), {
@@ -519,11 +488,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<RoleEntity>> {
     const result = CreateGuildRoleEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(GuildRouter.ROUTES.guildRoles(guildId), {
@@ -541,11 +507,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<RoleEntity[]>> {
     const result = ModifyGuildRolePositionsEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guildRoles(guildId), {
@@ -564,11 +527,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<RoleEntity>> {
     const result = ModifyGuildRoleEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guildRole(guildId, roleId), {
@@ -609,15 +569,12 @@ export class GuildRouter {
    */
   getGuildPruneCount(
     guildId: Snowflake,
-    query: GetGuildPruneCountQueryEntity = {},
+    query: z.input<typeof GetGuildPruneCountQueryEntity> = {},
   ): Promise<HttpResponse<{ pruned: number }>> {
     const result = GetGuildPruneCountQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(GuildRouter.ROUTES.guildPrune(guildId), {
@@ -635,11 +592,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<{ pruned: number | null }>> {
     const result = BeginGuildPruneEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(GuildRouter.ROUTES.guildPrune(guildId), {
@@ -708,11 +662,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<GuildWidgetSettingsEntity>> {
     const result = ModifyGuildWidgetSettingsEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guildWidgetSettings(guildId), {
@@ -770,11 +721,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<WelcomeScreenEntity>> {
     const result = ModifyGuildWelcomeScreenEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guildWelcomeScreen(guildId), {
@@ -802,11 +750,8 @@ export class GuildRouter {
   ): Promise<HttpResponse<GuildOnboardingEntity>> {
     const result = ModifyGuildOnboardingEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(GuildRouter.ROUTES.guildOnboarding(guildId), {

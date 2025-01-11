@@ -1,4 +1,5 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   type ActivityInstanceEntity,
@@ -34,11 +35,8 @@ export class ApplicationRouter {
   ): Promise<HttpResponse<ApplicationEntity>> {
     const result = EditCurrentApplicationEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(ApplicationRouter.ROUTES.currentApplication, {

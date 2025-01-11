@@ -1,4 +1,6 @@
 import type { MessageEntity, Snowflake } from "@nyxjs/core";
+import type { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   GetAnswerVotersQueryEntity,
@@ -31,15 +33,12 @@ export class PollRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     answerId: number,
-    query: GetAnswerVotersQueryEntity = {},
+    query: z.input<typeof GetAnswerVotersQueryEntity> = {},
   ): Promise<HttpResponse<PollVotersResponseEntity>> {
     const result = GetAnswerVotersQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(

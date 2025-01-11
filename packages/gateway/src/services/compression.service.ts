@@ -1,20 +1,27 @@
 import { EventEmitter } from "eventemitter3";
 import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
-import { CompressionOptions, type CompressionType } from "../schemas/index.js";
-import type { GatewayEvents } from "../types/index.js";
+import type { z } from "zod";
+import { fromError } from "zod-validation-error";
+import { CompressionError } from "../errors/index.js";
+import { CompressionOptions } from "../schemas/index.js";
+import type { CompressionType, GatewayEvents } from "../types/index.js";
 
 export class CompressionService extends EventEmitter<GatewayEvents> {
+  #totalSize = 0;
   #chunks: Uint8Array[] = [];
-  #totalMemoryUsage = 0;
   #zstdStream: Decompress | null = null;
   #zlibInflate: zlib.Inflate | null = null;
 
-  readonly #options: CompressionOptions;
+  readonly #options: z.output<typeof CompressionOptions>;
 
-  constructor(options: Partial<CompressionOptions> = {}) {
+  constructor(options: z.input<typeof CompressionOptions> = {}) {
     super();
-    this.#options = CompressionOptions.parse(options);
+    try {
+      this.#options = CompressionOptions.parse(options);
+    } catch (error) {
+      throw CompressionError.validationError(fromError(error).message);
+    }
   }
 
   get compressionType(): CompressionType | undefined {
@@ -25,18 +32,6 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
     return this.#zlibInflate !== null || this.#zstdStream !== null;
   }
 
-  get chunksCount(): number {
-    return this.#chunks.length;
-  }
-
-  get totalProcessedSize(): number {
-    return this.#chunks.reduce((total, chunk) => total + chunk.length, 0);
-  }
-
-  get lastChunkSize(): number | undefined {
-    return this.#chunks.length > 0 ? this.#chunks.at(-1)?.length : undefined;
-  }
-
   get isZlib(): boolean {
     return this.#options.type === "zlib-stream";
   }
@@ -45,73 +40,47 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
     return this.#options.type === "zstd-stream";
   }
 
-  get currentOptions(): Readonly<CompressionOptions> {
-    return Object.freeze({ ...this.#options });
-  }
-
   initialize(): void {
     this.destroy();
 
-    if (this.isZlib) {
-      this.#zlibInflate = new zlib.Inflate({
-        chunkSize: this.#options.zlibChunkSize,
-        windowBits: this.#options.zlibWindowBits,
-      });
-
-      if (!this.#zlibInflate || this.#zlibInflate.err) {
-        throw new Error(
-          `Zlib initialization failed: ${this.#zlibInflate?.msg}`,
-        );
+    try {
+      if (this.isZlib) {
+        this.#initializeZlib();
+      } else if (this.isZstd) {
+        this.#initializeZstd();
       }
-
-      this.emit(
-        "debug",
-        "[Gateway:Compression] Zlib initialization successful",
-      );
-    } else if (this.isZstd) {
-      this.#zstdStream = new Decompress((chunk) => {
-        this.#chunks.push(chunk);
-      });
-
-      if (!this.#zstdStream) {
-        throw new Error("Zstd initialization failed");
-      }
-
-      this.emit(
-        "debug",
-        "[Gateway:Compression] Zstd initialization successful",
+    } catch (error) {
+      throw CompressionError.initializationFailed(
+        this.#options.type ?? "unknown",
+        error,
       );
     }
   }
 
   decompress(data: Buffer | Uint8Array): Buffer {
     if (!this.isInitialized) {
-      throw new Error("Compression not initialized");
+      throw CompressionError.notInitialized();
     }
 
-    const buffer = Buffer.from(data);
-    const decompressed = this.isZlib
-      ? this.#decompressZlib(buffer)
-      : this.#decompressZstd(buffer);
+    const buffer = Buffer.from(data.buffer, data.byteOffset, data.length);
 
-    const newMemoryUsage = this.#totalMemoryUsage + decompressed.length;
-    if (
-      this.#options.maxTotalMemory &&
-      newMemoryUsage > this.#options.maxTotalMemory
-    ) {
-      throw new Error(
-        `Memory limit exceeded: ${this.#formatBytes(newMemoryUsage)} > ${this.#formatBytes(this.#options.maxTotalMemory)}`,
+    try {
+      const decompressed = this.isZlib
+        ? this.#decompressZlib(buffer)
+        : this.#decompressZstd(buffer);
+
+      this.emit(
+        "debug",
+        `[Gateway:Compression] Decompressed ${buffer.length} bytes to ${decompressed.length} bytes`,
+      );
+
+      return decompressed;
+    } catch (error) {
+      throw CompressionError.decompressionFailed(
+        this.#options.type ?? "unknown",
+        error,
       );
     }
-
-    this.#totalMemoryUsage = newMemoryUsage;
-
-    this.emit(
-      "debug",
-      `[Gateway:Compression] Decompressed ${buffer.length} bytes to ${decompressed.length} bytes`,
-    );
-
-    return decompressed;
   }
 
   destroy(): void {
@@ -121,67 +90,84 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
     this.emit("debug", "[Gateway:Compression] Service destroyed");
   }
 
-  clearChunks(): void {
-    const previousCount = this.#chunks.length;
-    const previousMemory = this.#totalMemoryUsage;
-    this.#chunks = [];
-    this.#totalMemoryUsage = 0;
-
-    this.emit(
-      "debug",
-      `[Gateway:Compression] Cleared ${previousCount} chunks (${this.#formatBytes(previousMemory)})`,
-    );
-  }
-
-  getChunkAt(index: number): Uint8Array | undefined {
-    return this.#chunks[index];
-  }
-
-  getLastChunks(count: number): Uint8Array[] {
-    return this.#chunks.slice(-count);
-  }
-
   validateBuffer(data: Buffer | Uint8Array): boolean {
-    if (this.isZlib) {
-      return this.#isZlibFlushMarker(Buffer.from(data));
+    if (!this.#options.validateBuffers) {
+      return true;
     }
 
-    return true;
+    return this.isZlib ? this.#isZlibFlushMarker(Buffer.from(data)) : true;
   }
 
-  #formatBytes(bytes: number): string {
-    if (bytes === 0) {
-      return "0 Bytes";
+  #initializeZlib(): void {
+    this.#zlibInflate = new zlib.Inflate({
+      chunkSize: this.#options.zlibChunkSize,
+      windowBits: this.#options.zlibWindowBits,
+    });
+
+    if (!this.#zlibInflate || this.#zlibInflate.err) {
+      throw new Error(
+        this.#zlibInflate?.msg ?? "Failed to create Zlib inflater",
+      );
     }
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
+
+    this.emit("debug", "[Gateway:Compression] Zlib initialization successful");
+  }
+
+  #initializeZstd(): void {
+    this.#zstdStream = new Decompress((chunk) => this.#handleChunk(chunk));
+
+    if (!this.#zstdStream) {
+      throw new Error("Failed to create Zstd decompressor");
+    }
+
+    this.emit("debug", "[Gateway:Compression] Zstd initialization successful");
+  }
+
+  #handleChunk(chunk: Uint8Array): void {
+    if (
+      this.#options.maxChunkSize &&
+      chunk.length > this.#options.maxChunkSize
+    ) {
+      throw CompressionError.invalidChunkSize(
+        chunk.length,
+        this.#options.maxChunkSize,
+      );
+    }
+
+    try {
+      this.#chunks.push(chunk);
+      this.#totalSize += chunk.length;
+    } catch {
+      if (this.#options.autoCleanChunks) {
+        this.#chunks = [];
+        this.#chunks.push(chunk);
+        this.#totalSize += chunk.length;
+      } else {
+        throw CompressionError.maxChunksExceeded();
+      }
+    }
   }
 
   #decompressZlib(data: Buffer): Buffer {
     if (!this.#zlibInflate) {
-      throw new Error("Zlib decompressor not initialized");
+      throw CompressionError.notInitialized();
     }
 
-    if (this.#options.validateBuffers) {
-      const shouldFlush = this.#isZlibFlushMarker(data);
-      if (!shouldFlush) {
-        return Buffer.alloc(0);
-      }
+    if (this.#options.validateBuffers && !this.#isZlibFlushMarker(data)) {
+      return Buffer.alloc(0);
     }
 
     this.#zlibInflate.push(data, zlib.Z_SYNC_FLUSH);
 
     if (this.#zlibInflate.err < 0) {
-      throw new Error(`Zlib inflation error: ${this.#zlibInflate.msg}`);
+      throw new Error(this.#zlibInflate.msg ?? "Zlib decompression failed");
     }
 
     const result = this.#zlibInflate.result;
     return Buffer.isBuffer(result) ? result : Buffer.from(result ?? []);
   }
 
-  #isZlibFlushMarker(data: Buffer): data is Buffer {
+  #isZlibFlushMarker(data: Buffer): boolean {
     if (data.length < this.#options.zlibFlushBytes.length) {
       return false;
     }
@@ -192,17 +178,18 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
 
   #decompressZstd(data: Buffer): Buffer {
     if (!this.#zstdStream) {
-      throw new Error("Zstd decompressor not initialized");
+      throw CompressionError.notInitialized();
     }
 
     this.#chunks = [];
     this.#zstdStream.push(new Uint8Array(data));
 
-    if (this.#chunks.length === 0) {
+    const newChunks = this.#chunks.slice(this.#totalSize);
+    if (newChunks.length === 0) {
       return Buffer.alloc(0);
     }
 
-    return this.#combineChunks(this.#chunks);
+    return this.#combineChunks(newChunks);
   }
 
   #combineChunks(chunks: Uint8Array[]): Buffer {

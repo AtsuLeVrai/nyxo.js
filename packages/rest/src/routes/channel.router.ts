@@ -7,6 +7,7 @@ import type {
   ThreadMemberEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   AddGroupDmRecipientEntity,
@@ -90,11 +91,8 @@ export class ChannelRouter {
       ])
       .safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(ChannelRouter.ROUTES.base(channelId), {
@@ -126,11 +124,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<void>> {
     const result = EditChannelPermissionsEntity.safeParse(permissions);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(
@@ -161,11 +156,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<InviteEntity>> {
     const result = CreateChannelInviteEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(ChannelRouter.ROUTES.invites(channelId), {
@@ -262,11 +254,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<void>> {
     const result = AddGroupDmRecipientEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(ChannelRouter.ROUTES.recipients(channelId, userId), {
@@ -297,11 +286,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadFromMessageEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -323,11 +309,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadWithoutMessageEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -356,11 +339,8 @@ export class ChannelRouter {
       ])
       .safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -431,15 +411,12 @@ export class ChannelRouter {
    */
   listThreadMembers(
     channelId: Snowflake,
-    options: ListThreadMembersQueryEntity = {},
+    options: z.input<typeof ListThreadMembersQueryEntity> = {},
   ): Promise<HttpResponse<ThreadMemberEntity[]>> {
     const result = ListThreadMembersQueryEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(ChannelRouter.ROUTES.threadMembers(channelId), {
@@ -456,11 +433,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(
@@ -480,11 +454,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(
@@ -504,11 +475,8 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(

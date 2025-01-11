@@ -1,4 +1,5 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateGuildSoundboardSoundEntity,
@@ -34,11 +35,8 @@ export class SoundboardRouter {
   ): Promise<HttpResponse<void>> {
     const result = SendSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(SoundboardRouter.ROUTES.sendSound(channelId), {
@@ -84,11 +82,8 @@ export class SoundboardRouter {
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = CreateGuildSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(SoundboardRouter.ROUTES.guildSounds(guildId), {
@@ -108,11 +103,8 @@ export class SoundboardRouter {
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = ModifyGuildSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(

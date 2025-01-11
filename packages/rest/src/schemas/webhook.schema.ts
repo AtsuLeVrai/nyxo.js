@@ -38,7 +38,7 @@ export type ModifyWebhookEntity = z.infer<typeof ModifyWebhookEntity>;
  */
 export const ExecuteWebhookQueryEntity = z
   .object({
-    wait: z.boolean().default(false).optional(),
+    wait: z.boolean().optional().default(false),
     thread_id: Snowflake.optional(),
   })
   .strict();

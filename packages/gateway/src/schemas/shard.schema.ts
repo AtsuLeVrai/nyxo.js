@@ -27,13 +27,14 @@ export const ShardOptions = z
   .object({
     totalShards: z
       .union([z.number().positive(), z.literal("auto")])
+      .optional()
       .default("auto"),
-    shardList: z.array(z.number().nonnegative()).default([]),
-    spawnTimeout: z.number().positive().default(30000),
-    spawnDelay: z.number().nonnegative().default(5000),
-    maxGuildsPerShard: z.number().positive().default(2500),
-    shardCount: z.number().positive().default(1),
-    maxConcurrency: z.number().positive().default(1),
+    shardList: z.array(z.number().nonnegative()).optional().default([]),
+    spawnTimeout: z.number().positive().optional().default(30000),
+    spawnDelay: z.number().nonnegative().optional().default(5000),
+    maxGuildsPerShard: z.number().positive().optional().default(2500),
+    shardCount: z.number().positive().optional().default(1),
+    maxConcurrency: z.number().positive().optional().default(1),
   })
   .strict()
   .refine(
@@ -48,5 +49,3 @@ export const ShardOptions = z
       path: ["maxConcurrency"],
     },
   );
-
-export type ShardOptions = z.infer<typeof ShardOptions>;

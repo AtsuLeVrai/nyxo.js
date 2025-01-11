@@ -1,4 +1,6 @@
 import type { Snowflake, WebhookEntity } from "@nyxjs/core";
+import type { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateWebhookEntity,
@@ -46,11 +48,8 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = CreateWebhookEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(WebhookRouter.ROUTES.channelWebhooks(channelId), {
@@ -104,11 +103,8 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = ModifyWebhookEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(WebhookRouter.ROUTES.webhook(webhookId), {
@@ -128,11 +124,8 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = ModifyWebhookEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(
@@ -179,7 +172,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     options: ExecuteWebhookEntity,
-    query: ExecuteWebhookQueryEntity = {},
+    query: z.input<typeof ExecuteWebhookQueryEntity> = {},
   ): Promise<HttpResponse<WebhookEntity | undefined>> {
     const result = ExecuteWebhookEntity.safeParse(options);
     const resultQuery = ExecuteWebhookQueryEntity.safeParse(query);
@@ -211,15 +204,12 @@ export class WebhookRouter {
   executeSlackCompatibleWebhook(
     webhookId: Snowflake,
     token: string,
-    query: ExecuteWebhookQueryEntity = {},
+    query: z.input<typeof ExecuteWebhookQueryEntity> = {},
   ): Promise<HttpResponse<void>> {
     const result = ExecuteWebhookQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -236,15 +226,12 @@ export class WebhookRouter {
   executeGithubCompatibleWebhook(
     webhookId: Snowflake,
     token: string,
-    query: ExecuteWebhookQueryEntity = {},
+    query: z.input<typeof ExecuteWebhookQueryEntity> = {},
   ): Promise<HttpResponse<void>> {
     const result = ExecuteWebhookQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(
@@ -266,11 +253,8 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = GetWebhookMessageQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(
@@ -326,11 +310,8 @@ export class WebhookRouter {
   ): Promise<HttpResponse<void>> {
     const result = GetWebhookMessageQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.delete(

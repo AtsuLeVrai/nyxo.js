@@ -10,10 +10,10 @@ export const ListEntitlementQueryEntity = z
     sku_ids: z.string().optional(),
     before: Snowflake.optional(),
     after: Snowflake.optional(),
-    limit: z.number().int().min(1).max(100).default(100).optional(),
+    limit: z.number().int().min(1).max(100).optional().default(100),
     guild_id: Snowflake.optional(),
-    exclude_ended: z.boolean().default(false).optional(),
-    exclude_deleted: z.boolean().default(true).optional(),
+    exclude_ended: z.boolean().optional().default(false),
+    exclude_deleted: z.boolean().optional().default(true),
   })
   .strict();
 

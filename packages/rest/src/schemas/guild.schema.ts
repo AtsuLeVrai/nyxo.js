@@ -129,7 +129,7 @@ export interface ListActiveGuildThreadsEntity {
  */
 export const ListGuildMembersQueryEntity = z
   .object({
-    limit: z.number().min(1).max(1000).default(1).optional(),
+    limit: z.number().min(1).max(1000).optional().default(1),
     after: Snowflake.optional(),
   })
   .strict();
@@ -144,7 +144,7 @@ export type ListGuildMembersQueryEntity = z.infer<
 export const SearchGuildMembersQueryEntity = z
   .object({
     query: z.string(),
-    limit: z.number().min(1).max(1000).default(1).optional(),
+    limit: z.number().min(1).max(1000).optional().default(1),
   })
   .strict();
 
@@ -189,7 +189,7 @@ export type ModifyGuildMemberEntity = z.infer<typeof ModifyGuildMemberEntity>;
  */
 export const GetGuildBansQueryEntity = z
   .object({
-    limit: z.number().min(1).max(1000).default(1000).optional(),
+    limit: z.number().min(1).max(1000).optional().default(1000),
     before: Snowflake.optional(),
     after: Snowflake.optional(),
   })
@@ -216,7 +216,7 @@ export type CreateGuildBanEntity = z.infer<typeof CreateGuildBanEntity>;
 export const BulkGuildBanEntity = z
   .object({
     user_ids: z.array(Snowflake).max(200),
-    delete_message_seconds: z.number().min(0).max(604800).default(0).optional(),
+    delete_message_seconds: z.number().min(0).max(604800).optional().default(0),
   })
   .strict();
 
@@ -235,16 +235,16 @@ export interface BulkGuildBanResponseEntity {
  */
 export const CreateGuildRoleEntity = z
   .object({
-    name: z.string().max(100).default("new role"),
+    name: z.string().max(100).optional().default("new role"),
     permissions: z.string(),
-    color: z.number().int().default(0),
-    hoist: z.boolean().default(false),
+    color: z.number().int().optional().default(0),
+    hoist: z.boolean().optional().default(false),
     icon: z
       .string()
       .regex(/^data:image\/(jpeg|png|gif);base64,/)
       .nullable(),
     unicode_emoji: z.string().emoji().optional(),
-    mentionable: z.boolean().default(false),
+    mentionable: z.boolean().optional().default(false),
   })
   .strict();
 
@@ -278,7 +278,7 @@ export type ModifyGuildRoleEntity = z.infer<typeof ModifyGuildRoleEntity>;
  */
 export const GetGuildPruneCountQueryEntity = z
   .object({
-    days: z.number().min(1).max(30).default(7).optional(),
+    days: z.number().min(1).max(30).optional().default(7),
     include_roles: z.string().optional(),
   })
   .strict();
@@ -292,8 +292,8 @@ export type GetGuildPruneCountQueryEntity = z.infer<
  */
 export const BeginGuildPruneEntity = z
   .object({
-    days: z.number().min(1).max(30).default(7),
-    compute_prune_count: z.boolean().default(true),
+    days: z.number().min(1).max(30).optional().default(7),
+    compute_prune_count: z.boolean().optional().default(true),
     include_roles: z.array(Snowflake),
     /** @deprecated */
     reason: z.string().optional(),

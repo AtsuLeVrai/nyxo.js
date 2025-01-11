@@ -41,15 +41,15 @@ export const CreateGlobalApplicationCommandEntity = z
      * @deprecated User `contexts instead`
      */
     dm_permission: z.boolean().nullish(),
-    default_permission: z.boolean().default(true).optional(),
+    default_permission: z.boolean().optional().default(true),
     integration_types: z
       .array(z.nativeEnum(ApplicationIntegrationType))
       .optional(),
     contexts: z.array(z.nativeEnum(InteractionContextType)).optional(),
     type: z
       .nativeEnum(ApplicationCommandType)
-      .default(ApplicationCommandType.ChatInput)
-      .optional(),
+      .optional()
+      .default(ApplicationCommandType.ChatInput),
     nsfw: z.boolean().optional(),
   })
   .strict();

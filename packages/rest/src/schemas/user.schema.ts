@@ -27,8 +27,8 @@ export const GetCurrentUserGuildsQueryEntity = z
   .object({
     before: Snowflake.optional(),
     after: Snowflake.optional(),
-    limit: z.number().int().default(200).optional(),
-    with_counts: z.boolean().default(false).optional(),
+    limit: z.number().int().optional().default(200),
+    with_counts: z.boolean().optional().default(false),
   })
   .strict();
 

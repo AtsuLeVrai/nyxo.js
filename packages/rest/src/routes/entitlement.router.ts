@@ -1,4 +1,6 @@
 import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
+import type { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateTestEntitlementEntity,
@@ -27,15 +29,12 @@ export class EntitlementRouter {
    */
   listEntitlements(
     applicationId: Snowflake,
-    query: ListEntitlementQueryEntity = {},
+    query: z.input<typeof ListEntitlementQueryEntity> = {},
   ): Promise<HttpResponse<EntitlementEntity[]>> {
     const result = ListEntitlementQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(
@@ -79,11 +78,8 @@ export class EntitlementRouter {
   ): Promise<HttpResponse<EntitlementEntity>> {
     const result = CreateTestEntitlementEntity.safeParse(test);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(

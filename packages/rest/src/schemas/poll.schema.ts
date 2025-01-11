@@ -14,7 +14,7 @@ export interface PollVotersResponseEntity {
 export const GetAnswerVotersQueryEntity = z
   .object({
     after: Snowflake.optional(),
-    limit: z.number().int().min(1).max(100).default(25).optional(),
+    limit: z.number().int().min(1).max(100).optional().default(25),
   })
   .strict();
 

@@ -10,8 +10,8 @@ export const CreateStageInstanceEntity = z
     topic: z.string().min(1).max(120),
     privacy_level: z
       .nativeEnum(StageInstancePrivacyLevel)
-      .default(StageInstancePrivacyLevel.GuildOnly)
-      .optional(),
+      .optional()
+      .default(StageInstancePrivacyLevel.GuildOnly),
     send_start_notification: z.boolean().optional(),
     guild_scheduled_event_id: Snowflake.optional(),
   })

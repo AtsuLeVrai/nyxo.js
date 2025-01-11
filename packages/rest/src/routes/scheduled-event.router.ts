@@ -3,6 +3,7 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateGuildScheduledEventEntity,
@@ -49,11 +50,8 @@ export class ScheduledEventRouter {
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = CreateGuildScheduledEventEntity.safeParse(event);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(ScheduledEventRouter.ROUTES.events(guildId), {
@@ -86,11 +84,8 @@ export class ScheduledEventRouter {
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = ModifyGuildScheduledEventEntity.safeParse(modify);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(
@@ -124,11 +119,8 @@ export class ScheduledEventRouter {
   ): Promise<HttpResponse<GuildScheduledEventUserEntity[]>> {
     const result = GetGuildScheduledEventUsersQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(ScheduledEventRouter.ROUTES.users(guildId, eventId), {

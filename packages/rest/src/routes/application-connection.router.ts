@@ -4,6 +4,7 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import type { HttpResponse } from "../types/index.js";
 
@@ -42,11 +43,8 @@ export class ApplicationConnectionRouter {
       .max(5)
       .safeParse(metadata);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(

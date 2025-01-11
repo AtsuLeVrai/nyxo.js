@@ -54,8 +54,8 @@ export type ModifyGuildScheduledEventEntity = z.infer<
  */
 export const GetGuildScheduledEventUsersQueryEntity = z
   .object({
-    limit: z.number().max(100).default(100).optional(),
-    with_member: z.boolean().default(false).optional(),
+    limit: z.number().max(100).optional().default(100),
+    with_member: z.boolean().optional().default(false),
     before: Snowflake.optional(),
     after: Snowflake.optional(),
   })

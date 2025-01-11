@@ -7,6 +7,8 @@ import type {
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
+import type { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateGroupDmEntity,
@@ -59,11 +61,8 @@ export class UserRouter {
   ): Promise<HttpResponse<UserEntity>> {
     const result = ModifyCurrentUserEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(UserRouter.ROUTES.me, {
@@ -75,15 +74,12 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   getCurrentUserGuilds(
-    query: GetCurrentUserGuildsQueryEntity = {},
+    query: z.input<typeof GetCurrentUserGuildsQueryEntity> = {},
   ): Promise<HttpResponse<GuildEntity[]>> {
     const result = GetCurrentUserGuildsQueryEntity.safeParse(query);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(UserRouter.ROUTES.guilds, {
@@ -124,11 +120,8 @@ export class UserRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = CreateGroupDmEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(UserRouter.ROUTES.channels, {
@@ -162,11 +155,8 @@ export class UserRouter {
     const result =
       UpdateCurrentUserApplicationRoleConnectionEntity.safeParse(connection);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.put(UserRouter.ROUTES.applicationRole(applicationId), {

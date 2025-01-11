@@ -32,7 +32,6 @@ export interface HttpResponse<T = unknown> {
 }
 
 export interface RestEvents {
-  debug: (message: string, data?: unknown) => void;
   request: (
     path: string,
     method: string,

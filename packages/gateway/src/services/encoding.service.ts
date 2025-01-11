@@ -1,23 +1,30 @@
 import erlpack from "erlpack";
 import { EventEmitter } from "eventemitter3";
-import {
-  EncodingOptions,
-  type EncodingType,
+import type { z } from "zod";
+import { fromError } from "zod-validation-error";
+import { EncodingError } from "../errors/index.js";
+import { EncodingOptions } from "../schemas/index.js";
+import type {
+  EncodingType,
+  GatewayEvents,
   PayloadEntity,
   ProcessOptions,
-} from "../schemas/index.js";
-import type { GatewayEvents } from "../types/index.js";
+} from "../types/index.js";
 
 export class EncodingService extends EventEmitter<GatewayEvents> {
-  readonly #options: EncodingOptions;
+  readonly #options: z.output<typeof EncodingOptions>;
 
-  constructor(options: Partial<EncodingOptions> = {}) {
+  constructor(options: z.input<typeof EncodingOptions> = {}) {
     super();
-    this.#options = EncodingOptions.parse(options);
+    try {
+      this.#options = EncodingOptions.parse(options);
+    } catch (error) {
+      throw EncodingError.validationError(fromError(error).message);
+    }
   }
 
   get encodingType(): EncodingType {
-    return this.#options.encodingType;
+    return this.#options.type;
   }
 
   get maxPayloadSize(): number {
@@ -25,53 +32,67 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
   }
 
   get isJson(): boolean {
-    return this.#options.encodingType === "json";
+    return this.#options.type === "json";
   }
 
   get isEtf(): boolean {
-    return this.#options.encodingType === "etf";
-  }
-
-  get currentOptions(): Readonly<EncodingOptions> {
-    return Object.freeze({ ...this.#options });
+    return this.#options.type === "etf";
   }
 
   encode(data: PayloadEntity): Buffer | string {
-    const result = this.isJson ? this.#encodeJson(data) : this.#encodeEtf(data);
+    try {
+      const result = this.isJson
+        ? this.#encodeJson(data)
+        : this.#encodeEtf(data);
 
-    const size = Buffer.isBuffer(result)
-      ? result.length
-      : Buffer.byteLength(result);
+      const size = Buffer.isBuffer(result)
+        ? result.length
+        : Buffer.byteLength(result);
 
-    if (size > this.#options.maxPayloadSize) {
-      throw new Error(
-        `Payload size ${size} bytes exceeds maximum ${this.#options.maxPayloadSize} bytes`,
+      if (size > this.#options.maxPayloadSize) {
+        throw EncodingError.payloadSizeExceeded(
+          size,
+          this.#options.maxPayloadSize,
+        );
+      }
+
+      this.emit(
+        "debug",
+        `[Gateway:Encoding] Encoded successfully - Size: ${size} bytes`,
       );
+
+      return result;
+    } catch (error) {
+      if (error instanceof EncodingError) {
+        throw error;
+      }
+      throw EncodingError.encodingError(this.#options.type, error);
     }
-
-    this.emit(
-      "debug",
-      `[Gateway:Encoding] Encoded successfully - Size: ${size} bytes`,
-    );
-
-    return result;
   }
 
   decode(data: Buffer | string): PayloadEntity {
-    const result = this.isJson ? this.#decodeJson(data) : this.#decodeEtf(data);
+    try {
+      const result = this.isJson
+        ? this.#decodeJson(data)
+        : this.#decodeEtf(data);
 
-    this.emit(
-      "debug",
-      `[Gateway:Encoding] Decoded successfully - Opcode: ${result.op}`,
-    );
+      this.emit(
+        "debug",
+        `[Gateway:Encoding] Decoded successfully - Opcode: ${result.op}`,
+      );
 
-    return result;
+      return result;
+    } catch (error) {
+      if (error instanceof EncodingError) {
+        throw error;
+      }
+      throw EncodingError.decodingError(this.#options.type, error);
+    }
   }
 
-  #encodeJson(data: PayloadEntity): string {
+  #encodeJson(data: unknown): string {
     const processed = this.#processData(data, {
       processBigInts: this.#options.allowBigInts,
-      validateSnowflakes: this.#options.validateSnowflakes,
     });
 
     return JSON.stringify(
@@ -81,77 +102,79 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
     );
   }
 
-  #encodeEtf(data: PayloadEntity): Buffer {
+  #encodeEtf(data: unknown): Buffer {
     const processed = this.#processData(data, {
       validateEtfKeys: !this.#options.etfAllowAtomKeys,
       processBigInts: this.#options.allowBigInts,
-      validateSnowflakes: this.#options.validateSnowflakes,
     });
 
-    return erlpack.pack(processed);
+    try {
+      return erlpack.pack(processed);
+    } catch (error) {
+      throw EncodingError.encodingError("ETF", error);
+    }
   }
 
   #decodeJson(data: Buffer | string): PayloadEntity {
-    const strData = typeof data === "string" ? data : data.toString("utf-8");
-    const payload: PayloadEntity = JSON.parse(
-      strData,
-      this.#options.jsonReviver,
-    );
-
-    if (this.#options.validateKeys && !PayloadEntity.parse(payload)) {
-      throw new Error("Invalid JSON payload structure");
+    try {
+      const strData = typeof data === "string" ? data : data.toString("utf-8");
+      return JSON.parse(strData, this.#options.jsonReviver);
+    } catch (error) {
+      throw EncodingError.decodingError("JSON", error);
     }
-
-    return payload;
   }
 
   #decodeEtf(data: Buffer | string): PayloadEntity {
-    const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    const payload: PayloadEntity = erlpack.unpack(bufferData);
-
-    if (this.#options.validateKeys && !PayloadEntity.parse(payload)) {
-      throw new Error("Invalid ETF payload structure");
+    try {
+      const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
+      return erlpack.unpack(bufferData) as PayloadEntity;
+    } catch (error) {
+      throw EncodingError.decodingError("ETF", error);
     }
-
-    return payload;
   }
 
   #processData(data: unknown, options: ProcessOptions = {}): unknown {
-    const validatedOptions = ProcessOptions.parse(options);
-
-    if (data === null || data === undefined) {
-      return data;
-    }
-
-    if (validatedOptions.processBigInts && typeof data === "bigint") {
-      return data.toString();
-    }
-
-    if (Array.isArray(data)) {
-      return data.map((item) => this.#processData(item, validatedOptions));
-    }
-
-    if (typeof data === "object" && data !== null) {
-      const processed: Record<string, unknown> = {};
-
-      for (const [key, value] of Object.entries(data)) {
-        if (validatedOptions.validateEtfKeys && typeof key !== "string") {
-          this.emit(
-            "debug",
-            "[Gateway:Encoding] Invalid ETF key type detected",
-          );
-
-          if (this.#options.etfStrictMode) {
-            throw new Error("ETF encoding requires string keys");
-          }
-          continue;
-        }
-        processed[key] = this.#processData(value, validatedOptions);
+    try {
+      if (data === null || data === undefined) {
+        return data;
       }
 
-      return processed;
-    }
+      if (options.processBigInts && typeof data === "bigint") {
+        return data.toString();
+      }
 
-    return data;
+      if (Array.isArray(data)) {
+        return data.map((item) => this.#processData(item, options));
+      }
+
+      if (typeof data === "object" && data !== null) {
+        const processed: Record<string, unknown> = {};
+
+        for (const [key, value] of Object.entries(data)) {
+          if (options.validateEtfKeys && typeof key !== "string") {
+            this.emit(
+              "debug",
+              "[Gateway:Encoding] Invalid ETF key type detected",
+            );
+
+            if (this.#options.etfStrictMode) {
+              throw EncodingError.invalidEtfKeys(String(key));
+            }
+            continue;
+          }
+
+          processed[key] = this.#processData(value, options);
+        }
+
+        return processed;
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof EncodingError) {
+        throw error;
+      }
+      throw EncodingError.encodingError("data processing", error);
+    }
   }
 }

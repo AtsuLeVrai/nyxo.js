@@ -1,4 +1,5 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateApplicationEmojiEntity,
@@ -53,11 +54,8 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = CreateGuildEmojiEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(EmojiRouter.ROUTES.guildBase(guildId), {
@@ -76,11 +74,8 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = ModifyGuildEmojiEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
@@ -133,11 +128,8 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = CreateApplicationEmojiEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(EmojiRouter.ROUTES.applicationBase(applicationId), {
@@ -157,11 +149,8 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = ModifyApplicationEmojiEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(

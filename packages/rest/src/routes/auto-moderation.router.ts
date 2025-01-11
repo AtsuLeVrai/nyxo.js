@@ -1,4 +1,5 @@
 import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   CreateAutoModerationRuleEntity,
@@ -49,11 +50,8 @@ export class AutoModerationRouter {
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
     const result = CreateAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.post(AutoModerationRouter.ROUTES.base(guildId), {
@@ -73,11 +71,8 @@ export class AutoModerationRouter {
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
     const result = ModifyAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.patch(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {

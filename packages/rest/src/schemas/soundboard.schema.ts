@@ -29,7 +29,7 @@ export const CreateGuildSoundboardSoundEntity = z
   .object({
     name: z.string().min(2).max(32),
     sound: z.string(),
-    volume: z.number().min(0).max(1).default(1).nullish(),
+    volume: z.number().min(0).max(1).nullish().default(1),
     emoji_id: Snowflake.nullish(),
     emoji_name: z.string().nullish(),
   })

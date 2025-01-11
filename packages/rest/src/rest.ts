@@ -1,8 +1,15 @@
-import { ApiVersion } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import { type Brotli, BrotliDecompress, Gunzip, Inflate } from "minizlib";
-import { Pool, ProxyAgent, RetryAgent, type RetryHandler } from "undici";
-import { z } from "zod";
+import { Pool, ProxyAgent, RetryAgent } from "undici";
+import type { z } from "zod";
+import { fromError } from "zod-validation-error";
+import {
+  RestApiError,
+  RestHttpError,
+  isRestCloudflareBanError,
+  isRestRateLimitError,
+} from "./errors/index.js";
+import { RestOptions } from "./options/index.js";
 import {
   ApplicationCommandRouter,
   ApplicationConnectionRouter,
@@ -34,40 +41,11 @@ import { FileProcessorService, RateLimitService } from "./services/index.js";
 import type {
   FileType,
   HttpResponse,
+  JsonErrorEntity,
   PathLike,
   RestEvents,
   RouteEntity,
 } from "./types/index.js";
-
-export const RestOptions = z
-  .object({
-    token: z.string(),
-    version: z.nativeEnum(ApiVersion).optional().default(ApiVersion.V10),
-    compress: z.boolean().optional().default(true),
-    userAgent: z
-      .string()
-      .optional()
-      .default("DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)"),
-    pool: z.custom<Pool.Options>().optional().default({
-      allowH2: false,
-      maxConcurrentStreams: 100,
-      keepAliveTimeout: 10000,
-      keepAliveMaxTimeout: 30000,
-      bodyTimeout: 15000,
-      headersTimeout: 15000,
-    }),
-    retry: z.custom<RetryHandler.RetryOptions>().optional().default({
-      retryAfter: false,
-      maxRetries: 3,
-      minTimeout: 100,
-      maxTimeout: 15000,
-      timeoutFactor: 2,
-    }),
-    proxy: z.custom<ProxyAgent.Options>().optional(),
-  })
-  .strict();
-
-export type RestOptions = z.infer<typeof RestOptions>;
 
 export class Rest extends EventEmitter<RestEvents> {
   #applications: ApplicationRouter | null = null;
@@ -100,16 +78,21 @@ export class Rest extends EventEmitter<RestEvents> {
 
   #retryAgent: RetryAgent;
   readonly #pool: Pool;
-  readonly #options: RestOptions;
+  readonly #options: z.output<typeof RestOptions>;
   readonly #rateLimitService: RateLimitService;
   readonly #processor: FileProcessorService;
 
-  constructor(options: RestOptions) {
+  constructor(options: z.input<typeof RestOptions>) {
     super();
-    this.#options = RestOptions.parse(options);
+    try {
+      this.#options = RestOptions.parse(options);
+    } catch (error) {
+      const validationError = fromError(error);
+      throw new Error(validationError.message);
+    }
 
-    this.#rateLimitService = new RateLimitService();
-    this.#processor = new FileProcessorService();
+    this.#rateLimitService = new RateLimitService(this.#options.rateLimit);
+    this.#processor = new FileProcessorService(this.#options.fileProcessor);
 
     this.#pool = new Pool("https://discord.com", this.#options.pool);
 
@@ -330,7 +313,27 @@ export class Rest extends EventEmitter<RestEvents> {
 
     try {
       this.#pendingRequests.add(requestId);
-      await this.#rateLimitService.checkRateLimit(options.path, options.method);
+
+      try {
+        await this.#rateLimitService.checkRateLimit(
+          options.path,
+          options.method,
+        );
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: <explanation>
+        // biome-ignore lint/suspicious/noConsoleLog: <explanation>
+        console.log(error);
+        if (isRestRateLimitError(error) || isRestCloudflareBanError(error)) {
+          throw error;
+        }
+        throw new RestHttpError(
+          429,
+          "Rate limit check failed",
+          options.method,
+          options.path,
+        );
+      }
+
       const controller = new AbortController();
 
       const preparedOptions = options.files
@@ -373,8 +376,11 @@ export class Rest extends EventEmitter<RestEvents> {
 
       const contentType = response.headers["content-type"];
       if (!contentType?.includes("application/json")) {
-        throw new Error(
+        throw new RestHttpError(
+          response.statusCode,
           `Expected content-type application/json but received ${contentType}`,
+          options.method,
+          options.path,
         );
       }
 
@@ -390,7 +396,33 @@ export class Rest extends EventEmitter<RestEvents> {
       try {
         data = JSON.parse(decompressedBody.toString());
       } catch {
-        throw new Error("Failed to parse response body");
+        throw new RestHttpError(
+          response.statusCode,
+          "Failed to parse response body",
+          options.method,
+          options.path,
+        );
+      }
+
+      if (response.statusCode >= 400) {
+        if (this.#isDiscordApiError(data)) {
+          throw new RestApiError(
+            data.code,
+            response.statusCode,
+            data.message,
+            data.errors,
+            options.method,
+            options.path,
+          );
+        }
+        throw new RestHttpError(
+          response.statusCode,
+          typeof data === "object" && data !== null && "message" in data
+            ? String(data.message)
+            : "Unknown API Error",
+          options.method,
+          options.path,
+        );
       }
 
       if (data === null || data === undefined) {
@@ -510,6 +542,15 @@ export class Rest extends EventEmitter<RestEvents> {
     };
   }
 
+  #isDiscordApiError(data: unknown): data is JsonErrorEntity {
+    return (
+      typeof data === "object" &&
+      data !== null &&
+      "code" in data &&
+      "message" in data
+    );
+  }
+
   async #decompress(buffer: Buffer, contentEncoding?: string): Promise<Buffer> {
     let decompressedBody: Brotli | Inflate | Gunzip;
     if (contentEncoding?.includes("br")) {
@@ -562,7 +603,6 @@ export class Rest extends EventEmitter<RestEvents> {
 
   #setupEventForwarding(...emitter: EventEmitter<RestEvents>[]): void {
     const events: (keyof RestEvents)[] = [
-      "debug",
       "request",
       "response",
       "rateLimited",

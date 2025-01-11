@@ -1,4 +1,6 @@
 import type { AuditLogEntity, Snowflake } from "@nyxjs/core";
+import type { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import { GetGuildAuditLogQueryEntity } from "../schemas/index.js";
 import type { HttpResponse } from "../types/index.js";
@@ -20,15 +22,12 @@ export class AuditLogRouter {
    */
   getGuildAuditLog(
     guildId: Snowflake,
-    options: GetGuildAuditLogQueryEntity = {},
+    options: z.input<typeof GetGuildAuditLogQueryEntity> = {},
   ): Promise<HttpResponse<AuditLogEntity>> {
     const result = GetGuildAuditLogQueryEntity.safeParse(options);
     if (!result.success) {
-      throw new Error(
-        result.error.errors
-          .map((e) => `[${e.path.join(".")}] ${e.message}`)
-          .join(", "),
-      );
+      const validationError = fromZodError(result.error);
+      throw new Error(validationError.message);
     }
 
     return this.#rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {

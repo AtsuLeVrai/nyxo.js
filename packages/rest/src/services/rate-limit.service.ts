@@ -1,5 +1,10 @@
 import { setTimeout } from "node:timers/promises";
+import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
+import type { z } from "zod";
+import { fromError } from "zod-validation-error";
+import { RestCloudflareBanError, RestRateLimitError } from "../errors/index.js";
+import { RateLimitOptions } from "../options/index.js";
 import type {
   CloudflareAnalytics,
   HttpStatusCode,
@@ -9,36 +14,24 @@ import type {
 } from "../types/index.js";
 
 export class RateLimitService extends EventEmitter<RestEvents> {
-  #buckets = new Map<string, RateLimitBucket>();
-  #routesToBuckets = new Map<string, string>();
+  #buckets = new Store<string, RateLimitBucket>();
+  #routesToBuckets = new Store<string, string>();
   #invalidRequestsCount = 0;
   #invalidRequestsResetTime = Date.now();
   #globalReset: number | null = null;
   #cloudflareAnalytics: CloudflareAnalytics[] = [];
-  readonly #cloudflareWindow = 600_000;
-  readonly #headers = {
-    limit: "x-ratelimit-limit",
-    remaining: "x-ratelimit-remaining",
-    reset: "x-ratelimit-reset",
-    resetAfter: "x-ratelimit-reset-after",
-    bucket: "x-ratelimit-bucket",
-    scope: "x-ratelimit-scope",
-    global: "x-ratelimit-global",
-    retryAfter: "retry-after",
-  } as const;
 
-  readonly #sharedRoutes = new Map<RegExp, string>([
-    [/^\/guilds\/\d+\/emojis/, "emoji"],
-    [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
-    [/^\/guilds\/\d+\/channels/, "guild-channels"],
-    [/^\/guilds\/\d+\/members/, "guild-members"],
-  ]);
+  readonly #options: z.output<typeof RateLimitOptions>;
 
-  readonly #majorParams = [
-    { regex: /^\/guilds\/(\d+)/, param: "guild_id" },
-    { regex: /^\/channels\/(\d+)/, param: "channel_id" },
-    { regex: /^\/webhooks\/(\d+)/, param: "webhook_id" },
-  ];
+  constructor(options: z.input<typeof RateLimitOptions> = {}) {
+    super();
+    try {
+      this.#options = RateLimitOptions.parse(options);
+    } catch (error) {
+      const validationError = fromError(error);
+      throw new Error(validationError.message);
+    }
+  }
 
   processHeaders(
     method: string,
@@ -53,22 +46,51 @@ export class RateLimitService extends EventEmitter<RestEvents> {
     }
 
     if (status === 403 && headers["cf-ray"]) {
+      const analytics = {
+        total: this.#cloudflareAnalytics.length,
+        errors: this.#cloudflareAnalytics.filter((d) => d.status >= 400).length,
+        lastMinute: this.#cloudflareAnalytics.filter(
+          (d) => Date.now() - d.timestamp < 60_000,
+        ).length,
+        mostAffectedRoutes: this.#getMostAffectedRoutes(),
+      };
+
+      const error = new RestCloudflareBanError(
+        this.#options.timeouts.cloudflareWindow,
+        path,
+        analytics,
+      );
+
       this.emit("cloudflareBan", {
         path,
-        analytics: this.#getCloudflareAnalytics(),
-        recommendedWaitTime: 600_000,
+        analytics,
+        recommendedWaitTime: this.#options.timeouts.cloudflareWindow,
       });
-      return;
+
+      throw error;
     }
 
     if (status === 429) {
-      const retryAfter = Number(headers[this.#headers.retryAfter]) * 1000;
-      const isGlobal = headers[this.#headers.global] === "true";
-      const scope = (headers[this.#headers.scope] as RateLimitScope) || "user";
+      const retryAfter =
+        Number(headers[this.#options.headers.retryAfter]) * 1000;
+      const isGlobal = headers[this.#options.headers.global] === "true";
+      const scope =
+        (headers[this.#options.headers.scope] as RateLimitScope) || "user";
 
       if (isGlobal) {
         this.#globalReset = Date.now() + retryAfter;
       }
+
+      const error = new RestRateLimitError(
+        retryAfter,
+        isGlobal,
+        scope,
+        method,
+        path,
+        retryAfter,
+        -1,
+        0,
+      );
 
       this.emit("rateLimited", {
         timeToReset: retryAfter,
@@ -81,10 +103,10 @@ export class RateLimitService extends EventEmitter<RestEvents> {
         retryAfter,
       });
 
-      return;
+      throw error;
     }
 
-    const bucketId = headers[this.#headers.bucket];
+    const bucketId = headers[this.#options.headers.bucket];
     if (!bucketId) {
       return;
     }
@@ -92,11 +114,11 @@ export class RateLimitService extends EventEmitter<RestEvents> {
     const routeKey = this.#generateRouteKey(method, path);
     const bucket: RateLimitBucket = {
       hash: bucketId,
-      limit: Number(headers[this.#headers.limit]),
-      remaining: Number(headers[this.#headers.remaining]),
-      reset: Number(headers[this.#headers.reset]),
-      resetAfter: Number(headers[this.#headers.resetAfter]),
-      scope: (headers[this.#headers.scope] as RateLimitScope) || "user",
+      limit: Number(headers[this.#options.headers.limit]),
+      remaining: Number(headers[this.#options.headers.remaining]),
+      reset: Number(headers[this.#options.headers.reset]),
+      resetAfter: Number(headers[this.#options.headers.resetAfter]),
+      scope: (headers[this.#options.headers.scope] as RateLimitScope) || "user",
       sharedRoute: this.#getSharedRoute(path),
     };
 
@@ -106,18 +128,34 @@ export class RateLimitService extends EventEmitter<RestEvents> {
 
   async checkRateLimit(method: string, path: string): Promise<void> {
     if (this.#isCloudflareBlocked()) {
-      throw new Error(
-        "Currently banned by Cloudflare. Please wait before retrying.",
+      throw new RestCloudflareBanError(
+        this.#options.timeouts.cloudflareBlockWindow,
+        path,
+        {
+          total: this.#cloudflareAnalytics.length,
+          errors: this.#cloudflareAnalytics.filter((d) => d.status >= 400)
+            .length,
+          lastMinute: this.#cloudflareAnalytics.filter(
+            (d) => Date.now() - d.timestamp < 60_000,
+          ).length,
+          mostAffectedRoutes: this.#getMostAffectedRoutes(),
+        },
       );
     }
 
     if (this.#globalReset && Date.now() < this.#globalReset) {
       const timeToReset = this.#globalReset - Date.now();
-      throw new Error(`Global rate limit, retry in ${timeToReset}ms`);
+      throw new RestRateLimitError(timeToReset, true, "global", method, path);
     }
 
     if (this.#isInvalidRequestLimitExceeded()) {
-      throw new Error("Invalid request limit exceeded (10,000 per 10 minutes)");
+      throw new RestRateLimitError(
+        this.#options.timeouts.invalidRequestWindow,
+        false,
+        "user",
+        method,
+        path,
+      );
     }
 
     const routeKey = this.#generateRouteKey(method, path);
@@ -137,6 +175,18 @@ export class RateLimitService extends EventEmitter<RestEvents> {
       const timeToReset = Math.max(0, reset - now);
 
       if (timeToReset > 0) {
+        const error = new RestRateLimitError(
+          timeToReset,
+          false,
+          bucket.scope,
+          method,
+          path,
+          undefined,
+          bucket.limit,
+          bucket.remaining,
+          bucket.hash,
+        );
+
         this.emit("rateLimited", {
           bucketHash: bucket.hash,
           timeToReset,
@@ -149,6 +199,7 @@ export class RateLimitService extends EventEmitter<RestEvents> {
         });
 
         await setTimeout(timeToReset);
+        throw error;
       }
     }
   }
@@ -166,7 +217,7 @@ export class RateLimitService extends EventEmitter<RestEvents> {
     const now = Date.now();
 
     this.#cloudflareAnalytics = this.#cloudflareAnalytics.filter(
-      (data) => now - data.timestamp < this.#cloudflareWindow,
+      (data) => now - data.timestamp < this.#options.timeouts.cloudflareWindow,
     );
 
     this.#cloudflareAnalytics.push({
@@ -179,10 +230,10 @@ export class RateLimitService extends EventEmitter<RestEvents> {
       (data) => data.status === 403 || data.status === 429,
     ).length;
 
-    if (errorCount >= 50) {
+    if (errorCount >= this.#options.timeouts.cloudflareErrorThreshold) {
       this.emit("cloudflareWarning", {
         errorCount,
-        timeWindow: this.#cloudflareWindow,
+        timeWindow: this.#options.timeouts.cloudflareWindow,
         mostAffectedRoutes: this.#getMostAffectedRoutes(),
       });
     }
@@ -191,10 +242,13 @@ export class RateLimitService extends EventEmitter<RestEvents> {
   #isCloudflareBlocked(): boolean {
     const now = Date.now();
     const recentErrors = this.#cloudflareAnalytics
-      .filter((data) => now - data.timestamp < 60_000)
+      .filter(
+        (data) =>
+          now - data.timestamp < this.#options.timeouts.cloudflareBlockWindow,
+      )
       .filter((data) => data.status === 403 || data.status === 429).length;
 
-    return recentErrors >= 10;
+    return recentErrors >= this.#options.timeouts.cloudflareBlockThreshold;
   }
 
   #getMostAffectedRoutes(): Array<{ path: string; count: number }> {
@@ -211,33 +265,18 @@ export class RateLimitService extends EventEmitter<RestEvents> {
       .slice(0, 5);
   }
 
-  #getCloudflareAnalytics(): {
-    total: number;
-    errors: number;
-    lastMinute: number;
-    mostAffectedRoutes: Array<{ path: string; count: number }>;
-  } {
-    const now = Date.now();
-    return {
-      total: this.#cloudflareAnalytics.length,
-      errors: this.#cloudflareAnalytics.filter((d) => d.status >= 400).length,
-      lastMinute: this.#cloudflareAnalytics.filter(
-        (d) => now - d.timestamp < 60_000,
-      ).length,
-      mostAffectedRoutes: this.#getMostAffectedRoutes(),
-    };
-  }
-
   #generateRouteKey(method: string, path: string): string {
-    for (const [pattern, identifier] of this.#sharedRoutes) {
-      if (pattern.test(path)) {
+    for (const [pattern, identifier] of Object.entries(
+      this.#options.sharedRoutes,
+    )) {
+      if (new RegExp(pattern).test(path)) {
         return `shared:${identifier}`;
       }
     }
 
     let normalizedPath = path;
-    for (const { regex, param } of this.#majorParams) {
-      const match = path.match(regex);
+    for (const { regex, param } of this.#options.majorParams) {
+      const match = path.match(new RegExp(regex));
       if (match) {
         normalizedPath = normalizedPath.replace(String(match[1]), `{${param}}`);
       }
@@ -249,17 +288,23 @@ export class RateLimitService extends EventEmitter<RestEvents> {
   #trackInvalidRequest(): void {
     const now = Date.now();
 
-    if (now - this.#invalidRequestsResetTime >= 600_000) {
+    if (
+      now - this.#invalidRequestsResetTime >=
+      this.#options.timeouts.invalidRequestWindow
+    ) {
       this.#invalidRequestsCount = 0;
       this.#invalidRequestsResetTime = now;
     }
 
     this.#invalidRequestsCount++;
 
-    if (this.#invalidRequestsCount >= 8000) {
+    if (
+      this.#invalidRequestsCount >=
+      this.#options.timeouts.invalidRequestWarningThreshold
+    ) {
       this.emit("invalidRequestWarning", {
         count: this.#invalidRequestsCount,
-        max: 10000,
+        max: this.#options.timeouts.invalidRequestMaxLimit,
       });
     }
   }
@@ -267,18 +312,26 @@ export class RateLimitService extends EventEmitter<RestEvents> {
   #isInvalidRequestLimitExceeded(): boolean {
     const now = Date.now();
 
-    if (now - this.#invalidRequestsResetTime >= 600_000) {
+    if (
+      now - this.#invalidRequestsResetTime >=
+      this.#options.timeouts.invalidRequestWindow
+    ) {
       this.#invalidRequestsCount = 0;
       this.#invalidRequestsResetTime = now;
       return false;
     }
 
-    return this.#invalidRequestsCount >= 10_000;
+    return (
+      this.#invalidRequestsCount >=
+      this.#options.timeouts.invalidRequestMaxLimit
+    );
   }
 
   #getSharedRoute(path: string): string | undefined {
-    for (const [pattern, identifier] of this.#sharedRoutes) {
-      if (pattern.test(path)) {
+    for (const [pattern, identifier] of Object.entries(
+      this.#options.sharedRoutes,
+    )) {
+      if (new RegExp(pattern).test(path)) {
         return identifier;
       }
     }
