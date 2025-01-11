@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BitwisePermissionFlags, LocaleKey } from "../enums/index.js";
-import { BitFieldManager, Snowflake } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 import {
   ApplicationCommandOptionEntity,
   ApplicationCommandOptionType,
@@ -146,7 +146,6 @@ export const InteractionCallbackMessagesEntity = z
           z.literal(MessageFlags.SuppressNotifications),
         ]),
       )
-      .transform((value) => new BitFieldManager<MessageFlags>(value))
       .optional(),
     components: z.array(ActionRowEntity).optional(),
     attachments: z.lazy(() => AttachmentEntity).optional(),

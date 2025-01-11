@@ -84,13 +84,9 @@ export const PollCreateRequestEntity = z
       .int()
       .min(1)
       .max(32 * 24)
-      .optional()
       .default(24),
-    allow_multiselect: z.boolean().optional().default(false),
-    layout_type: z
-      .nativeEnum(LayoutType)
-      .optional()
-      .default(LayoutType.Default),
+    allow_multiselect: z.boolean().default(false),
+    layout_type: z.nativeEnum(LayoutType).default(LayoutType.Default),
   })
   .strict();
 

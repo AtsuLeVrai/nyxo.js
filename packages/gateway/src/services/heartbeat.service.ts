@@ -1,9 +1,8 @@
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { HeartbeatError } from "../errors/index.js";
 import type { Gateway } from "../gateway.js";
-import { HeartbeatOptions } from "../schemas/index.js";
+import { HeartbeatOptions } from "../options/index.js";
 import type {
   GatewayEvents,
   HeartbeatState,
@@ -44,7 +43,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     try {
       this.#options = HeartbeatOptions.parse(options);
     } catch (error) {
-      throw HeartbeatError.validationError(fromError(error).message);
+      throw new Error(fromError(error).message);
     }
   }
 
@@ -82,11 +81,11 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
 
   start(interval: number): void {
     if (interval <= 0) {
-      throw HeartbeatError.invalidInterval(interval);
+      throw new Error(`Invalid heartbeat interval: ${interval}ms`);
     }
 
     if (this.isRunning) {
-      throw HeartbeatError.alreadyRunning();
+      throw new Error("Heartbeat service is already running");
     }
 
     this.#cleanupTimers();
@@ -128,10 +127,8 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       sequence < this.#options.minSequence ||
       sequence > this.#options.maxSequence
     ) {
-      throw HeartbeatError.invalidSequence(
-        sequence,
-        this.#options.minSequence,
-        this.#options.maxSequence,
+      throw new Error(
+        `Invalid sequence number: ${sequence} - Must be between ${this.#options.minSequence} and ${this.#options.maxSequence}`,
       );
     }
 
@@ -245,11 +242,10 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     }
 
     if (this.#stats.latency > this.#options.maxLatency) {
-      const warn = HeartbeatError.highLatency(
-        this.#stats.latency,
-        this.#options.maxLatency,
+      this.emit(
+        "warn",
+        `[Gateway:Heartbeat] High latency detected: ${this.#stats.latency}ms`,
       );
-      this.emit("warn", warn.message);
     }
   }
 

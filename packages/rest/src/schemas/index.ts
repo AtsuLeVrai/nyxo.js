@@ -6,6 +6,7 @@ export * from "./channel.schema.js";
 export * from "./emoji.schema.js";
 export * from "./entitlement.schema.js";
 export * from "./gateway.schema.js";
+export * from "./guild.schema.js";
 export * from "./guild-template.schema.js";
 export * from "./interaction.schema.js";
 export * from "./invite.schema.js";

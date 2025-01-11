@@ -155,7 +155,6 @@ export const ApplicationCommandEntity = z
     id: Snowflake,
     type: z
       .nativeEnum(ApplicationCommandType)
-      .optional()
       .default(ApplicationCommandType.ChatInput),
     application_id: Snowflake,
     guild_id: Snowflake.optional(),

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BitFieldManager, Snowflake } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-flags}
@@ -30,9 +30,7 @@ export const SkuEntity = z
     application_id: Snowflake,
     name: z.string(),
     slug: z.string(),
-    flags: z
-      .nativeEnum(SkuFlags)
-      .transform((value) => new BitFieldManager<SkuFlags>(value)),
+    flags: z.nativeEnum(SkuFlags),
   })
   .strict();
 

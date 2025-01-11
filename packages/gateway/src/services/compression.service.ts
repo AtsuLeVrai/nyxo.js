@@ -3,8 +3,7 @@ import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { CompressionError } from "../errors/index.js";
-import { CompressionOptions } from "../schemas/index.js";
+import { CompressionOptions } from "../options/index.js";
 import type { CompressionType, GatewayEvents } from "../types/index.js";
 
 export class CompressionService extends EventEmitter<GatewayEvents> {
@@ -20,7 +19,7 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
     try {
       this.#options = CompressionOptions.parse(options);
     } catch (error) {
-      throw CompressionError.validationError(fromError(error).message);
+      throw new Error(fromError(error).message);
     }
   }
 
@@ -50,16 +49,18 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
         this.#initializeZstd();
       }
     } catch (error) {
-      throw CompressionError.initializationFailed(
-        this.#options.type ?? "unknown",
-        error,
+      throw new Error(
+        `Failed to initialize compression for ${this.#options.type}`,
+        {
+          cause: error,
+        },
       );
     }
   }
 
   decompress(data: Buffer | Uint8Array): Buffer {
     if (!this.isInitialized) {
-      throw CompressionError.notInitialized();
+      throw new Error("Compression service is not initialized");
     }
 
     const buffer = Buffer.from(data.buffer, data.byteOffset, data.length);
@@ -76,10 +77,9 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
 
       return decompressed;
     } catch (error) {
-      throw CompressionError.decompressionFailed(
-        this.#options.type ?? "unknown",
-        error,
-      );
+      throw new Error(`Failed to decompress data using ${this.#options.type}`, {
+        cause: error,
+      });
     }
   }
 
@@ -128,9 +128,8 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
       this.#options.maxChunkSize &&
       chunk.length > this.#options.maxChunkSize
     ) {
-      throw CompressionError.invalidChunkSize(
-        chunk.length,
-        this.#options.maxChunkSize,
+      throw new Error(
+        `Zstd chunk size exceeded - Received: ${chunk.length} bytes, Max: ${this.#options.maxChunkSize} bytes`,
       );
     }
 
@@ -143,14 +142,14 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
         this.#chunks.push(chunk);
         this.#totalSize += chunk.length;
       } else {
-        throw CompressionError.maxChunksExceeded();
+        throw new Error("Zstd chunk buffer exceeded");
       }
     }
   }
 
   #decompressZlib(data: Buffer): Buffer {
     if (!this.#zlibInflate) {
-      throw CompressionError.notInitialized();
+      throw new Error("Zlib inflater is not initialized");
     }
 
     if (this.#options.validateBuffers && !this.#isZlibFlushMarker(data)) {
@@ -178,7 +177,7 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
 
   #decompressZstd(data: Buffer): Buffer {
     if (!this.#zstdStream) {
-      throw CompressionError.notInitialized();
+      throw new Error("Zstd decompressor is not initialized");
     }
 
     this.#chunks = [];

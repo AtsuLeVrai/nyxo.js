@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/rest",
+  "name": "nyx.js",
   "version": "1.0.0",
-  "description": "Efficient REST API Management for Nyx.js",
+  "description": "A Next-Generation Discord Bot Framework",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -28,7 +28,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/3tatsu/nyx.js",
-    "directory": "packages/rest"
+    "directory": "packages/nyxjs"
   },
   "bugs": {
     "url": "https://github.com/3tatsu/nyx.js/issues"
@@ -48,18 +48,18 @@
   },
   "dependencies": {
     "@nyxjs/core": "workspace:*",
+    "@nyxjs/gateway": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
-    "@sindresorhus/slugify": "^2.2.1",
+    "change-case": "^5.4.4",
     "eventemitter3": "^5.0.1",
-    "form-data": "^4.0.1",
-    "mime-types": "^2.1.35",
+    "type-fest": "^4.32.0",
     "undici": "^6.21.0",
     "zod": "^3.24.1",
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/mime-types": "^2.1.4",
     "@types/node": "^22.10.5",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"

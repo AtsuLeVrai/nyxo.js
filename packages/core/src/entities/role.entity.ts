@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BitFieldManager, Snowflake } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-flags}
@@ -32,6 +32,7 @@ export const RoleEntity = z
     id: Snowflake,
     name: z.string(),
     color: z.number().int(),
+    description: z.string().nullish(),
     hoist: z.boolean(),
     icon: z.string().nullish(),
     unicode_emoji: z.string().emoji().nullish(),
@@ -40,9 +41,7 @@ export const RoleEntity = z
     managed: z.boolean(),
     mentionable: z.boolean(),
     tags: RoleTagsEntity.optional(),
-    flags: z
-      .nativeEnum(RoleFlags)
-      .transform((value) => new BitFieldManager<RoleFlags>(value)),
+    flags: z.union([z.nativeEnum(RoleFlags), z.number().int()]),
   })
   .strict();
 

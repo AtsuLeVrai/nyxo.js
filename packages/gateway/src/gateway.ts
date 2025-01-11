@@ -5,7 +5,6 @@ import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { GatewayError } from "./errors/index.js";
 import {
   type HelloEntity,
   IdentifyEntity,
@@ -15,7 +14,7 @@ import {
   type UpdatePresenceEntity,
   type UpdateVoiceStateEntity,
 } from "./events/index.js";
-import { GatewayOptions } from "./schemas/index.js";
+import { GatewayOptions } from "./options/index.js";
 import {
   CompressionService,
   EncodingService,
@@ -54,7 +53,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     try {
       this.#options = GatewayOptions.parse(options);
     } catch (error) {
-      throw GatewayError.validationError(fromError(error).message);
+      throw new Error(fromError(error).message);
     }
 
     this.#compressionService = new CompressionService(options.compression);
@@ -122,7 +121,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       await this.#initializeWebSocket(gatewayInfo.data.url);
       this.emit("connected");
     } catch (error) {
-      throw GatewayError.connectionError("gateway", error);
+      throw new Error("Failed to connect to the gateway", {
+        cause: error,
+      });
     }
   }
 
@@ -155,22 +156,18 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     data: GatewaySendEvents[T],
   ): void {
     if (!this.#ws || this.readyState !== WebSocket.OPEN) {
-      throw GatewayError.invalidState("No active WebSocket connection");
+      throw new Error("WebSocket connection is not open");
     }
 
-    try {
-      const payload: PayloadEntity = {
-        op: opcode,
-        d: data,
-        s: this.sequence,
-        t: null,
-      };
+    const payload: PayloadEntity = {
+      op: opcode,
+      d: data,
+      s: this.sequence,
+      t: null,
+    };
 
-      this.#ws.send(this.#encodingService.encode(payload));
-      this.emit("debug", `[Gateway] Sent payload with op ${opcode}`);
-    } catch {
-      throw GatewayError.invalidPayload(opcode);
-    }
+    this.#ws.send(this.#encodingService.encode(payload));
+    this.emit("debug", `[Gateway] Sent payload with op ${opcode}`);
   }
 
   destroy(code: GatewayCloseCodes = 4000): void {
@@ -191,7 +188,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.#compressionService.destroy();
       this.#heartbeatService.destroy();
     } catch (error) {
-      throw GatewayError.cleanupError(error);
+      throw new Error("Failed to destroy the gateway connection", {
+        cause: error,
+      });
     }
   }
 
@@ -216,8 +215,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
           resolve();
         });
 
-        ws.once("error", (error) => {
-          reject(GatewayError.websocketError(-1, error));
+        ws.on("error", (error) => {
+          reject(error);
         });
 
         ws.on("message", (data: Buffer) => {
@@ -229,24 +228,20 @@ export class Gateway extends EventEmitter<GatewayEvents> {
           await this.#handleClose(code);
         });
       } catch (error) {
-        reject(GatewayError.websocketError(-1, error));
+        reject(error);
       }
     });
   }
 
   #handleMessage(data: Buffer): void {
-    try {
-      let processedData = data;
+    let processedData = data;
 
-      if (this.#options.compression) {
-        processedData = this.#compressionService.decompress(data);
-      }
-
-      const payload = this.#encodingService.decode(processedData);
-      this.#handlePayload(payload);
-    } catch {
-      throw GatewayError.invalidPayload(-1);
+    if (this.#options.compression) {
+      processedData = this.#compressionService.decompress(data);
     }
+
+    const payload = this.#encodingService.decode(processedData);
+    this.#handlePayload(payload);
   }
 
   #handlePayload(payload: PayloadEntity): void {
@@ -362,7 +357,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #sendResume(): void {
     const sessionId = this.#sessionId;
     if (!sessionId) {
-      throw GatewayError.invalidState("No session ID available for resume");
+      throw new Error("No session ID available to resume");
     }
 
     const payload: ResumeEntity = {
@@ -434,7 +429,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     if (this.#reconnectAttempts >= this.#options.maxReconnectAttempts) {
-      throw GatewayError.maxRetriesExceeded(this.#reconnectAttempts);
+      throw new Error(
+        `Maximum reconnection attempts (${this.#reconnectAttempts}) reached`,
+      );
     }
 
     await this.#waitForBackoff();
@@ -459,7 +456,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       Gateway.BACKOFF_SCHEDULE.at(-1);
 
     if (!backoffTime) {
-      throw GatewayError.invalidState("Backoff time not found");
+      throw new Error("No backoff time available");
     }
 
     const newAttempts = ++this.#reconnectAttempts;

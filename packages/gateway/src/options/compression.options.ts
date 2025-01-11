@@ -8,21 +8,18 @@ export const CompressionOptions = z
       .number()
       .int()
       .positive()
-      .optional()
       .default(128 * 1024),
-    zlibWindowBits: z.number().int().optional().default(15),
+    zlibWindowBits: z.number().int().default(15),
     zlibFlushBytes: z
       .instanceof(Buffer)
-      .optional()
       .default(Buffer.from([0x00, 0x00, 0xff, 0xff])),
-    maxChunksInMemory: z.number().int().positive().optional().default(1000),
-    autoCleanChunks: z.boolean().optional().default(true),
+    maxChunksInMemory: z.number().int().positive().default(1000),
+    autoCleanChunks: z.boolean().default(true),
     maxChunkSize: z
       .number()
       .int()
       .positive()
-      .optional()
       .default(1024 * 1024),
-    validateBuffers: z.boolean().optional().default(true),
+    validateBuffers: z.boolean().default(true),
   })
   .strict();

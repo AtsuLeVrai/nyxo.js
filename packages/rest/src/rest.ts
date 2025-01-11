@@ -1,5 +1,4 @@
 import { EventEmitter } from "eventemitter3";
-import { type Brotli, BrotliDecompress, Gunzip, Inflate } from "minizlib";
 import { Pool, ProxyAgent, RetryAgent } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
@@ -38,13 +37,14 @@ import {
   WebhookRouter,
 } from "./routes/index.js";
 import { FileProcessorService, RateLimitService } from "./services/index.js";
-import type {
-  FileType,
-  HttpResponse,
-  JsonErrorEntity,
-  PathLike,
-  RestEvents,
-  RouteEntity,
+import {
+  type FileType,
+  type HttpResponse,
+  HttpStatusCode,
+  type JsonErrorEntity,
+  type PathLike,
+  type RestEvents,
+  type RouteEntity,
 } from "./types/index.js";
 
 export class Rest extends EventEmitter<RestEvents> {
@@ -374,6 +374,14 @@ export class Rest extends EventEmitter<RestEvents> {
         response.statusCode,
       );
 
+      if (response.statusCode === HttpStatusCode.NoContent) {
+        return {
+          data: null as T,
+          status: response.statusCode,
+          headers: response.headers,
+        };
+      }
+
       const contentType = response.headers["content-type"];
       if (!contentType?.includes("application/json")) {
         throw new RestHttpError(
@@ -385,16 +393,10 @@ export class Rest extends EventEmitter<RestEvents> {
       }
 
       const rawBody = Buffer.from(await response.body.arrayBuffer());
-      const contentEncoding = response.headers["content-encoding"];
-
-      const decompressedBody = await this.#decompress(
-        rawBody,
-        contentEncoding as string,
-      );
 
       let data: unknown;
       try {
-        data = JSON.parse(decompressedBody.toString());
+        data = JSON.parse(rawBody.toString());
       } catch {
         throw new RestHttpError(
           response.statusCode,
@@ -551,29 +553,6 @@ export class Rest extends EventEmitter<RestEvents> {
     );
   }
 
-  async #decompress(buffer: Buffer, contentEncoding?: string): Promise<Buffer> {
-    let decompressedBody: Brotli | Inflate | Gunzip;
-    if (contentEncoding?.includes("br")) {
-      decompressedBody = new BrotliDecompress({ level: 11 });
-    } else if (contentEncoding?.includes("gzip")) {
-      decompressedBody = new Gunzip({ level: 9 });
-    } else if (contentEncoding?.includes("deflate")) {
-      decompressedBody = new Inflate({ level: 9 });
-    } else {
-      return buffer;
-    }
-
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-
-      decompressedBody.on("data", (chunk: Buffer) => chunks.push(chunk));
-      decompressedBody.on("end", () => resolve(Buffer.concat(chunks)));
-      decompressedBody.on("error", reject);
-
-      decompressedBody.end(buffer);
-    });
-  }
-
   #buildPath(path: string): PathLike {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     return `/api/v${this.#options.version}${normalizedPath}`;
@@ -587,9 +566,6 @@ export class Rest extends EventEmitter<RestEvents> {
       "x-ratelimit-precision": "millisecond",
     };
 
-    if (this.#options.compress) {
-      headers["accept-encoding"] = "gzip,deflate,br";
-    }
     if (options.reason) {
       headers["x-audit-log-reason"] = encodeURIComponent(options.reason);
     }

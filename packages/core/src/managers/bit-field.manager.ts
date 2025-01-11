@@ -150,15 +150,15 @@ export class BitFieldManager<T> {
 
   toArray(): bigint[] {
     const result: bigint[] = [];
-    let currentBit = 1n;
     let value = this.#bitfield;
+    let position = 0n;
 
     while (value > 0n) {
-      if ((value & currentBit) === currentBit) {
-        result.push(currentBit);
+      if (value & 1n) {
+        result.push(1n << position);
       }
-      currentBit <<= 1n;
-      value &= ~currentBit;
+      value >>= 1n;
+      position++;
     }
 
     return result;

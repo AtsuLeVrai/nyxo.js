@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BitwisePermissionFlags } from "../enums/index.js";
-import { BitFieldManager, Snowflake } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 import { GuildMemberEntity } from "./guild.entity.js";
 import { UserEntity } from "./user.entity.js";
 
@@ -82,12 +82,8 @@ export const OverwriteEntity = z
   .object({
     id: Snowflake,
     type: z.nativeEnum(OverwriteType),
-    allow: z
-      .array(z.nativeEnum(BitwisePermissionFlags))
-      .transform((flags) => BitFieldManager.combine(flags)),
-    deny: z
-      .array(z.nativeEnum(BitwisePermissionFlags))
-      .transform((flags) => BitFieldManager.combine(flags)),
+    allow: z.array(z.nativeEnum(BitwisePermissionFlags)),
+    deny: z.array(z.nativeEnum(BitwisePermissionFlags)),
   })
   .strict();
 
@@ -197,9 +193,7 @@ export const ChannelEntity = z
       ])
       .optional(),
     permissions: z.string().optional(),
-    flags: z
-      .nativeEnum(ChannelFlags)
-      .transform((value) => new BitFieldManager<ChannelFlags>(value)),
+    flags: z.nativeEnum(ChannelFlags),
     total_message_sent: z.number().int().optional(),
     available_tags: z.array(ForumTagEntity).optional(),
     applied_tags: z.array(Snowflake).optional(),

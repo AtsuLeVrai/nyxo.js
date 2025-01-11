@@ -2,10 +2,83 @@ import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { ShardController } from "../controllers/index.js";
-import { ShardError } from "../errors/index.js";
-import { ShardOptions, ShardSession } from "../schemas/index.js";
-import type { GatewayEvents } from "../types/index.js";
+import { ShardOptions } from "../options/index.js";
+import type {
+  GatewayEvents,
+  ShardSession,
+  ShardStatus,
+} from "../types/index.js";
+
+class ShardController {
+  readonly #data: ShardSession;
+  #lastStatusChange: number = Date.now();
+  #reconnectAttempts = 0;
+  #lastError?: Error;
+
+  constructor(session: ShardSession) {
+    this.#data = { ...session };
+  }
+
+  get shardId(): number {
+    return this.#data.shardId;
+  }
+
+  get numShards(): number {
+    return this.#data.numShards;
+  }
+
+  get status(): ShardStatus {
+    return this.#data.status ?? "idle";
+  }
+
+  get guildCount(): number {
+    return this.#data.guildCount;
+  }
+
+  get lastStatusChange(): number {
+    return this.#lastStatusChange;
+  }
+
+  get reconnectAttempts(): number {
+    return this.#reconnectAttempts;
+  }
+
+  get lastError(): Error | undefined {
+    return this.#lastError;
+  }
+
+  get session(): Readonly<ShardSession> {
+    return { ...this.#data };
+  }
+
+  setStatus(status: ShardStatus): void {
+    this.#data.status = status;
+    this.#lastStatusChange = Date.now();
+  }
+
+  incrementReconnectAttempts(): number {
+    return ++this.#reconnectAttempts;
+  }
+
+  resetReconnectAttempts(): void {
+    this.#reconnectAttempts = 0;
+  }
+
+  updateGuildCount(count: number): void {
+    this.#data.guildCount = count;
+  }
+
+  setError(error: Error): void {
+    this.#lastError = error;
+    this.setStatus("error");
+  }
+
+  reset(): void {
+    this.#reconnectAttempts = 0;
+    this.#lastError = undefined;
+    this.setStatus("idle");
+  }
+}
 
 export class ShardService extends EventEmitter<GatewayEvents> {
   readonly #shards = new Store<string, ShardController>();
@@ -25,7 +98,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     try {
       this.#options = ShardOptions.parse(options);
     } catch (error) {
-      throw ShardError.validationError(fromError(error).message);
+      throw new Error(fromError(error).message);
     }
 
     this.#state.maxConcurrency = this.#options.maxConcurrency;
@@ -77,7 +150,9 @@ export class ShardService extends EventEmitter<GatewayEvents> {
         `[Gateway:ShardService] Spawn process completed - ${totalShards} shards initialized`,
       );
     } catch (error) {
-      throw ShardError.spawnError(-1, error);
+      throw new Error("Failed to spawn shard", {
+        cause: error,
+      });
     } finally {
       this.#state.isSpawning = false;
     }
@@ -86,12 +161,12 @@ export class ShardService extends EventEmitter<GatewayEvents> {
   getNextShard(): [number, number] {
     const shards = Array.from(this.#shards.values());
     if (shards.length === 0) {
-      throw ShardError.noShardsAvailable();
+      throw new Error("No shards are available");
     }
 
     const controller = shards[this.#state.currentShardIndex];
     if (!controller) {
-      throw ShardError.invalidShardId(this.#state.currentShardIndex);
+      throw new Error(`Invalid shard ID: ${this.#state.currentShardIndex}`);
     }
 
     this.#state.currentShardIndex =
@@ -102,7 +177,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
   getShardInfo(shardId: number): [number, number] {
     const controller = this.#getController(shardId);
     if (!controller) {
-      throw ShardError.invalidShardId(shardId);
+      throw new Error(`Invalid shard ID: ${shardId}`);
     }
 
     return [controller.shardId, controller.numShards];
@@ -121,7 +196,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
   async respawnShard(shardId: number): Promise<void> {
     const controller = this.#getController(shardId);
     if (!controller) {
-      throw ShardError.invalidShardId(shardId);
+      throw new Error(`Invalid shard ID: ${shardId}`);
     }
 
     this.emit("debug", `[Gateway:ShardService] Respawning shard ${shardId}`);
@@ -154,7 +229,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
 
   #validateConcurrency(concurrency: number): number {
     if (concurrency > 16) {
-      throw ShardError.concurrencyExceeded(concurrency, 16);
+      throw new Error(`Max concurrency exceeded: ${concurrency} > ${16}`);
     }
     return concurrency;
   }
@@ -173,7 +248,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
         guildCount: 0,
       };
 
-      return ShardSession.parse(session);
+      return session;
     });
   }
 
@@ -229,7 +304,6 @@ export class ShardService extends EventEmitter<GatewayEvents> {
   }
 
   async #spawnShard(session: ShardSession): Promise<void> {
-    this.#validateShardSession(session);
     const shardKey = this.#getShardKey(session.shardId);
 
     await this.#gracefulHandoff(shardKey);
@@ -255,9 +329,8 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     return new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(
-          ShardError.spawnTimeout(
-            oldController.shardId,
-            this.#options.spawnTimeout,
+          new Error(
+            `Shard ${oldController.shardId} spawn timed out after ${this.#options.spawnTimeout}ms`,
           ),
         );
       }, this.#options.spawnTimeout);
@@ -306,30 +379,6 @@ export class ShardService extends EventEmitter<GatewayEvents> {
       return this.#state.recommendedShards;
     }
     return this.#options.totalShards;
-  }
-
-  #validateShardSession(session: ShardSession): void {
-    if (session.shardId < 0) {
-      throw ShardError.invalidShardId(session.shardId);
-    }
-
-    if (session.numShards < 1) {
-      throw ShardError.invalidSession(session.shardId, session.numShards);
-    }
-
-    if (session.shardId >= session.numShards) {
-      throw ShardError.invalidSession(session.shardId, session.numShards);
-    }
-
-    const guildsPerShard = Math.ceil(
-      this.#state.guildCount / session.numShards,
-    );
-    if (guildsPerShard > this.#options.maxGuildsPerShard) {
-      throw ShardError.tooManyGuilds(
-        guildsPerShard,
-        this.#options.maxGuildsPerShard,
-      );
-    }
   }
 
   #getBucketsList(): [number, ShardController[]][] {

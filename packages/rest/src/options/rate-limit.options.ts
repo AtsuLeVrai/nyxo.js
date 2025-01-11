@@ -2,14 +2,14 @@ import { z } from "zod";
 
 export const RateLimitHeadersOptions = z
   .object({
-    limit: z.string().optional().default("x-ratelimit-limit"),
-    remaining: z.string().optional().default("x-ratelimit-remaining"),
-    reset: z.string().optional().default("x-ratelimit-reset"),
-    resetAfter: z.string().optional().default("x-ratelimit-reset-after"),
-    bucket: z.string().optional().default("x-ratelimit-bucket"),
-    scope: z.string().optional().default("x-ratelimit-scope"),
-    global: z.string().optional().default("x-ratelimit-global"),
-    retryAfter: z.string().optional().default("retry-after"),
+    limit: z.string().default("x-ratelimit-limit"),
+    remaining: z.string().default("x-ratelimit-remaining"),
+    reset: z.string().default("x-ratelimit-reset"),
+    resetAfter: z.string().default("x-ratelimit-reset-after"),
+    bucket: z.string().default("x-ratelimit-bucket"),
+    scope: z.string().default("x-ratelimit-scope"),
+    global: z.string().default("x-ratelimit-global"),
+    retryAfter: z.string().default("retry-after"),
   })
   .strict();
 
@@ -33,7 +33,6 @@ export const RateLimitMajorParamOptions = z
       })
       .strict(),
   )
-  .optional()
   .default([
     { regex: /^\/guilds\/(\d+)/, param: "guild_id" },
     { regex: /^\/channels\/(\d+)/, param: "channel_id" },
@@ -41,17 +40,13 @@ export const RateLimitMajorParamOptions = z
   ]);
 
 export const RateLimitTimeoutOptions = z.object({
-  cloudflareWindow: z.number().positive().optional().default(600_000),
-  cloudflareErrorThreshold: z.number().positive().optional().default(50),
-  cloudflareBlockThreshold: z.number().positive().optional().default(10),
-  cloudflareBlockWindow: z.number().positive().optional().default(60_000),
-  invalidRequestWindow: z.number().positive().optional().default(600_000),
-  invalidRequestWarningThreshold: z
-    .number()
-    .positive()
-    .optional()
-    .default(8000),
-  invalidRequestMaxLimit: z.number().positive().optional().default(10_000),
+  cloudflareWindow: z.number().positive().default(600_000),
+  cloudflareErrorThreshold: z.number().positive().default(50),
+  cloudflareBlockThreshold: z.number().positive().default(10),
+  cloudflareBlockWindow: z.number().positive().default(60_000),
+  invalidRequestWindow: z.number().positive().default(600_000),
+  invalidRequestWarningThreshold: z.number().positive().default(8000),
+  invalidRequestMaxLimit: z.number().positive().default(10_000),
 });
 
 export const RateLimitOptions = z

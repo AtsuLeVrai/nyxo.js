@@ -30,13 +30,13 @@ export enum TextInputStyle {
  */
 export const TextInputEntity = z
   .object({
-    type: z.literal(ComponentType.TextInput),
+    type: z.literal(ComponentType.TextInput).default(ComponentType.TextInput),
     custom_id: z.string().max(100),
     style: z.nativeEnum(TextInputStyle),
     label: z.string().max(45),
     min_length: z.number().int().min(0).max(4000).optional(),
     max_length: z.number().int().min(1).max(4000).optional(),
-    required: z.boolean().optional().default(true),
+    required: z.boolean().default(true),
     value: z.string().max(4000).optional(),
     placeholder: z.string().max(100).optional(),
   })
@@ -84,8 +84,8 @@ export const SelectMenuBaseEntity = z
   .object({
     custom_id: z.string().max(100),
     placeholder: z.string().max(150).optional(),
-    min_values: z.number().int().min(0).max(25).optional().default(1),
-    max_values: z.number().int().min(1).max(25).optional().default(1),
+    min_values: z.number().int().min(0).max(25).default(1),
+    max_values: z.number().int().min(1).max(25).default(1),
     disabled: z.boolean().optional(),
     default_values: z.array(SelectMenuDefaultValueEntity).optional(),
   })
@@ -94,33 +94,39 @@ export const SelectMenuBaseEntity = z
 export type SelectMenuBaseEntity = z.infer<typeof SelectMenuBaseEntity>;
 
 export const StringSelectMenuEntity = SelectMenuBaseEntity.extend({
-  type: z.literal(ComponentType.StringSelect),
+  type: z
+    .literal(ComponentType.StringSelect)
+    .default(ComponentType.StringSelect),
   options: z.array(SelectMenuOptionEntity).min(1).max(25),
 }).strict();
 
 export type StringSelectMenuEntity = z.infer<typeof StringSelectMenuEntity>;
 
 export const ChannelSelectMenuEntity = SelectMenuBaseEntity.extend({
-  type: z.literal(ComponentType.ChannelSelect),
+  type: z
+    .literal(ComponentType.ChannelSelect)
+    .default(ComponentType.ChannelSelect),
   channel_types: z.nativeEnum(ChannelType).optional(),
 }).strict();
 
 export type ChannelSelectMenuEntity = z.infer<typeof ChannelSelectMenuEntity>;
 
 export const UserSelectMenuEntity = SelectMenuBaseEntity.extend({
-  type: z.literal(ComponentType.UserSelect),
+  type: z.literal(ComponentType.UserSelect).default(ComponentType.UserSelect),
 }).strict();
 
 export type UserSelectMenuEntity = z.infer<typeof UserSelectMenuEntity>;
 
 export const RoleSelectMenuEntity = SelectMenuBaseEntity.extend({
-  type: z.literal(ComponentType.RoleSelect),
+  type: z.literal(ComponentType.RoleSelect).default(ComponentType.RoleSelect),
 }).strict();
 
 export type RoleSelectMenuEntity = z.infer<typeof RoleSelectMenuEntity>;
 
 export const MentionableSelectMenuEntity = SelectMenuBaseEntity.extend({
-  type: z.literal(ComponentType.MentionableSelect),
+  type: z
+    .literal(ComponentType.MentionableSelect)
+    .default(ComponentType.MentionableSelect),
 }).strict();
 
 export type MentionableSelectMenuEntity = z.infer<
@@ -154,8 +160,8 @@ export enum ButtonStyle {
  */
 export const ButtonEntity = z
   .object({
-    type: z.literal(ComponentType.Button),
-    style: z.nativeEnum(ButtonStyle),
+    type: z.literal(ComponentType.Button).default(ComponentType.Button),
+    style: z.nativeEnum(ButtonStyle).default(ButtonStyle.Primary),
     label: z.string().max(80).optional(),
     emoji: EmojiEntity.pick({
       name: true,
@@ -165,7 +171,7 @@ export const ButtonEntity = z
     custom_id: z.string().max(100).optional(),
     sku_id: z.string().optional(),
     url: z.string().url().optional(),
-    disabled: z.boolean().default(false).optional(),
+    disabled: z.boolean().default(false),
   })
   .strict()
   .superRefine((button, ctx) => {
@@ -207,7 +213,7 @@ export type ComponentEntity = z.infer<typeof ComponentEntity>;
  */
 export const ActionRowEntity = z
   .object({
-    type: z.literal(ComponentType.ActionRow),
+    type: z.literal(ComponentType.ActionRow).default(ComponentType.ActionRow),
     components: z.array(ComponentEntity).max(5),
   })
   .strict()

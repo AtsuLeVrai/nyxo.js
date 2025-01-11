@@ -2,8 +2,7 @@ import erlpack from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { EncodingError } from "../errors/index.js";
-import { EncodingOptions } from "../schemas/index.js";
+import { EncodingOptions } from "../options/index.js";
 import type {
   EncodingType,
   GatewayEvents,
@@ -19,7 +18,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
     try {
       this.#options = EncodingOptions.parse(options);
     } catch (error) {
-      throw EncodingError.validationError(fromError(error).message);
+      throw new Error(fromError(error).message);
     }
   }
 
@@ -50,9 +49,8 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
         : Buffer.byteLength(result);
 
       if (size > this.#options.maxPayloadSize) {
-        throw EncodingError.payloadSizeExceeded(
-          size,
-          this.#options.maxPayloadSize,
+        throw new Error(
+          `Payload size ${size} bytes exceeds maximum ${this.#options.maxPayloadSize} bytes`,
         );
       }
 
@@ -63,10 +61,9 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
 
       return result;
     } catch (error) {
-      if (error instanceof EncodingError) {
-        throw error;
-      }
-      throw EncodingError.encodingError(this.#options.type, error);
+      throw new Error(`Failed to encode payload: ${this.#options.type}`, {
+        cause: error,
+      });
     }
   }
 
@@ -83,10 +80,9 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
 
       return result;
     } catch (error) {
-      if (error instanceof EncodingError) {
-        throw error;
-      }
-      throw EncodingError.decodingError(this.#options.type, error);
+      throw new Error(`Failed to decode payload: ${this.#options.type}`, {
+        cause: error,
+      });
     }
   }
 
@@ -108,29 +104,17 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
       processBigInts: this.#options.allowBigInts,
     });
 
-    try {
-      return erlpack.pack(processed);
-    } catch (error) {
-      throw EncodingError.encodingError("ETF", error);
-    }
+    return erlpack.pack(processed);
   }
 
   #decodeJson(data: Buffer | string): PayloadEntity {
-    try {
-      const strData = typeof data === "string" ? data : data.toString("utf-8");
-      return JSON.parse(strData, this.#options.jsonReviver);
-    } catch (error) {
-      throw EncodingError.decodingError("JSON", error);
-    }
+    const strData = typeof data === "string" ? data : data.toString("utf-8");
+    return JSON.parse(strData, this.#options.jsonReviver);
   }
 
   #decodeEtf(data: Buffer | string): PayloadEntity {
-    try {
-      const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
-      return erlpack.unpack(bufferData) as PayloadEntity;
-    } catch (error) {
-      throw EncodingError.decodingError("ETF", error);
-    }
+    const bufferData = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    return erlpack.unpack(bufferData) as PayloadEntity;
   }
 
   #processData(data: unknown, options: ProcessOptions = {}): unknown {
@@ -158,7 +142,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
             );
 
             if (this.#options.etfStrictMode) {
-              throw EncodingError.invalidEtfKeys(String(key));
+              throw new Error(`Invalid ETF key: ${key} is not a string`);
             }
             continue;
           }
@@ -171,10 +155,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
 
       return data;
     } catch (error) {
-      if (error instanceof EncodingError) {
-        throw error;
-      }
-      throw EncodingError.encodingError("data processing", error);
+      throw new Error("Failed to process data", { cause: error });
     }
   }
 }

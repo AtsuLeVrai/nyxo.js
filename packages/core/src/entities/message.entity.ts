@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BitFieldManager, Snowflake } from "../managers/index.js";
+import { Snowflake } from "../managers/index.js";
 import {
   ApplicationEntity,
   ApplicationIntegrationType,
@@ -94,10 +94,7 @@ export const AttachmentEntity = z
     ephemeral: z.boolean().optional(),
     duration_secs: z.number().optional(),
     waveform: z.string().optional(),
-    flags: z
-      .nativeEnum(AttachmentFlags)
-      .transform((value) => new BitFieldManager(value))
-      .optional(),
+    flags: z.nativeEnum(AttachmentFlags).optional(),
   })
   .strict();
 
@@ -216,7 +213,7 @@ export enum EmbedType {
 export const EmbedEntity = z
   .object({
     title: z.string().max(256).optional(),
-    type: z.nativeEnum(EmbedType).optional().default(EmbedType.Rich),
+    type: z.nativeEnum(EmbedType).default(EmbedType.Rich),
     description: z.string().max(4096).optional(),
     url: z.string().url().optional(),
     timestamp: z.string().datetime().optional(),
@@ -278,7 +275,6 @@ export const MessageReferenceEntity = z
   .object({
     type: z
       .nativeEnum(MessageReferenceType)
-      .optional()
       .default(MessageReferenceType.Default),
     message_id: Snowflake.optional(),
     channel_id: Snowflake.optional(),
@@ -525,10 +521,7 @@ export const MessageEntity: z.ZodObject<z.ZodRawShape> = z
       .lazy(() => MessageEntity)
       .nullable()
       .optional(),
-    flags: z
-      .nativeEnum(MessageFlags)
-      .transform((value) => new BitFieldManager<MessageFlags>(value))
-      .optional(),
+    flags: z.nativeEnum(MessageFlags).optional(),
     interaction_metadata: z
       .union([
         ApplicationCommandInteractionMetadataEntity,
