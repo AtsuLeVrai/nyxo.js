@@ -4,25 +4,21 @@ import { z } from "zod";
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params}
  */
-export const CreateGuildEmojiEntity = z
-  .object({
-    name: z.string(),
-    image: z.string().regex(/^data:image\/(png|jpg|jpeg);base64,/),
-    roles: z.array(Snowflake).optional(),
-  })
-  .strict();
+export const CreateGuildEmojiEntity = z.object({
+  name: z.string(),
+  image: z.string().regex(/^data:image\/(png|jpg|jpeg);base64,/),
+  roles: z.array(Snowflake).optional(),
+});
 
 export type CreateGuildEmojiEntity = z.infer<typeof CreateGuildEmojiEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji-json-params}
  */
-export const ModifyGuildEmojiEntity = z
-  .object({
-    name: z.string().optional(),
-    roles: z.array(Snowflake).nullish(),
-  })
-  .strict();
+export const ModifyGuildEmojiEntity = z.object({
+  name: z.string().optional(),
+  roles: z.array(Snowflake).nullish(),
+});
 
 export type ModifyGuildEmojiEntity = z.infer<typeof ModifyGuildEmojiEntity>;
 

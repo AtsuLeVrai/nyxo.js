@@ -11,18 +11,16 @@ export const InteractionCallbackDataEntity = CreateMessageEntity.pick({
   components: true,
   attachments: true,
   poll: true,
-}).strict();
+});
 
 export type InteractionCallbackDataEntity = z.infer<
   typeof InteractionCallbackDataEntity
 >;
 
-export const InteractionResponseEntity = z
-  .object({
-    type: z.nativeEnum(InteractionCallbackType),
-    data: InteractionCallbackDataEntity.optional(),
-  })
-  .strict();
+export const InteractionResponseEntity = z.object({
+  type: z.nativeEnum(InteractionCallbackType),
+  data: InteractionCallbackDataEntity.optional(),
+});
 
 export type InteractionResponseEntity = z.infer<
   typeof InteractionResponseEntity

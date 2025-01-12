@@ -62,7 +62,7 @@ export class ApplicationCommandRouter {
    */
   createGlobalApplicationCommand(
     applicationId: Snowflake,
-    options: CreateGlobalApplicationCommandEntity,
+    options: z.input<typeof CreateGlobalApplicationCommandEntity>,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
@@ -96,7 +96,7 @@ export class ApplicationCommandRouter {
   editGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-    options: EditGlobalApplicationCommandEntity,
+    options: z.input<typeof EditGlobalApplicationCommandEntity>,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
@@ -127,7 +127,7 @@ export class ApplicationCommandRouter {
    */
   bulkOverwriteGlobalApplicationCommands(
     applicationId: Snowflake,
-    commands: CreateGlobalApplicationCommandEntity[],
+    commands: z.input<typeof CreateGlobalApplicationCommandEntity>[],
   ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     const result = z
       .array(CreateGlobalApplicationCommandEntity)
@@ -165,7 +165,7 @@ export class ApplicationCommandRouter {
   createGuildApplicationCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
-    options: CreateGuildApplicationCommandEntity,
+    options: z.input<typeof CreateGuildApplicationCommandEntity>,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
@@ -205,7 +205,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: EditGuildApplicationCommandEntity,
+    options: z.input<typeof EditGuildApplicationCommandEntity>,
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
@@ -248,7 +248,7 @@ export class ApplicationCommandRouter {
   bulkOverwriteGuildApplicationCommands(
     applicationId: Snowflake,
     guildId: Snowflake,
-    commands: CreateGlobalApplicationCommandEntity[],
+    commands: z.input<typeof CreateGlobalApplicationCommandEntity>[],
   ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
     const result = z
       .array(CreateGlobalApplicationCommandEntity)
@@ -306,7 +306,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: EditApplicationCommandPermissionsEntity,
+    options: z.input<typeof EditApplicationCommandPermissionsEntity>,
   ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
     const result = EditApplicationCommandPermissionsEntity.safeParse(options);
     if (!result.success) {

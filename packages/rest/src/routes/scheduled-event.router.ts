@@ -3,6 +3,7 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -45,7 +46,7 @@ export class ScheduledEventRouter {
    */
   createGuildScheduledEvent(
     guildId: Snowflake,
-    event: CreateGuildScheduledEventEntity,
+    event: z.input<typeof CreateGuildScheduledEventEntity>,
     reason?: string,
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = CreateGuildScheduledEventEntity.safeParse(event);
@@ -79,7 +80,7 @@ export class ScheduledEventRouter {
   modifyGuildScheduledEvent(
     guildId: Snowflake,
     eventId: Snowflake,
-    modify: ModifyGuildScheduledEventEntity,
+    modify: z.input<typeof ModifyGuildScheduledEventEntity>,
     reason?: string,
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = ModifyGuildScheduledEventEntity.safeParse(modify);
@@ -115,7 +116,7 @@ export class ScheduledEventRouter {
   getGuildScheduledEventUsers(
     guildId: Snowflake,
     eventId: Snowflake,
-    query?: GetGuildScheduledEventUsersQueryEntity,
+    query: z.input<typeof GetGuildScheduledEventUsersQueryEntity> = {},
   ): Promise<HttpResponse<GuildScheduledEventUserEntity[]>> {
     const result = GetGuildScheduledEventUsersQueryEntity.safeParse(query);
     if (!result.success) {

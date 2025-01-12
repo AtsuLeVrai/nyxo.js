@@ -1,4 +1,5 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -31,7 +32,7 @@ export class SoundboardRouter {
    */
   sendSoundboardSound(
     channelId: Snowflake,
-    options: SendSoundboardSoundEntity,
+    options: z.input<typeof SendSoundboardSoundEntity>,
   ): Promise<HttpResponse<void>> {
     const result = SendSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
@@ -77,7 +78,7 @@ export class SoundboardRouter {
    */
   createGuildSoundboardSound(
     guildId: Snowflake,
-    options: CreateGuildSoundboardSoundEntity,
+    options: z.input<typeof CreateGuildSoundboardSoundEntity>,
     reason?: string,
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = CreateGuildSoundboardSoundEntity.safeParse(options);
@@ -98,7 +99,7 @@ export class SoundboardRouter {
   modifyGuildSoundboardSound(
     guildId: Snowflake,
     soundId: Snowflake,
-    options: ModifyGuildSoundboardSoundEntity,
+    options: z.input<typeof ModifyGuildSoundboardSoundEntity>,
     reason?: string,
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = ModifyGuildSoundboardSoundEntity.safeParse(options);

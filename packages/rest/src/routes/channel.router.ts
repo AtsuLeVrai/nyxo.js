@@ -78,9 +78,9 @@ export class ChannelRouter {
   modifyChannel(
     channelId: Snowflake,
     options:
-      | ModifyChannelGuildChannelEntity
-      | ModifyChannelThreadEntity
-      | ModifyChannelGroupDmEntity,
+      | z.input<typeof ModifyChannelGuildChannelEntity>
+      | z.input<typeof ModifyChannelThreadEntity>
+      | z.input<typeof ModifyChannelGroupDmEntity>,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = z
@@ -119,7 +119,7 @@ export class ChannelRouter {
   editChannelPermissions(
     channelId: Snowflake,
     overwriteId: Snowflake,
-    permissions: EditChannelPermissionsEntity,
+    permissions: z.input<typeof EditChannelPermissionsEntity>,
     reason?: string,
   ): Promise<HttpResponse<void>> {
     const result = EditChannelPermissionsEntity.safeParse(permissions);
@@ -151,7 +151,7 @@ export class ChannelRouter {
    */
   createChannelInvite(
     channelId: Snowflake,
-    options: CreateChannelInviteEntity,
+    options: z.input<typeof CreateChannelInviteEntity>,
     reason?: string,
   ): Promise<HttpResponse<InviteEntity>> {
     const result = CreateChannelInviteEntity.safeParse(options);
@@ -250,7 +250,7 @@ export class ChannelRouter {
   groupDmAddRecipient(
     channelId: Snowflake,
     userId: Snowflake,
-    options: AddGroupDmRecipientEntity,
+    options: z.input<typeof AddGroupDmRecipientEntity>,
   ): Promise<HttpResponse<void>> {
     const result = AddGroupDmRecipientEntity.safeParse(options);
     if (!result.success) {
@@ -281,7 +281,7 @@ export class ChannelRouter {
   startThreadFromMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-    options: StartThreadFromMessageEntity,
+    options: z.input<typeof StartThreadFromMessageEntity>,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadFromMessageEntity.safeParse(options);
@@ -304,7 +304,7 @@ export class ChannelRouter {
    */
   startThreadWithoutMessage(
     channelId: Snowflake,
-    options: StartThreadWithoutMessageEntity,
+    options: z.input<typeof StartThreadWithoutMessageEntity>,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadWithoutMessageEntity.safeParse(options);
@@ -328,8 +328,10 @@ export class ChannelRouter {
   startThreadInForumOrMediaChannel(
     channelId: Snowflake,
     options:
-      | StartThreadInForumOrMediaChannelEntity
-      | StartThreadInForumOrMediaChannelForumAndMediaThreadMessageEntity,
+      | z.input<typeof StartThreadInForumOrMediaChannelEntity>
+      | z.input<
+          typeof StartThreadInForumOrMediaChannelForumAndMediaThreadMessageEntity
+        >,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = z
@@ -429,7 +431,7 @@ export class ChannelRouter {
    */
   listPublicArchivedThreads(
     channelId: Snowflake,
-    options: ListPublicArchivedThreadsQueryEntity = {},
+    options: z.input<typeof ListPublicArchivedThreadsQueryEntity> = {},
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
@@ -450,7 +452,7 @@ export class ChannelRouter {
    */
   listPrivateArchivedThreads(
     channelId: Snowflake,
-    options: ListPublicArchivedThreadsQueryEntity = {},
+    options: z.input<typeof ListPublicArchivedThreadsQueryEntity> = {},
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
@@ -471,7 +473,7 @@ export class ChannelRouter {
    */
   listJoinedPrivateArchivedThreads(
     channelId: Snowflake,
-    options: ListPublicArchivedThreadsQueryEntity = {},
+    options: z.input<typeof ListPublicArchivedThreadsQueryEntity> = {},
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {

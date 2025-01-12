@@ -1,4 +1,5 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -31,7 +32,7 @@ export class ApplicationRouter {
    * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
    */
   editCurrentApplication(
-    options: EditCurrentApplicationEntity,
+    options: z.input<typeof EditCurrentApplicationEntity>,
   ): Promise<HttpResponse<ApplicationEntity>> {
     const result = EditCurrentApplicationEntity.safeParse(options);
     if (!result.success) {

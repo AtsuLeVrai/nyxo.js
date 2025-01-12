@@ -17,13 +17,11 @@ export enum ApplicationCommandPermissionType {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permissions-structure}
  */
-export const ApplicationCommandPermissionEntity = z
-  .object({
-    id: Snowflake,
-    type: z.nativeEnum(ApplicationCommandPermissionType),
-    permission: z.boolean(),
-  })
-  .strict();
+export const ApplicationCommandPermissionEntity = z.object({
+  id: Snowflake,
+  type: z.nativeEnum(ApplicationCommandPermissionType),
+  permission: z.boolean(),
+});
 
 export type ApplicationCommandPermissionEntity = z.infer<
   typeof ApplicationCommandPermissionEntity
@@ -32,17 +30,15 @@ export type ApplicationCommandPermissionEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-guild-application-command-permissions-structure}
  */
-export const GuildApplicationCommandPermissionSchema = z
-  .object({
-    id: Snowflake,
-    application_id: Snowflake,
-    guild_id: Snowflake,
-    permissions: z.array(ApplicationCommandPermissionEntity),
-  })
-  .strict();
+export const GuildApplicationCommandPermissionEntity = z.object({
+  id: Snowflake,
+  application_id: Snowflake,
+  guild_id: Snowflake,
+  permissions: z.array(ApplicationCommandPermissionEntity),
+});
 
 export type GuildApplicationCommandPermissionEntity = z.infer<
-  typeof GuildApplicationCommandPermissionSchema
+  typeof GuildApplicationCommandPermissionEntity
 >;
 
 /**
@@ -56,16 +52,14 @@ export enum ApplicationCommandEntryPointType {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-choice-structure}
  */
-export const ApplicationCommandOptionChoiceSchema = z
-  .object({
-    name: z.string().min(1).max(100),
-    name_localizations: AvailableLocale.nullish(),
-    value: z.union([z.string(), z.number()]),
-  })
-  .strict();
+export const ApplicationCommandOptionChoiceEntity = z.object({
+  name: z.string().min(1).max(100),
+  name_localizations: AvailableLocale.nullish(),
+  value: z.union([z.string(), z.number()]),
+});
 
 export type ApplicationCommandOptionChoiceEntity = z.infer<
-  typeof ApplicationCommandOptionChoiceSchema
+  typeof ApplicationCommandOptionChoiceEntity
 >;
 
 /**
@@ -110,31 +104,26 @@ export const APPLICATION_COMMAND_NAME_REGEX =
 
 export const ApplicationCommandOptionEntity: z.ZodType<ApplicationCommandOptionEntity> =
   z.lazy(() =>
-    z
-      .object({
-        type: z.nativeEnum(ApplicationCommandOptionType),
-        name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-        name_localizations: createAvailableLocale(
-          z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-        ).nullish(),
-        description: z.string().min(1).max(100),
-        description_localizations: createAvailableLocale(
-          z.string().min(1).max(100),
-        ).nullish(),
-        required: z.boolean().optional(),
-        choices: z
-          .array(ApplicationCommandOptionChoiceSchema)
-          .max(25)
-          .optional(),
-        options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
-        channel_types: z.array(z.nativeEnum(ChannelType)).optional(),
-        min_value: z.number().int().optional(),
-        max_value: z.number().int().optional(),
-        min_length: z.number().int().min(0).max(6000).optional(),
-        max_length: z.number().int().min(1).max(6000).optional(),
-        autocomplete: z.boolean().optional(),
-      })
-      .strict(),
+    z.object({
+      type: z.nativeEnum(ApplicationCommandOptionType),
+      name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+      name_localizations: createAvailableLocale(
+        z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+      ).nullish(),
+      description: z.string().min(1).max(100),
+      description_localizations: createAvailableLocale(
+        z.string().min(1).max(100),
+      ).nullish(),
+      required: z.boolean().optional(),
+      choices: z.array(ApplicationCommandOptionChoiceEntity).max(25).optional(),
+      options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
+      channel_types: z.array(z.nativeEnum(ChannelType)).optional(),
+      min_value: z.number().int().optional(),
+      max_value: z.number().int().optional(),
+      min_length: z.number().int().min(0).max(6000).optional(),
+      max_length: z.number().int().min(1).max(6000).optional(),
+      autocomplete: z.boolean().optional(),
+    }),
   );
 
 /**
@@ -150,36 +139,34 @@ export enum ApplicationCommandType {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
  */
-export const ApplicationCommandEntity = z
-  .object({
-    id: Snowflake,
-    type: z
-      .nativeEnum(ApplicationCommandType)
-      .default(ApplicationCommandType.ChatInput),
-    application_id: Snowflake,
-    guild_id: Snowflake.optional(),
-    name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-    name_localizations: createAvailableLocale(
-      z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-    ).nullish(),
-    description: z.string().min(1).max(100),
-    description_localizations: createAvailableLocale(
-      z.string().min(1).max(100),
-    ).nullish(),
-    options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
-    default_member_permissions: z.string().nullable(),
-    dm_permission: z.boolean().optional(),
-    default_permission: z.boolean().nullish(),
-    nsfw: z.boolean().optional(),
-    integration_types: z
-      .array(z.nativeEnum(ApplicationIntegrationType))
-      .optional(),
-    contexts: z
-      .array(z.lazy(() => z.nativeEnum(InteractionContextType)))
-      .nullish(),
-    version: Snowflake,
-    handler: z.nativeEnum(ApplicationCommandEntryPointType).optional(),
-  })
-  .strict();
+export const ApplicationCommandEntity = z.object({
+  id: Snowflake,
+  type: z
+    .nativeEnum(ApplicationCommandType)
+    .default(ApplicationCommandType.ChatInput),
+  application_id: Snowflake,
+  guild_id: Snowflake.optional(),
+  name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+  name_localizations: createAvailableLocale(
+    z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+  ).nullish(),
+  description: z.string().min(1).max(100),
+  description_localizations: createAvailableLocale(
+    z.string().min(1).max(100),
+  ).nullish(),
+  options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
+  default_member_permissions: z.string().nullable(),
+  dm_permission: z.boolean().optional(),
+  default_permission: z.boolean().nullish(),
+  nsfw: z.boolean().optional(),
+  integration_types: z
+    .array(z.nativeEnum(ApplicationIntegrationType))
+    .optional(),
+  contexts: z
+    .array(z.lazy(() => z.nativeEnum(InteractionContextType)))
+    .nullish(),
+  version: Snowflake,
+  handler: z.nativeEnum(ApplicationCommandEntryPointType).optional(),
+});
 
 export type ApplicationCommandEntity = z.infer<typeof ApplicationCommandEntity>;

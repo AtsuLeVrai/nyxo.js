@@ -55,11 +55,9 @@ export enum InteractionType {
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-activity-instance-resource}
  */
-export const InteractionCallbackActivityInstanceEntity = z
-  .object({
-    id: z.string(),
-  })
-  .strict();
+export const InteractionCallbackActivityInstanceEntity = z.object({
+  id: z.string(),
+});
 
 export type InteractionCallbackActivityInstanceEntity = z.infer<
   typeof InteractionCallbackActivityInstanceEntity
@@ -68,13 +66,11 @@ export type InteractionCallbackActivityInstanceEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-resource-object}
  */
-export const InteractionCallbackResource = z
-  .object({
-    type: z.nativeEnum(InteractionCallbackType),
-    activity_instance: InteractionCallbackActivityInstanceEntity.optional(),
-    message: z.lazy(() => MessageEntity).optional(),
-  })
-  .strict();
+export const InteractionCallbackResource = z.object({
+  type: z.nativeEnum(InteractionCallbackType),
+  activity_instance: InteractionCallbackActivityInstanceEntity.optional(),
+  message: z.lazy(() => MessageEntity).optional(),
+});
 
 export type InteractionCallbackResource = z.infer<
   typeof InteractionCallbackResource
@@ -83,16 +79,14 @@ export type InteractionCallbackResource = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-callback-interaction-callback-object}
  */
-export const InteractionCallbackEntity = z
-  .object({
-    id: Snowflake,
-    type: z.nativeEnum(InteractionCallbackType),
-    activity_instance_id: z.string().optional(),
-    response_message_id: Snowflake.optional(),
-    response_message_loading: z.boolean().optional(),
-    response_message_ephemeral: z.boolean().optional(),
-  })
-  .strict();
+export const InteractionCallbackEntity = z.object({
+  id: Snowflake,
+  type: z.nativeEnum(InteractionCallbackType),
+  activity_instance_id: z.string().optional(),
+  response_message_id: Snowflake.optional(),
+  response_message_loading: z.boolean().optional(),
+  response_message_ephemeral: z.boolean().optional(),
+});
 
 export type InteractionCallbackEntity = z.infer<
   typeof InteractionCallbackEntity
@@ -101,13 +95,11 @@ export type InteractionCallbackEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal}
  */
-export const InteractionCallbackModalEntity = z
-  .object({
-    custom_id: z.string().max(100),
-    title: z.string().max(45),
-    components: z.array(ActionRowEntity).min(1).max(5),
-  })
-  .strict();
+export const InteractionCallbackModalEntity = z.object({
+  custom_id: z.string().max(100),
+  title: z.string().max(45),
+  components: z.array(ActionRowEntity).min(1).max(5),
+});
 
 export type InteractionCallbackModalEntity = z.infer<
   typeof InteractionCallbackModalEntity
@@ -116,11 +108,9 @@ export type InteractionCallbackModalEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-autocomplete}
  */
-export const InteractionCallbackAutocompleteEntity = z
-  .object({
-    choices: z.array(z.lazy(() => ApplicationCommandOptionEntity)).max(25),
-  })
-  .strict();
+export const InteractionCallbackAutocompleteEntity = z.object({
+  choices: z.array(z.lazy(() => ApplicationCommandOptionEntity)).max(25),
+});
 
 export type InteractionCallbackAutocompleteEntity = z.infer<
   typeof InteractionCallbackAutocompleteEntity
@@ -151,7 +141,7 @@ export const InteractionCallbackMessagesEntity = z
     attachments: z.lazy(() => AttachmentEntity).optional(),
     poll: PollCreateRequestEntity.optional(),
   })
-  .strict()
+
   .refine(
     (data) => {
       const hasContent = Boolean(data.content);
@@ -183,7 +173,7 @@ export const InteractionCallbackResponseEntity = z
       ])
       .optional(),
   })
-  .strict()
+
   .superRefine((data, ctx) => {
     if (data.type === 4 && !data.data) {
       ctx.addIssue({
@@ -213,15 +203,13 @@ export type InteractionCallbackResponseEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#message-interaction-object-message-interaction-structure}
  */
-export const MessageInteractionEntity = z
-  .object({
-    id: Snowflake,
-    type: z.nativeEnum(InteractionType),
-    name: z.string(),
-    user: UserEntity,
-    member: GuildMemberEntity.partial().optional(),
-  })
-  .strict();
+export const MessageInteractionEntity = z.object({
+  id: Snowflake,
+  type: z.nativeEnum(InteractionType),
+  name: z.string(),
+  user: UserEntity,
+  member: GuildMemberEntity.partial().optional(),
+});
 
 export type MessageInteractionEntity = z.infer<typeof MessageInteractionEntity>;
 
@@ -238,59 +226,55 @@ export interface ApplicationCommandInteractionDataOptionEntity {
 
 export const ApplicationCommandInteractionDataOptionEntity: z.ZodType<ApplicationCommandInteractionDataOptionEntity> =
   z.lazy(() =>
-    z
-      .object({
-        name: z.string(),
-        type: z.nativeEnum(ApplicationCommandOptionType),
-        value: z.union([z.string(), z.number(), z.boolean()]).optional(),
-        options: z
-          .array(ApplicationCommandInteractionDataOptionEntity)
-          .optional(),
-        focused: z.boolean().optional(),
-      })
-      .strict(),
+    z.object({
+      name: z.string(),
+      type: z.nativeEnum(ApplicationCommandOptionType),
+      value: z.union([z.string(), z.number(), z.boolean()]).optional(),
+      options: z
+        .array(ApplicationCommandInteractionDataOptionEntity)
+        .optional(),
+      focused: z.boolean().optional(),
+    }),
   );
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure}
  */
-export const InteractionResolvedDataEntity = z
-  .object({
-    users: z.map(Snowflake, UserEntity).optional(),
-    members: z
-      .map(
-        Snowflake,
-        GuildMemberEntity.omit({ user: true, deaf: true, mute: true }),
-      )
-      .optional(),
-    roles: z.map(Snowflake, RoleEntity).optional(),
-    channels: z
-      .map(
-        Snowflake,
-        ChannelEntity.pick({
-          id: true,
-          name: true,
-          type: true,
-          permissions: true,
-          thread_metadata: true,
-          parent_id: true,
-        }),
-      )
-      .optional(),
-    messages: z
-      .map(
-        Snowflake,
-        z.lazy(() => MessageEntity.partial()),
-      )
-      .optional(),
-    attachments: z
-      .map(
-        Snowflake,
-        z.lazy(() => AttachmentEntity),
-      )
-      .optional(),
-  })
-  .strict();
+export const InteractionResolvedDataEntity = z.object({
+  users: z.map(Snowflake, UserEntity).optional(),
+  members: z
+    .map(
+      Snowflake,
+      GuildMemberEntity.omit({ user: true, deaf: true, mute: true }),
+    )
+    .optional(),
+  roles: z.map(Snowflake, RoleEntity).optional(),
+  channels: z
+    .map(
+      Snowflake,
+      ChannelEntity.pick({
+        id: true,
+        name: true,
+        type: true,
+        permissions: true,
+        thread_metadata: true,
+        parent_id: true,
+      }),
+    )
+    .optional(),
+  messages: z
+    .map(
+      Snowflake,
+      z.lazy(() => MessageEntity.partial()),
+    )
+    .optional(),
+  attachments: z
+    .map(
+      Snowflake,
+      z.lazy(() => AttachmentEntity),
+    )
+    .optional(),
+});
 
 export type InteractionResolvedDataEntity = z.infer<
   typeof InteractionResolvedDataEntity
@@ -299,12 +283,10 @@ export type InteractionResolvedDataEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-modal-submit-data-structure}
  */
-export const InteractionModalSubmitDataEntity = z
-  .object({
-    custom_id: z.string(),
-    components: z.array(ActionRowEntity),
-  })
-  .strict();
+export const InteractionModalSubmitDataEntity = z.object({
+  custom_id: z.string(),
+  components: z.array(ActionRowEntity),
+});
 
 export type InteractionModalSubmitDataEntity = z.infer<
   typeof InteractionModalSubmitDataEntity
@@ -313,14 +295,12 @@ export type InteractionModalSubmitDataEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-message-component-data-structure}
  */
-export const InteractionMessageComponentDataEntity = z
-  .object({
-    custom_id: z.string(),
-    component_type: z.nativeEnum(ComponentType),
-    values: z.array(SelectMenuEntity).optional(),
-    resolved: InteractionResolvedDataEntity.optional(),
-  })
-  .strict();
+export const InteractionMessageComponentDataEntity = z.object({
+  custom_id: z.string(),
+  component_type: z.nativeEnum(ComponentType),
+  values: z.array(SelectMenuEntity).optional(),
+  resolved: InteractionResolvedDataEntity.optional(),
+});
 
 export type InteractionMessageComponentDataEntity = z.infer<
   typeof InteractionMessageComponentDataEntity
@@ -329,17 +309,15 @@ export type InteractionMessageComponentDataEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-data-structure}
  */
-export const ApplicationCommandInteractionDataEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    type: z.lazy(() => z.nativeEnum(ApplicationCommandType)),
-    resolved: InteractionResolvedDataEntity.optional(),
-    options: z.array(ApplicationCommandInteractionDataOptionEntity).optional(),
-    guild_id: Snowflake.optional(),
-    target_id: Snowflake.optional(),
-  })
-  .strict();
+export const ApplicationCommandInteractionDataEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  type: z.lazy(() => z.nativeEnum(ApplicationCommandType)),
+  resolved: InteractionResolvedDataEntity.optional(),
+  options: z.array(ApplicationCommandInteractionDataOptionEntity).optional(),
+  guild_id: Snowflake.optional(),
+  target_id: Snowflake.optional(),
+});
 
 export type ApplicationCommandInteractionDataEntity = z.infer<
   typeof ApplicationCommandInteractionDataEntity
@@ -355,30 +333,22 @@ export enum InteractionContextType {
 }
 
 export const InteractionDataEntity = z.discriminatedUnion("type", [
-  z
-    .object({
-      type: z.literal(InteractionType.ApplicationCommand),
-      data: ApplicationCommandInteractionDataEntity,
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal(InteractionType.MessageComponent),
-      data: InteractionMessageComponentDataEntity,
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal(InteractionType.ApplicationCommandAutocomplete),
-      data: ApplicationCommandInteractionDataEntity,
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal(InteractionType.ModalSubmit),
-      data: InteractionModalSubmitDataEntity,
-    })
-    .strict(),
+  z.object({
+    type: z.literal(InteractionType.ApplicationCommand),
+    data: ApplicationCommandInteractionDataEntity,
+  }),
+  z.object({
+    type: z.literal(InteractionType.MessageComponent),
+    data: InteractionMessageComponentDataEntity,
+  }),
+  z.object({
+    type: z.literal(InteractionType.ApplicationCommandAutocomplete),
+    data: ApplicationCommandInteractionDataEntity,
+  }),
+  z.object({
+    type: z.literal(InteractionType.ModalSubmit),
+    data: InteractionModalSubmitDataEntity,
+  }),
 ]);
 
 export type InteractionDataEntity = z.infer<typeof InteractionDataEntity>;
@@ -386,37 +356,35 @@ export type InteractionDataEntity = z.infer<typeof InteractionDataEntity>;
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-structure}
  */
-export const InteractionEntity = z
-  .object({
-    id: Snowflake,
-    application_id: Snowflake,
-    type: z.nativeEnum(InteractionType),
-    data: z
-      .union([
-        ApplicationCommandInteractionDataEntity,
-        InteractionMessageComponentDataEntity,
-        InteractionModalSubmitDataEntity,
-      ])
-      .optional(),
-    guild: GuildEntity.partial().optional(),
-    guild_id: Snowflake.optional(),
-    channel: ChannelEntity.partial().optional(),
-    channel_id: Snowflake.optional(),
-    member: GuildMemberEntity.optional(),
-    user: UserEntity.optional(),
-    token: z.string(),
-    version: z.literal(1),
-    message: z.lazy(() => MessageEntity).optional(),
-    app_permissions: z.nativeEnum(BitwisePermissionFlags),
-    locale: LocaleKey.optional(),
-    guild_locale: LocaleKey.optional(),
-    entitlements: z.array(EntitlementEntity),
-    authorizing_integration_owners: z.record(
-      z.nativeEnum(ApplicationIntegrationType),
-      Snowflake,
-    ),
-    context: z.nativeEnum(InteractionContextType).optional(),
-  })
-  .strict();
+export const InteractionEntity = z.object({
+  id: Snowflake,
+  application_id: Snowflake,
+  type: z.nativeEnum(InteractionType),
+  data: z
+    .union([
+      ApplicationCommandInteractionDataEntity,
+      InteractionMessageComponentDataEntity,
+      InteractionModalSubmitDataEntity,
+    ])
+    .optional(),
+  guild: GuildEntity.partial().optional(),
+  guild_id: Snowflake.optional(),
+  channel: ChannelEntity.partial().optional(),
+  channel_id: Snowflake.optional(),
+  member: GuildMemberEntity.optional(),
+  user: UserEntity.optional(),
+  token: z.string(),
+  version: z.literal(1),
+  message: z.lazy(() => MessageEntity).optional(),
+  app_permissions: z.nativeEnum(BitwisePermissionFlags),
+  locale: LocaleKey.optional(),
+  guild_locale: LocaleKey.optional(),
+  entitlements: z.array(EntitlementEntity),
+  authorizing_integration_owners: z.record(
+    z.nativeEnum(ApplicationIntegrationType),
+    Snowflake,
+  ),
+  context: z.nativeEnum(InteractionContextType).optional(),
+});
 
 export type InteractionEntity = z.infer<typeof InteractionEntity>;

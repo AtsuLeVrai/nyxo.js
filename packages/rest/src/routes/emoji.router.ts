@@ -1,4 +1,5 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -49,7 +50,7 @@ export class EmojiRouter {
    */
   createGuildEmoji(
     guildId: Snowflake,
-    options: CreateGuildEmojiEntity,
+    options: z.input<typeof CreateGuildEmojiEntity>,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = CreateGuildEmojiEntity.safeParse(options);
@@ -69,7 +70,7 @@ export class EmojiRouter {
   modifyGuildEmoji(
     guildId: Snowflake,
     emojiId: Snowflake,
-    options: ModifyGuildEmojiEntity,
+    options: z.input<typeof ModifyGuildEmojiEntity>,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = ModifyGuildEmojiEntity.safeParse(options);
@@ -123,7 +124,7 @@ export class EmojiRouter {
    */
   createApplicationEmoji(
     applicationId: Snowflake,
-    options: CreateApplicationEmojiEntity,
+    options: z.input<typeof CreateApplicationEmojiEntity>,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = CreateApplicationEmojiEntity.safeParse(options);
@@ -144,7 +145,7 @@ export class EmojiRouter {
   modifyApplicationEmoji(
     applicationId: Snowflake,
     emojiId: Snowflake,
-    options: ModifyApplicationEmojiEntity,
+    options: z.input<typeof ModifyApplicationEmojiEntity>,
     reason?: string,
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = ModifyApplicationEmojiEntity.safeParse(options);

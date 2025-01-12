@@ -3,6 +3,7 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -57,7 +58,7 @@ export class VoiceRouter {
    */
   modifyCurrentUserVoiceState(
     guildId: Snowflake,
-    options: ModifyCurrentUserVoiceStateEntity,
+    options: z.input<typeof ModifyCurrentUserVoiceStateEntity>,
   ): Promise<HttpResponse<void>> {
     const result = ModifyCurrentUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
@@ -76,7 +77,7 @@ export class VoiceRouter {
   modifyUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
-    options: ModifyUserVoiceStateEntity,
+    options: z.input<typeof ModifyUserVoiceStateEntity>,
   ): Promise<HttpResponse<void>> {
     const result = ModifyUserVoiceStateEntity.safeParse(options);
     if (!result.success) {

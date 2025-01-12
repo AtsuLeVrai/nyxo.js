@@ -19,14 +19,12 @@ import { UserEntity } from "./user.entity.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#role-subscription-data-object-role-subscription-data-object-structure}
  */
-export const RoleSubscriptionDataEntity = z
-  .object({
-    role_subscription_listing_id: Snowflake,
-    tier_name: z.string(),
-    total_months_subscribed: z.number(),
-    is_renewal: z.boolean(),
-  })
-  .strict();
+export const RoleSubscriptionDataEntity = z.object({
+  role_subscription_listing_id: Snowflake,
+  tier_name: z.string(),
+  total_months_subscribed: z.number(),
+  is_renewal: z.boolean(),
+});
 
 export type RoleSubscriptionDataEntity = z.infer<
   typeof RoleSubscriptionDataEntity
@@ -44,28 +42,24 @@ export enum AllowedMentionType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#allowed-mentions-object-allowed-mentions-structure}
  */
-export const AllowedMentionsEntity = z
-  .object({
-    parse: z.array(z.nativeEnum(AllowedMentionType)),
-    roles: z.array(Snowflake).optional(),
-    users: z.array(Snowflake).optional(),
-    replied_user: z.boolean().optional(),
-  })
-  .strict();
+export const AllowedMentionsEntity = z.object({
+  parse: z.array(z.nativeEnum(AllowedMentionType)),
+  roles: z.array(Snowflake).optional(),
+  users: z.array(Snowflake).optional(),
+  replied_user: z.boolean().optional(),
+});
 
 export type AllowedMentionsEntity = z.infer<typeof AllowedMentionsEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#channel-mention-object-channel-mention-structure}
  */
-export const ChannelMentionEntity = z
-  .object({
-    id: Snowflake,
-    guild_id: Snowflake,
-    type: z.nativeEnum(ChannelType),
-    name: z.string(),
-  })
-  .strict();
+export const ChannelMentionEntity = z.object({
+  id: Snowflake,
+  guild_id: Snowflake,
+  type: z.nativeEnum(ChannelType),
+  name: z.string(),
+});
 
 export type ChannelMentionEntity = z.infer<typeof ChannelMentionEntity>;
 
@@ -79,118 +73,102 @@ export enum AttachmentFlags {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#attachment-object-attachment-structure}
  */
-export const AttachmentEntity = z
-  .object({
-    id: Snowflake,
-    filename: z.string(),
-    title: z.string().optional(),
-    description: z.string().optional(),
-    content_type: z.string().optional(),
-    size: z.number().int(),
-    url: z.string().url(),
-    proxy_url: z.string().url(),
-    height: z.number().int().nullish(),
-    width: z.number().int().nullish(),
-    ephemeral: z.boolean().optional(),
-    duration_secs: z.number().optional(),
-    waveform: z.string().optional(),
-    flags: z.nativeEnum(AttachmentFlags).optional(),
-  })
-  .strict();
+export const AttachmentEntity = z.object({
+  id: Snowflake,
+  filename: z.string(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  content_type: z.string().optional(),
+  size: z.number().int(),
+  url: z.string().url(),
+  proxy_url: z.string().url(),
+  height: z.number().int().nullish(),
+  width: z.number().int().nullish(),
+  ephemeral: z.boolean().optional(),
+  duration_secs: z.number().optional(),
+  waveform: z.string().optional(),
+  flags: z.nativeEnum(AttachmentFlags).optional(),
+});
 
 export type AttachmentEntity = z.infer<typeof AttachmentEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-field-structure}
  */
-export const EmbedFieldEntity = z
-  .object({
-    name: z.string().max(256),
-    value: z.string().max(1024),
-    inline: z.boolean().optional(),
-  })
-  .strict();
+export const EmbedFieldEntity = z.object({
+  name: z.string().max(256),
+  value: z.string().max(1024),
+  inline: z.boolean().optional(),
+});
 
 export type EmbedFieldEntity = z.infer<typeof EmbedFieldEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-footer-structure}
  */
-export const EmbedFooterEntity = z
-  .object({
-    text: z.string().max(2048),
-    icon_url: z.string().url().optional(),
-    proxy_icon_url: z.string().url().optional(),
-  })
-  .strict();
+export const EmbedFooterEntity = z.object({
+  text: z.string().max(2048),
+  icon_url: z.string().url().optional(),
+  proxy_icon_url: z.string().url().optional(),
+});
 
 export type EmbedFooterEntity = z.infer<typeof EmbedFooterEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-author-structure}
  */
-export const EmbedAuthorEntity = z
-  .object({
-    name: z.string().max(256),
-    url: z.string().url().optional(),
-    icon_url: z.string().url().optional(),
-    proxy_icon_url: z.string().url().optional(),
-  })
-  .strict();
+export const EmbedAuthorEntity = z.object({
+  name: z.string().max(256),
+  url: z.string().url().optional(),
+  icon_url: z.string().url().optional(),
+  proxy_icon_url: z.string().url().optional(),
+});
 
 export type EmbedAuthorEntity = z.infer<typeof EmbedAuthorEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-provider-structure}
  */
-export const EmbedProviderEntity = z
-  .object({
-    name: z.string().optional(),
-    url: z.string().url().optional(),
-  })
-  .strict();
+export const EmbedProviderEntity = z.object({
+  name: z.string().optional(),
+  url: z.string().url().optional(),
+});
 
 export type EmbedProviderEntity = z.infer<typeof EmbedProviderEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-image-structure}
  */
-export const EmbedImageEntity = z
-  .object({
-    url: z.string().url(),
-    proxy_url: z.string().url().optional(),
-    height: z.number().int().optional(),
-    width: z.number().int().optional(),
-  })
-  .strict();
+export const EmbedImageEntity = z.object({
+  url: z.string().url(),
+  proxy_url: z.string().url().optional(),
+  height: z.number().int().optional(),
+  width: z.number().int().optional(),
+});
 
 export type EmbedImageEntity = z.infer<typeof EmbedImageEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-video-structure}
  */
-export const EmbedVideoEntity = z
-  .object({
-    url: z.string().url().optional(),
-    proxy_url: z.string().url().optional(),
-    height: z.number().int().optional(),
-    width: z.number().int().optional(),
-  })
-  .strict();
+export const EmbedVideoEntity = z.object({
+  url: z.string().url().optional(),
+  proxy_url: z.string().url().optional(),
+  height: z.number().int().optional(),
+  width: z.number().int().optional(),
+});
 
 export type EmbedVideoEntity = z.infer<typeof EmbedVideoEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-thumbnail-structure}
  */
-export const EmbedThumbnailEntity = z
-  .object({
-    url: z.string().url(),
-    proxy_url: z.string().url().optional(),
-    height: z.number().int().optional(),
-    width: z.number().int().optional(),
-  })
-  .strict();
+export const EmbedThumbnailEntity = z.object({
+  url: z.string().url(),
+  proxy_url: z.string().url().optional(),
+  height: z.number().int().optional(),
+  width: z.number().int().optional(),
+});
 
 export type EmbedThumbnailEntity = z.infer<typeof EmbedThumbnailEntity>;
 
@@ -210,35 +188,31 @@ export enum EmbedType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-structure}
  */
-export const EmbedEntity = z
-  .object({
-    title: z.string().max(256).optional(),
-    type: z.nativeEnum(EmbedType).default(EmbedType.Rich),
-    description: z.string().max(4096).optional(),
-    url: z.string().url().optional(),
-    timestamp: z.string().datetime().optional(),
-    color: z.number().int().optional(),
-    footer: EmbedFooterEntity.optional(),
-    image: EmbedImageEntity.optional(),
-    thumbnail: EmbedThumbnailEntity.optional(),
-    video: EmbedVideoEntity.optional(),
-    provider: EmbedProviderEntity.optional(),
-    author: EmbedAuthorEntity.optional(),
-    fields: z.array(EmbedFieldEntity).max(25).optional(),
-  })
-  .strict();
+export const EmbedEntity = z.object({
+  title: z.string().max(256).optional(),
+  type: z.nativeEnum(EmbedType).default(EmbedType.Rich),
+  description: z.string().max(4096).optional(),
+  url: z.string().url().optional(),
+  timestamp: z.string().datetime().optional(),
+  color: z.number().int().optional(),
+  footer: EmbedFooterEntity.optional(),
+  image: EmbedImageEntity.optional(),
+  thumbnail: EmbedThumbnailEntity.optional(),
+  video: EmbedVideoEntity.optional(),
+  provider: EmbedProviderEntity.optional(),
+  author: EmbedAuthorEntity.optional(),
+  fields: z.array(EmbedFieldEntity).max(25).optional(),
+});
 
 export type EmbedEntity = z.infer<typeof EmbedEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#reaction-count-details-object-reaction-count-details-structure}
  */
-export const ReactionCountDetailsEntity = z
-  .object({
-    burst: z.number().int(),
-    normal: z.number().int(),
-  })
-  .strict();
+export const ReactionCountDetailsEntity = z.object({
+  burst: z.number().int(),
+  normal: z.number().int(),
+});
 
 export type ReactionCountDetailsEntity = z.infer<
   typeof ReactionCountDetailsEntity
@@ -247,16 +221,14 @@ export type ReactionCountDetailsEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#reaction-object-reaction-structure}
  */
-export const ReactionEntity = z
-  .object({
-    count: z.number().int(),
-    count_details: ReactionCountDetailsEntity,
-    me: z.boolean(),
-    me_burst: z.boolean(),
-    emoji: EmojiEntity.partial(),
-    burst_colors: z.unknown(),
-  })
-  .strict();
+export const ReactionEntity = z.object({
+  count: z.number().int(),
+  count_details: ReactionCountDetailsEntity,
+  me: z.boolean(),
+  me_burst: z.boolean(),
+  emoji: EmojiEntity.partial(),
+  burst_colors: z.unknown(),
+});
 
 export type ReactionEntity = z.infer<typeof ReactionEntity>;
 
@@ -271,48 +243,42 @@ export enum MessageReferenceType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-reference-structure}
  */
-export const MessageReferenceEntity = z
-  .object({
-    type: z
-      .nativeEnum(MessageReferenceType)
-      .default(MessageReferenceType.Default),
-    message_id: Snowflake.optional(),
-    channel_id: Snowflake.optional(),
-    guild_id: Snowflake.optional(),
-    fail_if_not_exists: z.boolean().optional(),
-  })
-  .strict();
+export const MessageReferenceEntity = z.object({
+  type: z
+    .nativeEnum(MessageReferenceType)
+    .default(MessageReferenceType.Default),
+  message_id: Snowflake.optional(),
+  channel_id: Snowflake.optional(),
+  guild_id: Snowflake.optional(),
+  fail_if_not_exists: z.boolean().optional(),
+});
 
 export type MessageReferenceEntity = z.infer<typeof MessageReferenceEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-call-object-message-call-object-structure}
  */
-export const MessageCallEntity = z
-  .object({
-    participants: z.array(Snowflake),
-    ended_timestamp: z.string().datetime().nullish(),
-  })
-  .strict();
+export const MessageCallEntity = z.object({
+  participants: z.array(Snowflake),
+  ended_timestamp: z.string().datetime().nullish(),
+});
 
 export type MessageCallEntity = z.infer<typeof MessageCallEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-message-component-interaction-metadata-structure}
  */
-export const MessageComponentInteractionMetadataEntity = z
-  .object({
-    id: Snowflake,
-    type: z.lazy(() => z.nativeEnum(InteractionType)),
-    user: UserEntity,
-    authorizing_integration_owners: z.record(
-      z.nativeEnum(ApplicationIntegrationType),
-      Snowflake,
-    ),
-    original_response_message_id: Snowflake.optional(),
-    interacted_message_id: Snowflake,
-  })
-  .strict();
+export const MessageComponentInteractionMetadataEntity = z.object({
+  id: Snowflake,
+  type: z.lazy(() => z.nativeEnum(InteractionType)),
+  user: UserEntity,
+  authorizing_integration_owners: z.record(
+    z.nativeEnum(ApplicationIntegrationType),
+    Snowflake,
+  ),
+  original_response_message_id: Snowflake.optional(),
+  interacted_message_id: Snowflake,
+});
 
 export type MessageComponentInteractionMetadataEntity = z.infer<
   typeof MessageComponentInteractionMetadataEntity
@@ -321,20 +287,18 @@ export type MessageComponentInteractionMetadataEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-application-command-interaction-metadata-structure}
  */
-export const ApplicationCommandInteractionMetadataEntity = z
-  .object({
-    id: Snowflake,
-    type: z.lazy(() => z.nativeEnum(InteractionType)),
-    user: UserEntity,
-    authorizing_integration_owners: z.record(
-      z.nativeEnum(ApplicationIntegrationType),
-      Snowflake,
-    ),
-    original_response_message_id: Snowflake.optional(),
-    target_user: UserEntity.optional(),
-    target_message_id: Snowflake.optional(),
-  })
-  .strict();
+export const ApplicationCommandInteractionMetadataEntity = z.object({
+  id: Snowflake,
+  type: z.lazy(() => z.nativeEnum(InteractionType)),
+  user: UserEntity,
+  authorizing_integration_owners: z.record(
+    z.nativeEnum(ApplicationIntegrationType),
+    Snowflake,
+  ),
+  original_response_message_id: Snowflake.optional(),
+  target_user: UserEntity.optional(),
+  target_message_id: Snowflake.optional(),
+});
 
 export type ApplicationCommandInteractionMetadataEntity = z.infer<
   typeof ApplicationCommandInteractionMetadataEntity
@@ -343,22 +307,20 @@ export type ApplicationCommandInteractionMetadataEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-modal-submit-interaction-metadata-structure}
  */
-export const ModalSubmitInteractionMetadataEntity = z
-  .object({
-    id: Snowflake,
-    type: z.lazy(() => z.nativeEnum(InteractionType)),
-    user: UserEntity,
-    authorizing_integration_owners: z.record(
-      z.nativeEnum(ApplicationIntegrationType),
-      Snowflake,
-    ),
-    original_response_message_id: Snowflake.optional(),
-    triggering_interaction_metadata: z.union([
-      ApplicationCommandInteractionMetadataEntity,
-      MessageComponentInteractionMetadataEntity,
-    ]),
-  })
-  .strict();
+export const ModalSubmitInteractionMetadataEntity = z.object({
+  id: Snowflake,
+  type: z.lazy(() => z.nativeEnum(InteractionType)),
+  user: UserEntity,
+  authorizing_integration_owners: z.record(
+    z.nativeEnum(ApplicationIntegrationType),
+    Snowflake,
+  ),
+  original_response_message_id: Snowflake.optional(),
+  triggering_interaction_metadata: z.union([
+    ApplicationCommandInteractionMetadataEntity,
+    MessageComponentInteractionMetadataEntity,
+  ]),
+});
 
 export type ModalSubmitInteractionMetadataEntity = z.infer<
   typeof ModalSubmitInteractionMetadataEntity
@@ -394,12 +356,10 @@ export enum MessageActivityType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-activity-structure}
  */
-export const MessageActivityEntity = z
-  .object({
-    type: z.nativeEnum(MessageActivityType),
-    party_id: z.string().optional(),
-  })
-  .strict();
+export const MessageActivityEntity = z.object({
+  type: z.nativeEnum(MessageActivityType),
+  party_id: z.string().optional(),
+});
 
 export type MessageActivityEntity = z.infer<typeof MessageActivityEntity>;
 
@@ -493,53 +453,51 @@ export interface MessageEntity {
   call?: MessageCallEntity;
 }
 
-export const MessageEntity: z.ZodObject<z.ZodRawShape> = z
-  .object({
-    id: Snowflake,
-    channel_id: Snowflake,
-    author: UserEntity,
-    content: z.string(),
-    timestamp: z.string().datetime(),
-    edited_timestamp: z.string().datetime().nullable(),
-    tts: z.boolean(),
-    mention_everyone: z.boolean(),
-    mentions: z.array(UserEntity),
-    mention_roles: z.array(Snowflake),
-    mention_channels: z.array(ChannelMentionEntity).optional(),
-    attachments: z.array(AttachmentEntity),
-    embeds: z.array(EmbedEntity),
-    reactions: z.array(ReactionEntity).optional(),
-    nonce: z.union([z.string(), z.number().int()]).optional(),
-    pinned: z.boolean(),
-    webhook_id: Snowflake.optional(),
-    type: z.nativeEnum(MessageType),
-    activity: MessageActivityEntity.optional(),
-    application: ApplicationEntity.partial().optional(),
-    application_id: Snowflake.optional(),
-    message_reference: z.lazy(() => MessageReferenceEntity).optional(),
-    referenced_message: z
-      .lazy(() => MessageEntity)
-      .nullable()
-      .optional(),
-    flags: z.nativeEnum(MessageFlags).optional(),
-    interaction_metadata: z
-      .union([
-        ApplicationCommandInteractionMetadataEntity,
-        MessageComponentInteractionMetadataEntity,
-        ModalSubmitInteractionMetadataEntity,
-      ])
-      .optional(),
-    thread: z.lazy(() => AnyThreadChannelEntity).optional(),
-    components: z.array(ActionRowEntity).optional(),
-    sticker_items: z.array(StickerItemEntity).optional(),
-    stickers: z.array(StickerEntity).optional(),
-    position: z.number().int().optional(),
-    role_subscription_data: RoleSubscriptionDataEntity.optional(),
-    resolved: z.lazy(() => InteractionResolvedDataEntity.optional()),
-    poll: PollEntity.optional(),
-    call: MessageCallEntity.optional(),
-  })
-  .strict();
+export const MessageEntity: z.ZodObject<z.ZodRawShape> = z.object({
+  id: Snowflake,
+  channel_id: Snowflake,
+  author: UserEntity,
+  content: z.string(),
+  timestamp: z.string().datetime(),
+  edited_timestamp: z.string().datetime().nullable(),
+  tts: z.boolean(),
+  mention_everyone: z.boolean(),
+  mentions: z.array(UserEntity),
+  mention_roles: z.array(Snowflake),
+  mention_channels: z.array(ChannelMentionEntity).optional(),
+  attachments: z.array(AttachmentEntity),
+  embeds: z.array(EmbedEntity),
+  reactions: z.array(ReactionEntity).optional(),
+  nonce: z.union([z.string(), z.number().int()]).optional(),
+  pinned: z.boolean(),
+  webhook_id: Snowflake.optional(),
+  type: z.nativeEnum(MessageType),
+  activity: MessageActivityEntity.optional(),
+  application: ApplicationEntity.partial().optional(),
+  application_id: Snowflake.optional(),
+  message_reference: z.lazy(() => MessageReferenceEntity).optional(),
+  referenced_message: z
+    .lazy(() => MessageEntity)
+    .nullable()
+    .optional(),
+  flags: z.nativeEnum(MessageFlags).optional(),
+  interaction_metadata: z
+    .union([
+      ApplicationCommandInteractionMetadataEntity,
+      MessageComponentInteractionMetadataEntity,
+      ModalSubmitInteractionMetadataEntity,
+    ])
+    .optional(),
+  thread: z.lazy(() => AnyThreadChannelEntity).optional(),
+  components: z.array(ActionRowEntity).optional(),
+  sticker_items: z.array(StickerItemEntity).optional(),
+  stickers: z.array(StickerEntity).optional(),
+  position: z.number().int().optional(),
+  role_subscription_data: RoleSubscriptionDataEntity.optional(),
+  resolved: z.lazy(() => InteractionResolvedDataEntity.optional()),
+  poll: PollEntity.optional(),
+  call: MessageCallEntity.optional(),
+});
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#message-snapshot-structure}
@@ -564,22 +522,20 @@ export interface MessageSnapshotEntity {
 
 // @ts-expect-error Zod does not like circular references
 export const MessageSnapshotEntity: z.ZodObject<z.ZodRawShape> = z.lazy(() =>
-  z
-    .object({
-      message: MessageEntity.pick({
-        type: true,
-        content: true,
-        embeds: true,
-        attachments: true,
-        timestamp: true,
-        edited_timestamp: true,
-        flags: true,
-        mentions: true,
-        mention_roles: true,
-        stickers: true,
-        sticker_items: true,
-        components: true,
-      }),
-    })
-    .strict(),
+  z.object({
+    message: MessageEntity.pick({
+      type: true,
+      content: true,
+      embeds: true,
+      attachments: true,
+      timestamp: true,
+      edited_timestamp: true,
+      flags: true,
+      mentions: true,
+      mention_roles: true,
+      stickers: true,
+      sticker_items: true,
+      components: true,
+    }),
+  }),
 );

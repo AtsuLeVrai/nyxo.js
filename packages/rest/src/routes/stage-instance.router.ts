@@ -1,4 +1,5 @@
 import type { Snowflake, StageInstanceEntity } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -24,7 +25,7 @@ export class StageInstanceRouter {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
    */
   createStageInstance(
-    options: CreateStageInstanceEntity,
+    options: z.input<typeof CreateStageInstanceEntity>,
     reason?: string,
   ): Promise<HttpResponse<StageInstanceEntity>> {
     const result = CreateStageInstanceEntity.safeParse(options);
@@ -53,7 +54,7 @@ export class StageInstanceRouter {
    */
   modifyStageInstance(
     channelId: Snowflake,
-    options: ModifyStageInstanceEntity,
+    options: z.input<typeof ModifyStageInstanceEntity>,
     reason?: string,
   ): Promise<HttpResponse<StageInstanceEntity>> {
     const result = ModifyStageInstanceEntity.safeParse(options);

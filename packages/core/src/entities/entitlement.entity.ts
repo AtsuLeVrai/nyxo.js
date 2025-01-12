@@ -18,19 +18,17 @@ export enum EntitlementType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-structure}
  */
-export const EntitlementEntity = z
-  .object({
-    id: Snowflake,
-    sku_id: Snowflake,
-    application_id: Snowflake,
-    user_id: Snowflake.optional(),
-    type: z.nativeEnum(EntitlementType),
-    deleted: z.boolean(),
-    starts_at: z.string().datetime().nullable(),
-    ends_at: z.string().datetime().nullable(),
-    guild_id: Snowflake.optional(),
-    consumed: z.boolean().optional(),
-  })
-  .strict();
+export const EntitlementEntity = z.object({
+  id: Snowflake,
+  sku_id: Snowflake,
+  application_id: Snowflake,
+  user_id: Snowflake.optional(),
+  type: z.nativeEnum(EntitlementType),
+  deleted: z.boolean(),
+  starts_at: z.string().datetime().nullable(),
+  ends_at: z.string().datetime().nullable(),
+  guild_id: Snowflake.optional(),
+  consumed: z.boolean().optional(),
+});
 
 export type EntitlementEntity = z.infer<typeof EntitlementEntity>;

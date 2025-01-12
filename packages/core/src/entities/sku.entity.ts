@@ -23,15 +23,13 @@ export enum SkuType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-structure}
  */
-export const SkuEntity = z
-  .object({
-    id: Snowflake,
-    type: z.nativeEnum(SkuType),
-    application_id: Snowflake,
-    name: z.string(),
-    slug: z.string(),
-    flags: z.nativeEnum(SkuFlags),
-  })
-  .strict();
+export const SkuEntity = z.object({
+  id: Snowflake,
+  type: z.nativeEnum(SkuType),
+  application_id: Snowflake,
+  name: z.string(),
+  slug: z.string(),
+  flags: z.nativeEnum(SkuFlags),
+});
 
 export type SkuEntity = z.infer<typeof SkuEntity>;

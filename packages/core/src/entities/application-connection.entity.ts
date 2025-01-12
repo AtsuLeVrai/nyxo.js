@@ -18,25 +18,23 @@ export enum ApplicationRoleConnectionMetadataType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#application-role-connection-metadata-object-application-role-connection-metadata-structure}
  */
-export const ApplicationRoleConnectionMetadataSchema = z
-  .object({
-    type: z.nativeEnum(ApplicationRoleConnectionMetadataType),
-    key: z
-      .string()
-      .min(1)
-      .max(50)
-      .regex(/^[a-z0-9_]+$/),
-    name: z.string().min(1).max(100),
-    name_localizations: createAvailableLocale(
-      z.string().min(1).max(100),
-    ).optional(),
-    description: z.string().min(1).max(200),
-    description_localizations: createAvailableLocale(
-      z.string().min(1).max(200),
-    ).optional(),
-  })
-  .strict();
+export const ApplicationRoleConnectionMetadataEntity = z.object({
+  type: z.nativeEnum(ApplicationRoleConnectionMetadataType),
+  key: z
+    .string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-z0-9_]+$/),
+  name: z.string().min(1).max(100),
+  name_localizations: createAvailableLocale(
+    z.string().min(1).max(100),
+  ).optional(),
+  description: z.string().min(1).max(200),
+  description_localizations: createAvailableLocale(
+    z.string().min(1).max(200),
+  ).optional(),
+});
 
 export type ApplicationRoleConnectionMetadataEntity = z.infer<
-  typeof ApplicationRoleConnectionMetadataSchema
+  typeof ApplicationRoleConnectionMetadataEntity
 >;

@@ -26,7 +26,6 @@ export const SubscriptionEntity = z
     canceled_at: z.string().datetime().nullable(),
     country: z.string().length(2).optional(), // ISO3166-1 alpha-2 country code
   })
-  .strict()
   .refine(
     (data) => {
       if (data.status === 1 && !data.canceled_at) {

@@ -1,4 +1,5 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -72,7 +73,7 @@ export class StickerRouter {
    */
   createGuildSticker(
     guildId: Snowflake,
-    options: CreateGuildStickerEntity,
+    options: z.input<typeof CreateGuildStickerEntity>,
     reason?: string,
   ): Promise<HttpResponse<StickerEntity>> {
     const result = CreateGuildStickerEntity.safeParse(options);
@@ -95,7 +96,7 @@ export class StickerRouter {
   modifyGuildSticker(
     guildId: Snowflake,
     stickerId: Snowflake,
-    options: ModifyGuildStickerEntity,
+    options: z.input<typeof ModifyGuildStickerEntity>,
     reason?: string,
   ): Promise<HttpResponse<StickerEntity>> {
     const result = ModifyGuildStickerEntity.safeParse(options);

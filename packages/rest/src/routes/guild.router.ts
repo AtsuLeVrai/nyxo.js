@@ -106,7 +106,9 @@ export class GuildRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
    */
-  createGuild(options: CreateGuildEntity): Promise<HttpResponse<GuildEntity>> {
+  createGuild(
+    options: z.input<typeof CreateGuildEntity>,
+  ): Promise<HttpResponse<GuildEntity>> {
     const result = CreateGuildEntity.safeParse(options);
     if (!result.success) {
       const validationError = fromZodError(result.error);
@@ -142,7 +144,7 @@ export class GuildRouter {
    */
   modifyGuild(
     guildId: Snowflake,
-    options: ModifyGuildEntity,
+    options: z.input<typeof ModifyGuildEntity>,
     reason?: string,
   ): Promise<HttpResponse<GuildEntity>> {
     const result = ModifyGuildEntity.safeParse(options);
@@ -176,7 +178,7 @@ export class GuildRouter {
    */
   createGuildChannel(
     guildId: Snowflake,
-    options: CreateGuildChannelEntity,
+    options: z.input<typeof CreateGuildChannelEntity>,
     reason?: string,
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = CreateGuildChannelEntity.safeParse(options);
@@ -196,7 +198,7 @@ export class GuildRouter {
    */
   modifyGuildChannelPositions(
     guildId: Snowflake,
-    options: ModifyGuildChannelPositionsEntity,
+    options: z.input<typeof ModifyGuildChannelPositionsEntity>,
   ): Promise<HttpResponse<void>> {
     const result = ModifyGuildChannelPositionsEntity.safeParse(options);
     if (!result.success) {
@@ -251,7 +253,7 @@ export class GuildRouter {
    */
   searchGuildMembers(
     guildId: Snowflake,
-    query: SearchGuildMembersQueryEntity,
+    query: z.input<typeof SearchGuildMembersQueryEntity>,
   ): Promise<HttpResponse<GuildMemberEntity[]>> {
     const result = SearchGuildMembersQueryEntity.safeParse(query);
     if (!result.success) {
@@ -270,7 +272,7 @@ export class GuildRouter {
   addGuildMember(
     guildId: Snowflake,
     userId: Snowflake,
-    options: AddGuildMemberEntity,
+    options: z.input<typeof AddGuildMemberEntity>,
   ): Promise<HttpResponse<GuildMemberEntity>> {
     const result = AddGuildMemberEntity.safeParse(options);
     if (!result.success) {
@@ -289,7 +291,7 @@ export class GuildRouter {
   modifyGuildMember(
     guildId: Snowflake,
     userId: Snowflake,
-    options: ModifyGuildMemberEntity,
+    options: z.input<typeof ModifyGuildMemberEntity>,
     reason?: string,
   ): Promise<HttpResponse<GuildMemberEntity>> {
     const result = ModifyGuildMemberEntity.safeParse(options);
@@ -413,7 +415,7 @@ export class GuildRouter {
   createGuildBan(
     guildId: Snowflake,
     userId: Snowflake,
-    options: CreateGuildBanEntity,
+    options: z.input<typeof CreateGuildBanEntity>,
     reason?: string,
   ): Promise<HttpResponse<void>> {
     const result = CreateGuildBanEntity.safeParse(options);
@@ -446,7 +448,7 @@ export class GuildRouter {
    */
   bulkGuildBan(
     guildId: Snowflake,
-    options: BulkGuildBanEntity,
+    options: z.input<typeof BulkGuildBanEntity>,
     reason?: string,
   ): Promise<HttpResponse<BulkGuildBanResponseEntity>> {
     const result = BulkGuildBanEntity.safeParse(options);
@@ -483,7 +485,7 @@ export class GuildRouter {
    */
   createGuildRole(
     guildId: Snowflake,
-    options: CreateGuildRoleEntity,
+    options: z.input<typeof CreateGuildRoleEntity>,
     reason?: string,
   ): Promise<HttpResponse<RoleEntity>> {
     const result = CreateGuildRoleEntity.safeParse(options);
@@ -503,7 +505,7 @@ export class GuildRouter {
    */
   modifyGuildRolePositions(
     guildId: Snowflake,
-    options: ModifyGuildRolePositionsEntity,
+    options: z.input<typeof ModifyGuildRolePositionsEntity>,
   ): Promise<HttpResponse<RoleEntity[]>> {
     const result = ModifyGuildRolePositionsEntity.safeParse(options);
     if (!result.success) {
@@ -522,7 +524,7 @@ export class GuildRouter {
   modifyGuildRole(
     guildId: Snowflake,
     roleId: Snowflake,
-    options: ModifyGuildRoleEntity,
+    options: z.input<typeof ModifyGuildRoleEntity>,
     reason?: string,
   ): Promise<HttpResponse<RoleEntity>> {
     const result = ModifyGuildRoleEntity.safeParse(options);
@@ -587,7 +589,7 @@ export class GuildRouter {
    */
   beginGuildPrune(
     guildId: Snowflake,
-    options: BeginGuildPruneEntity,
+    options: z.input<typeof BeginGuildPruneEntity>,
     reason?: string,
   ): Promise<HttpResponse<{ pruned: number | null }>> {
     const result = BeginGuildPruneEntity.safeParse(options);
@@ -657,7 +659,7 @@ export class GuildRouter {
    */
   modifyGuildWidget(
     guildId: Snowflake,
-    options: ModifyGuildWidgetSettingsEntity,
+    options: z.input<typeof ModifyGuildWidgetSettingsEntity>,
     reason?: string,
   ): Promise<HttpResponse<GuildWidgetSettingsEntity>> {
     const result = ModifyGuildWidgetSettingsEntity.safeParse(options);
@@ -716,7 +718,7 @@ export class GuildRouter {
    */
   modifyGuildWelcomeScreen(
     guildId: Snowflake,
-    options: ModifyGuildWelcomeScreenEntity,
+    options: z.input<typeof ModifyGuildWelcomeScreenEntity>,
     reason?: string,
   ): Promise<HttpResponse<WelcomeScreenEntity>> {
     const result = ModifyGuildWelcomeScreenEntity.safeParse(options);
@@ -745,7 +747,7 @@ export class GuildRouter {
    */
   modifyGuildOnboarding(
     guildId: Snowflake,
-    options: ModifyGuildOnboardingEntity,
+    options: z.input<typeof ModifyGuildOnboardingEntity>,
     reason?: string,
   ): Promise<HttpResponse<GuildOnboardingEntity>> {
     const result = ModifyGuildOnboardingEntity.safeParse(options);

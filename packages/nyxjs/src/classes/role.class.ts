@@ -13,52 +13,48 @@ import {
   type ModifyGuildRoleEntity,
   type Rest,
 } from "@nyxjs/rest";
-import type { CamelCasedPropertiesDeep } from "type-fest";
+import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import type { ColorInformation } from "../builders/index.js";
-import { camelCaseDeep, snakeCaseDeep } from "../utils.js";
+import { snakeCaseDeep } from "../utils.js";
 
-export class RoleTags {
-  readonly #data: CamelCasedPropertiesDeep<RoleTagsEntity>;
+export class RoleTagsClass {
+  readonly #data: RoleTagsEntity;
 
-  constructor(data: Partial<RoleTagsEntity> = {}) {
+  constructor(data: Partial<z.input<typeof RoleTagsEntity>> = {}) {
     try {
-      this.#data = RoleTagsEntity.transform(camelCaseDeep).parse(data);
+      this.#data = RoleTagsEntity.parse(data);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
   }
 
   get botId(): string | null {
-    return this.#data.botId ?? null;
+    return this.#data.bot_id ?? null;
   }
 
   get integrationId(): string | null {
-    return this.#data.integrationId ?? null;
+    return this.#data.integration_id ?? null;
   }
 
   get premiumSubscriber(): null {
-    return this.#data.premiumSubscriber ?? null;
+    return this.#data.premium_subscriber ?? null;
   }
 
   get subscriptionListingId(): string | null {
-    return this.#data.subscriptionListingId ?? null;
+    return this.#data.premium_subscriber ?? null;
   }
 
   get availableForPurchase(): null {
-    return this.#data.availableForPurchase ?? null;
+    return this.#data.available_for_purchase ?? null;
   }
 
   get guildConnections(): null {
-    return this.#data.guildConnections ?? null;
+    return this.#data.guild_connections ?? null;
   }
 
-  get data(): CamelCasedPropertiesDeep<RoleTagsEntity> {
-    return this.#data;
-  }
-
-  static from(data: Partial<RoleTagsEntity>): RoleTags {
-    return new RoleTags(data);
+  static from(data: Partial<z.input<typeof RoleTagsEntity>>): RoleTagsClass {
+    return new RoleTagsClass(data);
   }
 
   isBot(): boolean {
@@ -81,24 +77,9 @@ export class RoleTags {
     return this.guildConnections !== null;
   }
 
-  equals(other: RoleTags): boolean {
-    return (
-      this.botId === other.botId &&
-      this.integrationId === other.integrationId &&
-      this.premiumSubscriber === other.premiumSubscriber &&
-      this.subscriptionListingId === other.subscriptionListingId &&
-      this.availableForPurchase === other.availableForPurchase &&
-      this.guildConnections === other.guildConnections
-    );
-  }
-
-  clone(): RoleTags {
-    return RoleTags.from(this.toJson());
-  }
-
   toJson(): RoleTagsEntity {
     try {
-      return RoleTagsEntity.parse(snakeCaseDeep(this.#data));
+      return RoleTagsEntity.parse(this.#data);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
@@ -116,30 +97,23 @@ export interface RoleDifferences {
   unicodeEmoji: boolean;
 }
 
-export interface DetailedRoleJson
-  extends Omit<CamelCasedPropertiesDeep<RoleEntity>, "permissions"> {
-  colorInfo: ColorInformation;
-  contrastingColor: string;
-  isDefault: boolean;
-  isManaged: boolean;
-  isBoosterRole: boolean;
-  permissions: string[];
-  iconUrl: string | null;
-}
-
 export class Role {
   readonly #rest: Rest;
-  readonly #data: CamelCasedPropertiesDeep<RoleEntity>;
+  readonly #data: RoleEntity;
   readonly #guildId: string;
   readonly #permissions: BitFieldManager<BitwisePermissionFlags>;
   readonly #flags: BitFieldManager<RoleFlags>;
 
-  constructor(rest: Rest, guildId: string, data: Partial<RoleEntity> = {}) {
+  constructor(
+    rest: Rest,
+    guildId: string,
+    data: Partial<z.input<typeof RoleEntity>> = {},
+  ) {
     this.#rest = rest;
     this.#guildId = guildId;
 
     try {
-      this.#data = RoleEntity.transform(camelCaseDeep).parse(data);
+      this.#data = RoleEntity.parse(data);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
@@ -166,12 +140,12 @@ export class Role {
     return this.#data.hoist;
   }
 
-  get icon(): string | null | undefined {
-    return this.#data.icon;
+  get icon(): string | null {
+    return this.#data.icon ?? null;
   }
 
-  get unicodeEmoji(): string | null | undefined {
-    return this.#data.unicodeEmoji;
+  get unicodeEmoji(): string | null {
+    return this.#data.unicode_emoji ?? null;
   }
 
   get position(): number {
@@ -186,13 +160,13 @@ export class Role {
     return this.#data.mentionable;
   }
 
-  get tags(): RoleTags | undefined {
+  get tags(): RoleTagsClass | null {
     return this.#data.tags
-      ? RoleTags.from(snakeCaseDeep(this.#data.tags))
-      : undefined;
+      ? RoleTagsClass.from(snakeCaseDeep(this.#data.tags))
+      : null;
   }
 
-  get data(): CamelCasedPropertiesDeep<RoleEntity> {
+  get data(): RoleEntity {
     return this.#data;
   }
 
@@ -234,7 +208,7 @@ export class Role {
   getPermissionNames(): string[] {
     return Object.entries(BitwisePermissionFlags)
       .filter(
-        ([_, flag]) => typeof flag === "bigint" && this.hasPermission(flag),
+        ([_, flag]) => typeof flag === "number" && this.hasPermission(flag),
       )
       .map(([name]) => name);
   }
@@ -339,17 +313,12 @@ export class Role {
     return formatRole(this.id);
   }
 
-  toDetailedJson(): DetailedRoleJson {
-    return {
-      ...this.data,
-      colorInfo: this.getColor(),
-      contrastingColor: this.getContrastingColor(),
-      isDefault: this.isDefault(),
-      isManaged: this.isManagedRole(),
-      isBoosterRole: this.isBoosterRole(),
-      permissions: this.getPermissionNames(),
-      iconUrl: this.getIconUrl(),
-    };
+  toJson(): RoleEntity {
+    try {
+      return RoleEntity.parse(this.#data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   hasPermission(permission: BitwisePermissionFlags): boolean {

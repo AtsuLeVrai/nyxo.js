@@ -74,7 +74,7 @@ export class EntitlementRouter {
    */
   createTestEntitlement(
     applicationId: Snowflake,
-    test: CreateTestEntitlementEntity,
+    test: z.input<typeof CreateTestEntitlementEntity>,
   ): Promise<HttpResponse<EntitlementEntity>> {
     const result = CreateTestEntitlementEntity.safeParse(test);
     if (!result.success) {

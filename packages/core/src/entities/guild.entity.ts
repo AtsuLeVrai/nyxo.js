@@ -29,19 +29,17 @@ export enum GuildOnboardingMode {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure}
  */
-export const GuildOnboardingPromptOptionEntity = z
-  .object({
-    id: Snowflake,
-    channel_ids: z.array(Snowflake),
-    role_ids: z.array(Snowflake),
-    emoji: z.lazy(() => EmojiEntity).optional(),
-    emoji_id: Snowflake.optional(),
-    emoji_name: z.string().optional(),
-    emoji_animated: z.boolean().optional(),
-    title: z.string(),
-    description: z.string().nullable(),
-  })
-  .strict();
+export const GuildOnboardingPromptOptionEntity = z.object({
+  id: Snowflake,
+  channel_ids: z.array(Snowflake),
+  role_ids: z.array(Snowflake),
+  emoji: z.lazy(() => EmojiEntity).optional(),
+  emoji_id: Snowflake.optional(),
+  emoji_name: z.string().optional(),
+  emoji_animated: z.boolean().optional(),
+  title: z.string(),
+  description: z.string().nullable(),
+});
 
 export type GuildOnboardingPromptOptionEntity = z.infer<
   typeof GuildOnboardingPromptOptionEntity
@@ -50,17 +48,15 @@ export type GuildOnboardingPromptOptionEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure}
  */
-export const GuildOnboardingPromptEntity = z
-  .object({
-    id: Snowflake,
-    type: z.nativeEnum(GuildOnboardingPromptType),
-    options: z.array(GuildOnboardingPromptOptionEntity),
-    title: z.string(),
-    single_select: z.boolean(),
-    required: z.boolean(),
-    in_onboarding: z.boolean(),
-  })
-  .strict();
+export const GuildOnboardingPromptEntity = z.object({
+  id: Snowflake,
+  type: z.nativeEnum(GuildOnboardingPromptType),
+  options: z.array(GuildOnboardingPromptOptionEntity),
+  title: z.string(),
+  single_select: z.boolean(),
+  required: z.boolean(),
+  in_onboarding: z.boolean(),
+});
 
 export type GuildOnboardingPromptEntity = z.infer<
   typeof GuildOnboardingPromptEntity
@@ -69,29 +65,25 @@ export type GuildOnboardingPromptEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-guild-onboarding-structure}
  */
-export const GuildOnboardingEntity = z
-  .object({
-    guild_id: Snowflake,
-    prompts: z.array(GuildOnboardingPromptEntity),
-    default_channel_ids: z.array(Snowflake),
-    enabled: z.boolean(),
-    mode: z.nativeEnum(GuildOnboardingMode),
-  })
-  .strict();
+export const GuildOnboardingEntity = z.object({
+  guild_id: Snowflake,
+  prompts: z.array(GuildOnboardingPromptEntity),
+  default_channel_ids: z.array(Snowflake),
+  enabled: z.boolean(),
+  mode: z.nativeEnum(GuildOnboardingMode),
+});
 
 export type GuildOnboardingEntity = z.infer<typeof GuildOnboardingEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-channel-structure}
  */
-export const WelcomeScreenChannelEntity = z
-  .object({
-    channel_id: Snowflake,
-    description: z.string(),
-    emoji_id: Snowflake.nullable(),
-    emoji_name: z.string().nullable(),
-  })
-  .strict();
+export const WelcomeScreenChannelEntity = z.object({
+  channel_id: Snowflake,
+  description: z.string(),
+  emoji_id: Snowflake.nullable(),
+  emoji_name: z.string().nullable(),
+});
 
 export type WelcomeScreenChannelEntity = z.infer<
   typeof WelcomeScreenChannelEntity
@@ -100,39 +92,33 @@ export type WelcomeScreenChannelEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-structure}
  */
-export const WelcomeScreenEntity = z
-  .object({
-    description: z.string().nullable(),
-    welcome_channels: z.array(WelcomeScreenChannelEntity),
-  })
-  .strict();
+export const WelcomeScreenEntity = z.object({
+  description: z.string().nullable(),
+  welcome_channels: z.array(WelcomeScreenChannelEntity),
+});
 
 export type WelcomeScreenEntity = z.infer<typeof WelcomeScreenEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#ban-object-ban-structure}
  */
-export const BanEntity = z
-  .object({
-    reason: z.string().nullable(),
-    user: z.lazy(() => UserEntity),
-  })
-  .strict();
+export const BanEntity = z.object({
+  reason: z.string().nullable(),
+  user: z.lazy(() => UserEntity),
+});
 
 export type BanEntity = z.infer<typeof BanEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-application-object-integration-application-structure}
  */
-export const IntegrationApplicationEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    icon: z.string().nullable(),
-    description: z.string(),
-    bot: z.lazy(() => UserEntity).optional(),
-  })
-  .strict();
+export const IntegrationApplicationEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  icon: z.string().nullable(),
+  description: z.string(),
+  bot: z.lazy(() => UserEntity).optional(),
+});
 
 export type IntegrationApplicationEntity = z.infer<
   typeof IntegrationApplicationEntity
@@ -141,12 +127,10 @@ export type IntegrationApplicationEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-account-object-integration-account-structure}
  */
-export const IntegrationAccountEntity = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-  })
-  .strict();
+export const IntegrationAccountEntity = z.object({
+  id: z.string(),
+  name: z.string(),
+});
 
 export type IntegrationAccountEntity = z.infer<typeof IntegrationAccountEntity>;
 
@@ -161,31 +145,29 @@ export enum IntegrationExpirationBehavior {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure}
  */
-export const IntegrationEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    type: z.union([
-      z.literal("twitch"),
-      z.literal("youtube"),
-      z.literal("discord"),
-      z.literal("guild_subscription"),
-    ]),
-    enabled: z.boolean(),
-    syncing: z.boolean().optional(),
-    role_id: Snowflake.optional(),
-    enable_emoticons: z.boolean().optional(),
-    expire_behavior: z.nativeEnum(IntegrationExpirationBehavior).optional(),
-    expire_grace_period: z.number().int().optional(),
-    user: z.lazy(() => UserEntity).optional(),
-    account: IntegrationAccountEntity,
-    synced_at: z.string().datetime().optional(),
-    subscriber_count: z.number().int().optional(),
-    revoked: z.boolean().optional(),
-    application: IntegrationApplicationEntity.optional(),
-    scopes: z.nativeEnum(OAuth2Scope).optional(),
-  })
-  .strict();
+export const IntegrationEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  type: z.union([
+    z.literal("twitch"),
+    z.literal("youtube"),
+    z.literal("discord"),
+    z.literal("guild_subscription"),
+  ]),
+  enabled: z.boolean(),
+  syncing: z.boolean().optional(),
+  role_id: Snowflake.optional(),
+  enable_emoticons: z.boolean().optional(),
+  expire_behavior: z.nativeEnum(IntegrationExpirationBehavior).optional(),
+  expire_grace_period: z.number().int().optional(),
+  user: z.lazy(() => UserEntity).optional(),
+  account: IntegrationAccountEntity,
+  synced_at: z.string().datetime().optional(),
+  subscriber_count: z.number().int().optional(),
+  revoked: z.boolean().optional(),
+  application: IntegrationApplicationEntity.optional(),
+  scopes: z.nativeEnum(OAuth2Scope).optional(),
+});
 
 export type IntegrationEntity = z.infer<typeof IntegrationEntity>;
 
@@ -207,36 +189,32 @@ export enum GuildMemberFlags {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-structure}
  */
-export const GuildMemberEntity = z
-  .object({
-    user: z.lazy(() => UserEntity),
-    nick: z.string().nullish(),
-    avatar: z.string().nullish(),
-    banner: z.string().nullish(),
-    roles: z.array(Snowflake),
-    joined_at: z.string().datetime(),
-    premium_since: z.string().datetime().nullish(),
-    deaf: z.boolean(),
-    mute: z.boolean(),
-    flags: z.nativeEnum(GuildMemberFlags),
-    pending: z.boolean().optional(),
-    permissions: z.string().optional(),
-    communication_disabled_until: z.string().datetime().nullish(),
-    avatar_decoration_data: z.lazy(() => AvatarDecorationDataEntity).nullish(),
-  })
-  .strict();
+export const GuildMemberEntity = z.object({
+  user: z.lazy(() => UserEntity),
+  nick: z.string().nullish(),
+  avatar: z.string().nullish(),
+  banner: z.string().nullish(),
+  roles: z.array(Snowflake),
+  joined_at: z.string().datetime(),
+  premium_since: z.string().datetime().nullish(),
+  deaf: z.boolean(),
+  mute: z.boolean(),
+  flags: z.nativeEnum(GuildMemberFlags),
+  pending: z.boolean().optional(),
+  permissions: z.string().optional(),
+  communication_disabled_until: z.string().datetime().nullish(),
+  avatar_decoration_data: z.lazy(() => AvatarDecorationDataEntity).nullish(),
+});
 
 export type GuildMemberEntity = z.infer<typeof GuildMemberEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-settings-object-guild-widget-settings-structure}
  */
-export const GuildWidgetSettingsEntity = z
-  .object({
-    enabled: z.boolean(),
-    channel_id: Snowflake.nullable(),
-  })
-  .strict();
+export const GuildWidgetSettingsEntity = z.object({
+  enabled: z.boolean(),
+  channel_id: Snowflake.nullable(),
+});
 
 export type GuildWidgetSettingsEntity = z.infer<
   typeof GuildWidgetSettingsEntity
@@ -245,21 +223,19 @@ export type GuildWidgetSettingsEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure}
  */
-export const GuildWidgetEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    instant_invite: z.string().nullable(),
-    channels: z.array(
-      z.union([
-        z.lazy(() => GuildVoiceChannelEntity.partial()),
-        z.lazy(() => GuildStageVoiceChannelEntity.partial()),
-      ]),
-    ),
-    members: z.array(z.lazy(() => UserEntity)),
-    presence_count: z.number().int(),
-  })
-  .strict();
+export const GuildWidgetEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  instant_invite: z.string().nullable(),
+  channels: z.array(
+    z.union([
+      z.lazy(() => GuildVoiceChannelEntity.partial()),
+      z.lazy(() => GuildStageVoiceChannelEntity.partial()),
+    ]),
+  ),
+  members: z.array(z.lazy(() => UserEntity)),
+  presence_count: z.number().int(),
+});
 
 export type GuildWidgetEntity = z.infer<typeof GuildWidgetEntity>;
 
@@ -301,33 +277,29 @@ export enum GuildFeature {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-preview-object-guild-preview-structure}
  */
-export const GuildPreviewEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    icon: z.string().nullable(),
-    splash: z.string().nullable(),
-    discovery_splash: z.string().nullable(),
-    emojis: z.array(z.lazy(() => EmojiEntity)),
-    features: z.array(z.nativeEnum(GuildFeature)),
-    approximate_member_count: z.number().int(),
-    approximate_presence_count: z.number().int(),
-    description: z.string().nullable(),
-    stickers: z.array(z.lazy(() => StickerEntity)),
-  })
-  .strict();
+export const GuildPreviewEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  icon: z.string().nullable(),
+  splash: z.string().nullable(),
+  discovery_splash: z.string().nullable(),
+  emojis: z.array(z.lazy(() => EmojiEntity)),
+  features: z.array(z.nativeEnum(GuildFeature)),
+  approximate_member_count: z.number().int(),
+  approximate_presence_count: z.number().int(),
+  description: z.string().nullable(),
+  stickers: z.array(z.lazy(() => StickerEntity)),
+});
 
 export type GuildPreviewEntity = z.infer<typeof GuildPreviewEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object}
  */
-export const UnavailableGuildEntity = z
-  .object({
-    id: Snowflake,
-    unavailable: z.literal(true),
-  })
-  .strict();
+export const UnavailableGuildEntity = z.object({
+  id: Snowflake,
+  unavailable: z.literal(true),
+});
 
 export type UnavailableGuildEntity = z.infer<typeof UnavailableGuildEntity>;
 
@@ -402,55 +374,51 @@ export enum DefaultMessageNotificationLevel {
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-structure}
  */
-export const GuildEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    icon: z.string().nullable(),
-    icon_hash: z.string().nullish(),
-    splash: z.string().nullable(),
-    discovery_splash: z.string().nullable(),
-    owner: z.boolean().optional(),
-    owner_id: Snowflake,
-    permissions: z.string().optional(),
-    /** @deprecated Voice region id for the guild (deprecated) */
-    region: z.string().nullish(),
-    afk_channel_id: Snowflake.nullable(),
-    afk_timeout: z.number().int(),
-    widget_enabled: z.boolean().optional(),
-    widget_channel_id: z.string().nullish(),
-    verification_level: z.nativeEnum(VerificationLevel),
-    default_message_notifications: z.nativeEnum(
-      DefaultMessageNotificationLevel,
-    ),
-    explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel),
-    roles: z.array(RoleEntity),
-    emojis: z.array(z.lazy(() => EmojiEntity)),
-    features: z.array(z.nativeEnum(GuildFeature)),
-    mfa_level: z.nativeEnum(MfaLevel),
-    application_id: Snowflake.optional(),
-    system_channel_id: Snowflake.nullable(),
-    system_channel_flags: z.nativeEnum(SystemChannelFlags),
-    rules_channel_id: Snowflake.nullable(),
-    max_presences: z.number().int().nullish(),
-    max_members: z.number().int(),
-    vanity_url_code: z.string().nullable(),
-    description: z.string().nullable(),
-    banner: z.string().nullable(),
-    premium_tier: z.nativeEnum(PremiumTier),
-    premium_subscription_count: z.number().int().optional(),
-    preferred_locale: LocaleKey,
-    public_updates_channel_id: Snowflake.nullable(),
-    max_video_channel_users: z.number().int().optional(),
-    max_stage_video_channel_users: z.number().int().optional(),
-    approximate_member_count: z.number().int().optional(),
-    approximate_presence_count: z.number().int().optional(),
-    welcome_screen: WelcomeScreenEntity.optional(),
-    nsfw_level: z.nativeEnum(NsfwLevel),
-    stickers: z.array(z.lazy(() => StickerEntity)).optional(),
-    premium_progress_bar_enabled: z.boolean(),
-    safety_alerts_channel_id: Snowflake.nullable(),
-  })
-  .strict();
+export const GuildEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  icon: z.string().nullable(),
+  icon_hash: z.string().nullish(),
+  splash: z.string().nullable(),
+  discovery_splash: z.string().nullable(),
+  owner: z.boolean().optional(),
+  owner_id: Snowflake,
+  permissions: z.string().optional(),
+  /** @deprecated Voice region id for the guild (deprecated) */
+  region: z.string().nullish(),
+  afk_channel_id: Snowflake.nullable(),
+  afk_timeout: z.number().int(),
+  widget_enabled: z.boolean().optional(),
+  widget_channel_id: z.string().nullish(),
+  verification_level: z.nativeEnum(VerificationLevel),
+  default_message_notifications: z.nativeEnum(DefaultMessageNotificationLevel),
+  explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel),
+  roles: z.array(RoleEntity),
+  emojis: z.array(z.lazy(() => EmojiEntity)),
+  features: z.array(z.nativeEnum(GuildFeature)),
+  mfa_level: z.nativeEnum(MfaLevel),
+  application_id: Snowflake.optional(),
+  system_channel_id: Snowflake.nullable(),
+  system_channel_flags: z.nativeEnum(SystemChannelFlags),
+  rules_channel_id: Snowflake.nullable(),
+  max_presences: z.number().int().nullish(),
+  max_members: z.number().int(),
+  vanity_url_code: z.string().nullable(),
+  description: z.string().nullable(),
+  banner: z.string().nullable(),
+  premium_tier: z.nativeEnum(PremiumTier),
+  premium_subscription_count: z.number().int().optional(),
+  preferred_locale: LocaleKey,
+  public_updates_channel_id: Snowflake.nullable(),
+  max_video_channel_users: z.number().int().optional(),
+  max_stage_video_channel_users: z.number().int().optional(),
+  approximate_member_count: z.number().int().optional(),
+  approximate_presence_count: z.number().int().optional(),
+  welcome_screen: WelcomeScreenEntity.optional(),
+  nsfw_level: z.nativeEnum(NsfwLevel),
+  stickers: z.array(z.lazy(() => StickerEntity)).optional(),
+  premium_progress_bar_enabled: z.boolean(),
+  safety_alerts_channel_id: Snowflake.nullable(),
+});
 
 export type GuildEntity = z.infer<typeof GuildEntity>;

@@ -1,21 +1,16 @@
 import {
   Gateway,
-  type GatewayEvents,
+  type GatewayIntentsBits,
   GatewayOptions,
-  type ReadyEntity,
 } from "@nyxjs/gateway";
-import { Rest, type RestEvents, RestOptions } from "@nyxjs/rest";
+import { Rest, RestOptions } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
 export const ClientOptions = z.intersection(RestOptions, GatewayOptions);
 
-export interface ClientEvents extends RestEvents, GatewayEvents {
-  ready: (ready: ReadyEntity) => void;
-}
-
-export class Client extends EventEmitter<ClientEvents> {
+export class Client extends EventEmitter {
   readonly token: string;
   readonly rest: Rest;
   readonly gateway: Gateway;
@@ -33,6 +28,23 @@ export class Client extends EventEmitter<ClientEvents> {
     this.token = this.#options.token;
     this.rest = new Rest(this.#options);
     this.gateway = new Gateway(this.rest, this.#options);
+  }
+
+  get ping(): number {
+    return this.gateway.ping;
+  }
+
+  get isReady(): boolean {
+    return Boolean(this.gateway.sessionId);
+  }
+
+  hasIntent(intent: GatewayIntentsBits): boolean {
+    const intents = this.#options.intents;
+    if (Array.isArray(intents)) {
+      return intents.includes(intent);
+    }
+
+    return (intents & intent) === intent;
   }
 
   connect(): Promise<void> {

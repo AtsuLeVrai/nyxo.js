@@ -11,26 +11,22 @@ import { WebhookEntity } from "./webhook.entity.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object}
  */
-export const AuditLogChangeEntity = z
-  .object({
-    key: z.string(),
-    new_value: z.unknown().optional(),
-    old_value: z.unknown().optional(),
-  })
-  .strict();
+export const AuditLogChangeEntity = z.object({
+  key: z.string(),
+  new_value: z.unknown().optional(),
+  old_value: z.unknown().optional(),
+});
 
 export type AuditLogChangeEntity = z.infer<typeof AuditLogChangeEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-exceptions}
  */
-export const AuditLogCommandPermissionChangeEntity = z
-  .object({
-    key: Snowflake,
-    old_value: z.record(z.unknown()),
-    new_value: z.record(z.unknown()),
-  })
-  .strict();
+export const AuditLogCommandPermissionChangeEntity = z.object({
+  key: Snowflake,
+  old_value: z.record(z.unknown()),
+  new_value: z.record(z.unknown()),
+});
 
 export type AuditLogCommandPermissionChangeEntity = z.infer<
   typeof AuditLogCommandPermissionChangeEntity
@@ -39,39 +35,35 @@ export type AuditLogCommandPermissionChangeEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-exceptions}
  */
-export const AuditLogRoleChangeEntity = z
-  .object({
-    key: z.union([z.literal("$add"), z.literal("$remove")]),
-    new_value: z.array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    ),
-  })
-  .strict();
+export const AuditLogRoleChangeEntity = z.object({
+  key: z.union([z.literal("$add"), z.literal("$remove")]),
+  new_value: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
+});
 
 export type AuditLogRoleChangeEntity = z.infer<typeof AuditLogRoleChangeEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
  */
-export const AuditLogEntryInfoEntity = z
-  .object({
-    application_id: Snowflake.optional(),
-    auto_moderation_rule_name: z.string().optional(),
-    auto_moderation_rule_trigger_type: z.string().optional(),
-    channel_id: Snowflake.optional(),
-    count: z.string().optional(),
-    delete_member_days: z.string().optional(),
-    id: Snowflake.optional(),
-    members_removed: z.string().optional(),
-    message_id: Snowflake.optional(),
-    role_name: z.string().optional(),
-    type: z.union([z.literal("0"), z.literal("1")]).optional(),
-    integration_type: z.string().optional(),
-  })
-  .strict();
+export const AuditLogEntryInfoEntity = z.object({
+  application_id: Snowflake.optional(),
+  auto_moderation_rule_name: z.string().optional(),
+  auto_moderation_rule_trigger_type: z.string().optional(),
+  channel_id: Snowflake.optional(),
+  count: z.string().optional(),
+  delete_member_days: z.string().optional(),
+  id: Snowflake.optional(),
+  members_removed: z.string().optional(),
+  message_id: Snowflake.optional(),
+  role_name: z.string().optional(),
+  type: z.union([z.literal("0"), z.literal("1")]).optional(),
+  integration_type: z.string().optional(),
+});
 
 export type AuditLogEntryInfoEntity = z.infer<typeof AuditLogEntryInfoEntity>;
 
@@ -150,40 +142,36 @@ export enum AuditLogEvent {
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object}
  */
-export const AuditLogEntryEntity = z
-  .object({
-    target_id: z.string().nullable(),
-    changes: z
-      .union([
-        z.array(AuditLogChangeEntity),
-        z.array(AuditLogCommandPermissionChangeEntity),
-        z.array(AuditLogRoleChangeEntity),
-      ])
-      .optional(),
-    user_id: Snowflake.nullable(),
-    id: Snowflake,
-    action_type: z.nativeEnum(AuditLogEvent),
-    options: AuditLogEntryInfoEntity.optional(),
-    reason: z.string().optional(),
-  })
-  .strict();
+export const AuditLogEntryEntity = z.object({
+  target_id: z.string().nullable(),
+  changes: z
+    .union([
+      z.array(AuditLogChangeEntity),
+      z.array(AuditLogCommandPermissionChangeEntity),
+      z.array(AuditLogRoleChangeEntity),
+    ])
+    .optional(),
+  user_id: Snowflake.nullable(),
+  id: Snowflake,
+  action_type: z.nativeEnum(AuditLogEvent),
+  options: AuditLogEntryInfoEntity.optional(),
+  reason: z.string().optional(),
+});
 
 export type AuditLogEntryEntity = z.infer<typeof AuditLogEntryEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-object}
  */
-export const AuditLogEntity = z
-  .object({
-    application_commands: z.array(ApplicationCommandEntity),
-    audit_log_entries: z.array(AuditLogEntryEntity),
-    auto_moderation_rules: z.array(AutoModerationRuleEntity),
-    guild_scheduled_events: z.array(GuildScheduledEventEntity),
-    integrations: z.array(IntegrationEntity.partial()),
-    threads: z.array(AnyThreadChannelEntity),
-    users: z.array(UserEntity),
-    webhooks: z.array(WebhookEntity),
-  })
-  .strict();
+export const AuditLogEntity = z.object({
+  application_commands: z.array(ApplicationCommandEntity),
+  audit_log_entries: z.array(AuditLogEntryEntity),
+  auto_moderation_rules: z.array(AutoModerationRuleEntity),
+  guild_scheduled_events: z.array(GuildScheduledEventEntity),
+  integrations: z.array(IntegrationEntity.partial()),
+  threads: z.array(AnyThreadChannelEntity),
+  users: z.array(UserEntity),
+  webhooks: z.array(WebhookEntity),
+});
 
 export type AuditLogEntity = z.infer<typeof AuditLogEntity>;

@@ -37,45 +37,43 @@ export interface ActivityInstanceEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
  */
-export const EditCurrentApplicationEntity = z
-  .object({
-    custom_install_url: z.string().url().optional(),
-    description: z.string().optional(),
-    role_connections_verification_url: z.string().url().optional(),
-    install_params: InstallParamsEntity.optional(),
-    integration_types_config: z
-      .record(
-        z.nativeEnum(ApplicationIntegrationType),
-        ApplicationIntegrationTypeConfigurationEntity,
-      )
-      .optional(),
-    flags: z
-      .union([
-        z.literal(ApplicationFlags.GatewayPresenceLimited),
-        z.literal(ApplicationFlags.GatewayGuildMembersLimited),
-        z.literal(ApplicationFlags.GatewayMessageContentLimited),
-      ])
-      .optional(),
-    icon: z
-      .string()
-      .regex(/^data:image\/(jpeg|png|gif);base64,/)
-      .optional(),
-    cover_image: z
-      .string()
-      .regex(/^data:image\/(jpeg|png|gif);base64,/)
-      .optional(),
-    interactions_endpoint_url: z.string().url().optional(),
-    tags: z.array(z.string().max(20)).max(5).optional(),
-    event_webhooks_url: z.string().url().optional(),
-    event_webhooks_status: z
-      .union([
-        z.literal(ApplicationEventWebhookStatus.Disabled),
-        z.literal(ApplicationEventWebhookStatus.Enabled),
-      ])
-      .optional(),
-    event_webhooks_types: z.array(z.string()).optional(),
-  })
-  .strict();
+export const EditCurrentApplicationEntity = z.object({
+  custom_install_url: z.string().url().optional(),
+  description: z.string().optional(),
+  role_connections_verification_url: z.string().url().optional(),
+  install_params: InstallParamsEntity.optional(),
+  integration_types_config: z
+    .record(
+      z.nativeEnum(ApplicationIntegrationType),
+      ApplicationIntegrationTypeConfigurationEntity,
+    )
+    .optional(),
+  flags: z
+    .union([
+      z.literal(ApplicationFlags.GatewayPresenceLimited),
+      z.literal(ApplicationFlags.GatewayGuildMembersLimited),
+      z.literal(ApplicationFlags.GatewayMessageContentLimited),
+    ])
+    .optional(),
+  icon: z
+    .string()
+    .regex(/^data:image\/(jpeg|png|gif);base64,/)
+    .optional(),
+  cover_image: z
+    .string()
+    .regex(/^data:image\/(jpeg|png|gif);base64,/)
+    .optional(),
+  interactions_endpoint_url: z.string().url().optional(),
+  tags: z.array(z.string().max(20)).max(5).optional(),
+  event_webhooks_url: z.string().url().optional(),
+  event_webhooks_status: z
+    .union([
+      z.literal(ApplicationEventWebhookStatus.Disabled),
+      z.literal(ApplicationEventWebhookStatus.Enabled),
+    ])
+    .optional(),
+  event_webhooks_types: z.array(z.string()).optional(),
+});
 
 export type EditCurrentApplicationEntity = z.infer<
   typeof EditCurrentApplicationEntity

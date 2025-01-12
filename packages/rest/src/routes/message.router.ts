@@ -43,7 +43,7 @@ export class MessageRouter {
    */
   getMessages(
     channelId: Snowflake,
-    query?: GetChannelMessagesQueryEntity,
+    query: z.input<typeof GetChannelMessagesQueryEntity> = {},
   ): Promise<HttpResponse<MessageEntity[]>> {
     const result = GetChannelMessagesQueryEntity.safeParse(query);
     if (!result.success) {
@@ -73,7 +73,7 @@ export class MessageRouter {
    */
   createMessage(
     channelId: Snowflake,
-    options: CreateMessageEntity,
+    options: z.input<typeof CreateMessageEntity>,
   ): Promise<HttpResponse<MessageEntity>> {
     const result = CreateMessageEntity.safeParse(options);
     if (!result.success) {
@@ -192,7 +192,7 @@ export class MessageRouter {
   editMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-    options: EditMessageEntity,
+    options: z.input<typeof EditMessageEntity>,
   ): Promise<HttpResponse<MessageEntity>> {
     const result = EditMessageEntity.safeParse(options);
     if (!result.success) {
@@ -229,7 +229,7 @@ export class MessageRouter {
    */
   bulkDeleteMessages(
     channelId: Snowflake,
-    options: BulkDeleteMessagesEntity,
+    options: z.input<typeof BulkDeleteMessagesEntity>,
     reason?: string,
   ): Promise<HttpResponse<void>> {
     const result = BulkDeleteMessagesEntity.safeParse(options);

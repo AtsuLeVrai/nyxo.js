@@ -23,50 +23,44 @@ export enum StickerType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-structure}
  */
-export const StickerEntity = z
-  .object({
-    id: Snowflake,
-    pack_id: Snowflake.optional(),
-    name: z.string(),
-    description: z.string().nullable(),
-    tags: z.array(z.string()).transform((value) => value.join(",")),
-    type: z.nativeEnum(StickerType),
-    format_type: z.nativeEnum(StickerFormatType),
-    available: z.boolean().optional(),
-    guild_id: Snowflake.optional(),
-    user: z.lazy(() => UserEntity).optional(),
-    sort_value: z.number().int().optional(),
-  })
-  .strict();
+export const StickerEntity = z.object({
+  id: Snowflake,
+  pack_id: Snowflake.optional(),
+  name: z.string(),
+  description: z.string().nullable(),
+  tags: z.array(z.string()).transform((value) => value.join(",")),
+  type: z.nativeEnum(StickerType),
+  format_type: z.nativeEnum(StickerFormatType),
+  available: z.boolean().optional(),
+  guild_id: Snowflake.optional(),
+  user: z.lazy(() => UserEntity).optional(),
+  sort_value: z.number().int().optional(),
+});
 
 export type StickerEntity = z.infer<typeof StickerEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-pack-object-sticker-pack-structure}
  */
-export const StickerPackEntity = z
-  .object({
-    id: Snowflake,
-    stickers: z.array(StickerEntity),
-    name: z.string(),
-    sku_id: Snowflake,
-    cover_sticker_id: Snowflake.optional(),
-    description: z.string(),
-    banner_asset_id: Snowflake.optional(),
-  })
-  .strict();
+export const StickerPackEntity = z.object({
+  id: Snowflake,
+  stickers: z.array(StickerEntity),
+  name: z.string(),
+  sku_id: Snowflake,
+  cover_sticker_id: Snowflake.optional(),
+  description: z.string(),
+  banner_asset_id: Snowflake.optional(),
+});
 
 export type StickerPackEntity = z.infer<typeof StickerPackEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-item-object-sticker-item-structure}
  */
-export const StickerItemEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    format_type: z.nativeEnum(StickerFormatType),
-  })
-  .strict();
+export const StickerItemEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  format_type: z.nativeEnum(StickerFormatType),
+});
 
 export type StickerItemEntity = z.infer<typeof StickerItemEntity>;

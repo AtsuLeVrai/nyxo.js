@@ -3,6 +3,7 @@ import type {
   MessageEntity,
   Snowflake,
 } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -64,7 +65,7 @@ export class InteractionRouter {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: InteractionResponseEntity,
+    options: z.input<typeof InteractionResponseEntity>,
     withResponse = true,
   ): Promise<HttpResponse<InteractionCallbackEntity | undefined>> {
     const result = InteractionResponseEntity.safeParse(options);
@@ -103,7 +104,7 @@ export class InteractionRouter {
   editOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-    options: Partial<InteractionCallbackDataEntity>,
+    options: z.input<typeof InteractionCallbackDataEntity>,
   ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
@@ -143,7 +144,7 @@ export class InteractionRouter {
   createFollowupMessage(
     applicationId: Snowflake,
     interactionToken: string,
-    options: FollowupMessageEntity,
+    options: z.input<typeof FollowupMessageEntity>,
   ): Promise<HttpResponse<MessageEntity>> {
     const result = FollowupMessageEntity.safeParse(options);
     if (!result.success) {
@@ -186,7 +187,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-    options: Partial<InteractionCallbackDataEntity>,
+    options: z.input<typeof InteractionCallbackDataEntity>,
   ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {

@@ -57,7 +57,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
   modifyCurrentUser(
-    options: ModifyCurrentUserEntity,
+    options: z.input<typeof ModifyCurrentUserEntity>,
   ): Promise<HttpResponse<UserEntity>> {
     const result = ModifyCurrentUserEntity.safeParse(options);
     if (!result.success) {
@@ -116,7 +116,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
   createGroupDm(
-    options: CreateGroupDmEntity,
+    options: z.input<typeof CreateGroupDmEntity>,
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = CreateGroupDmEntity.safeParse(options);
     if (!result.success) {
@@ -150,7 +150,9 @@ export class UserRouter {
    */
   updateCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
-    connection: UpdateCurrentUserApplicationRoleConnectionEntity,
+    connection: z.input<
+      typeof UpdateCurrentUserApplicationRoleConnectionEntity
+    >,
   ): Promise<HttpResponse<ApplicationRoleConnectionEntity>> {
     const result =
       UpdateCurrentUserApplicationRoleConnectionEntity.safeParse(connection);

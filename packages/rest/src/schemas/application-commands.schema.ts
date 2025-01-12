@@ -12,11 +12,9 @@ import { z } from "zod";
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions-json-params}
  */
-export const EditApplicationCommandPermissionsEntity = z
-  .object({
-    permissions: z.array(ApplicationCommandPermissionEntity).max(100),
-  })
-  .strict();
+export const EditApplicationCommandPermissionsEntity = z.object({
+  permissions: z.array(ApplicationCommandPermissionEntity).max(100),
+});
 
 export type EditApplicationCommandPermissionsEntity = z.infer<
   typeof EditApplicationCommandPermissionsEntity
@@ -25,34 +23,32 @@ export type EditApplicationCommandPermissionsEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command-json-params}
  */
-export const CreateGlobalApplicationCommandEntity = z
-  .object({
-    name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-    name_localizations: createAvailableLocale(
-      z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-    ).nullish(),
-    description: z.string().min(1).max(100).optional(),
-    description_localizations: createAvailableLocale(
-      z.string().min(1).max(100),
-    ).nullish(),
-    options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
-    default_member_permissions: z.string().nullish(),
-    /**
-     * @deprecated User `contexts instead`
-     */
-    dm_permission: z.boolean().nullish(),
-    default_permission: z.boolean().optional().default(true),
-    integration_types: z
-      .array(z.nativeEnum(ApplicationIntegrationType))
-      .optional(),
-    contexts: z.array(z.nativeEnum(InteractionContextType)).optional(),
-    type: z
-      .nativeEnum(ApplicationCommandType)
-      .optional()
-      .default(ApplicationCommandType.ChatInput),
-    nsfw: z.boolean().optional(),
-  })
-  .strict();
+export const CreateGlobalApplicationCommandEntity = z.object({
+  name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+  name_localizations: createAvailableLocale(
+    z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+  ).nullish(),
+  description: z.string().min(1).max(100).optional(),
+  description_localizations: createAvailableLocale(
+    z.string().min(1).max(100),
+  ).nullish(),
+  options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
+  default_member_permissions: z.string().nullish(),
+  /**
+   * @deprecated User `contexts instead`
+   */
+  dm_permission: z.boolean().nullish(),
+  default_permission: z.boolean().optional().default(true),
+  integration_types: z
+    .array(z.nativeEnum(ApplicationIntegrationType))
+    .optional(),
+  contexts: z.array(z.nativeEnum(InteractionContextType)).optional(),
+  type: z
+    .nativeEnum(ApplicationCommandType)
+    .optional()
+    .default(ApplicationCommandType.ChatInput),
+  nsfw: z.boolean().optional(),
+});
 
 export type CreateGlobalApplicationCommandEntity = z.infer<
   typeof CreateGlobalApplicationCommandEntity
@@ -64,9 +60,7 @@ export type CreateGlobalApplicationCommandEntity = z.infer<
 export const EditGlobalApplicationCommandEntity =
   CreateGlobalApplicationCommandEntity.omit({
     type: true,
-  })
-    .strict()
-    .partial();
+  }).partial();
 
 export type EditGlobalApplicationCommandEntity = z.infer<
   typeof EditGlobalApplicationCommandEntity
@@ -79,7 +73,7 @@ export const CreateGuildApplicationCommandEntity =
   CreateGlobalApplicationCommandEntity.omit({
     integration_types: true,
     contexts: true,
-  }).strict();
+  });
 
 export type CreateGuildApplicationCommandEntity = z.infer<
   typeof CreateGuildApplicationCommandEntity
@@ -91,9 +85,7 @@ export type CreateGuildApplicationCommandEntity = z.infer<
 export const EditGuildApplicationCommandEntity =
   CreateGuildApplicationCommandEntity.omit({
     type: true,
-  })
-    .strict()
-    .partial();
+  }).partial();
 
 export type EditGuildApplicationCommandEntity = z.infer<
   typeof EditGuildApplicationCommandEntity

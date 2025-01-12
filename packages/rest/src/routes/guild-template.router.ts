@@ -1,4 +1,5 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -36,7 +37,7 @@ export class GuildTemplateRouter {
    */
   createGuildFromGuildTemplate(
     code: string,
-    options: CreateGuildFromGuildTemplateEntity,
+    options: z.input<typeof CreateGuildFromGuildTemplateEntity>,
   ): Promise<HttpResponse<GuildEntity>> {
     const result = CreateGuildFromGuildTemplateEntity.safeParse(options);
     if (!result.success) {
@@ -63,7 +64,7 @@ export class GuildTemplateRouter {
    */
   createGuildTemplate(
     guildId: Snowflake,
-    options: CreateGuildTemplateEntity,
+    options: z.input<typeof CreateGuildTemplateEntity>,
   ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = CreateGuildTemplateEntity.safeParse(options);
     if (!result.success) {
@@ -94,7 +95,7 @@ export class GuildTemplateRouter {
   modifyGuildTemplate(
     guildId: Snowflake,
     code: string,
-    options: ModifyGuildTemplateEntity,
+    options: z.input<typeof ModifyGuildTemplateEntity>,
   ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = ModifyGuildTemplateEntity.safeParse(options);
     if (!result.success) {

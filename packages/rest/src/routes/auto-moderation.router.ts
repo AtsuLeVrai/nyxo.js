@@ -1,4 +1,5 @@
 import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
@@ -45,7 +46,7 @@ export class AutoModerationRouter {
    */
   createAutoModerationRule(
     guildId: Snowflake,
-    options: CreateAutoModerationRuleEntity,
+    options: z.input<typeof CreateAutoModerationRuleEntity>,
     reason?: string,
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
     const result = CreateAutoModerationRuleEntity.safeParse(options);
@@ -66,7 +67,7 @@ export class AutoModerationRouter {
   modifyAutoModerationRule(
     guildId: Snowflake,
     ruleId: Snowflake,
-    options: ModifyAutoModerationRuleEntity,
+    options: z.input<typeof ModifyAutoModerationRuleEntity>,
     reason?: string,
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
     const result = ModifyAutoModerationRuleEntity.safeParse(options);

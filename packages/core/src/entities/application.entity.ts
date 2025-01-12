@@ -8,12 +8,10 @@ import { UserEntity } from "./user.entity.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#install-params-object-install-params-structure}
  */
-export const InstallParamsEntity = z
-  .object({
-    scopes: z.array(z.nativeEnum(OAuth2Scope)),
-    permissions: z.string(),
-  })
-  .strict();
+export const InstallParamsEntity = z.object({
+  scopes: z.array(z.nativeEnum(OAuth2Scope)),
+  permissions: z.string(),
+});
 
 export type InstallParamsEntity = z.infer<typeof InstallParamsEntity>;
 
@@ -45,11 +43,9 @@ export enum ApplicationEventWebhookStatus {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object}
  */
-export const ApplicationIntegrationTypeConfigurationEntity = z
-  .object({
-    oauth2_install_params: InstallParamsEntity.optional(),
-  })
-  .strict();
+export const ApplicationIntegrationTypeConfigurationEntity = z.object({
+  oauth2_install_params: InstallParamsEntity.optional(),
+});
 
 export type ApplicationIntegrationTypeConfigurationEntity = z.infer<
   typeof ApplicationIntegrationTypeConfigurationEntity
@@ -66,43 +62,41 @@ export enum ApplicationIntegrationType {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-structure}
  */
-export const ApplicationEntity = z
-  .object({
-    id: Snowflake,
-    name: z.string(),
-    icon: z.string().nullable(),
-    description: z.string(),
-    rpc_origins: z.array(z.string()).optional(),
-    bot_public: z.boolean(),
-    bot_require_code_grant: z.boolean(),
-    bot: UserEntity.optional(),
-    terms_of_service_url: z.string().url().optional(),
-    privacy_policy_url: z.string().url().optional(),
-    owner: UserEntity.optional(),
-    verify_key: z.string(),
-    team: TeamEntity.nullable(),
-    guild_id: Snowflake.optional(),
-    guild: GuildEntity.partial().optional(),
-    primary_sku_id: Snowflake.optional(),
-    slug: z.string().url().optional(),
-    cover_image: z.string().optional(),
-    flags: z.nativeEnum(ApplicationFlags),
-    approximate_guild_count: z.number().int().optional(),
-    approximate_user_install_count: z.number().int().optional(),
-    redirect_uris: z.array(z.string().url()).optional(),
-    interactions_endpoint_url: z.string().url().nullish(),
-    role_connections_verification_url: z.string().url().nullish(),
-    event_webhooks_url: z.string().url(),
-    event_webhooks_status: z.nativeEnum(ApplicationEventWebhookStatus),
-    event_webhooks_types: z.array(z.string()).optional(),
-    tags: z.array(z.string()).max(5).optional(),
-    install_params: InstallParamsEntity.optional(),
-    integration_types_config: z.record(
-      z.nativeEnum(ApplicationIntegrationType),
-      ApplicationIntegrationTypeConfigurationEntity,
-    ),
-    custom_install_url: z.string().url().optional(),
-  })
-  .strict();
+export const ApplicationEntity = z.object({
+  id: Snowflake,
+  name: z.string(),
+  icon: z.string().nullable(),
+  description: z.string(),
+  rpc_origins: z.array(z.string()).optional(),
+  bot_public: z.boolean(),
+  bot_require_code_grant: z.boolean(),
+  bot: UserEntity.optional(),
+  terms_of_service_url: z.string().url().optional(),
+  privacy_policy_url: z.string().url().optional(),
+  owner: UserEntity.optional(),
+  verify_key: z.string(),
+  team: TeamEntity.nullable(),
+  guild_id: Snowflake.optional(),
+  guild: GuildEntity.partial().optional(),
+  primary_sku_id: Snowflake.optional(),
+  slug: z.string().url().optional(),
+  cover_image: z.string().optional(),
+  flags: z.nativeEnum(ApplicationFlags),
+  approximate_guild_count: z.number().int().optional(),
+  approximate_user_install_count: z.number().int().optional(),
+  redirect_uris: z.array(z.string().url()).optional(),
+  interactions_endpoint_url: z.string().url().nullish(),
+  role_connections_verification_url: z.string().url().nullish(),
+  event_webhooks_url: z.string().url(),
+  event_webhooks_status: z.nativeEnum(ApplicationEventWebhookStatus),
+  event_webhooks_types: z.array(z.string()).optional(),
+  tags: z.array(z.string()).max(5).optional(),
+  install_params: InstallParamsEntity.optional(),
+  integration_types_config: z.record(
+    z.nativeEnum(ApplicationIntegrationType),
+    ApplicationIntegrationTypeConfigurationEntity,
+  ),
+  custom_install_url: z.string().url().optional(),
+});
 
 export type ApplicationEntity = z.infer<typeof ApplicationEntity>;

@@ -23,7 +23,6 @@ export const GatewayOptions = z
     largeThreshold: z.number().int().min(50).max(250).default(50),
     maxReconnectAttempts: z.number().int().positive().default(5),
   })
-  .strict()
   .refine(
     (data) => {
       if (Array.isArray(data.intents)) {

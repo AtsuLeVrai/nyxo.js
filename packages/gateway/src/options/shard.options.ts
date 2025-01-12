@@ -13,7 +13,6 @@ export const ShardOptions = z
     shardCount: z.number().positive().default(1),
     maxConcurrency: z.number().positive().default(1),
   })
-  .strict()
   .refine(
     (data) => {
       if (data.maxConcurrency > 16) {

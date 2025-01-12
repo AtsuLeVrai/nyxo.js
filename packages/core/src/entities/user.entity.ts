@@ -1,17 +1,16 @@
 import { z } from "zod";
+import { LocaleKey } from "../enums/index.js";
 import { Snowflake } from "../managers/index.js";
 import { IntegrationEntity } from "./guild.entity.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure}
  */
-export const ApplicationRoleConnectionEntity = z
-  .object({
-    platform_name: z.string().max(50).nullable(),
-    platform_username: z.string().max(100).nullable(),
-    metadata: z.record(z.string().max(100)),
-  })
-  .strict();
+export const ApplicationRoleConnectionEntity = z.object({
+  platform_name: z.string().max(50).nullable(),
+  platform_username: z.string().max(100).nullable(),
+  metadata: z.record(z.string().max(100)),
+});
 
 export type ApplicationRoleConnectionEntity = z.infer<
   typeof ApplicationRoleConnectionEntity
@@ -57,32 +56,28 @@ export enum ConnectionService {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#connection-object-connection-structure}
  */
-export const ConnectionEntity = z
-  .object({
-    id: z.string(),
-    name: z.string(),
-    type: z.nativeEnum(ConnectionService),
-    revoked: z.boolean().optional(),
-    integrations: z.array(z.lazy(() => IntegrationEntity.partial())).optional(),
-    verified: z.boolean(),
-    friend_sync: z.boolean(),
-    show_activity: z.boolean(),
-    two_way_link: z.boolean(),
-    visibility: z.number().min(0).max(1),
-  })
-  .strict();
+export const ConnectionEntity = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.nativeEnum(ConnectionService),
+  revoked: z.boolean().optional(),
+  integrations: z.array(z.lazy(() => IntegrationEntity.partial())).optional(),
+  verified: z.boolean(),
+  friend_sync: z.boolean(),
+  show_activity: z.boolean(),
+  two_way_link: z.boolean(),
+  visibility: z.number().min(0).max(1),
+});
 
 export type ConnectionEntity = z.infer<typeof ConnectionEntity>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure}
  */
-export const AvatarDecorationDataEntity = z
-  .object({
-    asset: z.string(),
-    sku_id: Snowflake,
-  })
-  .strict();
+export const AvatarDecorationDataEntity = z.object({
+  asset: z.string(),
+  sku_id: Snowflake,
+});
 
 export type AvatarDecorationDataEntity = z.infer<
   typeof AvatarDecorationDataEntity
@@ -135,26 +130,24 @@ function isUsernameValid(value: string): value is string {
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-structure}
  */
-export const UserEntity = z
-  .object({
-    id: Snowflake,
-    username: z.string().min(2).max(32).refine(isUsernameValid),
-    discriminator: z.string(),
-    global_name: z.string().nullable(),
-    avatar: z.string().nullable(),
-    bot: z.boolean().optional(),
-    system: z.boolean().optional(),
-    mfa_enabled: z.boolean().optional(),
-    banner: z.string().nullish(),
-    accent_color: z.number().int().optional(),
-    locale: z.string().optional(),
-    verified: z.boolean().optional(),
-    email: z.string().email().nullish(),
-    flags: z.nativeEnum(UserFlags).optional(),
-    premium_type: z.nativeEnum(PremiumType).optional(),
-    public_flags: z.nativeEnum(UserFlags).optional(),
-    avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
-  })
-  .strict();
+export const UserEntity = z.object({
+  id: Snowflake,
+  username: z.string().min(2).max(32).refine(isUsernameValid),
+  discriminator: z.string(),
+  global_name: z.string().nullable(),
+  avatar: z.string().nullable(),
+  bot: z.boolean().optional(),
+  system: z.boolean().optional(),
+  mfa_enabled: z.boolean().optional(),
+  banner: z.string().nullish(),
+  accent_color: z.number().int().nullish(),
+  locale: LocaleKey.optional(),
+  verified: z.boolean().optional(),
+  email: z.string().email().nullish(),
+  flags: z.union([z.nativeEnum(UserFlags), z.number().int()]).optional(),
+  premium_type: z.nativeEnum(PremiumType).optional(),
+  public_flags: z.union([z.nativeEnum(UserFlags), z.number().int()]).optional(),
+  avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
+});
 
 export type UserEntity = z.infer<typeof UserEntity>;

@@ -1,4 +1,5 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import { GetInviteQueryEntity } from "../schemas/index.js";
@@ -20,7 +21,7 @@ export class InviteRouter {
    */
   getInvite(
     code: string,
-    query: GetInviteQueryEntity = {},
+    query: z.input<typeof GetInviteQueryEntity> = {},
   ): Promise<HttpResponse<InviteEntity & InviteMetadataEntity>> {
     const result = GetInviteQueryEntity.safeParse(query);
     if (!result.success) {

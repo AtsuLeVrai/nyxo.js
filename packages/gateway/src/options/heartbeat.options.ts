@@ -18,7 +18,6 @@ export const HeartbeatOptions = z
     retryOnFail: z.boolean().default(true),
     resetOnZombie: z.boolean().default(true),
   })
-  .strict()
   .refine((data) => data.maxJitter >= data.minJitter, {
     message: "maxJitter must be greater than or equal to minJitter",
     path: ["maxJitter"],
