@@ -5,18 +5,18 @@ command_exists() {
     type "$1" >/dev/null 2>&1
 }
 
-# Check if pnpm is available
-if ! command_exists pnpm; then
-    echo "❌ pnpm is not installed. Please install it before proceeding."
+# Check if rush is available
+if ! command_exists rush; then
+    echo "❌ rush is not installed. Please install it before proceeding."
     exit 1
 fi
 
 echo "🔍 Running checks..."
 
-# Execute the check command
-echo "📋 Running 'pnpm run check'..."
-if ! pnpm run check; then
-    echo "❌ The 'check' command failed. Please fix the errors before committing."
+# Execute the rush check command
+echo "📋 Running 'rush check'..."
+if ! rush check; then
+    echo "❌ The 'rush check' command failed. Please fix the errors before committing."
     exit 1
 fi
 
