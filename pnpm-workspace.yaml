@@ -1,8 +1,0 @@
-packages:
-  - 'internals/*'
-  - 'packages/*'
-  - 'scripts'
-exclude:
-  - '**/dist'
-  - '**/test'
-  - '**/.turbo'

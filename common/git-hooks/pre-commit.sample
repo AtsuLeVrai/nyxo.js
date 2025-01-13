@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Check if a command exists
+command_exists() {
+    type "$1" >/dev/null 2>&1
+}
+
+# Check if pnpm is available
+if ! command_exists pnpm; then
+    echo "❌ pnpm is not installed. Please install it before proceeding."
+    exit 1
+fi
+
+echo "🔍 Running checks..."
+
+# Execute the check command
+echo "📋 Running 'pnpm run check'..."
+if ! pnpm run check; then
+    echo "❌ The 'check' command failed. Please fix the errors before committing."
+    exit 1
+fi
+
+# Update the git index
+echo "📝 Updating the git index..."
+git update-index --again
+
+echo "✅ All checks passed successfully!"
+exit 0

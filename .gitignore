@@ -1,35 +1,45 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # Compiled output
-dist
-tmp
-out
-out-tsc
-build
-.next
-.turbo
-.vercel
+dist/
+tmp/
+out/
+out-tsc/
+build/
+.next/
+.turbo/
+.vercel/
+lib/
+lib-amd/
+lib-es6/
+lib-esnext/
+lib-commonjs/
+lib-shim/
+dist-storybook/
 
 # Dependencies
-node_modules
-.pnp
+node_modules/
+.pnp/
 .pnp.js
-bower_components
-jspm_packages
-web_modules
+bower_components/
+jspm_packages/
+web_modules/
 
-# Environment
+# Environment variables
 .env
 .env.*
 !.env.example
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
 
-# Testing
-coverage
+# Testing and coverage
+coverage/
 testem.log
 *.lcov
-.nyc_output
+.nyc_output/
+lib-cov/
 
-# IDEs and editors
+# IDE and editors
 .idea/
 .project
 .classpath
@@ -39,9 +49,7 @@ testem.log
 *.sublime-workspace
 *.swp
 *.swo
-.history
-
-# IDE - VSCode
+.history/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -49,37 +57,68 @@ testem.log
 !.vscode/extensions.json
 *.code-workspace
 
-# Debug logs
+# Logs and debugging
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.pnpm-debug.log*
 libpeerconnection.log
-logs
-*.log
 /connect.lock
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# Cache and temp files
+# Cache and temporary files
 .eslintcache
 .stylelintcache
-.temp
-.cache
-.parcel-cache
-.rts2_cache_cjs
-.rts2_cache_es
-.rts2_cache_umd
-.rollup.cache
+.temp/
+.cache/
+.parcel-cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.rollup.cache/
+.npm/
+.docusaurus/
+.fusebox/
+.dynamodb/
+.serverless/
+.heft/
+.rush/
+.rush-logs/
+common/temp/
+common/deploy/
+common/autoinstallers/*/.npmrc
 
-# Build tools
-.gradle
-.maven
-.dart_tool
+# Build tools and runtime
+.gradle/
+.maven/
+.dart_tool/
+.lock-wscript/
+*.pid
+*.seed
+*.pid.lock
+.grunt/
+build/Release/
+
+# TypeScript specific
+*.tsbuildinfo
+
+# Package management
+*.tgz
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.yarn-integrity
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.pem
+.sass-cache/
 
 # Misc
-.DS_Store
-*.pem
-Thumbs.db
-.sass-cache
-/typings
-*.tsbuildinfo
+/typings/
 .node_repl_history

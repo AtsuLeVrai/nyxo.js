@@ -37,22 +37,12 @@
     "name": "3tatsu",
     "url": "https://github.com/3tatsu"
   },
-  "scripts": {
-    "build": "node ../../scripts/build.js",
-    "build:watch": "node ../../scripts/build.js -w --verbose",
-    "build:prod": "node ../../scripts/build.js --clean --verbose",
-    "format": "biome format --write .",
-    "lint": "biome lint --write --unsafe .",
-    "check": "biome check --write --unsafe .",
-    "type-check": "tsc --noEmit"
-  },
   "dependencies": {
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.10.5",
-    "typescript": "^5.7.3",
-    "vitest": "^2.1.8"
+    "typescript": "^5.7.3"
   }
 }
