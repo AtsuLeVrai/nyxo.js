@@ -11,10 +11,16 @@
     "node": ">=22",
     "pnpm": ">=9"
   },
+  "scripts": {
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe ."
+  },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@microsoft/api-extractor": "^7.49.1",
     "@swc/core": "^1.10.7",
+    "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
     "commander": "^13.0.0",
     "rollup": "^4.30.1",

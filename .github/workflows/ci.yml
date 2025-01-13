@@ -1,27 +1,42 @@
 name: CI
+
 on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    types: [ opened, synchronize ]
+
 jobs:
   build:
+    name: CI
+    timeout-minutes: 15
     runs-on: ubuntu-latest
+    # To use Remote Caching, uncomment the next lines and follow the steps below.
+    # env:
+    #  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+    #  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - name: Git config user
-        uses: snow-actions/git-config-user@v1.0.0
+
+      - uses: pnpm/action-setup@v3
         with:
-          name: # Service Account's Name
-          email: # Service Account's Email Address
-      - uses: actions/setup-node@v3
+          version: 9
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
-      - name: Verify Change Logs
-        run: node common/scripts/install-run-rush.js change --verify
-      - name: Rush Install
-        run: node common/scripts/install-run-rush.js install
-      - name: Rush rebuild
-        run: node common/scripts/install-run-rush.js rebuild --verbose --production
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check
+        run: pnpm run check
+
+      - name: Build
+        run: pnpm run build:prod

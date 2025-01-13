@@ -6,9 +6,7 @@
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -38,6 +36,15 @@
   "author": {
     "name": "3tatsu",
     "url": "https://github.com/3tatsu"
+  },
+  "scripts": {
+    "build": "node ../../scripts/build.js",
+    "build:watch": "node ../../scripts/build.js -w",
+    "build:prod": "node ../../scripts/build.js --clean --production",
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe .",
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

@@ -37,6 +37,15 @@
     "name": "3tatsu",
     "url": "https://github.com/3tatsu"
   },
+  "scripts": {
+    "build": "node ../../scripts/build.js",
+    "build:watch": "node ../../scripts/build.js -w",
+    "build:prod": "node ../../scripts/build.js --clean --production",
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe .",
+    "type-check": "tsc --noEmit"
+  },
   "dependencies": {
     "zod": "^3.24.1"
   },

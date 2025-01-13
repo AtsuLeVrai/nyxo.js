@@ -1,349 +1,372 @@
-import {readFileSync} from "node:fs";
-import {mkdir, readFile, rm, writeFile} from "node:fs/promises";
-import {resolve} from "node:path";
-import {Extractor, ExtractorConfig} from "@microsoft/api-extractor";
+import { readFileSync } from "node:fs";
+import { mkdir, rm } from "node:fs/promises";
+import { resolve } from "node:path";
+import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
+import chalk from "chalk";
 import chokidar from "chokidar";
-import {program} from "commander";
-import {rollup} from "rollup";
-import {defineRollupSwcOption, swc} from "rollup-plugin-swc3";
+import { program } from "commander";
+import { rollup } from "rollup";
+import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
+const NODE_MODULES_REGEX = /^node:/;
+const IGNORED_FILES_REGEX = /(^|[/\\])\../;
+
 const paths = {
-    root: process.cwd(),
-    src: resolve(process.cwd(), "src"),
-    dist: resolve(process.cwd(), "dist"),
-    temp: resolve(process.cwd(), "temp"),
-    tsconfig: resolve(process.cwd(), "tsconfig.json"),
-    package: resolve(process.cwd(), "package.json"),
+  root: process.cwd(),
+  src: resolve(process.cwd(), "src"),
+  dist: resolve(process.cwd(), "dist"),
+  temp: resolve(process.cwd(), "temp"),
+  tsconfig: resolve(process.cwd(), "tsconfig.json"),
+  package: resolve(process.cwd(), "package.json"),
+};
+
+const prefix = {
+  app: chalk.magenta("⚡") + chalk.cyan(" Nyx") + chalk.gray(".js"),
+  time: () => chalk.gray(`[${new Date().toLocaleTimeString()}]`),
+  success: chalk.green("✓"),
+  error: chalk.red("✗"),
+  warning: chalk.yellow("!"),
+  info: chalk.blue("i"),
+  debug: chalk.gray("⚙"),
 };
 
 program
-    .option("-w, --watch", "Watch mode - rebuild on changes")
-    .option("-c, --clean", "Clean dist and temp folders before building")
-    .option("--skipTypes", "Skip type generation")
-    .option("-v, --verbose", "Verbose output")
-    .parse(process.argv);
+  .option("-w, --watch", "Watch mode - rebuild on changes")
+  .option("-c, --clean", "Clean dist and temp folders before building")
+  .option("--skipTypes", "Skip type generation")
+  .option("-p, --production", "Build for production")
+  .parse(process.argv);
 
 const options = program.opts();
 
-function log(message, type = "info") {
-    const prefix =
-        {
-            info: "📝",
-            success: "✅",
-            error: "❌",
-            warning: "!",
-            start: "🚀",
-        }[type] || "📝";
+function log(message, type = "info", details = "") {
+  const icon = prefix[type] || prefix.info;
+  const messageColor =
+    {
+      success: chalk.green,
+      error: chalk.red,
+      warning: chalk.yellow,
+      info: chalk.white,
+      debug: chalk.gray,
+    }[type] || chalk.white;
 
-    if (type === "error") {
-        console.error(`${prefix} ${message}`);
-    } else if (type === "warning") {
-        console.warn(`${prefix} ${message}`);
-    } else {
-        console.log(`${prefix} ${message}`);
-    }
+  console.log(
+    `${prefix.app} ${prefix.time()} ${icon} ${messageColor(message)}${
+      details ? chalk.gray(` (${details})`) : ""
+    }`,
+  );
 }
 
 function getExternals() {
-    const pkg = JSON.parse(readFileSync(paths.package, "utf-8").toString());
-    return [
-        ...Object.keys(pkg.dependencies || {}),
-        ...Object.keys(pkg.peerDependencies || {}),
-        ...Object.keys(pkg.devDependencies || {}),
-        /^node:/, // Node.js native modules
-    ];
+  log("Analyzing package dependencies...", "debug");
+  const pkg = JSON.parse(readFileSync(paths.package, "utf-8").toString());
+  const externals = [
+    ...Object.keys(pkg.dependencies || {}),
+    ...Object.keys(pkg.peerDependencies || {}),
+    ...Object.keys(pkg.devDependencies || {}),
+    NODE_MODULES_REGEX,
+  ];
+  log(`Found ${externals.length - 1} external dependencies`, "debug");
+  return externals;
 }
 
 const swcConfig = defineRollupSwcOption({
-    jsc: {
-        target: "esnext",
-        parser: {
-            syntax: "typescript",
-            tsx: false,
-            decorators: true,
-            dynamicImport: true,
-            importAssertions: true,
-        },
-        externalHelpers: true,
-        keepClassNames: true,
-        transform: {
-            legacyDecorator: false,
-            decoratorMetadata: true,
-            useDefineForClassFields: true,
-        },
+  jsc: {
+    target: "esnext",
+    parser: {
+      syntax: "typescript",
+      tsx: false,
+      decorators: true,
+      dynamicImport: true,
+      importAssertions: true,
     },
-    module: {
-        type: "es6",
-        strict: true,
-        strictMode: true,
-        lazy: false,
-        noInterop: false,
+    externalHelpers: true,
+    keepClassNames: true,
+    transform: {
+      legacyDecorator: false,
+      decoratorMetadata: true,
+      useDefineForClassFields: true,
     },
-    sourceMaps: true,
-    exclude: ["node_modules", "dist", ".*.js$", ".*\\.d.ts$"],
+  },
+  module: {
+    type: "es6",
+    strict: true,
+    strictMode: true,
+    lazy: false,
+    noInterop: false,
+  },
+  sourceMaps: !options.production,
+  exclude: ["node_modules", "dist", ".*.js$", ".*\\.d.ts$"],
 });
 
 const rollupConfig = {
-    input: resolve(paths.src, "index.ts"),
-    external: getExternals(),
-    output: [
-        {
-            file: resolve(paths.dist, "index.mjs"),
-            format: "esm",
-            sourcemap: true,
-        },
-        {
-            file: resolve(paths.dist, "index.cjs"),
-            format: "cjs",
-            sourcemap: true,
-        },
-    ],
-    plugins: [swc(swcConfig)],
+  input: resolve(paths.src, "index.ts"),
+  external: getExternals(),
+  output: [
+    {
+      file: resolve(paths.dist, "index.mjs"),
+      format: "esm",
+      sourcemap: !options.production,
+    },
+    {
+      file: resolve(paths.dist, "index.cjs"),
+      format: "cjs",
+      sourcemap: !options.production,
+    },
+  ],
+  plugins: [swc(swcConfig)],
 };
 
 const apiExtractorConfig = {
-    $schema:
-        "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.json",
-    projectFolder: paths.root,
-    mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
-    bundledPackages: [],
-    compiler: {
-        tsconfigFilePath: paths.tsconfig,
-        overrideTsconfig: {
-            compilerOptions: {
-                types: ["node"],
-                skipLibCheck: true,
-            },
-        },
+  projectFolder: paths.root,
+  mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
+  bundledPackages: [],
+  compiler: {
+    tsconfigFilePath: paths.tsconfig,
+    overrideTsconfig: {
+      compilerOptions: {
+        types: ["node"],
+        skipLibCheck: true,
+      },
     },
-    apiReport: {enabled: false},
-    docModel: {enabled: false},
-    dtsRollup: {
-        enabled: true,
-        untrimmedFilePath: resolve(paths.dist, "index.d.ts"),
-        omitTrimmingComments: false,
+  },
+  apiReport: { enabled: false },
+  docModel: { enabled: false },
+  dtsRollup: {
+    enabled: true,
+    untrimmedFilePath: resolve(paths.dist, "index.d.ts"),
+    omitTrimmingComments: false,
+  },
+  tsdocMetadata: { enabled: false },
+  messages: {
+    compilerMessageReporting: { default: { logLevel: "warning" } },
+    extractorMessageReporting: {
+      default: { logLevel: "warning" },
+      "ae-missing-release-tag": { logLevel: "none" },
     },
-    tsdocMetadata: {enabled: false},
-    messages: {
-        compilerMessageReporting: {default: {logLevel: "warning"}},
-        extractorMessageReporting: {
-            default: {logLevel: "warning"},
-            "ae-missing-release-tag": {logLevel: "none"},
-        },
-        tsdocMessageReporting: {default: {logLevel: "warning"}},
-    },
+    tsdocMessageReporting: { default: { logLevel: "warning" } },
+  },
 };
 
 async function clean() {
-    log("Cleaning dist and temp folders...", "start");
-    try {
-        await Promise.all([
-            rm(paths.dist, {recursive: true, force: true}),
-            rm(paths.temp, {recursive: true, force: true}),
-        ]);
-        await Promise.all([
-            mkdir(paths.dist, {recursive: true}),
-            mkdir(paths.temp, {recursive: true}),
-        ]);
-        log("Clean completed", "success");
-    } catch (error) {
-        log("Clean failed", "error");
-        throw error;
-    }
+  try {
+    log("Cleaning build directories...", "info");
+    await Promise.all([
+      rm(paths.dist, { recursive: true, force: true }),
+      rm(paths.temp, { recursive: true, force: true }),
+    ]);
+    log("Removed old build files", "debug");
+
+    await Promise.all([
+      mkdir(paths.dist, { recursive: true }),
+      mkdir(paths.temp, { recursive: true }),
+    ]);
+    log("Created fresh build directories", "success");
+  } catch (error) {
+    log("Clean operation failed", "error", error.message);
+    throw new Error(`Clean failed: ${error.message}`);
+  }
 }
 
 async function compileTypes() {
-    log("Compiling TypeScript types...", "start");
+  try {
+    log("Starting TypeScript compilation...", "info");
 
-    try {
-        const configPath = ts.findConfigFile(
-            paths.root,
-            ts.sys.fileExists,
-            "tsconfig.json",
-        );
-
-        if (!configPath) {
-            throw new Error("Could not find tsconfig.json");
-        }
-
-        const {config, error} = ts.readConfigFile(configPath, ts.sys.readFile);
-        if (error) {
-            throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
-        }
-
-        const parsedConfig = ts.parseJsonConfigFileContent(
-            config,
-            ts.sys,
-            paths.root,
-        );
-
-        const compilerOptions = {
-            ...parsedConfig.options,
-            declaration: true,
-            emitDeclarationOnly: true,
-            outDir: paths.temp,
-            noEmit: false,
-        };
-
-        const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
-        const emitResult = program.emit();
-
-        const allDiagnostics = ts
-            .getPreEmitDiagnostics(program)
-            .concat(emitResult.diagnostics);
-
-        if (allDiagnostics.length > 0) {
-            const formatHost = {
-                getCurrentDirectory: () => paths.root,
-                getCanonicalFileName: (path) => path,
-                getNewLine: () => ts.sys.newLine,
-            };
-
-            const messages = allDiagnostics
-                .map((diagnostic) => ts.formatDiagnostic(diagnostic, formatHost))
-                .join("\n");
-
-            if (emitResult.emitSkipped) {
-                throw new Error(`TypeScript compilation failed:\n${messages}`);
-            }
-            log(`TypeScript warnings:\n${messages}`, "warning");
-        }
-
-        log("Types compilation completed", "success");
-    } catch (error) {
-        log("Types compilation failed", "error");
-        throw error;
+    const configPath = ts.findConfigFile(
+      paths.root,
+      ts.sys.fileExists,
+      "tsconfig.json",
+    );
+    if (!configPath) {
+      throw new Error("Could not find tsconfig.json");
     }
+    log("Found TypeScript configuration", "debug");
+
+    const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (error) {
+      throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
+    }
+
+    const parsedConfig = ts.parseJsonConfigFileContent(
+      config,
+      ts.sys,
+      paths.root,
+    );
+    const compilerOptions = {
+      ...parsedConfig.options,
+      declaration: true,
+      emitDeclarationOnly: true,
+      outDir: paths.temp,
+      noEmit: false,
+    };
+
+    log("Creating TypeScript program...", "debug");
+    const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
+    const emitResult = program.emit();
+
+    const allDiagnostics = ts
+      .getPreEmitDiagnostics(program)
+      .concat(emitResult.diagnostics);
+
+    if (allDiagnostics.length > 0) {
+      log(
+        `Found ${allDiagnostics.length} TypeScript diagnostic messages`,
+        "warning",
+      );
+    }
+
+    if (allDiagnostics.length > 0 && emitResult.emitSkipped) {
+      throw new Error("TypeScript compilation failed");
+    }
+
+    log("TypeScript compilation completed", "success");
+  } catch (error) {
+    log("TypeScript compilation failed", "error", error.message);
+    throw new Error(`Types compilation failed: ${error.message}`);
+  }
 }
 
 async function buildBundles() {
-    log("Creating bundles with Rollup...", "start");
-    try {
-        const bundle = await rollup(rollupConfig);
-        await Promise.all(
-            rollupConfig.output.map((output) => bundle.write(output)),
+  try {
+    log("Creating bundles with Rollup...", "info");
+
+    log("Building bundle...", "debug");
+    const bundle = await rollup(rollupConfig);
+
+    log("Writing output files...", "debug");
+    await Promise.all(
+      rollupConfig.output.map(async (output) => {
+        await bundle.write(output);
+        log(
+          `Generated ${output.format.toUpperCase()} bundle`,
+          "debug",
+          output.file,
         );
-        await bundle.close();
-        log("Bundle creation completed", "success");
-    } catch (error) {
-        log("Bundle creation failed", "error");
-        throw error;
-    }
+      }),
+    );
+
+    await bundle.close();
+    log("Bundle creation completed", "success");
+  } catch (error) {
+    log("Bundle creation failed", "error", error.message);
+    throw new Error(`Bundle creation failed: ${error.message}`);
+  }
 }
 
 async function buildTypes() {
-    log("Generating types with API Extractor...", "start");
+  try {
+    log("Generating types with API Extractor...", "info");
 
-    try {
-        const extractorConfig = ExtractorConfig.prepare({
-            configObject: apiExtractorConfig,
-            configObjectFullPath: paths.root,
-            packageJsonFullPath: resolve(paths.root, "package.json"),
-        });
+    const extractorConfig = ExtractorConfig.prepare({
+      configObject: apiExtractorConfig,
+      configObjectFullPath: paths.root,
+      packageJsonFullPath: resolve(paths.root, "package.json"),
+    });
 
-        const extractorResult = Extractor.invoke(extractorConfig, {
-            localBuild: true,
-            showVerboseMessages: options.verbose,
-            showDiagnostics: options.verbose,
-            typescriptCompilerFolder: resolve(
-                paths.root,
-                "node_modules",
-                "typescript",
-            ),
-        });
+    const extractorResult = Extractor.invoke(extractorConfig, {
+      localBuild: true,
+      showVerboseMessages: false,
+      showDiagnostics: false,
+      typescriptCompilerFolder: resolve(
+        paths.root,
+        "node_modules",
+        "typescript",
+      ),
+    });
 
-        if (extractorResult.succeeded) {
-            log("Type generation completed", "success");
-        } else {
-            throw new Error(
-                `API Extractor: ${extractorResult.errorCount} error(s) and ${extractorResult.warningCount} warning(s)`,
-            );
-        }
-    } catch (error) {
-        log("Type generation failed", "error");
-        throw error;
+    if (!extractorResult.succeeded) {
+      throw new Error(
+        `API Extractor failed with ${extractorResult.errorCount} errors`,
+      );
     }
-}
 
-async function cleanupTypes() {
-    log("Cleaning up generated types...", "start");
-    try {
-        const dtsPath = resolve(paths.dist, "index.d.ts");
-        const content = await readFile(dtsPath, "utf-8");
-
-        const cleanedContent = content
-            .replace(/\/\*\*\s*\*\s*\*\//g, "")
-            .replace(/\*\/\s*\/\*\*/g, "*")
-            .replace(/\n\s*\n\s*\n/g, "\n\n");
-
-        await writeFile(dtsPath, cleanedContent, "utf-8");
-        log("Types cleanup completed", "success");
-    } catch (error) {
-        log("Types cleanup failed", "error");
-        throw error;
-    }
+    log("Type generation completed", "success");
+  } catch (error) {
+    log("Type generation failed", "error", error.message);
+    throw new Error(`Type generation failed: ${error.message}`);
+  }
 }
 
 async function build() {
-    try {
-        log("Starting build...", "start");
+  const startTime = Date.now();
+  try {
+    log(
+      `Starting build${options.production ? " (production)" : ""}...`,
+      "info",
+    );
 
-        if (options.clean) {
-            await clean();
-        }
-
-        if (!options.skipTypes) {
-            await compileTypes();
-        }
-
-        await buildBundles();
-
-        if (!options.skipTypes) {
-            await buildTypes();
-            await cleanupTypes();
-        }
-
-        if (!options.watch) {
-            await rm(paths.temp, {recursive: true, force: true});
-        }
-
-        log("Build completed successfully!", "success");
-    } catch (error) {
-        log(`Build failed: ${error}`, "error");
-        process.exit(1);
+    if (options.clean) {
+      await clean();
     }
+
+    if (options.skipTypes) {
+      log("Skipping type generation", "warning");
+    } else {
+      await compileTypes();
+      await buildTypes();
+    }
+
+    await buildBundles();
+
+    if (!options.watch) {
+      await rm(paths.temp, { recursive: true, force: true });
+      log("Cleaned temporary files", "debug");
+    }
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    const mode = options.production
+      ? chalk.yellow("production")
+      : chalk.blue("development");
+    log(
+      `Build completed for ${mode} mode in ${chalk.cyan(`${duration}s`)}`,
+      "success",
+    );
+  } catch (error) {
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    log(`Build failed after ${duration}s`, "error", error.message);
+    process.exit(1);
+  }
 }
 
 async function watch() {
+  await build();
+  log("Starting watch mode...", "info");
+
+  const watcher = chokidar.watch(paths.src, {
+    ignored: IGNORED_FILES_REGEX,
+    persistent: true,
+  });
+
+  watcher.on("ready", () => {
+    log("Initial scan complete. Ready for changes", "info");
+  });
+
+  watcher.on("change", async (path) => {
+    log(`File changed: ${chalk.blue(path)}`, "info");
     await build();
+  });
 
-    log("Watching for changes...", "info");
+  watcher.on("error", (error) => {
+    log("Watcher error", "error", error.message);
+  });
 
-    const watcher = chokidar.watch(paths.src, {
-        ignored: /(^|[/\\])\../,
-        persistent: true,
-    });
-
-    watcher.on("change", async (path) => {
-        log(`File ${path} has been changed`, "info");
-        await build();
-    });
-
-    process.on("SIGINT", () => {
-        watcher.close();
-        process.exit(0);
-    });
+  process.on("SIGINT", () => {
+    log("Received stop signal", "warning");
+    watcher.close();
+    log("Watch mode terminated", "info");
+    process.exit(0);
+  });
 }
 
 if (options.watch) {
-    watch().catch((error) => {
-        log(`Watch error: ${error}`, "error");
-        process.exit(1);
-    });
+  watch().catch((error) => {
+    log("Watch mode failed", "error", error.message);
+    process.exit(1);
+  });
 } else {
-    build().catch((error) => {
-        log(`Build error: ${error}`, "error");
-        process.exit(1);
-    });
+  build().catch((error) => {
+    log("Build failed", "error", error.message);
+    process.exit(1);
+  });
 }
