@@ -5,12 +5,10 @@ export type BitFieldResolvable<T> =
   | bigint
   | `${bigint}`;
 
-export class BitFieldManager<T> {
-  static readonly BIGINT_REGEX = /^-?\d+$/;
-  static readonly BINARY_REGEX = /^[01]+$/;
-  static readonly MAX_SAFE_INTEGER = BigInt(Number.MAX_SAFE_INTEGER);
-  static readonly DEFAULT_RADIX = 16;
+const BIGINT_REGEX = /^-?\d+$/;
+const BINARY_REGEX = /^[01]+$/;
 
+export class BitFieldManager<T> {
   #bitfield: bigint;
   readonly #frozen: boolean;
 
@@ -24,7 +22,7 @@ export class BitFieldManager<T> {
   }
 
   static fromBinary<F>(binary: string): BitFieldManager<F> {
-    if (!BitFieldManager.BINARY_REGEX.test(binary)) {
+    if (!BINARY_REGEX.test(binary)) {
       throw new Error("Invalid binary string");
     }
 
@@ -183,7 +181,7 @@ export class BitFieldManager<T> {
     return count;
   }
 
-  toString(radix = BitFieldManager.DEFAULT_RADIX): string {
+  toString(radix = 16): string {
     return this.#bitfield.toString(radix);
   }
 
@@ -305,7 +303,7 @@ export class BitFieldManager<T> {
     if (value < 0n) {
       throw new TypeError("Bitfield value cannot be negative");
     }
-    if (value > BitFieldManager.MAX_SAFE_INTEGER) {
+    if (value > BigInt(Number.MAX_SAFE_INTEGER)) {
       throw new TypeError("Bitfield value exceeds maximum safe integer");
     }
     return value;
@@ -318,7 +316,7 @@ export class BitFieldManager<T> {
       throw new Error("Empty string is not a valid BigInt");
     }
 
-    if (!BitFieldManager.BIGINT_REGEX.test(trimmedValue)) {
+    if (!BIGINT_REGEX.test(trimmedValue)) {
       throw new Error("Invalid BigInt format");
     }
 

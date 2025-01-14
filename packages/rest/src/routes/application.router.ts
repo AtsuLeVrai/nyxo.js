@@ -36,8 +36,7 @@ export class ApplicationRouter {
   ): Promise<HttpResponse<ApplicationEntity>> {
     const result = EditCurrentApplicationEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(ApplicationRouter.ROUTES.currentApplication, {

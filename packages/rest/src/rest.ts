@@ -2,12 +2,6 @@ import { EventEmitter } from "eventemitter3";
 import { Pool, ProxyAgent, RetryAgent } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import {
-  RestApiError,
-  RestHttpError,
-  isRestCloudflareBanError,
-  isRestRateLimitError,
-} from "./errors/index.js";
 import { RestOptions } from "./options/index.js";
 import {
   ApplicationCommandRouter,
@@ -48,31 +42,32 @@ import {
 } from "./types/index.js";
 
 export class Rest extends EventEmitter<RestEvents> {
-  #applications: ApplicationRouter | null = null;
-  #commands: ApplicationCommandRouter | null = null;
-  #connections: ApplicationConnectionRouter | null = null;
-  #auditLogs: AuditLogRouter | null = null;
-  #autoModeration: AutoModerationRouter | null = null;
-  #channels: ChannelRouter | null = null;
-  #emojis: EmojiRouter | null = null;
-  #entitlements: EntitlementRouter | null = null;
-  #gateway: GatewayRouter | null = null;
-  #guilds: GuildRouter | null = null;
-  #templates: GuildTemplateRouter | null = null;
-  #interactions: InteractionRouter | null = null;
-  #invites: InviteRouter | null = null;
-  #messages: MessageRouter | null = null;
-  #oauth2: OAuth2Router | null = null;
-  #polls: PollRouter | null = null;
-  #scheduledEvents: ScheduledEventRouter | null = null;
-  #skus: SkuRouter | null = null;
-  #soundboards: SoundboardRouter | null = null;
-  #stages: StageInstanceRouter | null = null;
-  #stickers: StickerRouter | null = null;
-  #subscriptions: SubscriptionRouter | null = null;
-  #users: UserRouter | null = null;
-  #voice: VoiceRouter | null = null;
-  #webhooks: WebhookRouter | null = null;
+  readonly applications = new ApplicationRouter(this);
+  readonly commands = new ApplicationCommandRouter(this);
+  readonly connections = new ApplicationConnectionRouter(this);
+  readonly auditLogs = new AuditLogRouter(this);
+  readonly autoModeration = new AutoModerationRouter(this);
+  readonly channels = new ChannelRouter(this);
+  readonly emojis = new EmojiRouter(this);
+  readonly entitlements = new EntitlementRouter(this);
+  readonly gateway = new GatewayRouter(this);
+  readonly guilds = new GuildRouter(this);
+  readonly templates = new GuildTemplateRouter(this);
+  readonly interactions = new InteractionRouter(this);
+  readonly invites = new InviteRouter(this);
+  readonly messages = new MessageRouter(this);
+  readonly oauth2 = new OAuth2Router(this);
+  readonly polls = new PollRouter(this);
+  readonly scheduledEvents = new ScheduledEventRouter(this);
+  readonly skus = new SkuRouter(this);
+  readonly soundboards = new SoundboardRouter(this);
+  readonly stages = new StageInstanceRouter(this);
+  readonly stickers = new StickerRouter(this);
+  readonly subscriptions = new SubscriptionRouter(this);
+  readonly users = new UserRouter(this);
+  readonly voice = new VoiceRouter(this);
+  readonly webhooks = new WebhookRouter(this);
+
   #proxyAgent: ProxyAgent | null = null;
   readonly #pendingRequests = new Set<string>();
 
@@ -108,206 +103,6 @@ export class Rest extends EventEmitter<RestEvents> {
     this.#setupEventForwarding(this.#rateLimitService);
   }
 
-  get applications(): ApplicationRouter {
-    if (!this.#applications) {
-      this.#applications = new ApplicationRouter(this);
-    }
-
-    return this.#applications;
-  }
-
-  get commands(): ApplicationCommandRouter {
-    if (!this.#commands) {
-      this.#commands = new ApplicationCommandRouter(this);
-    }
-
-    return this.#commands;
-  }
-
-  get connections(): ApplicationConnectionRouter {
-    if (!this.#connections) {
-      this.#connections = new ApplicationConnectionRouter(this);
-    }
-
-    return this.#connections;
-  }
-
-  get auditLogs(): AuditLogRouter {
-    if (!this.#auditLogs) {
-      this.#auditLogs = new AuditLogRouter(this);
-    }
-
-    return this.#auditLogs;
-  }
-
-  get autoModeration(): AutoModerationRouter {
-    if (!this.#autoModeration) {
-      this.#autoModeration = new AutoModerationRouter(this);
-    }
-
-    return this.#autoModeration;
-  }
-
-  get channels(): ChannelRouter {
-    if (!this.#channels) {
-      this.#channels = new ChannelRouter(this);
-    }
-
-    return this.#channels;
-  }
-
-  get emojis(): EmojiRouter {
-    if (!this.#emojis) {
-      this.#emojis = new EmojiRouter(this);
-    }
-
-    return this.#emojis;
-  }
-
-  get entitlements(): EntitlementRouter {
-    if (!this.#entitlements) {
-      this.#entitlements = new EntitlementRouter(this);
-    }
-
-    return this.#entitlements;
-  }
-
-  get gateway(): GatewayRouter {
-    if (!this.#gateway) {
-      this.#gateway = new GatewayRouter(this);
-    }
-
-    return this.#gateway;
-  }
-
-  get guilds(): GuildRouter {
-    if (!this.#guilds) {
-      this.#guilds = new GuildRouter(this);
-    }
-
-    return this.#guilds;
-  }
-
-  get templates(): GuildTemplateRouter {
-    if (!this.#templates) {
-      this.#templates = new GuildTemplateRouter(this);
-    }
-
-    return this.#templates;
-  }
-
-  get interactions(): InteractionRouter {
-    if (!this.#interactions) {
-      this.#interactions = new InteractionRouter(this);
-    }
-
-    return this.#interactions;
-  }
-
-  get invites(): InviteRouter {
-    if (!this.#invites) {
-      this.#invites = new InviteRouter(this);
-    }
-
-    return this.#invites;
-  }
-
-  get messages(): MessageRouter {
-    if (!this.#messages) {
-      this.#messages = new MessageRouter(this);
-    }
-
-    return this.#messages;
-  }
-
-  get oauth2(): OAuth2Router {
-    if (!this.#oauth2) {
-      this.#oauth2 = new OAuth2Router(this);
-    }
-
-    return this.#oauth2;
-  }
-
-  get polls(): PollRouter {
-    if (!this.#polls) {
-      this.#polls = new PollRouter(this);
-    }
-
-    return this.#polls;
-  }
-
-  get scheduledEvents(): ScheduledEventRouter {
-    if (!this.#scheduledEvents) {
-      this.#scheduledEvents = new ScheduledEventRouter(this);
-    }
-
-    return this.#scheduledEvents;
-  }
-
-  get skus(): SkuRouter {
-    if (!this.#skus) {
-      this.#skus = new SkuRouter(this);
-    }
-
-    return this.#skus;
-  }
-
-  get soundboards(): SoundboardRouter {
-    if (!this.#soundboards) {
-      this.#soundboards = new SoundboardRouter(this);
-    }
-
-    return this.#soundboards;
-  }
-
-  get stages(): StageInstanceRouter {
-    if (!this.#stages) {
-      this.#stages = new StageInstanceRouter(this);
-    }
-
-    return this.#stages;
-  }
-
-  get stickers(): StickerRouter {
-    if (!this.#stickers) {
-      this.#stickers = new StickerRouter(this);
-    }
-
-    return this.#stickers;
-  }
-
-  get subscriptions(): SubscriptionRouter {
-    if (!this.#subscriptions) {
-      this.#subscriptions = new SubscriptionRouter(this);
-    }
-
-    return this.#subscriptions;
-  }
-
-  get users(): UserRouter {
-    if (!this.#users) {
-      this.#users = new UserRouter(this);
-    }
-
-    return this.#users;
-  }
-
-  get voice(): VoiceRouter {
-    if (!this.#voice) {
-      this.#voice = new VoiceRouter(this);
-    }
-
-    return this.#voice;
-  }
-
-  get webhooks(): WebhookRouter {
-    if (!this.#webhooks) {
-      this.#webhooks = new WebhookRouter(this);
-    }
-
-    return this.#webhooks;
-  }
-
   async request<T>(options: RouteEntity): Promise<HttpResponse<T>> {
     const requestId = this.#generateRequestId(options);
 
@@ -319,26 +114,15 @@ export class Rest extends EventEmitter<RestEvents> {
           options.path,
           options.method,
         );
-      } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: <explanation>
-        // biome-ignore lint/suspicious/noConsoleLog: <explanation>
-        console.log(error);
-        if (isRestRateLimitError(error) || isRestCloudflareBanError(error)) {
-          throw error;
-        }
-        throw new RestHttpError(
-          429,
-          "Rate limit check failed",
-          options.method,
-          options.path,
+      } catch {
+        throw new Error(
+          `Rate limit check failed. Method: ${options.method}, Path: ${options.path}`,
         );
       }
 
       const controller = new AbortController();
 
-      const preparedOptions = options.files
-        ? await this.handleFiles(options)
-        : options;
+      const preparedOptions = await this.handleFiles(options);
 
       this.emit(
         "request",
@@ -384,11 +168,10 @@ export class Rest extends EventEmitter<RestEvents> {
 
       const contentType = response.headers["content-type"];
       if (!contentType?.includes("application/json")) {
-        throw new RestHttpError(
-          response.statusCode,
-          `Expected content-type application/json but received ${contentType}`,
-          options.method,
-          options.path,
+        throw new Error(
+          `HTTP Error ${response.statusCode}: Invalid content type. ` +
+            `Expected application/json but received ${contentType}. ` +
+            `Method: ${options.method}, Path: ${options.path}`,
         );
       }
 
@@ -398,32 +181,29 @@ export class Rest extends EventEmitter<RestEvents> {
       try {
         data = JSON.parse(rawBody.toString());
       } catch {
-        throw new RestHttpError(
-          response.statusCode,
-          "Failed to parse response body",
-          options.method,
-          options.path,
+        throw new Error(
+          `HTTP Error ${response.statusCode}: Failed to parse response body. ` +
+            `Method: ${options.method}, Path: ${options.path}`,
         );
       }
 
       if (response.statusCode >= 400) {
         if (this.#isDiscordApiError(data)) {
-          throw new RestApiError(
-            data.code,
-            response.statusCode,
-            data.message,
-            data.errors,
-            options.method,
-            options.path,
+          throw new Error(
+            `Discord API Error ${response.statusCode} (Code: ${data.code}): ${data.message}. Method: ${options.method}, Path: ${options.path}${
+              data.errors
+                ? `\nDetails: ${JSON.stringify(data.errors, null, 2)}`
+                : ""
+            }`,
           );
         }
-        throw new RestHttpError(
-          response.statusCode,
-          typeof data === "object" && data !== null && "message" in data
-            ? String(data.message)
-            : "Unknown API Error",
-          options.method,
-          options.path,
+
+        throw new Error(
+          `HTTP Error ${response.statusCode}: ${
+            typeof data === "object" && data !== null && "message" in data
+              ? String(data.message)
+              : "Unknown API Error"
+          }\nMethod: ${options.method}, Path: ${options.path}`,
         );
       }
 

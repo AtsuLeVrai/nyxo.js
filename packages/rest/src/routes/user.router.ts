@@ -61,8 +61,7 @@ export class UserRouter {
   ): Promise<HttpResponse<UserEntity>> {
     const result = ModifyCurrentUserEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(UserRouter.ROUTES.me, {
@@ -78,8 +77,7 @@ export class UserRouter {
   ): Promise<HttpResponse<GuildEntity[]>> {
     const result = GetCurrentUserGuildsQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(UserRouter.ROUTES.guilds, {
@@ -120,8 +118,7 @@ export class UserRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = CreateGroupDmEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(UserRouter.ROUTES.channels, {
@@ -157,8 +154,7 @@ export class UserRouter {
     const result =
       UpdateCurrentUserApplicationRoleConnectionEntity.safeParse(connection);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.put(UserRouter.ROUTES.applicationRole(applicationId), {

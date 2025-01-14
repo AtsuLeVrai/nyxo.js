@@ -91,8 +91,7 @@ export class ChannelRouter {
       ])
       .safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(ChannelRouter.ROUTES.base(channelId), {
@@ -124,8 +123,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<void>> {
     const result = EditChannelPermissionsEntity.safeParse(permissions);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.put(
@@ -156,8 +154,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<InviteEntity>> {
     const result = CreateChannelInviteEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(ChannelRouter.ROUTES.invites(channelId), {
@@ -254,8 +251,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<void>> {
     const result = AddGroupDmRecipientEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.put(ChannelRouter.ROUTES.recipients(channelId, userId), {
@@ -286,8 +282,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadFromMessageEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -309,8 +304,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ChannelEntity>> {
     const result = StartThreadWithoutMessageEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -341,8 +335,7 @@ export class ChannelRouter {
       ])
       .safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -417,8 +410,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ThreadMemberEntity[]>> {
     const result = ListThreadMembersQueryEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(ChannelRouter.ROUTES.threadMembers(channelId), {
@@ -435,8 +427,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(
@@ -456,8 +447,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(
@@ -477,8 +467,7 @@ export class ChannelRouter {
   ): Promise<HttpResponse<ListPublicArchivedThreadsResponseEntity>> {
     const result = ListPublicArchivedThreadsQueryEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(

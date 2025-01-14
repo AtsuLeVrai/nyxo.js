@@ -70,8 +70,7 @@ export class InteractionRouter {
   ): Promise<HttpResponse<InteractionCallbackEntity | undefined>> {
     const result = InteractionResponseEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -108,8 +107,7 @@ export class InteractionRouter {
   ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
@@ -148,8 +146,7 @@ export class InteractionRouter {
   ): Promise<HttpResponse<MessageEntity>> {
     const result = FollowupMessageEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -191,8 +188,7 @@ export class InteractionRouter {
   ): Promise<HttpResponse<MessageEntity>> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(

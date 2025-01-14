@@ -30,8 +30,7 @@ export class StageInstanceRouter {
   ): Promise<HttpResponse<StageInstanceEntity>> {
     const result = CreateStageInstanceEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(StageInstanceRouter.ROUTES.stageInstances, {
@@ -59,8 +58,7 @@ export class StageInstanceRouter {
   ): Promise<HttpResponse<StageInstanceEntity>> {
     const result = ModifyStageInstanceEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(

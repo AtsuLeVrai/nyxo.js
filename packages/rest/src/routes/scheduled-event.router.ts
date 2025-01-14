@@ -51,8 +51,7 @@ export class ScheduledEventRouter {
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = CreateGuildScheduledEventEntity.safeParse(event);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(ScheduledEventRouter.ROUTES.events(guildId), {
@@ -85,8 +84,7 @@ export class ScheduledEventRouter {
   ): Promise<HttpResponse<GuildScheduledEventEntity>> {
     const result = ModifyGuildScheduledEventEntity.safeParse(modify);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
@@ -120,8 +118,7 @@ export class ScheduledEventRouter {
   ): Promise<HttpResponse<GuildScheduledEventUserEntity[]>> {
     const result = GetGuildScheduledEventUsersQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(ScheduledEventRouter.ROUTES.users(guildId, eventId), {

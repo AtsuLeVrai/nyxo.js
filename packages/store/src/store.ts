@@ -347,9 +347,9 @@ export class Store<K, V> extends Map<K, V> {
 
   aggregate<T extends Record<string, unknown>>(
     options: AggregateOptions<V, T>,
-  ): Map<string, T> {
-    const groups = new Map<string, V[]>();
-    const result = new Map<string, T>();
+  ): Store<string, T> {
+    const groups = new Store<string, V[]>();
+    const result = new Store<string, T>();
     const isFunction = typeof options.groupBy === "function";
 
     for (const value of this.values()) {

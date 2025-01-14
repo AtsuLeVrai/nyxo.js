@@ -41,8 +41,7 @@ export class GuildTemplateRouter {
   ): Promise<HttpResponse<GuildEntity>> {
     const result = CreateGuildFromGuildTemplateEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(GuildTemplateRouter.ROUTES.template(code), {
@@ -68,8 +67,7 @@ export class GuildTemplateRouter {
   ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = CreateGuildTemplateEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
@@ -99,8 +97,7 @@ export class GuildTemplateRouter {
   ): Promise<HttpResponse<GuildTemplateEntity>> {
     const result = ModifyGuildTemplateEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(

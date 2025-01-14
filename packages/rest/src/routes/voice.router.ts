@@ -62,8 +62,7 @@ export class VoiceRouter {
   ): Promise<HttpResponse<void>> {
     const result = ModifyCurrentUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(VoiceRouter.ROUTES.currentUserVoiceState(guildId), {
@@ -81,8 +80,7 @@ export class VoiceRouter {
   ): Promise<HttpResponse<void>> {
     const result = ModifyUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(

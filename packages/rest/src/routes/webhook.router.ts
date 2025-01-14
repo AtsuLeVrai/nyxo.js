@@ -48,8 +48,7 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = CreateWebhookEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(WebhookRouter.ROUTES.channelWebhooks(channelId), {
@@ -103,8 +102,7 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = ModifyWebhookEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(WebhookRouter.ROUTES.webhook(webhookId), {
@@ -124,8 +122,7 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = ModifyWebhookEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
@@ -208,8 +205,7 @@ export class WebhookRouter {
   ): Promise<HttpResponse<void>> {
     const result = ExecuteWebhookQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -230,8 +226,7 @@ export class WebhookRouter {
   ): Promise<HttpResponse<void>> {
     const result = ExecuteWebhookQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -253,8 +248,7 @@ export class WebhookRouter {
   ): Promise<HttpResponse<WebhookEntity>> {
     const result = GetWebhookMessageQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(
@@ -310,8 +304,7 @@ export class WebhookRouter {
   ): Promise<HttpResponse<void>> {
     const result = GetWebhookMessageQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.delete(

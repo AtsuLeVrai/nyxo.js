@@ -37,8 +37,7 @@ export class PollRouter {
   ): Promise<HttpResponse<PollVotersResponseEntity>> {
     const result = GetAnswerVotersQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(

@@ -3,10 +3,6 @@ import type { Dispatcher } from "undici";
 import type { FileType } from "./file.type.js";
 import type { RateLimitEvent } from "./rate-limit.type.js";
 
-/**
- * @see {@link https://discord.com/developers/docs/reference#user-agent}
- */
-export type DiscordUserAgent = `DiscordBot (${string}, ${string})`;
 export type PathLike = `/${string}`;
 
 /**

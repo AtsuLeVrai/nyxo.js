@@ -33,8 +33,7 @@ export class EntitlementRouter {
   ): Promise<HttpResponse<EntitlementEntity[]>> {
     const result = ListEntitlementQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(
@@ -78,8 +77,7 @@ export class EntitlementRouter {
   ): Promise<HttpResponse<EntitlementEntity>> {
     const result = CreateTestEntitlementEntity.safeParse(test);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(

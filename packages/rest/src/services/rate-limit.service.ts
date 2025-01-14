@@ -3,7 +3,6 @@ import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { RestCloudflareBanError, RestRateLimitError } from "../errors/index.js";
 import { RateLimitOptions } from "../options/index.js";
 import type {
   CloudflareAnalytics,
@@ -14,12 +13,12 @@ import type {
 } from "../types/index.js";
 
 export class RateLimitService extends EventEmitter<RestEvents> {
-  #buckets = new Store<string, RateLimitBucket>();
-  #routesToBuckets = new Store<string, string>();
   #invalidRequestsCount = 0;
-  #invalidRequestsResetTime = Date.now();
   #globalReset: number | null = null;
+  #invalidRequestsResetTime = Date.now();
   #cloudflareAnalytics: CloudflareAnalytics[] = [];
+  #routesToBuckets = new Store<string, string>();
+  #buckets = new Store<string, RateLimitBucket>();
 
   readonly #options: z.output<typeof RateLimitOptions>;
 
@@ -28,8 +27,7 @@ export class RateLimitService extends EventEmitter<RestEvents> {
     try {
       this.#options = RateLimitOptions.parse(options);
     } catch (error) {
-      const validationError = fromError(error);
-      throw new Error(validationError.message);
+      throw new Error(fromError(error).message);
     }
   }
 
@@ -55,19 +53,17 @@ export class RateLimitService extends EventEmitter<RestEvents> {
         mostAffectedRoutes: this.#getMostAffectedRoutes(),
       };
 
-      const error = new RestCloudflareBanError(
-        this.#options.timeouts.cloudflareWindow,
-        path,
-        analytics,
-      );
-
       this.emit("cloudflareBan", {
         path,
         analytics,
         recommendedWaitTime: this.#options.timeouts.cloudflareWindow,
       });
 
-      throw error;
+      throw new Error(
+        `Cloudflare has blocked access to this resource. Path: ${path}. ` +
+          `Please wait ${this.#options.timeouts.cloudflareWindow}ms before retrying. ` +
+          `Analytics: ${JSON.stringify(analytics, null, 2)}`,
+      );
     }
 
     if (status === 429) {
@@ -81,17 +77,6 @@ export class RateLimitService extends EventEmitter<RestEvents> {
         this.#globalReset = Date.now() + retryAfter;
       }
 
-      const error = new RestRateLimitError(
-        retryAfter,
-        isGlobal,
-        scope,
-        method,
-        path,
-        retryAfter,
-        -1,
-        0,
-      );
-
       this.emit("rateLimited", {
         timeToReset: retryAfter,
         limit: -1,
@@ -103,7 +88,11 @@ export class RateLimitService extends EventEmitter<RestEvents> {
         retryAfter,
       });
 
-      throw error;
+      throw new Error(
+        `Rate limit exceeded for ${isGlobal ? "global" : scope} scope. ` +
+          `Method: ${method}, Path: ${path}. ` +
+          `Please wait ${retryAfter}ms before retrying.`,
+      );
     }
 
     const bucketId = headers[this.#options.headers.bucket];
@@ -128,33 +117,32 @@ export class RateLimitService extends EventEmitter<RestEvents> {
 
   async checkRateLimit(method: string, path: string): Promise<void> {
     if (this.#isCloudflareBlocked()) {
-      throw new RestCloudflareBanError(
-        this.#options.timeouts.cloudflareBlockWindow,
-        path,
-        {
-          total: this.#cloudflareAnalytics.length,
-          errors: this.#cloudflareAnalytics.filter((d) => d.status >= 400)
-            .length,
-          lastMinute: this.#cloudflareAnalytics.filter(
-            (d) => Date.now() - d.timestamp < 60_000,
-          ).length,
-          mostAffectedRoutes: this.#getMostAffectedRoutes(),
-        },
+      const analytics = {
+        total: this.#cloudflareAnalytics.length,
+        errors: this.#cloudflareAnalytics.filter((d) => d.status >= 400).length,
+        lastMinute: this.#cloudflareAnalytics.filter(
+          (d) => Date.now() - d.timestamp < 60_000,
+        ).length,
+        mostAffectedRoutes: this.#getMostAffectedRoutes(),
+      };
+
+      throw new Error(
+        `Cloudflare requests limit exceeded. Path: ${path}. ` +
+          `Please wait ${this.#options.timeouts.cloudflareBlockWindow}ms before retrying. ` +
+          `Analytics: ${JSON.stringify(analytics, null, 2)}`,
       );
     }
 
     if (this.#globalReset && Date.now() < this.#globalReset) {
       const timeToReset = this.#globalReset - Date.now();
-      throw new RestRateLimitError(timeToReset, true, "global", method, path);
+      throw new Error(
+        `Global rate limit in effect. Method: ${method}, Path: ${path}. Please wait ${timeToReset}ms before retrying.`,
+      );
     }
 
     if (this.#isInvalidRequestLimitExceeded()) {
-      throw new RestRateLimitError(
-        this.#options.timeouts.invalidRequestWindow,
-        false,
-        "user",
-        method,
-        path,
+      throw new Error(
+        `Invalid request limit exceeded. Method: ${method}, Path: ${path}. Please wait ${this.#options.timeouts.invalidRequestWindow}ms before retrying.`,
       );
     }
 
@@ -175,18 +163,6 @@ export class RateLimitService extends EventEmitter<RestEvents> {
       const timeToReset = Math.max(0, reset - now);
 
       if (timeToReset > 0) {
-        const error = new RestRateLimitError(
-          timeToReset,
-          false,
-          bucket.scope,
-          method,
-          path,
-          undefined,
-          bucket.limit,
-          bucket.remaining,
-          bucket.hash,
-        );
-
         this.emit("rateLimited", {
           bucketHash: bucket.hash,
           timeToReset,
@@ -199,7 +175,12 @@ export class RateLimitService extends EventEmitter<RestEvents> {
         });
 
         await setTimeout(timeToReset);
-        throw error;
+        throw new Error(
+          `Rate limit reached for bucket '${bucket.hash}'. ` +
+            `Method: ${method}, Path: ${path}, Scope: ${bucket.scope}. ` +
+            `Limit: ${bucket.limit}, Remaining: ${bucket.remaining}. ` +
+            `Please wait ${timeToReset}ms before retrying.`,
+        );
       }
     }
   }

@@ -51,8 +51,7 @@ export class AutoModerationRouter {
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
     const result = CreateAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(AutoModerationRouter.ROUTES.base(guildId), {
@@ -72,8 +71,7 @@ export class AutoModerationRouter {
   ): Promise<HttpResponse<AutoModerationRuleEntity>> {
     const result = ModifyAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {

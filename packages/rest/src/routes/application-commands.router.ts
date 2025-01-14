@@ -66,8 +66,7 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -100,8 +99,7 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
@@ -134,8 +132,7 @@ export class ApplicationCommandRouter {
       .max(200)
       .safeParse(commands);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.put(ApplicationCommandRouter.ROUTES.base(applicationId), {
@@ -169,8 +166,7 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = CreateGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
@@ -209,8 +205,7 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<ApplicationCommandEntity>> {
     const result = EditGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
@@ -255,8 +250,7 @@ export class ApplicationCommandRouter {
       .max(200)
       .safeParse(commands);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.put(
@@ -310,8 +304,7 @@ export class ApplicationCommandRouter {
   ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
     const result = EditApplicationCommandPermissionsEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.put(

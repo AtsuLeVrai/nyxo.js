@@ -78,8 +78,7 @@ export class StickerRouter {
   ): Promise<HttpResponse<StickerEntity>> {
     const result = CreateGuildStickerEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     const { file, ...rest } = result.data;
@@ -101,8 +100,7 @@ export class StickerRouter {
   ): Promise<HttpResponse<StickerEntity>> {
     const result = ModifyGuildStickerEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(

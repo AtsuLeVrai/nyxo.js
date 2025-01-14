@@ -25,8 +25,7 @@ export class InviteRouter {
   ): Promise<HttpResponse<InviteEntity & InviteMetadataEntity>> {
     const result = GetInviteQueryEntity.safeParse(query);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(InviteRouter.ROUTES.invite(code), {

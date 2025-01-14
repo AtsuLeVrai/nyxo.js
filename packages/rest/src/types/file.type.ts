@@ -10,4 +10,16 @@ export interface FileData {
   filename: string;
   contentType: string;
   size: number;
+  dataUri?: string;
+}
+
+export interface FileValidationOptions {
+  maxSizeBytes: number;
+  allowedTypes: string[];
+  allowedExtensions: string[];
+  validateImage?: boolean;
+  maxWidth?: number;
+  maxHeight?: number;
+  minWidth?: number;
+  minHeight?: number;
 }

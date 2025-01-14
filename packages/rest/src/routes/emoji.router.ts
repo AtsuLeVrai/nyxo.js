@@ -55,8 +55,7 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = CreateGuildEmojiEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(EmojiRouter.ROUTES.guildBase(guildId), {
@@ -75,8 +74,7 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = ModifyGuildEmojiEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
@@ -129,8 +127,7 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = CreateApplicationEmojiEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(EmojiRouter.ROUTES.applicationBase(applicationId), {
@@ -150,8 +147,7 @@ export class EmojiRouter {
   ): Promise<HttpResponse<EmojiEntity>> {
     const result = ModifyApplicationEmojiEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(

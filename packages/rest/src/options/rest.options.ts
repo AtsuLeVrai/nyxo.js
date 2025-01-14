@@ -4,6 +4,9 @@ import { z } from "zod";
 import { FileProcessorOptions } from "./file-processor.options.js";
 import { RateLimitOptions } from "./rate-limit.options.js";
 
+/**
+ * @see {@link https://discord.com/developers/docs/reference#user-agent}
+ */
 export const DISCORD_USER_AGENT_REGEX =
   /^DiscordBot \(([^,\s]+), (\d+(\.\d+)*)\)$/;
 

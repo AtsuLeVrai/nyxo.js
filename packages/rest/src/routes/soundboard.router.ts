@@ -36,8 +36,7 @@ export class SoundboardRouter {
   ): Promise<HttpResponse<void>> {
     const result = SendSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(SoundboardRouter.ROUTES.sendSound(channelId), {
@@ -83,8 +82,7 @@ export class SoundboardRouter {
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = CreateGuildSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(SoundboardRouter.ROUTES.guildSounds(guildId), {
@@ -104,8 +102,7 @@ export class SoundboardRouter {
   ): Promise<HttpResponse<SoundboardSoundEntity>> {
     const result = ModifyGuildSoundboardSoundEntity.safeParse(options);
     if (!result.success) {
-      const validationError = fromZodError(result.error);
-      throw new Error(validationError.message);
+      throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
