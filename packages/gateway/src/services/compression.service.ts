@@ -2,8 +2,7 @@ import { EventEmitter } from "eventemitter3";
 import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
 import type { z } from "zod";
-import { fromError } from "zod-validation-error";
-import { CompressionOptions } from "../options/index.js";
+import type { CompressionOptions } from "../options/index.js";
 import type { CompressionType, GatewayEvents } from "../types/index.js";
 
 export class CompressionService extends EventEmitter<GatewayEvents> {
@@ -14,43 +13,39 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
 
   readonly #options: z.output<typeof CompressionOptions>;
 
-  constructor(options: z.input<typeof CompressionOptions> = {}) {
+  constructor(options: z.output<typeof CompressionOptions>) {
     super();
-    try {
-      this.#options = CompressionOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+    this.#options = options;
   }
 
   get compressionType(): CompressionType | undefined {
-    return this.#options.type;
+    return this.#options.compressionType;
   }
 
-  get isInitialized(): boolean {
+  isZlib(): boolean {
+    return this.#options.compressionType === "zlib-stream";
+  }
+
+  isZstd(): boolean {
+    return this.#options.compressionType === "zstd-stream";
+  }
+
+  isInitialized(): boolean {
     return this.#zlibInflate !== null || this.#zstdStream !== null;
-  }
-
-  get isZlib(): boolean {
-    return this.#options.type === "zlib-stream";
-  }
-
-  get isZstd(): boolean {
-    return this.#options.type === "zstd-stream";
   }
 
   initialize(): void {
     this.destroy();
 
     try {
-      if (this.isZlib) {
+      if (this.isZlib()) {
         this.#initializeZlib();
-      } else if (this.isZstd) {
+      } else if (this.isZstd()) {
         this.#initializeZstd();
       }
     } catch (error) {
       throw new Error(
-        `Failed to initialize compression for ${this.#options.type}`,
+        `Failed to initialize compression for ${this.#options.compressionType}`,
         {
           cause: error,
         },
@@ -66,7 +61,7 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
     const buffer = Buffer.from(data.buffer, data.byteOffset, data.length);
 
     try {
-      const decompressed = this.isZlib
+      const decompressed = this.isZlib()
         ? this.#decompressZlib(buffer)
         : this.#decompressZstd(buffer);
 
@@ -77,9 +72,12 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
 
       return decompressed;
     } catch (error) {
-      throw new Error(`Failed to decompress data using ${this.#options.type}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Failed to decompress data using ${this.#options.compressionType}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
@@ -95,7 +93,7 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
       return true;
     }
 
-    return this.isZlib ? this.#isZlibFlushMarker(Buffer.from(data)) : true;
+    return this.isZlib() ? this.#isZlibFlushMarker(Buffer.from(data)) : true;
   }
 
   #initializeZlib(): void {

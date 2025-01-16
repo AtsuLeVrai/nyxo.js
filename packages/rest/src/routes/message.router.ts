@@ -9,7 +9,6 @@ import {
   GetChannelMessagesQueryEntity,
   GetReactionsQueryEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class MessageRouter {
   static readonly ROUTES = {
@@ -44,7 +43,7 @@ export class MessageRouter {
   getMessages(
     channelId: Snowflake,
     query: z.input<typeof GetChannelMessagesQueryEntity> = {},
-  ): Promise<HttpResponse<MessageEntity[]>> {
+  ): Promise<MessageEntity[]> {
     const result = GetChannelMessagesQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -61,7 +60,7 @@ export class MessageRouter {
   getMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     return this.#rest.get(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
     );
@@ -73,7 +72,7 @@ export class MessageRouter {
   createMessage(
     channelId: Snowflake,
     options: z.input<typeof CreateMessageEntity>,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     const result = CreateMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -92,7 +91,7 @@ export class MessageRouter {
   crosspostMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     return this.#rest.post(
       MessageRouter.ROUTES.crosspost(channelId, messageId),
     );
@@ -105,7 +104,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.put(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
     );
@@ -118,7 +117,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
     );
@@ -132,7 +131,7 @@ export class MessageRouter {
     messageId: Snowflake,
     emoji: string,
     userId: Snowflake,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       MessageRouter.ROUTES.userReaction(channelId, messageId, emoji, userId),
     );
@@ -146,7 +145,7 @@ export class MessageRouter {
     messageId: Snowflake,
     emoji: string,
     query: z.input<typeof GetReactionsQueryEntity> = {},
-  ): Promise<HttpResponse<UserEntity[]>> {
+  ): Promise<UserEntity[]> {
     const result = GetReactionsQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -164,7 +163,7 @@ export class MessageRouter {
   deleteAllReactions(
     channelId: Snowflake,
     messageId: Snowflake,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       MessageRouter.ROUTES.reactions(channelId, messageId, ""),
     );
@@ -177,7 +176,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       MessageRouter.ROUTES.reactions(channelId, messageId, emoji),
     );
@@ -190,7 +189,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     options: z.input<typeof EditMessageEntity>,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     const result = EditMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -213,7 +212,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     reason?: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       { reason },
@@ -227,7 +226,7 @@ export class MessageRouter {
     channelId: Snowflake,
     options: z.input<typeof BulkDeleteMessagesEntity>,
     reason?: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     const result = BulkDeleteMessagesEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);

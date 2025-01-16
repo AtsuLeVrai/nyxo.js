@@ -1,94 +1,58 @@
 import { open, stat } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import { Readable } from "node:stream";
-import slugify from "@sindresorhus/slugify";
 import FormData from "form-data";
 import { lookup } from "mime-types";
-import sharp, { type FormatEnum } from "sharp";
+import sharp from "sharp";
 import type { Dispatcher } from "undici";
-import type { z } from "zod";
-import { fromError } from "zod-validation-error";
-import { FileProcessorOptions } from "../options/index.js";
+import { FileProcessingError } from "../errors/index.js";
 import type {
-  BaseImageOptionsEntity,
-  DataUriImageData,
-  FileData,
-  FileType,
+  DataUri,
+  FileInput,
   FileValidationOptions,
+  ImageProcessingOptions,
+  ProcessedFile,
 } from "../types/index.js";
 
 const DATA_URI_REGEX = /^data:(.+);base64,(.+)$/;
+const MAX_ATTACHMENTS_PER_MESSAGE = 10;
+const DEFAULT_MAX_TOTAL_SIZE = 10 * 1024 * 1024;
 
 export class FileProcessorService {
-  readonly #options: z.output<typeof FileProcessorOptions>;
-
-  constructor(options: z.input<typeof FileProcessorOptions> = {}) {
-    try {
-      this.#options = FileProcessorOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-  }
-
-  async toDataUri(
-    input: FileType,
-    options: Partial<FileValidationOptions> = {},
-  ): Promise<string> {
-    if (typeof input === "string" && this.isDataUri(input)) {
-      return input;
-    }
-
-    const fileData = await this.processFile(
-      input,
-      {
-        asDataUri: true,
-      },
-      {
-        ...options,
-        allowedTypes: ["image/jpeg", "image/png", "image/gif"],
-        allowedExtensions: [".jpg", ".jpeg", ".png", ".gif"],
-      },
-    );
-
-    if (!fileData.dataUri) {
-      throw new Error("Failed to convert file to data URI");
-    }
-
-    return fileData.dataUri;
-  }
-
   async createFormData(
-    files: FileType[],
+    files: FileInput | FileInput[],
     body?: Dispatcher.RequestOptions["body"],
-    imageOptions?: BaseImageOptionsEntity,
+    imageOptions?: ImageProcessingOptions,
   ): Promise<FormData> {
-    if (files.length > this.#options.maxAttachments) {
-      throw new Error(
-        `Too many attachments. Maximum allowed: ${this.#options.maxAttachments}`,
+    const filesArray = Array.isArray(files) ? files : [files];
+
+    if (filesArray.length > MAX_ATTACHMENTS_PER_MESSAGE) {
+      throw new FileProcessingError(
+        `Too many attachments. Maximum allowed: ${MAX_ATTACHMENTS_PER_MESSAGE}`,
       );
     }
 
     const form = new FormData();
     let totalSize = 0;
 
-    for (let i = 0; i < files.length; i++) {
-      const fileData = await this.processFile(
-        files[i] as FileType,
+    for (let i = 0; i < filesArray.length; i++) {
+      const processedFile = await this.processFile(
+        filesArray[i] as FileInput,
         imageOptions,
       );
-      totalSize += fileData.size;
 
-      if (totalSize > this.#options.maxTotalSize) {
-        throw new Error(
-          `Total files size exceeds limit: ${this.#options.maxTotalSize} bytes`,
+      totalSize += processedFile.size;
+      if (totalSize > DEFAULT_MAX_TOTAL_SIZE) {
+        throw new FileProcessingError(
+          `Total files size exceeds limit: ${DEFAULT_MAX_TOTAL_SIZE} bytes`,
         );
       }
 
-      const fieldName = files.length === 1 ? "file" : `files[${i}]`;
-      form.append(fieldName, fileData.buffer, {
-        filename: fileData.filename,
-        contentType: fileData.contentType,
-        knownLength: fileData.size,
+      const fieldName = filesArray.length === 1 ? "file" : `files[${i}]`;
+      form.append(fieldName, processedFile.buffer, {
+        filename: processedFile.filename,
+        contentType: processedFile.contentType,
+        knownLength: processedFile.size,
       });
     }
 
@@ -108,106 +72,128 @@ export class FileProcessorService {
   }
 
   async processFile(
-    input: FileType,
-    imageOptions?: BaseImageOptionsEntity,
-    validationOptions: Partial<FileValidationOptions> = {},
-  ): Promise<FileData> {
-    const options = { ...validationOptions };
-    let fileData: FileData;
+    input: FileInput,
+    imageOptions?: ImageProcessingOptions,
+    validationOptions?: FileValidationOptions,
+  ): Promise<ProcessedFile> {
+    let processedFile: ProcessedFile;
 
-    if (Buffer.isBuffer(input)) {
-      fileData = this.#processBuffer(input);
-    } else if (input instanceof File) {
-      fileData = await this.#processFileObject(input);
-    } else if (input instanceof URL) {
-      fileData = await this.#processFilePath(input.pathname);
-    } else if (typeof input === "string") {
-      if (this.isDataUri(input)) {
-        fileData = this.#processDataUri(input);
+    try {
+      if (Buffer.isBuffer(input)) {
+        processedFile = this.#processBuffer(input);
+      } else if (input instanceof File) {
+        processedFile = await this.#processFileObject(input);
+      } else if (input instanceof URL) {
+        processedFile = await this.#processFilePath(input.pathname);
+      } else if (typeof input === "string") {
+        if (this.#isDataUri(input)) {
+          processedFile = this.#processDataUri(input);
+        } else {
+          processedFile = await this.#processFilePath(input);
+        }
       } else {
-        fileData = await this.#processFilePath(input);
+        throw new FileProcessingError("Invalid file input type");
       }
-    } else {
-      throw new Error("Invalid file input type");
+
+      await this.#validateFile(processedFile, validationOptions);
+
+      if (this.#isImage(processedFile.contentType) && imageOptions) {
+        processedFile = await this.#processImage(processedFile, imageOptions);
+      }
+
+      if (imageOptions?.asDataUri) {
+        processedFile.dataUri = this.#createDataUri(
+          processedFile.buffer,
+          processedFile.contentType,
+        );
+      }
+
+      return processedFile;
+    } catch (error) {
+      if (error instanceof FileProcessingError) {
+        throw error;
+      }
+
+      if (error instanceof Error) {
+        throw new FileProcessingError(
+          `File processing failed: ${error.message}`,
+          { cause: error },
+        );
+      }
+
+      throw new FileProcessingError("File processing failed");
     }
-
-    await this.#validateFile(fileData, options);
-
-    if (this.isImage(fileData.contentType) && imageOptions) {
-      fileData = await this.#processImage(fileData, imageOptions);
-    }
-
-    if (this.#options.sanitizeFilenames) {
-      fileData.filename = this.#sanitizeFilename(fileData.filename);
-    }
-
-    if (imageOptions?.asDataUri) {
-      fileData.dataUri = `data:${fileData.contentType};base64,${fileData.buffer.toString("base64")}`;
-    }
-
-    return fileData;
-  }
-
-  isDataUri(input: string): input is DataUriImageData {
-    return input.startsWith("data:");
-  }
-
-  isImage(contentType: string): boolean {
-    return contentType.startsWith("image/");
-  }
-
-  isVideo(contentType: string): boolean {
-    return contentType.startsWith("video/");
-  }
-
-  isAudio(contentType: string): boolean {
-    return contentType.startsWith("audio/");
   }
 
   async #validateFile(
-    fileData: FileData,
-    options: Partial<FileValidationOptions>,
+    file: ProcessedFile,
+    options: FileValidationOptions = {},
   ): Promise<void> {
-    if (options.maxSizeBytes && fileData.size > options.maxSizeBytes) {
-      throw new Error(`File size exceeds limit: ${options.maxSizeBytes} bytes`);
+    if (options.maxSizeBytes && file.size > options.maxSizeBytes) {
+      throw new FileProcessingError(
+        `File size exceeds limit: ${options.maxSizeBytes} bytes`,
+      );
     }
 
-    const ext = extname(fileData.filename).toLowerCase();
+    const ext = extname(file.filename).toLowerCase();
     if (!options.allowedExtensions?.includes(ext)) {
-      throw new Error(`File extension not allowed: ${ext}`);
+      throw new FileProcessingError(`File extension not allowed: ${ext}`);
     }
 
-    if (!options.allowedTypes?.includes(fileData.contentType)) {
-      throw new Error(`File type not allowed: ${fileData.contentType}`);
+    if (!options.allowedTypes?.includes(file.contentType)) {
+      throw new FileProcessingError(
+        `File type not allowed: ${file.contentType}`,
+      );
     }
 
-    if (options.validateImage && this.isImage(fileData.contentType)) {
-      await this.#validateImageSize(fileData.buffer);
+    if (options.validateImage && this.#isImage(file.contentType)) {
+      await this.#validateImageDimensions(file.buffer, options);
     }
   }
 
-  async #validateImageSize(buffer: Buffer): Promise<void> {
+  async #validateImageDimensions(
+    buffer: Buffer,
+    options: FileValidationOptions,
+  ): Promise<void> {
     const metadata = await sharp(buffer).metadata();
-    const maxDimension = 4096;
 
-    if (
-      (metadata.width && metadata.width > maxDimension) ||
-      (metadata.height && metadata.height > maxDimension)
-    ) {
-      throw new Error(
-        `Image dimensions exceed Discord's limits (max: ${maxDimension}x${maxDimension})`,
+    if (!(metadata.width && metadata.height)) {
+      throw new FileProcessingError("Unable to get image dimensions");
+    }
+
+    if (options.maxWidth && metadata.width > options.maxWidth) {
+      throw new FileProcessingError(
+        `Image width exceeds maximum: ${metadata.width}px (max: ${options.maxWidth}px)`,
+      );
+    }
+
+    if (options.maxHeight && metadata.height > options.maxHeight) {
+      throw new FileProcessingError(
+        `Image height exceeds maximum: ${metadata.height}px (max: ${options.maxHeight}px)`,
+      );
+    }
+
+    if (options.minWidth && metadata.width < options.minWidth) {
+      throw new FileProcessingError(
+        `Image width below minimum: ${metadata.width}px (min: ${options.minWidth}px)`,
+      );
+    }
+
+    if (options.minHeight && metadata.height < options.minHeight) {
+      throw new FileProcessingError(
+        `Image height below minimum: ${metadata.height}px (min: ${options.minHeight}px)`,
       );
     }
   }
 
   async #processImage(
-    fileData: FileData,
-    options: BaseImageOptionsEntity,
-  ): Promise<FileData> {
-    let transformer = sharp(fileData.buffer);
+    file: ProcessedFile,
+    options: ImageProcessingOptions,
+  ): Promise<ProcessedFile> {
+    let transformer = sharp(file.buffer);
 
     if (options.format) {
-      transformer = transformer.toFormat(options.format as keyof FormatEnum);
+      transformer = transformer.toFormat(options.format);
     }
 
     // biome-ignore lint/style/useExplicitLengthCheck: <explanation>
@@ -218,28 +204,34 @@ export class FileProcessorService {
       });
     }
 
-    fileData.buffer = await transformer.toBuffer();
-    fileData.size = fileData.buffer.length;
+    const buffer = await transformer.toBuffer();
+
+    let contentType = file.contentType;
+    let filename = file.filename;
 
     if (options.format) {
-      fileData.contentType = `image/${options.format}`;
-      const filename = fileData.filename.split(".").slice(0, -1).join(".");
-      fileData.filename = `${filename}.${options.format}`;
+      contentType = `image/${options.format}`;
+      filename = this.#changeExtension(filename, options.format);
     }
 
-    return fileData;
-  }
-
-  #processBuffer(buffer: Buffer): FileData {
     return {
       buffer,
-      filename: "buffer-file",
+      filename,
+      contentType,
+      size: buffer.length,
+    };
+  }
+
+  #processBuffer(buffer: Buffer): ProcessedFile {
+    return {
+      buffer,
+      filename: "file",
       contentType: "application/octet-stream",
       size: buffer.length,
     };
   }
 
-  async #processFileObject(file: File): Promise<FileData> {
+  async #processFileObject(file: File): Promise<ProcessedFile> {
     const buffer = Buffer.from(await file.arrayBuffer());
     return {
       buffer,
@@ -249,13 +241,13 @@ export class FileProcessorService {
     };
   }
 
-  async #processFilePath(filePath: string): Promise<FileData> {
-    const stats = await stat(filePath);
-    const handle = await open(filePath);
+  async #processFilePath(path: string): Promise<ProcessedFile> {
+    const stats = await stat(path);
+    const handle = await open(path);
 
     try {
       const buffer = await handle.readFile();
-      const filename = basename(filePath);
+      const filename = basename(path);
       return {
         buffer,
         filename,
@@ -267,33 +259,44 @@ export class FileProcessorService {
     }
   }
 
-  #processDataUri(dataUri: DataUriImageData): FileData {
+  #processDataUri(dataUri: DataUri): ProcessedFile {
     const matches = dataUri.match(DATA_URI_REGEX);
     if (!matches) {
-      throw new Error("Invalid data URI format");
+      throw new FileProcessingError("Invalid data URI format");
     }
 
     const [, contentType, base64Data] = matches;
     if (!(contentType && base64Data)) {
-      throw new Error("Invalid data URI format");
+      throw new FileProcessingError("Missing content type or data in data URI");
     }
 
     const buffer = Buffer.from(base64Data, "base64");
-
     return {
       buffer,
-      filename: `data-uri.${contentType.split("/")[1] || "bin"}`,
+      filename: `file.${this.#getExtensionFromMime(contentType)}`,
       contentType,
       size: buffer.length,
     };
   }
 
-  #sanitizeFilename(filename: string): string {
-    const extension = filename.split(".").pop() || "";
-    const baseName = filename.slice(0, filename.length - extension.length - 1);
-    return (
-      slugify(baseName, this.#options.slugifyOptions) +
-      (extension ? `.${extension}` : "")
-    );
+  #changeExtension(filename: string, newExt: string): string {
+    const basename = filename.replace(/\.[^/.]+$/, "");
+    return `${basename}.${newExt}`;
+  }
+
+  #getExtensionFromMime(mime: string): string {
+    return mime.split("/")[1] || "bin";
+  }
+
+  #createDataUri(buffer: Buffer, contentType: string): string {
+    return `data:${contentType};base64,${buffer.toString("base64")}`;
+  }
+
+  #isDataUri(input: string): input is DataUri {
+    return DATA_URI_REGEX.test(input);
+  }
+
+  #isImage(contentType: string): boolean {
+    return contentType.startsWith("image/");
   }
 }

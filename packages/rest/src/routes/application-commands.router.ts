@@ -13,7 +13,6 @@ import {
   EditGlobalApplicationCommandEntity,
   EditGuildApplicationCommandEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class ApplicationCommandRouter {
   static readonly ROUTES = {
@@ -51,7 +50,7 @@ export class ApplicationCommandRouter {
   getGlobalCommands(
     applicationId: Snowflake,
     withLocalizations = false,
-  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
+  ): Promise<ApplicationCommandEntity[]> {
     return this.#rest.get(ApplicationCommandRouter.ROUTES.base(applicationId), {
       query: { with_localizations: withLocalizations },
     });
@@ -63,7 +62,7 @@ export class ApplicationCommandRouter {
   createGlobalApplicationCommand(
     applicationId: Snowflake,
     options: z.input<typeof CreateGlobalApplicationCommandEntity>,
-  ): Promise<HttpResponse<ApplicationCommandEntity>> {
+  ): Promise<ApplicationCommandEntity> {
     const result = CreateGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -83,7 +82,7 @@ export class ApplicationCommandRouter {
   getGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-  ): Promise<HttpResponse<ApplicationCommandEntity>> {
+  ): Promise<ApplicationCommandEntity> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
@@ -96,7 +95,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
     options: z.input<typeof EditGlobalApplicationCommandEntity>,
-  ): Promise<HttpResponse<ApplicationCommandEntity>> {
+  ): Promise<ApplicationCommandEntity> {
     const result = EditGlobalApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -114,7 +113,7 @@ export class ApplicationCommandRouter {
   deleteGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
     );
@@ -126,7 +125,7 @@ export class ApplicationCommandRouter {
   bulkOverwriteGlobalApplicationCommands(
     applicationId: Snowflake,
     commands: z.input<typeof CreateGlobalApplicationCommandEntity>[],
-  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
+  ): Promise<ApplicationCommandEntity[]> {
     const result = z
       .array(CreateGlobalApplicationCommandEntity)
       .max(200)
@@ -147,7 +146,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     withLocalizations = false,
-  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
+  ): Promise<ApplicationCommandEntity[]> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
       {
@@ -163,7 +162,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     options: z.input<typeof CreateGuildApplicationCommandEntity>,
-  ): Promise<HttpResponse<ApplicationCommandEntity>> {
+  ): Promise<ApplicationCommandEntity> {
     const result = CreateGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -184,7 +183,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-  ): Promise<HttpResponse<ApplicationCommandEntity>> {
+  ): Promise<ApplicationCommandEntity> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
@@ -202,7 +201,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
     options: z.input<typeof EditGuildApplicationCommandEntity>,
-  ): Promise<HttpResponse<ApplicationCommandEntity>> {
+  ): Promise<ApplicationCommandEntity> {
     const result = EditGuildApplicationCommandEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -227,7 +226,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       ApplicationCommandRouter.ROUTES.guildCommand(
         applicationId,
@@ -244,7 +243,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commands: z.input<typeof CreateGlobalApplicationCommandEntity>[],
-  ): Promise<HttpResponse<ApplicationCommandEntity[]>> {
+  ): Promise<ApplicationCommandEntity[]> {
     const result = z
       .array(CreateGlobalApplicationCommandEntity)
       .max(200)
@@ -267,7 +266,7 @@ export class ApplicationCommandRouter {
   getGuildApplicationCommandPermissions(
     applicationId: Snowflake,
     guildId: Snowflake,
-  ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity[]>> {
+  ): Promise<GuildApplicationCommandPermissionEntity[]> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommandsPermissions(
         applicationId,
@@ -283,7 +282,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-  ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
+  ): Promise<GuildApplicationCommandPermissionEntity> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.guildCommandPermissions(
         applicationId,
@@ -301,7 +300,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
     options: z.input<typeof EditApplicationCommandPermissionsEntity>,
-  ): Promise<HttpResponse<GuildApplicationCommandPermissionEntity>> {
+  ): Promise<GuildApplicationCommandPermissionEntity> {
     const result = EditApplicationCommandPermissionsEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);

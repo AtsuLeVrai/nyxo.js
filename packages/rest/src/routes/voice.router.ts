@@ -10,7 +10,6 @@ import {
   ModifyCurrentUserVoiceStateEntity,
   ModifyUserVoiceStateEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class VoiceRouter {
   static readonly ROUTES = {
@@ -30,16 +29,14 @@ export class VoiceRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
-  listVoiceRegions(): Promise<HttpResponse<VoiceRegionEntity[]>> {
+  listVoiceRegions(): Promise<VoiceRegionEntity[]> {
     return this.#rest.get(VoiceRouter.ROUTES.voiceRegions);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
-  getCurrentUserVoiceState(
-    guildId: Snowflake,
-  ): Promise<HttpResponse<VoiceStateEntity>> {
+  getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
     return this.#rest.get(VoiceRouter.ROUTES.currentUserVoiceState(guildId));
   }
 
@@ -49,7 +46,7 @@ export class VoiceRouter {
   getUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
-  ): Promise<HttpResponse<VoiceStateEntity>> {
+  ): Promise<VoiceStateEntity> {
     return this.#rest.get(VoiceRouter.ROUTES.userVoiceState(guildId, userId));
   }
 
@@ -59,7 +56,7 @@ export class VoiceRouter {
   modifyCurrentUserVoiceState(
     guildId: Snowflake,
     options: z.input<typeof ModifyCurrentUserVoiceStateEntity>,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     const result = ModifyCurrentUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -77,7 +74,7 @@ export class VoiceRouter {
     guildId: Snowflake,
     userId: Snowflake,
     options: z.input<typeof ModifyUserVoiceStateEntity>,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     const result = ModifyUserVoiceStateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);

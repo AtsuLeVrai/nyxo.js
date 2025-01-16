@@ -7,7 +7,6 @@ import {
   type ListStickerPacksResponseEntity,
   ModifyGuildStickerEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class StickerRouter {
   static readonly ROUTES = {
@@ -29,30 +28,28 @@ export class StickerRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
    */
-  getSticker(stickerId: Snowflake): Promise<HttpResponse<StickerEntity>> {
+  getSticker(stickerId: Snowflake): Promise<StickerEntity> {
     return this.#rest.get(StickerRouter.ROUTES.sticker(stickerId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
    */
-  listStickerPacks(): Promise<HttpResponse<ListStickerPacksResponseEntity>> {
+  listStickerPacks(): Promise<ListStickerPacksResponseEntity> {
     return this.#rest.get(StickerRouter.ROUTES.stickerPacks);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
    */
-  getStickerPack(packId: Snowflake): Promise<HttpResponse<StickerPackEntity>> {
+  getStickerPack(packId: Snowflake): Promise<StickerPackEntity> {
     return this.#rest.get(StickerRouter.ROUTES.stickerPack(packId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
    */
-  listGuildStickers(
-    guildId: Snowflake,
-  ): Promise<HttpResponse<StickerEntity[]>> {
+  listGuildStickers(guildId: Snowflake): Promise<StickerEntity[]> {
     return this.#rest.get(StickerRouter.ROUTES.guildStickers(guildId));
   }
 
@@ -62,7 +59,7 @@ export class StickerRouter {
   getGuildSticker(
     guildId: Snowflake,
     stickerId: Snowflake,
-  ): Promise<HttpResponse<StickerEntity>> {
+  ): Promise<StickerEntity> {
     return this.#rest.get(
       StickerRouter.ROUTES.guildSticker(guildId, stickerId),
     );
@@ -75,7 +72,7 @@ export class StickerRouter {
     guildId: Snowflake,
     options: z.input<typeof CreateGuildStickerEntity>,
     reason?: string,
-  ): Promise<HttpResponse<StickerEntity>> {
+  ): Promise<StickerEntity> {
     const result = CreateGuildStickerEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -97,7 +94,7 @@ export class StickerRouter {
     stickerId: Snowflake,
     options: z.input<typeof ModifyGuildStickerEntity>,
     reason?: string,
-  ): Promise<HttpResponse<StickerEntity>> {
+  ): Promise<StickerEntity> {
     const result = ModifyGuildStickerEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -119,7 +116,7 @@ export class StickerRouter {
     guildId: Snowflake,
     stickerId: Snowflake,
     reason?: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       StickerRouter.ROUTES.guildSticker(guildId, stickerId),
       {

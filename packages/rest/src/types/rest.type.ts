@@ -1,9 +1,6 @@
-import type { IncomingHttpHeaders } from "node:http";
 import type { Dispatcher } from "undici";
-import type { FileType } from "./file.type.js";
+import type { FileInput } from "./file-processor.type.js";
 import type { RateLimitEvent } from "./rate-limit.type.js";
-
-export type PathLike = `/${string}`;
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-example-json-error-response}
@@ -14,45 +11,33 @@ export interface JsonErrorEntity {
   errors?: Record<string, unknown>;
 }
 
-export interface RouteEntity
-  extends Omit<Dispatcher.RequestOptions, "origin" | "path"> {
-  path: PathLike;
-  files?: FileType | FileType[];
+export interface RequestOptions
+  extends Omit<Dispatcher.RequestOptions, "origin"> {
+  files?: FileInput | FileInput[];
   reason?: string;
 }
 
-export interface HttpResponse<T = unknown> {
-  data: T;
-  status: number;
-  headers: IncomingHttpHeaders;
+export interface RequestStartEvent {
+  path: string;
+  method: string;
+  body?: unknown;
+  timestamp: number;
+}
+
+export interface RequestFinishEvent {
+  path: string;
+  method: string;
+  statusCode: number;
+  latency: number;
 }
 
 export interface RestEvents {
-  request: (
-    path: string,
-    method: string,
-    requestId: string,
-    options?: RouteEntity,
-  ) => void;
-  response: (
-    path: string,
-    method: string,
-    statusCode: number,
-    latency: number,
-    requestId: string,
-  ) => void;
+  debug: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string | Error, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
   rateLimited: (info: RateLimitEvent) => void;
-  invalidRequestWarning: (info: { count: number; max: number }) => void;
-  cloudflareWarning: (info: {
-    errorCount: number;
-    timeWindow: number;
-    mostAffectedRoutes: Array<{ path: string; count: number }>;
-  }) => void;
-  cloudflareBan: (info: {
-    path: string;
-    analytics: unknown;
-    recommendedWaitTime: number;
-  }) => void;
+  requestStart: (requestInfo: RequestStartEvent) => void;
+  requestFinish: (requestInfo: RequestFinishEvent) => void;
 }
 
 /**

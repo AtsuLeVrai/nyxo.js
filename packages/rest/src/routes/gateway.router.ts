@@ -3,7 +3,6 @@ import type {
   GatewayBotResponseEntity,
   GatewayResponseEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class GatewayRouter {
   static readonly ROUTES = {
@@ -20,14 +19,14 @@ export class GatewayRouter {
   /**
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
    */
-  getGateway(): Promise<HttpResponse<GatewayResponseEntity>> {
+  getGateway(): Promise<GatewayResponseEntity> {
     return this.#rest.get(GatewayRouter.ROUTES.gateway);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot}
    */
-  getGatewayBot(): Promise<HttpResponse<GatewayBotResponseEntity>> {
+  getGatewayBot(): Promise<GatewayBotResponseEntity> {
     return this.#rest.get(GatewayRouter.ROUTES.gatewayBot);
   }
 }

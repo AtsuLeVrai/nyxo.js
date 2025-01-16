@@ -7,7 +7,6 @@ import {
   CreateGuildTemplateEntity,
   ModifyGuildTemplateEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class GuildTemplateRouter {
   static ROUTES = {
@@ -28,7 +27,7 @@ export class GuildTemplateRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
-  getGuildTemplate(code: string): Promise<HttpResponse<GuildTemplateEntity>> {
+  getGuildTemplate(code: string): Promise<GuildTemplateEntity> {
     return this.#rest.get(GuildTemplateRouter.ROUTES.template(code));
   }
 
@@ -38,7 +37,7 @@ export class GuildTemplateRouter {
   createGuildFromGuildTemplate(
     code: string,
     options: z.input<typeof CreateGuildFromGuildTemplateEntity>,
-  ): Promise<HttpResponse<GuildEntity>> {
+  ): Promise<GuildEntity> {
     const result = CreateGuildFromGuildTemplateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -52,9 +51,7 @@ export class GuildTemplateRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
-  getGuildTemplates(
-    guildId: Snowflake,
-  ): Promise<HttpResponse<GuildTemplateEntity[]>> {
+  getGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
     return this.#rest.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
   }
 
@@ -64,7 +61,7 @@ export class GuildTemplateRouter {
   createGuildTemplate(
     guildId: Snowflake,
     options: z.input<typeof CreateGuildTemplateEntity>,
-  ): Promise<HttpResponse<GuildTemplateEntity>> {
+  ): Promise<GuildTemplateEntity> {
     const result = CreateGuildTemplateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -81,7 +78,7 @@ export class GuildTemplateRouter {
   syncGuildTemplate(
     guildId: Snowflake,
     code: string,
-  ): Promise<HttpResponse<GuildTemplateEntity>> {
+  ): Promise<GuildTemplateEntity> {
     return this.#rest.put(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
     );
@@ -94,7 +91,7 @@ export class GuildTemplateRouter {
     guildId: Snowflake,
     code: string,
     options: z.input<typeof ModifyGuildTemplateEntity>,
-  ): Promise<HttpResponse<GuildTemplateEntity>> {
+  ): Promise<GuildTemplateEntity> {
     const result = ModifyGuildTemplateEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -114,7 +111,7 @@ export class GuildTemplateRouter {
   deleteGuildTemplate(
     guildId: Snowflake,
     code: string,
-  ): Promise<HttpResponse<GuildTemplateEntity>> {
+  ): Promise<GuildTemplateEntity> {
     return this.#rest.delete(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
     );

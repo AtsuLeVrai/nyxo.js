@@ -1,8 +1,7 @@
 import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
-import { fromError } from "zod-validation-error";
-import { ShardOptions } from "../options/index.js";
+import type { ShardOptions } from "../options/index.js";
 import type {
   GatewayEvents,
   ShardSession,
@@ -93,14 +92,9 @@ export class ShardService extends EventEmitter<GatewayEvents> {
 
   readonly #options: z.output<typeof ShardOptions>;
 
-  constructor(options: z.input<typeof ShardOptions> = {}) {
+  constructor(options: z.output<typeof ShardOptions>) {
     super();
-    try {
-      this.#options = ShardOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
+    this.#options = options;
     this.#state.maxConcurrency = this.#options.maxConcurrency;
   }
 
@@ -114,8 +108,12 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     ).length;
   }
 
-  get isFullyConnected(): boolean {
+  isFullyConnected(): boolean {
     return this.connectedShards === this.totalShards;
+  }
+
+  isEnabled(): boolean {
+    return Boolean(this.#options.totalShards);
   }
 
   async spawn(
@@ -123,6 +121,10 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     maxConcurrency?: number,
     recommendedShards?: number,
   ): Promise<void> {
+    if (!this.#options.totalShards) {
+      return;
+    }
+
     if (this.#state.isSpawning) {
       this.emit("debug", "[Gateway:ShardService] Spawn already in progress");
       return;
@@ -139,7 +141,7 @@ export class ShardService extends EventEmitter<GatewayEvents> {
       this.#state.recommendedShards =
         recommendedShards ?? this.#calculateRecommendedShards();
 
-      const totalShards = this.#calculateTotalShards();
+      const totalShards = this.#calculateTotalShards(this.#options.totalShards);
       const sessions = this.#createShardSessions(totalShards);
 
       this.#createBuckets(sessions);
@@ -374,11 +376,12 @@ export class ShardService extends EventEmitter<GatewayEvents> {
     return this.#options.shardCount;
   }
 
-  #calculateTotalShards(): number {
-    if (this.#options.totalShards === "auto") {
+  #calculateTotalShards(totalShards: "auto" | number): number {
+    if (totalShards === "auto") {
       return this.#state.recommendedShards;
     }
-    return this.#options.totalShards;
+
+    return totalShards;
   }
 
   #getBucketsList(): [number, ShardController[]][] {

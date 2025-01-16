@@ -184,7 +184,6 @@ export interface GatewayEvents {
   shardReconnect: (shardId: number) => void;
   shardResume: (shardId: number) => void;
   connecting: (attempt: number) => void;
-  connected: () => void;
   reconnecting: (attempt: number) => void;
   dispatch: <K extends keyof GatewayReceiveEvents>(
     event: K,
@@ -194,9 +193,9 @@ export interface GatewayEvents {
   sessionEnd: (sessionId: string, code: number) => void;
   sessionInvalid: (resumable: boolean) => void;
   close: (code: number) => void;
-  debug: (message: string) => void;
-  error: (error: Error) => void;
-  warn: (message: string) => void;
+  debug: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string | Error, context?: Record<string, unknown>) => void;
+  warn: (message: string, context?: Record<string, unknown>) => void;
 }
 
 /**

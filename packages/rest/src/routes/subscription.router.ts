@@ -3,7 +3,6 @@ import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import { SubscriptionQueryEntity } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class SubscriptionRouter {
   static readonly ROUTES = {
@@ -25,7 +24,7 @@ export class SubscriptionRouter {
   listSkuSubscriptions(
     skuId: Snowflake,
     query: z.input<typeof SubscriptionQueryEntity> = {},
-  ): Promise<HttpResponse<SubscriptionEntity[]>> {
+  ): Promise<SubscriptionEntity[]> {
     const result = SubscriptionQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -42,7 +41,7 @@ export class SubscriptionRouter {
   getSkuSubscription(
     skuId: Snowflake,
     subscriptionId: Snowflake,
-  ): Promise<HttpResponse<SubscriptionEntity>> {
+  ): Promise<SubscriptionEntity> {
     return this.#rest.get(
       SubscriptionRouter.ROUTES.skuSubscription(skuId, subscriptionId),
     );

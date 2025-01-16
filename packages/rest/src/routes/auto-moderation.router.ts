@@ -6,7 +6,6 @@ import {
   CreateAutoModerationRuleEntity,
   ModifyAutoModerationRuleEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class AutoModerationRouter {
   static readonly ROUTES = {
@@ -27,7 +26,7 @@ export class AutoModerationRouter {
    */
   listAutoModerationRules(
     guildId: Snowflake,
-  ): Promise<HttpResponse<AutoModerationRuleEntity[]>> {
+  ): Promise<AutoModerationRuleEntity[]> {
     return this.#rest.get(AutoModerationRouter.ROUTES.base(guildId));
   }
 
@@ -37,7 +36,7 @@ export class AutoModerationRouter {
   getAutoModerationRule(
     guildId: Snowflake,
     ruleId: Snowflake,
-  ): Promise<HttpResponse<AutoModerationRuleEntity>> {
+  ): Promise<AutoModerationRuleEntity> {
     return this.#rest.get(AutoModerationRouter.ROUTES.rule(guildId, ruleId));
   }
 
@@ -48,7 +47,7 @@ export class AutoModerationRouter {
     guildId: Snowflake,
     options: z.input<typeof CreateAutoModerationRuleEntity>,
     reason?: string,
-  ): Promise<HttpResponse<AutoModerationRuleEntity>> {
+  ): Promise<AutoModerationRuleEntity> {
     const result = CreateAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -68,7 +67,7 @@ export class AutoModerationRouter {
     ruleId: Snowflake,
     options: z.input<typeof ModifyAutoModerationRuleEntity>,
     reason?: string,
-  ): Promise<HttpResponse<AutoModerationRuleEntity>> {
+  ): Promise<AutoModerationRuleEntity> {
     const result = ModifyAutoModerationRuleEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -87,7 +86,7 @@ export class AutoModerationRouter {
     guildId: Snowflake,
     ruleId: Snowflake,
     reason?: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       AutoModerationRouter.ROUTES.rule(guildId, ruleId),
       {

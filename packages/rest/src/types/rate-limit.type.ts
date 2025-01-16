@@ -4,10 +4,10 @@ export interface RateLimitBucket {
   hash: string;
   limit: number;
   remaining: number;
-  reset: number; // Epoch time
-  resetAfter: number; // Seconds
+  reset: number;
+  resetAfter: number;
   scope: RateLimitScope;
-  sharedRoute?: string; // For shared buckets
+  sharedRoute?: string;
 }
 
 export interface RateLimitEvent {
@@ -20,10 +20,4 @@ export interface RateLimitEvent {
   global: boolean;
   scope: RateLimitScope;
   retryAfter?: number;
-}
-
-export interface CloudflareAnalytics {
-  status: number;
-  timestamp: number;
-  path: string;
 }

@@ -16,7 +16,6 @@ import {
   ModifyCurrentUserEntity,
   UpdateCurrentUserApplicationRoleConnectionEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class UserRouter {
   static readonly ROUTES = {
@@ -42,14 +41,14 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
-  getCurrentUser(): Promise<HttpResponse<UserEntity>> {
+  getCurrentUser(): Promise<UserEntity> {
     return this.#rest.get(UserRouter.ROUTES.me);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
-  getUser(userId: Snowflake): Promise<HttpResponse<UserEntity>> {
+  getUser(userId: Snowflake): Promise<UserEntity> {
     return this.#rest.get(UserRouter.ROUTES.user(userId));
   }
 
@@ -58,7 +57,7 @@ export class UserRouter {
    */
   modifyCurrentUser(
     options: z.input<typeof ModifyCurrentUserEntity>,
-  ): Promise<HttpResponse<UserEntity>> {
+  ): Promise<UserEntity> {
     const result = ModifyCurrentUserEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -74,7 +73,7 @@ export class UserRouter {
    */
   getCurrentUserGuilds(
     query: z.input<typeof GetCurrentUserGuildsQueryEntity> = {},
-  ): Promise<HttpResponse<GuildEntity[]>> {
+  ): Promise<GuildEntity[]> {
     const result = GetCurrentUserGuildsQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -88,23 +87,21 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
-  getCurrentUserGuildMember(
-    guildId: Snowflake,
-  ): Promise<HttpResponse<GuildMemberEntity>> {
+  getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
     return this.#rest.get(UserRouter.ROUTES.guildMember(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
-  leaveGuild(guildId: Snowflake): Promise<HttpResponse<void>> {
+  leaveGuild(guildId: Snowflake): Promise<void> {
     return this.#rest.delete(UserRouter.ROUTES.leaveGuild(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
-  createDm(recipientId: Snowflake): Promise<HttpResponse<ChannelEntity>> {
+  createDm(recipientId: Snowflake): Promise<ChannelEntity> {
     return this.#rest.post(UserRouter.ROUTES.channels, {
       body: JSON.stringify({ recipient_id: recipientId }),
     });
@@ -115,7 +112,7 @@ export class UserRouter {
    */
   createGroupDm(
     options: z.input<typeof CreateGroupDmEntity>,
-  ): Promise<HttpResponse<ChannelEntity>> {
+  ): Promise<ChannelEntity> {
     const result = CreateGroupDmEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -129,7 +126,7 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
-  getCurrentUserConnections(): Promise<HttpResponse<ConnectionEntity[]>> {
+  getCurrentUserConnections(): Promise<ConnectionEntity[]> {
     return this.#rest.get(UserRouter.ROUTES.connections);
   }
 
@@ -138,7 +135,7 @@ export class UserRouter {
    */
   getCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
-  ): Promise<HttpResponse<ApplicationRoleConnectionEntity>> {
+  ): Promise<ApplicationRoleConnectionEntity> {
     return this.#rest.get(UserRouter.ROUTES.applicationRole(applicationId));
   }
 
@@ -150,7 +147,7 @@ export class UserRouter {
     connection: z.input<
       typeof UpdateCurrentUserApplicationRoleConnectionEntity
     >,
-  ): Promise<HttpResponse<ApplicationRoleConnectionEntity>> {
+  ): Promise<ApplicationRoleConnectionEntity> {
     const result =
       UpdateCurrentUserApplicationRoleConnectionEntity.safeParse(connection);
     if (!result.success) {

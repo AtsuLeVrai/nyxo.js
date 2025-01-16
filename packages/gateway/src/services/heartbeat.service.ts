@@ -1,8 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
-import { fromError } from "zod-validation-error";
 import type { Gateway } from "../gateway.js";
-import { HeartbeatOptions } from "../options/index.js";
+import type { HeartbeatOptions } from "../options/index.js";
 import type {
   GatewayEvents,
   HeartbeatState,
@@ -34,25 +33,10 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
   readonly #gateway: Gateway;
   readonly #options: z.output<typeof HeartbeatOptions>;
 
-  constructor(
-    gateway: Gateway,
-    options: z.input<typeof HeartbeatOptions> = {},
-  ) {
+  constructor(gateway: Gateway, options: z.output<typeof HeartbeatOptions>) {
     super();
     this.#gateway = gateway;
-    try {
-      this.#options = HeartbeatOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-  }
-
-  get isRunning(): boolean {
-    return this.#interval !== null;
-  }
-
-  get isReconnecting(): boolean {
-    return this.#state.isReconnecting;
+    this.#options = options;
   }
 
   get latency(): number {
@@ -71,7 +55,15 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     return this.#stats.missedHeartbeats;
   }
 
-  get averageLatency(): number {
+  isRunning(): boolean {
+    return this.#interval !== null;
+  }
+
+  isReconnecting(): boolean {
+    return this.#state.isReconnecting;
+  }
+
+  averageLatency(): number {
     if (this.#stats.latencyHistory.length === 0) {
       return 0;
     }
@@ -84,7 +76,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       throw new Error(`Invalid heartbeat interval: ${interval}ms`);
     }
 
-    if (this.isRunning) {
+    if (this.isRunning()) {
       throw new Error("Heartbeat service is already running");
     }
 

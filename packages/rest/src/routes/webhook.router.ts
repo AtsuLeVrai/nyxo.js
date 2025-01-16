@@ -10,7 +10,6 @@ import {
   GetWebhookMessageQueryEntity,
   ModifyWebhookEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class WebhookRouter {
   static readonly ROUTES = {
@@ -45,7 +44,7 @@ export class WebhookRouter {
     channelId: Snowflake,
     options: z.input<typeof CreateWebhookEntity>,
     reason?: string,
-  ): Promise<HttpResponse<WebhookEntity>> {
+  ): Promise<WebhookEntity> {
     const result = CreateWebhookEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -60,23 +59,21 @@ export class WebhookRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
    */
-  getChannelWebhooks(
-    channelId: Snowflake,
-  ): Promise<HttpResponse<WebhookEntity[]>> {
+  getChannelWebhooks(channelId: Snowflake): Promise<WebhookEntity[]> {
     return this.#rest.get(WebhookRouter.ROUTES.channelWebhooks(channelId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
    */
-  getGuildWebhooks(guildId: Snowflake): Promise<HttpResponse<WebhookEntity[]>> {
+  getGuildWebhooks(guildId: Snowflake): Promise<WebhookEntity[]> {
     return this.#rest.get(WebhookRouter.ROUTES.guildWebhooks(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
    */
-  getWebhook(webhookId: Snowflake): Promise<HttpResponse<WebhookEntity>> {
+  getWebhook(webhookId: Snowflake): Promise<WebhookEntity> {
     return this.#rest.get(WebhookRouter.ROUTES.webhook(webhookId));
   }
 
@@ -86,7 +83,7 @@ export class WebhookRouter {
   getWebhookWithToken(
     webhookId: Snowflake,
     token: string,
-  ): Promise<HttpResponse<WebhookEntity>> {
+  ): Promise<WebhookEntity> {
     return this.#rest.get(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
     );
@@ -99,7 +96,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     options: z.input<typeof ModifyWebhookEntity>,
     reason?: string,
-  ): Promise<HttpResponse<WebhookEntity>> {
+  ): Promise<WebhookEntity> {
     const result = ModifyWebhookEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -119,7 +116,7 @@ export class WebhookRouter {
     token: string,
     options: Omit<z.input<typeof ModifyWebhookEntity>, "channel_id">,
     reason?: string,
-  ): Promise<HttpResponse<WebhookEntity>> {
+  ): Promise<WebhookEntity> {
     const result = ModifyWebhookEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -137,10 +134,7 @@ export class WebhookRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
    */
-  deleteWebhook(
-    webhookId: Snowflake,
-    reason?: string,
-  ): Promise<HttpResponse<void>> {
+  deleteWebhook(webhookId: Snowflake, reason?: string): Promise<void> {
     return this.#rest.delete(WebhookRouter.ROUTES.webhook(webhookId), {
       reason,
     });
@@ -153,7 +147,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     reason?: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
       {
@@ -170,7 +164,7 @@ export class WebhookRouter {
     token: string,
     options: z.input<typeof ExecuteWebhookEntity>,
     query: z.input<typeof ExecuteWebhookQueryEntity> = {},
-  ): Promise<HttpResponse<WebhookEntity | undefined>> {
+  ): Promise<WebhookEntity | undefined> {
     const result = ExecuteWebhookEntity.safeParse(options);
     const resultQuery = ExecuteWebhookQueryEntity.safeParse(query);
     if (!(result.success && resultQuery.success)) {
@@ -202,7 +196,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     query: z.input<typeof ExecuteWebhookQueryEntity> = {},
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     const result = ExecuteWebhookQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -223,7 +217,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     query: z.input<typeof ExecuteWebhookQueryEntity> = {},
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     const result = ExecuteWebhookQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -245,7 +239,7 @@ export class WebhookRouter {
     token: string,
     messageId: Snowflake,
     query: z.input<typeof GetWebhookMessageQueryEntity> = {},
-  ): Promise<HttpResponse<WebhookEntity>> {
+  ): Promise<WebhookEntity> {
     const result = GetWebhookMessageQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -268,7 +262,7 @@ export class WebhookRouter {
     messageId: Snowflake,
     options: z.input<typeof EditWebhookMessageEntity>,
     query: z.input<typeof GetWebhookMessageQueryEntity> = {},
-  ): Promise<HttpResponse<WebhookEntity>> {
+  ): Promise<WebhookEntity> {
     const result = EditWebhookMessageEntity.safeParse(query);
     const resultQuery = GetWebhookMessageQueryEntity.safeParse(query);
     if (!(result.success && resultQuery.success)) {
@@ -301,7 +295,7 @@ export class WebhookRouter {
     token: string,
     messageId: Snowflake,
     query: z.input<typeof GetWebhookMessageQueryEntity> = {},
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     const result = GetWebhookMessageQueryEntity.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);

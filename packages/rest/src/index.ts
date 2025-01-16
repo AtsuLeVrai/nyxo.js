@@ -1,3 +1,4 @@
+export * from "./errors/index.js";
 export * from "./options/index.js";
 export * from "./routes/index.js";
 export * from "./schemas/index.js";

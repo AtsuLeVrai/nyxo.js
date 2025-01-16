@@ -5,7 +5,6 @@ import {
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class ApplicationConnectionRouter {
   static readonly ROUTES = {
@@ -24,7 +23,7 @@ export class ApplicationConnectionRouter {
    */
   getApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
-  ): Promise<HttpResponse<ApplicationRoleConnectionMetadataEntity[]>> {
+  ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
     return this.#rest.get(
       ApplicationConnectionRouter.ROUTES.base(applicationId),
     );
@@ -36,7 +35,7 @@ export class ApplicationConnectionRouter {
   updateApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
     metadata: z.input<typeof ApplicationRoleConnectionMetadataEntity>[],
-  ): Promise<HttpResponse<ApplicationRoleConnectionMetadataEntity[]>> {
+  ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
     const result = z
       .array(ApplicationRoleConnectionMetadataEntity)
       .max(5)

@@ -11,7 +11,6 @@ import {
   InteractionCallbackDataEntity,
   InteractionResponseEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class InteractionRouter {
   static ROUTES = {
@@ -67,7 +66,7 @@ export class InteractionRouter {
     interactionToken: string,
     options: z.input<typeof InteractionResponseEntity>,
     withResponse = true,
-  ): Promise<HttpResponse<InteractionCallbackEntity | undefined>> {
+  ): Promise<InteractionCallbackEntity | undefined> {
     const result = InteractionResponseEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -88,7 +87,7 @@ export class InteractionRouter {
   getOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     return this.#rest.get(
       InteractionRouter.ROUTES.getOriginalResponse(
         applicationId,
@@ -104,7 +103,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     options: z.input<typeof InteractionCallbackDataEntity>,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -127,7 +126,7 @@ export class InteractionRouter {
   deleteOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       InteractionRouter.ROUTES.deleteOriginalResponse(
         applicationId,
@@ -143,7 +142,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     options: z.input<typeof FollowupMessageEntity>,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     const result = FollowupMessageEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -167,7 +166,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     return this.#rest.get(
       InteractionRouter.ROUTES.getFollowupMessage(
         applicationId,
@@ -185,7 +184,7 @@ export class InteractionRouter {
     interactionToken: string,
     messageId: Snowflake,
     options: z.input<typeof InteractionCallbackDataEntity>,
-  ): Promise<HttpResponse<MessageEntity>> {
+  ): Promise<MessageEntity> {
     const result = InteractionCallbackDataEntity.partial().safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -210,7 +209,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-  ): Promise<HttpResponse<void>> {
+  ): Promise<void> {
     return this.#rest.delete(
       InteractionRouter.ROUTES.deleteFollowupMessage(
         applicationId,

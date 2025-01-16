@@ -1,6 +1,6 @@
 import type { StickerPackEntity } from "@nyxjs/core";
 import { z } from "zod";
-import type { FileType } from "../types/index.js";
+import type { FileInput } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs-response-structure}
@@ -16,7 +16,7 @@ export const CreateGuildStickerEntity = z.object({
   name: z.string().min(2).max(30),
   description: z.string().min(2).max(100),
   tags: z.string().max(200),
-  file: z.custom<FileType>(),
+  file: z.custom<FileInput>(),
 });
 
 export type CreateGuildStickerEntity = z.infer<typeof CreateGuildStickerEntity>;

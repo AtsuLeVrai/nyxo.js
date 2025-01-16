@@ -30,21 +30,21 @@ import {
   type PayloadEntity,
 } from "./types/index.js";
 
-export class Gateway extends EventEmitter<GatewayEvents> {
-  static readonly BACKOFF_SCHEDULE = [1000, 5000, 10000];
-  static readonly ZOMBIED_CONNECTION_THRESHOLD = 2;
+const BACKOFF_SCHEDULE = [1000, 5000, 10000];
+const ZOMBIED_CONNECTION_THRESHOLD = 2;
 
+export class Gateway extends EventEmitter<GatewayEvents> {
+  #reconnectAttempts = 0;
   #sessionId: string | null = null;
   #resumeUrl: string | null = null;
-  #reconnectAttempts = 0;
   #ws: WebSocket | null = null;
 
   readonly #rest: Rest;
   readonly #options: z.output<typeof GatewayOptions>;
-  readonly #compressionService: CompressionService;
-  readonly #encodingService: EncodingService;
-  readonly #heartbeatService: HeartbeatService;
-  readonly #shardService: ShardService;
+  readonly #compression: CompressionService;
+  readonly #encoding: EncodingService;
+  readonly #heartbeat: HeartbeatService;
+  readonly #shard: ShardService;
 
   constructor(rest: Rest, options: z.input<typeof GatewayOptions>) {
     super();
@@ -56,21 +56,21 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       throw new Error(fromError(error).message);
     }
 
-    this.#compressionService = new CompressionService(options.compression);
-    this.#encodingService = new EncodingService(options.encoding);
-    this.#heartbeatService = new HeartbeatService(this, options.heartbeat);
-    this.#shardService = new ShardService(options.shard);
+    this.#compression = new CompressionService(this.#options);
+    this.#encoding = new EncodingService(this.#options);
+    this.#heartbeat = new HeartbeatService(this, this.#options);
+    this.#shard = new ShardService(this.#options);
 
     this.#setupEventForwarding(
-      this.#heartbeatService,
-      this.#compressionService,
-      this.#encodingService,
-      this.#shardService,
+      this.#heartbeat,
+      this.#compression,
+      this.#encoding,
+      this.#shard,
     );
   }
 
   get ping(): number {
-    return this.#heartbeatService.latency;
+    return this.#heartbeat.latency;
   }
 
   get sessionId(): string | null {
@@ -82,15 +82,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   get sequence(): number {
-    return this.#heartbeatService.sequence;
+    return this.#heartbeat.sequence;
   }
 
   get reconnectAttempts(): number {
     return this.#reconnectAttempts;
-  }
-
-  get isReconnecting(): boolean {
-    return this.#heartbeatService.isReconnecting;
   }
 
   get readyState(): number {
@@ -99,6 +95,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   get webSocket(): WebSocket | null {
     return this.#ws;
+  }
+
+  isReconnecting(): boolean {
+    return this.#heartbeat.isReconnecting();
   }
 
   async connect(): Promise<void> {
@@ -110,16 +110,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this.#rest.users.getCurrentUserGuilds(),
       ]);
 
-      if (this.#options.shard) {
-        await this.#shardService.spawn(
-          guilds.data.length,
-          gatewayInfo.data.session_start_limit.max_concurrency,
-          gatewayInfo.data.shards,
-        );
-      }
+      await this.#shard.spawn(
+        guilds.length,
+        gatewayInfo.session_start_limit.max_concurrency,
+        gatewayInfo.shards,
+      );
 
-      await this.#initializeWebSocket(gatewayInfo.data.url);
-      this.emit("connected");
+      await this.#initializeWebSocket(gatewayInfo.url);
     } catch (error) {
       throw new Error("Failed to connect to the gateway", {
         cause: error,
@@ -166,7 +163,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       t: null,
     };
 
-    this.#ws.send(this.#encodingService.encode(payload));
+    this.#ws.send(this.#encoding.encode(payload));
     this.emit("debug", `[Gateway] Sent payload with op ${opcode}`);
   }
 
@@ -185,8 +182,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.#resumeUrl = null;
       this.#reconnectAttempts = 0;
 
-      this.#compressionService.destroy();
-      this.#heartbeatService.destroy();
+      this.#compression.destroy();
+      this.#heartbeat.destroy();
     } catch (error) {
       throw new Error("Failed to destroy the gateway connection", {
         cause: error,
@@ -197,8 +194,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   isHealthy(): boolean {
     return (
       this.readyState === WebSocket.OPEN &&
-      this.#heartbeatService.missedHeartbeats <
-        Gateway.ZOMBIED_CONNECTION_THRESHOLD &&
+      this.#heartbeat.missedHeartbeats < ZOMBIED_CONNECTION_THRESHOLD &&
       this.ping < 30000
     );
   }
@@ -236,17 +232,17 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #handleMessage(data: Buffer): void {
     let processedData = data;
 
-    if (this.#options.compression) {
-      processedData = this.#compressionService.decompress(data);
+    if (this.#compression.isInitialized()) {
+      processedData = this.#compression.decompress(data);
     }
 
-    const payload = this.#encodingService.decode(processedData);
+    const payload = this.#encoding.decode(processedData);
     this.#handlePayload(payload);
   }
 
   #handlePayload(payload: PayloadEntity): void {
     if (payload.s !== null) {
-      this.#heartbeatService.updateSequence(payload.s);
+      this.#heartbeat.updateSequence(payload.s);
     }
 
     switch (payload.op) {
@@ -259,11 +255,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         break;
 
       case GatewayOpcodes.Heartbeat:
-        this.#heartbeatService.sendHeartbeat();
+        this.#heartbeat.sendHeartbeat();
         break;
 
       case GatewayOpcodes.HeartbeatAck:
-        this.#heartbeatService.ackHeartbeat();
+        this.#heartbeat.ackHeartbeat();
         break;
 
       case GatewayOpcodes.InvalidSession:
@@ -302,7 +298,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   #handleHello(hello: HelloEntity): void {
-    this.#heartbeatService.start(hello.heartbeat_interval);
+    this.#heartbeat.start(hello.heartbeat_interval);
 
     if (this.#canResume()) {
       this.#sendResume();
@@ -338,13 +334,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         browser: "nyx.js",
         device: "nyx.js",
       },
-      compress: Boolean(this.#options.compression?.type),
+      compress: this.#compression.isInitialized(),
       large_threshold: this.#options.largeThreshold,
       intents: BitFieldManager.combine(this.#options.intents).toNumber(),
     };
 
-    if (this.#options.shard) {
-      payload.shard = this.#shardService.getNextShard();
+    if (this.#shard.isEnabled()) {
+      payload.shard = this.#shard.getNextShard();
     }
 
     if (this.#options.presence) {
@@ -381,7 +377,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   async #handleClose(code: number): Promise<void> {
-    this.#heartbeatService.destroy();
+    this.#heartbeat.destroy();
 
     if (this.#sessionId) {
       this.emit("sessionEnd", this.#sessionId, code);
@@ -412,7 +408,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   async #handleReconnect(): Promise<void> {
-    if (this.isReconnecting) {
+    if (this.isReconnecting()) {
       return;
     }
 
@@ -420,7 +416,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     this.destroy();
 
-    if (!this.#options.heartbeat?.autoReconnect) {
+    if (!this.#options?.autoReconnect) {
       this.emit(
         "debug",
         "[Gateway] Auto reconnect disabled, stopping reconnection attempt",
@@ -452,8 +448,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   async #waitForBackoff(): Promise<void> {
     const backoffTime =
-      Gateway.BACKOFF_SCHEDULE[this.#reconnectAttempts] ??
-      Gateway.BACKOFF_SCHEDULE.at(-1);
+      BACKOFF_SCHEDULE[this.#reconnectAttempts] ?? BACKOFF_SCHEDULE.at(-1);
 
     if (!backoffTime) {
       throw new Error("No backoff time available");
@@ -471,15 +466,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #buildGatewayUrl(baseUrl: string): string {
     const params = new URLSearchParams({
       v: String(this.#options.version),
-      encoding: this.#encodingService.encodingType,
+      encoding: this.#encoding.encodingType,
     });
 
-    if (this.#compressionService.compressionType) {
-      params.append(
-        "compress",
-        String(this.#compressionService.compressionType),
-      );
-      this.#compressionService.initialize();
+    if (this.#compression.compressionType) {
+      params.append("compress", String(this.#compression.compressionType));
+      this.#compression.initialize();
     }
 
     return `${baseUrl}?${params.toString()}`;
@@ -487,17 +479,21 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   #setupEventForwarding(...emitters: EventEmitter<GatewayEvents>[]): void {
     const forwardedEvents: (keyof GatewayEvents)[] = [
-      "debug",
-      "warn",
-      "error",
-      "close",
-      "dispatch",
+      "shardSpawn",
+      "shardReady",
+      "shardDisconnect",
+      "shardReconnect",
+      "shardResume",
       "connecting",
-      "connected",
       "reconnecting",
+      "dispatch",
       "sessionStart",
       "sessionEnd",
       "sessionInvalid",
+      "close",
+      "debug",
+      "error",
+      "warn",
     ];
 
     for (const emitter of emitters) {

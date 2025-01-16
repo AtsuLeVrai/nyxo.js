@@ -3,7 +3,6 @@ import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import { GetGuildAuditLogQueryEntity } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class AuditLogRouter {
   static readonly ROUTES = {
@@ -23,7 +22,7 @@ export class AuditLogRouter {
   getGuildAuditLog(
     guildId: Snowflake,
     options: z.input<typeof GetGuildAuditLogQueryEntity> = {},
-  ): Promise<HttpResponse<AuditLogEntity>> {
+  ): Promise<AuditLogEntity> {
     const result = GetGuildAuditLogQueryEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);

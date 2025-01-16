@@ -6,7 +6,6 @@ import {
   type ActivityInstanceEntity,
   EditCurrentApplicationEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class ApplicationRouter {
   static ROUTES = {
@@ -24,7 +23,7 @@ export class ApplicationRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
-  getCurrentApplication(): Promise<HttpResponse<ApplicationEntity>> {
+  getCurrentApplication(): Promise<ApplicationEntity> {
     return this.#rest.get(ApplicationRouter.ROUTES.currentApplication);
   }
 
@@ -33,7 +32,7 @@ export class ApplicationRouter {
    */
   editCurrentApplication(
     options: z.input<typeof EditCurrentApplicationEntity>,
-  ): Promise<HttpResponse<ApplicationEntity>> {
+  ): Promise<ApplicationEntity> {
     const result = EditCurrentApplicationEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -50,7 +49,7 @@ export class ApplicationRouter {
   getApplicationActivityInstance(
     applicationId: Snowflake,
     instanceId: string,
-  ): Promise<HttpResponse<ActivityInstanceEntity>> {
+  ): Promise<ActivityInstanceEntity> {
     return this.#rest.get(
       ApplicationRouter.ROUTES.activityInstance(applicationId, instanceId),
     );

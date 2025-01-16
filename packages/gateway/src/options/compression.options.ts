@@ -2,7 +2,7 @@ import { z } from "zod";
 import { CompressionType } from "../types/index.js";
 
 export const CompressionOptions = z.object({
-  type: z.nativeEnum(CompressionType).optional(),
+  compressionType: z.nativeEnum(CompressionType).optional(),
   zlibChunkSize: z
     .number()
     .int()

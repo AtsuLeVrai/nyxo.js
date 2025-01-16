@@ -1,8 +1,8 @@
 import type { Snowflake } from "@nyxjs/core";
 import type {
   AnimatedImageOptionsEntity,
-  BaseImageOptionsEntity,
   ImageFormat,
+  ImageProcessingOptions,
   StickerFormatOptionsEntity,
 } from "./types/index.js";
 
@@ -18,7 +18,7 @@ function validateHash(hash: string): void {
 
 function buildUrl(
   parts: string[],
-  options?: BaseImageOptionsEntity,
+  options?: ImageProcessingOptions,
   baseUrl = "https://cdn.discordapp.com",
 ): string {
   const url = new URL(parts.join("/"), baseUrl);
@@ -46,7 +46,7 @@ export const Cdn = {
     channelId: Snowflake,
     attachmentId: Snowflake,
     filename: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     const path = [
       "attachments",
@@ -119,7 +119,7 @@ export const Cdn = {
   guildSplash(
     guildId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(
@@ -131,7 +131,7 @@ export const Cdn = {
   guildDiscoverySplash(
     guildId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(
@@ -175,7 +175,7 @@ export const Cdn = {
   guildScheduledEventCover(
     eventId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(
@@ -187,7 +187,7 @@ export const Cdn = {
   applicationIcon(
     applicationId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(
@@ -203,7 +203,7 @@ export const Cdn = {
   applicationCover(
     applicationId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(
@@ -219,7 +219,7 @@ export const Cdn = {
   applicationAsset(
     applicationId: Snowflake,
     assetId: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     return buildUrl(
       [
@@ -235,7 +235,7 @@ export const Cdn = {
     applicationId: Snowflake,
     achievementId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(
@@ -254,7 +254,7 @@ export const Cdn = {
   storePageAsset(
     applicationId: Snowflake,
     assetId: Snowflake,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     return buildUrl(
       [
@@ -269,7 +269,7 @@ export const Cdn = {
 
   stickerPackBanner(
     bannerAssetId: Snowflake,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     return buildUrl(
       [
@@ -303,7 +303,7 @@ export const Cdn = {
   teamIcon(
     teamId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(
@@ -315,7 +315,7 @@ export const Cdn = {
   roleIcon(
     roleId: Snowflake,
     hash: string,
-    options?: BaseImageOptionsEntity,
+    options?: ImageProcessingOptions,
   ): string {
     validateHash(hash);
     return buildUrl(

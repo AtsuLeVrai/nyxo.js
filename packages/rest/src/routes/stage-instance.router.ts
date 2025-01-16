@@ -6,7 +6,6 @@ import {
   CreateStageInstanceEntity,
   ModifyStageInstanceEntity,
 } from "../schemas/index.js";
-import type { HttpResponse } from "../types/index.js";
 
 export class StageInstanceRouter {
   static readonly ROUTES = {
@@ -27,7 +26,7 @@ export class StageInstanceRouter {
   createStageInstance(
     options: z.input<typeof CreateStageInstanceEntity>,
     reason?: string,
-  ): Promise<HttpResponse<StageInstanceEntity>> {
+  ): Promise<StageInstanceEntity> {
     const result = CreateStageInstanceEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -42,9 +41,7 @@ export class StageInstanceRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
    */
-  getStageInstance(
-    channelId: Snowflake,
-  ): Promise<HttpResponse<StageInstanceEntity>> {
+  getStageInstance(channelId: Snowflake): Promise<StageInstanceEntity> {
     return this.#rest.get(StageInstanceRouter.ROUTES.stageInstance(channelId));
   }
 
@@ -55,7 +52,7 @@ export class StageInstanceRouter {
     channelId: Snowflake,
     options: z.input<typeof ModifyStageInstanceEntity>,
     reason?: string,
-  ): Promise<HttpResponse<StageInstanceEntity>> {
+  ): Promise<StageInstanceEntity> {
     const result = ModifyStageInstanceEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -73,10 +70,7 @@ export class StageInstanceRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
    */
-  deleteStageInstance(
-    channelId: Snowflake,
-    reason?: string,
-  ): Promise<HttpResponse<void>> {
+  deleteStageInstance(channelId: Snowflake, reason?: string): Promise<void> {
     return this.#rest.delete(
       StageInstanceRouter.ROUTES.stageInstance(channelId),
       {

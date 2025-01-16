@@ -1,11 +1,10 @@
 /**
  * @see {@link https://discord.com/developers/docs/reference#image-data}
  */
-export type DataUriImageData = `data:${string};base64,${string}`;
+export type DataUri = `data:${string};base64,${string}`;
+export type FileInput = string | File | Buffer | DataUri | URL;
 
-export type FileType = string | File | Buffer | DataUriImageData | URL;
-
-export interface FileData {
+export interface ProcessedFile {
   buffer: Buffer;
   filename: string;
   contentType: string;
@@ -14,9 +13,9 @@ export interface FileData {
 }
 
 export interface FileValidationOptions {
-  maxSizeBytes: number;
-  allowedTypes: string[];
-  allowedExtensions: string[];
+  maxSizeBytes?: number;
+  allowedTypes?: string[];
+  allowedExtensions?: string[];
   validateImage?: boolean;
   maxWidth?: number;
   maxHeight?: number;

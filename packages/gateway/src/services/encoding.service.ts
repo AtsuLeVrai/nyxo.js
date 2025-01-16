@@ -1,8 +1,7 @@
 import erlpack from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
-import { fromError } from "zod-validation-error";
-import { EncodingOptions } from "../options/index.js";
+import type { EncodingOptions } from "../options/index.js";
 import type {
   EncodingType,
   GatewayEvents,
@@ -13,34 +12,30 @@ import type {
 export class EncodingService extends EventEmitter<GatewayEvents> {
   readonly #options: z.output<typeof EncodingOptions>;
 
-  constructor(options: z.input<typeof EncodingOptions> = {}) {
+  constructor(options: z.output<typeof EncodingOptions>) {
     super();
-    try {
-      this.#options = EncodingOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-  }
-
-  get encodingType(): EncodingType {
-    return this.#options.type;
+    this.#options = options;
   }
 
   get maxPayloadSize(): number {
     return this.#options.maxPayloadSize;
   }
 
-  get isJson(): boolean {
-    return this.#options.type === "json";
+  get encodingType(): EncodingType {
+    return this.#options.encodingType;
   }
 
-  get isEtf(): boolean {
-    return this.#options.type === "etf";
+  isJson(): boolean {
+    return this.#options.encodingType === "json";
+  }
+
+  isEtf(): boolean {
+    return this.#options.encodingType === "etf";
   }
 
   encode(data: PayloadEntity): Buffer | string {
     try {
-      const result = this.isJson
+      const result = this.isJson()
         ? this.#encodeJson(data)
         : this.#encodeEtf(data);
 
@@ -61,15 +56,18 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
 
       return result;
     } catch (error) {
-      throw new Error(`Failed to encode payload: ${this.#options.type}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Failed to encode payload: ${this.#options.encodingType}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
   decode(data: Buffer | string): PayloadEntity {
     try {
-      const result = this.isJson
+      const result = this.isJson()
         ? this.#decodeJson(data)
         : this.#decodeEtf(data);
 
@@ -80,9 +78,12 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
 
       return result;
     } catch (error) {
-      throw new Error(`Failed to decode payload: ${this.#options.type}`, {
-        cause: error,
-      });
+      throw new Error(
+        `Failed to decode payload: ${this.#options.encodingType}`,
+        {
+          cause: error,
+        },
+      );
     }
   }
 
