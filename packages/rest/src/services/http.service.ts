@@ -11,7 +11,7 @@ import {
   type RestEvents,
 } from "../types/index.js";
 
-export interface HttpResponse<T = unknown> {
+interface HttpResponse<T = unknown> {
   data: T;
   statusCode: number;
   headers: Record<string, string>;
@@ -53,9 +53,12 @@ export class HttpService extends EventEmitter<RestEvents> {
       const response = await this.#retryAgent.request({
         ...options,
         origin: "https://discord.com",
-        path: this.#buildPath(options.path),
-        headers: this.#buildHeaders(options),
+        path: this.#formatPath(options.path),
         signal: controller.signal,
+        headers: this.#getHeaders({
+          headers: options.headers as Record<string, string>,
+          reason: options.reason,
+        }),
       });
 
       this.emit("requestFinish", {
@@ -123,13 +126,32 @@ export class HttpService extends EventEmitter<RestEvents> {
     }
   }
 
-  #buildPath(path: string): string {
-    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    return `/api/v${this.#options.version}${normalizedPath}`;
+  #formatPath(path: string): string {
+    if (path.includes("..")) {
+      throw new HttpError("Path cannot contain directory traversal");
+    }
+
+    const cleanPath = path
+      .trim()
+      .replace(/\/+/g, "/")
+      .replace(/^\/+|\/+$/g, "");
+
+    try {
+      const fullPath = `/api/v${this.#options.version}/${cleanPath}`;
+      new URL(fullPath, "https://discord.com");
+      return fullPath;
+    } catch (error) {
+      throw new HttpError(
+        `Invalid API path: ${error instanceof Error ? error.message : "unknown error"}`,
+      );
+    }
   }
 
-  #buildHeaders(options: RequestOptions): Record<string, string> {
-    const headers: Record<string, string> = {
+  #getHeaders(options: {
+    headers?: Record<string, string>;
+    reason?: string;
+  }): Record<string, string> {
+    const baseHeaders: Record<string, string> = {
       authorization: `Bot ${this.#options.token}`,
       "user-agent": this.#options.userAgent,
       "content-type": "application/json",
@@ -137,12 +159,28 @@ export class HttpService extends EventEmitter<RestEvents> {
     };
 
     if (options.reason) {
-      headers["x-audit-log-reason"] = encodeURIComponent(options.reason);
+      try {
+        baseHeaders["x-audit-log-reason"] = encodeURIComponent(options.reason);
+      } catch {
+        throw new Error("Reason contains non-encodable characters");
+      }
+    }
+
+    const customHeaders = options.headers || {};
+    const conflictingHeaders = Object.keys(customHeaders)
+      .filter((header) => header.toLowerCase() in baseHeaders)
+      .map((header) => header.toLowerCase());
+
+    if (conflictingHeaders.length > 0) {
+      this.emit(
+        "warn",
+        `Conflicting headers detected: ${conflictingHeaders.join(", ")}`,
+      );
     }
 
     return {
-      ...headers,
-      ...(options.headers as Record<string, string>),
+      ...baseHeaders,
+      ...customHeaders,
     };
   }
 

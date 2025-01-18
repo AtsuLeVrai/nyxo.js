@@ -185,14 +185,26 @@ export interface GatewayEvents {
   shardResume: (shardId: number) => void;
   connecting: (attempt: number) => void;
   reconnecting: (attempt: number) => void;
+  sessionStart: (
+    sessionId: string,
+    readyTime: number,
+    data: ReadyEntity,
+  ) => void;
+  sessionEnd: (sessionId: string, code: number) => void;
+  sessionInvalid: (resumable: boolean) => void;
+  close: (code: number) => void;
+  heartbeatStart: (interval: number) => void;
+  heartbeatStop: () => void;
+  heartbeatSuccess: (latency: number) => void;
+  heartbeatMissed: (missedCount: number) => void;
+  heartbeatReconnecting: (attempt: number) => void;
+  payloadSizeExceeded: (size: number, maxSize: number) => void;
+  invalidEtfKey: (key: unknown) => void;
+  chunkSizeExceeded: (size: number, maxSize: number) => void;
   dispatch: <K extends keyof GatewayReceiveEvents>(
     event: K,
     data: GatewayReceiveEvents[K],
   ) => void;
-  sessionStart: (sessionId: string, data: ReadyEntity) => void;
-  sessionEnd: (sessionId: string, code: number) => void;
-  sessionInvalid: (resumable: boolean) => void;
-  close: (code: number) => void;
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (message: string | Error, context?: Record<string, unknown>) => void;
   warn: (message: string, context?: Record<string, unknown>) => void;

@@ -44,15 +44,13 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
         : Buffer.byteLength(result);
 
       if (size > this.#options.maxPayloadSize) {
+        this.emit("payloadSizeExceeded", size, this.#options.maxPayloadSize);
         throw new Error(
           `Payload size ${size} bytes exceeds maximum ${this.#options.maxPayloadSize} bytes`,
         );
       }
 
-      this.emit(
-        "debug",
-        `[Gateway:Encoding] Encoded successfully - Size: ${size} bytes`,
-      );
+      this.emit("debug", `Encoded successfully - Size: ${size} bytes`);
 
       return result;
     } catch (error) {
@@ -71,10 +69,7 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
         ? this.#decodeJson(data)
         : this.#decodeEtf(data);
 
-      this.emit(
-        "debug",
-        `[Gateway:Encoding] Decoded successfully - Opcode: ${result.op}`,
-      );
+      this.emit("debug", `Decoded successfully - Opcode: ${result.op}`);
 
       return result;
     } catch (error) {
@@ -137,10 +132,8 @@ export class EncodingService extends EventEmitter<GatewayEvents> {
 
         for (const [key, value] of Object.entries(data)) {
           if (options.validateEtfKeys && typeof key !== "string") {
-            this.emit(
-              "debug",
-              "[Gateway:Encoding] Invalid ETF key type detected",
-            );
+            this.emit("invalidEtfKey", key);
+            this.emit("debug", "Invalid ETF key type detected");
 
             if (this.#options.etfStrictMode) {
               throw new Error(`Invalid ETF key: ${key} is not a string`);

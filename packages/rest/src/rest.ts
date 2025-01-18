@@ -1,5 +1,6 @@
 import { EventEmitter } from "eventemitter3";
-import type { ProxyAgent } from "undici";
+import type FormData from "form-data";
+import type { Dispatcher, ProxyAgent } from "undici";
 import type { z } from "zod";
 import { RestError } from "./errors/index.js";
 import { RestOptions } from "./options/index.js";
@@ -35,7 +36,14 @@ import {
   HttpService,
   RateLimiterService,
 } from "./services/index.js";
-import type { RequestOptions, RestEvents } from "./types/index.js";
+import type {
+  FileInput,
+  FileValidationOptions,
+  ImageProcessingOptions,
+  ProcessedFile,
+  RequestOptions,
+  RestEvents,
+} from "./types/index.js";
 
 export class Rest extends EventEmitter<RestEvents> {
   readonly applications = new ApplicationRouter(this);
@@ -87,31 +95,6 @@ export class Rest extends EventEmitter<RestEvents> {
     this.#http = new HttpService(this.#options);
 
     this.#setupEventForwarding(this.#rateLimiter, this.#http);
-  }
-
-  async request<T>(options: RequestOptions): Promise<T> {
-    try {
-      this.#rateLimiter.checkRateLimit(options.path, options.method);
-
-      const processedOptions = await this.#processedOptions(options);
-
-      const response = await this.#http.request<T>(processedOptions);
-
-      this.#rateLimiter.updateRateLimit(
-        options.path,
-        options.method,
-        response.headers,
-        response.statusCode,
-      );
-
-      return response.data;
-    } catch (error) {
-      if (error instanceof RestError) {
-        throw error;
-      }
-
-      throw new RestError("Failed to make request");
-    }
   }
 
   get<T>(
@@ -169,8 +152,45 @@ export class Rest extends EventEmitter<RestEvents> {
     });
   }
 
+  createFormData(
+    files: FileInput | FileInput[],
+    body?: Dispatcher.RequestOptions["body"],
+    imageOptions?: ImageProcessingOptions,
+  ): Promise<FormData> {
+    return this.#fileProcessor.createFormData(files, body, imageOptions);
+  }
+
+  processFile(
+    input: FileInput,
+    imageOptions?: ImageProcessingOptions,
+    validationOptions?: FileValidationOptions,
+  ): Promise<ProcessedFile> {
+    return this.#fileProcessor.processFile(
+      input,
+      imageOptions,
+      validationOptions,
+    );
+  }
+
   async updateProxy(options?: ProxyAgent.Options): Promise<void> {
     await this.#http.updateProxy(options);
+  }
+
+  checkRateLimit(path: string, method: string): void {
+    this.#rateLimiter.checkRateLimit(path, method);
+  }
+
+  updateRateLimit(
+    path: string,
+    method: string,
+    headers: Record<string, string>,
+    status: number,
+  ): void {
+    this.#rateLimiter.updateRateLimit(path, method, headers, status);
+  }
+
+  resetRateLimits(): void {
+    this.#rateLimiter.reset();
   }
 
   async destroy(): Promise<void> {
@@ -182,21 +202,45 @@ export class Rest extends EventEmitter<RestEvents> {
     }
   }
 
-  async #processedOptions(options: RequestOptions): Promise<RequestOptions> {
-    if (options.files) {
-      const formData = await this.#fileProcessor.createFormData(
-        options.files,
-        options.body,
+  async request<T>(options: RequestOptions): Promise<T> {
+    try {
+      this.#rateLimiter.checkRateLimit(options.path, options.method);
+
+      const processedOptions = await this.#getRequestOptions(options);
+      const response = await this.#http.request<T>(processedOptions);
+
+      this.#rateLimiter.updateRateLimit(
+        options.path,
+        options.method,
+        response.headers,
+        response.statusCode,
       );
 
-      return {
-        ...options,
-        body: formData.getBuffer(),
-        headers: formData.getHeaders(options.headers as Record<string, string>),
-      };
+      return response.data;
+    } catch (error) {
+      if (error instanceof RestError) {
+        throw error;
+      }
+
+      throw new RestError("Failed to make request");
+    }
+  }
+
+  async #getRequestOptions(options: RequestOptions): Promise<RequestOptions> {
+    if (!options.files) {
+      return options;
     }
 
-    return options;
+    const formData = await this.#fileProcessor.createFormData(
+      options.files,
+      options.body,
+    );
+
+    return {
+      ...options,
+      body: formData.getBuffer(),
+      headers: formData.getHeaders(options.headers as Record<string, string>),
+    };
   }
 
   #setupEventForwarding(...emitters: EventEmitter<RestEvents>[]): void {

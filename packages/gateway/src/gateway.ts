@@ -38,6 +38,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #sessionId: string | null = null;
   #resumeUrl: string | null = null;
   #ws: WebSocket | null = null;
+  #connectStartTime = 0;
 
   readonly #rest: Rest;
   readonly #options: z.output<typeof GatewayOptions>;
@@ -103,6 +104,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   async connect(): Promise<void> {
     try {
+      this.#connectStartTime = Date.now();
       this.emit("connecting", this.#reconnectAttempts);
 
       const [gatewayInfo, guilds] = await Promise.all([
@@ -125,25 +127,19 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   updatePresence(presence: UpdatePresenceEntity): void {
-    this.emit(
-      "debug",
-      `[Gateway] Updating presence: ${JSON.stringify(presence)}`,
-    );
+    this.emit("debug", `Updating presence: ${JSON.stringify(presence)}`);
     this.send(GatewayOpcodes.PresenceUpdate, presence);
   }
 
   updateVoiceState(options: UpdateVoiceStateEntity): void {
-    this.emit(
-      "debug",
-      `[Gateway] Updating voice state for guild ${options.guild_id}`,
-    );
+    this.emit("debug", `Updating voice state for guild ${options.guild_id}`);
     this.send(GatewayOpcodes.VoiceStateUpdate, options);
   }
 
   requestGuildMembers(options: RequestGuildMembersEntity): void {
     this.emit(
       "debug",
-      `[Gateway] Requesting guild members for guild ${options.guild_id}`,
+      `Requesting guild members for guild ${options.guild_id}`,
     );
     this.send(GatewayOpcodes.RequestGuildMembers, options);
   }
@@ -164,11 +160,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     };
 
     this.#ws.send(this.#encoding.encode(payload));
-    this.emit("debug", `[Gateway] Sent payload with op ${opcode}`);
+    this.emit("debug", `Sent payload with op ${opcode}`);
   }
 
   destroy(code: GatewayCloseCodes = 4000): void {
-    this.emit("debug", `[Gateway] Destroying connection with code ${code}`);
+    this.emit("debug", `Destroying connection with code ${code}`);
 
     try {
       const ws = this.#ws;
@@ -207,7 +203,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this.#ws = ws;
 
         ws.once("open", () => {
-          this.emit("debug", `[Gateway] Connection established to ${wsUrl}`);
+          this.emit("debug", `Connection established to ${wsUrl}`);
           resolve();
         });
 
@@ -273,7 +269,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         break;
 
       default:
-        this.emit("debug", `[Gateway] Unhandled payload op: ${payload.op}`);
+        this.emit("debug", `Unhandled payload op: ${payload.op}`);
     }
   }
 
@@ -312,18 +308,20 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#resumeUrl = data.resume_gateway_url;
     this.#reconnectAttempts = 0;
 
-    this.emit("sessionStart", data.session_id, data);
+    const readyTime = Date.now() - this.#connectStartTime;
+    this.emit("sessionStart", data.session_id, readyTime, data);
 
     const details = [
       `🤖 ${data.user.username} (${data.application.id})`,
       `📡 Session ${data.session_id}`,
       `🌐 v${data.v} | ${data.guilds.length} guilds`,
+      `⏱ Ready in ${readyTime}ms`,
       data.shard ? `✨ Shard [${data.shard}]` : "",
     ]
       .filter(Boolean)
       .join("\n");
 
-    this.emit("debug", `[Gateway] Ready:\n${details}`);
+    this.emit("debug", `Ready:\n${details}`);
   }
 
   #identify(): void {
@@ -419,7 +417,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     if (!this.#options?.autoReconnect) {
       this.emit(
         "debug",
-        "[Gateway] Auto reconnect disabled, stopping reconnection attempt",
+        "Auto reconnect disabled, stopping reconnection attempt",
       );
       return;
     }
@@ -457,7 +455,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const newAttempts = ++this.#reconnectAttempts;
     this.emit(
       "debug",
-      `[Gateway] Backoff delay: ${backoffTime}ms (attempt: ${newAttempts})`,
+      `Backoff delay: ${backoffTime}ms (attempt: ${newAttempts})`,
     );
 
     await setTimeout(backoffTime);
@@ -486,11 +484,19 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       "shardResume",
       "connecting",
       "reconnecting",
-      "dispatch",
       "sessionStart",
       "sessionEnd",
       "sessionInvalid",
       "close",
+      "heartbeatStart",
+      "heartbeatStop",
+      "heartbeatSuccess",
+      "heartbeatMissed",
+      "heartbeatReconnecting",
+      "payloadSizeExceeded",
+      "invalidEtfKey",
+      "chunkSizeExceeded",
+      "dispatch",
       "debug",
       "error",
       "warn",

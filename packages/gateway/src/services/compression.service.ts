@@ -126,6 +126,7 @@ export class CompressionService extends EventEmitter<GatewayEvents> {
       this.#options.maxChunkSize &&
       chunk.length > this.#options.maxChunkSize
     ) {
+      this.emit("chunkSizeExceeded", chunk.length, this.#options.maxChunkSize);
       throw new Error(
         `Zstd chunk size exceeded - Received: ${chunk.length} bytes, Max: ${this.#options.maxChunkSize} bytes`,
       );

@@ -77,6 +77,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     }
 
     if (this.isRunning()) {
+      this.emit("warn", "Heartbeat service is already running");
       throw new Error("Heartbeat service is already running");
     }
 
@@ -89,8 +90,9 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
 
     this.emit(
       "debug",
-      `[Gateway:Heartbeat] Starting - Interval: ${interval}ms, Initial delay: ${initialDelay}ms`,
+      `Starting - Interval: ${interval}ms, Initial delay: ${initialDelay}ms`,
     );
+    this.emit("heartbeatStart", interval);
 
     setTimeout(() => {
       this.sendHeartbeat();
@@ -111,7 +113,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       retryAttempts: 0,
     };
 
-    this.emit("debug", "[Gateway:Heartbeat] Destroyed - All state reset");
+    this.emit("debug", "Destroyed - All state reset");
   }
 
   updateSequence(sequence: number): void {
@@ -125,7 +127,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     }
 
     this.#stats.sequence = sequence;
-    this.emit("debug", `[Gateway:Heartbeat] Sequence updated: ${sequence}`);
+    this.emit("debug", `Sequence updated: ${sequence}`);
   }
 
   ackHeartbeat(): void {
@@ -140,8 +142,9 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
 
     this.emit(
       "debug",
-      `[Gateway:Heartbeat] Acknowledged - Latency: ${this.#stats.latency}ms, Sequence: ${this.#stats.sequence}`,
+      `Acknowledged - Latency: ${this.#stats.latency}ms, Sequence: ${this.#stats.sequence}`,
     );
+    this.emit("heartbeatSuccess", this.#stats.latency);
   }
 
   sendHeartbeat(): void {
@@ -157,7 +160,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
 
     this.emit(
       "debug",
-      `[Gateway:Heartbeat] Sending - Sequence: ${this.#stats.sequence}, Total beats: ${this.#stats.totalBeats}`,
+      `Sending - Sequence: ${this.#stats.sequence}, Total beats: ${this.#stats.totalBeats}`,
     );
 
     try {
@@ -172,18 +175,21 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
   #handleMissedHeartbeat(): void {
     this.#stats.missedHeartbeats++;
 
+    this.emit("heartbeatMissed", this.#stats.missedHeartbeats);
     this.emit(
       "debug",
-      `[Gateway:Heartbeat] Missed beat - Count: ${this.#stats.missedHeartbeats}/${this.#options.maxMissedHeartbeats}`,
+      `Missed beat - Count: ${this.#stats.missedHeartbeats}/${this.#options.maxMissedHeartbeats}`,
     );
 
     if (
       this.#stats.missedHeartbeats >= this.#options.maxMissedHeartbeats &&
       this.#options.resetOnZombie
     ) {
+      this.emit("heartbeatStop");
       this.destroy();
 
       if (this.#options.autoReconnect) {
+        this.emit("heartbeatReconnecting", 1);
         this.#handleReconnect();
       }
     }
@@ -196,15 +202,17 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
       30000,
     );
 
+    this.emit("heartbeatReconnecting", this.#state.retryAttempts);
     this.emit(
       "debug",
-      `[Gateway:Heartbeat] Retry attempt ${this.#state.retryAttempts} in ${backoff}ms`,
+      `Retry attempt ${this.#state.retryAttempts} in ${backoff}ms`,
     );
 
     this.#reconnectTimeout = setTimeout(() => {
       if (this.#state.retryAttempts < 5) {
         this.sendHeartbeat();
       } else {
+        this.emit("warn", "Max heartbeat retry attempts reached");
         this.destroy();
       }
     }, backoff);
@@ -216,7 +224,10 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     }
 
     this.#state.isReconnecting = true;
-    this.emit("debug", "[Gateway:Heartbeat] Attempting to reconnect");
+    this.#state.retryAttempts++;
+
+    this.emit("heartbeatReconnecting", this.#state.retryAttempts);
+    this.emit("debug", "Attempting to reconnect");
 
     setTimeout(() => {
       if (this.#state.intervalMs > 0) {
@@ -234,10 +245,7 @@ export class HeartbeatService extends EventEmitter<GatewayEvents> {
     }
 
     if (this.#stats.latency > this.#options.maxLatency) {
-      this.emit(
-        "warn",
-        `[Gateway:Heartbeat] High latency detected: ${this.#stats.latency}ms`,
-      );
+      this.emit("warn", `High latency detected: ${this.#stats.latency}ms`);
     }
   }
 
