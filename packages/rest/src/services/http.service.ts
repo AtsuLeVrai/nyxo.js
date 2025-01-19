@@ -1,6 +1,7 @@
 import { EventEmitter } from "eventemitter3";
+import { BrotliDecompress, Gunzip, Inflate } from "minizlib";
 import type { Dispatcher } from "undici";
-import { Pool, ProxyAgent, RetryAgent } from "undici";
+import { request } from "undici";
 import type { z } from "zod";
 import { ApiError, HttpError } from "../errors/index.js";
 import type { HttpOptions } from "../options/index.js";
@@ -15,27 +16,15 @@ interface HttpResponse<T = unknown> {
   data: T;
   statusCode: number;
   headers: Record<string, string>;
+  latency: number;
 }
 
 export class HttpService extends EventEmitter<RestEvents> {
-  readonly #pool: Pool;
-  #proxyAgent: ProxyAgent | null = null;
-  readonly #retryAgent: RetryAgent;
   readonly #options: z.output<typeof HttpOptions>;
 
   constructor(options: z.output<typeof HttpOptions>) {
     super();
     this.#options = options;
-    this.#pool = new Pool("https://discord.com", this.#options.pool);
-
-    if (this.#options.proxy) {
-      this.#proxyAgent = new ProxyAgent(this.#options.proxy);
-    }
-
-    this.#retryAgent = new RetryAgent(
-      this.#proxyAgent ?? this.#pool,
-      this.#options.retry,
-    );
   }
 
   async request<T>(options: RequestOptions): Promise<HttpResponse<T>> {
@@ -50,22 +39,23 @@ export class HttpService extends EventEmitter<RestEvents> {
     });
 
     try {
-      const response = await this.#retryAgent.request({
+      const url = this.#formatPath(options.path);
+      const requestOptions: Dispatcher.RequestOptions = {
         ...options,
-        origin: "https://discord.com",
-        path: this.#formatPath(options.path),
+        origin: url.origin,
+        path: url.pathname + url.search,
         signal: controller.signal,
-        headers: this.#getHeaders({
-          headers: options.headers as Record<string, string>,
-          reason: options.reason,
-        }),
-      });
+        headers: this.#getHeaders(options),
+      };
+
+      const response = await request(requestOptions);
+      const latency = Date.now() - startTime;
 
       this.emit("requestFinish", {
         path: options.path,
         method: options.method,
         statusCode: response.statusCode,
-        latency: Date.now() - startTime,
+        latency,
       });
 
       if (response.statusCode === HttpStatusCode.NoContent) {
@@ -73,6 +63,7 @@ export class HttpService extends EventEmitter<RestEvents> {
           data: {} as T,
           statusCode: response.statusCode,
           headers: response.headers as Record<string, string>,
+          latency,
         };
       }
 
@@ -81,6 +72,7 @@ export class HttpService extends EventEmitter<RestEvents> {
         data,
         statusCode: response.statusCode,
         headers: response.headers as Record<string, string>,
+        latency,
       };
     } catch (error) {
       if (error instanceof HttpError || error instanceof ApiError) {
@@ -104,29 +96,7 @@ export class HttpService extends EventEmitter<RestEvents> {
     }
   }
 
-  async updateProxy(proxyOptions?: ProxyAgent.Options): Promise<void> {
-    if (this.#proxyAgent) {
-      await this.#proxyAgent.close();
-    }
-
-    if (proxyOptions) {
-      this.#proxyAgent = new ProxyAgent(proxyOptions);
-    }
-  }
-
-  async destroy(): Promise<void> {
-    try {
-      await Promise.all([
-        this.#proxyAgent?.close(),
-        this.#retryAgent.close(),
-        this.#pool.destroy(),
-      ]);
-    } finally {
-      this.removeAllListeners();
-    }
-  }
-
-  #formatPath(path: string): string {
+  #formatPath(path: string): URL {
     if (path.includes("..")) {
       throw new HttpError("Path cannot contain directory traversal");
     }
@@ -137,9 +107,10 @@ export class HttpService extends EventEmitter<RestEvents> {
       .replace(/^\/+|\/+$/g, "");
 
     try {
-      const fullPath = `/api/v${this.#options.version}/${cleanPath}`;
-      new URL(fullPath, "https://discord.com");
-      return fullPath;
+      return new URL(
+        `/api/v${this.#options.version}/${cleanPath}`,
+        "https://discord.com",
+      );
     } catch (error) {
       throw new HttpError(
         `Invalid API path: ${error instanceof Error ? error.message : "unknown error"}`,
@@ -147,10 +118,7 @@ export class HttpService extends EventEmitter<RestEvents> {
     }
   }
 
-  #getHeaders(options: {
-    headers?: Record<string, string>;
-    reason?: string;
-  }): Record<string, string> {
+  #getHeaders(options: RequestOptions): Record<string, string> {
     const baseHeaders: Record<string, string> = {
       authorization: `Bot ${this.#options.token}`,
       "user-agent": this.#options.userAgent,
@@ -164,6 +132,10 @@ export class HttpService extends EventEmitter<RestEvents> {
       } catch {
         throw new Error("Reason contains non-encodable characters");
       }
+    }
+
+    if (this.#options.acceptEncoding) {
+      baseHeaders["accept-encoding"] = "gzip, deflate, br";
     }
 
     const customHeaders = options.headers || {};
@@ -181,7 +153,7 @@ export class HttpService extends EventEmitter<RestEvents> {
     return {
       ...baseHeaders,
       ...customHeaders,
-    };
+    } as Record<string, string>;
   }
 
   async #parseResponse<T>(response: Dispatcher.ResponseData): Promise<T> {
@@ -194,7 +166,7 @@ export class HttpService extends EventEmitter<RestEvents> {
       );
     }
 
-    const buffer = Buffer.from(await response.body.arrayBuffer());
+    const buffer = await this.#decompressResponse(response);
     let data: unknown;
 
     try {
@@ -210,6 +182,41 @@ export class HttpService extends EventEmitter<RestEvents> {
     }
 
     return data as T;
+  }
+
+  async #decompressResponse(
+    response: Dispatcher.ResponseData,
+  ): Promise<Buffer> {
+    const contentType = response.headers["content-encoding"];
+    const buffer = Buffer.from(await response.body.arrayBuffer());
+
+    if (!contentType) {
+      return buffer;
+    }
+
+    let stream: Gunzip | Inflate | BrotliDecompress;
+    switch (contentType) {
+      case "gzip":
+        stream = new Gunzip({ level: 9 });
+        break;
+      case "deflate":
+        stream = new Inflate({ level: 9 });
+        break;
+      case "br":
+        stream = new BrotliDecompress({ level: 11 });
+        break;
+      default:
+        throw new HttpError(`Unsupported content encoding: ${contentType}`);
+    }
+
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+
+      stream.on("data", (chunk) => chunks.push(chunk));
+      stream.on("end", () => resolve(Buffer.concat(chunks)));
+      stream.on("error", reject);
+      stream.end(buffer);
+    });
   }
 
   #handleErrorResponse(status: number, data: unknown): never {

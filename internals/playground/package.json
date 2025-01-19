@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/playground",
+  "version": "private",
+  "private": true,
+  "description": "A playground for Nyx.js",
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/3tatsu/nyx.js",
+    "directory": "internals/playground"
+  },
+  "bugs": {
+    "url": "https://github.com/3tatsu/nyx.js/issues"
+  },
+  "author": {
+    "name": "3tatsu",
+    "url": "https://github.com/3tatsu"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts --watch",
+    "start": "tsx src/index.ts",
+    "format": "biome format --write .",
+    "lint": "biome lint --write --unsafe .",
+    "check": "biome check --write --unsafe .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "nyx.js": "workspace:*",
+    "tsx": "^4.19.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^22.10.7",
+    "dotenv": "^16.4.7",
+    "typescript": "^5.7.3"
+  }
+}

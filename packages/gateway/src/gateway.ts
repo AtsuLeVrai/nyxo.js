@@ -33,6 +33,32 @@ import {
 const BACKOFF_SCHEDULE = [1000, 5000, 10000];
 const ZOMBIED_CONNECTION_THRESHOLD = 2;
 
+export const GATEWAY_FORWARDED_EVENTS: (keyof GatewayEvents)[] = [
+  "shardSpawn",
+  "shardReady",
+  "shardDisconnect",
+  "shardReconnect",
+  "shardResume",
+  "connecting",
+  "reconnecting",
+  "sessionStart",
+  "sessionEnd",
+  "sessionInvalid",
+  "close",
+  "heartbeatStart",
+  "heartbeatStop",
+  "heartbeatSuccess",
+  "heartbeatMissed",
+  "heartbeatReconnecting",
+  "payloadSizeExceeded",
+  "invalidEtfKey",
+  "chunkSizeExceeded",
+  "dispatch",
+  "debug",
+  "error",
+  "warn",
+];
+
 export class Gateway extends EventEmitter<GatewayEvents> {
   #reconnectAttempts = 0;
   #sessionId: string | null = null;
@@ -62,12 +88,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#heartbeat = new HeartbeatService(this, this.#options);
     this.#shard = new ShardService(this.#options);
 
-    this.#setupEventForwarding(
+    this.#setupEventForwarding([
       this.#heartbeat,
       this.#compression,
       this.#encoding,
       this.#shard,
-    );
+    ]);
   }
 
   get ping(): number {
@@ -215,7 +241,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
           this.#handleMessage(data);
         });
 
-        ws.on("close", async (code: number) => {
+        ws.on("close", async (code) => {
           this.emit("close", code);
           await this.#handleClose(code);
         });
@@ -233,10 +259,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     const payload = this.#encoding.decode(processedData);
-    this.#handlePayload(payload);
-  }
-
-  #handlePayload(payload: PayloadEntity): void {
     if (payload.s !== null) {
       this.#heartbeat.updateSequence(payload.s);
     }
@@ -475,38 +497,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return `${baseUrl}?${params.toString()}`;
   }
 
-  #setupEventForwarding(...emitters: EventEmitter<GatewayEvents>[]): void {
-    const forwardedEvents: (keyof GatewayEvents)[] = [
-      "shardSpawn",
-      "shardReady",
-      "shardDisconnect",
-      "shardReconnect",
-      "shardResume",
-      "connecting",
-      "reconnecting",
-      "sessionStart",
-      "sessionEnd",
-      "sessionInvalid",
-      "close",
-      "heartbeatStart",
-      "heartbeatStop",
-      "heartbeatSuccess",
-      "heartbeatMissed",
-      "heartbeatReconnecting",
-      "payloadSizeExceeded",
-      "invalidEtfKey",
-      "chunkSizeExceeded",
-      "dispatch",
-      "debug",
-      "error",
-      "warn",
-    ];
-
-    for (const emitter of emitters) {
-      for (const event of forwardedEvents) {
-        emitter.on(event, (...args) => {
-          this.emit(event, ...args);
-        });
+  #setupEventForwarding(services: EventEmitter<GatewayEvents>[]): void {
+    for (const service of services) {
+      for (const event of GATEWAY_FORWARDED_EVENTS) {
+        service.on(event, (...args) => this.emit(event, ...args));
       }
     }
   }

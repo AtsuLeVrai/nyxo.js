@@ -16,13 +16,13 @@ import {
   formatUser,
 } from "@nyxjs/core";
 import {
-  type BaseImageOptionsEntity,
   Cdn,
+  type ImageProcessingOptions,
   type ModifyCurrentUserEntity,
-  type Rest,
 } from "@nyxjs/rest";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
+import type { Client } from "../client.js";
 
 export class ApplicationRoleConnection {
   readonly #data: ApplicationRoleConnectionEntity;
@@ -163,13 +163,13 @@ export class AvatarDecorationData {
 }
 
 export class User {
-  readonly #rest: Rest;
+  readonly #client: Client;
   readonly #data: UserEntity;
   readonly #flags: BitFieldManager<UserFlags>;
   readonly #publicFlags: BitFieldManager<UserFlags>;
 
-  constructor(rest: Rest, data: Partial<z.input<typeof UserEntity>> = {}) {
-    this.#rest = rest;
+  constructor(client: Client, data: Partial<z.input<typeof UserEntity>> = {}) {
+    this.#client = client;
 
     try {
       this.#data = UserEntity.parse(data);
@@ -251,8 +251,8 @@ export class User {
     return new Date(this.createdTimestamp);
   }
 
-  static from(rest: Rest, data: Partial<z.input<typeof UserEntity>>): User {
-    return new User(rest, data);
+  static from(client: Client, data: Partial<z.input<typeof UserEntity>>): User {
+    return new User(client, data);
   }
 
   hasAvatar(): boolean {
@@ -271,7 +271,7 @@ export class User {
     return this.mfaEnabled;
   }
 
-  avatarUrl(options?: BaseImageOptionsEntity): string {
+  avatarUrl(options?: ImageProcessingOptions): string {
     if (!this.avatar) {
       return Cdn.defaultUserAvatar(this.discriminator);
     }
@@ -279,7 +279,7 @@ export class User {
     return Cdn.userAvatar(this.id, this.avatar, options);
   }
 
-  bannerUrl(options?: BaseImageOptionsEntity): string | null {
+  bannerUrl(options?: ImageProcessingOptions): string | null {
     if (!this.#data.banner) {
       return null;
     }
@@ -291,14 +291,12 @@ export class User {
     return Cdn.defaultUserAvatar(this.discriminator);
   }
 
-  async createDmChannel(): Promise<ChannelEntity> {
-    const response = await this.#rest.users.createDm(this.id);
-    return response.data;
+  createDmChannel(): Promise<ChannelEntity> {
+    return this.#client.rest.users.createDm(this.id);
   }
 
-  async fetchGuildMember(guildId: string): Promise<GuildMemberEntity> {
-    const response = await this.#rest.guilds.getGuildMember(guildId, this.id);
-    return response.data;
+  fetchGuildMember(guildId: string): Promise<GuildMemberEntity> {
+    return this.#client.rest.guilds.getGuildMember(guildId, this.id);
   }
 
   async ban(
@@ -306,7 +304,7 @@ export class User {
     deleteMessageSeconds?: number,
     reason?: string,
   ): Promise<void> {
-    await this.#rest.guilds.createGuildBan(
+    await this.#client.rest.guilds.createGuildBan(
       guildId,
       this.id,
       {
@@ -317,11 +315,11 @@ export class User {
   }
 
   async unban(guildId: string, reason?: string): Promise<void> {
-    await this.#rest.guilds.removeGuildBan(guildId, this.id, reason);
+    await this.#client.rest.guilds.removeGuildBan(guildId, this.id, reason);
   }
 
   async kick(guildId: string, reason?: string): Promise<void> {
-    await this.#rest.guilds.removeGuildMember(guildId, this.id, reason);
+    await this.#client.rest.guilds.removeGuildMember(guildId, this.id, reason);
   }
 
   async fetchConnections(): Promise<Connection[]> {
@@ -329,8 +327,8 @@ export class User {
       return [];
     }
 
-    const response = await this.#rest.users.getCurrentUserConnections();
-    return response.data.map((connection) => new Connection(connection));
+    const response = await this.#client.rest.users.getCurrentUserConnections();
+    return response.map((connection) => new Connection(connection));
   }
 
   isBot(): boolean {
@@ -342,8 +340,8 @@ export class User {
   }
 
   async isSelf(): Promise<boolean> {
-    const response = await this.#rest.users.getCurrentUser();
-    return response.data.id === this.id;
+    const response = await this.#client.rest.users.getCurrentUser();
+    return response.id === this.id;
   }
 
   isPremium(): boolean {
@@ -369,8 +367,8 @@ export class User {
       throw new Error("You can only edit your own user");
     }
 
-    const response = await this.#rest.users.modifyCurrentUser(options);
-    return new User(this.#rest, response.data);
+    const response = await this.#client.rest.users.modifyCurrentUser(options);
+    return new User(this.#client, response);
   }
 
   toString(): FormattedUser {

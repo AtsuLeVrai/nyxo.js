@@ -8,14 +8,14 @@ import {
   formatRole,
 } from "@nyxjs/core";
 import {
-  type BaseImageOptionsEntity,
   Cdn,
+  type ImageProcessingOptions,
   type ModifyGuildRoleEntity,
-  type Rest,
 } from "@nyxjs/rest";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import type { ColorInformation } from "../builders/index.js";
+import type { Client } from "../client.js";
 import { snakeCaseDeep } from "../utils.js";
 
 export class RoleTagsClass {
@@ -98,18 +98,18 @@ export interface RoleDifferences {
 }
 
 export class Role {
-  readonly #rest: Rest;
+  readonly #client: Client;
   readonly #data: RoleEntity;
   readonly #guildId: string;
   readonly #permissions: BitFieldManager<BitwisePermissionFlags>;
   readonly #flags: BitFieldManager<RoleFlags>;
 
   constructor(
-    rest: Rest,
+    client: Client,
     guildId: string,
     data: Partial<z.input<typeof RoleEntity>> = {},
   ) {
-    this.#rest = rest;
+    this.#client = client;
     this.#guildId = guildId;
 
     try {
@@ -178,8 +178,12 @@ export class Role {
     return this.#flags.clone();
   }
 
-  static from(rest: Rest, guildId: string, data: Partial<RoleEntity>): Role {
-    return new Role(rest, guildId, data);
+  static from(
+    client: Client,
+    guildId: string,
+    data: Partial<RoleEntity>,
+  ): Role {
+    return new Role(client, guildId, data);
   }
 
   isDefault(): boolean {
@@ -213,7 +217,7 @@ export class Role {
       .map(([name]) => name);
   }
 
-  getIconUrl(options?: BaseImageOptionsEntity): string | null {
+  getIconUrl(options?: ImageProcessingOptions): string | null {
     if (!this.#data.icon) {
       return null;
     }
@@ -254,36 +258,40 @@ export class Role {
   }
 
   async modify(options: ModifyGuildRoleEntity, reason?: string): Promise<Role> {
-    const response = await this.#rest.guilds.modifyGuildRole(
+    const response = await this.#client.rest.guilds.modifyGuildRole(
       this.#guildId,
       this.id,
       options,
       reason,
     );
 
-    return new Role(this.#rest, this.#guildId, response.data);
+    return new Role(this.#client, this.#guildId, response);
   }
 
   async delete(reason?: string): Promise<void> {
-    await this.#rest.guilds.deleteGuildRole(this.#guildId, this.id, reason);
+    await this.#client.rest.guilds.deleteGuildRole(
+      this.#guildId,
+      this.id,
+      reason,
+    );
   }
 
   async setPosition(position: number): Promise<Role> {
-    const response = await this.#rest.guilds.modifyGuildRolePositions(
+    const response = await this.#client.rest.guilds.modifyGuildRolePositions(
       this.#guildId,
       [{ id: this.id, position }],
     );
 
-    const updatedRole = response.data.find((role) => role.id === this.id);
+    const updatedRole = response.find((role) => role.id === this.id);
     if (!updatedRole) {
       throw new Error("Role not found after position update");
     }
 
-    return new Role(this.#rest, this.#guildId, updatedRole);
+    return new Role(this.#client, this.#guildId, updatedRole);
   }
 
   async clone(newName?: string, reason?: string): Promise<Role> {
-    const response = await this.#rest.guilds.createGuildRole(
+    const response = await this.#client.rest.guilds.createGuildRole(
       this.#guildId,
       {
         name: newName ?? `${this.name} (copy)`,
@@ -297,7 +305,7 @@ export class Role {
       reason,
     );
 
-    return new Role(this.#rest, this.#guildId, response.data);
+    return new Role(this.#client, this.#guildId, response);
   }
 
   syncPermissionsWith(other: Role, reason?: string): Promise<Role> {

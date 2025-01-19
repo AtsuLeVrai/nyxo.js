@@ -21,4 +21,5 @@ export interface FileValidationOptions {
   maxHeight?: number;
   minWidth?: number;
   minHeight?: number;
+  embedImage?: boolean;
 }

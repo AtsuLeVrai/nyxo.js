@@ -1,6 +1,6 @@
 import type { Dispatcher } from "undici";
 import type { FileInput } from "./file-processor.type.js";
-import type { RateLimitEvent } from "./rate-limit.type.js";
+import type { RateLimitBucket, RateLimitEvent } from "./rate-limit.type.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-example-json-error-response}
@@ -11,8 +11,7 @@ export interface JsonErrorEntity {
   errors?: Record<string, unknown>;
 }
 
-export interface RequestOptions
-  extends Omit<Dispatcher.RequestOptions, "origin"> {
+export interface RequestOptions extends Dispatcher.RequestOptions {
   files?: FileInput | FileInput[];
   reason?: string;
 }
@@ -31,13 +30,22 @@ export interface RequestFinishEvent {
   latency: number;
 }
 
+export interface InvalidRequestEvent {
+  path: string;
+  method: string;
+  statusCode: number;
+}
+
 export interface RestEvents {
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (message: string | Error, context?: Record<string, unknown>) => void;
   warn: (message: string, context?: Record<string, unknown>) => void;
-  rateLimited: (info: RateLimitEvent) => void;
   requestStart: (requestInfo: RequestStartEvent) => void;
   requestFinish: (requestInfo: RequestFinishEvent) => void;
+  rateLimited: (data: RateLimitEvent) => void;
+  bucketCreated: (bucket: RateLimitBucket) => void;
+  bucketDeleted: (bucketHash: string) => void;
+  invalidRequest: (data: InvalidRequestEvent) => void;
 }
 
 /**

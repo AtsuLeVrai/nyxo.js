@@ -4,6 +4,9 @@ import type { z } from "zod";
 import { RateLimitError } from "../errors/index.js";
 import type { RateLimiterOptions } from "../options/index.js";
 import type {
+  BucketLatencyInfo,
+  BucketStatusInfo,
+  GlobalRateLimitStats,
   RateLimitBucket,
   RateLimitScope,
   RestEvents,
@@ -20,6 +23,12 @@ const DISCORD_RATELIMIT_HEADERS = {
   retryAfter: "retry-after",
 } as const;
 
+const DISCORD_MAJOR_PARAMS = [
+  { regex: /^\/guilds\/(\d+)/, param: "guild_id" },
+  { regex: /^\/channels\/(\d+)/, param: "channel_id" },
+  { regex: /^\/webhooks\/(\d+)/, param: "webhook_id" },
+] as const;
+
 const DISCORD_SHARED_ROUTES = new Map([
   [/^\/guilds\/\d+\/emojis/, "emoji"],
   [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
@@ -27,30 +36,37 @@ const DISCORD_SHARED_ROUTES = new Map([
   [/^\/guilds\/\d+\/members/, "guild-members"],
 ]);
 
-const DISCORD_MAJOR_PARAMS = [
-  { regex: /^\/guilds\/(\d+)/, param: "guild_id" },
-  { regex: /^\/channels\/(\d+)/, param: "channel_id" },
-  { regex: /^\/webhooks\/(\d+)/, param: "webhook_id" },
-] as const;
+const INVALID_STATUS_CODES = new Set([401, 403, 429]);
+const INTERACTION_ROUTES = new Set(["/interactions", "/webhooks"]);
 
 export class RateLimiterService extends EventEmitter<RestEvents> {
   readonly #buckets = new Store<string, RateLimitBucket>();
   readonly #routesToBuckets = new Store<string, string>();
+  readonly #sharedBuckets = new Store<string, Set<string>>();
+  readonly #bucketLatencies = new Store<string, BucketLatencyInfo[]>();
   readonly #options: z.output<typeof RateLimiterOptions>;
 
   #globalReset: number | null = null;
   #invalidRequestCount = 0;
   #invalidRequestResetTime = Date.now();
+  readonly #cleanupInterval: NodeJS.Timeout;
 
   constructor(options: z.output<typeof RateLimiterOptions>) {
     super();
     this.#options = options;
+    this.#cleanupInterval = setInterval(() => this.#cleanupBuckets(), 30_000);
   }
 
   checkRateLimit(path: string, method: string): void {
     this.emit("debug", "Checking rate limits", { path, method });
 
     if (this.#isGloballyLimited()) {
+      for (const route of INTERACTION_ROUTES) {
+        if (path.startsWith(route)) {
+          return;
+        }
+      }
+
       throw new RateLimitError({
         timeToReset: this.#globalReset ? this.#globalReset - Date.now() : -1,
         method,
@@ -103,18 +119,30 @@ export class RateLimiterService extends EventEmitter<RestEvents> {
   updateRateLimit(
     path: string,
     method: string,
+    latency: number,
     headers: Record<string, string>,
-    status: number,
+    statusCode: number,
   ): void {
+    if (INVALID_STATUS_CODES.has(statusCode) && statusCode !== 429) {
+      this.incrementInvalidRequestCount();
+      this.emit("invalidRequest", { path, method, statusCode });
+    }
+
     const rateLimitHeaders = this.#extractRateLimitHeaders(headers);
 
-    if (status === 429) {
+    if (statusCode === 429) {
       const retryAfter =
         Number(headers[DISCORD_RATELIMIT_HEADERS.retryAfter]) * 1000;
       const isGlobal = headers[DISCORD_RATELIMIT_HEADERS.global] === "true";
+      const scope =
+        (headers[DISCORD_RATELIMIT_HEADERS.scope] as RateLimitScope) || "user";
 
       if (isGlobal) {
         this.#globalReset = Date.now() + retryAfter;
+      }
+
+      if (scope !== "shared") {
+        this.incrementInvalidRequestCount();
       }
 
       throw new RateLimitError({
@@ -122,9 +150,7 @@ export class RateLimiterService extends EventEmitter<RestEvents> {
         method,
         path,
         global: isGlobal,
-        scope:
-          (headers[DISCORD_RATELIMIT_HEADERS.scope] as RateLimitScope) ||
-          "user",
+        scope,
         retryAfter,
       });
     }
@@ -146,8 +172,19 @@ export class RateLimiterService extends EventEmitter<RestEvents> {
       sharedRoute: this.#getSharedRoute(path),
     };
 
+    const isNewBucket = !this.#buckets.has(bucketHash);
     this.#buckets.set(bucketHash, bucket);
     this.#routesToBuckets.set(routeKey, bucketHash);
+
+    if (bucket.sharedRoute) {
+      this.#linkSharedBucket(bucket.sharedRoute, bucketHash);
+    }
+
+    if (isNewBucket) {
+      this.emit("bucketCreated", bucket);
+    }
+
+    this.calculateLatency(bucket.hash, latency);
 
     this.emit("debug", "Updated rate limit bucket", { bucketHash, bucket });
   }
@@ -155,9 +192,87 @@ export class RateLimiterService extends EventEmitter<RestEvents> {
   reset(): void {
     this.#buckets.clear();
     this.#routesToBuckets.clear();
+    this.#sharedBuckets.clear();
+    this.#bucketLatencies.clear();
     this.#globalReset = null;
     this.#invalidRequestCount = 0;
     this.#invalidRequestResetTime = Date.now();
+    clearInterval(this.#cleanupInterval);
+  }
+
+  shouldRetry(error: RateLimitError): boolean {
+    if (error.context.global) {
+      return false;
+    }
+
+    if (error.context.scope === "shared") {
+      return true;
+    }
+
+    return true;
+  }
+
+  getNextReset(path: string, method: string): number | null {
+    const bucket = this.#getBucket(path, method);
+    return bucket ? bucket.reset : null;
+  }
+
+  getBucketStatus(path: string, method: string): BucketStatusInfo | null {
+    const bucket = this.#getBucket(path, method);
+    if (!bucket) {
+      return null;
+    }
+
+    return {
+      remaining: bucket.remaining,
+      reset: bucket.reset,
+      limit: bucket.limit,
+    };
+  }
+
+  getGlobalStats(): GlobalRateLimitStats {
+    return {
+      totalBuckets: this.#buckets.size,
+      activeBuckets: Array.from(this.#buckets.values()).filter(
+        (b) => b.reset > Date.now(),
+      ).length,
+      globallyLimited: this.#isGloballyLimited(),
+      invalidRequestCount: this.#invalidRequestCount,
+      timeToReset: this.#globalReset ? this.#globalReset - Date.now() : 0,
+    };
+  }
+
+  incrementInvalidRequestCount(): void {
+    this.#invalidRequestCount++;
+  }
+
+  destroy(): void {
+    this.reset();
+    this.removeAllListeners();
+  }
+
+  calculateLatency(bucketHash: string, latency: number): void {
+    if (latency > this.#options.latencyThreshold) {
+      return;
+    }
+
+    const bucket = this.#buckets.get(bucketHash);
+    if (!bucket) {
+      return;
+    }
+
+    const latencies = this.#bucketLatencies.get(bucketHash) ?? [];
+    latencies.push({ timestamp: Date.now(), latency });
+
+    if (latencies.length > this.#options.maxLatencyEntries) {
+      latencies.shift();
+    }
+
+    this.#bucketLatencies.set(bucketHash, latencies);
+
+    const avgLatency =
+      latencies.reduce((sum, l) => sum + l.latency, 0) / latencies.length;
+    bucket.reset += avgLatency;
   }
 
   #getBucket(path: string, method: string): RateLimitBucket | undefined {
@@ -242,6 +357,39 @@ export class RateLimiterService extends EventEmitter<RestEvents> {
         return identifier;
       }
     }
+
     return undefined;
+  }
+
+  #linkSharedBucket(sharedRoute: string, bucketHash: string): void {
+    let buckets = this.#sharedBuckets.get(sharedRoute);
+    if (!buckets) {
+      buckets = new Set();
+      this.#sharedBuckets.set(sharedRoute, buckets);
+    }
+
+    buckets.add(bucketHash);
+  }
+
+  #cleanupBuckets(): void {
+    const now = Date.now();
+
+    for (const [hash, bucket] of this.#buckets.entries()) {
+      if (bucket.reset < now) {
+        this.#buckets.delete(hash);
+        this.emit("bucketDeleted", hash);
+      }
+    }
+
+    for (const [hash, latencies] of this.#bucketLatencies.entries()) {
+      const validLatencies = latencies.filter(
+        (l) => now - l.timestamp < 60_000,
+      );
+      if (validLatencies.length === 0) {
+        this.#bucketLatencies.delete(hash);
+      } else {
+        this.#bucketLatencies.set(hash, validLatencies);
+      }
+    }
   }
 }

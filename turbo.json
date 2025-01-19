@@ -1,7 +1,11 @@
 {
   "$schema": "https://turbo.build/schema.v2.json",
   "ui": "tui",
-  "globalDependencies": [".env", "tsconfig.json", "biome.json"],
+  "globalDependencies": [
+    ".env",
+    "tsconfig.json",
+    "biome.json"
+  ],
   "globalEnv": [
     "NODE_ENV",
     "CI",
@@ -10,23 +14,62 @@
     "GATEWAY_VERSION"
   ],
   "tasks": {
+    "dev": {
+      "dependsOn": [
+        "^dev"
+      ],
+      "outputs": [],
+      "env": [
+        "NODE_ENV"
+      ],
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "dependsOn": [
+        "^start"
+      ],
+      "outputs": [],
+      "env": [
+        "NODE_ENV"
+      ],
+      "cache": false
+    },
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"],
-      "env": ["NODE_ENV"],
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ],
+      "env": [
+        "NODE_ENV"
+      ],
       "cache": true
     },
     "build:watch": {
-      "dependsOn": ["^build:watch"],
-      "outputs": ["dist/**"],
-      "env": ["NODE_ENV"],
+      "dependsOn": [
+        "^build:watch"
+      ],
+      "outputs": [
+        "dist/**"
+      ],
+      "env": [
+        "NODE_ENV"
+      ],
       "cache": false,
       "persistent": true
     },
     "build:prod": {
-      "dependsOn": ["^build:prod"],
-      "outputs": ["dist/**"],
-      "env": ["NODE_ENV"],
+      "dependsOn": [
+        "^build:prod"
+      ],
+      "outputs": [
+        "dist/**"
+      ],
+      "env": [
+        "NODE_ENV"
+      ],
       "cache": true
     },
     "format": {
@@ -42,7 +85,9 @@
       "cache": true
     },
     "type-check": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": [],
       "cache": true
     }

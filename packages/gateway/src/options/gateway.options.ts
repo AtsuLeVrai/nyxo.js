@@ -16,7 +16,7 @@ export const GatewayOptions = z.object({
   version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
   presence: UpdatePresenceEntity.optional(),
   largeThreshold: z.number().int().min(50).max(250).default(50),
-  maxReconnectAttempts: z.number().int().positive().default(5),
+  maxReconnectAttempts: z.number().int().default(5),
   ...EncodingOptions.shape,
   ...CompressionOptions.shape,
   ...HeartbeatOptions.shape,

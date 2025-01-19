@@ -1,16 +1,43 @@
 import {
+  GATEWAY_FORWARDED_EVENTS,
   Gateway,
+  type GatewayEvents,
   type GatewayIntentsBits,
   GatewayOptions,
+  type GatewayReceiveEvents,
 } from "@nyxjs/gateway";
-import { Rest, RestOptions } from "@nyxjs/rest";
+import {
+  REST_FORWARDED_EVENTS,
+  Rest,
+  type RestEvents,
+  RestOptions,
+} from "@nyxjs/rest";
+import { camelCase } from "change-case";
 import { EventEmitter } from "eventemitter3";
+import type { CamelCase } from "type-fest";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
-export const ClientOptions = z.intersection(RestOptions, GatewayOptions);
+export const ClientOptions = z.object({
+  ...RestOptions.shape,
+  ...GatewayOptions.shape,
+});
 
-export class Client extends EventEmitter {
+type EventHandlerToTuple<T> = T extends (...args: infer P) => void ? P : never;
+
+type ArgumentMap<T> = {
+  [K in keyof T]: T[K] extends (...args: never[]) => void
+    ? EventHandlerToTuple<T[K]>
+    : [T[K]];
+};
+
+type CamelCaseGatewayEvents = {
+  [K in keyof GatewayReceiveEvents as CamelCase<K>]: GatewayReceiveEvents[K];
+};
+
+export type ClientEvents = RestEvents & GatewayEvents & CamelCaseGatewayEvents;
+
+export class Client extends EventEmitter<ClientEvents> {
   readonly token: string;
   readonly rest: Rest;
   readonly gateway: Gateway;
@@ -27,7 +54,13 @@ export class Client extends EventEmitter {
 
     this.token = this.#options.token;
     this.rest = new Rest(this.#options);
-    this.gateway = new Gateway(this.rest, this.#options);
+    this.gateway = new Gateway(
+      this.rest,
+      // TODO: Remove the type assertion once zod supports recursive types
+      this.#options as z.output<typeof GatewayOptions>,
+    );
+
+    this.#setupEventListeners();
   }
 
   get ping(): number {
@@ -36,6 +69,13 @@ export class Client extends EventEmitter {
 
   get isReady(): boolean {
     return Boolean(this.gateway.sessionId);
+  }
+
+  override on<K extends keyof ClientEvents>(
+    event: K,
+    listener: (...args: ArgumentMap<ClientEvents>[K]) => void,
+  ): this {
+    return super.on(event, listener as never);
   }
 
   hasIntent(intent: GatewayIntentsBits): boolean {
@@ -49,5 +89,19 @@ export class Client extends EventEmitter {
 
   connect(): Promise<void> {
     return this.gateway.connect();
+  }
+
+  #setupEventListeners(): void {
+    for (const event of REST_FORWARDED_EVENTS) {
+      this.rest.on(event, (...args) => this.emit(event, ...args));
+    }
+
+    for (const event of GATEWAY_FORWARDED_EVENTS) {
+      this.gateway.on(event, (...args) => this.emit(event, ...args));
+    }
+
+    this.gateway.on("dispatch", (event, data) =>
+      this.emit(camelCase(event) as keyof CamelCaseGatewayEvents, data),
+    );
   }
 }

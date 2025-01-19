@@ -35,7 +35,6 @@ import type {
   GuildSoundboardSoundDeleteEntity,
   GuildSoundboardSoundsUpdateEntity,
   GuildStickersUpdateEntity,
-  HelloEntity,
   IdentifyEntity,
   IntegrationCreateEntity,
   IntegrationDeleteEntity,
@@ -82,9 +81,6 @@ export interface PayloadEntity {
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
  */
 export interface GatewayReceiveEvents {
-  [GatewayOpcodes.Hello]: HelloEntity;
-  [GatewayOpcodes.Reconnect]: number;
-  [GatewayOpcodes.InvalidSession]: boolean;
   READY: ReadyEntity;
   RESUMED: boolean;
   APPLICATION_COMMAND_PERMISSIONS_UPDATE: GuildApplicationCommandPermissionEntity;
