@@ -3,14 +3,12 @@ import { mkdir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import chalk from "chalk";
-import chokidar from "chokidar";
 import { program } from "commander";
 import { rollup } from "rollup";
 import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
 const NODE_MODULES_REGEX = /^node:/;
-const IGNORED_FILES_REGEX = /(^|[/\\])\../;
 
 const paths = {
   root: process.cwd(),
@@ -32,9 +30,7 @@ const prefix = {
 };
 
 program
-  .option("-w, --watch", "Watch mode - rebuild on changes")
   .option("-c, --clean", "Clean dist and temp folders before building")
-  .option("--skipTypes", "Skip type generation")
   .option("-p, --production", "Build for production")
   .parse(process.argv);
 
@@ -60,6 +56,7 @@ function log(message, type = "info", details = "") {
 
 function getExternals() {
   log("Analyzing package dependencies...", "debug");
+
   const pkg = JSON.parse(readFileSync(paths.package, "utf-8").toString());
   const externals = [
     ...Object.keys(pkg.dependencies || {}),
@@ -67,6 +64,7 @@ function getExternals() {
     ...Object.keys(pkg.devDependencies || {}),
     NODE_MODULES_REGEX,
   ];
+
   log(`Found ${externals.length - 1} external dependencies`, "debug");
   return externals;
 }
@@ -152,16 +150,19 @@ const apiExtractorConfig = {
 async function clean() {
   try {
     log("Cleaning build directories...", "info");
+
     await Promise.all([
       rm(paths.dist, { recursive: true, force: true }),
       rm(paths.temp, { recursive: true, force: true }),
     ]);
+
     log("Removed old build files", "debug");
 
     await Promise.all([
       mkdir(paths.dist, { recursive: true }),
       mkdir(paths.temp, { recursive: true }),
     ]);
+
     log("Created fresh build directories", "success");
   } catch (error) {
     log("Clean operation failed", "error", error.message);
@@ -169,7 +170,7 @@ async function clean() {
   }
 }
 
-async function compileTypes() {
+function compileTypes() {
   try {
     log("Starting TypeScript compilation...", "info");
 
@@ -178,9 +179,11 @@ async function compileTypes() {
       ts.sys.fileExists,
       "tsconfig.json",
     );
+
     if (!configPath) {
       throw new Error("Could not find tsconfig.json");
     }
+
     log("Found TypeScript configuration", "debug");
 
     const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -202,6 +205,7 @@ async function compileTypes() {
     };
 
     log("Creating TypeScript program...", "debug");
+
     const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
     const emitResult = program.emit();
 
@@ -227,34 +231,7 @@ async function compileTypes() {
   }
 }
 
-async function buildBundles() {
-  try {
-    log("Creating bundles with Rollup...", "info");
-
-    log("Building bundle...", "debug");
-    const bundle = await rollup(rollupConfig);
-
-    log("Writing output files...", "debug");
-    await Promise.all(
-      rollupConfig.output.map(async (output) => {
-        await bundle.write(output);
-        log(
-          `Generated ${output.format.toUpperCase()} bundle`,
-          "debug",
-          output.file,
-        );
-      }),
-    );
-
-    await bundle.close();
-    log("Bundle creation completed", "success");
-  } catch (error) {
-    log("Bundle creation failed", "error", error.message);
-    throw new Error(`Bundle creation failed: ${error.message}`);
-  }
-}
-
-async function buildTypes() {
+function buildTypes() {
   try {
     log("Generating types with API Extractor...", "info");
 
@@ -288,6 +265,33 @@ async function buildTypes() {
   }
 }
 
+async function buildBundles() {
+  try {
+    log("Creating bundles with Rollup...", "info");
+
+    log("Building bundle...", "debug");
+    const bundle = await rollup(rollupConfig);
+
+    log("Writing output files...", "debug");
+    await Promise.all(
+      rollupConfig.output.map(async (output) => {
+        await bundle.write(output);
+        log(
+          `Generated ${output.format.toUpperCase()} bundle`,
+          "debug",
+          output.file,
+        );
+      }),
+    );
+
+    await bundle.close();
+    log("Bundle creation completed", "success");
+  } catch (error) {
+    log("Bundle creation failed", "error", error.message);
+    throw new Error(`Bundle creation failed: ${error.message}`);
+  }
+}
+
 async function build() {
   const startTime = Date.now();
   try {
@@ -300,19 +304,12 @@ async function build() {
       await clean();
     }
 
-    if (options.skipTypes) {
-      log("Skipping type generation", "warning");
-    } else {
-      await compileTypes();
-      await buildTypes();
-    }
-
     await buildBundles();
 
-    if (!options.watch) {
-      await rm(paths.temp, { recursive: true, force: true });
-      log("Cleaned temporary files", "debug");
-    }
+    compileTypes();
+    buildTypes();
+
+    await rm(paths.temp, { recursive: true, force: true });
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     const mode = options.production
@@ -329,44 +326,7 @@ async function build() {
   }
 }
 
-async function watch() {
-  await build();
-  log("Starting watch mode...", "info");
-
-  const watcher = chokidar.watch(paths.src, {
-    ignored: IGNORED_FILES_REGEX,
-    persistent: true,
-  });
-
-  watcher.on("ready", () => {
-    log("Initial scan complete. Ready for changes", "info");
-  });
-
-  watcher.on("change", async (path) => {
-    log(`File changed: ${chalk.blue(path)}`, "info");
-    await build();
-  });
-
-  watcher.on("error", (error) => {
-    log("Watcher error", "error", error.message);
-  });
-
-  process.on("SIGINT", () => {
-    log("Received stop signal", "warning");
-    watcher.close();
-    log("Watch mode terminated", "info");
-    process.exit(0);
-  });
-}
-
-if (options.watch) {
-  watch().catch((error) => {
-    log("Watch mode failed", "error", error.message);
-    process.exit(1);
-  });
-} else {
-  build().catch((error) => {
-    log("Build failed", "error", error.message);
-    process.exit(1);
-  });
-}
+build().catch((error) => {
+  log("Build failed", "error", error.message);
+  process.exit(1);
+});
