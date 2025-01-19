@@ -6,7 +6,7 @@ import type {
 
 export class GatewayRouter {
   static readonly ROUTES = {
-    gateway: "/gateway" as const,
+    gatewayDefault: "/gateway" as const,
     gatewayBot: "/gateway/bot" as const,
   } as const;
 
@@ -20,7 +20,7 @@ export class GatewayRouter {
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
    */
   getGateway(): Promise<GatewayResponseEntity> {
-    return this.#rest.get(GatewayRouter.ROUTES.gateway);
+    return this.#rest.get(GatewayRouter.ROUTES.gatewayDefault);
   }
 
   /**

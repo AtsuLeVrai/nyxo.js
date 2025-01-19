@@ -1,16 +1,18 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
   type ActivityInstanceEntity,
-  EditCurrentApplicationEntity,
+  EditCurrentApplicationSchema,
 } from "../schemas/index.js";
 
 export class ApplicationRouter {
-  static ROUTES = {
-    currentApplication: "/applications/@me" as const,
-    activityInstance: (applicationId: Snowflake, instanceId: string) =>
+  static readonly ROUTES = {
+    applicationsMe: "/applications/@me" as const,
+    applicationsActivityInstance: (
+      applicationId: Snowflake,
+      instanceId: string,
+    ) =>
       `/applications/${applicationId}/activity-instances/${instanceId}` as const,
   } as const;
 
@@ -24,21 +26,21 @@ export class ApplicationRouter {
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(ApplicationRouter.ROUTES.currentApplication);
+    return this.#rest.get(ApplicationRouter.ROUTES.applicationsMe);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
    */
   editCurrentApplication(
-    options: z.input<typeof EditCurrentApplicationEntity>,
+    options: EditCurrentApplicationSchema,
   ): Promise<ApplicationEntity> {
-    const result = EditCurrentApplicationEntity.safeParse(options);
+    const result = EditCurrentApplicationSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(ApplicationRouter.ROUTES.currentApplication, {
+    return this.#rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
       body: JSON.stringify(result.data),
     });
   }
@@ -51,7 +53,10 @@ export class ApplicationRouter {
     instanceId: string,
   ): Promise<ActivityInstanceEntity> {
     return this.#rest.get(
-      ApplicationRouter.ROUTES.activityInstance(applicationId, instanceId),
+      ApplicationRouter.ROUTES.applicationsActivityInstance(
+        applicationId,
+        instanceId,
+      ),
     );
   }
 }

@@ -1,26 +1,30 @@
 import { type EmojiEntity, Snowflake } from "@nyxjs/core";
 import { z } from "zod";
+import { FileHandler } from "../handlers/index.js";
+import type { FileInput } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params}
  */
-export const CreateGuildEmojiEntity = z.object({
+export const CreateGuildEmojiSchema = z.object({
   name: z.string(),
-  image: z.string().regex(/^data:image\/(png|jpg|jpeg);base64,/),
+  image: z
+    .custom<FileInput>(FileHandler.isValidFileInput)
+    .transform(FileHandler.toDataUri),
   roles: z.array(Snowflake).optional(),
 });
 
-export type CreateGuildEmojiEntity = z.infer<typeof CreateGuildEmojiEntity>;
+export type CreateGuildEmojiSchema = z.input<typeof CreateGuildEmojiSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji-json-params}
  */
-export const ModifyGuildEmojiEntity = z.object({
+export const ModifyGuildEmojiSchema = z.object({
   name: z.string().optional(),
   roles: z.array(Snowflake).nullish(),
 });
 
-export type ModifyGuildEmojiEntity = z.infer<typeof ModifyGuildEmojiEntity>;
+export type ModifyGuildEmojiSchema = z.input<typeof ModifyGuildEmojiSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#list-application-emojis}
@@ -32,21 +36,21 @@ export interface ListApplicationEmojisEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji-json-params}
  */
-export const CreateApplicationEmojiEntity = CreateGuildEmojiEntity.omit({
+export const CreateApplicationEmojiSchema = CreateGuildEmojiSchema.omit({
   roles: true,
 });
 
-export type CreateApplicationEmojiEntity = z.infer<
-  typeof CreateApplicationEmojiEntity
+export type CreateApplicationEmojiSchema = z.input<
+  typeof CreateApplicationEmojiSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params}
  */
-export const ModifyApplicationEmojiEntity = ModifyGuildEmojiEntity.pick({
+export const ModifyApplicationEmojiSchema = ModifyGuildEmojiSchema.pick({
   name: true,
 });
 
-export type ModifyApplicationEmojiEntity = z.infer<
-  typeof ModifyApplicationEmojiEntity
+export type ModifyApplicationEmojiSchema = z.input<
+  typeof ModifyApplicationEmojiSchema
 >;

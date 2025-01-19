@@ -1,13 +1,12 @@
 import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  BulkDeleteMessagesEntity,
-  CreateMessageEntity,
-  EditMessageEntity,
-  GetChannelMessagesQueryEntity,
-  GetReactionsQueryEntity,
+  BulkDeleteMessagesSchema,
+  CreateMessageSchema,
+  EditMessageSchema,
+  GetChannelMessagesQuerySchema,
+  GetReactionsQuerySchema,
 } from "../schemas/index.js";
 
 export class MessageRouter {
@@ -16,18 +15,22 @@ export class MessageRouter {
       `/channels/${channelId}/messages` as const,
     channelMessage: (channelId: Snowflake, messageId: Snowflake) =>
       `/channels/${channelId}/messages/${messageId}` as const,
-    crosspost: (channelId: Snowflake, messageId: Snowflake) =>
+    channelMessageCrosspost: (channelId: Snowflake, messageId: Snowflake) =>
       `/channels/${channelId}/messages/${messageId}/crosspost` as const,
-    reactions: (channelId: Snowflake, messageId: Snowflake, emoji: string) =>
+    channelMessageReactions: (
+      channelId: Snowflake,
+      messageId: Snowflake,
+      emoji: string,
+    ) =>
       `/channels/${channelId}/messages/${messageId}/reactions/${emoji}` as const,
-    userReaction: (
+    channelMessageUserReaction: (
       channelId: Snowflake,
       messageId: Snowflake,
       emoji: string,
       userId: Snowflake = "@me",
     ) =>
       `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/${userId}` as const,
-    bulkDelete: (channelId: Snowflake) =>
+    channelMessagesBulkDelete: (channelId: Snowflake) =>
       `/channels/${channelId}/messages/bulk-delete` as const,
   } as const;
 
@@ -42,9 +45,9 @@ export class MessageRouter {
    */
   getMessages(
     channelId: Snowflake,
-    query: z.input<typeof GetChannelMessagesQueryEntity> = {},
+    query: GetChannelMessagesQuerySchema = {},
   ): Promise<MessageEntity[]> {
-    const result = GetChannelMessagesQueryEntity.safeParse(query);
+    const result = GetChannelMessagesQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -71,9 +74,9 @@ export class MessageRouter {
    */
   createMessage(
     channelId: Snowflake,
-    options: z.input<typeof CreateMessageEntity>,
+    options: CreateMessageSchema,
   ): Promise<MessageEntity> {
-    const result = CreateMessageEntity.safeParse(options);
+    const result = CreateMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -93,7 +96,7 @@ export class MessageRouter {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.post(
-      MessageRouter.ROUTES.crosspost(channelId, messageId),
+      MessageRouter.ROUTES.channelMessageCrosspost(channelId, messageId),
     );
   }
 
@@ -106,7 +109,11 @@ export class MessageRouter {
     emoji: string,
   ): Promise<void> {
     return this.#rest.put(
-      MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageUserReaction(
+        channelId,
+        messageId,
+        emoji,
+      ),
     );
   }
 
@@ -119,7 +126,11 @@ export class MessageRouter {
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.userReaction(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageUserReaction(
+        channelId,
+        messageId,
+        emoji,
+      ),
     );
   }
 
@@ -133,7 +144,12 @@ export class MessageRouter {
     userId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.userReaction(channelId, messageId, emoji, userId),
+      MessageRouter.ROUTES.channelMessageUserReaction(
+        channelId,
+        messageId,
+        emoji,
+        userId,
+      ),
     );
   }
 
@@ -144,15 +160,15 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-    query: z.input<typeof GetReactionsQueryEntity> = {},
+    query: GetReactionsQuerySchema = {},
   ): Promise<UserEntity[]> {
-    const result = GetReactionsQueryEntity.safeParse(query);
+    const result = GetReactionsQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(
-      MessageRouter.ROUTES.reactions(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
       { query: result.data },
     );
   }
@@ -165,7 +181,7 @@ export class MessageRouter {
     messageId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.reactions(channelId, messageId, ""),
+      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, ""),
     );
   }
 
@@ -178,7 +194,7 @@ export class MessageRouter {
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.reactions(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
     );
   }
 
@@ -188,9 +204,9 @@ export class MessageRouter {
   editMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-    options: z.input<typeof EditMessageEntity>,
+    options: EditMessageSchema,
   ): Promise<MessageEntity> {
-    const result = EditMessageEntity.safeParse(options);
+    const result = EditMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -224,17 +240,20 @@ export class MessageRouter {
    */
   bulkDeleteMessages(
     channelId: Snowflake,
-    options: z.input<typeof BulkDeleteMessagesEntity>,
+    options: BulkDeleteMessagesSchema,
     reason?: string,
   ): Promise<void> {
-    const result = BulkDeleteMessagesEntity.safeParse(options);
+    const result = BulkDeleteMessagesSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(MessageRouter.ROUTES.bulkDelete(channelId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.#rest.post(
+      MessageRouter.ROUTES.channelMessagesBulkDelete(channelId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+    );
   }
 }

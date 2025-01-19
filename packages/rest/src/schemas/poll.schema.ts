@@ -11,11 +11,11 @@ export interface PollVotersResponseEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-query-string-params}
  */
-export const GetAnswerVotersQueryEntity = z.object({
+export const GetAnswerVotersQuerySchema = z.object({
   after: Snowflake.optional(),
-  limit: z.number().int().min(1).max(100).optional().default(25),
+  limit: z.number().int().min(1).max(100).default(25),
 });
 
-export type GetAnswerVotersQueryEntity = z.infer<
-  typeof GetAnswerVotersQueryEntity
+export type GetAnswerVotersQuerySchema = z.input<
+  typeof GetAnswerVotersQuerySchema
 >;

@@ -15,52 +15,51 @@ import type {
   VoiceRegionEntity,
   WelcomeScreenEntity,
 } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  AddGuildMemberEntity,
-  BeginGuildPruneEntity,
-  BulkGuildBanEntity,
+  AddGuildMemberSchema,
+  BeginGuildPruneSchema,
   type BulkGuildBanResponseEntity,
-  CreateGuildBanEntity,
-  CreateGuildChannelEntity,
-  CreateGuildEntity,
-  CreateGuildRoleEntity,
-  GetGuildBansQueryEntity,
-  GetGuildPruneCountQueryEntity,
+  BulkGuildBanSchema,
+  CreateGuildBanSchema,
+  CreateGuildChannelSchema,
+  CreateGuildRoleSchema,
+  CreateGuildSchema,
+  GetGuildBansQuerySchema,
+  GetGuildPruneCountQuerySchema,
   type ListActiveGuildThreadsEntity,
-  ListGuildMembersQueryEntity,
-  ModifyGuildChannelPositionsEntity,
-  ModifyGuildEntity,
-  ModifyGuildMemberEntity,
-  ModifyGuildOnboardingEntity,
-  ModifyGuildRoleEntity,
-  ModifyGuildRolePositionsEntity,
-  ModifyGuildWelcomeScreenEntity,
-  ModifyGuildWidgetSettingsEntity,
-  SearchGuildMembersQueryEntity,
+  ListGuildMembersQuerySchema,
+  ModifyGuildChannelPositionsSchema,
+  ModifyGuildMemberSchema,
+  ModifyGuildOnboardingSchema,
+  ModifyGuildRolePositionsSchema,
+  ModifyGuildRoleSchema,
+  ModifyGuildSchema,
+  ModifyGuildWelcomeScreenSchema,
+  ModifyGuildWidgetSettingsSchema,
+  SearchGuildMembersQuerySchema,
   type WidgetStyleOptions,
 } from "../schemas/index.js";
 
 export class GuildRouter {
-  static ROUTES = {
+  static readonly ROUTES = {
     guilds: "/guilds" as const,
-    guild: (guildId: Snowflake) => `/guilds/${guildId}` as const,
+    guildBase: (guildId: Snowflake) => `/guilds/${guildId}` as const,
     guildPreview: (guildId: Snowflake) => `/guilds/${guildId}/preview` as const,
     guildChannels: (guildId: Snowflake) =>
       `/guilds/${guildId}/channels` as const,
-    threadsActive: (guildId: Snowflake) =>
+    guildActiveThreads: (guildId: Snowflake) =>
       `/guilds/${guildId}/threads/active` as const,
     guildMembers: (guildId: Snowflake) => `/guilds/${guildId}/members` as const,
-    searchMembers: (guildId: Snowflake) =>
+    guildMembersSearch: (guildId: Snowflake) =>
       `/guilds/${guildId}/members/search` as const,
     guildMember: (guildId: Snowflake, userId: Snowflake) =>
       `/guilds/${guildId}/members/${userId}` as const,
     guildCurrentMember: (guildId: Snowflake) =>
       `/guilds/${guildId}/members/@me` as const,
     /** @deprecated */
-    guildCurrentMemberNick: (guildId: Snowflake) =>
+    guildCurrentMemberNickname: (guildId: Snowflake) =>
       `/guilds/${guildId}/members/@me/nick` as const,
     guildMemberRole: (
       guildId: Snowflake,
@@ -70,7 +69,8 @@ export class GuildRouter {
     guildBans: (guildId: Snowflake) => `/guilds/${guildId}/bans` as const,
     guildBan: (guildId: Snowflake, userId: Snowflake) =>
       `/guilds/${guildId}/bans/${userId}` as const,
-    bulkBan: (guildId: Snowflake) => `/guilds/${guildId}/bulk-ban` as const,
+    guildBulkBan: (guildId: Snowflake) =>
+      `/guilds/${guildId}/bulk-ban` as const,
     guildRoles: (guildId: Snowflake) => `/guilds/${guildId}/roles` as const,
     guildRole: (guildId: Snowflake, roleId: Snowflake) =>
       `/guilds/${guildId}/roles/${roleId}` as const,
@@ -105,10 +105,8 @@ export class GuildRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
    */
-  createGuild(
-    options: z.input<typeof CreateGuildEntity>,
-  ): Promise<GuildEntity> {
-    const result = CreateGuildEntity.safeParse(options);
+  createGuild(options: CreateGuildSchema): Promise<GuildEntity> {
+    const result = CreateGuildSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -122,7 +120,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild}
    */
   getGuild(guildId: Snowflake, withCounts = false): Promise<GuildEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guild(guildId), {
+    return this.#rest.get(GuildRouter.ROUTES.guildBase(guildId), {
       query: { with_counts: withCounts },
     });
   }
@@ -139,15 +137,15 @@ export class GuildRouter {
    */
   modifyGuild(
     guildId: Snowflake,
-    options: z.input<typeof ModifyGuildEntity>,
+    options: ModifyGuildSchema,
     reason?: string,
   ): Promise<GuildEntity> {
-    const result = ModifyGuildEntity.safeParse(options);
+    const result = ModifyGuildSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guild(guildId), {
+    return this.#rest.patch(GuildRouter.ROUTES.guildBase(guildId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -157,7 +155,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#delete-guild}
    */
   deleteGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(GuildRouter.ROUTES.guild(guildId));
+    return this.#rest.delete(GuildRouter.ROUTES.guildBase(guildId));
   }
 
   /**
@@ -172,10 +170,10 @@ export class GuildRouter {
    */
   createGuildChannel(
     guildId: Snowflake,
-    options: z.input<typeof CreateGuildChannelEntity>,
+    options: CreateGuildChannelSchema,
     reason?: string,
   ): Promise<ChannelEntity> {
-    const result = CreateGuildChannelEntity.safeParse(options);
+    const result = CreateGuildChannelSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -191,9 +189,9 @@ export class GuildRouter {
    */
   modifyGuildChannelPositions(
     guildId: Snowflake,
-    options: z.input<typeof ModifyGuildChannelPositionsEntity>,
+    options: ModifyGuildChannelPositionsSchema,
   ): Promise<void> {
-    const result = ModifyGuildChannelPositionsEntity.safeParse(options);
+    const result = ModifyGuildChannelPositionsSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -209,7 +207,7 @@ export class GuildRouter {
   listActiveGuildThreads(
     guildId: Snowflake,
   ): Promise<ListActiveGuildThreadsEntity[]> {
-    return this.#rest.get(GuildRouter.ROUTES.threadsActive(guildId));
+    return this.#rest.get(GuildRouter.ROUTES.guildActiveThreads(guildId));
   }
 
   /**
@@ -227,9 +225,9 @@ export class GuildRouter {
    */
   listGuildMembers(
     guildId: Snowflake,
-    query: z.input<typeof ListGuildMembersQueryEntity> = {},
+    query: ListGuildMembersQuerySchema = {},
   ): Promise<GuildMemberEntity[]> {
-    const result = ListGuildMembersQueryEntity.safeParse(query);
+    const result = ListGuildMembersQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -244,14 +242,14 @@ export class GuildRouter {
    */
   searchGuildMembers(
     guildId: Snowflake,
-    query: z.input<typeof SearchGuildMembersQueryEntity>,
+    query: SearchGuildMembersQuerySchema,
   ): Promise<GuildMemberEntity[]> {
-    const result = SearchGuildMembersQueryEntity.safeParse(query);
+    const result = SearchGuildMembersQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(GuildRouter.ROUTES.searchMembers(guildId), {
+    return this.#rest.get(GuildRouter.ROUTES.guildMembersSearch(guildId), {
       query: result.data,
     });
   }
@@ -262,9 +260,9 @@ export class GuildRouter {
   addGuildMember(
     guildId: Snowflake,
     userId: Snowflake,
-    options: z.input<typeof AddGuildMemberEntity>,
+    options: AddGuildMemberSchema,
   ): Promise<GuildMemberEntity> {
-    const result = AddGuildMemberEntity.safeParse(options);
+    const result = AddGuildMemberSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -280,10 +278,10 @@ export class GuildRouter {
   modifyGuildMember(
     guildId: Snowflake,
     userId: Snowflake,
-    options: z.input<typeof ModifyGuildMemberEntity>,
+    options: ModifyGuildMemberSchema,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    const result = ModifyGuildMemberEntity.safeParse(options);
+    const result = ModifyGuildMemberSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -318,7 +316,7 @@ export class GuildRouter {
     reason?: string,
   ): Promise<GuildMemberEntity> {
     return this.#rest.patch(
-      GuildRouter.ROUTES.guildCurrentMemberNick(guildId),
+      GuildRouter.ROUTES.guildCurrentMemberNickname(guildId),
       {
         body: JSON.stringify({ nick: nickname }),
         reason,
@@ -374,9 +372,9 @@ export class GuildRouter {
    */
   getGuildBans(
     guildId: Snowflake,
-    query: z.input<typeof GetGuildBansQueryEntity> = {},
+    query: GetGuildBansQuerySchema = {},
   ): Promise<BanEntity[]> {
-    const result = GetGuildBansQueryEntity.safeParse(query);
+    const result = GetGuildBansQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -399,10 +397,10 @@ export class GuildRouter {
   createGuildBan(
     guildId: Snowflake,
     userId: Snowflake,
-    options: z.input<typeof CreateGuildBanEntity>,
+    options: CreateGuildBanSchema,
     reason?: string,
   ): Promise<void> {
-    const result = CreateGuildBanEntity.safeParse(options);
+    const result = CreateGuildBanSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -431,15 +429,15 @@ export class GuildRouter {
    */
   bulkGuildBan(
     guildId: Snowflake,
-    options: z.input<typeof BulkGuildBanEntity>,
+    options: BulkGuildBanSchema,
     reason?: string,
   ): Promise<BulkGuildBanResponseEntity> {
-    const result = BulkGuildBanEntity.safeParse(options);
+    const result = BulkGuildBanSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(GuildRouter.ROUTES.bulkBan(guildId), {
+    return this.#rest.put(GuildRouter.ROUTES.guildBulkBan(guildId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -464,10 +462,10 @@ export class GuildRouter {
    */
   createGuildRole(
     guildId: Snowflake,
-    options: z.input<typeof CreateGuildRoleEntity>,
+    options: CreateGuildRoleSchema,
     reason?: string,
   ): Promise<RoleEntity> {
-    const result = CreateGuildRoleEntity.safeParse(options);
+    const result = CreateGuildRoleSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -483,9 +481,9 @@ export class GuildRouter {
    */
   modifyGuildRolePositions(
     guildId: Snowflake,
-    options: z.input<typeof ModifyGuildRolePositionsEntity>,
+    options: ModifyGuildRolePositionsSchema,
   ): Promise<RoleEntity[]> {
-    const result = ModifyGuildRolePositionsEntity.safeParse(options);
+    const result = ModifyGuildRolePositionsSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -501,10 +499,10 @@ export class GuildRouter {
   modifyGuildRole(
     guildId: Snowflake,
     roleId: Snowflake,
-    options: z.input<typeof ModifyGuildRoleEntity>,
+    options: ModifyGuildRoleSchema,
     reason?: string,
   ): Promise<RoleEntity> {
-    const result = ModifyGuildRoleEntity.safeParse(options);
+    const result = ModifyGuildRoleSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -547,9 +545,9 @@ export class GuildRouter {
    */
   getGuildPruneCount(
     guildId: Snowflake,
-    query: z.input<typeof GetGuildPruneCountQueryEntity> = {},
+    query: GetGuildPruneCountQuerySchema = {},
   ): Promise<{ pruned: number }> {
-    const result = GetGuildPruneCountQueryEntity.safeParse(query);
+    const result = GetGuildPruneCountQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -564,10 +562,10 @@ export class GuildRouter {
    */
   beginGuildPrune(
     guildId: Snowflake,
-    options: z.input<typeof BeginGuildPruneEntity>,
+    options: BeginGuildPruneSchema,
     reason?: string,
   ): Promise<{ pruned: number | null }> {
-    const result = BeginGuildPruneEntity.safeParse(options);
+    const result = BeginGuildPruneSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -629,10 +627,10 @@ export class GuildRouter {
    */
   modifyGuildWidget(
     guildId: Snowflake,
-    options: z.input<typeof ModifyGuildWidgetSettingsEntity>,
+    options: ModifyGuildWidgetSettingsSchema,
     reason?: string,
   ): Promise<GuildWidgetSettingsEntity> {
-    const result = ModifyGuildWidgetSettingsEntity.safeParse(options);
+    const result = ModifyGuildWidgetSettingsSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -683,10 +681,10 @@ export class GuildRouter {
    */
   modifyGuildWelcomeScreen(
     guildId: Snowflake,
-    options: z.input<typeof ModifyGuildWelcomeScreenEntity>,
+    options: ModifyGuildWelcomeScreenSchema,
     reason?: string,
   ): Promise<WelcomeScreenEntity> {
-    const result = ModifyGuildWelcomeScreenEntity.safeParse(options);
+    const result = ModifyGuildWelcomeScreenSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -709,10 +707,10 @@ export class GuildRouter {
    */
   modifyGuildOnboarding(
     guildId: Snowflake,
-    options: z.input<typeof ModifyGuildOnboardingEntity>,
+    options: ModifyGuildOnboardingSchema,
     reason?: string,
   ): Promise<GuildOnboardingEntity> {
-    const result = ModifyGuildOnboardingEntity.safeParse(options);
+    const result = ModifyGuildOnboardingSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

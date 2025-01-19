@@ -3,48 +3,52 @@ import type {
   MessageEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  FollowupMessageEntity,
-  InteractionCallbackDataEntity,
-  InteractionResponseEntity,
+  FollowupMessageSchema,
+  InteractionCallbackDataSchema,
+  InteractionResponseSchema,
 } from "../schemas/index.js";
 
 export class InteractionRouter {
-  static ROUTES = {
-    createResponse: (interactionId: Snowflake, interactionToken: string) =>
-      `/interactions/${interactionId}/${interactionToken}/callback` as const,
-    getOriginalResponse: (applicationId: Snowflake, interactionToken: string) =>
-      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
-    editOriginalResponse: (
+  static readonly ROUTES = {
+    interactionCreateResponse: (
+      interactionId: Snowflake,
+      interactionToken: string,
+    ) => `/interactions/${interactionId}/${interactionToken}/callback` as const,
+    webhookOriginalResponseGet: (
       applicationId: Snowflake,
       interactionToken: string,
     ) =>
       `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
-    deleteOriginalResponse: (
+    webhookOriginalResponseEdit: (
       applicationId: Snowflake,
       interactionToken: string,
     ) =>
       `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
-    createFollowupMessage: (
+    webhookOriginalResponseDelete: (
+      applicationId: Snowflake,
+      interactionToken: string,
+    ) =>
+      `/webhooks/${applicationId}/${interactionToken}/messages/@original` as const,
+    webhookFollowupMessageCreate: (
       applicationId: Snowflake,
       interactionToken: string,
     ) => `/webhooks/${applicationId}/${interactionToken}` as const,
-    getFollowupMessage: (
+    webhookFollowupMessageGet: (
       applicationId: Snowflake,
       interactionToken: string,
       messageId: Snowflake,
     ) =>
       `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
-    editFollowupMessage: (
+    webhookFollowupMessageEdit: (
       applicationId: Snowflake,
       interactionToken: string,
       messageId: Snowflake,
     ) =>
       `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
-    deleteFollowupMessage: (
+    webhookFollowupMessageDelete: (
       applicationId: Snowflake,
       interactionToken: string,
       messageId: Snowflake,
@@ -64,16 +68,19 @@ export class InteractionRouter {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: z.input<typeof InteractionResponseEntity>,
+    options: InteractionResponseSchema,
     withResponse = true,
   ): Promise<InteractionCallbackEntity | undefined> {
-    const result = InteractionResponseEntity.safeParse(options);
+    const result = InteractionResponseSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
-      InteractionRouter.ROUTES.createResponse(interactionId, interactionToken),
+      InteractionRouter.ROUTES.interactionCreateResponse(
+        interactionId,
+        interactionToken,
+      ),
       {
         body: JSON.stringify(result.data),
         query: { with_response: withResponse },
@@ -89,7 +96,7 @@ export class InteractionRouter {
     interactionToken: string,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      InteractionRouter.ROUTES.getOriginalResponse(
+      InteractionRouter.ROUTES.webhookOriginalResponseGet(
         applicationId,
         interactionToken,
       ),
@@ -102,15 +109,15 @@ export class InteractionRouter {
   editOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-    options: z.input<typeof InteractionCallbackDataEntity>,
+    options: InteractionCallbackDataSchema,
   ): Promise<MessageEntity> {
-    const result = InteractionCallbackDataEntity.partial().safeParse(options);
+    const result = InteractionCallbackDataSchema.partial().safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
-      InteractionRouter.ROUTES.editOriginalResponse(
+      InteractionRouter.ROUTES.webhookOriginalResponseEdit(
         applicationId,
         interactionToken,
       ),
@@ -128,7 +135,7 @@ export class InteractionRouter {
     interactionToken: string,
   ): Promise<void> {
     return this.#rest.delete(
-      InteractionRouter.ROUTES.deleteOriginalResponse(
+      InteractionRouter.ROUTES.webhookOriginalResponseDelete(
         applicationId,
         interactionToken,
       ),
@@ -141,15 +148,15 @@ export class InteractionRouter {
   createFollowupMessage(
     applicationId: Snowflake,
     interactionToken: string,
-    options: z.input<typeof FollowupMessageEntity>,
+    options: FollowupMessageSchema,
   ): Promise<MessageEntity> {
-    const result = FollowupMessageEntity.safeParse(options);
+    const result = FollowupMessageSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
-      InteractionRouter.ROUTES.createFollowupMessage(
+      InteractionRouter.ROUTES.webhookFollowupMessageCreate(
         applicationId,
         interactionToken,
       ),
@@ -168,7 +175,7 @@ export class InteractionRouter {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      InteractionRouter.ROUTES.getFollowupMessage(
+      InteractionRouter.ROUTES.webhookFollowupMessageGet(
         applicationId,
         interactionToken,
         messageId,
@@ -183,15 +190,15 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-    options: z.input<typeof InteractionCallbackDataEntity>,
+    options: InteractionCallbackDataSchema,
   ): Promise<MessageEntity> {
-    const result = InteractionCallbackDataEntity.partial().safeParse(options);
+    const result = InteractionCallbackDataSchema.partial().safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
-      InteractionRouter.ROUTES.editFollowupMessage(
+      InteractionRouter.ROUTES.webhookFollowupMessageEdit(
         applicationId,
         interactionToken,
         messageId,
@@ -211,7 +218,7 @@ export class InteractionRouter {
     messageId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      InteractionRouter.ROUTES.deleteFollowupMessage(
+      InteractionRouter.ROUTES.webhookFollowupMessageDelete(
         applicationId,
         interactionToken,
         messageId,

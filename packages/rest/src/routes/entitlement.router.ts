@@ -1,19 +1,24 @@
 import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateTestEntitlementEntity,
-  ListEntitlementQueryEntity,
+  CreateTestEntitlementSchema,
+  ListEntitlementQuerySchema,
 } from "../schemas/index.js";
 
 export class EntitlementRouter {
   static readonly ROUTES = {
-    entitlements: (applicationId: Snowflake) =>
+    applicationEntitlements: (applicationId: Snowflake) =>
       `/applications/${applicationId}/entitlements` as const,
-    entitlement: (applicationId: Snowflake, entitlementId: Snowflake) =>
+    applicationEntitlement: (
+      applicationId: Snowflake,
+      entitlementId: Snowflake,
+    ) =>
       `/applications/${applicationId}/entitlements/${entitlementId}` as const,
-    consume: (applicationId: Snowflake, entitlementId: Snowflake) =>
+    applicationEntitlementConsume: (
+      applicationId: Snowflake,
+      entitlementId: Snowflake,
+    ) =>
       `/applications/${applicationId}/entitlements/${entitlementId}/consume` as const,
   } as const;
 
@@ -28,15 +33,15 @@ export class EntitlementRouter {
    */
   listEntitlements(
     applicationId: Snowflake,
-    query: z.input<typeof ListEntitlementQueryEntity> = {},
+    query: ListEntitlementQuerySchema = {},
   ): Promise<EntitlementEntity[]> {
-    const result = ListEntitlementQueryEntity.safeParse(query);
+    const result = ListEntitlementQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(
-      EntitlementRouter.ROUTES.entitlements(applicationId),
+      EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
         query: result.data,
       },
@@ -51,7 +56,10 @@ export class EntitlementRouter {
     entitlementId: Snowflake,
   ): Promise<EntitlementEntity> {
     return this.#rest.get(
-      EntitlementRouter.ROUTES.entitlement(applicationId, entitlementId),
+      EntitlementRouter.ROUTES.applicationEntitlement(
+        applicationId,
+        entitlementId,
+      ),
     );
   }
 
@@ -63,7 +71,10 @@ export class EntitlementRouter {
     entitlementId: Snowflake,
   ): Promise<void> {
     return this.#rest.post(
-      EntitlementRouter.ROUTES.consume(applicationId, entitlementId),
+      EntitlementRouter.ROUTES.applicationEntitlementConsume(
+        applicationId,
+        entitlementId,
+      ),
     );
   }
 
@@ -72,15 +83,15 @@ export class EntitlementRouter {
    */
   createTestEntitlement(
     applicationId: Snowflake,
-    test: z.input<typeof CreateTestEntitlementEntity>,
+    test: CreateTestEntitlementSchema,
   ): Promise<EntitlementEntity> {
-    const result = CreateTestEntitlementEntity.safeParse(test);
+    const result = CreateTestEntitlementSchema.safeParse(test);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
-      EntitlementRouter.ROUTES.entitlements(applicationId),
+      EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
         body: JSON.stringify(result.data),
       },
@@ -95,7 +106,10 @@ export class EntitlementRouter {
     entitlementId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      EntitlementRouter.ROUTES.entitlement(applicationId, entitlementId),
+      EntitlementRouter.ROUTES.applicationEntitlement(
+        applicationId,
+        entitlementId,
+      ),
     );
   }
 }

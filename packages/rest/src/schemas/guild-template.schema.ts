@@ -1,37 +1,39 @@
 import { z } from "zod";
+import { FileHandler } from "../handlers/index.js";
+import type { FileInput } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template-json-params}
  */
-export const CreateGuildFromGuildTemplateEntity = z.object({
+export const CreateGuildFromGuildTemplateSchema = z.object({
   name: z.string().min(2).max(100),
   icon: z
-    .string()
-    .regex(/^data:image\/(jpeg|png|gif);base64,/)
+    .custom<FileInput>(FileHandler.isValidFileInput)
+    .transform(FileHandler.toDataUri)
     .optional(),
 });
 
-export type CreateGuildFromGuildTemplateEntity = z.infer<
-  typeof CreateGuildFromGuildTemplateEntity
+export type CreateGuildFromGuildTemplateSchema = z.input<
+  typeof CreateGuildFromGuildTemplateSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-template-json-params}
  */
-export const CreateGuildTemplateEntity = z.object({
+export const CreateGuildTemplateSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(120).nullish(),
 });
 
-export type CreateGuildTemplateEntity = z.infer<
-  typeof CreateGuildTemplateEntity
+export type CreateGuildTemplateSchema = z.input<
+  typeof CreateGuildTemplateSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-template#modify-guild-template-json-params}
  */
-export const ModifyGuildTemplateEntity = CreateGuildTemplateEntity.partial();
+export const ModifyGuildTemplateSchema = CreateGuildTemplateSchema.partial();
 
-export type ModifyGuildTemplateEntity = z.infer<
-  typeof ModifyGuildTemplateEntity
+export type ModifyGuildTemplateSchema = z.input<
+  typeof ModifyGuildTemplateSchema
 >;

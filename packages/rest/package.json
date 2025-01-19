@@ -50,6 +50,7 @@
     "@nyxjs/core": "workspace:*",
     "@nyxjs/store": "workspace:*",
     "eventemitter3": "^5.0.1",
+    "file-type": "^20.0.0",
     "form-data": "^4.0.1",
     "mime-types": "^2.1.35",
     "minizlib": "^3.0.1",

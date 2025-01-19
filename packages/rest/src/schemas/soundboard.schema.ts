@@ -1,16 +1,18 @@
 import { Snowflake, type SoundboardSoundEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { FileHandler } from "../handlers/index.js";
+import type { FileInput } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params}
  */
-export const SendSoundboardSoundEntity = z.object({
+export const SendSoundboardSoundSchema = z.object({
   sound_id: Snowflake,
   source_guild_id: Snowflake.optional(),
 });
 
-export type SendSoundboardSoundEntity = z.infer<
-  typeof SendSoundboardSoundEntity
+export type SendSoundboardSoundSchema = z.input<
+  typeof SendSoundboardSoundSchema
 >;
 
 /**
@@ -23,28 +25,30 @@ export interface ListGuildSoundboardSoundsResponseEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound-json-params}
  */
-export const CreateGuildSoundboardSoundEntity = z.object({
+export const CreateGuildSoundboardSoundSchema = z.object({
   name: z.string().min(2).max(32),
-  sound: z.string(),
+  sound: z
+    .custom<FileInput>(FileHandler.isValidFileInput)
+    .transform(FileHandler.toDataUri),
   volume: z.number().min(0).max(1).nullish().default(1),
   emoji_id: Snowflake.nullish(),
   emoji_name: z.string().nullish(),
 });
 
-export type CreateGuildSoundboardSoundEntity = z.infer<
-  typeof CreateGuildSoundboardSoundEntity
+export type CreateGuildSoundboardSoundSchema = z.input<
+  typeof CreateGuildSoundboardSoundSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params}
  */
-export const ModifyGuildSoundboardSoundEntity = z.object({
+export const ModifyGuildSoundboardSoundSchema = z.object({
   name: z.string().min(2).max(32).optional(),
   volume: z.number().min(0).max(1).nullish(),
   emoji_id: Snowflake.nullish(),
   emoji_name: z.string().nullish(),
 });
 
-export type ModifyGuildSoundboardSoundEntity = z.infer<
-  typeof ModifyGuildSoundboardSoundEntity
+export type ModifyGuildSoundboardSoundSchema = z.input<
+  typeof ModifyGuildSoundboardSoundSchema
 >;

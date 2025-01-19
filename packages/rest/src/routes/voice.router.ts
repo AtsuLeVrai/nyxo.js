@@ -3,20 +3,19 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  ModifyCurrentUserVoiceStateEntity,
-  ModifyUserVoiceStateEntity,
+  ModifyCurrentUserVoiceStateSchema,
+  ModifyUserVoiceStateSchema,
 } from "../schemas/index.js";
 
 export class VoiceRouter {
   static readonly ROUTES = {
-    voiceRegions: "/voice/regions" as const,
-    currentUserVoiceState: (guildId: Snowflake) =>
+    voiceRegionsBase: "/voice/regions" as const,
+    guildCurrentUserVoiceState: (guildId: Snowflake) =>
       `/guilds/${guildId}/voice-states/@me` as const,
-    userVoiceState: (guildId: Snowflake, userId: Snowflake) =>
+    guildUserVoiceState: (guildId: Snowflake, userId: Snowflake) =>
       `/guilds/${guildId}/voice-states/${userId}` as const,
   } as const;
 
@@ -30,14 +29,16 @@ export class VoiceRouter {
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
   listVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(VoiceRouter.ROUTES.voiceRegions);
+    return this.#rest.get(VoiceRouter.ROUTES.voiceRegionsBase);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
   getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceRouter.ROUTES.currentUserVoiceState(guildId));
+    return this.#rest.get(
+      VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
+    );
   }
 
   /**
@@ -47,7 +48,9 @@ export class VoiceRouter {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceRouter.ROUTES.userVoiceState(guildId, userId));
+    return this.#rest.get(
+      VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
+    );
   }
 
   /**
@@ -55,16 +58,19 @@ export class VoiceRouter {
    */
   modifyCurrentUserVoiceState(
     guildId: Snowflake,
-    options: z.input<typeof ModifyCurrentUserVoiceStateEntity>,
+    options: ModifyCurrentUserVoiceStateSchema,
   ): Promise<void> {
-    const result = ModifyCurrentUserVoiceStateEntity.safeParse(options);
+    const result = ModifyCurrentUserVoiceStateSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(VoiceRouter.ROUTES.currentUserVoiceState(guildId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.patch(
+      VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 
   /**
@@ -73,15 +79,15 @@ export class VoiceRouter {
   modifyUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
-    options: z.input<typeof ModifyUserVoiceStateEntity>,
+    options: ModifyUserVoiceStateSchema,
   ): Promise<void> {
-    const result = ModifyUserVoiceStateEntity.safeParse(options);
+    const result = ModifyUserVoiceStateSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
-      VoiceRouter.ROUTES.userVoiceState(guildId, userId),
+      VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
       {
         body: JSON.stringify(result.data),
       },

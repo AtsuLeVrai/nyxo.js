@@ -4,12 +4,12 @@ export interface FileErrorContext {
   processingError?: boolean;
 }
 
-export class FileProcessingError extends Error {
+export class FileError extends Error {
   readonly context: FileErrorContext;
 
   constructor(message: string, context: FileErrorContext = {}) {
     super(message);
-    this.name = "FileProcessingError";
+    this.name = "FileError";
     this.context = context;
   }
 }

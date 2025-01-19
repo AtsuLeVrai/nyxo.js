@@ -1,16 +1,15 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateGuildStickerEntity,
+  CreateGuildStickerSchema,
   type ListStickerPacksResponseEntity,
-  ModifyGuildStickerEntity,
+  ModifyGuildStickerSchema,
 } from "../schemas/index.js";
 
 export class StickerRouter {
   static readonly ROUTES = {
-    stickerPacks: "/sticker-packs" as const,
+    stickerPacksBase: "/sticker-packs" as const,
     sticker: (stickerId: Snowflake) => `/stickers/${stickerId}` as const,
     stickerPack: (packId: Snowflake) => `/sticker-packs/${packId}` as const,
     guildStickers: (guildId: Snowflake) =>
@@ -36,7 +35,7 @@ export class StickerRouter {
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
    */
   listStickerPacks(): Promise<ListStickerPacksResponseEntity> {
-    return this.#rest.get(StickerRouter.ROUTES.stickerPacks);
+    return this.#rest.get(StickerRouter.ROUTES.stickerPacksBase);
   }
 
   /**
@@ -70,10 +69,10 @@ export class StickerRouter {
    */
   createGuildSticker(
     guildId: Snowflake,
-    options: z.input<typeof CreateGuildStickerEntity>,
+    options: CreateGuildStickerSchema,
     reason?: string,
   ): Promise<StickerEntity> {
-    const result = CreateGuildStickerEntity.safeParse(options);
+    const result = CreateGuildStickerSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -92,10 +91,10 @@ export class StickerRouter {
   modifyGuildSticker(
     guildId: Snowflake,
     stickerId: Snowflake,
-    options: z.input<typeof ModifyGuildStickerEntity>,
+    options: ModifyGuildStickerSchema,
     reason?: string,
   ): Promise<StickerEntity> {
-    const result = ModifyGuildStickerEntity.safeParse(options);
+    const result = ModifyGuildStickerSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

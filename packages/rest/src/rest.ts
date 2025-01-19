@@ -10,6 +10,7 @@ import {
   RateLimitError,
   RestError,
 } from "./errors/index.js";
+import { FileHandler } from "./handlers/index.js";
 import { RestOptions } from "./options/index.js";
 import {
   ApplicationCommandRouter,
@@ -38,15 +39,10 @@ import {
   VoiceRouter,
   WebhookRouter,
 } from "./routes/index.js";
-import {
-  FileProcessorService,
-  HttpService,
-  RateLimiterService,
-} from "./services/index.js";
+import { HttpService, RateLimiterService } from "./services/index.js";
 import type {
   BucketStatusInfo,
   FileInput,
-  FileValidationOptions,
   GlobalRateLimitStats,
   ImageProcessingOptions,
   ProcessedFile,
@@ -95,7 +91,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
   readonly #http: HttpService;
   readonly #rateLimiter: RateLimiterService;
-  readonly #fileProcessor: FileProcessorService;
+  readonly #file: FileHandler;
   readonly #options: z.output<typeof RestOptions>;
 
   constructor(options: z.input<typeof RestOptions>) {
@@ -107,7 +103,7 @@ export class Rest extends EventEmitter<RestEvents> {
       throw new RestError(fromError(error).message);
     }
 
-    this.#fileProcessor = new FileProcessorService();
+    this.#file = new FileHandler(this.#options);
     this.#rateLimiter = new RateLimiterService(this.#options);
     this.#http = new HttpService(this.#options);
 
@@ -174,19 +170,14 @@ export class Rest extends EventEmitter<RestEvents> {
     body?: Dispatcher.RequestOptions["body"],
     imageOptions?: ImageProcessingOptions,
   ): Promise<FormData> {
-    return this.#fileProcessor.createFormData(files, body, imageOptions);
+    return this.#file.createFormData(files, body, imageOptions);
   }
 
   processFile(
     input: FileInput,
     imageOptions?: ImageProcessingOptions,
-    validationOptions?: FileValidationOptions,
   ): Promise<ProcessedFile> {
-    return this.#fileProcessor.processFile(
-      input,
-      imageOptions,
-      validationOptions,
-    );
+    return this.#file.processFile(input, imageOptions);
   }
 
   checkRateLimit(path: string, method: string): void {
@@ -412,7 +403,7 @@ export class Rest extends EventEmitter<RestEvents> {
       return options;
     }
 
-    const formData = await this.#fileProcessor.createFormData(
+    const formData = await this.#file.createFormData(
       options.files,
       options.body,
     );

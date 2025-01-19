@@ -1,17 +1,16 @@
 import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateAutoModerationRuleEntity,
-  ModifyAutoModerationRuleEntity,
+  CreateAutoModerationRuleSchema,
+  ModifyAutoModerationRuleSchema,
 } from "../schemas/index.js";
 
 export class AutoModerationRouter {
   static readonly ROUTES = {
-    base: (guildId: Snowflake) =>
+    guildAutoModerationRules: (guildId: Snowflake) =>
       `/guilds/${guildId}/auto-moderation/rules` as const,
-    rule: (guildId: Snowflake, ruleId: Snowflake) =>
+    guildAutoModerationRule: (guildId: Snowflake, ruleId: Snowflake) =>
       `/guilds/${guildId}/auto-moderation/rules/${ruleId}` as const,
   } as const;
 
@@ -27,7 +26,9 @@ export class AutoModerationRouter {
   listAutoModerationRules(
     guildId: Snowflake,
   ): Promise<AutoModerationRuleEntity[]> {
-    return this.#rest.get(AutoModerationRouter.ROUTES.base(guildId));
+    return this.#rest.get(
+      AutoModerationRouter.ROUTES.guildAutoModerationRules(guildId),
+    );
   }
 
   /**
@@ -37,7 +38,9 @@ export class AutoModerationRouter {
     guildId: Snowflake,
     ruleId: Snowflake,
   ): Promise<AutoModerationRuleEntity> {
-    return this.#rest.get(AutoModerationRouter.ROUTES.rule(guildId, ruleId));
+    return this.#rest.get(
+      AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
+    );
   }
 
   /**
@@ -45,18 +48,21 @@ export class AutoModerationRouter {
    */
   createAutoModerationRule(
     guildId: Snowflake,
-    options: z.input<typeof CreateAutoModerationRuleEntity>,
+    options: CreateAutoModerationRuleSchema,
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
-    const result = CreateAutoModerationRuleEntity.safeParse(options);
+    const result = CreateAutoModerationRuleSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(AutoModerationRouter.ROUTES.base(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.#rest.post(
+      AutoModerationRouter.ROUTES.guildAutoModerationRules(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+    );
   }
 
   /**
@@ -65,18 +71,21 @@ export class AutoModerationRouter {
   modifyAutoModerationRule(
     guildId: Snowflake,
     ruleId: Snowflake,
-    options: z.input<typeof ModifyAutoModerationRuleEntity>,
+    options: ModifyAutoModerationRuleSchema,
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
-    const result = ModifyAutoModerationRuleEntity.safeParse(options);
+    const result = ModifyAutoModerationRuleSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(AutoModerationRouter.ROUTES.rule(guildId, ruleId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.#rest.patch(
+      AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+    );
   }
 
   /**
@@ -88,7 +97,7 @@ export class AutoModerationRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      AutoModerationRouter.ROUTES.rule(guildId, ruleId),
+      AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
       {
         reason,
       },

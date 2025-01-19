@@ -7,6 +7,8 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
+import { FileHandler } from "../handlers/index.js";
+import type { FileInput } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum}
@@ -37,7 +39,7 @@ export interface ActivityInstanceEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
  */
-export const EditCurrentApplicationEntity = z.object({
+export const EditCurrentApplicationSchema = z.object({
   custom_install_url: z.string().url().optional(),
   description: z.string().optional(),
   role_connections_verification_url: z.string().url().optional(),
@@ -56,12 +58,12 @@ export const EditCurrentApplicationEntity = z.object({
     ])
     .optional(),
   icon: z
-    .string()
-    .regex(/^data:image\/(jpeg|png|gif);base64,/)
+    .custom<FileInput>(FileHandler.isValidFileInput)
+    .transform(FileHandler.toDataUri)
     .optional(),
   cover_image: z
-    .string()
-    .regex(/^data:image\/(jpeg|png|gif);base64,/)
+    .custom<FileInput>(FileHandler.isValidFileInput)
+    .transform(FileHandler.toDataUri)
     .optional(),
   interactions_endpoint_url: z.string().url().optional(),
   tags: z.array(z.string().max(20)).max(5).optional(),
@@ -75,6 +77,6 @@ export const EditCurrentApplicationEntity = z.object({
   event_webhooks_types: z.array(z.string()).optional(),
 });
 
-export type EditCurrentApplicationEntity = z.infer<
-  typeof EditCurrentApplicationEntity
+export type EditCurrentApplicationSchema = z.input<
+  typeof EditCurrentApplicationSchema
 >;

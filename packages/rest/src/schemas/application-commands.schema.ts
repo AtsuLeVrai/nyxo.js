@@ -12,18 +12,18 @@ import { z } from "zod";
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions-json-params}
  */
-export const EditApplicationCommandPermissionsEntity = z.object({
+export const EditApplicationCommandPermissionsSchema = z.object({
   permissions: z.array(ApplicationCommandPermissionEntity).max(100),
 });
 
-export type EditApplicationCommandPermissionsEntity = z.infer<
-  typeof EditApplicationCommandPermissionsEntity
+export type EditApplicationCommandPermissionsSchema = z.input<
+  typeof EditApplicationCommandPermissionsSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command-json-params}
  */
-export const CreateGlobalApplicationCommandEntity = z.object({
+export const CreateGlobalApplicationCommandSchema = z.object({
   name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
   name_localizations: createAvailableLocale(
     z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
@@ -34,11 +34,9 @@ export const CreateGlobalApplicationCommandEntity = z.object({
   ).nullish(),
   options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
   default_member_permissions: z.string().nullish(),
-  /**
-   * @deprecated User `contexts instead`
-   */
+  /** @deprecated User `contexts instead` */
   dm_permission: z.boolean().nullish(),
-  default_permission: z.boolean().optional().default(true),
+  default_permission: z.boolean().default(true),
   integration_types: z
     .array(z.nativeEnum(ApplicationIntegrationType))
     .optional(),
@@ -50,43 +48,43 @@ export const CreateGlobalApplicationCommandEntity = z.object({
   nsfw: z.boolean().optional(),
 });
 
-export type CreateGlobalApplicationCommandEntity = z.infer<
-  typeof CreateGlobalApplicationCommandEntity
+export type CreateGlobalApplicationCommandSchema = z.input<
+  typeof CreateGlobalApplicationCommandSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command-json-params}
  */
-export const EditGlobalApplicationCommandEntity =
-  CreateGlobalApplicationCommandEntity.omit({
+export const EditGlobalApplicationCommandSchema =
+  CreateGlobalApplicationCommandSchema.omit({
     type: true,
   }).partial();
 
-export type EditGlobalApplicationCommandEntity = z.infer<
-  typeof EditGlobalApplicationCommandEntity
+export type EditGlobalApplicationCommandSchema = z.input<
+  typeof EditGlobalApplicationCommandSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command-json-params}
  */
-export const CreateGuildApplicationCommandEntity =
-  CreateGlobalApplicationCommandEntity.omit({
+export const CreateGuildApplicationCommandSchema =
+  CreateGlobalApplicationCommandSchema.omit({
     integration_types: true,
     contexts: true,
   });
 
-export type CreateGuildApplicationCommandEntity = z.infer<
-  typeof CreateGuildApplicationCommandEntity
+export type CreateGuildApplicationCommandSchema = z.input<
+  typeof CreateGuildApplicationCommandSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command-json-params}
  */
-export const EditGuildApplicationCommandEntity =
-  CreateGuildApplicationCommandEntity.omit({
+export const EditGuildApplicationCommandSchema =
+  CreateGuildApplicationCommandSchema.omit({
     type: true,
   }).partial();
 
-export type EditGuildApplicationCommandEntity = z.infer<
-  typeof EditGuildApplicationCommandEntity
+export type EditGuildApplicationCommandSchema = z.input<
+  typeof EditGuildApplicationCommandSchema
 >;

@@ -1,15 +1,14 @@
 import type { Snowflake, StageInstanceEntity } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateStageInstanceEntity,
-  ModifyStageInstanceEntity,
+  CreateStageInstanceSchema,
+  ModifyStageInstanceSchema,
 } from "../schemas/index.js";
 
 export class StageInstanceRouter {
   static readonly ROUTES = {
-    stageInstances: "/stage-instances" as const,
+    stageInstancesBase: "/stage-instances" as const,
     stageInstance: (channelId: Snowflake) =>
       `/stage-instances/${channelId}` as const,
   } as const;
@@ -24,15 +23,15 @@ export class StageInstanceRouter {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
    */
   createStageInstance(
-    options: z.input<typeof CreateStageInstanceEntity>,
+    options: CreateStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    const result = CreateStageInstanceEntity.safeParse(options);
+    const result = CreateStageInstanceSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(StageInstanceRouter.ROUTES.stageInstances, {
+    return this.#rest.post(StageInstanceRouter.ROUTES.stageInstancesBase, {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -50,10 +49,10 @@ export class StageInstanceRouter {
    */
   modifyStageInstance(
     channelId: Snowflake,
-    options: z.input<typeof ModifyStageInstanceEntity>,
+    options: ModifyStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    const result = ModifyStageInstanceEntity.safeParse(options);
+    const result = ModifyStageInstanceSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

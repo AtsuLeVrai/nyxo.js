@@ -8,7 +8,7 @@ import type { Rest } from "../rest.js";
 
 export class ApplicationConnectionRouter {
   static readonly ROUTES = {
-    base: (applicationId: Snowflake) =>
+    applicationsRoleConnectionsMetadata: (applicationId: Snowflake) =>
       `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
 
@@ -25,7 +25,9 @@ export class ApplicationConnectionRouter {
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
     return this.#rest.get(
-      ApplicationConnectionRouter.ROUTES.base(applicationId),
+      ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
+        applicationId,
+      ),
     );
   }
 
@@ -45,7 +47,9 @@ export class ApplicationConnectionRouter {
     }
 
     return this.#rest.put(
-      ApplicationConnectionRouter.ROUTES.base(applicationId),
+      ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
+        applicationId,
+      ),
       {
         body: JSON.stringify(result.data),
       },

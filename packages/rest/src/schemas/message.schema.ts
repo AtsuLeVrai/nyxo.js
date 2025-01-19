@@ -14,21 +14,21 @@ import type { FileInput } from "../types/index.js";
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params}
  */
-export const GetChannelMessagesQueryEntity = z.object({
+export const GetChannelMessagesQuerySchema = z.object({
   around: Snowflake.optional(),
   before: Snowflake.optional(),
   after: Snowflake.optional(),
-  limit: z.number().int().min(1).max(100).optional().default(50),
+  limit: z.number().int().min(1).max(100).default(50),
 });
 
-export type GetChannelMessagesQueryEntity = z.infer<
-  typeof GetChannelMessagesQueryEntity
+export type GetChannelMessagesQuerySchema = z.input<
+  typeof GetChannelMessagesQuerySchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params}
  */
-export const CreateMessageEntity = z.object({
+export const CreateMessageSchema = z.object({
   content: z.string().max(2000).optional(),
   nonce: z.union([z.string().max(25), z.number().int().max(25)]).optional(),
   tts: z.boolean().optional(),
@@ -51,7 +51,7 @@ export const CreateMessageEntity = z.object({
   poll: PollCreateRequestEntity.optional(),
 });
 
-export type CreateMessageEntity = z.infer<typeof CreateMessageEntity>;
+export type CreateMessageSchema = z.input<typeof CreateMessageSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-reaction-types}
@@ -64,18 +64,18 @@ export enum ReactionTypeFlag {
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-query-string-params}
  */
-export const GetReactionsQueryEntity = z.object({
+export const GetReactionsQuerySchema = z.object({
   type: z.nativeEnum(ReactionTypeFlag).optional(),
   after: Snowflake.optional(),
-  limit: z.number().int().min(1).max(100).optional().default(25),
+  limit: z.number().int().min(1).max(100).default(25),
 });
 
-export type GetReactionsQueryEntity = z.infer<typeof GetReactionsQueryEntity>;
+export type GetReactionsQuerySchema = z.input<typeof GetReactionsQuerySchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#edit-message-jsonform-params}
  */
-export const EditMessageEntity = CreateMessageEntity.pick({
+export const EditMessageSchema = CreateMessageSchema.pick({
   content: true,
   embeds: true,
   flags: true,
@@ -86,13 +86,13 @@ export const EditMessageEntity = CreateMessageEntity.pick({
   attachments: true,
 });
 
-export type EditMessageEntity = z.infer<typeof EditMessageEntity>;
+export type EditMessageSchema = z.input<typeof EditMessageSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages-json-params}
  */
-export const BulkDeleteMessagesEntity = z.object({
+export const BulkDeleteMessagesSchema = z.object({
   messages: z.array(Snowflake).min(2).max(100),
 });
 
-export type BulkDeleteMessagesEntity = z.infer<typeof BulkDeleteMessagesEntity>;
+export type BulkDeleteMessagesSchema = z.input<typeof BulkDeleteMessagesSchema>;

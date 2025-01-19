@@ -7,28 +7,28 @@ import type {
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateGroupDmEntity,
-  GetCurrentUserGuildsQueryEntity,
-  ModifyCurrentUserEntity,
-  UpdateCurrentUserApplicationRoleConnectionEntity,
+  CreateGroupDmSchema,
+  GetCurrentUserGuildsQuerySchema,
+  ModifyCurrentUserSchema,
+  UpdateCurrentUserApplicationRoleConnectionSchema,
 } from "../schemas/index.js";
 
 export class UserRouter {
   static readonly ROUTES = {
-    base: "/users" as const,
-    me: "/users/@me" as const,
-    guilds: "/users/@me/guilds" as const,
-    channels: "/users/@me/channels" as const,
-    connections: "/users/@me/connections" as const,
+    usersBase: "/users" as const,
+    userCurrent: "/users/@me" as const,
+    userCurrentGuilds: "/users/@me/guilds" as const,
+    userCurrentChannels: "/users/@me/channels" as const,
+    userCurrentConnections: "/users/@me/connections" as const,
     user: (userId: Snowflake) => `/users/${userId}` as const,
-    guildMember: (guildId: Snowflake) =>
+    userCurrentGuildMember: (guildId: Snowflake) =>
       `/users/@me/guilds/${guildId}/member` as const,
-    leaveGuild: (guildId: Snowflake) => `/users/@me/guilds/${guildId}` as const,
-    applicationRole: (applicationId: Snowflake) =>
+    userCurrentLeaveGuild: (guildId: Snowflake) =>
+      `/users/@me/guilds/${guildId}` as const,
+    userCurrentApplicationRoleConnection: (applicationId: Snowflake) =>
       `/users/@me/applications/${applicationId}/role-connection` as const,
   } as const;
 
@@ -42,7 +42,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   getCurrentUser(): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.ROUTES.me);
+    return this.#rest.get(UserRouter.ROUTES.userCurrent);
   }
 
   /**
@@ -55,15 +55,13 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
-  modifyCurrentUser(
-    options: z.input<typeof ModifyCurrentUserEntity>,
-  ): Promise<UserEntity> {
-    const result = ModifyCurrentUserEntity.safeParse(options);
+  modifyCurrentUser(options: ModifyCurrentUserSchema): Promise<UserEntity> {
+    const result = ModifyCurrentUserSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(UserRouter.ROUTES.me, {
+    return this.#rest.patch(UserRouter.ROUTES.userCurrent, {
       body: JSON.stringify(result.data),
     });
   }
@@ -72,14 +70,14 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   getCurrentUserGuilds(
-    query: z.input<typeof GetCurrentUserGuildsQueryEntity> = {},
+    query: GetCurrentUserGuildsQuerySchema = {},
   ): Promise<GuildEntity[]> {
-    const result = GetCurrentUserGuildsQueryEntity.safeParse(query);
+    const result = GetCurrentUserGuildsQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(UserRouter.ROUTES.guilds, {
+    return this.#rest.get(UserRouter.ROUTES.userCurrentGuilds, {
       query: result.data,
     });
   }
@@ -88,21 +86,21 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.#rest.get(UserRouter.ROUTES.guildMember(guildId));
+    return this.#rest.get(UserRouter.ROUTES.userCurrentGuildMember(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(UserRouter.ROUTES.leaveGuild(guildId));
+    return this.#rest.delete(UserRouter.ROUTES.userCurrentLeaveGuild(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDm(recipientId: Snowflake): Promise<ChannelEntity> {
-    return this.#rest.post(UserRouter.ROUTES.channels, {
+    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify({ recipient_id: recipientId }),
     });
   }
@@ -110,15 +108,13 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
-  createGroupDm(
-    options: z.input<typeof CreateGroupDmEntity>,
-  ): Promise<ChannelEntity> {
-    const result = CreateGroupDmEntity.safeParse(options);
+  createGroupDm(options: CreateGroupDmSchema): Promise<ChannelEntity> {
+    const result = CreateGroupDmSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(UserRouter.ROUTES.channels, {
+    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify(result.data),
     });
   }
@@ -127,7 +123,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   getCurrentUserConnections(): Promise<ConnectionEntity[]> {
-    return this.#rest.get(UserRouter.ROUTES.connections);
+    return this.#rest.get(UserRouter.ROUTES.userCurrentConnections);
   }
 
   /**
@@ -136,7 +132,9 @@ export class UserRouter {
   getCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.get(UserRouter.ROUTES.applicationRole(applicationId));
+    return this.#rest.get(
+      UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
+    );
   }
 
   /**
@@ -144,18 +142,19 @@ export class UserRouter {
    */
   updateCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
-    connection: z.input<
-      typeof UpdateCurrentUserApplicationRoleConnectionEntity
-    >,
+    connection: UpdateCurrentUserApplicationRoleConnectionSchema,
   ): Promise<ApplicationRoleConnectionEntity> {
     const result =
-      UpdateCurrentUserApplicationRoleConnectionEntity.safeParse(connection);
+      UpdateCurrentUserApplicationRoleConnectionSchema.safeParse(connection);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(UserRouter.ROUTES.applicationRole(applicationId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.put(
+      UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 }

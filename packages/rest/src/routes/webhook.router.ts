@@ -1,14 +1,13 @@
 import type { Snowflake, WebhookEntity } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateWebhookEntity,
-  EditWebhookMessageEntity,
-  ExecuteWebhookEntity,
-  ExecuteWebhookQueryEntity,
-  GetWebhookMessageQueryEntity,
-  ModifyWebhookEntity,
+  CreateWebhookSchema,
+  EditWebhookMessageSchema,
+  ExecuteWebhookQuerySchema,
+  ExecuteWebhookSchema,
+  GetWebhookMessageQuerySchema,
+  ModifyWebhookSchema,
 } from "../schemas/index.js";
 
 export class WebhookRouter {
@@ -17,14 +16,14 @@ export class WebhookRouter {
       `/channels/${channelId}/webhooks` as const,
     guildWebhooks: (guildId: Snowflake) =>
       `/guilds/${guildId}/webhooks` as const,
-    webhook: (webhookId: Snowflake) => `/webhooks/${webhookId}` as const,
+    webhookBase: (webhookId: Snowflake) => `/webhooks/${webhookId}` as const,
     webhookWithToken: (webhookId: Snowflake, token: string) =>
       `/webhooks/${webhookId}/${token}` as const,
     webhookWithTokenSlack: (webhookId: Snowflake, token: string) =>
       `/webhooks/${webhookId}/${token}/slack` as const,
     webhookWithTokenGithub: (webhookId: Snowflake, token: string) =>
       `/webhooks/${webhookId}/${token}/github` as const,
-    webhookMessage: (
+    webhookTokenMessage: (
       webhookId: Snowflake,
       token: string,
       messageId: Snowflake,
@@ -42,10 +41,10 @@ export class WebhookRouter {
    */
   createWebhook(
     channelId: Snowflake,
-    options: z.input<typeof CreateWebhookEntity>,
+    options: CreateWebhookSchema,
     reason?: string,
   ): Promise<WebhookEntity> {
-    const result = CreateWebhookEntity.safeParse(options);
+    const result = CreateWebhookSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -74,7 +73,7 @@ export class WebhookRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
    */
   getWebhook(webhookId: Snowflake): Promise<WebhookEntity> {
-    return this.#rest.get(WebhookRouter.ROUTES.webhook(webhookId));
+    return this.#rest.get(WebhookRouter.ROUTES.webhookBase(webhookId));
   }
 
   /**
@@ -94,15 +93,15 @@ export class WebhookRouter {
    */
   modifyWebhook(
     webhookId: Snowflake,
-    options: z.input<typeof ModifyWebhookEntity>,
+    options: ModifyWebhookSchema,
     reason?: string,
   ): Promise<WebhookEntity> {
-    const result = ModifyWebhookEntity.safeParse(options);
+    const result = ModifyWebhookSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(WebhookRouter.ROUTES.webhook(webhookId), {
+    return this.#rest.patch(WebhookRouter.ROUTES.webhookBase(webhookId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -114,10 +113,10 @@ export class WebhookRouter {
   modifyWebhookWithToken(
     webhookId: Snowflake,
     token: string,
-    options: Omit<z.input<typeof ModifyWebhookEntity>, "channel_id">,
+    options: Omit<ModifyWebhookSchema, "channel_id">,
     reason?: string,
   ): Promise<WebhookEntity> {
-    const result = ModifyWebhookEntity.safeParse(options);
+    const result = ModifyWebhookSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -135,7 +134,7 @@ export class WebhookRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
    */
   deleteWebhook(webhookId: Snowflake, reason?: string): Promise<void> {
-    return this.#rest.delete(WebhookRouter.ROUTES.webhook(webhookId), {
+    return this.#rest.delete(WebhookRouter.ROUTES.webhookBase(webhookId), {
       reason,
     });
   }
@@ -162,11 +161,11 @@ export class WebhookRouter {
   executeWebhook(
     webhookId: Snowflake,
     token: string,
-    options: z.input<typeof ExecuteWebhookEntity>,
-    query: z.input<typeof ExecuteWebhookQueryEntity> = {},
+    options: ExecuteWebhookSchema,
+    query: ExecuteWebhookQuerySchema = {},
   ): Promise<WebhookEntity | undefined> {
-    const result = ExecuteWebhookEntity.safeParse(options);
-    const resultQuery = ExecuteWebhookQueryEntity.safeParse(query);
+    const result = ExecuteWebhookSchema.safeParse(options);
+    const resultQuery = ExecuteWebhookQuerySchema.safeParse(query);
     if (!(result.success && resultQuery.success)) {
       const errors = [
         ...(result.success ? [] : result.error.errors),
@@ -195,9 +194,9 @@ export class WebhookRouter {
   executeSlackCompatibleWebhook(
     webhookId: Snowflake,
     token: string,
-    query: z.input<typeof ExecuteWebhookQueryEntity> = {},
+    query: ExecuteWebhookQuerySchema = {},
   ): Promise<void> {
-    const result = ExecuteWebhookQueryEntity.safeParse(query);
+    const result = ExecuteWebhookQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -216,9 +215,9 @@ export class WebhookRouter {
   executeGithubCompatibleWebhook(
     webhookId: Snowflake,
     token: string,
-    query: z.input<typeof ExecuteWebhookQueryEntity> = {},
+    query: ExecuteWebhookQuerySchema = {},
   ): Promise<void> {
-    const result = ExecuteWebhookQueryEntity.safeParse(query);
+    const result = ExecuteWebhookQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -238,15 +237,15 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    query: z.input<typeof GetWebhookMessageQueryEntity> = {},
+    query: GetWebhookMessageQuerySchema = {},
   ): Promise<WebhookEntity> {
-    const result = GetWebhookMessageQueryEntity.safeParse(query);
+    const result = GetWebhookMessageQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.get(
-      WebhookRouter.ROUTES.webhookMessage(webhookId, token, messageId),
+      WebhookRouter.ROUTES.webhookTokenMessage(webhookId, token, messageId),
       {
         query: result.data,
       },
@@ -260,11 +259,11 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    options: z.input<typeof EditWebhookMessageEntity>,
-    query: z.input<typeof GetWebhookMessageQueryEntity> = {},
+    options: EditWebhookMessageSchema,
+    query: GetWebhookMessageQuerySchema = {},
   ): Promise<WebhookEntity> {
-    const result = EditWebhookMessageEntity.safeParse(query);
-    const resultQuery = GetWebhookMessageQueryEntity.safeParse(query);
+    const result = EditWebhookMessageSchema.safeParse(query);
+    const resultQuery = GetWebhookMessageQuerySchema.safeParse(query);
     if (!(result.success && resultQuery.success)) {
       const errors = [
         ...(result.success ? [] : result.error.errors),
@@ -278,7 +277,7 @@ export class WebhookRouter {
 
     const { files, ...rest } = options;
     return this.#rest.patch(
-      WebhookRouter.ROUTES.webhookMessage(webhookId, token, messageId),
+      WebhookRouter.ROUTES.webhookTokenMessage(webhookId, token, messageId),
       {
         body: JSON.stringify(rest),
         query: resultQuery.data,
@@ -294,15 +293,15 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    query: z.input<typeof GetWebhookMessageQueryEntity> = {},
+    query: GetWebhookMessageQuerySchema = {},
   ): Promise<void> {
-    const result = GetWebhookMessageQueryEntity.safeParse(query);
+    const result = GetWebhookMessageQuerySchema.safeParse(query);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.delete(
-      WebhookRouter.ROUTES.webhookMessage(webhookId, token, messageId),
+      WebhookRouter.ROUTES.webhookTokenMessage(webhookId, token, messageId),
       {
         query: result.data,
       },

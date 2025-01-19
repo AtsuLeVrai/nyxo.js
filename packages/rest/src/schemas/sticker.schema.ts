@@ -1,5 +1,6 @@
 import type { StickerPackEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { FileHandler } from "../handlers/index.js";
 import type { FileInput } from "../types/index.js";
 
 /**
@@ -12,22 +13,24 @@ export interface ListStickerPacksResponseEntity {
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker-form-params}
  */
-export const CreateGuildStickerEntity = z.object({
+export const CreateGuildStickerSchema = z.object({
   name: z.string().min(2).max(30),
   description: z.string().min(2).max(100),
   tags: z.string().max(200),
-  file: z.custom<FileInput>(),
+  file: z
+    .custom<FileInput>(FileHandler.isValidFileInput)
+    .transform(FileHandler.toDataUri),
 });
 
-export type CreateGuildStickerEntity = z.infer<typeof CreateGuildStickerEntity>;
+export type CreateGuildStickerSchema = z.input<typeof CreateGuildStickerSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params}
  */
-export const ModifyGuildStickerEntity = z.object({
+export const ModifyGuildStickerSchema = z.object({
   name: z.string().min(2).max(30).optional(),
   description: z.string().min(2).max(100).nullish(),
   tags: z.string().max(200).optional(),
 });
 
-export type ModifyGuildStickerEntity = z.infer<typeof ModifyGuildStickerEntity>;
+export type ModifyGuildStickerSchema = z.input<typeof ModifyGuildStickerSchema>;

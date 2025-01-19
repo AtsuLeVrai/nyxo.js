@@ -1,5 +1,5 @@
 import type { Dispatcher } from "undici";
-import type { FileInput } from "./file-processor.type.js";
+import type { FileInput } from "./file.type.js";
 import type { RateLimitBucket, RateLimitEvent } from "./rate-limit.type.js";
 
 /**

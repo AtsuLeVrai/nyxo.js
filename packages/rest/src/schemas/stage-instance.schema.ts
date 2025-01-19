@@ -4,7 +4,7 @@ import { z } from "zod";
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params}
  */
-export const CreateStageInstanceEntity = z.object({
+export const CreateStageInstanceSchema = z.object({
   channel_id: Snowflake,
   topic: z.string().min(1).max(120),
   privacy_level: z
@@ -15,18 +15,18 @@ export const CreateStageInstanceEntity = z.object({
   guild_scheduled_event_id: Snowflake.optional(),
 });
 
-export type CreateStageInstanceEntity = z.infer<
-  typeof CreateStageInstanceEntity
+export type CreateStageInstanceSchema = z.input<
+  typeof CreateStageInstanceSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}
  */
-export const ModifyStageInstanceEntity = CreateStageInstanceEntity.pick({
+export const ModifyStageInstanceSchema = CreateStageInstanceSchema.pick({
   topic: true,
   privacy_level: true,
 }).partial();
 
-export type ModifyStageInstanceEntity = z.infer<
-  typeof ModifyStageInstanceEntity
+export type ModifyStageInstanceSchema = z.input<
+  typeof ModifyStageInstanceSchema
 >;

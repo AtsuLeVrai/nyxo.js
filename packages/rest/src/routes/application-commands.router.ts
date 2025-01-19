@@ -7,30 +7,33 @@ import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateGlobalApplicationCommandEntity,
-  CreateGuildApplicationCommandEntity,
-  EditApplicationCommandPermissionsEntity,
-  EditGlobalApplicationCommandEntity,
-  EditGuildApplicationCommandEntity,
+  CreateGlobalApplicationCommandSchema,
+  CreateGuildApplicationCommandSchema,
+  EditApplicationCommandPermissionsSchema,
+  EditGlobalApplicationCommandSchema,
+  EditGuildApplicationCommandSchema,
 } from "../schemas/index.js";
 
 export class ApplicationCommandRouter {
   static readonly ROUTES = {
-    base: (applicationId: Snowflake) =>
+    applicationsCommands: (applicationId: Snowflake) =>
       `/applications/${applicationId}/commands` as const,
-    command: (applicationId: Snowflake, commandId: Snowflake) =>
+    applicationsCommandsId: (applicationId: Snowflake, commandId: Snowflake) =>
       `/applications/${applicationId}/commands/${commandId}` as const,
-    guildCommands: (applicationId: Snowflake, guildId: Snowflake) =>
+    applicationsGuildCommands: (applicationId: Snowflake, guildId: Snowflake) =>
       `/applications/${applicationId}/guilds/${guildId}/commands` as const,
-    guildCommand: (
+    applicationsGuildCommandsId: (
       applicationId: Snowflake,
       guildId: Snowflake,
       commandId: Snowflake,
     ) =>
       `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}` as const,
-    guildCommandsPermissions: (applicationId: Snowflake, guildId: Snowflake) =>
+    applicationsGuildCommandsPermissions: (
+      applicationId: Snowflake,
+      guildId: Snowflake,
+    ) =>
       `/applications/${applicationId}/guilds/${guildId}/commands/permissions` as const,
-    guildCommandPermissions: (
+    applicationsGuildCommandsPermissionsId: (
       applicationId: Snowflake,
       guildId: Snowflake,
       commandId: Snowflake,
@@ -51,9 +54,12 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
-    return this.#rest.get(ApplicationCommandRouter.ROUTES.base(applicationId), {
-      query: { with_localizations: withLocalizations },
-    });
+    return this.#rest.get(
+      ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
+      {
+        query: { with_localizations: withLocalizations },
+      },
+    );
   }
 
   /**
@@ -61,15 +67,15 @@ export class ApplicationCommandRouter {
    */
   createGlobalApplicationCommand(
     applicationId: Snowflake,
-    options: z.input<typeof CreateGlobalApplicationCommandEntity>,
+    options: CreateGlobalApplicationCommandSchema,
   ): Promise<ApplicationCommandEntity> {
-    const result = CreateGlobalApplicationCommandEntity.safeParse(options);
+    const result = CreateGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
-      ApplicationCommandRouter.ROUTES.base(applicationId),
+      ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
       {
         body: JSON.stringify(result.data),
       },
@@ -84,7 +90,10 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.get(
-      ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
+      ApplicationCommandRouter.ROUTES.applicationsCommandsId(
+        applicationId,
+        commandId,
+      ),
     );
   }
 
@@ -94,15 +103,18 @@ export class ApplicationCommandRouter {
   editGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-    options: z.input<typeof EditGlobalApplicationCommandEntity>,
+    options: EditGlobalApplicationCommandSchema,
   ): Promise<ApplicationCommandEntity> {
-    const result = EditGlobalApplicationCommandEntity.safeParse(options);
+    const result = EditGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
-      ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
+      ApplicationCommandRouter.ROUTES.applicationsCommandsId(
+        applicationId,
+        commandId,
+      ),
       { body: JSON.stringify(result.data) },
     );
   }
@@ -115,7 +127,10 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      ApplicationCommandRouter.ROUTES.command(applicationId, commandId),
+      ApplicationCommandRouter.ROUTES.applicationsCommandsId(
+        applicationId,
+        commandId,
+      ),
     );
   }
 
@@ -124,19 +139,22 @@ export class ApplicationCommandRouter {
    */
   bulkOverwriteGlobalApplicationCommands(
     applicationId: Snowflake,
-    commands: z.input<typeof CreateGlobalApplicationCommandEntity>[],
+    commands: CreateGlobalApplicationCommandSchema[],
   ): Promise<ApplicationCommandEntity[]> {
     const result = z
-      .array(CreateGlobalApplicationCommandEntity)
+      .array(CreateGlobalApplicationCommandSchema)
       .max(200)
       .safeParse(commands);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(ApplicationCommandRouter.ROUTES.base(applicationId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.put(
+      ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 
   /**
@@ -148,7 +166,10 @@ export class ApplicationCommandRouter {
     withLocalizations = false,
   ): Promise<ApplicationCommandEntity[]> {
     return this.#rest.get(
-      ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
+        applicationId,
+        guildId,
+      ),
       {
         query: { with_localizations: withLocalizations },
       },
@@ -161,15 +182,18 @@ export class ApplicationCommandRouter {
   createGuildApplicationCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
-    options: z.input<typeof CreateGuildApplicationCommandEntity>,
+    options: CreateGuildApplicationCommandSchema,
   ): Promise<ApplicationCommandEntity> {
-    const result = CreateGuildApplicationCommandEntity.safeParse(options);
+    const result = CreateGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.post(
-      ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
+        applicationId,
+        guildId,
+      ),
       {
         body: JSON.stringify(result.data),
       },
@@ -185,7 +209,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
   ): Promise<ApplicationCommandEntity> {
     return this.#rest.get(
-      ApplicationCommandRouter.ROUTES.guildCommand(
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
         guildId,
         commandId,
@@ -200,15 +224,15 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: z.input<typeof EditGuildApplicationCommandEntity>,
+    options: EditGuildApplicationCommandSchema,
   ): Promise<ApplicationCommandEntity> {
-    const result = EditGuildApplicationCommandEntity.safeParse(options);
+    const result = EditGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
-      ApplicationCommandRouter.ROUTES.guildCommand(
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
         guildId,
         commandId,
@@ -228,7 +252,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      ApplicationCommandRouter.ROUTES.guildCommand(
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
         guildId,
         commandId,
@@ -242,10 +266,10 @@ export class ApplicationCommandRouter {
   bulkOverwriteGuildApplicationCommands(
     applicationId: Snowflake,
     guildId: Snowflake,
-    commands: z.input<typeof CreateGlobalApplicationCommandEntity>[],
+    commands: CreateGlobalApplicationCommandSchema[],
   ): Promise<ApplicationCommandEntity[]> {
     const result = z
-      .array(CreateGlobalApplicationCommandEntity)
+      .array(CreateGlobalApplicationCommandSchema)
       .max(200)
       .safeParse(commands);
     if (!result.success) {
@@ -253,7 +277,10 @@ export class ApplicationCommandRouter {
     }
 
     return this.#rest.put(
-      ApplicationCommandRouter.ROUTES.guildCommands(applicationId, guildId),
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
+        applicationId,
+        guildId,
+      ),
       {
         body: JSON.stringify(result.data),
       },
@@ -268,7 +295,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity[]> {
     return this.#rest.get(
-      ApplicationCommandRouter.ROUTES.guildCommandsPermissions(
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommandsPermissions(
         applicationId,
         guildId,
       ),
@@ -284,7 +311,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity> {
     return this.#rest.get(
-      ApplicationCommandRouter.ROUTES.guildCommandPermissions(
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommandsPermissionsId(
         applicationId,
         guildId,
         commandId,
@@ -299,15 +326,15 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: z.input<typeof EditApplicationCommandPermissionsEntity>,
+    options: EditApplicationCommandPermissionsSchema,
   ): Promise<GuildApplicationCommandPermissionEntity> {
-    const result = EditApplicationCommandPermissionsEntity.safeParse(options);
+    const result = EditApplicationCommandPermissionsSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.put(
-      ApplicationCommandRouter.ROUTES.guildCommandPermissions(
+      ApplicationCommandRouter.ROUTES.applicationsGuildCommandsPermissionsId(
         applicationId,
         guildId,
         commandId,

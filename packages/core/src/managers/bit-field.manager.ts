@@ -6,7 +6,6 @@ export type BitFieldResolvable<T> =
   | `${bigint}`;
 
 const BIGINT_REGEX = /^-?\d+$/;
-const BINARY_REGEX = /^[01]+$/;
 
 export class BitFieldManager<T> {
   #bitfield: bigint;
@@ -19,14 +18,6 @@ export class BitFieldManager<T> {
 
   static from<F>(value: BitFieldResolvable<F>): BitFieldManager<F> {
     return new BitFieldManager(value);
-  }
-
-  static fromBinary<F>(binary: string): BitFieldManager<F> {
-    if (!BINARY_REGEX.test(binary)) {
-      throw new Error("Invalid binary string");
-    }
-
-    return new BitFieldManager<F>(BigInt(`0b${binary}`));
   }
 
   static isValid(value: unknown): value is bigint {

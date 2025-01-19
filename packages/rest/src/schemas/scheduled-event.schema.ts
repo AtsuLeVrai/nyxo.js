@@ -7,11 +7,13 @@ import {
   Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
+import { FileHandler } from "../handlers/index.js";
+import type { FileInput } from "../types/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
  */
-export const CreateGuildScheduledEventEntity = z.object({
+export const CreateGuildScheduledEventSchema = z.object({
   channel_id: Snowflake.optional(),
   entity_metadata: GuildScheduledEventEntityMetadataEntity.optional(),
   name: z.string().min(1).max(100),
@@ -21,40 +23,40 @@ export const CreateGuildScheduledEventEntity = z.object({
   description: z.string().min(1).max(1000).optional(),
   entity_type: z.nativeEnum(GuildScheduledEventType),
   image: z
-    .string()
-    .regex(/^data:image\/(jpeg|png|gif);base64,/)
+    .custom<FileInput>(FileHandler.isValidFileInput)
+    .transform(FileHandler.toDataUri)
     .optional(),
   recurrence_rule: GuildScheduledEventRecurrenceRuleEntity.optional(),
 });
 
-export type CreateGuildScheduledEventEntity = z.infer<
-  typeof CreateGuildScheduledEventEntity
+export type CreateGuildScheduledEventSchema = z.input<
+  typeof CreateGuildScheduledEventSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
  */
-export const ModifyGuildScheduledEventEntity =
-  CreateGuildScheduledEventEntity.partial().merge(
+export const ModifyGuildScheduledEventSchema =
+  CreateGuildScheduledEventSchema.partial().merge(
     z.object({
       status: z.nativeEnum(GuildScheduledEventStatus).optional(),
     }),
   );
 
-export type ModifyGuildScheduledEventEntity = z.infer<
-  typeof ModifyGuildScheduledEventEntity
+export type ModifyGuildScheduledEventSchema = z.input<
+  typeof ModifyGuildScheduledEventSchema
 >;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params}
  */
-export const GetGuildScheduledEventUsersQueryEntity = z.object({
-  limit: z.number().max(100).optional().default(100),
-  with_member: z.boolean().optional().default(false),
+export const GetGuildScheduledEventUsersQuerySchema = z.object({
+  limit: z.number().max(100).default(100),
+  with_member: z.boolean().default(false),
   before: Snowflake.optional(),
   after: Snowflake.optional(),
 });
 
-export type GetGuildScheduledEventUsersQueryEntity = z.infer<
-  typeof GetGuildScheduledEventUsersQueryEntity
+export type GetGuildScheduledEventUsersQuerySchema = z.input<
+  typeof GetGuildScheduledEventUsersQuerySchema
 >;

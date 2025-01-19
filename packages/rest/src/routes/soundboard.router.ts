@@ -1,22 +1,21 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
-import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../rest.js";
 import {
-  CreateGuildSoundboardSoundEntity,
+  CreateGuildSoundboardSoundSchema,
   type ListGuildSoundboardSoundsResponseEntity,
-  ModifyGuildSoundboardSoundEntity,
-  SendSoundboardSoundEntity,
+  ModifyGuildSoundboardSoundSchema,
+  SendSoundboardSoundSchema,
 } from "../schemas/index.js";
 
 export class SoundboardRouter {
   static readonly ROUTES = {
-    defaultSounds: "/soundboard-default-sounds" as const,
-    guildSounds: (guildId: Snowflake) =>
+    soundboardDefaultSounds: "/soundboard-default-sounds" as const,
+    guildSoundboardSounds: (guildId: Snowflake) =>
       `/guilds/${guildId}/soundboard-sounds` as const,
-    guildSound: (guildId: Snowflake, soundId: Snowflake) =>
+    guildSoundboardSound: (guildId: Snowflake, soundId: Snowflake) =>
       `/guilds/${guildId}/soundboard-sounds/${soundId}` as const,
-    sendSound: (channelId: Snowflake) =>
+    channelSendSoundboardSound: (channelId: Snowflake) =>
       `/channels/${channelId}/send-soundboard-sound` as const,
   } as const;
 
@@ -31,23 +30,26 @@ export class SoundboardRouter {
    */
   sendSoundboardSound(
     channelId: Snowflake,
-    options: z.input<typeof SendSoundboardSoundEntity>,
+    options: SendSoundboardSoundSchema,
   ): Promise<void> {
-    const result = SendSoundboardSoundEntity.safeParse(options);
+    const result = SendSoundboardSoundSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(SoundboardRouter.ROUTES.sendSound(channelId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.#rest.post(
+      SoundboardRouter.ROUTES.channelSendSoundboardSound(channelId),
+      {
+        body: JSON.stringify(result.data),
+      },
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.#rest.get(SoundboardRouter.ROUTES.defaultSounds);
+    return this.#rest.get(SoundboardRouter.ROUTES.soundboardDefaultSounds);
   }
 
   /**
@@ -56,7 +58,9 @@ export class SoundboardRouter {
   listGuildSoundboardSounds(
     guildId: Snowflake,
   ): Promise<ListGuildSoundboardSoundsResponseEntity> {
-    return this.#rest.get(SoundboardRouter.ROUTES.guildSounds(guildId));
+    return this.#rest.get(
+      SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
+    );
   }
 
   /**
@@ -66,7 +70,9 @@ export class SoundboardRouter {
     guildId: Snowflake,
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.get(SoundboardRouter.ROUTES.guildSound(guildId, soundId));
+    return this.#rest.get(
+      SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
+    );
   }
 
   /**
@@ -74,18 +80,21 @@ export class SoundboardRouter {
    */
   createGuildSoundboardSound(
     guildId: Snowflake,
-    options: z.input<typeof CreateGuildSoundboardSoundEntity>,
+    options: CreateGuildSoundboardSoundSchema,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    const result = CreateGuildSoundboardSoundEntity.safeParse(options);
+    const result = CreateGuildSoundboardSoundSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(SoundboardRouter.ROUTES.guildSounds(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.#rest.post(
+      SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+    );
   }
 
   /**
@@ -94,16 +103,16 @@ export class SoundboardRouter {
   modifyGuildSoundboardSound(
     guildId: Snowflake,
     soundId: Snowflake,
-    options: z.input<typeof ModifyGuildSoundboardSoundEntity>,
+    options: ModifyGuildSoundboardSoundSchema,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    const result = ModifyGuildSoundboardSoundEntity.safeParse(options);
+    const result = ModifyGuildSoundboardSoundSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
 
     return this.#rest.patch(
-      SoundboardRouter.ROUTES.guildSound(guildId, soundId),
+      SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
       {
         body: JSON.stringify(result.data),
         reason,
@@ -120,7 +129,7 @@ export class SoundboardRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      SoundboardRouter.ROUTES.guildSound(guildId, soundId),
+      SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
       {
         reason,
       },
