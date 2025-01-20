@@ -39,7 +39,7 @@ const DISCORD_SHARED_ROUTES = new Map([
 const INVALID_STATUS_CODES = new Set([401, 403, 429]);
 const INTERACTION_ROUTES = new Set(["/interactions", "/webhooks"]);
 
-export class RateLimiterService extends EventEmitter<RestEvents> {
+export class RateLimiterManager extends EventEmitter<RestEvents> {
   readonly #buckets = new Store<string, RateLimitBucket>();
   readonly #routesToBuckets = new Store<string, string>();
   readonly #sharedBuckets = new Store<string, Set<string>>();

@@ -1,6 +1,6 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../rest.js";
+import type { Rest } from "../core/rest.js";
 import { GetInviteQuerySchema } from "../schemas/index.js";
 
 export class InviteRouter {

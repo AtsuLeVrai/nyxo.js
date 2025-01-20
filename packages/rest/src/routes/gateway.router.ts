@@ -1,4 +1,4 @@
-import type { Rest } from "../rest.js";
+import type { Rest } from "../core/rest.js";
 import type {
   GatewayBotResponseEntity,
   GatewayResponseEntity,

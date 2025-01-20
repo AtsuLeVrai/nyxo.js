@@ -22,6 +22,23 @@ const DATA_URI_REGEX = /^data:(.+);base64,(.+)$/;
 const FILE_URI_REGEX = /^[/.]|^[a-zA-Z]:\\/;
 const FILE_NAME_REPLACE_REGEX = /\.[^/.]+$/;
 
+function isValidSingleInput(value: unknown): value is FileInput {
+  return (
+    FileHandler.isBuffer(value) ||
+    FileHandler.isFile(value) ||
+    FileHandler.isUrl(value) ||
+    FileHandler.isBlob(value) ||
+    FileHandler.isArrayBuffer(value) ||
+    FileHandler.isUint8Array(value) ||
+    FileHandler.isReadable(value) ||
+    FileHandler.isReadableStream(value) ||
+    (typeof value === "string" &&
+      (FileHandler.isDataUri(value) ||
+        FileHandler.isFilePath(value) ||
+        FileHandler.isValidUrl(value)))
+  );
+}
+
 export class FileHandler {
   readonly #options: z.output<typeof FileOptions>;
 
@@ -65,7 +82,30 @@ export class FileHandler {
     if (typeof input !== "string") {
       return false;
     }
+
     return FILE_URI_REGEX.test(input);
+  }
+
+  static isReadable(input: unknown): input is Readable {
+    return input instanceof Readable;
+  }
+
+  static isBlob(input: unknown): input is Blob {
+    return typeof Blob !== "undefined" && input instanceof Blob;
+  }
+
+  static isArrayBuffer(input: unknown): input is ArrayBuffer {
+    return input instanceof ArrayBuffer;
+  }
+
+  static isUint8Array(input: unknown): input is Uint8Array {
+    return input instanceof Uint8Array;
+  }
+
+  static isReadableStream(input: unknown): input is ReadableStream {
+    return (
+      typeof ReadableStream !== "undefined" && input instanceof ReadableStream
+    );
   }
 
   static isImageType(contentType: string): boolean {
@@ -119,12 +159,29 @@ export class FileHandler {
     }
   }
 
+  static isValidUrl(value: string): boolean {
+    try {
+      new URL(value, "file://");
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  static isValidFileInput(value: unknown): value is FileInput | FileInput[] {
+    if (Array.isArray(value)) {
+      return value.every((item) => isValidSingleInput(item));
+    }
+
+    return isValidSingleInput(value);
+  }
+
   static async checkFileSize(
     input: FileInput,
     maxSize: number,
   ): Promise<boolean> {
     try {
-      if (input instanceof File) {
+      if (FileHandler.isFile(input)) {
         return input.size <= maxSize;
       }
 
@@ -148,25 +205,26 @@ export class FileHandler {
     return ext ? `.${ext}` : "";
   }
 
-  static async getMimeType(input: FileInput): Promise<string | undefined> {
+  static async getMimeType(input: FileInput): Promise<string> {
     try {
-      if (input instanceof File) {
-        return input.type || lookup(input.name) || undefined;
+      if (FileHandler.isFile(input)) {
+        return input.type || lookup(input.name) || "application/octet-stream";
       }
 
       if (typeof input === "string") {
         if (FileHandler.isDataUri(input)) {
           const matches = input.match(DATA_URI_REGEX);
-          return matches?.[1];
+          return matches?.[1] ?? "application/octet-stream";
         }
-        return lookup(input) || undefined;
+
+        return lookup(input) || "application/octet-stream";
       }
 
       const buffer = await FileHandler.toBuffer(input);
       const type = await fileTypeFromBuffer(buffer);
-      return type?.mime;
+      return type?.mime ?? "application/octet-stream";
     } catch {
-      return undefined;
+      return "application/octet-stream";
     }
   }
 
@@ -175,8 +233,39 @@ export class FileHandler {
       return input;
     }
 
-    if (input instanceof File) {
+    if (FileHandler.isFile(input) || FileHandler.isBlob(input)) {
       return Buffer.from(await input.arrayBuffer());
+    }
+
+    if (FileHandler.isArrayBuffer(input)) {
+      return Buffer.from(input);
+    }
+
+    if (FileHandler.isUint8Array(input)) {
+      return Buffer.from(input);
+    }
+
+    if (FileHandler.isReadable(input)) {
+      const chunks: Buffer[] = [];
+      for await (const chunk of input) {
+        chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks);
+    }
+
+    if (FileHandler.isReadableStream(input)) {
+      const reader = input.getReader();
+      const chunks: Uint8Array[] = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        chunks.push(value);
+      }
+
+      return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
     }
 
     if (typeof input === "string" && FileHandler.isDataUri(input)) {
@@ -197,7 +286,7 @@ export class FileHandler {
       throw new FileError("File API is not available in this environment");
     }
 
-    if (input instanceof File) {
+    if (FileHandler.isFile(input)) {
       return input;
     }
 
@@ -205,7 +294,7 @@ export class FileHandler {
     let name = filename;
     let type: string;
 
-    if (input instanceof URL) {
+    if (FileHandler.isUrl(input)) {
       name ??= basename(input.pathname);
       type = lookup(name) || "application/octet-stream";
     } else if (typeof input === "string" && FileHandler.isDataUri(input)) {
@@ -243,7 +332,7 @@ export class FileHandler {
   }
 
   static async toUrl(input: FileInput): Promise<URL> {
-    if (input instanceof URL) {
+    if (FileHandler.isUrl(input)) {
       return input;
     }
 
@@ -270,7 +359,7 @@ export class FileHandler {
       return input;
     }
 
-    if (input instanceof URL) {
+    if (FileHandler.isFileUrl(input)) {
       if (input.protocol === "file:") {
         return decodeURIComponent(input.pathname);
       }
@@ -281,34 +370,6 @@ export class FileHandler {
     throw new FileError(
       "Cannot convert this input to a path. Only file paths and file:// URLs are supported",
     );
-  }
-
-  static isValidFileInput(value: unknown): value is FileInput {
-    if (Buffer.isBuffer(value)) {
-      return true;
-    }
-
-    if (typeof File !== "undefined" && value instanceof File) {
-      return true;
-    }
-
-    if (value instanceof URL) {
-      return true;
-    }
-
-    if (typeof value === "string") {
-      if (FileHandler.isDataUri(value)) {
-        return true;
-      }
-      try {
-        new URL(value, "file://");
-        return true;
-      } catch {
-        return FILE_URI_REGEX.test(value);
-      }
-    }
-
-    return false;
   }
 
   static bufferToDataUri(buffer: Buffer, contentType: string): DataUri {
@@ -334,7 +395,10 @@ export class FileHandler {
       await this.validateFile(processedFile, this.#options.validationOptions);
     }
 
-    if (this.isImage(processedFile.contentType) && mergedImageOptions) {
+    if (
+      FileHandler.isImageType(processedFile.contentType) &&
+      mergedImageOptions
+    ) {
       return await this.processImage(
         processedFile,
         mergedImageOptions as ImageProcessingOptions,
@@ -388,35 +452,49 @@ export class FileHandler {
     return form;
   }
 
-  async toDataUri(input: FileInput): Promise<string> {
-    if (typeof input === "string" && FileHandler.isDataUri(input)) {
-      return input;
-    }
-
-    const file = await this.processFile(input);
-    return FileHandler.bufferToDataUri(file.buffer, file.contentType);
-  }
-
   processInput(input: FileInput): Promise<ProcessedFile> | ProcessedFile {
     try {
-      if (Buffer.isBuffer(input)) {
+      if (FileHandler.isBuffer(input)) {
         return this.processBuffer(input);
       }
-      if (input instanceof File) {
+
+      if (FileHandler.isFile(input) || FileHandler.isBlob(input)) {
         return this.processFileObject(input);
       }
-      if (input instanceof URL) {
+
+      if (FileHandler.isArrayBuffer(input) || FileHandler.isUint8Array(input)) {
+        const uint8Array =
+          input instanceof ArrayBuffer ? new Uint8Array(input) : input;
+        return this.processBuffer(
+          Buffer.from(
+            uint8Array.buffer,
+            uint8Array.byteOffset,
+            uint8Array.byteLength,
+          ),
+        );
+      }
+
+      if (FileHandler.isReadable(input)) {
+        return this.processStream(input);
+      }
+
+      if (FileHandler.isReadableStream(input)) {
+        return this.processWebStream(input);
+      }
+
+      if (FileHandler.isUrl(input)) {
         return this.processPath(input.pathname);
       }
+
       if (typeof input === "string") {
         return this.processPath(input);
       }
+
       throw new FileError("Invalid file input type");
     } catch (error) {
       if (error instanceof FileError) {
         throw error;
       }
-
       throw new FileError("File processing failed");
     }
   }
@@ -474,13 +552,12 @@ export class FileHandler {
       throw new FileError(`File type not allowed: ${file.contentType}`);
     }
 
-    if (options.validateImage && this.isImage(file.contentType)) {
+    if (
+      options.validateImage &&
+      (await FileHandler.isImage(file.contentType))
+    ) {
       await this.validateImageDimensions(file.buffer, options);
     }
-  }
-
-  isImage(contentType: string): boolean {
-    return contentType.startsWith("image/");
   }
 
   async validateImageDimensions(
@@ -525,16 +602,6 @@ export class FileHandler {
     };
   }
 
-  async processFileObject(file: File): Promise<ProcessedFile> {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    return {
-      buffer,
-      filename: file.name,
-      contentType: file.type || lookup(file.name) || "application/octet-stream",
-      size: file.size,
-    };
-  }
-
   async processPath(path: string): Promise<ProcessedFile> {
     if (FileHandler.isDataUri(path)) {
       return this.processDataUri(path);
@@ -572,6 +639,39 @@ export class FileHandler {
       filename: `file.${ext}`,
       contentType,
       size: buffer.length,
+    };
+  }
+
+  async processStream(stream: Readable): Promise<ProcessedFile> {
+    const buffer = await FileHandler.toBuffer(stream);
+    return {
+      buffer,
+      filename: "stream-file",
+      contentType: "application/octet-stream",
+      size: buffer.length,
+    };
+  }
+
+  async processWebStream(stream: ReadableStream): Promise<ProcessedFile> {
+    const buffer = await FileHandler.toBuffer(stream);
+    return {
+      buffer,
+      filename: "web-stream-file",
+      contentType: "application/octet-stream",
+      size: buffer.length,
+    };
+  }
+
+  async processFileObject(file: File | Blob): Promise<ProcessedFile> {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const filename = file instanceof File ? file.name : "blob-file";
+    const contentType = file.type || "application/octet-stream";
+
+    return {
+      buffer,
+      filename,
+      contentType,
+      size: file.size,
     };
   }
 

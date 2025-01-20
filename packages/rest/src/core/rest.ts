@@ -9,9 +9,10 @@ import {
   HttpError,
   RateLimitError,
   RestError,
-} from "./errors/index.js";
-import { FileHandler } from "./handlers/index.js";
-import { RestOptions } from "./options/index.js";
+} from "../errors/index.js";
+import { FileHandler } from "../handlers/index.js";
+import { RateLimiterManager } from "../managers/index.js";
+import { RestOptions } from "../options/index.js";
 import {
   ApplicationCommandRouter,
   ApplicationConnectionRouter,
@@ -38,8 +39,8 @@ import {
   UserRouter,
   VoiceRouter,
   WebhookRouter,
-} from "./routes/index.js";
-import { HttpService, RateLimiterService } from "./services/index.js";
+} from "../routes/index.js";
+import { HttpService } from "../services/index.js";
 import type {
   BucketStatusInfo,
   FileInput,
@@ -48,9 +49,9 @@ import type {
   ProcessedFile,
   RequestOptions,
   RestEvents,
-} from "./types/index.js";
+} from "../types/index.js";
 
-export const REST_FORWARDED_EVENTS: (keyof RestEvents)[] = [
+export const REST_FORWARDED_EVENTS = new Set<keyof RestEvents>([
   "debug",
   "error",
   "warn",
@@ -60,7 +61,7 @@ export const REST_FORWARDED_EVENTS: (keyof RestEvents)[] = [
   "bucketCreated",
   "bucketDeleted",
   "invalidRequest",
-];
+]);
 
 export class Rest extends EventEmitter<RestEvents> {
   readonly applications = new ApplicationRouter(this);
@@ -90,7 +91,7 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly webhooks = new WebhookRouter(this);
 
   readonly #http: HttpService;
-  readonly #rateLimiter: RateLimiterService;
+  readonly #rateLimiter: RateLimiterManager;
   readonly #file: FileHandler;
   readonly #options: z.output<typeof RestOptions>;
 
@@ -104,7 +105,7 @@ export class Rest extends EventEmitter<RestEvents> {
     }
 
     this.#file = new FileHandler(this.#options);
-    this.#rateLimiter = new RateLimiterService(this.#options);
+    this.#rateLimiter = new RateLimiterManager(this.#options);
     this.#http = new HttpService(this.#options);
 
     this.#setupEventForwarding([this.#rateLimiter, this.#http]);

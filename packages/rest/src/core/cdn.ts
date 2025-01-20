@@ -4,7 +4,7 @@ import type {
   ImageFormat,
   ImageProcessingOptions,
   StickerFormatOptionsEntity,
-} from "./types/index.js";
+} from "../types/index.js";
 
 const DEFAULT_FORMAT: ImageFormat = "png";
 const HASH_REGEX = /^[a-fA-F0-9_]+$/;
