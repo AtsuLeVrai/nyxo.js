@@ -35,6 +35,42 @@ export enum GuildScheduledEventRecurrenceRuleWeekday {
 }
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-frequency}
+ */
+export enum GuildScheduledEventRecurrenceRuleFrequency {
+  Yearly = 0,
+  Monthly = 1,
+  Weekly = 2,
+  Daily = 3,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status}
+ */
+export enum GuildScheduledEventStatus {
+  Scheduled = 1,
+  Active = 2,
+  Completed = 3,
+  Canceled = 4,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
+ */
+export enum GuildScheduledEventType {
+  StageInstance = 1,
+  Voice = 2,
+  External = 3,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level}
+ */
+export enum GuildScheduledEventPrivacyLevel {
+  GuildOnly = 2,
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-nweekday-structure}
  */
 export const GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.object({
@@ -45,16 +81,6 @@ export const GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.object({
 export type GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.infer<
   typeof GuildScheduledEventRecurrenceRuleNWeekdayEntity
 >;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-frequency}
- */
-export enum GuildScheduledEventRecurrenceRuleFrequency {
-  Yearly = 0,
-  Monthly = 1,
-  Weekly = 2,
-  Daily = 3,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-structure}
@@ -105,32 +131,6 @@ export const GuildScheduledEventEntityMetadataEntity = z.object({
 export type GuildScheduledEventEntityMetadataEntity = z.infer<
   typeof GuildScheduledEventEntityMetadataEntity
 >;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status}
- */
-export enum GuildScheduledEventStatus {
-  Scheduled = 1,
-  Active = 2,
-  Completed = 3,
-  Canceled = 4,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
- */
-export enum GuildScheduledEventType {
-  StageInstance = 1,
-  Voice = 2,
-  External = 3,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level}
- */
-export enum GuildScheduledEventPrivacyLevel {
-  GuildOnly = 2,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-structure}

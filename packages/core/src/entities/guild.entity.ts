@@ -27,6 +27,132 @@ export enum GuildOnboardingMode {
 }
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors}
+ */
+export enum IntegrationExpirationBehavior {
+  RemoveRole = 0,
+  Kick = 1,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags}
+ */
+export enum GuildMemberFlags {
+  DidRejoin = 1 << 0,
+  CompletedOnboarding = 1 << 1,
+  BypassesVerification = 1 << 2,
+  StartedOnboarding = 1 << 3,
+  IsGuest = 1 << 4,
+  StartedHomeActions = 1 << 5,
+  CompletedHomeActions = 1 << 6,
+  AutoModQuarantinedUsername = 1 << 7,
+  DmSettingsUpsellAcknowledged = 1 << 9,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
+ */
+export enum GuildFeature {
+  AnimatedBanner = "ANIMATED_BANNER",
+  AnimatedIcon = "ANIMATED_ICON",
+  ApplicationCommandPermissionsV2 = "APPLICATION_COMMAND_PERMISSIONS_V2",
+  AutoModeration = "AUTO_MODERATION",
+  Banner = "BANNER",
+  Community = "COMMUNITY",
+  CreatorMonetizableProvisional = "CREATOR_MONETIZABLE_PROVISIONAL",
+  CreatorStorePage = "CREATOR_STORE_PAGE",
+  DeveloperSupportServer = "DEVELOPER_SUPPORT_SERVER",
+  Discoverable = "DISCOVERABLE",
+  Featurable = "FEATURABLE",
+  InvitesDisabled = "INVITES_DISABLED",
+  InviteSplash = "INVITE_SPLASH",
+  MemberVerificationGateEnabled = "MEMBER_VERIFICATION_GATE_ENABLED",
+  MoreSoundboard = "MORE_SOUNDBOARD",
+  MoreStickers = "MORE_STICKERS",
+  News = "NEWS",
+  Partnered = "PARTNERED",
+  PreviewEnabled = "PREVIEW_ENABLED",
+  RaidAlertsDisabled = "RAID_ALERTS_DISABLED",
+  RoleIcons = "ROLE_ICONS",
+  RoleSubscriptionsAvailableForPurchase = "ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE",
+  RoleSubscriptionsEnabled = "ROLE_SUBSCRIPTIONS_ENABLED",
+  Soundboard = "SOUNDBOARD",
+  TicketedEventsEnabled = "TICKETED_EVENTS_ENABLED",
+  VanityUrl = "VANITY_URL",
+  Verified = "VERIFIED",
+  VipRegions = "VIP_REGIONS",
+  WelcomeScreenEnabled = "WELCOME_SCREEN_ENABLED",
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags}
+ */
+export enum SystemChannelFlags {
+  SuppressJoinNotifications = 1 << 0,
+  SuppressPremiumSubscriptions = 1 << 1,
+  SuppressGuildReminderNotifications = 1 << 2,
+  SuppressJoinNotificationReplies = 1 << 3,
+  SuppressRoleSubscriptionPurchaseNotifications = 1 << 4,
+  SuppressRoleSubscriptionPurchaseNotificationReplies = 1 << 5,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-premium-tier}
+ */
+export enum PremiumTier {
+  None = 0,
+  Tier1 = 1,
+  Tier2 = 2,
+  Tier3 = 3,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-nsfw-level}
+ */
+export enum NsfwLevel {
+  Default = 0,
+  Explicit = 1,
+  Safe = 2,
+  AgeRestricted = 3,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-verification-level}
+ */
+export enum VerificationLevel {
+  None = 0,
+  Low = 1,
+  Medium = 2,
+  High = 3,
+  VeryHigh = 4,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mfa-level}
+ */
+export enum MfaLevel {
+  None = 0,
+  Elevated = 1,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level}
+ */
+export enum ExplicitContentFilterLevel {
+  Disabled = 0,
+  MembersWithoutRoles = 1,
+  AllMembers = 2,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level}
+ */
+export enum DefaultMessageNotificationLevel {
+  AllMessages = 0,
+  OnlyMentions = 1,
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure}
  */
 export const GuildOnboardingPromptOptionEntity = z.object({
@@ -135,14 +261,6 @@ export const IntegrationAccountEntity = z.object({
 export type IntegrationAccountEntity = z.infer<typeof IntegrationAccountEntity>;
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors}
- */
-export enum IntegrationExpirationBehavior {
-  RemoveRole = 0,
-  Kick = 1,
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure}
  */
 export const IntegrationEntity = z.object({
@@ -170,21 +288,6 @@ export const IntegrationEntity = z.object({
 });
 
 export type IntegrationEntity = z.infer<typeof IntegrationEntity>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags}
- */
-export enum GuildMemberFlags {
-  DidRejoin = 1 << 0,
-  CompletedOnboarding = 1 << 1,
-  BypassesVerification = 1 << 2,
-  StartedOnboarding = 1 << 3,
-  IsGuest = 1 << 4,
-  StartedHomeActions = 1 << 5,
-  CompletedHomeActions = 1 << 6,
-  AutoModQuarantinedUsername = 1 << 7,
-  DmSettingsUpsellAcknowledged = 1 << 9,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-structure}
@@ -240,41 +343,6 @@ export const GuildWidgetEntity = z.object({
 export type GuildWidgetEntity = z.infer<typeof GuildWidgetEntity>;
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
- */
-export enum GuildFeature {
-  AnimatedBanner = "ANIMATED_BANNER",
-  AnimatedIcon = "ANIMATED_ICON",
-  ApplicationCommandPermissionsV2 = "APPLICATION_COMMAND_PERMISSIONS_V2",
-  AutoModeration = "AUTO_MODERATION",
-  Banner = "BANNER",
-  Community = "COMMUNITY",
-  CreatorMonetizableProvisional = "CREATOR_MONETIZABLE_PROVISIONAL",
-  CreatorStorePage = "CREATOR_STORE_PAGE",
-  DeveloperSupportServer = "DEVELOPER_SUPPORT_SERVER",
-  Discoverable = "DISCOVERABLE",
-  Featurable = "FEATURABLE",
-  InvitesDisabled = "INVITES_DISABLED",
-  InviteSplash = "INVITE_SPLASH",
-  MemberVerificationGateEnabled = "MEMBER_VERIFICATION_GATE_ENABLED",
-  MoreSoundboard = "MORE_SOUNDBOARD",
-  MoreStickers = "MORE_STICKERS",
-  News = "NEWS",
-  Partnered = "PARTNERED",
-  PreviewEnabled = "PREVIEW_ENABLED",
-  RaidAlertsDisabled = "RAID_ALERTS_DISABLED",
-  RoleIcons = "ROLE_ICONS",
-  RoleSubscriptionsAvailableForPurchase = "ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE",
-  RoleSubscriptionsEnabled = "ROLE_SUBSCRIPTIONS_ENABLED",
-  Soundboard = "SOUNDBOARD",
-  TicketedEventsEnabled = "TICKETED_EVENTS_ENABLED",
-  VanityUrl = "VANITY_URL",
-  Verified = "VERIFIED",
-  VipRegions = "VIP_REGIONS",
-  WelcomeScreenEnabled = "WELCOME_SCREEN_ENABLED",
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-preview-object-guild-preview-structure}
  */
 export const GuildPreviewEntity = z.object({
@@ -302,74 +370,6 @@ export const UnavailableGuildEntity = z.object({
 });
 
 export type UnavailableGuildEntity = z.infer<typeof UnavailableGuildEntity>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags}
- */
-export enum SystemChannelFlags {
-  SuppressJoinNotifications = 1 << 0,
-  SuppressPremiumSubscriptions = 1 << 1,
-  SuppressGuildReminderNotifications = 1 << 2,
-  SuppressJoinNotificationReplies = 1 << 3,
-  SuppressRoleSubscriptionPurchaseNotifications = 1 << 4,
-  SuppressRoleSubscriptionPurchaseNotificationReplies = 1 << 5,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-premium-tier}
- */
-export enum PremiumTier {
-  None = 0,
-  Tier1 = 1,
-  Tier2 = 2,
-  Tier3 = 3,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-nsfw-level}
- */
-export enum NsfwLevel {
-  Default = 0,
-  Explicit = 1,
-  Safe = 2,
-  AgeRestricted = 3,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-verification-level}
- */
-export enum VerificationLevel {
-  None = 0,
-  Low = 1,
-  Medium = 2,
-  High = 3,
-  VeryHigh = 4,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mfa-level}
- */
-export enum MfaLevel {
-  None = 0,
-  Elevated = 1,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level}
- */
-export enum ExplicitContentFilterLevel {
-  Disabled = 0,
-  MembersWithoutRoles = 1,
-  AllMembers = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level}
- */
-export enum DefaultMessageNotificationLevel {
-  AllMessages = 0,
-  OnlyMentions = 1,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-structure}

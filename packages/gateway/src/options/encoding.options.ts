@@ -1,8 +1,11 @@
 import { z } from "zod";
-import { EncodingType } from "../types/index.js";
+
+export const EncodingType = z.union([z.literal("json"), z.literal("etf")]);
+
+export type EncodingType = z.infer<typeof EncodingType>;
 
 export const EncodingOptions = z.object({
-  encodingType: z.nativeEnum(EncodingType).default(EncodingType.Etf),
+  encodingType: EncodingType.default("etf"),
   maxPayloadSize: z.number().int().default(4096),
   allowBigInts: z.boolean().default(true),
   jsonSpaces: z.number().int().min(0).default(0),

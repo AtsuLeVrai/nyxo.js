@@ -6,16 +6,6 @@ import { TeamEntity } from "./team.entity.js";
 import { UserEntity } from "./user.entity.js";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/application#install-params-object-install-params-structure}
- */
-export const InstallParamsEntity = z.object({
-  scopes: z.array(z.nativeEnum(OAuth2Scope)),
-  permissions: z.string(),
-});
-
-export type InstallParamsEntity = z.infer<typeof InstallParamsEntity>;
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-flags}
  */
 export enum ApplicationFlags {
@@ -41,6 +31,24 @@ export enum ApplicationEventWebhookStatus {
 }
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-types}
+ */
+export enum ApplicationIntegrationType {
+  GuildInstall = 0,
+  UserInstall = 1,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/application#install-params-object-install-params-structure}
+ */
+export const InstallParamsEntity = z.object({
+  scopes: z.array(z.nativeEnum(OAuth2Scope)),
+  permissions: z.string(),
+});
+
+export type InstallParamsEntity = z.infer<typeof InstallParamsEntity>;
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object}
  */
 export const ApplicationIntegrationTypeConfigurationEntity = z.object({
@@ -50,14 +58,6 @@ export const ApplicationIntegrationTypeConfigurationEntity = z.object({
 export type ApplicationIntegrationTypeConfigurationEntity = z.infer<
   typeof ApplicationIntegrationTypeConfigurationEntity
 >;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-types}
- */
-export enum ApplicationIntegrationType {
-  GuildInstall = 0,
-  UserInstall = 1,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-structure}

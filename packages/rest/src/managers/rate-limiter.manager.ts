@@ -165,8 +165,8 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
       hash: bucketHash,
       limit: Number(rateLimitHeaders.limit),
       remaining: Number(rateLimitHeaders.remaining),
-      reset: Number(rateLimitHeaders.reset) * 1000,
-      resetAfter: Number(rateLimitHeaders.resetAfter) * 1000,
+      reset: Math.max(0, Number(rateLimitHeaders.reset) * 1000 || Date.now()),
+      resetAfter: Math.max(0, Number(rateLimitHeaders.remaining)),
       scope:
         (headers[DISCORD_RATELIMIT_HEADERS.scope] as RateLimitScope) || "user",
       sharedRoute: this.#getSharedRoute(path),

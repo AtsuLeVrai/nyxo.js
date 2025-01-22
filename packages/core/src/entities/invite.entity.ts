@@ -6,6 +6,23 @@ import { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
 import { UserEntity } from "./user.entity.js";
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-target-types}
+ */
+export enum InviteTargetType {
+  Stream = 1,
+  EmbeddedApplication = 2,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-types}
+ */
+export enum InviteType {
+  Guild = 0,
+  GroupDm = 1,
+  Friend = 2,
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/invite#invite-stage-instance-object-invite-stage-instance-structure}
  */
 export const InviteStageInstanceEntity = z.object({
@@ -31,23 +48,6 @@ export const InviteMetadataEntity = z.object({
 });
 
 export type InviteMetadataEntity = z.infer<typeof InviteMetadataEntity>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-target-types}
- */
-export enum InviteTargetType {
-  Stream = 1,
-  EmbeddedApplication = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-types}
- */
-export enum InviteType {
-  Guild = 0,
-  GroupDm = 1,
-  Friend = 2,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-structure}

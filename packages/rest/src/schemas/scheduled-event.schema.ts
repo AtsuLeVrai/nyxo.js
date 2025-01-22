@@ -37,11 +37,9 @@ export type CreateGuildScheduledEventSchema = z.input<
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
  */
 export const ModifyGuildScheduledEventSchema =
-  CreateGuildScheduledEventSchema.partial().merge(
-    z.object({
-      status: z.nativeEnum(GuildScheduledEventStatus).optional(),
-    }),
-  );
+  CreateGuildScheduledEventSchema.partial().extend({
+    status: z.nativeEnum(GuildScheduledEventStatus).optional(),
+  });
 
 export type ModifyGuildScheduledEventSchema = z.input<
   typeof ModifyGuildScheduledEventSchema

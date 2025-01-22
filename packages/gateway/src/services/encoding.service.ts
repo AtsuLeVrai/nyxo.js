@@ -1,9 +1,8 @@
 import erlpack from "erlpack";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
-import type { EncodingOptions } from "../options/index.js";
+import type { EncodingOptions, EncodingType } from "../options/index.js";
 import type {
-  EncodingType,
   GatewayEvents,
   PayloadEntity,
   ProcessOptions,

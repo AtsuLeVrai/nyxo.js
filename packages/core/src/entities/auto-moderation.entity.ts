@@ -35,6 +35,44 @@ export enum AutoModerationMaxRuleType {
 }
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types}
+ */
+export enum AutoModerationActionType {
+  BlockMessage = 1,
+  SendAlertMessage = 2,
+  Timeout = 3,
+  BlockMemberInteraction = 4,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types}
+ */
+export enum AutoModerationEventType {
+  MessageSend = 1,
+  MemberUpdate = 2,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-keyword-preset-types}
+ */
+export enum AutoModerationKeywordPresetType {
+  Profanity = 1,
+  SexualContent = 2,
+  Slurs = 3,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
+ */
+export enum AutoModerationRuleTriggerType {
+  Keyword = 1,
+  Spam = 3,
+  KeywordPreset = 4,
+  MentionSpam = 5,
+  MemberProfile = 6,
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata}
  */
 export const AutoModerationRegexMetadataEntity = z.object({
@@ -60,16 +98,6 @@ export type AutoModerationActionMetadataEntity = z.infer<
 >;
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types}
- */
-export enum AutoModerationActionType {
-  BlockMessage = 1,
-  SendAlertMessage = 2,
-  Timeout = 3,
-  BlockMemberInteraction = 4,
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-auto-moderation-action-structure}
  */
 export const AutoModerationActionEntity = z
@@ -77,7 +105,6 @@ export const AutoModerationActionEntity = z
     type: z.nativeEnum(AutoModerationActionType),
     metadata: AutoModerationActionMetadataEntity.optional(),
   })
-
   .refine((data) => {
     if (data.type === 2 && !data.metadata?.channel_id) {
       return false;
@@ -93,23 +120,6 @@ export const AutoModerationActionEntity = z
 export type AutoModerationActionEntity = z.infer<
   typeof AutoModerationActionEntity
 >;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types}
- */
-export enum AutoModerationEventType {
-  MessageSend = 1,
-  MemberUpdate = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-keyword-preset-types}
- */
-export enum AutoModerationKeywordPresetType {
-  Profanity = 1,
-  SexualContent = 2,
-  Slurs = 3,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata}
@@ -136,17 +146,6 @@ export const AutoModerationRuleTriggerMetadataWithValidationEntity =
 export type AutoModerationRuleTriggerMetadataWithValidationEntity = z.infer<
   typeof AutoModerationRuleTriggerMetadataWithValidationEntity
 >;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
- */
-export enum AutoModerationRuleTriggerType {
-  Keyword = 1,
-  Spam = 3,
-  KeywordPreset = 4,
-  MentionSpam = 5,
-  MemberProfile = 6,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-auto-moderation-rule-structure}

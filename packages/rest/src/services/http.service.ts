@@ -48,6 +48,7 @@ export class HttpService extends EventEmitter<RestEvents> {
         headers: this.#getHeaders(options),
       };
 
+      requestOptions.signal = AbortSignal.timeout(this.#options.timeout);
       const response = await request(requestOptions);
       const latency = Date.now() - startTime;
 
@@ -174,6 +175,7 @@ export class HttpService extends EventEmitter<RestEvents> {
     } catch {
       throw new HttpError("Failed to parse JSON response", {
         status: response.statusCode,
+        rawBody: buffer.toString(),
       });
     }
 
@@ -211,7 +213,6 @@ export class HttpService extends EventEmitter<RestEvents> {
 
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
-
       stream.on("data", (chunk) => chunks.push(chunk));
       stream.on("end", () => resolve(Buffer.concat(chunks)));
       stream.on("error", reject);

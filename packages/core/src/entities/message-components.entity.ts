@@ -26,6 +26,18 @@ export enum TextInputStyle {
 }
 
 /**
+ * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-styles}
+ */
+export enum ButtonStyle {
+  Primary = 1,
+  Secondary = 2,
+  Success = 3,
+  Danger = 4,
+  Link = 5,
+  Premium = 6,
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#text-input-object-text-input-structure}
  */
 export const TextInputEntity = z.object({
@@ -134,18 +146,6 @@ export const SelectMenuEntity = z.discriminatedUnion("type", [
 ]);
 
 export type SelectMenuEntity = z.infer<typeof SelectMenuEntity>;
-
-/**
- * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-styles}
- */
-export enum ButtonStyle {
-  Primary = 1,
-  Secondary = 2,
-  Success = 3,
-  Danger = 4,
-  Link = 5,
-  Premium = 6,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-structure}

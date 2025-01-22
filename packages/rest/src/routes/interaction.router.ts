@@ -1,14 +1,15 @@
-import type {
-  InteractionCallbackEntity,
-  MessageEntity,
-  Snowflake,
+import {
+  type InteractionCallbackEntity,
+  InteractionDataEntity,
+  type MessageEntity,
+  type Snowflake,
 } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/rest.js";
 import {
-  FollowupMessageSchema,
-  InteractionCallbackDataSchema,
-  InteractionResponseSchema,
+  EditWebhookMessageSchema,
+  ExecuteWebhookSchema,
 } from "../schemas/index.js";
 
 export class InteractionRouter {
@@ -68,10 +69,10 @@ export class InteractionRouter {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: InteractionResponseSchema,
+    options: z.input<typeof InteractionDataEntity>,
     withResponse = true,
   ): Promise<InteractionCallbackEntity | undefined> {
-    const result = InteractionResponseSchema.safeParse(options);
+    const result = InteractionDataEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -109,9 +110,9 @@ export class InteractionRouter {
   editOriginalInteractionResponse(
     applicationId: Snowflake,
     interactionToken: string,
-    options: InteractionCallbackDataSchema,
+    options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
-    const result = InteractionCallbackDataSchema.partial().safeParse(options);
+    const result = EditWebhookMessageSchema.partial().safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -148,9 +149,9 @@ export class InteractionRouter {
   createFollowupMessage(
     applicationId: Snowflake,
     interactionToken: string,
-    options: FollowupMessageSchema,
+    options: ExecuteWebhookSchema,
   ): Promise<MessageEntity> {
-    const result = FollowupMessageSchema.safeParse(options);
+    const result = ExecuteWebhookSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -190,9 +191,9 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-    options: InteractionCallbackDataSchema,
+    options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
-    const result = InteractionCallbackDataSchema.partial().safeParse(options);
+    const result = EditWebhookMessageSchema.partial().safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

@@ -57,14 +57,12 @@ export const ExecuteWebhookSchema = CreateMessageSchema.pick({
   attachments: true,
   flags: true,
   poll: true,
-}).merge(
-  z.object({
-    username: z.string().optional(),
-    avatar_url: z.string().optional(),
-    thread_name: z.string().optional(),
-    applied_tags: z.array(Snowflake).optional(),
-  }),
-);
+}).extend({
+  username: z.string().optional(),
+  avatar_url: z.string().optional(),
+  thread_name: z.string().optional(),
+  applied_tags: z.array(Snowflake).optional(),
+});
 
 export type ExecuteWebhookSchema = z.input<typeof ExecuteWebhookSchema>;
 

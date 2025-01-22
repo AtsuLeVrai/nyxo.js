@@ -15,6 +15,8 @@ export enum ApplicationRoleConnectionMetadataType {
   BooleanNotEqual = 8,
 }
 
+export const APPLICATION_ROLE_CONNECTION_METADATA_KEY_REGEX = /^[a-z0-9_]+$/;
+
 /**
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#application-role-connection-metadata-object-application-role-connection-metadata-structure}
  */
@@ -24,7 +26,7 @@ export const ApplicationRoleConnectionMetadataEntity = z.object({
     .string()
     .min(1)
     .max(50)
-    .regex(/^[a-z0-9_]+$/),
+    .regex(APPLICATION_ROLE_CONNECTION_METADATA_KEY_REGEX),
   name: z.string().min(1).max(100),
   name_localizations: createAvailableLocale(
     z.string().min(1).max(100),

@@ -147,19 +147,17 @@ export type StartThreadFromMessageSchema = z.input<
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params}
  */
 export const StartThreadWithoutMessageSchema =
-  StartThreadFromMessageSchema.merge(
-    z.object({
-      type: z
-        .union([
-          z.literal(ChannelType.AnnouncementThread),
-          z.literal(ChannelType.PrivateThread),
-          z.literal(ChannelType.PublicThread),
-        ])
-        .optional()
-        .default(ChannelType.PrivateThread),
-      invitable: z.boolean().optional(),
-    }),
-  );
+  StartThreadFromMessageSchema.extend({
+    type: z
+      .union([
+        z.literal(ChannelType.AnnouncementThread),
+        z.literal(ChannelType.PrivateThread),
+        z.literal(ChannelType.PublicThread),
+      ])
+      .optional()
+      .default(ChannelType.PrivateThread),
+    invitable: z.boolean().optional(),
+  });
 
 export type StartThreadWithoutMessageSchema = z.input<
   typeof StartThreadWithoutMessageSchema
@@ -188,22 +186,15 @@ export type StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema =
 export const StartThreadInForumOrMediaChannelSchema = CreateMessageSchema.pick({
   files: true,
   payload_json: true,
-}).merge(
-  z.object({
-    name: z.string().min(1).max(100),
-    auto_archive_duration: z
-      .union([
-        z.literal(60),
-        z.literal(1440),
-        z.literal(4320),
-        z.literal(10080),
-      ])
-      .optional(),
-    rate_limit_per_user: z.number().int().max(21600).nullish(),
-    message: StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
-    applied_tags: z.array(Snowflake).optional(),
-  }),
-);
+}).extend({
+  name: z.string().min(1).max(100),
+  auto_archive_duration: z
+    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
+    .optional(),
+  rate_limit_per_user: z.number().int().max(21600).nullish(),
+  message: StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
+  applied_tags: z.array(Snowflake).optional(),
+});
 
 export type StartThreadInForumOrMediaChannelSchema = z.input<
   typeof StartThreadInForumOrMediaChannelSchema

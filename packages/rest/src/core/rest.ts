@@ -42,7 +42,7 @@ import type {
 import { HttpService } from "../services/index.js";
 import type { RequestOptions, RestEvents } from "../types/index.js";
 
-export const REST_FORWARDED_EVENTS = new Set<keyof RestEvents>([
+export const REST_FORWARDED_EVENTS: Array<keyof RestEvents> = [
   "debug",
   "error",
   "warn",
@@ -52,7 +52,7 @@ export const REST_FORWARDED_EVENTS = new Set<keyof RestEvents>([
   "bucketCreated",
   "bucketDeleted",
   "invalidRequest",
-]);
+];
 
 export class Rest extends EventEmitter<RestEvents> {
   readonly options: z.output<typeof RestOptions>;
@@ -244,8 +244,6 @@ export class Rest extends EventEmitter<RestEvents> {
 
   async request<T>(options: RequestOptions): Promise<T> {
     let attempt = 0;
-    const maxRetries = this.options.maxRetries;
-
     while (true) {
       try {
         this.rateLimiter.checkRateLimit(options.path, options.method);
@@ -265,7 +263,7 @@ export class Rest extends EventEmitter<RestEvents> {
         return response.data;
       } catch (error) {
         attempt++;
-        await this.#handleRequestError(error, attempt, maxRetries);
+        await this.#handleRequestError(error, attempt, this.options.maxRetries);
       }
     }
   }
@@ -285,7 +283,10 @@ export class Rest extends EventEmitter<RestEvents> {
     return {
       ...options,
       body: formData.getBuffer(),
-      headers: formData.getHeaders(options.headers as Record<string, string>),
+      headers: {
+        ...options.headers,
+        ...formData.getHeaders(),
+      },
     };
   }
 
@@ -343,8 +344,8 @@ export class Rest extends EventEmitter<RestEvents> {
   }
 
   #calculateBackoff(attempt: number): number {
-    const base = Math.min(1000 * 2 ** attempt, 5000);
+    const baseDelay = Math.min(1000 * 2 ** attempt, 30000);
     const jitter = Math.random() * 1000;
-    return base + jitter;
+    return baseDelay + jitter;
   }
 }

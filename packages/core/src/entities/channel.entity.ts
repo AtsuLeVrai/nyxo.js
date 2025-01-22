@@ -5,6 +5,67 @@ import { GuildMemberEntity } from "./guild.entity.js";
 import { UserEntity } from "./user.entity.js";
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/channel#overwrite-object-overwrite-structure}
+ */
+export enum OverwriteType {
+  Role = 0,
+  Member = 1,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-forum-layout-types}
+ */
+export enum ForumLayoutType {
+  NotSet = 0,
+  ListView = 1,
+  GalleryView = 2,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-sort-order-types}
+ */
+export enum SortOrderType {
+  LatestActivity = 0,
+  CreationDate = 1,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-flags}
+ */
+export enum ChannelFlags {
+  Pinned = 1 << 1,
+  RequireTag = 1 << 4,
+  HideMediaDownloadOptions = 1 << 15,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes}
+ */
+export enum VideoQualityMode {
+  Auto = 1,
+  Full = 2,
+}
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
+ */
+export enum ChannelType {
+  GuildText = 0,
+  Dm = 1,
+  GuildVoice = 2,
+  GroupDm = 3,
+  GuildCategory = 4,
+  GuildAnnouncement = 5,
+  AnnouncementThread = 10,
+  PublicThread = 11,
+  PrivateThread = 12,
+  GuildStageVoice = 13,
+  GuildDirectory = 14,
+  GuildForum = 15,
+  GuildMedia = 16,
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/channel#forum-tag-object-forum-tag-structure}
  */
 export const ForumTagEntity = z.object({
@@ -60,14 +121,6 @@ export const ThreadMetadataEntity = z.object({
 export type ThreadMetadataEntity = z.infer<typeof ThreadMetadataEntity>;
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/channel#overwrite-object-overwrite-structure}
- */
-export enum OverwriteType {
-  Role = 0,
-  Member = 1,
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/channel#overwrite-object}
  */
 export const OverwriteEntity = z.object({
@@ -88,59 +141,6 @@ export const FollowedChannelEntity = z.object({
 });
 
 export type FollowedChannelEntity = z.infer<typeof FollowedChannelEntity>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-forum-layout-types}
- */
-export enum ForumLayoutType {
-  NotSet = 0,
-  ListView = 1,
-  GalleryView = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-sort-order-types}
- */
-export enum SortOrderType {
-  LatestActivity = 0,
-  CreationDate = 1,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-flags}
- */
-export enum ChannelFlags {
-  Pinned = 1 << 1,
-  RequireTag = 1 << 4,
-  HideMediaDownloadOptions = 1 << 15,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-video-quality-modes}
- */
-export enum VideoQualityMode {
-  Auto = 1,
-  Full = 2,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
- */
-export enum ChannelType {
-  GuildText = 0,
-  Dm = 1,
-  GuildVoice = 2,
-  GroupDm = 3,
-  GuildCategory = 4,
-  GuildAnnouncement = 5,
-  AnnouncementThread = 10,
-  PublicThread = 11,
-  PrivateThread = 12,
-  GuildStageVoice = 13,
-  GuildDirectory = 14,
-  GuildForum = 15,
-  GuildMedia = 16,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-structure}

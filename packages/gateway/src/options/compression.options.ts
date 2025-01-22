@@ -1,8 +1,14 @@
 import { z } from "zod";
-import { CompressionType } from "../types/index.js";
+
+export const CompressionType = z.union([
+  z.literal("zlib-stream"),
+  z.literal("zstd-stream"),
+]);
+
+export type CompressionType = z.infer<typeof CompressionType>;
 
 export const CompressionOptions = z.object({
-  compressionType: z.nativeEnum(CompressionType).optional(),
+  compressionType: CompressionType.optional(),
   zlibChunkSize: z
     .number()
     .int()

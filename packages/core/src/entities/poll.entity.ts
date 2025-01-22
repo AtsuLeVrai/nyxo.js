@@ -2,6 +2,13 @@ import { z } from "zod";
 import { EmojiEntity } from "./emoji.entity.js";
 
 /**
+ * @see {@link https://discord.com/developers/docs/resources/poll#layout-type}
+ */
+export enum LayoutType {
+  Default = 1,
+}
+
+/**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-results-object-poll-answer-count-object-structure}
  */
 export const PollAnswerCountEntity = z.object({
@@ -55,13 +62,6 @@ export const PollAnswerEntity = z.object({
 });
 
 export type PollAnswerEntity = z.infer<typeof PollAnswerEntity>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/poll#layout-type}
- */
-export enum LayoutType {
-  Default = 1,
-}
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-create-request-object-poll-create-request-object-structure}

@@ -2,8 +2,8 @@ import { EventEmitter } from "eventemitter3";
 import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
 import type { z } from "zod";
-import type { CompressionOptions } from "../options/index.js";
-import type { CompressionType, GatewayEvents } from "../types/index.js";
+import type { CompressionOptions, CompressionType } from "../options/index.js";
+import type { GatewayEvents } from "../types/index.js";
 
 export class CompressionService extends EventEmitter<GatewayEvents> {
   #totalSize = 0;

@@ -4,19 +4,6 @@ import { Snowflake } from "../managers/index.js";
 import { IntegrationEntity } from "./guild.entity.js";
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure}
- */
-export const ApplicationRoleConnectionEntity = z.object({
-  platform_name: z.string().max(50).nullable(),
-  platform_username: z.string().max(100).nullable(),
-  metadata: z.record(z.string().max(100)),
-});
-
-export type ApplicationRoleConnectionEntity = z.infer<
-  typeof ApplicationRoleConnectionEntity
->;
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/user#connection-object-visibility-types}
  */
 export enum ConnectionVisibility {
@@ -54,36 +41,6 @@ export enum ConnectionService {
 }
 
 /**
- * @see {@link https://discord.com/developers/docs/resources/user#connection-object-connection-structure}
- */
-export const ConnectionEntity = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.nativeEnum(ConnectionService),
-  revoked: z.boolean().optional(),
-  integrations: z.array(z.lazy(() => IntegrationEntity.partial())).optional(),
-  verified: z.boolean(),
-  friend_sync: z.boolean(),
-  show_activity: z.boolean(),
-  two_way_link: z.boolean(),
-  visibility: z.number().min(0).max(1),
-});
-
-export type ConnectionEntity = z.infer<typeof ConnectionEntity>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure}
- */
-export const AvatarDecorationDataEntity = z.object({
-  asset: z.string(),
-  sku_id: Snowflake,
-});
-
-export type AvatarDecorationDataEntity = z.infer<
-  typeof AvatarDecorationDataEntity
->;
-
-/**
  * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types}
  */
 export enum PremiumType {
@@ -113,6 +70,49 @@ export enum UserFlags {
   BotHttpInteractions = 1 << 19,
   ActiveDeveloper = 1 << 22,
 }
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object-application-role-connection-structure}
+ */
+export const ApplicationRoleConnectionEntity = z.object({
+  platform_name: z.string().max(50).nullable(),
+  platform_username: z.string().max(100).nullable(),
+  metadata: z.record(z.string().max(100)),
+});
+
+export type ApplicationRoleConnectionEntity = z.infer<
+  typeof ApplicationRoleConnectionEntity
+>;
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/user#connection-object-connection-structure}
+ */
+export const ConnectionEntity = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.nativeEnum(ConnectionService),
+  revoked: z.boolean().optional(),
+  integrations: z.array(z.lazy(() => IntegrationEntity.partial())).optional(),
+  verified: z.boolean(),
+  friend_sync: z.boolean(),
+  show_activity: z.boolean(),
+  two_way_link: z.boolean(),
+  visibility: z.number().min(0).max(1),
+});
+
+export type ConnectionEntity = z.infer<typeof ConnectionEntity>;
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object-avatar-decoration-data-structure}
+ */
+export const AvatarDecorationDataEntity = z.object({
+  asset: z.string(),
+  sku_id: Snowflake,
+});
+
+export type AvatarDecorationDataEntity = z.infer<
+  typeof AvatarDecorationDataEntity
+>;
 
 function isUsernameValid(value: string): value is string {
   const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];

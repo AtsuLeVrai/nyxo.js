@@ -3,6 +3,7 @@ import type { BaseErrorContext } from "./rest.errors.js";
 export interface HttpErrorContext extends BaseErrorContext {
   cause?: Error;
   status?: number;
+  rawBody?: string;
   body?: unknown;
 }
 
