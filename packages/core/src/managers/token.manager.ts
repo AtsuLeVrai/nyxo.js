@@ -13,10 +13,12 @@ export interface TokenParts {
 }
 
 const TOKEN_PATTERN =
-  /^([MN][A-Za-z\d]{23}\.[\w-]{6}\.[\w-]{27}|[\w-]{24}\.[\w-]{6}\.[\w-]{27}|mfa\.[\w-]{84})$/;
-const BOT_TOKEN_PATTERN = /^[MN][\w-]{23,25}\.[\w-]{6}\.[\w-]{27}$/;
-const BEARER_TOKEN_PATTERN = /^[\w-]{24,29}\.[\w-]{6}\.[\w-]{27}$/;
-const MFA_TOKEN_PATTERN = /^mfa\.[\w-]{84}$/;
+  /^[A-Za-z0-9-_]{23,28}\.[A-Za-z0-9-_]{6,7}\.[A-Za-z0-9-_]{27,}$/;
+const BOT_TOKEN_PATTERN =
+  /^[A-Za-z0-9-_]{23,28}\.[A-Za-z0-9-_]{6,7}\.[A-Za-z0-9-_]{27,}$/;
+const BEARER_TOKEN_PATTERN =
+  /^[A-Za-z0-9-_]{23,28}\.[A-Za-z0-9-_]{6,7}\.[A-Za-z0-9-_]{27,}$/;
+const MFA_TOKEN_PATTERN = /^mfa\.[A-Za-z0-9-_]{84,}$/;
 
 export const Token = z.string().regex(TOKEN_PATTERN);
 export type Token = z.infer<typeof Token>;

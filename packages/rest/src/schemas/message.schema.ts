@@ -38,9 +38,7 @@ export const CreateMessageSchema = z.object({
   message_reference: MessageReferenceEntity.optional(),
   components: ActionRowEntity.optional(),
   sticker_ids: z.array(Snowflake).max(3).optional(),
-  files: z
-    .custom<FileInput | FileInput[]>(FileHandler.isValidFileInput)
-    .optional(),
+  files: z.custom<FileInput | FileInput[]>(FileHandler.isValidInput).optional(),
   /** @deprecated Do not use `payload_json`. This is done automatically! */
   payload_json: z.string().optional(),
   attachments: z.array(AttachmentEntity).max(10).optional(),

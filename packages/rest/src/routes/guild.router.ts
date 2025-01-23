@@ -16,7 +16,7 @@ import type {
   WelcomeScreenEntity,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   AddGuildMemberSchema,
   BeginGuildPruneSchema,
@@ -105,8 +105,8 @@ export class GuildRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
    */
-  createGuild(options: CreateGuildSchema): Promise<GuildEntity> {
-    const result = CreateGuildSchema.safeParse(options);
+  async createGuild(options: CreateGuildSchema): Promise<GuildEntity> {
+    const result = await CreateGuildSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -135,12 +135,12 @@ export class GuildRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild}
    */
-  modifyGuild(
+  async modifyGuild(
     guildId: Snowflake,
     options: ModifyGuildSchema,
     reason?: string,
   ): Promise<GuildEntity> {
-    const result = ModifyGuildSchema.safeParse(options);
+    const result = await ModifyGuildSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -460,12 +460,12 @@ export class GuildRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role}
    */
-  createGuildRole(
+  async createGuildRole(
     guildId: Snowflake,
     options: CreateGuildRoleSchema,
     reason?: string,
   ): Promise<RoleEntity> {
-    const result = CreateGuildRoleSchema.safeParse(options);
+    const result = await CreateGuildRoleSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

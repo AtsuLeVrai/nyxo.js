@@ -58,11 +58,11 @@ export const EditCurrentApplicationSchema = z.object({
     ])
     .optional(),
   icon: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .optional(),
   cover_image: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .optional(),
   interactions_endpoint_url: z.string().url().optional(),

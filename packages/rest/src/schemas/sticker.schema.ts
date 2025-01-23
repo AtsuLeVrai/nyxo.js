@@ -18,7 +18,7 @@ export const CreateGuildStickerSchema = z.object({
   description: z.string().min(2).max(100),
   tags: z.string().max(200),
   file: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri),
 });
 

@@ -9,7 +9,7 @@ import type { FileInput } from "../types/index.js";
 export const CreateGuildEmojiSchema = z.object({
   name: z.string(),
   image: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri),
   roles: z.array(Snowflake).optional(),
 });

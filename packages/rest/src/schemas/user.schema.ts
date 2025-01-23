@@ -9,11 +9,11 @@ import type { FileInput } from "../types/index.js";
 export const ModifyCurrentUserSchema = z.object({
   username: z.string().optional(),
   avatar: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
   banner: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
 });

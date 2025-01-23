@@ -23,7 +23,7 @@ export const CreateGuildScheduledEventSchema = z.object({
   description: z.string().min(1).max(1000).optional(),
   entity_type: z.nativeEnum(GuildScheduledEventType),
   image: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .optional(),
   recurrence_rule: GuildScheduledEventRecurrenceRuleEntity.optional(),

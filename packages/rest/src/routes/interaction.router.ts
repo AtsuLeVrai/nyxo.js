@@ -6,7 +6,7 @@ import {
 } from "@nyxjs/core";
 import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   EditWebhookMessageSchema,
   ExecuteWebhookSchema,

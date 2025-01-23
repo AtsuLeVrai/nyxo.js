@@ -25,7 +25,7 @@ export const CreateGuildSchema = z.object({
   name: z.string().min(2).max(100),
   region: z.string().nullish(),
   icon: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .optional(),
   verification_level: z.nativeEnum(VerificationLevel).optional(),
@@ -58,20 +58,20 @@ export const ModifyGuildSchema = z.object({
   afk_channel_id: Snowflake.nullish(),
   afk_timeout: z.number().optional(),
   icon: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
   owner_id: Snowflake.optional(),
   splash: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
   discovery_splash: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
   banner: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
   system_channel_id: Snowflake.nullish(),
@@ -219,7 +219,7 @@ export const CreateGuildRoleSchema = z.object({
   color: z.number().int().default(0),
   hoist: z.boolean().default(false),
   icon: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullable(),
   unicode_emoji: z.string().emoji().optional(),

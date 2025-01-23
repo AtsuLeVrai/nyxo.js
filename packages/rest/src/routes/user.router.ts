@@ -8,7 +8,7 @@ import type {
   UserEntity,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateGroupDmSchema,
   GetCurrentUserGuildsQuerySchema,
@@ -55,8 +55,10 @@ export class UserRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
-  modifyCurrentUser(options: ModifyCurrentUserSchema): Promise<UserEntity> {
-    const result = ModifyCurrentUserSchema.safeParse(options);
+  async modifyCurrentUser(
+    options: ModifyCurrentUserSchema,
+  ): Promise<UserEntity> {
+    const result = await ModifyCurrentUserSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

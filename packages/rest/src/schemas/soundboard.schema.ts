@@ -28,7 +28,7 @@ export interface ListGuildSoundboardSoundsResponseEntity {
 export const CreateGuildSoundboardSoundSchema = z.object({
   name: z.string().min(2).max(32),
   sound: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri),
   volume: z.number().min(0).max(1).nullish().default(1),
   emoji_id: Snowflake.nullish(),

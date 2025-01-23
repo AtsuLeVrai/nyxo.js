@@ -10,7 +10,7 @@ import { CreateMessageSchema } from "./message.schema.js";
 export const CreateWebhookSchema = z.object({
   name: z.string().min(1).max(80),
   avatar: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
 });
@@ -23,7 +23,7 @@ export type CreateWebhookSchema = z.input<typeof CreateWebhookSchema>;
 export const ModifyWebhookSchema = z.object({
   name: z.string().min(1).max(80).optional(),
   avatar: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .nullish(),
   channel_id: Snowflake.optional(),

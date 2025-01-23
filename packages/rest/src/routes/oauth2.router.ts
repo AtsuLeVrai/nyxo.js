@@ -1,5 +1,5 @@
 import type { ApplicationEntity } from "@nyxjs/core";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import type { AuthorizationEntity } from "../schemas/index.js";
 
 // biome-ignore lint/style/useNamingConvention: This is a router class, not an entity class

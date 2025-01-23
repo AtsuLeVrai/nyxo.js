@@ -57,7 +57,7 @@ export type SnowflakeEntity = z.infer<typeof SnowflakeEntity>;
 
 export class SnowflakeManager {
   readonly #id: Snowflake;
-  readonly #options: z.output<typeof SnowflakeOptions>;
+  readonly #options: SnowflakeOptions;
 
   constructor(
     snowflake: SnowflakeResolvable,
@@ -126,7 +126,7 @@ export class SnowflakeManager {
     return Number(this.toBigInt() & 0xfffn);
   }
 
-  deconstruct(): z.output<typeof SnowflakeEntity> {
+  deconstruct(): SnowflakeEntity {
     return SnowflakeEntity.parse({
       timestamp: this.getTimestamp(),
       workerId: this.getWorkerId(),
@@ -143,6 +143,7 @@ export class SnowflakeManager {
     if (thisId === otherId) {
       return 0;
     }
+
     return thisId > otherId ? 1 : -1;
   }
 
@@ -160,7 +161,7 @@ export class SnowflakeManager {
 
   #resolveId(
     snowflake: SnowflakeResolvable,
-    options: z.output<typeof SnowflakeOptions>,
+    options: SnowflakeOptions,
   ): Snowflake {
     const parsedResolvable = SnowflakeResolvable.parse(snowflake);
 
@@ -181,6 +182,7 @@ export class SnowflakeManager {
       if (parsedResolvable < 0 || !Number.isInteger(parsedResolvable)) {
         throw new Error("Invalid timestamp value");
       }
+
       return this.#generate(parsedResolvable, options);
     }
 

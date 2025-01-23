@@ -1,5 +1,6 @@
 import { setTimeout } from "node:timers/promises";
 import { EventEmitter } from "eventemitter3";
+import pQueue from "p-queue";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import {
@@ -9,7 +10,6 @@ import {
   RestError,
 } from "../errors/index.js";
 import { RouterFactory } from "../factory/index.js";
-import { FileHandler } from "../handlers/index.js";
 import { RateLimiterManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import type {
@@ -45,21 +45,19 @@ import type { RequestOptions, RestEvents } from "../types/index.js";
 export const REST_FORWARDED_EVENTS: Array<keyof RestEvents> = [
   "debug",
   "error",
-  "warn",
-  "requestStart",
-  "requestFinish",
+  "request",
   "rateLimited",
   "bucketCreated",
   "bucketDeleted",
-  "invalidRequest",
 ];
 
 export class Rest extends EventEmitter<RestEvents> {
-  readonly options: z.output<typeof RestOptions>;
+  readonly queue: pQueue;
   readonly http: HttpService;
   readonly rateLimiter: RateLimiterManager;
-  readonly file: FileHandler;
   readonly routers: RouterFactory;
+  readonly options: z.output<typeof RestOptions>;
+  readonly #eventCleanup: () => void;
 
   constructor(options: z.input<typeof RestOptions>) {
     super();
@@ -70,16 +68,14 @@ export class Rest extends EventEmitter<RestEvents> {
       throw new RestError(fromError(error).message);
     }
 
-    this.file = new FileHandler(this.options);
+    this.queue = new pQueue(this.options);
     this.rateLimiter = new RateLimiterManager(this.options);
     this.http = new HttpService(this.options);
     this.routers = new RouterFactory(this);
 
-    for (const service of [this.rateLimiter, this.http]) {
-      for (const event of REST_FORWARDED_EVENTS) {
-        service.on(event, (...args) => this.emit(event, ...args));
-      }
-    }
+    this.#eventCleanup = this.#forward([this.rateLimiter, this.http], this);
+    this.queue.on("idle", () => this.emit("debug", "Queue is idle"));
+    this.queue.on("error", (error) => this.emit("error", error));
   }
 
   get applications(): ApplicationRouter {
@@ -239,55 +235,60 @@ export class Rest extends EventEmitter<RestEvents> {
 
   destroy(): void {
     this.rateLimiter.reset();
+    this.queue.clear();
+    this.#eventCleanup();
     this.removeAllListeners();
   }
 
-  async request<T>(options: RequestOptions): Promise<T> {
-    let attempt = 0;
-    while (true) {
-      try {
-        this.rateLimiter.checkRateLimit(options.path, options.method);
+  request<T>(options: RequestOptions): Promise<T> {
+    return this.queue.add<T>(
+      async () => {
+        let attempt = 0;
+        while (true) {
+          try {
+            this.rateLimiter.checkRateLimit(options.path, options.method);
 
-        const processedOptions = await this.#prepareRequestOptions(options);
+            const response = await this.http.request<T>(options);
 
-        const response = await this.http.request<T>(processedOptions);
+            this.rateLimiter.updateRateLimit(
+              options.path,
+              options.method,
+              response.latency,
+              response.headers,
+              response.statusCode,
+            );
 
-        this.rateLimiter.updateRateLimit(
-          options.path,
-          options.method,
-          response.latency,
-          response.headers,
-          response.statusCode,
-        );
-
-        return response.data;
-      } catch (error) {
-        attempt++;
-        await this.#handleRequestError(error, attempt, this.options.maxRetries);
-      }
-    }
+            return response.data;
+          } catch (error) {
+            attempt++;
+            await this.#handleRequestError(
+              error,
+              attempt,
+              this.options.maxRetries,
+            );
+          }
+        }
+      },
+      {
+        priority: this.#getPriority(options),
+      },
+    ) as Promise<T>;
   }
 
-  async #prepareRequestOptions(
-    options: RequestOptions,
-  ): Promise<RequestOptions> {
-    if (!options.files) {
-      return options;
+  #getPriority(options: RequestOptions): number {
+    if (options.method === "GET") {
+      return 0;
     }
 
-    const formData = await this.file.createFormData(
-      options.files,
-      options.body,
-    );
+    if (options.method === "POST") {
+      return 1;
+    }
 
-    return {
-      ...options,
-      body: formData.getBuffer(),
-      headers: {
-        ...options.headers,
-        ...formData.getHeaders(),
-      },
-    };
+    if (options.method === "PUT" || options.method === "PATCH") {
+      return 2;
+    }
+
+    return 3;
   }
 
   async #handleRequestError(
@@ -318,7 +319,7 @@ export class Rest extends EventEmitter<RestEvents> {
   }
 
   async #handleRateLimitError(error: RateLimitError): Promise<void> {
-    if (error.global || error.retryable) {
+    if (error.retryable) {
       const delay = error.getRetryDelay();
       await setTimeout(delay);
       return;
@@ -347,5 +348,28 @@ export class Rest extends EventEmitter<RestEvents> {
     const baseDelay = Math.min(1000 * 2 ** attempt, 30000);
     const jitter = Math.random() * 1000;
     return baseDelay + jitter;
+  }
+
+  #forward<T extends EventEmitter<RestEvents>>(
+    from: T | T[],
+    to: EventEmitter<RestEvents>,
+  ): () => void {
+    const sources = Array.isArray(from) ? from : [from];
+    const cleanups: Array<() => void> = [];
+
+    for (const source of sources) {
+      for (const event of REST_FORWARDED_EVENTS) {
+        const handler = (...args: unknown[]): boolean =>
+          to.emit(event, ...(args as never));
+        source.on(event, handler);
+        cleanups.push(() => source.off(event, handler));
+      }
+    }
+
+    return (): void => {
+      for (const cleanup of cleanups) {
+        cleanup();
+      }
+    };
   }
 }

@@ -1,6 +1,6 @@
 import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateTestEntitlementSchema,
   ListEntitlementQuerySchema,

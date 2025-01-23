@@ -1,6 +1,6 @@
 import type { Snowflake, WebhookEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateWebhookSchema,
   EditWebhookMessageSchema,
@@ -39,12 +39,12 @@ export class WebhookRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook}
    */
-  createWebhook(
+  async createWebhook(
     channelId: Snowflake,
     options: CreateWebhookSchema,
     reason?: string,
   ): Promise<WebhookEntity> {
-    const result = CreateWebhookSchema.safeParse(options);
+    const result = await CreateWebhookSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -91,12 +91,12 @@ export class WebhookRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook}
    */
-  modifyWebhook(
+  async modifyWebhook(
     webhookId: Snowflake,
     options: ModifyWebhookSchema,
     reason?: string,
   ): Promise<WebhookEntity> {
-    const result = ModifyWebhookSchema.safeParse(options);
+    const result = await ModifyWebhookSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -110,13 +110,13 @@ export class WebhookRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token}
    */
-  modifyWebhookWithToken(
+  async modifyWebhookWithToken(
     webhookId: Snowflake,
     token: string,
     options: Omit<ModifyWebhookSchema, "channel_id">,
     reason?: string,
   ): Promise<WebhookEntity> {
-    const result = ModifyWebhookSchema.safeParse(options);
+    const result = await ModifyWebhookSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }
@@ -164,20 +164,17 @@ export class WebhookRouter {
     options: ExecuteWebhookSchema,
     query: ExecuteWebhookQuerySchema = {},
   ): Promise<WebhookEntity | undefined> {
-    const result = ExecuteWebhookSchema.safeParse(options);
-    const resultQuery = ExecuteWebhookQuerySchema.safeParse(query);
-    if (!(result.success && resultQuery.success)) {
-      const errors = [
-        ...(result.success ? [] : result.error.errors),
-        ...(resultQuery.success ? [] : resultQuery.error.errors),
-      ];
-
-      throw new Error(
-        errors.map((e) => `[${e.path.join(".")}] ${e.message}`).join(", "),
-      );
+    const resultSchema = ExecuteWebhookSchema.safeParse(options);
+    if (!resultSchema.success) {
+      throw new Error(fromZodError(resultSchema.error).message);
     }
 
-    const { files, ...rest } = result.data;
+    const resultQuery = ExecuteWebhookQuerySchema.safeParse(query);
+    if (!resultQuery.success) {
+      throw new Error(fromZodError(resultQuery.error).message);
+    }
+
+    const { files, ...rest } = resultSchema.data;
     return this.#rest.post(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
       {
@@ -262,20 +259,17 @@ export class WebhookRouter {
     options: EditWebhookMessageSchema,
     query: GetWebhookMessageQuerySchema = {},
   ): Promise<WebhookEntity> {
-    const result = EditWebhookMessageSchema.safeParse(query);
-    const resultQuery = GetWebhookMessageQuerySchema.safeParse(query);
-    if (!(result.success && resultQuery.success)) {
-      const errors = [
-        ...(result.success ? [] : result.error.errors),
-        ...(resultQuery.success ? [] : resultQuery.error.errors),
-      ];
-
-      throw new Error(
-        errors.map((e) => `[${e.path.join(".")}] ${e.message}`).join(", "),
-      );
+    const resultSchema = EditWebhookMessageSchema.safeParse(options);
+    if (!resultSchema.success) {
+      throw new Error(fromZodError(resultSchema.error).message);
     }
 
-    const { files, ...rest } = options;
+    const resultQuery = GetWebhookMessageQuerySchema.safeParse(query);
+    if (!resultQuery.success) {
+      throw new Error(fromZodError(resultQuery.error).message);
+    }
+
+    const { files, ...rest } = resultSchema.data;
     return this.#rest.patch(
       WebhookRouter.ROUTES.webhookTokenMessage(webhookId, token, messageId),
       {

@@ -4,7 +4,7 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateGuildScheduledEventSchema,
   GetGuildScheduledEventUsersQuerySchema,
@@ -45,12 +45,12 @@ export class ScheduledEventRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event}
    */
-  createGuildScheduledEvent(
+  async createGuildScheduledEvent(
     guildId: Snowflake,
     event: CreateGuildScheduledEventSchema,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    const result = CreateGuildScheduledEventSchema.safeParse(event);
+    const result = await CreateGuildScheduledEventSchema.safeParseAsync(event);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

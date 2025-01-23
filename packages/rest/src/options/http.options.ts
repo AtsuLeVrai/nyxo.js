@@ -14,6 +14,5 @@ export const HttpOptions = z.object({
     .string()
     .regex(DISCORD_USER_AGENT_REGEX)
     .default("DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)"),
-  acceptEncoding: z.boolean().default(true),
   timeout: z.number().int().default(15000),
 });

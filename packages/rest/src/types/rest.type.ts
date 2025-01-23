@@ -16,36 +16,21 @@ export interface RequestOptions extends Dispatcher.RequestOptions {
   reason?: string;
 }
 
-export interface RequestStartEvent {
+export interface RequestEvent {
   path: string;
   method: string;
-  body?: unknown;
+  statusCode?: number;
+  latency?: number;
   timestamp: number;
-}
-
-export interface RequestFinishEvent {
-  path: string;
-  method: string;
-  statusCode: number;
-  latency: number;
-}
-
-export interface InvalidRequestEvent {
-  path: string;
-  method: string;
-  statusCode: number;
 }
 
 export interface RestEvents {
   debug: (message: string, context?: Record<string, unknown>) => void;
-  error: (message: string | Error, context?: Record<string, unknown>) => void;
-  warn: (message: string, context?: Record<string, unknown>) => void;
-  requestStart: (requestInfo: RequestStartEvent) => void;
-  requestFinish: (requestInfo: RequestFinishEvent) => void;
+  error: (error: Error | string, context?: Record<string, unknown>) => void;
+  request: (info: RequestEvent) => void;
   rateLimited: (data: RateLimitEvent) => void;
   bucketCreated: (bucket: RateLimitBucket) => void;
   bucketDeleted: (bucketHash: string) => void;
-  invalidRequest: (data: InvalidRequestEvent) => void;
 }
 
 /**

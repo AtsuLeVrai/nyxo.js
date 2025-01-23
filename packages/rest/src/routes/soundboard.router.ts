@@ -1,6 +1,6 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateGuildSoundboardSoundSchema,
   type ListGuildSoundboardSoundsResponseEntity,
@@ -78,12 +78,13 @@ export class SoundboardRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound}
    */
-  createGuildSoundboardSound(
+  async createGuildSoundboardSound(
     guildId: Snowflake,
     options: CreateGuildSoundboardSoundSchema,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    const result = CreateGuildSoundboardSoundSchema.safeParse(options);
+    const result =
+      await CreateGuildSoundboardSoundSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

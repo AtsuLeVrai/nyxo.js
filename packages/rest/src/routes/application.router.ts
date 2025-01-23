@@ -1,6 +1,6 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   type ActivityInstanceEntity,
   EditCurrentApplicationSchema,
@@ -32,10 +32,10 @@ export class ApplicationRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
    */
-  editCurrentApplication(
+  async editCurrentApplication(
     options: EditCurrentApplicationSchema,
   ): Promise<ApplicationEntity> {
-    const result = EditCurrentApplicationSchema.safeParse(options);
+    const result = await EditCurrentApplicationSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

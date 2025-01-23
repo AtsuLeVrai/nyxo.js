@@ -1,6 +1,6 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateGuildFromGuildTemplateSchema,
   CreateGuildTemplateSchema,
@@ -36,11 +36,12 @@ export class GuildTemplateRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template}
    */
-  createGuildFromGuildTemplate(
+  async createGuildFromGuildTemplate(
     code: string,
     options: CreateGuildFromGuildTemplateSchema,
   ): Promise<GuildEntity> {
-    const result = CreateGuildFromGuildTemplateSchema.safeParse(options);
+    const result =
+      await CreateGuildFromGuildTemplateSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

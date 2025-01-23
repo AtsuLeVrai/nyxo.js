@@ -1,6 +1,6 @@
 import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateGuildStickerSchema,
   type ListStickerPacksResponseEntity,
@@ -67,12 +67,12 @@ export class StickerRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
    */
-  createGuildSticker(
+  async createGuildSticker(
     guildId: Snowflake,
     options: CreateGuildStickerSchema,
     reason?: string,
   ): Promise<StickerEntity> {
-    const result = CreateGuildStickerSchema.safeParse(options);
+    const result = await CreateGuildStickerSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

@@ -12,7 +12,7 @@ import type {
   RestEvents,
 } from "../types/index.js";
 
-const DISCORD_RATELIMIT_HEADERS = {
+export const DISCORD_RATE_LIMIT_HEADERS = {
   limit: "x-ratelimit-limit",
   remaining: "x-ratelimit-remaining",
   reset: "x-ratelimit-reset",
@@ -125,17 +125,21 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
   ): void {
     if (INVALID_STATUS_CODES.has(statusCode) && statusCode !== 429) {
       this.incrementInvalidRequestCount();
-      this.emit("invalidRequest", { path, method, statusCode });
+      this.emit("error", `Invalid status code: ${statusCode}`, {
+        path,
+        method,
+        headers,
+      });
     }
 
     const rateLimitHeaders = this.#extractRateLimitHeaders(headers);
 
     if (statusCode === 429) {
       const retryAfter =
-        Number(headers[DISCORD_RATELIMIT_HEADERS.retryAfter]) * 1000;
-      const isGlobal = headers[DISCORD_RATELIMIT_HEADERS.global] === "true";
+        Number(headers[DISCORD_RATE_LIMIT_HEADERS.retryAfter]) * 1000;
+      const isGlobal = headers[DISCORD_RATE_LIMIT_HEADERS.global] === "true";
       const scope =
-        (headers[DISCORD_RATELIMIT_HEADERS.scope] as RateLimitScope) || "user";
+        (headers[DISCORD_RATE_LIMIT_HEADERS.scope] as RateLimitScope) || "user";
 
       if (isGlobal) {
         this.#globalReset = Date.now() + retryAfter;
@@ -155,7 +159,7 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
       });
     }
 
-    const bucketHash = headers[DISCORD_RATELIMIT_HEADERS.bucket];
+    const bucketHash = headers[DISCORD_RATE_LIMIT_HEADERS.bucket];
     if (!bucketHash) {
       return;
     }
@@ -168,7 +172,7 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
       reset: Math.max(0, Number(rateLimitHeaders.reset) * 1000 || Date.now()),
       resetAfter: Math.max(0, Number(rateLimitHeaders.remaining)),
       scope:
-        (headers[DISCORD_RATELIMIT_HEADERS.scope] as RateLimitScope) || "user",
+        (headers[DISCORD_RATE_LIMIT_HEADERS.scope] as RateLimitScope) || "user",
       sharedRoute: this.#getSharedRoute(path),
     };
 
@@ -304,16 +308,16 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
 
   #extractRateLimitHeaders(
     headers: Record<string, string>,
-  ): Record<keyof typeof DISCORD_RATELIMIT_HEADERS, string> {
+  ): Record<keyof typeof DISCORD_RATE_LIMIT_HEADERS, string> {
     return {
-      limit: headers[DISCORD_RATELIMIT_HEADERS.limit] as string,
-      remaining: headers[DISCORD_RATELIMIT_HEADERS.remaining] as string,
-      reset: headers[DISCORD_RATELIMIT_HEADERS.reset] as string,
-      resetAfter: headers[DISCORD_RATELIMIT_HEADERS.resetAfter] as string,
-      bucket: headers[DISCORD_RATELIMIT_HEADERS.bucket] as string,
-      scope: headers[DISCORD_RATELIMIT_HEADERS.scope] as string,
-      global: headers[DISCORD_RATELIMIT_HEADERS.global] as string,
-      retryAfter: headers[DISCORD_RATELIMIT_HEADERS.retryAfter] as string,
+      limit: headers[DISCORD_RATE_LIMIT_HEADERS.limit] as string,
+      remaining: headers[DISCORD_RATE_LIMIT_HEADERS.remaining] as string,
+      reset: headers[DISCORD_RATE_LIMIT_HEADERS.reset] as string,
+      resetAfter: headers[DISCORD_RATE_LIMIT_HEADERS.resetAfter] as string,
+      bucket: headers[DISCORD_RATE_LIMIT_HEADERS.bucket] as string,
+      scope: headers[DISCORD_RATE_LIMIT_HEADERS.scope] as string,
+      global: headers[DISCORD_RATE_LIMIT_HEADERS.global] as string,
+      retryAfter: headers[DISCORD_RATE_LIMIT_HEADERS.retryAfter] as string,
     };
   }
 

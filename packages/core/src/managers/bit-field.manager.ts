@@ -1,22 +1,21 @@
-export type BitFieldResolvable<T> =
-  | (T | bigint | `${bigint}`)[]
-  | BitFieldManager<T>
-  | T
+export type BitFieldResolvable<T = unknown> =
   | bigint
-  | `${bigint}`;
+  | number
+  | BitFieldManager<T>
+  | T;
 
-const BIGINT_REGEX = /^-?\d+$/;
+const MAX_BIT_VALUE = (1n << 64n) - 1n;
 
 export class BitFieldManager<T> {
   #bitfield: bigint;
-  readonly #frozen: boolean;
 
-  constructor(value: BitFieldResolvable<T> = 0n, frozen = false) {
+  constructor(value: BitFieldResolvable<T> | BitFieldResolvable<T>[] = 0n) {
     this.#bitfield = this.#resolve(value);
-    this.#frozen = frozen;
   }
 
-  static from<F>(value: BitFieldResolvable<F>): BitFieldManager<F> {
+  static from<F>(
+    value: BitFieldResolvable<F> | BitFieldResolvable<F>[],
+  ): BitFieldManager<F> {
     return new BitFieldManager(value);
   }
 
@@ -100,41 +99,36 @@ export class BitFieldManager<T> {
   }
 
   add(...flags: T[]): this {
-    this.#ensureUnfrozen();
     this.#setBitfield(this.#bitfield | this.#resolve(flags));
     return this;
   }
 
   remove(...flags: T[]): this {
-    this.#ensureUnfrozen();
     this.#setBitfield(this.#bitfield & ~this.#resolve(flags));
     return this;
   }
 
   toggle(...flags: T[]): this {
-    this.#ensureUnfrozen();
     this.#setBitfield(this.#bitfield ^ this.#resolve(flags));
     return this;
   }
 
   set(flags: T[]): this {
-    this.#ensureUnfrozen();
     this.#setBitfield(this.#resolve(flags));
     return this;
   }
 
   clear(): this {
-    this.#ensureUnfrozen();
     this.#setBitfield(0n);
     return this;
   }
 
   freeze(): BitFieldManager<T> {
-    return new BitFieldManager<T>(this.#bitfield, true);
+    return new BitFieldManager<T>(this.#bitfield);
   }
 
   clone(): BitFieldManager<T> {
-    return new BitFieldManager<T>(this.#bitfield, this.#frozen);
+    return new BitFieldManager<T>(this.#bitfield);
   }
 
   toArray(): bigint[] {
@@ -146,6 +140,7 @@ export class BitFieldManager<T> {
       if (value & 1n) {
         result.push(1n << position);
       }
+
       value >>= 1n;
       position++;
     }
@@ -259,6 +254,126 @@ export class BitFieldManager<T> {
     return this.#bitfield.toString();
   }
 
+  difference(other: BitFieldResolvable<T>): BitFieldManager<T> {
+    const otherBits = this.#resolve(other);
+    return new BitFieldManager<T>(this.#bitfield & ~otherBits);
+  }
+
+  intersects(other: BitFieldResolvable<T>): boolean {
+    const otherBits = this.#resolve(other);
+    return (this.#bitfield & otherBits) !== 0n;
+  }
+
+  isSubset(other: BitFieldResolvable<T>): other is BitFieldManager<T> {
+    const otherBits = this.#resolve(other);
+    return (this.#bitfield & otherBits) === this.#bitfield;
+  }
+
+  isSuperset(other: BitFieldResolvable<T>): other is BitFieldManager<T> {
+    const otherBits = this.#resolve(other);
+    return (this.#bitfield & otherBits) === otherBits;
+  }
+
+  hammingDistance(other: BitFieldResolvable<T>): number {
+    const otherBits = this.#resolve(other);
+    let distance = this.#bitfield ^ otherBits;
+    let count = 0;
+
+    while (distance > 0n) {
+      if (distance & 1n) {
+        count++;
+      }
+      distance >>= 1n;
+    }
+
+    return count;
+  }
+
+  mask(start: number, end: number): BitFieldManager<T> {
+    if (!Number.isInteger(start) || start < 0 || start >= 64) {
+      throw new RangeError("Start position must be between 0 and 63");
+    }
+    if (!Number.isInteger(end) || end < 0 || end >= 64) {
+      throw new RangeError("End position must be between 0 and 63");
+    }
+    if (start >= end) {
+      throw new RangeError("Start position must be less than end position");
+    }
+
+    const mask = ((1n << BigInt(end - start)) - 1n) << BigInt(start);
+    return new BitFieldManager<T>(this.#bitfield & mask);
+  }
+
+  setBit(position: number): this {
+    if (!Number.isInteger(position) || position < 0 || position >= 64) {
+      throw new RangeError("Bit position must be between 0 and 63");
+    }
+
+    this.#setBitfield(this.#bitfield | (1n << BigInt(position)));
+    return this;
+  }
+
+  clearBit(position: number): this {
+    if (!Number.isInteger(position) || position < 0 || position >= 64) {
+      throw new RangeError("Bit position must be between 0 and 63");
+    }
+
+    this.#setBitfield(this.#bitfield & ~(1n << BigInt(position)));
+    return this;
+  }
+
+  toggleBit(position: number): this {
+    if (!Number.isInteger(position) || position < 0 || position >= 64) {
+      throw new RangeError("Bit position must be between 0 and 63");
+    }
+
+    this.#setBitfield(this.#bitfield ^ (1n << BigInt(position)));
+    return this;
+  }
+
+  getSetBitPositions(): number[] {
+    const positions: number[] = [];
+    let value = this.#bitfield;
+    let position = 0;
+
+    while (value > 0n) {
+      if (value & 1n) {
+        positions.push(position);
+      }
+      value >>= 1n;
+      position++;
+    }
+
+    return positions;
+  }
+
+  swapBits(pos1: number, pos2: number): this {
+    if (
+      !Number.isInteger(pos1) ||
+      pos1 < 0 ||
+      pos1 >= 64 ||
+      !Number.isInteger(pos2) ||
+      pos2 < 0 ||
+      pos2 >= 64
+    ) {
+      throw new RangeError("Bit positions must be between 0 and 63");
+    }
+
+    if (pos1 === pos2) {
+      return this;
+    }
+
+    const bit1 = (this.#bitfield >> BigInt(pos1)) & 1n;
+    const bit2 = (this.#bitfield >> BigInt(pos2)) & 1n;
+
+    if (bit1 !== bit2) {
+      const mask = (1n << BigInt(pos1)) | (1n << BigInt(pos2));
+      this.#setBitfield(this.#bitfield ^ mask);
+    }
+
+    return this;
+  }
+
   *[Symbol.iterator](): Iterator<bigint> {
     yield* this.toArray();
   }
@@ -280,11 +395,8 @@ export class BitFieldManager<T> {
       if (!Number.isInteger(value) || value < 0) {
         throw new TypeError("Number must be a non-negative integer");
       }
-      return this.#validateBigInt(BigInt(value));
-    }
 
-    if (typeof value === "string") {
-      return this.#assertValidBigInt(value);
+      return this.#validateBigInt(BigInt(value));
     }
 
     throw new TypeError(`Invalid type for bitfield value: ${typeof value}`);
@@ -294,40 +406,15 @@ export class BitFieldManager<T> {
     if (value < 0n) {
       throw new TypeError("Bitfield value cannot be negative");
     }
-    if (value > BigInt(Number.MAX_SAFE_INTEGER)) {
+
+    if (value > MAX_BIT_VALUE) {
       throw new TypeError("Bitfield value exceeds maximum safe integer");
     }
+
     return value;
-  }
-
-  #assertValidBigInt(value: string): bigint {
-    const trimmedValue = value.trim();
-
-    if (!trimmedValue) {
-      throw new Error("Empty string is not a valid BigInt");
-    }
-
-    if (!BIGINT_REGEX.test(trimmedValue)) {
-      throw new Error("Invalid BigInt format");
-    }
-
-    try {
-      const result = BigInt(trimmedValue);
-      return this.#validateBigInt(result);
-    } catch (error) {
-      throw new Error(
-        `Failed to create BigInt: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
   }
 
   #setBitfield(value: bigint): void {
     this.#bitfield = this.#validateBigInt(value);
-  }
-
-  #ensureUnfrozen(): void {
-    if (this.#frozen) {
-      throw new Error("Cannot modify a frozen BitFieldManager");
-    }
   }
 }

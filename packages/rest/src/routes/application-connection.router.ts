@@ -4,7 +4,7 @@ import {
 } from "@nyxjs/core";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 
 export class ApplicationConnectionRouter {
   static readonly ROUTES = {

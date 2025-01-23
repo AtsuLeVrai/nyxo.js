@@ -8,7 +8,7 @@ import type { FileInput } from "../types/index.js";
 export const CreateGuildFromGuildTemplateSchema = z.object({
   name: z.string().min(2).max(100),
   icon: z
-    .custom<FileInput>(FileHandler.isValidFileInput)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
     .transform(FileHandler.toDataUri)
     .optional(),
 });

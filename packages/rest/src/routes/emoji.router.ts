@@ -1,6 +1,6 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/rest.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateApplicationEmojiSchema,
   CreateGuildEmojiSchema,
@@ -43,12 +43,12 @@ export class EmojiRouter {
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji}
    */
-  createGuildEmoji(
+  async createGuildEmoji(
     guildId: Snowflake,
     options: CreateGuildEmojiSchema,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const result = CreateGuildEmojiSchema.safeParse(options);
+    const result = await CreateGuildEmojiSchema.safeParseAsync(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

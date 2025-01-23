@@ -228,17 +228,20 @@ export type ApplicationCommandOptionEntity = z.infer<
 /**
  * Simple command options (excluding subcommands and groups)
  */
-export const SimpleApplicationCommandOptionEntity = z.union([
-  StringOptionEntity,
-  IntegerOptionEntity,
-  NumberOptionEntity,
-  ChannelOptionEntity,
-  BooleanOptionEntity,
-  UserOptionEntity,
-  RoleOptionEntity,
-  MentionableOptionEntity,
-  AttachmentOptionEntity,
-]);
+export const SimpleApplicationCommandOptionEntity = z.discriminatedUnion(
+  "type",
+  [
+    StringOptionEntity,
+    IntegerOptionEntity,
+    NumberOptionEntity,
+    ChannelOptionEntity,
+    BooleanOptionEntity,
+    UserOptionEntity,
+    RoleOptionEntity,
+    MentionableOptionEntity,
+    AttachmentOptionEntity,
+  ],
+);
 
 export type SimpleApplicationCommandOptionEntity = z.infer<
   typeof SimpleApplicationCommandOptionEntity
