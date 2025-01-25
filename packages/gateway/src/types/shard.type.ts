@@ -1,15 +1,5 @@
-export type ShardStatus =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "resuming"
-  | "disconnected"
-  | "reconnecting"
-  | "error";
-
-export interface ShardSession {
+export interface ShardData {
   shardId: number;
-  numShards: number;
-  status?: ShardStatus;
+  totalShards: number;
   guildCount: number;
 }

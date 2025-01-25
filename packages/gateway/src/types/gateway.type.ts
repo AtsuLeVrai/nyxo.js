@@ -173,37 +173,39 @@ export interface GatewaySendEvents {
   [GatewayOpcodes.PresenceUpdate]: UpdatePresenceEntity;
 }
 
+export type SessionStatus =
+  | { type: "start"; sessionId: string; readyTime: number; data: ReadyEntity }
+  | { type: "end"; sessionId: string; code: number }
+  | { type: "invalid"; resumable: boolean };
+
+export type ConnectionStatus =
+  | {
+      type: "initial";
+    }
+  | {
+      type: "reconnect";
+      attempt: number;
+    }
+  | {
+      type: "closed";
+      code: number;
+    };
+
+export type HeartbeatStatus =
+  | { type: "start"; interval: number }
+  | { type: "stop" }
+  | { type: "success"; latency: number };
+
 export interface GatewayEvents {
-  shardSpawn: (shardId: number) => void;
-  shardReady: (shardId: number) => void;
-  shardDisconnect: (shardId: number) => void;
-  shardReconnect: (shardId: number) => void;
-  shardResume: (shardId: number) => void;
-  connecting: (attempt: number) => void;
-  reconnecting: (attempt: number) => void;
-  sessionStart: (
-    sessionId: string,
-    readyTime: number,
-    data: ReadyEntity,
-  ) => void;
-  sessionEnd: (sessionId: string, code: number) => void;
-  sessionInvalid: (resumable: boolean) => void;
-  close: (code: number) => void;
-  heartbeatStart: (interval: number) => void;
-  heartbeatStop: () => void;
-  heartbeatSuccess: (latency: number) => void;
-  heartbeatMissed: (missedCount: number) => void;
-  heartbeatReconnecting: (attempt: number) => void;
-  payloadSizeExceeded: (size: number, maxSize: number) => void;
-  invalidEtfKey: (key: unknown) => void;
-  chunkSizeExceeded: (size: number, maxSize: number) => void;
+  heartbeatUpdate: (heartbeat: HeartbeatStatus) => void;
+  connectionUpdate: (connection: ConnectionStatus) => void;
+  sessionUpdate: (status: SessionStatus) => void;
+  debug: (message: string, context?: Record<string, unknown>) => void;
+  error: (message: string | Error, context?: Record<string, unknown>) => void;
   dispatch: <K extends keyof GatewayReceiveEvents>(
     event: K,
     data: GatewayReceiveEvents[K],
   ) => void;
-  debug: (message: string, context?: Record<string, unknown>) => void;
-  error: (message: string | Error, context?: Record<string, unknown>) => void;
-  warn: (message: string, context?: Record<string, unknown>) => void;
 }
 
 /**
