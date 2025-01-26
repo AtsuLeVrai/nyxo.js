@@ -3,12 +3,7 @@ import { EventEmitter } from "eventemitter3";
 import pQueue from "p-queue";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import {
-  ApiError,
-  HttpError,
-  RateLimitError,
-  RestError,
-} from "../errors/index.js";
+import { HttpError, RateLimitError } from "../errors/index.js";
 import { RouterFactory } from "../factory/index.js";
 import { RateLimiterManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
@@ -65,7 +60,7 @@ export class Rest extends EventEmitter<RestEvents> {
     try {
       this.options = RestOptions.parse(options);
     } catch (error) {
-      throw new RestError(fromError(error).message);
+      throw new Error(fromError(error).message);
     }
 
     this.queue = new pQueue(this.options);
@@ -74,7 +69,6 @@ export class Rest extends EventEmitter<RestEvents> {
     this.routers = new RouterFactory(this);
 
     this.#eventCleanup = this.#forward([this.rateLimiter, this.http], this);
-    this.queue.on("idle", () => this.emit("debug", "Queue is idle"));
     this.queue.on("error", (error) => this.emit("error", error));
   }
 
@@ -301,11 +295,7 @@ export class Rest extends EventEmitter<RestEvents> {
       return;
     }
 
-    if (
-      (error instanceof HttpError || error instanceof ApiError) &&
-      error.retryable &&
-      attempt < maxRetries
-    ) {
+    if (error instanceof HttpError && error.retryable && attempt < maxRetries) {
       await this.#handleRetryableError(error, attempt);
       return;
     }
@@ -329,7 +319,7 @@ export class Rest extends EventEmitter<RestEvents> {
   }
 
   async #handleRetryableError(
-    error: HttpError | ApiError,
+    error: HttpError,
     attempt: number,
   ): Promise<void> {
     const backoff = this.#calculateBackoff(attempt);
@@ -338,7 +328,7 @@ export class Rest extends EventEmitter<RestEvents> {
       attempt,
       backoff,
       status: error.status,
-      code: error instanceof ApiError ? error.code : undefined,
+      code: error.code,
     });
 
     await setTimeout(backoff);

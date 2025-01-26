@@ -1,7 +1,11 @@
 import type { RateLimitScope } from "../types/index.js";
-import type { BaseErrorContext } from "./rest.errors.js";
 
-export interface RateLimitErrorContext extends BaseErrorContext {
+export interface RateLimitErrorContext {
+  path: string;
+  method: string;
+  headers?: Record<string, string>;
+  retryable?: boolean;
+  timestamp?: number;
   timeToReset: number;
   bucketHash?: string;
   global: boolean;

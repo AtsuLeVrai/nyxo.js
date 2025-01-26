@@ -56,7 +56,7 @@ export const Cdn = {
     ];
     const url = new URL(path.join("/"), "https://cdn.discordapp.com");
 
-    // biome-ignore lint/style/useExplicitLengthCheck: Bug in biome
+    // biome-ignore lint/style/useExplicitLengthCheck: This is a valid check
     if (options?.size && options.size > 0) {
       url.searchParams.set("size", options.size.toString());
     }

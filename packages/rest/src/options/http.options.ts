@@ -1,14 +1,13 @@
-import { ApiVersion } from "@nyxjs/core";
+import { ApiVersion, BotToken } from "@nyxjs/core";
 import { z } from "zod";
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#user-agent}
  */
-export const DISCORD_USER_AGENT_REGEX =
-  /^DiscordBot \(([^,\s]+), (\d+(\.\d+)*)\)$/;
+export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
 
 export const HttpOptions = z.object({
-  token: z.string(),
+  token: BotToken,
   version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
   userAgent: z
     .string()

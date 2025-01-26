@@ -2,17 +2,16 @@ import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import { request } from "undici";
 import type { z } from "zod";
-import { ApiError, HttpError } from "../errors/index.js";
+import { HttpError } from "../errors/index.js";
 import { FileHandler } from "../handlers/index.js";
 import type { HttpOptions } from "../options/index.js";
-import {
-  HttpStatusCode,
-  type JsonErrorEntity,
-  type RequestOptions,
-  type RestEvents,
+import type {
+  JsonErrorEntity,
+  RequestOptions,
+  RestEvents,
 } from "../types/index.js";
 
-interface HttpResponse<T = unknown> {
+export interface HttpResponse<T = unknown> {
   data: T;
   statusCode: number;
   headers: Record<string, string>;
@@ -59,7 +58,7 @@ export class HttpService extends EventEmitter<RestEvents> {
       const response = await request(processedOptions);
       const latency = Date.now() - startTime;
 
-      if (response.statusCode === HttpStatusCode.NoContent) {
+      if (response.statusCode === 204) {
         return {
           data: {} as T,
           statusCode: response.statusCode,
@@ -98,7 +97,7 @@ export class HttpService extends EventEmitter<RestEvents> {
         latency,
       };
     } catch (error) {
-      if (error instanceof HttpError || error instanceof ApiError) {
+      if (error instanceof HttpError) {
         throw error;
       }
 
@@ -170,8 +169,7 @@ export class HttpService extends EventEmitter<RestEvents> {
 
   #handleErrorResponse(status: number, data: unknown): never {
     if (this.#isDiscordApiError(data)) {
-      throw new ApiError({
-        message: data.message,
+      throw new HttpError(data.message, {
         code: data.code,
         status,
         errors: data.errors,

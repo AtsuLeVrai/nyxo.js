@@ -506,12 +506,10 @@ export const AnyChannelEntity = z.discriminatedUnion("type", [
   GroupDmChannelEntity,
   GuildCategoryChannelEntity,
   GuildAnnouncementChannelEntity,
-  PublicThreadChannelEntity,
-  PrivateThreadChannelEntity,
-  AnnouncementThreadChannelEntity,
   GuildStageVoiceChannelEntity,
   GuildForumChannelEntity,
   GuildMediaChannelEntity,
+  ...AnyThreadChannelEntity.options,
 ]);
 
 export type AnyChannelEntity = z.infer<typeof AnyChannelEntity>;

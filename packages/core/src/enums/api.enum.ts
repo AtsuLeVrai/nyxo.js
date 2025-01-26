@@ -27,9 +27,7 @@ export enum ApiVersion {
    */
   V8 = 8,
   /**
-   * @deprecated Use {@link ApiVersion.V10} instead - Version 9 has been deprecated
-   * @remarks
-   * Nyx.js supports only version 10 of the Discord API
+   * @deprecated Use {@link ApiVersion.V10} instead - Nyx.js supports only version 10 of the Discord API
    */
   V9 = 9,
   V10 = 10,

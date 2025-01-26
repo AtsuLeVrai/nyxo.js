@@ -10,9 +10,10 @@ const LARGE_THRESHOLD = 2500;
 const VERY_LARGE_THRESHOLD = 150000;
 
 export class ShardManager extends EventEmitter<GatewayEvents> {
-  #shards = new Store<number, ShardData>();
   #currentIndex = 0;
   #maxConcurrency = 1;
+  #currentShardId: number | null = null;
+  #shards = new Store<number, ShardData>();
 
   readonly #options: z.output<typeof ShardOptions>;
 
@@ -140,8 +141,17 @@ export class ShardManager extends EventEmitter<GatewayEvents> {
       throw new Error(`Invalid shard ID: ${this.#currentIndex}`);
     }
 
+    this.#currentShardId = shard.shardId;
     this.#currentIndex = (this.#currentIndex + 1) % this.#shards.size;
     return [shard.shardId, shard.totalShards];
+  }
+
+  getCurrentShardId(): number {
+    if (this.#currentShardId === null) {
+      throw new Error("No active shard");
+    }
+
+    return this.#currentShardId;
   }
 
   calculateShardId(guildId: string): number {
@@ -163,6 +173,7 @@ export class ShardManager extends EventEmitter<GatewayEvents> {
   destroy(): void {
     this.#shards.clear();
     this.#currentIndex = 0;
+    this.#currentShardId = null;
   }
 
   isDmShard(shardId: number): boolean {

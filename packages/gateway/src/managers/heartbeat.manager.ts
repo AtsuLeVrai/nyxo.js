@@ -1,9 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
-import type { Gateway } from "../core/index.js";
 import type { HeartbeatOptions } from "../options/index.js";
 import type { GatewayEvents } from "../types/index.js";
-import { GatewayOpcodes } from "../types/index.js";
 
 export class HeartbeatManager extends EventEmitter<GatewayEvents> {
   #latency = 0;
@@ -22,13 +20,16 @@ export class HeartbeatManager extends EventEmitter<GatewayEvents> {
   #interval: NodeJS.Timeout | null = null;
   #reconnectTimeout: NodeJS.Timeout | null = null;
 
-  readonly #gateway: Gateway;
   readonly #options: z.output<typeof HeartbeatOptions>;
+  readonly #sendHeartbeatPayload: (sequence: number) => void;
 
-  constructor(gateway: Gateway, options: z.output<typeof HeartbeatOptions>) {
+  constructor(
+    options: z.output<typeof HeartbeatOptions>,
+    sendHeartbeatPayload: (sequence: number) => void,
+  ) {
     super();
-    this.#gateway = gateway;
     this.#options = options;
+    this.#sendHeartbeatPayload = sendHeartbeatPayload;
   }
 
   get latency(): number {
@@ -152,7 +153,7 @@ export class HeartbeatManager extends EventEmitter<GatewayEvents> {
       `Sending - Sequence: ${this.#sequence}, Total beats: ${this.#totalBeats}`,
     );
 
-    this.#gateway.send(GatewayOpcodes.Heartbeat, this.#sequence);
+    this.#sendHeartbeatPayload(this.#sequence);
   }
 
   #handleMissedHeartbeat(): void {

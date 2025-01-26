@@ -10,6 +10,7 @@ import {
   IdentifyEntity,
   type ReadyEntity,
   type RequestGuildMembersEntity,
+  type RequestSoundboardSoundsEntity,
   type ResumeEntity,
   type UpdatePresenceEntity,
   type UpdateVoiceStateEntity,
@@ -69,14 +70,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     this.compression = new CompressionService(this.#options.compressionType);
     this.encoding = new EncodingService(this.#options.encodingType);
-    this.heartbeat = new HeartbeatManager(this, this.#options);
+    this.heartbeat = new HeartbeatManager(this.#options, (sequence) =>
+      this.send(GatewayOpcodes.Heartbeat, sequence),
+    );
     this.shard = new ShardManager(this.#options);
 
     this.#eventCleanup = this.#forward([this.heartbeat, this.shard], this);
-  }
-
-  get ping(): number {
-    return this.heartbeat.latency;
   }
 
   get sessionId(): string | null {
@@ -85,10 +84,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   get resumeUrl(): string | null {
     return this.#resumeUrl;
-  }
-
-  get sequence(): number {
-    return this.heartbeat.sequence;
   }
 
   get reconnectAttempts(): number {
@@ -101,10 +96,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   get webSocket(): WebSocket | null {
     return this.#ws;
-  }
-
-  isReconnecting(): boolean {
-    return this.heartbeat.isReconnecting();
   }
 
   getBackoffDelay(): number {
@@ -161,22 +152,34 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
   }
 
-  updatePresence(presence: UpdatePresenceEntity): void {
+  updatePresence(presence: z.input<typeof UpdatePresenceEntity>): void {
     this.emit("debug", `Updating presence: ${JSON.stringify(presence)}`);
     this.send(GatewayOpcodes.PresenceUpdate, presence);
   }
 
-  updateVoiceState(options: UpdateVoiceStateEntity): void {
+  updateVoiceState(options: z.input<typeof UpdateVoiceStateEntity>): void {
     this.emit("debug", `Updating voice state for guild ${options.guild_id}`);
     this.send(GatewayOpcodes.VoiceStateUpdate, options);
   }
 
-  requestGuildMembers(options: RequestGuildMembersEntity): void {
+  requestGuildMembers(
+    options: z.input<typeof RequestGuildMembersEntity>,
+  ): void {
     this.emit(
       "debug",
       `Requesting guild members for guild ${options.guild_id}`,
     );
     this.send(GatewayOpcodes.RequestGuildMembers, options);
+  }
+
+  requestSoundboardSounds(
+    options: z.input<typeof RequestSoundboardSoundsEntity>,
+  ): void {
+    this.emit(
+      "debug",
+      `Requesting soundboard sounds for guilds ${options.guild_ids.join(", ")}`,
+    );
+    this.send(GatewayOpcodes.RequestSoundboardSounds, options);
   }
 
   send<T extends keyof GatewaySendEvents>(
@@ -190,7 +193,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const payload: PayloadEntity = {
       op: opcode,
       d: data,
-      s: this.sequence,
+      s: this.heartbeat.sequence,
       t: null,
     };
 
@@ -230,7 +233,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return (
       this.readyState === WebSocket.OPEN &&
       this.heartbeat.missedHeartbeats < ZOMBIED_CONNECTION_THRESHOLD &&
-      this.ping < 30000
+      this.heartbeat.latency < 30000
     );
   }
 
@@ -328,7 +331,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   #canResume(): boolean {
-    return Boolean(this.sessionId && this.sequence > 0);
+    return Boolean(this.sessionId && this.heartbeat.sequence > 0);
   }
 
   #handleHello(hello: HelloEntity): void {
@@ -400,7 +403,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const payload: ResumeEntity = {
       token: this.#options.token,
       session_id: sessionId,
-      seq: this.sequence,
+      seq: this.heartbeat.sequence,
     };
 
     this.send(GatewayOpcodes.Resume, payload);
@@ -451,7 +454,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   async #handleReconnect(): Promise<void> {
-    if (this.isReconnecting()) {
+    if (this.heartbeat.isReconnecting()) {
       return;
     }
 
