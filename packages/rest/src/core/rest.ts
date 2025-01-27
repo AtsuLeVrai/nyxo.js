@@ -1,6 +1,7 @@
 import { setTimeout } from "node:timers/promises";
 import { EventEmitter } from "eventemitter3";
 import pQueue from "p-queue";
+import type { Dispatcher } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { HttpError, RateLimitError } from "../errors/index.js";
@@ -46,30 +47,37 @@ export const REST_FORWARDED_EVENTS: Array<keyof RestEvents> = [
   "bucketDeleted",
 ];
 
+const HTTP_METHOD_PRIORITIES: Record<Dispatcher.HttpMethod, number> = {
+  GET: 0,
+  POST: 1,
+  PUT: 2,
+  PATCH: 2,
+  DELETE: 3,
+  HEAD: 0,
+  CONNECT: 0,
+  OPTIONS: 0,
+  TRACE: 0,
+};
+
 export class Rest extends EventEmitter<RestEvents> {
   readonly queue: pQueue;
   readonly http: HttpService;
   readonly rateLimiter: RateLimiterManager;
   readonly routers: RouterFactory;
-  readonly options: z.output<typeof RestOptions>;
+  readonly options: RestOptions;
+
   readonly #eventCleanup: () => void;
 
   constructor(options: z.input<typeof RestOptions>) {
     super();
 
-    try {
-      this.options = RestOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
-    this.queue = new pQueue(this.options);
-    this.rateLimiter = new RateLimiterManager(this.options);
+    this.options = this.#validateOptions(options);
+    this.queue = this.#createQueue();
+    this.rateLimiter = new RateLimiterManager(this.options.rateLimit);
     this.http = new HttpService(this.options);
     this.routers = new RouterFactory(this);
 
     this.#eventCleanup = this.#forward([this.rateLimiter, this.http], this);
-    this.queue.on("error", (error) => this.emit("error", error));
   }
 
   get applications(): ApplicationRouter {
@@ -172,72 +180,11 @@ export class Rest extends EventEmitter<RestEvents> {
     return this.routers.getRouter("subscriptions");
   }
 
-  get<T>(
-    path: string,
-    options: Omit<RequestOptions, "method" | "path"> = {},
-  ): Promise<T> {
-    return this.request<T>({
-      ...options,
-      method: "GET",
-      path,
-    });
-  }
-
-  post<T>(
-    path: string,
-    options: Omit<RequestOptions, "method" | "path"> = {},
-  ): Promise<T> {
-    return this.request<T>({
-      ...options,
-      method: "POST",
-      path,
-    });
-  }
-
-  put<T>(
-    path: string,
-    options: Omit<RequestOptions, "method" | "path"> = {},
-  ): Promise<T> {
-    return this.request<T>({
-      ...options,
-      method: "PUT",
-      path,
-    });
-  }
-
-  patch<T>(
-    path: string,
-    options: Omit<RequestOptions, "method" | "path"> = {},
-  ): Promise<T> {
-    return this.request<T>({
-      ...options,
-      method: "PATCH",
-      path,
-    });
-  }
-
-  delete<T>(
-    path: string,
-    options: Omit<RequestOptions, "method" | "path"> = {},
-  ): Promise<T> {
-    return this.request<T>({
-      ...options,
-      method: "DELETE",
-      path,
-    });
-  }
-
-  destroy(): void {
-    this.rateLimiter.reset();
-    this.queue.clear();
-    this.#eventCleanup();
-    this.removeAllListeners();
-  }
-
-  request<T>(options: RequestOptions): Promise<T> {
-    return this.queue.add<T>(
+  async request<T>(options: RequestOptions): Promise<T> {
+    const request = await this.queue.add(
       async () => {
         let attempt = 0;
+
         while (true) {
           try {
             this.rateLimiter.checkRateLimit(options.path, options.method);
@@ -255,89 +202,74 @@ export class Rest extends EventEmitter<RestEvents> {
             return response.data;
           } catch (error) {
             attempt++;
-            await this.#handleRequestError(
-              error,
-              attempt,
-              this.options.maxRetries,
-            );
+            await this.#handleRequestError(error, attempt);
           }
         }
       },
-      {
-        priority: this.#getPriority(options),
-      },
-    ) as Promise<T>;
+      { priority: this.#calculatePriority(options) },
+    );
+
+    if (!request) {
+      throw new Error("Request failed");
+    }
+
+    return request;
   }
 
-  #getPriority(options: RequestOptions): number {
-    if (options.method === "GET") {
-      return 0;
-    }
-
-    if (options.method === "POST") {
-      return 1;
-    }
-
-    if (options.method === "PUT" || options.method === "PATCH") {
-      return 2;
-    }
-
-    return 3;
+  get<T>(
+    path: string,
+    options: Omit<RequestOptions, "method" | "path"> = {},
+  ): Promise<T> {
+    return this.request<T>({ ...options, method: "GET", path });
   }
 
-  async #handleRequestError(
-    error: unknown,
-    attempt: number,
-    maxRetries: number,
-  ): Promise<void> {
-    if (error instanceof RateLimitError) {
-      await this.#handleRateLimitError(error);
-      return;
-    }
-
-    if (error instanceof HttpError && error.retryable && attempt < maxRetries) {
-      await this.#handleRetryableError(error, attempt);
-      return;
-    }
-
-    this.emit("error", "Request failed", {
-      attempt,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-
-    throw error;
+  post<T>(
+    path: string,
+    options: Omit<RequestOptions, "method" | "path"> = {},
+  ): Promise<T> {
+    return this.request<T>({ ...options, method: "POST", path });
   }
 
-  async #handleRateLimitError(error: RateLimitError): Promise<void> {
-    if (error.retryable) {
-      const delay = error.getRetryDelay();
-      await setTimeout(delay);
-      return;
+  put<T>(
+    path: string,
+    options: Omit<RequestOptions, "method" | "path"> = {},
+  ): Promise<T> {
+    return this.request<T>({ ...options, method: "PUT", path });
+  }
+
+  patch<T>(
+    path: string,
+    options: Omit<RequestOptions, "method" | "path"> = {},
+  ): Promise<T> {
+    return this.request<T>({ ...options, method: "PATCH", path });
+  }
+
+  delete<T>(
+    path: string,
+    options: Omit<RequestOptions, "method" | "path"> = {},
+  ): Promise<T> {
+    return this.request<T>({ ...options, method: "DELETE", path });
+  }
+
+  destroy(): void {
+    this.rateLimiter.destroy();
+    this.queue.clear();
+    this.#eventCleanup();
+    this.removeAllListeners();
+  }
+
+  #validateOptions(options: z.input<typeof RestOptions>): RestOptions {
+    try {
+      return RestOptions.parse(options);
+    } catch (error) {
+      throw new Error(fromError(error).message);
     }
-
-    throw error;
   }
 
-  async #handleRetryableError(
-    error: HttpError,
-    attempt: number,
-  ): Promise<void> {
-    const backoff = this.#calculateBackoff(attempt);
-
-    this.emit("debug", "Retrying failed request", {
-      attempt,
-      backoff,
-      status: error.status,
-      code: error.code,
-    });
-
-    await setTimeout(backoff);
-  }
-
-  #calculateBackoff(attempt: number): number {
-    const baseDelay = Math.min(1000 * 2 ** attempt, 30000);
-    const jitter = Math.random() * 1000;
-    return baseDelay + jitter;
+  #createQueue(): pQueue {
+    const queue = new pQueue(this.options.queue);
+    queue.on("error", (error) => this.emit("error", error));
+    return queue;
   }
 
   #forward<T extends EventEmitter<RestEvents>>(
@@ -361,5 +293,62 @@ export class Rest extends EventEmitter<RestEvents> {
         cleanup();
       }
     };
+  }
+
+  #calculatePriority(options: RequestOptions): number {
+    return HTTP_METHOD_PRIORITIES[options.method] ?? 3;
+  }
+
+  async #handleRequestError(error: unknown, attempt: number): Promise<void> {
+    if (error instanceof RateLimitError) {
+      await this.#handleRateLimitError(error);
+      return;
+    }
+
+    if (
+      error instanceof HttpError &&
+      error.retryable &&
+      attempt < this.options.maxRetries
+    ) {
+      await this.#handleRetryableError(error, attempt);
+      return;
+    }
+
+    this.emit("error", "Request failed", {
+      attempt,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+
+    throw error;
+  }
+
+  async #handleRateLimitError(error: RateLimitError): Promise<void> {
+    if (error.retryable) {
+      await setTimeout(error.getRetryDelay());
+      return;
+    }
+    throw error;
+  }
+
+  async #handleRetryableError(
+    error: HttpError,
+    attempt: number,
+  ): Promise<void> {
+    const backoff = this.#calculateBackoff(attempt);
+
+    this.emit("debug", "Retrying failed request", {
+      attempt,
+      backoff,
+      status: error.status,
+      code: error.code,
+    });
+
+    await setTimeout(backoff);
+  }
+
+  #calculateBackoff(attempt: number): number {
+    const baseDelay = Math.min(1000 * 2 ** attempt, 30000);
+    const jitter = Math.random() * 1000;
+    return baseDelay + jitter;
   }
 }

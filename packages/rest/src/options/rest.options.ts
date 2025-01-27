@@ -1,20 +1,28 @@
+import { ApiVersion, BotToken } from "@nyxjs/core";
 import { z } from "zod";
-import { HttpOptions } from "./http.options.js";
+import { QueueOptions } from "./queue.options.js";
 import { RateLimiterOptions } from "./rate-limiter.options.js";
 
-export const QueueOptions = z.object({
-  concurrency: z.number().int().default(5),
-  intervalCap: z.number().int().default(10),
-  interval: z.number().int().default(1000),
-  timeout: z.number().int().default(15000),
-  autoStart: z.boolean().default(true),
-  throwOnTimeout: z.boolean().default(false),
-  carryoverConcurrencyCount: z.boolean().default(false),
-});
+/**
+ * @see {@link https://discord.com/developers/docs/reference#user-agent}
+ */
+export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
+export const DEFAULT_API_VERSION = ApiVersion.V10;
+export const DEFAULT_USER_AGENT =
+  "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)";
 
-export const RestOptions = z.object({
-  maxRetries: z.number().int().default(Number.MAX_SAFE_INTEGER),
-  ...HttpOptions.shape,
-  ...RateLimiterOptions.shape,
-  ...QueueOptions.shape,
-});
+export const RestOptions = z
+  .object({
+    token: BotToken,
+    version: z.literal(ApiVersion.V10).default(DEFAULT_API_VERSION),
+    userAgent: z
+      .string()
+      .regex(DISCORD_USER_AGENT_REGEX)
+      .default(DEFAULT_USER_AGENT),
+    maxRetries: z.number().int().positive().default(Number.MAX_SAFE_INTEGER),
+    rateLimit: RateLimiterOptions.default({}),
+    queue: QueueOptions.default({}),
+  })
+  .strict();
+
+export type RestOptions = z.infer<typeof RestOptions>;

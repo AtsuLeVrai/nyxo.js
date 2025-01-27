@@ -7,27 +7,8 @@ export interface RateLimitBucket {
   reset: number;
   resetAfter: number;
   scope: RateLimitScope;
+  lastUsed: number;
   sharedRoute?: string;
-}
-
-export interface BucketStatusInfo {
-  remaining: number;
-  reset: number;
-  limit: number;
-  latency?: number;
-}
-
-export interface BucketLatencyInfo {
-  timestamp: number;
-  latency: number;
-}
-
-export interface GlobalRateLimitStats {
-  totalBuckets: number;
-  activeBuckets: number;
-  globallyLimited: boolean;
-  invalidRequestCount: number;
-  timeToReset: number;
 }
 
 export interface RateLimitEvent {

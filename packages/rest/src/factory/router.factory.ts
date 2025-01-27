@@ -30,7 +30,6 @@ import {
 
 type RouterConstructor = new (rest: Rest) => unknown;
 type RouterInstance = InstanceType<RouterConstructor>;
-type RouterMap = Store<string, RouterInstance>;
 
 const ROUTER_MAPPING = {
   applications: ApplicationRouter,
@@ -69,7 +68,7 @@ type RouterNames = keyof RouterClasses;
 
 export class RouterFactory {
   readonly #rest: Rest;
-  readonly #routerMap: RouterMap = new Store();
+  readonly #routerMap = new Store<string, RouterInstance>();
 
   constructor(rest: Rest) {
     this.#rest = rest;
