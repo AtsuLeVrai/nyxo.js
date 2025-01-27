@@ -16,68 +16,73 @@ import {
 const DATA_URI_REGEX = /^data:(.+);base64,(.+)$/;
 const FILE_PATH_REGEX = /^[/.]|^[a-zA-Z]:\\/;
 const MAX_ASSET_SIZE = 256 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_FILES = 10;
+const DEFAULT_FILENAME = "file";
+const DEFAULT_CONTENT_TYPE = "application/octet-stream";
+const COMPRESSION_QUALITIES = [80, 60, 40] as const;
 
-export class FileHandler {
-  readonly #maxSize = 10 * 1024 * 1024;
-  readonly #maxFiles = 10;
-
-  static isBuffer(input: unknown): input is Buffer {
+export const FileHandler = {
+  isBuffer(input: unknown): input is Buffer {
     return Buffer.isBuffer(input);
-  }
+  },
 
-  static isFile(input: unknown): input is File {
+  isFile(input: unknown): input is File {
     return typeof File !== "undefined" && input instanceof File;
-  }
+  },
 
-  static isBlob(input: unknown): input is Blob {
+  isBlob(input: unknown): input is Blob {
     return typeof Blob !== "undefined" && input instanceof Blob;
-  }
+  },
 
-  static isReadable(input: unknown): input is Readable {
+  isReadable(input: unknown): input is Readable {
     return input instanceof Readable;
-  }
+  },
 
-  static isDataUri(input: unknown): input is DataUri {
+  isDataUri(input: unknown): input is DataUri {
     return typeof input === "string" && DATA_URI_REGEX.test(input);
-  }
+  },
 
-  static isFilePath(input: unknown): input is string {
+  isFilePath(input: unknown): input is string {
     return typeof input === "string" && FILE_PATH_REGEX.test(input);
-  }
+  },
 
-  static isValidSingleInput(input: unknown): input is FileInput {
+  isValidSingleInput(input: unknown): input is FileInput {
     return (
-      FileHandler.isBuffer(input) ||
-      FileHandler.isFile(input) ||
-      FileHandler.isBlob(input) ||
-      FileHandler.isReadable(input) ||
+      this.isBuffer(input) ||
+      this.isFile(input) ||
+      this.isBlob(input) ||
+      this.isReadable(input) ||
       (typeof input === "string" &&
-        (FileHandler.isDataUri(input) || FileHandler.isFilePath(input)))
+        (this.isDataUri(input) || this.isFilePath(input)))
     );
-  }
+  },
 
-  static isValidInput(input: unknown): input is FileInput | FileInput[] {
+  isValidInput(input: unknown): input is FileInput | FileInput[] {
     return Array.isArray(input)
-      ? input.every((item) => FileHandler.isValidSingleInput(item))
-      : FileHandler.isValidSingleInput(input);
-  }
+      ? input.every((item) => this.isValidSingleInput(item))
+      : this.isValidSingleInput(input);
+  },
 
-  static async toBuffer(input: FileInput): Promise<Buffer> {
-    if (FileHandler.isBuffer(input)) {
+  async readStreamToBuffer(stream: Readable): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  },
+
+  async toBuffer(input: FileInput): Promise<Buffer> {
+    if (this.isBuffer(input)) {
       return input;
     }
 
-    if (FileHandler.isReadable(input)) {
-      const chunks: Buffer[] = [];
-      for await (const chunk of input) {
-        chunks.push(Buffer.from(chunk));
-      }
-
-      return Buffer.concat(chunks);
+    if (this.isReadable(input)) {
+      return await this.readStreamToBuffer(input);
     }
 
     if (typeof input === "string") {
-      if (FileHandler.isDataUri(input)) {
+      if (this.isDataUri(input)) {
         const matches = input.match(DATA_URI_REGEX);
         if (!matches?.[2]) {
           throw new Error("Invalid data URI format");
@@ -85,50 +90,59 @@ export class FileHandler {
         return Buffer.from(matches[2], "base64");
       }
 
-      const stream = createReadStream(input);
-      const chunks: Buffer[] = [];
-
-      for await (const chunk of stream) {
-        chunks.push(Buffer.from(chunk));
-      }
-
-      return Buffer.concat(chunks);
+      return await this.readStreamToBuffer(createReadStream(input));
     }
 
-    if (FileHandler.isFile(input) || FileHandler.isBlob(input)) {
+    if (this.isFile(input) || this.isBlob(input)) {
       return Buffer.from(await input.arrayBuffer());
     }
 
     throw new Error("Invalid file input");
-  }
+  },
 
-  static bufferToDataUri(buffer: Buffer, contentType: string): DataUri {
+  bufferToDataUri(buffer: Buffer, contentType: string): DataUri {
     return `data:${contentType};base64,${buffer.toString("base64")}` as DataUri;
-  }
+  },
 
-  static dataUriToContentType(dataUri: DataUri): string {
+  dataUriToContentType(dataUri: DataUri): string {
     const matches = dataUri.match(DATA_URI_REGEX);
-    return matches?.[1] || "application/octet-stream";
-  }
+    return matches?.[1] || DEFAULT_CONTENT_TYPE;
+  },
 
-  static async toDataUri(input: FileInput): Promise<DataUri> {
-    if (FileHandler.isDataUri(input)) {
+  async toDataUri(input: FileInput): Promise<DataUri> {
+    if (this.isDataUri(input)) {
       return input;
     }
 
-    const buffer = await FileHandler.toBuffer(input);
+    const buffer = await this.toBuffer(input);
     const type = await fileTypeFromBuffer(buffer);
 
-    return FileHandler.bufferToDataUri(
-      buffer,
-      type?.mime ?? "application/octet-stream",
-    );
-  }
+    return this.bufferToDataUri(buffer, type?.mime ?? DEFAULT_CONTENT_TYPE);
+  },
 
-  static async resizeImageIfNeeded(
-    buffer: Buffer,
-    maxSize: number,
-  ): Promise<Buffer> {
+  async compressImage(
+    image: sharp.Sharp,
+    format: string | undefined,
+    quality: number,
+  ): Promise<Buffer | null> {
+    try {
+      switch (format) {
+        case "png":
+          return await image.png({ quality, compressionLevel: 9 }).toBuffer();
+        case "jpeg":
+        case "jpg":
+          return await image.jpeg({ quality }).toBuffer();
+        case "webp":
+          return await image.webp({ quality }).toBuffer();
+        default:
+          return null;
+      }
+    } catch {
+      return null;
+    }
+  },
+
+  async resizeImageIfNeeded(buffer: Buffer, maxSize: number): Promise<Buffer> {
     try {
       if (buffer.length <= maxSize) {
         return buffer;
@@ -141,27 +155,19 @@ export class FileHandler {
         throw new Error("Unable to get image dimensions");
       }
 
-      for (const quality of [80, 60, 40]) {
-        if (metadata.format === "png") {
-          const resized = await image
-            .png({ quality, compressionLevel: 9 })
-            .toBuffer();
-          if (resized.length <= maxSize) {
-            return resized;
-          }
-        } else if (metadata.format === "jpeg" || metadata.format === "jpg") {
-          const resized = await image.jpeg({ quality }).toBuffer();
-          if (resized.length <= maxSize) {
-            return resized;
-          }
-        } else if (metadata.format === "webp") {
-          const resized = await image.webp({ quality }).toBuffer();
-          if (resized.length <= maxSize) {
-            return resized;
-          }
+      // Try compression first
+      for (const quality of COMPRESSION_QUALITIES) {
+        const compressed = await this.compressImage(
+          image,
+          metadata.format,
+          quality,
+        );
+        if (compressed && compressed.length <= maxSize) {
+          return compressed;
         }
       }
 
+      // If compression not enough, resize
       const ratio = Math.sqrt(maxSize / buffer.length);
       const newWidth = Math.floor(metadata.width * ratio);
       const newHeight = Math.floor(metadata.height * ratio);
@@ -170,23 +176,36 @@ export class FileHandler {
     } catch {
       return buffer;
     }
-  }
+  },
+
+  getFilename(input: FileInput): string {
+    if (typeof input === "string") {
+      return this.isDataUri(input) ? DEFAULT_FILENAME : basename(input);
+    }
+    if (this.isFile(input)) {
+      return input.name;
+    }
+    return DEFAULT_FILENAME;
+  },
+
+  async getContentType(buffer: Buffer, filename: string): Promise<string> {
+    const fileType = await fileTypeFromBuffer(buffer);
+    const mimeType = lookup(filename);
+    return fileType?.mime || mimeType || DEFAULT_CONTENT_TYPE;
+  },
 
   async processFile(
     input: FileInput,
     context: "attachment" | "asset" = "attachment",
   ): Promise<ProcessedFile> {
-    if (!FileHandler.isValidInput(input)) {
+    if (!this.isValidInput(input)) {
       throw new Error("Invalid file input");
     }
 
-    const buffer = await FileHandler.toBuffer(input);
-    const maxSize = context === "asset" ? MAX_ASSET_SIZE : this.#maxSize;
+    const buffer = await this.toBuffer(input);
+    const maxSize = context === "asset" ? MAX_ASSET_SIZE : MAX_SIZE;
 
-    const processedBuffer = await FileHandler.resizeImageIfNeeded(
-      buffer,
-      maxSize,
-    );
+    const processedBuffer = await this.resizeImageIfNeeded(buffer, maxSize);
 
     if (processedBuffer.length > maxSize) {
       throw new Error(
@@ -195,28 +214,17 @@ export class FileHandler {
       );
     }
 
-    let filename: string;
-    if (typeof input === "string") {
-      filename = FileHandler.isDataUri(input) ? "file" : basename(input);
-    } else if (FileHandler.isFile(input)) {
-      filename = input.name;
-    } else {
-      filename = "file";
-    }
-
-    const fileType = await fileTypeFromBuffer(processedBuffer);
-    const mimeType = lookup(filename);
-    const contentType =
-      fileType?.mime || mimeType || "application/octet-stream";
+    const filename = this.getFilename(input);
+    const contentType = await this.getContentType(processedBuffer, filename);
 
     return {
       buffer: processedBuffer,
       filename,
       contentType,
       size: processedBuffer.length,
-      dataUri: FileHandler.bufferToDataUri(processedBuffer, contentType),
+      dataUri: this.bufferToDataUri(processedBuffer, contentType),
     };
-  }
+  },
 
   async createFormData(
     files: FileInput | FileInput[],
@@ -224,7 +232,7 @@ export class FileHandler {
   ): Promise<FormData> {
     const filesArray = Array.isArray(files) ? files : [files];
 
-    if (filesArray.length > this.#maxFiles) {
+    if (filesArray.length > MAX_FILES) {
       throw new Error(
         `Discord Error ${JsonErrorCode.FileUploadTooBig}: Too many files provided`,
       );
@@ -249,16 +257,13 @@ export class FileHandler {
       } else if (Buffer.isBuffer(body) || body instanceof Uint8Array) {
         form.append("payload_json", Buffer.from(body));
       } else if (body instanceof Readable) {
-        const chunks: Buffer[] = [];
-        for await (const chunk of body) {
-          chunks.push(Buffer.from(chunk));
-        }
-        form.append("payload_json", Buffer.concat(chunks));
+        const buffer = await this.readStreamToBuffer(body);
+        form.append("payload_json", buffer);
       } else {
         form.append("payload_json", JSON.stringify(body));
       }
     }
 
     return form;
-  }
-}
+  },
+} as const;

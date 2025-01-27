@@ -1,15 +1,20 @@
 import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import { request } from "undici";
-import type { z } from "zod";
 import { HttpError } from "../errors/index.js";
-import { FileHandler } from "../handlers/index.js";
-import type { HttpOptions } from "../options/index.js";
+import { FileHandler, HeaderHandler } from "../handlers/index.js";
+import type { RestOptions } from "../options/index.js";
 import type {
   JsonErrorEntity,
   RequestOptions,
   RestEvents,
 } from "../types/index.js";
+
+const HTTP_DEFAULTS = {
+  apiBaseUrl: "https://discord.com",
+  contentType: "application/json",
+  rateLimitPrecision: "millisecond",
+} as const;
 
 export interface HttpResponse<T = unknown> {
   data: T;
@@ -19,64 +24,27 @@ export interface HttpResponse<T = unknown> {
 }
 
 export class HttpService extends EventEmitter<RestEvents> {
-  readonly #file = new FileHandler();
-  readonly #options: z.output<typeof HttpOptions>;
+  readonly #options: RestOptions;
 
-  constructor(options: z.output<typeof HttpOptions>) {
+  constructor(options: RestOptions) {
     super();
     this.#options = options;
   }
 
   async request<T>(options: RequestOptions): Promise<HttpResponse<T>> {
-    const startTime = Date.now();
+    const startTime = this.#getCurrentTimestamp();
 
     try {
       const url = this.#formatPath(options.path);
-      let processedOptions: Dispatcher.RequestOptions = {
-        ...options,
-        origin: url.origin,
-        path: url.pathname + url.search,
-        signal: AbortSignal.timeout(this.#options.timeout),
-        headers: this.#getHeaders(options),
-      };
-
-      if (options.files) {
-        const formData = await this.#file.createFormData(
-          options.files,
-          options.body,
-        );
-        processedOptions = {
-          ...processedOptions,
-          body: formData.getBuffer(),
-          headers: {
-            ...processedOptions.headers,
-            ...formData.getHeaders(),
-          },
-        };
-      }
-
-      const response = await request(processedOptions);
-      const latency = Date.now() - startTime;
+      const requestOptions = await this.#prepareRequestOptions(options, url);
+      const response = await this.#executeRequest(requestOptions);
+      const latency = this.#calculateLatency(startTime);
 
       if (response.statusCode === 204) {
-        return {
-          data: {} as T,
-          statusCode: response.statusCode,
-          headers: response.headers as Record<string, string>,
-          latency,
-        };
+        return this.#createEmptyResponse<T>(response, latency);
       }
 
-      const buffer = Buffer.from(await response.body.arrayBuffer());
-      let data: unknown;
-      try {
-        data = JSON.parse(buffer.toString());
-      } catch {
-        throw new HttpError("Failed to parse JSON response", {
-          status: response.statusCode,
-          rawBody: buffer.toString(),
-        });
-      }
+      const data = await this.#parseResponseData(response);
 
       if (response.statusCode >= 400) {
         this.#handleErrorResponse(response.statusCode, data);
@@ -87,7 +55,7 @@ export class HttpService extends EventEmitter<RestEvents> {
         method: options.method,
         statusCode: response.statusCode,
         latency,
-        timestamp: Date.now(),
+        timestamp: this.#getCurrentTimestamp(),
       });
 
       return {
@@ -97,17 +65,7 @@ export class HttpService extends EventEmitter<RestEvents> {
         latency,
       };
     } catch (error) {
-      if (error instanceof HttpError) {
-        throw error;
-      }
-
-      throw new HttpError(
-        error instanceof Error ? error.message : "Request failed",
-        {
-          path: options.path,
-          method: options.method,
-        },
-      );
+      this.#handleRequestError(error, options);
     }
   }
 
@@ -116,42 +74,114 @@ export class HttpService extends EventEmitter<RestEvents> {
       throw new HttpError("Path cannot contain directory traversal");
     }
 
-    const cleanPath = path
-      .trim()
-      .replace(/\/+/g, "/")
-      .replace(/^\/+|\/+$/g, "");
+    const cleanPath = this.#cleanPath(path);
 
     try {
       return new URL(
         `/api/v${this.#options.version}/${cleanPath}`,
-        "https://discord.com",
+        HTTP_DEFAULTS.apiBaseUrl,
       );
     } catch (error) {
       throw new HttpError(
-        `Invalid API path: ${error instanceof Error ? error.message : "unknown error"}`,
+        `"Invalid API path": ${error instanceof Error ? error.message : "unknown error"}`,
       );
     }
   }
 
-  #getHeaders(options: RequestOptions): Record<string, string> {
-    const baseHeaders: Record<string, string> = {
-      authorization: `Bot ${this.#options.token}`,
-      "user-agent": this.#options.userAgent,
-      "content-type": "application/json",
-      "x-ratelimit-precision": "millisecond",
+  #cleanPath(path: string): string {
+    return path
+      .trim()
+      .replace(/\/+/g, "/")
+      .replace(/^\/+|\/+$/g, "");
+  }
+
+  async #prepareRequestOptions(
+    options: RequestOptions,
+    url: URL,
+  ): Promise<Dispatcher.RequestOptions> {
+    let requestOptions: Dispatcher.RequestOptions = {
+      ...options,
+      origin: url.origin,
+      path: url.pathname + url.search,
+      signal: AbortSignal.timeout(this.#options.queue.timeout),
+      headers: this.#getHeaders(options),
     };
 
-    if (options.reason) {
-      try {
-        baseHeaders["x-audit-log-reason"] = encodeURIComponent(options.reason);
-      } catch {
-        throw new Error("Reason contains non-encodable characters");
-      }
+    if (options.files) {
+      requestOptions = await this.#addFormDataToOptions(
+        requestOptions,
+        options,
+      );
     }
 
-    const customHeaders = options.headers || {};
-    const conflictingHeaders = Object.keys(customHeaders)
-      .filter((header) => header.toLowerCase() in baseHeaders)
+    return requestOptions;
+  }
+
+  async #addFormDataToOptions(
+    options: Dispatcher.RequestOptions,
+    requestOptions: RequestOptions,
+  ): Promise<Dispatcher.RequestOptions> {
+    if (!requestOptions.files) {
+      throw new Error(
+        "Request options contain files but no file handler is available",
+      );
+    }
+
+    const formData = await FileHandler.createFormData(
+      requestOptions.files,
+      requestOptions.body,
+    );
+
+    return {
+      ...options,
+      body: formData.getBuffer(),
+      headers: {
+        ...options.headers,
+        ...formData.getHeaders(),
+      },
+    };
+  }
+
+  #getHeaders(options: RequestOptions): Record<string, string> {
+    const baseHeaders = this.#createBaseHeaders();
+    this.#addAuditLogReason(baseHeaders, options.reason);
+
+    const customHeaders = HeaderHandler.parse(options.headers).headers || {};
+    this.#checkConflictingHeaders(customHeaders, baseHeaders);
+
+    return {
+      ...baseHeaders,
+      ...customHeaders,
+    };
+  }
+
+  #createBaseHeaders(): Record<string, string> {
+    return {
+      authorization: `Bot ${this.#options.token}`,
+      "user-agent": this.#options.userAgent,
+      "content-type": HTTP_DEFAULTS.contentType,
+      "x-ratelimit-precision": HTTP_DEFAULTS.rateLimitPrecision,
+    };
+  }
+
+  #addAuditLogReason(headers: Record<string, string>, reason?: string): void {
+    if (!reason) {
+      return;
+    }
+
+    try {
+      headers["x-audit-log-reason"] = encodeURIComponent(reason);
+    } catch {
+      throw new Error("Reason contains non-encodable characters");
+    }
+  }
+
+  #checkConflictingHeaders(
+    custom: Record<string, string>,
+    base: Record<string, string>,
+  ): void {
+    const conflictingHeaders = Object.keys(custom)
+      .filter((header) => header.toLowerCase() in base)
       .map((header) => header.toLowerCase());
 
     if (conflictingHeaders.length > 0) {
@@ -160,11 +190,38 @@ export class HttpService extends EventEmitter<RestEvents> {
         `Conflicting headers detected: ${conflictingHeaders.join(", ")}`,
       );
     }
+  }
 
+  async #executeRequest(
+    options: Dispatcher.RequestOptions,
+  ): Promise<Dispatcher.ResponseData> {
+    return await request(options);
+  }
+
+  async #parseResponseData(
+    response: Dispatcher.ResponseData,
+  ): Promise<unknown> {
+    const buffer = Buffer.from(await response.body.arrayBuffer());
+    try {
+      return JSON.parse(buffer.toString());
+    } catch {
+      throw new HttpError("Failed to parse JSON response", {
+        status: response.statusCode,
+        rawBody: buffer.toString(),
+      });
+    }
+  }
+
+  #createEmptyResponse<T>(
+    response: Dispatcher.ResponseData,
+    latency: number,
+  ): HttpResponse<T> {
     return {
-      ...baseHeaders,
-      ...customHeaders,
-    } as Record<string, string>;
+      data: {} as T,
+      statusCode: response.statusCode,
+      headers: response.headers as Record<string, string>,
+      latency,
+    };
   }
 
   #handleErrorResponse(status: number, data: unknown): never {
@@ -176,11 +233,26 @@ export class HttpService extends EventEmitter<RestEvents> {
       });
     }
 
+    throw new HttpError(this.#getErrorMessage(data), { status });
+  }
+
+  #getErrorMessage(data: unknown): string {
+    return typeof data === "object" && data !== null && "message" in data
+      ? String(data.message)
+      : "Unknown API Error";
+  }
+
+  #handleRequestError(error: unknown, options: RequestOptions): never {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+
     throw new HttpError(
-      typeof data === "object" && data !== null && "message" in data
-        ? String(data.message)
-        : "Unknown API Error",
-      { status },
+      error instanceof Error ? error.message : "Unknown API Error",
+      {
+        path: options.path,
+        method: options.method,
+      },
     );
   }
 
@@ -191,5 +263,13 @@ export class HttpService extends EventEmitter<RestEvents> {
       "code" in data &&
       "message" in data
     );
+  }
+
+  #getCurrentTimestamp(): number {
+    return Date.now();
+  }
+
+  #calculateLatency(startTime: number): number {
+    return this.#getCurrentTimestamp() - startTime;
   }
 }
