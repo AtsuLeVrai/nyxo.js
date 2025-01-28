@@ -1,14 +1,10 @@
-import { EventEmitter } from "eventemitter3";
 import type { Dispatcher } from "undici";
 import { request } from "undici";
+import type { Rest } from "../core/index.js";
 import { HttpError } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import type { RestOptions } from "../options/index.js";
-import type {
-  JsonErrorEntity,
-  RequestOptions,
-  RestEvents,
-} from "../types/index.js";
+import type { JsonErrorEntity, RequestOptions } from "../types/index.js";
 
 const HTTP_DEFAULTS = {
   apiBaseUrl: "https://discord.com",
@@ -23,11 +19,12 @@ export interface HttpResponse<T = unknown> {
   latency: number;
 }
 
-export class HttpService extends EventEmitter<RestEvents> {
+export class HttpService {
+  readonly #rest: Rest;
   readonly #options: RestOptions;
 
-  constructor(options: RestOptions) {
-    super();
+  constructor(rest: Rest, options: RestOptions) {
+    this.#rest = rest;
     this.#options = options;
   }
 
@@ -50,7 +47,7 @@ export class HttpService extends EventEmitter<RestEvents> {
         this.#handleErrorResponse(response.statusCode, data);
       }
 
-      this.emit("request", {
+      this.#rest.emit("request", {
         path: options.path,
         method: options.method,
         statusCode: response.statusCode,
@@ -185,7 +182,7 @@ export class HttpService extends EventEmitter<RestEvents> {
       .map((header) => header.toLowerCase());
 
     if (conflictingHeaders.length > 0) {
-      this.emit(
+      this.#rest.emit(
         "error",
         `Conflicting headers detected: ${conflictingHeaders.join(", ")}`,
       );

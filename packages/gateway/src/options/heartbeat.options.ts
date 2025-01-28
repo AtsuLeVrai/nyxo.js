@@ -1,6 +1,16 @@
 import { z } from "zod";
 
-export const HeartbeatOptions = z.object({
-  maxMissedHeartbeats: z.number().int().default(3),
-  autoReconnect: z.boolean().default(true),
-});
+const DEFAULT_MAX_MISSED_HEARTBEATS = 3;
+
+export const HeartbeatOptions = z
+  .object({
+    maxMissedHeartbeats: z
+      .number()
+      .int()
+      .positive()
+      .default(DEFAULT_MAX_MISSED_HEARTBEATS),
+    autoReconnect: z.boolean().default(true),
+  })
+  .strict();
+
+export type HeartbeatOptions = z.infer<typeof HeartbeatOptions>;

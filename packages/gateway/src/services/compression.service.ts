@@ -2,16 +2,19 @@ import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
 import type { CompressionType } from "../options/index.js";
 
-const ZLIB_FLUSH = Buffer.from([0x00, 0x00, 0xff, 0xff]);
-const ZLIB_CHUNK_SIZE = 128 * 1024;
-const ZLIB_WINDOW_BITS = 15;
+const COMPRESSION_CONSTANTS = {
+  zlib: {
+    flush: Buffer.from([0x00, 0x00, 0xff, 0xff]),
+    chunkSize: 128 * 1024,
+    windowBits: 15,
+  },
+} as const;
 
 export class CompressionService {
+  readonly #compressionType?: CompressionType;
   #zstdStream: Decompress | null = null;
   #zlibInflate: zlib.Inflate | null = null;
   #chunks: Uint8Array[] = [];
-
-  readonly #compressionType?: CompressionType;
 
   constructor(compressionType?: CompressionType) {
     this.#compressionType = compressionType;
@@ -28,22 +31,16 @@ export class CompressionService {
   initialize(): void {
     this.destroy();
 
-    if (this.#compressionType === "zlib-stream") {
-      this.#zlibInflate = new zlib.Inflate({
-        chunkSize: ZLIB_CHUNK_SIZE,
-        windowBits: ZLIB_WINDOW_BITS,
-      });
-
-      if (!this.#zlibInflate || this.#zlibInflate.err) {
-        throw new Error("Failed to create Zlib inflater");
+    try {
+      if (this.#compressionType === "zlib-stream") {
+        this.#initializeZlib();
+      } else if (this.#compressionType === "zstd-stream") {
+        this.#initializeZstd();
       }
-    }
-
-    if (this.#compressionType === "zstd-stream") {
-      this.#zstdStream = new Decompress((chunk) => this.#chunks.push(chunk));
-      if (!this.#zstdStream) {
-        throw new Error("Failed to create Zstd decompressor");
-      }
+    } catch {
+      throw new Error(
+        `Failed to initialize ${this.#compressionType} compression`,
+      );
     }
   }
 
@@ -52,17 +49,21 @@ export class CompressionService {
       throw new Error("Compression not initialized");
     }
 
-    const buffer = Buffer.from(data.buffer, data.byteOffset, data.length);
+    try {
+      const buffer = Buffer.from(data.buffer, data.byteOffset, data.length);
 
-    if (this.#zlibInflate) {
-      return this.#decompressZlib(buffer);
+      if (this.#zlibInflate) {
+        return this.#decompressZlib(buffer);
+      }
+
+      if (this.#zstdStream) {
+        return this.#decompressZstd(buffer);
+      }
+
+      throw new Error("No compression handler available");
+    } catch (error) {
+      throw new Error("Decompression failed", { cause: error });
     }
-
-    if (this.#zstdStream) {
-      return this.#decompressZstd(buffer);
-    }
-
-    throw new Error("No compression handler available");
   }
 
   destroy(): void {
@@ -71,12 +72,30 @@ export class CompressionService {
     this.#chunks = [];
   }
 
+  #initializeZlib(): void {
+    this.#zlibInflate = new zlib.Inflate({
+      chunkSize: COMPRESSION_CONSTANTS.zlib.chunkSize,
+      windowBits: COMPRESSION_CONSTANTS.zlib.windowBits,
+    });
+
+    if (!this.#zlibInflate || this.#zlibInflate.err) {
+      throw new Error("Failed to create Zlib inflater");
+    }
+  }
+
+  #initializeZstd(): void {
+    this.#zstdStream = new Decompress((chunk) => this.#chunks.push(chunk));
+    if (!this.#zstdStream) {
+      throw new Error("Failed to create Zstd decompressor");
+    }
+  }
+
   #decompressZlib(data: Buffer): Buffer {
     if (!this.#zlibInflate) {
       return Buffer.alloc(0);
     }
 
-    const hasFlush = data.subarray(-4).equals(ZLIB_FLUSH);
+    const hasFlush = data.subarray(-4).equals(COMPRESSION_CONSTANTS.zlib.flush);
     if (!hasFlush) {
       return Buffer.alloc(0);
     }
@@ -98,9 +117,15 @@ export class CompressionService {
     this.#chunks = [];
     this.#zstdStream.push(new Uint8Array(data));
 
-    const combined = new Uint8Array(
-      this.#chunks.reduce((sum, chunk) => sum + chunk.length, 0),
+    if (this.#chunks.length === 0) {
+      return Buffer.alloc(0);
+    }
+
+    const totalLength = this.#chunks.reduce(
+      (sum, chunk) => sum + chunk.length,
+      0,
     );
+    const combined = new Uint8Array(totalLength);
 
     let offset = 0;
     for (const chunk of this.#chunks) {

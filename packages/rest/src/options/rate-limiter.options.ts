@@ -1,12 +1,10 @@
 import { z } from "zod";
 
-export const DEFAULT_RATE_LIMITER_OPTIONS = {
-  invalidRequestWindow: 600_000,
-  invalidRequestMaxLimit: 10_000,
-  latencyThreshold: 30_000,
-  maxLatencyEntries: 10,
-  cleanupInterval: 30_000,
-} as const;
+const DEFAULT_INVALID_REQUEST_WINDOW = 600_000;
+const DEFAULT_INVALID_REQUEST_MAX_LIMIT = 10_000;
+const DEFAULT_LATENCY_THRESHOLD = 30_000;
+const DEFAULT_MAX_LATENCY_ENTRIES = 10;
+const DEFAULT_CLEANUP_INTERVAL = 30_000;
 
 export const RateLimiterOptions = z
   .object({
@@ -14,27 +12,27 @@ export const RateLimiterOptions = z
       .number()
       .int()
       .positive()
-      .default(DEFAULT_RATE_LIMITER_OPTIONS.invalidRequestWindow),
+      .default(DEFAULT_INVALID_REQUEST_WINDOW),
     invalidRequestMaxLimit: z
       .number()
       .int()
       .positive()
-      .default(DEFAULT_RATE_LIMITER_OPTIONS.invalidRequestMaxLimit),
+      .default(DEFAULT_INVALID_REQUEST_MAX_LIMIT),
     latencyThreshold: z
       .number()
       .int()
       .positive()
-      .default(DEFAULT_RATE_LIMITER_OPTIONS.latencyThreshold),
+      .default(DEFAULT_LATENCY_THRESHOLD),
     maxLatencyEntries: z
       .number()
       .int()
       .positive()
-      .default(DEFAULT_RATE_LIMITER_OPTIONS.maxLatencyEntries),
+      .default(DEFAULT_MAX_LATENCY_ENTRIES),
     cleanupInterval: z
       .number()
       .int()
       .positive()
-      .default(DEFAULT_RATE_LIMITER_OPTIONS.cleanupInterval),
+      .default(DEFAULT_CLEANUP_INTERVAL),
   })
   .strict();
 

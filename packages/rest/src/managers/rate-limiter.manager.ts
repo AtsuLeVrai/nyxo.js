@@ -1,12 +1,8 @@
 import { Store } from "@nyxjs/store";
-import { EventEmitter } from "eventemitter3";
+import type { Rest } from "../core/index.js";
 import { RateLimitError } from "../errors/index.js";
 import type { RateLimiterOptions } from "../options/index.js";
-import type {
-  RateLimitBucket,
-  RateLimitScope,
-  RestEvents,
-} from "../types/index.js";
+import type { RateLimitBucket, RateLimitScope } from "../types/index.js";
 
 export const DISCORD_RATE_LIMIT_HEADERS = {
   limit: "x-ratelimit-limit",
@@ -36,7 +32,7 @@ const INVALID_STATUS_CODES = [401, 403, 404, 429];
 const INTERACTION_ROUTES = ["/interactions", "/webhooks"];
 const WEBHOOK_ROUTE_REGEX = /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/;
 
-export class RateLimiterManager extends EventEmitter<RestEvents> {
+export class RateLimiterManager {
   #globalReset: number | null = null;
   #invalidRequestCount = 0;
   #invalidRequestResetTime = Date.now();
@@ -44,11 +40,12 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
   readonly #sharedBuckets = new Store<string, Set<string>>();
   readonly #routesToBuckets = new Store<string, string>();
 
+  readonly #rest: Rest;
   readonly #options: RateLimiterOptions;
   readonly #cleanupInterval: NodeJS.Timeout;
 
-  constructor(options: RateLimiterOptions) {
-    super();
+  constructor(rest: Rest, options: RateLimiterOptions) {
+    this.#rest = rest;
     this.#options = options;
     this.#cleanupInterval = setInterval(
       () => this.#cleanupBuckets(),
@@ -57,10 +54,10 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
   }
 
   checkRateLimit(path: string, method: string): void {
-    this.emit("debug", "Checking rate limits", { path, method });
+    this.#rest.emit("debug", "Checking rate limits", { path, method });
 
     if (INTERACTION_ROUTES.some((route) => path.startsWith(route))) {
-      this.emit("debug", "Interaction route bypass global limit", {
+      this.#rest.emit("debug", "Interaction route bypass global limit", {
         path,
         method,
       });
@@ -95,7 +92,7 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
     if (this.#isBucketLimited(bucket)) {
       const timeToReset = this.#getBucketResetTime(bucket);
 
-      this.emit("rateLimited", {
+      this.#rest.emit("rateLimited", {
         bucketHash: bucket.hash,
         timeToReset,
         limit: bucket.limit,
@@ -126,7 +123,7 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
   ): void {
     if (INVALID_STATUS_CODES.includes(statusCode) && statusCode !== 429) {
       this.incrementInvalidRequestCount();
-      this.emit("error", `Invalid status code: ${statusCode}`, {
+      this.#rest.emit("error", `Invalid status code: ${statusCode}`, {
         path,
         method,
       });
@@ -182,10 +179,13 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
     }
 
     if (isNewBucket) {
-      this.emit("bucketCreated", bucket);
+      this.#rest.emit("bucketCreated", bucket);
     }
 
-    this.emit("debug", "Updated rate limit bucket", { bucketHash, bucket });
+    this.#rest.emit("debug", "Updated rate limit bucket", {
+      bucketHash,
+      bucket,
+    });
   }
 
   incrementInvalidRequestCount(): void {
@@ -200,7 +200,6 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
     this.#invalidRequestCount = 0;
     this.#invalidRequestResetTime = Date.now();
     clearInterval(this.#cleanupInterval);
-    this.removeAllListeners();
   }
 
   #getBucket(path: string, method: string): RateLimitBucket | undefined {
@@ -313,7 +312,7 @@ export class RateLimiterManager extends EventEmitter<RestEvents> {
     for (const [hash, bucket] of this.#buckets.entries()) {
       if (bucket.reset < now) {
         this.#buckets.delete(hash);
-        this.emit("bucketDeleted", hash);
+        this.#rest.emit("bucketDeleted", hash);
       }
     }
 

@@ -66,6 +66,7 @@ import type {
   VoiceServerUpdateEntity,
   WebhookUpdateEntity,
 } from "../events/index.js";
+import type { HealthStatus } from "./health.type.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#payload-structure}
@@ -200,12 +201,37 @@ export interface GatewayEvents {
   heartbeatUpdate: (heartbeat: HeartbeatStatus) => void;
   connectionUpdate: (connection: ConnectionStatus) => void;
   sessionUpdate: (status: SessionStatus) => void;
+  healthUpdate: (status: HealthStatus) => void;
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (message: string | Error, context?: Record<string, unknown>) => void;
   dispatch: <K extends keyof GatewayReceiveEvents>(
     event: K,
     data: GatewayReceiveEvents[K],
   ) => void;
+}
+
+export interface GatewayDiagnostics {
+  connectionState: {
+    readyState: number;
+    isHealthy: boolean;
+    reconnectAttempts: number;
+    sessionId: string | null;
+  };
+  heartbeat: {
+    latency: number;
+    missedHeartbeats: number;
+    sequence: number;
+    isRunning: boolean;
+  };
+  sharding: {
+    isEnabled: boolean;
+    totalShards: number;
+    currentShardId: number | null;
+  };
+  timing: {
+    connectStartTime: number;
+    uptime: number;
+  };
 }
 
 /**

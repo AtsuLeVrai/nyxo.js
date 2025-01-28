@@ -2,7 +2,9 @@ import erlpack from "erlpack";
 import type { EncodingType } from "../options/index.js";
 import type { PayloadEntity } from "../types/index.js";
 
-const MAX_PAYLOAD_SIZE = 4096;
+const ENCODING_CONSTANTS = {
+  maxPayloadSize: 4096,
+} as const;
 
 export class EncodingService {
   readonly #encodingType: EncodingType;
@@ -17,18 +19,9 @@ export class EncodingService {
 
   encode(data: PayloadEntity): Buffer | string {
     try {
-      const result =
-        this.#encodingType === "json"
-          ? JSON.stringify(this.#processData(data))
-          : erlpack.pack(this.#processData(data));
-
-      const size = Buffer.isBuffer(result)
-        ? result.length
-        : Buffer.byteLength(result);
-      if (size > MAX_PAYLOAD_SIZE) {
-        throw new Error(`Payload exceeds ${MAX_PAYLOAD_SIZE} bytes`);
-      }
-
+      const processed = this.#processData(data);
+      const result = this.#encodeData(processed);
+      this.#validatePayloadSize(result);
       return result;
     } catch (error) {
       throw new Error(`Failed to encode ${this.#encodingType}`, {
@@ -49,6 +42,22 @@ export class EncodingService {
     }
   }
 
+  #encodeData(data: unknown): Buffer | string {
+    return this.#encodingType === "json"
+      ? JSON.stringify(data)
+      : erlpack.pack(data);
+  }
+
+  #validatePayloadSize(data: Buffer | string): void {
+    const size = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
+
+    if (size > ENCODING_CONSTANTS.maxPayloadSize) {
+      throw new Error(
+        `Payload exceeds ${ENCODING_CONSTANTS.maxPayloadSize} bytes`,
+      );
+    }
+  }
+
   #processData(data: unknown): unknown {
     if (!data || typeof data !== "object") {
       return data;
@@ -59,9 +68,10 @@ export class EncodingService {
     }
 
     const processed: Record<string, unknown> = {};
+
     for (const [key, value] of Object.entries(data)) {
       if (this.#encodingType === "etf" && typeof key !== "string") {
-        throw new Error("ETF keys must be strings");
+        throw new Error("ETF encoding requires string keys");
       }
       processed[key] = this.#processData(value);
     }
