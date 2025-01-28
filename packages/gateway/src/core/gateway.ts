@@ -14,7 +14,6 @@ import { GatewayOptions } from "../options/index.js";
 import {
   CompressionService,
   EncodingService,
-  HEALTH_CONSTANTS,
   HealthService,
   ReconnectionService,
   SessionService,
@@ -61,7 +60,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.encoding = new EncodingService(this.#options.encodingType);
       this.session = new SessionService();
       this.reconnection = new ReconnectionService();
-      this.health = new HealthService();
+      this.health = new HealthService(this.#options.health);
 
       this.#operationHandler = new OperationHandler(this);
 
@@ -73,7 +72,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
   }
 
-  get options(): Readonly<z.output<typeof GatewayOptions>> {
+  get options(): Readonly<GatewayOptions> {
     return this.#options;
   }
 
@@ -114,13 +113,19 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   updatePresence(presence: z.input<typeof UpdatePresenceEntity>): void {
-    this.#validateConnection();
+    if (!this.#isConnectionValid()) {
+      throw new Error("WebSocket connection is not open");
+    }
+
     this.emit("debug", `Updating presence: ${JSON.stringify(presence)}`);
     this.send(GatewayOpcodes.PresenceUpdate, presence);
   }
 
   updateVoiceState(options: z.input<typeof UpdateVoiceStateEntity>): void {
-    this.#validateConnection();
+    if (!this.#isConnectionValid()) {
+      throw new Error("WebSocket connection is not open");
+    }
+
     this.emit("debug", `Updating voice state for guild ${options.guild_id}`);
     this.send(GatewayOpcodes.VoiceStateUpdate, options);
   }
@@ -128,7 +133,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   requestGuildMembers(
     options: z.input<typeof RequestGuildMembersEntity>,
   ): void {
-    this.#validateConnection();
+    if (!this.#isConnectionValid()) {
+      throw new Error("WebSocket connection is not open");
+    }
+
     this.emit(
       "debug",
       `Requesting guild members for guild ${options.guild_id}`,
@@ -139,7 +147,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   requestSoundboardSounds(
     options: z.input<typeof RequestSoundboardSoundsEntity>,
   ): void {
-    this.#validateConnection();
+    if (!this.#isConnectionValid()) {
+      throw new Error("WebSocket connection is not open");
+    }
+
     this.emit("debug", "Requesting soundboard sounds");
     this.send(GatewayOpcodes.RequestSoundboardSounds, options);
   }
@@ -157,7 +168,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         });
 
         ws.on("error", (error) => {
-          this.emit("error", new Error(error.message));
+          this.emit("error", error);
           reject(error);
         });
 
@@ -290,12 +301,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     await this.#operationHandler.handleClose(code);
   }
 
-  #validateConnection(): void {
-    if (!this.#isConnectionValid()) {
-      throw new Error("WebSocket connection is not open");
-    }
-  }
-
   #isConnectionValid(): boolean {
     return this.#ws?.readyState === WebSocket.OPEN;
   }
@@ -330,7 +335,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       if (this.health.shouldTakeAction(healthStatus)) {
         await this.#handleUnhealthyConnection(healthStatus);
       }
-    }, this.#options.healthCheckInterval);
+    }, this.#options.health.healthCheckInterval);
   }
 
   #stopHealthCheck(): void {
@@ -354,7 +359,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     if (status.state === ConnectionState.Unhealthy) {
       if (
         status.details.missedHeartbeats >=
-        HEALTH_CONSTANTS.zombiedConnectionThreshold
+        this.#options.health.zombieConnectionThreshold
       ) {
         this.heartbeat.destroy();
         if (this.#ws) {

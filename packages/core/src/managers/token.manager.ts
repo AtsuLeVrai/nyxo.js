@@ -46,7 +46,7 @@ export type TokenOptions = z.infer<typeof TokenOptions>;
 
 export class TokenManager {
   readonly #token: Token;
-  readonly #options: z.output<typeof TokenOptions>;
+  readonly #options: TokenOptions;
 
   constructor(token: string, options: z.input<typeof TokenOptions> = {}) {
     try {

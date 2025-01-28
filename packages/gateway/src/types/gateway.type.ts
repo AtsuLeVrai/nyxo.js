@@ -200,8 +200,8 @@ export type HeartbeatStatus =
 export interface GatewayEvents {
   heartbeatUpdate: (heartbeat: HeartbeatStatus) => void;
   connectionUpdate: (connection: ConnectionStatus) => void;
-  sessionUpdate: (status: SessionStatus) => void;
-  healthUpdate: (status: HealthStatus) => void;
+  sessionUpdate: (session: SessionStatus) => void;
+  healthUpdate: (health: HealthStatus) => void;
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (message: string | Error, context?: Record<string, unknown>) => void;
   dispatch: <K extends keyof GatewayReceiveEvents>(

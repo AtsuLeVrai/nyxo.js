@@ -2,13 +2,13 @@ import { ApiVersion, BitFieldManager, BotToken } from "@nyxjs/core";
 import { z } from "zod";
 import { UpdatePresenceEntity } from "../events/index.js";
 import { GatewayIntentsBits } from "../types/index.js";
+import { HealthOptions } from "./health.options.js";
 import { HeartbeatOptions } from "./heartbeat.options.js";
 import { ShardOptions } from "./shard.options.js";
 
 const DEFAULT_LARGE_THRESHOLD = 50;
 const MIN_LARGE_THRESHOLD = 50;
 const MAX_LARGE_THRESHOLD = 250;
-const HEALTH_CHECK_INTERVAL = 30000;
 const DEFAULT_API_VERSION = ApiVersion.V10;
 
 export const EncodingType = z.enum(["json", "etf"]);
@@ -36,11 +36,7 @@ export const GatewayOptions = z
       .default(DEFAULT_LARGE_THRESHOLD),
     encodingType: EncodingType.default("etf"),
     compressionType: CompressionType.optional(),
-    healthCheckInterval: z
-      .number()
-      .int()
-      .positive()
-      .default(HEALTH_CHECK_INTERVAL),
+    health: HealthOptions.default({}),
     heartbeat: HeartbeatOptions.default({}),
     shard: ShardOptions.default({}),
   })

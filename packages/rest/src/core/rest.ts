@@ -72,6 +72,10 @@ export class Rest extends EventEmitter<RestEvents> {
     this.routers = new RouterFactory(this);
   }
 
+  get options(): Readonly<RestOptions> {
+    return this.#options;
+  }
+
   get applications(): ApplicationRouter {
     return this.routers.getRouter("applications");
   }
