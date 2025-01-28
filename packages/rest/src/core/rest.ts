@@ -252,8 +252,9 @@ export class Rest extends EventEmitter<RestEvents> {
   }
 
   destroy(): void {
-    this.rateLimiter.destroy();
     this.queue.clear();
+    this.rateLimiter.destroy();
+    this.routers.destroy();
     this.#eventCleanup();
     this.removeAllListeners();
   }

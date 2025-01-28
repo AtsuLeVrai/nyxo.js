@@ -28,7 +28,10 @@ import {
   WebhookRouter,
 } from "../routes/index.js";
 
-type RouterConstructor = new (rest: Rest) => unknown;
+interface RouterConstructor {
+  new (rest: Rest): unknown;
+}
+
 type RouterInstance = InstanceType<RouterConstructor>;
 
 const ROUTER_MAPPING = {
@@ -67,16 +70,12 @@ type RouterClasses = typeof ROUTER_MAPPING;
 type RouterNames = keyof RouterClasses;
 
 export class RouterFactory {
-  readonly #rest: Rest;
   readonly #routerMap = new Store<string, RouterInstance>();
+  readonly #rest: Rest;
 
   constructor(rest: Rest) {
     this.#rest = rest;
-
-    for (const [routerName, routerClass] of Object.entries(ROUTER_MAPPING)) {
-      const router = new routerClass(this.#rest);
-      this.#routerMap.set(routerName, router);
-    }
+    this.#initializeRouters();
   }
 
   get size(): number {
@@ -86,13 +85,11 @@ export class RouterFactory {
   getRouter<K extends RouterNames>(
     routerInput: K,
   ): InstanceType<RouterClasses[K]> {
-    if (!this.#isValidRouterName(routerInput)) {
-      throw new Error(`Invalid router name: ${routerInput}`);
-    }
+    this.#validateRouterName(routerInput);
 
     const router = this.#routerMap.get(routerInput);
     if (!router) {
-      throw new Error(`Router instance not found: ${routerInput}`);
+      throw new Error(`Router: ${routerInput} not found`);
     }
 
     return router as InstanceType<(typeof ROUTER_MAPPING)[typeof routerInput]>;
@@ -104,6 +101,28 @@ export class RouterFactory {
 
   clear(): void {
     this.#routerMap.clear();
+  }
+
+  debug(): Map<string, RouterInstance> {
+    return new Map(this.#routerMap);
+  }
+
+  destroy(): void {
+    this.clear();
+    this.#initializeRouters();
+  }
+
+  #initializeRouters(): void {
+    for (const [routerName, RouterClass] of Object.entries(ROUTER_MAPPING)) {
+      const router = new RouterClass(this.#rest);
+      this.#routerMap.set(routerName, router);
+    }
+  }
+
+  #validateRouterName(name: string): asserts name is RouterNames {
+    if (!this.#isValidRouterName(name)) {
+      throw new Error(`Invalid router name: ${name}`);
+    }
   }
 
   #isValidRouterName(name: string): name is RouterNames {
