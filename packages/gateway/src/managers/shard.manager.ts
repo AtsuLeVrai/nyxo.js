@@ -51,7 +51,9 @@ export class ShardManager {
     maxConcurrency: number,
     recommendedShards: number,
   ): Promise<void> {
-    this.#validateSpawnConditions(guildCount, recommendedShards);
+    if (!this.#validateSpawnConditions(guildCount, recommendedShards)) {
+      return;
+    }
 
     const totalShards = this.#calculateTotalShards(
       guildCount,
@@ -109,6 +111,19 @@ export class ShardManager {
     }
 
     this.#currentShardId = shardId;
+
+    const shard = this.#shards.get(shardId);
+    if (!shard) {
+      throw new Error(`Shard ${shardId} not found`);
+    }
+
+    this.#gateway.emit("shardUpdate", {
+      shardId,
+      type: "ready",
+      totalShards: shard.totalShards,
+      guildCount: shard.guildCount,
+    });
+
     this.#gateway.emit("debug", `Current shard ID set to ${shardId}`);
   }
 
@@ -116,6 +131,7 @@ export class ShardManager {
     if (this.#shards.size === 0) {
       return 0;
     }
+
     return Number(BigInt(guildId) >> BigInt(22)) % this.#shards.size;
   }
 
@@ -132,6 +148,15 @@ export class ShardManager {
   }
 
   destroy(): void {
+    for (const [shardId, shard] of this.#shards.entries()) {
+      this.#gateway.emit("shardUpdate", {
+        type: "destroy",
+        shardId,
+        totalShards: shard.totalShards,
+        guildCount: shard.guildCount,
+      });
+    }
+
     this.#shards.clear();
     this.#currentIndex = 0;
     this.#currentShardId = null;
@@ -147,12 +172,12 @@ export class ShardManager {
   #validateSpawnConditions(
     guildCount: number,
     recommendedShards: number,
-  ): void {
+  ): boolean {
     const isShardingRequired = guildCount >= SHARD_CONSTANTS.largeThreshold;
     const hasConfiguredShards = this.#options.totalShards !== undefined;
 
-    if (!(isShardingRequired || hasConfiguredShards)) {
-      return;
+    if (!(isShardingRequired && hasConfiguredShards)) {
+      return false;
     }
 
     const minShards = Math.ceil(guildCount / SHARD_CONSTANTS.largeThreshold);
@@ -164,6 +189,8 @@ export class ShardManager {
         `Recommended shard count too low (minimum ${minShards} shards required)`,
       );
     }
+
+    return true;
   }
 
   #calculateTotalShards(guildCount: number, recommendedShards: number): number {
@@ -210,7 +237,7 @@ export class ShardManager {
   }
 
   async #spawnShards(totalShards: number, guildCount: number): Promise<void> {
-    if (this.#options.shardList?.length > 0) {
+    if (this.#options.shardList) {
       this.#validateShardList(totalShards);
     }
 
@@ -282,6 +309,13 @@ export class ShardManager {
     guildCount: number,
   ): void {
     this.#shards.set(shardId, {
+      shardId,
+      totalShards,
+      guildCount,
+    });
+
+    this.#gateway.emit("shardUpdate", {
+      type: "spawn",
       shardId,
       totalShards,
       guildCount,

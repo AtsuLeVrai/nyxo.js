@@ -239,19 +239,15 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
   }
 
-  isHealthy(): boolean {
-    return this.health.isHealthy(
-      this.#ws,
-      this.heartbeat.missedHeartbeats,
-      this.heartbeat.latency,
-    );
-  }
-
   getDiagnostics(): GatewayDiagnostics {
     return {
       connectionState: {
         readyState: this.readyState,
-        isHealthy: this.isHealthy(),
+        isHealthy: this.health.isHealthy(
+          this.#ws,
+          this.heartbeat.missedHeartbeats,
+          this.heartbeat.latency,
+        ),
         reconnectAttempts: this.reconnection.attempts,
         sessionId: this.session.sessionId,
       },
@@ -271,14 +267,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         uptime: Date.now() - this.#connectStartTime,
       },
     };
-  }
-
-  checkHealth(): HealthStatus {
-    return this.health.checkHealth(
-      this.#ws,
-      this.heartbeat.missedHeartbeats,
-      this.heartbeat.latency,
-    );
   }
 
   #handleMessage(data: Buffer): void {

@@ -80,7 +80,7 @@ export class HeartbeatManager {
     this.#gateway.emit("debug", `Acknowledged - Latency: ${this.#latency}ms`);
     this.#gateway.emit("heartbeatUpdate", {
       type: "success",
-      latency: this.#latency,
+      interval: this.#intervalMs,
     });
   }
 

@@ -5,12 +5,12 @@ export const ShardOptions = z
     totalShards: z
       .union([z.number().int().positive(), z.literal("auto")])
       .optional(),
-    shardList: z.array(z.number().int().nonnegative()).default([]),
+    shardList: z.array(z.number().int().nonnegative()).optional(),
   })
   .strict()
   .refine(
     (data) => {
-      if (typeof data.totalShards === "number" && data.shardList.length > 0) {
+      if (typeof data.totalShards === "number" && data.shardList) {
         return data.shardList.every(
           (shard) => shard < Number(data.totalShards),
         );

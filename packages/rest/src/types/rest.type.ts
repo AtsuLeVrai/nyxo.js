@@ -1,6 +1,6 @@
 import type { Dispatcher } from "undici";
 import type { FileInput } from "./file.type.js";
-import type { RateLimitBucket, RateLimitEvent } from "./rate-limit.type.js";
+import type { RateLimitEvent } from "./rate-limit.type.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json-example-json-error-response}
@@ -29,8 +29,6 @@ export interface RestEvents {
   error: (error: Error | string, context?: Record<string, unknown>) => void;
   request: (info: RequestEvent) => void;
   rateLimited: (data: RateLimitEvent) => void;
-  bucketCreated: (bucket: RateLimitBucket) => void;
-  bucketDeleted: (bucketHash: string) => void;
 }
 
 /**

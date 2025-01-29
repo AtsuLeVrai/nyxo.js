@@ -20,7 +20,7 @@ export const RestOptions = z
       .string()
       .regex(DISCORD_USER_AGENT_REGEX)
       .default(DEFAULT_USER_AGENT),
-    maxRetries: z.number().int().positive().default(Number.MAX_SAFE_INTEGER),
+    maxRetries: z.number().int().positive().default(3),
     rateLimit: RateLimiterOptions.default({}),
     queue: QueueOptions.default({}),
   })

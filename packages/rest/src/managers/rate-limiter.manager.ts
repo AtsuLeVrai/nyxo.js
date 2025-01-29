@@ -170,16 +170,11 @@ export class RateLimiterManager {
       lastUsed: Date.now(),
     };
 
-    const isNewBucket = !this.#buckets.has(bucketHash);
     this.#buckets.set(bucketHash, bucket);
     this.#routesToBuckets.set(routeKey, bucketHash);
 
     if (bucket.sharedRoute) {
       this.#linkSharedBucket(bucket.sharedRoute, bucketHash);
-    }
-
-    if (isNewBucket) {
-      this.#rest.emit("bucketCreated", bucket);
     }
 
     this.#rest.emit("debug", "Updated rate limit bucket", {
@@ -312,7 +307,6 @@ export class RateLimiterManager {
     for (const [hash, bucket] of this.#buckets.entries()) {
       if (bucket.reset < now) {
         this.#buckets.delete(hash);
-        this.#rest.emit("bucketDeleted", hash);
       }
     }
 

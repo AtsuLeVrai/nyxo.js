@@ -144,7 +144,7 @@ export interface GatewayReceiveEvents {
   MESSAGE_REACTION_REMOVE_ALL: MessageReactionRemoveAllEntity;
   MESSAGE_REACTION_REMOVE_EMOJI: MessageReactionRemoveEmojiEntity;
   PRESENCE_UPDATE: PresenceEntity;
-  TYPEING_START: TypingEntity;
+  TYPING_START: TypingEntity;
   USER_UPDATE: UserEntity;
   VOICE_CHANNEL_EFFECT_SEND: VoiceChannelEffectSendEntity;
   VOICE_STATE_UPDATE: VoiceStateEntity;
@@ -174,34 +174,38 @@ export interface GatewaySendEvents {
   [GatewayOpcodes.PresenceUpdate]: UpdatePresenceEntity;
 }
 
-export type SessionStatus =
-  | { type: "start"; sessionId: string; readyTime: number; data: ReadyEntity }
-  | { type: "end"; sessionId: string; code: number }
-  | { type: "invalid"; resumable: boolean };
+export interface SessionStatus {
+  type: "start" | "end" | "invalid";
+  sessionId?: string;
+  resumable?: boolean;
+  code?: number;
+  data?: ReadyEntity;
+}
 
-export type ConnectionStatus =
-  | {
-      type: "initial";
-    }
-  | {
-      type: "reconnect";
-      attempt: number;
-    }
-  | {
-      type: "closed";
-      code: number;
-    };
+export interface ConnectionStatus {
+  type: "initial" | "reconnect" | "closed";
+  code?: number;
+  attempt?: number;
+}
 
-export type HeartbeatStatus =
-  | { type: "start"; interval: number }
-  | { type: "stop" }
-  | { type: "success"; latency: number };
+export interface HeartbeatStatus {
+  type: "start" | "stop" | "success";
+  interval?: number;
+}
+
+export interface ShardStatus {
+  type: "spawn" | "ready" | "destroy";
+  shardId: number;
+  totalShards: number;
+  guildCount: number;
+}
 
 export interface GatewayEvents {
   heartbeatUpdate: (heartbeat: HeartbeatStatus) => void;
   connectionUpdate: (connection: ConnectionStatus) => void;
   sessionUpdate: (session: SessionStatus) => void;
   healthUpdate: (health: HealthStatus) => void;
+  shardUpdate: (status: ShardStatus) => void;
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (message: string | Error, context?: Record<string, unknown>) => void;
   dispatch: <K extends keyof GatewayReceiveEvents>(

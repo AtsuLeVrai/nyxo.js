@@ -68,53 +68,29 @@ export class HealthService {
   }
 
   getHealthDescription(status: HealthStatus): string {
-    const stateLabels = {
-      [ConnectionState.Optimal]: {
-        emoji: "✅",
-        label: "Optimal",
-        description: "Normal operation",
-      },
-      [ConnectionState.Degraded]: {
-        emoji: "!",
-        label: "Degraded",
-        description: "Reduced performance",
-      },
-      [ConnectionState.Unhealthy]: {
-        emoji: "❌",
-        label: "Unhealthy",
-        description: "Critical issues detected",
-      },
-      [ConnectionState.Disconnected]: {
-        emoji: "🔌",
-        label: "Disconnected",
-        description: "Connection lost",
-      },
+    const emoji = {
+      [ConnectionState.Optimal]: "✅",
+      [ConnectionState.Degraded]: "!",
+      [ConnectionState.Unhealthy]: "❌",
+      [ConnectionState.Disconnected]: "🔌",
     };
 
-    const wsStateMap = {
-      [WebSocket.CONNECTING]: "CONNECTING",
-      [WebSocket.OPEN]: "CONNECTED",
-      [WebSocket.CLOSING]: "CLOSING",
-      [WebSocket.CLOSED]: "CLOSED",
+    const connectionState = {
+      [WebSocket.CONNECTING]: "Connecting",
+      [WebSocket.OPEN]: "Connected",
+      [WebSocket.CLOSING]: "Closing",
+      [WebSocket.CLOSED]: "Closed",
     };
 
-    const sections = [
-      `${stateLabels[status.state].emoji} [${stateLabels[status.state].label}] - ${stateLabels[status.state].description}`,
+    let output = `${emoji[status.state]} Status: ${connectionState[status.details.connectionState]}`;
+    output += `\nLatency: ${status.details.latency}ms`;
+    output += `\nHeartbeats Missed: ${status.details.missedHeartbeats}/${this.#options.zombieConnectionThreshold}`;
 
-      "\n=== CONNECTION STATUS ===",
-      `• WebSocket State: ${wsStateMap[status.details.connectionState]}`,
-      `• Latency: ${status.details.latency}ms`,
-      `• Missed Heartbeats: ${status.details.missedHeartbeats}/${this.#options.zombieConnectionThreshold}`,
+    if (status.issues.length > 0) {
+      output += `\n\nIssues:\n${status.issues.map((issue) => `• ${issue}`).join("\n")}`;
+    }
 
-      ...(status.issues.length > 0
-        ? [
-            "\n=== DETECTED ISSUES ===",
-            ...status.issues.map((issue) => `▸ ${issue}`),
-          ]
-        : ["\n=== NO ISSUES DETECTED ==="]),
-    ];
-
-    return sections.join("\n");
+    return output;
   }
 
   shouldTakeAction(status: HealthStatus): boolean {
