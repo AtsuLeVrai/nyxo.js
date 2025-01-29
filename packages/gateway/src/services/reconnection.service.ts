@@ -1,9 +1,11 @@
+import type { ReconnectionOptions } from "../options/index.js";
+
 export class ReconnectionService {
   #attempts = 0;
-  readonly #backoffSchedule: number[];
+  readonly #options: ReconnectionOptions;
 
-  constructor(backoffSchedule: number[] = [1000, 5000, 10000]) {
-    this.#backoffSchedule = backoffSchedule;
+  constructor(options: ReconnectionOptions) {
+    this.#options = options;
   }
 
   get attempts(): number {
@@ -20,7 +22,9 @@ export class ReconnectionService {
 
   getDelay(): number {
     return (
-      this.#backoffSchedule[this.#attempts] ?? this.#backoffSchedule.at(-1) ?? 0
+      this.#options.backoffSchedule[this.#attempts] ??
+      this.#options.backoffSchedule.at(-1) ??
+      0
     );
   }
 }

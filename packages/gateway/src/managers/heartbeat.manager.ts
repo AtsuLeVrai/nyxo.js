@@ -2,12 +2,6 @@ import type { Gateway } from "../core/index.js";
 import type { HeartbeatOptions } from "../options/index.js";
 import { GatewayOpcodes } from "../types/index.js";
 
-const HEARTBEAT_CONSTANTS = {
-  maxHistorySize: 100,
-  reconnectDelayMs: 1000,
-  minIntervalMs: 1,
-} as const;
-
 export class HeartbeatManager {
   #latency = 0;
   #latencyHistory: number[] = [];
@@ -56,7 +50,7 @@ export class HeartbeatManager {
   }
 
   start(interval: number): void {
-    if (interval <= HEARTBEAT_CONSTANTS.minIntervalMs) {
+    if (interval <= this.#options.minInterval) {
       throw new Error(`Invalid heartbeat interval: ${interval}ms`);
     }
 
@@ -166,14 +160,14 @@ export class HeartbeatManager {
       if (this.#intervalMs > 0) {
         this.start(this.#intervalMs);
       }
-    }, HEARTBEAT_CONSTANTS.reconnectDelayMs);
+    }, this.#options.reconnectDelay);
   }
 
   #updateLatency(now: number): void {
     this.#latency = now - this.#lastSend;
     this.#latencyHistory.push(this.#latency);
 
-    if (this.#latencyHistory.length > HEARTBEAT_CONSTANTS.maxHistorySize) {
+    if (this.#latencyHistory.length > this.#options.maxHistorySize) {
       this.#latencyHistory.shift();
     }
   }

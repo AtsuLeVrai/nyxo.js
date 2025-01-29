@@ -52,7 +52,6 @@ const gateway = new Gateway(rest, {
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
-  compressionType: "zstd-stream",
 });
 
 gateway.on("debug", (...args) => {

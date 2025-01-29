@@ -1,27 +1,26 @@
 import { Decompress } from "fzstd";
 import zlib from "zlib-sync";
-import type { CompressionType } from "../options/index.js";
+import type { CompressionOptions, CompressionType } from "../options/index.js";
 
 const COMPRESSION_CONSTANTS = {
   zlib: {
     flush: Buffer.from([0x00, 0x00, 0xff, 0xff]),
-    chunkSize: 128 * 1024,
-    windowBits: 15,
   },
 } as const;
 
 export class CompressionService {
-  readonly #compressionType?: CompressionType;
   #zstdStream: Decompress | null = null;
   #zlibInflate: zlib.Inflate | null = null;
   #chunks: Uint8Array[] = [];
 
-  constructor(compressionType?: CompressionType) {
-    this.#compressionType = compressionType;
+  readonly #options: CompressionOptions;
+
+  constructor(options: CompressionOptions) {
+    this.#options = options;
   }
 
   get compressionType(): CompressionType | undefined {
-    return this.#compressionType;
+    return this.#options.compressionType;
   }
 
   isInitialized(): boolean {
@@ -32,14 +31,14 @@ export class CompressionService {
     this.destroy();
 
     try {
-      if (this.#compressionType === "zlib-stream") {
+      if (this.#options.compressionType === "zlib-stream") {
         this.#initializeZlib();
-      } else if (this.#compressionType === "zstd-stream") {
+      } else if (this.#options.compressionType === "zstd-stream") {
         this.#initializeZstd();
       }
     } catch {
       throw new Error(
-        `Failed to initialize ${this.#compressionType} compression`,
+        `Failed to initialize ${this.#options.compressionType} compression`,
       );
     }
   }
@@ -74,8 +73,8 @@ export class CompressionService {
 
   #initializeZlib(): void {
     this.#zlibInflate = new zlib.Inflate({
-      chunkSize: COMPRESSION_CONSTANTS.zlib.chunkSize,
-      windowBits: COMPRESSION_CONSTANTS.zlib.windowBits,
+      chunkSize: this.#options.zlibChunkSize,
+      windowBits: this.#options.zlibWindowBits,
     });
 
     if (!this.#zlibInflate || this.#zlibInflate.err) {

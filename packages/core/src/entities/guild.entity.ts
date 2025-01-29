@@ -266,12 +266,7 @@ export type IntegrationAccountEntity = z.infer<typeof IntegrationAccountEntity>;
 export const IntegrationEntity = z.object({
   id: Snowflake,
   name: z.string(),
-  type: z.union([
-    z.literal("twitch"),
-    z.literal("youtube"),
-    z.literal("discord"),
-    z.literal("guild_subscription"),
-  ]),
+  type: z.enum(["twitch", "youtube", "discord", "guild_subscription"]),
   enabled: z.boolean(),
   syncing: z.boolean().optional(),
   role_id: Snowflake.optional(),

@@ -56,10 +56,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
       this.shard = new ShardManager(this, this.#options.shard);
 
-      this.compression = new CompressionService(this.#options.compressionType);
+      this.compression = new CompressionService(this.#options.compression);
       this.encoding = new EncodingService(this.#options.encodingType);
       this.session = new SessionService();
-      this.reconnection = new ReconnectionService();
+      this.reconnection = new ReconnectionService(this.#options.reconnection);
       this.health = new HealthService(this.#options.health);
 
       this.#operationHandler = new OperationHandler(this);
@@ -277,11 +277,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     const payload = this.encoding.decode(processedData);
-
-    if (payload.s !== null) {
-      this.session.updateSequence(payload.s);
-    }
-
     this.#operationHandler.handlePayload(payload);
   }
 

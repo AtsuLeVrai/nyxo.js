@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-const DEFAULT_MAX_MISSED_HEARTBEATS = 3;
+const MAX_MISSED_HEARTBEATS = 3;
+const MAX_HISTORY_SIZE = 100;
+const RECONNECT_DELAY = 1000;
+const MIN_INTERVAL = 1;
 
 export const HeartbeatOptions = z
   .object({
@@ -8,8 +11,11 @@ export const HeartbeatOptions = z
       .number()
       .int()
       .positive()
-      .default(DEFAULT_MAX_MISSED_HEARTBEATS),
+      .default(MAX_MISSED_HEARTBEATS),
     autoReconnect: z.boolean().default(true),
+    maxHistorySize: z.number().positive().default(MAX_HISTORY_SIZE),
+    reconnectDelay: z.number().positive().default(RECONNECT_DELAY),
+    minInterval: z.number().positive().default(MIN_INTERVAL),
   })
   .strict();
 

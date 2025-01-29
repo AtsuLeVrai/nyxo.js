@@ -59,7 +59,7 @@ export type TextInputEntity = z.infer<typeof TextInputEntity>;
  */
 export const SelectMenuDefaultValueEntity = z.object({
   id: Snowflake,
-  type: z.union([z.literal("user"), z.literal("role"), z.literal("channel")]),
+  type: z.enum(["user", "role", "channel"]),
 });
 
 export type SelectMenuDefaultValueEntity = z.infer<

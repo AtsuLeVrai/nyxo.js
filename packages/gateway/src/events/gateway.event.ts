@@ -17,12 +17,12 @@ export type UpdateVoiceStateEntity = z.infer<typeof UpdateVoiceStateEntity>;
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-status-types}
  */
-export const UpdatePresenceStatusType = z.union([
-  z.literal("online"),
-  z.literal("dnd"),
-  z.literal("idle"),
-  z.literal("invisible"),
-  z.literal("offline"),
+export const UpdatePresenceStatusType = z.enum([
+  "online",
+  "dnd",
+  "idle",
+  "invisible",
+  "offline",
 ]);
 
 export type UpdatePresenceStatusType = z.infer<typeof UpdatePresenceStatusType>;

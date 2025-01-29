@@ -2,20 +2,19 @@ import { ApiVersion, BitFieldManager, BotToken } from "@nyxjs/core";
 import { z } from "zod";
 import { UpdatePresenceEntity } from "../events/index.js";
 import { GatewayIntentsBits } from "../types/index.js";
+import { CompressionOptions } from "./compression.options.js";
 import { HealthOptions } from "./health.options.js";
 import { HeartbeatOptions } from "./heartbeat.options.js";
+import { ReconnectionOptions } from "./reconnection.options.js";
 import { ShardOptions } from "./shard.options.js";
 
-const DEFAULT_LARGE_THRESHOLD = 50;
+const LARGE_THRESHOLD = 50;
 const MIN_LARGE_THRESHOLD = 50;
 const MAX_LARGE_THRESHOLD = 250;
 const DEFAULT_API_VERSION = ApiVersion.V10;
 
 export const EncodingType = z.enum(["json", "etf"]);
 export type EncodingType = z.infer<typeof EncodingType>;
-
-export const CompressionType = z.enum(["zlib-stream", "zstd-stream"]);
-export type CompressionType = z.infer<typeof CompressionType>;
 
 export const GatewayOptions = z
   .object({
@@ -33,11 +32,12 @@ export const GatewayOptions = z
       .int()
       .min(MIN_LARGE_THRESHOLD)
       .max(MAX_LARGE_THRESHOLD)
-      .default(DEFAULT_LARGE_THRESHOLD),
-    encodingType: EncodingType.default("etf"),
-    compressionType: CompressionType.optional(),
+      .default(LARGE_THRESHOLD),
+    encodingType: EncodingType.default("json"),
+    compression: CompressionOptions.default({}),
     health: HealthOptions.default({}),
     heartbeat: HeartbeatOptions.default({}),
+    reconnection: ReconnectionOptions.default({}),
     shard: ShardOptions.default({}),
   })
   .strict();

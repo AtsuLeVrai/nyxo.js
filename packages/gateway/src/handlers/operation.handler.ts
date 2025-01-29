@@ -156,7 +156,6 @@ export class OperationHandler {
     this.#gateway.emit("sessionUpdate", {
       type: "start",
       sessionId: data.session_id,
-      readyTime,
       data,
     });
 

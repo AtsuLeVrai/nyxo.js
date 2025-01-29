@@ -1,4 +1,3 @@
-export * from "./classes/index.js";
 export * from "./core/index.js";
 
 export * from "@nyxjs/core";

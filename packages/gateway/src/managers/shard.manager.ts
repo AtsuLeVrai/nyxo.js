@@ -4,14 +4,6 @@ import type { Gateway } from "../core/index.js";
 import type { ShardOptions } from "../options/index.js";
 import type { ShardData } from "../types/index.js";
 
-const SHARD_CONSTANTS = {
-  spawnDelayMs: 5000,
-  largeThreshold: 2500,
-  veryLargeThreshold: 150000,
-  minSessionLimit: 2000,
-  sessionsPer1kGuilds: 5,
-} as const;
-
 export class ShardManager {
   #currentIndex = 0;
   #maxConcurrency = 1;
@@ -42,7 +34,7 @@ export class ShardManager {
     const totalGuildCount = this.#calculateTotalGuildCount();
     return (
       Boolean(this.#options.totalShards) ||
-      totalGuildCount >= SHARD_CONSTANTS.largeThreshold
+      totalGuildCount >= this.#options.largeThreshold
     );
   }
 
@@ -173,16 +165,16 @@ export class ShardManager {
     guildCount: number,
     recommendedShards: number,
   ): boolean {
-    const isShardingRequired = guildCount >= SHARD_CONSTANTS.largeThreshold;
+    const isShardingRequired = guildCount >= this.#options.largeThreshold;
     const hasConfiguredShards = this.#options.totalShards !== undefined;
 
     if (!(isShardingRequired && hasConfiguredShards)) {
       return false;
     }
 
-    const minShards = Math.ceil(guildCount / SHARD_CONSTANTS.largeThreshold);
+    const minShards = Math.ceil(guildCount / this.#options.largeThreshold);
     if (
-      guildCount >= SHARD_CONSTANTS.largeThreshold &&
+      guildCount >= this.#options.largeThreshold &&
       recommendedShards < minShards
     ) {
       throw new Error(
@@ -202,9 +194,7 @@ export class ShardManager {
       return this.#options.totalShards;
     }
 
-    const minimumShards = Math.ceil(
-      guildCount / SHARD_CONSTANTS.largeThreshold,
-    );
+    const minimumShards = Math.ceil(guildCount / this.#options.largeThreshold);
     return Math.max(1, minimumShards);
   }
 
@@ -213,7 +203,7 @@ export class ShardManager {
     totalShards: number,
     recommendedShards: number,
   ): void {
-    const isLargeBot = guildCount >= SHARD_CONSTANTS.veryLargeThreshold;
+    const isLargeBot = guildCount >= this.#options.veryLargeThreshold;
 
     if (!isLargeBot) {
       return;
@@ -226,8 +216,8 @@ export class ShardManager {
     }
 
     const newSessionLimit = Math.max(
-      SHARD_CONSTANTS.minSessionLimit,
-      Math.ceil((guildCount / 1000) * SHARD_CONSTANTS.sessionsPer1kGuilds),
+      this.#options.minSessionLimit,
+      Math.ceil((guildCount / 1000) * this.#options.sessionsPerGuilds),
     );
 
     this.#gateway.emit(
@@ -298,7 +288,7 @@ export class ShardManager {
 
       const isLastBucket = bucketId === orderedBuckets.at(-1)?.[0];
       if (!isLastBucket) {
-        await setTimeout(SHARD_CONSTANTS.spawnDelayMs);
+        await setTimeout(this.#options.spawnDelay);
       }
     }
   }

@@ -108,7 +108,7 @@ export type AuditLogCommandPermissionChangeEntity = z.infer<
  * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-exceptions}
  */
 export const AuditLogRoleChangeEntity = z.object({
-  key: z.union([z.literal("$add"), z.literal("$remove")]),
+  key: z.enum(["$add", "$remove"]),
   new_value: z.array(
     z.object({
       id: z.string(),
@@ -133,7 +133,7 @@ export const AuditLogEntryInfoEntity = z.object({
   members_removed: z.string().optional(),
   message_id: Snowflake.optional(),
   role_name: z.string().optional(),
-  type: z.union([z.literal("0"), z.literal("1")]).optional(),
+  type: z.enum(["0", "1"]).optional(),
   integration_type: z.string().optional(),
 });
 
