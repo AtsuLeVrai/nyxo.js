@@ -60,8 +60,8 @@ export class BitFieldManager<T> {
   static deserialize<F>(value: string): BitFieldManager<F> {
     try {
       return new BitFieldManager<F>(BigInt(value));
-    } catch {
-      throw new Error("Invalid serialized BitField");
+    } catch (error) {
+      throw new Error("Invalid serialized BitField", { cause: error });
     }
   }
 

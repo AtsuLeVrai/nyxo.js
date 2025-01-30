@@ -5,10 +5,8 @@ import type { ShardOptions } from "../options/index.js";
 import type { ShardData } from "../types/index.js";
 
 export class ShardManager {
-  #currentIndex = 0;
-  #maxConcurrency = 1;
-  #currentShardId: number | null = null;
   #shards = new Store<number, ShardData>();
+  #maxConcurrency = 1;
 
   readonly #gateway: Gateway;
   readonly #options: ShardOptions;
@@ -22,12 +20,20 @@ export class ShardManager {
     return this.#shards.size;
   }
 
-  get currentShardId(): number {
-    if (this.#currentShardId === null) {
-      throw new Error("No active shard");
-    }
+  get maxConcurrency(): number {
+    return this.#maxConcurrency;
+  }
 
-    return this.#currentShardId;
+  get shards(): Store<number, ShardData> {
+    return this.#shards;
+  }
+
+  get shardIds(): number[] {
+    return Array.from(this.#shards.keys());
+  }
+
+  get shardData(): ShardData[] {
+    return Array.from(this.#shards.values());
   }
 
   isEnabled(): boolean {
@@ -58,65 +64,70 @@ export class ShardManager {
       totalShards,
       recommendedShards,
     );
-
-    await this.#spawnShards(totalShards, guildCount);
+    await this.#spawnShards(totalShards);
   }
 
-  getNextShard(): [number, number] {
-    if (this.#shards.size === 0) {
-      throw new Error("No shards available");
+  async getAvailableShard(): Promise<[number, number]> {
+    for (const [shardId, shard] of this.#shards.entries()) {
+      if (this.isShardBucketAvailable(shard.bucket)) {
+        shard.rateLimit.remaining--;
+        this.setShardStatus(shardId, "connecting");
+        return [shardId, shard.totalShards];
+      }
     }
 
-    const shard = this.#shards.get(this.#currentIndex);
-    if (!shard) {
-      throw new Error(`Invalid shard ID: ${this.#currentIndex}`);
-    }
-
-    this.#currentShardId = shard.shardId;
-    this.#currentIndex = (this.#currentIndex + 1) % this.#shards.size;
-    return [shard.shardId, shard.totalShards];
+    await this.#waitForAvailableBucket();
+    return this.getAvailableShard();
   }
 
-  getCurrentShardId(): number {
-    if (this.#currentShardId === null) {
-      this.#gateway.emit(
-        "debug",
-        "Attempted to get current shard ID when no shard is active",
-      );
-      throw new Error("No active shard");
-    }
-
-    if (!this.#shards.has(this.#currentShardId)) {
-      this.#gateway.emit(
-        "debug",
-        `Current shard ID ${this.#currentShardId} not found in shard list`,
-      );
-      throw new Error(`Invalid shard ID: ${this.#currentShardId}`);
-    }
-
-    return this.#currentShardId;
-  }
-
-  setCurrentShardId(shardId: number): void {
-    if (!this.#shards.has(shardId)) {
-      throw new Error(`Invalid shard ID: ${shardId}`);
-    }
-
-    this.#currentShardId = shardId;
-
+  addGuildToShard(guildId: string): void {
+    const shardId = this.calculateShardId(guildId);
     const shard = this.#shards.get(shardId);
+
     if (!shard) {
       throw new Error(`Shard ${shardId} not found`);
     }
 
-    this.#gateway.emit("shardUpdate", {
-      shardId,
-      type: "ready",
-      totalShards: shard.totalShards,
-      guildCount: shard.guildCount,
-    });
+    shard.guilds.add(guildId);
+    shard.guildCount = shard.guilds.size;
 
-    this.#gateway.emit("debug", `Current shard ID set to ${shardId}`);
+    this.#gateway.emit("debug", `Added guild ${guildId} to shard ${shardId}`);
+  }
+
+  removeGuildFromShard(guildId: string): void {
+    const shardId = this.calculateShardId(guildId);
+    const shard = this.#shards.get(shardId);
+
+    if (!shard) {
+      throw new Error(`Shard ${shardId} not found`);
+    }
+
+    shard.guilds.delete(guildId);
+    shard.guildCount = shard.guilds.size;
+
+    this.#gateway.emit(
+      "debug",
+      `Removed guild ${guildId} from shard ${shardId}`,
+    );
+  }
+
+  addGuildsToShard(shardId: number, guildIds: string[]): void {
+    const shard = this.#shards.get(shardId);
+
+    if (!shard) {
+      throw new Error(`Shard ${shardId} not found`);
+    }
+
+    for (const guildId of guildIds) {
+      shard.guilds.add(guildId);
+    }
+
+    shard.guildCount = shard.guilds.size;
+
+    this.#gateway.emit(
+      "debug",
+      `Added ${guildIds.length} guilds to shard ${shardId}`,
+    );
   }
 
   calculateShardId(guildId: string): number {
@@ -135,12 +146,28 @@ export class ShardManager {
     return this.#shards.get(shardId);
   }
 
+  getShardByGuildId(guildId: string): Readonly<ShardData> | undefined {
+    const shardId = this.calculateShardId(guildId);
+    return this.getShardInfo(shardId);
+  }
+
+  setShardStatus(shardId: number, status: ShardData["status"]): void {
+    const shard = this.#shards.get(shardId);
+
+    if (!shard) {
+      throw new Error(`Shard ${shardId} not found`);
+    }
+
+    shard.status = status;
+  }
+
   isDmShard(shardId: number): boolean {
     return shardId === 0;
   }
 
   destroy(): void {
     for (const [shardId, shard] of this.#shards.entries()) {
+      this.setShardStatus(shardId, "disconnected");
       this.#gateway.emit("shardUpdate", {
         type: "destroy",
         shardId,
@@ -150,8 +177,34 @@ export class ShardManager {
     }
 
     this.#shards.clear();
-    this.#currentIndex = 0;
-    this.#currentShardId = null;
+  }
+
+  isShardBucketAvailable(bucket: number): boolean {
+    const shards = Array.from(this.#shards.values()).filter(
+      (shard) => shard.bucket === bucket,
+    );
+
+    return shards.some((shard) => shard.rateLimit.remaining > 0);
+  }
+
+  async #waitForAvailableBucket(): Promise<void> {
+    const nextReset = Math.min(
+      ...Array.from(this.#shards.values()).map(
+        (shard) => shard.rateLimit.reset,
+      ),
+    );
+
+    const delay = nextReset - Date.now();
+    if (delay > 0) {
+      await setTimeout(delay);
+    }
+
+    for (const shard of this.#shards.values()) {
+      if (shard.rateLimit.reset <= nextReset) {
+        shard.rateLimit.remaining = 120;
+        shard.rateLimit.reset = Date.now() + 60_000;
+      }
+    }
   }
 
   #calculateTotalGuildCount(): number {
@@ -226,15 +279,13 @@ export class ShardManager {
     );
   }
 
-  async #spawnShards(totalShards: number, guildCount: number): Promise<void> {
+  async #spawnShards(totalShards: number): Promise<void> {
     if (this.#options.shardList) {
       this.#validateShardList(totalShards);
     }
 
     const buckets = this.#createShardBuckets(totalShards);
-    const averageGuildsPerShard = Math.ceil(guildCount / totalShards);
-
-    await this.#spawnShardBuckets(buckets, totalShards, averageGuildsPerShard);
+    await this.#spawnShardBuckets(buckets, totalShards);
   }
 
   #validateShardList(totalShards: number): void {
@@ -268,7 +319,6 @@ export class ShardManager {
   async #spawnShardBuckets(
     buckets: Map<number, number[]>,
     totalShards: number,
-    averageGuildsPerShard: number,
   ): Promise<void> {
     const orderedBuckets = Array.from(buckets.entries()).sort(
       ([a], [b]) => a - b,
@@ -282,7 +332,7 @@ export class ShardManager {
 
       await Promise.all(
         bucketShardIds.map((shardId) =>
-          this.#initializeShard(shardId, totalShards, averageGuildsPerShard),
+          this.#initializeShard(shardId, totalShards),
         ),
       );
 
@@ -293,22 +343,25 @@ export class ShardManager {
     }
   }
 
-  #initializeShard(
-    shardId: number,
-    totalShards: number,
-    guildCount: number,
-  ): void {
+  #initializeShard(shardId: number, totalShards: number): void {
     this.#shards.set(shardId, {
       shardId,
       totalShards,
-      guildCount,
+      guildCount: 0,
+      guilds: new Set(),
+      status: "disconnected",
+      bucket: this.getRateLimitKey(shardId),
+      rateLimit: {
+        remaining: 120,
+        reset: Date.now() + 60_000,
+      },
     });
 
     this.#gateway.emit("shardUpdate", {
       type: "spawn",
       shardId,
       totalShards,
-      guildCount,
+      guildCount: 0,
     });
 
     this.#gateway.emit(

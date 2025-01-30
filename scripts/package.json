@@ -18,8 +18,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@microsoft/api-extractor": "^7.49.1",
-    "@swc/core": "^1.10.11",
+    "@microsoft/api-extractor": "^7.49.2",
+    "@swc/core": "^1.10.12",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "rollup": "^4.32.1",

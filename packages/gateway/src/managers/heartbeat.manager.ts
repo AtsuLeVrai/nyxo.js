@@ -33,6 +33,26 @@ export class HeartbeatManager {
     return this.#missedHeartbeats;
   }
 
+  get totalBeats(): number {
+    return this.#totalBeats;
+  }
+
+  get intervalMs(): number {
+    return this.#intervalMs;
+  }
+
+  get retryAttempts(): number {
+    return this.#retryAttempts;
+  }
+
+  get lastSend(): number {
+    return this.#lastSend;
+  }
+
+  isAcked(): boolean {
+    return this.#isAcked;
+  }
+
   isRunning(): boolean {
     return this.#interval !== null;
   }

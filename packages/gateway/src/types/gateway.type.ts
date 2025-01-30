@@ -69,16 +69,6 @@ import type {
 import type { HealthStatus } from "./health.type.js";
 
 /**
- * @see {@link https://discord.com/developers/docs/events/gateway-events#payload-structure}
- */
-export interface PayloadEntity {
-  op: GatewayOpcodes;
-  d: object | number | null;
-  s: number | null;
-  t: string | null;
-}
-
-/**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
  */
 export interface GatewayReceiveEvents {
@@ -174,18 +164,21 @@ export interface GatewaySendEvents {
   [GatewayOpcodes.PresenceUpdate]: UpdatePresenceEntity;
 }
 
+/**
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#payload-structure}
+ */
+export interface PayloadEntity {
+  op: GatewayOpcodes;
+  d: object | number | null;
+  s: number | null;
+  t: keyof GatewayReceiveEvents | null;
+}
+
 export interface SessionStatus {
   type: "start" | "end" | "invalid";
   sessionId?: string;
   resumable?: boolean;
   code?: number;
-  data?: ReadyEntity;
-}
-
-export interface ConnectionStatus {
-  type: "initial" | "reconnect" | "closed";
-  code?: number;
-  attempt?: number;
 }
 
 export interface HeartbeatStatus {
@@ -202,7 +195,6 @@ export interface ShardStatus {
 
 export interface GatewayEvents {
   heartbeatUpdate: (heartbeat: HeartbeatStatus) => void;
-  connectionUpdate: (connection: ConnectionStatus) => void;
   sessionUpdate: (session: SessionStatus) => void;
   healthUpdate: (health: HealthStatus) => void;
   shardUpdate: (status: ShardStatus) => void;
@@ -212,30 +204,6 @@ export interface GatewayEvents {
     event: K,
     data: GatewayReceiveEvents[K],
   ) => void;
-}
-
-export interface GatewayDiagnostics {
-  connectionState: {
-    readyState: number;
-    isHealthy: boolean;
-    reconnectAttempts: number;
-    sessionId: string | null;
-  };
-  heartbeat: {
-    latency: number;
-    missedHeartbeats: number;
-    sequence: number;
-    isRunning: boolean;
-  };
-  sharding: {
-    isEnabled: boolean;
-    totalShards: number;
-    currentShardId: number | null;
-  };
-  timing: {
-    connectStartTime: number;
-    uptime: number;
-  };
 }
 
 /**

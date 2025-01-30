@@ -168,8 +168,10 @@ export class HttpService {
 
     try {
       headers["x-audit-log-reason"] = encodeURIComponent(reason);
-    } catch {
-      throw new Error("Reason contains non-encodable characters");
+    } catch (error) {
+      throw new Error("Reason contains non-encodable characters", {
+        cause: error,
+      });
     }
   }
 

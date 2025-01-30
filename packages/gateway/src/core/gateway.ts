@@ -21,7 +21,6 @@ import {
 import {
   ConnectionState,
   type GatewayCloseCodes,
-  type GatewayDiagnostics,
   type GatewayEvents,
   GatewayOpcodes,
   type GatewaySendEvents,
@@ -91,8 +90,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   async connect(): Promise<void> {
     try {
       this.#connectStartTime = Date.now();
-      this.emit("connectionUpdate", { type: "initial" });
-
       const [gatewayInfo, guilds] = await Promise.all([
         this.#rest.gateway.getGatewayBot(),
         this.#rest.users.getCurrentUserGuilds(),
@@ -113,7 +110,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   updatePresence(presence: z.input<typeof UpdatePresenceEntity>): void {
-    if (!this.#isConnectionValid()) {
+    if (!this.isConnectionValid()) {
       throw new Error("WebSocket connection is not open");
     }
 
@@ -122,7 +119,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   updateVoiceState(options: z.input<typeof UpdateVoiceStateEntity>): void {
-    if (!this.#isConnectionValid()) {
+    if (!this.isConnectionValid()) {
       throw new Error("WebSocket connection is not open");
     }
 
@@ -133,7 +130,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   requestGuildMembers(
     options: z.input<typeof RequestGuildMembersEntity>,
   ): void {
-    if (!this.#isConnectionValid()) {
+    if (!this.isConnectionValid()) {
       throw new Error("WebSocket connection is not open");
     }
 
@@ -147,7 +144,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   requestSoundboardSounds(
     options: z.input<typeof RequestSoundboardSoundsEntity>,
   ): void {
-    if (!this.#isConnectionValid()) {
+    if (!this.isConnectionValid()) {
       throw new Error("WebSocket connection is not open");
     }
 
@@ -173,7 +170,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         });
 
         ws.on("message", this.#handleMessage.bind(this));
-        ws.on("close", this.#handleClose.bind(this));
+        ws.on("close", this.#operationHandler.handleClose.bind(this));
       } catch (error) {
         reject(
           new Error("Failed to initialize WebSocket", {
@@ -188,7 +185,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     opcode: T,
     data: GatewaySendEvents[T],
   ): void {
-    if (!this.#isConnectionValid()) {
+    if (!this.isConnectionValid()) {
       throw new Error("WebSocket connection is not open");
     }
 
@@ -200,14 +197,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     };
 
     this.#ws?.send(this.encoding.encode(payload));
-  }
-
-  canRetry(): boolean {
-    if (!this.#options.heartbeat.autoReconnect) {
-      this.emit("debug", "Auto reconnect disabled");
-      return false;
-    }
-    return true;
   }
 
   destroy(code: GatewayCloseCodes = 4000): void {
@@ -239,34 +228,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
   }
 
-  getDiagnostics(): GatewayDiagnostics {
-    return {
-      connectionState: {
-        readyState: this.readyState,
-        isHealthy: this.health.isHealthy(
-          this.#ws,
-          this.heartbeat.missedHeartbeats,
-          this.heartbeat.latency,
-        ),
-        reconnectAttempts: this.reconnection.attempts,
-        sessionId: this.session.sessionId,
-      },
-      heartbeat: {
-        latency: this.heartbeat.latency,
-        missedHeartbeats: this.heartbeat.missedHeartbeats,
-        sequence: this.session.sequence,
-        isRunning: this.heartbeat.isRunning(),
-      },
-      sharding: {
-        isEnabled: this.shard.isEnabled(),
-        totalShards: this.shard.totalShards,
-        currentShardId: this.shard.getCurrentShardId(),
-      },
-      timing: {
-        connectStartTime: this.#connectStartTime,
-        uptime: Date.now() - this.#connectStartTime,
-      },
-    };
+  isConnectionValid(): boolean {
+    return this.#ws?.readyState === WebSocket.OPEN;
   }
 
   #handleMessage(data: Buffer): void {
@@ -278,14 +241,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     const payload = this.encoding.decode(processedData);
     this.#operationHandler.handlePayload(payload);
-  }
-
-  async #handleClose(code: number): Promise<void> {
-    await this.#operationHandler.handleClose(code);
-  }
-
-  #isConnectionValid(): boolean {
-    return this.#ws?.readyState === WebSocket.OPEN;
   }
 
   #buildGatewayUrl(baseUrl: string): string {

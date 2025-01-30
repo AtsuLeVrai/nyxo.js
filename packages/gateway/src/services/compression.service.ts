@@ -36,9 +36,10 @@ export class CompressionService {
       } else if (this.#options.compressionType === "zstd-stream") {
         this.#initializeZstd();
       }
-    } catch {
+    } catch (error) {
       throw new Error(
         `Failed to initialize ${this.#options.compressionType} compression`,
+        { cause: error },
       );
     }
   }

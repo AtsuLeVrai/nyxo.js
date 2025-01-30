@@ -66,10 +66,6 @@ gateway.on("heartbeatUpdate", (...args) => {
   console.log("[GATEWAY - HEARTBEAT]", ...args);
 });
 
-gateway.on("connectionUpdate", (...args) => {
-  console.log("[GATEWAY - CONNECTION]", ...args);
-});
-
 gateway.on("sessionUpdate", (...args) => {
   console.log("[GATEWAY - SESSION]", ...args);
 });

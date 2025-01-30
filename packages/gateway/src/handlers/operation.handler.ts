@@ -1,6 +1,8 @@
 import { setTimeout } from "node:timers/promises";
+import type { UnavailableGuildEntity } from "@nyxjs/core";
 import type { Gateway } from "../core/index.js";
 import {
+  type GuildCreateEntity,
   type HelloEntity,
   IdentifyEntity,
   type ReadyEntity,
@@ -39,7 +41,9 @@ export class OperationHandler {
         break;
 
       case GatewayOpcodes.Hello:
-        this.handleHello(payload.d as HelloEntity);
+        this.handleHello(payload.d as HelloEntity).catch((error) =>
+          this.#gateway.emit("error", error),
+        );
         break;
 
       case GatewayOpcodes.Heartbeat: {
@@ -99,13 +103,13 @@ export class OperationHandler {
     }
   }
 
-  handleHello(hello: HelloEntity): void {
+  async handleHello(hello: HelloEntity): Promise<void> {
     this.#gateway.heartbeat.start(hello.heartbeat_interval);
 
     if (this.#gateway.session.canResume()) {
       this.#sendResume();
     } else {
-      this.#identify();
+      await this.#identify();
     }
   }
 
@@ -122,13 +126,7 @@ export class OperationHandler {
       return;
     }
 
-    this.#gateway.emit("connectionUpdate", {
-      type: "reconnect",
-      attempt: this.#gateway.reconnection.attempts,
-    });
-
     this.#gateway.destroy();
-
     await this.#handleDisconnect(4000);
   }
 
@@ -137,8 +135,36 @@ export class OperationHandler {
       return;
     }
 
-    if (payload.t === "READY") {
-      this.#handleReady(payload.d as ReadyEntity);
+    switch (payload.t) {
+      case "READY": {
+        const data = payload.d as ReadyEntity;
+        this.#handleReady(data);
+        break;
+      }
+
+      case "GUILD_CREATE": {
+        if (this.#gateway.shard.isEnabled()) {
+          const data = payload.d as GuildCreateEntity;
+          if ("id" in data && !("unavailable" in data)) {
+            this.#gateway.shard.addGuildToShard(data.id);
+          }
+        }
+        break;
+      }
+
+      case "GUILD_DELETE": {
+        if (this.#gateway.shard.isEnabled()) {
+          const data = payload.d as UnavailableGuildEntity;
+          if ("id" in data) {
+            this.#gateway.shard.removeGuildFromShard(data.id);
+          }
+        }
+        break;
+      }
+
+      default: {
+        break;
+      }
     }
 
     this.#gateway.emit(
@@ -152,11 +178,19 @@ export class OperationHandler {
     this.#gateway.session.setSession(data.session_id, data.resume_gateway_url);
     this.#gateway.reconnection.reset();
 
+    if (this.#gateway.shard.isEnabled()) {
+      const shard = this.#gateway.shard.getShardInfo(data.shard?.[0] ?? 0);
+      if (shard) {
+        this.#gateway.shard.setShardStatus(shard.shardId, "ready");
+        const guildIds = data.guilds.map((guild) => guild.id);
+        this.#gateway.shard.addGuildsToShard(shard.shardId, guildIds);
+      }
+    }
+
     const readyTime = Date.now() - this.#gateway.connectStartTime;
     this.#gateway.emit("sessionUpdate", {
       type: "start",
       sessionId: data.session_id,
-      data,
     });
 
     const details = [
@@ -187,10 +221,9 @@ export class OperationHandler {
     });
   }
 
-  #identify(): void {
-    const payload = this.#createIdentifyPayload();
-
+  async #identify(): Promise<void> {
     try {
+      const payload = await this.#createIdentifyPayload();
       const validatedPayload = IdentifyEntity.parse(payload);
       this.#gateway.send(GatewayOpcodes.Identify, validatedPayload);
     } catch (error) {
@@ -198,7 +231,7 @@ export class OperationHandler {
     }
   }
 
-  #createIdentifyPayload(): IdentifyEntity {
+  async #createIdentifyPayload(): Promise<IdentifyEntity> {
     const payload: IdentifyEntity = {
       token: this.#gateway.options.token,
       properties: {
@@ -215,7 +248,7 @@ export class OperationHandler {
       this.#gateway.shard.isEnabled() &&
       this.#gateway.shard.totalShards > 0
     ) {
-      payload.shard = this.#gateway.shard.getNextShard();
+      payload.shard = await this.#gateway.shard.getAvailableShard();
       this.#gateway.emit(
         "debug",
         `Using shard ${payload.shard[0]}/${payload.shard[1]}`,
@@ -230,7 +263,7 @@ export class OperationHandler {
   }
 
   async #handleDisconnect(code: number): Promise<void> {
-    if (!this.#gateway.canRetry()) {
+    if (!this.#gateway.options.heartbeat.autoReconnect) {
       this.#gateway.emit(
         "debug",
         "Retry not allowed, stopping reconnection process",
@@ -275,7 +308,7 @@ export class OperationHandler {
       this.#gateway.emit("debug", "Attempting to resume session");
       await this.#gateway.initializeWebSocket(resumeUrl);
       this.#sendResume();
-    } catch (_error) {
+    } catch {
       this.#gateway.emit(
         "debug",
         "Resume attempt failed, falling back to reconnect",
