@@ -232,6 +232,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     return this.#ws?.readyState === WebSocket.OPEN;
   }
 
+  checkHealth(): HealthStatus {
+    return this.health.checkHealth(
+      this.#ws,
+      this.heartbeat.missedHeartbeats,
+      this.heartbeat.latency,
+    );
+  }
+
   #handleMessage(data: Buffer): void {
     let processedData = data;
 
