@@ -1,33 +1,12 @@
-import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
-import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
+import { Client, GatewayIntentsBits } from "nyx.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
   throw new Error("No env found");
 }
 
-const rest = new Rest({
-  token: env.DISCORD_TOKEN,
-});
-
-rest.on("debug", (...args) => {
-  console.log("[REST - DEBUG]", ...args);
-});
-
-rest.on("error", (...args) => {
-  console.log("[REST - ERROR]", ...args);
-});
-
-rest.on("request", (...args) => {
-  console.log("[REST - REQUEST]", ...args);
-});
-
-rest.on("rateLimited", (...args) => {
-  console.log("[REST - RATELIMITED]", ...args);
-});
-
-const gateway = new Gateway(rest, {
+const client = new Client({
   token: env.DISCORD_TOKEN,
   intents: [
     GatewayIntentsBits.Guilds,
@@ -54,32 +33,44 @@ const gateway = new Gateway(rest, {
   ],
 });
 
-gateway.on("debug", (...args) => {
-  console.log("[GATEWAY - DEBUG]", ...args);
+client.on("request", (...args) => {
+  console.log("[REQUEST]", ...args);
 });
 
-gateway.on("error", (...args) => {
-  console.log("[GATEWAY - ERROR]", ...args);
+client.on("rateLimited", (...args) => {
+  console.log("[RATELIMITED]", ...args);
 });
 
-gateway.on("heartbeatUpdate", (...args) => {
-  console.log("[GATEWAY - HEARTBEAT]", ...args);
+client.on("debug", (...args) => {
+  console.log("[DEBUG]", ...args);
 });
 
-gateway.on("sessionUpdate", (...args) => {
-  console.log("[GATEWAY - SESSION]", ...args);
+client.on("error", (...args) => {
+  console.log("[ERROR]", ...args);
 });
 
-gateway.on("healthUpdate", (...args) => {
-  console.log("[GATEWAY - HEALTH]", ...args);
+client.on("heartbeatUpdate", (...args) => {
+  console.log("[HEARTBEAT]", ...args);
 });
 
-gateway.on("shardUpdate", (...args) => {
-  console.log("[GATEWAY - SHARD]", ...args);
+client.on("sessionUpdate", (...args) => {
+  console.log("[SESSION]", ...args);
 });
 
-gateway.on("dispatch", (...args) => {
-  console.log("[GATEWAY - DISPATCH]", ...args);
+client.on("healthUpdate", (...args) => {
+  console.log("[HEALTH]", ...args);
 });
 
-gateway.connect().catch(console.error);
+client.on("shardUpdate", (...args) => {
+  console.log("[SHARD]", ...args);
+});
+
+client.on("dispatch", (...args) => {
+  console.log("[DISPATCH]", ...args);
+});
+
+// client.on("ready", (data) => {
+//   console.log("Ready", data);
+// });
+
+client.connect().catch(console.error);

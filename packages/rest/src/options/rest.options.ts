@@ -12,18 +12,16 @@ const DEFAULT_USER_AGENT =
  */
 export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
 
-export const RestOptions = z
-  .object({
-    token: BotToken,
-    version: z.literal(ApiVersion.V10).default(DEFAULT_API_VERSION),
-    userAgent: z
-      .string()
-      .regex(DISCORD_USER_AGENT_REGEX)
-      .default(DEFAULT_USER_AGENT),
-    maxRetries: z.number().int().positive().default(3),
-    rateLimit: RateLimiterOptions.default({}),
-    queue: QueueOptions.default({}),
-  })
-  .strict();
+export const RestOptions = z.object({
+  token: BotToken,
+  version: z.literal(ApiVersion.V10).default(DEFAULT_API_VERSION),
+  userAgent: z
+    .string()
+    .regex(DISCORD_USER_AGENT_REGEX)
+    .default(DEFAULT_USER_AGENT),
+  maxRetries: z.number().int().positive().default(3),
+  rateLimit: RateLimiterOptions.default({}),
+  queue: QueueOptions.default({}),
+});
 
 export type RestOptions = z.infer<typeof RestOptions>;

@@ -50,8 +50,10 @@
     "@nyxjs/gateway": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
+    "change-case": "^5.4.4",
     "erlpack": "^0.1.4",
     "eventemitter3": "^5.0.1",
+    "type-fest": "^4.33.0",
     "zod": "^3.24.1",
     "zod-validation-error": "^3.4.0"
   },
