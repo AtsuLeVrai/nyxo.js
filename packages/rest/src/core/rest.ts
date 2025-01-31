@@ -5,10 +5,9 @@ import type { Dispatcher } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { HttpError, RateLimitError } from "../errors/index.js";
-import { RouterFactory } from "../factory/index.js";
 import { RateLimiterManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
-import type {
+import {
   ApplicationCommandRouter,
   ApplicationConnectionRouter,
   ApplicationRouter,
@@ -54,7 +53,6 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly queue: pQueue;
   readonly http: HttpService;
   readonly rateLimiter: RateLimiterManager;
-  readonly routers: RouterFactory;
   readonly #options: RestOptions;
 
   constructor(options: z.input<typeof RestOptions>) {
@@ -69,7 +67,6 @@ export class Rest extends EventEmitter<RestEvents> {
     this.queue = this.#createQueue();
     this.rateLimiter = new RateLimiterManager(this, this.#options.rateLimit);
     this.http = new HttpService(this, this.#options);
-    this.routers = new RouterFactory(this);
   }
 
   get options(): Readonly<RestOptions> {
@@ -77,103 +74,103 @@ export class Rest extends EventEmitter<RestEvents> {
   }
 
   get applications(): ApplicationRouter {
-    return this.routers.getRouter("applications");
+    return new ApplicationRouter(this);
   }
 
   get commands(): ApplicationCommandRouter {
-    return this.routers.getRouter("commands");
+    return new ApplicationCommandRouter(this);
   }
 
   get connections(): ApplicationConnectionRouter {
-    return this.routers.getRouter("connections");
+    return new ApplicationConnectionRouter(this);
   }
 
   get guilds(): GuildRouter {
-    return this.routers.getRouter("guilds");
+    return new GuildRouter(this);
   }
 
   get channels(): ChannelRouter {
-    return this.routers.getRouter("channels");
+    return new ChannelRouter(this);
   }
 
   get invites(): InviteRouter {
-    return this.routers.getRouter("invites");
+    return new InviteRouter(this);
   }
 
   get templates(): GuildTemplateRouter {
-    return this.routers.getRouter("templates");
+    return new GuildTemplateRouter(this);
   }
 
   get users(): UserRouter {
-    return this.routers.getRouter("users");
+    return new UserRouter(this);
   }
 
   get auditLogs(): AuditLogRouter {
-    return this.routers.getRouter("auditLogs");
+    return new AuditLogRouter(this);
   }
 
   get messages(): MessageRouter {
-    return this.routers.getRouter("messages");
+    return new MessageRouter(this);
   }
 
   get interactions(): InteractionRouter {
-    return this.routers.getRouter("interactions");
+    return new InteractionRouter(this);
   }
 
   get emojis(): EmojiRouter {
-    return this.routers.getRouter("emojis");
+    return new EmojiRouter(this);
   }
 
   get stickers(): StickerRouter {
-    return this.routers.getRouter("stickers");
+    return new StickerRouter(this);
   }
 
   get voice(): VoiceRouter {
-    return this.routers.getRouter("voice");
+    return new VoiceRouter(this);
   }
 
   get soundboards(): SoundboardRouter {
-    return this.routers.getRouter("soundboards");
+    return new SoundboardRouter(this);
   }
 
   get stages(): StageInstanceRouter {
-    return this.routers.getRouter("stages");
+    return new StageInstanceRouter(this);
   }
 
   get scheduledEvents(): ScheduledEventRouter {
-    return this.routers.getRouter("scheduledEvents");
+    return new ScheduledEventRouter(this);
   }
 
   get polls(): PollRouter {
-    return this.routers.getRouter("polls");
+    return new PollRouter(this);
   }
 
   get autoModeration(): AutoModerationRouter {
-    return this.routers.getRouter("autoModeration");
+    return new AutoModerationRouter(this);
   }
 
   get webhooks(): WebhookRouter {
-    return this.routers.getRouter("webhooks");
+    return new WebhookRouter(this);
   }
 
   get oauth2(): OAuth2Router {
-    return this.routers.getRouter("oauth2");
+    return new OAuth2Router(this);
   }
 
   get gateway(): GatewayRouter {
-    return this.routers.getRouter("gateway");
+    return new GatewayRouter(this);
   }
 
   get skus(): SkuRouter {
-    return this.routers.getRouter("skus");
+    return new SkuRouter(this);
   }
 
   get entitlements(): EntitlementRouter {
-    return this.routers.getRouter("entitlements");
+    return new EntitlementRouter(this);
   }
 
   get subscriptions(): SubscriptionRouter {
-    return this.routers.getRouter("subscriptions");
+    return new SubscriptionRouter(this);
   }
 
   async request<T>(options: RequestOptions): Promise<T> {
@@ -250,7 +247,6 @@ export class Rest extends EventEmitter<RestEvents> {
   destroy(): void {
     this.queue.clear();
     this.rateLimiter.destroy();
-    this.routers.destroy();
     this.removeAllListeners();
   }
 

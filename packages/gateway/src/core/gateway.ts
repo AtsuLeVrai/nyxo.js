@@ -2,6 +2,7 @@ import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { z } from "zod";
+import { fromError } from "zod-validation-error";
 import type {
   RequestGuildMembersEntity,
   RequestSoundboardSoundsEntity,
@@ -49,26 +50,25 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     super();
 
     try {
-      this.#rest = rest;
       this.#options = GatewayOptions.parse(options);
-
-      this.heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
-      this.shard = new ShardManager(this, this.#options.shard);
-
-      this.compression = new CompressionService(this.#options.compression);
-      this.encoding = new EncodingService(this.#options.encodingType);
-      this.session = new SessionService();
-      this.reconnection = new ReconnectionService(this.#options.reconnection);
-      this.health = new HealthService(this.#options.health);
-
-      this.#operationHandler = new OperationHandler(this);
-
-      this.#startHealthCheck();
     } catch (error) {
-      throw new Error("Failed to initialize gateway", {
-        cause: error,
-      });
+      throw new Error(fromError(error).message);
     }
+
+    this.#rest = rest;
+
+    this.heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
+    this.shard = new ShardManager(this, this.#options.shard);
+
+    this.compression = new CompressionService(this.#options.compression);
+    this.encoding = new EncodingService(this.#options.encodingType);
+    this.session = new SessionService();
+    this.reconnection = new ReconnectionService(this.#options.reconnection);
+    this.health = new HealthService(this.#options.health);
+
+    this.#operationHandler = new OperationHandler(this);
+
+    this.#startHealthCheck();
   }
 
   get options(): Readonly<GatewayOptions> {
