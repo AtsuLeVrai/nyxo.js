@@ -1,3 +1,5 @@
+export * from "./builders/index.js";
+export * from "./classes/index.js";
 export * from "./core/index.js";
 export * from "./handlers/index.js";
 
