@@ -20,7 +20,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "husky": "^9.1.7",
-    "turbo": "^2.3.4"
+    "turbo": "^2.4.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

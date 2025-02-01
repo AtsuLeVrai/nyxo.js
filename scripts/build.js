@@ -1,15 +1,51 @@
 import { readFileSync } from "node:fs";
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
-import chalk from "chalk";
+import terser from "@rollup/plugin-terser";
 import { program } from "commander";
+import { createConsola } from "consola";
 import { rollup } from "rollup";
 import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
+/**
+ * @typedef {Object} BuildPaths
+ * @property {string} root - Project root directory
+ * @property {string} src - Source directory
+ * @property {string} dist - Distribution directory
+ * @property {string} temp - Temporary directory
+ * @property {string} tsconfig - TypeScript config path
+ * @property {string} package - Package.json path
+ */
+
+/**
+ * @typedef {Object} BuildOptions
+ * @property {boolean} clean - Whether to clean directories before building
+ * @property {boolean} production - Whether to build for production
+ */
+
+/**
+ * Regular expression to match Node.js built-in modules
+ * @type {RegExp}
+ */
 const NODE_MODULES_REGEX = /^node:/;
 
+/**
+ * Consola logger instance
+ * @type {import("consola").ConsolaInstance}
+ */
+const logger = createConsola({
+  level: 20,
+  formatOptions: {
+    date: true,
+  },
+});
+
+/**
+ * Build paths configuration
+ * @type {BuildPaths}
+ */
 const paths = {
   root: process.cwd(),
   src: resolve(process.cwd(), "src"),
@@ -19,56 +55,37 @@ const paths = {
   package: resolve(process.cwd(), "package.json"),
 };
 
-const prefix = {
-  app: chalk.magenta("⚡") + chalk.cyan(" Nyx") + chalk.gray(".js"),
-  time: () => chalk.gray(`[${new Date().toLocaleTimeString()}]`),
-  success: chalk.green("✓"),
-  error: chalk.red("✗"),
-  warning: chalk.yellow("!"),
-  info: chalk.blue("i"),
-  debug: chalk.gray("⚙"),
-};
-
+// CLI Configuration
 program
   .option("-c, --clean", "Clean dist and temp folders before building")
   .option("-p, --production", "Build for production")
   .parse(process.argv);
 
+/** @type {BuildOptions} */
 const options = program.opts();
 
-function log(message, type = "info", details = "") {
-  const icon = prefix[type] || prefix.info;
-  const messageColor =
-    {
-      success: chalk.green,
-      error: chalk.red,
-      warning: chalk.yellow,
-      info: chalk.white,
-      debug: chalk.gray,
-    }[type] || chalk.white;
-
-  console.log(
-    `${prefix.app} ${prefix.time()} ${icon} ${messageColor(message)}${
-      details ? chalk.gray(` (${details})`) : ""
-    }`,
-  );
-}
-
+/**
+ * Get external dependencies from package.json
+ * @returns {string[]} Array of external dependencies
+ */
 function getExternals() {
-  log("Analyzing package dependencies...", "debug");
+  logger.debug("Analyzing package dependencies...");
 
-  const pkg = JSON.parse(readFileSync(paths.package, "utf-8").toString());
+  const pkg = JSON.parse(readFileSync(paths.package, "utf-8"));
   const externals = [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
-    ...Object.keys(pkg.devDependencies || {}),
     NODE_MODULES_REGEX,
   ];
 
-  log(`Found ${externals.length - 1} external dependencies`, "debug");
+  logger.debug(`Found ${externals.length - 1} external dependencies`);
   return externals;
 }
 
+/**
+ * SWC configuration for Rollup
+ * @type {import('rollup-plugin-swc3').RollupSwcOptions}
+ */
 const swcConfig = defineRollupSwcOption({
   jsc: {
     target: "esnext",
@@ -90,14 +107,41 @@ const swcConfig = defineRollupSwcOption({
   module: {
     type: "es6",
     strict: true,
-    strictMode: true,
-    lazy: false,
-    noInterop: false,
+    lazy: true,
+    importInterop: "swc",
   },
   sourceMaps: !options.production,
   exclude: ["node_modules", "dist", ".*.js$", ".*\\.d.ts$"],
+  minify: options.production,
 });
 
+/**
+ * Terser configuration for production builds
+ * @type {import('@rollup/plugin-terser').Options}
+ */
+const terserConfig = {
+  format: {
+    comments: false,
+    ecma: 2020,
+  },
+  compress: {
+    passes: 2,
+    pure_getters: true,
+    unsafe: true,
+    unsafe_comps: true,
+    unsafe_math: true,
+    unsafe_methods: true,
+    drop_console: options.production,
+    drop_debugger: options.production,
+  },
+  module: true,
+  toplevel: true,
+};
+
+/**
+ * Rollup build configuration
+ * @type {import('rollup').RollupOptions}
+ */
 const rollupConfig = {
   input: resolve(paths.src, "index.ts"),
   external: getExternals(),
@@ -106,16 +150,24 @@ const rollupConfig = {
       file: resolve(paths.dist, "index.mjs"),
       format: "esm",
       sourcemap: !options.production,
+      plugins: options.production ? [terser(terserConfig)] : [],
     },
     {
       file: resolve(paths.dist, "index.cjs"),
       format: "cjs",
       sourcemap: !options.production,
+      interop: "auto",
+      esModule: true,
+      plugins: options.production ? [terser(terserConfig)] : [],
     },
   ],
   plugins: [swc(swcConfig)],
 };
 
+/**
+ * API Extractor configuration
+ * @type {import('@microsoft/api-extractor').IConfigFile}
+ */
 const apiExtractorConfig = {
   projectFolder: paths.root,
   mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
@@ -126,6 +178,8 @@ const apiExtractorConfig = {
       compilerOptions: {
         types: ["node"],
         skipLibCheck: true,
+        preserveSymlinks: true,
+        isolatedModules: true,
       },
     },
   },
@@ -147,32 +201,40 @@ const apiExtractorConfig = {
   },
 };
 
+/**
+ * Clean build directories
+ * @returns {Promise<void>}
+ */
 async function clean() {
   try {
-    log("Cleaning build directories...", "info");
+    logger.info("Cleaning build directories...");
 
     await Promise.all([
       rm(paths.dist, { recursive: true, force: true }),
       rm(paths.temp, { recursive: true, force: true }),
     ]);
 
-    log("Removed old build files", "debug");
+    logger.debug("Removed old build files");
 
     await Promise.all([
       mkdir(paths.dist, { recursive: true }),
       mkdir(paths.temp, { recursive: true }),
     ]);
 
-    log("Created fresh build directories", "success");
+    logger.success("Created fresh build directories");
   } catch (error) {
-    log("Clean operation failed", "error", error.message);
+    logger.error("Clean operation failed", error);
     throw new Error(`Clean failed: ${error.message}`);
   }
 }
 
+/**
+ * Compile TypeScript types
+ * @returns {void}
+ */
 function compileTypes() {
   try {
-    log("Starting TypeScript compilation...", "info");
+    logger.info("Starting TypeScript compilation...");
 
     const configPath = ts.findConfigFile(
       paths.root,
@@ -184,7 +246,7 @@ function compileTypes() {
       throw new Error("Could not find tsconfig.json");
     }
 
-    log("Found TypeScript configuration", "debug");
+    logger.debug("Found TypeScript configuration");
 
     const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
     if (error) {
@@ -204,7 +266,7 @@ function compileTypes() {
       noEmit: false,
     };
 
-    log("Creating TypeScript program...", "debug");
+    logger.debug("Creating TypeScript program...");
 
     const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
     const emitResult = program.emit();
@@ -214,26 +276,43 @@ function compileTypes() {
       .concat(emitResult.diagnostics);
 
     if (allDiagnostics.length > 0) {
-      log(
-        `Found ${allDiagnostics.length} TypeScript diagnostic messages`,
-        "warning",
-      );
+      for (const diagnostic of allDiagnostics) {
+        if (diagnostic.file && diagnostic.start !== undefined) {
+          const { line, character } =
+            diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+          const message = ts.flattenDiagnosticMessageText(
+            diagnostic.messageText,
+            "\n",
+          );
+          logger.warn(
+            `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
+          );
+        } else {
+          logger.warn(
+            ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+          );
+        }
+      }
     }
 
-    if (allDiagnostics.length > 0 && emitResult.emitSkipped) {
+    if (emitResult.emitSkipped) {
       throw new Error("TypeScript compilation failed");
     }
 
-    log("TypeScript compilation completed", "success");
+    logger.success("TypeScript compilation completed");
   } catch (error) {
-    log("TypeScript compilation failed", "error", error.message);
+    logger.error("TypeScript compilation failed", error);
     throw new Error(`Types compilation failed: ${error.message}`);
   }
 }
 
+/**
+ * Build TypeScript definitions
+ * @returns {void}
+ */
 function buildTypes() {
   try {
-    log("Generating types with API Extractor...", "info");
+    logger.info("Generating types with API Extractor...");
 
     const extractorConfig = ExtractorConfig.prepare({
       configObject: apiExtractorConfig,
@@ -258,46 +337,68 @@ function buildTypes() {
       );
     }
 
-    log("Type generation completed", "success");
+    logger.success("Type generation completed");
   } catch (error) {
-    log("Type generation failed", "error", error.message);
+    logger.error("Type generation failed", error);
     throw new Error(`Type generation failed: ${error.message}`);
   }
 }
 
+/**
+ * Build bundles using Rollup
+ * @returns {Promise<void>}
+ */
 async function buildBundles() {
   try {
-    log("Creating bundles with Rollup...", "info");
+    logger.info("Creating bundles with Rollup...");
 
-    log("Building bundle...", "debug");
+    logger.debug("Building bundle...");
     const bundle = await rollup(rollupConfig);
 
-    log("Writing output files...", "debug");
+    logger.debug("Writing output files...");
     await Promise.all(
       rollupConfig.output.map(async (output) => {
         await bundle.write(output);
-        log(
-          `Generated ${output.format.toUpperCase()} bundle`,
-          "debug",
-          output.file,
-        );
+        logger.debug(`Generated ${output.format.toUpperCase()} bundle`, {
+          file: output.file,
+        });
       }),
     );
 
     await bundle.close();
-    log("Bundle creation completed", "success");
+    logger.success("Bundle creation completed");
   } catch (error) {
-    log("Bundle creation failed", "error", error.message);
+    logger.error("Bundle creation failed", error);
     throw new Error(`Bundle creation failed: ${error.message}`);
   }
 }
 
+/**
+ * Check bundle size for unusually large declaration files
+ * @returns {Promise<void>}
+ */
+async function checkBundleSize() {
+  const dtsPath = resolve(paths.dist, "index.d.ts");
+  const stats = await stat(dtsPath);
+  const sizeInMb = stats.size / (1024 * 1024);
+
+  if (sizeInMb > 1) {
+    logger.warn(
+      `Declaration file size (${sizeInMb.toFixed(2)}MB) is unusually large!`,
+    );
+  }
+}
+
+/**
+ * Main build function
+ * @returns {Promise<void>}
+ */
 async function build() {
-  const startTime = Date.now();
+  const startTime = process.hrtime();
+
   try {
-    log(
+    logger.info(
       `Starting build${options.production ? " (production)" : ""}...`,
-      "info",
     );
 
     if (options.clean) {
@@ -305,28 +406,24 @@ async function build() {
     }
 
     await buildBundles();
-
     compileTypes();
     buildTypes();
+    await checkBundleSize();
 
     await rm(paths.temp, { recursive: true, force: true });
 
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    const mode = options.production
-      ? chalk.yellow("production")
-      : chalk.blue("development");
-    log(
-      `Build completed for ${mode} mode in ${chalk.cyan(`${duration}s`)}`,
-      "success",
+    const [seconds] = process.hrtime(startTime);
+    logger.success(
+      `Build completed for ${options.production ? "production" : "development"} mode in ${seconds}s`,
     );
   } catch (error) {
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    log(`Build failed after ${duration}s`, "error", error.message);
+    const [seconds] = process.hrtime(startTime);
+    logger.error(`Build failed after ${seconds}s:`, error);
     process.exit(1);
   }
 }
 
 build().catch((error) => {
-  log("Build failed", "error", error.message);
+  logger.error("Build failed:", error);
   process.exit(1);
 });
