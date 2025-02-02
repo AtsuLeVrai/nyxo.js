@@ -32,7 +32,7 @@ export class Client extends EventEmitter<ClientEvents> {
   }
 
   connect(): Promise<void> {
-    this.#events.handleEvents();
+    this.#events.initializeEvents();
     return this.gateway.connect();
   }
 }

@@ -1,7 +1,10 @@
 import type { GatewayEvents, GatewayReceiveEvents } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
-import type { CamelCase } from "type-fest";
+import type { CamelCase, Class } from "type-fest";
+import { z } from "zod";
+import { User } from "../classes/index.js";
 import type { Client } from "../core/index.js";
+import { CacheManager, CacheOptions } from "../managers/index.js";
 
 export interface ClientEvents extends RestEvents, GatewayEvents {
   ready: () => void;
@@ -98,126 +101,211 @@ const GATEWAY_EVENTS = [
 const GATEWAY_DISPATCH_EVENTS: [
   keyof GatewayReceiveEvents,
   CamelCase<keyof GatewayReceiveEvents>,
+  (
+    | Class<unknown, [client: Client, data: never]>
+    | Class<unknown, [client: Client, data: never]>[]
+    | undefined
+  ),
 ][] = [
-  ["READY", "ready"],
-  ["RESUMED", "resumed"],
+  ["READY", "ready", undefined],
+  ["RESUMED", "resumed", undefined],
   [
     "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
     "applicationCommandPermissionsUpdate",
+    undefined,
   ],
-  ["AUTO_MODERATION_RULE_CREATE", "autoModerationRuleCreate"],
-  ["AUTO_MODERATION_RULE_UPDATE", "autoModerationRuleUpdate"],
-  ["AUTO_MODERATION_RULE_DELETE", "autoModerationRuleDelete"],
-  ["AUTO_MODERATION_ACTION_EXECUTION", "autoModerationActionExecution"],
-  ["CHANNEL_CREATE", "channelCreate"],
-  ["CHANNEL_UPDATE", "channelUpdate"],
-  ["CHANNEL_DELETE", "channelDelete"],
-  ["CHANNEL_PINS_UPDATE", "channelPinsUpdate"],
-  ["THREAD_CREATE", "threadCreate"],
-  ["THREAD_UPDATE", "threadUpdate"],
-  ["THREAD_DELETE", "threadDelete"],
-  ["THREAD_LIST_SYNC", "threadListSync"],
-  ["THREAD_MEMBER_UPDATE", "threadMemberUpdate"],
-  ["THREAD_MEMBERS_UPDATE", "threadMembersUpdate"],
-  ["ENTITLEMENT_CREATE", "entitlementCreate"],
-  ["ENTITLEMENT_UPDATE", "entitlementUpdate"],
-  ["ENTITLEMENT_DELETE", "entitlementDelete"],
-  ["GUILD_CREATE", "guildCreate"],
-  ["GUILD_UPDATE", "guildUpdate"],
-  ["GUILD_DELETE", "guildDelete"],
-  ["GUILD_AUDIT_LOG_ENTRY_CREATE", "guildAuditLogEntryCreate"],
-  ["GUILD_BAN_ADD", "guildBanAdd"],
-  ["GUILD_BAN_REMOVE", "guildBanRemove"],
-  ["GUILD_EMOJIS_UPDATE", "guildEmojisUpdate"],
-  ["GUILD_STICKERS_UPDATE", "guildStickersUpdate"],
-  ["GUILD_INTEGRATIONS_UPDATE", "guildIntegrationsUpdate"],
-  ["GUILD_MEMBER_ADD", "guildMemberAdd"],
-  ["GUILD_MEMBER_REMOVE", "guildMemberRemove"],
-  ["GUILD_MEMBER_UPDATE", "guildMemberUpdate"],
-  ["GUILD_MEMBERS_CHUNK", "guildMembersChunk"],
-  ["GUILD_ROLE_CREATE", "guildRoleCreate"],
-  ["GUILD_ROLE_UPDATE", "guildRoleUpdate"],
-  ["GUILD_ROLE_DELETE", "guildRoleDelete"],
-  ["GUILD_SCHEDULED_EVENT_CREATE", "guildScheduledEventCreate"],
-  ["GUILD_SCHEDULED_EVENT_UPDATE", "guildScheduledEventUpdate"],
-  ["GUILD_SCHEDULED_EVENT_DELETE", "guildScheduledEventDelete"],
-  ["GUILD_SCHEDULED_EVENT_USER_ADD", "guildScheduledEventUserAdd"],
-  ["GUILD_SCHEDULED_EVENT_USER_REMOVE", "guildScheduledEventUserRemove"],
-  ["GUILD_SOUNDBOARD_SOUND_CREATE", "guildSoundboardSoundCreate"],
-  ["GUILD_SOUNDBOARD_SOUND_UPDATE", "guildSoundboardSoundUpdate"],
-  ["GUILD_SOUNDBOARD_SOUND_DELETE", "guildSoundboardSoundDelete"],
-  ["GUILD_SOUNDBOARD_SOUNDS_UPDATE", "guildSoundboardSoundsUpdate"],
-  ["SOUNDBOARD_SOUNDS", "soundboardSounds"],
-  ["INTEGRATION_CREATE", "integrationCreate"],
-  ["INTEGRATION_UPDATE", "integrationUpdate"],
-  ["INTEGRATION_DELETE", "integrationDelete"],
-  ["INVITE_CREATE", "inviteCreate"],
-  ["INVITE_DELETE", "inviteDelete"],
-  ["MESSAGE_CREATE", "messageCreate"],
-  ["MESSAGE_UPDATE", "messageUpdate"],
-  ["MESSAGE_DELETE", "messageDelete"],
-  ["MESSAGE_DELETE_BULK", "messageDeleteBulk"],
-  ["MESSAGE_REACTION_ADD", "messageReactionAdd"],
-  ["MESSAGE_REACTION_REMOVE", "messageReactionRemove"],
-  ["MESSAGE_REACTION_REMOVE_ALL", "messageReactionRemoveAll"],
-  ["MESSAGE_REACTION_REMOVE_EMOJI", "messageReactionRemoveEmoji"],
-  ["PRESENCE_UPDATE", "presenceUpdate"],
-  ["TYPING_START", "typingStart"],
-  ["USER_UPDATE", "userUpdate"],
-  ["VOICE_CHANNEL_EFFECT_SEND", "voiceChannelEffectSend"],
-  ["VOICE_STATE_UPDATE", "voiceStateUpdate"],
-  ["VOICE_SERVER_UPDATE", "voiceServerUpdate"],
-  ["WEBHOOKS_UPDATE", "webhooksUpdate"],
-  ["INTERACTION_CREATE", "interactionCreate"],
-  ["STAGE_INSTANCE_CREATE", "stageInstanceCreate"],
-  ["STAGE_INSTANCE_UPDATE", "stageInstanceUpdate"],
-  ["STAGE_INSTANCE_DELETE", "stageInstanceDelete"],
-  ["SUBSCRIPTION_CREATE", "subscriptionCreate"],
-  ["SUBSCRIPTION_UPDATE", "subscriptionUpdate"],
-  ["SUBSCRIPTION_DELETE", "subscriptionDelete"],
-  ["MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd"],
-  ["MESSAGE_POLL_VOTE_REMOVE", "messagePollVoteRemove"],
+  ["AUTO_MODERATION_RULE_CREATE", "autoModerationRuleCreate", undefined],
+  ["AUTO_MODERATION_RULE_UPDATE", "autoModerationRuleUpdate", undefined],
+  ["AUTO_MODERATION_RULE_DELETE", "autoModerationRuleDelete", undefined],
+  [
+    "AUTO_MODERATION_ACTION_EXECUTION",
+    "autoModerationActionExecution",
+    undefined,
+  ],
+  ["CHANNEL_CREATE", "channelCreate", undefined],
+  ["CHANNEL_UPDATE", "channelUpdate", undefined],
+  ["CHANNEL_DELETE", "channelDelete", undefined],
+  ["CHANNEL_PINS_UPDATE", "channelPinsUpdate", undefined],
+  ["THREAD_CREATE", "threadCreate", undefined],
+  ["THREAD_UPDATE", "threadUpdate", undefined],
+  ["THREAD_DELETE", "threadDelete", undefined],
+  ["THREAD_LIST_SYNC", "threadListSync", undefined],
+  ["THREAD_MEMBER_UPDATE", "threadMemberUpdate", undefined],
+  ["THREAD_MEMBERS_UPDATE", "threadMembersUpdate", undefined],
+  ["ENTITLEMENT_CREATE", "entitlementCreate", undefined],
+  ["ENTITLEMENT_UPDATE", "entitlementUpdate", undefined],
+  ["ENTITLEMENT_DELETE", "entitlementDelete", undefined],
+  ["GUILD_CREATE", "guildCreate", undefined],
+  ["GUILD_UPDATE", "guildUpdate", undefined],
+  ["GUILD_DELETE", "guildDelete", undefined],
+  ["GUILD_AUDIT_LOG_ENTRY_CREATE", "guildAuditLogEntryCreate", undefined],
+  ["GUILD_BAN_ADD", "guildBanAdd", undefined],
+  ["GUILD_BAN_REMOVE", "guildBanRemove", undefined],
+  ["GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", undefined],
+  ["GUILD_STICKERS_UPDATE", "guildStickersUpdate", undefined],
+  ["GUILD_INTEGRATIONS_UPDATE", "guildIntegrationsUpdate", undefined],
+  ["GUILD_MEMBER_ADD", "guildMemberAdd", undefined],
+  ["GUILD_MEMBER_REMOVE", "guildMemberRemove", undefined],
+  ["GUILD_MEMBER_UPDATE", "guildMemberUpdate", undefined],
+  ["GUILD_MEMBERS_CHUNK", "guildMembersChunk", undefined],
+  ["GUILD_ROLE_CREATE", "guildRoleCreate", undefined],
+  ["GUILD_ROLE_UPDATE", "guildRoleUpdate", undefined],
+  ["GUILD_ROLE_DELETE", "guildRoleDelete", undefined],
+  ["GUILD_SCHEDULED_EVENT_CREATE", "guildScheduledEventCreate", undefined],
+  ["GUILD_SCHEDULED_EVENT_UPDATE", "guildScheduledEventUpdate", undefined],
+  ["GUILD_SCHEDULED_EVENT_DELETE", "guildScheduledEventDelete", undefined],
+  ["GUILD_SCHEDULED_EVENT_USER_ADD", "guildScheduledEventUserAdd", undefined],
+  [
+    "GUILD_SCHEDULED_EVENT_USER_REMOVE",
+    "guildScheduledEventUserRemove",
+    undefined,
+  ],
+  ["GUILD_SOUNDBOARD_SOUND_CREATE", "guildSoundboardSoundCreate", undefined],
+  ["GUILD_SOUNDBOARD_SOUND_UPDATE", "guildSoundboardSoundUpdate", undefined],
+  ["GUILD_SOUNDBOARD_SOUND_DELETE", "guildSoundboardSoundDelete", undefined],
+  ["GUILD_SOUNDBOARD_SOUNDS_UPDATE", "guildSoundboardSoundsUpdate", undefined],
+  ["SOUNDBOARD_SOUNDS", "soundboardSounds", undefined],
+  ["INTEGRATION_CREATE", "integrationCreate", undefined],
+  ["INTEGRATION_UPDATE", "integrationUpdate", undefined],
+  ["INTEGRATION_DELETE", "integrationDelete", undefined],
+  ["INVITE_CREATE", "inviteCreate", undefined],
+  ["INVITE_DELETE", "inviteDelete", undefined],
+  ["MESSAGE_CREATE", "messageCreate", undefined],
+  ["MESSAGE_UPDATE", "messageUpdate", undefined],
+  ["MESSAGE_DELETE", "messageDelete", undefined],
+  ["MESSAGE_DELETE_BULK", "messageDeleteBulk", undefined],
+  ["MESSAGE_REACTION_ADD", "messageReactionAdd", undefined],
+  ["MESSAGE_REACTION_REMOVE", "messageReactionRemove", undefined],
+  ["MESSAGE_REACTION_REMOVE_ALL", "messageReactionRemoveAll", undefined],
+  ["MESSAGE_REACTION_REMOVE_EMOJI", "messageReactionRemoveEmoji", undefined],
+  ["PRESENCE_UPDATE", "presenceUpdate", undefined],
+  ["TYPING_START", "typingStart", undefined],
+  ["USER_UPDATE", "userUpdate", User],
+  ["VOICE_CHANNEL_EFFECT_SEND", "voiceChannelEffectSend", undefined],
+  ["VOICE_STATE_UPDATE", "voiceStateUpdate", undefined],
+  ["VOICE_SERVER_UPDATE", "voiceServerUpdate", undefined],
+  ["WEBHOOKS_UPDATE", "webhooksUpdate", undefined],
+  ["INTERACTION_CREATE", "interactionCreate", undefined],
+  ["STAGE_INSTANCE_CREATE", "stageInstanceCreate", undefined],
+  ["STAGE_INSTANCE_UPDATE", "stageInstanceUpdate", undefined],
+  ["STAGE_INSTANCE_DELETE", "stageInstanceDelete", undefined],
+  ["SUBSCRIPTION_CREATE", "subscriptionCreate", undefined],
+  ["SUBSCRIPTION_UPDATE", "subscriptionUpdate", undefined],
+  ["SUBSCRIPTION_DELETE", "subscriptionDelete", undefined],
+  ["MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd", undefined],
+  ["MESSAGE_POLL_VOTE_REMOVE", "messagePollVoteRemove", undefined],
 ] as const;
+
+export const EventOptions = z
+  .object({
+    once: z.boolean().default(false),
+    maxListeners: z.number().positive().default(10),
+    ...CacheOptions.shape,
+  })
+  .strict();
+
+type EventOptions = z.infer<typeof EventOptions>;
+
+function isClass<T>(value: unknown): value is Class<T> {
+  if (typeof value !== "function") {
+    return false;
+  }
+  if (!value.prototype?.constructor) {
+    return false;
+  }
+  if (Function.prototype.toString.call(value).startsWith("class ")) {
+    return true;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype !== Function.prototype;
+}
 
 export class EventHandler {
   readonly #client: Client;
+  readonly #options: EventOptions;
+  readonly #caches = new Map<string, CacheManager<string, unknown>>();
 
-  constructor(client: Client) {
+  constructor(client: Client, options: Partial<EventOptions> = {}) {
     this.#client = client;
+
+    try {
+      this.#options = EventOptions.parse(options);
+    } catch (error) {
+      throw new Error(`Invalid event handler options: ${error}`);
+    }
   }
 
-  handleEvents(): void {
-    this.#handleRestEvents();
-    this.#handleGatewayEvents();
-  }
-
-  #handleRestEvents(): void {
+  initializeEvents(): void {
     for (const event of REST_EVENTS) {
-      this.#client.rest.on(event, (...args) => {
-        this.#client.emit(event, ...args);
+      this.#setupRestEvent(event);
+    }
+
+    for (const event of GATEWAY_EVENTS) {
+      this.#setupGatewayEvent(event);
+    }
+
+    for (const [, clientEvent, DataClass] of GATEWAY_DISPATCH_EVENTS) {
+      if (DataClass) {
+        this.#caches.set(
+          clientEvent,
+          new CacheManager({
+            expiresIn: this.#options.expiresIn,
+            maxSize: this.#options.maxSize,
+          }),
+        );
+      }
+    }
+  }
+
+  #setupRestEvent(event: keyof RestEvents): void {
+    this.#client.rest.on(event, (...args) => {
+      this.#client.emit(event, ...args);
+    });
+  }
+
+  #setupGatewayEvent(event: keyof GatewayEvents): void {
+    this.#client.gateway.on(event, (...args) => {
+      this.#client.emit(event, ...args);
+    });
+
+    if (event === "dispatch") {
+      this.#client.gateway.on(event, (dispatch, data) => {
+        this.#handleDispatchEvent(dispatch, data);
       });
     }
   }
 
-  #handleGatewayEvents(): void {
-    for (const event of GATEWAY_EVENTS) {
-      this.#client.gateway.on(event, (...args) => {
-        this.#client.emit(event, ...args);
-      });
+  #handleDispatchEvent<T extends keyof GatewayReceiveEvents>(
+    event: T,
+    data: GatewayReceiveEvents[T],
+  ): void {
+    const eventMapping = GATEWAY_DISPATCH_EVENTS.find(([key]) => key === event);
+    if (!eventMapping) {
+      return;
     }
 
-    this.#client.gateway.on("dispatch", (event, data) => {
-      const eventMapping = GATEWAY_DISPATCH_EVENTS.find(
-        ([key]) => key === event,
-      );
-      if (!eventMapping) {
-        return;
+    const [, clientEvent, DataClass] = eventMapping;
+    let processedData = data as object;
+
+    if (DataClass) {
+      if (Array.isArray(DataClass)) {
+        for (const ClassType of DataClass) {
+          processedData = new ClassType(this.#client, data as never) as object;
+          break;
+        }
+      } else if (isClass(DataClass)) {
+        processedData = new DataClass(this.#client, data as never) as object;
       }
 
-      const [, eventName] = eventMapping;
+      if ("id" in processedData) {
+        const cache = this.#caches.get(clientEvent);
+        if (cache) {
+          cache.add(processedData.id as string, processedData);
+        }
+      }
+    }
 
-      // @ts-ignore
-      this.#client.emit(eventName, data as never);
-    });
+    // @ts-expect-error
+    this.#client.emit(clientEvent, processedData as never);
   }
 }

@@ -1,6 +1,8 @@
 # Compiled output
 dist/
 tmp/
+temp/
+temps/
 out/
 out-tsc/
 build/
