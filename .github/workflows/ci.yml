@@ -92,7 +92,7 @@ jobs:
       #          fail_ci_if_error: true
 
       - name: Run benchmarks
-        run: pnpm run bench
+        run: pnpm run test:bench
 
   build:
     needs: [ lint, test ]
