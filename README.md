@@ -9,14 +9,11 @@
     <a href="https://www.typescriptlang.org/">
       <img src="https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
     </a>
-    <a href="https://www.npmjs.com/package/@nyxjs/core">
-      <img src="https://img.shields.io/npm/v/@nyxjs/core?style=for-the-badge&logo=npm&color=CB3837" alt="NPM version">
-    </a>
     <a href="https://github.com/AtsuLeVrai/nyx.js/actions">
-      <img src="https://img.shields.io/github/actions/workflow/status/AtsuLeVrai/nyx.js/ci.yml?style=for-the-badge&logo=github" alt="CI Status">
+      <img src="https://img.shields.io/github/actions/workflow/status/AtsuLeVrai/nyx.js/ci.yml?style=for-the-badge&logo=github" alt="CI">
     </a>
-    <a href="https://discord.gg/your-discord">
-      <img src="https://img.shields.io/discord/1301585513651634236?style=for-the-badge&logo=discord&color=5865F2" alt="Discord">
+    <a href="https://biomejs.com/">
+      <img src="https://img.shields.io/badge/biome-Check-60a5fa?style=for-the-badge&logo=biome&color=60a5fa" alt="Biome Check">
     </a>
   </p>
 
