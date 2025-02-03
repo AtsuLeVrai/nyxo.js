@@ -2,41 +2,156 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    types: [ opened, synchronize ]
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: true
 
 jobs:
-  build:
-    name: CI
-    timeout-minutes: 15
+  cache-and-install:
     runs-on: ubuntu-latest
-    # To use Remote Caching, uncomment the next lines and follow the steps below.
-    # env:
-    #  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-    #  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
     steps:
-      - name: Check out code
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
-      - uses: pnpm/action-setup@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
-      - name: Setup Node.js environment
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Check
-        run: pnpm run check
+      # Cache pour les outputs de Turborepo
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+  lint:
+    needs: cache-and-install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+      - run: pnpm install --frozen-lockfile
+      - name: Run ESLint
+        run: pnpm turbo lint
+
+  typecheck:
+    needs: cache-and-install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+      - run: pnpm install --frozen-lockfile
+      - name: Run type checking
+        run: pnpm turbo type-check
+
+  test:
+    needs: cache-and-install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm turbo test
+
+      - name: Run coverage
+        run: pnpm turbo coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: true
+
+      - name: Run benchmarks
+        run: pnpm turbo bench
+
+  build:
+    needs: [ lint, typecheck, test ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+      - run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm run build:prod
+        run: pnpm turbo build:prod
+
+      - name: Cache build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/dist
+            **/build
+            .next
+            out
+          key: ${{ runner.os }}-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-
+
+  success:
+    needs: [ lint, typecheck, test, build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Success
+        run: echo "All jobs completed successfully!"

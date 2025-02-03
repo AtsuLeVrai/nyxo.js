@@ -24,14 +24,16 @@
     "url": "https://github.com/3tatsu"
   },
   "scripts": {
-    "dev": "tsx ./src/index.ts -w",
     "start": "tsx ./src/index.ts",
     "format": "biome format --write .",
     "lint": "biome lint --write --unsafe .",
     "check": "biome check --write --unsafe ."
   },
   "dependencies": {
-    "nyx.js": "workspace:*"
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/gateway": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
+    "@nyxjs/store": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

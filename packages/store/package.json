@@ -45,9 +45,13 @@
     "check": "biome check --write --unsafe .",
     "type-check": "tsc --noEmit"
   },
+  "dependencies": {
+    "type-fest": "^4.33.0"
+  },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.13.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
   }
 }
