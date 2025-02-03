@@ -86,10 +86,10 @@ jobs:
       - name: Run coverage
         run: pnpm run test:coverage
 
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v5
-        with:
-          fail_ci_if_error: true
+      #      - name: Upload coverage reports
+      #        uses: codecov/codecov-action@v5
+      #        with:
+      #          fail_ci_if_error: true
 
       - name: Run benchmarks
         run: pnpm run bench
