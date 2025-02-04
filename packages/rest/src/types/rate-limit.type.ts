@@ -11,9 +11,22 @@ export interface RateLimitBucket {
   sharedRoute?: string;
 }
 
-export interface RateLimitEvent extends RateLimitBucket {
+export interface RateLimitError {
   timeToReset: number;
   method: string;
   path: string;
   global: boolean;
+  scope: RateLimitScope;
+  retryAfter?: number;
+}
+
+export interface RateLimitHeaders {
+  limit: string;
+  remaining: string;
+  reset: string;
+  resetAfter: string;
+  bucket: string;
+  scope: string;
+  global: string;
+  retryAfter: string;
 }

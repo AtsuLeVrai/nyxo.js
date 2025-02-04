@@ -1,6 +1,5 @@
 import type { Dispatcher } from "undici";
 import type { FileInput } from "./file.type.js";
-import type { RateLimitEvent } from "./rate-limit.type.js";
 
 export interface JsonErrorField {
   code: string;
@@ -34,7 +33,6 @@ export interface RestEvents {
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (error: Error | string, context?: Record<string, unknown>) => void;
   request: (request: RequestEvent) => void;
-  rateLimited: (rateLimit: RateLimitEvent) => void;
 }
 
 /**

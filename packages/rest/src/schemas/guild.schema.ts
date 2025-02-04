@@ -1,6 +1,6 @@
 import {
+  AnyChannelEntity,
   type AnyThreadChannelEntity,
-  ChannelEntity,
   DefaultMessageNotificationLevel,
   ExplicitContentFilterLevel,
   GuildFeature,
@@ -34,7 +34,7 @@ export const CreateGuildSchema = z.object({
     .optional(),
   explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel).optional(),
   roles: z.array(RoleEntity).optional(),
-  channels: z.array(ChannelEntity.partial()).optional(),
+  channels: z.array(AnyChannelEntity).optional(),
   afk_channel_id: Snowflake.optional(),
   afk_timeout: z.number().optional(),
   system_channel_id: Snowflake.optional(),
@@ -90,7 +90,7 @@ export type ModifyGuildSchema = z.input<typeof ModifyGuildSchema>;
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
  */
-export const CreateGuildChannelSchema = ChannelEntity;
+export const CreateGuildChannelSchema = AnyChannelEntity;
 
 export type CreateGuildChannelSchema = z.input<typeof CreateGuildChannelSchema>;
 

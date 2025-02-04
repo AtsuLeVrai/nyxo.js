@@ -1,38 +1,25 @@
 import { z } from "zod";
 
-const DEFAULT_INVALID_REQUEST_WINDOW = 600_000;
-const DEFAULT_INVALID_REQUEST_MAX_LIMIT = 10_000;
-const DEFAULT_LATENCY_THRESHOLD = 30_000;
-const DEFAULT_MAX_LATENCY_ENTRIES = 10;
-const DEFAULT_CLEANUP_INTERVAL = 30_000;
-
 export const RateLimiterOptions = z
   .object({
-    invalidRequestWindow: z
-      .number()
-      .int()
-      .positive()
-      .default(DEFAULT_INVALID_REQUEST_WINDOW),
-    invalidRequestMaxLimit: z
-      .number()
-      .int()
-      .positive()
-      .default(DEFAULT_INVALID_REQUEST_MAX_LIMIT),
-    latencyThreshold: z
-      .number()
-      .int()
-      .positive()
-      .default(DEFAULT_LATENCY_THRESHOLD),
-    maxLatencyEntries: z
-      .number()
-      .int()
-      .positive()
-      .default(DEFAULT_MAX_LATENCY_ENTRIES),
-    cleanupInterval: z
-      .number()
-      .int()
-      .positive()
-      .default(DEFAULT_CLEANUP_INTERVAL),
+    cleanupInterval: z.number().int().positive().default(60_000),
+    invalidRequestWindow: z.number().int().positive().default(600_000),
+    invalidRequestMaxLimit: z.number().int().positive().default(10_000),
+    majorParameters: z.map(z.instanceof(RegExp), z.string()).default(
+      new Map([
+        [/^\/guilds\/(\d+)/, "guild_id"],
+        [/^\/channels\/(\d+)/, "channel_id"],
+        [/^\/webhooks\/(\d+)/, "webhook_id"],
+      ]),
+    ),
+    sharedRoutes: z.map(z.instanceof(RegExp), z.string()).default(
+      new Map([
+        [/^\/guilds\/\d+\/emojis/, "emoji"],
+        [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
+        [/^\/guilds\/\d+\/channels/, "guild-channels"],
+        [/^\/guilds\/\d+\/members/, "guild-members"],
+      ]),
+    ),
   })
   .strict();
 

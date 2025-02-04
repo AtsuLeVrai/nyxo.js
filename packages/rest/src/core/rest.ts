@@ -35,6 +35,7 @@ import type { RequestOptions, RestEvents } from "../types/index.js";
 
 export class Rest extends EventEmitter<RestEvents> {
   readonly http: HttpService;
+  readonly analytic: AnalyticsManager;
   readonly rateLimiter: RateLimiterManager;
   readonly #options: RestOptions;
 
@@ -47,8 +48,8 @@ export class Rest extends EventEmitter<RestEvents> {
       throw new Error(fromError(error).message);
     }
 
-    this.rateLimiter = new RateLimiterManager(this, this.#options.rateLimit);
     this.http = new HttpService(this, this.#options);
+    this.rateLimiter = new RateLimiterManager(this.#options.rateLimit);
   }
 
   get options(): Readonly<RestOptions> {
@@ -164,7 +165,6 @@ export class Rest extends EventEmitter<RestEvents> {
       this.rateLimiter.updateRateLimit(
         options.path,
         options.method,
-        response.latency,
         response.headers,
         response.statusCode,
       );

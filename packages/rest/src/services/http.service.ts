@@ -13,7 +13,6 @@ export interface HttpResponse<T = unknown> {
   data: T;
   statusCode: number;
   headers: Record<string, string>;
-  latency: number;
 }
 
 export class HttpService {
@@ -76,7 +75,6 @@ export class HttpService {
           data: {} as T,
           statusCode: response.statusCode,
           headers: response.headers as Record<string, string>,
-          latency,
         };
       }
 
@@ -134,7 +132,6 @@ export class HttpService {
         data: data as T,
         statusCode: response.statusCode,
         headers: response.headers as Record<string, string>,
-        latency,
       };
     } catch (error) {
       if (

@@ -142,7 +142,11 @@ export const FileHandler = {
     }
   },
 
-  async resizeImageIfNeeded(buffer: Buffer, maxSize: number): Promise<Buffer> {
+  async resizeImageIfNeeded(
+    buffer: Buffer,
+    maxSize: number,
+    qualities: readonly number[] = COMPRESSION_QUALITIES,
+  ): Promise<Buffer> {
     try {
       if (buffer.length <= maxSize) {
         return buffer;
@@ -156,7 +160,7 @@ export const FileHandler = {
       }
 
       // Try compression first
-      for (const quality of COMPRESSION_QUALITIES) {
+      for (const quality of qualities) {
         const compressed = await this.compressImage(
           image,
           metadata.format,

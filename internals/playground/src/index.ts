@@ -19,10 +19,6 @@ rest.on("request", (...args) => {
   console.log("[REST - REQUEST]", ...args);
 });
 
-rest.on("rateLimited", (...args) => {
-  console.log("[REST - RATELIMITED]", ...args);
-});
-
 rest.on("debug", (...args) => {
   console.log("[REST - DEBUG]", ...args);
 });
