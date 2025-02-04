@@ -35,7 +35,6 @@ import type { RequestOptions, RestEvents } from "../types/index.js";
 
 export class Rest extends EventEmitter<RestEvents> {
   readonly http: HttpService;
-  readonly analytic: AnalyticsManager;
   readonly rateLimiter: RateLimiterManager;
   readonly #options: RestOptions;
 
