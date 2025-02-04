@@ -11,5 +11,5 @@ export interface ProcessedFile {
   filename: string;
   contentType: string;
   size: number;
-  dataUri: string;
+  dataUri: DataUri;
 }

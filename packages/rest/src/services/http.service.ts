@@ -1,16 +1,13 @@
-import type { Dispatcher } from "undici";
-import { request } from "undici";
+import { type Dispatcher, Pool, RetryAgent } from "undici";
 import type { Rest } from "../core/index.js";
-import { HttpError } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import type { RestOptions } from "../options/index.js";
-import type { JsonErrorEntity, RequestOptions } from "../types/index.js";
-
-const HTTP_DEFAULTS = {
-  apiBaseUrl: "https://discord.com",
-  contentType: "application/json",
-  rateLimitPrecision: "millisecond",
-} as const;
+import {
+  JsonErrorCode,
+  type JsonErrorEntity,
+  type JsonErrorField,
+  type RequestOptions,
+} from "../types/index.js";
 
 export interface HttpResponse<T = unknown> {
   data: T;
@@ -22,29 +19,107 @@ export interface HttpResponse<T = unknown> {
 export class HttpService {
   readonly #rest: Rest;
   readonly #options: RestOptions;
+  readonly #pool: Pool;
+  readonly #retryAgent: RetryAgent;
 
   constructor(rest: Rest, options: RestOptions) {
     this.#rest = rest;
     this.#options = options;
+
+    this.#pool = new Pool(this.#options.baseUrl, this.#options.pool);
+    this.#retryAgent = new RetryAgent(this.#pool, this.#options.retry);
   }
 
   async request<T>(options: RequestOptions): Promise<HttpResponse<T>> {
-    const startTime = this.#getCurrentTimestamp();
+    const startTime = Date.now();
+    const url = new URL(
+      `/api/v${this.#options.version}/${options.path.replace(/^\/+/, "")}`,
+      this.#options.baseUrl,
+    );
+
+    const requestOptions: Dispatcher.RequestOptions = {
+      ...options,
+      origin: url.origin,
+      path: url.pathname + url.search,
+      headers: {
+        authorization: `Bot ${this.#options.token}`,
+        "user-agent": this.#options.userAgent,
+        "content-type": "application/json",
+        "x-ratelimit-precision": "millisecond",
+        ...HeaderHandler.parse(options.headers).headers,
+      },
+    };
+
+    if (options.files) {
+      const formData = await FileHandler.createFormData(
+        options.files,
+        options.body,
+      );
+      requestOptions.body = formData.getBuffer();
+      requestOptions.headers = {
+        ...requestOptions.headers,
+        ...formData.getHeaders(),
+      };
+    }
+
+    if (options.reason && requestOptions.headers) {
+      (requestOptions.headers as Record<string, string>)["x-audit-log-reason"] =
+        encodeURIComponent(options.reason);
+    }
 
     try {
-      const url = this.#formatPath(options.path);
-      const requestOptions = await this.#prepareRequestOptions(options, url);
-      const response = await this.#executeRequest(requestOptions);
-      const latency = this.#calculateLatency(startTime);
+      const response = await this.#retryAgent.request(requestOptions);
+      const latency = Date.now() - startTime;
 
       if (response.statusCode === 204) {
-        return this.#createEmptyResponse<T>(response, latency);
+        return {
+          data: {} as T,
+          statusCode: response.statusCode,
+          headers: response.headers as Record<string, string>,
+          latency,
+        };
       }
 
-      const data = await this.#parseResponseData(response);
+      const buffer = Buffer.from(await response.body.arrayBuffer());
+      let data: unknown;
+
+      try {
+        data = JSON.parse(buffer.toString());
+      } catch {
+        data = {
+          code: JsonErrorCode.GeneralError,
+          message: "Invalid JSON response",
+        };
+      }
 
       if (response.statusCode >= 400) {
-        this.#handleErrorResponse(response.statusCode, data);
+        const error = data as JsonErrorEntity;
+
+        if (error.errors) {
+          const transformedErrors: Record<
+            string,
+            { _errors: JsonErrorField[] }
+          > = {};
+
+          for (const [key, value] of Object.entries(error.errors)) {
+            if (value._errors) {
+              transformedErrors[key] = {
+                _errors: value._errors.map((err) => ({
+                  ...err,
+                  path: [key, ...(err.path || [])],
+                })),
+              };
+            }
+          }
+
+          error.errors = transformedErrors;
+        }
+
+        if (!error.code) {
+          error.code = response.statusCode;
+        }
+
+        throw error;
       }
 
       this.#rest.emit("request", {
@@ -52,7 +127,7 @@ export class HttpService {
         method: options.method,
         statusCode: response.statusCode,
         latency,
-        timestamp: this.#getCurrentTimestamp(),
+        timestamp: Date.now(),
       });
 
       return {
@@ -62,213 +137,22 @@ export class HttpService {
         latency,
       };
     } catch (error) {
-      this.#handleRequestError(error, options);
-    }
-  }
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        typeof error.code === "number"
+      ) {
+        throw error;
+      }
 
-  #formatPath(path: string): URL {
-    if (path.includes("..")) {
-      throw new HttpError("Path cannot contain directory traversal");
-    }
-
-    const cleanPath = this.#cleanPath(path);
-
-    try {
-      return new URL(
-        `/api/v${this.#options.version}/${cleanPath}`,
-        HTTP_DEFAULTS.apiBaseUrl,
-      );
-    } catch (error) {
-      throw new HttpError(
-        `"Invalid API path": ${error instanceof Error ? error.message : "unknown error"}`,
-      );
-    }
-  }
-
-  #cleanPath(path: string): string {
-    return path
-      .trim()
-      .replace(/\/+/g, "/")
-      .replace(/^\/+|\/+$/g, "");
-  }
-
-  async #prepareRequestOptions(
-    options: RequestOptions,
-    url: URL,
-  ): Promise<Dispatcher.RequestOptions> {
-    let requestOptions: Dispatcher.RequestOptions = {
-      ...options,
-      origin: url.origin,
-      path: url.pathname + url.search,
-      signal: AbortSignal.timeout(this.#options.queue.timeout),
-      headers: this.#getHeaders(options),
-    };
-
-    if (options.files) {
-      requestOptions = await this.#addFormDataToOptions(
-        requestOptions,
-        options,
-      );
-    }
-
-    return requestOptions;
-  }
-
-  async #addFormDataToOptions(
-    options: Dispatcher.RequestOptions,
-    requestOptions: RequestOptions,
-  ): Promise<Dispatcher.RequestOptions> {
-    if (!requestOptions.files) {
-      throw new Error(
-        "Request options contain files but no file handler is available",
-      );
-    }
-
-    const formData = await FileHandler.createFormData(
-      requestOptions.files,
-      requestOptions.body,
-    );
-
-    return {
-      ...options,
-      body: formData.getBuffer(),
-      headers: {
-        ...options.headers,
-        ...formData.getHeaders(),
-      },
-    };
-  }
-
-  #getHeaders(options: RequestOptions): Record<string, string> {
-    const baseHeaders = this.#createBaseHeaders();
-    this.#addAuditLogReason(baseHeaders, options.reason);
-
-    const customHeaders = HeaderHandler.parse(options.headers).headers || {};
-    this.#checkConflictingHeaders(customHeaders, baseHeaders);
-
-    return {
-      ...baseHeaders,
-      ...customHeaders,
-    };
-  }
-
-  #createBaseHeaders(): Record<string, string> {
-    return {
-      authorization: `Bot ${this.#options.token}`,
-      "user-agent": this.#options.userAgent,
-      "content-type": HTTP_DEFAULTS.contentType,
-      "x-ratelimit-precision": HTTP_DEFAULTS.rateLimitPrecision,
-    };
-  }
-
-  #addAuditLogReason(headers: Record<string, string>, reason?: string): void {
-    if (!reason) {
-      return;
-    }
-
-    try {
-      headers["x-audit-log-reason"] = encodeURIComponent(reason);
-    } catch (error) {
-      throw new Error("Reason contains non-encodable characters", {
+      throw new Error("Request failed", {
         cause: error,
       });
     }
   }
 
-  #checkConflictingHeaders(
-    custom: Record<string, string>,
-    base: Record<string, string>,
-  ): void {
-    const conflictingHeaders = Object.keys(custom)
-      .filter((header) => header.toLowerCase() in base)
-      .map((header) => header.toLowerCase());
-
-    if (conflictingHeaders.length > 0) {
-      this.#rest.emit(
-        "error",
-        `Conflicting headers detected: ${conflictingHeaders.join(", ")}`,
-      );
-    }
-  }
-
-  async #executeRequest(
-    options: Dispatcher.RequestOptions,
-  ): Promise<Dispatcher.ResponseData> {
-    return await request(options);
-  }
-
-  async #parseResponseData(
-    response: Dispatcher.ResponseData,
-  ): Promise<unknown> {
-    const buffer = Buffer.from(await response.body.arrayBuffer());
-    try {
-      return JSON.parse(buffer.toString());
-    } catch {
-      throw new HttpError("Failed to parse JSON response", {
-        status: response.statusCode,
-        rawBody: buffer.toString(),
-      });
-    }
-  }
-
-  #createEmptyResponse<T>(
-    response: Dispatcher.ResponseData,
-    latency: number,
-  ): HttpResponse<T> {
-    return {
-      data: {} as T,
-      statusCode: response.statusCode,
-      headers: response.headers as Record<string, string>,
-      latency,
-    };
-  }
-
-  #handleErrorResponse(status: number, data: unknown): never {
-    if (this.#isDiscordApiError(data)) {
-      throw new HttpError(data.message, {
-        code: data.code,
-        status,
-        errors: data.errors,
-      });
-    }
-
-    throw new HttpError(this.#getErrorMessage(data), { status });
-  }
-
-  #getErrorMessage(data: unknown): string {
-    return typeof data === "object" && data !== null && "message" in data
-      ? String(data.message)
-      : "Unknown API Error";
-  }
-
-  #handleRequestError(error: unknown, options: RequestOptions): never {
-    if (error instanceof HttpError) {
-      throw error;
-    }
-
-    throw new HttpError(
-      error instanceof Error ? error.message : "Unknown API Error",
-      {
-        path: options.path,
-        method: options.method,
-      },
-    );
-  }
-
-  #isDiscordApiError(data: unknown): data is JsonErrorEntity {
-    return (
-      typeof data === "object" &&
-      data !== null &&
-      "code" in data &&
-      "message" in data
-    );
-  }
-
-  #getCurrentTimestamp(): number {
-    return Date.now();
-  }
-
-  #calculateLatency(startTime: number): number {
-    return this.#getCurrentTimestamp() - startTime;
+  async destroy(): Promise<void> {
+    await Promise.all([this.#pool.close(), this.#retryAgent.close()]);
   }
 }

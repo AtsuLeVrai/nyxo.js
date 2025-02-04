@@ -82,4 +82,12 @@ gateway.on("dispatch", (...args) => {
   console.log("[GATEWAY - DISPATCH]", ...args);
 });
 
-gateway.connect().catch(console.error);
+async function main(): Promise<void> {
+  try {
+    await gateway.connect();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+main();

@@ -67,32 +67,6 @@ export class HealthService {
     );
   }
 
-  getHealthDescription(status: HealthStatus): string {
-    const emoji = {
-      [ConnectionState.Optimal]: "✅",
-      [ConnectionState.Degraded]: "!",
-      [ConnectionState.Unhealthy]: "❌",
-      [ConnectionState.Disconnected]: "🔌",
-    };
-
-    const connectionState = {
-      [WebSocket.CONNECTING]: "Connecting",
-      [WebSocket.OPEN]: "Connected",
-      [WebSocket.CLOSING]: "Closing",
-      [WebSocket.CLOSED]: "Closed",
-    };
-
-    let output = `${emoji[status.state]} Status: ${connectionState[status.details.connectionState]}`;
-    output += `\nLatency: ${status.details.latency}ms`;
-    output += `\nHeartbeats Missed: ${status.details.missedHeartbeats}/${this.#options.zombieConnectionThreshold}`;
-
-    if (status.issues.length > 0) {
-      output += `\n\nIssues:\n${status.issues.map((issue) => `• ${issue}`).join("\n")}`;
-    }
-
-    return output;
-  }
-
   shouldTakeAction(status: HealthStatus): boolean {
     return (
       status.state === ConnectionState.Unhealthy ||

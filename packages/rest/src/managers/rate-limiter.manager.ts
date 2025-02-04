@@ -1,6 +1,6 @@
 import { Store } from "@nyxjs/store";
 import type { Rest } from "../core/index.js";
-import { RateLimitError } from "../errors/index.js";
+
 import type { RateLimiterOptions } from "../options/index.js";
 import type { RateLimitBucket, RateLimitScope } from "../types/index.js";
 
@@ -65,23 +65,23 @@ export class RateLimiterManager {
     }
 
     if (this.#isGloballyLimited()) {
-      throw new RateLimitError({
+      throw {
         timeToReset: this.#globalReset ? this.#globalReset - Date.now() : -1,
         method,
         path,
         global: true,
         scope: "global",
-      });
+      };
     }
 
     if (this.#isInvalidRequestLimited()) {
-      throw new RateLimitError({
+      throw {
         timeToReset: this.#getInvalidRequestResetTime(),
         method,
         path,
         global: false,
         scope: "user",
-      });
+      };
     }
 
     const bucket = this.#getBucket(path, method);
@@ -93,7 +93,7 @@ export class RateLimiterManager {
       const timeToReset = this.#getBucketResetTime(bucket);
 
       this.#rest.emit("rateLimited", {
-        bucketHash: bucket.hash,
+        hash: bucket.hash,
         timeToReset,
         limit: bucket.limit,
         remaining: bucket.remaining,
@@ -101,16 +101,19 @@ export class RateLimiterManager {
         path,
         global: false,
         scope: bucket.scope,
+        reset: bucket.reset,
+        resetAfter: bucket.resetAfter,
+        lastUsed: bucket.lastUsed,
       });
 
-      throw new RateLimitError({
+      throw {
         timeToReset,
         method,
         path,
         bucketHash: bucket.hash,
         global: false,
         scope: bucket.scope,
-      });
+      };
     }
   }
 
@@ -143,14 +146,14 @@ export class RateLimiterManager {
         this.incrementInvalidRequestCount();
       }
 
-      throw new RateLimitError({
+      throw {
         timeToReset: retryAfter,
         method,
         path,
         global: isGlobal,
         scope,
         retryAfter,
-      });
+      };
     }
 
     const bucketHash = rateLimitHeaders.bucket;

@@ -276,7 +276,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       );
 
       this.emit("healthUpdate", healthStatus);
-      this.emit("debug", this.health.getHealthDescription(healthStatus));
 
       if (this.health.shouldTakeAction(healthStatus)) {
         await this.#handleUnhealthyConnection(healthStatus);

@@ -1,10 +1,6 @@
-import { setTimeout } from "node:timers/promises";
 import { EventEmitter } from "eventemitter3";
-import pQueue from "p-queue";
-import type { Dispatcher } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { HttpError, RateLimitError } from "../errors/index.js";
 import { RateLimiterManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
@@ -37,20 +33,7 @@ import {
 import { HttpService } from "../services/index.js";
 import type { RequestOptions, RestEvents } from "../types/index.js";
 
-const HTTP_METHOD_PRIORITIES: Record<Dispatcher.HttpMethod, number> = {
-  GET: 0,
-  POST: 1,
-  PUT: 2,
-  PATCH: 2,
-  DELETE: 3,
-  HEAD: 0,
-  CONNECT: 0,
-  OPTIONS: 0,
-  TRACE: 0,
-};
-
 export class Rest extends EventEmitter<RestEvents> {
-  readonly queue: pQueue;
   readonly http: HttpService;
   readonly rateLimiter: RateLimiterManager;
   readonly #options: RestOptions;
@@ -64,7 +47,6 @@ export class Rest extends EventEmitter<RestEvents> {
       throw new Error(fromError(error).message);
     }
 
-    this.queue = this.#createQueue();
     this.rateLimiter = new RateLimiterManager(this, this.#options.rateLimit);
     this.http = new HttpService(this, this.#options);
   }
@@ -174,39 +156,25 @@ export class Rest extends EventEmitter<RestEvents> {
   }
 
   async request<T>(options: RequestOptions): Promise<T> {
-    const request = await this.queue.add(
-      async () => {
-        let attempt = 0;
+    try {
+      this.rateLimiter.checkRateLimit(options.path, options.method);
 
-        while (true) {
-          try {
-            this.rateLimiter.checkRateLimit(options.path, options.method);
+      const response = await this.http.request<T>(options);
 
-            const response = await this.http.request<T>(options);
+      this.rateLimiter.updateRateLimit(
+        options.path,
+        options.method,
+        response.latency,
+        response.headers,
+        response.statusCode,
+      );
 
-            this.rateLimiter.updateRateLimit(
-              options.path,
-              options.method,
-              response.latency,
-              response.headers,
-              response.statusCode,
-            );
-
-            return response.data;
-          } catch (error) {
-            attempt++;
-            await this.#handleRequestError(error, attempt);
-          }
-        }
-      },
-      { priority: this.#calculatePriority(options) },
-    );
-
-    if (!request) {
-      throw new Error("Request failed");
+      return response.data;
+    } catch (error) {
+      throw new Error("Request failed", {
+        cause: error,
+      });
     }
-
-    return request;
   }
 
   get<T>(
@@ -244,72 +212,9 @@ export class Rest extends EventEmitter<RestEvents> {
     return this.request<T>({ ...options, method: "DELETE", path });
   }
 
-  destroy(): void {
-    this.queue.clear();
+  async destroy(): Promise<void> {
+    await this.http.destroy();
     this.rateLimiter.destroy();
     this.removeAllListeners();
-  }
-
-  #createQueue(): pQueue {
-    const queue = new pQueue(this.#options.queue);
-    queue.on("error", (error) => this.emit("error", error));
-    return queue;
-  }
-
-  #calculatePriority(options: RequestOptions): number {
-    return HTTP_METHOD_PRIORITIES[options.method] ?? 3;
-  }
-
-  async #handleRequestError(error: unknown, attempt: number): Promise<void> {
-    if (error instanceof RateLimitError) {
-      await this.#handleRateLimitError(error);
-      return;
-    }
-
-    if (
-      error instanceof HttpError &&
-      error.retryable &&
-      attempt < this.#options.maxRetries
-    ) {
-      await this.#handleRetryableError(error, attempt);
-      return;
-    }
-
-    this.emit("error", "Request failed", {
-      attempt,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-
-    throw error;
-  }
-
-  async #handleRateLimitError(error: RateLimitError): Promise<void> {
-    if (error.retryable) {
-      await setTimeout(error.getRetryDelay());
-      return;
-    }
-    throw error;
-  }
-
-  async #handleRetryableError(
-    error: HttpError,
-    attempt: number,
-  ): Promise<void> {
-    const backoff = this.#calculateBackoff(attempt);
-
-    this.emit("debug", "Retrying failed request", {
-      attempt,
-      backoff,
-      status: error.status,
-      code: error.code,
-    });
-
-    await setTimeout(backoff);
-  }
-
-  #calculateBackoff(attempt: number): number {
-    const baseDelay = Math.min(1000 * 2 ** attempt, 30000);
-    const jitter = Math.random() * 1000;
-    return baseDelay + jitter;
   }
 }
