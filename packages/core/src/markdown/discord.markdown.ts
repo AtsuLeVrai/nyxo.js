@@ -46,8 +46,8 @@ export function subText(text: string): SubHeader {
 }
 
 export type Link = `[${string}](${string})`;
-export function link(text: string, url: string | URL): Link {
-  return `[${text}](${url instanceof URL ? url.href : url})`;
+export function link(text: string, url: string): Link {
+  return `[${text}](${url})`;
 }
 
 export type Code = `\`${string}\``;

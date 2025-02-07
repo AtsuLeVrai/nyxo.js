@@ -6,23 +6,27 @@ import FormData from "form-data";
 import { lookup } from "mime-types";
 import sharp from "sharp";
 import type { Dispatcher } from "undici";
-import {
-  type DataUri,
-  type FileInput,
-  JsonErrorCode,
-  type ProcessedFile,
-} from "../types/index.js";
+import type { DataUri, FileInput, ProcessedFile } from "../types/index.js";
 
 const DATA_URI_REGEX = /^data:(.+);base64,(.+)$/;
 const FILE_PATH_REGEX = /^[/.]|^[a-zA-Z]:\\/;
-const MAX_ASSET_SIZE = 256 * 1024;
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_ASSET_SIZE = 256 * 1024; // 256KB
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_FILES = 10;
 const DEFAULT_FILENAME = "file";
 const DEFAULT_CONTENT_TYPE = "application/octet-stream";
 const COMPRESSION_QUALITIES = [80, 60, 40] as const;
 
+const SUPPORTED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
+
 export const FileHandler = {
+  // Type guards
   isBuffer(input: unknown): input is Buffer {
     return Buffer.isBuffer(input);
   },
@@ -64,6 +68,7 @@ export const FileHandler = {
       : this.isValidSingleInput(input);
   },
 
+  // Buffer handling
   async readStreamToBuffer(stream: Readable): Promise<Buffer> {
     const chunks: Buffer[] = [];
     for await (const chunk of stream) {
@@ -100,6 +105,7 @@ export const FileHandler = {
     throw new Error("Invalid file input");
   },
 
+  // Data URI handling
   bufferToDataUri(buffer: Buffer, contentType: string): DataUri {
     return `data:${contentType};base64,${buffer.toString("base64")}` as DataUri;
   },
@@ -115,11 +121,15 @@ export const FileHandler = {
     }
 
     const buffer = await this.toBuffer(input);
-    const type = await fileTypeFromBuffer(buffer);
+    const contentType = await this.getContentType(
+      buffer,
+      this.getFilename(input),
+    );
 
-    return this.bufferToDataUri(buffer, type?.mime ?? DEFAULT_CONTENT_TYPE);
+    return this.bufferToDataUri(buffer, contentType);
   },
 
+  // Image processing
   async compressImage(
     image: sharp.Sharp,
     format: string | undefined,
@@ -145,10 +155,11 @@ export const FileHandler = {
   async resizeImageIfNeeded(
     buffer: Buffer,
     maxSize: number,
+    contentType: string,
     qualities: readonly number[] = COMPRESSION_QUALITIES,
   ): Promise<Buffer> {
     try {
-      if (buffer.length <= maxSize) {
+      if (buffer.length <= maxSize || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
         return buffer;
       }
 
@@ -182,6 +193,7 @@ export const FileHandler = {
     }
   },
 
+  // File information
   getFilename(input: FileInput): string {
     if (typeof input === "string") {
       return this.isDataUri(input) ? DEFAULT_FILENAME : basename(input);
@@ -193,9 +205,21 @@ export const FileHandler = {
   },
 
   async getContentType(buffer: Buffer, filename: string): Promise<string> {
-    const fileType = await fileTypeFromBuffer(buffer);
-    const mimeType = lookup(filename);
-    return fileType?.mime || mimeType || DEFAULT_CONTENT_TYPE;
+    try {
+      const fileType = await fileTypeFromBuffer(buffer);
+      if (fileType?.mime) {
+        return fileType.mime;
+      }
+
+      const mimeType = lookup(filename);
+      if (mimeType) {
+        return mimeType;
+      }
+
+      return DEFAULT_CONTENT_TYPE;
+    } catch {
+      return DEFAULT_CONTENT_TYPE;
+    }
   },
 
   async processFile(
@@ -206,30 +230,34 @@ export const FileHandler = {
       throw new Error("Invalid file input");
     }
 
-    const buffer = await this.toBuffer(input);
-    const maxSize = context === "asset" ? MAX_ASSET_SIZE : MAX_SIZE;
+    try {
+      const buffer = await this.toBuffer(input);
+      const maxSize = context === "asset" ? MAX_ASSET_SIZE : MAX_SIZE;
 
-    const processedBuffer = await this.resizeImageIfNeeded(buffer, maxSize);
+      const filename = this.getFilename(input);
+      const contentType = await this.getContentType(buffer, filename);
 
-    if (processedBuffer.length > maxSize) {
-      throw new Error(
-        `Discord Error ${JsonErrorCode.FileUploadTooBig}: ` +
-          `File size ${processedBuffer.length} exceeds maximum size of ${maxSize} bytes`,
+      const processedBuffer = await this.resizeImageIfNeeded(
+        buffer,
+        maxSize,
+        contentType,
       );
+
+      return {
+        buffer: processedBuffer,
+        filename,
+        contentType,
+        size: processedBuffer.length,
+        dataUri: this.bufferToDataUri(processedBuffer, contentType),
+      };
+    } catch (error) {
+      throw new Error("File processing failed", {
+        cause: error,
+      });
     }
-
-    const filename = this.getFilename(input);
-    const contentType = await this.getContentType(processedBuffer, filename);
-
-    return {
-      buffer: processedBuffer,
-      filename,
-      contentType,
-      size: processedBuffer.length,
-      dataUri: this.bufferToDataUri(processedBuffer, contentType),
-    };
   },
 
+  // Form data creation
   async createFormData(
     files: FileInput | FileInput[],
     body?: Dispatcher.RequestOptions["body"],
@@ -238,7 +266,7 @@ export const FileHandler = {
 
     if (filesArray.length > MAX_FILES) {
       throw new Error(
-        `Discord Error ${JsonErrorCode.FileUploadTooBig}: Too many files provided`,
+        `Discord Error ${filesArray.length} files are too many. Max is ${MAX_FILES}`,
       );
     }
 

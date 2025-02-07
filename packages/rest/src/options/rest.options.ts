@@ -1,7 +1,7 @@
 import { ApiVersion, BotToken } from "@nyxjs/core";
-import type { Pool, RetryHandler } from "undici";
 import { z } from "zod";
-import { RateLimiterOptions } from "./rate-limiter.options.js";
+import { RateLimitOptions } from "./rate-limit.options.js";
+import { RetryOptions } from "./retry.options.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/reference#user-agent}
@@ -15,32 +15,10 @@ export const RestOptions = z.object({
     .string()
     .regex(DISCORD_USER_AGENT_REGEX)
     .default("DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)"),
-  maxRetries: z.number().int().positive().default(3),
-  rateLimit: RateLimiterOptions.default({}),
   baseUrl: z.string().default("https://discord.com"),
-  pool: z.custom<Pool.Options>().default({
-    keepAliveTimeout: 5000,
-    maxHeaderSize: 16384,
-    maxResponseSize: 10485760,
-  }),
-  retry: z.custom<RetryHandler.RetryOptions>().default({
-    maxRetries: 5,
-    minTimeout: 1000,
-    maxTimeout: 30000,
-    timeoutFactor: 2,
-    retryAfter: true,
-    methods: ["GET", "PUT", "POST", "PATCH", "DELETE"],
-    statusCodes: [408, 429, 500, 502, 503, 504],
-    errorCodes: [
-      "ECONNRESET",
-      "ECONNREFUSED",
-      "ENOTFOUND",
-      "ENETDOWN",
-      "ENETUNREACH",
-      "EHOSTDOWN",
-      "UND_ERR_SOCKET",
-    ],
-  }),
+  rateLimit: RateLimitOptions.default({}),
+  retry: RetryOptions.default({}),
+  metrics: z.boolean().default(false),
 });
 
 export type RestOptions = z.infer<typeof RestOptions>;

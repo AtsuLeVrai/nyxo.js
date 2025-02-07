@@ -229,12 +229,12 @@ async function clean() {
 }
 
 /**
- * Compile TypeScript types
+ * Compile TypeScript types for temp directory (used in production)
  * @returns {void}
  */
 function compileTypes() {
   try {
-    logger.info("Starting TypeScript compilation...");
+    logger.info("Starting TypeScript compilation for temp...");
 
     const configPath = ts.findConfigFile(
       paths.root,
@@ -246,8 +246,6 @@ function compileTypes() {
       throw new Error("Could not find tsconfig.json");
     }
 
-    logger.debug("Found TypeScript configuration");
-
     const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
     if (error) {
       throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
@@ -258,6 +256,7 @@ function compileTypes() {
       ts.sys,
       paths.root,
     );
+
     const compilerOptions = {
       ...parsedConfig.options,
       declaration: true,
@@ -265,8 +264,6 @@ function compileTypes() {
       outDir: paths.temp,
       noEmit: false,
     };
-
-    logger.debug("Creating TypeScript program...");
 
     const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
     const emitResult = program.emit();
@@ -307,13 +304,130 @@ function compileTypes() {
 }
 
 /**
- * Build TypeScript definitions
+ * Compile TypeScript types for development
  * @returns {void}
  */
-function buildTypes() {
+function compileDevTypes() {
   try {
-    logger.info("Generating types with API Extractor...");
+    logger.info(
+      "Starting TypeScript declaration compilation for development...",
+    );
 
+    const configPath = ts.findConfigFile(
+      paths.root,
+      ts.sys.fileExists,
+      "tsconfig.json",
+    );
+    if (!configPath) {
+      throw new Error("Could not find tsconfig.json");
+    }
+
+    const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (error) {
+      throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
+    }
+
+    const parsedConfig = ts.parseJsonConfigFileContent(
+      config,
+      ts.sys,
+      paths.root,
+    );
+    const compilerOptions = {
+      ...parsedConfig.options,
+      declaration: true,
+      emitDeclarationOnly: true, // Only emit .d.ts files
+      declarationDir: paths.dist,
+      outDir: paths.dist,
+      noEmit: false,
+      sourceMap: true,
+    };
+
+    logger.debug("Creating TypeScript program...");
+    const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
+    const emitResult = program.emit();
+
+    const allDiagnostics = ts
+      .getPreEmitDiagnostics(program)
+      .concat(emitResult.diagnostics);
+    for (const diagnostic of allDiagnostics) {
+      if (diagnostic.file && diagnostic.start !== undefined) {
+        const { line, character } =
+          diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+        const message = ts.flattenDiagnosticMessageText(
+          diagnostic.messageText,
+          "\n",
+        );
+        logger.warn(
+          `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
+        );
+      } else {
+        logger.warn(
+          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+        );
+      }
+    }
+
+    if (emitResult.emitSkipped) {
+      throw new Error("TypeScript declaration compilation failed");
+    }
+
+    logger.success("Development TypeScript declarations completed");
+  } catch (error) {
+    logger.error(
+      "Development TypeScript declaration compilation failed",
+      error,
+    );
+    throw new Error(`Types compilation failed: ${error.message}`);
+  }
+}
+
+/**
+ * Compile TypeScript types for production using API Extractor
+ * @returns {Promise<void>}
+ */
+async function compileProdTypes() {
+  try {
+    logger.info("Generating production type declarations...");
+
+    // First compile TS declarations to temp directory
+    const configPath = ts.findConfigFile(
+      paths.root,
+      ts.sys.fileExists,
+      "tsconfig.json",
+    );
+    if (!configPath) {
+      throw new Error("Could not find tsconfig.json");
+    }
+
+    const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (error) {
+      throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
+    }
+
+    const parsedConfig = ts.parseJsonConfigFileContent(
+      config,
+      ts.sys,
+      paths.root,
+    );
+    const compilerOptions = {
+      ...parsedConfig.options,
+      declaration: true,
+      emitDeclarationOnly: true,
+      declarationDir: paths.temp,
+      outDir: paths.temp,
+      noEmit: false,
+    };
+
+    logger.debug("Compiling TypeScript declarations...");
+    const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
+    const emitResult = program.emit();
+
+    if (emitResult.emitSkipped) {
+      throw new Error("TypeScript declaration compilation failed");
+    }
+
+    // Then use API Extractor to bundle types
+    logger.debug("Bundling declarations with API Extractor...");
     const extractorConfig = ExtractorConfig.prepare({
       configObject: apiExtractorConfig,
       configObjectFullPath: paths.root,
@@ -337,10 +451,13 @@ function buildTypes() {
       );
     }
 
-    logger.success("Type generation completed");
+    // Clean up temp directory
+    await rm(paths.temp, { recursive: true, force: true });
+
+    logger.success("Production type declarations completed");
   } catch (error) {
-    logger.error("Type generation failed", error);
-    throw new Error(`Type generation failed: ${error.message}`);
+    logger.error("Production type declaration generation failed", error);
+    throw new Error(`Type declaration generation failed: ${error.message}`);
   }
 }
 
@@ -405,12 +522,17 @@ async function build() {
       await clean();
     }
 
+    // Build bundles first
     await buildBundles();
-    compileTypes();
-    buildTypes();
-    await checkBundleSize();
 
-    await rm(paths.temp, { recursive: true, force: true });
+    // Handle types based on environment
+    if (options.production) {
+      await compileProdTypes();
+    } else {
+      await compileDevTypes();
+    }
+
+    await checkBundleSize();
 
     const [seconds] = process.hrtime(startTime);
     logger.success(

@@ -23,6 +23,10 @@ rest.on("debug", (...args) => {
   console.log("[REST - DEBUG]", ...args);
 });
 
+rest.on("rateLimited", (...args) => {
+  console.log("[REST - RATE LIMITED]", ...args);
+});
+
 const gateway = new Gateway(rest, {
   token: env.DISCORD_TOKEN,
   intents: [
@@ -78,12 +82,4 @@ gateway.on("dispatch", (...args) => {
   console.log("[GATEWAY - DISPATCH]", ...args);
 });
 
-async function main(): Promise<void> {
-  try {
-    await gateway.connect();
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-main();
+gateway.connect();
