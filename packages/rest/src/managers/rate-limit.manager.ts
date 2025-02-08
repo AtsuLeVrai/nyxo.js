@@ -1,44 +1,13 @@
 import { Store } from "@nyxjs/store";
+import { RATE_LIMIT_CONSTANTS } from "../constants/index.js";
 import type { Rest } from "../core/index.js";
 import { RateLimitError } from "../errors/index.js";
 import type { RateLimitOptions } from "../options/index.js";
-import type { RateLimitBucket, RateLimitScope } from "../types/index.js";
-
-export const RATE_LIMIT_HEADERS = {
-  LIMIT: "x-ratelimit-limit",
-  REMAINING: "x-ratelimit-remaining",
-  RESET: "x-ratelimit-reset",
-  RESET_AFTER: "x-ratelimit-reset-after",
-  BUCKET: "x-ratelimit-bucket",
-  SCOPE: "x-ratelimit-scope",
-  GLOBAL: "x-ratelimit-global",
-  RETRY_AFTER: "retry-after",
-} as const;
-
-export const ROUTES = {
-  PATTERNS: {
-    WEBHOOK: /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/,
-    EXEMPT: ["/interactions", "/webhooks"] as const,
-    MAJOR_PARAMETERS: new Map<RegExp, string>([
-      [/^\/guilds\/(\d+)/, "guild_id"],
-      [/^\/channels\/(\d+)/, "channel_id"],
-      [/^\/webhooks\/(\d+)/, "webhook_id"],
-    ]),
-    SHARED_BUCKETS: new Map<RegExp, string>([
-      [/^\/guilds\/\d+\/emojis/, "emoji"],
-      [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
-      [/^\/guilds\/\d+\/channels/, "guild-channels"],
-      [/^\/guilds\/\d+\/members/, "guild-members"],
-    ]),
-  },
-} as const;
-
-interface RateLimitAttempt {
-  count: number;
-  lastAttempt: number;
-  nextReset: number;
-  scope: RateLimitScope;
-}
+import type {
+  RateLimitAttempt,
+  RateLimitBucket,
+  RateLimitScope,
+} from "../types/index.js";
 
 export class RateLimitManager {
   readonly #buckets = new Store<string, RateLimitBucket>();
@@ -88,12 +57,15 @@ export class RateLimitManager {
   }
 
   getRouteKey(method: string, path: string): string {
-    const webhookMatch = path.match(ROUTES.PATTERNS.WEBHOOK);
+    const webhookMatch = path.match(
+      RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS.WEBHOOK,
+    );
     if (webhookMatch) {
       return `webhook:${webhookMatch[1]}:${webhookMatch[2]}:${method}`;
     }
 
-    for (const [pattern, identifier] of ROUTES.PATTERNS.SHARED_BUCKETS) {
+    for (const [pattern, identifier] of RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS
+      .SHARED_BUCKETS) {
       if (pattern.test(path)) {
         return `shared:${identifier}`;
       }
@@ -147,7 +119,9 @@ export class RateLimitManager {
   }
 
   #isExemptRoute(path: string): boolean {
-    return ROUTES.PATTERNS.EXEMPT.some((route) => path.startsWith(route));
+    return RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS.EXEMPT.some((route) =>
+      path.startsWith(route),
+    );
   }
 
   #handleRateLimitExceeded(
@@ -156,11 +130,13 @@ export class RateLimitManager {
     headers: Record<string, string>,
     routeKey: string,
   ): void {
-    const retryAfter = Number(headers[RATE_LIMIT_HEADERS.RETRY_AFTER]);
+    const retryAfter = Number(
+      headers[RATE_LIMIT_CONSTANTS.HEADERS.RETRY_AFTER],
+    );
     const scope =
-      (headers[RATE_LIMIT_HEADERS.SCOPE] as RateLimitScope) ?? "user";
-    const isGlobal = headers[RATE_LIMIT_HEADERS.GLOBAL] === "true";
-    const bucketHash = headers[RATE_LIMIT_HEADERS.BUCKET];
+      (headers[RATE_LIMIT_CONSTANTS.HEADERS.SCOPE] as RateLimitScope) ?? "user";
+    const isGlobal = headers[RATE_LIMIT_CONSTANTS.HEADERS.GLOBAL] === "true";
+    const bucketHash = headers[RATE_LIMIT_CONSTANTS.HEADERS.BUCKET];
     this.#rest.emit("rateLimitExceeded", bucketHash || routeKey, retryAfter);
 
     const attempt = this.#updateRateLimitAttempt(routeKey, retryAfter, scope);
@@ -208,7 +184,7 @@ export class RateLimitManager {
     method: string,
     headers: Record<string, string>,
   ): void {
-    const bucketHash = headers[RATE_LIMIT_HEADERS.BUCKET];
+    const bucketHash = headers[RATE_LIMIT_CONSTANTS.HEADERS.BUCKET];
     if (!bucketHash) {
       return;
     }
@@ -216,11 +192,14 @@ export class RateLimitManager {
     const existingBucket = this.#buckets.get(bucketHash);
     const bucket: RateLimitBucket = {
       hash: bucketHash,
-      limit: Number(headers[RATE_LIMIT_HEADERS.LIMIT]),
-      remaining: Number(headers[RATE_LIMIT_HEADERS.REMAINING]),
-      reset: Number(headers[RATE_LIMIT_HEADERS.RESET]) * 1000,
-      resetAfter: Number(headers[RATE_LIMIT_HEADERS.RESET_AFTER]) * 1000,
-      scope: (headers[RATE_LIMIT_HEADERS.SCOPE] as RateLimitScope) ?? "user",
+      limit: Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.LIMIT]),
+      remaining: Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.REMAINING]),
+      reset: Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.RESET]) * 1000,
+      resetAfter:
+        Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.RESET_AFTER]) * 1000,
+      scope:
+        (headers[RATE_LIMIT_CONSTANTS.HEADERS.SCOPE] as RateLimitScope) ??
+        "user",
       sharedRoute: this.#getSharedRoute(path),
     };
 
@@ -288,7 +267,8 @@ export class RateLimitManager {
 
   #normalizePath(path: string): string {
     let normalizedPath = path;
-    for (const [regex, param] of ROUTES.PATTERNS.MAJOR_PARAMETERS) {
+    for (const [regex, param] of RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS
+      .MAJOR_PARAMETERS) {
       const match = path.match(regex);
       if (match) {
         normalizedPath = normalizedPath.replace(
@@ -301,7 +281,8 @@ export class RateLimitManager {
   }
 
   #getSharedRoute(path: string): string | undefined {
-    for (const [pattern, identifier] of ROUTES.PATTERNS.SHARED_BUCKETS) {
+    for (const [pattern, identifier] of RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS
+      .SHARED_BUCKETS) {
       if (pattern.test(path)) {
         return identifier;
       }

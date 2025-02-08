@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { API_CONSTANTS } from "../constants/index.js";
 
 export const RetryOnOptions = z
   .object({
@@ -8,35 +9,6 @@ export const RetryOnOptions = z
   })
   .strict();
 
-const DEFAULT_RETRYABLE_STATUS_CODES = [
-  408, // Request Timeout
-  429, // Too Many Requests
-  500, // Internal Server Error
-  502, // Bad Gateway
-  503, // Service Unavailable
-  504, // Gateway Timeout
-];
-
-const DEFAULT_RETRYABLE_ERRORS = [
-  "ECONNRESET", // Connection was forcibly closed
-  "ETIMEDOUT", // Connection timed out
-  "ECONNREFUSED", // Connection was refused
-  "EPIPE", // Broken pipe
-  "ENOTFOUND", // DNS lookup failed
-  "ENETUNREACH", // Network unreachable
-];
-
-const DEFAULT_NON_RETRYABLE_STATUS_CODES = [
-  401, // Unauthorized
-  403, // Forbidden
-  404, // Not Found
-];
-
-const DEFAULT_NON_RETRYABLE_ERRORS = [
-  "ERR_INVALID_TOKEN", // Invalid authentication token
-  "ERR_INVALID_AUTH", // Invalid authentication credentials
-];
-
 export const RetryOptions = z
   .object({
     maxRetries: z.number().int().positive().default(3),
@@ -45,14 +17,20 @@ export const RetryOptions = z
     jitter: z.number().positive().min(0).max(1).default(0.1),
     retryableStatusCodes: z
       .array(z.number())
-      .default(DEFAULT_RETRYABLE_STATUS_CODES),
-    retryableErrors: z.array(z.string()).default(DEFAULT_RETRYABLE_ERRORS),
+      .readonly()
+      .default(API_CONSTANTS.RETRY.STATUS_CODES.RETRYABLE),
+    retryableErrors: z
+      .array(z.string())
+      .readonly()
+      .default(API_CONSTANTS.RETRY.ERROR_CODES.RETRYABLE),
     nonRetryableStatusCodes: z
       .array(z.number())
-      .default(DEFAULT_NON_RETRYABLE_STATUS_CODES),
+      .readonly()
+      .default(API_CONSTANTS.RETRY.STATUS_CODES.NON_RETRYABLE),
     nonRetryableErrors: z
       .array(z.string())
-      .default(DEFAULT_NON_RETRYABLE_ERRORS),
+      .readonly()
+      .default(API_CONSTANTS.RETRY.ERROR_CODES.NON_RETRYABLE),
     retryOn: RetryOnOptions.default({}),
   })
   .strict();

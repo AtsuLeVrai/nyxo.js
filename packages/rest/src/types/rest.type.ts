@@ -1,7 +1,12 @@
 import type { Dispatcher } from "undici";
-import type { RestOptions } from "../options/index.js";
 import type { FileInput } from "./file.type.js";
 import type { RateLimitErrorContext } from "./rate-limit.type.js";
+import type { RetryAttemptEvent } from "./retry.type.js";
+import type {
+  SessionCreatedEvent,
+  SessionDestroyedEvent,
+  SessionUpdatedEvent,
+} from "./session.type.js";
 
 export interface JsonErrorField {
   code: string;
@@ -31,36 +36,11 @@ export interface ApiRequestEvent {
   requestId: string;
 }
 
-export interface ApiRequestRetryEvent {
-  path: string;
-  method: string;
-  timestamp: number;
-  retryAfter: number;
-}
-
-interface SessionCreatedEvent {
-  sessionId: string;
-  timestamp: number;
-  options: Partial<RestOptions>;
-}
-
-interface SessionDestroyedEvent {
-  sessionId: string;
-  timestamp: number;
-}
-
-interface SessionUpdatedEvent {
-  sessionId: string;
-  timestamp: number;
-  oldOptions: Partial<RestOptions>;
-  newOptions: Partial<RestOptions>;
-}
-
 export interface RestEventHandlers {
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (error: Error | string, context?: Record<string, unknown>) => void;
   requestFinish: (request: ApiRequestEvent) => void;
-  requestRetry: (request: ApiRequestRetryEvent) => void;
+  retryAttempt: (retry: RetryAttemptEvent) => void;
   rateLimited: (context: RateLimitErrorContext) => void;
   rateLimitExceeded: (bucket: string, resetAfter: number) => void;
   bucketExpired: (bucketHash: string) => void;

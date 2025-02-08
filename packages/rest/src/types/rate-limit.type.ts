@@ -19,3 +19,17 @@ export interface RateLimitErrorContext {
   bucketHash?: string;
   attempts?: number;
 }
+
+export interface RateLimitErrorJson {
+  name: string;
+  message: string;
+  code: number;
+  context: RateLimitErrorContext;
+}
+
+export interface RateLimitAttempt {
+  count: number;
+  lastAttempt: number;
+  nextReset: number;
+  scope: RateLimitScope;
+}

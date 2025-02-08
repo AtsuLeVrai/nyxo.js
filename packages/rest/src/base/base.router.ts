@@ -1,6 +1,6 @@
 import type { Rest } from "../core/index.js";
 
-export class BaseRouter {
+export abstract class BaseRouter {
   protected rest: Rest;
   protected sessionId?: string;
 

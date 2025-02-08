@@ -1,26 +1,17 @@
 import { type Dispatcher, request } from "undici";
 import type { Rest } from "../core/index.js";
-import { HttpError } from "../errors/index.js";
+import { RequestError } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import type { RestOptions } from "../options/index.js";
-import type { ApiRequestOptions } from "../types/index.js";
-
-export interface HttpResponse<T = unknown> {
-  data: T;
-  statusCode: number;
-  headers: Record<string, string>;
-  duration: number;
-}
+import type {
+  ApiRequestOptions,
+  ParsedRequest,
+  RequestResponse,
+} from "../types/index.js";
 
 const PATH_REGEX = /^\/+/;
 
-interface ParsedRequest {
-  url: URL;
-  options: Dispatcher.RequestOptions;
-  requestId: string;
-}
-
-export class HttpService {
+export class RequestManager {
   readonly #rest: Rest;
   readonly #options: RestOptions;
   readonly #requestTimeouts: Map<string, NodeJS.Timeout>;
@@ -31,7 +22,7 @@ export class HttpService {
     this.#requestTimeouts = new Map();
   }
 
-  async request<T>(options: ApiRequestOptions): Promise<HttpResponse<T>> {
+  async request<T>(options: ApiRequestOptions): Promise<RequestResponse<T>> {
     const requestStart = Date.now();
     const requestId = this.#generateRequestId();
 
@@ -173,12 +164,12 @@ export class HttpService {
     response: Dispatcher.ResponseData,
     bodyContent: Buffer,
     requestId: string,
-  ): Promise<HttpResponse<T>> {
+  ): Promise<RequestResponse<T>> {
     const headers = HeaderHandler.parse(response.headers).headers;
 
     if (response.statusCode >= 400) {
       const text = await response.body.text();
-      throw new HttpError(
+      throw new RequestError(
         `HTTP ${response.statusCode} ${text}`,
         response.statusCode,
         headers,
@@ -233,7 +224,7 @@ export class HttpService {
     try {
       return JSON.parse(bodyContent.toString()) as T;
     } catch {
-      throw new HttpError("Invalid JSON response", statusCode, headers, {
+      throw new RequestError("Invalid JSON response", statusCode, headers, {
         requestId,
       });
     }
@@ -247,7 +238,7 @@ export class HttpService {
   ): void {
     const duration = Date.now() - startTime;
 
-    if (error instanceof HttpError) {
+    if (error instanceof RequestError) {
       error.requestId = requestId;
       error.path = options.path;
       error.method = options.method;

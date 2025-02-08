@@ -1,13 +1,6 @@
-export interface HttpErrorJson {
-  name: string;
-  message: string;
-  statusCode: number;
-  requestId?: string;
-  path?: string;
-  method?: string;
-}
+import type { RequestErrorJson } from "../types/index.js";
 
-export class HttpError extends Error {
+export class RequestError extends Error {
   statusCode: number;
   headers: Record<string, string>;
   requestId?: string;
@@ -25,7 +18,7 @@ export class HttpError extends Error {
     },
   ) {
     super(message);
-    this.name = "HttpError";
+    this.name = "RequestError";
     this.statusCode = statusCode;
     this.headers = headers;
     this.requestId = options?.requestId;
@@ -33,7 +26,7 @@ export class HttpError extends Error {
     this.method = options?.method;
   }
 
-  toJson(): HttpErrorJson {
+  toJson(): RequestErrorJson {
     return {
       name: this.name,
       message: this.message,

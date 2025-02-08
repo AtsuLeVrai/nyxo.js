@@ -1,11 +1,7 @@
-import type { RateLimitErrorContext } from "../types/index.js";
-
-export interface RateLimitErrorJson {
-  name: string;
-  message: string;
-  code: number;
-  context: RateLimitErrorContext;
-}
+import type {
+  RateLimitErrorContext,
+  RateLimitErrorJson,
+} from "../types/index.js";
 
 export class RateLimitError extends Error {
   readonly context: RateLimitErrorContext;
@@ -13,7 +9,7 @@ export class RateLimitError extends Error {
 
   constructor(context: RateLimitErrorContext) {
     super(
-      `Rate limit exceeded for ${context.path} (${context.method}): retry after ${context.retryAfter}s`,
+      `Rate limit exceeded for ${context.path} (${context.method}): retry after ${context.retryAfter}ms`,
     );
     this.name = "RateLimitError";
     this.context = context;

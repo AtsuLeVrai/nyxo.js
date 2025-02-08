@@ -19,8 +19,8 @@ rest.on("requestFinish", (...args) => {
   console.log("[REST - REQUEST]", ...args);
 });
 
-rest.on("requestRetry", (...args) => {
-  console.log("[REST - REQUEST RETRY]", ...args);
+rest.on("retryAttempt", (...args) => {
+  console.log("[REST - RETRY]", ...args);
 });
 
 rest.on("debug", (...args) => {
@@ -119,6 +119,25 @@ gateway.on("dispatch", (...args) => {
 });
 
 gateway.connect();
+
+// async function main(): Promise<void> {
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+//   await rest.users.getCurrentUserGuilds();
+// }
+//
+// main();
 
 process.on("SIGINT", () => {
   gateway.destroy();

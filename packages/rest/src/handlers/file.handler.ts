@@ -6,24 +6,8 @@ import FormData from "form-data";
 import { lookup } from "mime-types";
 import sharp from "sharp";
 import type { Dispatcher } from "undici";
+import { FILE_CONSTANTS } from "../constants/index.js";
 import type { DataUri, FileInput, ProcessedFile } from "../types/index.js";
-
-const DATA_URI_REGEX = /^data:(.+);base64,(.+)$/;
-const FILE_PATH_REGEX = /^[/.]|^[a-zA-Z]:\\/;
-const MAX_ASSET_SIZE = 256 * 1024; // 256KB
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_FILES = 10;
-const DEFAULT_FILENAME = "file";
-const DEFAULT_CONTENT_TYPE = "application/octet-stream";
-const COMPRESSION_QUALITIES = [80, 60, 40] as const;
-
-const SUPPORTED_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-]);
 
 export const FileHandler = {
   // Type guards
@@ -44,11 +28,15 @@ export const FileHandler = {
   },
 
   isDataUri(input: unknown): input is DataUri {
-    return typeof input === "string" && DATA_URI_REGEX.test(input);
+    return (
+      typeof input === "string" && FILE_CONSTANTS.PATTERNS.DATA_URI.test(input)
+    );
   },
 
   isFilePath(input: unknown): input is string {
-    return typeof input === "string" && FILE_PATH_REGEX.test(input);
+    return (
+      typeof input === "string" && FILE_CONSTANTS.PATTERNS.FILE_PATH.test(input)
+    );
   },
 
   isValidSingleInput(input: unknown): input is FileInput {
@@ -88,7 +76,7 @@ export const FileHandler = {
 
     if (typeof input === "string") {
       if (this.isDataUri(input)) {
-        const matches = input.match(DATA_URI_REGEX);
+        const matches = input.match(FILE_CONSTANTS.PATTERNS.DATA_URI);
         if (!matches?.[2]) {
           throw new Error("Invalid data URI format");
         }
@@ -111,8 +99,8 @@ export const FileHandler = {
   },
 
   dataUriToContentType(dataUri: DataUri): string {
-    const matches = dataUri.match(DATA_URI_REGEX);
-    return matches?.[1] || DEFAULT_CONTENT_TYPE;
+    const matches = dataUri.match(FILE_CONSTANTS.PATTERNS.DATA_URI);
+    return matches?.[1] || FILE_CONSTANTS.DEFAULTS.CONTENT_TYPE;
   },
 
   async toDataUri(input: FileInput): Promise<DataUri> {
@@ -156,10 +144,13 @@ export const FileHandler = {
     buffer: Buffer,
     maxSize: number,
     contentType: string,
-    qualities: readonly number[] = COMPRESSION_QUALITIES,
+    qualities: readonly number[] = FILE_CONSTANTS.IMAGE.COMPRESSION_QUALITIES,
   ): Promise<Buffer> {
     try {
-      if (buffer.length <= maxSize || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
+      if (
+        buffer.length <= maxSize ||
+        !FILE_CONSTANTS.IMAGE.SUPPORTED_TYPES.has(contentType)
+      ) {
         return buffer;
       }
 
@@ -196,12 +187,14 @@ export const FileHandler = {
   // File information
   getFilename(input: FileInput): string {
     if (typeof input === "string") {
-      return this.isDataUri(input) ? DEFAULT_FILENAME : basename(input);
+      return this.isDataUri(input)
+        ? FILE_CONSTANTS.DEFAULTS.FILENAME
+        : basename(input);
     }
     if (this.isFile(input)) {
       return input.name;
     }
-    return DEFAULT_FILENAME;
+    return FILE_CONSTANTS.DEFAULTS.FILENAME;
   },
 
   async getContentType(buffer: Buffer, filename: string): Promise<string> {
@@ -216,9 +209,9 @@ export const FileHandler = {
         return mimeType;
       }
 
-      return DEFAULT_CONTENT_TYPE;
+      return FILE_CONSTANTS.DEFAULTS.CONTENT_TYPE;
     } catch {
-      return DEFAULT_CONTENT_TYPE;
+      return FILE_CONSTANTS.DEFAULTS.CONTENT_TYPE;
     }
   },
 
@@ -232,7 +225,10 @@ export const FileHandler = {
 
     try {
       const buffer = await this.toBuffer(input);
-      const maxSize = context === "asset" ? MAX_ASSET_SIZE : MAX_SIZE;
+      const maxSize =
+        context === "asset"
+          ? FILE_CONSTANTS.LIMITS.MAX_ASSET_SIZE
+          : FILE_CONSTANTS.LIMITS.MAX_SIZE;
 
       const filename = this.getFilename(input);
       const contentType = await this.getContentType(buffer, filename);
@@ -264,9 +260,9 @@ export const FileHandler = {
   ): Promise<FormData> {
     const filesArray = Array.isArray(files) ? files : [files];
 
-    if (filesArray.length > MAX_FILES) {
+    if (filesArray.length > FILE_CONSTANTS.LIMITS.MAX_FILES) {
       throw new Error(
-        `Discord Error ${filesArray.length} files are too many. Max is ${MAX_FILES}`,
+        `Discord Error ${filesArray.length} files are too many. Max is ${FILE_CONSTANTS.LIMITS.MAX_FILES}`,
       );
     }
 
