@@ -2,6 +2,7 @@ import { setTimeout } from "node:timers/promises";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import type { BaseRouter } from "../base/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
 import { RateLimitManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
@@ -61,6 +62,7 @@ const REQUEST_CONSTANTS = {
 
 export class Rest extends EventEmitter<RestEventHandlers> {
   readonly #sessions = new Map<string, SessionInfo>();
+  readonly #routerCache = new Map<string, Map<string, BaseRouter>>();
   readonly #defaultSessionId: string = "default";
 
   constructor(options: z.input<typeof RestOptions>) {
@@ -69,103 +71,226 @@ export class Rest extends EventEmitter<RestEventHandlers> {
   }
 
   get applications(): ApplicationRouter {
-    return new ApplicationRouter(this);
+    return this.getRouter(ApplicationRouter);
   }
 
   get commands(): ApplicationCommandRouter {
-    return new ApplicationCommandRouter(this);
+    return this.getRouter(ApplicationCommandRouter);
   }
 
   get connections(): ApplicationConnectionRouter {
-    return new ApplicationConnectionRouter(this);
+    return this.getRouter(ApplicationConnectionRouter);
   }
 
   get guilds(): GuildRouter {
-    return new GuildRouter(this);
+    return this.getRouter(GuildRouter);
   }
 
   get channels(): ChannelRouter {
-    return new ChannelRouter(this);
+    return this.getRouter(ChannelRouter);
   }
 
   get invites(): InviteRouter {
-    return new InviteRouter(this);
+    return this.getRouter(InviteRouter);
   }
 
   get templates(): GuildTemplateRouter {
-    return new GuildTemplateRouter(this);
+    return this.getRouter(GuildTemplateRouter);
   }
 
   get users(): UserRouter {
-    return new UserRouter(this);
+    return this.getRouter(UserRouter);
   }
 
   get auditLogs(): AuditLogRouter {
-    return new AuditLogRouter(this);
+    return this.getRouter(AuditLogRouter);
   }
 
   get messages(): MessageRouter {
-    return new MessageRouter(this);
+    return this.getRouter(MessageRouter);
   }
 
   get interactions(): InteractionRouter {
-    return new InteractionRouter(this);
+    return this.getRouter(InteractionRouter);
   }
 
   get emojis(): EmojiRouter {
-    return new EmojiRouter(this);
+    return this.getRouter(EmojiRouter);
   }
 
   get stickers(): StickerRouter {
-    return new StickerRouter(this);
+    return this.getRouter(StickerRouter);
   }
 
   get voice(): VoiceRouter {
-    return new VoiceRouter(this);
+    return this.getRouter(VoiceRouter);
   }
 
   get soundboards(): SoundboardRouter {
-    return new SoundboardRouter(this);
+    return this.getRouter(SoundboardRouter);
   }
 
   get stages(): StageInstanceRouter {
-    return new StageInstanceRouter(this);
+    return this.getRouter(StageInstanceRouter);
   }
 
   get scheduledEvents(): ScheduledEventRouter {
-    return new ScheduledEventRouter(this);
+    return this.getRouter(ScheduledEventRouter);
   }
 
   get polls(): PollRouter {
-    return new PollRouter(this);
+    return this.getRouter(PollRouter);
   }
 
   get autoModeration(): AutoModerationRouter {
-    return new AutoModerationRouter(this);
+    return this.getRouter(AutoModerationRouter);
   }
 
   get webhooks(): WebhookRouter {
-    return new WebhookRouter(this);
+    return this.getRouter(WebhookRouter);
   }
 
   get oauth2(): OAuth2Router {
-    return new OAuth2Router(this);
+    return this.getRouter(OAuth2Router);
   }
 
   get gateway(): GatewayRouter {
-    return new GatewayRouter(this);
+    return this.getRouter(GatewayRouter);
   }
 
   get skus(): SkuRouter {
-    return new SkuRouter(this);
+    return this.getRouter(SkuRouter);
   }
 
   get entitlements(): EntitlementRouter {
-    return new EntitlementRouter(this);
+    return this.getRouter(EntitlementRouter);
   }
 
   get subscriptions(): SubscriptionRouter {
-    return new SubscriptionRouter(this);
+    return this.getRouter(SubscriptionRouter);
+  }
+
+  getGuilds(sessionId: string): GuildRouter {
+    return this.getRouter(GuildRouter, sessionId);
+  }
+
+  getChannels(sessionId: string): ChannelRouter {
+    return this.getRouter(ChannelRouter, sessionId);
+  }
+
+  getInvites(sessionId: string): InviteRouter {
+    return this.getRouter(InviteRouter, sessionId);
+  }
+
+  getTemplates(sessionId: string): GuildTemplateRouter {
+    return this.getRouter(GuildTemplateRouter, sessionId);
+  }
+
+  getUsers(sessionId: string): UserRouter {
+    return this.getRouter(UserRouter, sessionId);
+  }
+
+  getAuditLogs(sessionId: string): AuditLogRouter {
+    return this.getRouter(AuditLogRouter, sessionId);
+  }
+
+  getMessages(sessionId: string): MessageRouter {
+    return this.getRouter(MessageRouter, sessionId);
+  }
+
+  getInteractions(sessionId: string): InteractionRouter {
+    return this.getRouter(InteractionRouter, sessionId);
+  }
+
+  getEmojis(sessionId: string): EmojiRouter {
+    return this.getRouter(EmojiRouter, sessionId);
+  }
+
+  getStickers(sessionId: string): StickerRouter {
+    return this.getRouter(StickerRouter, sessionId);
+  }
+
+  getVoice(sessionId: string): VoiceRouter {
+    return this.getRouter(VoiceRouter, sessionId);
+  }
+
+  getSoundboards(sessionId: string): SoundboardRouter {
+    return this.getRouter(SoundboardRouter, sessionId);
+  }
+
+  getStages(sessionId: string): StageInstanceRouter {
+    return this.getRouter(StageInstanceRouter, sessionId);
+  }
+
+  getScheduledEvents(sessionId: string): ScheduledEventRouter {
+    return this.getRouter(ScheduledEventRouter, sessionId);
+  }
+
+  getPolls(sessionId: string): PollRouter {
+    return this.getRouter(PollRouter, sessionId);
+  }
+
+  getAutoModeration(sessionId: string): AutoModerationRouter {
+    return this.getRouter(AutoModerationRouter, sessionId);
+  }
+
+  getWebhooks(sessionId: string): WebhookRouter {
+    return this.getRouter(WebhookRouter, sessionId);
+  }
+
+  getOAuth2(sessionId: string): OAuth2Router {
+    return this.getRouter(OAuth2Router, sessionId);
+  }
+
+  getGateway(sessionId: string): GatewayRouter {
+    return this.getRouter(GatewayRouter, sessionId);
+  }
+
+  getSkus(sessionId: string): SkuRouter {
+    return this.getRouter(SkuRouter, sessionId);
+  }
+
+  getEntitlements(sessionId: string): EntitlementRouter {
+    return this.getRouter(EntitlementRouter, sessionId);
+  }
+
+  getSubscriptions(sessionId: string): SubscriptionRouter {
+    return this.getRouter(SubscriptionRouter, sessionId);
+  }
+
+  getApplications(sessionId: string): ApplicationRouter {
+    return this.getRouter(ApplicationRouter, sessionId);
+  }
+
+  getCommands(sessionId: string): ApplicationCommandRouter {
+    return this.getRouter(ApplicationCommandRouter, sessionId);
+  }
+
+  getConnections(sessionId: string): ApplicationConnectionRouter {
+    return this.getRouter(ApplicationConnectionRouter, sessionId);
+  }
+
+  getRouter<T extends BaseRouter>(
+    RouterClass: new (rest: Rest, sessionId?: string) => T,
+    sessionId?: string,
+  ): T {
+    const id = sessionId || this.#defaultSessionId;
+
+    let sessionRouters = this.#routerCache.get(id);
+    if (!sessionRouters) {
+      sessionRouters = new Map();
+      this.#routerCache.set(id, sessionRouters);
+    }
+
+    const routerName = RouterClass.name;
+    let router = sessionRouters.get(routerName) as T;
+
+    if (!router) {
+      router = new RouterClass(this, id);
+      sessionRouters.set(routerName, router);
+    }
+
+    return router;
   }
 
   getSessionOptions(sessionId?: string): Readonly<RestOptions> {
@@ -391,6 +516,7 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     }
 
     this.#sessions.clear();
+    this.#routerCache.clear();
     this.removeAllListeners();
   }
 
@@ -402,6 +528,7 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     const session = this.#sessions.get(sessionId);
     if (session) {
       session.rateLimiter.destroy();
+      this.#routerCache.delete(sessionId);
       this.#sessions.delete(sessionId);
 
       this.emit("sessionDestroyed", {

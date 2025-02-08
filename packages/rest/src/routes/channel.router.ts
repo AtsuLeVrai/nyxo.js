@@ -8,7 +8,7 @@ import type {
 } from "@nyxjs/core";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import {
   AddGroupDmRecipientSchema,
   CreateChannelInviteSchema,
@@ -25,7 +25,7 @@ import {
   StartThreadWithoutMessageSchema,
 } from "../schemas/index.js";
 
-export class ChannelRouter {
+export class ChannelRouter extends BaseRouter {
   static readonly ROUTES = {
     channelBase: (channelId: Snowflake) => `/channels/${channelId}` as const,
     channelPermission: (channelId: Snowflake, overwriteId: Snowflake) =>
@@ -62,17 +62,15 @@ export class ChannelRouter {
       `/channels/${channelId}/typing` as const,
   } as const;
 
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel}
    */
   getChannel(channelId: Snowflake): Promise<ChannelEntity> {
-    return this.#rest.get(ChannelRouter.ROUTES.channelBase(channelId));
+    return this.rest.get(
+      ChannelRouter.ROUTES.channelBase(channelId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -97,17 +95,21 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(ChannelRouter.ROUTES.channelBase(channelId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.patch(
+      ChannelRouter.ROUTES.channelBase(channelId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#deleteclose-channel}
    */
   deleteChannel(channelId: Snowflake, reason?: string): Promise<ChannelEntity> {
-    return this.#rest.delete(ChannelRouter.ROUTES.channelBase(channelId), {
+    return this.rest.delete(ChannelRouter.ROUTES.channelBase(channelId), {
       reason,
     });
   }
@@ -126,12 +128,13 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(
+    return this.rest.put(
       ChannelRouter.ROUTES.channelPermission(channelId, overwriteId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -139,7 +142,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-invites}
    */
   getChannelInvites(channelId: Snowflake): Promise<InviteEntity[]> {
-    return this.#rest.get(ChannelRouter.ROUTES.channelInvites(channelId));
+    return this.rest.get(ChannelRouter.ROUTES.channelInvites(channelId));
   }
 
   /**
@@ -155,10 +158,14 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(ChannelRouter.ROUTES.channelInvites(channelId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.post(
+      ChannelRouter.ROUTES.channelInvites(channelId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -169,11 +176,12 @@ export class ChannelRouter {
     overwriteId: Snowflake,
     reason?: string,
   ): Promise<ChannelEntity> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ChannelRouter.ROUTES.channelPermission(channelId, overwriteId),
       {
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -185,24 +193,32 @@ export class ChannelRouter {
     webhookChannelId: Snowflake,
     reason?: string,
   ): Promise<FollowedChannelEntity> {
-    return this.#rest.post(ChannelRouter.ROUTES.channelFollowers(channelId), {
-      body: JSON.stringify({ webhook_channel_id: webhookChannelId }),
-      reason,
-    });
+    return this.rest.post(
+      ChannelRouter.ROUTES.channelFollowers(channelId),
+      {
+        body: JSON.stringify({ webhook_channel_id: webhookChannelId }),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#trigger-typing-indicator}
    */
   triggerTypingIndicator(channelId: Snowflake): Promise<void> {
-    return this.#rest.post(ChannelRouter.ROUTES.channelTyping(channelId));
+    return this.rest.post(
+      ChannelRouter.ROUTES.channelTyping(channelId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
    */
   getPinnedMessages(channelId: Snowflake): Promise<MessageEntity[]> {
-    return this.#rest.get(ChannelRouter.ROUTES.channelPins(channelId));
+    return this.rest.get(ChannelRouter.ROUTES.channelPins(channelId));
   }
 
   /**
@@ -213,11 +229,12 @@ export class ChannelRouter {
     messageId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.rest.put(
       ChannelRouter.ROUTES.channelPinnedMessage(channelId, messageId),
       {
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -229,11 +246,12 @@ export class ChannelRouter {
     messageId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ChannelRouter.ROUTES.channelPinnedMessage(channelId, messageId),
       {
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -250,11 +268,12 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(
+    return this.rest.put(
       ChannelRouter.ROUTES.channelRecipients(channelId, userId),
       {
         body: JSON.stringify(result.data),
       },
+      this.sessionId,
     );
   }
 
@@ -265,8 +284,10 @@ export class ChannelRouter {
     channelId: Snowflake,
     userId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ChannelRouter.ROUTES.channelRecipients(channelId, userId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -284,12 +305,13 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       ChannelRouter.ROUTES.channelStartThreadFromMessage(channelId, messageId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -306,12 +328,13 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       ChannelRouter.ROUTES.channelStartThreadWithoutMessage(channelId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -335,12 +358,13 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       ChannelRouter.ROUTES.channelStartThreadInForumOrMediaChannel(channelId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -348,7 +372,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#join-thread}
    */
   joinThread(channelId: Snowflake): Promise<void> {
-    return this.#rest.put(
+    return this.rest.put(
       ChannelRouter.ROUTES.channelThreadMember(channelId, "@me"),
     );
   }
@@ -357,8 +381,10 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#add-thread-member}
    */
   addThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
-    return this.#rest.put(
+    return this.rest.put(
       ChannelRouter.ROUTES.channelThreadMember(channelId, userId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -366,8 +392,10 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#leave-thread}
    */
   leaveThread(channelId: Snowflake): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ChannelRouter.ROUTES.channelThreadMember(channelId, "@me"),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -375,8 +403,10 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#remove-thread-member}
    */
   removeThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ChannelRouter.ROUTES.channelThreadMember(channelId, userId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -388,11 +418,12 @@ export class ChannelRouter {
     userId: Snowflake,
     withMember = false,
   ): Promise<ThreadMemberEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       ChannelRouter.ROUTES.channelThreadMember(channelId, userId),
       {
         query: { with_member: withMember },
       },
+      this.sessionId,
     );
   }
 
@@ -408,11 +439,12 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(
+    return this.rest.get(
       ChannelRouter.ROUTES.channelThreadMembers(channelId),
       {
         query: result.data,
       },
+      this.sessionId,
     );
   }
 
@@ -428,11 +460,12 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(
+    return this.rest.get(
       ChannelRouter.ROUTES.channelPublicArchivedThreads(channelId),
       {
         query: result.data,
       },
+      this.sessionId,
     );
   }
 
@@ -448,11 +481,12 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(
+    return this.rest.get(
       ChannelRouter.ROUTES.channelPrivateArchivedThreads(channelId),
       {
         query: result.data,
       },
+      this.sessionId,
     );
   }
 
@@ -468,11 +502,12 @@ export class ChannelRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(
+    return this.rest.get(
       ChannelRouter.ROUTES.channelJoinedPrivateArchivedThreads(channelId),
       {
         query: result.data,
       },
+      this.sessionId,
     );
   }
 }

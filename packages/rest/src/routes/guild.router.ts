@@ -16,7 +16,7 @@ import type {
   WelcomeScreenEntity,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import {
   AddGuildMemberSchema,
   BeginGuildPruneSchema,
@@ -42,7 +42,7 @@ import {
   type WidgetStyleOptions,
 } from "../schemas/index.js";
 
-export class GuildRouter {
+export class GuildRouter extends BaseRouter {
   static readonly ROUTES = {
     guilds: "/guilds" as const,
     guildBase: (guildId: Snowflake) => `/guilds/${guildId}` as const,
@@ -96,12 +96,6 @@ export class GuildRouter {
       `/guilds/${guildId}/onboarding` as const,
   } as const;
 
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
    */
@@ -111,25 +105,37 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(GuildRouter.ROUTES.guilds, {
-      body: JSON.stringify(result.data),
-    });
+    return this.rest.post(
+      GuildRouter.ROUTES.guilds,
+      {
+        body: JSON.stringify(result.data),
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild}
    */
   getGuild(guildId: Snowflake, withCounts = false): Promise<GuildEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildBase(guildId), {
-      query: { with_counts: withCounts },
-    });
+    return this.rest.get(
+      GuildRouter.ROUTES.guildBase(guildId),
+      {
+        query: { with_counts: withCounts },
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-preview}
    */
   getPreview(guildId: Snowflake): Promise<GuildEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildPreview(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildPreview(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -145,24 +151,36 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guildBase(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildBase(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#delete-guild}
    */
   deleteGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(GuildRouter.ROUTES.guildBase(guildId));
+    return this.rest.delete(
+      GuildRouter.ROUTES.guildBase(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-channels}
    */
   getChannels(guildId: Snowflake): Promise<ChannelEntity[]> {
-    return this.#rest.get(GuildRouter.ROUTES.guildChannels(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildChannels(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -178,10 +196,14 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(GuildRouter.ROUTES.guildChannels(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.post(
+      GuildRouter.ROUTES.guildChannels(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -196,9 +218,13 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guildChannels(guildId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildChannels(guildId),
+      {
+        body: JSON.stringify(result.data),
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -207,7 +233,11 @@ export class GuildRouter {
   listActiveGuildThreads(
     guildId: Snowflake,
   ): Promise<ListActiveGuildThreadsEntity[]> {
-    return this.#rest.get(GuildRouter.ROUTES.guildActiveThreads(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildActiveThreads(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -217,7 +247,11 @@ export class GuildRouter {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildMember(guildId, userId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildMember(guildId, userId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -232,9 +266,13 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(GuildRouter.ROUTES.guildMembers(guildId), {
-      query: result.data,
-    });
+    return this.rest.get(
+      GuildRouter.ROUTES.guildMembers(guildId),
+      {
+        query: result.data,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -249,9 +287,13 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(GuildRouter.ROUTES.guildMembersSearch(guildId), {
-      query: result.data,
-    });
+    return this.rest.get(
+      GuildRouter.ROUTES.guildMembersSearch(guildId),
+      {
+        query: result.data,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -267,9 +309,13 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(GuildRouter.ROUTES.guildMember(guildId, userId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.rest.put(
+      GuildRouter.ROUTES.guildMember(guildId, userId),
+      {
+        body: JSON.stringify(result.data),
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -286,10 +332,14 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guildMember(guildId, userId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildMember(guildId, userId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -300,10 +350,14 @@ export class GuildRouter {
     nickname?: string | null,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.patch(GuildRouter.ROUTES.guildCurrentMember(guildId), {
-      body: JSON.stringify({ nick: nickname }),
-      reason,
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildCurrentMember(guildId),
+      {
+        body: JSON.stringify({ nick: nickname }),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -315,12 +369,13 @@ export class GuildRouter {
     nickname?: string | null,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.patch(
+    return this.rest.patch(
       GuildRouter.ROUTES.guildCurrentMemberNickname(guildId),
       {
         body: JSON.stringify({ nick: nickname }),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -333,9 +388,10 @@ export class GuildRouter {
     roleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.rest.put(
       GuildRouter.ROUTES.guildMemberRole(guildId, userId, roleId),
       { reason },
+      this.sessionId,
     );
   }
 
@@ -348,9 +404,10 @@ export class GuildRouter {
     roleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       GuildRouter.ROUTES.guildMemberRole(guildId, userId, roleId),
       { reason },
+      this.sessionId,
     );
   }
 
@@ -362,9 +419,13 @@ export class GuildRouter {
     userId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(GuildRouter.ROUTES.guildMember(guildId, userId), {
-      reason,
-    });
+    return this.rest.delete(
+      GuildRouter.ROUTES.guildMember(guildId, userId),
+      {
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -379,16 +440,24 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(GuildRouter.ROUTES.guildBans(guildId), {
-      query: result.data,
-    });
+    return this.rest.get(
+      GuildRouter.ROUTES.guildBans(guildId),
+      {
+        query: result.data,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-ban}
    */
   getGuildBan(guildId: Snowflake, userId: Snowflake): Promise<BanEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildBan(guildId, userId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildBan(guildId, userId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -405,10 +474,14 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(GuildRouter.ROUTES.guildBan(guildId, userId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.put(
+      GuildRouter.ROUTES.guildBan(guildId, userId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -419,9 +492,13 @@ export class GuildRouter {
     userId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(GuildRouter.ROUTES.guildBan(guildId, userId), {
-      reason,
-    });
+    return this.rest.delete(
+      GuildRouter.ROUTES.guildBan(guildId, userId),
+      {
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -437,24 +514,36 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(GuildRouter.ROUTES.guildBulkBan(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.put(
+      GuildRouter.ROUTES.guildBulkBan(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-roles}
    */
   getGuildRoles(guildId: Snowflake): Promise<RoleEntity[]> {
-    return this.#rest.get(GuildRouter.ROUTES.guildRoles(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildRoles(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-role}
    */
   getGuildRole(guildId: Snowflake, roleId: Snowflake): Promise<RoleEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildRole(guildId, roleId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildRole(guildId, roleId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -470,10 +559,14 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(GuildRouter.ROUTES.guildRoles(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.post(
+      GuildRouter.ROUTES.guildRoles(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -488,9 +581,13 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guildRoles(guildId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildRoles(guildId),
+      {
+        body: JSON.stringify(result.data),
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -507,10 +604,14 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guildRole(guildId, roleId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildRole(guildId, roleId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -521,10 +622,14 @@ export class GuildRouter {
     level: MfaLevel,
     reason?: string,
   ): Promise<number> {
-    return this.#rest.post(GuildRouter.ROUTES.guildMfa(guildId), {
-      body: JSON.stringify({ level }),
-      reason,
-    });
+    return this.rest.post(
+      GuildRouter.ROUTES.guildMfa(guildId),
+      {
+        body: JSON.stringify({ level }),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -535,9 +640,13 @@ export class GuildRouter {
     roleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(GuildRouter.ROUTES.guildRole(guildId, roleId), {
-      reason,
-    });
+    return this.rest.delete(
+      GuildRouter.ROUTES.guildRole(guildId, roleId),
+      {
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -552,9 +661,13 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(GuildRouter.ROUTES.guildPrune(guildId), {
-      query: result.data,
-    });
+    return this.rest.get(
+      GuildRouter.ROUTES.guildPrune(guildId),
+      {
+        query: result.data,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -570,17 +683,25 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(GuildRouter.ROUTES.guildPrune(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.post(
+      GuildRouter.ROUTES.guildPrune(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-voice-regions}
    */
   getGuildVoiceRegions(guildId: Snowflake): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(GuildRouter.ROUTES.guildRegions(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildRegions(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -589,14 +710,22 @@ export class GuildRouter {
   getGuildInvites(
     guildId: Snowflake,
   ): Promise<(InviteEntity & InviteMetadataEntity)[]> {
-    return this.#rest.get(GuildRouter.ROUTES.guildInvites(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildInvites(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-integrations}
    */
   getGuildIntegrations(guildId: Snowflake): Promise<IntegrationEntity[]> {
-    return this.#rest.get(GuildRouter.ROUTES.guildIntegrations(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildIntegrations(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -607,9 +736,10 @@ export class GuildRouter {
     integrationId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       GuildRouter.ROUTES.guildIntegration(guildId, integrationId),
       { reason },
+      this.sessionId,
     );
   }
 
@@ -619,7 +749,11 @@ export class GuildRouter {
   getGuildWidgetSettings(
     guildId: Snowflake,
   ): Promise<GuildWidgetSettingsEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildWidgetSettings(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildWidgetSettings(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -635,17 +769,25 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guildWidgetSettings(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildWidgetSettings(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget}
    */
   getGuildWidget(guildId: Snowflake): Promise<GuildWidgetEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildWidget(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildWidget(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -654,7 +796,11 @@ export class GuildRouter {
   getGuildVanityUrl(
     guildId: Snowflake,
   ): Promise<Pick<InviteEntity & InviteMetadataEntity, "code" | "uses">> {
-    return this.#rest.get(GuildRouter.ROUTES.guildVanityUrl(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildVanityUrl(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -664,16 +810,24 @@ export class GuildRouter {
     guildId: Snowflake,
     style: WidgetStyleOptions = "shield",
   ): Promise<Buffer> {
-    return this.#rest.get(GuildRouter.ROUTES.guildWidgetImage(guildId), {
-      query: { style },
-    });
+    return this.rest.get(
+      GuildRouter.ROUTES.guildWidgetImage(guildId),
+      {
+        query: { style },
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-welcome-screen}
    */
   getGuildWelcomeScreen(guildId: Snowflake): Promise<WelcomeScreenEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildWelcomeScreen(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildWelcomeScreen(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -689,17 +843,25 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(GuildRouter.ROUTES.guildWelcomeScreen(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.patch(
+      GuildRouter.ROUTES.guildWelcomeScreen(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-onboarding}
    */
   getGuildOnboarding(guildId: Snowflake): Promise<GuildOnboardingEntity> {
-    return this.#rest.get(GuildRouter.ROUTES.guildOnboarding(guildId));
+    return this.rest.get(
+      GuildRouter.ROUTES.guildOnboarding(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -715,9 +877,13 @@ export class GuildRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(GuildRouter.ROUTES.guildOnboarding(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.put(
+      GuildRouter.ROUTES.guildOnboarding(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 }

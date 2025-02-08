@@ -1,6 +1,6 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import {
   CreateApplicationEmojiSchema,
   CreateGuildEmojiSchema,
@@ -9,7 +9,7 @@ import {
   ModifyGuildEmojiSchema,
 } from "../schemas/index.js";
 
-export class EmojiRouter {
+export class EmojiRouter extends BaseRouter {
   static readonly ROUTES = {
     guildEmojis: (guildId: Snowflake) => `/guilds/${guildId}/emojis` as const,
     guildEmoji: (guildId: Snowflake, emojiId: Snowflake) =>
@@ -20,24 +20,26 @@ export class EmojiRouter {
       `/applications/${applicationId}/emojis/${emojiId}` as const,
   } as const;
 
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
    */
   listGuildEmojis(guildId: Snowflake): Promise<EmojiEntity[]> {
-    return this.#rest.get(EmojiRouter.ROUTES.guildEmojis(guildId));
+    return this.rest.get(
+      EmojiRouter.ROUTES.guildEmojis(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji}
    */
   getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): Promise<EmojiEntity> {
-    return this.#rest.get(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId));
+    return this.rest.get(
+      EmojiRouter.ROUTES.guildEmoji(guildId, emojiId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -53,10 +55,14 @@ export class EmojiRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(EmojiRouter.ROUTES.guildEmojis(guildId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.post(
+      EmojiRouter.ROUTES.guildEmojis(guildId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji}
@@ -72,10 +78,14 @@ export class EmojiRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
-      body: JSON.stringify(result.data),
-      reason,
-    });
+    return this.rest.patch(
+      EmojiRouter.ROUTES.guildEmoji(guildId, emojiId),
+      {
+        body: JSON.stringify(result.data),
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -86,9 +96,13 @@ export class EmojiRouter {
     emojiId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
-      reason,
-    });
+    return this.rest.delete(
+      EmojiRouter.ROUTES.guildEmoji(guildId, emojiId),
+      {
+        reason,
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -97,7 +111,11 @@ export class EmojiRouter {
   listApplicationEmojis(
     applicationId: Snowflake,
   ): Promise<ListApplicationEmojisEntity> {
-    return this.#rest.get(EmojiRouter.ROUTES.applicationEmojis(applicationId));
+    return this.rest.get(
+      EmojiRouter.ROUTES.applicationEmojis(applicationId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -107,8 +125,10 @@ export class EmojiRouter {
     applicationId: Snowflake,
     emojiId: Snowflake,
   ): Promise<EmojiEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -125,12 +145,13 @@ export class EmojiRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       EmojiRouter.ROUTES.applicationEmojis(applicationId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -148,12 +169,13 @@ export class EmojiRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(
+    return this.rest.patch(
       EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -165,11 +187,12 @@ export class EmojiRouter {
     emojiId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
       {
         reason,
       },
+      this.sessionId,
     );
   }
 }

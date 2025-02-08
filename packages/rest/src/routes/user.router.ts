@@ -8,7 +8,7 @@ import type {
   UserEntity,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import {
   CreateGroupDmSchema,
   GetCurrentUserGuildsQuerySchema,
@@ -16,7 +16,7 @@ import {
   UpdateCurrentUserApplicationRoleConnectionSchema,
 } from "../schemas/index.js";
 
-export class UserRouter {
+export class UserRouter extends BaseRouter {
   static readonly ROUTES = {
     usersBase: "/users" as const,
     userCurrent: "/users/@me" as const,
@@ -32,24 +32,26 @@ export class UserRouter {
       `/users/@me/applications/${applicationId}/role-connection` as const,
   } as const;
 
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   getCurrentUser(): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.ROUTES.userCurrent);
+    return this.rest.get(
+      UserRouter.ROUTES.userCurrent,
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
   getUser(userId: Snowflake): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.ROUTES.user(userId));
+    return this.rest.get(
+      UserRouter.ROUTES.user(userId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -63,9 +65,13 @@ export class UserRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(UserRouter.ROUTES.userCurrent, {
-      body: JSON.stringify(result.data),
-    });
+    return this.rest.patch(
+      UserRouter.ROUTES.userCurrent,
+      {
+        body: JSON.stringify(result.data),
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -79,32 +85,48 @@ export class UserRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(UserRouter.ROUTES.userCurrentGuilds, {
-      query: result.data,
-    });
+    return this.rest.get(
+      UserRouter.ROUTES.userCurrentGuilds,
+      {
+        query: result.data,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.#rest.get(UserRouter.ROUTES.userCurrentGuildMember(guildId));
+    return this.rest.get(
+      UserRouter.ROUTES.userCurrentGuildMember(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(UserRouter.ROUTES.userCurrentLeaveGuild(guildId));
+    return this.rest.delete(
+      UserRouter.ROUTES.userCurrentLeaveGuild(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDm(recipientId: Snowflake): Promise<ChannelEntity> {
-    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
-      body: JSON.stringify({ recipient_id: recipientId }),
-    });
+    return this.rest.post(
+      UserRouter.ROUTES.userCurrentChannels,
+      {
+        body: JSON.stringify({ recipient_id: recipientId }),
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -116,16 +138,24 @@ export class UserRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
-      body: JSON.stringify(result.data),
-    });
+    return this.rest.post(
+      UserRouter.ROUTES.userCurrentChannels,
+      {
+        body: JSON.stringify(result.data),
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   getCurrentUserConnections(): Promise<ConnectionEntity[]> {
-    return this.#rest.get(UserRouter.ROUTES.userCurrentConnections);
+    return this.rest.get(
+      UserRouter.ROUTES.userCurrentConnections,
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -134,8 +164,10 @@ export class UserRouter {
   getCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -152,11 +184,12 @@ export class UserRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.put(
+    return this.rest.put(
       UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
       {
         body: JSON.stringify(result.data),
       },
+      this.sessionId,
     );
   }
 }

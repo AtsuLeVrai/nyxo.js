@@ -4,14 +4,14 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import {
   CreateGuildScheduledEventSchema,
   GetGuildScheduledEventUsersQuerySchema,
   ModifyGuildScheduledEventSchema,
 } from "../schemas/index.js";
 
-export class ScheduledEventRouter {
+export class ScheduledEventRouter extends BaseRouter {
   static readonly ROUTES = {
     guildScheduledEvents: (guildId: Snowflake) =>
       `/guilds/${guildId}/scheduled-events` as const,
@@ -21,12 +21,6 @@ export class ScheduledEventRouter {
       `/guilds/${guildId}/scheduled-events/${eventId}/users` as const,
   } as const;
 
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild}
    */
@@ -34,11 +28,12 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       ScheduledEventRouter.ROUTES.guildScheduledEvents(guildId),
       {
         query: { with_user_count: withUserCount },
       },
+      this.sessionId,
     );
   }
 
@@ -55,12 +50,13 @@ export class ScheduledEventRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       ScheduledEventRouter.ROUTES.guildScheduledEvents(guildId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -72,11 +68,12 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
       {
         query: { with_user_count: withUserCount },
       },
+      this.sessionId,
     );
   }
 
@@ -94,12 +91,13 @@ export class ScheduledEventRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(
+    return this.rest.patch(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
       {
         body: JSON.stringify(result.data),
         reason,
       },
+      this.sessionId,
     );
   }
 
@@ -110,8 +108,10 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     eventId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -128,11 +128,12 @@ export class ScheduledEventRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(
+    return this.rest.get(
       ScheduledEventRouter.ROUTES.guildScheduledEventUsers(guildId, eventId),
       {
         query: result.data,
       },
+      this.sessionId,
     );
   }
 }

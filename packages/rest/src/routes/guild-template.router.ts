@@ -1,13 +1,13 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import {
   CreateGuildFromGuildTemplateSchema,
   CreateGuildTemplateSchema,
   ModifyGuildTemplateSchema,
 } from "../schemas/index.js";
 
-export class GuildTemplateRouter {
+export class GuildTemplateRouter extends BaseRouter {
   static readonly ROUTES = {
     guildTemplatesDefault: "/guilds/templates" as const,
     guildTemplateDefault: (code: string) =>
@@ -18,18 +18,14 @@ export class GuildTemplateRouter {
       `/guilds/${guildId}/templates/${code}` as const,
   } as const;
 
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
   getGuildTemplate(code: string): Promise<GuildTemplateEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       GuildTemplateRouter.ROUTES.guildTemplateDefault(code),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -46,11 +42,12 @@ export class GuildTemplateRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       GuildTemplateRouter.ROUTES.guildTemplateDefault(code),
       {
         body: JSON.stringify(result.data),
       },
+      this.sessionId,
     );
   }
 
@@ -58,7 +55,11 @@ export class GuildTemplateRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
   getGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
-    return this.#rest.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
+    return this.rest.get(
+      GuildTemplateRouter.ROUTES.guildTemplates(guildId),
+      undefined,
+      this.sessionId,
+    );
   }
 
   /**
@@ -73,9 +74,13 @@ export class GuildTemplateRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
-      body: JSON.stringify(result.data),
-    });
+    return this.rest.post(
+      GuildTemplateRouter.ROUTES.guildTemplates(guildId),
+      {
+        body: JSON.stringify(result.data),
+      },
+      this.sessionId,
+    );
   }
 
   /**
@@ -85,8 +90,10 @@ export class GuildTemplateRouter {
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {
-    return this.#rest.put(
+    return this.rest.put(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -103,11 +110,12 @@ export class GuildTemplateRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(
+    return this.rest.patch(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
       {
         body: JSON.stringify(result.data),
       },
+      this.sessionId,
     );
   }
 
@@ -118,8 +126,10 @@ export class GuildTemplateRouter {
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {
-    return this.#rest.delete(
+    return this.rest.delete(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
+      undefined,
+      this.sessionId,
     );
   }
 }

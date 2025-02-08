@@ -1,18 +1,12 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import { GetInviteQuerySchema } from "../schemas/index.js";
 
-export class InviteRouter {
+export class InviteRouter extends BaseRouter {
   static readonly ROUTES = {
     inviteBase: (code: string) => `/invites/${code}` as const,
   } as const;
-
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
@@ -26,17 +20,25 @@ export class InviteRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.get(InviteRouter.ROUTES.inviteBase(code), {
-      query: result.data,
-    });
+    return this.rest.get(
+      InviteRouter.ROUTES.inviteBase(code),
+      {
+        query: result.data,
+      },
+      this.sessionId,
+    );
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.#rest.delete(InviteRouter.ROUTES.inviteBase(code), {
-      reason,
-    });
+    return this.rest.delete(
+      InviteRouter.ROUTES.inviteBase(code),
+      {
+        reason,
+      },
+      this.sessionId,
+    );
   }
 }

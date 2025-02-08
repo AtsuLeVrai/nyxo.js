@@ -4,13 +4,13 @@ import type {
   VoiceStateEntity,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../base/index.js";
 import {
   ModifyCurrentUserVoiceStateSchema,
   ModifyUserVoiceStateSchema,
 } from "../schemas/index.js";
 
-export class VoiceRouter {
+export class VoiceRouter extends BaseRouter {
   static readonly ROUTES = {
     voiceRegionsBase: "/voice/regions" as const,
     guildCurrentUserVoiceState: (guildId: Snowflake) =>
@@ -19,25 +19,21 @@ export class VoiceRouter {
       `/guilds/${guildId}/voice-states/${userId}` as const,
   } as const;
 
-  #rest: Rest;
-
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
   listVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(VoiceRouter.ROUTES.voiceRegionsBase);
+    return this.rest.get(VoiceRouter.ROUTES.voiceRegionsBase);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
   getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -48,8 +44,10 @@ export class VoiceRouter {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<VoiceStateEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
+      undefined,
+      this.sessionId,
     );
   }
 
@@ -65,11 +63,12 @@ export class VoiceRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(
+    return this.rest.patch(
       VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
       {
         body: JSON.stringify(result.data),
       },
+      this.sessionId,
     );
   }
 
@@ -86,11 +85,12 @@ export class VoiceRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.#rest.patch(
+    return this.rest.patch(
       VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
       {
         body: JSON.stringify(result.data),
       },
+      this.sessionId,
     );
   }
 }
