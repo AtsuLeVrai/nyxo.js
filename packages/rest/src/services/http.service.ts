@@ -1,46 +1,37 @@
 import { type Dispatcher, request } from "undici";
 import type { Rest } from "../core/index.js";
+import { HttpError } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import type { RestOptions } from "../options/index.js";
-import type { RequestOptions } from "../types/index.js";
+import type { ApiRequestOptions } from "../types/index.js";
 
+// Enhanced typings for HTTP responses
 export interface HttpResponse<T = unknown> {
   data: T;
   statusCode: number;
   headers: Record<string, string>;
+  duration: number;
 }
+
+// Constants
+const PATH_REGEX = /^\/+/;
 
 interface ParsedRequest {
   url: URL;
   options: Dispatcher.RequestOptions;
+  requestId: string;
 }
 
-export class HttpError extends Error {
-  readonly statusCode: number;
-  readonly headers: Record<string, string>;
-
-  constructor(
-    message: string,
-    statusCode: number,
-    headers: Record<string, string>,
-  ) {
-    super(message);
-    this.name = "HttpError";
-    this.statusCode = statusCode;
-    this.headers = headers;
-  }
-}
-
-// Regex for cleaning leading slashes from paths
-const PATH_REGEX = /^\/+/;
-
+// Main HTTP Service class
 export class HttpService {
   readonly #rest: Rest;
   readonly #options: RestOptions;
+  readonly #requestTimeouts: Map<string, NodeJS.Timeout>;
 
   constructor(rest: Rest, options: RestOptions) {
     this.#rest = rest;
     this.#options = options;
+    this.#requestTimeouts = new Map();
   }
 
   /**
@@ -48,61 +39,63 @@ export class HttpService {
    * Handles request preparation, execution, and response processing
    * Emits request and error events for monitoring
    */
-  async request<T>(options: RequestOptions): Promise<HttpResponse<T>> {
+  async request<T>(options: ApiRequestOptions): Promise<HttpResponse<T>> {
     const requestStart = Date.now();
-    let responseBody: Buffer | null = null;
+    const requestId = this.#generateRequestId();
 
     try {
-      // Prepare the request with all necessary headers and configurations
-      const preparedRequest = await this.#prepareRequest(options);
-
-      // Execute the HTTP request
+      const preparedRequest = await this.#prepareRequest(options, requestId);
       const response = await request(preparedRequest.options);
+      const responseBody = await this.#readResponseBody(response);
 
-      // Read and process the response body
-      responseBody = await this.#readResponseBody(response);
-
-      // Process the response and create the result object
-      const result = this.#processResponse<T>(response, responseBody);
-
-      // Calculate request duration and emit success event
-      const requestDuration = Date.now() - requestStart;
-      this.#emitRequestMetrics(
-        options,
+      const result = await this.#processResponse<T>(
         response,
-        result.headers,
-        requestDuration,
+        responseBody,
+        requestId,
       );
+
+      // Calculate duration and emit metrics
+      const duration = Date.now() - requestStart;
+      result.duration = duration;
+
+      this.#emitRequestMetrics(options, response, result.headers, {
+        requestId,
+        duration,
+      });
 
       return result;
     } catch (error) {
-      // Handle and emit any errors that occurred during the request
-      this.#handleRequestError(error, options, requestStart);
+      this.#handleRequestError(error, options, requestStart, requestId);
       throw error;
+    } finally {
+      this.#clearRequestTimeout(requestId);
     }
   }
 
-  // Prepares the request by building the URL and setting up request options
+  /**
+   * Prepares the request with enhanced headers and configurations
+   */
   #prepareRequest(
-    options: RequestOptions,
+    options: ApiRequestOptions,
+    requestId: string,
   ): Promise<ParsedRequest> | ParsedRequest {
     const url = this.#buildUrl(options.path);
-    const baseOptions = this.#buildBaseRequestOptions(options, url);
+    const baseOptions = this.#buildBaseRequestOptions(options, url, requestId);
 
-    // Handle file uploads separately due to different content type and body format
     if (options.files) {
       return this.#handleFileUpload(options, baseOptions);
     }
 
-    // Process request body if present
     if (options.body) {
       baseOptions.body = this.#serializeRequestBody(options.body);
     }
 
-    return { url, options: baseOptions };
+    return { url, options: baseOptions, requestId };
   }
 
-  // Builds the complete URL for the request
+  /**
+   * Builds the complete URL for the request
+   */
   #buildUrl(path: string): URL {
     const cleanPath = path.replace(PATH_REGEX, "");
     return new URL(
@@ -111,41 +104,54 @@ export class HttpService {
     );
   }
 
-  // Creates the base request options with common headers and settings
+  /**
+   * Creates base request options with all necessary configurations
+   */
   #buildBaseRequestOptions(
-    options: RequestOptions,
+    options: ApiRequestOptions,
     url: URL,
+    requestId: string,
   ): Dispatcher.RequestOptions {
-    const requestOptions: Dispatcher.RequestOptions = {
+    return {
       ...options,
       origin: url.origin,
       path: url.pathname + url.search,
-      headers: this.#buildRequestHeaders(options),
+      headers: this.#buildRequestHeaders(options, requestId),
     };
-
-    // Add audit log reason if provided
-    if (options.reason && requestOptions.headers) {
-      (requestOptions.headers as Record<string, string>)["x-audit-log-reason"] =
-        encodeURIComponent(options.reason);
-    }
-
-    return requestOptions;
   }
 
-  // Builds the complete set of request headers
-  #buildRequestHeaders(options: RequestOptions): Record<string, string> {
-    return {
+  /**
+   * Builds enhanced request headers with security and tracking
+   */
+  #buildRequestHeaders(
+    options: ApiRequestOptions,
+    requestId: string,
+  ): Record<string, string> {
+    const headers: Record<string, string> = {
       authorization: `Bot ${this.#options.token}`,
       "content-type": "application/json",
+      "x-request-id": requestId,
       "x-ratelimit-precision": "millisecond",
       "user-agent": this.#options.userAgent,
+      accept: "application/json",
+      // "accept-encoding": "gzip, deflate",
+      connection: "keep-alive",
+      "x-api-version": `v${this.#options.version}`,
       ...HeaderHandler.parse(options.headers).headers,
     };
+
+    if (options.reason) {
+      headers["x-audit-log-reason"] = encodeURIComponent(options.reason);
+    }
+
+    return headers;
   }
 
-  // Handles file upload requests by creating multipart form data
+  /**
+   * Handles file upload requests
+   */
   async #handleFileUpload(
-    options: RequestOptions,
+    options: ApiRequestOptions,
     baseOptions: Dispatcher.RequestOptions,
   ): Promise<ParsedRequest> {
     if (!options.files) {
@@ -157,6 +163,7 @@ export class HttpService {
       options.body,
     );
 
+    const requestId = this.#generateRequestId();
     return {
       url: new URL(baseOptions.path, baseOptions.origin),
       options: {
@@ -167,10 +174,13 @@ export class HttpService {
           ...formData.getHeaders(),
         },
       },
+      requestId,
     };
   }
 
-  // Safely reads the response body, handling empty responses
+  /**
+   * Safely reads the response body
+   */
   async #readResponseBody(response: Dispatcher.ResponseData): Promise<Buffer> {
     try {
       return Buffer.from(await response.body.arrayBuffer());
@@ -182,37 +192,74 @@ export class HttpService {
     }
   }
 
-  // Processes the response and creates the final response object
-  #processResponse<T>(
+  /**
+   * Processes and validates the response
+   */
+  async #processResponse<T>(
     response: Dispatcher.ResponseData,
     bodyContent: Buffer,
-  ): HttpResponse<T> {
+    requestId: string,
+  ): Promise<HttpResponse<T>> {
     const headers = HeaderHandler.parse(response.headers).headers;
 
-    // Handle empty responses (HTTP 204)
-    if (response.statusCode === 204) {
-      return { data: {} as T, statusCode: response.statusCode, headers };
+    // Handle error responses
+    if (response.statusCode >= 400) {
+      const text = await response.body.text();
+      throw new HttpError(
+        `HTTP ${response.statusCode} ${text}`,
+        response.statusCode,
+        headers,
+        { requestId },
+      );
     }
 
-    // Parse and validate JSON response
+    // Handle empty responses
+    if (response.statusCode === 204) {
+      return {
+        data: {} as T,
+        statusCode: response.statusCode,
+        headers,
+        duration: 0,
+      };
+    }
+
+    // Parse and return response
     const data = this.#parseResponseBody<T>(
       bodyContent,
       response.statusCode,
       headers,
+      requestId,
     );
-    return { data, statusCode: response.statusCode, headers };
+
+    return {
+      data,
+      statusCode: response.statusCode,
+      headers,
+      duration: 0,
+    };
   }
 
-  // Serializes the request body to JSON if needed
+  /**
+   * Serializes request body to JSON
+   */
   #serializeRequestBody(body: unknown): string {
-    return typeof body === "string" ? body : JSON.stringify(body);
+    try {
+      return typeof body === "string" ? body : JSON.stringify(body);
+    } catch (error) {
+      throw new Error("Failed to serialize request body", {
+        cause: error,
+      });
+    }
   }
 
-  // Parses the response body and handles parsing errors
+  /**
+   * Parses response body with error handling
+   */
   #parseResponseBody<T>(
     bodyContent: Buffer,
     statusCode: number,
     headers: Record<string, string>,
+    requestId: string,
   ): T {
     if (bodyContent.length === 0) {
       return {} as T;
@@ -221,43 +268,77 @@ export class HttpService {
     try {
       return JSON.parse(bodyContent.toString()) as T;
     } catch {
-      throw new HttpError("Invalid JSON response", statusCode, headers);
+      throw new HttpError("Invalid JSON response", statusCode, headers, {
+        requestId,
+      });
     }
   }
 
-  // Emits request metrics for monitoring
+  /**
+   * Emits request metrics for monitoring
+   */
   #emitRequestMetrics(
-    options: RequestOptions,
+    options: ApiRequestOptions,
     response: Dispatcher.ResponseData,
     headers: Record<string, string>,
-    duration: number,
+    context: {
+      requestId: string;
+      duration: number;
+    },
   ): void {
     this.#rest.emit("request", {
       path: options.path,
       method: options.method,
       statusCode: response.statusCode,
       headers,
-      latency: duration,
+      latency: context.duration,
       timestamp: Date.now(),
+      requestId: context.requestId,
     });
   }
 
-  // Handles and emits request errors
+  /**
+   * Enhanced error handling with context
+   */
   #handleRequestError(
     error: unknown,
-    options: RequestOptions,
+    options: ApiRequestOptions,
     startTime: number,
+    requestId: string,
   ): void {
     const duration = Date.now() - startTime;
+
+    if (error instanceof HttpError) {
+      error.requestId = requestId;
+      error.path = options.path;
+      error.method = options.method;
+    }
+
     this.#rest.emit(
       "error",
       error instanceof Error ? error : new Error(String(error)),
       {
-        path: options.path,
-        method: options.method,
-        duration,
-        error,
+        context: {
+          requestId,
+          path: options.path,
+          method: options.method,
+          duration,
+          timestamp: new Date().toISOString(),
+        },
       },
     );
+  }
+
+  // Utility methods
+  #generateRequestId(): string {
+    return `req_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  }
+
+  #clearRequestTimeout(requestId: string): void {
+    const timeoutId = this.#requestTimeouts.get(requestId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.#requestTimeouts.delete(requestId);
+    }
   }
 }

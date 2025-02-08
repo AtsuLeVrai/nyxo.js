@@ -1,116 +1,77 @@
 import { Store } from "@nyxjs/store";
-import type { Rest } from "../core/index.js";
+import { RateLimitError } from "../errors/index.js";
 import type { RateLimitOptions } from "../options/index.js";
-import type {
-  RateLimitBucket,
-  RateLimitError,
-  RateLimitScope,
-} from "../types/index.js";
+import type { RateLimitBucket, RateLimitScope } from "../types/index.js";
 
-// Constants for rate limiting behavior
-const RATE_LIMIT_CONSTANTS = {
-  SAFETY_MARGIN_MS: 50,
-  GLOBAL_RATE_LIMIT_PER_SECOND: 50,
-  INVALID_REQUEST_LIMIT: 10000,
-  INVALID_REQUEST_WINDOW_MINUTES: 10,
-  DEFAULT_RETRY_DELAY_MS: 500,
+// Type-safe header constants
+export const RATE_LIMIT_HEADERS = {
+  LIMIT: "x-ratelimit-limit",
+  REMAINING: "x-ratelimit-remaining",
+  RESET: "x-ratelimit-reset",
+  RESET_AFTER: "x-ratelimit-reset-after",
+  BUCKET: "x-ratelimit-bucket",
+  SCOPE: "x-ratelimit-scope",
+  GLOBAL: "x-ratelimit-global",
+  RETRY_AFTER: "retry-after",
 } as const;
 
-// Rate limit header constants as specified in Discord documentation
-const RATE_LIMIT_HEADERS = {
-  limit: "x-ratelimit-limit",
-  remaining: "x-ratelimit-remaining",
-  reset: "x-ratelimit-reset",
-  resetAfter: "x-ratelimit-reset-after",
-  bucket: "x-ratelimit-bucket",
-  scope: "x-ratelimit-scope",
-  global: "x-ratelimit-global",
-  retryAfter: "retry-after",
+// Route configuration with strong typing
+export const ROUTES = {
+  PATTERNS: {
+    WEBHOOK: /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/,
+    EXEMPT: ["/interactions", "/webhooks"] as const,
+    MAJOR_PARAMETERS: new Map<RegExp, string>([
+      [/^\/guilds\/(\d+)/, "guild_id"],
+      [/^\/channels\/(\d+)/, "channel_id"],
+      [/^\/webhooks\/(\d+)/, "webhook_id"],
+    ]),
+    SHARED_BUCKETS: new Map<RegExp, string>([
+      [/^\/guilds\/\d+\/emojis/, "emoji"],
+      [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
+      [/^\/guilds\/\d+\/channels/, "guild-channels"],
+      [/^\/guilds\/\d+\/members/, "guild-members"],
+    ]),
+  },
 } as const;
 
-// Route patterns for special handling
-const ROUTE_PATTERNS = {
-  // Webhook route pattern with capture groups for ID and token
-  WEBHOOK: /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/,
-
-  // Routes exempt from global rate limits
-  EXEMPT_ROUTES: ["/interactions", "/webhooks"],
-
-  // Major resource identifiers as per Discord documentation
-  MAJOR_RESOURCES: new Map([
-    [/^\/guilds\/(\d+)/, "guild_id"],
-    [/^\/channels\/(\d+)/, "channel_id"],
-    [/^\/webhooks\/(\d+)/, "webhook_id"],
-  ]),
-
-  // Routes with shared rate limits
-  SHARED_RESOURCES: new Map([
-    [/^\/guilds\/\d+\/emojis/, "emoji"],
-    [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
-    [/^\/guilds\/\d+\/channels/, "guild-channels"],
-    [/^\/guilds\/\d+\/members/, "guild-members"],
-  ]),
-} as const;
-
-// Interface for tracking rate limit attempts
 interface RateLimitAttempt {
-  count: number; // Number of attempts made
-  lastAttempt: number; // Timestamp of the last attempt
-  nextReset: number; // Timestamp when the rate limit resets
-  inProgress: boolean; // Flag to prevent concurrent retries
-}
-
-export class RateLimiterError extends Error {
-  readonly context: RateLimitError;
-
-  constructor(context: RateLimitError) {
-    super(
-      `Rate limit encountered for ${context.path} (${context.method}): retry after ${context.retryAfter}s`,
-    );
-    this.name = "RateLimiterError";
-    this.context = context;
-  }
+  count: number;
+  lastAttempt: number;
+  nextReset: number;
+  scope: RateLimitScope;
 }
 
 export class RateLimitManager {
   readonly #buckets = new Store<string, RateLimitBucket>();
-  readonly #routesToBuckets = new Store<string, string>();
+  readonly #routeBuckets = new Store<string, string>();
   readonly #sharedBuckets = new Store<string, Set<string>>();
   readonly #attempts = new Store<string, RateLimitAttempt>();
-  readonly #rest: Rest;
+
   readonly #options: RateLimitOptions;
+  readonly #cleanupInterval: NodeJS.Timeout;
 
-  constructor(rest: Rest, options: RateLimitOptions) {
-    this.#rest = rest;
+  constructor(options: RateLimitOptions) {
     this.#options = options;
-
-    // Start periodic cleanup of expired rate limits
-    setInterval(
-      () => this.#cleanupExpiredLimits(),
-      this.#options.cleanupInterval,
-    );
+    this.#cleanupInterval = this.#startCleanupInterval();
   }
 
-  // Check if a request would exceed rate limits
+  /**
+   * Checks if a request would exceed rate limits
+   */
   checkRateLimit(path: string, method: string): void {
-    // Skip rate limit checks for exempt routes (interactions and webhooks)
     if (this.#isExemptRoute(path)) {
       return;
     }
 
-    const routeKey = this.getRouteKey(method, path);
-
-    // Check for ongoing retry attempts
-    this.#handleRetryAttempt(routeKey, path, method);
-
-    // Check bucket-specific rate limits
     const bucket = this.#getBucket(path, method);
     if (bucket) {
       this.#checkBucketLimit(bucket, path, method);
     }
   }
 
-  // Update rate limit information based on response headers
+  /**
+   * Updates rate limit information based on response headers
+   */
   updateRateLimit(
     path: string,
     method: string,
@@ -124,99 +85,35 @@ export class RateLimitManager {
       return;
     }
 
-    // Reset attempt counter on successful requests
     if (statusCode < 400) {
       this.#attempts.delete(routeKey);
     }
 
-    // Update rate limit bucket information
     this.#updateBucketInfo(path, method, headers);
   }
 
-  // Generate a unique key for a route considering resource IDs
+  /**
+   * Generates a unique key for a route
+   */
   getRouteKey(method: string, path: string): string {
-    // Handle webhook routes specially
-    const webhookMatch = path.match(ROUTE_PATTERNS.WEBHOOK);
+    const webhookMatch = path.match(ROUTES.PATTERNS.WEBHOOK);
     if (webhookMatch) {
       return `webhook:${webhookMatch[1]}:${webhookMatch[2]}:${method}`;
     }
 
-    // Check for shared rate limit routes
-    for (const [
-      pattern,
-      identifier,
-    ] of ROUTE_PATTERNS.SHARED_RESOURCES.entries()) {
+    for (const [pattern, identifier] of ROUTES.PATTERNS.SHARED_BUCKETS) {
       if (pattern.test(path)) {
         return `shared:${identifier}`;
       }
     }
 
-    // Normalize path with major parameters
     const normalizedPath = this.#normalizePath(path);
     return `${method}:${normalizedPath}`;
   }
 
-  // Clean up resources
-  destroy(): void {
-    this.#buckets.clear();
-    this.#routesToBuckets.clear();
-    this.#sharedBuckets.clear();
-    this.#attempts.clear();
-  }
-
-  // Helper method to get detailed bucket info for debugging
-  getBucketDebugInfo(path: string, method: string): object {
-    const routeKey = this.getRouteKey(method, path);
-    const bucketHash = this.#routesToBuckets.get(routeKey);
-    const bucket = bucketHash ? this.#buckets.get(bucketHash) : undefined;
-    const attempt = this.#attempts.get(routeKey);
-
-    return {
-      routeKey,
-      bucketHash,
-      bucket: bucket
-        ? {
-            ...bucket,
-            timeUntilReset: bucket.reset - Date.now(),
-          }
-        : undefined,
-      attempt: attempt
-        ? {
-            ...attempt,
-            timeUntilReset: attempt.nextReset - Date.now(),
-          }
-        : undefined,
-      isExemptRoute: this.#isExemptRoute(path),
-      normalizedPath: this.#normalizePath(path),
-      sharedRoute: this.#getSharedRoute(path),
-    };
-  }
-
-  // Helper method to check if a route is currently rate limited
-  isRateLimited(path: string, method: string): boolean {
-    try {
-      this.checkRateLimit(path, method);
-      return false;
-    } catch (error) {
-      if (error instanceof RateLimiterError) {
-        return true;
-      }
-      throw error;
-    }
-  }
-
-  // Get estimated time until rate limit reset
-  getTimeUntilReset(path: string, method: string): number | null {
-    const bucket = this.#getBucket(path, method);
-    if (!bucket) {
-      return null;
-    }
-
-    const now = Date.now();
-    return Math.max(0, bucket.reset - now);
-  }
-
-  // Get current rate limit status for a route
+  /**
+   * Gets current rate limit status for a route
+   */
   getRateLimitStatus(
     path: string,
     method: string,
@@ -240,187 +137,115 @@ export class RateLimitManager {
     return {
       limited: bucket.remaining <= 0 && bucket.reset > now,
       remaining: bucket.remaining,
-      resetAfter: Math.max(0, bucket.reset - now) / 1000,
+      resetAfter: Math.max(0, bucket.reset - now),
       scope: bucket.scope,
     };
   }
 
-  // Check if a route is exempt from rate limits
+  /**
+   * Cleans up the manager resources
+   */
+  destroy(): void {
+    clearInterval(this.#cleanupInterval);
+    this.#buckets.clear();
+    this.#routeBuckets.clear();
+    this.#sharedBuckets.clear();
+    this.#attempts.clear();
+  }
+
+  // Private methods
+  #startCleanupInterval(): NodeJS.Timeout {
+    return setInterval(
+      () => this.#cleanupExpiredLimits(),
+      this.#options.cleanupInterval,
+    );
+  }
+
   #isExemptRoute(path: string): boolean {
-    return ROUTE_PATTERNS.EXEMPT_ROUTES.some((route) => path.startsWith(route));
+    return ROUTES.PATTERNS.EXEMPT.some((route) => path.startsWith(route));
   }
 
-  // Handle retry attempts for a route
-  #handleRetryAttempt(routeKey: string, path: string, method: string): void {
-    const attempt = this.#attempts.get(routeKey);
-    if (!attempt) {
-      return;
-    }
-
-    if (attempt.inProgress) {
-      throw new RateLimiterError({
-        method,
-        path,
-        retryAfter: RATE_LIMIT_CONSTANTS.DEFAULT_RETRY_DELAY_MS / 1000,
-        scope: "user",
-        global: false,
-      });
-    }
-
-    this.#checkMaxRetries(attempt, path, method, routeKey);
-  }
-
-  // Check if maximum retries have been exceeded
-  #checkMaxRetries(
-    attempt: RateLimitAttempt,
-    path: string,
-    method: string,
-    routeKey: string,
-  ): void {
-    if (attempt.count >= this.#rest.options.retry.maxRetries) {
-      const now = Date.now();
-      if (now < attempt.nextReset) {
-        throw new RateLimiterError({
-          method,
-          path,
-          retryAfter: (attempt.nextReset - now) / 1000,
-          scope: "user",
-          global: false,
-        });
-      }
-      this.#attempts.delete(routeKey);
-    }
-  }
-
-  // Handle rate limit exceeded response
   #handleRateLimitExceeded(
     path: string,
     method: string,
     headers: Record<string, string>,
     routeKey: string,
   ): void {
-    const retryAfter = Number(headers[RATE_LIMIT_HEADERS.retryAfter]);
+    const retryAfter = Number(headers[RATE_LIMIT_HEADERS.RETRY_AFTER]);
     const scope =
-      (headers[RATE_LIMIT_HEADERS.scope] as RateLimitScope) || "user";
-    const isGlobal = headers[RATE_LIMIT_HEADERS.global] === "true";
+      (headers[RATE_LIMIT_HEADERS.SCOPE] as RateLimitScope) ?? "user";
+    const isGlobal = headers[RATE_LIMIT_HEADERS.GLOBAL] === "true";
 
-    const attempt = this.#updateRateLimitAttempt(routeKey, retryAfter);
-    const actualDelay = this.#calculateRetryDelay(attempt, retryAfter);
+    const attempt = this.#updateRateLimitAttempt(routeKey, retryAfter, scope);
 
-    this.#scheduleRetryReset(routeKey, actualDelay);
+    // Ajuster le retryAfter en fonction du nombre de tentatives
+    const adjustedRetryAfter = this.#calculateAdjustedRetryAfter(
+      retryAfter,
+      attempt.count,
+    );
 
-    throw new RateLimiterError({
+    throw new RateLimitError({
       method,
       path,
-      retryAfter: actualDelay / 1000,
+      retryAfter: adjustedRetryAfter,
       scope,
       global: isGlobal,
+      attempts: attempt.count,
     });
   }
 
-  // Update rate limit attempt information
+  #calculateAdjustedRetryAfter(baseDelay: number, attempts: number): number {
+    // Facteur de base pour l'augmentation exponentielle
+    const backoffFactor = Math.min(2 ** (attempts - 1), 8);
+    return baseDelay * backoffFactor;
+  }
+
   #updateRateLimitAttempt(
     routeKey: string,
     retryAfter: number,
+    scope: RateLimitScope,
   ): RateLimitAttempt {
     const now = Date.now();
-    const attempt = this.#attempts.get(routeKey) || {
-      count: 0,
+    const existing = this.#attempts.get(routeKey);
+    const attempt: RateLimitAttempt = {
+      count: (existing?.count ?? 0) + 1,
       lastAttempt: now,
       nextReset: now + retryAfter * 1000,
-      inProgress: false,
+      scope,
     };
-
-    attempt.count++;
-    attempt.lastAttempt = now;
-    attempt.nextReset = now + retryAfter * 1000;
-    attempt.inProgress = true;
 
     this.#attempts.set(routeKey, attempt);
     return attempt;
   }
 
-  // Calculate actual retry delay with exponential backoff
-  #calculateRetryDelay(attempt: RateLimitAttempt, retryAfter: number): number {
-    return this.#rest.calculateRetryDelay(retryAfter * 1000, attempt.count);
-  }
-
-  // Schedule reset of retry attempt
-  #scheduleRetryReset(routeKey: string, delay: number): void {
-    setTimeout(() => {
-      const attempt = this.#attempts.get(routeKey);
-      if (attempt) {
-        attempt.inProgress = false;
-        this.#attempts.set(routeKey, attempt);
-      }
-    }, delay);
-  }
-
-  // Update bucket information from response headers
   #updateBucketInfo(
     path: string,
     method: string,
     headers: Record<string, string>,
   ): void {
-    const bucketHash = headers[RATE_LIMIT_HEADERS.bucket];
+    const bucketHash = headers[RATE_LIMIT_HEADERS.BUCKET];
     if (!bucketHash) {
       return;
     }
 
     const bucket: RateLimitBucket = {
       hash: bucketHash,
-      limit: Number(headers[RATE_LIMIT_HEADERS.limit]),
-      remaining: Number(headers[RATE_LIMIT_HEADERS.remaining]),
-      reset: Number(headers[RATE_LIMIT_HEADERS.reset]) * 1000,
-      resetAfter: Number(headers[RATE_LIMIT_HEADERS.resetAfter]) * 1000,
-      scope: (headers[RATE_LIMIT_HEADERS.scope] as RateLimitScope) || "user",
+      limit: Number(headers[RATE_LIMIT_HEADERS.LIMIT]),
+      remaining: Number(headers[RATE_LIMIT_HEADERS.REMAINING]),
+      reset: Number(headers[RATE_LIMIT_HEADERS.RESET]) * 1000,
+      resetAfter: Number(headers[RATE_LIMIT_HEADERS.RESET_AFTER]) * 1000,
+      scope: (headers[RATE_LIMIT_HEADERS.SCOPE] as RateLimitScope) ?? "user",
       sharedRoute: this.#getSharedRoute(path),
     };
 
     this.#buckets.set(bucketHash, bucket);
-    this.#routesToBuckets.set(this.getRouteKey(method, path), bucketHash);
+    this.#routeBuckets.set(this.getRouteKey(method, path), bucketHash);
 
     if (bucket.sharedRoute) {
       this.#linkSharedBucket(bucket.sharedRoute, bucketHash);
     }
   }
 
-  // Normalize path by replacing resource IDs with placeholders
-  #normalizePath(path: string): string {
-    let normalizedPath = path;
-    for (const [regex, param] of ROUTE_PATTERNS.MAJOR_RESOURCES.entries()) {
-      const match = path.match(regex);
-      if (match) {
-        normalizedPath = normalizedPath.replace(String(match[1]), `{${param}}`);
-      }
-    }
-    return normalizedPath;
-  }
-
-  // Get shared route identifier if applicable
-  #getSharedRoute(path: string): string | undefined {
-    for (const [
-      pattern,
-      identifier,
-    ] of ROUTE_PATTERNS.SHARED_RESOURCES.entries()) {
-      if (pattern.test(path)) {
-        return identifier;
-      }
-    }
-    return undefined;
-  }
-
-  // Link bucket to shared route
-  #linkSharedBucket(sharedRoute: string, bucketHash: string): void {
-    let buckets = this.#sharedBuckets.get(sharedRoute);
-    if (!buckets) {
-      buckets = new Set();
-      this.#sharedBuckets.set(sharedRoute, buckets);
-    }
-    buckets.add(bucketHash);
-  }
-
-  // Check if bucket has available capacity
   #checkBucketLimit(
     bucket: RateLimitBucket,
     path: string,
@@ -428,24 +253,23 @@ export class RateLimitManager {
   ): void {
     const now = Date.now();
 
-    if (bucket.remaining <= 0) {
-      const waitTime = bucket.reset - now;
-      if (waitTime > 0) {
-        throw new RateLimiterError({
-          method,
-          path,
-          retryAfter: waitTime / 1000,
-          scope: bucket.scope,
-          bucketHash: bucket.hash,
-        });
-      }
-    } else if (bucket.remaining === 1) {
+    if (bucket.remaining <= 0 && bucket.reset > now) {
+      throw new RateLimitError({
+        method,
+        path,
+        retryAfter: bucket.reset - now,
+        scope: bucket.scope,
+        bucketHash: bucket.hash,
+      });
+    }
+
+    if (bucket.remaining === 1) {
       const timeUntilReset = bucket.reset - now;
       if (timeUntilReset < this.#options.safetyMargin) {
-        throw new RateLimiterError({
+        throw new RateLimitError({
           method,
           path,
-          retryAfter: (this.#options.safetyMargin - timeUntilReset) / 1000,
+          retryAfter: this.#options.safetyMargin - timeUntilReset,
           scope: bucket.scope,
           bucketHash: bucket.hash,
         });
@@ -453,19 +277,46 @@ export class RateLimitManager {
     }
   }
 
-  // Get bucket for route if exists
   #getBucket(path: string, method: string): RateLimitBucket | undefined {
     const routeKey = this.getRouteKey(method, path);
-    const bucketHash = this.#routesToBuckets.get(routeKey);
+    const bucketHash = this.#routeBuckets.get(routeKey);
     return bucketHash ? this.#buckets.get(bucketHash) : undefined;
   }
 
-  // Clean up expired rate limits
+  #normalizePath(path: string): string {
+    let normalizedPath = path;
+    for (const [regex, param] of ROUTES.PATTERNS.MAJOR_PARAMETERS) {
+      const match = path.match(regex);
+      if (match) {
+        normalizedPath = normalizedPath.replace(
+          match[1] as string,
+          `{${param}}`,
+        );
+      }
+    }
+    return normalizedPath;
+  }
+
+  #getSharedRoute(path: string): string | undefined {
+    for (const [pattern, identifier] of ROUTES.PATTERNS.SHARED_BUCKETS) {
+      if (pattern.test(path)) {
+        return identifier;
+      }
+    }
+    return undefined;
+  }
+
+  #linkSharedBucket(sharedRoute: string, bucketHash: string): void {
+    const buckets = this.#sharedBuckets.get(sharedRoute) ?? new Set();
+    buckets.add(bucketHash);
+    this.#sharedBuckets.set(sharedRoute, buckets);
+  }
+
   #cleanupExpiredLimits(): void {
     const now = Date.now();
     const activeHashes = new Set<string>();
 
-    // Clean expired buckets
+    // Clean buckets
     for (const [hash, bucket] of this.#buckets.entries()) {
       if (bucket.reset < now) {
         this.#buckets.delete(hash);
@@ -474,10 +325,10 @@ export class RateLimitManager {
       }
     }
 
-    // Clean unused route mappings
-    for (const [route, hash] of this.#routesToBuckets.entries()) {
+    // Clean route mappings
+    for (const [route, hash] of this.#routeBuckets.entries()) {
       if (!activeHashes.has(hash)) {
-        this.#routesToBuckets.delete(route);
+        this.#routeBuckets.delete(route);
       }
     }
 
@@ -493,7 +344,7 @@ export class RateLimitManager {
       }
     }
 
-    // Clean expired attempts
+    // Clean attempts
     for (const [route, attempt] of this.#attempts.entries()) {
       if (attempt.nextReset < now) {
         this.#attempts.delete(route);

@@ -1,13 +1,31 @@
 import { z } from "zod";
 
+/**
+ * Default values for rate limit configuration
+ */
+const RATE_LIMIT_DEFAULTS = {
+  CLEANUP_INTERVAL: 60_000, // 1 minute in milliseconds
+  SAFETY_MARGIN: 1_000, // 1 second in milliseconds
+} as const;
+
+/**
+ * Rate limiting configuration options
+ */
 export const RateLimitOptions = z
   .object({
-    cleanupInterval: z.number().int().positive().default(60_000),
-    safetyMargin: z.number().int().positive().default(50),
-    globalRateLimit: z.number().int().positive().default(50),
-    invalidRequestLimit: z.number().int().positive().default(10000),
-    invalidRequestWindow: z.number().int().positive().default(10),
-    defaultRetryDelay: z.number().int().positive().default(500),
+    /** Interval in milliseconds to clean up expired rate limit buckets */
+    cleanupInterval: z
+      .number()
+      .int()
+      .positive()
+      .default(RATE_LIMIT_DEFAULTS.CLEANUP_INTERVAL),
+
+    /** Additional time in milliseconds to wait before considering a rate limit expired */
+    safetyMargin: z
+      .number()
+      .int()
+      .positive()
+      .default(RATE_LIMIT_DEFAULTS.SAFETY_MARGIN),
   })
   .strict();
 

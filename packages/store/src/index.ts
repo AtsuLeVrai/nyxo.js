@@ -1,5 +1,3 @@
-import type { SetReturnType } from "type-fest";
-
 export type StorePredicate<K, V> =
   | ((value: V, key: K, map: Store<K, V>) => boolean)
   | Partial<V>;
@@ -77,14 +75,7 @@ export class Store<K, V> extends Map<K, V> {
   find(predicate: StorePredicate<K, V>): V | undefined {
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
-        if (
-          (
-            predicate as SetReturnType<
-              (value: V, key: K, map: Store<K, V>) => boolean,
-              V
-            >
-          )(value, key, this)
-        ) {
+        if (predicate(value, key, this)) {
           this.#updateAccessTime(key);
           return value;
         }
@@ -107,14 +98,7 @@ export class Store<K, V> extends Map<K, V> {
 
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
-        if (
-          (
-            predicate as SetReturnType<
-              (value: V, key: K, map: Store<K, V>) => boolean,
-              V
-            >
-          )(value, key, this)
-        ) {
+        if (predicate(value, key, this)) {
           newStore.set(key, value);
         }
       }

@@ -52,6 +52,10 @@ const gateway = new Gateway(rest, {
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
+  encodingType: "etf",
+  compression: {
+    compressionType: "zstd-stream",
+  },
 });
 
 gateway.on("debug", (...args) => {
@@ -83,3 +87,21 @@ gateway.on("dispatch", (...args) => {
 });
 
 gateway.connect();
+
+process.on("SIGINT", () => {
+  gateway.destroy();
+  rest.destroy();
+});
+
+process.on("SIGTERM", () => {
+  gateway.destroy();
+  rest.destroy();
+});
+
+process.on("unhandledRejection", (error) => {
+  console.error(error);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error(error);
+});
