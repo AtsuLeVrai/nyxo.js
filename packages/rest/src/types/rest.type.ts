@@ -32,7 +32,6 @@ export interface ApiRequestEvent {
   statusCode: number;
   latency: number;
   timestamp: number;
-  requestId: string;
 }
 
 export interface RestEventHandlers {

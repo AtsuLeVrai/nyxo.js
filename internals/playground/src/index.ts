@@ -27,10 +27,6 @@ rest.on("debug", (...args) => {
   console.log("[REST - DEBUG]", ...args);
 });
 
-rest.on("rateLimited", (...args) => {
-  console.log("[REST - RATE LIMITED]", ...args);
-});
-
 rest.on("rateLimitExceeded", (...args) => {
   console.log("[REST - RATE LIMIT EXCEEDED]", ...args);
 });
@@ -84,10 +80,6 @@ const gateway = new Gateway(rest, {
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
-  encodingType: "etf",
-  compression: {
-    compressionType: "zstd-stream",
-  },
 });
 
 gateway.on("debug", (...args) => {

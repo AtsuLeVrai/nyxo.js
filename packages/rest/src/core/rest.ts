@@ -1,3 +1,4 @@
+import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import type { BaseRouter } from "../base/index.js";
@@ -41,7 +42,7 @@ export class Rest extends EventEmitter<RestEventHandlers> {
   readonly sessions: SessionManager;
   readonly retry: RetryManager;
 
-  readonly #routerCache = new Map<string, Map<string, BaseRouter>>();
+  readonly #routerCache = new Store<string, Store<string, BaseRouter>>();
 
   constructor(options: z.input<typeof RestOptions>) {
     super();
@@ -255,7 +256,7 @@ export class Rest extends EventEmitter<RestEventHandlers> {
   ): T {
     let sessionRouters = this.#routerCache.get(sessionId);
     if (!sessionRouters) {
-      sessionRouters = new Map();
+      sessionRouters = new Store();
       this.#routerCache.set(sessionId, sessionRouters);
     }
 

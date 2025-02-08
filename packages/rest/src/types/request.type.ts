@@ -10,14 +10,12 @@ export interface RequestResponse<T = unknown> {
 export interface ParsedRequest {
   url: URL;
   options: Dispatcher.RequestOptions;
-  requestId: string;
 }
 
 export interface RequestErrorJson {
   name: string;
   message: string;
   statusCode: number;
-  requestId?: string;
   path?: string;
   method?: string;
 }

@@ -14,28 +14,21 @@ const PATH_REGEX = /^\/+/;
 export class RequestManager {
   readonly #rest: Rest;
   readonly #options: RestOptions;
-  readonly #requestTimeouts: Map<string, NodeJS.Timeout>;
 
   constructor(rest: Rest, options: RestOptions) {
     this.#rest = rest;
     this.#options = options;
-    this.#requestTimeouts = new Map();
   }
 
   async request<T>(options: ApiRequestOptions): Promise<RequestResponse<T>> {
     const requestStart = Date.now();
-    const requestId = this.#generateRequestId();
 
     try {
-      const preparedRequest = await this.#prepareRequest(options, requestId);
+      const preparedRequest = await this.#prepareRequest(options);
       const response = await request(preparedRequest.options);
       const responseBody = await this.#readResponseBody(response);
 
-      const result = await this.#processResponse<T>(
-        response,
-        responseBody,
-        requestId,
-      );
+      const result = await this.#processResponse<T>(response, responseBody);
 
       const duration = Date.now() - requestStart;
       result.duration = duration;
@@ -47,24 +40,20 @@ export class RequestManager {
         headers: result.headers,
         latency: duration,
         timestamp: Date.now(),
-        requestId: requestId,
       });
 
       return result;
     } catch (error) {
-      this.#handleRequestError(error, options, requestStart, requestId);
+      this.#handleRequestError(error, options, requestStart);
       throw error;
-    } finally {
-      this.#clearRequestTimeout(requestId);
     }
   }
 
   #prepareRequest(
     options: ApiRequestOptions,
-    requestId: string,
   ): Promise<ParsedRequest> | ParsedRequest {
     const url = this.#buildUrl(options.path);
-    const baseOptions = this.#buildBaseRequestOptions(options, url, requestId);
+    const baseOptions = this.#buildBaseRequestOptions(options, url);
 
     if (options.files) {
       return this.#handleFileUpload(options, baseOptions);
@@ -74,7 +63,7 @@ export class RequestManager {
       baseOptions.body = this.#serializeRequestBody(options.body);
     }
 
-    return { url, options: baseOptions, requestId };
+    return { url, options: baseOptions };
   }
 
   #buildUrl(path: string): URL {
@@ -88,24 +77,19 @@ export class RequestManager {
   #buildBaseRequestOptions(
     options: ApiRequestOptions,
     url: URL,
-    requestId: string,
   ): Dispatcher.RequestOptions {
     return {
       ...options,
       origin: url.origin,
       path: url.pathname + url.search,
-      headers: this.#buildRequestHeaders(options, requestId),
+      headers: this.#buildRequestHeaders(options),
     };
   }
 
-  #buildRequestHeaders(
-    options: ApiRequestOptions,
-    requestId: string,
-  ): Record<string, string> {
+  #buildRequestHeaders(options: ApiRequestOptions): Record<string, string> {
     const headers: Record<string, string> = {
       authorization: `${this.#options.authType} ${this.#options.token}`,
       "content-type": "application/json",
-      "x-request-id": requestId,
       "x-ratelimit-precision": "millisecond",
       "user-agent": this.#options.userAgent,
       accept: "application/json",
@@ -134,7 +118,6 @@ export class RequestManager {
       options.body,
     );
 
-    const requestId = this.#generateRequestId();
     return {
       url: new URL(baseOptions.path, baseOptions.origin),
       options: {
@@ -145,7 +128,6 @@ export class RequestManager {
           ...formData.getHeaders(),
         },
       },
-      requestId,
     };
   }
 
@@ -163,7 +145,6 @@ export class RequestManager {
   async #processResponse<T>(
     response: Dispatcher.ResponseData,
     bodyContent: Buffer,
-    requestId: string,
   ): Promise<RequestResponse<T>> {
     const headers = HeaderHandler.parse(response.headers).headers;
 
@@ -173,7 +154,6 @@ export class RequestManager {
         `HTTP ${response.statusCode} ${text}`,
         response.statusCode,
         headers,
-        { requestId },
       );
     }
 
@@ -190,7 +170,6 @@ export class RequestManager {
       bodyContent,
       response.statusCode,
       headers,
-      requestId,
     );
 
     return {
@@ -215,7 +194,6 @@ export class RequestManager {
     bodyContent: Buffer,
     statusCode: number,
     headers: Record<string, string>,
-    requestId: string,
   ): T {
     if (bodyContent.length === 0) {
       return {} as T;
@@ -224,9 +202,7 @@ export class RequestManager {
     try {
       return JSON.parse(bodyContent.toString()) as T;
     } catch {
-      throw new RequestError("Invalid JSON response", statusCode, headers, {
-        requestId,
-      });
+      throw new RequestError("Invalid JSON response", statusCode, headers);
     }
   }
 
@@ -234,12 +210,10 @@ export class RequestManager {
     error: unknown,
     options: ApiRequestOptions,
     startTime: number,
-    requestId: string,
   ): void {
     const duration = Date.now() - startTime;
 
     if (error instanceof RequestError) {
-      error.requestId = requestId;
       error.path = options.path;
       error.method = options.method;
     }
@@ -249,7 +223,6 @@ export class RequestManager {
       error instanceof Error ? error : new Error(String(error)),
       {
         context: {
-          requestId,
           path: options.path,
           method: options.method,
           duration,
@@ -257,17 +230,5 @@ export class RequestManager {
         },
       },
     );
-  }
-
-  #generateRequestId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
-  }
-
-  #clearRequestTimeout(requestId: string): void {
-    const timeoutId = this.#requestTimeouts.get(requestId);
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      this.#requestTimeouts.delete(requestId);
-    }
   }
 }

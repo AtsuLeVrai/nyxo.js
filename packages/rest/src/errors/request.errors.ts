@@ -3,7 +3,6 @@ import type { RequestErrorJson } from "../types/index.js";
 export class RequestError extends Error {
   statusCode: number;
   headers: Record<string, string>;
-  requestId?: string;
   path?: string;
   method?: string;
 
@@ -12,7 +11,6 @@ export class RequestError extends Error {
     statusCode: number,
     headers: Record<string, string>,
     options?: {
-      requestId?: string;
       path?: string;
       method?: string;
     },
@@ -21,7 +19,6 @@ export class RequestError extends Error {
     this.name = "RequestError";
     this.statusCode = statusCode;
     this.headers = headers;
-    this.requestId = options?.requestId;
     this.path = options?.path;
     this.method = options?.method;
   }
@@ -31,7 +28,6 @@ export class RequestError extends Error {
       name: this.name,
       message: this.message,
       statusCode: this.statusCode,
-      requestId: this.requestId,
       path: this.path,
       method: this.method,
     };
