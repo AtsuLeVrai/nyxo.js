@@ -15,8 +15,12 @@ rest.on("error", (...args) => {
   console.log("[REST - ERROR]", ...args);
 });
 
-rest.on("request", (...args) => {
+rest.on("requestFinish", (...args) => {
   console.log("[REST - REQUEST]", ...args);
+});
+
+rest.on("requestRetry", (...args) => {
+  console.log("[REST - REQUEST RETRY]", ...args);
 });
 
 rest.on("debug", (...args) => {
@@ -25,6 +29,34 @@ rest.on("debug", (...args) => {
 
 rest.on("rateLimited", (...args) => {
   console.log("[REST - RATE LIMITED]", ...args);
+});
+
+rest.on("rateLimitExceeded", (...args) => {
+  console.log("[REST - RATE LIMIT EXCEEDED]", ...args);
+});
+
+rest.on("bucketExpired", (...args) => {
+  console.log("[REST - BUCKET EXPIRED]", ...args);
+});
+
+rest.on("bucketCreated", (...args) => {
+  console.log("[REST - BUCKET CREATED]", ...args);
+});
+
+rest.on("bucketUpdated", (...args) => {
+  console.log("[REST - BUCKET UPDATED]", ...args);
+});
+
+rest.on("sessionCreated", (...args) => {
+  console.log("[REST - SESSION CREATED]", ...args);
+});
+
+rest.on("sessionDestroyed", (...args) => {
+  console.log("[REST - SESSION DESTROYED]", ...args);
+});
+
+rest.on("sessionUpdated", (...args) => {
+  console.log("[REST - SESSION UPDATED]", ...args);
 });
 
 const gateway = new Gateway(rest, {

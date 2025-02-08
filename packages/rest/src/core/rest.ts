@@ -1,7 +1,7 @@
 import { setTimeout } from "node:timers/promises";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { fromZodError } from "zod-validation-error";
 import { ApiError, RateLimitError } from "../errors/index.js";
 import { RateLimitManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
@@ -39,7 +39,12 @@ import type {
   RestEventHandlers,
 } from "../types/index.js";
 
-// Constants for request handling
+interface SessionInfo {
+  httpService: HttpService;
+  rateLimiter: RateLimitManager;
+  options: RestOptions;
+}
+
 const REQUEST_CONSTANTS = {
   MIN_RETRY_DELAY: 100,
   MAX_JITTER: 500,
@@ -55,26 +60,12 @@ const REQUEST_CONSTANTS = {
 } as const;
 
 export class Rest extends EventEmitter<RestEventHandlers> {
-  readonly http: HttpService;
-  readonly rateLimiter: RateLimitManager;
-  readonly #options: RestOptions;
+  readonly #sessions = new Map<string, SessionInfo>();
+  readonly #defaultSessionId: string = "default";
 
   constructor(options: z.input<typeof RestOptions>) {
     super();
-
-    try {
-      this.#options = RestOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
-    this.http = new HttpService(this, this.#options);
-    this.rateLimiter = new RateLimitManager(this.#options.rateLimit);
-  }
-
-  // Getters for options and routers
-  get options(): Readonly<RestOptions> {
-    return this.#options;
+    this.addSession(this.#defaultSessionId, options);
   }
 
   get applications(): ApplicationRouter {
@@ -177,10 +168,119 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     return new SubscriptionRouter(this);
   }
 
-  // Enhanced request method with better error handling and retry logic
-  async request<T>(options: ApiRequestOptions, attempt = 0): Promise<T> {
+  getSessionOptions(sessionId?: string): Readonly<RestOptions> {
+    const session = this.getSessionInfo(sessionId || this.#defaultSessionId);
+    return { ...session.options };
+  }
+
+  updateSessionOptions(
+    options: z.input<typeof RestOptions>,
+    sessionId?: string,
+  ): void {
+    const id = sessionId || this.#defaultSessionId;
+    const session = this.getSessionInfo(id);
+    const oldOptions = { ...session.options };
+
+    const updatedOptions = RestOptions.safeParse({
+      ...oldOptions,
+      ...options,
+    });
+    if (!updatedOptions.success) {
+      throw new Error(fromZodError(updatedOptions.error).message);
+    }
+
+    const httpService = new HttpService(this, updatedOptions.data);
+    const rateLimiter = new RateLimitManager(
+      this,
+      updatedOptions.data.rateLimit,
+    );
+    session.rateLimiter.destroy();
+
+    this.#sessions.set(id, {
+      httpService,
+      rateLimiter,
+      options: updatedOptions.data,
+    });
+
+    this.emit("sessionUpdated", {
+      sessionId: id,
+      timestamp: Date.now(),
+      oldOptions,
+      newOptions: updatedOptions.data,
+    });
+  }
+
+  getOption<K extends keyof RestOptions>(
+    key: K,
+    sessionId?: string,
+  ): RestOptions[K] {
+    const options = this.getSessionOptions(sessionId);
+    return options[key];
+  }
+
+  getOptions<K extends keyof RestOptions>(
+    keys: K[],
+    sessionId?: string,
+  ): Pick<RestOptions, K> {
+    const options = this.getSessionOptions(sessionId);
+    return keys.reduce(
+      (acc, key) => {
+        acc[key] = options[key];
+        return acc;
+      },
+      {} as Pick<RestOptions, K>,
+    );
+  }
+
+  addSession(sessionId: string, options: z.input<typeof RestOptions>): void {
+    if (this.#sessions.has(sessionId)) {
+      throw new Error(`Session ${sessionId} already exists`);
+    }
+
+    const parsedOptions = RestOptions.safeParse(options);
+    if (!parsedOptions.success) {
+      throw new Error(fromZodError(parsedOptions.error).message);
+    }
+
+    const httpService = new HttpService(this, parsedOptions.data);
+    const rateLimiter = new RateLimitManager(
+      this,
+      parsedOptions.data.rateLimit,
+    );
+
+    this.#sessions.set(sessionId, {
+      httpService,
+      rateLimiter,
+      options: parsedOptions.data,
+    });
+
+    this.emit("sessionCreated", {
+      sessionId,
+      timestamp: Date.now(),
+      options: parsedOptions.data,
+    });
+  }
+
+  getSessionInfo(sessionId?: string): SessionInfo {
+    const id = sessionId || this.#defaultSessionId;
+    const session = this.#sessions.get(id);
+
+    if (!session) {
+      throw new Error(`Session ${id} not found`);
+    }
+
+    return session;
+  }
+
+  async request<T>(
+    options: ApiRequestOptions,
+    sessionId?: string,
+    attempt = 0,
+  ): Promise<T> {
+    const session = this.getSessionInfo(sessionId);
+
     try {
-      return await this.#executeRequest<T>(options);
+      return await this.#executeRequest<T>(options, session);
     } catch (error) {
       const normalizedError = this.#normalizeError(error);
 
@@ -188,24 +288,29 @@ export class Rest extends EventEmitter<RestEventHandlers> {
         normalizedError,
         options,
         attempt,
+        session.options,
       );
 
-      if (!shouldRetry || attempt >= this.#options.retry.maxRetries) {
+      if (!shouldRetry || attempt >= session.options.retry.maxRetries) {
         throw normalizedError;
       }
 
-      return this.request(options, attempt + 1);
+      return this.request(options, sessionId, attempt + 1);
     }
   }
 
-  calculateRetryDelay(baseDelay: number, attempt: number): number {
+  calculateRetryDelay(
+    baseDelay: number,
+    attempt: number,
+    options: RestOptions,
+  ): number {
     const exponentialDelay = Math.min(
       baseDelay * 2 ** attempt,
-      this.#options.retry.maxDelay,
+      options.retry.maxDelay,
     );
 
     const maxJitter = Math.min(
-      exponentialDelay * this.#options.retry.jitter,
+      exponentialDelay * options.retry.jitter,
       REQUEST_CONSTANTS.MAX_JITTER,
     );
     const jitter = Math.random() * maxJitter;
@@ -216,17 +321,13 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     );
   }
 
-  // Calculate backoff with improved error handling
-  calculateBackoff(attempt: number): number {
+  calculateBackoff(attempt: number, options: RestOptions): number {
     const exponentialDelay = 1000 * 2 ** attempt;
-    const backoffDelay = Math.max(exponentialDelay);
-    const finalDelay = Math.min(backoffDelay, this.#options.retry.maxDelay);
-
-    const jitter = Math.random() * this.#options.retry.jitter * finalDelay;
+    const finalDelay = Math.min(exponentialDelay, options.retry.maxDelay);
+    const jitter = Math.random() * options.retry.jitter * finalDelay;
     return finalDelay + jitter;
   }
 
-  // Type guard for API error responses
   isJsonErrorEntity(error: unknown): error is JsonErrorResponse {
     return (
       typeof error === "object" &&
@@ -236,64 +337,95 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     );
   }
 
-  // HTTP method convenience wrappers
   get<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
+    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "GET", path });
+    return this.request<T>({ ...options, method: "GET", path }, sessionId);
   }
 
   post<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
+    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "POST", path });
+    return this.request<T>({ ...options, method: "POST", path }, sessionId);
   }
 
   put<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
+    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "PUT", path });
+    return this.request<T>({ ...options, method: "PUT", path }, sessionId);
   }
 
   patch<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
+    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "PATCH", path });
+    return this.request<T>({ ...options, method: "PATCH", path }, sessionId);
   }
 
   delete<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
+    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "DELETE", path });
+    return this.request<T>({ ...options, method: "DELETE", path }, sessionId);
   }
 
-  // Cleanup resources
+  getSessions(): string[] {
+    return Array.from(this.#sessions.keys());
+  }
+
+  hasSession(sessionId: string): boolean {
+    return this.#sessions.has(sessionId);
+  }
+
   destroy(): void {
-    this.rateLimiter.destroy();
+    for (const [, session] of this.#sessions) {
+      session.rateLimiter.destroy();
+    }
+
+    this.#sessions.clear();
     this.removeAllListeners();
   }
 
-  // Validate and process the request
-  async #executeRequest<T>(options: ApiRequestOptions): Promise<T> {
-    // Check rate limits before making the request
-    this.rateLimiter.checkRateLimit(options.path, options.method);
+  removeSession(sessionId: string): void {
+    if (sessionId === this.#defaultSessionId) {
+      throw new Error("Cannot remove default session");
+    }
 
-    const response = await this.http.request<T>(options);
+    const session = this.#sessions.get(sessionId);
+    if (session) {
+      session.rateLimiter.destroy();
+      this.#sessions.delete(sessionId);
 
-    // Update rate limit information after the request
-    this.rateLimiter.updateRateLimit(
+      this.emit("sessionDestroyed", {
+        sessionId,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  async #executeRequest<T>(
+    options: ApiRequestOptions,
+    session: SessionInfo,
+  ): Promise<T> {
+    session.rateLimiter.checkRateLimit(options.path, options.method);
+
+    const response = await session.httpService.request<T>(options);
+
+    session.rateLimiter.updateRateLimit(
       options.path,
       options.method,
       response.headers,
       response.statusCode,
     );
 
-    // Handle error responses
     if (response.statusCode >= 400 && this.isJsonErrorEntity(response.data)) {
       throw new ApiError(
         response.data,
@@ -306,61 +438,42 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     return response.data;
   }
 
-  // Handle different types of request errors
   async #handleRequestError(
     error: Error,
     options: ApiRequestOptions,
     attempt: number,
+    sessionOptions: RestOptions,
   ): Promise<boolean> {
-    if (!this.#shouldRetry(error, attempt)) {
+    if (!this.#shouldRetry(error, attempt, sessionOptions)) {
       return false;
     }
 
-    // Handle rate limit errors
     if (error instanceof RateLimitError) {
       const retryDelay = this.calculateRetryDelay(
         error.context.retryAfter,
         attempt,
+        sessionOptions,
       );
 
-      this.#emitDebugInfo("rate_limit", options, {
-        attempt,
-        delay: retryDelay,
-        retryAfter: error.context.retryAfter,
-      });
+      this.emit(
+        "debug",
+        `Rate limited on ${options.method} ${options.path}. Retrying in ${retryDelay}ms`,
+        {
+          attempt,
+          delay: retryDelay,
+          retryAfter: error.context.retryAfter,
+        },
+      );
 
       await setTimeout(retryDelay);
       return true;
     }
 
-    // Handle other retryable errors
-    const retryDelay = this.calculateBackoff(attempt);
-
-    this.#emitDebugInfo("retry", options, {
-      attempt,
-      delay: retryDelay,
-      error,
-    });
-
-    await setTimeout(retryDelay);
+    const backoffDelay = this.calculateBackoff(attempt, sessionOptions);
+    await setTimeout(backoffDelay);
     return true;
   }
 
-  // Emit debug information in a consistent format
-  #emitDebugInfo(
-    type: "rate_limit" | "retry",
-    options: ApiRequestOptions,
-    details: Record<string, unknown>,
-  ): void {
-    const message =
-      type === "rate_limit"
-        ? `Rate limited on ${options.method} ${options.path}. Retrying in ${details.delay}ms`
-        : `Request failed, retrying ${options.method} ${options.path}`;
-
-    this.emit("debug", message, details);
-  }
-
-  // Improved error normalization
   #normalizeError(error: unknown): Error {
     if (error instanceof Error) {
       return error;
@@ -368,48 +481,30 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     return new Error(typeof error === "string" ? error : JSON.stringify(error));
   }
 
-  // Enhanced retry decision logic
-  #shouldRetry(error: Error, attempt: number): boolean {
-    if (attempt >= this.#options.retry.maxRetries) {
+  #shouldRetry(error: Error, attempt: number, options: RestOptions): boolean {
+    if (attempt >= options.retry.maxRetries) {
       return false;
     }
 
-    // Handle API errors
     if (error instanceof ApiError) {
-      // Vérifier d'abord les codes non-retryables
-      if (this.#options.retry.nonRetryableStatusCodes.includes(error.status)) {
-        return false;
-      }
-      // Puis vérifier les codes retryables
-      return this.#options.retry.retryableStatusCodes.includes(error.status);
+      return options.retry.retryableStatusCodes.includes(error.status);
     }
 
-    // Handle rate limit errors
     if (error instanceof RateLimitError) {
-      return this.#options.retry.retryOn.rateLimits;
+      return options.retry.retryOn.rateLimits;
     }
 
-    // Handle network errors
     const errorMessage = error.message.toLowerCase();
-    const isNetworkError = this.#options.retry.retryableErrors.some((code) =>
+
+    const isNetworkError = options.retry.retryableErrors.some((code) =>
       errorMessage.includes(code.toLowerCase()),
     );
     if (isNetworkError) {
-      return this.#options.retry.retryOn.networkErrors;
+      return options.retry.retryOn.networkErrors;
     }
 
-    // Handle timeout errors
-    const isTimeoutError = errorMessage.includes("timeout");
-    if (isTimeoutError) {
-      return this.#options.retry.retryOn.timeouts;
-    }
-
-    // Handle non-retryable errors
-    const isNonRetryableError = this.#options.retry.nonRetryableErrors.some(
-      (code) => errorMessage.includes(code.toLowerCase()),
-    );
-    if (isNonRetryableError) {
-      return false;
+    if (errorMessage.includes("timeout")) {
+      return options.retry.retryOn.timeouts;
     }
 
     return false;

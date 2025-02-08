@@ -5,7 +5,6 @@ import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import type { RestOptions } from "../options/index.js";
 import type { ApiRequestOptions } from "../types/index.js";
 
-// Enhanced typings for HTTP responses
 export interface HttpResponse<T = unknown> {
   data: T;
   statusCode: number;
@@ -13,7 +12,6 @@ export interface HttpResponse<T = unknown> {
   duration: number;
 }
 
-// Constants
 const PATH_REGEX = /^\/+/;
 
 interface ParsedRequest {
@@ -22,7 +20,6 @@ interface ParsedRequest {
   requestId: string;
 }
 
-// Main HTTP Service class
 export class HttpService {
   readonly #rest: Rest;
   readonly #options: RestOptions;
@@ -34,11 +31,6 @@ export class HttpService {
     this.#requestTimeouts = new Map();
   }
 
-  /**
-   * Performs an HTTP request with the given options and returns the response
-   * Handles request preparation, execution, and response processing
-   * Emits request and error events for monitoring
-   */
   async request<T>(options: ApiRequestOptions): Promise<HttpResponse<T>> {
     const requestStart = Date.now();
     const requestId = this.#generateRequestId();
@@ -54,13 +46,17 @@ export class HttpService {
         requestId,
       );
 
-      // Calculate duration and emit metrics
       const duration = Date.now() - requestStart;
       result.duration = duration;
 
-      this.#emitRequestMetrics(options, response, result.headers, {
-        requestId,
-        duration,
+      this.#rest.emit("requestFinish", {
+        path: options.path,
+        method: options.method,
+        statusCode: response.statusCode,
+        headers: result.headers,
+        latency: duration,
+        timestamp: Date.now(),
+        requestId: requestId,
       });
 
       return result;
@@ -72,9 +68,6 @@ export class HttpService {
     }
   }
 
-  /**
-   * Prepares the request with enhanced headers and configurations
-   */
   #prepareRequest(
     options: ApiRequestOptions,
     requestId: string,
@@ -93,9 +86,6 @@ export class HttpService {
     return { url, options: baseOptions, requestId };
   }
 
-  /**
-   * Builds the complete URL for the request
-   */
   #buildUrl(path: string): URL {
     const cleanPath = path.replace(PATH_REGEX, "");
     return new URL(
@@ -104,9 +94,6 @@ export class HttpService {
     );
   }
 
-  /**
-   * Creates base request options with all necessary configurations
-   */
   #buildBaseRequestOptions(
     options: ApiRequestOptions,
     url: URL,
@@ -120,21 +107,17 @@ export class HttpService {
     };
   }
 
-  /**
-   * Builds enhanced request headers with security and tracking
-   */
   #buildRequestHeaders(
     options: ApiRequestOptions,
     requestId: string,
   ): Record<string, string> {
     const headers: Record<string, string> = {
-      authorization: `Bot ${this.#options.token}`,
+      authorization: `${this.#options.authType} ${this.#options.token}`,
       "content-type": "application/json",
       "x-request-id": requestId,
       "x-ratelimit-precision": "millisecond",
       "user-agent": this.#options.userAgent,
       accept: "application/json",
-      // "accept-encoding": "gzip, deflate",
       connection: "keep-alive",
       "x-api-version": `v${this.#options.version}`,
       ...HeaderHandler.parse(options.headers).headers,
@@ -147,9 +130,6 @@ export class HttpService {
     return headers;
   }
 
-  /**
-   * Handles file upload requests
-   */
   async #handleFileUpload(
     options: ApiRequestOptions,
     baseOptions: Dispatcher.RequestOptions,
@@ -178,9 +158,6 @@ export class HttpService {
     };
   }
 
-  /**
-   * Safely reads the response body
-   */
   async #readResponseBody(response: Dispatcher.ResponseData): Promise<Buffer> {
     try {
       return Buffer.from(await response.body.arrayBuffer());
@@ -192,9 +169,6 @@ export class HttpService {
     }
   }
 
-  /**
-   * Processes and validates the response
-   */
   async #processResponse<T>(
     response: Dispatcher.ResponseData,
     bodyContent: Buffer,
@@ -202,7 +176,6 @@ export class HttpService {
   ): Promise<HttpResponse<T>> {
     const headers = HeaderHandler.parse(response.headers).headers;
 
-    // Handle error responses
     if (response.statusCode >= 400) {
       const text = await response.body.text();
       throw new HttpError(
@@ -213,7 +186,6 @@ export class HttpService {
       );
     }
 
-    // Handle empty responses
     if (response.statusCode === 204) {
       return {
         data: {} as T,
@@ -223,7 +195,6 @@ export class HttpService {
       };
     }
 
-    // Parse and return response
     const data = this.#parseResponseBody<T>(
       bodyContent,
       response.statusCode,
@@ -239,9 +210,6 @@ export class HttpService {
     };
   }
 
-  /**
-   * Serializes request body to JSON
-   */
   #serializeRequestBody(body: unknown): string {
     try {
       return typeof body === "string" ? body : JSON.stringify(body);
@@ -252,9 +220,6 @@ export class HttpService {
     }
   }
 
-  /**
-   * Parses response body with error handling
-   */
   #parseResponseBody<T>(
     bodyContent: Buffer,
     statusCode: number,
@@ -274,32 +239,6 @@ export class HttpService {
     }
   }
 
-  /**
-   * Emits request metrics for monitoring
-   */
-  #emitRequestMetrics(
-    options: ApiRequestOptions,
-    response: Dispatcher.ResponseData,
-    headers: Record<string, string>,
-    context: {
-      requestId: string;
-      duration: number;
-    },
-  ): void {
-    this.#rest.emit("request", {
-      path: options.path,
-      method: options.method,
-      statusCode: response.statusCode,
-      headers,
-      latency: context.duration,
-      timestamp: Date.now(),
-      requestId: context.requestId,
-    });
-  }
-
-  /**
-   * Enhanced error handling with context
-   */
   #handleRequestError(
     error: unknown,
     options: ApiRequestOptions,
@@ -329,7 +268,6 @@ export class HttpService {
     );
   }
 
-  // Utility methods
   #generateRequestId(): string {
     return `req_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }

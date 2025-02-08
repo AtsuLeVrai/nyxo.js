@@ -7,7 +7,6 @@ export interface HttpErrorJson {
   method?: string;
 }
 
-// Enhanced error handling with more context
 export class HttpError extends Error {
   statusCode: number;
   headers: Record<string, string>;

@@ -1,9 +1,9 @@
 import { Store } from "@nyxjs/store";
+import type { Rest } from "../core/index.js";
 import { RateLimitError } from "../errors/index.js";
 import type { RateLimitOptions } from "../options/index.js";
 import type { RateLimitBucket, RateLimitScope } from "../types/index.js";
 
-// Type-safe header constants
 export const RATE_LIMIT_HEADERS = {
   LIMIT: "x-ratelimit-limit",
   REMAINING: "x-ratelimit-remaining",
@@ -15,7 +15,6 @@ export const RATE_LIMIT_HEADERS = {
   RETRY_AFTER: "retry-after",
 } as const;
 
-// Route configuration with strong typing
 export const ROUTES = {
   PATTERNS: {
     WEBHOOK: /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/,
@@ -49,15 +48,14 @@ export class RateLimitManager {
 
   readonly #options: RateLimitOptions;
   readonly #cleanupInterval: NodeJS.Timeout;
+  readonly #rest: Rest;
 
-  constructor(options: RateLimitOptions) {
+  constructor(rest: Rest, options: RateLimitOptions) {
+    this.#rest = rest;
     this.#options = options;
     this.#cleanupInterval = this.#startCleanupInterval();
   }
 
-  /**
-   * Checks if a request would exceed rate limits
-   */
   checkRateLimit(path: string, method: string): void {
     if (this.#isExemptRoute(path)) {
       return;
@@ -69,9 +67,6 @@ export class RateLimitManager {
     }
   }
 
-  /**
-   * Updates rate limit information based on response headers
-   */
   updateRateLimit(
     path: string,
     method: string,
@@ -92,9 +87,6 @@ export class RateLimitManager {
     this.#updateBucketInfo(path, method, headers);
   }
 
-  /**
-   * Generates a unique key for a route
-   */
   getRouteKey(method: string, path: string): string {
     const webhookMatch = path.match(ROUTES.PATTERNS.WEBHOOK);
     if (webhookMatch) {
@@ -111,9 +103,6 @@ export class RateLimitManager {
     return `${method}:${normalizedPath}`;
   }
 
-  /**
-   * Gets current rate limit status for a route
-   */
   getRateLimitStatus(
     path: string,
     method: string,
@@ -142,9 +131,6 @@ export class RateLimitManager {
     };
   }
 
-  /**
-   * Cleans up the manager resources
-   */
   destroy(): void {
     clearInterval(this.#cleanupInterval);
     this.#buckets.clear();
@@ -153,7 +139,6 @@ export class RateLimitManager {
     this.#attempts.clear();
   }
 
-  // Private methods
   #startCleanupInterval(): NodeJS.Timeout {
     return setInterval(
       () => this.#cleanupExpiredLimits(),
@@ -175,10 +160,11 @@ export class RateLimitManager {
     const scope =
       (headers[RATE_LIMIT_HEADERS.SCOPE] as RateLimitScope) ?? "user";
     const isGlobal = headers[RATE_LIMIT_HEADERS.GLOBAL] === "true";
+    const bucketHash = headers[RATE_LIMIT_HEADERS.BUCKET];
+    this.#rest.emit("rateLimitExceeded", bucketHash || routeKey, retryAfter);
 
     const attempt = this.#updateRateLimitAttempt(routeKey, retryAfter, scope);
 
-    // Ajuster le retryAfter en fonction du nombre de tentatives
     const adjustedRetryAfter = this.#calculateAdjustedRetryAfter(
       retryAfter,
       attempt.count,
@@ -195,7 +181,6 @@ export class RateLimitManager {
   }
 
   #calculateAdjustedRetryAfter(baseDelay: number, attempts: number): number {
-    // Facteur de base pour l'augmentation exponentielle
     const backoffFactor = Math.min(2 ** (attempts - 1), 8);
     return baseDelay * backoffFactor;
   }
@@ -228,6 +213,7 @@ export class RateLimitManager {
       return;
     }
 
+    const existingBucket = this.#buckets.get(bucketHash);
     const bucket: RateLimitBucket = {
       hash: bucketHash,
       limit: Number(headers[RATE_LIMIT_HEADERS.LIMIT]),
@@ -238,9 +224,26 @@ export class RateLimitManager {
       sharedRoute: this.#getSharedRoute(path),
     };
 
+    if (!existingBucket) {
+      this.#rest.emit(
+        "bucketCreated",
+        bucketHash,
+        this.getRouteKey(method, path),
+      );
+    } else if (
+      existingBucket.remaining !== bucket.remaining ||
+      existingBucket.resetAfter !== bucket.resetAfter
+    ) {
+      this.#rest.emit(
+        "bucketUpdated",
+        bucketHash,
+        bucket.remaining,
+        bucket.resetAfter,
+      );
+    }
+
     this.#buckets.set(bucketHash, bucket);
     this.#routeBuckets.set(this.getRouteKey(method, path), bucketHash);
-
     if (bucket.sharedRoute) {
       this.#linkSharedBucket(bucket.sharedRoute, bucketHash);
     }
@@ -316,23 +319,21 @@ export class RateLimitManager {
     const now = Date.now();
     const activeHashes = new Set<string>();
 
-    // Clean buckets
     for (const [hash, bucket] of this.#buckets.entries()) {
       if (bucket.reset < now) {
         this.#buckets.delete(hash);
+        this.#rest.emit("bucketExpired", hash);
       } else {
         activeHashes.add(hash);
       }
     }
 
-    // Clean route mappings
     for (const [route, hash] of this.#routeBuckets.entries()) {
       if (!activeHashes.has(hash)) {
         this.#routeBuckets.delete(route);
       }
     }
 
-    // Clean shared buckets
     for (const [route, hashes] of this.#sharedBuckets.entries()) {
       const validHashes = new Set(
         [...hashes].filter((hash) => activeHashes.has(hash)),
@@ -344,7 +345,6 @@ export class RateLimitManager {
       }
     }
 
-    // Clean attempts
     for (const [route, attempt] of this.#attempts.entries()) {
       if (attempt.nextReset < now) {
         this.#attempts.delete(route);

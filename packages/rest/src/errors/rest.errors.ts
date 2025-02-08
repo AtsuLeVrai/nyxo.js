@@ -22,14 +22,12 @@ export class ApiError extends Error {
     this.errors = error.errors;
   }
 
-  // Improved error message formatting
   override toString(): string {
     const baseMessage = `${this.name}[${this.code}]: ${this.message} (${this.method} ${this.url})`;
     if (!this.errors) {
       return baseMessage;
     }
 
-    // Format field errors if they exist
     const fieldErrors = Object.entries(this.errors)
       .map(
         ([field, { _errors }]) =>
