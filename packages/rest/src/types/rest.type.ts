@@ -1,6 +1,5 @@
 import type { Dispatcher } from "undici";
 import type { FileInput } from "./file.type.js";
-import type { RateLimitErrorContext } from "./rate-limit.type.js";
 import type { RetryAttemptEvent } from "./retry.type.js";
 import type {
   SessionCreatedEvent,
@@ -41,7 +40,6 @@ export interface RestEventHandlers {
   error: (error: Error | string, context?: Record<string, unknown>) => void;
   requestFinish: (request: ApiRequestEvent) => void;
   retryAttempt: (retry: RetryAttemptEvent) => void;
-  rateLimited: (context: RateLimitErrorContext) => void;
   rateLimitExceeded: (bucket: string, resetAfter: number) => void;
   bucketExpired: (bucketHash: string) => void;
   bucketCreated: (bucketHash: string, route: string) => void;

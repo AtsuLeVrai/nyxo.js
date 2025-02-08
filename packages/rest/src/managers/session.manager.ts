@@ -22,7 +22,7 @@ export class SessionManager {
 
   addSession(sessionId: string, options: z.input<typeof RestOptions>): void {
     if (this.#sessions.has(sessionId)) {
-      throw new Error(`La session ${sessionId} existe déjà`);
+      throw new Error(`Session ${sessionId} already exists`);
     }
 
     const parsedOptions = RestOptions.safeParse(options);
@@ -88,7 +88,7 @@ export class SessionManager {
   getSessionInfo(sessionId: string = this.#defaultSessionId): SessionInfo {
     const session = this.#sessions.get(sessionId);
     if (!session) {
-      throw new Error(`Session ${sessionId} introuvable`);
+      throw new Error(`Session ${sessionId} not found`);
     }
     return session;
   }
@@ -130,7 +130,7 @@ export class SessionManager {
 
   removeSession(sessionId: string): void {
     if (sessionId === this.#defaultSessionId) {
-      throw new Error("Impossible de supprimer la session par défaut");
+      throw new Error("Cannot remove the default session");
     }
 
     const session = this.#sessions.get(sessionId);
