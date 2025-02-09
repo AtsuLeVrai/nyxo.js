@@ -39,7 +39,7 @@
   },
   "scripts": {
     "build": "node ../../scripts/build.js",
-    "build:prod": "node ../../scripts/build.js --clean --production",
+    "build:prod": "node ../../scripts/build.js --production",
     "format": "biome format --write .",
     "lint": "biome lint --write --unsafe .",
     "check": "biome check --write --unsafe .",
