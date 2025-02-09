@@ -1,11 +1,16 @@
 import { ChannelPinsUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class ChannelPins {
   readonly #data: ChannelPinsUpdateEntity;
 
-  constructor(data: ChannelPinsUpdateEntity) {
-    this.#data = ChannelPinsUpdateEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ChannelPinsUpdateEntity>> = {}) {
+    try {
+      this.#data = ChannelPinsUpdateEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get guildId(): unknown | null {

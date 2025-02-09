@@ -1,11 +1,16 @@
 import { PollEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Poll {
   readonly #data: PollEntity;
 
-  constructor(data: PollEntity) {
-    this.#data = PollEntity.parse(data);
+  constructor(data: Partial<z.input<typeof PollEntity>> = {}) {
+    try {
+      this.#data = PollEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get question(): unknown {

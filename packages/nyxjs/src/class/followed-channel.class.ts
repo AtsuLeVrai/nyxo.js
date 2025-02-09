@@ -1,11 +1,16 @@
 import { FollowedChannelEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class FollowedChannel {
   readonly #data: FollowedChannelEntity;
 
-  constructor(data: FollowedChannelEntity) {
-    this.#data = FollowedChannelEntity.parse(data);
+  constructor(data: Partial<z.input<typeof FollowedChannelEntity>> = {}) {
+    try {
+      this.#data = FollowedChannelEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get channelId(): unknown {

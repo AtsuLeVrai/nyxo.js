@@ -1,11 +1,16 @@
 import { PollResultsEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class PollResults {
   readonly #data: PollResultsEntity;
 
-  constructor(data: PollResultsEntity) {
-    this.#data = PollResultsEntity.parse(data);
+  constructor(data: Partial<z.input<typeof PollResultsEntity>> = {}) {
+    try {
+      this.#data = PollResultsEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get isFinalized(): boolean {

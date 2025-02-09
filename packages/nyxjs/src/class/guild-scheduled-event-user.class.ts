@@ -1,11 +1,18 @@
 import { GuildScheduledEventUserEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class GuildScheduledEventUser {
   readonly #data: GuildScheduledEventUserEntity;
 
-  constructor(data: GuildScheduledEventUserEntity) {
-    this.#data = GuildScheduledEventUserEntity.parse(data);
+  constructor(
+    data: Partial<z.input<typeof GuildScheduledEventUserEntity>> = {},
+  ) {
+    try {
+      this.#data = GuildScheduledEventUserEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get guildScheduledEventId(): unknown {

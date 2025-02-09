@@ -1,11 +1,16 @@
 import { ReactionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Reaction {
   readonly #data: ReactionEntity;
 
-  constructor(data: ReactionEntity) {
-    this.#data = ReactionEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ReactionEntity>> = {}) {
+    try {
+      this.#data = ReactionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get count(): number {

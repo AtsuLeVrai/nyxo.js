@@ -15,7 +15,7 @@ export const ReadyEntity = z.object({
   guilds: z.array(UnavailableGuildEntity),
   session_id: z.string(),
   resume_gateway_url: z.string(),
-  shard: z.tuple([z.number().int(), z.number().int()]),
+  shard: z.tuple([z.number().int(), z.number().int()]).optional(),
   application: ApplicationEntity.pick({ id: true, flags: true }),
 });
 

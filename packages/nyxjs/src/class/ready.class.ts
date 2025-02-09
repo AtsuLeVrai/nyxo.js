@@ -1,23 +1,34 @@
+import type { ApiVersion, ApplicationEntity } from "@nyxjs/core";
 import { ReadyEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
+import { Application } from "./application.class.js";
+import { UnavailableGuild } from "./unavailable-guild.class.js";
+import { User } from "./user.class.js";
 
 export class Ready {
   readonly #data: ReadyEntity;
 
-  constructor(data: ReadyEntity) {
-    this.#data = ReadyEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ReadyEntity>> = {}) {
+    try {
+      this.#data = ReadyEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
-  get v(): unknown {
+  get v(): ApiVersion {
     return this.#data.v;
   }
 
-  get user(): object | null {
-    return this.#data.user ? { ...this.#data.user } : null;
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
-  get guilds(): object[] {
-    return Array.isArray(this.#data.guilds) ? [...this.#data.guilds] : [];
+  get guilds(): UnavailableGuild[] {
+    return Array.isArray(this.#data.guilds)
+      ? this.#data.guilds.map((guild) => new UnavailableGuild(guild))
+      : [];
   }
 
   get sessionId(): string {
@@ -28,12 +39,14 @@ export class Ready {
     return this.#data.resume_gateway_url;
   }
 
-  get shard(): unknown {
-    return this.#data.shard;
+  get shard(): [number, number] | null {
+    return this.#data.shard ?? null;
   }
 
-  get application(): object | null {
-    return this.#data.application ? { ...this.#data.application } : null;
+  get application(): Application | null {
+    return this.#data.application
+      ? new Application(this.#data.application as ApplicationEntity)
+      : null;
   }
 
   static fromJson(json: ReadyEntity): Ready {

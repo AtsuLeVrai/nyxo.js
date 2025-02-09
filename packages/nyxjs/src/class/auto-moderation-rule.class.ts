@@ -1,11 +1,16 @@
 import { AutoModerationRuleEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class AutoModerationRule {
   readonly #data: AutoModerationRuleEntity;
 
-  constructor(data: AutoModerationRuleEntity) {
-    this.#data = AutoModerationRuleEntity.parse(data);
+  constructor(data: Partial<z.input<typeof AutoModerationRuleEntity>> = {}) {
+    try {
+      this.#data = AutoModerationRuleEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

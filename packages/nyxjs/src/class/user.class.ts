@@ -1,11 +1,16 @@
 import { UserEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class User {
   readonly #data: UserEntity;
 
-  constructor(data: UserEntity) {
-    this.#data = UserEntity.parse(data);
+  constructor(data: Partial<z.input<typeof UserEntity>> = {}) {
+    try {
+      this.#data = UserEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

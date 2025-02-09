@@ -1,11 +1,16 @@
 import { WelcomeScreenChannelEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class WelcomeScreenChannel {
   readonly #data: WelcomeScreenChannelEntity;
 
-  constructor(data: WelcomeScreenChannelEntity) {
-    this.#data = WelcomeScreenChannelEntity.parse(data);
+  constructor(data: Partial<z.input<typeof WelcomeScreenChannelEntity>> = {}) {
+    try {
+      this.#data = WelcomeScreenChannelEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get channelId(): unknown {

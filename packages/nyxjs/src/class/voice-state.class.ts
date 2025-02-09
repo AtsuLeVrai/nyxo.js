@@ -1,11 +1,16 @@
 import { VoiceStateEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class VoiceState {
   readonly #data: VoiceStateEntity;
 
-  constructor(data: VoiceStateEntity) {
-    this.#data = VoiceStateEntity.parse(data);
+  constructor(data: Partial<z.input<typeof VoiceStateEntity>> = {}) {
+    try {
+      this.#data = VoiceStateEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get guildId(): unknown | null {

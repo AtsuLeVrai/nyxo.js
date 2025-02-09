@@ -1,11 +1,16 @@
 import { GuildPreviewEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class GuildPreview {
   readonly #data: GuildPreviewEntity;
 
-  constructor(data: GuildPreviewEntity) {
-    this.#data = GuildPreviewEntity.parse(data);
+  constructor(data: Partial<z.input<typeof GuildPreviewEntity>> = {}) {
+    try {
+      this.#data = GuildPreviewEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

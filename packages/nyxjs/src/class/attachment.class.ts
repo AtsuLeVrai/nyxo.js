@@ -1,11 +1,16 @@
 import { AttachmentEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Attachment {
   readonly #data: AttachmentEntity;
 
-  constructor(data: AttachmentEntity) {
-    this.#data = AttachmentEntity.parse(data);
+  constructor(data: Partial<z.input<typeof AttachmentEntity>> = {}) {
+    try {
+      this.#data = AttachmentEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

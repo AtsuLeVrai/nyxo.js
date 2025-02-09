@@ -1,11 +1,16 @@
 import { StageInstanceEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class StageInstance {
   readonly #data: StageInstanceEntity;
 
-  constructor(data: StageInstanceEntity) {
-    this.#data = StageInstanceEntity.parse(data);
+  constructor(data: Partial<z.input<typeof StageInstanceEntity>> = {}) {
+    try {
+      this.#data = StageInstanceEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

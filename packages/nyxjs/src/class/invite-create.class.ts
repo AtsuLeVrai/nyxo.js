@@ -1,11 +1,16 @@
 import { InviteCreateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class InviteCreate {
   readonly #data: InviteCreateEntity;
 
-  constructor(data: InviteCreateEntity) {
-    this.#data = InviteCreateEntity.parse(data);
+  constructor(data: Partial<z.input<typeof InviteCreateEntity>> = {}) {
+    try {
+      this.#data = InviteCreateEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get channelId(): unknown {

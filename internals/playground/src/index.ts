@@ -113,8 +113,11 @@ client.on("shardRateLimit", (data) => {
   console.log("[SHARD RATE LIMIT]", data);
 });
 
-client.on("ready", (data) => {
-  console.log("[READY]", data);
+client.on("ready", (ready) => {
+  console.log(
+    "[READY] Bot is ready",
+    ready.guilds.map((guild) => guild.id),
+  );
 });
 
 client.connect();

@@ -1,11 +1,16 @@
 import { ThreadMetadataEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class ThreadMetadata {
   readonly #data: ThreadMetadataEntity;
 
-  constructor(data: ThreadMetadataEntity) {
-    this.#data = ThreadMetadataEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ThreadMetadataEntity>> = {}) {
+    try {
+      this.#data = ThreadMetadataEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get archived(): boolean {

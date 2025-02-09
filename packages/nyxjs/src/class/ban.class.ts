@@ -1,11 +1,16 @@
 import { BanEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Ban {
   readonly #data: BanEntity;
 
-  constructor(data: BanEntity) {
-    this.#data = BanEntity.parse(data);
+  constructor(data: Partial<z.input<typeof BanEntity>> = {}) {
+    try {
+      this.#data = BanEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get reason(): string | null {

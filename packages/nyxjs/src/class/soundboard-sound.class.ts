@@ -1,11 +1,16 @@
 import { SoundboardSoundEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class SoundboardSound {
   readonly #data: SoundboardSoundEntity;
 
-  constructor(data: SoundboardSoundEntity) {
-    this.#data = SoundboardSoundEntity.parse(data);
+  constructor(data: Partial<z.input<typeof SoundboardSoundEntity>> = {}) {
+    try {
+      this.#data = SoundboardSoundEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get name(): string {

@@ -81,7 +81,7 @@ export const ApplicationEntity = z.object({
   primary_sku_id: Snowflake.optional(),
   slug: z.string().url().optional(),
   cover_image: z.string().optional(),
-  flags: z.nativeEnum(ApplicationFlags),
+  flags: z.union([z.nativeEnum(ApplicationFlags), z.number().int()]),
   approximate_guild_count: z.number().int().optional(),
   approximate_user_install_count: z.number().int().optional(),
   redirect_uris: z.array(z.string().url()).optional(),

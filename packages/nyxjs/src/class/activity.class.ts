@@ -1,11 +1,16 @@
 import { ActivityEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Activity {
   readonly #data: ActivityEntity;
 
-  constructor(data: ActivityEntity) {
-    this.#data = ActivityEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ActivityEntity>> = {}) {
+    try {
+      this.#data = ActivityEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get name(): string {

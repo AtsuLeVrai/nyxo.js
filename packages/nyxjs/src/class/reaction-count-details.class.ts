@@ -1,11 +1,16 @@
 import { ReactionCountDetailsEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class ReactionCountDetails {
   readonly #data: ReactionCountDetailsEntity;
 
-  constructor(data: ReactionCountDetailsEntity) {
-    this.#data = ReactionCountDetailsEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ReactionCountDetailsEntity>> = {}) {
+    try {
+      this.#data = ReactionCountDetailsEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get burst(): number {

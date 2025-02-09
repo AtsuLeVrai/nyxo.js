@@ -1,11 +1,16 @@
 import { PrivateThreadChannelEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class PrivateThreadChannel {
   readonly #data: PrivateThreadChannelEntity;
 
-  constructor(data: PrivateThreadChannelEntity) {
-    this.#data = PrivateThreadChannelEntity.parse(data);
+  constructor(data: Partial<z.input<typeof PrivateThreadChannelEntity>> = {}) {
+    try {
+      this.#data = PrivateThreadChannelEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

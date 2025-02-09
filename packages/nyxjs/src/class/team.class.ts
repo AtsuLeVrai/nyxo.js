@@ -1,11 +1,16 @@
 import { TeamEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Team {
   readonly #data: TeamEntity;
 
-  constructor(data: TeamEntity) {
-    this.#data = TeamEntity.parse(data);
+  constructor(data: Partial<z.input<typeof TeamEntity>> = {}) {
+    try {
+      this.#data = TeamEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get icon(): string | null {

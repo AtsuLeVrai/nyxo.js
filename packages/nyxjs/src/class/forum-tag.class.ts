@@ -1,11 +1,16 @@
 import { ForumTagEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class ForumTag {
   readonly #data: ForumTagEntity;
 
-  constructor(data: ForumTagEntity) {
-    this.#data = ForumTagEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ForumTagEntity>> = {}) {
+    try {
+      this.#data = ForumTagEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

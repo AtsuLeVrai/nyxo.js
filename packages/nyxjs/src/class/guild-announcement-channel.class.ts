@@ -1,11 +1,18 @@
 import { GuildAnnouncementChannelEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class GuildAnnouncementChannel {
   readonly #data: GuildAnnouncementChannelEntity;
 
-  constructor(data: GuildAnnouncementChannelEntity) {
-    this.#data = GuildAnnouncementChannelEntity.parse(data);
+  constructor(
+    data: Partial<z.input<typeof GuildAnnouncementChannelEntity>> = {},
+  ) {
+    try {
+      this.#data = GuildAnnouncementChannelEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

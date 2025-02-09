@@ -1,11 +1,16 @@
 import { EntitlementEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Entitlement {
   readonly #data: EntitlementEntity;
 
-  constructor(data: EntitlementEntity) {
-    this.#data = EntitlementEntity.parse(data);
+  constructor(data: Partial<z.input<typeof EntitlementEntity>> = {}) {
+    try {
+      this.#data = EntitlementEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

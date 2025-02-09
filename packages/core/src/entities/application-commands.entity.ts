@@ -169,6 +169,8 @@ export const BooleanOptionEntity = BaseApplicationCommandOptionEntity.extend({
   required: z.boolean().optional(),
 });
 
+export type BooleanOptionEntity = z.infer<typeof BooleanOptionEntity>;
+
 /**
  * User Option - {@link ApplicationCommandOptionType.User}
  */
@@ -177,6 +179,8 @@ export const UserOptionEntity = BaseApplicationCommandOptionEntity.extend({
   required: z.boolean().optional(),
 });
 
+export type UserOptionEntity = z.infer<typeof UserOptionEntity>;
+
 /**
  * Role Option - {@link ApplicationCommandOptionType.Role}
  */
@@ -184,6 +188,8 @@ export const RoleOptionEntity = BaseApplicationCommandOptionEntity.extend({
   type: z.literal(ApplicationCommandOptionType.Role),
   required: z.boolean().optional(),
 });
+
+export type RoleOptionEntity = z.infer<typeof RoleOptionEntity>;
 
 /**
  * Mentionable Option - {@link ApplicationCommandOptionType.Mentionable}
@@ -194,6 +200,8 @@ export const MentionableOptionEntity =
     required: z.boolean().optional(),
   });
 
+export type MentionableOptionEntity = z.infer<typeof MentionableOptionEntity>;
+
 /**
  * Attachment Option - {@link ApplicationCommandOptionType.Attachment}
  */
@@ -203,6 +211,8 @@ export const AttachmentOptionEntity = BaseApplicationCommandOptionEntity.extend(
     required: z.boolean().optional(),
   },
 );
+
+export type AttachmentOptionEntity = z.infer<typeof AttachmentOptionEntity>;
 
 /**
  * Union of all possible command options

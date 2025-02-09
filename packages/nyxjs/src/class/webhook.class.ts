@@ -1,11 +1,16 @@
 import { WebhookEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Webhook {
   readonly #data: WebhookEntity;
 
-  constructor(data: WebhookEntity) {
-    this.#data = WebhookEntity.parse(data);
+  constructor(data: Partial<z.input<typeof WebhookEntity>> = {}) {
+    try {
+      this.#data = WebhookEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

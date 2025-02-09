@@ -1,11 +1,16 @@
 import { VoiceRegionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class VoiceRegion {
   readonly #data: VoiceRegionEntity;
 
-  constructor(data: VoiceRegionEntity) {
-    this.#data = VoiceRegionEntity.parse(data);
+  constructor(data: Partial<z.input<typeof VoiceRegionEntity>> = {}) {
+    try {
+      this.#data = VoiceRegionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): string {

@@ -1,11 +1,18 @@
 import { AnnouncementThreadChannelEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class AnnouncementThreadChannel {
   readonly #data: AnnouncementThreadChannelEntity;
 
-  constructor(data: AnnouncementThreadChannelEntity) {
-    this.#data = AnnouncementThreadChannelEntity.parse(data);
+  constructor(
+    data: Partial<z.input<typeof AnnouncementThreadChannelEntity>> = {},
+  ) {
+    try {
+      this.#data = AnnouncementThreadChannelEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

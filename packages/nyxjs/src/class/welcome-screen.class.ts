@@ -1,11 +1,16 @@
 import { WelcomeScreenEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class WelcomeScreen {
   readonly #data: WelcomeScreenEntity;
 
-  constructor(data: WelcomeScreenEntity) {
-    this.#data = WelcomeScreenEntity.parse(data);
+  constructor(data: Partial<z.input<typeof WelcomeScreenEntity>> = {}) {
+    try {
+      this.#data = WelcomeScreenEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get description(): string | null {

@@ -1,11 +1,16 @@
 import { EmojiEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Emoji {
   readonly #data: EmojiEntity;
 
-  constructor(data: EmojiEntity) {
-    this.#data = EmojiEntity.parse(data);
+  constructor(data: Partial<z.input<typeof EmojiEntity>> = {}) {
+    try {
+      this.#data = EmojiEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown | null {

@@ -1,11 +1,16 @@
 import { PollMediaEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class PollMedia {
   readonly #data: PollMediaEntity;
 
-  constructor(data: PollMediaEntity) {
-    this.#data = PollMediaEntity.parse(data);
+  constructor(data: Partial<z.input<typeof PollMediaEntity>> = {}) {
+    try {
+      this.#data = PollMediaEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get text(): string | null {

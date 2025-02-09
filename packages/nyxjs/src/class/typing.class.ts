@@ -1,11 +1,16 @@
 import { TypingEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Typing {
   readonly #data: TypingEntity;
 
-  constructor(data: TypingEntity) {
-    this.#data = TypingEntity.parse(data);
+  constructor(data: Partial<z.input<typeof TypingEntity>> = {}) {
+    try {
+      this.#data = TypingEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get channelId(): unknown {

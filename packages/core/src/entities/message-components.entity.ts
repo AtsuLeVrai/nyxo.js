@@ -165,7 +165,6 @@ export const ButtonEntity = z
     url: z.string().url().optional(),
     disabled: z.boolean().default(false),
   })
-
   .superRefine((button, ctx) => {
     if (button.style === ButtonStyle.Link && !button.url) {
       ctx.addIssue({
@@ -208,7 +207,6 @@ export const ActionRowEntity = z
     type: z.literal(ComponentType.ActionRow).default(ComponentType.ActionRow),
     components: z.array(ComponentEntity).max(5),
   })
-
   .superRefine((row, ctx) => {
     const hasButton = row.components.some((c) => "style" in c);
     const hasSelectMenu = row.components.some(

@@ -1,11 +1,16 @@
 import { SubscriptionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Subscription {
   readonly #data: SubscriptionEntity;
 
-  constructor(data: SubscriptionEntity) {
-    this.#data = SubscriptionEntity.parse(data);
+  constructor(data: Partial<z.input<typeof SubscriptionEntity>> = {}) {
+    try {
+      this.#data = SubscriptionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

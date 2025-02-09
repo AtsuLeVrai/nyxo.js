@@ -1,11 +1,16 @@
 import { ThreadListSyncEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class ThreadListSync {
   readonly #data: ThreadListSyncEntity;
 
-  constructor(data: ThreadListSyncEntity) {
-    this.#data = ThreadListSyncEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ThreadListSyncEntity>> = {}) {
+    try {
+      this.#data = ThreadListSyncEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get guildId(): unknown {

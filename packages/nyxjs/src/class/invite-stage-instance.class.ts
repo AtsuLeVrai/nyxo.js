@@ -1,11 +1,16 @@
 import { InviteStageInstanceEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class InviteStageInstance {
   readonly #data: InviteStageInstanceEntity;
 
-  constructor(data: InviteStageInstanceEntity) {
-    this.#data = InviteStageInstanceEntity.parse(data);
+  constructor(data: Partial<z.input<typeof InviteStageInstanceEntity>> = {}) {
+    try {
+      this.#data = InviteStageInstanceEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get members(): object[] {

@@ -1,11 +1,16 @@
 import { DefaultReactionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class DefaultReaction {
   readonly #data: DefaultReactionEntity;
 
-  constructor(data: DefaultReactionEntity) {
-    this.#data = DefaultReactionEntity.parse(data);
+  constructor(data: Partial<z.input<typeof DefaultReactionEntity>> = {}) {
+    try {
+      this.#data = DefaultReactionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get emojiId(): unknown | null {

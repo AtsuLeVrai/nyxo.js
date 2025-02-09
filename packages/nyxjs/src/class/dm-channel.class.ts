@@ -1,11 +1,16 @@
 import { DmChannelEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class DmChannel {
   readonly #data: DmChannelEntity;
 
-  constructor(data: DmChannelEntity) {
-    this.#data = DmChannelEntity.parse(data);
+  constructor(data: Partial<z.input<typeof DmChannelEntity>> = {}) {
+    try {
+      this.#data = DmChannelEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

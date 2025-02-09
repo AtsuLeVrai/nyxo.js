@@ -1,11 +1,18 @@
 import { AutoModerationActionExecutionEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class AutoModerationActionExecution {
   readonly #data: AutoModerationActionExecutionEntity;
 
-  constructor(data: AutoModerationActionExecutionEntity) {
-    this.#data = AutoModerationActionExecutionEntity.parse(data);
+  constructor(
+    data: Partial<z.input<typeof AutoModerationActionExecutionEntity>> = {},
+  ) {
+    try {
+      this.#data = AutoModerationActionExecutionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get guildId(): unknown {

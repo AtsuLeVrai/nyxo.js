@@ -1,11 +1,16 @@
 import { ChannelMentionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class ChannelMention {
   readonly #data: ChannelMentionEntity;
 
-  constructor(data: ChannelMentionEntity) {
-    this.#data = ChannelMentionEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ChannelMentionEntity>> = {}) {
+    try {
+      this.#data = ChannelMentionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

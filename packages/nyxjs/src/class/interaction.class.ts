@@ -1,11 +1,16 @@
 import { InteractionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Interaction {
   readonly #data: InteractionEntity;
 
-  constructor(data: InteractionEntity) {
-    this.#data = InteractionEntity.parse(data);
+  constructor(data: Partial<z.input<typeof InteractionEntity>> = {}) {
+    try {
+      this.#data = InteractionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

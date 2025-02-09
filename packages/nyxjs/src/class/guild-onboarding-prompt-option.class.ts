@@ -1,11 +1,18 @@
 import { GuildOnboardingPromptOptionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class GuildOnboardingPromptOption {
   readonly #data: GuildOnboardingPromptOptionEntity;
 
-  constructor(data: GuildOnboardingPromptOptionEntity) {
-    this.#data = GuildOnboardingPromptOptionEntity.parse(data);
+  constructor(
+    data: Partial<z.input<typeof GuildOnboardingPromptOptionEntity>> = {},
+  ) {
+    try {
+      this.#data = GuildOnboardingPromptOptionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

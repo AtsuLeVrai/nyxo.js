@@ -1,11 +1,16 @@
 import { ThreadMemberUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class ThreadMember {
   readonly #data: ThreadMemberUpdateEntity;
 
-  constructor(data: ThreadMemberUpdateEntity) {
-    this.#data = ThreadMemberUpdateEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ThreadMemberUpdateEntity>> = {}) {
+    try {
+      this.#data = ThreadMemberUpdateEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown | null {

@@ -1,11 +1,16 @@
 import { UnavailableGuildEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class UnavailableGuild {
   readonly #data: UnavailableGuildEntity;
 
-  constructor(data: UnavailableGuildEntity) {
-    this.#data = UnavailableGuildEntity.parse(data);
+  constructor(data: Partial<z.input<typeof UnavailableGuildEntity>> = {}) {
+    try {
+      this.#data = UnavailableGuildEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

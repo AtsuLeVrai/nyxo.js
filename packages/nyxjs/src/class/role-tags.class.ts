@@ -1,11 +1,16 @@
 import { RoleTagsEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class RoleTags {
   readonly #data: RoleTagsEntity;
 
-  constructor(data: RoleTagsEntity) {
-    this.#data = RoleTagsEntity.parse(data);
+  constructor(data: Partial<z.input<typeof RoleTagsEntity>> = {}) {
+    try {
+      this.#data = RoleTagsEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get botId(): unknown | null {

@@ -1,11 +1,16 @@
 import { TeamMemberEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class TeamMember {
   readonly #data: TeamMemberEntity;
 
-  constructor(data: TeamMemberEntity) {
-    this.#data = TeamMemberEntity.parse(data);
+  constructor(data: Partial<z.input<typeof TeamMemberEntity>> = {}) {
+    try {
+      this.#data = TeamMemberEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get membershipState(): unknown {

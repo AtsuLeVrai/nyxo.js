@@ -1,11 +1,16 @@
 import { GuildWidgetSettingsEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class GuildWidgetSettings {
   readonly #data: GuildWidgetSettingsEntity;
 
-  constructor(data: GuildWidgetSettingsEntity) {
-    this.#data = GuildWidgetSettingsEntity.parse(data);
+  constructor(data: Partial<z.input<typeof GuildWidgetSettingsEntity>> = {}) {
+    try {
+      this.#data = GuildWidgetSettingsEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get enabled(): boolean {

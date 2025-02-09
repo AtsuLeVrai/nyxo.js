@@ -1,11 +1,16 @@
 import { StickerPackEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class StickerPack {
   readonly #data: StickerPackEntity;
 
-  constructor(data: StickerPackEntity) {
-    this.#data = StickerPackEntity.parse(data);
+  constructor(data: Partial<z.input<typeof StickerPackEntity>> = {}) {
+    try {
+      this.#data = StickerPackEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

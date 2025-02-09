@@ -1,11 +1,16 @@
 import { ConnectionEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Connection {
   readonly #data: ConnectionEntity;
 
-  constructor(data: ConnectionEntity) {
-    this.#data = ConnectionEntity.parse(data);
+  constructor(data: Partial<z.input<typeof ConnectionEntity>> = {}) {
+    try {
+      this.#data = ConnectionEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): string {

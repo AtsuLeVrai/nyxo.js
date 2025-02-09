@@ -1,11 +1,16 @@
 import { SkuEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class Sku {
   readonly #data: SkuEntity;
 
-  constructor(data: SkuEntity) {
-    this.#data = SkuEntity.parse(data);
+  constructor(data: Partial<z.input<typeof SkuEntity>> = {}) {
+    try {
+      this.#data = SkuEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): unknown {

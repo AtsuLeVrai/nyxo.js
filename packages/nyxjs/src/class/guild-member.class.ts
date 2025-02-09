@@ -1,11 +1,16 @@
 import { GuildMemberEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class GuildMember {
   readonly #data: GuildMemberEntity;
 
-  constructor(data: GuildMemberEntity) {
-    this.#data = GuildMemberEntity.parse(data);
+  constructor(data: Partial<z.input<typeof GuildMemberEntity>> = {}) {
+    try {
+      this.#data = GuildMemberEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get user(): unknown {

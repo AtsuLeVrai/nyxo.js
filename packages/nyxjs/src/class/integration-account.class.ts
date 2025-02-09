@@ -1,11 +1,16 @@
 import { IntegrationAccountEntity } from "@nyxjs/core";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class IntegrationAccount {
   readonly #data: IntegrationAccountEntity;
 
-  constructor(data: IntegrationAccountEntity) {
-    this.#data = IntegrationAccountEntity.parse(data);
+  constructor(data: Partial<z.input<typeof IntegrationAccountEntity>> = {}) {
+    try {
+      this.#data = IntegrationAccountEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get id(): string {

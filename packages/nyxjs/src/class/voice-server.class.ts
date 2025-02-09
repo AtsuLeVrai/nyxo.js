@@ -1,11 +1,16 @@
 import { VoiceServerUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export class VoiceServer {
   readonly #data: VoiceServerUpdateEntity;
 
-  constructor(data: VoiceServerUpdateEntity) {
-    this.#data = VoiceServerUpdateEntity.parse(data);
+  constructor(data: Partial<z.input<typeof VoiceServerUpdateEntity>> = {}) {
+    try {
+      this.#data = VoiceServerUpdateEntity.parse(data);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
   }
 
   get token(): string {
