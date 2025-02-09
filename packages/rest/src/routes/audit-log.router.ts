@@ -1,13 +1,19 @@
 import type { AuditLogEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import { GetGuildAuditLogQuerySchema } from "../schemas/index.js";
 
-export class AuditLogRouter extends BaseRouter {
+export class AuditLogRouter {
   static readonly ROUTES = {
     guildAuditLogs: (guildId: Snowflake) =>
       `/guilds/${guildId}/audit-logs` as const,
   } as const;
+
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log}
@@ -21,7 +27,7 @@ export class AuditLogRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {
+    return this.#rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {
       query: result.data,
     });
   }

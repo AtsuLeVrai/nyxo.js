@@ -1,6 +1,6 @@
 import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   BulkDeleteMessagesSchema,
   CreateMessageSchema,
@@ -9,7 +9,7 @@ import {
   GetReactionsQuerySchema,
 } from "../schemas/index.js";
 
-export class MessageRouter extends BaseRouter {
+export class MessageRouter {
   static readonly ROUTES = {
     channelMessages: (channelId: Snowflake) =>
       `/channels/${channelId}/messages` as const,
@@ -34,6 +34,12 @@ export class MessageRouter extends BaseRouter {
       `/channels/${channelId}/messages/bulk-delete` as const,
   } as const;
 
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-messages}
    */
@@ -46,7 +52,7 @@ export class MessageRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(MessageRouter.ROUTES.channelMessages(channelId), {
+    return this.#rest.get(MessageRouter.ROUTES.channelMessages(channelId), {
       query: result.data,
     });
   }
@@ -58,7 +64,7 @@ export class MessageRouter extends BaseRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
     );
   }
@@ -76,7 +82,7 @@ export class MessageRouter extends BaseRouter {
     }
 
     const { files, ...rest } = result.data;
-    return this.rest.post(MessageRouter.ROUTES.channelMessages(channelId), {
+    return this.#rest.post(MessageRouter.ROUTES.channelMessages(channelId), {
       body: JSON.stringify(rest),
       files: files,
     });
@@ -89,7 +95,7 @@ export class MessageRouter extends BaseRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.rest.post(
+    return this.#rest.post(
       MessageRouter.ROUTES.channelMessageCrosspost(channelId, messageId),
     );
   }
@@ -102,7 +108,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.rest.put(
+    return this.#rest.put(
       MessageRouter.ROUTES.channelMessageUserReaction(
         channelId,
         messageId,
@@ -119,7 +125,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.channelMessageUserReaction(
         channelId,
         messageId,
@@ -137,7 +143,7 @@ export class MessageRouter extends BaseRouter {
     emoji: string,
     userId: Snowflake,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.channelMessageUserReaction(
         channelId,
         messageId,
@@ -161,7 +167,7 @@ export class MessageRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(
+    return this.#rest.get(
       MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
       { query: result.data },
     );
@@ -174,7 +180,7 @@ export class MessageRouter extends BaseRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, ""),
     );
   }
@@ -187,7 +193,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
     );
   }
@@ -206,7 +212,7 @@ export class MessageRouter extends BaseRouter {
     }
 
     const { files, ...rest } = result.data;
-    return this.rest.patch(
+    return this.#rest.patch(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       {
         body: JSON.stringify(rest),
@@ -223,7 +229,7 @@ export class MessageRouter extends BaseRouter {
     messageId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       { reason },
     );
@@ -242,7 +248,7 @@ export class MessageRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
+    return this.#rest.post(
       MessageRouter.ROUTES.channelMessagesBulkDelete(channelId),
       {
         body: JSON.stringify(result.data),

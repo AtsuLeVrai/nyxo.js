@@ -1,4 +1,4 @@
-export interface RetryAttemptEvent {
+export interface RetryAttempt {
   error: Error;
   attempt: number;
   delay: number;

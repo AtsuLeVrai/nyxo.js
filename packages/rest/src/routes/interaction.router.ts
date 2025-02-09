@@ -6,13 +6,13 @@ import {
 } from "@nyxjs/core";
 import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   EditWebhookMessageSchema,
   ExecuteWebhookSchema,
 } from "../schemas/index.js";
 
-export class InteractionRouter extends BaseRouter {
+export class InteractionRouter {
   static readonly ROUTES = {
     interactionCreateResponse: (
       interactionId: Snowflake,
@@ -57,6 +57,12 @@ export class InteractionRouter extends BaseRouter {
       `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
   } as const;
 
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#create-interaction-response}
    */
@@ -71,7 +77,7 @@ export class InteractionRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
+    return this.#rest.post(
       InteractionRouter.ROUTES.interactionCreateResponse(
         interactionId,
         interactionToken,
@@ -90,7 +96,7 @@ export class InteractionRouter extends BaseRouter {
     applicationId: Snowflake,
     interactionToken: string,
   ): Promise<MessageEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       InteractionRouter.ROUTES.webhookOriginalResponseGet(
         applicationId,
         interactionToken,
@@ -111,7 +117,7 @@ export class InteractionRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(
+    return this.#rest.patch(
       InteractionRouter.ROUTES.webhookOriginalResponseEdit(
         applicationId,
         interactionToken,
@@ -129,7 +135,7 @@ export class InteractionRouter extends BaseRouter {
     applicationId: Snowflake,
     interactionToken: string,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       InteractionRouter.ROUTES.webhookOriginalResponseDelete(
         applicationId,
         interactionToken,
@@ -150,7 +156,7 @@ export class InteractionRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
+    return this.#rest.post(
       InteractionRouter.ROUTES.webhookFollowupMessageCreate(
         applicationId,
         interactionToken,
@@ -169,7 +175,7 @@ export class InteractionRouter extends BaseRouter {
     interactionToken: string,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       InteractionRouter.ROUTES.webhookFollowupMessageGet(
         applicationId,
         interactionToken,
@@ -192,7 +198,7 @@ export class InteractionRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(
+    return this.#rest.patch(
       InteractionRouter.ROUTES.webhookFollowupMessageEdit(
         applicationId,
         interactionToken,
@@ -212,7 +218,7 @@ export class InteractionRouter extends BaseRouter {
     interactionToken: string,
     messageId: Snowflake,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       InteractionRouter.ROUTES.webhookFollowupMessageDelete(
         applicationId,
         interactionToken,

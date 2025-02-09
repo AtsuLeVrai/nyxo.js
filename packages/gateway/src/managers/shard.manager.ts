@@ -2,7 +2,7 @@ import { setTimeout } from "node:timers/promises";
 import { Store } from "@nyxjs/store";
 import type { Gateway } from "../core/index.js";
 import type { ShardOptions } from "../options/index.js";
-import type { ShardData } from "../types/index.js";
+import type { ShardData, ShardStatus } from "../types/index.js";
 
 export class ShardManager {
   #shards = new Store<number, ShardData>();
@@ -68,8 +68,19 @@ export class ShardManager {
   }
 
   async getAvailableShard(): Promise<[number, number]> {
+    let attempts = 0;
+
     for (const [shardId, shard] of this.#shards.entries()) {
       if (this.isShardBucketAvailable(shard.bucket)) {
+        if (shard.status === "reconnecting") {
+          this.#gateway.emit("shardReconnect", {
+            shardId,
+            totalShards: shard.totalShards,
+            attempts: ++attempts,
+            delay: this.#options.spawnDelay,
+          });
+        }
+
         shard.rateLimit.remaining--;
         this.setShardStatus(shardId, "connecting");
         return [shardId, shard.totalShards];
@@ -151,14 +162,35 @@ export class ShardManager {
     return this.getShardInfo(shardId);
   }
 
-  setShardStatus(shardId: number, status: ShardData["status"]): void {
+  setShardStatus(shardId: number, status: ShardStatus): void {
     const shard = this.#shards.get(shardId);
 
     if (!shard) {
       throw new Error(`Shard ${shardId} not found`);
     }
 
+    const oldStatus = shard.status;
     shard.status = status;
+
+    if (status === "disconnected" && oldStatus !== "disconnected") {
+      this.#gateway.emit("shardDisconnect", {
+        shardId,
+        totalShards: shard.totalShards,
+        code: 1006,
+        reason: "Connection closed",
+        wasClean: false,
+      });
+    }
+
+    if (status === "resuming") {
+      this.#gateway.emit("shardResume", {
+        shardId,
+        totalShards: shard.totalShards,
+        sessionId: this.#gateway.session.sessionId ?? "",
+        replayedEvents: 0,
+        latency: this.#gateway.heartbeat.latency,
+      });
+    }
   }
 
   isDmShard(shardId: number): boolean {
@@ -166,14 +198,8 @@ export class ShardManager {
   }
 
   destroy(): void {
-    for (const [shardId, shard] of this.#shards.entries()) {
+    for (const [shardId] of this.#shards.entries()) {
       this.setShardStatus(shardId, "disconnected");
-      this.#gateway.emit("shardUpdate", {
-        type: "destroy",
-        shardId,
-        totalShards: shard.totalShards,
-        guildCount: shard.guildCount,
-      });
     }
 
     this.#shards.clear();
@@ -193,6 +219,19 @@ export class ShardManager {
         (shard) => shard.rateLimit.reset,
       ),
     );
+
+    for (const shard of this.#shards.values()) {
+      if (shard.rateLimit.remaining === 0) {
+        this.#gateway.emit("shardRateLimit", {
+          shardId: shard.shardId,
+          totalShards: shard.totalShards,
+          bucket: shard.bucket,
+          timeout: nextReset - Date.now(),
+          remaining: 0,
+          reset: nextReset,
+        });
+      }
+    }
 
     const delay = nextReset - Date.now();
     if (delay > 0) {
@@ -357,10 +396,11 @@ export class ShardManager {
       },
     });
 
-    this.#gateway.emit("shardUpdate", {
-      type: "spawn",
+    this.#gateway.emit("shardReady", {
       shardId,
       totalShards,
+      sessionId: this.#gateway.session.sessionId ?? "",
+      latency: this.#gateway.heartbeat.latency,
       guildCount: 0,
     });
 

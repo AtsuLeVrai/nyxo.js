@@ -21,15 +21,14 @@ import {
 } from "../services/index.js";
 import {
   ConnectionState,
-  type GatewayCloseCodes,
-  type GatewayEvents,
+  type GatewayEventHandlers,
   GatewayOpcodes,
   type GatewaySendEvents,
   type HealthStatus,
   type PayloadEntity,
 } from "../types/index.js";
 
-export class Gateway extends EventEmitter<GatewayEvents> {
+export class Gateway extends EventEmitter<GatewayEventHandlers> {
   readonly heartbeat: HeartbeatManager;
   readonly shard: ShardManager;
   readonly compression: CompressionService;
@@ -199,7 +198,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#ws?.send(this.encoding.encode(payload));
   }
 
-  destroy(code: GatewayCloseCodes = 4000): void {
+  destroy(code = 1000): void {
     this.emit("debug", `Destroying connection with code ${code}`);
 
     try {
@@ -275,7 +274,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this.heartbeat.latency,
       );
 
-      this.emit("healthUpdate", healthStatus);
+      this.emit("healthStatus", healthStatus);
 
       if (this.health.shouldTakeAction(healthStatus)) {
         await this.#handleUnhealthyConnection(healthStatus);

@@ -1,12 +1,12 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   type ActivityInstanceEntity,
   EditCurrentApplicationSchema,
 } from "../schemas/index.js";
 
-export class ApplicationRouter extends BaseRouter {
+export class ApplicationRouter {
   static readonly ROUTES = {
     applicationsMe: "/applications/@me" as const,
     applicationsActivityInstance: (
@@ -16,11 +16,17 @@ export class ApplicationRouter extends BaseRouter {
       `/applications/${applicationId}/activity-instances/${instanceId}` as const,
   } as const;
 
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.rest.get(ApplicationRouter.ROUTES.applicationsMe);
+    return this.#rest.get(ApplicationRouter.ROUTES.applicationsMe);
   }
 
   /**
@@ -34,7 +40,7 @@ export class ApplicationRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
+    return this.#rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
       body: JSON.stringify(result.data),
     });
   }
@@ -46,7 +52,7 @@ export class ApplicationRouter extends BaseRouter {
     applicationId: Snowflake,
     instanceId: string,
   ): Promise<ActivityInstanceEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       ApplicationRouter.ROUTES.applicationsActivityInstance(
         applicationId,
         instanceId,

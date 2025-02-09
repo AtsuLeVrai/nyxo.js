@@ -67,6 +67,19 @@ import type {
   WebhookUpdateEntity,
 } from "../events/index.js";
 import type { HealthStatus } from "./health.type.js";
+import type {
+  SessionClose,
+  SessionInvalid,
+  SessionState,
+} from "./session.type.js";
+import type {
+  ShardDisconnect,
+  ShardRateLimit,
+  ShardReady,
+  ShardReconnect,
+  ShardResume,
+  ShardStats,
+} from "./shard.type.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
@@ -174,30 +187,18 @@ export interface PayloadEntity {
   t: keyof GatewayReceiveEvents | null;
 }
 
-export interface SessionStatus {
-  type: "start" | "end" | "invalid";
-  sessionId?: string;
-  resumable?: boolean;
-  code?: number;
-}
-
-export interface HeartbeatStatus {
-  type: "start" | "stop" | "success";
-  interval?: number;
-}
-
-export interface ShardStatus {
-  type: "spawn" | "ready" | "destroy";
-  shardId: number;
-  totalShards: number;
-  guildCount: number;
-}
-
-export interface GatewayEvents {
-  heartbeatUpdate: (heartbeat: HeartbeatStatus) => void;
-  sessionUpdate: (session: SessionStatus) => void;
-  healthUpdate: (health: HealthStatus) => void;
-  shardUpdate: (status: ShardStatus) => void;
+export interface GatewayEventHandlers {
+  sessionState: (session: SessionState) => void;
+  sessionClose: (session: SessionClose) => void;
+  sessionInvalid: (session: SessionInvalid) => void;
+  healthStatus: (health: HealthStatus) => void;
+  shardSpawn: (stats: ShardStats) => void;
+  shardDestroy: (stats: ShardStats) => void;
+  shardReady: (data: ShardReady) => void;
+  shardDisconnect: (data: ShardDisconnect) => void;
+  shardReconnect: (data: ShardReconnect) => void;
+  shardResume: (data: ShardResume) => void;
+  shardRateLimit: (data: ShardRateLimit) => void;
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (message: string | Error, context?: Record<string, unknown>) => void;
   dispatch: <K extends keyof GatewayReceiveEvents>(
@@ -249,24 +250,4 @@ export enum GatewayOpcodes {
   Hello = 10,
   HeartbeatAck = 11,
   RequestSoundboardSounds = 31,
-}
-
-/**
- * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes}
- */
-export enum GatewayCloseCodes {
-  UnknownError = 4000,
-  UnknownOpcode = 4001,
-  DecodeError = 4002,
-  NotAuthenticated = 4003,
-  AuthenticationFailed = 4004,
-  AlreadyAuthenticated = 4005,
-  InvalidSeq = 4007,
-  RateLimited = 4008,
-  SessionTimedOut = 4009,
-  InvalidShard = 4010,
-  ShardingRequired = 4011,
-  InvalidApiVersion = 4012,
-  InvalidIntents = 4013,
-  DisallowedIntents = 4014,
 }

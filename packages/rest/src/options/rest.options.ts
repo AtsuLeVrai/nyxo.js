@@ -1,8 +1,14 @@
 import { ApiVersion } from "@nyxjs/core";
 import { z } from "zod";
-import { API_CONSTANTS } from "../constants/index.js";
 import { RateLimitOptions } from "./rate-limit.options.js";
 import { RetryOptions } from "./retry.options.js";
+
+const REST_DEFAULTS = {
+  AUTH_TYPE: "Bot",
+  VERSION: ApiVersion.V10,
+  USER_AGENT: "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
+  BASE_URL: "https://discord.com/api",
+} as const;
 
 /** @see {@link https://discord.com/developers/docs/reference#user-agent} */
 export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
@@ -10,18 +16,17 @@ export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
 export const RestOptions = z
   .object({
     token: z.string(),
-    authType: z
-      .enum(["Bot", "Bearer"])
-      .default(API_CONSTANTS.DEFAULTS.AUTH_TYPE),
-    version: z.literal(ApiVersion.V10).default(API_CONSTANTS.DEFAULTS.VERSION),
+    authType: z.enum(["Bot", "Bearer"]).default(REST_DEFAULTS.AUTH_TYPE),
+    version: z.literal(ApiVersion.V10).default(REST_DEFAULTS.VERSION),
     userAgent: z
       .string()
       .regex(DISCORD_USER_AGENT_REGEX)
-      .default(API_CONSTANTS.DEFAULTS.USER_AGENT),
-    baseUrl: z.string().url().default(API_CONSTANTS.DEFAULTS.BASE_URL),
+      .default(REST_DEFAULTS.USER_AGENT),
+    baseUrl: z.string().url().default(REST_DEFAULTS.BASE_URL),
     rateLimit: RateLimitOptions.default({}),
     retry: RetryOptions.default({}),
   })
-  .strict();
+  .strict()
+  .readonly();
 
 export type RestOptions = z.infer<typeof RestOptions>;

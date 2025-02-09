@@ -2,6 +2,7 @@ import type { ReconnectionOptions } from "../options/index.js";
 
 export class ReconnectionService {
   #attempts = 0;
+
   readonly #options: ReconnectionOptions;
 
   constructor(options: ReconnectionOptions) {

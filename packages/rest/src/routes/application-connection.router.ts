@@ -4,13 +4,19 @@ import {
 } from "@nyxjs/core";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 
-export class ApplicationConnectionRouter extends BaseRouter {
+export class ApplicationConnectionRouter {
   static readonly ROUTES = {
     applicationsRoleConnectionsMetadata: (applicationId: Snowflake) =>
       `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
+
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records}
@@ -18,7 +24,7 @@ export class ApplicationConnectionRouter extends BaseRouter {
   getApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.rest.get(
+    return this.#rest.get(
       ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
         applicationId,
       ),
@@ -40,7 +46,7 @@ export class ApplicationConnectionRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.put(
+    return this.#rest.put(
       ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
         applicationId,
       ),

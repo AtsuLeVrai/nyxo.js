@@ -1,6 +1,6 @@
 import type { Snowflake, WebhookEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateWebhookSchema,
   EditWebhookMessageSchema,
@@ -10,7 +10,7 @@ import {
   ModifyWebhookSchema,
 } from "../schemas/index.js";
 
-export class WebhookRouter extends BaseRouter {
+export class WebhookRouter {
   static readonly ROUTES = {
     channelWebhooks: (channelId: Snowflake) =>
       `/channels/${channelId}/webhooks` as const,
@@ -30,6 +30,12 @@ export class WebhookRouter extends BaseRouter {
     ) => `/webhooks/${webhookId}/${token}/messages/${messageId}` as const,
   } as const;
 
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook}
    */
@@ -43,7 +49,7 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(WebhookRouter.ROUTES.channelWebhooks(channelId), {
+    return this.#rest.post(WebhookRouter.ROUTES.channelWebhooks(channelId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -53,21 +59,21 @@ export class WebhookRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
    */
   getChannelWebhooks(channelId: Snowflake): Promise<WebhookEntity[]> {
-    return this.rest.get(WebhookRouter.ROUTES.channelWebhooks(channelId));
+    return this.#rest.get(WebhookRouter.ROUTES.channelWebhooks(channelId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
    */
   getGuildWebhooks(guildId: Snowflake): Promise<WebhookEntity[]> {
-    return this.rest.get(WebhookRouter.ROUTES.guildWebhooks(guildId));
+    return this.#rest.get(WebhookRouter.ROUTES.guildWebhooks(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
    */
   getWebhook(webhookId: Snowflake): Promise<WebhookEntity> {
-    return this.rest.get(WebhookRouter.ROUTES.webhookBase(webhookId));
+    return this.#rest.get(WebhookRouter.ROUTES.webhookBase(webhookId));
   }
 
   /**
@@ -77,7 +83,7 @@ export class WebhookRouter extends BaseRouter {
     webhookId: Snowflake,
     token: string,
   ): Promise<WebhookEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
     );
   }
@@ -95,7 +101,7 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(WebhookRouter.ROUTES.webhookBase(webhookId), {
+    return this.#rest.patch(WebhookRouter.ROUTES.webhookBase(webhookId), {
       body: JSON.stringify(result.data),
       reason,
     });
@@ -115,7 +121,7 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(
+    return this.#rest.patch(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
       {
         body: JSON.stringify(result.data),
@@ -128,7 +134,7 @@ export class WebhookRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
    */
   deleteWebhook(webhookId: Snowflake, reason?: string): Promise<void> {
-    return this.rest.delete(WebhookRouter.ROUTES.webhookBase(webhookId), {
+    return this.#rest.delete(WebhookRouter.ROUTES.webhookBase(webhookId), {
       reason,
     });
   }
@@ -141,7 +147,7 @@ export class WebhookRouter extends BaseRouter {
     token: string,
     reason?: string,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
       {
         reason,
@@ -169,7 +175,7 @@ export class WebhookRouter extends BaseRouter {
     }
 
     const { files, ...rest } = resultSchema.data;
-    return this.rest.post(
+    return this.#rest.post(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
       {
         body: JSON.stringify(rest),
@@ -192,7 +198,7 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
+    return this.#rest.post(
       WebhookRouter.ROUTES.webhookWithTokenSlack(webhookId, token),
       {
         query: result.data,
@@ -213,7 +219,7 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
+    return this.#rest.post(
       WebhookRouter.ROUTES.webhookWithTokenGithub(webhookId, token),
       {
         query: result.data,
@@ -235,7 +241,7 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(
+    return this.#rest.get(
       WebhookRouter.ROUTES.webhookTokenMessage(webhookId, token, messageId),
       {
         query: result.data,
@@ -264,7 +270,7 @@ export class WebhookRouter extends BaseRouter {
     }
 
     const { files, ...rest } = resultSchema.data;
-    return this.rest.patch(
+    return this.#rest.patch(
       WebhookRouter.ROUTES.webhookTokenMessage(webhookId, token, messageId),
       {
         body: JSON.stringify(rest),
@@ -288,7 +294,7 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.delete(
+    return this.#rest.delete(
       WebhookRouter.ROUTES.webhookTokenMessage(webhookId, token, messageId),
       {
         query: result.data,

@@ -2,9 +2,7 @@ import erlpack from "erlpack";
 import type { EncodingType } from "../options/index.js";
 import type { PayloadEntity } from "../types/index.js";
 
-const ENCODING_CONSTANTS = {
-  maxPayloadSize: 4096,
-} as const;
+const MAX_PAYLOAD_SIZE = 4096;
 
 export class EncodingService {
   readonly #encodingType: EncodingType;
@@ -51,10 +49,8 @@ export class EncodingService {
   #validatePayloadSize(data: Buffer | string): void {
     const size = Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
 
-    if (size > ENCODING_CONSTANTS.maxPayloadSize) {
-      throw new Error(
-        `Payload exceeds ${ENCODING_CONSTANTS.maxPayloadSize} bytes`,
-      );
+    if (size > MAX_PAYLOAD_SIZE) {
+      throw new Error(`Payload exceeds ${MAX_PAYLOAD_SIZE} bytes`);
     }
   }
 

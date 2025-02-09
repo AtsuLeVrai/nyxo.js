@@ -1,5 +1,4 @@
 import { setTimeout } from "node:timers/promises";
-import { REQUEST_CONSTANTS } from "../constants/index.js";
 import type { Rest } from "../core/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
 import type { RetryOptions } from "../options/index.js";
@@ -81,14 +80,11 @@ export class RetryManager {
 
     const maxJitter = Math.min(
       exponentialDelay * this.#options.jitter,
-      REQUEST_CONSTANTS.MAX_JITTER,
+      this.#options.maxJitter,
     );
     const jitter = Math.random() * maxJitter;
 
-    return Math.max(
-      exponentialDelay + jitter,
-      REQUEST_CONSTANTS.MIN_RETRY_DELAY,
-    );
+    return Math.max(exponentialDelay + jitter, this.#options.minDelay);
   }
 
   #calculateBackoffDelay(attempt: number): number {

@@ -8,13 +8,12 @@ import {
   type ReadyEntity,
 } from "../events/index.js";
 import {
-  type GatewayCloseCodes,
   GatewayOpcodes,
   type GatewayReceiveEvents,
   type PayloadEntity,
 } from "../types/index.js";
 
-export const NON_RESUMABLE_CODES: GatewayCloseCodes[] = [
+const NON_RESUMABLE_CODES: number[] = [
   4004, // Authentication failed
   4010, // Invalid shard
   4011, // Sharding required
@@ -77,8 +76,7 @@ export class OperationHandler {
     this.#gateway.heartbeat.destroy();
 
     if (this.#gateway.session.sessionId) {
-      this.#gateway.emit("sessionUpdate", {
-        type: "end",
+      this.#gateway.emit("sessionClose", {
         sessionId: this.#gateway.session.sessionId,
         code,
       });
@@ -88,8 +86,7 @@ export class OperationHandler {
   }
 
   async handleInvalidSession(resumable: boolean): Promise<void> {
-    this.#gateway.emit("sessionUpdate", {
-      type: "invalid",
+    this.#gateway.emit("sessionInvalid", {
       resumable,
     });
 
@@ -115,9 +112,7 @@ export class OperationHandler {
 
   shouldResume(code: number): boolean {
     const isClean = code === 1000 || code === 1001;
-    return !(
-      isClean || NON_RESUMABLE_CODES.includes(code as GatewayCloseCodes)
-    );
+    return !(isClean || NON_RESUMABLE_CODES.includes(code));
   }
 
   async handleReconnect(): Promise<void> {
@@ -188,9 +183,9 @@ export class OperationHandler {
     }
 
     const readyTime = Date.now() - this.#gateway.connectStartTime;
-    this.#gateway.emit("sessionUpdate", {
-      type: "start",
+    this.#gateway.emit("sessionState", {
       sessionId: data.session_id,
+      resumeUrl: data.resume_gateway_url,
     });
 
     const details = [

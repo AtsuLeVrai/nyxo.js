@@ -1,12 +1,12 @@
 import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateTestEntitlementSchema,
   ListEntitlementQuerySchema,
 } from "../schemas/index.js";
 
-export class EntitlementRouter extends BaseRouter {
+export class EntitlementRouter {
   static readonly ROUTES = {
     applicationEntitlements: (applicationId: Snowflake) =>
       `/applications/${applicationId}/entitlements` as const,
@@ -22,6 +22,12 @@ export class EntitlementRouter extends BaseRouter {
       `/applications/${applicationId}/entitlements/${entitlementId}/consume` as const,
   } as const;
 
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements}
    */
@@ -34,7 +40,7 @@ export class EntitlementRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(
+    return this.#rest.get(
       EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
         query: result.data,
@@ -49,7 +55,7 @@ export class EntitlementRouter extends BaseRouter {
     applicationId: Snowflake,
     entitlementId: Snowflake,
   ): Promise<EntitlementEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       EntitlementRouter.ROUTES.applicationEntitlement(
         applicationId,
         entitlementId,
@@ -64,7 +70,7 @@ export class EntitlementRouter extends BaseRouter {
     applicationId: Snowflake,
     entitlementId: Snowflake,
   ): Promise<void> {
-    return this.rest.post(
+    return this.#rest.post(
       EntitlementRouter.ROUTES.applicationEntitlementConsume(
         applicationId,
         entitlementId,
@@ -84,7 +90,7 @@ export class EntitlementRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
+    return this.#rest.post(
       EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
         body: JSON.stringify(result.data),
@@ -99,7 +105,7 @@ export class EntitlementRouter extends BaseRouter {
     applicationId: Snowflake,
     entitlementId: Snowflake,
   ): Promise<void> {
-    return this.rest.delete(
+    return this.#rest.delete(
       EntitlementRouter.ROUTES.applicationEntitlement(
         applicationId,
         entitlementId,

@@ -91,11 +91,10 @@ export class HeartbeatManager {
     const now = Date.now();
     this.#handleAck();
     this.#updateLatency(now);
-    this.#gateway.emit("debug", `Acknowledged - Latency: ${this.#latency}ms`);
-    this.#gateway.emit("heartbeatUpdate", {
-      type: "success",
-      interval: this.#intervalMs,
-    });
+    this.#gateway.emit(
+      "debug",
+      `Acknowledged - Latency: ${this.#latency}ms - Average: ${this.averageLatency()}ms`,
+    );
   }
 
   sendHeartbeat(): void {
@@ -127,10 +126,6 @@ export class HeartbeatManager {
       "debug",
       `Starting - Interval: ${interval}ms, Initial delay: ${initialDelay}ms`,
     );
-    this.#gateway.emit("heartbeatUpdate", {
-      type: "start",
-      interval,
-    });
 
     setTimeout(() => {
       this.sendHeartbeat();
@@ -157,7 +152,6 @@ export class HeartbeatManager {
     );
 
     if (this.#missedHeartbeats >= this.#options.maxMissedHeartbeats) {
-      this.#gateway.emit("heartbeatUpdate", { type: "stop" });
       this.destroy();
 
       if (this.#options.autoReconnect) {

@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { API_CONSTANTS } from "../constants/index.js";
+
+const RATE_LIMIT_DEFAULTS = {
+  CLEANUP_INTERVAL: 60_000,
+  SAFETY_MARGIN: 1000,
+} as const;
 
 export const RateLimitOptions = z
   .object({
@@ -7,13 +11,14 @@ export const RateLimitOptions = z
       .number()
       .int()
       .positive()
-      .default(API_CONSTANTS.RATE_LIMIT.CLEANUP_INTERVAL),
+      .default(RATE_LIMIT_DEFAULTS.CLEANUP_INTERVAL),
     safetyMargin: z
       .number()
       .int()
       .positive()
-      .default(API_CONSTANTS.RATE_LIMIT.SAFETY_MARGIN),
+      .default(RATE_LIMIT_DEFAULTS.SAFETY_MARGIN),
   })
-  .strict();
+  .strict()
+  .readonly();
 
 export type RateLimitOptions = z.infer<typeof RateLimitOptions>;

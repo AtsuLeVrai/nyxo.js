@@ -8,7 +8,7 @@ import type {
   UserEntity,
 } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import {
   CreateGroupDmSchema,
   GetCurrentUserGuildsQuerySchema,
@@ -16,7 +16,7 @@ import {
   UpdateCurrentUserApplicationRoleConnectionSchema,
 } from "../schemas/index.js";
 
-export class UserRouter extends BaseRouter {
+export class UserRouter {
   static readonly ROUTES = {
     usersBase: "/users" as const,
     userCurrent: "/users/@me" as const,
@@ -32,18 +32,24 @@ export class UserRouter extends BaseRouter {
       `/users/@me/applications/${applicationId}/role-connection` as const,
   } as const;
 
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
+
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   getCurrentUser(): Promise<UserEntity> {
-    return this.rest.get(UserRouter.ROUTES.userCurrent);
+    return this.#rest.get(UserRouter.ROUTES.userCurrent);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
   getUser(userId: Snowflake): Promise<UserEntity> {
-    return this.rest.get(UserRouter.ROUTES.user(userId));
+    return this.#rest.get(UserRouter.ROUTES.user(userId));
   }
 
   /**
@@ -57,7 +63,7 @@ export class UserRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(UserRouter.ROUTES.userCurrent, {
+    return this.#rest.patch(UserRouter.ROUTES.userCurrent, {
       body: JSON.stringify(result.data),
     });
   }
@@ -73,7 +79,7 @@ export class UserRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(UserRouter.ROUTES.userCurrentGuilds, {
+    return this.#rest.get(UserRouter.ROUTES.userCurrentGuilds, {
       query: result.data,
     });
   }
@@ -82,21 +88,21 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.rest.get(UserRouter.ROUTES.userCurrentGuildMember(guildId));
+    return this.#rest.get(UserRouter.ROUTES.userCurrentGuildMember(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.rest.delete(UserRouter.ROUTES.userCurrentLeaveGuild(guildId));
+    return this.#rest.delete(UserRouter.ROUTES.userCurrentLeaveGuild(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDm(recipientId: Snowflake): Promise<ChannelEntity> {
-    return this.rest.post(UserRouter.ROUTES.userCurrentChannels, {
+    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify({ recipient_id: recipientId }),
     });
   }
@@ -110,7 +116,7 @@ export class UserRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(UserRouter.ROUTES.userCurrentChannels, {
+    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify(result.data),
     });
   }
@@ -119,7 +125,7 @@ export class UserRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   getCurrentUserConnections(): Promise<ConnectionEntity[]> {
-    return this.rest.get(UserRouter.ROUTES.userCurrentConnections);
+    return this.#rest.get(UserRouter.ROUTES.userCurrentConnections);
   }
 
   /**
@@ -128,7 +134,7 @@ export class UserRouter extends BaseRouter {
   getCurrentUserApplicationRoleConnection(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
     );
   }
@@ -146,7 +152,7 @@ export class UserRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.put(
+    return this.#rest.put(
       UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
       {
         body: JSON.stringify(result.data),

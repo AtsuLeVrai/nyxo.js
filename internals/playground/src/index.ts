@@ -70,32 +70,60 @@ const gateway = new Gateway(rest, {
   ],
 });
 
-gateway.on("debug", (...args) => {
-  console.log("[GATEWAY - DEBUG]", ...args);
-});
-
 gateway.on("error", (...args) => {
   console.log("[GATEWAY - ERROR]", ...args);
 });
 
-gateway.on("heartbeatUpdate", (...args) => {
-  console.log("[GATEWAY - HEARTBEAT]", ...args);
+gateway.on("debug", (...args) => {
+  console.log("[GATEWAY - DEBUG]", ...args);
 });
 
-gateway.on("sessionUpdate", (...args) => {
-  console.log("[GATEWAY - SESSION]", ...args);
+gateway.on("dispatch", (event, data) => {
+  console.log("[GATEWAY - DISPATCH]", event, data);
 });
 
-gateway.on("healthUpdate", (...args) => {
-  console.log("[GATEWAY - HEALTH]", ...args);
+gateway.on("healthStatus", (health) => {
+  console.log("[GATEWAY - HEALTH STATUS]", health);
 });
 
-gateway.on("shardUpdate", (...args) => {
-  console.log("[GATEWAY - SHARD]", ...args);
+gateway.on("sessionState", (session) => {
+  console.log("[GATEWAY - SESSION STATE]", session);
 });
 
-gateway.on("dispatch", (...args) => {
-  console.log("[GATEWAY - DISPATCH]", ...args);
+gateway.on("sessionClose", (session) => {
+  console.log("[GATEWAY - SESSION CLOSE]", session);
+});
+
+gateway.on("sessionInvalid", (session) => {
+  console.log("[GATEWAY - SESSION INVALID]", session);
+});
+
+gateway.on("shardSpawn", (stats) => {
+  console.log("[GATEWAY - SHARD SPAWN]", stats);
+});
+
+gateway.on("shardDestroy", (stats) => {
+  console.log("[GATEWAY - SHARD DESTROY]", stats);
+});
+
+gateway.on("shardReady", (data) => {
+  console.log("[GATEWAY - SHARD READY]", data);
+});
+
+gateway.on("shardDisconnect", (data) => {
+  console.log("[GATEWAY - SHARD DISCONNECT]", data);
+});
+
+gateway.on("shardReconnect", (data) => {
+  console.log("[GATEWAY - SHARD RECONNECT]", data);
+});
+
+gateway.on("shardResume", (data) => {
+  console.log("[GATEWAY - SHARD RESUME]", data);
+});
+
+gateway.on("shardRateLimit", (data) => {
+  console.log("[GATEWAY - SHARD RATE LIMIT]", data);
 });
 
 gateway.connect();

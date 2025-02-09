@@ -1,6 +1,6 @@
 import type { Dispatcher } from "undici";
 import type { FileInput } from "./file.type.js";
-import type { RetryAttemptEvent } from "./retry.type.js";
+import type { RetryAttempt } from "./retry.type.js";
 
 export interface JsonErrorField {
   code: string;
@@ -20,7 +20,7 @@ export interface ApiRequestOptions extends Dispatcher.RequestOptions {
   reason?: string;
 }
 
-export interface ApiRequestEvent {
+export interface ApiRequest {
   path: string;
   method: string;
   headers: Record<string, string>;
@@ -32,8 +32,8 @@ export interface ApiRequestEvent {
 export interface RestEventHandlers {
   debug: (message: string, context?: Record<string, unknown>) => void;
   error: (error: Error | string, context?: Record<string, unknown>) => void;
-  requestFinish: (request: ApiRequestEvent) => void;
-  retryAttempt: (retry: RetryAttemptEvent) => void;
+  requestFinish: (request: ApiRequest) => void;
+  retryAttempt: (retry: RetryAttempt) => void;
   rateLimitExceeded: (bucket: string, resetAfter: number) => void;
   bucketExpired: (bucketHash: string) => void;
   bucketCreated: (bucketHash: string, route: string) => void;

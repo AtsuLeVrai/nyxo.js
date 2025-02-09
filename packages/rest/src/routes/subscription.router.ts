@@ -1,15 +1,21 @@
 import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
 import { fromZodError } from "zod-validation-error";
-import { BaseRouter } from "../base/index.js";
+import type { Rest } from "../core/index.js";
 import { SubscriptionQuerySchema } from "../schemas/index.js";
 
-export class SubscriptionRouter extends BaseRouter {
+export class SubscriptionRouter {
   static readonly ROUTES = {
     skuSubscriptionsBase: (skuId: Snowflake) =>
       `/skus/${skuId}/subscriptions` as const,
     skuSubscription: (skuId: Snowflake, subscriptionId: Snowflake) =>
       `/skus/${skuId}/subscriptions/${subscriptionId}` as const,
   } as const;
+
+  readonly #rest: Rest;
+
+  constructor(rest: Rest) {
+    this.#rest = rest;
+  }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions}
@@ -23,7 +29,7 @@ export class SubscriptionRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(
+    return this.#rest.get(
       SubscriptionRouter.ROUTES.skuSubscriptionsBase(skuId),
       {
         query: result.data,
@@ -38,7 +44,7 @@ export class SubscriptionRouter extends BaseRouter {
     skuId: Snowflake,
     subscriptionId: Snowflake,
   ): Promise<SubscriptionEntity> {
-    return this.rest.get(
+    return this.#rest.get(
       SubscriptionRouter.ROUTES.skuSubscription(skuId, subscriptionId),
     );
   }

@@ -1,8 +1,6 @@
-import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import type { BaseRouter } from "../base/index.js";
 import { ApiError } from "../errors/index.js";
 import {
   RateLimitManager,
@@ -44,7 +42,6 @@ import type {
 } from "../types/index.js";
 
 export class Rest extends EventEmitter<RestEventHandlers> {
-  readonly #routerCache = new Store<string, Store<string, BaseRouter>>();
   readonly #options: RestOptions;
   readonly #request: RequestManager;
   readonly #rateLimiter: RateLimitManager;
@@ -65,121 +62,103 @@ export class Rest extends EventEmitter<RestEventHandlers> {
   }
 
   get applications(): ApplicationRouter {
-    return this.getRouter(ApplicationRouter);
+    return new ApplicationRouter(this);
   }
 
   get commands(): ApplicationCommandRouter {
-    return this.getRouter(ApplicationCommandRouter);
+    return new ApplicationCommandRouter(this);
   }
 
   get connections(): ApplicationConnectionRouter {
-    return this.getRouter(ApplicationConnectionRouter);
+    return new ApplicationConnectionRouter(this);
   }
 
   get guilds(): GuildRouter {
-    return this.getRouter(GuildRouter);
+    return new GuildRouter(this);
   }
 
   get channels(): ChannelRouter {
-    return this.getRouter(ChannelRouter);
+    return new ChannelRouter(this);
   }
 
   get invites(): InviteRouter {
-    return this.getRouter(InviteRouter);
+    return new InviteRouter(this);
   }
 
   get templates(): GuildTemplateRouter {
-    return this.getRouter(GuildTemplateRouter);
+    return new GuildTemplateRouter(this);
   }
 
   get users(): UserRouter {
-    return this.getRouter(UserRouter);
+    return new UserRouter(this);
   }
 
   get auditLogs(): AuditLogRouter {
-    return this.getRouter(AuditLogRouter);
+    return new AuditLogRouter(this);
   }
 
   get messages(): MessageRouter {
-    return this.getRouter(MessageRouter);
+    return new MessageRouter(this);
   }
 
   get interactions(): InteractionRouter {
-    return this.getRouter(InteractionRouter);
+    return new InteractionRouter(this);
   }
 
   get emojis(): EmojiRouter {
-    return this.getRouter(EmojiRouter);
+    return new EmojiRouter(this);
   }
 
   get stickers(): StickerRouter {
-    return this.getRouter(StickerRouter);
+    return new StickerRouter(this);
   }
 
   get voice(): VoiceRouter {
-    return this.getRouter(VoiceRouter);
+    return new VoiceRouter(this);
   }
 
   get soundboards(): SoundboardRouter {
-    return this.getRouter(SoundboardRouter);
+    return new SoundboardRouter(this);
   }
 
   get stages(): StageInstanceRouter {
-    return this.getRouter(StageInstanceRouter);
+    return new StageInstanceRouter(this);
   }
 
   get scheduledEvents(): ScheduledEventRouter {
-    return this.getRouter(ScheduledEventRouter);
+    return new ScheduledEventRouter(this);
   }
 
   get polls(): PollRouter {
-    return this.getRouter(PollRouter);
+    return new PollRouter(this);
   }
 
   get autoModeration(): AutoModerationRouter {
-    return this.getRouter(AutoModerationRouter);
+    return new AutoModerationRouter(this);
   }
 
   get webhooks(): WebhookRouter {
-    return this.getRouter(WebhookRouter);
+    return new WebhookRouter(this);
   }
 
   get oauth2(): OAuth2Router {
-    return this.getRouter(OAuth2Router);
+    return new OAuth2Router(this);
   }
 
   get gateway(): GatewayRouter {
-    return this.getRouter(GatewayRouter);
+    return new GatewayRouter(this);
   }
 
   get skus(): SkuRouter {
-    return this.getRouter(SkuRouter);
+    return new SkuRouter(this);
   }
 
   get entitlements(): EntitlementRouter {
-    return this.getRouter(EntitlementRouter);
+    return new EntitlementRouter(this);
   }
 
   get subscriptions(): SubscriptionRouter {
-    return this.getRouter(SubscriptionRouter);
-  }
-
-  getRouter<T extends BaseRouter>(RouterClass: new (rest: Rest) => T): T {
-    let sessionRouters = this.#routerCache.get(RouterClass.name);
-    if (!sessionRouters) {
-      sessionRouters = new Store();
-      this.#routerCache.set(RouterClass.name, sessionRouters);
-    }
-
-    const routerName = RouterClass.name;
-    let router = sessionRouters.get(routerName) as T;
-
-    if (!router) {
-      router = new RouterClass(this);
-      sessionRouters.set(routerName, router);
-    }
-
-    return router;
+    return new SubscriptionRouter(this);
   }
 
   request<T>(options: ApiRequestOptions): Promise<T> {
@@ -259,7 +238,6 @@ export class Rest extends EventEmitter<RestEventHandlers> {
   }
 
   destroy(): void {
-    this.#routerCache.clear();
     this.#rateLimiter.destroy();
     this.removeAllListeners();
   }
