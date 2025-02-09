@@ -9,12 +9,6 @@ build/
 .next/
 .turbo/
 .vercel/
-lib/
-lib-amd/
-lib-es6/
-lib-esnext/
-lib-commonjs/
-lib-shim/
 dist-storybook/
 
 # Dependencies

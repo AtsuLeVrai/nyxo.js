@@ -1,49 +1,12 @@
-import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
-import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
+import { Client, GatewayIntentsBits } from "nyx.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
   throw new Error("No env found");
 }
 
-const rest = new Rest({
-  token: env.DISCORD_TOKEN,
-});
-
-rest.on("error", (...args) => {
-  console.log("[REST - ERROR]", ...args);
-});
-
-rest.on("requestFinish", (...args) => {
-  console.log("[REST - REQUEST]", ...args);
-});
-
-rest.on("retryAttempt", (...args) => {
-  console.log("[REST - RETRY]", ...args);
-});
-
-rest.on("debug", (...args) => {
-  console.log("[REST - DEBUG]", ...args);
-});
-
-rest.on("rateLimitExceeded", (...args) => {
-  console.log("[REST - RATE LIMIT EXCEEDED]", ...args);
-});
-
-rest.on("bucketExpired", (...args) => {
-  console.log("[REST - BUCKET EXPIRED]", ...args);
-});
-
-rest.on("bucketCreated", (...args) => {
-  console.log("[REST - BUCKET CREATED]", ...args);
-});
-
-rest.on("bucketUpdated", (...args) => {
-  console.log("[REST - BUCKET UPDATED]", ...args);
-});
-
-const gateway = new Gateway(rest, {
+const client = new Client({
   token: env.DISCORD_TOKEN,
   intents: [
     GatewayIntentsBits.Guilds,
@@ -70,63 +33,91 @@ const gateway = new Gateway(rest, {
   ],
 });
 
-gateway.on("error", (...args) => {
-  console.log("[GATEWAY - ERROR]", ...args);
+client.on("error", (...args) => {
+  console.log("[ERROR]", ...args);
 });
 
-gateway.on("debug", (...args) => {
-  console.log("[GATEWAY - DEBUG]", ...args);
+client.on("requestFinish", (...args) => {
+  console.log("[REQUEST]", ...args);
 });
 
-gateway.on("dispatch", (event, data) => {
-  console.log("[GATEWAY - DISPATCH]", event, data);
+client.on("retryAttempt", (...args) => {
+  console.log("[RETRY]", ...args);
 });
 
-gateway.on("healthStatus", (health) => {
-  console.log("[GATEWAY - HEALTH STATUS]", health);
+client.on("debug", (...args) => {
+  console.log("[DEBUG]", ...args);
 });
 
-gateway.on("sessionState", (session) => {
-  console.log("[GATEWAY - SESSION STATE]", session);
+client.on("rateLimitExceeded", (...args) => {
+  console.log("[RATE LIMIT EXCEEDED]", ...args);
 });
 
-gateway.on("sessionClose", (session) => {
-  console.log("[GATEWAY - SESSION CLOSE]", session);
+client.on("bucketExpired", (...args) => {
+  console.log("[BUCKET EXPIRED]", ...args);
 });
 
-gateway.on("sessionInvalid", (session) => {
-  console.log("[GATEWAY - SESSION INVALID]", session);
+client.on("bucketCreated", (...args) => {
+  console.log("[BUCKET CREATED]", ...args);
 });
 
-gateway.on("shardSpawn", (stats) => {
-  console.log("[GATEWAY - SHARD SPAWN]", stats);
+client.on("bucketUpdated", (...args) => {
+  console.log("[BUCKET UPDATED]", ...args);
 });
 
-gateway.on("shardDestroy", (stats) => {
-  console.log("[GATEWAY - SHARD DESTROY]", stats);
+// client.on("dispatch", (event, data) => {
+//   console.log("[DISPATCH]", event, data);
+// });
+
+client.on("healthStatus", (health) => {
+  console.log("[HEALTH STATUS]", health);
 });
 
-gateway.on("shardReady", (data) => {
-  console.log("[GATEWAY - SHARD READY]", data);
+client.on("sessionState", (session) => {
+  console.log("[SESSION STATE]", session);
 });
 
-gateway.on("shardDisconnect", (data) => {
-  console.log("[GATEWAY - SHARD DISCONNECT]", data);
+client.on("sessionClose", (session) => {
+  console.log("[SESSION CLOSE]", session);
 });
 
-gateway.on("shardReconnect", (data) => {
-  console.log("[GATEWAY - SHARD RECONNECT]", data);
+client.on("sessionInvalid", (session) => {
+  console.log("[SESSION INVALID]", session);
 });
 
-gateway.on("shardResume", (data) => {
-  console.log("[GATEWAY - SHARD RESUME]", data);
+client.on("shardSpawn", (stats) => {
+  console.log("[SHARD SPAWN]", stats);
 });
 
-gateway.on("shardRateLimit", (data) => {
-  console.log("[GATEWAY - SHARD RATE LIMIT]", data);
+client.on("shardDestroy", (stats) => {
+  console.log("[SHARD DESTROY]", stats);
 });
 
-gateway.connect();
+client.on("shardReady", (data) => {
+  console.log("[SHARD READY]", data);
+});
+
+client.on("shardDisconnect", (data) => {
+  console.log("[SHARD DISCONNECT]", data);
+});
+
+client.on("shardReconnect", (data) => {
+  console.log("[SHARD RECONNECT]", data);
+});
+
+client.on("shardResume", (data) => {
+  console.log("[SHARD RESUME]", data);
+});
+
+client.on("shardRateLimit", (data) => {
+  console.log("[SHARD RATE LIMIT]", data);
+});
+
+client.on("ready", (data) => {
+  console.log("[READY]", data);
+});
+
+client.connect();
 
 process.on("unhandledRejection", (error) => {
   console.error(error);

@@ -53,12 +53,12 @@ Nyx.js is a modern, modular monorepo framework designed to streamline Discord bo
 
 ## 📦 Ecosystem
 
-| Package                                | Version                                                                                                                                               | Description                                                                 |
-|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| [**@nyxjs/core**](packages/core)       | [![npm](https://img.shields.io/npm/v/@nyxjs/core?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/core)       | Foundation layer with DI container, lifecycle management, and plugin system |
-| [**@nyxjs/gateway**](packages/gateway) | [![npm](https://img.shields.io/npm/v/@nyxjs/gateway?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/gateway) | Real-time event processing with automatic sharding and reconnection         |
-| [**@nyxjs/rest**](packages/rest)       | [![npm](https://img.shields.io/npm/v/@nyxjs/rest?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/rest)       | Type-safe Discord REST API wrapper with rate limiting and cache control     |
-| [**@nyxjs/store**](packages/store)     | [![npm](https://img.shields.io/npm/v/@nyxjs/store?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/store)     | Unified state management for guilds, users, and channels                    |
+| Package                                | Version                                                                                                                                               | Description                                                             |
+|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [**@nyxjs/core**](packages/core)       | [![npm](https://img.shields.io/npm/v/@nyxjs/core?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/core)       | Core framework with dependency injection and lifecycle management       |
+| [**@nyxjs/gateway**](packages/gateway) | [![npm](https://img.shields.io/npm/v/@nyxjs/gateway?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/gateway) | Real-time event processing with automatic sharding and reconnection     |
+| [**@nyxjs/rest**](packages/rest)       | [![npm](https://img.shields.io/npm/v/@nyxjs/rest?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/rest)       | Type-safe Discord REST API wrapper with rate limiting and cache control |
+| [**@nyxjs/store**](packages/store)     | [![npm](https://img.shields.io/npm/v/@nyxjs/store?color=CB3837&label=%20&style=flat-square&logo=npm)](https://www.npmjs.com/package/@nyxjs/store)     | Unified state management for guilds, users, and channels                |
 
 ---
 

@@ -6,7 +6,7 @@ import { RetryOptions } from "./retry.options.js";
 const REST_DEFAULTS = {
   AUTH_TYPE: "Bot",
   VERSION: ApiVersion.V10,
-  USER_AGENT: "DiscordBot (https://github.com/3tatsu/nyx.js, 1.0.0)",
+  USER_AGENT: "DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)",
   BASE_URL: "https://discord.com/api",
 } as const;
 
@@ -26,7 +26,6 @@ export const RestOptions = z
     rateLimit: RateLimitOptions.default({}),
     retry: RetryOptions.default({}),
   })
-  .strict()
   .readonly();
 
 export type RestOptions = z.infer<typeof RestOptions>;

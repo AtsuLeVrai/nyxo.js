@@ -56,10 +56,7 @@ const paths = {
 };
 
 // CLI Configuration
-program
-  .option("-c, --clean", "Clean dist and temp folders before building")
-  .option("-p, --production", "Build for production")
-  .parse(process.argv);
+program.option("-p, --production", "Build for production").parse(process.argv);
 
 /** @type {BuildOptions} */
 const options = program.opts();
@@ -443,11 +440,10 @@ async function build() {
       `Starting build${options.production ? " (production)" : ""}...`,
     );
 
-    if (options.clean) {
-      await clean();
-    }
+    // Clean directories first
+    await clean();
 
-    // Build bundles first
+    // Build bundles using Rollup
     await buildBundles();
 
     // Handle types based on environment

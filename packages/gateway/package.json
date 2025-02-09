@@ -27,15 +27,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/3tatsu/nyx.js",
+    "url": "https://github.com/AtsuLeVrai/nyx.js",
     "directory": "packages/gateway"
   },
   "bugs": {
-    "url": "https://github.com/3tatsu/nyx.js/issues"
+    "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
   },
   "author": {
-    "name": "3tatsu",
-    "url": "https://github.com/3tatsu"
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
     "build": "node ../../scripts/build.js",
