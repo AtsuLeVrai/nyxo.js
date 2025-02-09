@@ -22,8 +22,6 @@ export class ApplicationConnectionRouter extends BaseRouter {
       ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
         applicationId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -49,7 +47,6 @@ export class ApplicationConnectionRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 }

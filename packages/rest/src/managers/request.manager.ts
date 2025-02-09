@@ -28,7 +28,7 @@ export class RequestManager {
       const response = await request(preparedRequest.options);
       const responseBody = await this.#readResponseBody(response);
 
-      const result = await this.#processResponse<T>(response, responseBody);
+      const result = this.#processResponse<T>(response, responseBody);
 
       const duration = Date.now() - requestStart;
       result.duration = duration;
@@ -142,21 +142,11 @@ export class RequestManager {
     }
   }
 
-  async #processResponse<T>(
+  #processResponse<T>(
     response: Dispatcher.ResponseData,
     bodyContent: Buffer,
-  ): Promise<RequestResponse<T>> {
+  ): RequestResponse<T> {
     const headers = HeaderHandler.parse(response.headers).headers;
-
-    if (response.statusCode >= 400) {
-      const text = await response.body.text();
-      throw new RequestError(
-        `HTTP ${response.statusCode} ${text}`,
-        response.statusCode,
-        headers,
-      );
-    }
-
     if (response.statusCode === 204) {
       return {
         data: {} as T,

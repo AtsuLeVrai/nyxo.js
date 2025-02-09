@@ -5,4 +5,3 @@ export * from "./request.type.js";
 export * from "./rate-limit.type.js";
 export * from "./rest.type.js";
 export * from "./retry.type.js";
-export * from "./session.type.js";

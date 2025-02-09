@@ -43,47 +43,31 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
-      WebhookRouter.ROUTES.channelWebhooks(channelId),
-      {
-        body: JSON.stringify(result.data),
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.post(WebhookRouter.ROUTES.channelWebhooks(channelId), {
+      body: JSON.stringify(result.data),
+      reason,
+    });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
    */
   getChannelWebhooks(channelId: Snowflake): Promise<WebhookEntity[]> {
-    return this.rest.get(
-      WebhookRouter.ROUTES.channelWebhooks(channelId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(WebhookRouter.ROUTES.channelWebhooks(channelId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
    */
   getGuildWebhooks(guildId: Snowflake): Promise<WebhookEntity[]> {
-    return this.rest.get(
-      WebhookRouter.ROUTES.guildWebhooks(guildId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(WebhookRouter.ROUTES.guildWebhooks(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
    */
   getWebhook(webhookId: Snowflake): Promise<WebhookEntity> {
-    return this.rest.get(
-      WebhookRouter.ROUTES.webhookBase(webhookId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(WebhookRouter.ROUTES.webhookBase(webhookId));
   }
 
   /**
@@ -95,8 +79,6 @@ export class WebhookRouter extends BaseRouter {
   ): Promise<WebhookEntity> {
     return this.rest.get(
       WebhookRouter.ROUTES.webhookWithToken(webhookId, token),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -113,14 +95,10 @@ export class WebhookRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(
-      WebhookRouter.ROUTES.webhookBase(webhookId),
-      {
-        body: JSON.stringify(result.data),
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.patch(WebhookRouter.ROUTES.webhookBase(webhookId), {
+      body: JSON.stringify(result.data),
+      reason,
+    });
   }
 
   /**
@@ -143,7 +121,6 @@ export class WebhookRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -151,13 +128,9 @@ export class WebhookRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
    */
   deleteWebhook(webhookId: Snowflake, reason?: string): Promise<void> {
-    return this.rest.delete(
-      WebhookRouter.ROUTES.webhookBase(webhookId),
-      {
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.delete(WebhookRouter.ROUTES.webhookBase(webhookId), {
+      reason,
+    });
   }
 
   /**
@@ -173,7 +146,6 @@ export class WebhookRouter extends BaseRouter {
       {
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -204,7 +176,6 @@ export class WebhookRouter extends BaseRouter {
         query: resultQuery.data,
         files,
       },
-      this.sessionId,
     );
   }
 
@@ -226,7 +197,6 @@ export class WebhookRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 
@@ -248,7 +218,6 @@ export class WebhookRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 
@@ -271,7 +240,6 @@ export class WebhookRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 
@@ -303,7 +271,6 @@ export class WebhookRouter extends BaseRouter {
         query: resultQuery.data,
         files,
       },
-      this.sessionId,
     );
   }
 
@@ -326,7 +293,6 @@ export class WebhookRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 }

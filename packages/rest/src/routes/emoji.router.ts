@@ -24,22 +24,14 @@ export class EmojiRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
    */
   listGuildEmojis(guildId: Snowflake): Promise<EmojiEntity[]> {
-    return this.rest.get(
-      EmojiRouter.ROUTES.guildEmojis(guildId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(EmojiRouter.ROUTES.guildEmojis(guildId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji}
    */
   getGuildEmoji(guildId: Snowflake, emojiId: Snowflake): Promise<EmojiEntity> {
-    return this.rest.get(
-      EmojiRouter.ROUTES.guildEmoji(guildId, emojiId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId));
   }
 
   /**
@@ -55,14 +47,10 @@ export class EmojiRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
-      EmojiRouter.ROUTES.guildEmojis(guildId),
-      {
-        body: JSON.stringify(result.data),
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.post(EmojiRouter.ROUTES.guildEmojis(guildId), {
+      body: JSON.stringify(result.data),
+      reason,
+    });
   }
   /**
    * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji}
@@ -78,14 +66,10 @@ export class EmojiRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(
-      EmojiRouter.ROUTES.guildEmoji(guildId, emojiId),
-      {
-        body: JSON.stringify(result.data),
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.patch(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
+      body: JSON.stringify(result.data),
+      reason,
+    });
   }
 
   /**
@@ -96,13 +80,9 @@ export class EmojiRouter extends BaseRouter {
     emojiId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.rest.delete(
-      EmojiRouter.ROUTES.guildEmoji(guildId, emojiId),
-      {
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.delete(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
+      reason,
+    });
   }
 
   /**
@@ -111,11 +91,7 @@ export class EmojiRouter extends BaseRouter {
   listApplicationEmojis(
     applicationId: Snowflake,
   ): Promise<ListApplicationEmojisEntity> {
-    return this.rest.get(
-      EmojiRouter.ROUTES.applicationEmojis(applicationId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(EmojiRouter.ROUTES.applicationEmojis(applicationId));
   }
 
   /**
@@ -127,8 +103,6 @@ export class EmojiRouter extends BaseRouter {
   ): Promise<EmojiEntity> {
     return this.rest.get(
       EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -145,14 +119,10 @@ export class EmojiRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
-      EmojiRouter.ROUTES.applicationEmojis(applicationId),
-      {
-        body: JSON.stringify(result.data),
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.post(EmojiRouter.ROUTES.applicationEmojis(applicationId), {
+      body: JSON.stringify(result.data),
+      reason,
+    });
   }
 
   /**
@@ -175,7 +145,6 @@ export class EmojiRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -192,7 +161,6 @@ export class EmojiRouter extends BaseRouter {
       {
         reason,
       },
-      this.sessionId,
     );
   }
 }

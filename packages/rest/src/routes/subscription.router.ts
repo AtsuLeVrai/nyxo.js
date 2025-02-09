@@ -28,7 +28,6 @@ export class SubscriptionRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 
@@ -41,8 +40,6 @@ export class SubscriptionRouter extends BaseRouter {
   ): Promise<SubscriptionEntity> {
     return this.rest.get(
       SubscriptionRouter.ROUTES.skuSubscription(skuId, subscriptionId),
-      undefined,
-      this.sessionId,
     );
   }
 }

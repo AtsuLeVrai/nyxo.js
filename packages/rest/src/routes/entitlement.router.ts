@@ -39,7 +39,6 @@ export class EntitlementRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 
@@ -55,8 +54,6 @@ export class EntitlementRouter extends BaseRouter {
         applicationId,
         entitlementId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -72,8 +69,6 @@ export class EntitlementRouter extends BaseRouter {
         applicationId,
         entitlementId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -94,7 +89,6 @@ export class EntitlementRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -110,8 +104,6 @@ export class EntitlementRouter extends BaseRouter {
         applicationId,
         entitlementId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 }

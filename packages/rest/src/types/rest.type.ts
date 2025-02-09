@@ -1,11 +1,6 @@
 import type { Dispatcher } from "undici";
 import type { FileInput } from "./file.type.js";
 import type { RetryAttemptEvent } from "./retry.type.js";
-import type {
-  SessionCreatedEvent,
-  SessionDestroyedEvent,
-  SessionUpdatedEvent,
-} from "./session.type.js";
 
 export interface JsonErrorField {
   code: string;
@@ -47,7 +42,4 @@ export interface RestEventHandlers {
     remaining: number,
     resetAfter: number,
   ) => void;
-  sessionCreated: (event: SessionCreatedEvent) => void;
-  sessionDestroyed: (event: SessionDestroyedEvent) => void;
-  sessionUpdated: (event: SessionUpdatedEvent) => void;
 }

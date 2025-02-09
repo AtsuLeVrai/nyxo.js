@@ -1,10 +1,15 @@
 import { Store } from "@nyxjs/store";
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
+import { fromError } from "zod-validation-error";
 import type { BaseRouter } from "../base/index.js";
 import { ApiError } from "../errors/index.js";
-import { RetryManager, SessionManager } from "../managers/index.js";
-import type { RestOptions } from "../options/index.js";
+import {
+  RateLimitManager,
+  RequestManager,
+  RetryManager,
+} from "../managers/index.js";
+import { RestOptions } from "../options/index.js";
 import {
   ApplicationCommandRouter,
   ApplicationConnectionRouter,
@@ -39,15 +44,24 @@ import type {
 } from "../types/index.js";
 
 export class Rest extends EventEmitter<RestEventHandlers> {
-  readonly sessions: SessionManager;
-  readonly retry: RetryManager;
-
   readonly #routerCache = new Store<string, Store<string, BaseRouter>>();
+  readonly #options: RestOptions;
+  readonly #request: RequestManager;
+  readonly #rateLimiter: RateLimitManager;
+  readonly #retry: RetryManager;
 
   constructor(options: z.input<typeof RestOptions>) {
     super();
-    this.sessions = new SessionManager(this, options);
-    this.retry = new RetryManager(this);
+
+    try {
+      this.#options = RestOptions.parse(options);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
+
+    this.#request = new RequestManager(this, this.#options);
+    this.#rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
+    this.#retry = new RetryManager(this, this.#options.retry);
   }
 
   get applications(): ApplicationRouter {
@@ -150,137 +164,32 @@ export class Rest extends EventEmitter<RestEventHandlers> {
     return this.getRouter(SubscriptionRouter);
   }
 
-  getGuilds(sessionId: string): GuildRouter {
-    return this.getRouter(GuildRouter, sessionId);
-  }
-
-  getChannels(sessionId: string): ChannelRouter {
-    return this.getRouter(ChannelRouter, sessionId);
-  }
-
-  getInvites(sessionId: string): InviteRouter {
-    return this.getRouter(InviteRouter, sessionId);
-  }
-
-  getTemplates(sessionId: string): GuildTemplateRouter {
-    return this.getRouter(GuildTemplateRouter, sessionId);
-  }
-
-  getUsers(sessionId: string): UserRouter {
-    return this.getRouter(UserRouter, sessionId);
-  }
-
-  getAuditLogs(sessionId: string): AuditLogRouter {
-    return this.getRouter(AuditLogRouter, sessionId);
-  }
-
-  getMessages(sessionId: string): MessageRouter {
-    return this.getRouter(MessageRouter, sessionId);
-  }
-
-  getInteractions(sessionId: string): InteractionRouter {
-    return this.getRouter(InteractionRouter, sessionId);
-  }
-
-  getEmojis(sessionId: string): EmojiRouter {
-    return this.getRouter(EmojiRouter, sessionId);
-  }
-
-  getStickers(sessionId: string): StickerRouter {
-    return this.getRouter(StickerRouter, sessionId);
-  }
-
-  getVoice(sessionId: string): VoiceRouter {
-    return this.getRouter(VoiceRouter, sessionId);
-  }
-
-  getSoundboards(sessionId: string): SoundboardRouter {
-    return this.getRouter(SoundboardRouter, sessionId);
-  }
-
-  getStages(sessionId: string): StageInstanceRouter {
-    return this.getRouter(StageInstanceRouter, sessionId);
-  }
-
-  getScheduledEvents(sessionId: string): ScheduledEventRouter {
-    return this.getRouter(ScheduledEventRouter, sessionId);
-  }
-
-  getPolls(sessionId: string): PollRouter {
-    return this.getRouter(PollRouter, sessionId);
-  }
-
-  getAutoModeration(sessionId: string): AutoModerationRouter {
-    return this.getRouter(AutoModerationRouter, sessionId);
-  }
-
-  getWebhooks(sessionId: string): WebhookRouter {
-    return this.getRouter(WebhookRouter, sessionId);
-  }
-
-  getOAuth2(sessionId: string): OAuth2Router {
-    return this.getRouter(OAuth2Router, sessionId);
-  }
-
-  getGateway(sessionId: string): GatewayRouter {
-    return this.getRouter(GatewayRouter, sessionId);
-  }
-
-  getSkus(sessionId: string): SkuRouter {
-    return this.getRouter(SkuRouter, sessionId);
-  }
-
-  getEntitlements(sessionId: string): EntitlementRouter {
-    return this.getRouter(EntitlementRouter, sessionId);
-  }
-
-  getSubscriptions(sessionId: string): SubscriptionRouter {
-    return this.getRouter(SubscriptionRouter, sessionId);
-  }
-
-  getApplications(sessionId: string): ApplicationRouter {
-    return this.getRouter(ApplicationRouter, sessionId);
-  }
-
-  getCommands(sessionId: string): ApplicationCommandRouter {
-    return this.getRouter(ApplicationCommandRouter, sessionId);
-  }
-
-  getConnections(sessionId: string): ApplicationConnectionRouter {
-    return this.getRouter(ApplicationConnectionRouter, sessionId);
-  }
-
-  getRouter<T extends BaseRouter>(
-    RouterClass: new (rest: Rest, sessionId?: string) => T,
-    sessionId: string = this.sessions.defaultSessionId,
-  ): T {
-    let sessionRouters = this.#routerCache.get(sessionId);
+  getRouter<T extends BaseRouter>(RouterClass: new (rest: Rest) => T): T {
+    let sessionRouters = this.#routerCache.get(RouterClass.name);
     if (!sessionRouters) {
       sessionRouters = new Store();
-      this.#routerCache.set(sessionId, sessionRouters);
+      this.#routerCache.set(RouterClass.name, sessionRouters);
     }
 
     const routerName = RouterClass.name;
     let router = sessionRouters.get(routerName) as T;
 
     if (!router) {
-      router = new RouterClass(this, sessionId);
+      router = new RouterClass(this);
       sessionRouters.set(routerName, router);
     }
 
     return router;
   }
 
-  request<T>(options: ApiRequestOptions, sessionId?: string): Promise<T> {
-    return this.retry.execute(
+  request<T>(options: ApiRequestOptions): Promise<T> {
+    return this.#retry.execute(
       async () => {
-        const session = this.sessions.getSessionInfo(sessionId);
+        this.#rateLimiter.checkRateLimit(options.path, options.method);
 
-        session.rateLimiter.checkRateLimit(options.path, options.method);
+        const response = await this.#request.request<T>(options);
 
-        const response = await session.request.request<T>(options);
-
-        session.rateLimiter.updateRateLimit(
+        this.#rateLimiter.updateRateLimit(
           options.path,
           options.method,
           response.headers,
@@ -301,7 +210,7 @@ export class Rest extends EventEmitter<RestEventHandlers> {
 
         return response.data;
       },
-      { method: options.method, path: options.path, sessionId },
+      { method: options.method, path: options.path },
     );
   }
 
@@ -317,46 +226,41 @@ export class Rest extends EventEmitter<RestEventHandlers> {
   get<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
-    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "GET", path }, sessionId);
+    return this.request<T>({ ...options, method: "GET", path });
   }
 
   post<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
-    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "POST", path }, sessionId);
+    return this.request<T>({ ...options, method: "POST", path });
   }
 
   put<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
-    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "PUT", path }, sessionId);
+    return this.request<T>({ ...options, method: "PUT", path });
   }
 
   patch<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
-    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "PATCH", path }, sessionId);
+    return this.request<T>({ ...options, method: "PATCH", path });
   }
 
   delete<T>(
     path: string,
     options: Omit<ApiRequestOptions, "method" | "path"> = {},
-    sessionId?: string,
   ): Promise<T> {
-    return this.request<T>({ ...options, method: "DELETE", path }, sessionId);
+    return this.request<T>({ ...options, method: "DELETE", path });
   }
 
   destroy(): void {
-    this.sessions.destroy();
     this.#routerCache.clear();
+    this.#rateLimiter.destroy();
     this.removeAllListeners();
   }
 }

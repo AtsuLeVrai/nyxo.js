@@ -46,13 +46,9 @@ export class MessageRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(
-      MessageRouter.ROUTES.channelMessages(channelId),
-      {
-        query: result.data,
-      },
-      this.sessionId,
-    );
+    return this.rest.get(MessageRouter.ROUTES.channelMessages(channelId), {
+      query: result.data,
+    });
   }
 
   /**
@@ -64,8 +60,6 @@ export class MessageRouter extends BaseRouter {
   ): Promise<MessageEntity> {
     return this.rest.get(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -82,14 +76,10 @@ export class MessageRouter extends BaseRouter {
     }
 
     const { files, ...rest } = result.data;
-    return this.rest.post(
-      MessageRouter.ROUTES.channelMessages(channelId),
-      {
-        body: JSON.stringify(rest),
-        files: files,
-      },
-      this.sessionId,
-    );
+    return this.rest.post(MessageRouter.ROUTES.channelMessages(channelId), {
+      body: JSON.stringify(rest),
+      files: files,
+    });
   }
 
   /**
@@ -101,8 +91,6 @@ export class MessageRouter extends BaseRouter {
   ): Promise<MessageEntity> {
     return this.rest.post(
       MessageRouter.ROUTES.channelMessageCrosspost(channelId, messageId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -120,8 +108,6 @@ export class MessageRouter extends BaseRouter {
         messageId,
         emoji,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -139,8 +125,6 @@ export class MessageRouter extends BaseRouter {
         messageId,
         emoji,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -160,8 +144,6 @@ export class MessageRouter extends BaseRouter {
         emoji,
         userId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -182,7 +164,6 @@ export class MessageRouter extends BaseRouter {
     return this.rest.get(
       MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
       { query: result.data },
-      this.sessionId,
     );
   }
 
@@ -195,8 +176,6 @@ export class MessageRouter extends BaseRouter {
   ): Promise<void> {
     return this.rest.delete(
       MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, ""),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -210,8 +189,6 @@ export class MessageRouter extends BaseRouter {
   ): Promise<void> {
     return this.rest.delete(
       MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -235,7 +212,6 @@ export class MessageRouter extends BaseRouter {
         body: JSON.stringify(rest),
         files: files,
       },
-      this.sessionId,
     );
   }
 
@@ -250,7 +226,6 @@ export class MessageRouter extends BaseRouter {
     return this.rest.delete(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       { reason },
-      this.sessionId,
     );
   }
 
@@ -273,7 +248,6 @@ export class MessageRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 }

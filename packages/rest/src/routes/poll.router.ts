@@ -37,7 +37,6 @@ export class PollRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 
@@ -47,8 +46,6 @@ export class PollRouter extends BaseRouter {
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
     return this.rest.post(
       PollRouter.ROUTES.channelPollExpire(channelId, messageId),
-      undefined,
-      this.sessionId,
     );
   }
 }

@@ -32,8 +32,6 @@ export class VoiceRouter extends BaseRouter {
   getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
     return this.rest.get(
       VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -46,8 +44,6 @@ export class VoiceRouter extends BaseRouter {
   ): Promise<VoiceStateEntity> {
     return this.rest.get(
       VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -68,7 +64,6 @@ export class VoiceRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -90,7 +85,6 @@ export class VoiceRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 }

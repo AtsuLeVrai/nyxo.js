@@ -14,21 +14,13 @@ export class GatewayRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
    */
   getGateway(): Promise<GatewayResponseEntity> {
-    return this.rest.get(
-      GatewayRouter.ROUTES.gatewayDefault,
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(GatewayRouter.ROUTES.gatewayDefault);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot}
    */
   getGatewayBot(): Promise<GatewayBotResponseEntity> {
-    return this.rest.get(
-      GatewayRouter.ROUTES.gatewayBot,
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(GatewayRouter.ROUTES.gatewayBot);
   }
 }

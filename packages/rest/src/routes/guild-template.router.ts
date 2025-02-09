@@ -22,11 +22,7 @@ export class GuildTemplateRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
   getGuildTemplate(code: string): Promise<GuildTemplateEntity> {
-    return this.rest.get(
-      GuildTemplateRouter.ROUTES.guildTemplateDefault(code),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(GuildTemplateRouter.ROUTES.guildTemplateDefault(code));
   }
 
   /**
@@ -47,7 +43,6 @@ export class GuildTemplateRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -55,11 +50,7 @@ export class GuildTemplateRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
   getGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
-    return this.rest.get(
-      GuildTemplateRouter.ROUTES.guildTemplates(guildId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
   }
 
   /**
@@ -74,13 +65,9 @@ export class GuildTemplateRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
-      GuildTemplateRouter.ROUTES.guildTemplates(guildId),
-      {
-        body: JSON.stringify(result.data),
-      },
-      this.sessionId,
-    );
+    return this.rest.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
+      body: JSON.stringify(result.data),
+    });
   }
 
   /**
@@ -92,8 +79,6 @@ export class GuildTemplateRouter extends BaseRouter {
   ): Promise<GuildTemplateEntity> {
     return this.rest.put(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -115,7 +100,6 @@ export class GuildTemplateRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -128,8 +112,6 @@ export class GuildTemplateRouter extends BaseRouter {
   ): Promise<GuildTemplateEntity> {
     return this.rest.delete(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
-      undefined,
-      this.sessionId,
     );
   }
 }

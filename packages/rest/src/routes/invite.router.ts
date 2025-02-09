@@ -20,25 +20,17 @@ export class InviteRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(
-      InviteRouter.ROUTES.inviteBase(code),
-      {
-        query: result.data,
-      },
-      this.sessionId,
-    );
+    return this.rest.get(InviteRouter.ROUTES.inviteBase(code), {
+      query: result.data,
+    });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.rest.delete(
-      InviteRouter.ROUTES.inviteBase(code),
-      {
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.delete(InviteRouter.ROUTES.inviteBase(code), {
+      reason,
+    });
   }
 }

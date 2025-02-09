@@ -53,7 +53,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         query: { with_localizations: withLocalizations },
       },
-      this.sessionId,
     );
   }
 
@@ -74,7 +73,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -90,8 +88,6 @@ export class ApplicationCommandRouter extends BaseRouter {
         applicationId,
         commandId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -114,7 +110,6 @@ export class ApplicationCommandRouter extends BaseRouter {
         commandId,
       ),
       { body: JSON.stringify(result.data) },
-      this.sessionId,
     );
   }
 
@@ -130,8 +125,6 @@ export class ApplicationCommandRouter extends BaseRouter {
         applicationId,
         commandId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -155,7 +148,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -175,7 +167,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         query: { with_localizations: withLocalizations },
       },
-      this.sessionId,
     );
   }
 
@@ -200,7 +191,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -218,8 +208,6 @@ export class ApplicationCommandRouter extends BaseRouter {
         guildId,
         commandId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -246,7 +234,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -264,8 +251,6 @@ export class ApplicationCommandRouter extends BaseRouter {
         guildId,
         commandId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -293,7 +278,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -309,8 +293,6 @@ export class ApplicationCommandRouter extends BaseRouter {
         applicationId,
         guildId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -328,8 +310,6 @@ export class ApplicationCommandRouter extends BaseRouter {
         guildId,
         commandId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -356,7 +336,6 @@ export class ApplicationCommandRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 }

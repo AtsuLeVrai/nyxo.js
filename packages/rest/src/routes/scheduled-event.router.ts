@@ -33,7 +33,6 @@ export class ScheduledEventRouter extends BaseRouter {
       {
         query: { with_user_count: withUserCount },
       },
-      this.sessionId,
     );
   }
 
@@ -56,7 +55,6 @@ export class ScheduledEventRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -73,7 +71,6 @@ export class ScheduledEventRouter extends BaseRouter {
       {
         query: { with_user_count: withUserCount },
       },
-      this.sessionId,
     );
   }
 
@@ -97,7 +94,6 @@ export class ScheduledEventRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -110,8 +106,6 @@ export class ScheduledEventRouter extends BaseRouter {
   ): Promise<void> {
     return this.rest.delete(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -133,7 +127,6 @@ export class ScheduledEventRouter extends BaseRouter {
       {
         query: result.data,
       },
-      this.sessionId,
     );
   }
 }

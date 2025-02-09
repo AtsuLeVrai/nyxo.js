@@ -36,7 +36,6 @@ export class SoundboardRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -44,11 +43,7 @@ export class SoundboardRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.rest.get(
-      SoundboardRouter.ROUTES.soundboardDefaultSounds,
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(SoundboardRouter.ROUTES.soundboardDefaultSounds);
   }
 
   /**
@@ -59,8 +54,6 @@ export class SoundboardRouter extends BaseRouter {
   ): Promise<ListGuildSoundboardSoundsResponseEntity> {
     return this.rest.get(
       SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -73,8 +66,6 @@ export class SoundboardRouter extends BaseRouter {
   ): Promise<SoundboardSoundEntity> {
     return this.rest.get(
       SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -98,7 +89,6 @@ export class SoundboardRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -122,7 +112,6 @@ export class SoundboardRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -139,7 +128,6 @@ export class SoundboardRouter extends BaseRouter {
       {
         reason,
       },
-      this.sessionId,
     );
   }
 }

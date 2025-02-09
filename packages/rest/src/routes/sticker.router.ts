@@ -22,44 +22,28 @@ export class StickerRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
    */
   getSticker(stickerId: Snowflake): Promise<StickerEntity> {
-    return this.rest.get(
-      StickerRouter.ROUTES.sticker(stickerId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(StickerRouter.ROUTES.sticker(stickerId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
    */
   listStickerPacks(): Promise<ListStickerPacksResponseEntity> {
-    return this.rest.get(
-      StickerRouter.ROUTES.stickerPacksBase,
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(StickerRouter.ROUTES.stickerPacksBase);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
    */
   getStickerPack(packId: Snowflake): Promise<StickerPackEntity> {
-    return this.rest.get(
-      StickerRouter.ROUTES.stickerPack(packId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(StickerRouter.ROUTES.stickerPack(packId));
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
    */
   listGuildStickers(guildId: Snowflake): Promise<StickerEntity[]> {
-    return this.rest.get(
-      StickerRouter.ROUTES.guildStickers(guildId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(StickerRouter.ROUTES.guildStickers(guildId));
   }
 
   /**
@@ -69,11 +53,7 @@ export class StickerRouter extends BaseRouter {
     guildId: Snowflake,
     stickerId: Snowflake,
   ): Promise<StickerEntity> {
-    return this.rest.get(
-      StickerRouter.ROUTES.guildSticker(guildId, stickerId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(StickerRouter.ROUTES.guildSticker(guildId, stickerId));
   }
 
   /**
@@ -90,15 +70,11 @@ export class StickerRouter extends BaseRouter {
     }
 
     const { file, ...rest } = result.data;
-    return this.rest.post(
-      StickerRouter.ROUTES.guildStickers(guildId),
-      {
-        body: JSON.stringify(rest),
-        files: file,
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.post(StickerRouter.ROUTES.guildStickers(guildId), {
+      body: JSON.stringify(rest),
+      files: file,
+      reason,
+    });
   }
 
   /**
@@ -121,7 +97,6 @@ export class StickerRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -138,7 +113,6 @@ export class StickerRouter extends BaseRouter {
       {
         reason,
       },
-      this.sessionId,
     );
   }
 }

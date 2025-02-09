@@ -11,10 +11,6 @@ export class SkuRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/sku#list-skus}
    */
   listSkus(applicationId: Snowflake): Promise<SkuEntity[]> {
-    return this.rest.get(
-      SkuRouter.ROUTES.applicationSkus(applicationId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(SkuRouter.ROUTES.applicationSkus(applicationId));
   }
 }

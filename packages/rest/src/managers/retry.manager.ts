@@ -2,13 +2,15 @@ import { setTimeout } from "node:timers/promises";
 import { REQUEST_CONSTANTS } from "../constants/index.js";
 import type { Rest } from "../core/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
-import type { RestOptions } from "../options/index.js";
+import type { RetryOptions } from "../options/index.js";
 
 export class RetryManager {
   readonly #rest: Rest;
+  readonly #options: RetryOptions;
 
-  constructor(rest: Rest) {
+  constructor(rest: Rest, options: RetryOptions) {
     this.#rest = rest;
+    this.#options = options;
   }
 
   async execute<T>(
@@ -16,12 +18,9 @@ export class RetryManager {
     context: {
       method: string;
       path: string;
-      sessionId?: string;
     },
   ): Promise<T> {
     let attempt = 0;
-    const session = this.#rest.sessions.getSessionInfo(context.sessionId);
-
     while (true) {
       try {
         return await operation();
@@ -32,10 +31,9 @@ export class RetryManager {
           normalizedError,
           attempt,
           context,
-          session.options,
         );
 
-        if (!shouldRetry || attempt >= session.options.retry.maxRetries) {
+        if (!shouldRetry || attempt >= this.#options.maxRetries) {
           throw normalizedError;
         }
 
@@ -47,14 +45,13 @@ export class RetryManager {
   async #handleError(
     error: Error,
     attempt: number,
-    context: { method: string; path: string; sessionId?: string },
-    options: RestOptions,
+    context: { method: string; path: string },
   ): Promise<boolean> {
-    if (!this.#shouldRetry(error, attempt, options)) {
+    if (!this.#shouldRetry(error, attempt)) {
       return false;
     }
 
-    const delay = this.#calculateDelay(error, attempt, options);
+    const delay = this.#calculateDelay(error, attempt);
 
     this.#rest.emit("retryAttempt", {
       error,
@@ -68,30 +65,22 @@ export class RetryManager {
     return true;
   }
 
-  #calculateDelay(error: Error, attempt: number, options: RestOptions): number {
+  #calculateDelay(error: Error, attempt: number): number {
     if (error instanceof RateLimitError) {
-      return this.#calculateRateLimitDelay(
-        error.context.retryAfter,
-        attempt,
-        options,
-      );
+      return this.#calculateRateLimitDelay(error.context.retryAfter, attempt);
     }
 
-    return this.#calculateBackoffDelay(attempt, options);
+    return this.#calculateBackoffDelay(attempt);
   }
 
-  #calculateRateLimitDelay(
-    baseDelay: number,
-    attempt: number,
-    options: RestOptions,
-  ): number {
+  #calculateRateLimitDelay(baseDelay: number, attempt: number): number {
     const exponentialDelay = Math.min(
       baseDelay * 2 ** attempt,
-      options.retry.maxDelay,
+      this.#options.maxDelay,
     );
 
     const maxJitter = Math.min(
-      exponentialDelay * options.retry.jitter,
+      exponentialDelay * this.#options.jitter,
       REQUEST_CONSTANTS.MAX_JITTER,
     );
     const jitter = Math.random() * maxJitter;
@@ -102,37 +91,37 @@ export class RetryManager {
     );
   }
 
-  #calculateBackoffDelay(attempt: number, options: RestOptions): number {
+  #calculateBackoffDelay(attempt: number): number {
     const exponentialDelay = 1000 * 2 ** attempt;
-    const finalDelay = Math.min(exponentialDelay, options.retry.maxDelay);
-    const jitter = Math.random() * options.retry.jitter * finalDelay;
+    const finalDelay = Math.min(exponentialDelay, this.#options.maxDelay);
+    const jitter = Math.random() * this.#options.jitter * finalDelay;
     return finalDelay + jitter;
   }
 
-  #shouldRetry(error: Error, attempt: number, options: RestOptions): boolean {
-    if (attempt >= options.retry.maxRetries) {
+  #shouldRetry(error: Error, attempt: number): boolean {
+    if (attempt >= this.#options.maxRetries) {
       return false;
     }
 
     if (error instanceof ApiError) {
-      return options.retry.retryableStatusCodes.includes(error.status);
+      return this.#options.retryableStatusCodes.includes(error.status);
     }
 
     if (error instanceof RateLimitError) {
-      return options.retry.retryOn.rateLimits;
+      return this.#options.retryOn.rateLimits;
     }
 
     const errorMessage = error.message.toLowerCase();
 
-    const isNetworkError = options.retry.retryableErrors.some((code) =>
+    const isNetworkError = this.#options.retryableErrors.some((code) =>
       errorMessage.includes(code.toLowerCase()),
     );
     if (isNetworkError) {
-      return options.retry.retryOn.networkErrors;
+      return this.#options.retryOn.networkErrors;
     }
 
     if (errorMessage.includes("timeout")) {
-      return options.retry.retryOn.timeouts;
+      return this.#options.retryOn.timeouts;
     }
 
     return false;
@@ -142,6 +131,13 @@ export class RetryManager {
     if (error instanceof Error) {
       return error;
     }
-    return new Error(typeof error === "string" ? error : JSON.stringify(error));
+
+    if (typeof error === "object" && error !== null) {
+      return new Error(JSON.stringify(error), {
+        cause: error,
+      });
+    }
+
+    return new Error(String(error));
   }
 }

@@ -80,7 +80,6 @@ export class InteractionRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         query: { with_response: withResponse },
       },
-      this.sessionId,
     );
   }
 
@@ -96,8 +95,6 @@ export class InteractionRouter extends BaseRouter {
         applicationId,
         interactionToken,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -122,7 +119,6 @@ export class InteractionRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -138,8 +134,6 @@ export class InteractionRouter extends BaseRouter {
         applicationId,
         interactionToken,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -164,7 +158,6 @@ export class InteractionRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -182,8 +175,6 @@ export class InteractionRouter extends BaseRouter {
         interactionToken,
         messageId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -210,7 +201,6 @@ export class InteractionRouter extends BaseRouter {
       {
         body: JSON.stringify(result.data),
       },
-      this.sessionId,
     );
   }
 
@@ -228,8 +218,6 @@ export class InteractionRouter extends BaseRouter {
         interactionToken,
         messageId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 }

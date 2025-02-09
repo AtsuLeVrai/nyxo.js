@@ -25,25 +25,17 @@ export class StageInstanceRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.post(
-      StageInstanceRouter.ROUTES.stageInstancesBase,
-      {
-        body: JSON.stringify(result.data),
-        reason,
-      },
-      this.sessionId,
-    );
+    return this.rest.post(StageInstanceRouter.ROUTES.stageInstancesBase, {
+      body: JSON.stringify(result.data),
+      reason,
+    });
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
    */
   getStageInstance(channelId: Snowflake): Promise<StageInstanceEntity> {
-    return this.rest.get(
-      StageInstanceRouter.ROUTES.stageInstance(channelId),
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(StageInstanceRouter.ROUTES.stageInstance(channelId));
   }
 
   /**
@@ -65,7 +57,6 @@ export class StageInstanceRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -78,7 +69,6 @@ export class StageInstanceRouter extends BaseRouter {
       {
         reason,
       },
-      this.sessionId,
     );
   }
 }

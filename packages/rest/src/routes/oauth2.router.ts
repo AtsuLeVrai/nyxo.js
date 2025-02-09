@@ -13,21 +13,13 @@ export class OAuth2Router extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
    */
   getCurrentBotApplicationInformation(): Promise<ApplicationEntity> {
-    return this.rest.get(
-      OAuth2Router.ROUTES.oauth2CurrentApplication,
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(OAuth2Router.ROUTES.oauth2CurrentApplication);
   }
 
   /**
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
    */
   getCurrentAuthorizationInformation(): Promise<AuthorizationEntity> {
-    return this.rest.get(
-      OAuth2Router.ROUTES.oauth2CurrentAuthorization,
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(OAuth2Router.ROUTES.oauth2CurrentAuthorization);
   }
 }

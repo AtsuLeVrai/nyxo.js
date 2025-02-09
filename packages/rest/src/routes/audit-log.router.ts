@@ -21,12 +21,8 @@ export class AuditLogRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.get(
-      AuditLogRouter.ROUTES.guildAuditLogs(guildId),
-      {
-        query: result.data,
-      },
-      this.sessionId,
-    );
+    return this.rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {
+      query: result.data,
+    });
   }
 }

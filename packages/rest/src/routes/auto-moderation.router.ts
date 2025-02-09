@@ -22,8 +22,6 @@ export class AutoModerationRouter extends BaseRouter {
   ): Promise<AutoModerationRuleEntity[]> {
     return this.rest.get(
       AutoModerationRouter.ROUTES.guildAutoModerationRules(guildId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -36,8 +34,6 @@ export class AutoModerationRouter extends BaseRouter {
   ): Promise<AutoModerationRuleEntity> {
     return this.rest.get(
       AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
-      undefined,
-      this.sessionId,
     );
   }
 
@@ -60,7 +56,6 @@ export class AutoModerationRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -84,7 +79,6 @@ export class AutoModerationRouter extends BaseRouter {
         body: JSON.stringify(result.data),
         reason,
       },
-      this.sessionId,
     );
   }
 
@@ -101,7 +95,6 @@ export class AutoModerationRouter extends BaseRouter {
       {
         reason,
       },
-      this.sessionId,
     );
   }
 }

@@ -43,18 +43,6 @@ rest.on("bucketUpdated", (...args) => {
   console.log("[REST - BUCKET UPDATED]", ...args);
 });
 
-rest.on("sessionCreated", (...args) => {
-  console.log("[REST - SESSION CREATED]", ...args);
-});
-
-rest.on("sessionDestroyed", (...args) => {
-  console.log("[REST - SESSION DESTROYED]", ...args);
-});
-
-rest.on("sessionUpdated", (...args) => {
-  console.log("[REST - SESSION UPDATED]", ...args);
-});
-
 const gateway = new Gateway(rest, {
   token: env.DISCORD_TOKEN,
   intents: [
@@ -111,35 +99,6 @@ gateway.on("dispatch", (...args) => {
 });
 
 gateway.connect();
-
-// async function main(): Promise<void> {
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-//   await rest.users.getCurrentUserGuilds();
-// }
-//
-// main();
-
-process.on("SIGINT", () => {
-  gateway.destroy();
-  rest.destroy();
-});
-
-process.on("SIGTERM", () => {
-  gateway.destroy();
-  rest.destroy();
-});
 
 process.on("unhandledRejection", (error) => {
   console.error(error);

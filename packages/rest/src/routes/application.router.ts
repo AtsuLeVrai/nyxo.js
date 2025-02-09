@@ -20,11 +20,7 @@ export class ApplicationRouter extends BaseRouter {
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.rest.get(
-      ApplicationRouter.ROUTES.applicationsMe,
-      undefined,
-      this.sessionId,
-    );
+    return this.rest.get(ApplicationRouter.ROUTES.applicationsMe);
   }
 
   /**
@@ -38,13 +34,9 @@ export class ApplicationRouter extends BaseRouter {
       throw new Error(fromZodError(result.error).message);
     }
 
-    return this.rest.patch(
-      ApplicationRouter.ROUTES.applicationsMe,
-      {
-        body: JSON.stringify(result.data),
-      },
-      this.sessionId,
-    );
+    return this.rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
+      body: JSON.stringify(result.data),
+    });
   }
 
   /**
@@ -59,8 +51,6 @@ export class ApplicationRouter extends BaseRouter {
         applicationId,
         instanceId,
       ),
-      undefined,
-      this.sessionId,
     );
   }
 }

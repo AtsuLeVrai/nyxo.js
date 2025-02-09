@@ -75,34 +75,6 @@ export class RateLimitManager {
     return `${method}:${normalizedPath}`;
   }
 
-  getRateLimitStatus(
-    path: string,
-    method: string,
-  ): {
-    limited: boolean;
-    remaining: number;
-    resetAfter: number;
-    scope: RateLimitScope;
-  } {
-    const bucket = this.#getBucket(path, method);
-    if (!bucket) {
-      return {
-        limited: false,
-        remaining: Number.POSITIVE_INFINITY,
-        resetAfter: 0,
-        scope: "user",
-      };
-    }
-
-    const now = Date.now();
-    return {
-      limited: bucket.remaining <= 0 && bucket.reset > now,
-      remaining: bucket.remaining,
-      resetAfter: Math.max(0, bucket.reset - now),
-      scope: bucket.scope,
-    };
-  }
-
   destroy(): void {
     clearInterval(this.#cleanupInterval);
     this.#buckets.clear();
