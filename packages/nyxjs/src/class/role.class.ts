@@ -1,9 +1,16 @@
-import { RoleEntity } from "@nyxjs/core";
+import {
+  BitFieldManager,
+  RoleEntity,
+  type RoleFlags,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { RoleTags } from "./role-tags.class.js";
 
 export class Role {
   readonly #data: RoleEntity;
+  readonly #flags: BitFieldManager<RoleFlags>;
 
   constructor(data: Partial<z.input<typeof RoleEntity>> = {}) {
     try {
@@ -11,9 +18,11 @@ export class Role {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -57,16 +66,12 @@ export class Role {
     return Boolean(this.#data.mentionable);
   }
 
-  get tags(): object | null {
-    return this.#data.tags ?? null;
+  get tags(): RoleTags | null {
+    return this.#data.tags ? new RoleTags(this.#data.tags) : null;
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
-  }
-
-  static fromJson(json: RoleEntity): Role {
-    return new Role(json);
+  get flags(): BitFieldManager<RoleFlags> {
+    return this.#flags;
   }
 
   toJson(): RoleEntity {

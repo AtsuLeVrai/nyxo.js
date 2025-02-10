@@ -1,6 +1,7 @@
 import { PollMediaEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Emoji } from "./emoji.class.js";
 
 export class PollMedia {
   readonly #data: PollMediaEntity;
@@ -17,12 +18,8 @@ export class PollMedia {
     return this.#data.text ?? null;
   }
 
-  get emoji(): unknown | null {
-    return this.#data.emoji ?? null;
-  }
-
-  static fromJson(json: PollMediaEntity): PollMedia {
-    return new PollMedia(json);
+  get emoji(): Emoji | null {
+    return this.#data.emoji ? new Emoji(this.#data.emoji) : null;
   }
 
   toJson(): PollMediaEntity {

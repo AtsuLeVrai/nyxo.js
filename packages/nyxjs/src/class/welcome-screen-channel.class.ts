@@ -1,4 +1,4 @@
-import { WelcomeScreenChannelEntity } from "@nyxjs/core";
+import { type Snowflake, WelcomeScreenChannelEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,7 +13,7 @@ export class WelcomeScreenChannel {
     }
   }
 
-  get channelId(): unknown {
+  get channelId(): Snowflake {
     return this.#data.channel_id;
   }
 
@@ -21,16 +21,12 @@ export class WelcomeScreenChannel {
     return this.#data.description;
   }
 
-  get emojiId(): unknown | null {
+  get emojiId(): Snowflake | null {
     return this.#data.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
     return this.#data.emoji_name ?? null;
-  }
-
-  static fromJson(json: WelcomeScreenChannelEntity): WelcomeScreenChannel {
-    return new WelcomeScreenChannel(json);
   }
 
   toJson(): WelcomeScreenChannelEntity {

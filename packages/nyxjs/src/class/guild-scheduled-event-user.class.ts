@@ -1,6 +1,8 @@
-import { GuildScheduledEventUserEntity } from "@nyxjs/core";
+import { GuildScheduledEventUserEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { GuildMember } from "./guild-member.class.js";
+import { User } from "./user.class.js";
 
 export class GuildScheduledEventUser {
   readonly #data: GuildScheduledEventUserEntity;
@@ -15,22 +17,16 @@ export class GuildScheduledEventUser {
     }
   }
 
-  get guildScheduledEventId(): unknown {
+  get guildScheduledEventId(): Snowflake {
     return this.#data.guild_scheduled_event_id;
   }
 
-  get user(): object | null {
-    return this.#data.user ? { ...this.#data.user } : null;
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
-  get member(): object | null {
-    return this.#data.member ?? null;
-  }
-
-  static fromJson(
-    json: GuildScheduledEventUserEntity,
-  ): GuildScheduledEventUser {
-    return new GuildScheduledEventUser(json);
+  get member(): GuildMember | null {
+    return this.#data.member ? new GuildMember(this.#data.member) : null;
   }
 
   toJson(): GuildScheduledEventUserEntity {

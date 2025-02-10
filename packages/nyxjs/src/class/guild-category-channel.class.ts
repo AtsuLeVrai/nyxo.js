@@ -1,9 +1,20 @@
-import { GuildCategoryChannelEntity } from "@nyxjs/core";
+import {
+  BitFieldManager,
+  type ChannelFlags,
+  type ChannelType,
+  type ForumLayoutType,
+  GuildCategoryChannelEntity,
+  type OverwriteEntity,
+  type Snowflake,
+  type SortOrderType,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { DefaultReaction } from "./default-reaction.class.js";
 
 export class GuildCategoryChannel {
   readonly #data: GuildCategoryChannelEntity;
+  readonly #flags: BitFieldManager<ChannelFlags>;
 
   constructor(data: Partial<z.input<typeof GuildCategoryChannelEntity>> = {}) {
     try {
@@ -11,17 +22,19 @@ export class GuildCategoryChannel {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): ChannelType.GuildCategory {
     return this.#data.type;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
@@ -29,7 +42,7 @@ export class GuildCategoryChannel {
     return this.#data.position ?? null;
   }
 
-  get permissionOverwrites(): object[] | null {
+  get permissionOverwrites(): OverwriteEntity[] | null {
     return this.#data.permission_overwrites ?? null;
   }
 
@@ -37,44 +50,42 @@ export class GuildCategoryChannel {
     return this.#data.name ?? null;
   }
 
-  get nsfw(): boolean | null {
-    return this.#data.nsfw ?? null;
+  get nsfw(): boolean {
+    return Boolean(this.#data.nsfw);
   }
 
   get permissions(): string | null {
     return this.#data.permissions ?? null;
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
+  get flags(): BitFieldManager<ChannelFlags> {
+    return this.#flags;
   }
 
   get totalMessageSent(): number | null {
     return this.#data.total_message_sent ?? null;
   }
 
-  get appliedTags(): unknown[] | null {
+  get appliedTags(): Snowflake[] | null {
     return this.#data.applied_tags ?? null;
   }
 
-  get defaultReactionEmoji(): object | null {
-    return this.#data.default_reaction_emoji ?? null;
+  get defaultReactionEmoji(): DefaultReaction | null {
+    return this.#data.default_reaction_emoji
+      ? new DefaultReaction(this.#data.default_reaction_emoji)
+      : null;
   }
 
   get defaultThreadRateLimitPerUser(): number | null {
     return this.#data.default_thread_rate_limit_per_user ?? null;
   }
 
-  get defaultSortOrder(): unknown | null {
+  get defaultSortOrder(): SortOrderType | null {
     return this.#data.default_sort_order ?? null;
   }
 
-  get defaultForumLayout(): unknown | null {
+  get defaultForumLayout(): ForumLayoutType | null {
     return this.#data.default_forum_layout ?? null;
-  }
-
-  static fromJson(json: GuildCategoryChannelEntity): GuildCategoryChannel {
-    return new GuildCategoryChannel(json);
   }
 
   toJson(): GuildCategoryChannelEntity {

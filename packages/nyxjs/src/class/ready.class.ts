@@ -49,10 +49,6 @@ export class Ready {
       : null;
   }
 
-  static fromJson(json: ReadyEntity): Ready {
-    return new Ready(json);
-  }
-
   toJson(): ReadyEntity {
     return { ...this.#data };
   }

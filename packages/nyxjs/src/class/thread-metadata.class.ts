@@ -17,7 +17,7 @@ export class ThreadMetadata {
     return Boolean(this.#data.archived);
   }
 
-  get autoArchiveDuration(): unknown {
+  get autoArchiveDuration(): 60 | 1440 | 4320 | 10080 {
     return this.#data.auto_archive_duration;
   }
 
@@ -29,16 +29,12 @@ export class ThreadMetadata {
     return Boolean(this.#data.locked);
   }
 
-  get invitable(): boolean | null {
-    return this.#data.invitable ?? null;
+  get invitable(): boolean {
+    return Boolean(this.#data.invitable);
   }
 
   get createTimestamp(): string | null {
     return this.#data.create_timestamp ?? null;
-  }
-
-  static fromJson(json: ThreadMetadataEntity): ThreadMetadata {
-    return new ThreadMetadata(json);
   }
 
   toJson(): ThreadMetadataEntity {

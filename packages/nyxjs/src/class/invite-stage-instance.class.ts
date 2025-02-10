@@ -1,6 +1,7 @@
 import { InviteStageInstanceEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { GuildMember } from "./guild-member.class.js";
 
 export class InviteStageInstance {
   readonly #data: InviteStageInstanceEntity;
@@ -13,8 +14,10 @@ export class InviteStageInstance {
     }
   }
 
-  get members(): object[] {
-    return Array.isArray(this.#data.members) ? [...this.#data.members] : [];
+  get members(): GuildMember[] {
+    return Array.isArray(this.#data.members)
+      ? this.#data.members.map((member) => new GuildMember(member))
+      : [];
   }
 
   get participantCount(): number {
@@ -27,10 +30,6 @@ export class InviteStageInstance {
 
   get topic(): string {
     return this.#data.topic;
-  }
-
-  static fromJson(json: InviteStageInstanceEntity): InviteStageInstance {
-    return new InviteStageInstance(json);
   }
 
   toJson(): InviteStageInstanceEntity {

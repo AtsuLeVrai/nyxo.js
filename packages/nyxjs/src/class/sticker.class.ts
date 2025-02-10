@@ -1,6 +1,12 @@
-import { StickerEntity } from "@nyxjs/core";
+import {
+  type Snowflake,
+  StickerEntity,
+  type StickerFormatType,
+  type StickerType,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class Sticker {
   readonly #data: StickerEntity;
@@ -13,11 +19,11 @@ export class Sticker {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get packId(): unknown | null {
+  get packId(): Snowflake | null {
     return this.#data.pack_id ?? null;
   }
 
@@ -33,32 +39,28 @@ export class Sticker {
     return this.#data.tags;
   }
 
-  get type(): unknown {
+  get type(): StickerType {
     return this.#data.type;
   }
 
-  get formatType(): unknown {
+  get formatType(): StickerFormatType {
     return this.#data.format_type;
   }
 
-  get available(): boolean | null {
-    return this.#data.available ?? null;
+  get available(): boolean {
+    return Boolean(this.#data.available);
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
-  get user(): unknown | null {
-    return this.#data.user ?? null;
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
   get sortValue(): number | null {
     return this.#data.sort_value ?? null;
-  }
-
-  static fromJson(json: StickerEntity): Sticker {
-    return new Sticker(json);
   }
 
   toJson(): StickerEntity {

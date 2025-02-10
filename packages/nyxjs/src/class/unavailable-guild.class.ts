@@ -1,4 +1,4 @@
-import { UnavailableGuildEntity } from "@nyxjs/core";
+import { type Snowflake, UnavailableGuildEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,16 +13,12 @@ export class UnavailableGuild {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get unavailable(): unknown {
+  get unavailable(): true {
     return this.#data.unavailable;
-  }
-
-  static fromJson(json: UnavailableGuildEntity): UnavailableGuild {
-    return new UnavailableGuild(json);
   }
 
   toJson(): UnavailableGuildEntity {

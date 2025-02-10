@@ -19,7 +19,6 @@ const RATE_LIMIT_CONSTANTS = {
     GLOBAL: "x-ratelimit-global",
     RETRY_AFTER: "retry-after",
   } as const,
-
   ROUTES: {
     PATTERNS: {
       WEBHOOK: /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/,

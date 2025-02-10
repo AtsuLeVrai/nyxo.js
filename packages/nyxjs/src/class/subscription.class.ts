@@ -1,4 +1,8 @@
-import { SubscriptionEntity } from "@nyxjs/core";
+import {
+  type Snowflake,
+  SubscriptionEntity,
+  type SubscriptionStatus,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,25 +17,25 @@ export class Subscription {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get userId(): unknown {
+  get userId(): Snowflake {
     return this.#data.user_id;
   }
 
-  get skuIds(): unknown[] {
+  get skuIds(): Snowflake[] {
     return Array.isArray(this.#data.sku_ids) ? [...this.#data.sku_ids] : [];
   }
 
-  get entitlementIds(): unknown[] {
+  get entitlementIds(): Snowflake[] {
     return Array.isArray(this.#data.entitlement_ids)
       ? [...this.#data.entitlement_ids]
       : [];
   }
 
-  get renewalSkuIds(): unknown[] | null {
+  get renewalSkuIds(): Snowflake[] | null {
     return this.#data.renewal_sku_ids ?? null;
   }
 
@@ -43,7 +47,7 @@ export class Subscription {
     return this.#data.current_period_end;
   }
 
-  get status(): unknown {
+  get status(): SubscriptionStatus {
     return this.#data.status;
   }
 
@@ -53,10 +57,6 @@ export class Subscription {
 
   get country(): string | null {
     return this.#data.country ?? null;
-  }
-
-  static fromJson(json: SubscriptionEntity): Subscription {
-    return new Subscription(json);
   }
 
   toJson(): SubscriptionEntity {

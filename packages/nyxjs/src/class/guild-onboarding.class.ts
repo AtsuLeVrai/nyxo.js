@@ -1,6 +1,11 @@
-import { GuildOnboardingEntity } from "@nyxjs/core";
+import {
+  GuildOnboardingEntity,
+  type GuildOnboardingMode,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { GuildOnboardingPrompt } from "./guild-onboarding-prompt.class.js";
 
 export class GuildOnboarding {
   readonly #data: GuildOnboardingEntity;
@@ -13,15 +18,17 @@ export class GuildOnboarding {
     }
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
-  get prompts(): object[] {
-    return Array.isArray(this.#data.prompts) ? [...this.#data.prompts] : [];
+  get prompts(): GuildOnboardingPrompt[] {
+    return Array.isArray(this.#data.prompts)
+      ? this.#data.prompts.map((prompt) => new GuildOnboardingPrompt(prompt))
+      : [];
   }
 
-  get defaultChannelIds(): unknown[] {
+  get defaultChannelIds(): Snowflake[] {
     return Array.isArray(this.#data.default_channel_ids)
       ? [...this.#data.default_channel_ids]
       : [];
@@ -31,12 +38,8 @@ export class GuildOnboarding {
     return Boolean(this.#data.enabled);
   }
 
-  get mode(): unknown {
+  get mode(): GuildOnboardingMode {
     return this.#data.mode;
-  }
-
-  static fromJson(json: GuildOnboardingEntity): GuildOnboarding {
-    return new GuildOnboarding(json);
   }
 
   toJson(): GuildOnboardingEntity {

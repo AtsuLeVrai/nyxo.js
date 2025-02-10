@@ -1,6 +1,7 @@
 import { PollAnswerEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { PollMedia } from "./poll-media.class.js";
 
 export class PollAnswer {
   readonly #data: PollAnswerEntity;
@@ -17,12 +18,8 @@ export class PollAnswer {
     return this.#data.answer_id;
   }
 
-  get pollMedia(): object | null {
-    return this.#data.poll_media ? { ...this.#data.poll_media } : null;
-  }
-
-  static fromJson(json: PollAnswerEntity): PollAnswer {
-    return new PollAnswer(json);
+  get pollMedia(): PollMedia | null {
+    return this.#data.poll_media ? new PollMedia(this.#data.poll_media) : null;
   }
 
   toJson(): PollAnswerEntity {

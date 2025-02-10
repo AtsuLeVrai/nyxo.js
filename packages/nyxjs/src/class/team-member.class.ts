@@ -1,6 +1,12 @@
-import { TeamMemberEntity } from "@nyxjs/core";
+import {
+  type MembershipState,
+  type Snowflake,
+  TeamMemberEntity,
+  type TeamMemberRole,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class TeamMember {
   readonly #data: TeamMemberEntity;
@@ -13,24 +19,20 @@ export class TeamMember {
     }
   }
 
-  get membershipState(): unknown {
+  get membershipState(): MembershipState {
     return this.#data.membership_state;
   }
 
-  get teamId(): unknown {
+  get teamId(): Snowflake {
     return this.#data.team_id;
   }
 
-  get user(): object | null {
-    return this.#data.user ? { ...this.#data.user } : null;
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
-  get role(): unknown {
+  get role(): TeamMemberRole {
     return this.#data.role;
-  }
-
-  static fromJson(json: TeamMemberEntity): TeamMember {
-    return new TeamMember(json);
   }
 
   toJson(): TeamMemberEntity {

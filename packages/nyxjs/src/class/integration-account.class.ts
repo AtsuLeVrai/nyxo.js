@@ -21,10 +21,6 @@ export class IntegrationAccount {
     return this.#data.name;
   }
 
-  static fromJson(json: IntegrationAccountEntity): IntegrationAccount {
-    return new IntegrationAccount(json);
-  }
-
   toJson(): IntegrationAccountEntity {
     return { ...this.#data };
   }

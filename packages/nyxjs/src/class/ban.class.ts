@@ -1,6 +1,7 @@
 import { BanEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class Ban {
   readonly #data: BanEntity;
@@ -17,12 +18,8 @@ export class Ban {
     return this.#data.reason ?? null;
   }
 
-  get user(): unknown {
-    return this.#data.user;
-  }
-
-  static fromJson(json: BanEntity): Ban {
-    return new Ban(json);
+  get user(): User {
+    return new User(this.#data.user);
   }
 
   toJson(): BanEntity {

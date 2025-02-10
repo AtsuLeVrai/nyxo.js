@@ -1,6 +1,7 @@
-import { IntegrationApplicationEntity } from "@nyxjs/core";
+import { IntegrationApplicationEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class IntegrationApplication {
   readonly #data: IntegrationApplicationEntity;
@@ -15,7 +16,7 @@ export class IntegrationApplication {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -31,12 +32,8 @@ export class IntegrationApplication {
     return this.#data.description;
   }
 
-  get bot(): unknown | null {
-    return this.#data.bot ?? null;
-  }
-
-  static fromJson(json: IntegrationApplicationEntity): IntegrationApplication {
-    return new IntegrationApplication(json);
+  get bot(): User | null {
+    return this.#data.bot ? new User(this.#data.bot) : null;
   }
 
   toJson(): IntegrationApplicationEntity {

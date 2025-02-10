@@ -1,6 +1,7 @@
-import { StickerPackEntity } from "@nyxjs/core";
+import { type Snowflake, StickerPackEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Sticker } from "./sticker.class.js";
 
 export class StickerPack {
   readonly #data: StickerPackEntity;
@@ -13,23 +14,25 @@ export class StickerPack {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get stickers(): object[] {
-    return Array.isArray(this.#data.stickers) ? [...this.#data.stickers] : [];
+  get stickers(): Sticker[] {
+    return Array.isArray(this.#data.stickers)
+      ? this.#data.stickers.map((sticker) => new Sticker(sticker))
+      : [];
   }
 
   get name(): string {
     return this.#data.name;
   }
 
-  get skuId(): unknown {
+  get skuId(): Snowflake {
     return this.#data.sku_id;
   }
 
-  get coverStickerId(): unknown | null {
+  get coverStickerId(): Snowflake | null {
     return this.#data.cover_sticker_id ?? null;
   }
 
@@ -37,12 +40,8 @@ export class StickerPack {
     return this.#data.description;
   }
 
-  get bannerAssetId(): unknown | null {
+  get bannerAssetId(): Snowflake | null {
     return this.#data.banner_asset_id ?? null;
-  }
-
-  static fromJson(json: StickerPackEntity): StickerPack {
-    return new StickerPack(json);
   }
 
   toJson(): StickerPackEntity {

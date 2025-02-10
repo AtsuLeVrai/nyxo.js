@@ -1,6 +1,12 @@
-import { GuildWidgetEntity } from "@nyxjs/core";
+import {
+  type GuildStageVoiceChannelEntity,
+  type GuildVoiceChannelEntity,
+  GuildWidgetEntity,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class GuildWidget {
   readonly #data: GuildWidgetEntity;
@@ -13,7 +19,7 @@ export class GuildWidget {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -25,20 +31,21 @@ export class GuildWidget {
     return this.#data.instant_invite ?? null;
   }
 
-  get channels(): unknown[] {
+  get channels(): (
+    | Partial<GuildVoiceChannelEntity>
+    | Partial<GuildStageVoiceChannelEntity>
+  )[] {
     return Array.isArray(this.#data.channels) ? [...this.#data.channels] : [];
   }
 
-  get members(): unknown[] {
-    return Array.isArray(this.#data.members) ? [...this.#data.members] : [];
+  get members(): User[] {
+    return Array.isArray(this.#data.members)
+      ? this.#data.members.map((member) => new User(member))
+      : [];
   }
 
   get presenceCount(): number {
     return this.#data.presence_count;
-  }
-
-  static fromJson(json: GuildWidgetEntity): GuildWidget {
-    return new GuildWidget(json);
   }
 
   toJson(): GuildWidgetEntity {

@@ -279,7 +279,7 @@ export const IntegrationEntity = z.object({
   subscriber_count: z.number().int().optional(),
   revoked: z.boolean().optional(),
   application: IntegrationApplicationEntity.optional(),
-  scopes: z.nativeEnum(OAuth2Scope).optional(),
+  scopes: z.array(z.nativeEnum(OAuth2Scope)).optional(),
 });
 
 export type IntegrationEntity = z.infer<typeof IntegrationEntity>;

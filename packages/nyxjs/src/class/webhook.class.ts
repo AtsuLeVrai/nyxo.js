@@ -1,6 +1,9 @@
-import { WebhookEntity } from "@nyxjs/core";
+import { type Snowflake, WebhookEntity, type WebhookType } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Channel } from "./channel.class.js";
+import { Guild } from "./guild.class.js";
+import { User } from "./user.class.js";
 
 export class Webhook {
   readonly #data: WebhookEntity;
@@ -13,24 +16,24 @@ export class Webhook {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): WebhookType {
     return this.#data.type;
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
-  get channelId(): unknown | null {
+  get channelId(): Snowflake | null {
     return this.#data.channel_id ?? null;
   }
 
-  get user(): object | null {
-    return this.#data.user ?? null;
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
   get name(): string | null {
@@ -49,20 +52,18 @@ export class Webhook {
     return this.#data.application_id ?? null;
   }
 
-  get sourceGuild(): object | null {
-    return this.#data.source_guild ?? null;
+  get sourceGuild(): Guild | null {
+    return this.#data.source_guild ? new Guild(this.#data.source_guild) : null;
   }
 
-  get sourceChannel(): unknown | null {
-    return this.#data.source_channel ?? null;
+  get sourceChannel(): Channel | null {
+    return this.#data.source_channel
+      ? new Channel(this.#data.source_channel)
+      : null;
   }
 
   get url(): string | null {
     return this.#data.url ?? null;
-  }
-
-  static fromJson(json: WebhookEntity): Webhook {
-    return new Webhook(json);
   }
 
   toJson(): WebhookEntity {

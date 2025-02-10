@@ -1,9 +1,22 @@
-import { ApplicationEntity } from "@nyxjs/core";
+import {
+  ApplicationEntity,
+  type ApplicationEventWebhookStatus,
+  type ApplicationFlags,
+  type ApplicationIntegrationType,
+  type ApplicationIntegrationTypeConfigurationEntity,
+  BitFieldManager,
+  type InstallParamsEntity,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Guild } from "./guild.class.js";
+import { Team } from "./team.class.js";
+import { User } from "./user.class.js";
 
 export class Application {
   readonly #data: ApplicationEntity;
+  readonly #flags: BitFieldManager<ApplicationFlags>;
 
   constructor(data: Partial<z.input<typeof ApplicationEntity>> = {}) {
     try {
@@ -11,9 +24,11 @@ export class Application {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -41,8 +56,8 @@ export class Application {
     return Boolean(this.#data.bot_require_code_grant);
   }
 
-  get bot(): object | null {
-    return this.#data.bot ?? null;
+  get bot(): User | null {
+    return this.#data.bot ? new User(this.#data.bot) : null;
   }
 
   get termsOfServiceUrl(): string | null {
@@ -53,27 +68,27 @@ export class Application {
     return this.#data.privacy_policy_url ?? null;
   }
 
-  get owner(): object | null {
-    return this.#data.owner ?? null;
+  get owner(): User | null {
+    return this.#data.owner ? new User(this.#data.owner) : null;
   }
 
   get verifyKey(): string {
     return this.#data.verify_key;
   }
 
-  get team(): object | null {
-    return this.#data.team ?? null;
+  get team(): Team | null {
+    return this.#data.team ? new Team(this.#data.team) : null;
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
-  get guild(): object | null {
-    return this.#data.guild ?? null;
+  get guild(): Guild | null {
+    return this.#data.guild ? new Guild(this.#data.guild) : null;
   }
 
-  get primarySkuId(): unknown | null {
+  get primarySkuId(): Snowflake | null {
     return this.#data.primary_sku_id ?? null;
   }
 
@@ -85,8 +100,8 @@ export class Application {
     return this.#data.cover_image ?? null;
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
+  get flags(): BitFieldManager<ApplicationFlags> {
+    return this.#flags;
   }
 
   get approximateGuildCount(): number | null {
@@ -113,7 +128,7 @@ export class Application {
     return this.#data.event_webhooks_url;
   }
 
-  get eventWebhooksStatus(): unknown {
+  get eventWebhooksStatus(): ApplicationEventWebhookStatus {
     return this.#data.event_webhooks_status;
   }
 
@@ -125,20 +140,19 @@ export class Application {
     return this.#data.tags ?? null;
   }
 
-  get installParams(): object | null {
+  get installParams(): InstallParamsEntity | null {
     return this.#data.install_params ?? null;
   }
 
-  get integrationTypesConfig(): unknown {
+  get integrationTypesConfig(): Record<
+    ApplicationIntegrationType,
+    ApplicationIntegrationTypeConfigurationEntity
+  > {
     return this.#data.integration_types_config;
   }
 
   get customInstallUrl(): string | null {
     return this.#data.custom_install_url ?? null;
-  }
-
-  static fromJson(json: ApplicationEntity): Application {
-    return new Application(json);
   }
 
   toJson(): ApplicationEntity {

@@ -1,6 +1,7 @@
-import { VoiceStateEntity } from "@nyxjs/core";
+import { type Snowflake, VoiceStateEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { GuildMember } from "./guild-member.class.js";
 
 export class VoiceState {
   readonly #data: VoiceStateEntity;
@@ -13,23 +14,23 @@ export class VoiceState {
     }
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
-  get channelId(): unknown | null {
+  get channelId(): Snowflake | null {
     return this.#data.channel_id ?? null;
   }
 
-  get userId(): unknown {
+  get userId(): Snowflake {
     return this.#data.user_id;
   }
 
-  get member(): object | null {
-    return this.#data.member ?? null;
+  get member(): GuildMember | null {
+    return this.#data.member ? new GuildMember(this.#data.member) : null;
   }
 
-  get sessionId(): unknown {
+  get sessionId(): Snowflake {
     return this.#data.session_id;
   }
 
@@ -49,8 +50,8 @@ export class VoiceState {
     return Boolean(this.#data.self_mute);
   }
 
-  get selfStream(): boolean | null {
-    return this.#data.self_stream ?? null;
+  get selfStream(): boolean {
+    return Boolean(this.#data.self_stream);
   }
 
   get selfVideo(): boolean {
@@ -63,10 +64,6 @@ export class VoiceState {
 
   get requestToSpeakTimestamp(): string | null {
     return this.#data.request_to_speak_timestamp ?? null;
-  }
-
-  static fromJson(json: VoiceStateEntity): VoiceState {
-    return new VoiceState(json);
   }
 
   toJson(): VoiceStateEntity {

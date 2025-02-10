@@ -1,9 +1,17 @@
-import { GuildMemberEntity } from "@nyxjs/core";
+import {
+  type AvatarDecorationDataEntity,
+  BitFieldManager,
+  GuildMemberEntity,
+  type GuildMemberFlags,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class GuildMember {
   readonly #data: GuildMemberEntity;
+  readonly #flags: BitFieldManager<GuildMemberFlags>;
 
   constructor(data: Partial<z.input<typeof GuildMemberEntity>> = {}) {
     try {
@@ -11,10 +19,12 @@ export class GuildMember {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get user(): unknown {
-    return this.#data.user;
+  get user(): User {
+    return new User(this.#data.user);
   }
 
   get nick(): string | null {
@@ -29,7 +39,7 @@ export class GuildMember {
     return this.#data.banner ?? null;
   }
 
-  get roles(): unknown[] {
+  get roles(): Snowflake[] {
     return Array.isArray(this.#data.roles) ? [...this.#data.roles] : [];
   }
 
@@ -49,12 +59,12 @@ export class GuildMember {
     return Boolean(this.#data.mute);
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
+  get flags(): BitFieldManager<GuildMemberFlags> {
+    return this.#flags;
   }
 
-  get pending(): boolean | null {
-    return this.#data.pending ?? null;
+  get pending(): boolean {
+    return Boolean(this.#data.pending);
   }
 
   get permissions(): string | null {
@@ -65,12 +75,8 @@ export class GuildMember {
     return this.#data.communication_disabled_until ?? null;
   }
 
-  get avatarDecorationData(): unknown | null {
+  get avatarDecorationData(): AvatarDecorationDataEntity | null {
     return this.#data.avatar_decoration_data ?? null;
-  }
-
-  static fromJson(json: GuildMemberEntity): GuildMember {
-    return new GuildMember(json);
   }
 
   toJson(): GuildMemberEntity {

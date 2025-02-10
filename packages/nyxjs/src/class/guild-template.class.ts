@@ -1,6 +1,8 @@
-import { GuildTemplateEntity } from "@nyxjs/core";
+import { GuildTemplateEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Guild } from "./guild.class.js";
+import { User } from "./user.class.js";
 
 export class GuildTemplate {
   readonly #data: GuildTemplateEntity;
@@ -29,12 +31,12 @@ export class GuildTemplate {
     return this.#data.usage_count;
   }
 
-  get creatorId(): unknown {
+  get creatorId(): Snowflake {
     return this.#data.creator_id;
   }
 
-  get creator(): object | null {
-    return this.#data.creator ? { ...this.#data.creator } : null;
+  get creator(): User | null {
+    return this.#data.creator ? new User(this.#data.creator) : null;
   }
 
   get createdAt(): string {
@@ -45,22 +47,18 @@ export class GuildTemplate {
     return this.#data.updated_at;
   }
 
-  get sourceGuildId(): unknown {
+  get sourceGuildId(): Snowflake {
     return this.#data.source_guild_id;
   }
 
-  get serializedSourceGuild(): object | null {
+  get serializedSourceGuild(): Guild | null {
     return this.#data.serialized_source_guild
-      ? { ...this.#data.serialized_source_guild }
+      ? new Guild(this.#data.serialized_source_guild)
       : null;
   }
 
-  get isDirty(): boolean | null {
-    return this.#data.is_dirty ?? null;
-  }
-
-  static fromJson(json: GuildTemplateEntity): GuildTemplate {
-    return new GuildTemplate(json);
+  get isDirty(): boolean {
+    return Boolean(this.#data.is_dirty);
   }
 
   toJson(): GuildTemplateEntity {

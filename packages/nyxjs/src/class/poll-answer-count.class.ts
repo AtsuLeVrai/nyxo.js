@@ -25,10 +25,6 @@ export class PollAnswerCount {
     return Boolean(this.#data.me_voted);
   }
 
-  static fromJson(json: PollAnswerCountEntity): PollAnswerCount {
-    return new PollAnswerCount(json);
-  }
-
   toJson(): PollAnswerCountEntity {
     return { ...this.#data };
   }

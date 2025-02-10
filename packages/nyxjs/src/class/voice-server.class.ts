@@ -1,3 +1,4 @@
+import type { Snowflake } from "@nyxjs/core";
 import { VoiceServerUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
@@ -17,16 +18,12 @@ export class VoiceServer {
     return this.#data.token;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
   get endpoint(): string | null {
     return this.#data.endpoint ?? null;
-  }
-
-  static fromJson(json: VoiceServerUpdateEntity): VoiceServer {
-    return new VoiceServer(json);
   }
 
   toJson(): VoiceServerUpdateEntity {

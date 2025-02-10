@@ -1,6 +1,8 @@
-import { PollCreateRequestEntity } from "@nyxjs/core";
+import { type LayoutType, PollCreateRequestEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { PollAnswer } from "./poll-answer.class.js";
+import { PollMedia } from "./poll-media.class.js";
 
 export class PollCreateRequest {
   readonly #data: PollCreateRequestEntity;
@@ -13,28 +15,26 @@ export class PollCreateRequest {
     }
   }
 
-  get question(): unknown {
-    return this.#data.question;
+  get question(): PollMedia | null {
+    return this.#data.question ? new PollMedia(this.#data.question) : null;
   }
 
-  get answers(): object[] {
-    return Array.isArray(this.#data.answers) ? [...this.#data.answers] : [];
+  get answers(): PollAnswer[] {
+    return Array.isArray(this.#data.answers)
+      ? this.#data.answers.map((answer) => new PollAnswer(answer))
+      : [];
   }
 
-  get duration(): unknown {
+  get duration(): number {
     return this.#data.duration;
   }
 
-  get allowMultiselect(): unknown {
-    return this.#data.allow_multiselect;
+  get allowMultiselect(): boolean {
+    return Boolean(this.#data.allow_multiselect);
   }
 
-  get layoutType(): unknown {
+  get layoutType(): LayoutType {
     return this.#data.layout_type;
-  }
-
-  static fromJson(json: PollCreateRequestEntity): PollCreateRequest {
-    return new PollCreateRequest(json);
   }
 
   toJson(): PollCreateRequestEntity {

@@ -1,4 +1,8 @@
-import { StageInstanceEntity } from "@nyxjs/core";
+import {
+  type Snowflake,
+  StageInstanceEntity,
+  type StageInstancePrivacyLevel,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,15 +17,15 @@ export class StageInstance {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
-  get channelId(): unknown {
+  get channelId(): Snowflake {
     return this.#data.channel_id;
   }
 
@@ -29,7 +33,7 @@ export class StageInstance {
     return this.#data.topic;
   }
 
-  get privacyLevel(): unknown {
+  get privacyLevel(): StageInstancePrivacyLevel {
     return this.#data.privacy_level;
   }
 
@@ -37,12 +41,8 @@ export class StageInstance {
     return Boolean(this.#data.discoverable_disabled);
   }
 
-  get guildScheduledEventId(): unknown | null {
+  get guildScheduledEventId(): Snowflake | null {
     return this.#data.guild_scheduled_event_id ?? null;
-  }
-
-  static fromJson(json: StageInstanceEntity): StageInstance {
-    return new StageInstance(json);
   }
 
   toJson(): StageInstanceEntity {

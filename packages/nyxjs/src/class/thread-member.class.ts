@@ -1,9 +1,12 @@
+import { BitFieldManager, type Snowflake } from "@nyxjs/core";
 import { ThreadMemberUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { GuildMember } from "./guild-member.class.js";
 
 export class ThreadMember {
   readonly #data: ThreadMemberUpdateEntity;
+  readonly #flags: BitFieldManager<number>;
 
   constructor(data: Partial<z.input<typeof ThreadMemberUpdateEntity>> = {}) {
     try {
@@ -11,13 +14,15 @@ export class ThreadMember {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown | null {
+  get id(): Snowflake | null {
     return this.#data.id ?? null;
   }
 
-  get userId(): unknown | null {
+  get userId(): Snowflake | null {
     return this.#data.user_id ?? null;
   }
 
@@ -25,20 +30,16 @@ export class ThreadMember {
     return this.#data.join_timestamp;
   }
 
-  get flags(): number {
-    return this.#data.flags;
+  get flags(): BitFieldManager<number> {
+    return this.#flags;
   }
 
-  get member(): unknown {
-    return this.#data.member;
+  get member(): GuildMember {
+    return new GuildMember(this.#data.member);
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
-  }
-
-  static fromJson(json: ThreadMemberUpdateEntity): ThreadMember {
-    return new ThreadMember(json);
   }
 
   toJson(): ThreadMemberUpdateEntity {

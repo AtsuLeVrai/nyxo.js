@@ -33,10 +33,6 @@ export class InviteMetadata {
     return this.#data.created_at;
   }
 
-  static fromJson(json: InviteMetadataEntity): InviteMetadata {
-    return new InviteMetadata(json);
-  }
-
   toJson(): InviteMetadataEntity {
     return { ...this.#data };
   }

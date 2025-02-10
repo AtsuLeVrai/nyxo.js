@@ -1,3 +1,8 @@
+import type {
+  AutoModerationActionEntity,
+  AutoModerationRuleTriggerType,
+  Snowflake,
+} from "@nyxjs/core";
 import { AutoModerationActionExecutionEntity } from "@nyxjs/gateway";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
@@ -15,35 +20,35 @@ export class AutoModerationActionExecution {
     }
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
-  get action(): unknown {
+  get action(): AutoModerationActionEntity {
     return this.#data.action;
   }
 
-  get ruleId(): unknown {
+  get ruleId(): Snowflake {
     return this.#data.rule_id;
   }
 
-  get ruleTriggerType(): unknown {
+  get ruleTriggerType(): AutoModerationRuleTriggerType {
     return this.#data.rule_trigger_type;
   }
 
-  get userId(): unknown {
+  get userId(): Snowflake {
     return this.#data.user_id;
   }
 
-  get channelId(): unknown | null {
+  get channelId(): Snowflake | null {
     return this.#data.channel_id ?? null;
   }
 
-  get messageId(): unknown | null {
+  get messageId(): Snowflake | null {
     return this.#data.message_id ?? null;
   }
 
-  get alertSystemMessageId(): unknown | null {
+  get alertSystemMessageId(): Snowflake | null {
     return this.#data.alert_system_message_id ?? null;
   }
 
@@ -57,12 +62,6 @@ export class AutoModerationActionExecution {
 
   get matchedContent(): string | null {
     return this.#data.matched_content ?? null;
-  }
-
-  static fromJson(
-    json: AutoModerationActionExecutionEntity,
-  ): AutoModerationActionExecution {
-    return new AutoModerationActionExecution(json);
   }
 
   toJson(): AutoModerationActionExecutionEntity {

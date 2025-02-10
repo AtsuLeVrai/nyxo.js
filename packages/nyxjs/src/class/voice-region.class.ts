@@ -33,10 +33,6 @@ export class VoiceRegion {
     return Boolean(this.#data.custom);
   }
 
-  static fromJson(json: VoiceRegionEntity): VoiceRegion {
-    return new VoiceRegion(json);
-  }
-
   toJson(): VoiceRegionEntity {
     return { ...this.#data };
   }

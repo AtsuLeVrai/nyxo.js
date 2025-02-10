@@ -1,9 +1,16 @@
-import { SkuEntity } from "@nyxjs/core";
+import {
+  BitFieldManager,
+  SkuEntity,
+  type SkuFlags,
+  type SkuType,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
 export class Sku {
   readonly #data: SkuEntity;
+  readonly #flags: BitFieldManager<SkuFlags>;
 
   constructor(data: Partial<z.input<typeof SkuEntity>> = {}) {
     try {
@@ -11,17 +18,19 @@ export class Sku {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): SkuType {
     return this.#data.type;
   }
 
-  get applicationId(): unknown {
+  get applicationId(): Snowflake {
     return this.#data.application_id;
   }
 
@@ -33,12 +42,8 @@ export class Sku {
     return this.#data.slug;
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
-  }
-
-  static fromJson(json: SkuEntity): Sku {
-    return new Sku(json);
+  get flags(): BitFieldManager<SkuFlags> {
+    return this.#flags;
   }
 
   toJson(): SkuEntity {

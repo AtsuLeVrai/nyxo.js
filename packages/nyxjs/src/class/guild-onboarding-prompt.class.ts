@@ -1,6 +1,11 @@
-import { GuildOnboardingPromptEntity } from "@nyxjs/core";
+import {
+  GuildOnboardingPromptEntity,
+  type GuildOnboardingPromptType,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { GuildOnboardingPromptOption } from "./guild-onboarding-prompt-option.class.js";
 
 export class GuildOnboardingPrompt {
   readonly #data: GuildOnboardingPromptEntity;
@@ -13,16 +18,20 @@ export class GuildOnboardingPrompt {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): GuildOnboardingPromptType {
     return this.#data.type;
   }
 
-  get options(): object[] {
-    return Array.isArray(this.#data.options) ? [...this.#data.options] : [];
+  get options(): GuildOnboardingPromptOption[] {
+    return Array.isArray(this.#data.options)
+      ? this.#data.options.map(
+          (option) => new GuildOnboardingPromptOption(option),
+        )
+      : [];
   }
 
   get title(): string {
@@ -39,10 +48,6 @@ export class GuildOnboardingPrompt {
 
   get inOnboarding(): boolean {
     return Boolean(this.#data.in_onboarding);
-  }
-
-  static fromJson(json: GuildOnboardingPromptEntity): GuildOnboardingPrompt {
-    return new GuildOnboardingPrompt(json);
   }
 
   toJson(): GuildOnboardingPromptEntity {

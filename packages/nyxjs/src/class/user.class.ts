@@ -1,9 +1,19 @@
-import { UserEntity } from "@nyxjs/core";
+import {
+  type AvatarDecorationDataEntity,
+  BitFieldManager,
+  type Locale,
+  type PremiumType,
+  type Snowflake,
+  UserEntity,
+  type UserFlags,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
 export class User {
   readonly #data: UserEntity;
+  readonly #flags: BitFieldManager<UserFlags>;
+  readonly #publicFlags: BitFieldManager<UserFlags>;
 
   constructor(data: Partial<z.input<typeof UserEntity>> = {}) {
     try {
@@ -11,13 +21,16 @@ export class User {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
+    this.#publicFlags = new BitFieldManager(this.#data.public_flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get username(): unknown {
+  get username(): string {
     return this.#data.username;
   }
 
@@ -33,16 +46,16 @@ export class User {
     return this.#data.avatar ?? null;
   }
 
-  get bot(): boolean | null {
-    return this.#data.bot ?? null;
+  get bot(): boolean {
+    return Boolean(this.#data.bot);
   }
 
-  get system(): boolean | null {
-    return this.#data.system ?? null;
+  get system(): boolean {
+    return Boolean(this.#data.system);
   }
 
-  get mfaEnabled(): boolean | null {
-    return this.#data.mfa_enabled ?? null;
+  get mfaEnabled(): boolean {
+    return Boolean(this.#data.mfa_enabled);
   }
 
   get banner(): string | null {
@@ -53,36 +66,34 @@ export class User {
     return this.#data.accent_color ?? null;
   }
 
-  get locale(): unknown | null {
+  get locale(): Locale | null {
     return this.#data.locale ?? null;
   }
 
-  get verified(): boolean | null {
-    return this.#data.verified ?? null;
+  get verified(): boolean {
+    return Boolean(this.#data.verified);
   }
 
   get email(): string | null {
     return this.#data.email ?? null;
   }
 
-  get flags(): unknown | null {
-    return this.#data.flags ?? null;
+  get flags(): BitFieldManager<UserFlags> {
+    return this.#flags;
   }
 
-  get premiumType(): unknown | null {
+  get premiumType(): PremiumType | null {
     return this.#data.premium_type ?? null;
   }
 
-  get publicFlags(): unknown | null {
-    return this.#data.public_flags ?? null;
+  get publicFlags(): BitFieldManager<UserFlags> {
+    return this.#publicFlags;
   }
 
-  get avatarDecorationData(): object | null {
-    return this.#data.avatar_decoration_data ?? null;
-  }
-
-  static fromJson(json: UserEntity): User {
-    return new User(json);
+  get avatarDecorationData(): AvatarDecorationDataEntity | null {
+    return this.#data.avatar_decoration_data
+      ? { ...this.#data.avatar_decoration_data }
+      : null;
   }
 
   toJson(): UserEntity {

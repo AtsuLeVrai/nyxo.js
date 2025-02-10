@@ -21,10 +21,6 @@ export class ReactionCountDetails {
     return this.#data.normal;
   }
 
-  static fromJson(json: ReactionCountDetailsEntity): ReactionCountDetails {
-    return new ReactionCountDetails(json);
-  }
-
   toJson(): ReactionCountDetailsEntity {
     return { ...this.#data };
   }

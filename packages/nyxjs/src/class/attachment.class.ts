@@ -1,9 +1,15 @@
-import { AttachmentEntity } from "@nyxjs/core";
+import {
+  AttachmentEntity,
+  type AttachmentFlags,
+  BitFieldManager,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
 export class Attachment {
   readonly #data: AttachmentEntity;
+  readonly #flags: BitFieldManager<AttachmentFlags>;
 
   constructor(data: Partial<z.input<typeof AttachmentEntity>> = {}) {
     try {
@@ -11,9 +17,11 @@ export class Attachment {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -53,8 +61,8 @@ export class Attachment {
     return this.#data.width ?? null;
   }
 
-  get ephemeral(): boolean | null {
-    return this.#data.ephemeral ?? null;
+  get ephemeral(): boolean {
+    return Boolean(this.#data.ephemeral);
   }
 
   get durationSecs(): number | null {
@@ -65,12 +73,8 @@ export class Attachment {
     return this.#data.waveform ?? null;
   }
 
-  get flags(): unknown | null {
-    return this.#data.flags ?? null;
-  }
-
-  static fromJson(json: AttachmentEntity): Attachment {
-    return new Attachment(json);
+  get flags(): BitFieldManager<AttachmentFlags> {
+    return this.#flags;
   }
 
   toJson(): AttachmentEntity {

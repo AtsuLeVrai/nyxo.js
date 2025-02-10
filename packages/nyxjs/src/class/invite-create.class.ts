@@ -1,6 +1,9 @@
+import type { InviteTargetType, Snowflake } from "@nyxjs/core";
 import { InviteCreateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Application } from "./application.class.js";
+import { User } from "./user.class.js";
 
 export class InviteCreate {
   readonly #data: InviteCreateEntity;
@@ -13,7 +16,7 @@ export class InviteCreate {
     }
   }
 
-  get channelId(): unknown {
+  get channelId(): Snowflake {
     return this.#data.channel_id;
   }
 
@@ -25,12 +28,12 @@ export class InviteCreate {
     return this.#data.created_at;
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
-  get inviter(): object | null {
-    return this.#data.inviter ?? null;
+  get inviter(): User | null {
+    return this.#data.inviter ? new User(this.#data.inviter) : null;
   }
 
   get maxAge(): number {
@@ -41,16 +44,18 @@ export class InviteCreate {
     return this.#data.max_uses;
   }
 
-  get targetType(): unknown | null {
+  get targetType(): InviteTargetType | null {
     return this.#data.target_type ?? null;
   }
 
-  get targetUser(): object | null {
-    return this.#data.target_user ?? null;
+  get targetUser(): User | null {
+    return this.#data.target_user ? new User(this.#data.target_user) : null;
   }
 
-  get targetApplication(): object | null {
-    return this.#data.target_application ?? null;
+  get targetApplication(): Application | null {
+    return this.#data.target_application
+      ? new Application(this.#data.target_application)
+      : null;
   }
 
   get temporary(): boolean {
@@ -59,10 +64,6 @@ export class InviteCreate {
 
   get uses(): number {
     return this.#data.uses;
-  }
-
-  static fromJson(json: InviteCreateEntity): InviteCreate {
-    return new InviteCreate(json);
   }
 
   toJson(): InviteCreateEntity {

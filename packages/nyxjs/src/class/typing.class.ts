@@ -1,6 +1,8 @@
+import type { Snowflake } from "@nyxjs/core";
 import { TypingEntity } from "@nyxjs/gateway";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { GuildMember } from "./guild-member.class.js";
 
 export class Typing {
   readonly #data: TypingEntity;
@@ -13,15 +15,15 @@ export class Typing {
     }
   }
 
-  get channelId(): unknown {
+  get channelId(): Snowflake {
     return this.#data.channel_id;
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
-  get userId(): unknown {
+  get userId(): Snowflake {
     return this.#data.user_id;
   }
 
@@ -29,12 +31,8 @@ export class Typing {
     return this.#data.timestamp;
   }
 
-  get member(): object | null {
-    return this.#data.member ?? null;
-  }
-
-  static fromJson(json: TypingEntity): Typing {
-    return new Typing(json);
+  get member(): GuildMember | null {
+    return this.#data.member ? new GuildMember(this.#data.member) : null;
   }
 
   toJson(): TypingEntity {

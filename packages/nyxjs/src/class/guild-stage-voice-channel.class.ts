@@ -1,9 +1,18 @@
-import { GuildStageVoiceChannelEntity } from "@nyxjs/core";
+import {
+  BitFieldManager,
+  type ChannelFlags,
+  type ChannelType,
+  GuildStageVoiceChannelEntity,
+  type OverwriteEntity,
+  type Snowflake,
+  type VideoQualityMode,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
 export class GuildStageVoiceChannel {
   readonly #data: GuildStageVoiceChannelEntity;
+  readonly #flags: BitFieldManager<ChannelFlags>;
 
   constructor(
     data: Partial<z.input<typeof GuildStageVoiceChannelEntity>> = {},
@@ -13,17 +22,19 @@ export class GuildStageVoiceChannel {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): ChannelType.GuildStageVoice {
     return this.#data.type;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
@@ -31,7 +42,7 @@ export class GuildStageVoiceChannel {
     return this.#data.position ?? null;
   }
 
-  get permissionOverwrites(): object[] | null {
+  get permissionOverwrites(): OverwriteEntity[] | null {
     return this.#data.permission_overwrites ?? null;
   }
 
@@ -43,8 +54,8 @@ export class GuildStageVoiceChannel {
     return this.#data.topic ?? null;
   }
 
-  get nsfw(): boolean | null {
-    return this.#data.nsfw ?? null;
+  get nsfw(): boolean {
+    return Boolean(this.#data.nsfw);
   }
 
   get bitrate(): number {
@@ -59,7 +70,7 @@ export class GuildStageVoiceChannel {
     return this.#data.rate_limit_per_user ?? null;
   }
 
-  get parentId(): unknown | null {
+  get parentId(): Snowflake | null {
     return this.#data.parent_id ?? null;
   }
 
@@ -71,7 +82,7 @@ export class GuildStageVoiceChannel {
     return this.#data.rtc_region ?? null;
   }
 
-  get videoQualityMode(): unknown | null {
+  get videoQualityMode(): VideoQualityMode | null {
     return this.#data.video_quality_mode ?? null;
   }
 
@@ -79,16 +90,12 @@ export class GuildStageVoiceChannel {
     return this.#data.permissions ?? null;
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
+  get flags(): BitFieldManager<ChannelFlags> {
+    return this.#flags;
   }
 
   get totalMessageSent(): number | null {
     return this.#data.total_message_sent ?? null;
-  }
-
-  static fromJson(json: GuildStageVoiceChannelEntity): GuildStageVoiceChannel {
-    return new GuildStageVoiceChannel(json);
   }
 
   toJson(): GuildStageVoiceChannelEntity {

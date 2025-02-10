@@ -1,6 +1,15 @@
-import { DmChannelEntity } from "@nyxjs/core";
+import {
+  type ChannelType,
+  DmChannelEntity,
+  type ForumLayoutType,
+  type Snowflake,
+  type SortOrderType,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { DefaultReaction } from "./default-reaction.class.js";
+import { ThreadMember } from "./thread-member.class.js";
+import { User } from "./user.class.js";
 
 export class DmChannel {
   readonly #data: DmChannelEntity;
@@ -13,15 +22,15 @@ export class DmChannel {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): ChannelType.Dm {
     return this.#data.type;
   }
 
-  get lastMessageId(): unknown | null {
+  get lastMessageId(): Snowflake | null {
     return this.#data.last_message_id ?? null;
   }
 
@@ -29,9 +38,9 @@ export class DmChannel {
     return this.#data.rate_limit_per_user ?? null;
   }
 
-  get recipients(): unknown[] {
+  get recipients(): User[] {
     return Array.isArray(this.#data.recipients)
-      ? [...this.#data.recipients]
+      ? this.#data.recipients.map((recipient) => new User(recipient))
       : [];
   }
 
@@ -39,16 +48,16 @@ export class DmChannel {
     return this.#data.icon ?? null;
   }
 
-  get ownerId(): unknown | null {
+  get ownerId(): Snowflake | null {
     return this.#data.owner_id ?? null;
   }
 
-  get applicationId(): unknown | null {
+  get applicationId(): Snowflake | null {
     return this.#data.application_id ?? null;
   }
 
-  get managed(): boolean | null {
-    return this.#data.managed ?? null;
+  get managed(): boolean {
+    return Boolean(this.#data.managed);
   }
 
   get lastPinTimestamp(): string | null {
@@ -63,8 +72,8 @@ export class DmChannel {
     return this.#data.member_count ?? null;
   }
 
-  get member(): object | null {
-    return this.#data.member ?? null;
+  get member(): ThreadMember | null {
+    return this.#data.member ? new ThreadMember(this.#data.member) : null;
   }
 
   get permissions(): string | null {
@@ -75,28 +84,26 @@ export class DmChannel {
     return this.#data.total_message_sent ?? null;
   }
 
-  get appliedTags(): unknown[] | null {
+  get appliedTags(): Snowflake[] | null {
     return this.#data.applied_tags ?? null;
   }
 
-  get defaultReactionEmoji(): object | null {
-    return this.#data.default_reaction_emoji ?? null;
+  get defaultReactionEmoji(): DefaultReaction | null {
+    return this.#data.default_reaction_emoji
+      ? new DefaultReaction(this.#data.default_reaction_emoji)
+      : null;
   }
 
   get defaultThreadRateLimitPerUser(): number | null {
     return this.#data.default_thread_rate_limit_per_user ?? null;
   }
 
-  get defaultSortOrder(): unknown | null {
+  get defaultSortOrder(): SortOrderType | null {
     return this.#data.default_sort_order ?? null;
   }
 
-  get defaultForumLayout(): unknown | null {
+  get defaultForumLayout(): ForumLayoutType | null {
     return this.#data.default_forum_layout ?? null;
-  }
-
-  static fromJson(json: DmChannelEntity): DmChannel {
-    return new DmChannel(json);
   }
 
   toJson(): DmChannelEntity {

@@ -1,4 +1,4 @@
-import { ForumTagEntity } from "@nyxjs/core";
+import { ForumTagEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,7 +13,7 @@ export class ForumTag {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -25,16 +25,12 @@ export class ForumTag {
     return Boolean(this.#data.moderated);
   }
 
-  get emojiId(): unknown | null {
+  get emojiId(): Snowflake | null {
     return this.#data.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
     return this.#data.emoji_name ?? null;
-  }
-
-  static fromJson(json: ForumTagEntity): ForumTag {
-    return new ForumTag(json);
   }
 
   toJson(): ForumTagEntity {

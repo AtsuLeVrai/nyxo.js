@@ -1,4 +1,8 @@
-import { ChannelMentionEntity } from "@nyxjs/core";
+import {
+  ChannelMentionEntity,
+  type ChannelType,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,24 +17,20 @@ export class ChannelMention {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
-  get type(): unknown {
+  get type(): ChannelType {
     return this.#data.type;
   }
 
   get name(): string {
     return this.#data.name;
-  }
-
-  static fromJson(json: ChannelMentionEntity): ChannelMention {
-    return new ChannelMention(json);
   }
 
   toJson(): ChannelMentionEntity {

@@ -1,4 +1,11 @@
-import { AutoModerationRuleEntity } from "@nyxjs/core";
+import {
+  type AutoModerationActionEntity,
+  type AutoModerationEventType,
+  AutoModerationRuleEntity,
+  type AutoModerationRuleTriggerMetadataEntity,
+  type AutoModerationRuleTriggerType,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,11 +20,11 @@ export class AutoModerationRule {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
@@ -25,25 +32,25 @@ export class AutoModerationRule {
     return this.#data.name;
   }
 
-  get creatorId(): unknown {
+  get creatorId(): Snowflake {
     return this.#data.creator_id;
   }
 
-  get eventType(): unknown {
+  get eventType(): AutoModerationEventType {
     return this.#data.event_type;
   }
 
-  get triggerType(): unknown {
+  get triggerType(): AutoModerationRuleTriggerType {
     return this.#data.trigger_type;
   }
 
-  get triggerMetadata(): object | null {
+  get triggerMetadata(): AutoModerationRuleTriggerMetadataEntity | null {
     return this.#data.trigger_metadata
       ? { ...this.#data.trigger_metadata }
       : null;
   }
 
-  get actions(): unknown[] {
+  get actions(): AutoModerationActionEntity[] {
     return Array.isArray(this.#data.actions) ? [...this.#data.actions] : [];
   }
 
@@ -51,20 +58,16 @@ export class AutoModerationRule {
     return Boolean(this.#data.enabled);
   }
 
-  get exemptRoles(): unknown[] {
+  get exemptRoles(): Snowflake[] {
     return Array.isArray(this.#data.exempt_roles)
       ? [...this.#data.exempt_roles]
       : [];
   }
 
-  get exemptChannels(): unknown[] {
+  get exemptChannels(): Snowflake[] {
     return Array.isArray(this.#data.exempt_channels)
       ? [...this.#data.exempt_channels]
       : [];
-  }
-
-  static fromJson(json: AutoModerationRuleEntity): AutoModerationRule {
-    return new AutoModerationRule(json);
   }
 
   toJson(): AutoModerationRuleEntity {

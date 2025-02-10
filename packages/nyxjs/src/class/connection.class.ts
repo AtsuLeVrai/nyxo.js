@@ -1,6 +1,11 @@
-import { ConnectionEntity } from "@nyxjs/core";
+import {
+  ConnectionEntity,
+  type ConnectionService,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Integration } from "./integration.class.js";
 
 export class Connection {
   readonly #data: ConnectionEntity;
@@ -13,7 +18,7 @@ export class Connection {
     }
   }
 
-  get id(): string {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -21,16 +26,20 @@ export class Connection {
     return this.#data.name;
   }
 
-  get type(): unknown {
+  get type(): ConnectionService {
     return this.#data.type;
   }
 
-  get revoked(): boolean | null {
-    return this.#data.revoked ?? null;
+  get revoked(): boolean {
+    return Boolean(this.#data.revoked);
   }
 
-  get integrations(): unknown[] | null {
-    return this.#data.integrations ?? null;
+  get integrations(): Integration[] | null {
+    return this.#data.integrations
+      ? this.#data.integrations.map(
+          (integration) => new Integration(integration),
+        )
+      : null;
   }
 
   get verified(): boolean {
@@ -51,10 +60,6 @@ export class Connection {
 
   get visibility(): number {
     return this.#data.visibility;
-  }
-
-  static fromJson(json: ConnectionEntity): Connection {
-    return new Connection(json);
   }
 
   toJson(): ConnectionEntity {

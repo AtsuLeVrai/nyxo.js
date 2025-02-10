@@ -1,6 +1,7 @@
 import { PollResultsEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { PollAnswerCount } from "./poll-answer-count.class.js";
 
 export class PollResults {
   readonly #data: PollResultsEntity;
@@ -17,14 +18,12 @@ export class PollResults {
     return Boolean(this.#data.is_finalized);
   }
 
-  get answerCounts(): object[] {
+  get answerCounts(): PollAnswerCount[] {
     return Array.isArray(this.#data.answer_counts)
-      ? [...this.#data.answer_counts]
+      ? this.#data.answer_counts.map(
+          (answerCount) => new PollAnswerCount(answerCount),
+        )
       : [];
-  }
-
-  static fromJson(json: PollResultsEntity): PollResults {
-    return new PollResults(json);
   }
 
   toJson(): PollResultsEntity {

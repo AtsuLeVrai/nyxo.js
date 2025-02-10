@@ -1,6 +1,7 @@
-import { SoundboardSoundEntity } from "@nyxjs/core";
+import { type Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class SoundboardSound {
   readonly #data: SoundboardSoundEntity;
@@ -17,7 +18,7 @@ export class SoundboardSound {
     return this.#data.name;
   }
 
-  get soundId(): unknown {
+  get soundId(): Snowflake {
     return this.#data.sound_id;
   }
 
@@ -25,7 +26,7 @@ export class SoundboardSound {
     return this.#data.volume;
   }
 
-  get emojiId(): unknown | null {
+  get emojiId(): Snowflake | null {
     return this.#data.emoji_id ?? null;
   }
 
@@ -33,7 +34,7 @@ export class SoundboardSound {
     return this.#data.emoji_name ?? null;
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
@@ -41,12 +42,8 @@ export class SoundboardSound {
     return Boolean(this.#data.available);
   }
 
-  get user(): object | null {
-    return this.#data.user ?? null;
-  }
-
-  static fromJson(json: SoundboardSoundEntity): SoundboardSound {
-    return new SoundboardSound(json);
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
   toJson(): SoundboardSoundEntity {

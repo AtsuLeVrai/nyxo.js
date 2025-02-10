@@ -1,4 +1,8 @@
-import { EntitlementEntity } from "@nyxjs/core";
+import {
+  EntitlementEntity,
+  type EntitlementType,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,23 +17,23 @@ export class Entitlement {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get skuId(): unknown {
+  get skuId(): Snowflake {
     return this.#data.sku_id;
   }
 
-  get applicationId(): unknown {
+  get applicationId(): Snowflake {
     return this.#data.application_id;
   }
 
-  get userId(): unknown | null {
+  get userId(): Snowflake | null {
     return this.#data.user_id ?? null;
   }
 
-  get type(): unknown {
+  get type(): EntitlementType {
     return this.#data.type;
   }
 
@@ -45,16 +49,12 @@ export class Entitlement {
     return this.#data.ends_at ?? null;
   }
 
-  get guildId(): unknown | null {
+  get guildId(): Snowflake | null {
     return this.#data.guild_id ?? null;
   }
 
-  get consumed(): boolean | null {
-    return this.#data.consumed ?? null;
-  }
-
-  static fromJson(json: EntitlementEntity): Entitlement {
-    return new Entitlement(json);
+  get consumed(): boolean {
+    return Boolean(this.#data.consumed);
   }
 
   toJson(): EntitlementEntity {

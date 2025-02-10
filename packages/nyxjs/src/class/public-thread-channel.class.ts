@@ -1,9 +1,21 @@
-import { PublicThreadChannelEntity } from "@nyxjs/core";
+import {
+  BitFieldManager,
+  type ChannelFlags,
+  type ChannelType,
+  PublicThreadChannelEntity,
+  type Snowflake,
+  type SortOrderType,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { DefaultReaction } from "./default-reaction.class.js";
+import { ForumTag } from "./forum-tag.class.js";
+import { ThreadMember } from "./thread-member.class.js";
+import { ThreadMetadata } from "./thread-metadata.class.js";
 
 export class PublicThreadChannel {
   readonly #data: PublicThreadChannelEntity;
+  readonly #flags: BitFieldManager<ChannelFlags>;
 
   constructor(data: Partial<z.input<typeof PublicThreadChannelEntity>> = {}) {
     try {
@@ -11,17 +23,19 @@ export class PublicThreadChannel {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): ChannelType.PublicThread {
     return this.#data.type;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
@@ -33,11 +47,11 @@ export class PublicThreadChannel {
     return this.#data.name ?? null;
   }
 
-  get nsfw(): boolean | null {
-    return this.#data.nsfw ?? null;
+  get nsfw(): boolean {
+    return Boolean(this.#data.nsfw);
   }
 
-  get lastMessageId(): unknown | null {
+  get lastMessageId(): Snowflake | null {
     return this.#data.last_message_id ?? null;
   }
 
@@ -45,11 +59,11 @@ export class PublicThreadChannel {
     return this.#data.rate_limit_per_user ?? null;
   }
 
-  get ownerId(): unknown | null {
+  get ownerId(): Snowflake | null {
     return this.#data.owner_id ?? null;
   }
 
-  get parentId(): unknown {
+  get parentId(): Snowflake {
     return this.#data.parent_id;
   }
 
@@ -65,45 +79,49 @@ export class PublicThreadChannel {
     return this.#data.member_count ?? null;
   }
 
-  get threadMetadata(): object {
+  get threadMetadata(): ThreadMetadata | null {
     return this.#data.thread_metadata
-      ? { ...this.#data.thread_metadata }
+      ? new ThreadMetadata(this.#data.thread_metadata)
       : null;
   }
 
-  get member(): object | null {
-    return this.#data.member ?? null;
+  get member(): ThreadMember | null {
+    return this.#data.member ? new ThreadMember(this.#data.member) : null;
   }
 
   get permissions(): string | null {
     return this.#data.permissions ?? null;
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
+  get flags(): BitFieldManager<ChannelFlags> {
+    return this.#flags;
   }
 
   get totalMessageSent(): number | null {
     return this.#data.total_message_sent ?? null;
   }
 
-  get availableTags(): object[] | null {
-    return this.#data.available_tags ?? null;
+  get availableTags(): ForumTag[] | null {
+    return this.#data.available_tags
+      ? this.#data.available_tags.map((tag) => new ForumTag(tag))
+      : null;
   }
 
-  get appliedTags(): unknown[] | null {
+  get appliedTags(): string[] | null {
     return this.#data.applied_tags ?? null;
   }
 
-  get defaultReactionEmoji(): object | null {
-    return this.#data.default_reaction_emoji ?? null;
+  get defaultReactionEmoji(): DefaultReaction | null {
+    return this.#data.default_reaction_emoji
+      ? new DefaultReaction(this.#data.default_reaction_emoji)
+      : null;
   }
 
   get defaultThreadRateLimitPerUser(): number | null {
     return this.#data.default_thread_rate_limit_per_user ?? null;
   }
 
-  get defaultSortOrder(): unknown | null {
+  get defaultSortOrder(): SortOrderType | null {
     return this.#data.default_sort_order ?? null;
   }
 
@@ -122,10 +140,6 @@ export class PublicThreadChannel {
     } catch {
       return false;
     }
-  }
-
-  static fromJson(json: PublicThreadChannelEntity): PublicThreadChannel {
-    return new PublicThreadChannel(json);
   }
 
   merge(other: Partial<PublicThreadChannelEntity>): PublicThreadChannel {

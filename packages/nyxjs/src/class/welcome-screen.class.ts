@@ -1,6 +1,7 @@
 import { WelcomeScreenEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { WelcomeScreenChannel } from "./welcome-screen-channel.class.js";
 
 export class WelcomeScreen {
   readonly #data: WelcomeScreenEntity;
@@ -17,14 +18,12 @@ export class WelcomeScreen {
     return this.#data.description ?? null;
   }
 
-  get welcomeChannels(): object[] {
+  get welcomeChannels(): WelcomeScreenChannel[] {
     return Array.isArray(this.#data.welcome_channels)
-      ? [...this.#data.welcome_channels]
+      ? this.#data.welcome_channels.map(
+          (channel) => new WelcomeScreenChannel(channel),
+        )
       : [];
-  }
-
-  static fromJson(json: WelcomeScreenEntity): WelcomeScreen {
-    return new WelcomeScreen(json);
   }
 
   toJson(): WelcomeScreenEntity {

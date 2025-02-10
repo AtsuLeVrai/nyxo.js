@@ -1,6 +1,12 @@
-import { GuildPreviewEntity } from "@nyxjs/core";
+import {
+  type GuildFeature,
+  GuildPreviewEntity,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Emoji } from "./emoji.class.js";
+import { Sticker } from "./sticker.class.js";
 
 export class GuildPreview {
   readonly #data: GuildPreviewEntity;
@@ -13,7 +19,7 @@ export class GuildPreview {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -33,11 +39,13 @@ export class GuildPreview {
     return this.#data.discovery_splash ?? null;
   }
 
-  get emojis(): unknown[] {
-    return Array.isArray(this.#data.emojis) ? [...this.#data.emojis] : [];
+  get emojis(): Emoji[] {
+    return Array.isArray(this.#data.emojis)
+      ? this.#data.emojis.map((emoji) => new Emoji(emoji))
+      : [];
   }
 
-  get features(): unknown[] {
+  get features(): GuildFeature[] {
     return Array.isArray(this.#data.features) ? [...this.#data.features] : [];
   }
 
@@ -53,12 +61,10 @@ export class GuildPreview {
     return this.#data.description ?? null;
   }
 
-  get stickers(): unknown[] {
-    return Array.isArray(this.#data.stickers) ? [...this.#data.stickers] : [];
-  }
-
-  static fromJson(json: GuildPreviewEntity): GuildPreview {
-    return new GuildPreview(json);
+  get stickers(): Sticker[] {
+    return Array.isArray(this.#data.stickers)
+      ? this.#data.stickers.map((sticker) => new Sticker(sticker))
+      : [];
   }
 
   toJson(): GuildPreviewEntity {

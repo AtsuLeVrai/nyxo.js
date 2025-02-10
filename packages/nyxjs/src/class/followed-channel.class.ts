@@ -1,4 +1,4 @@
-import { FollowedChannelEntity } from "@nyxjs/core";
+import { FollowedChannelEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,16 +13,12 @@ export class FollowedChannel {
     }
   }
 
-  get channelId(): unknown {
+  get channelId(): Snowflake {
     return this.#data.channel_id;
   }
 
-  get webhookId(): unknown {
+  get webhookId(): Snowflake {
     return this.#data.webhook_id;
-  }
-
-  static fromJson(json: FollowedChannelEntity): FollowedChannel {
-    return new FollowedChannel(json);
   }
 
   toJson(): FollowedChannelEntity {

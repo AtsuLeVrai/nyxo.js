@@ -1,6 +1,8 @@
 import { ReactionEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Emoji } from "./emoji.class.js";
+import { ReactionCountDetails } from "./reaction-count-details.class.js";
 
 export class Reaction {
   readonly #data: ReactionEntity;
@@ -17,8 +19,10 @@ export class Reaction {
     return this.#data.count;
   }
 
-  get countDetails(): object {
-    return this.#data.count_details ? { ...this.#data.count_details } : null;
+  get countDetails(): ReactionCountDetails | null {
+    return this.#data.count_details
+      ? new ReactionCountDetails(this.#data.count_details)
+      : null;
   }
 
   get me(): boolean {
@@ -29,8 +33,8 @@ export class Reaction {
     return Boolean(this.#data.me_burst);
   }
 
-  get emoji(): object {
-    return this.#data.emoji ? { ...this.#data.emoji } : null;
+  get emoji(): Emoji | null {
+    return this.#data.emoji ? new Emoji(this.#data.emoji) : null;
   }
 
   get burstColors(): unknown {
@@ -52,10 +56,6 @@ export class Reaction {
     } catch {
       return false;
     }
-  }
-
-  static fromJson(json: ReactionEntity): Reaction {
-    return new Reaction(json);
   }
 
   merge(other: Partial<ReactionEntity>): Reaction {

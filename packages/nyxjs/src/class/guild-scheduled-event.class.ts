@@ -1,6 +1,15 @@
-import { GuildScheduledEventEntity } from "@nyxjs/core";
+import {
+  GuildScheduledEventEntity,
+  type GuildScheduledEventEntityMetadataEntity,
+  type GuildScheduledEventPrivacyLevel,
+  type GuildScheduledEventRecurrenceRuleEntity,
+  type GuildScheduledEventStatus,
+  type GuildScheduledEventType,
+  type Snowflake,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class GuildScheduledEvent {
   readonly #data: GuildScheduledEventEntity;
@@ -13,19 +22,19 @@ export class GuildScheduledEvent {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
-  get channelId(): unknown | null {
+  get channelId(): Snowflake | null {
     return this.#data.channel_id ?? null;
   }
 
-  get creatorId(): unknown | null {
+  get creatorId(): Snowflake | null {
     return this.#data.creator_id ?? null;
   }
 
@@ -45,28 +54,28 @@ export class GuildScheduledEvent {
     return this.#data.scheduled_end_time ?? null;
   }
 
-  get privacyLevel(): unknown {
+  get privacyLevel(): GuildScheduledEventPrivacyLevel {
     return this.#data.privacy_level;
   }
 
-  get status(): unknown {
+  get status(): GuildScheduledEventStatus {
     return this.#data.status;
   }
 
-  get entityType(): unknown {
+  get entityType(): GuildScheduledEventType {
     return this.#data.entity_type;
   }
 
-  get entityId(): unknown | null {
+  get entityId(): Snowflake | null {
     return this.#data.entity_id ?? null;
   }
 
-  get entityMetadata(): object | null {
+  get entityMetadata(): GuildScheduledEventEntityMetadataEntity | null {
     return this.#data.entity_metadata ?? null;
   }
 
-  get creator(): object | null {
-    return this.#data.creator ?? null;
+  get creator(): User | null {
+    return this.#data.creator ? new User(this.#data.creator) : null;
   }
 
   get userCount(): number | null {
@@ -77,12 +86,8 @@ export class GuildScheduledEvent {
     return this.#data.image ?? null;
   }
 
-  get recurrenceRule(): object | null {
+  get recurrenceRule(): GuildScheduledEventRecurrenceRuleEntity | null {
     return this.#data.recurrence_rule ?? null;
-  }
-
-  static fromJson(json: GuildScheduledEventEntity): GuildScheduledEvent {
-    return new GuildScheduledEvent(json);
   }
 
   toJson(): GuildScheduledEventEntity {

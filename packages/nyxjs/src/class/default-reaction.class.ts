@@ -1,4 +1,4 @@
-import { DefaultReactionEntity } from "@nyxjs/core";
+import { DefaultReactionEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,16 +13,12 @@ export class DefaultReaction {
     }
   }
 
-  get emojiId(): unknown | null {
+  get emojiId(): Snowflake | null {
     return this.#data.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
     return this.#data.emoji_name ?? null;
-  }
-
-  static fromJson(json: DefaultReactionEntity): DefaultReaction {
-    return new DefaultReaction(json);
   }
 
   toJson(): DefaultReactionEntity {

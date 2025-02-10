@@ -12,7 +12,7 @@ import type { ClientEventHandlers } from "../types/index.js";
 interface ClientEvent {
   name: keyof GatewayReceiveEvents;
   camelName: CamelCase<keyof GatewayReceiveEvents>;
-  handler: Class<unknown, [data: never]>;
+  handler: Class<unknown, [data: never]>[];
 }
 
 const REST_EVENTS: readonly (keyof RestEventHandlers)[] = [
@@ -47,7 +47,7 @@ const CLIENT_EVENTS: ClientEvent[] = [
   {
     name: "READY",
     camelName: "ready",
-    handler: Ready,
+    handler: [Ready],
   },
 ];
 
@@ -100,10 +100,12 @@ export class ClientEventManager {
       return;
     }
 
-    const processedArgs = new handler.handler(args as never);
+    const processedArgs = handler.handler.map(
+      (Handler) => new Handler(args as never),
+    );
     this.#client.emit(
       handler.camelName as keyof ClientEventHandlers,
-      processedArgs as never,
+      ...(processedArgs as never),
     );
   }
 }

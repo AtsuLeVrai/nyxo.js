@@ -1,4 +1,4 @@
-import { GuildWidgetSettingsEntity } from "@nyxjs/core";
+import { GuildWidgetSettingsEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -17,12 +17,8 @@ export class GuildWidgetSettings {
     return Boolean(this.#data.enabled);
   }
 
-  get channelId(): unknown | null {
+  get channelId(): Snowflake | null {
     return this.#data.channel_id ?? null;
-  }
-
-  static fromJson(json: GuildWidgetSettingsEntity): GuildWidgetSettings {
-    return new GuildWidgetSettings(json);
   }
 
   toJson(): GuildWidgetSettingsEntity {

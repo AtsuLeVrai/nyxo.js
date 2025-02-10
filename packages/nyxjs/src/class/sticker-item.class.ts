@@ -1,4 +1,8 @@
-import { StickerItemEntity } from "@nyxjs/core";
+import {
+  type Snowflake,
+  type StickerFormatType,
+  StickerItemEntity,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
@@ -13,7 +17,7 @@ export class StickerItem {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -21,12 +25,8 @@ export class StickerItem {
     return this.#data.name;
   }
 
-  get formatType(): unknown {
+  get formatType(): StickerFormatType {
     return this.#data.format_type;
-  }
-
-  static fromJson(json: StickerItemEntity): StickerItem {
-    return new StickerItem(json);
   }
 
   toJson(): StickerItemEntity {

@@ -1,9 +1,18 @@
-import { GuildVoiceChannelEntity } from "@nyxjs/core";
+import {
+  BitFieldManager,
+  type ChannelFlags,
+  type ChannelType,
+  GuildVoiceChannelEntity,
+  type OverwriteEntity,
+  type Snowflake,
+  type VideoQualityMode,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 
 export class GuildVoiceChannel {
   readonly #data: GuildVoiceChannelEntity;
+  readonly #flags: BitFieldManager<ChannelFlags>;
 
   constructor(data: Partial<z.input<typeof GuildVoiceChannelEntity>> = {}) {
     try {
@@ -11,17 +20,19 @@ export class GuildVoiceChannel {
     } catch (error) {
       throw new Error(fromError(error).message);
     }
+
+    this.#flags = new BitFieldManager(this.#data.flags);
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get type(): unknown {
+  get type(): ChannelType.GuildVoice {
     return this.#data.type;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
   }
 
@@ -29,7 +40,7 @@ export class GuildVoiceChannel {
     return this.#data.position ?? null;
   }
 
-  get permissionOverwrites(): object[] | null {
+  get permissionOverwrites(): OverwriteEntity[] | null {
     return this.#data.permission_overwrites ?? null;
   }
 
@@ -41,11 +52,11 @@ export class GuildVoiceChannel {
     return this.#data.topic ?? null;
   }
 
-  get nsfw(): boolean | null {
-    return this.#data.nsfw ?? null;
+  get nsfw(): boolean {
+    return Boolean(this.#data.nsfw);
   }
 
-  get lastMessageId(): unknown | null {
+  get lastMessageId(): Snowflake | null {
     return this.#data.last_message_id ?? null;
   }
 
@@ -61,7 +72,7 @@ export class GuildVoiceChannel {
     return this.#data.rate_limit_per_user ?? null;
   }
 
-  get parentId(): unknown | null {
+  get parentId(): Snowflake | null {
     return this.#data.parent_id ?? null;
   }
 
@@ -73,7 +84,7 @@ export class GuildVoiceChannel {
     return this.#data.rtc_region ?? null;
   }
 
-  get videoQualityMode(): unknown | null {
+  get videoQualityMode(): VideoQualityMode | null {
     return this.#data.video_quality_mode ?? null;
   }
 
@@ -81,7 +92,7 @@ export class GuildVoiceChannel {
     return this.#data.member_count ?? null;
   }
 
-  get defaultAutoArchiveDuration(): unknown | null {
+  get defaultAutoArchiveDuration(): 60 | 1440 | 4320 | 10080 | null {
     return this.#data.default_auto_archive_duration ?? null;
   }
 
@@ -89,16 +100,12 @@ export class GuildVoiceChannel {
     return this.#data.permissions ?? null;
   }
 
-  get flags(): unknown {
-    return this.#data.flags;
+  get flags(): BitFieldManager<ChannelFlags> {
+    return this.#flags;
   }
 
   get totalMessageSent(): number | null {
     return this.#data.total_message_sent ?? null;
-  }
-
-  static fromJson(json: GuildVoiceChannelEntity): GuildVoiceChannel {
-    return new GuildVoiceChannel(json);
   }
 
   toJson(): GuildVoiceChannelEntity {

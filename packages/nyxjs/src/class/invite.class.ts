@@ -1,6 +1,16 @@
-import { InviteEntity } from "@nyxjs/core";
+import {
+  InviteEntity,
+  type InviteTargetType,
+  type InviteType,
+} from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Application } from "./application.class.js";
+import { Channel } from "./channel.class.js";
+import { GuildScheduledEvent } from "./guild-scheduled-event.class.js";
+import { Guild } from "./guild.class.js";
+import { InviteStageInstance } from "./invite-stage-instance.class.js";
+import { User } from "./user.class.js";
 
 export class Invite {
   readonly #data: InviteEntity;
@@ -13,7 +23,7 @@ export class Invite {
     }
   }
 
-  get type(): unknown {
+  get type(): InviteType {
     return this.#data.type;
   }
 
@@ -21,28 +31,30 @@ export class Invite {
     return this.#data.code;
   }
 
-  get guild(): object | null {
-    return this.#data.guild ?? null;
+  get guild(): Guild | null {
+    return this.#data.guild ? new Guild(this.#data.guild) : null;
   }
 
-  get channel(): unknown | null {
-    return this.#data.channel ?? null;
+  get channel(): Channel | null {
+    return this.#data.channel ? new Channel(this.#data.channel) : null;
   }
 
-  get inviter(): object | null {
-    return this.#data.inviter ?? null;
+  get inviter(): User | null {
+    return this.#data.inviter ? new User(this.#data.inviter) : null;
   }
 
-  get targetType(): unknown | null {
+  get targetType(): InviteTargetType | null {
     return this.#data.target_type ?? null;
   }
 
-  get targetUser(): object | null {
-    return this.#data.target_user ?? null;
+  get targetUser(): User | null {
+    return this.#data.target_user ? new User(this.#data.target_user) : null;
   }
 
-  get targetApplication(): object | null {
-    return this.#data.target_application ?? null;
+  get targetApplication(): Application | null {
+    return this.#data.target_application
+      ? new Application(this.#data.target_application)
+      : null;
   }
 
   get approximatePresenceCount(): number | null {
@@ -57,16 +69,16 @@ export class Invite {
     return this.#data.expires_at ?? null;
   }
 
-  get stageInstance(): object | null {
-    return this.#data.stage_instance ?? null;
+  get stageInstance(): InviteStageInstance | null {
+    return this.#data.stage_instance
+      ? new InviteStageInstance(this.#data.stage_instance)
+      : null;
   }
 
-  get guildScheduledEvent(): object | null {
-    return this.#data.guild_scheduled_event ?? null;
-  }
-
-  static fromJson(json: InviteEntity): Invite {
-    return new Invite(json);
+  get guildScheduledEvent(): GuildScheduledEvent | null {
+    return this.#data.guild_scheduled_event
+      ? new GuildScheduledEvent(this.#data.guild_scheduled_event)
+      : null;
   }
 
   toJson(): InviteEntity {

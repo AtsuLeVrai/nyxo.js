@@ -1,6 +1,14 @@
+import type {
+  IntegrationExpirationBehavior,
+  OAuth2Scope,
+  Snowflake,
+} from "@nyxjs/core";
 import { IntegrationUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { Application } from "./application.class.js";
+import { IntegrationAccount } from "./integration-account.class.js";
+import { User } from "./user.class.js";
 
 export class Integration {
   readonly #data: IntegrationUpdateEntity;
@@ -13,7 +21,7 @@ export class Integration {
     }
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
@@ -29,19 +37,19 @@ export class Integration {
     return Boolean(this.#data.enabled);
   }
 
-  get syncing(): boolean | null {
-    return this.#data.syncing ?? null;
+  get syncing(): boolean {
+    return Boolean(this.#data.syncing);
   }
 
-  get roleId(): unknown | null {
+  get roleId(): Snowflake | null {
     return this.#data.role_id ?? null;
   }
 
-  get enableEmoticons(): boolean | null {
-    return this.#data.enable_emoticons ?? null;
+  get enableEmoticons(): boolean {
+    return Boolean(this.#data.enable_emoticons);
   }
 
-  get expireBehavior(): unknown | null {
+  get expireBehavior(): IntegrationExpirationBehavior | null {
     return this.#data.expire_behavior ?? null;
   }
 
@@ -49,12 +57,14 @@ export class Integration {
     return this.#data.expire_grace_period ?? null;
   }
 
-  get user(): unknown | null {
-    return this.#data.user ?? null;
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
-  get account(): object | null {
-    return this.#data.account ? { ...this.#data.account } : null;
+  get account(): IntegrationAccount | null {
+    return this.#data.account
+      ? new IntegrationAccount(this.#data.account)
+      : null;
   }
 
   get syncedAt(): string | null {
@@ -65,24 +75,22 @@ export class Integration {
     return this.#data.subscriber_count ?? null;
   }
 
-  get revoked(): boolean | null {
-    return this.#data.revoked ?? null;
+  get revoked(): boolean {
+    return Boolean(this.#data.revoked);
   }
 
-  get application(): object | null {
-    return this.#data.application ?? null;
+  get application(): Application | null {
+    return this.#data.application
+      ? new Application(this.#data.application)
+      : null;
   }
 
-  get scopes(): unknown | null {
+  get scopes(): OAuth2Scope[] | null {
     return this.#data.scopes ?? null;
   }
 
-  get guildId(): unknown {
+  get guildId(): Snowflake {
     return this.#data.guild_id;
-  }
-
-  static fromJson(json: IntegrationUpdateEntity): Integration {
-    return new Integration(json);
   }
 
   toJson(): IntegrationUpdateEntity {

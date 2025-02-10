@@ -1,6 +1,7 @@
-import { TeamEntity } from "@nyxjs/core";
+import { type Snowflake, TeamEntity } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { TeamMember } from "./team-member.class.js";
 
 export class Team {
   readonly #data: TeamEntity;
@@ -17,24 +18,22 @@ export class Team {
     return this.#data.icon ?? null;
   }
 
-  get id(): unknown {
+  get id(): Snowflake {
     return this.#data.id;
   }
 
-  get members(): object[] {
-    return Array.isArray(this.#data.members) ? [...this.#data.members] : [];
+  get members(): TeamMember[] {
+    return Array.isArray(this.#data.members)
+      ? this.#data.members.map((member) => new TeamMember(member))
+      : [];
   }
 
   get name(): string {
     return this.#data.name;
   }
 
-  get ownerUserId(): unknown {
+  get ownerUserId(): Snowflake {
     return this.#data.owner_user_id;
-  }
-
-  static fromJson(json: TeamEntity): Team {
-    return new Team(json);
   }
 
   toJson(): TeamEntity {

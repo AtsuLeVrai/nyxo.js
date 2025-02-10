@@ -1,6 +1,7 @@
-import { EmojiEntity } from "@nyxjs/core";
+import { EmojiEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { User } from "./user.class.js";
 
 export class Emoji {
   readonly #data: EmojiEntity;
@@ -13,7 +14,7 @@ export class Emoji {
     }
   }
 
-  get id(): unknown | null {
+  get id(): Snowflake | null {
     return this.#data.id ?? null;
   }
 
@@ -21,32 +22,28 @@ export class Emoji {
     return this.#data.name ?? null;
   }
 
-  get roles(): unknown[] | null {
+  get roles(): Snowflake[] | null {
     return this.#data.roles ?? null;
   }
 
-  get user(): unknown | null {
-    return this.#data.user ?? null;
+  get user(): User | null {
+    return this.#data.user ? new User(this.#data.user) : null;
   }
 
-  get requireColons(): boolean | null {
-    return this.#data.require_colons ?? null;
+  get requireColons(): boolean {
+    return Boolean(this.#data.require_colons);
   }
 
-  get managed(): boolean | null {
-    return this.#data.managed ?? null;
+  get managed(): boolean {
+    return Boolean(this.#data.managed);
   }
 
-  get animated(): boolean | null {
-    return this.#data.animated ?? null;
+  get animated(): boolean {
+    return Boolean(this.#data.animated);
   }
 
-  get available(): boolean | null {
-    return this.#data.available ?? null;
-  }
-
-  static fromJson(json: EmojiEntity): Emoji {
-    return new Emoji(json);
+  get available(): boolean {
+    return Boolean(this.#data.available);
   }
 
   toJson(): EmojiEntity {

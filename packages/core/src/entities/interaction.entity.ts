@@ -288,6 +288,8 @@ export const InteractionDataEntity = z.discriminatedUnion("type", [
   }),
 ]);
 
+export type InteractionDataEntity = z.infer<typeof InteractionDataEntity>;
+
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-messages}
  */
