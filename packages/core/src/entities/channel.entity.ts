@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { BitwisePermissionFlags } from "../enums/index.js";
 import { Snowflake } from "../managers/index.js";
 import { GuildMemberEntity } from "./guild.entity.js";
 import { UserEntity } from "./user.entity.js";
@@ -126,8 +125,8 @@ export type ThreadMetadataEntity = z.infer<typeof ThreadMetadataEntity>;
 export const OverwriteEntity = z.object({
   id: Snowflake,
   type: z.nativeEnum(OverwriteType),
-  allow: z.array(z.nativeEnum(BitwisePermissionFlags)),
-  deny: z.array(z.nativeEnum(BitwisePermissionFlags)),
+  allow: z.string(),
+  deny: z.string(),
 });
 
 export type OverwriteEntity = z.infer<typeof OverwriteEntity>;
@@ -175,7 +174,7 @@ export const ChannelEntity = z.object({
     .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
     .optional(),
   permissions: z.string().optional(),
-  flags: z.nativeEnum(ChannelFlags),
+  flags: z.union([z.number().int(), z.nativeEnum(ChannelFlags)]),
   total_message_sent: z.number().int().optional(),
   available_tags: z.array(ForumTagEntity).optional(),
   applied_tags: z.array(Snowflake).optional(),
@@ -192,7 +191,7 @@ export type ChannelEntity = z.infer<typeof ChannelEntity>;
  */
 export const GuildTextChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.GuildText),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
 }).omit({
   bitrate: true,
   user_limit: true,
@@ -239,7 +238,7 @@ export type DmChannelEntity = z.infer<typeof DmChannelEntity>;
  */
 export const GuildVoiceChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.GuildVoice),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
   bitrate: z.number().int(),
   user_limit: z.number().int(),
 }).omit({
@@ -292,7 +291,7 @@ export type GroupDmChannelEntity = z.infer<typeof GroupDmChannelEntity>;
  */
 export const GuildCategoryChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.GuildCategory),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
 }).omit({
   topic: true,
   last_message_id: true,
@@ -325,7 +324,7 @@ export type GuildCategoryChannelEntity = z.infer<
  */
 export const GuildAnnouncementChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.GuildAnnouncement),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
 }).omit({
   bitrate: true,
   user_limit: true,
@@ -358,7 +357,7 @@ export type GuildAnnouncementChannelEntity = z.infer<
  */
 export const PublicThreadChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.PublicThread),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
   thread_metadata: ThreadMetadataEntity,
   parent_id: Snowflake,
 }).omit({
@@ -418,7 +417,7 @@ export type AnyThreadChannelEntity = z.infer<typeof AnyThreadChannelEntity>;
  */
 export const GuildStageVoiceChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.GuildStageVoice),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
   bitrate: z.number().int(),
   user_limit: z.number().int(),
 }).omit({
@@ -450,7 +449,7 @@ export type GuildStageVoiceChannelEntity = z.infer<
  */
 export const GuildForumChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.GuildForum),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
   available_tags: z.array(ForumTagEntity),
 }).omit({
   bitrate: true,
@@ -476,7 +475,7 @@ export type GuildForumChannelEntity = z.infer<typeof GuildForumChannelEntity>;
  */
 export const GuildMediaChannelEntity = ChannelEntity.extend({
   type: z.literal(ChannelType.GuildMedia),
-  guild_id: Snowflake,
+  guild_id: Snowflake.optional(),
   available_tags: z.array(ForumTagEntity),
 }).omit({
   bitrate: true,

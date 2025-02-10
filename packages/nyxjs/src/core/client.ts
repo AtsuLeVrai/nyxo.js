@@ -26,10 +26,7 @@ export class Client extends EventEmitter<ClientEventHandlers> {
     this.#events = new ClientEventManager(this);
     this.rest = new Rest(this.#options);
     this.gateway = new Gateway(this.rest, this.#options);
-  }
 
-  async connect(): Promise<void> {
     this.#events.initialize();
-    await this.gateway.connect();
   }
 }

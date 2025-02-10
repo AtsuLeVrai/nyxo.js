@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { Client, GatewayIntentsBits } from "nyx.js";
+import { Client, GatewayIntentsBits, Guild } from "nyx.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
@@ -120,7 +120,16 @@ client.on("ready", (ready) => {
   );
 });
 
-client.connect();
+client.on("guildCreate", (guild) => {
+  if (guild instanceof Guild) {
+    console.log(
+      "[GUILD CREATE]",
+      guild.channels.map((channel) => channel.toJson()),
+    );
+  }
+});
+
+client.gateway.connect();
 
 process.on("unhandledRejection", (error) => {
   console.error(error);
