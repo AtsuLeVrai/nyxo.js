@@ -1,4 +1,4 @@
-import { type Dispatcher, request } from "undici";
+import { type Dispatcher, Pool } from "undici";
 import type { Rest } from "../core/index.js";
 import { RequestError } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
@@ -14,10 +14,23 @@ const PATH_REGEX = /^\/+/;
 export class RequestManager {
   readonly #rest: Rest;
   readonly #options: RestOptions;
+  readonly #pool: Pool;
 
   constructor(rest: Rest, options: RestOptions) {
     this.#rest = rest;
     this.#options = options;
+    this.#pool = new Pool(options.baseUrl, {
+      connections: 32,
+      pipelining: 1,
+      connectTimeout: 30000,
+      keepAliveTimeout: 60000,
+      keepAliveMaxTimeout: 300000,
+      headersTimeout: 30000,
+      bodyTimeout: 300000,
+      maxHeaderSize: 16384,
+      allowH2: false,
+      strictContentLength: true,
+    });
   }
 
   async request<T>(options: ApiRequestOptions): Promise<RequestResponse<T>> {
@@ -25,7 +38,7 @@ export class RequestManager {
 
     try {
       const preparedRequest = await this.#prepareRequest(options);
-      const response = await request(preparedRequest.options);
+      const response = await this.#pool.request(preparedRequest.options);
       const responseBody = await this.#readResponseBody(response);
 
       const result = this.#processResponse<T>(response, responseBody);
@@ -47,6 +60,10 @@ export class RequestManager {
       this.#handleRequestError(error, options, requestStart);
       throw error;
     }
+  }
+
+  async destroy(): Promise<void> {
+    await this.#pool.close();
   }
 
   #prepareRequest(
@@ -83,6 +100,7 @@ export class RequestManager {
       origin: url.origin,
       path: url.pathname + url.search,
       headers: this.#buildRequestHeaders(options),
+      reset: true,
     };
   }
 

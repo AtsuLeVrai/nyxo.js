@@ -38,8 +38,8 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "build": "node ../../scripts/build.js",
-    "build:prod": "node ../../scripts/build.js --production",
+    "build": "cross-env NODE_ENV=development node ../../scripts/build.js",
+    "build:prod": "cross-env NODE_ENV=production node ../../scripts/build.js",
     "format": "biome format --write .",
     "lint": "biome lint --write --unsafe .",
     "check": "biome check --write --unsafe .",
@@ -59,6 +59,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.13.1",
+    "cross-env": "^7.0.3",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
   }

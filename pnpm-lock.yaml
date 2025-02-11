@@ -67,6 +67,9 @@ importers:
       '@types/node':
         specifier: ^22.13.1
         version: 22.13.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
@@ -119,6 +122,9 @@ importers:
       '@types/ws':
         specifier: ^8.5.14
         version: 8.5.14
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
@@ -162,6 +168,9 @@ importers:
       '@types/node':
         specifier: ^22.13.1
         version: 22.13.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
@@ -211,6 +220,9 @@ importers:
       '@types/node':
         specifier: ^22.13.1
         version: 22.13.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
@@ -226,6 +238,9 @@ importers:
       '@types/node':
         specifier: ^22.13.1
         version: 22.13.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
@@ -247,9 +262,6 @@ importers:
       '@swc/core':
         specifier: ^1.10.15
         version: 1.10.15(@swc/helpers@0.5.15)
-      commander:
-        specifier: ^13.1.0
-        version: 13.1.0
       consola:
         specifier: ^3.4.0
         version: 3.4.0
@@ -1183,10 +1195,6 @@ packages:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
     engines: {node: '>= 0.8'}
 
-  commander@13.1.0:
-    resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
-    engines: {node: '>=18'}
-
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
@@ -1196,6 +1204,11 @@ packages:
   consola@3.4.0:
     resolution: {integrity: sha512-EiPU8G6dQG0GFHNR8ljnZFki/8a+cQwEQ+7wpxdChl02Q8HXlwEZWD5lqAF8vC2sEC3Tehr8hy7vErz88LHyUA==}
     engines: {node: ^14.18.0 || >=16.10.0}
+
+  cross-env@7.0.3:
+    resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
+    engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
+    hasBin: true
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -1469,8 +1482,8 @@ packages:
     resolution: {integrity: sha512-Xa4Nw17FS9ApQFJ9umLiJS4orGjm7ZzwUrwamcGQuHSzDyth9boKDaycYdDcZDuqYATXw4HFXgaqWTctW/v1HA==}
     engines: {node: '>=16 || 14 >=14.18'}
 
-  pathe@2.0.2:
-    resolution: {integrity: sha512-15Ztpk+nov8DR524R4BF7uEuzESgzUEAV4Ah7CUMNGXdE5ELuvxElxGXndBl32vMSsWa1jpNf22Z+Er3sKwq+w==}
+  pathe@2.0.3:
+    resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
   pathval@2.0.0:
     resolution: {integrity: sha512-vE7JKRyES09KiunauX7nd2Q9/L7lhok4smP9RZTDeD4MVs72Dp2qNFVz39Nz5a0FVEW0BJR6C0DYrq6unoziZA==}
@@ -2476,13 +2489,13 @@ snapshots:
   '@vitest/runner@3.0.5':
     dependencies:
       '@vitest/utils': 3.0.5
-      pathe: 2.0.2
+      pathe: 2.0.3
 
   '@vitest/snapshot@3.0.5':
     dependencies:
       '@vitest/pretty-format': 3.0.5
       magic-string: 0.30.17
-      pathe: 2.0.2
+      pathe: 2.0.3
 
   '@vitest/spy@3.0.5':
     dependencies:
@@ -2493,7 +2506,7 @@ snapshots:
       '@vitest/utils': 3.0.5
       fflate: 0.8.2
       flatted: 3.3.2
-      pathe: 2.0.2
+      pathe: 2.0.3
       sirv: 3.0.0
       tinyglobby: 0.2.10
       tinyrainbow: 2.0.0
@@ -2602,13 +2615,15 @@ snapshots:
     dependencies:
       delayed-stream: 1.0.0
 
-  commander@13.1.0: {}
-
   commander@2.20.3: {}
 
   concat-map@0.0.1: {}
 
   consola@3.4.0: {}
+
+  cross-env@7.0.3:
+    dependencies:
+      cross-spawn: 7.0.6
 
   cross-spawn@7.0.6:
     dependencies:
@@ -2893,7 +2908,7 @@ snapshots:
       lru-cache: 10.4.3
       minipass: 7.1.2
 
-  pathe@2.0.2: {}
+  pathe@2.0.3: {}
 
   pathval@2.0.0: {}
 
@@ -3178,7 +3193,7 @@ snapshots:
       cac: 6.7.14
       debug: 4.4.0
       es-module-lexer: 1.6.0
-      pathe: 2.0.2
+      pathe: 2.0.3
       vite: 6.1.0(@types/node@22.13.1)(jiti@1.21.7)(terser@5.38.2)(tsx@4.19.2)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -3231,7 +3246,7 @@ snapshots:
       debug: 4.4.0
       expect-type: 1.1.0
       magic-string: 0.30.17
-      pathe: 2.0.2
+      pathe: 2.0.3
       std-env: 3.8.0
       tinybench: 2.9.0
       tinyexec: 0.3.2

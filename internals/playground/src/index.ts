@@ -190,4 +190,4 @@ process.on("uncaughtException", (error) => {
 });
 
 // Connect to gateway
-client.gateway.connect();
+client.connect();

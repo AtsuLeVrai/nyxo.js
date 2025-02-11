@@ -7,7 +7,7 @@ const REST_DEFAULTS = {
   AUTH_TYPE: "Bot",
   VERSION: ApiVersion.V10,
   USER_AGENT: "DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)",
-  BASE_URL: "https://discord.com/api",
+  BASE_URL: "https://discord.com",
 } as const;
 
 /** @see {@link https://discord.com/developers/docs/reference#user-agent} */

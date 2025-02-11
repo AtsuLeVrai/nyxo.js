@@ -99,7 +99,7 @@ export const ActivityEntity = z.object({
   name: z.string(),
   type: z.nativeEnum(ActivityType),
   url: z.string().nullish(),
-  created_at: z.number().int(),
+  created_at: z.union([z.number().int(), z.string()]),
   timestamps: ActivityTimestampsEntity.optional(),
   application_id: Snowflake.optional(),
   details: z.string().nullish(),

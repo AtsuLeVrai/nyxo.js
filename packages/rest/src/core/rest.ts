@@ -237,7 +237,8 @@ export class Rest extends Emitron<RestEventHandlers> {
     return this.request<T>({ ...options, method: "DELETE", path });
   }
 
-  destroy(): void {
+  async destroy(): Promise<void> {
+    await this.#request.destroy();
     this.#rateLimiter.destroy();
     this.clearAll();
   }

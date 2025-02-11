@@ -36,16 +36,19 @@ export class Client extends Emitron<ClientEventHandlers> {
     this.#events = new ClientEventManager(this);
     this.rest = new Rest(this.#options);
     this.gateway = new Gateway(this.rest, this.#options);
-
-    this.#events.initialize();
   }
 
   get token(): TokenManager {
     return new TokenManager(this.#options.token);
   }
 
-  destroy(): void {
-    this.rest.destroy();
+  connect(): Promise<void> {
+    this.#events.initialize();
+    return this.gateway.connect();
+  }
+
+  async destroy(): Promise<void> {
+    await this.rest.destroy();
     this.gateway.destroy();
     this.clearAll();
   }

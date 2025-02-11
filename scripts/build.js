@@ -3,7 +3,6 @@ import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import terser from "@rollup/plugin-terser";
-import { program } from "commander";
 import { createConsola } from "consola";
 import { rollup } from "rollup";
 import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
@@ -55,11 +54,7 @@ const paths = {
   package: resolve(process.cwd(), "package.json"),
 };
 
-// CLI Configuration
-program.option("-p, --production", "Build for production").parse(process.argv);
-
-/** @type {BuildOptions} */
-const options = program.opts();
+const isProduction = process.env.NODE_ENV === "production";
 
 /**
  * Get external dependencies from package.json
@@ -107,9 +102,9 @@ const swcConfig = defineRollupSwcOption({
     lazy: true,
     importInterop: "swc",
   },
-  sourceMaps: !options.production,
+  sourceMaps: !isProduction,
   exclude: ["node_modules", "dist", ".*.js$", ".*\\.d.ts$"],
-  minify: options.production,
+  minify: isProduction,
 });
 
 /**
@@ -128,8 +123,8 @@ const terserConfig = {
     unsafe_comps: true,
     unsafe_math: true,
     unsafe_methods: true,
-    drop_console: options.production,
-    drop_debugger: options.production,
+    drop_console: isProduction,
+    drop_debugger: isProduction,
   },
   module: true,
   toplevel: true,
@@ -146,16 +141,16 @@ const rollupConfig = {
     {
       file: resolve(paths.dist, "index.mjs"),
       format: "esm",
-      sourcemap: !options.production,
-      plugins: options.production ? [terser(terserConfig)] : [],
+      sourcemap: !isProduction,
+      plugins: isProduction ? [terser(terserConfig)] : [],
     },
     {
       file: resolve(paths.dist, "index.cjs"),
       format: "cjs",
-      sourcemap: !options.production,
+      sourcemap: !isProduction,
       interop: "auto",
       esModule: true,
-      plugins: options.production ? [terser(terserConfig)] : [],
+      plugins: isProduction ? [terser(terserConfig)] : [],
     },
   ],
   plugins: [swc(swcConfig)],
@@ -185,17 +180,10 @@ const apiExtractorConfig = {
     },
   },
   apiReport: {
-    enabled: true,
-    reportFileName: "api-report.md",
-    reportFolder: "<projectFolder>/docs/",
-    reportTempFolder: "<projectFolder>/temp/",
-    includeForgottenExports: true,
+    enabled: false,
   },
   docModel: {
-    enabled: true,
-    apiJsonFilePath: "<projectFolder>/docs/api.json",
-    includeForgottenExports: true,
-    projectFolderUrl: "https://github.com/AtsuLeVrai/nyx.js/tree/main",
+    enabled: false,
   },
   dtsRollup: {
     enabled: true,
@@ -451,9 +439,7 @@ async function build() {
   const startTime = process.hrtime();
 
   try {
-    logger.info(
-      `Starting build${options.production ? " (production)" : ""}...`,
-    );
+    logger.info(`Starting build${isProduction ? " (production)" : ""}...`);
 
     // Clean directories first
     await clean();
@@ -462,7 +448,7 @@ async function build() {
     await buildBundles();
 
     // Handle types based on environment
-    if (options.production) {
+    if (isProduction) {
       await compileProdTypes();
     } else {
       await compileDevTypes();
@@ -472,7 +458,7 @@ async function build() {
 
     const [seconds] = process.hrtime(startTime);
     logger.success(
-      `Build completed for ${options.production ? "production" : "development"} mode in ${seconds}s`,
+      `Build completed for ${isProduction ? "production" : "development"} mode in ${seconds}s`,
     );
   } catch (error) {
     const [seconds] = process.hrtime(startTime);
