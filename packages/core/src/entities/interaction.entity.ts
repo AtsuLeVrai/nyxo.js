@@ -125,7 +125,12 @@ export const InteractionResolvedDataEntity = z.object({
     )
     .optional(),
   // messages: z.record(Snowflake, MessageEntity).optional(), // Commented to avoid circular reference
-  attachments: z.record(Snowflake, AttachmentEntity).optional(),
+  attachments: z
+    .record(
+      Snowflake,
+      z.lazy(() => AttachmentEntity),
+    )
+    .optional(),
 });
 
 export type InteractionResolvedDataEntity = z.infer<
@@ -274,11 +279,14 @@ export const InteractionCallbackMessagesEntity = z
   .object({
     tts: z.boolean().optional(),
     content: z.string().optional(),
-    embeds: z.array(EmbedEntity).max(10).optional(),
-    allowed_mentions: AllowedMentionsEntity.optional(),
+    embeds: z
+      .array(z.lazy(() => EmbedEntity))
+      .max(10)
+      .optional(),
+    allowed_mentions: z.lazy(() => AllowedMentionsEntity).optional(),
     flags: parseBitField<MessageFlags>().optional(),
     components: z.array(ActionRowEntity).optional(),
-    attachments: z.array(AttachmentEntity).optional(),
+    attachments: z.array(z.lazy(() => AttachmentEntity)).optional(),
     poll: PollCreateRequestEntity.optional(),
   })
   .refine(

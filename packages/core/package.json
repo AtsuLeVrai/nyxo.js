@@ -46,6 +46,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "markdown-it": "^14.1.0",
     "zod": "^3.24.1",
     "zod-validation-error": "^3.4.0"
   },
