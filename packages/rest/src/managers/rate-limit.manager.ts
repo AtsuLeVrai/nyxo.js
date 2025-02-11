@@ -76,6 +76,10 @@ export class RateLimitManager {
     headers: Record<string, string>,
     statusCode: number,
   ): void {
+    if (this.#isExemptRoute(path)) {
+      return;
+    }
+
     const routeKey = this.getRouteKey(method, path);
 
     if (statusCode === 429) {

@@ -1,9 +1,7 @@
 import { z } from "zod";
 import { Snowflake } from "../managers/index.js";
-import {
-  ApplicationEntity,
-  ApplicationIntegrationType,
-} from "./application.entity.js";
+import { parseBitField } from "../utils/index.js";
+import { ApplicationEntity } from "./application.entity.js";
 import { AnyThreadChannelEntity, ChannelType } from "./channel.entity.js";
 import { EmojiEntity } from "./emoji.entity.js";
 import { InteractionType } from "./interaction.entity.js";
@@ -174,7 +172,7 @@ export const AttachmentEntity = z.object({
   ephemeral: z.boolean().optional(),
   duration_secs: z.number().optional(),
   waveform: z.string().optional(),
-  flags: z.nativeEnum(AttachmentFlags).optional(),
+  flags: parseBitField<AttachmentFlags>().optional(),
 });
 
 export type AttachmentEntity = z.infer<typeof AttachmentEntity>;
@@ -338,12 +336,9 @@ export const MessageComponentInteractionMetadataEntity = z.object({
   id: Snowflake,
   type: z.lazy(() => z.nativeEnum(InteractionType)),
   user: UserEntity,
-  authorizing_integration_owners: z.record(
-    z.nativeEnum(ApplicationIntegrationType),
-    Snowflake,
-  ),
+  authorizing_integration_owners: z.record(z.string(), Snowflake),
   original_response_message_id: Snowflake.optional(),
-  interacted_message_id: Snowflake,
+  interacted_message_id: Snowflake.optional(),
 });
 
 export type MessageComponentInteractionMetadataEntity = z.infer<
@@ -357,10 +352,7 @@ export const ApplicationCommandInteractionMetadataEntity = z.object({
   id: Snowflake,
   type: z.lazy(() => z.nativeEnum(InteractionType)),
   user: UserEntity,
-  authorizing_integration_owners: z.record(
-    z.nativeEnum(ApplicationIntegrationType),
-    Snowflake,
-  ),
+  authorizing_integration_owners: z.record(z.string(), Snowflake),
   original_response_message_id: Snowflake.optional(),
   target_user: UserEntity.optional(),
   target_message_id: Snowflake.optional(),
@@ -377,15 +369,14 @@ export const ModalSubmitInteractionMetadataEntity = z.object({
   id: Snowflake,
   type: z.lazy(() => z.nativeEnum(InteractionType)),
   user: UserEntity,
-  authorizing_integration_owners: z.record(
-    z.nativeEnum(ApplicationIntegrationType),
-    Snowflake,
-  ),
+  authorizing_integration_owners: z.record(z.string(), Snowflake),
   original_response_message_id: Snowflake.optional(),
-  triggering_interaction_metadata: z.union([
-    ApplicationCommandInteractionMetadataEntity,
-    MessageComponentInteractionMetadataEntity,
-  ]),
+  triggering_interaction_metadata: z
+    .union([
+      ApplicationCommandInteractionMetadataEntity,
+      MessageComponentInteractionMetadataEntity,
+    ])
+    .optional(),
 });
 
 export type ModalSubmitInteractionMetadataEntity = z.infer<
@@ -410,7 +401,7 @@ export const MessageEntity = z.object({
   channel_id: Snowflake,
   author: UserEntity,
   content: z.string(),
-  timestamp: z.string().datetime(),
+  timestamp: z.string(),
   edited_timestamp: z.string().datetime().nullable(),
   tts: z.boolean(),
   mention_everyone: z.boolean(),
@@ -427,7 +418,7 @@ export const MessageEntity = z.object({
   activity: MessageActivityEntity.optional(),
   application: ApplicationEntity.partial().optional(),
   application_id: Snowflake.optional(),
-  flags: z.nativeEnum(MessageFlags).optional(),
+  flags: parseBitField<MessageFlags>().optional(),
   components: z.array(ActionRowEntity).optional(),
   sticker_items: z.array(StickerItemEntity).optional(),
   /** @deprecated The stickers sent with the message */

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Snowflake } from "../managers/index.js";
+import { parseBitField } from "../utils/index.js";
 import { GuildMemberEntity } from "./guild.entity.js";
 import { UserEntity } from "./user.entity.js";
 
@@ -94,7 +95,7 @@ export const ThreadMemberEntity = z.object({
   id: Snowflake.optional(),
   user_id: Snowflake.optional(),
   join_timestamp: z.string().datetime(),
-  flags: z.number().int(),
+  flags: parseBitField<number>(),
   member: z.lazy(() => GuildMemberEntity.optional()),
 });
 
@@ -174,7 +175,7 @@ export const ChannelEntity = z.object({
     .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
     .optional(),
   permissions: z.string().optional(),
-  flags: z.union([z.number().int(), z.nativeEnum(ChannelFlags)]),
+  flags: parseBitField<ChannelFlags>(),
   total_message_sent: z.number().int().optional(),
   available_tags: z.array(ForumTagEntity).optional(),
   applied_tags: z.array(Snowflake).optional(),

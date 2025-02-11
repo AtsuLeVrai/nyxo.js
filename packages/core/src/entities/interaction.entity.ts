@@ -1,12 +1,11 @@
 import { z } from "zod";
-import { BitwisePermissionFlags, LocaleKey } from "../enums/index.js";
+import { type BitwisePermissionFlags, LocaleKey } from "../enums/index.js";
 import { Snowflake } from "../managers/index.js";
+import { parseBitField } from "../utils/index.js";
 import {
   ApplicationCommandOptionChoiceEntity,
   ApplicationCommandOptionType,
-  ApplicationCommandType,
 } from "./application-commands.entity.js";
-import { ApplicationIntegrationType } from "./application.entity.js";
 import { ChannelEntity } from "./channel.entity.js";
 import { EntitlementEntity } from "./entitlement.entity.js";
 import { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
@@ -19,7 +18,7 @@ import {
   AllowedMentionsEntity,
   AttachmentEntity,
   EmbedEntity,
-  MessageFlags,
+  type MessageFlags,
 } from "./message.entity.js";
 import { PollCreateRequestEntity } from "./poll.entity.js";
 import { RoleEntity } from "./role.entity.js";
@@ -166,36 +165,36 @@ const BaseCommandOption = z.object({
 });
 
 const StringCommandOption = BaseCommandOption.extend({
-  type: z.literal(ApplicationCommandOptionType.String),
+  type: z.literal(3),
   value: z.string(),
   focused: z.boolean().optional(),
 });
 
 const NumberCommandOption = BaseCommandOption.extend({
-  type: z.literal(ApplicationCommandOptionType.Number),
+  type: z.literal(10),
   value: z.number(),
   focused: z.boolean().optional(),
 });
 
 const IntegerCommandOption = BaseCommandOption.extend({
-  type: z.literal(ApplicationCommandOptionType.Integer),
+  type: z.literal(4),
   value: z.number().int(),
   focused: z.boolean().optional(),
 });
 
 const BooleanCommandOption = BaseCommandOption.extend({
-  type: z.literal(ApplicationCommandOptionType.Boolean),
+  type: z.literal(5),
   value: z.boolean(),
   focused: z.boolean().optional(),
 });
 
 const SubCommandOption = BaseCommandOption.extend({
-  type: z.literal(ApplicationCommandOptionType.SubCommand),
+  type: z.literal(1),
   options: z.array(z.lazy(() => SimpleCommandOption)).optional(),
 });
 
 const SubCommandGroupOption = BaseCommandOption.extend({
-  type: z.literal(ApplicationCommandOptionType.SubCommandGroup),
+  type: z.literal(2),
   options: z.array(SubCommandOption),
 });
 
@@ -212,7 +211,8 @@ const SimpleCommandOption = z.discriminatedUnion("type", [
 export const ApplicationCommandInteractionDataEntity = z.object({
   id: Snowflake,
   name: z.string(),
-  type: z.nativeEnum(ApplicationCommandType),
+  // TODO: Fix enum ApplicationCommandType error in zod
+  type: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
   resolved: InteractionResolvedDataEntity.optional(),
   options: z
     .array(
@@ -234,23 +234,10 @@ export type ApplicationCommandInteractionDataEntity = z.infer<
 /**
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data}
  */
-export const InteractionDataEntity = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal(InteractionType.ApplicationCommand),
-    data: ApplicationCommandInteractionDataEntity,
-  }),
-  z.object({
-    type: z.literal(InteractionType.ApplicationCommandAutocomplete),
-    data: ApplicationCommandInteractionDataEntity,
-  }),
-  z.object({
-    type: z.literal(InteractionType.MessageComponent),
-    data: MessageComponentInteractionDataEntity,
-  }),
-  z.object({
-    type: z.literal(InteractionType.ModalSubmit),
-    data: ModalSubmitInteractionDataEntity,
-  }),
+export const InteractionDataEntity = z.union([
+  ApplicationCommandInteractionDataEntity,
+  MessageComponentInteractionDataEntity,
+  ModalSubmitInteractionDataEntity,
 ]);
 
 export type InteractionDataEntity = z.infer<typeof InteractionDataEntity>;
@@ -289,7 +276,7 @@ export const InteractionCallbackMessagesEntity = z
     content: z.string().optional(),
     embeds: z.array(EmbedEntity).max(10).optional(),
     allowed_mentions: AllowedMentionsEntity.optional(),
-    flags: z.nativeEnum(MessageFlags).optional(),
+    flags: parseBitField<MessageFlags>().optional(),
     components: z.array(ActionRowEntity).optional(),
     attachments: z.array(AttachmentEntity).optional(),
     poll: PollCreateRequestEntity.optional(),
@@ -328,7 +315,7 @@ export type InteractionCallbackModalEntity = z.infer<
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#autocomplete}
  */
 export const InteractionCallbackAutocompleteEntity = z.object({
-  choices: z.array(ApplicationCommandOptionChoiceEntity).max(25),
+  choices: z.array(z.lazy(() => ApplicationCommandOptionChoiceEntity)).max(25),
 });
 
 export type InteractionCallbackAutocompleteEntity = z.infer<
@@ -402,14 +389,11 @@ export const InteractionEntity = z.object({
   token: z.string(),
   version: z.literal(1),
   // message: MessageEntity.optional(), // Commented to avoid circular reference
-  app_permissions: z.nativeEnum(BitwisePermissionFlags),
+  app_permissions: parseBitField<BitwisePermissionFlags>(),
   locale: LocaleKey.optional(),
   guild_locale: LocaleKey.optional(),
   entitlements: z.array(EntitlementEntity),
-  authorizing_integration_owners: z.record(
-    z.nativeEnum(ApplicationIntegrationType),
-    Snowflake,
-  ),
+  authorizing_integration_owners: z.record(z.string(), Snowflake),
   context: z.nativeEnum(InteractionContextType).optional(),
 });
 

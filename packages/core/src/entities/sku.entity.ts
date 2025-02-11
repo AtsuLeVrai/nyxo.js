@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Snowflake } from "../managers/index.js";
+import { parseBitField } from "../utils/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-flags}
@@ -29,7 +30,7 @@ export const SkuEntity = z.object({
   application_id: Snowflake,
   name: z.string(),
   slug: z.string(),
-  flags: z.nativeEnum(SkuFlags),
+  flags: parseBitField<SkuFlags>(),
 });
 
 export type SkuEntity = z.infer<typeof SkuEntity>;

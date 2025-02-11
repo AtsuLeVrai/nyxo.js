@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { OAuth2Scope } from "../enums/index.js";
 import { Snowflake } from "../managers/index.js";
+import { parseBitField } from "../utils/index.js";
 import { GuildEntity } from "./guild.entity.js";
 import { TeamEntity } from "./team.entity.js";
 import { UserEntity } from "./user.entity.js";
@@ -81,7 +82,7 @@ export const ApplicationEntity = z.object({
   primary_sku_id: Snowflake.optional(),
   slug: z.string().url().optional(),
   cover_image: z.string().optional(),
-  flags: z.union([z.nativeEnum(ApplicationFlags), z.number().int()]),
+  flags: parseBitField<ApplicationFlags>().optional(),
   approximate_guild_count: z.number().int().optional(),
   approximate_user_install_count: z.number().int().optional(),
   redirect_uris: z.array(z.string().url()).optional(),

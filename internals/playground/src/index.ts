@@ -1,5 +1,10 @@
 import { config } from "dotenv";
-import { Client, GatewayIntentsBits, Guild } from "nyx.js";
+import {
+  Client,
+  type CreateGlobalApplicationCommandSchema,
+  GatewayIntentsBits,
+  Guild,
+} from "nyx.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
@@ -120,12 +125,39 @@ client.on("ready", (ready) => {
   );
 });
 
-client.on("guildCreate", (guild) => {
-  if (guild instanceof Guild) {
-    console.log(
-      "[GUILD CREATE]",
-      guild.channels.map((channel) => channel.toJson()),
-    );
+const APPLICATION_COMMANDS: CreateGlobalApplicationCommandSchema[] = [
+  {
+    name: "ping",
+    description: "Ping the bot",
+  },
+];
+
+client.on("guildCreate", async (guild) => {
+  if (!(guild instanceof Guild)) {
+    return;
+  }
+
+  await client.rest.commands.bulkOverwriteGuildApplicationCommands(
+    client.token.id,
+    guild.id,
+    APPLICATION_COMMANDS,
+  );
+
+  console.log(
+    "[GUILD CREATE]",
+    guild.channels.map((channel) => channel.toJson()),
+  );
+});
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isApplicationCommand()) {
+    return;
+  }
+
+  if (interaction.commandName === "ping") {
+    await interaction.reply({
+      content: "Pong!",
+    });
   }
 });
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { LocaleKey } from "../enums/index.js";
 import { Snowflake } from "../managers/index.js";
+import { parseBitField } from "../utils/index.js";
 import { IntegrationEntity } from "./guild.entity.js";
 
 /**
@@ -144,9 +145,9 @@ export const UserEntity = z.object({
   locale: LocaleKey.optional(),
   verified: z.boolean().optional(),
   email: z.string().email().nullish(),
-  flags: z.union([z.nativeEnum(UserFlags), z.number().int()]).optional(),
+  flags: parseBitField<UserFlags>().optional(),
   premium_type: z.nativeEnum(PremiumType).optional(),
-  public_flags: z.union([z.nativeEnum(UserFlags), z.number().int()]).optional(),
+  public_flags: parseBitField<UserFlags>().optional(),
   avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
 });
 

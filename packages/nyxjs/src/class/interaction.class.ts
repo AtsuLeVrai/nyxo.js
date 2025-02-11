@@ -1,7 +1,6 @@
 import {
   type ActionRowEntity,
   type ApplicationCommandInteractionDataEntity,
-  type ApplicationIntegrationType,
   type AttachmentEntity,
   BitFieldManager,
   type BitwisePermissionFlags,
@@ -120,10 +119,7 @@ export class Interaction extends BaseClass<InteractionEntity> {
     );
   }
 
-  get authorizingIntegrationOwners(): Record<
-    ApplicationIntegrationType,
-    Snowflake
-  > {
+  get authorizingIntegrationOwners(): Record<string, Snowflake> {
     return this.data.authorizing_integration_owners;
   }
 
@@ -132,40 +128,41 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   get commandName(): string | null {
-    if (!this.isApplicationCommand()) {
-      return null;
+    if (this.isApplicationCommand()) {
+      return this.intData.name;
     }
 
-    return this.intData?.data.name ?? null;
+    return null;
   }
 
   get commandId(): string | null {
-    if (!this.isApplicationCommand()) {
-      return null;
+    if (this.isApplicationCommand()) {
+      return this.intData.id;
     }
-    return this.intData?.data.id;
+
+    return null;
   }
 
   get commandType(): number | null {
-    if (!this.isApplicationCommand()) {
-      return null;
+    if (this.isApplicationCommand()) {
+      return this.intData.type;
     }
 
-    return this.intData?.data.type;
+    return null;
   }
 
   get componentType(): number | null {
     if (!this.isMessageComponent()) {
       return null;
     }
-    return this.data.data.component_type;
+    return this.intData.component_type;
   }
 
   get customId(): string | null {
     if (!(this.isMessageComponent() || this.isModalSubmit())) {
       return null;
     }
-    return this.data.data.custom_id;
+    return this.intData.custom_id;
   }
 
   get modalComponents(): ActionRowEntity[] {
@@ -173,24 +170,24 @@ export class Interaction extends BaseClass<InteractionEntity> {
       return [];
     }
 
-    return this.data.data.components;
+    return this.intData.components;
   }
 
   get subCommandName(): string | null {
-    if (!(this.isApplicationCommand() && this.data.data.options)) {
+    if (!(this.isApplicationCommand() && this.intData?.options)) {
       return null;
     }
-    const subCommand = this.data.data.options.find(
+    const subCommand = this.intData.options.find(
       (opt) => opt.type === 1 || opt.type === 2,
     );
     return subCommand?.name ?? null;
   }
 
   get subCommandGroupName(): string | null {
-    if (!(this.isApplicationCommand() && this.data.data.options)) {
+    if (!(this.isApplicationCommand() && this.intData.options)) {
       return null;
     }
-    const group = this.data.data.options.find((opt) => opt.type === 2);
+    const group = this.intData.options.find((opt) => opt.type === 2);
     return group?.name ?? null;
   }
 
@@ -203,10 +200,7 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   isApplicationCommand(): this is Interaction & {
-    data: {
-      type: InteractionType.ApplicationCommand;
-      data: ApplicationCommandInteractionDataEntity;
-    };
+    intData: ApplicationCommandInteractionDataEntity;
   } {
     return (
       this.type === InteractionType.ApplicationCommand && this.intData !== null
@@ -214,10 +208,7 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   isMessageComponent(): this is Interaction & {
-    data: {
-      type: InteractionType.MessageComponent;
-      data: MessageComponentInteractionDataEntity;
-    };
+    intData: MessageComponentInteractionDataEntity;
   } {
     return (
       this.type === InteractionType.MessageComponent && this.intData !== null
@@ -225,10 +216,7 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   isModalSubmit(): this is Interaction & {
-    data: {
-      type: InteractionType.ModalSubmit;
-      data: ModalSubmitInteractionDataEntity;
-    };
+    intData: ModalSubmitInteractionDataEntity;
   } {
     return this.type === InteractionType.ModalSubmit && this.intData !== null;
   }
@@ -242,11 +230,10 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   getOption<T = unknown>(name: string): T | null {
-    if (!(this.isApplicationCommand() && this.data.data.options)) {
+    if (!(this.isApplicationCommand() && this.intData?.options)) {
       return null;
     }
-    const option = this.data.data.options.find((opt) => opt.name === name);
-
+    const option = this.intData.options.find((opt) => opt.name === name);
     // @ts-expect-error
     return option?.value as T | null;
   }
@@ -264,14 +251,14 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   getUserOption(name: string): User | null {
-    if (!(this.isApplicationCommand() && this.data.data.resolved?.users)) {
+    if (!(this.isApplicationCommand() && this.intData?.resolved?.users)) {
       return null;
     }
     const userId = this.getOption<string>(name);
     if (!userId) {
       return null;
     }
-    const userData = this.data.data.resolved.users[userId];
+    const userData = this.intData.resolved.users[userId];
     if (!userData) {
       return null;
     }
@@ -279,18 +266,18 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   getChannelOption(name: string): Channel | null {
-    if (!(this.isApplicationCommand() && this.data.data.resolved?.channels)) {
+    if (!(this.isApplicationCommand() && this.intData.resolved?.channels)) {
       return null;
     }
     const channelId = this.getOption<string>(name);
     if (!channelId) {
       return null;
     }
-    const channelData = this.data.data.resolved.channels[channelId];
+    const channelData = this.intData.resolved.channels[channelId];
     if (!channelData) {
       return null;
     }
-    return new Channel(channelData);
+    return new Channel(this.client, channelData);
   }
 
   getRoleOption(name: string): string | null {
@@ -309,24 +296,22 @@ export class Interaction extends BaseClass<InteractionEntity> {
       return null;
     }
 
-    if (this.data.data.resolved?.users?.[mentionableId]) {
-      return new User(
-        this.client,
-        this.data.data.resolved.users[mentionableId],
-      );
+    if (this.intData.resolved?.users?.[mentionableId]) {
+      return new User(this.client, this.intData.resolved.users[mentionableId]);
     }
 
-    if (this.data.data.resolved?.members?.[mentionableId]) {
-      return new GuildMember(this.data.data.resolved.members[mentionableId]);
+    if (this.intData.resolved?.members?.[mentionableId]) {
+      return new GuildMember(
+        this.client,
+        this.intData.resolved.members[mentionableId],
+      );
     }
 
     return mentionableId;
   }
 
   getAttachmentOption(name: string): AttachmentEntity | null {
-    if (
-      !(this.isApplicationCommand() && this.data.data.resolved?.attachments)
-    ) {
+    if (!(this.isApplicationCommand() && this.intData.resolved?.attachments)) {
       return null;
     }
     const attachmentId = this.getOption<string>(name);
@@ -334,17 +319,15 @@ export class Interaction extends BaseClass<InteractionEntity> {
       return null;
     }
 
-    return this.data.data.resolved.attachments[
-      attachmentId
-    ] as AttachmentEntity;
+    return this.intData.resolved.attachments[attachmentId] as AttachmentEntity;
   }
 
   getSubCommandOptions(): unknown[] {
-    if (!(this.isApplicationCommand() && this.data.data.options)) {
+    if (!(this.isApplicationCommand() && this.intData.options)) {
       return [];
     }
 
-    const subCommand = this.data.data.options.find((opt) => opt.type === 1);
+    const subCommand = this.intData.options.find((opt) => opt.type === 1);
     return subCommand?.options ?? [];
   }
 

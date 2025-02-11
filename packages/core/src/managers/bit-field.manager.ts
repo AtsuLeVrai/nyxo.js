@@ -1,6 +1,7 @@
 export type BitFieldResolvable<T = unknown> =
   | bigint
   | number
+  | string
   | BitFieldManager<T>
   | T;
 
@@ -100,6 +101,14 @@ export class BitFieldManager<T> {
         throw new TypeError("Number must be a non-negative integer");
       }
       return validateBigInt(BigInt(value));
+    }
+
+    if (typeof value === "string") {
+      try {
+        return validateBigInt(BigInt(value));
+      } catch {
+        throw new TypeError("Invalid string format for bitfield value");
+      }
     }
 
     throw new TypeError(`Invalid type for bitfield value: ${typeof value}`);

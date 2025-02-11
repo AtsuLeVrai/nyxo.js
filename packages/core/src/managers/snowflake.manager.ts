@@ -8,20 +8,15 @@ const MAX_WORKER_ID = 31;
 const TIMESTAMP_SHIFT = 22n;
 const WORKER_ID_SHIFT = 17n;
 const PROCESS_ID_SHIFT = 12n;
-const SNOWFLAKE_REGEX = /^\d{17,19}$/;
 
-export const Snowflake = z
-  .string()
-  .regex(SNOWFLAKE_REGEX)
-  .refine((value) => {
-    try {
-      const timestamp =
-        Number(BigInt(value) >> TIMESTAMP_SHIFT) + DISCORD_EPOCH;
-      return timestamp >= DISCORD_EPOCH && timestamp <= Date.now();
-    } catch {
-      return false;
-    }
-  });
+export const Snowflake = z.string().refine((value) => {
+  try {
+    const timestamp = Number(BigInt(value) >> TIMESTAMP_SHIFT) + DISCORD_EPOCH;
+    return timestamp >= DISCORD_EPOCH && timestamp <= Date.now() + 3600000;
+  } catch {
+    return false;
+  }
+});
 
 export type Snowflake = z.infer<typeof Snowflake>;
 
