@@ -389,10 +389,8 @@ export class ClientEventManager {
 
       if (!eventDefinition) {
         const camelCaseEvent = camelCase(eventName);
-        this.#client.emit(
-          camelCaseEvent as keyof ClientEventHandlers,
-          data as never,
-        );
+        // @ts-expect-error
+        this.#client.emit(camelCaseEvent as keyof ClientEventHandlers, data);
         return;
       }
 
@@ -424,9 +422,11 @@ export class ClientEventManager {
 
       if (eventName.includes("UPDATE")) {
         const oldData = this.#getFromCache(eventName);
-        this.#client.emit(camelCaseEvent, oldData, transformedData as never);
+        // @ts-expect-error
+        this.#client.emit(camelCaseEvent, oldData, transformedData);
       } else {
-        this.#client.emit(camelCaseEvent, transformedData as never);
+        // @ts-expect-error
+        this.#client.emit(camelCaseEvent, transformedData);
       }
     } catch (error) {
       throw new Error(`Error handling event ${eventName}`, {

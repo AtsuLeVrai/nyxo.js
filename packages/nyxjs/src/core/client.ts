@@ -9,7 +9,7 @@ import {
   Rest,
   type UpdateCurrentUserApplicationRoleConnectionSchema,
 } from "@nyxjs/rest";
-import { EventEmitter } from "eventemitter3";
+import { Emitron } from "emitron";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { Connection, Guild, User } from "../class/index.js";
@@ -17,7 +17,7 @@ import { ClientEventManager } from "../managers/index.js";
 import { ClientOptions } from "../options/index.js";
 import type { ClientEventHandlers } from "../types/index.js";
 
-export class Client extends EventEmitter<ClientEventHandlers> {
+export class Client extends Emitron<ClientEventHandlers> {
   readonly rest: Rest;
   readonly gateway: Gateway;
 
@@ -42,6 +42,12 @@ export class Client extends EventEmitter<ClientEventHandlers> {
 
   get token(): TokenManager {
     return new TokenManager(this.#options.token);
+  }
+
+  destroy(): void {
+    this.rest.destroy();
+    this.gateway.destroy();
+    this.clearAll();
   }
 
   async getCurrentUser(): Promise<User> {

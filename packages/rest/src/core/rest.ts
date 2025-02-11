@@ -1,4 +1,4 @@
-import { EventEmitter } from "eventemitter3";
+import { Emitron } from "emitron";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError } from "../errors/index.js";
@@ -41,7 +41,7 @@ import type {
   RestEventHandlers,
 } from "../types/index.js";
 
-export class Rest extends EventEmitter<RestEventHandlers> {
+export class Rest extends Emitron<RestEventHandlers> {
   readonly #options: RestOptions;
   readonly #request: RequestManager;
   readonly #rateLimiter: RateLimitManager;
@@ -239,6 +239,6 @@ export class Rest extends EventEmitter<RestEventHandlers> {
 
   destroy(): void {
     this.#rateLimiter.destroy();
-    this.removeAllListeners();
+    this.clearAll();
   }
 }

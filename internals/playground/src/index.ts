@@ -166,14 +166,7 @@ function shutdown(): void {
 
   try {
     // Clean gateway disconnection
-    client.gateway.destroy();
-
-    // Destroy REST connection
-    client.rest.destroy();
-
-    // Remove all listeners
-    client.removeAllListeners();
-
+    client.destroy();
     console.log("Shutdown completed");
     process.exit(0);
   } catch (error) {
