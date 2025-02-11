@@ -1,60 +1,37 @@
 import { InviteStageInstanceEntity } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { GuildMember } from "./guild-member.class.js";
 
-export class InviteStageInstance {
-  readonly #data: InviteStageInstanceEntity;
-
-  constructor(data: Partial<z.input<typeof InviteStageInstanceEntity>> = {}) {
-    try {
-      this.#data = InviteStageInstanceEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class InviteStageInstance extends BaseClass<InviteStageInstanceEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof InviteStageInstanceEntity>> = {},
+  ) {
+    super(client, InviteStageInstanceEntity, data);
   }
 
   get members(): GuildMember[] {
-    return Array.isArray(this.#data.members)
-      ? this.#data.members.map((member) => new GuildMember(member))
+    return Array.isArray(this.data.members)
+      ? this.data.members.map((member) => new GuildMember(this.client, member))
       : [];
   }
 
   get participantCount(): number {
-    return this.#data.participant_count;
+    return this.data.participant_count;
   }
 
   get speakerCount(): number {
-    return this.#data.speaker_count;
+    return this.data.speaker_count;
   }
 
   get topic(): string {
-    return this.#data.topic;
+    return this.data.topic;
   }
 
   toJson(): InviteStageInstanceEntity {
-    return { ...this.#data };
-  }
-
-  clone(): InviteStageInstance {
-    return new InviteStageInstance(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      InviteStageInstanceSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<InviteStageInstanceEntity>): InviteStageInstance {
-    return new InviteStageInstance({ ...this.toJson(), ...other });
-  }
-
-  equals(other: InviteStageInstance): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

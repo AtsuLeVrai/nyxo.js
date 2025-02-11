@@ -5,72 +5,49 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { User } from "./user.class.js";
 
-export class GuildWidget {
-  readonly #data: GuildWidgetEntity;
-
-  constructor(data: Partial<z.input<typeof GuildWidgetEntity>> = {}) {
-    try {
-      this.#data = GuildWidgetEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class GuildWidget extends BaseClass<GuildWidgetEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof GuildWidgetEntity>> = {},
+  ) {
+    super(client, GuildWidgetEntity, data);
   }
 
   get id(): Snowflake {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get name(): string {
-    return this.#data.name;
+    return this.data.name;
   }
 
   get instantInvite(): string | null {
-    return this.#data.instant_invite ?? null;
+    return this.data.instant_invite ?? null;
   }
 
   get channels(): (
     | Partial<GuildVoiceChannelEntity>
     | Partial<GuildStageVoiceChannelEntity>
   )[] {
-    return Array.isArray(this.#data.channels) ? [...this.#data.channels] : [];
+    return Array.isArray(this.data.channels) ? [...this.data.channels] : [];
   }
 
   get members(): User[] {
-    return Array.isArray(this.#data.members)
-      ? this.#data.members.map((member) => new User(member))
+    return Array.isArray(this.data.members)
+      ? this.data.members.map((member) => new User(this.client, member))
       : [];
   }
 
   get presenceCount(): number {
-    return this.#data.presence_count;
+    return this.data.presence_count;
   }
 
   toJson(): GuildWidgetEntity {
-    return { ...this.#data };
-  }
-
-  clone(): GuildWidget {
-    return new GuildWidget(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      GuildWidgetSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<GuildWidgetEntity>): GuildWidget {
-    return new GuildWidget({ ...this.toJson(), ...other });
-  }
-
-  equals(other: GuildWidget): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

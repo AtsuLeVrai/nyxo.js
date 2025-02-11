@@ -6,40 +6,35 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class Sku {
-  readonly #data: SkuEntity;
+export class Sku extends BaseClass<SkuEntity> {
   readonly #flags: BitFieldManager<SkuFlags>;
 
-  constructor(data: Partial<z.input<typeof SkuEntity>> = {}) {
-    try {
-      this.#data = SkuEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
-    this.#flags = new BitFieldManager(this.#data.flags);
+  constructor(client: Client, data: Partial<z.input<typeof SkuEntity>> = {}) {
+    super(client, SkuEntity, data);
+    this.#flags = new BitFieldManager(this.data.flags);
   }
 
   get id(): Snowflake {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get type(): SkuType {
-    return this.#data.type;
+    return this.data.type;
   }
 
   get applicationId(): Snowflake {
-    return this.#data.application_id;
+    return this.data.application_id;
   }
 
   get name(): string {
-    return this.#data.name;
+    return this.data.name;
   }
 
   get slug(): string {
-    return this.#data.slug;
+    return this.data.slug;
   }
 
   get flags(): BitFieldManager<SkuFlags> {
@@ -47,28 +42,7 @@ export class Sku {
   }
 
   toJson(): SkuEntity {
-    return { ...this.#data };
-  }
-
-  clone(): Sku {
-    return new Sku(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      SkuSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<SkuEntity>): Sku {
-    return new Sku({ ...this.toJson(), ...other });
-  }
-
-  equals(other: Sku): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

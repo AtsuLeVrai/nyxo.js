@@ -1,65 +1,44 @@
 import { type LayoutType, PollCreateRequestEntity } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { PollAnswer } from "./poll-answer.class.js";
 import { PollMedia } from "./poll-media.class.js";
 
-export class PollCreateRequest {
-  readonly #data: PollCreateRequestEntity;
-
-  constructor(data: Partial<z.input<typeof PollCreateRequestEntity>> = {}) {
-    try {
-      this.#data = PollCreateRequestEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class PollCreateRequest extends BaseClass<PollCreateRequestEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof PollCreateRequestEntity>> = {},
+  ) {
+    super(client, PollCreateRequestEntity as z.ZodSchema, data);
   }
 
   get question(): PollMedia | null {
-    return this.#data.question ? new PollMedia(this.#data.question) : null;
+    return this.data.question
+      ? new PollMedia(this.client, this.data.question)
+      : null;
   }
 
   get answers(): PollAnswer[] {
-    return Array.isArray(this.#data.answers)
-      ? this.#data.answers.map((answer) => new PollAnswer(answer))
+    return Array.isArray(this.data.answers)
+      ? this.data.answers.map((answer) => new PollAnswer(this.client, answer))
       : [];
   }
 
   get duration(): number {
-    return this.#data.duration;
+    return this.data.duration;
   }
 
   get allowMultiselect(): boolean {
-    return Boolean(this.#data.allow_multiselect);
+    return Boolean(this.data.allow_multiselect);
   }
 
   get layoutType(): LayoutType {
-    return this.#data.layout_type;
+    return this.data.layout_type;
   }
 
   toJson(): PollCreateRequestEntity {
-    return { ...this.#data };
-  }
-
-  clone(): PollCreateRequest {
-    return new PollCreateRequest(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      PollCreateRequestSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<PollCreateRequestEntity>): PollCreateRequest {
-    return new PollCreateRequest({ ...this.toJson(), ...other });
-  }
-
-  equals(other: PollCreateRequest): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

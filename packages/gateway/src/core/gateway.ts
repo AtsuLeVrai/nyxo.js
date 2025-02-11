@@ -202,6 +202,8 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
     this.emit("debug", `Destroying connection with code ${code}`);
 
     try {
+      this.#stopHealthCheck();
+
       const ws = this.#ws;
       if (ws) {
         ws.removeAllListeners();
@@ -211,15 +213,11 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
 
       this.session.reset();
       this.reconnection.reset();
-
       this.compression.destroy();
       this.heartbeat.destroy();
-
       if (this.shard.isEnabled()) {
         this.shard.destroy();
       }
-
-      this.#stopHealthCheck();
     } catch (error) {
       throw new Error("Failed to destroy gateway connection", {
         cause: error,

@@ -1,54 +1,31 @@
 import type { Snowflake } from "@nyxjs/core";
 import { VoiceServerUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class VoiceServer {
-  readonly #data: VoiceServerUpdateEntity;
-
-  constructor(data: Partial<z.input<typeof VoiceServerUpdateEntity>> = {}) {
-    try {
-      this.#data = VoiceServerUpdateEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class VoiceServer extends BaseClass<VoiceServerUpdateEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof VoiceServerUpdateEntity>> = {},
+  ) {
+    super(client, VoiceServerUpdateEntity, data);
   }
 
   get token(): string {
-    return this.#data.token;
+    return this.data.token;
   }
 
   get guildId(): Snowflake {
-    return this.#data.guild_id;
+    return this.data.guild_id;
   }
 
   get endpoint(): string | null {
-    return this.#data.endpoint ?? null;
+    return this.data.endpoint ?? null;
   }
 
   toJson(): VoiceServerUpdateEntity {
-    return { ...this.#data };
-  }
-
-  clone(): VoiceServer {
-    return new VoiceServer(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      VoiceServerSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<VoiceServerUpdateEntity>): VoiceServer {
-    return new VoiceServer({ ...this.toJson(), ...other });
-  }
-
-  equals(other: VoiceServer): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

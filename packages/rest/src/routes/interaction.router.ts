@@ -1,6 +1,6 @@
 import {
-  type InteractionCallbackEntity,
-  InteractionCallbackResponseEntity,
+  type InteractionCallbackResponseEntity,
+  InteractionResponseEntity,
   type MessageEntity,
   type Snowflake,
 } from "@nyxjs/core";
@@ -69,10 +69,10 @@ export class InteractionRouter {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: z.input<typeof InteractionCallbackResponseEntity>,
+    options: z.input<typeof InteractionResponseEntity>,
     withResponse = true,
-  ): Promise<InteractionCallbackEntity | undefined> {
-    const result = InteractionCallbackResponseEntity.safeParse(options);
+  ): Promise<InteractionCallbackResponseEntity | undefined> {
+    const result = InteractionResponseEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

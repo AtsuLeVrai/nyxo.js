@@ -4,67 +4,46 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { GuildOnboardingPrompt } from "./guild-onboarding-prompt.class.js";
 
-export class GuildOnboarding {
-  readonly #data: GuildOnboardingEntity;
-
-  constructor(data: Partial<z.input<typeof GuildOnboardingEntity>> = {}) {
-    try {
-      this.#data = GuildOnboardingEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class GuildOnboarding extends BaseClass<GuildOnboardingEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof GuildOnboardingEntity>> = {},
+  ) {
+    super(client, GuildOnboardingEntity, data);
   }
 
   get guildId(): Snowflake {
-    return this.#data.guild_id;
+    return this.data.guild_id;
   }
 
   get prompts(): GuildOnboardingPrompt[] {
-    return Array.isArray(this.#data.prompts)
-      ? this.#data.prompts.map((prompt) => new GuildOnboardingPrompt(prompt))
+    return Array.isArray(this.data.prompts)
+      ? this.data.prompts.map(
+          (prompt) => new GuildOnboardingPrompt(this.client, prompt),
+        )
       : [];
   }
 
   get defaultChannelIds(): Snowflake[] {
-    return Array.isArray(this.#data.default_channel_ids)
-      ? [...this.#data.default_channel_ids]
+    return Array.isArray(this.data.default_channel_ids)
+      ? [...this.data.default_channel_ids]
       : [];
   }
 
   get enabled(): boolean {
-    return Boolean(this.#data.enabled);
+    return Boolean(this.data.enabled);
   }
 
   get mode(): GuildOnboardingMode {
-    return this.#data.mode;
+    return this.data.mode;
   }
 
   toJson(): GuildOnboardingEntity {
-    return { ...this.#data };
-  }
-
-  clone(): GuildOnboarding {
-    return new GuildOnboarding(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      GuildOnboardingSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<GuildOnboardingEntity>): GuildOnboarding {
-    return new GuildOnboarding({ ...this.toJson(), ...other });
-  }
-
-  equals(other: GuildOnboarding): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

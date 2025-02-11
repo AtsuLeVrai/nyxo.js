@@ -1,89 +1,66 @@
 import { GuildTemplateEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
 
-export class GuildTemplate {
-  readonly #data: GuildTemplateEntity;
-
-  constructor(data: Partial<z.input<typeof GuildTemplateEntity>> = {}) {
-    try {
-      this.#data = GuildTemplateEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class GuildTemplate extends BaseClass<GuildTemplateEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof GuildTemplateEntity>> = {},
+  ) {
+    super(client, GuildTemplateEntity, data);
   }
 
   get code(): string {
-    return this.#data.code;
+    return this.data.code;
   }
 
   get name(): string {
-    return this.#data.name;
+    return this.data.name;
   }
 
   get description(): string | null {
-    return this.#data.description ?? null;
+    return this.data.description ?? null;
   }
 
   get usageCount(): number {
-    return this.#data.usage_count;
+    return this.data.usage_count;
   }
 
   get creatorId(): Snowflake {
-    return this.#data.creator_id;
+    return this.data.creator_id;
   }
 
   get creator(): User | null {
-    return this.#data.creator ? new User(this.#data.creator) : null;
+    return this.data.creator ? new User(this.client, this.data.creator) : null;
   }
 
   get createdAt(): string {
-    return this.#data.created_at;
+    return this.data.created_at;
   }
 
   get updatedAt(): string {
-    return this.#data.updated_at;
+    return this.data.updated_at;
   }
 
   get sourceGuildId(): Snowflake {
-    return this.#data.source_guild_id;
+    return this.data.source_guild_id;
   }
 
   get serializedSourceGuild(): Guild | null {
-    return this.#data.serialized_source_guild
-      ? new Guild(this.#data.serialized_source_guild)
+    return this.data.serialized_source_guild
+      ? new Guild(this.client, this.data.serialized_source_guild)
       : null;
   }
 
   get isDirty(): boolean {
-    return Boolean(this.#data.is_dirty);
+    return Boolean(this.data.is_dirty);
   }
 
   toJson(): GuildTemplateEntity {
-    return { ...this.#data };
-  }
-
-  clone(): GuildTemplate {
-    return new GuildTemplate(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      GuildTemplateSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<GuildTemplateEntity>): GuildTemplate {
-    return new GuildTemplate({ ...this.toJson(), ...other });
-  }
-
-  equals(other: GuildTemplate): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

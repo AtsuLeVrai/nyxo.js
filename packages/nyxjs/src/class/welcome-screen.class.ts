@@ -1,54 +1,31 @@
 import { WelcomeScreenEntity } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { WelcomeScreenChannel } from "./welcome-screen-channel.class.js";
 
-export class WelcomeScreen {
-  readonly #data: WelcomeScreenEntity;
-
-  constructor(data: Partial<z.input<typeof WelcomeScreenEntity>> = {}) {
-    try {
-      this.#data = WelcomeScreenEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class WelcomeScreen extends BaseClass<WelcomeScreenEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof WelcomeScreenEntity>> = {},
+  ) {
+    super(client, WelcomeScreenEntity, data);
   }
 
   get description(): string | null {
-    return this.#data.description ?? null;
+    return this.data.description ?? null;
   }
 
   get welcomeChannels(): WelcomeScreenChannel[] {
-    return Array.isArray(this.#data.welcome_channels)
-      ? this.#data.welcome_channels.map(
-          (channel) => new WelcomeScreenChannel(channel),
+    return Array.isArray(this.data.welcome_channels)
+      ? this.data.welcome_channels.map(
+          (channel) => new WelcomeScreenChannel(this.client, channel),
         )
       : [];
   }
 
   toJson(): WelcomeScreenEntity {
-    return { ...this.#data };
-  }
-
-  clone(): WelcomeScreen {
-    return new WelcomeScreen(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      WelcomeScreenSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<WelcomeScreenEntity>): WelcomeScreen {
-    return new WelcomeScreen({ ...this.toJson(), ...other });
-  }
-
-  equals(other: WelcomeScreen): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

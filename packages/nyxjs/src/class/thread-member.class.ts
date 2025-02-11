@@ -1,33 +1,31 @@
 import { BitFieldManager, type Snowflake } from "@nyxjs/core";
 import { ThreadMemberUpdateEntity } from "@nyxjs/gateway";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { GuildMember } from "./guild-member.class.js";
 
-export class ThreadMember {
-  readonly #data: ThreadMemberUpdateEntity;
+export class ThreadMember extends BaseClass<ThreadMemberUpdateEntity> {
   readonly #flags: BitFieldManager<number>;
 
-  constructor(data: Partial<z.input<typeof ThreadMemberUpdateEntity>> = {}) {
-    try {
-      this.#data = ThreadMemberUpdateEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
-    this.#flags = new BitFieldManager(this.#data.flags);
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof ThreadMemberUpdateEntity>> = {},
+  ) {
+    super(client, ThreadMemberUpdateEntity, data);
+    this.#flags = new BitFieldManager(this.data.flags);
   }
 
   get id(): Snowflake | null {
-    return this.#data.id ?? null;
+    return this.data.id ?? null;
   }
 
   get userId(): Snowflake | null {
-    return this.#data.user_id ?? null;
+    return this.data.user_id ?? null;
   }
 
   get joinTimestamp(): string {
-    return this.#data.join_timestamp;
+    return this.data.join_timestamp;
   }
 
   get flags(): BitFieldManager<number> {
@@ -35,36 +33,15 @@ export class ThreadMember {
   }
 
   get member(): GuildMember {
-    return new GuildMember(this.#data.member);
+    return new GuildMember(this.client, this.data.member);
   }
 
   get guildId(): Snowflake {
-    return this.#data.guild_id;
+    return this.data.guild_id;
   }
 
   toJson(): ThreadMemberUpdateEntity {
-    return { ...this.#data };
-  }
-
-  clone(): ThreadMember {
-    return new ThreadMember(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      ThreadMemberSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<ThreadMemberUpdateEntity>): ThreadMember {
-    return new ThreadMember({ ...this.toJson(), ...other });
-  }
-
-  equals(other: ThreadMember): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

@@ -1,49 +1,26 @@
 import { IntegrationAccountEntity } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class IntegrationAccount {
-  readonly #data: IntegrationAccountEntity;
-
-  constructor(data: Partial<z.input<typeof IntegrationAccountEntity>> = {}) {
-    try {
-      this.#data = IntegrationAccountEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class IntegrationAccount extends BaseClass<IntegrationAccountEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof IntegrationAccountEntity>> = {},
+  ) {
+    super(client, IntegrationAccountEntity, data);
   }
 
   get id(): string {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get name(): string {
-    return this.#data.name;
+    return this.data.name;
   }
 
   toJson(): IntegrationAccountEntity {
-    return { ...this.#data };
-  }
-
-  clone(): IntegrationAccount {
-    return new IntegrationAccount(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      IntegrationAccountSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<IntegrationAccountEntity>): IntegrationAccount {
-    return new IntegrationAccount({ ...this.toJson(), ...other });
-  }
-
-  equals(other: IntegrationAccount): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

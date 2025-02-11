@@ -1,61 +1,38 @@
 import { ForumTagEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class ForumTag {
-  readonly #data: ForumTagEntity;
-
-  constructor(data: Partial<z.input<typeof ForumTagEntity>> = {}) {
-    try {
-      this.#data = ForumTagEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class ForumTag extends BaseClass<ForumTagEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof ForumTagEntity>> = {},
+  ) {
+    super(client, ForumTagEntity, data);
   }
 
   get id(): Snowflake {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get name(): string {
-    return this.#data.name;
+    return this.data.name;
   }
 
   get moderated(): boolean {
-    return Boolean(this.#data.moderated);
+    return Boolean(this.data.moderated);
   }
 
   get emojiId(): Snowflake | null {
-    return this.#data.emoji_id ?? null;
+    return this.data.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
-    return this.#data.emoji_name ?? null;
+    return this.data.emoji_name ?? null;
   }
 
   toJson(): ForumTagEntity {
-    return { ...this.#data };
-  }
-
-  clone(): ForumTag {
-    return new ForumTag(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      ForumTagSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<ForumTagEntity>): ForumTag {
-    return new ForumTag({ ...this.toJson(), ...other });
-  }
-
-  equals(other: ForumTag): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

@@ -165,6 +165,10 @@ const rollupConfig = {
  * API Extractor configuration
  * @type {import('@microsoft/api-extractor').IConfigFile}
  */
+/**
+ * API Extractor configuration
+ * @type {import('@microsoft/api-extractor').IConfigFile}
+ */
 const apiExtractorConfig = {
   projectFolder: paths.root,
   mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
@@ -180,8 +184,19 @@ const apiExtractorConfig = {
       },
     },
   },
-  apiReport: { enabled: false },
-  docModel: { enabled: false },
+  apiReport: {
+    enabled: true,
+    reportFileName: "api-report.md",
+    reportFolder: "<projectFolder>/docs/",
+    reportTempFolder: "<projectFolder>/temp/",
+    includeForgottenExports: true,
+  },
+  docModel: {
+    enabled: true,
+    apiJsonFilePath: "<projectFolder>/docs/api.json",
+    includeForgottenExports: true,
+    projectFolderUrl: "https://github.com/AtsuLeVrai/nyx.js/tree/main",
+  },
   dtsRollup: {
     enabled: true,
     untrimmedFilePath: resolve(paths.dist, "index.d.ts"),

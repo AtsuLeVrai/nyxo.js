@@ -1,53 +1,30 @@
 import { PollAnswerCountEntity } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class PollAnswerCount {
-  readonly #data: PollAnswerCountEntity;
-
-  constructor(data: Partial<z.input<typeof PollAnswerCountEntity>> = {}) {
-    try {
-      this.#data = PollAnswerCountEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class PollAnswerCount extends BaseClass<PollAnswerCountEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof PollAnswerCountEntity>> = {},
+  ) {
+    super(client, PollAnswerCountEntity, data);
   }
 
   get id(): number {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get count(): number {
-    return this.#data.count;
+    return this.data.count;
   }
 
   get meVoted(): boolean {
-    return Boolean(this.#data.me_voted);
+    return Boolean(this.data.me_voted);
   }
 
   toJson(): PollAnswerCountEntity {
-    return { ...this.#data };
-  }
-
-  clone(): PollAnswerCount {
-    return new PollAnswerCount(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      PollAnswerCountSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<PollAnswerCountEntity>): PollAnswerCount {
-    return new PollAnswerCount({ ...this.toJson(), ...other });
-  }
-
-  equals(other: PollAnswerCount): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

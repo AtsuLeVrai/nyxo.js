@@ -5,69 +5,64 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 import { RoleTags } from "./role-tags.class.js";
 
-export class Role {
-  readonly #data: RoleEntity;
+export class Role extends BaseClass<RoleEntity> {
   readonly #flags: BitFieldManager<RoleFlags>;
 
-  constructor(data: Partial<z.input<typeof RoleEntity>> = {}) {
-    try {
-      this.#data = RoleEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
-    this.#flags = new BitFieldManager(this.#data.flags);
+  constructor(client: Client, data: Partial<z.input<typeof RoleEntity>> = {}) {
+    super(client, RoleEntity, data);
+    this.#flags = new BitFieldManager(this.data.flags);
   }
 
   get id(): Snowflake {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get name(): string {
-    return this.#data.name;
+    return this.data.name;
   }
 
   get color(): number {
-    return this.#data.color;
+    return this.data.color;
   }
 
   get description(): string | null {
-    return this.#data.description ?? null;
+    return this.data.description ?? null;
   }
 
   get hoist(): boolean {
-    return Boolean(this.#data.hoist);
+    return Boolean(this.data.hoist);
   }
 
   get icon(): string | null {
-    return this.#data.icon ?? null;
+    return this.data.icon ?? null;
   }
 
   get unicodeEmoji(): string | null {
-    return this.#data.unicode_emoji ?? null;
+    return this.data.unicode_emoji ?? null;
   }
 
   get position(): number {
-    return this.#data.position;
+    return this.data.position;
   }
 
   get permissions(): string {
-    return this.#data.permissions;
+    return this.data.permissions;
   }
 
   get managed(): boolean {
-    return Boolean(this.#data.managed);
+    return Boolean(this.data.managed);
   }
 
   get mentionable(): boolean {
-    return Boolean(this.#data.mentionable);
+    return Boolean(this.data.mentionable);
   }
 
   get tags(): RoleTags | null {
-    return this.#data.tags ? new RoleTags(this.#data.tags) : null;
+    return this.data.tags ? new RoleTags(this.client, this.data.tags) : null;
   }
 
   get flags(): BitFieldManager<RoleFlags> {
@@ -75,28 +70,7 @@ export class Role {
   }
 
   toJson(): RoleEntity {
-    return { ...this.#data };
-  }
-
-  clone(): Role {
-    return new Role(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      RoleSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<RoleEntity>): Role {
-    return new Role({ ...this.toJson(), ...other });
-  }
-
-  equals(other: Role): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

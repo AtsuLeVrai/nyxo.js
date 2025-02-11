@@ -45,8 +45,8 @@ import type { ClientEventHandlers } from "../types/index.js";
 
 interface EventDefinition {
   name: keyof GatewayReceiveEvents;
-  handler?: Class<unknown, [data: never]>;
-  transform?: (data: never) => unknown;
+  handler?: Class<unknown, [client: Client, data: never]>;
+  transform?: (client: Client, data: never) => unknown;
   validate?: (data: never) => boolean;
 }
 
@@ -152,13 +152,14 @@ const CLIENT_EVENTS: EventDefinition[] = [
     name: "GUILD_CREATE",
     handler: Guild,
     transform: (
+      client,
       data: GuildCreateEntity | UnavailableGuildEntity,
     ): Guild | UnavailableGuild => {
       if (data.unavailable) {
-        return new UnavailableGuild(data as UnavailableGuildEntity);
+        return new UnavailableGuild(client, data as UnavailableGuildEntity);
       }
 
-      return new Guild(data);
+      return new Guild(client, data);
     },
   },
   {
@@ -180,17 +181,17 @@ const CLIENT_EVENTS: EventDefinition[] = [
   {
     name: "GUILD_EMOJIS_UPDATE",
     handler: Emoji,
-    transform: (data: GuildEmojisUpdateEntity): Emoji[] => {
+    transform: (client, data: GuildEmojisUpdateEntity): Emoji[] => {
       const emojis = data.emojis;
-      return emojis.map((emoji) => new Emoji(emoji as EmojiEntity));
+      return emojis.map((emoji) => new Emoji(client, emoji as EmojiEntity));
     },
   },
   {
     name: "GUILD_STICKERS_UPDATE",
     handler: Sticker,
-    transform: (data: GuildStickersUpdateEntity): Sticker[] => {
+    transform: (client, data: GuildStickersUpdateEntity): Sticker[] => {
       const stickers = data.stickers;
-      return stickers.map((sticker) => new Sticker(sticker));
+      return stickers.map((sticker) => new Sticker(client, sticker));
     },
   },
   {
@@ -397,9 +398,15 @@ export class ClientEventManager {
 
       let transformedData: unknown;
       if (eventDefinition.transform) {
-        transformedData = eventDefinition.transform(data as never);
+        transformedData = eventDefinition.transform(
+          this.#client,
+          data as never,
+        );
       } else if (eventDefinition.handler) {
-        transformedData = new eventDefinition.handler(data as never);
+        transformedData = new eventDefinition.handler(
+          this.#client,
+          data as never,
+        );
       } else {
         transformedData = data;
       }

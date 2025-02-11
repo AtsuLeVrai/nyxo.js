@@ -1,61 +1,38 @@
 import { VoiceRegionEntity } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class VoiceRegion {
-  readonly #data: VoiceRegionEntity;
-
-  constructor(data: Partial<z.input<typeof VoiceRegionEntity>> = {}) {
-    try {
-      this.#data = VoiceRegionEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class VoiceRegion extends BaseClass<VoiceRegionEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof VoiceRegionEntity>> = {},
+  ) {
+    super(client, VoiceRegionEntity, data);
   }
 
   get id(): string {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get name(): string {
-    return this.#data.name;
+    return this.data.name;
   }
 
   get optimal(): boolean {
-    return Boolean(this.#data.optimal);
+    return Boolean(this.data.optimal);
   }
 
   get deprecated(): boolean {
-    return Boolean(this.#data.deprecated);
+    return Boolean(this.data.deprecated);
   }
 
   get custom(): boolean {
-    return Boolean(this.#data.custom);
+    return Boolean(this.data.custom);
   }
 
   toJson(): VoiceRegionEntity {
-    return { ...this.#data };
-  }
-
-  clone(): VoiceRegion {
-    return new VoiceRegion(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      VoiceRegionSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<VoiceRegionEntity>): VoiceRegion {
-    return new VoiceRegion({ ...this.toJson(), ...other });
-  }
-
-  equals(other: VoiceRegion): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

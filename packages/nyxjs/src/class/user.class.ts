@@ -1,81 +1,86 @@
 import {
   type AvatarDecorationDataEntity,
   BitFieldManager,
+  type FormattedUser,
   type Locale,
-  type PremiumType,
+  PremiumType,
   type Snowflake,
+  SnowflakeManager,
   UserEntity,
-  type UserFlags,
+  UserFlags,
+  formatUser,
 } from "@nyxjs/core";
+import {
+  type AnimatedImageOptions,
+  Cdn,
+  type CreateGroupDmSchema,
+} from "@nyxjs/rest";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
+import { Channel } from "./channel.class.js";
+import { GuildMember } from "./guild-member.class.js";
 
-export class User {
-  readonly #data: UserEntity;
+export class User extends BaseClass<UserEntity> {
   readonly #flags: BitFieldManager<UserFlags>;
   readonly #publicFlags: BitFieldManager<UserFlags>;
 
-  constructor(data: Partial<z.input<typeof UserEntity>> = {}) {
-    try {
-      this.#data = UserEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
-    this.#flags = new BitFieldManager(this.#data.flags);
-    this.#publicFlags = new BitFieldManager(this.#data.public_flags);
+  constructor(client: Client, data: Partial<z.input<typeof UserEntity>> = {}) {
+    super(client, UserEntity, data);
+    this.#flags = new BitFieldManager(this.data.flags);
+    this.#publicFlags = new BitFieldManager(this.data.public_flags);
   }
 
   get id(): Snowflake {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get username(): string {
-    return this.#data.username;
+    return this.data.username;
   }
 
   get discriminator(): string {
-    return this.#data.discriminator;
+    return this.data.discriminator;
   }
 
   get globalName(): string | null {
-    return this.#data.global_name ?? null;
+    return this.data.global_name ?? null;
   }
 
   get avatar(): string | null {
-    return this.#data.avatar ?? null;
+    return this.data.avatar ?? null;
   }
 
   get bot(): boolean {
-    return Boolean(this.#data.bot);
+    return Boolean(this.data.bot);
   }
 
   get system(): boolean {
-    return Boolean(this.#data.system);
+    return Boolean(this.data.system);
   }
 
   get mfaEnabled(): boolean {
-    return Boolean(this.#data.mfa_enabled);
+    return Boolean(this.data.mfa_enabled);
   }
 
   get banner(): string | null {
-    return this.#data.banner ?? null;
+    return this.data.banner ?? null;
   }
 
   get accentColor(): number | null {
-    return this.#data.accent_color ?? null;
+    return this.data.accent_color ?? null;
   }
 
   get locale(): Locale | null {
-    return this.#data.locale ?? null;
+    return this.data.locale ?? null;
   }
 
   get verified(): boolean {
-    return Boolean(this.#data.verified);
+    return Boolean(this.data.verified);
   }
 
   get email(): string | null {
-    return this.#data.email ?? null;
+    return this.data.email ?? null;
   }
 
   get flags(): BitFieldManager<UserFlags> {
@@ -83,7 +88,7 @@ export class User {
   }
 
   get premiumType(): PremiumType | null {
-    return this.#data.premium_type ?? null;
+    return this.data.premium_type ?? null;
   }
 
   get publicFlags(): BitFieldManager<UserFlags> {
@@ -91,34 +96,216 @@ export class User {
   }
 
   get avatarDecorationData(): AvatarDecorationDataEntity | null {
-    return this.#data.avatar_decoration_data
-      ? { ...this.#data.avatar_decoration_data }
+    return this.data.avatar_decoration_data
+      ? { ...this.data.avatar_decoration_data }
       : null;
   }
 
-  toJson(): UserEntity {
-    return { ...this.#data };
+  get createdTimestamp(): number {
+    const snowflake = new SnowflakeManager(this.id);
+    return snowflake.getTimestamp();
   }
 
-  clone(): User {
-    return new User(this.toJson());
+  get createdAt(): Date {
+    return new Date(this.createdTimestamp);
   }
 
-  validate(): boolean {
+  get accountAge(): number {
+    return Math.floor(
+      (Date.now() - this.createdTimestamp) / (24 * 60 * 60 * 1000),
+    );
+  }
+
+  get accentColorRbg(): { r: number; g: number; b: number } | null {
+    if (this.accentColor === null) {
+      return null;
+    }
+    return {
+      r: (this.accentColor >> 16) & 255,
+      g: (this.accentColor >> 8) & 255,
+      b: this.accentColor & 255,
+    };
+  }
+
+  getAvatarUrl(options?: AnimatedImageOptions): string {
+    if (this.avatar) {
+      return Cdn.userAvatar(this.id, this.avatar, options);
+    }
+
+    if (this.discriminator === "0") {
+      return Cdn.defaultUserAvatarSystem(this.id);
+    }
+
+    return Cdn.defaultUserAvatar(this.discriminator);
+  }
+
+  getBannerUrl(options?: AnimatedImageOptions): string | null {
+    return this.banner ? Cdn.userBanner(this.id, this.banner, options) : null;
+  }
+
+  getAvatarDecorationUrl(): string | null {
+    return this.avatarDecorationData?.asset
+      ? Cdn.avatarDecoration(this.avatarDecorationData.asset)
+      : null;
+  }
+
+  hasAnimatedAvatar(): boolean {
+    return this.avatar?.startsWith("a_") ?? false;
+  }
+
+  hasAnimatedBanner(): boolean {
+    return this.banner?.startsWith("a_") ?? false;
+  }
+
+  getDisplayName(): string {
+    return this.globalName ?? this.username;
+  }
+
+  getTag(): string {
+    return `${this.username}#${this.discriminator}`;
+  }
+
+  isSystemBot(): boolean {
+    return this.bot && this.system;
+  }
+
+  isWebhook(): boolean {
+    return this.bot && this.discriminator === "0000";
+  }
+
+  isDiscordOfficial(): boolean {
+    return this.flags.has(UserFlags.Staff);
+  }
+
+  isVerifiedDeveloper(): boolean {
+    return this.flags.has(UserFlags.VerifiedDeveloper);
+  }
+
+  isProgramModerator(): boolean {
+    return this.flags.has(UserFlags.CertifiedModerator);
+  }
+
+  isPartner(): boolean {
+    return this.flags.has(UserFlags.Partner);
+  }
+
+  isEarlySupporter(): boolean {
+    return this.flags.has(UserFlags.PremiumEarlySupporter);
+  }
+
+  hasNitro(): boolean {
+    return this.premiumType !== null;
+  }
+
+  hasNitroBasic(): boolean {
+    return this.premiumType === PremiumType.NitroBasic;
+  }
+
+  hasNitroClassic(): boolean {
+    return this.premiumType === PremiumType.NitroClassic;
+  }
+
+  hasNitroFull(): boolean {
+    return this.premiumType === PremiumType.Nitro;
+  }
+
+  getAccentColorHex(): string | null {
+    return this.accentColor !== null
+      ? `#${this.accentColor.toString(16).padStart(6, "0")}`
+      : null;
+  }
+
+  getMention(): FormattedUser {
+    return formatUser(this.id);
+  }
+
+  async fetch(): Promise<User> {
+    const data = await this.client.rest.users.getUser(this.id);
+    return new User(this.client, data);
+  }
+
+  async createDm(): Promise<Channel> {
+    const data = await this.client.rest.users.createDm(this.id);
+    return new Channel(this.client, data);
+  }
+
+  async createGroupDm(options: CreateGroupDmSchema): Promise<Channel> {
+    const data = await this.client.rest.users.createGroupDm(options);
+    return new Channel(this.client, data);
+  }
+
+  async getGuildMember(guildId: Snowflake): Promise<GuildMember> {
+    const data = await this.client.rest.guilds.getGuildMember(guildId, this.id);
+    return new GuildMember(this.client, data);
+  }
+
+  addToThread(channelId: Snowflake): Promise<void> {
+    return this.client.rest.channels.addThreadMember(channelId, this.id);
+  }
+
+  removeFromThread(channelId: Snowflake): Promise<void> {
+    return this.client.rest.channels.removeThreadMember(channelId, this.id);
+  }
+
+  isOlderThan(days: number): boolean {
+    const now = Date.now();
+    const accountAge = now - this.createdTimestamp;
+    return accountAge > days * 24 * 60 * 60 * 1000;
+  }
+
+  hasBadge(badge: UserFlags): boolean {
+    return this.flags.has(badge);
+  }
+
+  hasCustomizedProfile(): boolean {
+    return Boolean(
+      this.banner ||
+        this.accentColor ||
+        this.avatarDecorationData ||
+        this.globalName,
+    );
+  }
+
+  isSuspiciousAccount(): boolean {
+    const isNewAccount = this.accountAge < 7;
+    return isNewAccount && !this.verified;
+  }
+
+  hasMfa(): boolean {
+    return this.mfaEnabled;
+  }
+
+  usernameSimilarityWith(user: User): number {
+    const str1 = this.username.toLowerCase();
+    const str2 = user.username.toLowerCase();
+
+    if (str1 === str2) {
+      return 1;
+    }
+
+    let matches = 0;
+    const maxLength = Math.max(str1.length, str2.length);
+
+    for (let i = 0; i < Math.min(str1.length, str2.length); i++) {
+      if (str1[i] === str2[i]) {
+        matches++;
+      }
+    }
+
+    return matches / maxLength;
+  }
+
+  async canReceiveDm(): Promise<boolean> {
     try {
-      UserSchema.parse(this.toJson());
+      await this.createDm();
       return true;
     } catch {
       return false;
     }
   }
 
-  merge(other: Partial<UserEntity>): User {
-    return new User({ ...this.toJson(), ...other });
-  }
-
-  equals(other: User): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+  toJson(): UserEntity {
+    return { ...this.data };
   }
 }
 

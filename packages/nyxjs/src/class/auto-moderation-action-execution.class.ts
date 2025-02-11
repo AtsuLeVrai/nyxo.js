@@ -5,90 +5,63 @@ import type {
 } from "@nyxjs/core";
 import { AutoModerationActionExecutionEntity } from "@nyxjs/gateway";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class AutoModerationActionExecution {
-  readonly #data: AutoModerationActionExecutionEntity;
-
+export class AutoModerationActionExecution extends BaseClass<AutoModerationActionExecutionEntity> {
   constructor(
+    client: Client,
     data: Partial<z.input<typeof AutoModerationActionExecutionEntity>> = {},
   ) {
-    try {
-      this.#data = AutoModerationActionExecutionEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+    super(client, AutoModerationActionExecutionEntity, data);
   }
 
   get guildId(): Snowflake {
-    return this.#data.guild_id;
+    return this.data.guild_id;
   }
 
   get action(): AutoModerationActionEntity {
-    return this.#data.action;
+    return this.data.action;
   }
 
   get ruleId(): Snowflake {
-    return this.#data.rule_id;
+    return this.data.rule_id;
   }
 
   get ruleTriggerType(): AutoModerationRuleTriggerType {
-    return this.#data.rule_trigger_type;
+    return this.data.rule_trigger_type;
   }
 
   get userId(): Snowflake {
-    return this.#data.user_id;
+    return this.data.user_id;
   }
 
   get channelId(): Snowflake | null {
-    return this.#data.channel_id ?? null;
+    return this.data.channel_id ?? null;
   }
 
   get messageId(): Snowflake | null {
-    return this.#data.message_id ?? null;
+    return this.data.message_id ?? null;
   }
 
   get alertSystemMessageId(): Snowflake | null {
-    return this.#data.alert_system_message_id ?? null;
+    return this.data.alert_system_message_id ?? null;
   }
 
   get content(): string | null {
-    return this.#data.content ?? null;
+    return this.data.content ?? null;
   }
 
   get matchedKeyword(): string | null {
-    return this.#data.matched_keyword ?? null;
+    return this.data.matched_keyword ?? null;
   }
 
   get matchedContent(): string | null {
-    return this.#data.matched_content ?? null;
+    return this.data.matched_content ?? null;
   }
 
   toJson(): AutoModerationActionExecutionEntity {
-    return { ...this.#data };
-  }
-
-  clone(): AutoModerationActionExecution {
-    return new AutoModerationActionExecution(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      AutoModerationActionExecutionSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(
-    other: Partial<AutoModerationActionExecutionEntity>,
-  ): AutoModerationActionExecution {
-    return new AutoModerationActionExecution({ ...this.toJson(), ...other });
-  }
-
-  equals(other: AutoModerationActionExecution): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

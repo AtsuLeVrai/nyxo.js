@@ -1,49 +1,26 @@
 import { FollowedChannelEntity, type Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class FollowedChannel {
-  readonly #data: FollowedChannelEntity;
-
-  constructor(data: Partial<z.input<typeof FollowedChannelEntity>> = {}) {
-    try {
-      this.#data = FollowedChannelEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
+export class FollowedChannel extends BaseClass<FollowedChannelEntity> {
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof FollowedChannelEntity>> = {},
+  ) {
+    super(client, FollowedChannelEntity, data);
   }
 
   get channelId(): Snowflake {
-    return this.#data.channel_id;
+    return this.data.channel_id;
   }
 
   get webhookId(): Snowflake {
-    return this.#data.webhook_id;
+    return this.data.webhook_id;
   }
 
   toJson(): FollowedChannelEntity {
-    return { ...this.#data };
-  }
-
-  clone(): FollowedChannel {
-    return new FollowedChannel(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      FollowedChannelSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<FollowedChannelEntity>): FollowedChannel {
-    return new FollowedChannel({ ...this.toJson(), ...other });
-  }
-
-  equals(other: FollowedChannel): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

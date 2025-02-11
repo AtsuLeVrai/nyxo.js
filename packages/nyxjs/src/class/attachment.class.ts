@@ -5,72 +5,70 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { BaseClass } from "../base/index.js";
+import type { Client } from "../core/index.js";
 
-export class Attachment {
-  readonly #data: AttachmentEntity;
+export class Attachment extends BaseClass<AttachmentEntity> {
   readonly #flags: BitFieldManager<AttachmentFlags>;
 
-  constructor(data: Partial<z.input<typeof AttachmentEntity>> = {}) {
-    try {
-      this.#data = AttachmentEntity.parse(data);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
-    this.#flags = new BitFieldManager(this.#data.flags);
+  constructor(
+    client: Client,
+    data: Partial<z.input<typeof AttachmentEntity>> = {},
+  ) {
+    super(client, AttachmentEntity, data);
+    this.#flags = new BitFieldManager(this.data.flags);
   }
 
   get id(): Snowflake {
-    return this.#data.id;
+    return this.data.id;
   }
 
   get filename(): string {
-    return this.#data.filename;
+    return this.data.filename;
   }
 
   get title(): string | null {
-    return this.#data.title ?? null;
+    return this.data.title ?? null;
   }
 
   get description(): string | null {
-    return this.#data.description ?? null;
+    return this.data.description ?? null;
   }
 
   get contentType(): string | null {
-    return this.#data.content_type ?? null;
+    return this.data.content_type ?? null;
   }
 
   get size(): number {
-    return this.#data.size;
+    return this.data.size;
   }
 
   get url(): string {
-    return this.#data.url;
+    return this.data.url;
   }
 
   get proxyUrl(): string {
-    return this.#data.proxy_url;
+    return this.data.proxy_url;
   }
 
   get height(): number | null {
-    return this.#data.height ?? null;
+    return this.data.height ?? null;
   }
 
   get width(): number | null {
-    return this.#data.width ?? null;
+    return this.data.width ?? null;
   }
 
   get ephemeral(): boolean {
-    return Boolean(this.#data.ephemeral);
+    return Boolean(this.data.ephemeral);
   }
 
   get durationSecs(): number | null {
-    return this.#data.duration_secs ?? null;
+    return this.data.duration_secs ?? null;
   }
 
   get waveform(): string | null {
-    return this.#data.waveform ?? null;
+    return this.data.waveform ?? null;
   }
 
   get flags(): BitFieldManager<AttachmentFlags> {
@@ -78,28 +76,7 @@ export class Attachment {
   }
 
   toJson(): AttachmentEntity {
-    return { ...this.#data };
-  }
-
-  clone(): Attachment {
-    return new Attachment(this.toJson());
-  }
-
-  validate(): boolean {
-    try {
-      AttachmentSchema.parse(this.toJson());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  merge(other: Partial<AttachmentEntity>): Attachment {
-    return new Attachment({ ...this.toJson(), ...other });
-  }
-
-  equals(other: Attachment): boolean {
-    return JSON.stringify(this.#data) === JSON.stringify(other.toJson());
+    return { ...this.data };
   }
 }
 

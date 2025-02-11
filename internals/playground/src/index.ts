@@ -129,12 +129,40 @@ client.on("guildCreate", (guild) => {
   }
 });
 
-client.gateway.connect();
+function shutdown(): void {
+  console.log("Shutdown in progress...");
 
+  try {
+    // Clean gateway disconnection
+    client.gateway.destroy();
+
+    // Destroy REST connection
+    client.rest.destroy();
+
+    // Remove all listeners
+    client.removeAllListeners();
+
+    console.log("Shutdown completed");
+    process.exit(0);
+  } catch (error) {
+    console.error("Error during shutdown:", error);
+    process.exit(1);
+  }
+}
+
+// Handle shutdown signals
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
+// Handle uncaught errors
 process.on("unhandledRejection", (error) => {
-  console.error(error);
+  console.error("Unhandled rejection:", error);
 });
 
 process.on("uncaughtException", (error) => {
-  console.error(error);
+  console.error("Uncaught exception:", error);
+  shutdown(); // Attempt clean shutdown on fatal error
 });
+
+// Connect to gateway
+client.gateway.connect();

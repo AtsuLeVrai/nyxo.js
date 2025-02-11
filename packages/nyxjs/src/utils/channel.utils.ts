@@ -29,6 +29,7 @@ import {
   PrivateThreadChannel,
   PublicThreadChannel,
 } from "../class/index.js";
+import type { Client } from "../core/index.js";
 
 export type AnyThreadChannel =
   | AnnouncementThreadChannel
@@ -77,6 +78,7 @@ export const isGuildChannel = (
 };
 
 export function resolveThreadChannel(
+  client: Client,
   data: Partial<ChannelEntity>,
 ): AnyThreadChannel {
   if (!data.type) {
@@ -86,14 +88,17 @@ export function resolveThreadChannel(
   switch (data.type) {
     case ChannelType.AnnouncementThread:
       return new AnnouncementThreadChannel(
+        client,
         data as z.input<typeof AnnouncementThreadChannelEntity>,
       );
     case ChannelType.PublicThread:
       return new PublicThreadChannel(
+        client,
         data as z.input<typeof PublicThreadChannelEntity>,
       );
     case ChannelType.PrivateThread:
       return new PrivateThreadChannel(
+        client,
         data as z.input<typeof PrivateThreadChannelEntity>,
       );
     default:
@@ -101,22 +106,29 @@ export function resolveThreadChannel(
   }
 }
 
-export function resolveDmChannel(data: Partial<ChannelEntity>): AnyDmChannel {
+export function resolveDmChannel(
+  client: Client,
+  data: Partial<ChannelEntity>,
+): AnyDmChannel {
   if (!data.type) {
     throw new Error("Channel type is required");
   }
 
   switch (data.type) {
     case ChannelType.Dm:
-      return new DmChannel(data as z.input<typeof DmChannelEntity>);
+      return new DmChannel(client, data as z.input<typeof DmChannelEntity>);
     case ChannelType.GroupDm:
-      return new GroupDmChannel(data as z.input<typeof GroupDmChannelEntity>);
+      return new GroupDmChannel(
+        client,
+        data as z.input<typeof GroupDmChannelEntity>,
+      );
     default:
       throw new Error(`Invalid DM type: ${data.type}`);
   }
 }
 
 export function resolveGuildChannel(
+  client: Client,
   data: Partial<z.input<typeof ChannelEntity>>,
 ): AnyGuildChannel {
   if (!data.type) {
@@ -127,30 +139,37 @@ export function resolveGuildChannel(
     // @ts-expect-error
     case ChannelType.GuildText:
       return new GuildTextChannel(
+        client,
         data as z.input<typeof GuildTextChannelEntity>,
       );
     case ChannelType.GuildAnnouncement:
       return new GuildAnnouncementChannel(
+        client,
         data as z.input<typeof GuildAnnouncementChannelEntity>,
       );
     case ChannelType.GuildCategory:
       return new GuildCategoryChannel(
+        client,
         data as z.input<typeof GuildCategoryChannelEntity>,
       );
     case ChannelType.GuildForum:
       return new GuildForumChannel(
+        client,
         data as z.input<typeof GuildForumChannelEntity>,
       );
     case ChannelType.GuildMedia:
       return new GuildMediaChannel(
+        client,
         data as z.input<typeof GuildMediaChannelEntity>,
       );
     case ChannelType.GuildStageVoice:
       return new GuildStageVoiceChannel(
+        client,
         data as z.input<typeof GuildStageVoiceChannelEntity>,
       );
     case ChannelType.GuildVoice:
       return new GuildVoiceChannel(
+        client,
         data as z.input<typeof GuildVoiceChannelEntity>,
       );
     default:
@@ -158,7 +177,10 @@ export function resolveGuildChannel(
   }
 }
 
-export function resolveChannel(data: Partial<ChannelEntity>): AnyChannel {
+export function resolveChannel(
+  client: Client,
+  data: Partial<ChannelEntity>,
+): AnyChannel {
   if (!data.type) {
     throw new Error("Channel type is required");
   }
@@ -170,20 +192,12 @@ export function resolveChannel(data: Partial<ChannelEntity>): AnyChannel {
       ChannelType.PrivateThread,
     ].includes(data.type)
   ) {
-    return resolveThreadChannel(data);
+    return resolveThreadChannel(client, data);
   }
 
   if ([ChannelType.Dm, ChannelType.GroupDm].includes(data.type)) {
-    return resolveDmChannel(data);
+    return resolveDmChannel(client, data);
   }
 
-  return resolveGuildChannel(data);
-}
-
-export function validateChannel(channel: unknown): boolean {
-  if (!channel) {
-    return false;
-  }
-  const channelInstance = channel as AnyChannel;
-  return channelInstance.validate?.() ?? false;
+  return resolveGuildChannel(client, data);
 }

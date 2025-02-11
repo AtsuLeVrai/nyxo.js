@@ -70,6 +70,18 @@ export class TokenManager {
     }
   }
 
+  get id(): string {
+    return this.decode().id;
+  }
+
+  get timestamp(): Date | string {
+    return this.decode().timestamp;
+  }
+
+  get signature(): string {
+    return this.decode().signature;
+  }
+
   static fromAuthorizationHeader(header: string): TokenManager {
     try {
       const [type, token] = z
