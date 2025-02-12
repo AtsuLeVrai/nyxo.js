@@ -30,9 +30,16 @@ import type {
 } from "../class/index.js";
 import type { AnyChannel, AnyThreadChannel } from "../utils/index.js";
 
+export interface CacheHit {
+  key: string;
+  value: unknown;
+  className?: string;
+}
+
 export interface ClientEventHandlers
   extends RestEventHandlers,
     GatewayEventHandlers {
+  cacheHit: (hit: CacheHit) => void;
   ready: (ready: Ready) => void;
   resumed: (resumed: boolean) => void;
   applicationCommandPermissionsUpdate: (

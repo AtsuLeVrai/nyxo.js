@@ -118,6 +118,10 @@ client.on("shardRateLimit", (data) => {
   console.log("[SHARD RATE LIMIT]", data);
 });
 
+client.on("cacheHit", (data) => {
+  console.log("[CACHE HIT]", data);
+});
+
 client.on("ready", (ready) => {
   console.log(
     "[READY] Bot is ready",
@@ -150,13 +154,14 @@ client.on("guildCreate", async (guild) => {
 });
 
 client.on("interactionCreate", async (interaction) => {
+  console.log("[INTERACTION]", interaction);
   if (!interaction.isApplicationCommand()) {
     return;
   }
 
   if (interaction.commandName === "ping") {
     await interaction.reply({
-      content: "Pong!",
+      content: `Pong! ${interaction.member?.user.getMention()}`,
     });
   }
 });

@@ -42,6 +42,10 @@ export class Client extends Emitron<ClientEventHandlers> {
     return new TokenManager(this.#options.token);
   }
 
+  get options(): Readonly<ClientOptions> {
+    return Object.freeze(this.#options);
+  }
+
   connect(): Promise<void> {
     this.#events.initialize();
     return this.gateway.connect();
