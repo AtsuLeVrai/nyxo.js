@@ -1,20 +1,23 @@
 import {
   type ActionRowEntity,
+  AnyInteractionEntity,
   type ApplicationCommandInteractionDataEntity,
   type AttachmentEntity,
   BitFieldManager,
   type BitwisePermissionFlags,
+  type BotDmInteractionEntity,
+  type GuildInteractionEntity,
   type InteractionCallbackMessagesEntity,
   type InteractionCallbackModalEntity,
   InteractionCallbackType,
-  type InteractionContextType,
+  InteractionContextType,
   type InteractionDataEntity,
-  InteractionEntity,
   InteractionType,
   type Locale,
   type MessageComponentInteractionDataEntity,
   MessageFlags,
   type ModalSubmitInteractionDataEntity,
+  type PrivateChannelInteractionEntity,
   type Snowflake,
 } from "@nyxjs/core";
 import type {
@@ -31,163 +34,179 @@ import { Guild } from "./guild.class.js";
 import { Message } from "./message.class.js";
 import { User } from "./user.class.js";
 
-export class Interaction extends BaseClass<InteractionEntity> {
+export class Interaction extends BaseClass<AnyInteractionEntity> {
   readonly #appPermissions: BitFieldManager<BitwisePermissionFlags>;
 
   constructor(
     client: Client,
-    data: Partial<z.input<typeof InteractionEntity>> = {},
+    entity: Partial<z.input<typeof AnyInteractionEntity>> = {},
   ) {
-    super(client, InteractionEntity as z.ZodSchema, data as InteractionEntity);
-    this.#appPermissions = new BitFieldManager(this.data.app_permissions);
+    super(
+      client,
+      AnyInteractionEntity as z.ZodSchema,
+      entity as AnyInteractionEntity,
+    );
+    this.#appPermissions = new BitFieldManager(this.entity.app_permissions);
   }
 
-  // Base properties
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get applicationId(): Snowflake {
-    return this.data.application_id;
+    return this.entity.application_id;
   }
 
   get type(): InteractionType {
-    return this.data.type;
+    return this.entity.type;
   }
 
-  get intData(): InteractionDataEntity | null {
-    return this.data.data ?? null;
+  get data(): InteractionDataEntity | null {
+    return this.entity.data ?? null;
   }
 
   get guild(): Guild | null {
-    return this.data.guild ? new Guild(this.client, this.data.guild) : null;
+    if (!this.isGuildInteraction()) {
+      return null;
+    }
+
+    return this.entity.guild ? new Guild(this.client, this.entity.guild) : null;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    if (!this.isGuildInteraction()) {
+      return null;
+    }
+    return this.entity.guild_id;
   }
 
   get channel(): Channel | null {
-    return this.data.channel
-      ? new Channel(this.client, this.data.channel)
+    return this.entity.channel
+      ? new Channel(this.client, this.entity.channel)
       : null;
   }
 
   get channelId(): Snowflake | null {
-    return this.data.channel_id ?? null;
+    return this.entity.channel_id ?? null;
   }
 
   get member(): GuildMember | null {
-    return this.data.member
-      ? new GuildMember(this.client, this.data.member)
+    if (!this.isGuildInteraction()) {
+      return null;
+    }
+
+    return this.entity.member
+      ? new GuildMember(this.client, this.entity.member)
       : null;
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    if (this.isGuildInteraction()) {
+      return null;
+    }
+
+    if ("user" in this.entity && this.entity.user) {
+      return new User(this.client, this.entity.user);
+    }
+
+    return null;
   }
 
   get token(): string {
-    return this.data.token;
+    return this.entity.token;
   }
 
   get version(): 1 {
-    return this.data.version;
+    return this.entity.version;
   }
-
-  // get message(): Message | null {
-  //   return this.data.message
-  //     ? new Message(this.client, this.data.message)
-  //     : null;
-  // }
 
   get appPermissions(): BitFieldManager<BitwisePermissionFlags> {
     return this.#appPermissions;
   }
 
   get locale(): Locale | null {
-    return this.data.locale ?? null;
+    return this.entity.locale ?? null;
   }
 
   get guildLocale(): Locale | null {
-    return this.data.guild_locale ?? null;
+    if (!this.isGuildInteraction()) {
+      return null;
+    }
+
+    return this.entity.guild_locale ?? null;
   }
 
   get entitlements(): Entitlement[] {
-    return this.data.entitlements.map(
+    return this.entity.entitlements.map(
       (entitlement) => new Entitlement(this.client, entitlement),
     );
   }
 
   get authorizingIntegrationOwners(): Record<string, Snowflake> {
-    return this.data.authorizing_integration_owners;
+    return this.entity.authorizing_integration_owners;
   }
 
   get context(): InteractionContextType | null {
-    return this.data.context ?? null;
+    return this.entity.context ?? null;
   }
 
   get commandName(): string | null {
-    if (this.isApplicationCommand()) {
-      return this.intData.name;
+    if (!this.isApplicationCommand()) {
+      return null;
     }
-
-    return null;
+    return this.data.name;
   }
 
   get commandId(): string | null {
-    if (this.isApplicationCommand()) {
-      return this.intData.id;
+    if (!this.isApplicationCommand()) {
+      return null;
     }
-
-    return null;
+    return this.data.id;
   }
 
   get commandType(): number | null {
-    if (this.isApplicationCommand()) {
-      return this.intData.type;
+    if (!this.isApplicationCommand()) {
+      return null;
     }
-
-    return null;
+    return this.data.type;
   }
 
   get componentType(): number | null {
     if (!this.isMessageComponent()) {
       return null;
     }
-    return this.intData.component_type;
+    return this.data.component_type;
   }
 
   get customId(): string | null {
     if (!(this.isMessageComponent() || this.isModalSubmit())) {
       return null;
     }
-    return this.intData.custom_id;
+    return this.data.custom_id;
   }
 
   get modalComponents(): ActionRowEntity[] {
     if (!this.isModalSubmit()) {
       return [];
     }
-
-    return this.intData.components;
+    return this.data.components;
   }
 
   get subCommandName(): string | null {
-    if (!(this.isApplicationCommand() && this.intData?.options)) {
+    if (!(this.isApplicationCommand() && this.data?.options)) {
       return null;
     }
-    const subCommand = this.intData.options.find(
+    const subCommand = this.data.options.find(
       (opt) => opt.type === 1 || opt.type === 2,
     );
     return subCommand?.name ?? null;
   }
 
   get subCommandGroupName(): string | null {
-    if (!(this.isApplicationCommand() && this.intData.options)) {
+    if (!(this.isApplicationCommand() && this.data.options)) {
       return null;
     }
-    const group = this.intData.options.find((opt) => opt.type === 2);
+    const group = this.data.options.find((opt) => opt.type === 2);
     return group?.name ?? null;
   }
 
@@ -199,26 +218,42 @@ export class Interaction extends BaseClass<InteractionEntity> {
     return new Date(this.createdTimestamp);
   }
 
+  isGuildInteraction(): this is Interaction & {
+    entity: GuildInteractionEntity;
+  } {
+    return this.entity.context === InteractionContextType.Guild;
+  }
+
+  isBotDmInteraction(): this is Interaction & {
+    entity: BotDmInteractionEntity;
+  } {
+    return this.entity.context === InteractionContextType.BotDm;
+  }
+
+  isPrivateChannelInteraction(): this is Interaction & {
+    entity: PrivateChannelInteractionEntity;
+  } {
+    return this.entity.context === InteractionContextType.PrivateChannel;
+  }
+
   isApplicationCommand(): this is Interaction & {
-    intData: ApplicationCommandInteractionDataEntity;
+    data: ApplicationCommandInteractionDataEntity;
   } {
     return (
-      this.type === InteractionType.ApplicationCommand && this.intData !== null
+      this.type === InteractionType.ApplicationCommand && this.data !== null
     );
   }
 
   isMessageComponent(): this is Interaction & {
-    intData: MessageComponentInteractionDataEntity;
+    data: MessageComponentInteractionDataEntity;
   } {
-    return (
-      this.type === InteractionType.MessageComponent && this.intData !== null
-    );
+    return this.type === InteractionType.MessageComponent && this.data !== null;
   }
 
   isModalSubmit(): this is Interaction & {
-    intData: ModalSubmitInteractionDataEntity;
+    data: ModalSubmitInteractionDataEntity;
   } {
-    return this.type === InteractionType.ModalSubmit && this.intData !== null;
+    return this.type === InteractionType.ModalSubmit && this.data !== null;
   }
 
   isAutocomplete(): boolean {
@@ -230,10 +265,10 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   getOption<T = unknown>(name: string): T | null {
-    if (!(this.isApplicationCommand() && this.intData?.options)) {
+    if (!(this.isApplicationCommand() && this.data?.options)) {
       return null;
     }
-    const option = this.intData.options.find((opt) => opt.name === name);
+    const option = this.data.options.find((opt) => opt.name === name);
     // @ts-expect-error
     return option?.value as T | null;
   }
@@ -251,14 +286,14 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   getUserOption(name: string): User | null {
-    if (!(this.isApplicationCommand() && this.intData?.resolved?.users)) {
+    if (!(this.isApplicationCommand() && this.data?.resolved?.users)) {
       return null;
     }
     const userId = this.getOption<string>(name);
     if (!userId) {
       return null;
     }
-    const userData = this.intData.resolved.users[userId];
+    const userData = this.data.resolved.users[userId];
     if (!userData) {
       return null;
     }
@@ -266,14 +301,14 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   getChannelOption(name: string): Channel | null {
-    if (!(this.isApplicationCommand() && this.intData.resolved?.channels)) {
+    if (!(this.isApplicationCommand() && this.data.resolved?.channels)) {
       return null;
     }
     const channelId = this.getOption<string>(name);
     if (!channelId) {
       return null;
     }
-    const channelData = this.intData.resolved.channels[channelId];
+    const channelData = this.data.resolved.channels[channelId];
     if (!channelData) {
       return null;
     }
@@ -296,14 +331,14 @@ export class Interaction extends BaseClass<InteractionEntity> {
       return null;
     }
 
-    if (this.intData.resolved?.users?.[mentionableId]) {
-      return new User(this.client, this.intData.resolved.users[mentionableId]);
+    if (this.data.resolved?.users?.[mentionableId]) {
+      return new User(this.client, this.data.resolved.users[mentionableId]);
     }
 
-    if (this.intData.resolved?.members?.[mentionableId]) {
+    if (this.data.resolved?.members?.[mentionableId]) {
       return new GuildMember(
         this.client,
-        this.intData.resolved.members[mentionableId],
+        this.data.resolved.members[mentionableId],
       );
     }
 
@@ -311,23 +346,21 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   getAttachmentOption(name: string): AttachmentEntity | null {
-    if (!(this.isApplicationCommand() && this.intData.resolved?.attachments)) {
+    if (!(this.isApplicationCommand() && this.data.resolved?.attachments)) {
       return null;
     }
     const attachmentId = this.getOption<string>(name);
     if (!attachmentId) {
       return null;
     }
-
-    return this.intData.resolved.attachments[attachmentId] as AttachmentEntity;
+    return this.data.resolved.attachments[attachmentId] as AttachmentEntity;
   }
 
   getSubCommandOptions(): unknown[] {
-    if (!(this.isApplicationCommand() && this.intData.options)) {
+    if (!(this.isApplicationCommand() && this.data.options)) {
       return [];
     }
-
-    const subCommand = this.intData.options.find((opt) => opt.type === 1);
+    const subCommand = this.data.options.find((opt) => opt.type === 1);
     return subCommand?.options ?? [];
   }
 
@@ -413,7 +446,7 @@ export class Interaction extends BaseClass<InteractionEntity> {
   }
 
   inGuild(): this is Interaction & { guildId: Snowflake } {
-    return this.guildId !== null;
+    return this.isGuildInteraction();
   }
 
   hasExpired(): boolean {
@@ -462,8 +495,8 @@ export class Interaction extends BaseClass<InteractionEntity> {
     return this.member?.roles.includes(roleId) ?? false;
   }
 
-  toJson(): InteractionEntity {
-    return { ...this.data };
+  toJson(): AnyInteractionEntity {
+    return { ...this.entity };
   }
 }
 

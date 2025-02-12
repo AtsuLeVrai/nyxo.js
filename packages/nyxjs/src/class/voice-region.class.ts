@@ -6,33 +6,33 @@ import type { Client } from "../core/index.js";
 export class VoiceRegion extends BaseClass<VoiceRegionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof VoiceRegionEntity>> = {},
+    entity: Partial<z.input<typeof VoiceRegionEntity>> = {},
   ) {
-    super(client, VoiceRegionEntity, data);
+    super(client, VoiceRegionEntity, entity);
   }
 
   get id(): string {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get optimal(): boolean {
-    return Boolean(this.data.optimal);
+    return Boolean(this.entity.optimal);
   }
 
   get deprecated(): boolean {
-    return Boolean(this.data.deprecated);
+    return Boolean(this.entity.deprecated);
   }
 
   get custom(): boolean {
-    return Boolean(this.data.custom);
+    return Boolean(this.entity.custom);
   }
 
   toJson(): VoiceRegionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

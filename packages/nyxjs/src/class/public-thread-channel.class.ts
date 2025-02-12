@@ -19,78 +19,78 @@ export class PublicThreadChannel extends BaseClass<PublicThreadChannelEntity> {
 
   constructor(
     client: Client,
-    data: Partial<z.input<typeof PublicThreadChannelEntity>> = {},
+    entity: Partial<z.input<typeof PublicThreadChannelEntity>> = {},
   ) {
-    super(client, PublicThreadChannelEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
+    super(client, PublicThreadChannelEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get type(): ChannelType.PublicThread {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get position(): number | null {
-    return this.data.position ?? null;
+    return this.entity.position ?? null;
   }
 
   get name(): string | null {
-    return this.data.name ?? null;
+    return this.entity.name ?? null;
   }
 
   get nsfw(): boolean {
-    return Boolean(this.data.nsfw);
+    return Boolean(this.entity.nsfw);
   }
 
   get lastMessageId(): Snowflake | null {
-    return this.data.last_message_id ?? null;
+    return this.entity.last_message_id ?? null;
   }
 
   get rateLimitPerUser(): number | null {
-    return this.data.rate_limit_per_user ?? null;
+    return this.entity.rate_limit_per_user ?? null;
   }
 
   get ownerId(): Snowflake | null {
-    return this.data.owner_id ?? null;
+    return this.entity.owner_id ?? null;
   }
 
   get parentId(): Snowflake {
-    return this.data.parent_id;
+    return this.entity.parent_id;
   }
 
   get lastPinTimestamp(): string | null {
-    return this.data.last_pin_timestamp ?? null;
+    return this.entity.last_pin_timestamp ?? null;
   }
 
   get messageCount(): number | null {
-    return this.data.message_count ?? null;
+    return this.entity.message_count ?? null;
   }
 
   get memberCount(): number | null {
-    return this.data.member_count ?? null;
+    return this.entity.member_count ?? null;
   }
 
   get threadMetadata(): ThreadMetadata | null {
-    return this.data.thread_metadata
-      ? new ThreadMetadata(this.client, this.data.thread_metadata)
+    return this.entity.thread_metadata
+      ? new ThreadMetadata(this.client, this.entity.thread_metadata)
       : null;
   }
 
   get member(): ThreadMember | null {
-    return this.data.member
-      ? new ThreadMember(this.client, this.data.member)
+    return this.entity.member
+      ? new ThreadMember(this.client, this.entity.member)
       : null;
   }
 
   get permissions(): string | null {
-    return this.data.permissions ?? null;
+    return this.entity.permissions ?? null;
   }
 
   get flags(): BitFieldManager<ChannelFlags> {
@@ -98,35 +98,35 @@ export class PublicThreadChannel extends BaseClass<PublicThreadChannelEntity> {
   }
 
   get totalMessageSent(): number | null {
-    return this.data.total_message_sent ?? null;
+    return this.entity.total_message_sent ?? null;
   }
 
   get availableTags(): ForumTag[] | null {
-    return this.data.available_tags
-      ? this.data.available_tags.map((tag) => new ForumTag(this.client, tag))
+    return this.entity.available_tags
+      ? this.entity.available_tags.map((tag) => new ForumTag(this.client, tag))
       : null;
   }
 
   get appliedTags(): string[] | null {
-    return this.data.applied_tags ?? null;
+    return this.entity.applied_tags ?? null;
   }
 
   get defaultReactionEmoji(): DefaultReaction | null {
-    return this.data.default_reaction_emoji
-      ? new DefaultReaction(this.client, this.data.default_reaction_emoji)
+    return this.entity.default_reaction_emoji
+      ? new DefaultReaction(this.client, this.entity.default_reaction_emoji)
       : null;
   }
 
   get defaultThreadRateLimitPerUser(): number | null {
-    return this.data.default_thread_rate_limit_per_user ?? null;
+    return this.entity.default_thread_rate_limit_per_user ?? null;
   }
 
   get defaultSortOrder(): SortOrderType | null {
-    return this.data.default_sort_order ?? null;
+    return this.entity.default_sort_order ?? null;
   }
 
   toJson(): PublicThreadChannelEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

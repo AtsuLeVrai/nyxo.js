@@ -7,25 +7,25 @@ import { WelcomeScreenChannel } from "./welcome-screen-channel.class.js";
 export class WelcomeScreen extends BaseClass<WelcomeScreenEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof WelcomeScreenEntity>> = {},
+    entity: Partial<z.input<typeof WelcomeScreenEntity>> = {},
   ) {
-    super(client, WelcomeScreenEntity, data);
+    super(client, WelcomeScreenEntity, entity);
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get welcomeChannels(): WelcomeScreenChannel[] {
-    return Array.isArray(this.data.welcome_channels)
-      ? this.data.welcome_channels.map(
+    return Array.isArray(this.entity.welcome_channels)
+      ? this.entity.welcome_channels.map(
           (channel) => new WelcomeScreenChannel(this.client, channel),
         )
       : [];
   }
 
   toJson(): WelcomeScreenEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

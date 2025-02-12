@@ -11,57 +11,57 @@ import { Integration } from "./integration.class.js";
 export class Connection extends BaseClass<ConnectionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ConnectionEntity>> = {},
+    entity: Partial<z.input<typeof ConnectionEntity>> = {},
   ) {
-    super(client, ConnectionEntity, data);
+    super(client, ConnectionEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get type(): ConnectionService {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get revoked(): boolean {
-    return Boolean(this.data.revoked);
+    return Boolean(this.entity.revoked);
   }
 
   get integrations(): Integration[] | null {
-    return this.data.integrations
-      ? this.data.integrations.map(
+    return this.entity.integrations
+      ? this.entity.integrations.map(
           (integration) => new Integration(this.client, integration),
         )
       : null;
   }
 
   get verified(): boolean {
-    return Boolean(this.data.verified);
+    return Boolean(this.entity.verified);
   }
 
   get friendSync(): boolean {
-    return Boolean(this.data.friend_sync);
+    return Boolean(this.entity.friend_sync);
   }
 
   get showActivity(): boolean {
-    return Boolean(this.data.show_activity);
+    return Boolean(this.entity.show_activity);
   }
 
   get twoWayLink(): boolean {
-    return Boolean(this.data.two_way_link);
+    return Boolean(this.entity.two_way_link);
   }
 
   get visibility(): number {
-    return this.data.visibility;
+    return this.entity.visibility;
   }
 
   toJson(): ConnectionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

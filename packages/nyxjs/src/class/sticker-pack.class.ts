@@ -7,43 +7,43 @@ import { Sticker } from "./sticker.class.js";
 export class StickerPack extends BaseClass<StickerPackEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof StickerPackEntity>> = {},
+    entity: Partial<z.input<typeof StickerPackEntity>> = {},
   ) {
-    super(client, StickerPackEntity, data);
+    super(client, StickerPackEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get stickers(): Sticker[] {
-    return Array.isArray(this.data.stickers)
-      ? this.data.stickers.map((sticker) => new Sticker(this.client, sticker))
+    return Array.isArray(this.entity.stickers)
+      ? this.entity.stickers.map((sticker) => new Sticker(this.client, sticker))
       : [];
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get skuId(): Snowflake {
-    return this.data.sku_id;
+    return this.entity.sku_id;
   }
 
   get coverStickerId(): Snowflake | null {
-    return this.data.cover_sticker_id ?? null;
+    return this.entity.cover_sticker_id ?? null;
   }
 
   get description(): string {
-    return this.data.description;
+    return this.entity.description;
   }
 
   get bannerAssetId(): Snowflake | null {
-    return this.data.banner_asset_id ?? null;
+    return this.entity.banner_asset_id ?? null;
   }
 
   toJson(): StickerPackEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

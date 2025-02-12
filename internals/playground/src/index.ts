@@ -122,6 +122,10 @@ client.on("cacheHit", (data) => {
   console.log("[CACHE HIT]", data);
 });
 
+client.on("cacheMiss", (data) => {
+  console.log("[CACHE MISS]", data);
+});
+
 client.on("ready", (ready) => {
   console.log(
     "[READY] Bot is ready",
@@ -155,7 +159,9 @@ client.on("guildCreate", async (guild) => {
 
 client.on("interactionCreate", async (interaction) => {
   console.log("[INTERACTION]", interaction);
-  if (!interaction.isApplicationCommand()) {
+  if (
+    !(interaction.isApplicationCommand() || interaction.isGuildInteraction())
+  ) {
     return;
   }
 

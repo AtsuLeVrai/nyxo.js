@@ -10,22 +10,22 @@ export class ThreadMember extends BaseClass<ThreadMemberUpdateEntity> {
 
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ThreadMemberUpdateEntity>> = {},
+    entity: Partial<z.input<typeof ThreadMemberUpdateEntity>> = {},
   ) {
-    super(client, ThreadMemberUpdateEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
+    super(client, ThreadMemberUpdateEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get id(): Snowflake | null {
-    return this.data.id ?? null;
+    return this.entity.id ?? null;
   }
 
   get userId(): Snowflake | null {
-    return this.data.user_id ?? null;
+    return this.entity.user_id ?? null;
   }
 
   get joinTimestamp(): string {
-    return this.data.join_timestamp;
+    return this.entity.join_timestamp;
   }
 
   get flags(): BitFieldManager<number> {
@@ -33,15 +33,15 @@ export class ThreadMember extends BaseClass<ThreadMemberUpdateEntity> {
   }
 
   get member(): GuildMember {
-    return new GuildMember(this.client, this.data.member);
+    return new GuildMember(this.client, this.entity.member);
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   toJson(): ThreadMemberUpdateEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

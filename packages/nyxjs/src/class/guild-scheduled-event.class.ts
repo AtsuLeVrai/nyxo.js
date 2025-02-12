@@ -15,81 +15,83 @@ import { User } from "./user.class.js";
 export class GuildScheduledEvent extends BaseClass<GuildScheduledEventEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildScheduledEventEntity>> = {},
+    entity: Partial<z.input<typeof GuildScheduledEventEntity>> = {},
   ) {
-    super(client, GuildScheduledEventEntity, data);
+    super(client, GuildScheduledEventEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   get channelId(): Snowflake | null {
-    return this.data.channel_id ?? null;
+    return this.entity.channel_id ?? null;
   }
 
   get creatorId(): Snowflake | null {
-    return this.data.creator_id ?? null;
+    return this.entity.creator_id ?? null;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get scheduledStartTime(): string {
-    return this.data.scheduled_start_time;
+    return this.entity.scheduled_start_time;
   }
 
   get scheduledEndTime(): string | null {
-    return this.data.scheduled_end_time ?? null;
+    return this.entity.scheduled_end_time ?? null;
   }
 
   get privacyLevel(): GuildScheduledEventPrivacyLevel {
-    return this.data.privacy_level;
+    return this.entity.privacy_level;
   }
 
   get status(): GuildScheduledEventStatus {
-    return this.data.status;
+    return this.entity.status;
   }
 
   get entityType(): GuildScheduledEventType {
-    return this.data.entity_type;
+    return this.entity.entity_type;
   }
 
   get entityId(): Snowflake | null {
-    return this.data.entity_id ?? null;
+    return this.entity.entity_id ?? null;
   }
 
   get entityMetadata(): GuildScheduledEventEntityMetadataEntity | null {
-    return this.data.entity_metadata ?? null;
+    return this.entity.entity_metadata ?? null;
   }
 
   get creator(): User | null {
-    return this.data.creator ? new User(this.client, this.data.creator) : null;
+    return this.entity.creator
+      ? new User(this.client, this.entity.creator)
+      : null;
   }
 
   get userCount(): number | null {
-    return this.data.user_count ?? null;
+    return this.entity.user_count ?? null;
   }
 
   get image(): string | null {
-    return this.data.image ?? null;
+    return this.entity.image ?? null;
   }
 
   get recurrenceRule(): GuildScheduledEventRecurrenceRuleEntity | null {
-    return this.data.recurrence_rule ?? null;
+    return this.entity.recurrence_rule ?? null;
   }
 
   toJson(): GuildScheduledEventEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

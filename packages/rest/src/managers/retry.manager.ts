@@ -46,7 +46,18 @@ export class RetryManager {
     attempt: number,
     context: { method: string; path: string },
   ): Promise<boolean> {
+    this.#rest.emit("debug", "Handling retry error", {
+      error: error.message,
+      attempt,
+      context,
+    });
+
     if (!this.#shouldRetry(error, attempt)) {
+      this.#rest.emit("debug", "Retry not allowed", {
+        reason: "Policy or max attempts reached",
+        attempt,
+      });
+
       return false;
     }
 

@@ -6,21 +6,21 @@ import type { Client } from "../core/index.js";
 export class FollowedChannel extends BaseClass<FollowedChannelEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof FollowedChannelEntity>> = {},
+    entity: Partial<z.input<typeof FollowedChannelEntity>> = {},
   ) {
-    super(client, FollowedChannelEntity, data);
+    super(client, FollowedChannelEntity, entity);
   }
 
   get channelId(): Snowflake {
-    return this.data.channel_id;
+    return this.entity.channel_id;
   }
 
   get webhookId(): Snowflake {
-    return this.data.webhook_id;
+    return this.entity.webhook_id;
   }
 
   toJson(): FollowedChannelEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

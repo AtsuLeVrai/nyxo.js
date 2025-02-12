@@ -7,40 +7,43 @@ import { PollMedia } from "./poll-media.class.js";
 import { PollResults } from "./poll-results.class.js";
 
 export class Poll extends BaseClass<PollEntity> {
-  constructor(client: Client, data: Partial<z.input<typeof PollEntity>> = {}) {
-    super(client, PollEntity, data);
+  constructor(
+    client: Client,
+    entity: Partial<z.input<typeof PollEntity>> = {},
+  ) {
+    super(client, PollEntity, entity);
   }
 
   get question(): PollMedia {
-    return new PollMedia(this.client, this.data.question);
+    return new PollMedia(this.client, this.entity.question);
   }
 
   get answers(): PollAnswer[] {
-    return Array.isArray(this.data.answers)
-      ? this.data.answers.map((answer) => new PollAnswer(this.client, answer))
+    return Array.isArray(this.entity.answers)
+      ? this.entity.answers.map((answer) => new PollAnswer(this.client, answer))
       : [];
   }
 
   get expiry(): string | null {
-    return this.data.expiry ?? null;
+    return this.entity.expiry ?? null;
   }
 
   get allowMultiselect(): boolean {
-    return Boolean(this.data.allow_multiselect);
+    return Boolean(this.entity.allow_multiselect);
   }
 
   get layoutType(): LayoutType {
-    return this.data.layout_type;
+    return this.entity.layout_type;
   }
 
   get results(): PollResults | null {
-    return this.data.results
-      ? new PollResults(this.client, this.data.results)
+    return this.entity.results
+      ? new PollResults(this.client, this.entity.results)
       : null;
   }
 
   toJson(): PollEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

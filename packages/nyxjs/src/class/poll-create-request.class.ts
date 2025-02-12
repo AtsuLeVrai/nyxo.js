@@ -8,37 +8,37 @@ import { PollMedia } from "./poll-media.class.js";
 export class PollCreateRequest extends BaseClass<PollCreateRequestEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof PollCreateRequestEntity>> = {},
+    entity: Partial<z.input<typeof PollCreateRequestEntity>> = {},
   ) {
-    super(client, PollCreateRequestEntity as z.ZodSchema, data);
+    super(client, PollCreateRequestEntity as z.ZodSchema, entity);
   }
 
   get question(): PollMedia | null {
-    return this.data.question
-      ? new PollMedia(this.client, this.data.question)
+    return this.entity.question
+      ? new PollMedia(this.client, this.entity.question)
       : null;
   }
 
   get answers(): PollAnswer[] {
-    return Array.isArray(this.data.answers)
-      ? this.data.answers.map((answer) => new PollAnswer(this.client, answer))
+    return Array.isArray(this.entity.answers)
+      ? this.entity.answers.map((answer) => new PollAnswer(this.client, answer))
       : [];
   }
 
   get duration(): number {
-    return this.data.duration;
+    return this.entity.duration;
   }
 
   get allowMultiselect(): boolean {
-    return Boolean(this.data.allow_multiselect);
+    return Boolean(this.entity.allow_multiselect);
   }
 
   get layoutType(): LayoutType {
-    return this.data.layout_type;
+    return this.entity.layout_type;
   }
 
   toJson(): PollCreateRequestEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

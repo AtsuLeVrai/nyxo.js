@@ -8,59 +8,61 @@ import { User } from "./user.class.js";
 export class GuildTemplate extends BaseClass<GuildTemplateEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildTemplateEntity>> = {},
+    entity: Partial<z.input<typeof GuildTemplateEntity>> = {},
   ) {
-    super(client, GuildTemplateEntity, data);
+    super(client, GuildTemplateEntity, entity);
   }
 
   get code(): string {
-    return this.data.code;
+    return this.entity.code;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get usageCount(): number {
-    return this.data.usage_count;
+    return this.entity.usage_count;
   }
 
   get creatorId(): Snowflake {
-    return this.data.creator_id;
+    return this.entity.creator_id;
   }
 
   get creator(): User | null {
-    return this.data.creator ? new User(this.client, this.data.creator) : null;
+    return this.entity.creator
+      ? new User(this.client, this.entity.creator)
+      : null;
   }
 
   get createdAt(): string {
-    return this.data.created_at;
+    return this.entity.created_at;
   }
 
   get updatedAt(): string {
-    return this.data.updated_at;
+    return this.entity.updated_at;
   }
 
   get sourceGuildId(): Snowflake {
-    return this.data.source_guild_id;
+    return this.entity.source_guild_id;
   }
 
   get serializedSourceGuild(): Guild | null {
-    return this.data.serialized_source_guild
-      ? new Guild(this.client, this.data.serialized_source_guild)
+    return this.entity.serialized_source_guild
+      ? new Guild(this.client, this.entity.serialized_source_guild)
       : null;
   }
 
   get isDirty(): boolean {
-    return Boolean(this.data.is_dirty);
+    return Boolean(this.entity.is_dirty);
   }
 
   toJson(): GuildTemplateEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

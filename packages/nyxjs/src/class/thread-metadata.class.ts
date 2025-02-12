@@ -6,37 +6,37 @@ import type { Client } from "../core/index.js";
 export class ThreadMetadata extends BaseClass<ThreadMetadataEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ThreadMetadataEntity>> = {},
+    entity: Partial<z.input<typeof ThreadMetadataEntity>> = {},
   ) {
-    super(client, ThreadMetadataEntity, data);
+    super(client, ThreadMetadataEntity, entity);
   }
 
   get archived(): boolean {
-    return Boolean(this.data.archived);
+    return Boolean(this.entity.archived);
   }
 
   get autoArchiveDuration(): 60 | 1440 | 4320 | 10080 {
-    return this.data.auto_archive_duration;
+    return this.entity.auto_archive_duration;
   }
 
   get archiveTimestamp(): string {
-    return this.data.archive_timestamp;
+    return this.entity.archive_timestamp;
   }
 
   get locked(): boolean {
-    return Boolean(this.data.locked);
+    return Boolean(this.entity.locked);
   }
 
   get invitable(): boolean {
-    return Boolean(this.data.invitable);
+    return Boolean(this.entity.invitable);
   }
 
   get createTimestamp(): string | null {
-    return this.data.create_timestamp ?? null;
+    return this.entity.create_timestamp ?? null;
   }
 
   toJson(): ThreadMetadataEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

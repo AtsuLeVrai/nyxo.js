@@ -14,64 +14,67 @@ import { BaseClass } from "../base/index.js";
 import type { Client } from "../core/index.js";
 
 export class Embed extends BaseClass<EmbedEntity> {
-  constructor(client: Client, data: Partial<z.input<typeof EmbedEntity>> = {}) {
-    super(client, EmbedEntity as z.ZodSchema, data);
+  constructor(
+    client: Client,
+    entity: Partial<z.input<typeof EmbedEntity>> = {},
+  ) {
+    super(client, EmbedEntity as z.ZodSchema, entity);
   }
 
   get title(): string | null {
-    return this.data.title ?? null;
+    return this.entity.title ?? null;
   }
 
   get type(): EmbedType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get url(): string | null {
-    return this.data.url ?? null;
+    return this.entity.url ?? null;
   }
 
   get timestamp(): string | null {
-    return this.data.timestamp ?? null;
+    return this.entity.timestamp ?? null;
   }
 
   get color(): number | null {
-    return this.data.color ?? null;
+    return this.entity.color ?? null;
   }
 
   get footer(): EmbedFooterEntity | null {
-    return this.data.footer ?? null;
+    return this.entity.footer ?? null;
   }
 
   get image(): EmbedImageEntity | null {
-    return this.data.image ?? null;
+    return this.entity.image ?? null;
   }
 
   get thumbnail(): EmbedThumbnailEntity | null {
-    return this.data.thumbnail ?? null;
+    return this.entity.thumbnail ?? null;
   }
 
   get video(): EmbedVideoEntity | null {
-    return this.data.video ?? null;
+    return this.entity.video ?? null;
   }
 
   get provider(): EmbedProviderEntity | null {
-    return this.data.provider ?? null;
+    return this.entity.provider ?? null;
   }
 
   get author(): EmbedAuthorEntity | null {
-    return this.data.author ?? null;
+    return this.entity.author ?? null;
   }
 
   get fields(): EmbedFieldEntity[] {
-    return this.data.fields ?? [];
+    return this.entity.fields ?? [];
   }
 
   toJson(): EmbedEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

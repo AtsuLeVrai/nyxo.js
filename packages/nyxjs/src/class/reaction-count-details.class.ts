@@ -6,21 +6,21 @@ import type { Client } from "../core/index.js";
 export class ReactionCountDetails extends BaseClass<ReactionCountDetailsEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ReactionCountDetailsEntity>> = {},
+    entity: Partial<z.input<typeof ReactionCountDetailsEntity>> = {},
   ) {
-    super(client, ReactionCountDetailsEntity, data);
+    super(client, ReactionCountDetailsEntity, entity);
   }
 
   get burst(): number {
-    return this.data.burst;
+    return this.entity.burst;
   }
 
   get normal(): number {
-    return this.data.normal;
+    return this.entity.normal;
   }
 
   toJson(): ReactionCountDetailsEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -12,57 +12,57 @@ import { User } from "./user.class.js";
 export class Sticker extends BaseClass<StickerEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof StickerEntity>> = {},
+    entity: Partial<z.input<typeof StickerEntity>> = {},
   ) {
-    super(client, StickerEntity, data);
+    super(client, StickerEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get packId(): Snowflake | null {
-    return this.data.pack_id ?? null;
+    return this.entity.pack_id ?? null;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get tags(): string {
-    return this.data.tags;
+    return this.entity.tags;
   }
 
   get type(): StickerType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get formatType(): StickerFormatType {
-    return this.data.format_type;
+    return this.entity.format_type;
   }
 
   get available(): boolean {
-    return Boolean(this.data.available);
+    return Boolean(this.entity.available);
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    return this.entity.user ? new User(this.client, this.entity.user) : null;
   }
 
   get sortValue(): number | null {
-    return this.data.sort_value ?? null;
+    return this.entity.sort_value ?? null;
   }
 
   toJson(): StickerEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

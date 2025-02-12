@@ -13,62 +13,62 @@ export class Attachment extends BaseClass<AttachmentEntity> {
 
   constructor(
     client: Client,
-    data: Partial<z.input<typeof AttachmentEntity>> = {},
+    entity: Partial<z.input<typeof AttachmentEntity>> = {},
   ) {
-    super(client, AttachmentEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
+    super(client, AttachmentEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get filename(): string {
-    return this.data.filename;
+    return this.entity.filename;
   }
 
   get title(): string | null {
-    return this.data.title ?? null;
+    return this.entity.title ?? null;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get contentType(): string | null {
-    return this.data.content_type ?? null;
+    return this.entity.content_type ?? null;
   }
 
   get size(): number {
-    return this.data.size;
+    return this.entity.size;
   }
 
   get url(): string {
-    return this.data.url;
+    return this.entity.url;
   }
 
   get proxyUrl(): string {
-    return this.data.proxy_url;
+    return this.entity.proxy_url;
   }
 
   get height(): number | null {
-    return this.data.height ?? null;
+    return this.entity.height ?? null;
   }
 
   get width(): number | null {
-    return this.data.width ?? null;
+    return this.entity.width ?? null;
   }
 
   get ephemeral(): boolean {
-    return Boolean(this.data.ephemeral);
+    return Boolean(this.entity.ephemeral);
   }
 
   get durationSecs(): number | null {
-    return this.data.duration_secs ?? null;
+    return this.entity.duration_secs ?? null;
   }
 
   get waveform(): string | null {
-    return this.data.waveform ?? null;
+    return this.entity.waveform ?? null;
   }
 
   get flags(): BitFieldManager<AttachmentFlags> {
@@ -76,7 +76,7 @@ export class Attachment extends BaseClass<AttachmentEntity> {
   }
 
   toJson(): AttachmentEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

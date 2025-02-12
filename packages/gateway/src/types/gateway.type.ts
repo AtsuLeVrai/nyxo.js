@@ -1,11 +1,11 @@
 import type {
+  AnyInteractionEntity,
   AutoModerationRuleEntity,
   ChannelEntity,
   EntitlementEntity,
   GuildApplicationCommandPermissionEntity,
   GuildEntity,
   GuildScheduledEventEntity,
-  InteractionEntity,
   SoundboardSoundEntity,
   StageInstanceEntity,
   SubscriptionEntity,
@@ -153,7 +153,7 @@ export interface GatewayReceiveEvents {
   VOICE_STATE_UPDATE: VoiceStateEntity;
   VOICE_SERVER_UPDATE: VoiceServerUpdateEntity;
   WEBHOOKS_UPDATE: WebhookUpdateEntity;
-  INTERACTION_CREATE: InteractionEntity;
+  INTERACTION_CREATE: AnyInteractionEntity;
   STAGE_INSTANCE_CREATE: StageInstanceEntity;
   STAGE_INSTANCE_UPDATE: StageInstanceEntity;
   STAGE_INSTANCE_DELETE: StageInstanceEntity;

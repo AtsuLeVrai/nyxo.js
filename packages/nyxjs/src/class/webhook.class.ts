@@ -9,65 +9,65 @@ import { User } from "./user.class.js";
 export class Webhook extends BaseClass<WebhookEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof WebhookEntity>> = {},
+    entity: Partial<z.input<typeof WebhookEntity>> = {},
   ) {
-    super(client, WebhookEntity, data);
+    super(client, WebhookEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get type(): WebhookType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get channelId(): Snowflake | null {
-    return this.data.channel_id ?? null;
+    return this.entity.channel_id ?? null;
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    return this.entity.user ? new User(this.client, this.entity.user) : null;
   }
 
   get name(): string | null {
-    return this.data.name ?? null;
+    return this.entity.name ?? null;
   }
 
   get avatar(): string | null {
-    return this.data.avatar ?? null;
+    return this.entity.avatar ?? null;
   }
 
   get token(): string | null {
-    return this.data.token ?? null;
+    return this.entity.token ?? null;
   }
 
   get applicationId(): unknown | null {
-    return this.data.application_id ?? null;
+    return this.entity.application_id ?? null;
   }
 
   get sourceGuild(): Guild | null {
-    return this.data.source_guild
-      ? new Guild(this.client, this.data.source_guild)
+    return this.entity.source_guild
+      ? new Guild(this.client, this.entity.source_guild)
       : null;
   }
 
   get sourceChannel(): Channel | null {
-    return this.data.source_channel
-      ? new Channel(this.client, this.data.source_channel)
+    return this.entity.source_channel
+      ? new Channel(this.client, this.entity.source_channel)
       : null;
   }
 
   get url(): string | null {
-    return this.data.url ?? null;
+    return this.entity.url ?? null;
   }
 
   toJson(): WebhookEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

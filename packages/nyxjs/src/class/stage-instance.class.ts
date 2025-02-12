@@ -10,41 +10,41 @@ import type { Client } from "../core/index.js";
 export class StageInstance extends BaseClass<StageInstanceEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof StageInstanceEntity>> = {},
+    entity: Partial<z.input<typeof StageInstanceEntity>> = {},
   ) {
-    super(client, StageInstanceEntity, data);
+    super(client, StageInstanceEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   get channelId(): Snowflake {
-    return this.data.channel_id;
+    return this.entity.channel_id;
   }
 
   get topic(): string {
-    return this.data.topic;
+    return this.entity.topic;
   }
 
   get privacyLevel(): StageInstancePrivacyLevel {
-    return this.data.privacy_level;
+    return this.entity.privacy_level;
   }
 
   get discoverableDisabled(): boolean {
-    return Boolean(this.data.discoverable_disabled);
+    return Boolean(this.entity.discoverable_disabled);
   }
 
   get guildScheduledEventId(): Snowflake | null {
-    return this.data.guild_scheduled_event_id ?? null;
+    return this.entity.guild_scheduled_event_id ?? null;
   }
 
   toJson(): StageInstanceEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -10,25 +10,25 @@ import type { Client } from "../core/index.js";
 export class StickerItem extends BaseClass<StickerItemEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof StickerItemEntity>> = {},
+    entity: Partial<z.input<typeof StickerItemEntity>> = {},
   ) {
-    super(client, StickerItemEntity, data);
+    super(client, StickerItemEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get formatType(): StickerFormatType {
-    return this.data.format_type;
+    return this.entity.format_type;
   }
 
   toJson(): StickerItemEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

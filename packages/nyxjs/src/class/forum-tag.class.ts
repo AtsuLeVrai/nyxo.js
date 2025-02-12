@@ -6,33 +6,33 @@ import type { Client } from "../core/index.js";
 export class ForumTag extends BaseClass<ForumTagEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ForumTagEntity>> = {},
+    entity: Partial<z.input<typeof ForumTagEntity>> = {},
   ) {
-    super(client, ForumTagEntity, data);
+    super(client, ForumTagEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get moderated(): boolean {
-    return Boolean(this.data.moderated);
+    return Boolean(this.entity.moderated);
   }
 
   get emojiId(): Snowflake | null {
-    return this.data.emoji_id ?? null;
+    return this.entity.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
-    return this.data.emoji_name ?? null;
+    return this.entity.emoji_name ?? null;
   }
 
   toJson(): ForumTagEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

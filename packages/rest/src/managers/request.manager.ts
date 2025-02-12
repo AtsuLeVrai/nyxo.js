@@ -35,10 +35,29 @@ export class RequestManager {
 
   async request<T>(options: ApiRequestOptions): Promise<RequestResponse<T>> {
     const requestStart = Date.now();
+    const requestId = crypto.randomUUID();
+
+    this.#rest.emit("debug", `Starting request ${requestId}`, {
+      path: options.path,
+      method: options.method,
+      options,
+    });
 
     try {
       const preparedRequest = await this.#prepareRequest(options);
+
+      this.#rest.emit("debug", `Request ${requestId} prepared`, {
+        url: preparedRequest.url.toString(),
+        headers: preparedRequest.options.headers,
+      });
+
       const response = await this.#pool.request(preparedRequest.options);
+
+      this.#rest.emit("debug", `Request ${requestId} received response`, {
+        statusCode: response.statusCode,
+        headers: response.headers,
+      });
+
       const responseBody = await this.#readResponseBody(response);
 
       const result = this.#processResponse<T>(response, responseBody);

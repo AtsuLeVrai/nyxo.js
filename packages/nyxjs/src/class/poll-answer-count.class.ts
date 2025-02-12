@@ -6,25 +6,25 @@ import type { Client } from "../core/index.js";
 export class PollAnswerCount extends BaseClass<PollAnswerCountEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof PollAnswerCountEntity>> = {},
+    entity: Partial<z.input<typeof PollAnswerCountEntity>> = {},
   ) {
-    super(client, PollAnswerCountEntity, data);
+    super(client, PollAnswerCountEntity, entity);
   }
 
   get id(): number {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get count(): number {
-    return this.data.count;
+    return this.entity.count;
   }
 
   get meVoted(): boolean {
-    return Boolean(this.data.me_voted);
+    return Boolean(this.entity.me_voted);
   }
 
   toJson(): PollAnswerCountEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

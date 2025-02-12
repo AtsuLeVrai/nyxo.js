@@ -7,25 +7,25 @@ import { PollAnswerCount } from "./poll-answer-count.class.js";
 export class PollResults extends BaseClass<PollResultsEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof PollResultsEntity>> = {},
+    entity: Partial<z.input<typeof PollResultsEntity>> = {},
   ) {
-    super(client, PollResultsEntity, data);
+    super(client, PollResultsEntity, entity);
   }
 
   get isFinalized(): boolean {
-    return Boolean(this.data.is_finalized);
+    return Boolean(this.entity.is_finalized);
   }
 
   get answerCounts(): PollAnswerCount[] {
-    return Array.isArray(this.data.answer_counts)
-      ? this.data.answer_counts.map(
+    return Array.isArray(this.entity.answer_counts)
+      ? this.entity.answer_counts.map(
           (answerCount) => new PollAnswerCount(this.client, answerCount),
         )
       : [];
   }
 
   toJson(): PollResultsEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

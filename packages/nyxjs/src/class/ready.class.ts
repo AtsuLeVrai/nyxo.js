@@ -8,46 +8,49 @@ import { UnavailableGuild } from "./unavailable-guild.class.js";
 import { User } from "./user.class.js";
 
 export class Ready extends BaseClass<ReadyEntity> {
-  constructor(client: Client, data: Partial<z.input<typeof ReadyEntity>> = {}) {
-    super(client, ReadyEntity as z.ZodSchema, data);
+  constructor(
+    client: Client,
+    entity: Partial<z.input<typeof ReadyEntity>> = {},
+  ) {
+    super(client, ReadyEntity as z.ZodSchema, entity);
   }
 
   get v(): ApiVersion {
-    return this.data.v;
+    return this.entity.v;
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    return this.entity.user ? new User(this.client, this.entity.user) : null;
   }
 
   get guilds(): UnavailableGuild[] {
-    return Array.isArray(this.data.guilds)
-      ? this.data.guilds.map(
+    return Array.isArray(this.entity.guilds)
+      ? this.entity.guilds.map(
           (guild) => new UnavailableGuild(this.client, guild),
         )
       : [];
   }
 
   get sessionId(): string {
-    return this.data.session_id;
+    return this.entity.session_id;
   }
 
   get resumeGatewayUrl(): string {
-    return this.data.resume_gateway_url;
+    return this.entity.resume_gateway_url;
   }
 
   get shard(): [number, number] | null {
-    return this.data.shard ?? null;
+    return this.entity.shard ?? null;
   }
 
   get application(): Application | null {
-    return this.data.application
-      ? new Application(this.client, this.data.application)
+    return this.entity.application
+      ? new Application(this.client, this.entity.application)
       : null;
   }
 
   toJson(): ReadyEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -12,29 +12,29 @@ import type { Client } from "../core/index.js";
 export class Sku extends BaseClass<SkuEntity> {
   readonly #flags: BitFieldManager<SkuFlags>;
 
-  constructor(client: Client, data: Partial<z.input<typeof SkuEntity>> = {}) {
-    super(client, SkuEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
+  constructor(client: Client, entity: Partial<z.input<typeof SkuEntity>> = {}) {
+    super(client, SkuEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get type(): SkuType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get applicationId(): Snowflake {
-    return this.data.application_id;
+    return this.entity.application_id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get slug(): string {
-    return this.data.slug;
+    return this.entity.slug;
   }
 
   get flags(): BitFieldManager<SkuFlags> {
@@ -42,7 +42,7 @@ export class Sku extends BaseClass<SkuEntity> {
   }
 
   toJson(): SkuEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

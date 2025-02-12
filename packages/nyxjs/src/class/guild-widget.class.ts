@@ -12,42 +12,42 @@ import { User } from "./user.class.js";
 export class GuildWidget extends BaseClass<GuildWidgetEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildWidgetEntity>> = {},
+    entity: Partial<z.input<typeof GuildWidgetEntity>> = {},
   ) {
-    super(client, GuildWidgetEntity, data);
+    super(client, GuildWidgetEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get instantInvite(): string | null {
-    return this.data.instant_invite ?? null;
+    return this.entity.instant_invite ?? null;
   }
 
   get channels(): (
     | Partial<GuildVoiceChannelEntity>
     | Partial<GuildStageVoiceChannelEntity>
   )[] {
-    return Array.isArray(this.data.channels) ? [...this.data.channels] : [];
+    return Array.isArray(this.entity.channels) ? [...this.entity.channels] : [];
   }
 
   get members(): User[] {
-    return Array.isArray(this.data.members)
-      ? this.data.members.map((member) => new User(this.client, member))
+    return Array.isArray(this.entity.members)
+      ? this.entity.members.map((member) => new User(this.client, member))
       : [];
   }
 
   get presenceCount(): number {
-    return this.data.presence_count;
+    return this.entity.presence_count;
   }
 
   toJson(): GuildWidgetEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

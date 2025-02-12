@@ -16,74 +16,74 @@ export class GuildStageVoiceChannel extends BaseClass<GuildStageVoiceChannelEnti
 
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildStageVoiceChannelEntity>> = {},
+    entity: Partial<z.input<typeof GuildStageVoiceChannelEntity>> = {},
   ) {
-    super(client, GuildStageVoiceChannelEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
+    super(client, GuildStageVoiceChannelEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get type(): ChannelType.GuildStageVoice {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get position(): number | null {
-    return this.data.position ?? null;
+    return this.entity.position ?? null;
   }
 
   get permissionOverwrites(): OverwriteEntity[] | null {
-    return this.data.permission_overwrites ?? null;
+    return this.entity.permission_overwrites ?? null;
   }
 
   get name(): string | null {
-    return this.data.name ?? null;
+    return this.entity.name ?? null;
   }
 
   get topic(): string | null {
-    return this.data.topic ?? null;
+    return this.entity.topic ?? null;
   }
 
   get nsfw(): boolean {
-    return Boolean(this.data.nsfw);
+    return Boolean(this.entity.nsfw);
   }
 
   get bitrate(): number {
-    return this.data.bitrate;
+    return this.entity.bitrate;
   }
 
   get userLimit(): number {
-    return this.data.user_limit;
+    return this.entity.user_limit;
   }
 
   get rateLimitPerUser(): number | null {
-    return this.data.rate_limit_per_user ?? null;
+    return this.entity.rate_limit_per_user ?? null;
   }
 
   get parentId(): Snowflake | null {
-    return this.data.parent_id ?? null;
+    return this.entity.parent_id ?? null;
   }
 
   get lastPinTimestamp(): string | null {
-    return this.data.last_pin_timestamp ?? null;
+    return this.entity.last_pin_timestamp ?? null;
   }
 
   get rtcRegion(): string | null {
-    return this.data.rtc_region ?? null;
+    return this.entity.rtc_region ?? null;
   }
 
   get videoQualityMode(): VideoQualityMode | null {
-    return this.data.video_quality_mode ?? null;
+    return this.entity.video_quality_mode ?? null;
   }
 
   get permissions(): string | null {
-    return this.data.permissions ?? null;
+    return this.entity.permissions ?? null;
   }
 
   get flags(): BitFieldManager<ChannelFlags> {
@@ -91,11 +91,11 @@ export class GuildStageVoiceChannel extends BaseClass<GuildStageVoiceChannelEnti
   }
 
   get totalMessageSent(): number | null {
-    return this.data.total_message_sent ?? null;
+    return this.entity.total_message_sent ?? null;
   }
 
   toJson(): GuildStageVoiceChannelEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

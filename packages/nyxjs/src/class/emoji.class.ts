@@ -5,44 +5,47 @@ import type { Client } from "../core/index.js";
 import { User } from "./user.class.js";
 
 export class Emoji extends BaseClass<EmojiEntity> {
-  constructor(client: Client, data: Partial<z.input<typeof EmojiEntity>> = {}) {
-    super(client, EmojiEntity, data);
+  constructor(
+    client: Client,
+    entity: Partial<z.input<typeof EmojiEntity>> = {},
+  ) {
+    super(client, EmojiEntity, entity);
   }
 
   get id(): Snowflake | null {
-    return this.data.id ?? null;
+    return this.entity.id ?? null;
   }
 
   get name(): string | null {
-    return this.data.name ?? null;
+    return this.entity.name ?? null;
   }
 
   get roles(): Snowflake[] | null {
-    return this.data.roles ?? null;
+    return this.entity.roles ?? null;
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    return this.entity.user ? new User(this.client, this.entity.user) : null;
   }
 
   get requireColons(): boolean {
-    return Boolean(this.data.require_colons);
+    return Boolean(this.entity.require_colons);
   }
 
   get managed(): boolean {
-    return Boolean(this.data.managed);
+    return Boolean(this.entity.managed);
   }
 
   get animated(): boolean {
-    return Boolean(this.data.animated);
+    return Boolean(this.entity.animated);
   }
 
   get available(): boolean {
-    return Boolean(this.data.available);
+    return Boolean(this.entity.available);
   }
 
   toJson(): EmojiEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

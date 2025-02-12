@@ -6,29 +6,29 @@ import type { Client } from "../core/index.js";
 export class WelcomeScreenChannel extends BaseClass<WelcomeScreenChannelEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof WelcomeScreenChannelEntity>> = {},
+    entity: Partial<z.input<typeof WelcomeScreenChannelEntity>> = {},
   ) {
-    super(client, WelcomeScreenChannelEntity, data);
+    super(client, WelcomeScreenChannelEntity, entity);
   }
 
   get channelId(): Snowflake {
-    return this.data.channel_id;
+    return this.entity.channel_id;
   }
 
   get description(): string {
-    return this.data.description;
+    return this.entity.description;
   }
 
   get emojiId(): Snowflake | null {
-    return this.data.emoji_id ?? null;
+    return this.entity.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
-    return this.data.emoji_name ?? null;
+    return this.entity.emoji_name ?? null;
   }
 
   toJson(): WelcomeScreenChannelEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

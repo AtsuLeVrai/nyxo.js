@@ -9,65 +9,67 @@ import { User } from "./user.class.js";
 export class InviteCreate extends BaseClass<InviteCreateEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof InviteCreateEntity>> = {},
+    entity: Partial<z.input<typeof InviteCreateEntity>> = {},
   ) {
-    super(client, InviteCreateEntity, data);
+    super(client, InviteCreateEntity, entity);
   }
 
   get channelId(): Snowflake {
-    return this.data.channel_id;
+    return this.entity.channel_id;
   }
 
   get code(): string {
-    return this.data.code;
+    return this.entity.code;
   }
 
   get createdAt(): string {
-    return this.data.created_at;
+    return this.entity.created_at;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get inviter(): User | null {
-    return this.data.inviter ? new User(this.client, this.data.inviter) : null;
+    return this.entity.inviter
+      ? new User(this.client, this.entity.inviter)
+      : null;
   }
 
   get maxAge(): number {
-    return this.data.max_age;
+    return this.entity.max_age;
   }
 
   get maxUses(): number {
-    return this.data.max_uses;
+    return this.entity.max_uses;
   }
 
   get targetType(): InviteTargetType | null {
-    return this.data.target_type ?? null;
+    return this.entity.target_type ?? null;
   }
 
   get targetUser(): User | null {
-    return this.data.target_user
-      ? new User(this.client, this.data.target_user)
+    return this.entity.target_user
+      ? new User(this.client, this.entity.target_user)
       : null;
   }
 
   get targetApplication(): Application | null {
-    return this.data.target_application
-      ? new Application(this.client, this.data.target_application)
+    return this.entity.target_application
+      ? new Application(this.client, this.entity.target_application)
       : null;
   }
 
   get temporary(): boolean {
-    return Boolean(this.data.temporary);
+    return Boolean(this.entity.temporary);
   }
 
   get uses(): number {
-    return this.data.uses;
+    return this.entity.uses;
   }
 
   toJson(): InviteCreateEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

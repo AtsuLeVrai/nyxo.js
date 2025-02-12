@@ -396,7 +396,8 @@ export const InteractionEntity = z.object({
   user: UserEntity.optional(),
   token: z.string(),
   version: z.literal(1),
-  // message: MessageEntity.optional(), // Commented to avoid circular reference
+  // TODO: Fix circular reference error in zod
+  // message: MessageEntity.optional(),
   app_permissions: parseBitField<BitwisePermissionFlags>(),
   locale: LocaleKey.optional(),
   guild_locale: LocaleKey.optional(),
@@ -406,3 +407,95 @@ export const InteractionEntity = z.object({
 });
 
 export type InteractionEntity = z.infer<typeof InteractionEntity>;
+
+const commonFields = {
+  id: true,
+  application_id: true,
+  type: true,
+  data: true,
+  token: true,
+  version: true,
+  app_permissions: true,
+  locale: true,
+  entitlements: true,
+  authorizing_integration_owners: true,
+  context: true,
+} as const;
+
+export const GuildInteractionEntity = InteractionEntity.omit({
+  user: true,
+})
+  .pick({
+    ...commonFields,
+    guild_id: true,
+    guild: true,
+    channel_id: true,
+    channel: true,
+    member: true,
+    guild_locale: true,
+    // message: true,
+  })
+  .extend({
+    context: z.literal(InteractionContextType.Guild),
+    guild_id: Snowflake,
+    guild: GuildEntity.partial(),
+    member: GuildMemberEntity,
+    channel_id: Snowflake.optional(),
+    channel: ChannelEntity.partial().optional(),
+  });
+
+export type GuildInteractionEntity = z.infer<typeof GuildInteractionEntity>;
+
+export const BotDmInteractionEntity = InteractionEntity.omit({
+  guild: true,
+  guild_id: true,
+  member: true,
+  guild_locale: true,
+})
+  .pick({
+    ...commonFields,
+    channel_id: true,
+    channel: true,
+    user: true,
+    // message: true,
+  })
+  .extend({
+    context: z.literal(InteractionContextType.BotDm),
+    channel_id: Snowflake,
+    channel: ChannelEntity.partial(),
+    user: UserEntity,
+  });
+
+export type BotDmInteractionEntity = z.infer<typeof BotDmInteractionEntity>;
+
+export const PrivateChannelInteractionEntity = InteractionEntity.omit({
+  guild: true,
+  guild_id: true,
+  member: true,
+  guild_locale: true,
+})
+  .pick({
+    ...commonFields,
+    channel_id: true,
+    channel: true,
+    user: true,
+    // message: true,
+  })
+  .extend({
+    context: z.literal(InteractionContextType.PrivateChannel),
+    channel_id: Snowflake,
+    channel: ChannelEntity.partial(),
+    user: UserEntity,
+  });
+
+export type PrivateChannelInteractionEntity = z.infer<
+  typeof PrivateChannelInteractionEntity
+>;
+
+export const AnyInteractionEntity = z.discriminatedUnion("context", [
+  GuildInteractionEntity,
+  BotDmInteractionEntity,
+  PrivateChannelInteractionEntity,
+]);
+
+export type AnyInteractionEntity = z.infer<typeof AnyInteractionEntity>;

@@ -7,67 +7,67 @@ import { GuildMember } from "./guild-member.class.js";
 export class VoiceState extends BaseClass<VoiceStateEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof VoiceStateEntity>> = {},
+    entity: Partial<z.input<typeof VoiceStateEntity>> = {},
   ) {
-    super(client, VoiceStateEntity, data);
+    super(client, VoiceStateEntity, entity);
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get channelId(): Snowflake | null {
-    return this.data.channel_id ?? null;
+    return this.entity.channel_id ?? null;
   }
 
   get userId(): Snowflake {
-    return this.data.user_id;
+    return this.entity.user_id;
   }
 
   get member(): GuildMember | null {
-    return this.data.member
-      ? new GuildMember(this.client, this.data.member)
+    return this.entity.member
+      ? new GuildMember(this.client, this.entity.member)
       : null;
   }
 
   get sessionId(): Snowflake {
-    return this.data.session_id;
+    return this.entity.session_id;
   }
 
   get deaf(): boolean {
-    return Boolean(this.data.deaf);
+    return Boolean(this.entity.deaf);
   }
 
   get mute(): boolean {
-    return Boolean(this.data.mute);
+    return Boolean(this.entity.mute);
   }
 
   get selfDeaf(): boolean {
-    return Boolean(this.data.self_deaf);
+    return Boolean(this.entity.self_deaf);
   }
 
   get selfMute(): boolean {
-    return Boolean(this.data.self_mute);
+    return Boolean(this.entity.self_mute);
   }
 
   get selfStream(): boolean {
-    return Boolean(this.data.self_stream);
+    return Boolean(this.entity.self_stream);
   }
 
   get selfVideo(): boolean {
-    return Boolean(this.data.self_video);
+    return Boolean(this.entity.self_video);
   }
 
   get suppress(): boolean {
-    return Boolean(this.data.suppress);
+    return Boolean(this.entity.suppress);
   }
 
   get requestToSpeakTimestamp(): string | null {
-    return this.data.request_to_speak_timestamp ?? null;
+    return this.entity.request_to_speak_timestamp ?? null;
   }
 
   toJson(): VoiceStateEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

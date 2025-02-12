@@ -8,39 +8,39 @@ import { ReactionCountDetails } from "./reaction-count-details.class.js";
 export class Reaction extends BaseClass<ReactionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ReactionEntity>> = {},
+    entity: Partial<z.input<typeof ReactionEntity>> = {},
   ) {
-    super(client, ReactionEntity, data);
+    super(client, ReactionEntity, entity);
   }
 
   get count(): number {
-    return this.data.count;
+    return this.entity.count;
   }
 
   get countDetails(): ReactionCountDetails | null {
-    return this.data.count_details
-      ? new ReactionCountDetails(this.client, this.data.count_details)
+    return this.entity.count_details
+      ? new ReactionCountDetails(this.client, this.entity.count_details)
       : null;
   }
 
   get me(): boolean {
-    return Boolean(this.data.me);
+    return Boolean(this.entity.me);
   }
 
   get meBurst(): boolean {
-    return Boolean(this.data.me_burst);
+    return Boolean(this.entity.me_burst);
   }
 
   get emoji(): Emoji | null {
-    return this.data.emoji ? new Emoji(this.client, this.data.emoji) : null;
+    return this.entity.emoji ? new Emoji(this.client, this.entity.emoji) : null;
   }
 
   get burstColors(): unknown {
-    return this.data.burst_colors;
+    return this.entity.burst_colors;
   }
 
   toJson(): ReactionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

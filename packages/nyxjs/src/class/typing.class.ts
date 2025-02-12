@@ -8,35 +8,35 @@ import { GuildMember } from "./guild-member.class.js";
 export class Typing extends BaseClass<TypingEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof TypingEntity>> = {},
+    entity: Partial<z.input<typeof TypingEntity>> = {},
   ) {
-    super(client, TypingEntity, data);
+    super(client, TypingEntity, entity);
   }
 
   get channelId(): Snowflake {
-    return this.data.channel_id;
+    return this.entity.channel_id;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get userId(): Snowflake {
-    return this.data.user_id;
+    return this.entity.user_id;
   }
 
   get timestamp(): number {
-    return this.data.timestamp;
+    return this.entity.timestamp;
   }
 
   get member(): GuildMember | null {
-    return this.data.member
-      ? new GuildMember(this.client, this.data.member)
+    return this.entity.member
+      ? new GuildMember(this.client, this.entity.member)
       : null;
   }
 
   toJson(): TypingEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

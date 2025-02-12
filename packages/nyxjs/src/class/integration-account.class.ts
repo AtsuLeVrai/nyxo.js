@@ -6,21 +6,21 @@ import type { Client } from "../core/index.js";
 export class IntegrationAccount extends BaseClass<IntegrationAccountEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof IntegrationAccountEntity>> = {},
+    entity: Partial<z.input<typeof IntegrationAccountEntity>> = {},
   ) {
-    super(client, IntegrationAccountEntity, data);
+    super(client, IntegrationAccountEntity, entity);
   }
 
   get id(): string {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   toJson(): IntegrationAccountEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

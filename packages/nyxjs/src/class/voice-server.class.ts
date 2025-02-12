@@ -7,25 +7,25 @@ import type { Client } from "../core/index.js";
 export class VoiceServer extends BaseClass<VoiceServerUpdateEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof VoiceServerUpdateEntity>> = {},
+    entity: Partial<z.input<typeof VoiceServerUpdateEntity>> = {},
   ) {
-    super(client, VoiceServerUpdateEntity, data);
+    super(client, VoiceServerUpdateEntity, entity);
   }
 
   get token(): string {
-    return this.data.token;
+    return this.entity.token;
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   get endpoint(): string | null {
-    return this.data.endpoint ?? null;
+    return this.entity.endpoint ?? null;
   }
 
   toJson(): VoiceServerUpdateEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

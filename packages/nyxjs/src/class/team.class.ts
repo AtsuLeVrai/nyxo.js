@@ -5,34 +5,37 @@ import type { Client } from "../core/index.js";
 import { TeamMember } from "./team-member.class.js";
 
 export class Team extends BaseClass<TeamEntity> {
-  constructor(client: Client, data: Partial<z.input<typeof TeamEntity>> = {}) {
-    super(client, TeamEntity, data);
+  constructor(
+    client: Client,
+    entity: Partial<z.input<typeof TeamEntity>> = {},
+  ) {
+    super(client, TeamEntity, entity);
   }
 
   get icon(): string | null {
-    return this.data.icon ?? null;
+    return this.entity.icon ?? null;
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get members(): TeamMember[] {
-    return Array.isArray(this.data.members)
-      ? this.data.members.map((member) => new TeamMember(this.client, member))
+    return Array.isArray(this.entity.members)
+      ? this.entity.members.map((member) => new TeamMember(this.client, member))
       : [];
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get ownerUserId(): Snowflake {
-    return this.data.owner_user_id;
+    return this.entity.owner_user_id;
   }
 
   toJson(): TeamEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -11,57 +11,57 @@ import type { Client } from "../core/index.js";
 export class AutoModerationActionExecution extends BaseClass<AutoModerationActionExecutionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof AutoModerationActionExecutionEntity>> = {},
+    entity: Partial<z.input<typeof AutoModerationActionExecutionEntity>> = {},
   ) {
-    super(client, AutoModerationActionExecutionEntity, data);
+    super(client, AutoModerationActionExecutionEntity, entity);
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   get action(): AutoModerationActionEntity {
-    return this.data.action;
+    return this.entity.action;
   }
 
   get ruleId(): Snowflake {
-    return this.data.rule_id;
+    return this.entity.rule_id;
   }
 
   get ruleTriggerType(): AutoModerationRuleTriggerType {
-    return this.data.rule_trigger_type;
+    return this.entity.rule_trigger_type;
   }
 
   get userId(): Snowflake {
-    return this.data.user_id;
+    return this.entity.user_id;
   }
 
   get channelId(): Snowflake | null {
-    return this.data.channel_id ?? null;
+    return this.entity.channel_id ?? null;
   }
 
   get messageId(): Snowflake | null {
-    return this.data.message_id ?? null;
+    return this.entity.message_id ?? null;
   }
 
   get alertSystemMessageId(): Snowflake | null {
-    return this.data.alert_system_message_id ?? null;
+    return this.entity.alert_system_message_id ?? null;
   }
 
   get content(): string | null {
-    return this.data.content ?? null;
+    return this.entity.content ?? null;
   }
 
   get matchedKeyword(): string | null {
-    return this.data.matched_keyword ?? null;
+    return this.entity.matched_keyword ?? null;
   }
 
   get matchedContent(): string | null {
-    return this.data.matched_content ?? null;
+    return this.entity.matched_content ?? null;
   }
 
   toJson(): AutoModerationActionExecutionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

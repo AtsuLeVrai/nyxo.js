@@ -7,23 +7,23 @@ import { PollMedia } from "./poll-media.class.js";
 export class PollAnswer extends BaseClass<PollAnswerEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof PollAnswerEntity>> = {},
+    entity: Partial<z.input<typeof PollAnswerEntity>> = {},
   ) {
-    super(client, PollAnswerEntity, data);
+    super(client, PollAnswerEntity, entity);
   }
 
   get answerId(): number {
-    return this.data.answer_id;
+    return this.entity.answer_id;
   }
 
   get pollMedia(): PollMedia | null {
-    return this.data.poll_media
-      ? new PollMedia(this.client, this.data.poll_media)
+    return this.entity.poll_media
+      ? new PollMedia(this.client, this.entity.poll_media)
       : null;
   }
 
   toJson(): PollAnswerEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

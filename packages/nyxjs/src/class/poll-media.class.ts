@@ -7,21 +7,21 @@ import { Emoji } from "./emoji.class.js";
 export class PollMedia extends BaseClass<PollMediaEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof PollMediaEntity>> = {},
+    entity: Partial<z.input<typeof PollMediaEntity>> = {},
   ) {
-    super(client, PollMediaEntity, data);
+    super(client, PollMediaEntity, entity);
   }
 
   get text(): string | null {
-    return this.data.text ?? null;
+    return this.entity.text ?? null;
   }
 
   get emoji(): Emoji | null {
-    return this.data.emoji ? new Emoji(this.client, this.data.emoji) : null;
+    return this.entity.emoji ? new Emoji(this.client, this.entity.emoji) : null;
   }
 
   toJson(): PollMediaEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -12,61 +12,61 @@ import { Sticker } from "./sticker.class.js";
 export class GuildPreview extends BaseClass<GuildPreviewEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildPreviewEntity>> = {},
+    entity: Partial<z.input<typeof GuildPreviewEntity>> = {},
   ) {
-    super(client, GuildPreviewEntity, data);
+    super(client, GuildPreviewEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get icon(): string | null {
-    return this.data.icon ?? null;
+    return this.entity.icon ?? null;
   }
 
   get splash(): string | null {
-    return this.data.splash ?? null;
+    return this.entity.splash ?? null;
   }
 
   get discoverySplash(): string | null {
-    return this.data.discovery_splash ?? null;
+    return this.entity.discovery_splash ?? null;
   }
 
   get emojis(): Emoji[] {
-    return Array.isArray(this.data.emojis)
-      ? this.data.emojis.map((emoji) => new Emoji(this.client, emoji))
+    return Array.isArray(this.entity.emojis)
+      ? this.entity.emojis.map((emoji) => new Emoji(this.client, emoji))
       : [];
   }
 
   get features(): GuildFeature[] {
-    return Array.isArray(this.data.features) ? [...this.data.features] : [];
+    return Array.isArray(this.entity.features) ? [...this.entity.features] : [];
   }
 
   get approximateMemberCount(): number {
-    return this.data.approximate_member_count;
+    return this.entity.approximate_member_count;
   }
 
   get approximatePresenceCount(): number {
-    return this.data.approximate_presence_count;
+    return this.entity.approximate_presence_count;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get stickers(): Sticker[] {
-    return Array.isArray(this.data.stickers)
-      ? this.data.stickers.map((sticker) => new Sticker(this.client, sticker))
+    return Array.isArray(this.entity.stickers)
+      ? this.entity.stickers.map((sticker) => new Sticker(this.client, sticker))
       : [];
   }
 
   toJson(): GuildPreviewEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -12,57 +12,62 @@ import { RoleTags } from "./role-tags.class.js";
 export class Role extends BaseClass<RoleEntity> {
   readonly #flags: BitFieldManager<RoleFlags>;
 
-  constructor(client: Client, data: Partial<z.input<typeof RoleEntity>> = {}) {
-    super(client, RoleEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
+  constructor(
+    client: Client,
+    entity: Partial<z.input<typeof RoleEntity>> = {},
+  ) {
+    super(client, RoleEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get color(): number {
-    return this.data.color;
+    return this.entity.color;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   get hoist(): boolean {
-    return Boolean(this.data.hoist);
+    return Boolean(this.entity.hoist);
   }
 
   get icon(): string | null {
-    return this.data.icon ?? null;
+    return this.entity.icon ?? null;
   }
 
   get unicodeEmoji(): string | null {
-    return this.data.unicode_emoji ?? null;
+    return this.entity.unicode_emoji ?? null;
   }
 
   get position(): number {
-    return this.data.position;
+    return this.entity.position;
   }
 
   get permissions(): string {
-    return this.data.permissions;
+    return this.entity.permissions;
   }
 
   get managed(): boolean {
-    return Boolean(this.data.managed);
+    return Boolean(this.entity.managed);
   }
 
   get mentionable(): boolean {
-    return Boolean(this.data.mentionable);
+    return Boolean(this.entity.mentionable);
   }
 
   get tags(): RoleTags | null {
-    return this.data.tags ? new RoleTags(this.client, this.data.tags) : null;
+    return this.entity.tags
+      ? new RoleTags(this.client, this.entity.tags)
+      : null;
   }
 
   get flags(): BitFieldManager<RoleFlags> {
@@ -70,7 +75,7 @@ export class Role extends BaseClass<RoleEntity> {
   }
 
   toJson(): RoleEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

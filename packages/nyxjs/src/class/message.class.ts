@@ -35,112 +35,114 @@ export class Message extends BaseClass<MessageCreateEntity> {
 
   constructor(
     client: Client,
-    data: Partial<z.input<typeof MessageCreateEntity>> = {},
+    entity: Partial<z.input<typeof MessageCreateEntity>> = {},
   ) {
     super(
       client,
       MessageCreateEntity as z.ZodSchema,
-      data as MessageCreateEntity,
+      entity as MessageCreateEntity,
     );
-    this.#flags = new BitFieldManager(this.data.flags);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get channelId(): Snowflake {
-    return this.data.channel_id;
+    return this.entity.channel_id;
   }
 
   get author(): User | null {
-    return this.data.author ? new User(this.client, this.data.author) : null;
+    return this.entity.author
+      ? new User(this.client, this.entity.author)
+      : null;
   }
 
   get content(): string {
-    return this.data.content;
+    return this.entity.content;
   }
 
   get timestamp(): string {
-    return this.data.timestamp;
+    return this.entity.timestamp;
   }
 
   get editedTimestamp(): string | null {
-    return this.data.edited_timestamp ?? null;
+    return this.entity.edited_timestamp ?? null;
   }
 
   get tts(): boolean {
-    return Boolean(this.data.tts);
+    return Boolean(this.entity.tts);
   }
 
   get mentionEveryone(): boolean {
-    return Boolean(this.data.mention_everyone);
+    return Boolean(this.entity.mention_everyone);
   }
 
   get mentionRoles(): Snowflake[] {
-    return Array.isArray(this.data.mention_roles)
-      ? [...this.data.mention_roles]
+    return Array.isArray(this.entity.mention_roles)
+      ? [...this.entity.mention_roles]
       : [];
   }
 
   get attachments(): Attachment[] {
-    return Array.isArray(this.data.attachments)
-      ? this.data.attachments.map(
+    return Array.isArray(this.entity.attachments)
+      ? this.entity.attachments.map(
           (attachment) => new Attachment(this.client, attachment),
         )
       : [];
   }
 
   get embeds(): Embed[] {
-    return Array.isArray(this.data.embeds)
-      ? this.data.embeds.map((embed) => new Embed(this.client, embed))
+    return Array.isArray(this.entity.embeds)
+      ? this.entity.embeds.map((embed) => new Embed(this.client, embed))
       : [];
   }
 
   get pinned(): boolean {
-    return Boolean(this.data.pinned);
+    return Boolean(this.entity.pinned);
   }
 
   get type(): MessageType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get mentionChannels(): ChannelMention[] | null {
-    return this.data.mention_channels
-      ? this.data.mention_channels.map(
+    return this.entity.mention_channels
+      ? this.entity.mention_channels.map(
           (mention) => new ChannelMention(this.client, mention),
         )
       : null;
   }
 
   get reactions(): Reaction[] | null {
-    return this.data.reactions
-      ? this.data.reactions.map(
+    return this.entity.reactions
+      ? this.entity.reactions.map(
           (reaction) => new Reaction(this.client, reaction),
         )
       : null;
   }
 
   get nonce(): string | number | null {
-    return this.data.nonce ?? null;
+    return this.entity.nonce ?? null;
   }
 
   get webhookId(): Snowflake | null {
-    return this.data.webhook_id ?? null;
+    return this.entity.webhook_id ?? null;
   }
 
   get activity(): MessageActivityEntity | null {
-    return this.data.activity ?? null;
+    return this.entity.activity ?? null;
   }
 
   get application(): Application | null {
-    return this.data.application
-      ? new Application(this.client, this.data.application)
+    return this.entity.application
+      ? new Application(this.client, this.entity.application)
       : null;
   }
 
   get applicationId(): Snowflake | null {
-    return this.data.application_id ?? null;
+    return this.entity.application_id ?? null;
   }
 
   get flags(): BitFieldManager<MessageFlags> {
@@ -148,45 +150,45 @@ export class Message extends BaseClass<MessageCreateEntity> {
   }
 
   get components(): ActionRow[] | null {
-    return this.data.components
-      ? this.data.components.map(
+    return this.entity.components
+      ? this.entity.components.map(
           (component) => new ActionRow(this.client, component),
         )
       : null;
   }
 
   get stickerItems(): StickerItem[] | null {
-    return this.data.sticker_items
-      ? this.data.sticker_items.map(
+    return this.entity.sticker_items
+      ? this.entity.sticker_items.map(
           (stickerItem) => new StickerItem(this.client, stickerItem),
         )
       : null;
   }
 
   get stickers(): Sticker[] | null {
-    return this.data.stickers
-      ? this.data.stickers.map((sticker) => new Sticker(this.client, sticker))
+    return this.entity.stickers
+      ? this.entity.stickers.map((sticker) => new Sticker(this.client, sticker))
       : null;
   }
 
   get position(): number | null {
-    return this.data.position ?? null;
+    return this.entity.position ?? null;
   }
 
   get roleSubscriptionData(): RoleSubscriptionDataEntity | null {
-    return this.data.role_subscription_data ?? null;
+    return this.entity.role_subscription_data ?? null;
   }
 
   get poll(): Poll | null {
-    return this.data.poll ? new Poll(this.client, this.data.poll) : null;
+    return this.entity.poll ? new Poll(this.client, this.entity.poll) : null;
   }
 
   get call(): MessageCallEntity | null {
-    return this.data.call ?? null;
+    return this.entity.call ?? null;
   }
 
   get messageReference(): MessageReferenceEntity | null {
-    return this.data.message_reference ?? null;
+    return this.entity.message_reference ?? null;
   }
 
   get interactionMetadata():
@@ -194,31 +196,31 @@ export class Message extends BaseClass<MessageCreateEntity> {
     | MessageComponentInteractionMetadataEntity
     | ModalSubmitInteractionMetadataEntity
     | null {
-    return this.data.interaction_metadata ?? null;
+    return this.entity.interaction_metadata ?? null;
   }
 
   get thread(): AnyThreadChannel | null {
-    return this.data.thread
-      ? resolveThreadChannel(this.client, this.data.thread)
+    return this.entity.thread
+      ? resolveThreadChannel(this.client, this.entity.thread)
       : null;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get member(): GuildMember | null {
-    return this.data.member
-      ? new GuildMember(this.client, this.data.member)
+    return this.entity.member
+      ? new GuildMember(this.client, this.entity.member)
       : null;
   }
 
   get mentions(): (UserEntity | Partial<GuildMemberEntity>)[] | null {
-    return this.data.mentions ?? null;
+    return this.entity.mentions ?? null;
   }
 
   toJson(): MessageCreateEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

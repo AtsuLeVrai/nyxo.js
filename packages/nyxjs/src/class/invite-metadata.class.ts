@@ -6,33 +6,33 @@ import type { Client } from "../core/index.js";
 export class InviteMetadata extends BaseClass<InviteMetadataEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof InviteMetadataEntity>> = {},
+    entity: Partial<z.input<typeof InviteMetadataEntity>> = {},
   ) {
-    super(client, InviteMetadataEntity, data);
+    super(client, InviteMetadataEntity, entity);
   }
 
   get uses(): number {
-    return this.data.uses;
+    return this.entity.uses;
   }
 
   get maxUses(): number {
-    return this.data.max_uses;
+    return this.entity.max_uses;
   }
 
   get maxAge(): number {
-    return this.data.max_age;
+    return this.entity.max_age;
   }
 
   get temporary(): boolean {
-    return Boolean(this.data.temporary);
+    return Boolean(this.entity.temporary);
   }
 
   get createdAt(): string {
-    return this.data.created_at;
+    return this.entity.created_at;
   }
 
   toJson(): InviteMetadataEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

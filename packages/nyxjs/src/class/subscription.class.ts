@@ -10,55 +10,55 @@ import type { Client } from "../core/index.js";
 export class Subscription extends BaseClass<SubscriptionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof SubscriptionEntity>> = {},
+    entity: Partial<z.input<typeof SubscriptionEntity>> = {},
   ) {
-    super(client, SubscriptionEntity, data);
+    super(client, SubscriptionEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get userId(): Snowflake {
-    return this.data.user_id;
+    return this.entity.user_id;
   }
 
   get skuIds(): Snowflake[] {
-    return Array.isArray(this.data.sku_ids) ? [...this.data.sku_ids] : [];
+    return Array.isArray(this.entity.sku_ids) ? [...this.entity.sku_ids] : [];
   }
 
   get entitlementIds(): Snowflake[] {
-    return Array.isArray(this.data.entitlement_ids)
-      ? [...this.data.entitlement_ids]
+    return Array.isArray(this.entity.entitlement_ids)
+      ? [...this.entity.entitlement_ids]
       : [];
   }
 
   get renewalSkuIds(): Snowflake[] | null {
-    return this.data.renewal_sku_ids ?? null;
+    return this.entity.renewal_sku_ids ?? null;
   }
 
   get currentPeriodStart(): string {
-    return this.data.current_period_start;
+    return this.entity.current_period_start;
   }
 
   get currentPeriodEnd(): string {
-    return this.data.current_period_end;
+    return this.entity.current_period_end;
   }
 
   get status(): SubscriptionStatus {
-    return this.data.status;
+    return this.entity.status;
   }
 
   get canceledAt(): string | null {
-    return this.data.canceled_at ?? null;
+    return this.entity.canceled_at ?? null;
   }
 
   get country(): string | null {
-    return this.data.country ?? null;
+    return this.entity.country ?? null;
   }
 
   toJson(): SubscriptionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

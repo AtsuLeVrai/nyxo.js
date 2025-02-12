@@ -16,75 +16,77 @@ import { User } from "./user.class.js";
 export class Invite extends BaseClass<InviteEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof InviteEntity>> = {},
+    entity: Partial<z.input<typeof InviteEntity>> = {},
   ) {
-    super(client, InviteEntity, data);
+    super(client, InviteEntity, entity);
   }
 
   get type(): InviteType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get code(): string {
-    return this.data.code;
+    return this.entity.code;
   }
 
   get guild(): Guild | null {
-    return this.data.guild ? new Guild(this.client, this.data.guild) : null;
+    return this.entity.guild ? new Guild(this.client, this.entity.guild) : null;
   }
 
   get channel(): Channel | null {
-    return this.data.channel
-      ? new Channel(this.client, this.data.channel)
+    return this.entity.channel
+      ? new Channel(this.client, this.entity.channel)
       : null;
   }
 
   get inviter(): User | null {
-    return this.data.inviter ? new User(this.client, this.data.inviter) : null;
+    return this.entity.inviter
+      ? new User(this.client, this.entity.inviter)
+      : null;
   }
 
   get targetType(): InviteTargetType | null {
-    return this.data.target_type ?? null;
+    return this.entity.target_type ?? null;
   }
 
   get targetUser(): User | null {
-    return this.data.target_user
-      ? new User(this.client, this.data.target_user)
+    return this.entity.target_user
+      ? new User(this.client, this.entity.target_user)
       : null;
   }
 
   get targetApplication(): Application | null {
-    return this.data.target_application
-      ? new Application(this.client, this.data.target_application)
+    return this.entity.target_application
+      ? new Application(this.client, this.entity.target_application)
       : null;
   }
 
   get approximatePresenceCount(): number | null {
-    return this.data.approximate_presence_count ?? null;
+    return this.entity.approximate_presence_count ?? null;
   }
 
   get approximateMemberCount(): number | null {
-    return this.data.approximate_member_count ?? null;
+    return this.entity.approximate_member_count ?? null;
   }
 
   get expiresAt(): string | null {
-    return this.data.expires_at ?? null;
+    return this.entity.expires_at ?? null;
   }
 
   get stageInstance(): InviteStageInstance | null {
-    return this.data.stage_instance
-      ? new InviteStageInstance(this.client, this.data.stage_instance)
+    return this.entity.stage_instance
+      ? new InviteStageInstance(this.client, this.entity.stage_instance)
       : null;
   }
 
   get guildScheduledEvent(): GuildScheduledEvent | null {
-    return this.data.guild_scheduled_event
-      ? new GuildScheduledEvent(this.client, this.data.guild_scheduled_event)
+    return this.entity.guild_scheduled_event
+      ? new GuildScheduledEvent(this.client, this.entity.guild_scheduled_event)
       : null;
   }
 
   toJson(): InviteEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

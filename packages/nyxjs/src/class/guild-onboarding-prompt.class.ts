@@ -11,45 +11,45 @@ import { GuildOnboardingPromptOption } from "./guild-onboarding-prompt-option.cl
 export class GuildOnboardingPrompt extends BaseClass<GuildOnboardingPromptEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildOnboardingPromptEntity>> = {},
+    entity: Partial<z.input<typeof GuildOnboardingPromptEntity>> = {},
   ) {
-    super(client, GuildOnboardingPromptEntity, data);
+    super(client, GuildOnboardingPromptEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get type(): GuildOnboardingPromptType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get options(): GuildOnboardingPromptOption[] {
-    return Array.isArray(this.data.options)
-      ? this.data.options.map(
+    return Array.isArray(this.entity.options)
+      ? this.entity.options.map(
           (option) => new GuildOnboardingPromptOption(this.client, option),
         )
       : [];
   }
 
   get title(): string {
-    return this.data.title;
+    return this.entity.title;
   }
 
   get singleSelect(): boolean {
-    return Boolean(this.data.single_select);
+    return Boolean(this.entity.single_select);
   }
 
   get required(): boolean {
-    return Boolean(this.data.required);
+    return Boolean(this.entity.required);
   }
 
   get inOnboarding(): boolean {
-    return Boolean(this.data.in_onboarding);
+    return Boolean(this.entity.in_onboarding);
   }
 
   toJson(): GuildOnboardingPromptEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -6,37 +6,37 @@ import type { Client } from "../core/index.js";
 export class RoleTags extends BaseClass<RoleTagsEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof RoleTagsEntity>> = {},
+    entity: Partial<z.input<typeof RoleTagsEntity>> = {},
   ) {
-    super(client, RoleTagsEntity, data);
+    super(client, RoleTagsEntity, entity);
   }
 
   get botId(): Snowflake | null {
-    return this.data.bot_id ?? null;
+    return this.entity.bot_id ?? null;
   }
 
   get integrationId(): Snowflake | null {
-    return this.data.integration_id ?? null;
+    return this.entity.integration_id ?? null;
   }
 
   get premiumSubscriber(): null {
-    return this.data.premium_subscriber ?? null;
+    return this.entity.premium_subscriber ?? null;
   }
 
   get subscriptionListingId(): Snowflake | null {
-    return this.data.subscription_listing_id ?? null;
+    return this.entity.subscription_listing_id ?? null;
   }
 
   get availableForPurchase(): null {
-    return this.data.available_for_purchase ?? null;
+    return this.entity.available_for_purchase ?? null;
   }
 
   get guildConnections(): null {
-    return this.data.guild_connections ?? null;
+    return this.entity.guild_connections ?? null;
   }
 
   toJson(): RoleTagsEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

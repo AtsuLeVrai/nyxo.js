@@ -7,33 +7,33 @@ import { User } from "./user.class.js";
 export class IntegrationApplication extends BaseClass<IntegrationApplicationEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof IntegrationApplicationEntity>> = {},
+    entity: Partial<z.input<typeof IntegrationApplicationEntity>> = {},
   ) {
-    super(client, IntegrationApplicationEntity, data);
+    super(client, IntegrationApplicationEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get icon(): string | null {
-    return this.data.icon ?? null;
+    return this.entity.icon ?? null;
   }
 
   get description(): string {
-    return this.data.description;
+    return this.entity.description;
   }
 
   get bot(): User | null {
-    return this.data.bot ? new User(this.client, this.data.bot) : null;
+    return this.entity.bot ? new User(this.client, this.entity.bot) : null;
   }
 
   toJson(): IntegrationApplicationEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -6,21 +6,21 @@ import type { Client } from "../core/index.js";
 export class UnavailableGuild extends BaseClass<UnavailableGuildEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof UnavailableGuildEntity>> = {},
+    entity: Partial<z.input<typeof UnavailableGuildEntity>> = {},
   ) {
-    super(client, UnavailableGuildEntity, data);
+    super(client, UnavailableGuildEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get unavailable(): true {
-    return this.data.unavailable;
+    return this.entity.unavailable;
   }
 
   toJson(): UnavailableGuildEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

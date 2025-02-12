@@ -12,29 +12,29 @@ import { User } from "./user.class.js";
 export class TeamMember extends BaseClass<TeamMemberEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof TeamMemberEntity>> = {},
+    entity: Partial<z.input<typeof TeamMemberEntity>> = {},
   ) {
-    super(client, TeamMemberEntity, data);
+    super(client, TeamMemberEntity, entity);
   }
 
   get membershipState(): MembershipState {
-    return this.data.membership_state;
+    return this.entity.membership_state;
   }
 
   get teamId(): Snowflake {
-    return this.data.team_id;
+    return this.entity.team_id;
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    return this.entity.user ? new User(this.client, this.entity.user) : null;
   }
 
   get role(): TeamMemberRole {
-    return this.data.role;
+    return this.entity.role;
   }
 
   toJson(): TeamMemberEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

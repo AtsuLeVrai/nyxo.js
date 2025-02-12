@@ -9,37 +9,39 @@ import { GuildMember } from "./guild-member.class.js";
 export class ThreadListSync extends BaseClass<ThreadListSyncEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ThreadListSyncEntity>> = {},
+    entity: Partial<z.input<typeof ThreadListSyncEntity>> = {},
   ) {
-    super(client, ThreadListSyncEntity, data);
+    super(client, ThreadListSyncEntity, entity);
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   get channelIds(): Snowflake[] {
-    return Array.isArray(this.data.channel_ids)
-      ? [...this.data.channel_ids]
+    return Array.isArray(this.entity.channel_ids)
+      ? [...this.entity.channel_ids]
       : [];
   }
 
   get threads(): AnyThreadChannel[] {
-    return Array.isArray(this.data.threads)
-      ? this.data.threads.map((thread) =>
+    return Array.isArray(this.entity.threads)
+      ? this.entity.threads.map((thread) =>
           resolveThreadChannel(this.client, thread),
         )
       : [];
   }
 
   get members(): GuildMember[] {
-    return Array.isArray(this.data.members)
-      ? this.data.members.map((member) => new GuildMember(this.client, member))
+    return Array.isArray(this.entity.members)
+      ? this.entity.members.map(
+          (member) => new GuildMember(this.client, member),
+        )
       : [];
   }
 
   toJson(): ThreadListSyncEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

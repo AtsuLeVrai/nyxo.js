@@ -45,9 +45,9 @@ import type { ClientEventHandlers } from "../types/index.js";
 
 interface EventDefinition {
   name: keyof GatewayReceiveEvents;
-  handler?: Class<unknown, [client: Client, data: never]>;
-  transform?: (client: Client, data: never) => unknown;
-  validate?: (data: never) => boolean;
+  handler?: Class<unknown, [client: Client, entity: never]>;
+  transform?: (client: Client, entity: never) => unknown;
+  validate?: (entity: never) => boolean;
 }
 
 const REST_EVENTS: readonly (keyof RestEventHandlers)[] = [
@@ -82,11 +82,11 @@ const CLIENT_EVENTS: EventDefinition[] = [
   {
     name: "READY",
     handler: Ready,
-    validate: (data: Ready): boolean => Boolean(data.user),
+    validate: (entity: Ready): boolean => Boolean(entity.user),
   },
   {
     name: "RESUMED",
-    validate: (data: boolean) => typeof data === "boolean",
+    validate: (entity: boolean): boolean => typeof entity === "boolean",
   },
   {
     name: "AUTO_MODERATION_RULE_CREATE",
@@ -153,13 +153,13 @@ const CLIENT_EVENTS: EventDefinition[] = [
     handler: Guild,
     transform: (
       client,
-      data: GuildCreateEntity | UnavailableGuildEntity,
+      entity: GuildCreateEntity | UnavailableGuildEntity,
     ): Guild | UnavailableGuild => {
-      if (data.unavailable) {
-        return new UnavailableGuild(client, data as UnavailableGuildEntity);
+      if (entity.unavailable) {
+        return new UnavailableGuild(client, entity as UnavailableGuildEntity);
       }
 
-      return new Guild(client, data);
+      return new Guild(client, entity);
     },
   },
   {
@@ -181,16 +181,16 @@ const CLIENT_EVENTS: EventDefinition[] = [
   {
     name: "GUILD_EMOJIS_UPDATE",
     handler: Emoji,
-    transform: (client, data: GuildEmojisUpdateEntity): Emoji[] => {
-      const emojis = data.emojis;
+    transform: (client, entity: GuildEmojisUpdateEntity): Emoji[] => {
+      const emojis = entity.emojis;
       return emojis.map((emoji) => new Emoji(client, emoji as EmojiEntity));
     },
   },
   {
     name: "GUILD_STICKERS_UPDATE",
     handler: Sticker,
-    transform: (client, data: GuildStickersUpdateEntity): Sticker[] => {
-      const stickers = data.stickers;
+    transform: (client, entity: GuildStickersUpdateEntity): Sticker[] => {
+      const stickers = entity.stickers;
       return stickers.map((sticker) => new Sticker(client, sticker));
     },
   },
@@ -288,7 +288,7 @@ const CLIENT_EVENTS: EventDefinition[] = [
   },
   {
     name: "PRESENCE_UPDATE",
-    transform: (data: unknown) => data as PresenceEntity,
+    transform: (entity: unknown) => entity as PresenceEntity,
   },
   {
     name: "TYPING_START",
@@ -381,7 +381,7 @@ export class ClientEventManager {
     this.#client.gateway.on("dispatch", this.#handleDispatchEvent.bind(this));
   }
 
-  #handleDispatchEvent(eventName: string, data: unknown): void {
+  #handleDispatchEvent(eventName: string, entity: unknown): void {
     try {
       const eventDefinition = CLIENT_EVENTS.find(
         (def) => def.name === eventName,
@@ -398,15 +398,15 @@ export class ClientEventManager {
       if (eventDefinition.transform) {
         transformedData = eventDefinition.transform(
           this.#client,
-          data as never,
+          entity as never,
         );
       } else if (eventDefinition.handler) {
         transformedData = new eventDefinition.handler(
           this.#client,
-          data as never,
+          entity as never,
         );
       } else {
-        transformedData = data;
+        transformedData = entity;
       }
 
       if (
@@ -435,9 +435,9 @@ export class ClientEventManager {
     }
   }
 
-  #updateCache(eventName: string, data: unknown): void {
+  #updateCache(eventName: string, entity: unknown): void {
     const cached = this.#cache.get(eventName) || [];
-    cached.push(data);
+    cached.push(entity);
 
     if (cached.length > this.#cacheSize) {
       cached.shift();

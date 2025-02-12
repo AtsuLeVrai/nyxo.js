@@ -10,21 +10,21 @@ import type { Client } from "../core/index.js";
 export class ActionRow extends BaseClass<ActionRowEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ActionRowEntity>> = {},
+    entity: Partial<z.input<typeof ActionRowEntity>> = {},
   ) {
-    super(client, ActionRowEntity as z.ZodSchema, data as ActionRowEntity);
+    super(client, ActionRowEntity as z.ZodSchema, entity as ActionRowEntity);
   }
 
   get type(): ComponentType.ActionRow {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get components(): ComponentEntity[] {
-    return [...this.data.components];
+    return [...this.entity.components];
   }
 
   toJson(): ActionRowEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

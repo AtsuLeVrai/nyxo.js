@@ -10,29 +10,29 @@ import type { Client } from "../core/index.js";
 export class ChannelMention extends BaseClass<ChannelMentionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof ChannelMentionEntity>> = {},
+    entity: Partial<z.input<typeof ChannelMentionEntity>> = {},
   ) {
-    super(client, ChannelMentionEntity, data);
+    super(client, ChannelMentionEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   get type(): ChannelType {
-    return this.data.type;
+    return this.entity.type;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   toJson(): ChannelMentionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

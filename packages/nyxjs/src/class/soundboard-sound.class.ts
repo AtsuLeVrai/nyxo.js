@@ -7,45 +7,45 @@ import { User } from "./user.class.js";
 export class SoundboardSound extends BaseClass<SoundboardSoundEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof SoundboardSoundEntity>> = {},
+    entity: Partial<z.input<typeof SoundboardSoundEntity>> = {},
   ) {
-    super(client, SoundboardSoundEntity, data);
+    super(client, SoundboardSoundEntity, entity);
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get soundId(): Snowflake {
-    return this.data.sound_id;
+    return this.entity.sound_id;
   }
 
   get volume(): number {
-    return this.data.volume;
+    return this.entity.volume;
   }
 
   get emojiId(): Snowflake | null {
-    return this.data.emoji_id ?? null;
+    return this.entity.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
-    return this.data.emoji_name ?? null;
+    return this.entity.emoji_name ?? null;
   }
 
   get guildId(): Snowflake | null {
-    return this.data.guild_id ?? null;
+    return this.entity.guild_id ?? null;
   }
 
   get available(): boolean {
-    return Boolean(this.data.available);
+    return Boolean(this.entity.available);
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    return this.entity.user ? new User(this.client, this.entity.user) : null;
   }
 
   toJson(): SoundboardSoundEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

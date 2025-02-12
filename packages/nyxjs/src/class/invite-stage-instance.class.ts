@@ -7,31 +7,33 @@ import { GuildMember } from "./guild-member.class.js";
 export class InviteStageInstance extends BaseClass<InviteStageInstanceEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof InviteStageInstanceEntity>> = {},
+    entity: Partial<z.input<typeof InviteStageInstanceEntity>> = {},
   ) {
-    super(client, InviteStageInstanceEntity, data);
+    super(client, InviteStageInstanceEntity, entity);
   }
 
   get members(): GuildMember[] {
-    return Array.isArray(this.data.members)
-      ? this.data.members.map((member) => new GuildMember(this.client, member))
+    return Array.isArray(this.entity.members)
+      ? this.entity.members.map(
+          (member) => new GuildMember(this.client, member),
+        )
       : [];
   }
 
   get participantCount(): number {
-    return this.data.participant_count;
+    return this.entity.participant_count;
   }
 
   get speakerCount(): number {
-    return this.data.speaker_count;
+    return this.entity.speaker_count;
   }
 
   get topic(): string {
-    return this.data.topic;
+    return this.entity.topic;
   }
 
   toJson(): InviteStageInstanceEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

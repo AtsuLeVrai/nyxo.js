@@ -6,21 +6,21 @@ import type { Client } from "../core/index.js";
 export class DefaultReaction extends BaseClass<DefaultReactionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof DefaultReactionEntity>> = {},
+    entity: Partial<z.input<typeof DefaultReactionEntity>> = {},
   ) {
-    super(client, DefaultReactionEntity, data);
+    super(client, DefaultReactionEntity, entity);
   }
 
   get emojiId(): Snowflake | null {
-    return this.data.emoji_id ?? null;
+    return this.entity.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
-    return this.data.emoji_name ?? null;
+    return this.entity.emoji_name ?? null;
   }
 
   toJson(): DefaultReactionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

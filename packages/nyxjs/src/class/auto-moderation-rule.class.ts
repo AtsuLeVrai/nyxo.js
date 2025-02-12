@@ -13,63 +13,63 @@ import type { Client } from "../core/index.js";
 export class AutoModerationRule extends BaseClass<AutoModerationRuleEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof AutoModerationRuleEntity>> = {},
+    entity: Partial<z.input<typeof AutoModerationRuleEntity>> = {},
   ) {
-    super(client, AutoModerationRuleEntity, data);
+    super(client, AutoModerationRuleEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.entity.guild_id;
   }
 
   get name(): string {
-    return this.data.name;
+    return this.entity.name;
   }
 
   get creatorId(): Snowflake {
-    return this.data.creator_id;
+    return this.entity.creator_id;
   }
 
   get eventType(): AutoModerationEventType {
-    return this.data.event_type;
+    return this.entity.event_type;
   }
 
   get triggerType(): AutoModerationRuleTriggerType {
-    return this.data.trigger_type;
+    return this.entity.trigger_type;
   }
 
   get triggerMetadata(): AutoModerationRuleTriggerMetadataEntity | null {
-    return this.data.trigger_metadata
-      ? { ...this.data.trigger_metadata }
+    return this.entity.trigger_metadata
+      ? { ...this.entity.trigger_metadata }
       : null;
   }
 
   get actions(): AutoModerationActionEntity[] {
-    return Array.isArray(this.data.actions) ? [...this.data.actions] : [];
+    return Array.isArray(this.entity.actions) ? [...this.entity.actions] : [];
   }
 
   get enabled(): boolean {
-    return Boolean(this.data.enabled);
+    return Boolean(this.entity.enabled);
   }
 
   get exemptRoles(): Snowflake[] {
-    return Array.isArray(this.data.exempt_roles)
-      ? [...this.data.exempt_roles]
+    return Array.isArray(this.entity.exempt_roles)
+      ? [...this.entity.exempt_roles]
       : [];
   }
 
   get exemptChannels(): Snowflake[] {
-    return Array.isArray(this.data.exempt_channels)
-      ? [...this.data.exempt_channels]
+    return Array.isArray(this.entity.exempt_channels)
+      ? [...this.entity.exempt_channels]
       : [];
   }
 
   toJson(): AutoModerationRuleEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

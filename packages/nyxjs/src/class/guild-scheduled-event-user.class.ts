@@ -8,27 +8,27 @@ import { User } from "./user.class.js";
 export class GuildScheduledEventUser extends BaseClass<GuildScheduledEventUserEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildScheduledEventUserEntity>> = {},
+    entity: Partial<z.input<typeof GuildScheduledEventUserEntity>> = {},
   ) {
-    super(client, GuildScheduledEventUserEntity, data);
+    super(client, GuildScheduledEventUserEntity, entity);
   }
 
   get guildScheduledEventId(): Snowflake {
-    return this.data.guild_scheduled_event_id;
+    return this.entity.guild_scheduled_event_id;
   }
 
   get user(): User | null {
-    return this.data.user ? new User(this.client, this.data.user) : null;
+    return this.entity.user ? new User(this.client, this.entity.user) : null;
   }
 
   get member(): GuildMember | null {
-    return this.data.member
-      ? new GuildMember(this.client, this.data.member)
+    return this.entity.member
+      ? new GuildMember(this.client, this.entity.member)
       : null;
   }
 
   toJson(): GuildScheduledEventUserEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

@@ -6,21 +6,21 @@ import type { Client } from "../core/index.js";
 export class GuildWidgetSettings extends BaseClass<GuildWidgetSettingsEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildWidgetSettingsEntity>> = {},
+    entity: Partial<z.input<typeof GuildWidgetSettingsEntity>> = {},
   ) {
-    super(client, GuildWidgetSettingsEntity, data);
+    super(client, GuildWidgetSettingsEntity, entity);
   }
 
   get enabled(): boolean {
-    return Boolean(this.data.enabled);
+    return Boolean(this.entity.enabled);
   }
 
   get channelId(): Snowflake | null {
-    return this.data.channel_id ?? null;
+    return this.entity.channel_id ?? null;
   }
 
   toJson(): GuildWidgetSettingsEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

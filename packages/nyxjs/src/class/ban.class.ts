@@ -5,20 +5,20 @@ import type { Client } from "../core/index.js";
 import { User } from "./user.class.js";
 
 export class Ban extends BaseClass<BanEntity> {
-  constructor(client: Client, data: Partial<z.input<typeof BanEntity>> = {}) {
-    super(client, BanEntity, data);
+  constructor(client: Client, entity: Partial<z.input<typeof BanEntity>> = {}) {
+    super(client, BanEntity, entity);
   }
 
   get reason(): string | null {
-    return this.data.reason ?? null;
+    return this.entity.reason ?? null;
   }
 
   get user(): User {
-    return new User(this.client, this.data.user);
+    return new User(this.client, this.entity.user);
   }
 
   toJson(): BanEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

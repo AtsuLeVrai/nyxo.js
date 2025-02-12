@@ -245,6 +245,13 @@ export class RateLimitManager {
   ): void {
     const now = Date.now();
 
+    this.#rest.emit("debug", "Checking rate limit", {
+      bucket: bucket.hash,
+      remaining: bucket.remaining,
+      reset: bucket.reset,
+      now,
+    });
+
     if (bucket.remaining <= 0 && bucket.reset > now) {
       throw new RateLimitError({
         method,

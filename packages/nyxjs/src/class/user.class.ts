@@ -25,62 +25,65 @@ export class User extends BaseClass<UserEntity> {
   readonly #flags: BitFieldManager<UserFlags>;
   readonly #publicFlags: BitFieldManager<UserFlags>;
 
-  constructor(client: Client, data: Partial<z.input<typeof UserEntity>> = {}) {
-    super(client, UserEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
-    this.#publicFlags = new BitFieldManager(this.data.public_flags);
+  constructor(
+    client: Client,
+    entity: Partial<z.input<typeof UserEntity>> = {},
+  ) {
+    super(client, UserEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
+    this.#publicFlags = new BitFieldManager(this.entity.public_flags);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get username(): string {
-    return this.data.username;
+    return this.entity.username;
   }
 
   get discriminator(): string {
-    return this.data.discriminator;
+    return this.entity.discriminator;
   }
 
   get globalName(): string | null {
-    return this.data.global_name ?? null;
+    return this.entity.global_name ?? null;
   }
 
   get avatar(): string | null {
-    return this.data.avatar ?? null;
+    return this.entity.avatar ?? null;
   }
 
   get bot(): boolean {
-    return Boolean(this.data.bot);
+    return Boolean(this.entity.bot);
   }
 
   get system(): boolean {
-    return Boolean(this.data.system);
+    return Boolean(this.entity.system);
   }
 
   get mfaEnabled(): boolean {
-    return Boolean(this.data.mfa_enabled);
+    return Boolean(this.entity.mfa_enabled);
   }
 
   get banner(): string | null {
-    return this.data.banner ?? null;
+    return this.entity.banner ?? null;
   }
 
   get accentColor(): number | null {
-    return this.data.accent_color ?? null;
+    return this.entity.accent_color ?? null;
   }
 
   get locale(): Locale | null {
-    return this.data.locale ?? null;
+    return this.entity.locale ?? null;
   }
 
   get verified(): boolean {
-    return Boolean(this.data.verified);
+    return Boolean(this.entity.verified);
   }
 
   get email(): string | null {
-    return this.data.email ?? null;
+    return this.entity.email ?? null;
   }
 
   get flags(): BitFieldManager<UserFlags> {
@@ -88,7 +91,7 @@ export class User extends BaseClass<UserEntity> {
   }
 
   get premiumType(): PremiumType | null {
-    return this.data.premium_type ?? null;
+    return this.entity.premium_type ?? null;
   }
 
   get publicFlags(): BitFieldManager<UserFlags> {
@@ -96,8 +99,8 @@ export class User extends BaseClass<UserEntity> {
   }
 
   get avatarDecorationData(): AvatarDecorationDataEntity | null {
-    return this.data.avatar_decoration_data
-      ? { ...this.data.avatar_decoration_data }
+    return this.entity.avatar_decoration_data
+      ? { ...this.entity.avatar_decoration_data }
       : null;
   }
 
@@ -305,7 +308,7 @@ export class User extends BaseClass<UserEntity> {
   }
 
   toJson(): UserEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

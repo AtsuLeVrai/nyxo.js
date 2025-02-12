@@ -7,51 +7,51 @@ import { Emoji } from "./emoji.class.js";
 export class GuildOnboardingPromptOption extends BaseClass<GuildOnboardingPromptOptionEntity> {
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildOnboardingPromptOptionEntity>> = {},
+    entity: Partial<z.input<typeof GuildOnboardingPromptOptionEntity>> = {},
   ) {
-    super(client, GuildOnboardingPromptOptionEntity, data);
+    super(client, GuildOnboardingPromptOptionEntity, entity);
   }
 
   get id(): Snowflake {
-    return this.data.id;
+    return this.entity.id;
   }
 
   get channelIds(): Snowflake[] {
-    return Array.isArray(this.data.channel_ids)
-      ? [...this.data.channel_ids]
+    return Array.isArray(this.entity.channel_ids)
+      ? [...this.entity.channel_ids]
       : [];
   }
 
   get roleIds(): Snowflake[] {
-    return Array.isArray(this.data.role_ids) ? [...this.data.role_ids] : [];
+    return Array.isArray(this.entity.role_ids) ? [...this.entity.role_ids] : [];
   }
 
   get emoji(): Emoji | null {
-    return this.data.emoji ? new Emoji(this.client, this.data.emoji) : null;
+    return this.entity.emoji ? new Emoji(this.client, this.entity.emoji) : null;
   }
 
   get emojiId(): Snowflake | null {
-    return this.data.emoji_id ?? null;
+    return this.entity.emoji_id ?? null;
   }
 
   get emojiName(): string | null {
-    return this.data.emoji_name ?? null;
+    return this.entity.emoji_name ?? null;
   }
 
   get emojiAnimated(): boolean {
-    return Boolean(this.data.emoji_animated);
+    return Boolean(this.entity.emoji_animated);
   }
 
   get title(): string {
-    return this.data.title;
+    return this.entity.title;
   }
 
   get description(): string | null {
-    return this.data.description ?? null;
+    return this.entity.description ?? null;
   }
 
   toJson(): GuildOnboardingPromptOptionEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 

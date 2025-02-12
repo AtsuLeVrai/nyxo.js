@@ -15,46 +15,46 @@ export class GuildMember extends BaseClass<GuildMemberEntity> {
 
   constructor(
     client: Client,
-    data: Partial<z.input<typeof GuildMemberEntity>> = {},
+    entity: Partial<z.input<typeof GuildMemberEntity>> = {},
   ) {
-    super(client, GuildMemberEntity, data);
-    this.#flags = new BitFieldManager(this.data.flags);
+    super(client, GuildMemberEntity, entity);
+    this.#flags = new BitFieldManager(this.entity.flags);
   }
 
   get user(): User {
-    return new User(this.client, this.data.user);
+    return new User(this.client, this.entity.user);
   }
 
   get nick(): string | null {
-    return this.data.nick ?? null;
+    return this.entity.nick ?? null;
   }
 
   get avatar(): string | null {
-    return this.data.avatar ?? null;
+    return this.entity.avatar ?? null;
   }
 
   get banner(): string | null {
-    return this.data.banner ?? null;
+    return this.entity.banner ?? null;
   }
 
   get roles(): Snowflake[] {
-    return Array.isArray(this.data.roles) ? [...this.data.roles] : [];
+    return Array.isArray(this.entity.roles) ? [...this.entity.roles] : [];
   }
 
   get joinedAt(): string {
-    return this.data.joined_at;
+    return this.entity.joined_at;
   }
 
   get premiumSince(): string | null {
-    return this.data.premium_since ?? null;
+    return this.entity.premium_since ?? null;
   }
 
   get deaf(): boolean {
-    return Boolean(this.data.deaf);
+    return Boolean(this.entity.deaf);
   }
 
   get mute(): boolean {
-    return Boolean(this.data.mute);
+    return Boolean(this.entity.mute);
   }
 
   get flags(): BitFieldManager<GuildMemberFlags> {
@@ -62,23 +62,23 @@ export class GuildMember extends BaseClass<GuildMemberEntity> {
   }
 
   get pending(): boolean {
-    return Boolean(this.data.pending);
+    return Boolean(this.entity.pending);
   }
 
   get permissions(): string | null {
-    return this.data.permissions ?? null;
+    return this.entity.permissions ?? null;
   }
 
   get communicationDisabledUntil(): string | null {
-    return this.data.communication_disabled_until ?? null;
+    return this.entity.communication_disabled_until ?? null;
   }
 
   get avatarDecorationData(): AvatarDecorationDataEntity | null {
-    return this.data.avatar_decoration_data ?? null;
+    return this.entity.avatar_decoration_data ?? null;
   }
 
   toJson(): GuildMemberEntity {
-    return { ...this.data };
+    return { ...this.entity };
   }
 }
 
