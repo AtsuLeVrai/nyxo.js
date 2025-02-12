@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
-import terser from "@rollup/plugin-terser";
 import { createConsola } from "consola";
 import { rollup } from "rollup";
 import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
@@ -104,31 +103,8 @@ const swcConfig = defineRollupSwcOption({
   },
   sourceMaps: !isProduction,
   exclude: ["node_modules", "dist", ".*.js$", ".*\\.d.ts$"],
-  minify: isProduction,
+  minify: false,
 });
-
-/**
- * Terser configuration for production builds
- * @type {import('@rollup/plugin-terser').Options}
- */
-const terserConfig = {
-  format: {
-    comments: false,
-    ecma: 2020,
-  },
-  compress: {
-    passes: 2,
-    pure_getters: true,
-    unsafe: true,
-    unsafe_comps: true,
-    unsafe_math: true,
-    unsafe_methods: true,
-    drop_console: isProduction,
-    drop_debugger: isProduction,
-  },
-  module: true,
-  toplevel: true,
-};
 
 /**
  * Rollup build configuration
@@ -142,7 +118,6 @@ const rollupConfig = {
       file: resolve(paths.dist, "index.mjs"),
       format: "esm",
       sourcemap: !isProduction,
-      plugins: isProduction ? [terser(terserConfig)] : [],
     },
     {
       file: resolve(paths.dist, "index.cjs"),
@@ -150,7 +125,6 @@ const rollupConfig = {
       sourcemap: !isProduction,
       interop: "auto",
       esModule: true,
-      plugins: isProduction ? [terser(terserConfig)] : [],
     },
   ],
   plugins: [swc(swcConfig)],
