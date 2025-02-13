@@ -328,9 +328,9 @@ async function compileTypes() {
           `API Extractor failed with ${extractorResult.errorCount} errors`,
         );
       }
-
-      await rm(paths.temp, { recursive: true, force: true });
     }
+
+    await rm(paths.temp, { recursive: true, force: true });
 
     spinner.succeed(
       colors.success(

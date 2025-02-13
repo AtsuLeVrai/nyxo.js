@@ -30,6 +30,7 @@
     "check": "biome check --write --unsafe ."
   },
   "dependencies": {
+    "erlpack": "^0.1.4",
     "nyx.js": "workspace:*"
   },
   "devDependencies": {

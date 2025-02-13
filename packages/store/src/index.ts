@@ -1,4 +1,8 @@
-export type StorePredicate<K, V> =
+import { deepmerge } from "deepmerge-ts";
+import { get, unset } from "lodash-es";
+import { LRUCache } from "lru-cache";
+
+export type StorePredicate<K extends object | string | number | symbol, V> =
   | ((value: V, key: K, map: Store<K, V>) => boolean)
   | Partial<V>;
 
@@ -8,11 +12,12 @@ export interface StoreOptions {
   evictionStrategy?: "fifo" | "lru";
 }
 
-export class Store<K, V> extends Map<K, V> {
-  #ttlMap = new Map<K, number>();
-  #accessOrder = new Map<K, number>();
-  #lastAccess = 0;
-
+export class Store<K extends object | string | number | symbol, V> extends Map<
+  K,
+  V
+> {
+  readonly #ttlMap = new Map<K, number>();
+  readonly #lruCache?: LRUCache<K, number>;
   readonly #options: Required<StoreOptions>;
 
   constructor(
@@ -28,6 +33,12 @@ export class Store<K, V> extends Map<K, V> {
       ...options,
     };
 
+    if (this.#options.evictionStrategy === "lru") {
+      this.#lruCache = new LRUCache<K, number>({
+        max: this.#options.maxSize,
+      });
+    }
+
     if (entries) {
       this.#bulkSet(entries);
     }
@@ -41,7 +52,7 @@ export class Store<K, V> extends Map<K, V> {
     if (this.has(key)) {
       const existingValue = this.get(key) as V;
       if (typeof existingValue === "object" && typeof value === "object") {
-        this.set(key, this.#deepMerge(existingValue, value) as V);
+        this.set(key, deepmerge(existingValue, value) as V);
       } else {
         this.set(key, value as V);
       }
@@ -62,10 +73,10 @@ export class Store<K, V> extends Map<K, V> {
     }
 
     const pathsArray = Array.isArray(paths) ? paths : [paths];
-    const newValue = { ...value } as Record<string, unknown>;
+    const newValue = { ...value };
 
     for (const path of pathsArray) {
-      delete newValue[path as string];
+      unset(newValue, path);
     }
 
     this.set(key, newValue as V);
@@ -146,15 +157,14 @@ export class Store<K, V> extends Map<K, V> {
 
   override delete(key: K): boolean {
     this.#ttlMap.delete(key);
-    this.#accessOrder.delete(key);
+    this.#lruCache?.delete(key);
     return super.delete(key);
   }
 
   override clear(): void {
     super.clear();
     this.#ttlMap.clear();
-    this.#accessOrder.clear();
-    this.#lastAccess = 0;
+    this.#lruCache?.clear();
   }
 
   map<R>(callback: (value: V, key: K, store: this) => R): R[] {
@@ -174,13 +184,12 @@ export class Store<K, V> extends Map<K, V> {
 
   #bulkSet(entries: readonly (readonly [K, V])[]): void {
     for (const [key, value] of entries) {
-      super.set(key, value);
-      this.#updateAccessTime(key);
+      this.set(key, value);
     }
   }
 
   #startCleanupInterval(): void {
-    const cleanupInterval = Math.min(this.#options.ttl / 2, 60000); // Max 1 minute
+    const cleanupInterval = Math.min(this.#options.ttl / 2, 60000);
     setInterval(() => this.#cleanup(), cleanupInterval);
   }
 
@@ -195,7 +204,7 @@ export class Store<K, V> extends Map<K, V> {
 
   #updateAccessTime(key: K): void {
     if (this.#options.evictionStrategy === "lru") {
-      this.#accessOrder.set(key, ++this.#lastAccess);
+      this.#lruCache?.set(key, Date.now());
     }
   }
 
@@ -204,64 +213,25 @@ export class Store<K, V> extends Map<K, V> {
       return;
     }
 
-    let keyToEvict: K | undefined;
-
-    if (this.#options.evictionStrategy === "lru") {
-      let oldestAccess = Number.POSITIVE_INFINITY;
-      for (const [key, accessTime] of this.#accessOrder) {
-        if (accessTime < oldestAccess) {
-          oldestAccess = accessTime;
-          keyToEvict = key;
-        }
+    if (this.#options.evictionStrategy === "lru" && this.#lruCache) {
+      const leastUsedKey = this.#lruCache.keys().next().value;
+      if (leastUsedKey) {
+        this.delete(leastUsedKey);
       }
     } else {
-      keyToEvict = this.keys().next().value;
-    }
-
-    if (keyToEvict) {
-      this.delete(keyToEvict);
+      const firstKey = this.keys().next().value;
+      if (firstKey) {
+        this.delete(firstKey);
+      }
     }
   }
 
   #matchesPattern(value: V, pattern: [string, unknown][]): boolean {
-    return pattern.every(([k, v]) => {
-      const valueAtKey = value[k as keyof V];
-      return Array.isArray(valueAtKey)
-        ? valueAtKey.includes(v)
-        : valueAtKey === v;
+    return pattern.every(([path, expectedValue]) => {
+      const actualValue = get(value, path);
+      return Array.isArray(actualValue)
+        ? actualValue.includes(expectedValue)
+        : actualValue === expectedValue;
     });
-  }
-
-  #deepMerge(target: V, source: V | Partial<V>): V {
-    if (!source || typeof source !== "object") {
-      return source as V;
-    }
-
-    const merged = { ...target } as Record<string, unknown>;
-
-    for (const key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        const sourceValue = source[key as keyof typeof source];
-        const targetValue = target[key as keyof V];
-
-        if (
-          sourceValue &&
-          targetValue &&
-          typeof sourceValue === "object" &&
-          typeof targetValue === "object" &&
-          !Array.isArray(sourceValue) &&
-          !Array.isArray(targetValue)
-        ) {
-          merged[key] = this.#deepMerge(
-            targetValue as V,
-            sourceValue as Partial<V>,
-          );
-        } else if (sourceValue !== undefined) {
-          merged[key] = sourceValue;
-        }
-      }
-    }
-
-    return merged as V;
   }
 }

@@ -37,6 +37,7 @@
       "@swc/core",
       "bufferutil",
       "erlpack",
+      "esbuild",
       "sharp",
       "zlib-sync"
     ]

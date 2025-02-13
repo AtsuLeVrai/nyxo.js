@@ -45,8 +45,14 @@
     "check": "biome check --write --unsafe .",
     "type-check": "tsc --noEmit"
   },
+  "dependencies": {
+    "deepmerge-ts": "7.1.4",
+    "lodash-es": "4.17.21",
+    "lru-cache": "11.0.2"
+  },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@types/lodash-es": "4.17.12",
     "@types/node": "^22.13.2",
     "cross-env": "^7.0.3",
     "typescript": "^5.7.3",
