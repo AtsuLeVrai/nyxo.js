@@ -1,24 +1,38 @@
-import erlpack from "erlpack";
+import { OptionalDeps } from "@nyxjs/utils";
 import type { EncodingType } from "../options/index.js";
 import type { PayloadEntity } from "../types/index.js";
+
+interface EncodingModules {
+  erlpack?: typeof import("erlpack");
+}
 
 const MAX_PAYLOAD_SIZE = 4096;
 
 export class EncodingService {
   readonly #encodingType: EncodingType;
+  #modules: EncodingModules | null = null;
 
   constructor(encodingType: EncodingType) {
     this.#encodingType = encodingType;
   }
 
-  get encodingType(): EncodingType {
+  get type(): EncodingType {
     return this.#encodingType;
+  }
+
+  async initialize(): Promise<void> {
+    try {
+      this.#modules = await this.#createEncodingModules();
+    } catch (error) {
+      throw new Error("Failed to initialize encoding modules", {
+        cause: error,
+      });
+    }
   }
 
   encode(data: PayloadEntity): Buffer | string {
     try {
-      const processed = this.#processData(data);
-      const result = this.#encodeData(processed);
+      const result = this.#encodeData(data);
       this.#validatePayloadSize(result);
       return result;
     } catch (error) {
@@ -30,9 +44,19 @@ export class EncodingService {
 
   decode(data: Buffer | string): PayloadEntity {
     try {
-      return this.#encodingType === "json"
-        ? JSON.parse(typeof data === "string" ? data : data.toString("utf-8"))
-        : erlpack.unpack(Buffer.isBuffer(data) ? data : Buffer.from(data));
+      if (this.#encodingType === "json") {
+        return JSON.parse(
+          typeof data === "string" ? data : data.toString("utf-8"),
+        );
+      }
+
+      if (!this.#modules?.erlpack) {
+        throw new Error("erlpack module not initialized");
+      }
+
+      return this.#modules.erlpack.unpack(
+        Buffer.isBuffer(data) ? data : Buffer.from(data),
+      );
     } catch (error) {
       throw new Error(`Failed to decode ${this.#encodingType}`, {
         cause: error,
@@ -40,10 +64,20 @@ export class EncodingService {
     }
   }
 
+  destroy(): void {
+    this.#modules = null;
+  }
+
   #encodeData(data: unknown): Buffer | string {
-    return this.#encodingType === "json"
-      ? JSON.stringify(data)
-      : erlpack.pack(data);
+    if (this.#encodingType === "json") {
+      return JSON.stringify(data);
+    }
+
+    if (!this.#modules?.erlpack) {
+      throw new Error("erlpack module not initialized");
+    }
+
+    return this.#modules.erlpack.pack(data);
   }
 
   #validatePayloadSize(data: Buffer | string): void {
@@ -54,24 +88,18 @@ export class EncodingService {
     }
   }
 
-  #processData(data: unknown): unknown {
-    if (!data || typeof data !== "object") {
-      return data;
-    }
+  async #createEncodingModules(): Promise<EncodingModules> {
+    const modules: EncodingModules = {};
 
-    if (Array.isArray(data)) {
-      return data.map((item) => this.#processData(item));
-    }
-
-    const processed: Record<string, unknown> = {};
-
-    for (const [key, value] of Object.entries(data)) {
-      if (this.#encodingType === "etf" && typeof key !== "string") {
-        throw new Error("ETF encoding requires string keys");
+    if (this.#encodingType === "etf") {
+      const erlpackModule = await OptionalDeps.import("erlpack");
+      if (erlpackModule) {
+        modules.erlpack = erlpackModule as typeof import("erlpack");
+      } else {
+        throw new Error("erlpack module required but not available");
       }
-      processed[key] = this.#processData(value);
     }
 
-    return processed;
+    return modules;
   }
 }

@@ -1,5 +1,6 @@
-import { Decompress } from "fzstd";
-import zlib from "zlib-sync";
+import { OptionalDeps } from "@nyxjs/utils";
+import type { Decompress } from "fzstd";
+import type { Inflate } from "zlib-sync";
 import type {
   CompressionOptions,
   CompressionType,
@@ -7,11 +8,17 @@ import type {
   ZstdCompressionOptions,
 } from "../options/index.js";
 
+interface CompressionModules {
+  zlib?: typeof import("zlib-sync");
+  zstd?: typeof import("fzstd");
+}
+
 const ZLIB_FLUSH = Buffer.from([0x00, 0x00, 0xff, 0xff]);
 
 export class CompressionService {
   #zstdStream: Decompress | null = null;
-  #zlibInflate: zlib.Inflate | null = null;
+  #zlibInflate: Inflate | null = null;
+  #modules: CompressionModules | null = null;
   #chunks: Uint8Array[] = [];
 
   readonly #options?: CompressionOptions;
@@ -20,7 +27,7 @@ export class CompressionService {
     this.#options = options;
   }
 
-  get compressionType(): CompressionType | undefined {
+  get type(): CompressionType | undefined {
     return this.#options?.compressionType;
   }
 
@@ -40,7 +47,7 @@ export class CompressionService {
     return options?.compressionType === "zstd-stream";
   }
 
-  initialize(): void {
+  async initialize(): Promise<void> {
     if (!this.#options) {
       return;
     }
@@ -48,6 +55,8 @@ export class CompressionService {
     this.destroy();
 
     try {
+      this.#modules = await this.#createCompressionService();
+
       if (this.isZlib(this.#options)) {
         this.#initializeZlib();
       } else if (this.isZstd(this.#options)) {
@@ -86,15 +95,16 @@ export class CompressionService {
   destroy(): void {
     this.#zlibInflate = null;
     this.#zstdStream = null;
+    this.#modules = null;
     this.#chunks = [];
   }
 
   #initializeZlib(): void {
-    if (!(this.#options && this.isZlib(this.#options))) {
-      throw new Error("Zlib compression options not available");
+    if (!(this.#options && this.isZlib(this.#options) && this.#modules?.zlib)) {
+      throw new Error("Zlib compression options or module not available");
     }
 
-    this.#zlibInflate = new zlib.Inflate({
+    this.#zlibInflate = new this.#modules.zlib.Inflate({
       chunkSize: this.#options.zlibChunkSize,
       windowBits: this.#options.zlibWindowBits,
     });
@@ -105,11 +115,14 @@ export class CompressionService {
   }
 
   #initializeZstd(): void {
-    if (!(this.#options && this.isZstd(this.#options))) {
-      throw new Error("Zstd compression options not available");
+    if (!(this.#options && this.isZstd(this.#options) && this.#modules?.zstd)) {
+      throw new Error("Zstd compression options or module not available");
     }
 
-    this.#zstdStream = new Decompress((chunk) => this.#chunks.push(chunk));
+    this.#zstdStream = new this.#modules.zstd.Decompress((chunk) =>
+      this.#chunks.push(chunk),
+    );
+
     if (!this.#zstdStream) {
       throw new Error("Failed to create Zstd decompressor");
     }
@@ -125,7 +138,7 @@ export class CompressionService {
       return Buffer.alloc(0);
     }
 
-    this.#zlibInflate.push(data, zlib.Z_SYNC_FLUSH);
+    this.#zlibInflate.push(data, this.#modules?.zlib?.Z_SYNC_FLUSH);
 
     if (this.#zlibInflate.err) {
       throw new Error("Zlib decompression failed");
@@ -159,5 +172,31 @@ export class CompressionService {
     }
 
     return Buffer.from(combined);
+  }
+
+  async #createCompressionService(): Promise<CompressionModules> {
+    const modules: CompressionModules = {};
+
+    if (this.#options?.compressionType === "zlib-stream") {
+      const zlibModule = await OptionalDeps.import("zlib-sync");
+      if (zlibModule) {
+        modules.zlib = zlibModule as typeof import("zlib-sync");
+      }
+    } else if (this.#options?.compressionType === "zstd-stream") {
+      const zstdModule = await OptionalDeps.import("fzstd");
+      if (zstdModule) {
+        modules.zstd = zstdModule as typeof import("fzstd");
+      }
+    }
+
+    if (this.isZlib(this.#options) && !modules.zlib) {
+      throw new Error("zlib-sync module required but not available");
+    }
+
+    if (this.isZstd(this.#options) && !modules.zstd) {
+      throw new Error("fzstd module required but not available");
+    }
+
+    return modules;
   }
 }

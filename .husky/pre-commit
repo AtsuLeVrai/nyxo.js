@@ -1,2 +1,2 @@
-pnpm run check
+pnpm install -r && pnpm update -r && pnpm run check
 git update-index --again

@@ -92,6 +92,8 @@ export class Gateway extends Emitron<GatewayEventHandlers> {
       const [gatewayInfo, guilds] = await Promise.all([
         this.#rest.gateway.getGatewayBot(),
         this.#rest.users.getCurrentUserGuilds(),
+        this.encoding.type === "etf" ? this.encoding.initialize() : null,
+        this.compression.type ? this.compression.initialize() : null,
       ]);
 
       await this.shard.spawn(
@@ -253,12 +255,11 @@ export class Gateway extends Emitron<GatewayEventHandlers> {
   #buildGatewayUrl(baseUrl: string): string {
     const params = new URLSearchParams({
       v: String(this.#options.version),
-      encoding: this.encoding.encodingType,
+      encoding: this.encoding.type,
     });
 
-    if (this.compression.compressionType) {
-      params.append("compress", this.compression.compressionType);
-      this.compression.initialize();
+    if (this.compression.type) {
+      params.append("compress", this.compression.type);
     }
 
     return `${baseUrl}?${params.toString()}`;
