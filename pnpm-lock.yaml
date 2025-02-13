@@ -338,9 +338,6 @@ importers:
       chalk:
         specifier: ^5.4.1
         version: 5.4.1
-      consola:
-        specifier: ^3.4.0
-        version: 3.4.0
       ora:
         specifier: ^8.2.0
         version: 8.2.0
@@ -1602,10 +1599,6 @@ packages:
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
-
-  consola@3.4.0:
-    resolution: {integrity: sha512-EiPU8G6dQG0GFHNR8ljnZFki/8a+cQwEQ+7wpxdChl02Q8HXlwEZWD5lqAF8vC2sEC3Tehr8hy7vErz88LHyUA==}
-    engines: {node: ^14.18.0 || >=16.10.0}
 
   cross-env@7.0.3:
     resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
@@ -3614,8 +3607,6 @@ snapshots:
     optional: true
 
   concat-map@0.0.1: {}
-
-  consola@3.4.0: {}
 
   cross-env@7.0.3:
     dependencies:
