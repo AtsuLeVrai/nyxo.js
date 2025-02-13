@@ -155,12 +155,16 @@ export const FileHandler = {
     try {
       switch (format) {
         case "png":
-          return await image.png({ quality, compressionLevel: 9 }).toBuffer();
+          return await image
+            .png({ quality, compressionLevel: 9, palette: true })
+            .toBuffer();
         case "jpeg":
         case "jpg":
           return await image.jpeg({ quality }).toBuffer();
         case "webp":
-          return await image.webp({ quality }).toBuffer();
+          return await image
+            .webp({ quality, lossless: quality === 100, effort: 6 })
+            .toBuffer();
         default:
           return null;
       }
@@ -183,7 +187,9 @@ export const FileHandler = {
         return buffer;
       }
 
-      const image = sharp(buffer);
+      const image = sharp(buffer, {
+        failOn: "warning",
+      });
       const metadata = await image.metadata();
 
       if (!(metadata.width && metadata.height)) {
@@ -207,7 +213,9 @@ export const FileHandler = {
       const newWidth = Math.floor(metadata.width * ratio);
       const newHeight = Math.floor(metadata.height * ratio);
 
-      return await image.resize(newWidth, newHeight).toBuffer();
+      const result = await image.resize(newWidth, newHeight).toBuffer();
+      image.destroy();
+      return result;
     } catch {
       return buffer;
     }
