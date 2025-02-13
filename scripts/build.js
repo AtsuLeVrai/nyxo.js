@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
-import { createConsola } from "consola";
+import chalk from "chalk";
+import ora from "ora";
 import { rollup } from "rollup";
 import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
@@ -13,7 +14,7 @@ import ts from "typescript";
  * @property {string} src - Source directory
  * @property {string} dist - Distribution directory
  * @property {string} temp - Temporary directory
- * @property {string} tsconfig - TypeScript utils path
+ * @property {string} tsconfig - TypeScript config path
  * @property {string} package - Package.json path
  */
 
@@ -24,21 +25,46 @@ import ts from "typescript";
  */
 
 /**
+ * Color configuration for logging
+ */
+const colors = {
+  primary: chalk.rgb(129, 140, 248),
+  secondary: chalk.rgb(167, 139, 250),
+  success: chalk.rgb(52, 211, 153),
+  error: chalk.rgb(248, 113, 113),
+  warning: chalk.rgb(251, 191, 36),
+  info: chalk.rgb(96, 165, 250),
+  highlight: chalk.rgb(244, 114, 182),
+};
+
+/**
+ * Logger implementation with colored output and debug support
+ */
+const logger = {
+  info: (message) => console.log(colors.info(message)),
+  success: (message) => console.log(colors.success(`✨ ${message}`)),
+  error: (message, error) => {
+    console.error(colors.error(`❌ ${message}`));
+    if (error?.stack) {
+      console.error(colors.error(error.stack));
+    }
+  },
+  warning: (message) => console.log(colors.warning(`! ${message}`)),
+  debug: (message, data) => {
+    if (process.env.DEBUG) {
+      console.log(colors.secondary(`🔍 ${message}`));
+      if (data) {
+        console.log(data);
+      }
+    }
+  },
+};
+
+/**
  * Regular expression to match Node.js built-in modules
  * @type {RegExp}
  */
 const NODE_MODULES_REGEX = /^node:/;
-
-/**
- * Consola logger instance
- * @type {import("consola").ConsolaInstance}
- */
-const logger = createConsola({
-  level: 20,
-  formatOptions: {
-    date: true,
-  },
-});
 
 /**
  * Build paths configuration
@@ -176,9 +202,12 @@ const apiExtractorConfig = {
  * @returns {Promise<void>}
  */
 async function clean() {
-  try {
-    logger.info("Cleaning build directories...");
+  const spinner = ora({
+    text: colors.info("Cleaning build directories..."),
+    spinner: "dots",
+  }).start();
 
+  try {
     await Promise.all([
       rm(paths.dist, { recursive: true, force: true }),
       rm(paths.temp, { recursive: true, force: true }),
@@ -191,100 +220,26 @@ async function clean() {
       mkdir(paths.temp, { recursive: true }),
     ]);
 
-    logger.success("Created fresh build directories");
+    spinner.succeed(colors.success("Created fresh build directories"));
   } catch (error) {
-    logger.error("Clean operation failed", error);
+    spinner.fail(colors.error("Clean operation failed"));
     throw new Error(`Clean failed: ${error.message}`);
   }
 }
 
 /**
- * Compile TypeScript types for development
- * @returns {void}
- */
-function compileDevTypes() {
-  try {
-    logger.info(
-      "Starting TypeScript declaration compilation for development...",
-    );
-
-    const configPath = ts.findConfigFile(
-      paths.root,
-      ts.sys.fileExists,
-      "tsconfig.json",
-    );
-    if (!configPath) {
-      throw new Error("Could not find tsconfig.json");
-    }
-
-    const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
-    if (error) {
-      throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
-    }
-
-    const parsedConfig = ts.parseJsonConfigFileContent(
-      config,
-      ts.sys,
-      paths.root,
-    );
-    const compilerOptions = {
-      ...parsedConfig.options,
-      declaration: true,
-      emitDeclarationOnly: true, // Only emit .d.ts files
-      declarationDir: paths.dist,
-      outDir: paths.dist,
-      noEmit: false,
-      sourceMap: true,
-    };
-
-    logger.debug("Creating TypeScript program...");
-    const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
-    const emitResult = program.emit();
-
-    const allDiagnostics = ts
-      .getPreEmitDiagnostics(program)
-      .concat(emitResult.diagnostics);
-    for (const diagnostic of allDiagnostics) {
-      if (diagnostic.file && diagnostic.start !== undefined) {
-        const { line, character } =
-          diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-        const message = ts.flattenDiagnosticMessageText(
-          diagnostic.messageText,
-          "\n",
-        );
-        logger.warn(
-          `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
-        );
-      } else {
-        logger.warn(
-          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
-        );
-      }
-    }
-
-    if (emitResult.emitSkipped) {
-      throw new Error("TypeScript declaration compilation failed");
-    }
-
-    logger.success("Development TypeScript declarations completed");
-  } catch (error) {
-    logger.error(
-      "Development TypeScript declaration compilation failed",
-      error,
-    );
-    throw new Error(`Types compilation failed: ${error.message}`);
-  }
-}
-
-/**
- * Compile TypeScript types for production using API Extractor
+ * Compile TypeScript types for both development and production
  * @returns {Promise<void>}
  */
-async function compileProdTypes() {
-  try {
-    logger.info("Generating production type declarations...");
+async function compileTypes() {
+  const spinner = ora({
+    text: colors.info(
+      `Generating ${isProduction ? "production" : "development"} type declarations...`,
+    ),
+    spinner: "dots",
+  }).start();
 
-    // First compile TS declarations to temp directory
+  try {
     const configPath = ts.findConfigFile(
       paths.root,
       ts.sys.fileExists,
@@ -308,50 +263,86 @@ async function compileProdTypes() {
       ...parsedConfig.options,
       declaration: true,
       emitDeclarationOnly: true,
-      declarationDir: paths.temp,
-      outDir: paths.temp,
+      declarationDir: isProduction ? paths.temp : paths.dist,
+      outDir: isProduction ? paths.temp : paths.dist,
       noEmit: false,
+      sourceMap: !isProduction,
     };
 
-    logger.debug("Compiling TypeScript declarations...");
+    logger.debug("Creating TypeScript program...");
     const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
     const emitResult = program.emit();
+
+    // Only show diagnostics in development mode
+    if (!isProduction) {
+      const allDiagnostics = ts
+        .getPreEmitDiagnostics(program)
+        .concat(emitResult.diagnostics);
+      for (const diagnostic of allDiagnostics) {
+        if (diagnostic.file && diagnostic.start !== undefined) {
+          const { line, character } =
+            diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+          const message = ts.flattenDiagnosticMessageText(
+            diagnostic.messageText,
+            "\n",
+          );
+          logger.warning(
+            `${diagnostic.file.fileName} (${line + 1},${
+              character + 1
+            }): ${message}`,
+          );
+        } else {
+          logger.warning(
+            ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+          );
+        }
+      }
+    }
 
     if (emitResult.emitSkipped) {
       throw new Error("TypeScript declaration compilation failed");
     }
 
-    // Then use API Extractor to bundle types
-    logger.debug("Bundling declarations with API Extractor...");
-    const extractorConfig = ExtractorConfig.prepare({
-      configObject: apiExtractorConfig,
-      configObjectFullPath: paths.root,
-      packageJsonFullPath: resolve(paths.root, "package.json"),
-    });
+    // Additional steps for production build
+    if (isProduction) {
+      logger.debug("Bundling declarations with API Extractor...");
+      const extractorConfig = ExtractorConfig.prepare({
+        configObject: apiExtractorConfig,
+        configObjectFullPath: paths.root,
+        packageJsonFullPath: resolve(paths.root, "package.json"),
+      });
 
-    const extractorResult = Extractor.invoke(extractorConfig, {
-      localBuild: true,
-      showVerboseMessages: false,
-      showDiagnostics: false,
-      typescriptCompilerFolder: resolve(
-        paths.root,
-        "node_modules",
-        "typescript",
-      ),
-    });
+      const extractorResult = Extractor.invoke(extractorConfig, {
+        localBuild: true,
+        showVerboseMessages: false,
+        showDiagnostics: false,
+        typescriptCompilerFolder: resolve(
+          paths.root,
+          "node_modules",
+          "typescript",
+        ),
+      });
 
-    if (!extractorResult.succeeded) {
-      throw new Error(
-        `API Extractor failed with ${extractorResult.errorCount} errors`,
-      );
+      if (!extractorResult.succeeded) {
+        throw new Error(
+          `API Extractor failed with ${extractorResult.errorCount} errors`,
+        );
+      }
+
+      await rm(paths.temp, { recursive: true, force: true });
     }
 
-    // Clean up temp directory
-    await rm(paths.temp, { recursive: true, force: true });
-
-    logger.success("Production type declarations completed");
+    spinner.succeed(
+      colors.success(
+        `${isProduction ? "Production" : "Development"} type declarations completed`,
+      ),
+    );
   } catch (error) {
-    logger.error("Production type declaration generation failed", error);
+    spinner.fail(
+      colors.error(
+        `${isProduction ? "Production" : "Development"} type declaration generation failed`,
+      ),
+    );
     throw new Error(`Type declaration generation failed: ${error.message}`);
   }
 }
@@ -361,9 +352,12 @@ async function compileProdTypes() {
  * @returns {Promise<void>}
  */
 async function buildBundles() {
-  try {
-    logger.info("Creating bundles with Rollup...");
+  const spinner = ora({
+    text: colors.info("Creating bundles with Rollup..."),
+    spinner: "dots",
+  }).start();
 
+  try {
     logger.debug("Building bundle...");
     const bundle = await rollup(rollupConfig);
 
@@ -378,9 +372,9 @@ async function buildBundles() {
     );
 
     await bundle.close();
-    logger.success("Bundle creation completed");
+    spinner.succeed(colors.success("Bundle creation completed"));
   } catch (error) {
-    logger.error("Bundle creation failed", error);
+    spinner.fail(colors.error("Bundle creation failed"));
     throw new Error(`Bundle creation failed: ${error.message}`);
   }
 }
@@ -395,7 +389,7 @@ async function checkBundleSize() {
   const sizeInMb = stats.size / (1024 * 1024);
 
   if (sizeInMb > 1) {
-    logger.warn(
+    logger.warning(
       `Declaration file size (${sizeInMb.toFixed(2)}MB) is unusually large!`,
     );
   }
@@ -411,18 +405,10 @@ async function build() {
   try {
     logger.info(`Starting build${isProduction ? " (production)" : ""}...`);
 
-    // Clean directories first
     await clean();
-
-    // Build bundles using Rollup
     await buildBundles();
 
-    // Handle types based on environment
-    if (isProduction) {
-      await compileProdTypes();
-    } else {
-      await compileDevTypes();
-    }
+    await compileTypes();
 
     await checkBundleSize();
 

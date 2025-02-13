@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import type { Config } from "@swc/core";
 import boxen from "boxen";
 import chalk from "chalk";
 import { execa } from "execa";
@@ -57,7 +58,6 @@ node_modules/
 # Build
 dist/
 build/
-.nyxjs/
 
 # Logs
 logs
@@ -102,8 +102,7 @@ async function createProjectStructure(
       "src/utils",
       options.projectStructure === "Advanced" && "src/modules",
       options.projectStructure === "Advanced" && "src/services",
-      "src/types",
-      ".nyxjs",
+      options.language === "Typescript" && "src/types",
     ]
       .filter(Boolean)
       .map(String);
@@ -137,35 +136,66 @@ async function generateConfigFiles(
       version: "1.0.0",
       type: "module",
       scripts: {
-        dev: "nyxjs dev",
-        build: "nyxjs build",
-        start: "nyxjs start",
+        ...(options.language === "Typescript"
+          ? {
+              dev: "tsx watch src/index.ts",
+              build:
+                "swc ./src -d dist --strip-leading-paths --config-file .swcrc",
+              start: "node dist/index.js",
+            }
+          : {
+              dev: "nodemon src/index.js",
+              start: "node src/index.js",
+            }),
       },
       dependencies: {
         "nyx.js": "latest",
         dotenv: "latest",
+        ...(options.language === "Javascript"
+          ? {
+              nodemon: "latest",
+            }
+          : {}),
       },
       devDependencies: {
         ...(options.language === "Typescript"
           ? {
               "@types/node": "latest",
               typescript: "latest",
+              "@swc/cli": "latest",
+              "@swc/core": "latest",
+              tsx: "latest",
             }
           : {}),
       },
     };
 
-    const configExtension = options.language === "Typescript" ? "ts" : "js";
-    const configImport =
-      options.language === "Typescript"
-        ? 'import { defineConfig } from "nyx.js";'
-        : 'const { defineConfig } = require("nyx.js");';
-    const configExport =
-      options.language === "Typescript" ? "export default" : "module.exports =";
-
-    const nyxConfig = `${configImport}
-
-${configExport} defineConfig();`;
+    const swcConfig: Config = {
+      jsc: {
+        target: "esnext",
+        parser: {
+          syntax: "typescript",
+          tsx: false,
+          decorators: true,
+        },
+        externalHelpers: true,
+        keepClassNames: true,
+        transform: {
+          legacyDecorator: false,
+          decoratorMetadata: true,
+          useDefineForClassFields: true,
+        },
+      },
+      module: {
+        type: "es6",
+        strict: true,
+        lazy: true,
+        importInterop: "swc",
+      },
+      sourceMaps: false,
+      exclude: ["node_modules", "dist", ".*.js$", ".*\\.d.ts$"],
+      minify: false,
+    };
 
     const tsConfig: TsConfigJson = {
       compilerOptions: {
@@ -192,15 +222,15 @@ ${configExport} defineConfig();`;
       JSON.stringify(packageJson, null, 2),
     );
 
-    await writeFile(
-      resolve(projectPath, `nyxjs.config.${configExtension}`),
-      nyxConfig,
-    );
-
     if (options.language === "Typescript") {
       await writeFile(
         resolve(projectPath, "tsconfig.json"),
         JSON.stringify(tsConfig, null, 2),
+      );
+
+      await writeFile(
+        resolve(projectPath, ".swcrc"),
+        JSON.stringify(swcConfig, null, 2),
       );
     }
 
@@ -224,7 +254,9 @@ ${configExport} defineConfig();`;
     );
 
     await writeFile(resolve(projectPath, ".env.example"), templates.envExample);
-    await writeFile(resolve(projectPath, ".gitignore"), templates.gitignore);
+    if (options.github) {
+      await writeFile(resolve(projectPath, ".gitignore"), templates.gitignore);
+    }
 
     const readmeContent = templates.readme
       .replace("{{projectName}}", options.name)
