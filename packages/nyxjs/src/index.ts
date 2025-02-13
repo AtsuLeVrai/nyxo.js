@@ -1,3 +1,4 @@
+export * from "@nyxjs/cli";
 export * from "@nyxjs/core";
 export * from "@nyxjs/gateway";
 export * from "@nyxjs/rest";

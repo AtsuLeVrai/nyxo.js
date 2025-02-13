@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import {
+  ApplicationCommandOptionType,
   Client,
   type CreateGlobalApplicationCommandSchema,
   GatewayIntentsBits,
@@ -137,6 +138,13 @@ const APPLICATION_COMMANDS: CreateGlobalApplicationCommandSchema[] = [
   {
     name: "ping",
     description: "Ping the bot",
+    options: [
+      {
+        type: ApplicationCommandOptionType.User,
+        name: "name",
+        description: "Your name",
+      },
+    ],
   },
 ];
 
@@ -167,7 +175,7 @@ client.on("interactionCreate", async (interaction) => {
 
   if (interaction.commandName === "ping") {
     await interaction.reply({
-      content: `Pong! ${interaction.member?.user.getMention()}`,
+      content: `Pong! ${interaction.getUserOption("name")}`,
     });
   }
 });

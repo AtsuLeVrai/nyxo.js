@@ -4,10 +4,6 @@
 <img src="../../public/nyxjs_banner.png" alt="Nyx.js Banner" width="6912" style="margin-top: 20px; border-radius: 8px;">
 </div>
 
-# ⚠️ Notice
-
-This package is not yet in development and is not currently planned for implementation.
-
 ## 📄 License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public

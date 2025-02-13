@@ -13,7 +13,7 @@ import ts from "typescript";
  * @property {string} src - Source directory
  * @property {string} dist - Distribution directory
  * @property {string} temp - Temporary directory
- * @property {string} tsconfig - TypeScript config path
+ * @property {string} tsconfig - TypeScript utils path
  * @property {string} package - Package.json path
  */
 
@@ -130,10 +130,6 @@ const rollupConfig = {
   plugins: [swc(swcConfig)],
 };
 
-/**
- * API Extractor configuration
- * @type {import('@microsoft/api-extractor').IConfigFile}
- */
 /**
  * API Extractor configuration
  * @type {import('@microsoft/api-extractor').IConfigFile}
