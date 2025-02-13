@@ -19,6 +19,8 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@microsoft/api-extractor": "^7.50.0",
+    "@rollup/plugin-commonjs": "28.0.2",
+    "@rollup/plugin-node-resolve": "16.0.0",
     "@swc/core": "^1.10.16",
     "chalk": "^5.4.1",
     "ora": "^8.2.0",

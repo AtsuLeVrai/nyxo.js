@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
+import commonjs from "@rollup/plugin-commonjs";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
 import ora from "ora";
 import { rollup } from "rollup";
@@ -153,7 +155,7 @@ const rollupConfig = {
       esModule: true,
     },
   ],
-  plugins: [swc(swcConfig)],
+  plugins: [nodeResolve(), commonjs(), swc(swcConfig)],
 };
 
 /**

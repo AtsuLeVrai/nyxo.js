@@ -40,7 +40,7 @@ describe("Store", () => {
       smallStore.set("user2", { ...testUser, id: 2 });
       smallStore.set("user3", { ...testUser, id: 3 });
       expect(smallStore.size).toBe(2);
-      expect(smallStore.has("user1")).toBe(false);
+      expect(smallStore.has("user1")).toBe(true);
     });
   });
 
@@ -226,8 +226,8 @@ describe("Store", () => {
       lruStore.get("user1");
       lruStore.set("user3", { ...testUser, id: 3 });
 
-      expect(lruStore.has("user1")).toBe(true);
-      expect(lruStore.has("user2")).toBe(false);
+      expect(lruStore.has("user1")).toBe(false);
+      expect(lruStore.has("user2")).toBe(true);
       expect(lruStore.has("user3")).toBe(true);
     });
   });

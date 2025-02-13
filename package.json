@@ -16,7 +16,6 @@
     "check": "turbo run check",
     "type-check": "turbo run type-check",
     "test": "vitest",
-    "test:packages": "vitest --project packages",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:bench": "vitest bench",

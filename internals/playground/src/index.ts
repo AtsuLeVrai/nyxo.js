@@ -180,12 +180,12 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-function shutdown(): void {
+async function shutdown(): Promise<void> {
   console.log("Shutdown in progress...");
 
   try {
     // Clean gateway disconnection
-    client.destroy();
+    await client.destroy();
     console.log("Shutdown completed");
     process.exit(0);
   } catch (error) {
