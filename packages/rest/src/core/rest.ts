@@ -2,11 +2,7 @@ import { Emitron } from "emitron";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError } from "../errors/index.js";
-import {
-  RateLimitManager,
-  RequestManager,
-  RetryManager,
-} from "../managers/index.js";
+import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
   ApplicationCommandRouter,
@@ -35,6 +31,7 @@ import {
   VoiceRouter,
   WebhookRouter,
 } from "../routes/index.js";
+import { HttpService } from "../services/index.js";
 import type {
   ApiRequestOptions,
   JsonErrorResponse,
@@ -43,7 +40,7 @@ import type {
 
 export class Rest extends Emitron<RestEventHandlers> {
   readonly #options: RestOptions;
-  readonly #request: RequestManager;
+  readonly #http: HttpService;
   readonly #rateLimiter: RateLimitManager;
   readonly #retry: RetryManager;
 
@@ -56,7 +53,7 @@ export class Rest extends Emitron<RestEventHandlers> {
       throw new Error(fromError(error).message);
     }
 
-    this.#request = new RequestManager(this, this.#options);
+    this.#http = new HttpService(this, this.#options);
     this.#rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
     this.#retry = new RetryManager(this, this.#options.retry);
   }
@@ -166,7 +163,7 @@ export class Rest extends Emitron<RestEventHandlers> {
       async () => {
         this.#rateLimiter.checkRateLimit(options.path, options.method);
 
-        const response = await this.#request.request<T>(options);
+        const response = await this.#http.request<T>(options);
 
         this.#rateLimiter.updateRateLimit(
           options.path,
@@ -238,7 +235,7 @@ export class Rest extends Emitron<RestEventHandlers> {
   }
 
   async destroy(): Promise<void> {
-    await this.#request.destroy();
+    await this.#http.destroy();
     this.#rateLimiter.destroy();
     this.clearAll();
   }

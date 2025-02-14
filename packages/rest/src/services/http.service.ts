@@ -5,13 +5,13 @@ import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import type { RestOptions } from "../options/index.js";
 import type {
   ApiRequestOptions,
+  HttpResponse,
   ParsedRequest,
-  RequestResponse,
 } from "../types/index.js";
 
 const PATH_REGEX = /^\/+/;
 
-export class RequestManager {
+export class HttpService {
   readonly #rest: Rest;
   readonly #options: RestOptions;
   readonly #pool: Pool;
@@ -33,7 +33,7 @@ export class RequestManager {
     });
   }
 
-  async request<T>(options: ApiRequestOptions): Promise<RequestResponse<T>> {
+  async request<T>(options: ApiRequestOptions): Promise<HttpResponse<T>> {
     const requestStart = Date.now();
     const requestId = crypto.randomUUID();
 
@@ -182,7 +182,7 @@ export class RequestManager {
   #processResponse<T>(
     response: Dispatcher.ResponseData,
     bodyContent: Buffer,
-  ): RequestResponse<T> {
+  ): HttpResponse<T> {
     const headers = HeaderHandler.parse(response.headers).headers;
     if (response.statusCode === 204) {
       return {

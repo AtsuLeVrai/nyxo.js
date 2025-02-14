@@ -49,7 +49,6 @@
     "@nyxjs/core": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
-    "@nyxjs/utils": "workspace:*",
     "emitron": "^1.0.0",
     "ws": "^8.18.0",
     "zod": "^3.24.2",

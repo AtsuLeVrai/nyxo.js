@@ -50,7 +50,6 @@
     "@nyxjs/gateway": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
-    "@nyxjs/utils": "workspace:*",
     "change-case": "^5.4.4",
     "emitron": "^1.0.0",
     "type-fest": "^4.34.1",

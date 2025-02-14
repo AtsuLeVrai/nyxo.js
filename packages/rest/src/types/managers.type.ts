@@ -10,26 +10,18 @@ export interface RateLimitBucket {
   sharedRoute?: string;
 }
 
-export interface RateLimitErrorContext {
-  method: string;
-  path: string;
-  scope: RateLimitScope;
-  retryAfter: number;
-  global?: boolean;
-  bucketHash?: string;
-  attempts?: number;
-}
-
-export interface RateLimitErrorJson {
-  name: string;
-  message: string;
-  code: number;
-  context: RateLimitErrorContext;
-}
-
 export interface RateLimitAttempt {
   count: number;
   lastAttempt: number;
   nextReset: number;
   scope: RateLimitScope;
+}
+
+export interface RetryAttempt {
+  error: Error;
+  attempt: number;
+  delay: number;
+  method: string;
+  path: string;
+  timestamp: number;
 }

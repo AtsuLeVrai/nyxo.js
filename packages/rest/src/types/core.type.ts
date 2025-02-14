@@ -1,18 +1,25 @@
 import type { Dispatcher } from "undici";
-import type { FileInput } from "./file.type.js";
-import type { RetryAttempt } from "./retry.type.js";
+import type { FileInput } from "./handlers.type.js";
+import type { RetryAttempt } from "./managers.type.js";
 
-export interface JsonErrorField {
-  code: string;
-  message: string;
-  path: string[];
+export type ImageSize = 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096;
+
+export interface BaseImageOptions {
+  size?: ImageSize;
 }
 
-/** @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json} */
-export interface JsonErrorResponse {
-  code: number;
-  message: string;
-  errors?: Record<string, { _errors: JsonErrorField[] }>;
+export interface ImageOptions extends BaseImageOptions {
+  format?: "png" | "jpeg" | "webp";
+}
+
+export interface AnimatedImageOptions extends BaseImageOptions {
+  format?: "png" | "jpeg" | "webp" | "gif";
+  animated?: boolean;
+}
+
+export interface StickerFormatOptions extends BaseImageOptions {
+  format?: "png" | "gif" | "json";
+  useMediaProxy?: boolean;
 }
 
 export interface ApiRequestOptions extends Dispatcher.RequestOptions {

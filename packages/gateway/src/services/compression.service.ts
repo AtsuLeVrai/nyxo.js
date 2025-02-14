@@ -1,4 +1,4 @@
-import { OptionalDeps } from "@nyxjs/utils";
+import { OptionalDeps } from "@nyxjs/core";
 import type { Decompress } from "fzstd";
 import type { Inflate } from "zlib-sync";
 import type {

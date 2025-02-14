@@ -1,4 +1,4 @@
-import { OptionalDeps } from "@nyxjs/utils";
+import { OptionalDeps } from "@nyxjs/core";
 import type { EncodingType } from "../options/index.js";
 import type { PayloadEntity } from "../types/index.js";
 

@@ -2,7 +2,6 @@ export * from "@nyxjs/core";
 export * from "@nyxjs/gateway";
 export * from "@nyxjs/rest";
 export * from "@nyxjs/store";
-export * from "@nyxjs/utils";
 
 export * from "./base/index.js";
 export * from "./builders/index.js";
