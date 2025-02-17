@@ -52,7 +52,7 @@
     "@nyxjs/store": "workspace:*",
     "change-case": "^5.4.4",
     "emitron": "^1.0.0",
-    "type-fest": "^4.34.1",
+    "type-fest": "^4.35.0",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
   },
@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/node": "^22.13.2",
+    "@types/node": "^22.13.4",
     "cross-env": "^7.0.3",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
