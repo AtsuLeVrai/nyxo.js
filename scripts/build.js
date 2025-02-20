@@ -5,73 +5,126 @@ import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import commonjs from "@rollup/plugin-commonjs";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
-import ora from "ora";
+import figures from "figures";
+import prettyBytes from "pretty-bytes";
 import { rollup } from "rollup";
 import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
-/**
- * @typedef {Object} BuildPaths
- * @property {string} root - Project root directory
- * @property {string} src - Source directory
- * @property {string} dist - Distribution directory
- * @property {string} temp - Temporary directory
- * @property {string} tsconfig - TypeScript config path
- * @property {string} package - Package.json path
- */
-
-/**
- * @typedef {Object} BuildOptions
- * @property {boolean} clean - Whether to clean directories before building
- * @property {boolean} production - Whether to build for production
- */
-
-/**
- * Color configuration for logging
- */
-const colors = {
-  primary: chalk.rgb(129, 140, 248),
+const theme = {
+  primary: chalk.rgb(147, 197, 253),
   secondary: chalk.rgb(167, 139, 250),
-  success: chalk.rgb(52, 211, 153),
-  error: chalk.rgb(248, 113, 113),
-  warning: chalk.rgb(251, 191, 36),
-  info: chalk.rgb(96, 165, 250),
-  highlight: chalk.rgb(244, 114, 182),
+  success: chalk.rgb(134, 239, 172),
+  error: chalk.rgb(252, 165, 165),
+  warning: chalk.rgb(253, 230, 138),
+  info: chalk.rgb(147, 197, 253),
+  highlight: chalk.rgb(196, 181, 253),
+  dim: chalk.rgb(209, 213, 219),
+  white: chalk.rgb(255, 255, 255),
+  time: chalk.rgb(147, 197, 253),
 };
 
-/**
- * Logger implementation with colored output and debug support
- */
-const logger = {
-  info: (message) => console.log(colors.info(message)),
-  success: (message) => console.log(colors.success(`✨ ${message}`)),
-  error: (message, error) => {
-    console.error(colors.error(`❌ ${message}`));
+const symbols = {
+  start: figures.pointer,
+  success: figures.tick,
+  error: figures.cross,
+  warning: figures.warning,
+  info: figures.info,
+  debug: figures.bullet,
+  pending: figures.circleDotted,
+  complete: figures.circleFilled,
+  dot: figures.dot,
+  step: figures.pointerSmall,
+};
+
+class Logger {
+  constructor() {
+    this.metrics = {
+      startTime: process.hrtime(),
+      steps: new Map(),
+    };
+  }
+
+  getTimestamp() {
+    const now = new Date();
+    return theme.dim(`[${now.toLocaleTimeString()}]`);
+  }
+
+  formatDuration(startTime) {
+    const [seconds, nanoseconds] = process.hrtime(startTime);
+    return `${(seconds + nanoseconds / 1e9).toFixed(2)}s`;
+  }
+
+  startStep(step) {
+    const startTime = process.hrtime();
+    this.metrics.steps.set(step, startTime[0] * 1e9 + startTime[1]);
+    console.log(
+      `${this.getTimestamp()} ${theme.info(symbols.start)} ${theme.primary(step)}`,
+    );
+  }
+
+  endStep(step) {
+    const startTimeNs = this.metrics.steps.get(step);
+    if (startTimeNs) {
+      const duration =
+        (process.hrtime.bigint() - BigInt(startTimeNs)) / BigInt(1e9);
+      console.log(
+        `${this.getTimestamp()} ${theme.success(symbols.success)} ${theme.success(
+          step,
+        )} ${theme.dim(`(${duration.toString()}s)`)}`,
+      );
+    }
+  }
+
+  info(message) {
+    console.log(
+      `${this.getTimestamp()} ${theme.info(symbols.info)} ${message}`,
+    );
+  }
+
+  success(message) {
+    console.log(
+      `${this.getTimestamp()} ${theme.success(symbols.success)} ${theme.success(message)}`,
+    );
+  }
+
+  error(message, error) {
+    console.error(
+      `${this.getTimestamp()} ${theme.error(symbols.error)} ${theme.error(message)}`,
+    );
     if (error?.stack) {
-      console.error(colors.error(error.stack));
+      console.error(theme.dim(error.stack));
     }
-  },
-  warning: (message) => console.log(colors.warning(`! ${message}`)),
-  debug: (message, data) => {
-    if (process.env.DEBUG) {
-      console.log(colors.secondary(`🔍 ${message}`));
-      if (data) {
-        console.log(data);
-      }
+  }
+
+  warning(message) {
+    console.log(
+      `${this.getTimestamp()} ${theme.warning(symbols.warning)} ${theme.warning(message)}`,
+    );
+  }
+
+  debug(message, data) {
+    console.log(
+      `${this.getTimestamp()} ${theme.secondary(symbols.debug)} ${theme.secondary(message)}`,
+    );
+    if (data) {
+      console.log(
+        typeof data === "string" ? data : JSON.stringify(data, null, 2),
+      );
     }
-  },
-};
+  }
 
-/**
- * Regular expression to match Node.js built-in modules
- * @type {RegExp}
- */
-const NODE_MODULES_REGEX = /^node:/;
+  showSummary() {
+    const totalDuration = this.formatDuration(this.metrics.startTime);
+    console.log(
+      `${this.getTimestamp()} ${theme.success("✨ Build completed")} ${theme.white("in")} ${theme.time(totalDuration)}`,
+    );
+    console.log(
+      `${this.getTimestamp()} ${theme.info("📦")} ${this.metrics.steps.size} steps completed successfully`,
+    );
+  }
+}
 
-/**
- * Build paths configuration
- * @type {BuildPaths}
- */
 const paths = {
   root: process.cwd(),
   src: resolve(process.cwd(), "src"),
@@ -82,29 +135,8 @@ const paths = {
 };
 
 const isProduction = process.env.NODE_ENV === "production";
+const logger = new Logger();
 
-/**
- * Get external dependencies from package.json
- * @returns {string[]} Array of external dependencies
- */
-function getExternals() {
-  logger.debug("Analyzing package dependencies...");
-
-  const pkg = JSON.parse(readFileSync(paths.package, "utf-8"));
-  const externals = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.peerDependencies || {}),
-    NODE_MODULES_REGEX,
-  ];
-
-  logger.debug(`Found ${externals.length - 1} external dependencies`);
-  return externals;
-}
-
-/**
- * SWC configuration for Rollup
- * @type {import('rollup-plugin-swc3').RollupSwcOptions}
- */
 const swcConfig = defineRollupSwcOption({
   jsc: {
     target: "esnext",
@@ -121,51 +153,90 @@ const swcConfig = defineRollupSwcOption({
       legacyDecorator: false,
       decoratorMetadata: true,
       useDefineForClassFields: true,
+      optimizer: {
+        simplify: true,
+        globals: {
+          vars: {
+            "process.env.NODE_ENV": isProduction
+              ? '"production"'
+              : '"development"',
+          },
+        },
+      },
     },
   },
   module: {
     type: "es6",
     strict: true,
-    lazy: true,
-    importInterop: "swc",
+    lazy: false,
+    importInterop: "node",
   },
   sourceMaps: !isProduction,
-  exclude: ["node_modules", "dist", ".*.js$", ".*\\.d.ts$"],
   minify: false,
 });
 
-/**
- * Rollup build configuration
- * @type {import('rollup').RollupOptions}
- */
-const rollupConfig = {
-  input: resolve(paths.src, "index.ts"),
-  external: getExternals(),
-  output: [
-    {
-      file: resolve(paths.dist, "index.mjs"),
-      format: "esm",
-      sourcemap: !isProduction,
-    },
-    {
-      file: resolve(paths.dist, "index.cjs"),
-      format: "cjs",
-      sourcemap: !isProduction,
-      interop: "auto",
-      esModule: true,
-    },
-  ],
-  plugins: [nodeResolve(), commonjs(), swc(swcConfig)],
-};
+function getRollupConfig() {
+  const pkg = JSON.parse(readFileSync(paths.package, "utf-8"));
+  logger.debug("Package dependencies analysis:", {
+    dependencies: pkg.dependencies || {},
+    peerDependencies: pkg.peerDependencies || {},
+  });
 
-/**
- * API Extractor configuration
- * @type {import('@microsoft/api-extractor').IConfigFile}
- */
+  const externals = [
+    ...Object.keys(pkg.dependencies || {}),
+    ...Object.keys(pkg.peerDependencies || {}),
+    /^node:/,
+  ];
+  logger.debug("Configured externals:", externals);
+
+  const config = {
+    input: resolve(paths.src, "index.ts"),
+    external: externals,
+    output: [
+      {
+        file: resolve(paths.dist, "index.mjs"),
+        format: "esm",
+        sourcemap: !isProduction,
+        interop: "auto",
+        esModule: true,
+        exports: "named",
+        generatedCode: {
+          constBindings: true,
+        },
+      },
+      {
+        file: resolve(paths.dist, "index.cjs"),
+        format: "cjs",
+        sourcemap: !isProduction,
+        interop: "auto",
+        esModule: true,
+        exports: "named",
+        generatedCode: {
+          constBindings: true,
+        },
+      },
+    ],
+    plugins: [
+      nodeResolve({
+        preferBuiltins: true,
+        extensions: [".ts", ".js", ".mjs", ".cjs", ".json"],
+      }),
+      commonjs({
+        include: /node_modules/,
+        extensions: [".js", ".cjs"],
+        ignoreTryCatch: true,
+        requireReturnsDefault: "preferred",
+      }),
+      swc(swcConfig),
+    ],
+  };
+  logger.debug("Rollup configuration:", config);
+  return config;
+}
+
 const apiExtractorConfig = {
   projectFolder: paths.root,
   mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
-  bundledPackages: [],
   compiler: {
     tsconfigFilePath: paths.tsconfig,
     overrideTsconfig: {
@@ -174,15 +245,14 @@ const apiExtractorConfig = {
         skipLibCheck: true,
         preserveSymlinks: true,
         isolatedModules: true,
+        strict: true,
+        exactOptionalPropertyTypes: true,
+        noUncheckedIndexedAccess: true,
       },
     },
   },
-  apiReport: {
-    enabled: false,
-  },
-  docModel: {
-    enabled: false,
-  },
+  apiReport: { enabled: false },
+  docModel: { enabled: false },
   dtsRollup: {
     enabled: true,
     untrimmedFilePath: resolve(paths.dist, "index.d.ts"),
@@ -190,7 +260,11 @@ const apiExtractorConfig = {
   },
   tsdocMetadata: { enabled: false },
   messages: {
-    compilerMessageReporting: { default: { logLevel: "warning" } },
+    compilerMessageReporting: {
+      default: { logLevel: "warning" },
+      TS2589: { logLevel: "none" },
+      TS2344: { logLevel: "none" },
+    },
     extractorMessageReporting: {
       default: { logLevel: "warning" },
       "ae-missing-release-tag": { logLevel: "none" },
@@ -199,47 +273,29 @@ const apiExtractorConfig = {
   },
 };
 
-/**
- * Clean build directories
- * @returns {Promise<void>}
- */
 async function clean() {
-  const spinner = ora({
-    text: colors.info("Cleaning build directories..."),
-    spinner: "dots",
-  }).start();
-
+  logger.startStep("Cleaning directories");
   try {
     await Promise.all([
       rm(paths.dist, { recursive: true, force: true }),
       rm(paths.temp, { recursive: true, force: true }),
     ]);
 
-    logger.debug("Removed old build files");
-
     await Promise.all([
       mkdir(paths.dist, { recursive: true }),
       mkdir(paths.temp, { recursive: true }),
     ]);
 
-    spinner.succeed(colors.success("Created fresh build directories"));
+    logger.endStep("Cleaning directories");
   } catch (error) {
-    spinner.fail(colors.error("Clean operation failed"));
-    throw new Error(`Clean failed: ${error.message}`);
+    throw new Error(`Cleaning failed: ${error.message}`);
   }
 }
 
-/**
- * Compile TypeScript types for both development and production
- * @returns {Promise<void>}
- */
 async function compileTypes() {
-  const spinner = ora({
-    text: colors.info(
-      `Generating ${isProduction ? "production" : "development"} type declarations...`,
-    ),
-    spinner: "dots",
-  }).start();
+  logger.startStep(
+    `Generating types ${isProduction ? "(production)" : "(development)"}`,
+  );
 
   try {
     const configPath = ts.findConfigFile(
@@ -261,7 +317,10 @@ async function compileTypes() {
       ts.sys,
       paths.root,
     );
-    const compilerOptions = {
+
+    logger.debug("TypeScript compiler options:", parsedConfig.options);
+
+    const program = ts.createProgram(parsedConfig.fileNames, {
       ...parsedConfig.options,
       declaration: true,
       emitDeclarationOnly: true,
@@ -269,18 +328,17 @@ async function compileTypes() {
       outDir: isProduction ? paths.temp : paths.dist,
       noEmit: false,
       sourceMap: !isProduction,
-    };
+    });
 
-    logger.debug("Creating TypeScript program...");
-    const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
+    logger.debug("TypeScript program files:", parsedConfig.fileNames);
+
     const emitResult = program.emit();
 
-    // Only show diagnostics in development mode
     if (!isProduction) {
-      const allDiagnostics = ts
+      const diagnostics = ts
         .getPreEmitDiagnostics(program)
         .concat(emitResult.diagnostics);
-      for (const diagnostic of allDiagnostics) {
+      for (const diagnostic of diagnostics) {
         if (diagnostic.file && diagnostic.start !== undefined) {
           const { line, character } =
             diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
@@ -289,13 +347,7 @@ async function compileTypes() {
             "\n",
           );
           logger.warning(
-            `${diagnostic.file.fileName} (${line + 1},${
-              character + 1
-            }): ${message}`,
-          );
-        } else {
-          logger.warning(
-            ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+            `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
           );
         }
       }
@@ -305,14 +357,14 @@ async function compileTypes() {
       throw new Error("TypeScript declaration compilation failed");
     }
 
-    // Additional steps for production build
     if (isProduction) {
-      logger.debug("Bundling declarations with API Extractor...");
       const extractorConfig = ExtractorConfig.prepare({
         configObject: apiExtractorConfig,
         configObjectFullPath: paths.root,
         packageJsonFullPath: resolve(paths.root, "package.json"),
       });
+
+      logger.debug("API Extractor configuration:", extractorConfig);
 
       const extractorResult = Extractor.invoke(extractorConfig, {
         localBuild: true,
@@ -333,99 +385,88 @@ async function compileTypes() {
     }
 
     await rm(paths.temp, { recursive: true, force: true });
-
-    spinner.succeed(
-      colors.success(
-        `${isProduction ? "Production" : "Development"} type declarations completed`,
-      ),
+    logger.endStep(
+      `Generating types ${isProduction ? "(production)" : "(development)"}`,
     );
   } catch (error) {
-    spinner.fail(
-      colors.error(
-        `${isProduction ? "Production" : "Development"} type declaration generation failed`,
-      ),
-    );
-    throw new Error(`Type declaration generation failed: ${error.message}`);
+    throw new Error(`Type generation failed: ${error.message}`);
   }
 }
 
-/**
- * Build bundles using Rollup
- * @returns {Promise<void>}
- */
 async function buildBundles() {
-  const spinner = ora({
-    text: colors.info("Creating bundles with Rollup..."),
-    spinner: "dots",
-  }).start();
-
+  logger.startStep("Building bundles");
   try {
-    logger.debug("Building bundle...");
+    const rollupConfig = getRollupConfig();
+    logger.debug("Starting Rollup build with config:", rollupConfig);
     const bundle = await rollup(rollupConfig);
 
-    logger.debug("Writing output files...");
     await Promise.all(
       rollupConfig.output.map(async (output) => {
         await bundle.write(output);
-        logger.debug(`Generated ${output.format.toUpperCase()} bundle`, {
+        const stats = await stat(output.file);
+        logger.info(
+          `Generated ${output.format.toUpperCase()} bundle: ${theme.highlight(prettyBytes(stats.size))}`,
+        );
+        logger.debug("Bundle details:", {
+          format: output.format,
           file: output.file,
+          size: prettyBytes(stats.size),
+          rawSize: stats.size,
         });
       }),
     );
 
     await bundle.close();
-    spinner.succeed(colors.success("Bundle creation completed"));
+    logger.endStep("Building bundles");
   } catch (error) {
-    spinner.fail(colors.error("Bundle creation failed"));
     throw new Error(`Bundle creation failed: ${error.message}`);
   }
 }
 
-/**
- * Check bundle size for unusually large declaration files
- * @returns {Promise<void>}
- */
 async function checkBundleSize() {
-  const dtsPath = resolve(paths.dist, "index.d.ts");
-  const stats = await stat(dtsPath);
-  const sizeInMb = stats.size / (1024 * 1024);
+  logger.startStep("Checking bundle sizes");
+  try {
+    const dtsPath = resolve(paths.dist, "index.d.ts");
+    const stats = await stat(dtsPath);
+    const sizeInMb = stats.size / (1024 * 1024);
 
-  if (sizeInMb > 1) {
-    logger.warning(
-      `Declaration file size (${sizeInMb.toFixed(2)}MB) is unusually large!`,
-    );
+    if (sizeInMb > 1) {
+      logger.warning(
+        `Declaration file (${prettyBytes(stats.size)}) is unusually large!`,
+      );
+    }
+
+    logger.endStep("Checking bundle sizes");
+  } catch (error) {
+    throw new Error(`Size check failed: ${error.message}`);
   }
 }
 
-/**
- * Main build function
- * @returns {Promise<void>}
- */
 async function build() {
-  const startTime = process.hrtime();
-
   try {
-    logger.info(`Starting build${isProduction ? " (production)" : ""}...`);
+    logger.info(
+      `Starting build ${isProduction ? "(production)" : "(development)"}...`,
+    );
 
     await clean();
     await buildBundles();
-
     await compileTypes();
-
     await checkBundleSize();
 
-    const [seconds] = process.hrtime(startTime);
-    logger.success(
-      `Build completed for ${isProduction ? "production" : "development"} mode in ${seconds}s`,
-    );
+    logger.showSummary();
   } catch (error) {
-    const [seconds] = process.hrtime(startTime);
-    logger.error(`Build failed after ${seconds}s:`, error);
+    logger.error(
+      "Build failed",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     process.exit(1);
   }
 }
 
 build().catch((error) => {
-  logger.error("Build failed:", error);
+  logger.error(
+    "Fatal build error:",
+    error instanceof Error ? error : new Error(String(error)),
+  );
   process.exit(1);
 });

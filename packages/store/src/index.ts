@@ -2,7 +2,7 @@ import { deepmerge } from "deepmerge-ts";
 import { get, unset } from "lodash-es";
 import { LRUCache } from "lru-cache";
 
-export type StorePredicate<K extends object | string | number | symbol, V> =
+export type StorePredicate<K extends string | number | symbol, V> =
   | ((value: V, key: K, map: Store<K, V>) => boolean)
   | Partial<V>;
 
@@ -12,12 +12,10 @@ export interface StoreOptions {
   evictionStrategy?: "fifo" | "lru";
 }
 
-export class Store<K extends object | string | number | symbol, V> extends Map<
-  K,
-  V
-> {
+export class Store<K extends string | number | symbol, V> extends Map<K, V> {
   readonly #ttlMap = new Map<K, number>();
-  readonly #lruCache?: LRUCache<K, number>;
+  readonly #lruCache: LRUCache<K, number> | null = null;
+
   readonly #options: Required<StoreOptions>;
 
   constructor(
