@@ -30,12 +30,11 @@ export const RoleEntity = z.object({
   id: Snowflake,
   name: z.string(),
   color: z.number().int(),
-  description: z.string().nullish(),
   hoist: z.boolean(),
   icon: z.string().nullish(),
   unicode_emoji: z.string().emoji().nullish(),
   position: z.number().int(),
-  permissions: z.string(),
+  permissions: z.string().regex(/^\d+$/), // Validate that permissions is a string of digits
   managed: z.boolean(),
   mentionable: z.boolean(),
   tags: RoleTagsEntity.optional(),

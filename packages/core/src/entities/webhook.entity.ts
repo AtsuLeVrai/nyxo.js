@@ -21,13 +21,13 @@ export const WebhookEntity = z.object({
   type: z.nativeEnum(WebhookType),
   guild_id: Snowflake.nullish(),
   channel_id: Snowflake.nullish(),
-  user: UserEntity.optional(),
-  name: z.string().nullable(),
-  avatar: z.string().nullable(),
+  user: UserEntity.nullish(),
+  name: z.string().nullish(),
+  avatar: z.string().nullish(),
   token: z.string().optional(),
   application_id: Snowflake.nullable(),
-  source_guild: GuildEntity.partial().optional(),
-  source_channel: AnyChannelEntity.optional(),
+  source_guild: GuildEntity.partial().nullish(),
+  source_channel: AnyChannelEntity.nullish(),
   url: z.string().url().optional(),
 });
 

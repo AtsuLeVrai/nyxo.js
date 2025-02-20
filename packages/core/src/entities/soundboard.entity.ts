@@ -6,7 +6,7 @@ import { UserEntity } from "./user.entity.js";
  * @see {@link https://discord.com/developers/docs/resources/soundboard#soundboard-sound-object-soundboard-sound-structure}
  */
 export const SoundboardSoundEntity = z.object({
-  name: z.string(),
+  name: z.string().min(2).max(32),
   sound_id: Snowflake,
   volume: z.number().min(0).max(1),
   emoji_id: Snowflake.nullable(),

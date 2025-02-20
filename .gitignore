@@ -36,7 +36,6 @@ testem.log
 lib-cov/
 
 # IDE and editors
-.idea/
 .project
 .classpath
 .c9/

@@ -31,6 +31,13 @@ export const SkuEntity = z.object({
   name: z.string(),
   slug: z.string(),
   flags: parseBitField<SkuFlags>(),
+  dependent_sku_id: Snowflake.nullable(),
+  manifest_labels: z.array(z.string()).nullable(),
+  access_type: z.number().optional(),
+  features: z.array(z.string()),
+  release_date: z.string().datetime().nullable(),
+  premium: z.boolean(),
+  show_age_gate: z.boolean(),
 });
 
 export type SkuEntity = z.infer<typeof SkuEntity>;

@@ -28,7 +28,7 @@ export const StickerEntity = z.object({
   pack_id: Snowflake.optional(),
   name: z.string(),
   description: z.string().nullable(),
-  tags: z.string(),
+  tags: z.string().max(200),
   type: z.nativeEnum(StickerType),
   format_type: z.nativeEnum(StickerFormatType),
   available: z.boolean().optional(),

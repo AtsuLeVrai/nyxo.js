@@ -39,6 +39,9 @@ export enum ConnectionService {
   Twitter = "twitter",
   Xbox = "xbox",
   YouTube = "youtube",
+  Bluesky = "bluesky",
+  Crunchyroll = "crunchyroll",
+  Mastodon = "mastodon",
 }
 
 /**
