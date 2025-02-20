@@ -14,8 +14,8 @@ const FILE_CONSTANTS = {
     FILE_PATH: /^[/.]|^[a-zA-Z]:\\/,
   },
   LIMITS: {
-    MAX_ASSET_SIZE: 256 * 1024, // 256KB
-    MAX_SIZE: 10 * 1024 * 1024, // 10MB
+    MAX_ASSET_SIZE: 256 * 1024,
+    MAX_SIZE: 10 * 1024 * 1024,
     MAX_FILES: 10,
   },
   IMAGE: {
@@ -32,14 +32,9 @@ const FILE_CONSTANTS = {
     FILENAME: "file" as const,
     CONTENT_TYPE: "application/octet-stream" as const,
   },
-  CONTEXTS: {
-    ATTACHMENT: "attachment" as const,
-    ASSET: "asset" as const,
-  },
 } as const;
 
 export const FileHandler = {
-  // Type guards
   isBuffer(input: unknown): input is Buffer {
     return Buffer.isBuffer(input);
   },
@@ -85,7 +80,6 @@ export const FileHandler = {
       : this.isValidSingleInput(input);
   },
 
-  // Buffer handling
   async readStreamToBuffer(stream: Readable): Promise<Buffer> {
     const chunks: Buffer[] = [];
     for await (const chunk of stream) {
@@ -122,7 +116,6 @@ export const FileHandler = {
     throw new Error("Invalid file input");
   },
 
-  // Data URI handling
   bufferToDataUri(buffer: Buffer, contentType: string): DataUri {
     return `data:${contentType};base64,${buffer.toString("base64")}` as DataUri;
   },
@@ -146,7 +139,6 @@ export const FileHandler = {
     return this.bufferToDataUri(buffer, contentType);
   },
 
-  // Image processing
   async compressImage(
     image: sharp.Sharp,
     format: string | undefined,
@@ -196,7 +188,6 @@ export const FileHandler = {
         throw new Error("Unable to get image dimensions");
       }
 
-      // Try compression first
       for (const quality of qualities) {
         const compressed = await this.compressImage(
           image,
@@ -208,7 +199,6 @@ export const FileHandler = {
         }
       }
 
-      // If compression not enough, resize
       const ratio = Math.sqrt(maxSize / buffer.length);
       const newWidth = Math.floor(metadata.width * ratio);
       const newHeight = Math.floor(metadata.height * ratio);
@@ -221,7 +211,6 @@ export const FileHandler = {
     }
   },
 
-  // File information
   getFilename(input: FileInput): string {
     if (typeof input === "string") {
       return this.isDataUri(input)
@@ -290,7 +279,6 @@ export const FileHandler = {
     }
   },
 
-  // Form data creation
   async createFormData(
     files: FileInput | FileInput[],
     body?: Dispatcher.RequestOptions["body"],

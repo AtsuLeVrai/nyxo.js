@@ -1,5 +1,5 @@
 import type { GatewayBotResponseEntity, Rest } from "@nyxjs/rest";
-import { Emitron } from "emitron";
+import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
@@ -28,7 +28,7 @@ import {
   type PayloadEntity,
 } from "../types/index.js";
 
-export class Gateway extends Emitron<GatewayEventHandlers> {
+export class Gateway extends EventEmitter<GatewayEventHandlers> {
   readonly heartbeat: HeartbeatManager;
   readonly shard: ShardManager;
   readonly compression: CompressionService;
@@ -223,7 +223,7 @@ export class Gateway extends Emitron<GatewayEventHandlers> {
         this.shard.destroy();
       }
 
-      this.clearAll();
+      this.removeAllListeners();
     } catch (error) {
       throw new Error("Failed to destroy gateway connection", {
         cause: error,

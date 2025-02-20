@@ -140,9 +140,9 @@ importers:
       '@nyxjs/store':
         specifier: workspace:*
         version: link:../store
-      emitron:
-        specifier: ^1.0.0
-        version: 1.0.0
+      eventemitter3:
+        specifier: 5.0.1
+        version: 5.0.1
       ws:
         specifier: ^8.18.0
         version: 8.18.0(bufferutil@4.0.9)
@@ -202,9 +202,9 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
-      emitron:
-        specifier: ^1.0.0
-        version: 1.0.0
+      eventemitter3:
+        specifier: 5.0.1
+        version: 5.0.1
       type-fest:
         specifier: ^4.35.0
         version: 4.35.0
@@ -252,9 +252,9 @@ importers:
       '@nyxjs/store':
         specifier: workspace:*
         version: link:../store
-      emitron:
-        specifier: ^1.0.0
-        version: 1.0.0
+      eventemitter3:
+        specifier: 5.0.1
+        version: 5.0.1
       file-type:
         specifier: ^20.1.0
         version: 20.1.0
@@ -1526,10 +1526,6 @@ packages:
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
 
-  emitron@1.0.0:
-    resolution: {integrity: sha512-nRyxmlCUItnGH25gtkCu8tJRq7Z+UkqN9lPcB2/0irbB/A2O+2ctqxlUT+hnFg5KxIyXnSe5yASNd5kzSJsUew==}
-    engines: {node: '>=22', pnpm: '>=10'}
-
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -1577,6 +1573,9 @@ packages:
 
   estree-walker@3.0.3:
     resolution: {integrity: sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==}
+
+  eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
 
   expect-type@1.1.0:
     resolution: {integrity: sha512-bFi65yM+xZgk+u/KRIpekdSYkTB5W1pEf0Lt8Q8Msh7b+eQ7LXVtIB1Bkm4fvclDEL1b2CZkMhv2mOeF8tMdkA==}
@@ -3288,8 +3287,6 @@ snapshots:
 
   eastasianwidth@0.2.0: {}
 
-  emitron@1.0.0: {}
-
   emoji-regex@8.0.0: {}
 
   emoji-regex@9.2.2: {}
@@ -3383,6 +3380,8 @@ snapshots:
   estree-walker@3.0.3:
     dependencies:
       '@types/estree': 1.0.6
+
+  eventemitter3@5.0.1: {}
 
   expect-type@1.1.0: {}
 

@@ -89,13 +89,10 @@ export class RetryManager {
       this.#options.maxDelay,
     );
 
-    const maxJitter = Math.min(
+    return Math.max(
       exponentialDelay * this.#options.jitter,
-      this.#options.maxJitter,
+      this.#options.minDelay,
     );
-    const jitter = Math.random() * maxJitter;
-
-    return Math.max(exponentialDelay + jitter, this.#options.minDelay);
   }
 
   #calculateBackoffDelay(attempt: number): number {

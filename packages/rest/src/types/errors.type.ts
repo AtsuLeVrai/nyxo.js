@@ -16,6 +16,7 @@ export interface RateLimitErrorContext {
   global?: boolean;
   bucketHash?: string;
   attempts?: number;
+  reason?: string;
 }
 
 export interface RateLimitErrorJson {

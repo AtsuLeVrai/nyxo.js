@@ -39,117 +39,99 @@ export interface CacheHitMiss {
 export interface ClientEventHandlers
   extends RestEventHandlers,
     GatewayEventHandlers {
-  cacheHit: (hit: CacheHitMiss) => void;
-  cacheMiss: (hit: CacheHitMiss) => void;
-  ready: (ready: Ready) => void;
-  resumed: (resumed: boolean) => void;
-  applicationCommandPermissionsUpdate: (
+  cacheHit: [hit: CacheHitMiss];
+  cacheMiss: [hit: CacheHitMiss];
+  ready: [ready: Ready];
+  resumed: [resumed: boolean];
+  applicationCommandPermissionsUpdate: [
     oldPermissions: unknown,
     newPermissions: unknown,
-  ) => void;
-  autoModerationRuleCreate: (rule: AutoModerationRule) => void;
-  autoModerationRuleUpdate: (
+  ];
+  autoModerationRuleCreate: [rule: AutoModerationRule];
+  autoModerationRuleUpdate: [
     oldRule: AutoModerationRule,
     newRule: AutoModerationRule,
-  ) => void;
-  autoModerationRuleDelete: (rule: AutoModerationRule) => void;
-  autoModerationActionExecution: (action: unknown) => void;
-  channelCreate: (channel: AnyChannel) => void;
-  channelUpdate: (oldChannel: AnyChannel, newChannel: AnyChannel) => void;
-  channelDelete: (channel: AnyChannel) => void;
-  channelPinsUpdate: (pins: ChannelPins) => void;
-  threadCreate: (thread: AnyThreadChannel) => void;
-  threadUpdate: (
-    oldThread: AnyThreadChannel,
-    newThread: AnyThreadChannel,
-  ) => void;
-  threadDelete: (thread: AnyThreadChannel) => void;
-  threadListSync: (sync: ThreadListSync) => void;
-  threadMemberUpdate: (
-    oldMember: ThreadMember,
-    newMember: ThreadMember,
-  ) => void;
-  threadMembersUpdate: (update: unknown) => void;
-  entitlementCreate: (entitlement: Entitlement) => void;
-  entitlementUpdate: (
-    oldEntitlement: Entitlement,
-    newEntitlement: Entitlement,
-  ) => void;
-  entitlementDelete: (entitlement: Entitlement) => void;
-  guildCreate: (guild: Guild | UnavailableGuild) => void;
-  guildUpdate: (oldGuild: Guild, newGuild: Guild) => void;
-  guildDelete: (guild: Guild) => void;
-  guildAuditLogEntryCreate: (entry: unknown) => void;
-  guildBanAdd: (ban: Ban) => void;
-  guildBanRemove: (ban: Ban) => void;
-  guildEmojisUpdate: (oldEmojis: Emoji, newEmojis: Emoji) => void;
-  guildStickersUpdate: (oldStickers: Sticker, newStickers: Sticker) => void;
-  guildIntegrationsUpdate: (
+  ];
+  autoModerationRuleDelete: [rule: AutoModerationRule];
+  autoModerationActionExecution: [action: unknown];
+  channelCreate: [channel: AnyChannel];
+  channelUpdate: [oldChannel: AnyChannel, newChannel: AnyChannel];
+  channelDelete: [channel: AnyChannel];
+  channelPinsUpdate: [pins: ChannelPins];
+  threadCreate: [thread: AnyThreadChannel];
+  threadUpdate: [oldThread: AnyThreadChannel, newThread: AnyThreadChannel];
+  threadDelete: [thread: AnyThreadChannel];
+  threadListSync: [sync: ThreadListSync];
+  threadMemberUpdate: [oldMember: ThreadMember, newMember: ThreadMember];
+  threadMembersUpdate: [update: unknown];
+  entitlementCreate: [entitlement: Entitlement];
+  entitlementUpdate: [oldEntitlement: Entitlement, newEntitlement: Entitlement];
+  entitlementDelete: [entitlement: Entitlement];
+  guildCreate: [guild: Guild | UnavailableGuild];
+  guildUpdate: [oldGuild: Guild, newGuild: Guild];
+  guildDelete: [guild: Guild];
+  guildAuditLogEntryCreate: [entry: unknown];
+  guildBanAdd: [ban: Ban];
+  guildBanRemove: [ban: Ban];
+  guildEmojisUpdate: [oldEmojis: Emoji, newEmojis: Emoji];
+  guildStickersUpdate: [oldStickers: Sticker, newStickers: Sticker];
+  guildIntegrationsUpdate: [
     oldIntegrations: Integration,
     newIntegrations: Integration,
-  ) => void;
-  guildMemberAdd: (member: GuildMember) => void;
-  guildMemberRemove: (member: GuildMember) => void;
-  guildMemberUpdate: (oldMember: GuildMember, newMember: GuildMember) => void;
-  guildMembersChunk: (chunk: unknown) => void;
-  guildRoleCreate: (role: Role) => void;
-  guildRoleUpdate: (oldRole: Role, newRole: Role) => void;
-  guildRoleDelete: (role: Role) => void;
-  guildScheduledEventCreate: (event: GuildScheduledEvent) => void;
-  guildScheduledEventUpdate: (
+  ];
+  guildMemberAdd: [member: GuildMember];
+  guildMemberRemove: [member: GuildMember];
+  guildMemberUpdate: [oldMember: GuildMember, newMember: GuildMember];
+  guildMembersChunk: [chunk: unknown];
+  guildRoleCreate: [role: Role];
+  guildRoleUpdate: [oldRole: Role, newRole: Role];
+  guildRoleDelete: [role: Role];
+  guildScheduledEventCreate: [event: GuildScheduledEvent];
+  guildScheduledEventUpdate: [
     oldEvent: GuildScheduledEvent,
     newEvent: GuildScheduledEvent,
-  ) => void;
-  guildScheduledEventDelete: (event: GuildScheduledEvent) => void;
-  guildScheduledEventUserAdd: (user: GuildScheduledEventUser) => void;
-  guildScheduledEventUserRemove: (user: GuildScheduledEventUser) => void;
-  guildSoundboardSoundCreate: (sound: SoundboardSound) => void;
-  guildSoundboardSoundUpdate: (
+  ];
+  guildScheduledEventDelete: [event: GuildScheduledEvent];
+  guildScheduledEventUserAdd: [user: GuildScheduledEventUser];
+  guildScheduledEventUserRemove: [user: GuildScheduledEventUser];
+  guildSoundboardSoundCreate: [sound: SoundboardSound];
+  guildSoundboardSoundUpdate: [
     oldSound: SoundboardSound,
     newSound: SoundboardSound,
-  ) => void;
-  guildSoundboardSoundDelete: (sound: SoundboardSound) => void;
-  guildSoundboardSoundsUpdate: (update: unknown) => void;
-  soundboardSounds: (sounds: unknown) => void;
-  integrationCreate: (integration: Integration) => void;
-  integrationUpdate: (
-    oldIntegration: Integration,
-    newIntegration: Integration,
-  ) => void;
-  integrationDelete: (integration: Integration) => void;
-  inviteCreate: (invite: Invite) => void;
-  inviteDelete: (invite: Invite) => void;
-  messageCreate: (message: Message) => void;
-  messageUpdate: (oldMessage: Message, newMessage: Message) => void;
-  messageDelete: (message: Message) => void;
-  messageDeleteBulk: (messages: unknown) => void;
-  messageReactionAdd: (reaction: unknown) => void;
-  messageReactionRemove: (reaction: unknown) => void;
-  messageReactionRemoveAll: (reactions: unknown) => void;
-  messageReactionRemoveEmoji: (reaction: unknown) => void;
-  presenceUpdate: (
-    oldPresence: PresenceEntity,
-    newPresence: PresenceEntity,
-  ) => void;
-  typingStart: (typing: Typing) => void;
-  userUpdate: (oldUser: User, newUser: User) => void;
-  voiceChannelEffectSend: (effect: unknown) => void;
-  voiceStateUpdate: (oldState: VoiceState, newState: VoiceState) => void;
-  voiceServerUpdate: (update: VoiceServer) => void;
-  webhooksUpdate: (webhooks: unknown) => void;
-  interactionCreate: (interaction: Interaction) => void;
-  stageInstanceCreate: (instance: StageInstance) => void;
-  stageInstanceUpdate: (
-    oldInstance: StageInstance,
-    newInstance: StageInstance,
-  ) => void;
-  stageInstanceDelete: (instance: StageInstance) => void;
-  subscriptionCreate: (subscription: Subscription) => void;
-  subscriptionUpdate: (
+  ];
+  guildSoundboardSoundDelete: [sound: SoundboardSound];
+  guildSoundboardSoundsUpdate: [update: unknown];
+  soundboardSounds: [sounds: unknown];
+  integrationCreate: [integration: Integration];
+  integrationUpdate: [oldIntegration: Integration, newIntegration: Integration];
+  integrationDelete: [integration: Integration];
+  inviteCreate: [invite: Invite];
+  inviteDelete: [invite: Invite];
+  messageCreate: [message: Message];
+  messageUpdate: [oldMessage: Message, newMessage: Message];
+  messageDelete: [message: Message];
+  messageDeleteBulk: [messages: unknown];
+  messageReactionAdd: [reaction: unknown];
+  messageReactionRemove: [reaction: unknown];
+  messageReactionRemoveAll: [reactions: unknown];
+  messageReactionRemoveEmoji: [reaction: unknown];
+  presenceUpdate: [oldPresence: PresenceEntity, newPresence: PresenceEntity];
+  typingStart: [typing: Typing];
+  userUpdate: [oldUser: User, newUser: User];
+  voiceChannelEffectSend: [effect: unknown];
+  voiceStateUpdate: [oldState: VoiceState, newState: VoiceState];
+  voiceServerUpdate: [update: VoiceServer];
+  webhooksUpdate: [webhooks: unknown];
+  interactionCreate: [interaction: Interaction];
+  stageInstanceCreate: [instance: StageInstance];
+  stageInstanceUpdate: [oldInstance: StageInstance, newInstance: StageInstance];
+  stageInstanceDelete: [instance: StageInstance];
+  subscriptionCreate: [subscription: Subscription];
+  subscriptionUpdate: [
     oldSubscription: Subscription,
     newSubscription: Subscription,
-  ) => void;
-  subscriptionDelete: (subscription: Subscription) => void;
-  messagePollVoteAdd: (vote: unknown) => void;
-  messagePollVoteRemove: (vote: unknown) => void;
+  ];
+  subscriptionDelete: [subscription: Subscription];
+  messagePollVoteAdd: [vote: unknown];
+  messagePollVoteRemove: [vote: unknown];
 }

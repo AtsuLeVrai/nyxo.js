@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-const COMPRESSION_CONSTANTS = {
-  ZLIB_CHUNK_SIZE: 128 * 1024,
-  ZLIB_WINDOW_BITS: 15,
-} as const;
-
 export const CompressionType = z.enum(["zlib-stream", "zstd-stream"]);
 export type CompressionType = z.infer<typeof CompressionType>;
 
@@ -14,11 +9,8 @@ export const ZlibCompressionOptions = z
     zlibChunkSize: z
       .number()
       .positive()
-      .default(COMPRESSION_CONSTANTS.ZLIB_CHUNK_SIZE),
-    zlibWindowBits: z
-      .number()
-      .positive()
-      .default(COMPRESSION_CONSTANTS.ZLIB_WINDOW_BITS),
+      .default(128 * 1024),
+    zlibWindowBits: z.number().positive().default(15),
   })
   .strict();
 

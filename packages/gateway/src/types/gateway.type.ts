@@ -188,19 +188,19 @@ export interface PayloadEntity {
 }
 
 export interface GatewayEventHandlers {
-  sessionState: (session: SessionState) => void;
-  sessionClose: (session: SessionClose) => void;
-  sessionInvalid: (session: SessionInvalid) => void;
-  healthStatus: (health: HealthStatus) => void;
-  shardSpawn: (stats: ShardStats) => void;
-  shardDestroy: (stats: ShardStats) => void;
-  shardReady: (data: ShardReady) => void;
-  shardDisconnect: (data: ShardDisconnect) => void;
-  shardReconnect: (data: ShardReconnect) => void;
-  shardResume: (data: ShardResume) => void;
-  shardRateLimit: (data: ShardRateLimit) => void;
-  debug: (message: string, context?: Record<string, unknown>) => void;
-  error: (message: string | Error, context?: Record<string, unknown>) => void;
+  sessionState: [session: SessionState];
+  sessionClose: [session: SessionClose];
+  sessionInvalid: [session: SessionInvalid];
+  healthStatus: [health: HealthStatus];
+  shardSpawn: [stats: ShardStats];
+  shardDestroy: [stats: ShardStats];
+  shardReady: [data: ShardReady];
+  shardDisconnect: [data: ShardDisconnect];
+  shardReconnect: [data: ShardReconnect];
+  shardResume: [data: ShardResume];
+  shardRateLimit: [data: ShardRateLimit];
+  debug: [message: string, context?: Record<string, unknown>];
+  error: [message: string | Error, context?: Record<string, unknown>];
   dispatch: <K extends keyof GatewayReceiveEvents>(
     event: K,
     data: GatewayReceiveEvents[K],

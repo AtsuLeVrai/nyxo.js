@@ -51,7 +51,7 @@
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
     "change-case": "^5.4.4",
-    "emitron": "^1.0.0",
+    "eventemitter3": "5.0.1",
     "type-fest": "^4.35.0",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"

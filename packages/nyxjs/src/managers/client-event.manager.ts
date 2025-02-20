@@ -422,10 +422,8 @@ export class ClientEventManager {
 
       if (eventName.includes("UPDATE")) {
         const oldData = this.#getFromCache(eventName);
-        // @ts-expect-error
         this.#client.emit(camelCaseEvent, oldData, transformedData);
       } else {
-        // @ts-expect-error
         this.#client.emit(camelCaseEvent, transformedData);
       }
     } catch (error) {

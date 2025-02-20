@@ -7,14 +7,7 @@ export interface RateLimitBucket {
   reset: number;
   resetAfter: number;
   scope: RateLimitScope;
-  sharedRoute?: string;
-}
-
-export interface RateLimitAttempt {
-  count: number;
-  lastAttempt: number;
-  nextReset: number;
-  scope: RateLimitScope;
+  isEmojiRoute?: boolean;
 }
 
 export interface RetryAttempt {

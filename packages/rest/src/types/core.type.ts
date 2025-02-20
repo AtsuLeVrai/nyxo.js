@@ -37,16 +37,12 @@ export interface ApiRequest {
 }
 
 export interface RestEventHandlers {
-  debug: (message: string, context?: Record<string, unknown>) => void;
-  error: (error: Error | string, context?: Record<string, unknown>) => void;
-  requestFinish: (request: ApiRequest) => void;
-  retryAttempt: (retry: RetryAttempt) => void;
-  rateLimitExceeded: (bucket: string, resetAfter: number) => void;
-  bucketExpired: (bucketHash: string) => void;
-  bucketCreated: (bucketHash: string, route: string) => void;
-  bucketUpdated: (
-    bucketHash: string,
-    remaining: number,
-    resetAfter: number,
-  ) => void;
+  debug: [message: string, context?: Record<string, unknown>];
+  error: [error: Error | string, context?: Record<string, unknown>];
+  requestFinish: [request: ApiRequest];
+  retryAttempt: [retry: RetryAttempt];
+  rateLimitExceeded: [resetAfter: number, bucket?: string];
+  bucketExpired: [bucketHash: string];
+  bucketCreated: [bucketHash: string, route: string];
+  bucketUpdated: [bucketHash: string, remaining: number, resetAfter: number];
 }

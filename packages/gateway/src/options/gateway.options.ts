@@ -8,13 +8,6 @@ import { HeartbeatOptions } from "./heartbeat.options.js";
 import { ReconnectionOptions } from "./reconnection.options.js";
 import { ShardOptions } from "./shard.options.js";
 
-const GATEWAY_DEFAULTS = {
-  LARGE_THRESHOLD: 50,
-  MIN_LARGE_THRESHOLD: 50,
-  MAX_LARGE_THRESHOLD: 250,
-  API_VERSION: ApiVersion.V10,
-} as const;
-
 export const EncodingType = z.enum(["json", "etf"]);
 export type EncodingType = z.infer<typeof EncodingType>;
 
@@ -27,14 +20,9 @@ export const GatewayOptions = z
       }),
       z.number().int().positive(),
     ]),
-    version: z.literal(ApiVersion.V10).default(GATEWAY_DEFAULTS.API_VERSION),
+    version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
     presence: UpdatePresenceEntity.optional(),
-    largeThreshold: z
-      .number()
-      .int()
-      .min(GATEWAY_DEFAULTS.MIN_LARGE_THRESHOLD)
-      .max(GATEWAY_DEFAULTS.MAX_LARGE_THRESHOLD)
-      .default(GATEWAY_DEFAULTS.LARGE_THRESHOLD),
+    largeThreshold: z.number().int().min(50).max(250).default(50),
     encodingType: EncodingType.default("json"),
     compression: CompressionOptions.optional(),
     health: HealthOptions.default({}),

@@ -1,4 +1,4 @@
-import { Emitron } from "emitron";
+import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError } from "../errors/index.js";
@@ -38,7 +38,7 @@ import type {
   RestEventHandlers,
 } from "../types/index.js";
 
-export class Rest extends Emitron<RestEventHandlers> {
+export class Rest extends EventEmitter<RestEventHandlers> {
   readonly #options: RestOptions;
   readonly #http: HttpService;
   readonly #rateLimiter: RateLimitManager;
@@ -237,6 +237,6 @@ export class Rest extends Emitron<RestEventHandlers> {
   async destroy(): Promise<void> {
     await this.#http.destroy();
     this.#rateLimiter.destroy();
-    this.clearAll();
+    this.removeAllListeners();
   }
 }

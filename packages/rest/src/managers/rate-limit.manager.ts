@@ -2,72 +2,94 @@ import { Store } from "@nyxjs/store";
 import type { Rest } from "../core/index.js";
 import { RateLimitError } from "../errors/index.js";
 import type { RateLimitOptions } from "../options/index.js";
-import type {
-  RateLimitAttempt,
-  RateLimitBucket,
-  RateLimitScope,
-} from "../types/index.js";
+import type { RateLimitBucket, RateLimitScope } from "../types/index.js";
 
-const RATE_LIMIT_CONSTANTS = {
-  HEADERS: {
-    LIMIT: "x-ratelimit-limit",
-    REMAINING: "x-ratelimit-remaining",
-    RESET: "x-ratelimit-reset",
-    RESET_AFTER: "x-ratelimit-reset-after",
-    BUCKET: "x-ratelimit-bucket",
-    SCOPE: "x-ratelimit-scope",
-    GLOBAL: "x-ratelimit-global",
-    RETRY_AFTER: "retry-after",
-  } as const,
-  ROUTES: {
-    PATTERNS: {
-      WEBHOOK: /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/,
-      EXEMPT: ["/interactions", "/webhooks"] as const,
-      MAJOR_PARAMETERS: new Map([
-        [/^\/guilds\/(\d+)/, "guild_id"],
-        [/^\/channels\/(\d+)/, "channel_id"],
-        [/^\/webhooks\/(\d+)/, "webhook_id"],
-      ]),
-      SHARED_BUCKETS: new Map([
-        [/^\/guilds\/\d+\/emojis/, "emoji"],
-        [/^\/channels\/\d+\/messages\/bulk-delete/, "bulk-delete"],
-        [/^\/guilds\/\d+\/channels/, "guild-channels"],
-        [/^\/guilds\/\d+\/members/, "guild-members"],
-      ]),
-    },
-  },
-  TIMING: {
-    DEFAULT_RETRY_DELAY: 1000,
-    MAX_RETRY_ATTEMPTS: 3,
-    SAFETY_MARGIN: 500,
-  },
+const WEBHOOK_REGEX = /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/;
+const EMOJI_REGEX = /^\/guilds\/(\d+)\/emojis/;
+const EXEMPT_ROUTES = new Set(["/interactions", "/webhooks"]);
+
+const HEADERS = {
+  limit: "x-ratelimit-limit",
+  remaining: "x-ratelimit-remaining",
+  reset: "x-ratelimit-reset",
+  resetAfter: "x-ratelimit-reset-after",
+  bucket: "x-ratelimit-bucket",
+  scope: "x-ratelimit-scope",
+  global: "x-ratelimit-global",
+  retryAfter: "retry-after",
 } as const;
+
+const GLOBAL_LIMIT = {
+  REQUESTS_PER_SECOND: 50,
+  INVALID_REQUESTS_LIMIT: 10_000,
+  INVALID_REQUESTS_WINDOW: 600_000,
+};
+
+interface InvalidRequestTracking {
+  count: number;
+  windowStart: number;
+}
 
 export class RateLimitManager {
   readonly #buckets = new Store<string, RateLimitBucket>();
   readonly #routeBuckets = new Store<string, string>();
-  readonly #sharedBuckets = new Store<string, Set<string>>();
-  readonly #attempts = new Store<string, RateLimitAttempt>();
-
-  readonly #options: RateLimitOptions;
   readonly #cleanupInterval: NodeJS.Timeout;
+  readonly #invalidRequests: InvalidRequestTracking = {
+    count: 0,
+    windowStart: Date.now(),
+  };
+
+  readonly #globalRequestTimes: number[] = [];
+
   readonly #rest: Rest;
+  readonly #options: RateLimitOptions;
 
   constructor(rest: Rest, options: RateLimitOptions) {
     this.#rest = rest;
     this.#options = options;
-    this.#cleanupInterval = this.#startCleanupInterval();
+    this.#cleanupInterval = setInterval(
+      () => this.#cleanupExpiredBuckets(),
+      this.#options.cleanupInterval,
+    );
   }
 
   checkRateLimit(path: string, method: string): void {
-    if (this.#isExemptRoute(path)) {
+    this.#checkGlobalRateLimit();
+
+    this.#checkInvalidRequestLimit();
+
+    if (EXEMPT_ROUTES.has(path)) {
       return;
     }
 
-    const bucket = this.#getBucket(path, method);
+    const routeKey = this.getRouteKey(method, path);
+    const bucketHash = this.#routeBuckets.get(routeKey);
+    if (!bucketHash) {
+      return;
+    }
+
+    const bucket = this.#buckets.get(bucketHash);
     if (bucket) {
+      if (this.#isEmojiRoute(path)) {
+        this.#checkEmojiBucketLimit(bucket, path, method);
+        return;
+      }
       this.#checkBucketLimit(bucket, path, method);
     }
+  }
+
+  getRouteKey(method: string, path: string): string {
+    const webhookMatch = path.match(WEBHOOK_REGEX);
+    if (webhookMatch) {
+      return `webhook:${webhookMatch[1]}:${webhookMatch[2]}:${method}`;
+    }
+
+    const emojiMatch = path.match(EMOJI_REGEX);
+    if (emojiMatch) {
+      return `emoji:${emojiMatch[1]}:${method}`;
+    }
+
+    return `${method}:${path}`;
   }
 
   updateRateLimit(
@@ -76,166 +98,162 @@ export class RateLimitManager {
     headers: Record<string, string>,
     statusCode: number,
   ): void {
-    if (this.#isExemptRoute(path)) {
+    this.#trackGlobalRequest();
+
+    if (this.#isInvalidStatus(statusCode)) {
+      this.#trackInvalidRequest();
+    }
+
+    if (EXEMPT_ROUTES.has(path)) {
       return;
     }
 
     const routeKey = this.getRouteKey(method, path);
 
     if (statusCode === 429) {
-      this.#handleRateLimitExceeded(path, method, headers, routeKey);
+      this.#handleRateLimitExceeded(path, method, headers);
       return;
     }
 
-    if (statusCode < 400) {
-      this.#attempts.delete(routeKey);
+    const bucketHash = headers[HEADERS.bucket];
+    if (!bucketHash) {
+      return;
     }
 
-    this.#updateBucketInfo(path, method, headers);
-  }
-
-  getRouteKey(method: string, path: string): string {
-    const webhookMatch = path.match(
-      RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS.WEBHOOK,
-    );
-    if (webhookMatch) {
-      return `webhook:${webhookMatch[1]}:${webhookMatch[2]}:${method}`;
-    }
-
-    for (const [pattern, identifier] of RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS
-      .SHARED_BUCKETS) {
-      if (pattern.test(path)) {
-        return `shared:${identifier}`;
-      }
-    }
-
-    const normalizedPath = this.#normalizePath(path);
-    return `${method}:${normalizedPath}`;
+    this.#updateBucket(bucketHash, headers, routeKey, path);
   }
 
   destroy(): void {
     clearInterval(this.#cleanupInterval);
     this.#buckets.clear();
     this.#routeBuckets.clear();
-    this.#sharedBuckets.clear();
-    this.#attempts.clear();
+    this.#globalRequestTimes.length = 0;
   }
 
-  #startCleanupInterval(): NodeJS.Timeout {
-    return setInterval(
-      () => this.#cleanupExpiredLimits(),
-      this.#options.cleanupInterval,
-    );
+  #isInvalidStatus(statusCode: number): boolean {
+    return statusCode === 401 || statusCode === 403 || statusCode === 429;
   }
 
-  #isExemptRoute(path: string): boolean {
-    return RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS.EXEMPT.some((route) =>
-      path.startsWith(route),
-    );
+  #trackInvalidRequest(): void {
+    const now = Date.now();
+    if (
+      now - this.#invalidRequests.windowStart >=
+      GLOBAL_LIMIT.INVALID_REQUESTS_WINDOW
+    ) {
+      this.#invalidRequests.count = 1;
+      this.#invalidRequests.windowStart = now;
+    } else {
+      this.#invalidRequests.count++;
+    }
+  }
+
+  #checkInvalidRequestLimit(): void {
+    const now = Date.now();
+    if (
+      now - this.#invalidRequests.windowStart <
+        GLOBAL_LIMIT.INVALID_REQUESTS_WINDOW &&
+      this.#invalidRequests.count >= GLOBAL_LIMIT.INVALID_REQUESTS_LIMIT
+    ) {
+      throw new RateLimitError({
+        method: "ANY",
+        path: "ANY",
+        retryAfter:
+          (this.#invalidRequests.windowStart +
+            GLOBAL_LIMIT.INVALID_REQUESTS_WINDOW -
+            now) /
+          1000,
+        scope: "global",
+        global: true,
+        reason: "Cloudflare invalid requests limit exceeded",
+      });
+    }
+  }
+
+  #trackGlobalRequest(): void {
+    const now = Date.now();
+    this.#globalRequestTimes.push(now);
+
+    while (
+      this.#globalRequestTimes.length > 0 &&
+      this.#globalRequestTimes[0] &&
+      this.#globalRequestTimes[0] < now - 1000
+    ) {
+      this.#globalRequestTimes.shift();
+    }
+  }
+
+  #checkGlobalRateLimit(): void {
+    if (this.#globalRequestTimes.length >= GLOBAL_LIMIT.REQUESTS_PER_SECOND) {
+      const oldestRequest = this.#globalRequestTimes[0];
+      if (!oldestRequest) {
+        return;
+      }
+
+      const now = Date.now();
+      const waitTime = 1000 - (now - oldestRequest);
+
+      if (waitTime > 0) {
+        throw new RateLimitError({
+          method: "ANY",
+          path: "ANY",
+          retryAfter: waitTime / 1000,
+          scope: "global",
+          global: true,
+          reason: "Global rate limit exceeded",
+        });
+      }
+    }
+  }
+
+  #isEmojiRoute(path: string): boolean {
+    return EMOJI_REGEX.test(path);
   }
 
   #handleRateLimitExceeded(
     path: string,
     method: string,
     headers: Record<string, string>,
-    routeKey: string,
   ): void {
-    const retryAfter = Number(
-      headers[RATE_LIMIT_CONSTANTS.HEADERS.RETRY_AFTER],
-    );
-    const scope =
-      (headers[RATE_LIMIT_CONSTANTS.HEADERS.SCOPE] as RateLimitScope) ?? "user";
-    const isGlobal = headers[RATE_LIMIT_CONSTANTS.HEADERS.GLOBAL] === "true";
-    const bucketHash = headers[RATE_LIMIT_CONSTANTS.HEADERS.BUCKET];
-    this.#rest.emit("rateLimitExceeded", bucketHash || routeKey, retryAfter);
+    const retryAfter = Number(headers[HEADERS.retryAfter]);
+    const scope = (headers[HEADERS.scope] as RateLimitScope) ?? "user";
+    const isGlobal = headers[HEADERS.global] === "true";
 
-    const attempt = this.#updateRateLimitAttempt(routeKey, retryAfter, scope);
-
-    const adjustedRetryAfter = this.#calculateAdjustedRetryAfter(
-      retryAfter,
-      attempt.count,
-    );
+    this.#rest.emit("rateLimitExceeded", retryAfter, headers[HEADERS.bucket]);
 
     throw new RateLimitError({
       method,
       path,
-      retryAfter: adjustedRetryAfter,
+      retryAfter,
       scope,
       global: isGlobal,
-      attempts: attempt.count,
     });
   }
 
-  #calculateAdjustedRetryAfter(baseDelay: number, attempts: number): number {
-    const backoffFactor = Math.min(2 ** (attempts - 1), 8);
-    return baseDelay * backoffFactor;
-  }
-
-  #updateRateLimitAttempt(
-    routeKey: string,
-    retryAfter: number,
-    scope: RateLimitScope,
-  ): RateLimitAttempt {
-    const now = Date.now();
-    const existing = this.#attempts.get(routeKey);
-    const attempt: RateLimitAttempt = {
-      count: (existing?.count ?? 0) + 1,
-      lastAttempt: now,
-      nextReset: now + retryAfter * 1000,
-      scope,
-    };
-
-    this.#attempts.set(routeKey, attempt);
-    return attempt;
-  }
-
-  #updateBucketInfo(
-    path: string,
-    method: string,
+  #updateBucket(
+    bucketHash: string,
     headers: Record<string, string>,
+    routeKey: string,
+    path: string,
   ): void {
-    const bucketHash = headers[RATE_LIMIT_CONSTANTS.HEADERS.BUCKET];
-    if (!bucketHash) {
-      return;
-    }
-
-    const existingBucket = this.#buckets.get(bucketHash);
     const bucket: RateLimitBucket = {
       hash: bucketHash,
-      limit: Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.LIMIT]),
-      remaining: Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.REMAINING]),
-      reset: Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.RESET]) * 1000,
-      resetAfter:
-        Number(headers[RATE_LIMIT_CONSTANTS.HEADERS.RESET_AFTER]) * 1000,
-      scope:
-        (headers[RATE_LIMIT_CONSTANTS.HEADERS.SCOPE] as RateLimitScope) ??
-        "user",
-      sharedRoute: this.#getSharedRoute(path),
+      limit: Number(headers[HEADERS.limit]),
+      remaining: Number(headers[HEADERS.remaining]),
+      reset: Number(headers[HEADERS.reset]) * 1000,
+      resetAfter: Number(headers[HEADERS.resetAfter]) * 1000,
+      scope: (headers[HEADERS.scope] as RateLimitScope) ?? "user",
+      isEmojiRoute: this.#isEmojiRoute(path),
     };
 
-    if (!existingBucket) {
-      this.#rest.emit(
-        "bucketCreated",
-        bucketHash,
-        this.getRouteKey(method, path),
-      );
-    } else if (
-      existingBucket.remaining !== bucket.remaining ||
-      existingBucket.resetAfter !== bucket.resetAfter
-    ) {
-      this.#rest.emit(
-        "bucketUpdated",
-        bucketHash,
-        bucket.remaining,
-        bucket.resetAfter,
-      );
-    }
-
     this.#buckets.set(bucketHash, bucket);
-    this.#routeBuckets.set(this.getRouteKey(method, path), bucketHash);
-    if (bucket.sharedRoute) {
-      this.#linkSharedBucket(bucket.sharedRoute, bucketHash);
-    }
+    this.#routeBuckets.set(routeKey, bucketHash);
+
+    this.#rest.emit(
+      "bucketUpdated",
+      bucketHash,
+      bucket.remaining,
+      bucket.resetAfter,
+    );
   }
 
   #checkBucketLimit(
@@ -244,13 +262,6 @@ export class RateLimitManager {
     method: string,
   ): void {
     const now = Date.now();
-
-    this.#rest.emit("debug", "Checking rate limit", {
-      bucket: bucket.hash,
-      remaining: bucket.remaining,
-      reset: bucket.reset,
-      now,
-    });
 
     if (bucket.remaining <= 0 && bucket.reset > now) {
       throw new RateLimitError({
@@ -262,90 +273,56 @@ export class RateLimitManager {
       });
     }
 
-    if (bucket.remaining === 1) {
-      const timeUntilReset = bucket.reset - now;
-      if (timeUntilReset < this.#options.safetyMargin) {
-        throw new RateLimitError({
-          method,
-          path,
-          retryAfter: this.#options.safetyMargin - timeUntilReset,
-          scope: bucket.scope,
-          bucketHash: bucket.hash,
-        });
-      }
+    if (
+      bucket.remaining === 1 &&
+      bucket.reset - now < this.#options.safetyMargin
+    ) {
+      throw new RateLimitError({
+        method,
+        path,
+        retryAfter: this.#options.safetyMargin,
+        scope: bucket.scope,
+        bucketHash: bucket.hash,
+      });
     }
   }
 
-  #getBucket(path: string, method: string): RateLimitBucket | undefined {
-    const routeKey = this.getRouteKey(method, path);
-    const bucketHash = this.#routeBuckets.get(routeKey);
-    return bucketHash ? this.#buckets.get(bucketHash) : undefined;
-  }
-
-  #normalizePath(path: string): string {
-    let normalizedPath = path;
-    for (const [regex, param] of RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS
-      .MAJOR_PARAMETERS) {
-      const match = path.match(regex);
-      if (match) {
-        normalizedPath = normalizedPath.replace(
-          match[1] as string,
-          `{${param}}`,
-        );
-      }
-    }
-    return normalizedPath;
-  }
-
-  #getSharedRoute(path: string): string | undefined {
-    for (const [pattern, identifier] of RATE_LIMIT_CONSTANTS.ROUTES.PATTERNS
-      .SHARED_BUCKETS) {
-      if (pattern.test(path)) {
-        return identifier;
-      }
-    }
-    return undefined;
-  }
-
-  #linkSharedBucket(sharedRoute: string, bucketHash: string): void {
-    const buckets = this.#sharedBuckets.get(sharedRoute) ?? new Set();
-    buckets.add(bucketHash);
-    this.#sharedBuckets.set(sharedRoute, buckets);
-  }
-
-  #cleanupExpiredLimits(): void {
+  // Gestion spéciale pour les routes d'emoji avec un rate limit plus strict
+  #checkEmojiBucketLimit(
+    bucket: RateLimitBucket,
+    path: string,
+    method: string,
+  ): void {
     const now = Date.now();
-    const activeHashes = new Set<string>();
 
+    // Pour les emojis, on est plus conservateur avec les limites
+    if (bucket.remaining <= 1 && bucket.reset > now) {
+      throw new RateLimitError({
+        method,
+        path,
+        retryAfter: bucket.reset - now,
+        scope: bucket.scope,
+        bucketHash: bucket.hash,
+        reason: "Emoji rate limit",
+      });
+    }
+  }
+
+  #cleanupExpiredBuckets(): void {
+    const now = Date.now();
+
+    // Nettoyage des buckets expirés
     for (const [hash, bucket] of this.#buckets.entries()) {
       if (bucket.reset < now) {
         this.#buckets.delete(hash);
         this.#rest.emit("bucketExpired", hash);
-      } else {
-        activeHashes.add(hash);
       }
     }
 
+    // Nettoyage des routes orphelines
     for (const [route, hash] of this.#routeBuckets.entries()) {
-      if (!activeHashes.has(hash)) {
+      if (!this.#buckets.has(hash)) {
         this.#routeBuckets.delete(route);
-      }
-    }
-
-    for (const [route, hashes] of this.#sharedBuckets.entries()) {
-      const validHashes = new Set(
-        [...hashes].filter((hash) => activeHashes.has(hash)),
-      );
-      if (validHashes.size === 0) {
-        this.#sharedBuckets.delete(route);
-      } else {
-        this.#sharedBuckets.set(route, validHashes);
-      }
-    }
-
-    for (const [route, attempt] of this.#attempts.entries()) {
-      if (attempt.nextReset < now) {
-        this.#attempts.delete(route);
       }
     }
   }
