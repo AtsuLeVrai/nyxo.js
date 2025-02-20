@@ -1,4 +1,4 @@
-import type { Rest } from "@nyxjs/rest";
+import type { GatewayBotResponseEntity, Rest } from "@nyxjs/rest";
 import { Emitron } from "emitron";
 import WebSocket from "ws";
 import type { z } from "zod";
@@ -89,24 +89,34 @@ export class Gateway extends Emitron<GatewayEventHandlers> {
   async connect(): Promise<void> {
     try {
       this.#connectStartTime = Date.now();
-      const [gatewayInfo, guilds] = await Promise.all([
-        this.#rest.gateway.getGatewayBot(),
-        this.#rest.users.getCurrentUserGuilds(),
-        this.encoding.type === "etf" ? this.encoding.initialize() : null,
-        this.compression.type ? this.compression.initialize() : null,
-      ]);
 
-      await this.shard.spawn(
-        guilds.length,
-        gatewayInfo.session_start_limit.max_concurrency,
-        gatewayInfo.shards,
-      );
+      const initializationPromises: [
+        Promise<GatewayBotResponseEntity>,
+        ...Promise<void>[],
+      ] = [this.#rest.gateway.getGatewayBot()];
+
+      if (this.encoding.type === "etf") {
+        initializationPromises.push(this.encoding.initialize());
+      }
+
+      if (this.compression.type) {
+        initializationPromises.push(this.compression.initialize());
+      }
+
+      const [gatewayInfo] = await Promise.all(initializationPromises);
+      if (this.shard.isEnabled()) {
+        const guilds = await this.#rest.users.getCurrentUserGuilds();
+
+        await this.shard.spawn(
+          guilds.length,
+          gatewayInfo.session_start_limit.max_concurrency,
+          gatewayInfo.shards,
+        );
+      }
 
       await this.initializeWebSocket(gatewayInfo.url);
     } catch (error) {
-      throw new Error("Failed to connect to gateway", {
-        cause: error,
-      });
+      throw new Error("Failed to connect to gateway", { cause: error });
     }
   }
 
@@ -154,32 +164,24 @@ export class Gateway extends Emitron<GatewayEventHandlers> {
   }
 
   async initializeWebSocket(url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const wsUrl = this.#buildGatewayUrl(url);
-        const ws = new WebSocket(wsUrl);
-        this.#ws = ws;
+    try {
+      const wsUrl = this.#buildGatewayUrl(url);
+      const ws = new WebSocket(wsUrl);
+      this.#ws = ws;
 
+      ws.on("message", this.#handleMessage.bind(this));
+      ws.on("close", this.#operationHandler.handleClose.bind(this));
+
+      await new Promise<void>((resolve, reject) => {
         ws.once("open", () => {
           this.emit("debug", `Connection established to ${wsUrl}`);
           resolve();
         });
-
-        ws.on("error", (error) => {
-          this.emit("error", error);
-          reject(error);
-        });
-
-        ws.on("message", this.#handleMessage.bind(this));
-        ws.on("close", this.#operationHandler.handleClose.bind(this));
-      } catch (error) {
-        reject(
-          new Error("Failed to initialize WebSocket", {
-            cause: error,
-          }),
-        );
-      }
-    });
+        ws.once("error", reject);
+      });
+    } catch (error) {
+      throw new Error("Failed to initialize WebSocket", { cause: error });
+    }
   }
 
   send<T extends keyof GatewaySendEvents>(

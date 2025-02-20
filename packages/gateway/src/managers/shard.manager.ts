@@ -363,20 +363,26 @@ export class ShardManager {
       ([a], [b]) => a - b,
     );
 
-    for (const [bucketId, bucketShardIds] of orderedBuckets) {
-      this.#gateway.emit(
-        "debug",
-        `Spawning bucket ${bucketId} with shards: ${bucketShardIds.join(", ")}`,
-      );
+    const chunkSize = this.maxConcurrency;
+    for (let i = 0; i < orderedBuckets.length; i += chunkSize) {
+      const chunk = orderedBuckets.slice(i, i + chunkSize);
 
       await Promise.all(
-        bucketShardIds.map((shardId) =>
-          this.#initializeShard(shardId, totalShards),
-        ),
+        chunk.map(async ([bucketId, bucketShardIds]) => {
+          this.#gateway.emit(
+            "debug",
+            `Spawning bucket ${bucketId} with shards: ${bucketShardIds.join(", ")}`,
+          );
+
+          await Promise.all(
+            bucketShardIds.map((shardId) =>
+              this.#initializeShard(shardId, totalShards),
+            ),
+          );
+        }),
       );
 
-      const isLastBucket = bucketId === orderedBuckets.at(-1)?.[0];
-      if (!isLastBucket) {
+      if (i + chunkSize < orderedBuckets.length) {
         await setTimeout(this.#options.spawnDelay);
       }
     }
