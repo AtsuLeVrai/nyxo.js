@@ -37,7 +37,6 @@ const client = new Client({
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
-  compressionType: "zstd-stream",
 });
 
 client.on("error", (...args) => {
@@ -60,16 +59,8 @@ client.on("rateLimitExceeded", (...args) => {
   console.log("[RATE LIMIT EXCEEDED]", ...args);
 });
 
-client.on("bucketExpired", (...args) => {
-  console.log("[BUCKET EXPIRED]", ...args);
-});
-
-client.on("bucketCreated", (...args) => {
-  console.log("[BUCKET CREATED]", ...args);
-});
-
-client.on("bucketUpdated", (...args) => {
-  console.log("[BUCKET UPDATED]", ...args);
+client.on("bucketUpdate", (...args) => {
+  console.log("[BUCKET UPDATE]", ...args);
 });
 
 // client.on("dispatch", (event, data) => {
