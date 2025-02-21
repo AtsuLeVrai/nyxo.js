@@ -9,7 +9,7 @@ on:
 
 env:
   FORCE_COLOR: true
-  PNPM_VERSION: $(node -p "require('./package.json').engines.pnpm || '10.3.0'")
+  PNPM_VERSION: 10.4.1
 
 jobs:
   cache-and-install:

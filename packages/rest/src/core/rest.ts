@@ -1,7 +1,7 @@
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { ApiError } from "../errors/index.js";
+import { ApiError, type JsonErrorResponse } from "../errors/index.js";
 import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
@@ -31,12 +31,8 @@ import {
   VoiceRouter,
   WebhookRouter,
 } from "../routes/index.js";
-import { HttpService } from "../services/index.js";
-import type {
-  ApiRequestOptions,
-  JsonErrorResponse,
-  RestEventHandlers,
-} from "../types/index.js";
+import { type ApiRequestOptions, HttpService } from "../services/index.js";
+import type { RestEventHandlers } from "../types/index.js";
 
 export class Rest extends EventEmitter<RestEventHandlers> {
   readonly #options: RestOptions;

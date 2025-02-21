@@ -15,8 +15,7 @@ import {
   WelcomeScreenChannelEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler } from "../handlers/index.js";
-import type { FileInput } from "../types/index.js";
+import { FileHandler, type FileInput } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}

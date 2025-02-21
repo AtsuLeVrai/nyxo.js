@@ -1,13 +1,29 @@
 import { type Dispatcher, Pool } from "undici";
 import type { Rest } from "../core/index.js";
 import { RequestError } from "../errors/index.js";
-import { FileHandler, HeaderHandler } from "../handlers/index.js";
+import {
+  FileHandler,
+  type FileInput,
+  HeaderHandler,
+} from "../handlers/index.js";
 import type { RestOptions } from "../options/index.js";
-import type {
-  ApiRequestOptions,
-  HttpResponse,
-  ParsedRequest,
-} from "../types/index.js";
+
+export interface HttpResponse<T = unknown> {
+  data: T;
+  statusCode: number;
+  headers: Record<string, string>;
+  duration: number;
+}
+
+export interface ParsedRequest {
+  url: URL;
+  options: Dispatcher.RequestOptions;
+}
+
+export interface ApiRequestOptions extends Dispatcher.RequestOptions {
+  files?: FileInput | FileInput[];
+  reason?: string;
+}
 
 const PATH_REGEX = /^\/+/;
 

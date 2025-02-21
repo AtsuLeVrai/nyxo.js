@@ -2,7 +2,18 @@ import { Store } from "@nyxjs/store";
 import type { Rest } from "../core/index.js";
 import { RateLimitError } from "../errors/index.js";
 import type { RateLimitOptions } from "../options/index.js";
-import type { RateLimitBucket, RateLimitScope } from "../types/index.js";
+
+export type RateLimitScope = "user" | "global" | "shared";
+
+export interface RateLimitBucket {
+  hash: string;
+  limit: number;
+  remaining: number;
+  reset: number;
+  resetAfter: number;
+  scope: RateLimitScope;
+  isEmojiRoute?: boolean;
+}
 
 const WEBHOOK_REGEX = /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/;
 const EMOJI_REGEX = /^\/guilds\/(\d+)\/emojis/;
@@ -248,12 +259,12 @@ export class RateLimitManager {
     this.#buckets.set(bucketHash, bucket);
     this.#routeBuckets.set(routeKey, bucketHash);
 
-    this.#rest.emit(
-      "bucketUpdated",
+    this.#rest.emit("bucketUpdate", {
+      type: "updated",
       bucketHash,
-      bucket.remaining,
-      bucket.resetAfter,
-    );
+      remaining: bucket.remaining,
+      resetAfter: bucket.resetAfter,
+    });
   }
 
   #checkBucketLimit(
@@ -287,7 +298,6 @@ export class RateLimitManager {
     }
   }
 
-  // Gestion spéciale pour les routes d'emoji avec un rate limit plus strict
   #checkEmojiBucketLimit(
     bucket: RateLimitBucket,
     path: string,
@@ -295,7 +305,6 @@ export class RateLimitManager {
   ): void {
     const now = Date.now();
 
-    // Pour les emojis, on est plus conservateur avec les limites
     if (bucket.remaining <= 1 && bucket.reset > now) {
       throw new RateLimitError({
         method,
@@ -311,15 +320,16 @@ export class RateLimitManager {
   #cleanupExpiredBuckets(): void {
     const now = Date.now();
 
-    // Nettoyage des buckets expirés
     for (const [hash, bucket] of this.#buckets.entries()) {
       if (bucket.reset < now) {
         this.#buckets.delete(hash);
-        this.#rest.emit("bucketExpired", hash);
+        this.#rest.emit("bucketUpdate", {
+          type: "expired",
+          bucketHash: hash,
+        });
       }
     }
 
-    // Nettoyage des routes orphelines
     for (const [route, hash] of this.#routeBuckets.entries()) {
       if (!this.#buckets.has(hash)) {
         this.#routeBuckets.delete(route);

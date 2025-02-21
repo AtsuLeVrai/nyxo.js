@@ -1,7 +1,6 @@
 import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler } from "../handlers/index.js";
-import type { FileInput } from "../types/index.js";
+import { FileHandler, type FileInput } from "../handlers/index.js";
 import { CreateMessageSchema } from "./message.schema.js";
 
 /**

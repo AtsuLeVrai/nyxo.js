@@ -6,33 +6,34 @@ import FormData from "form-data";
 import { lookup } from "mime-types";
 import sharp from "sharp";
 import type { Dispatcher } from "undici";
-import type { DataUri, FileInput, ProcessedFile } from "../types/index.js";
 
-const FILE_CONSTANTS = {
-  PATTERNS: {
-    DATA_URI: /^data:(.+);base64,(.+)$/,
-    FILE_PATH: /^[/.]|^[a-zA-Z]:\\/,
-  },
-  LIMITS: {
-    MAX_ASSET_SIZE: 256 * 1024,
-    MAX_SIZE: 10 * 1024 * 1024,
-    MAX_FILES: 10,
-  },
-  IMAGE: {
-    COMPRESSION_QUALITIES: [80, 60, 40] as const,
-    SUPPORTED_TYPES: new Set([
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-      "image/avif",
-    ]),
-  },
-  DEFAULTS: {
-    FILENAME: "file" as const,
-    CONTENT_TYPE: "application/octet-stream" as const,
-  },
-} as const;
+/** @see {@link https://developer.mozilla.org/docs/Web/HTTP/Basics_of_HTTP/Data_URLs} */
+export type DataUri = `data:${string};base64,${string}`;
+export type FileInput = string | Buffer | Readable | File | Blob | DataUri;
+
+export interface ProcessedFile {
+  buffer: Buffer;
+  filename: string;
+  contentType: string;
+  size: number;
+  dataUri: DataUri;
+}
+
+const DATA_URI = /^data:(.+);base64,(.+)$/;
+const FILE_PATH = /^[/.]|^[a-zA-Z]:\\/;
+const MAX_ASSET_SIZE = 256 * 1024;
+const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_FILES = 10;
+const DEFAULT_FILENAME = "file";
+const DEFAULT_CONTENT_TYPE = "application/octet-stream";
+const COMPRESSION_QUALITIES = new Set([80, 60, 40]);
+const SUPPORTED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
 
 export const FileHandler = {
   isBuffer(input: unknown): input is Buffer {
@@ -52,15 +53,11 @@ export const FileHandler = {
   },
 
   isDataUri(input: unknown): input is DataUri {
-    return (
-      typeof input === "string" && FILE_CONSTANTS.PATTERNS.DATA_URI.test(input)
-    );
+    return typeof input === "string" && DATA_URI.test(input);
   },
 
   isFilePath(input: unknown): input is string {
-    return (
-      typeof input === "string" && FILE_CONSTANTS.PATTERNS.FILE_PATH.test(input)
-    );
+    return typeof input === "string" && FILE_PATH.test(input);
   },
 
   isValidSingleInput(input: unknown): input is FileInput {
@@ -99,7 +96,7 @@ export const FileHandler = {
 
     if (typeof input === "string") {
       if (this.isDataUri(input)) {
-        const matches = input.match(FILE_CONSTANTS.PATTERNS.DATA_URI);
+        const matches = input.match(DATA_URI);
         if (!matches?.[2]) {
           throw new Error("Invalid data URI format");
         }
@@ -121,8 +118,8 @@ export const FileHandler = {
   },
 
   dataUriToContentType(dataUri: DataUri): string {
-    const matches = dataUri.match(FILE_CONSTANTS.PATTERNS.DATA_URI);
-    return matches?.[1] || FILE_CONSTANTS.DEFAULTS.CONTENT_TYPE;
+    const matches = dataUri.match(DATA_URI);
+    return matches?.[1] || DEFAULT_CONTENT_TYPE;
   },
 
   async toDataUri(input: FileInput): Promise<DataUri> {
@@ -169,13 +166,10 @@ export const FileHandler = {
     buffer: Buffer,
     maxSize: number,
     contentType: string,
-    qualities: readonly number[] = FILE_CONSTANTS.IMAGE.COMPRESSION_QUALITIES,
+    qualities: Set<number> = COMPRESSION_QUALITIES,
   ): Promise<Buffer> {
     try {
-      if (
-        buffer.length <= maxSize ||
-        !FILE_CONSTANTS.IMAGE.SUPPORTED_TYPES.has(contentType)
-      ) {
+      if (buffer.length <= maxSize || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
         return buffer;
       }
 
@@ -213,14 +207,12 @@ export const FileHandler = {
 
   getFilename(input: FileInput): string {
     if (typeof input === "string") {
-      return this.isDataUri(input)
-        ? FILE_CONSTANTS.DEFAULTS.FILENAME
-        : basename(input);
+      return this.isDataUri(input) ? DEFAULT_FILENAME : basename(input);
     }
     if (this.isFile(input)) {
       return input.name;
     }
-    return FILE_CONSTANTS.DEFAULTS.FILENAME;
+    return DEFAULT_FILENAME;
   },
 
   async getContentType(buffer: Buffer, filename: string): Promise<string> {
@@ -235,9 +227,9 @@ export const FileHandler = {
         return mimeType;
       }
 
-      return FILE_CONSTANTS.DEFAULTS.CONTENT_TYPE;
+      return DEFAULT_CONTENT_TYPE;
     } catch {
-      return FILE_CONSTANTS.DEFAULTS.CONTENT_TYPE;
+      return DEFAULT_CONTENT_TYPE;
     }
   },
 
@@ -251,10 +243,7 @@ export const FileHandler = {
 
     try {
       const buffer = await this.toBuffer(input);
-      const maxSize =
-        context === "asset"
-          ? FILE_CONSTANTS.LIMITS.MAX_ASSET_SIZE
-          : FILE_CONSTANTS.LIMITS.MAX_SIZE;
+      const maxSize = context === "asset" ? MAX_ASSET_SIZE : MAX_SIZE;
 
       const filename = this.getFilename(input);
       const contentType = await this.getContentType(buffer, filename);
@@ -285,9 +274,9 @@ export const FileHandler = {
   ): Promise<FormData> {
     const filesArray = Array.isArray(files) ? files : [files];
 
-    if (filesArray.length > FILE_CONSTANTS.LIMITS.MAX_FILES) {
+    if (filesArray.length > MAX_FILES) {
       throw new Error(
-        `Discord Error ${filesArray.length} files are too many. Max is ${FILE_CONSTANTS.LIMITS.MAX_FILES}`,
+        `Discord Error ${filesArray.length} files are too many. Max is ${MAX_FILES}`,
       );
     }
 

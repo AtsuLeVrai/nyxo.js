@@ -1,4 +1,10 @@
-import type { RequestErrorJson } from "../types/index.js";
+export interface RequestErrorJson {
+  name: string;
+  message: string;
+  statusCode: number;
+  path?: string;
+  method?: string;
+}
 
 export class RequestError extends Error {
   statusCode: number;

@@ -56,9 +56,7 @@ const REST_EVENTS: readonly (keyof RestEventHandlers)[] = [
   "requestFinish",
   "retryAttempt",
   "rateLimitExceeded",
-  "bucketExpired",
-  "bucketCreated",
-  "bucketUpdated",
+  "bucketUpdate",
 ];
 
 const GATEWAY_EVENTS: readonly (keyof GatewayEventHandlers)[] = [

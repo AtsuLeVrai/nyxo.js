@@ -1,4 +1,15 @@
-import type { JsonErrorField, JsonErrorResponse } from "../types/index.js";
+export interface JsonErrorField {
+  code: string;
+  message: string;
+  path: string[];
+}
+
+/** @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json} */
+export interface JsonErrorResponse {
+  code: number;
+  message: string;
+  errors?: Record<string, { _errors: JsonErrorField[] }>;
+}
 
 export class ApiError extends Error {
   readonly code: number;

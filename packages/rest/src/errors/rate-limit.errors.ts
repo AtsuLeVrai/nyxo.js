@@ -1,7 +1,22 @@
-import type {
-  RateLimitErrorContext,
-  RateLimitErrorJson,
-} from "../types/index.js";
+import type { RateLimitScope } from "../managers/index.js";
+
+export interface RateLimitErrorContext {
+  method: string;
+  path: string;
+  scope: RateLimitScope;
+  retryAfter: number;
+  global?: boolean;
+  bucketHash?: string;
+  attempts?: number;
+  reason?: string;
+}
+
+export interface RateLimitErrorJson {
+  name: string;
+  message: string;
+  code: number;
+  context: RateLimitErrorContext;
+}
 
 export class RateLimitError extends Error {
   readonly context: RateLimitErrorContext;
