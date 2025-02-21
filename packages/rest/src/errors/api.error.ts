@@ -1,40 +1,62 @@
+import { BaseApiError, type BaseApiErrorContext } from "../base/index.js";
+
 export interface JsonErrorField {
   code: string;
   message: string;
   path: string[];
 }
 
-/** @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#json} */
 export interface JsonErrorResponse {
   code: number;
   message: string;
   errors?: Record<string, { _errors: JsonErrorField[] }>;
 }
 
-export class ApiError extends Error {
+export interface ApiErrorJson {
+  name: string;
+  message: string;
+  context: BaseApiErrorContext & {
+    code: number;
+    errors?: Record<string, { _errors: JsonErrorField[] }>;
+  };
+}
+
+export class ApiError extends BaseApiError {
   readonly code: number;
-  readonly status: number;
-  readonly method: string;
-  readonly url: string;
   readonly errors?: Record<string, { _errors: JsonErrorField[] }>;
 
   constructor(
     error: JsonErrorResponse,
     status: number,
+    headers: Record<string, unknown>,
     method: string,
-    url: string,
+    path: string,
   ) {
-    super(error.message);
-    this.name = "ApiError";
+    super(error.message, {
+      statusCode: status,
+      method,
+      path,
+      headers,
+    });
     this.code = error.code;
-    this.status = status;
-    this.method = method;
-    this.url = url;
     this.errors = error.errors;
   }
 
+  toJson(): ApiErrorJson {
+    return {
+      name: this.name,
+      message: this.message,
+      context: {
+        ...this.context,
+        code: this.code,
+        errors: this.errors,
+      },
+    };
+  }
+
   override toString(): string {
-    const baseMessage = `${this.name}[${this.code}]: ${this.message} (${this.method} ${this.url})`;
+    const baseMessage = super.toString();
+
     if (!this.errors) {
       return baseMessage;
     }

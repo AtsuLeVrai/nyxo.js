@@ -1,49 +1,27 @@
 import { z } from "zod";
 
-export const RetryOnOptions = z
-  .object({
-    networkErrors: z.boolean().default(true),
-    timeouts: z.boolean().default(true),
-    rateLimits: z.boolean().default(true),
-  })
-  .strict()
-  .readonly();
-
 export const RetryOptions = z
   .object({
-    maxRetries: z.number().int().positive().default(3),
-    backoff: z.number().int().positive().default(2),
-    minDelay: z.number().int().positive().default(100),
-    maxDelay: z.number().int().positive().default(5000),
-    jitter: z.number().positive().min(0).max(1).default(Math.random()),
-    retryableStatusCodes: z
-      .array(z.number())
-      .default([408, 429, 500, 502, 503, 504]),
-    retryableErrors: z
+    maxRetries: z.number().int().min(0).default(5),
+    maxTimeout: z.number().int().min(0).default(30000),
+    minTimeout: z.number().int().min(0).default(500),
+    timeoutFactor: z.number().min(1).default(2),
+    retryAfter: z.boolean().default(true),
+    methods: z
+      .array(z.string())
+      .default(["GET", "PUT", "HEAD", "OPTIONS", "DELETE"]),
+    statusCodes: z.array(z.number()).default([429, 500, 502, 503, 504]),
+    errorCodes: z
       .array(z.string())
       .default([
         "ECONNRESET",
         "ECONNREFUSED",
-        "EPIPE",
         "ENOTFOUND",
-        "ETIMEDOUT",
-        "EAI_AGAIN",
-      ]),
-    nonRetryableStatusCodes: z.array(z.number()).default([401, 403, 404]),
-    nonRetryableErrors: z
-      .array(z.string())
-      .default(["ERR_INVALID_TOKEN", "ERR_INVALID_AUTH"]),
-    networkErrors: z
-      .array(z.string())
-      .default([
-        "ECONNRESET",
-        "ETIMEDOUT",
-        "ECONNREFUSED",
-        "EPIPE",
-        "ENOTFOUND",
+        "ENETDOWN",
         "ENETUNREACH",
+        "EHOSTDOWN",
+        "UND_ERR_SOCKET",
       ]),
-    retryOn: RetryOnOptions.default({}),
   })
   .strict()
   .readonly();

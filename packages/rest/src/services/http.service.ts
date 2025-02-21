@@ -1,6 +1,6 @@
 import { type Dispatcher, Pool } from "undici";
 import type { Rest } from "../core/index.js";
-import { RequestError } from "../errors/index.js";
+import { ApiError, type JsonErrorResponse } from "../errors/index.js";
 import {
   FileHandler,
   type FileInput,
@@ -59,42 +59,56 @@ export class HttpService {
       options,
     });
 
-    try {
-      const preparedRequest = await this.#prepareRequest(options);
+    const preparedRequest = await this.#prepareRequest(options);
 
-      this.#rest.emit("debug", `Request ${requestId} prepared`, {
-        url: preparedRequest.url.toString(),
-        headers: preparedRequest.options.headers,
-      });
+    this.#rest.emit("debug", `Request ${requestId} prepared`, {
+      url: preparedRequest.url.toString(),
+      headers: preparedRequest.options.headers,
+    });
 
-      const response = await this.#pool.request(preparedRequest.options);
+    const response = await this.#pool.request(preparedRequest.options);
 
-      this.#rest.emit("debug", `Request ${requestId} received response`, {
-        statusCode: response.statusCode,
-        headers: response.headers,
-      });
+    this.#rest.emit("debug", `Request ${requestId} received response`, {
+      statusCode: response.statusCode,
+      headers: response.headers,
+    });
 
-      const responseBody = await this.#readResponseBody(response);
+    const responseBody = await this.#readResponseBody(response);
 
-      const result = this.#processResponse<T>(response, responseBody);
+    const result = this.#processResponse<T>(response, responseBody);
 
-      const duration = Date.now() - requestStart;
-      result.duration = duration;
-
-      this.#rest.emit("requestFinish", {
-        path: options.path,
-        method: options.method,
-        statusCode: response.statusCode,
-        headers: result.headers,
-        latency: duration,
-        timestamp: Date.now(),
-      });
-
-      return result;
-    } catch (error) {
-      this.#handleRequestError(error, options, requestStart);
-      throw error;
+    if (result.statusCode >= 400 && this.isJsonErrorEntity(result.data)) {
+      throw new ApiError(
+        result.data,
+        result.statusCode,
+        result.headers,
+        options.method,
+        options.path,
+      );
     }
+
+    const duration = Date.now() - requestStart;
+    result.duration = duration;
+
+    this.#rest.emit("requestFinish", {
+      path: options.path,
+      method: options.method,
+      statusCode: response.statusCode,
+      headers: result.headers,
+      latency: duration,
+      timestamp: Date.now(),
+    });
+
+    return result;
+  }
+
+  isJsonErrorEntity(error: unknown): error is JsonErrorResponse {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      "message" in error
+    );
   }
 
   async destroy(): Promise<void> {
@@ -245,33 +259,13 @@ export class HttpService {
     try {
       return JSON.parse(bodyContent.toString()) as T;
     } catch {
-      throw new RequestError("Invalid JSON response", statusCode, headers);
+      throw new ApiError(
+        { code: 0, message: "Failed to parse response body" },
+        statusCode,
+        headers,
+        "GET",
+        "/",
+      );
     }
-  }
-
-  #handleRequestError(
-    error: unknown,
-    options: ApiRequestOptions,
-    startTime: number,
-  ): void {
-    const duration = Date.now() - startTime;
-
-    if (error instanceof RequestError) {
-      error.path = options.path;
-      error.method = options.method;
-    }
-
-    this.#rest.emit(
-      "error",
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        context: {
-          path: options.path,
-          method: options.method,
-          duration,
-          timestamp: new Date().toISOString(),
-        },
-      },
-    );
   }
 }

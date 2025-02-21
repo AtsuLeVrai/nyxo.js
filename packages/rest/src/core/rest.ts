@@ -1,7 +1,6 @@
 import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { ApiError, type JsonErrorResponse } from "../errors/index.js";
 import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
@@ -168,30 +167,9 @@ export class Rest extends EventEmitter<RestEventHandlers> {
           response.statusCode,
         );
 
-        if (
-          response.statusCode >= 400 &&
-          this.isJsonErrorEntity(response.data)
-        ) {
-          throw new ApiError(
-            response.data,
-            response.statusCode,
-            options.method,
-            options.path,
-          );
-        }
-
         return response.data;
       },
       { method: options.method, path: options.path },
-    );
-  }
-
-  isJsonErrorEntity(error: unknown): error is JsonErrorResponse {
-    return (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      "message" in error
     );
   }
 

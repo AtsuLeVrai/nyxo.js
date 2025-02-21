@@ -3,7 +3,23 @@ import type { Rest } from "../core/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
 import type { RetryOptions } from "../options/index.js";
 
+interface HandleError {
+  shouldRetry: boolean;
+  timeout: number;
+}
+
+export interface RetryState {
+  retryCount: number;
+  retryAfter?: number;
+  timeoutAt?: number;
+  error?: Error;
+}
+
 export class RetryManager {
+  #state: RetryState = {
+    retryCount: 0,
+  };
+
   readonly #rest: Rest;
   readonly #options: RetryOptions;
 
@@ -14,134 +30,111 @@ export class RetryManager {
 
   async execute<T>(
     operation: () => Promise<T>,
-    context: {
-      method: string;
-      path: string;
-    },
+    context: { method: string; path: string },
   ): Promise<T> {
-    let attempt = 0;
     while (true) {
       try {
         return await operation();
       } catch (error) {
-        const normalizedError = this.#normalizeError(error);
+        const retryDetails = this.#handleError(error, context);
 
-        const shouldRetry = await this.#handleError(
-          normalizedError,
-          attempt,
-          context,
-        );
-
-        if (!shouldRetry || attempt >= this.#options.maxRetries) {
-          throw normalizedError;
+        if (!retryDetails.shouldRetry) {
+          throw error;
         }
 
-        attempt++;
+        await setTimeout(retryDetails.timeout);
+        this.#state.retryCount++;
       }
     }
   }
 
-  async #handleError(
-    error: Error,
-    attempt: number,
+  #handleError(
+    error: unknown,
     context: { method: string; path: string },
-  ): Promise<boolean> {
-    this.#rest.emit("debug", "Handling retry error", {
-      error: error.message,
-      attempt,
-      context,
-    });
-
-    if (!this.#shouldRetry(error, attempt)) {
-      this.#rest.emit("debug", "Retry not allowed", {
-        reason: "Policy or max attempts reached",
-        attempt,
-      });
-
-      return false;
+  ): HandleError {
+    if (this.#state.retryCount >= this.#options.maxRetries) {
+      return { shouldRetry: false, timeout: 0 };
     }
 
-    const delay = this.#calculateDelay(error, attempt);
+    if (!this.#options.methods.includes(context.method)) {
+      return { shouldRetry: false, timeout: 0 };
+    }
 
-    this.#rest.emit("retryAttempt", {
-      error,
-      attempt,
-      delay,
-      ...context,
-      timestamp: Date.now(),
-    });
-
-    await setTimeout(delay);
-    return true;
-  }
-
-  #calculateDelay(error: Error, attempt: number): number {
     if (error instanceof RateLimitError) {
-      return this.#calculateRateLimitDelay(error.context.retryAfter, attempt);
-    }
+      const timeout = this.#calculateTimeout(error.retryAfter);
+      this.#state.retryAfter = error.retryAfter;
 
-    return this.#calculateBackoffDelay(attempt);
-  }
-
-  #calculateRateLimitDelay(baseDelay: number, attempt: number): number {
-    const exponentialDelay = Math.min(
-      baseDelay * 2 ** attempt,
-      this.#options.maxDelay,
-    );
-
-    return Math.max(
-      exponentialDelay * this.#options.jitter,
-      this.#options.minDelay,
-    );
-  }
-
-  #calculateBackoffDelay(attempt: number): number {
-    const exponentialDelay = 1000 * 2 ** attempt;
-    const finalDelay = Math.min(exponentialDelay, this.#options.maxDelay);
-    const jitter = Math.random() * this.#options.jitter * finalDelay;
-    return finalDelay + jitter;
-  }
-
-  #shouldRetry(error: Error, attempt: number): boolean {
-    if (attempt >= this.#options.maxRetries) {
-      return false;
+      this.#emitRetryEvent(error, timeout, "Rate limit exceeded");
+      return { shouldRetry: true, timeout };
     }
 
     if (error instanceof ApiError) {
-      return this.#options.retryableStatusCodes.includes(error.status);
+      if (!this.#options.statusCodes.includes(error.context.statusCode)) {
+        return { shouldRetry: false, timeout: 0 };
+      }
+
+      if (this.#options.retryAfter && error.context.headers?.["retry-after"]) {
+        const retryAfter = Number(error.context.headers["retry-after"]) * 1000;
+        const timeout = this.#calculateTimeout(retryAfter);
+
+        this.#emitRetryEvent(
+          error,
+          timeout,
+          `Status ${error.context.statusCode} with Retry-After`,
+        );
+        return { shouldRetry: true, timeout };
+      }
+
+      const timeout = this.#calculateTimeout();
+      this.#emitRetryEvent(
+        error,
+        timeout,
+        `Status ${error.context.statusCode}`,
+      );
+      return { shouldRetry: true, timeout };
     }
 
-    if (error instanceof RateLimitError) {
-      return this.#options.retryOn.rateLimits;
+    if (error instanceof Error) {
+      const errorCode = this.#getErrorCode(error);
+      if (this.#options.errorCodes.includes(errorCode)) {
+        const timeout = this.#calculateTimeout();
+        this.#emitRetryEvent(error, timeout, `Network error: ${errorCode}`);
+        return { shouldRetry: true, timeout };
+      }
     }
 
-    const errorMessage = error.message.toLowerCase();
-
-    const isNetworkError = this.#options.retryableErrors.some((code) =>
-      errorMessage.includes(code.toLowerCase()),
-    );
-    if (isNetworkError) {
-      return this.#options.retryOn.networkErrors;
-    }
-
-    if (errorMessage.includes("timeout")) {
-      return this.#options.retryOn.timeouts;
-    }
-
-    return false;
+    return { shouldRetry: false, timeout: 0 };
   }
 
-  #normalizeError(error: unknown): Error {
-    if (error instanceof Error) {
-      return error;
-    }
+  #calculateTimeout(baseTimeout?: number): number {
+    const base = baseTimeout ?? this.#options.minTimeout;
+    const factor = this.#options.timeoutFactor ** this.#state.retryCount;
+    const timeout = base * factor;
 
-    if (typeof error === "object" && error !== null) {
-      return new Error(JSON.stringify(error), {
-        cause: error,
-      });
-    }
+    // Add jitter (±10%)
+    const jitter = timeout * 0.1 * (Math.random() * 2 - 1);
 
-    return new Error(String(error));
+    return Math.min(
+      Math.max(timeout + jitter, this.#options.minTimeout),
+      this.#options.maxTimeout,
+    );
+  }
+
+  #getErrorCode(error: Error): string {
+    const message = error.message.toUpperCase();
+    return (
+      this.#options.errorCodes.find((code) => message.includes(code)) ??
+      "UNKNOWN"
+    );
+  }
+
+  #emitRetryEvent(error: Error, timeout: number, reason: string): void {
+    this.#rest.emit("retryAttempt", {
+      error,
+      attempt: this.#state.retryCount + 1,
+      timeout,
+      reason,
+      timestamp: new Date().toISOString(),
+    });
   }
 }

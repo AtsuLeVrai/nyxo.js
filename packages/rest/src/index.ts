@@ -1,3 +1,4 @@
+export * from "./base/index.js";
 export * from "./core/index.js";
 export * from "./errors/index.js";
 export * from "./handlers/index.js";

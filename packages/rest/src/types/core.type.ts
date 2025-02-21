@@ -10,10 +10,9 @@ export interface ApiRequest {
 export interface RetryAttempt {
   error: Error;
   attempt: number;
-  delay: number;
-  method: string;
-  path: string;
-  timestamp: number;
+  timeout: number;
+  reason: string;
+  timestamp: string;
 }
 
 export type BucketEventType = "expired" | "updated";

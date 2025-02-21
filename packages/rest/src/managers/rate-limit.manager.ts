@@ -5,6 +5,11 @@ import type { RateLimitOptions } from "../options/index.js";
 
 export type RateLimitScope = "user" | "global" | "shared";
 
+interface InvalidRequestTracking {
+  count: number;
+  windowStart: number;
+}
+
 export interface RateLimitBucket {
   hash: string;
   limit: number;
@@ -29,17 +34,6 @@ const HEADERS = {
   global: "x-ratelimit-global",
   retryAfter: "retry-after",
 } as const;
-
-const GLOBAL_LIMIT = {
-  REQUESTS_PER_SECOND: 50,
-  INVALID_REQUESTS_LIMIT: 10_000,
-  INVALID_REQUESTS_WINDOW: 600_000,
-};
-
-interface InvalidRequestTracking {
-  count: number;
-  windowStart: number;
-}
 
 export class RateLimitManager {
   readonly #buckets = new Store<string, RateLimitBucket>();
@@ -149,7 +143,7 @@ export class RateLimitManager {
     const now = Date.now();
     if (
       now - this.#invalidRequests.windowStart >=
-      GLOBAL_LIMIT.INVALID_REQUESTS_WINDOW
+      this.#options.invalidRequestsWindow
     ) {
       this.#invalidRequests.count = 1;
       this.#invalidRequests.windowStart = now;
@@ -162,15 +156,15 @@ export class RateLimitManager {
     const now = Date.now();
     if (
       now - this.#invalidRequests.windowStart <
-        GLOBAL_LIMIT.INVALID_REQUESTS_WINDOW &&
-      this.#invalidRequests.count >= GLOBAL_LIMIT.INVALID_REQUESTS_LIMIT
+        this.#options.invalidRequestsWindow &&
+      this.#invalidRequests.count >= this.#options.invalidRequestsLimit
     ) {
       throw new RateLimitError({
         method: "ANY",
         path: "ANY",
         retryAfter:
           (this.#invalidRequests.windowStart +
-            GLOBAL_LIMIT.INVALID_REQUESTS_WINDOW -
+            this.#options.invalidRequestsWindow -
             now) /
           1000,
         scope: "global",
@@ -194,7 +188,7 @@ export class RateLimitManager {
   }
 
   #checkGlobalRateLimit(): void {
-    if (this.#globalRequestTimes.length >= GLOBAL_LIMIT.REQUESTS_PER_SECOND) {
+    if (this.#globalRequestTimes.length >= this.#options.requestsPerSecond) {
       const oldestRequest = this.#globalRequestTimes[0];
       if (!oldestRequest) {
         return;
