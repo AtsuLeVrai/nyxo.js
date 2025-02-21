@@ -1,16 +1,21 @@
 import { deepmerge } from "deepmerge-ts";
 import { get, unset } from "lodash-es";
 import { LRUCache } from "lru-cache";
+import { z } from "zod";
 
 export type StorePredicate<K extends string | number | symbol, V> =
   | ((value: V, key: K, map: Store<K, V>) => boolean)
   | Partial<V>;
 
-export interface StoreOptions {
-  maxSize?: number;
-  ttl?: number;
-  evictionStrategy?: "fifo" | "lru";
-}
+export const StoreOptions = z
+  .object({
+    maxSize: z.number().int().min(0).default(10000),
+    ttl: z.number().int().min(0).default(0),
+    evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
+  })
+  .readonly();
+
+export type StoreOptions = z.infer<typeof StoreOptions>;
 
 export class Store<K extends string | number | symbol, V> extends Map<K, V> {
   readonly #ttlMap = new Map<K, number>();
@@ -20,7 +25,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
 
   constructor(
     entries?: readonly (readonly [K, V])[] | null,
-    options: StoreOptions = {},
+    options: z.input<typeof StoreOptions> = {},
   ) {
     super();
 

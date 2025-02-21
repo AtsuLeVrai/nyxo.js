@@ -13,13 +13,14 @@ import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { Connection, Guild, User } from "../class/index.js";
-import { ClientEventManager } from "../managers/index.js";
+import { CacheManager, ClientEventManager } from "../managers/index.js";
 import { ClientOptions } from "../options/index.js";
 import type { ClientEventHandlers } from "../types/index.js";
 
 export class Client extends EventEmitter<ClientEventHandlers> {
   readonly rest: Rest;
   readonly gateway: Gateway;
+  readonly caches: CacheManager;
 
   readonly #options: ClientOptions;
   readonly #events: ClientEventManager;
@@ -34,16 +35,19 @@ export class Client extends EventEmitter<ClientEventHandlers> {
     }
 
     this.#events = new ClientEventManager(this);
+    this.caches = new CacheManager(this, this.#options);
     this.rest = new Rest(this.#options);
     this.gateway = new Gateway(this.rest, this.#options);
   }
 
   get token(): TokenManager {
-    return new TokenManager(this.#options.token);
+    return new TokenManager(this.#options.token, {
+      type: this.#options.authType,
+    });
   }
 
-  get options(): Readonly<ClientOptions> {
-    return Object.freeze(this.#options);
+  get options(): ClientOptions {
+    return this.#options;
   }
 
   connect(): Promise<void> {

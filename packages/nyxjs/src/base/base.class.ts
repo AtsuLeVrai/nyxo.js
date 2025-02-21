@@ -1,15 +1,14 @@
-import { Store } from "@nyxjs/store";
+import type { Snowflake } from "@nyxjs/core";
+import type { Store } from "@nyxjs/store";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import type { Client } from "../core/index.js";
 
-type HasId = { id: string };
+type HasId = { id: Snowflake };
 
 export abstract class BaseClass<T> {
   protected client: Client;
   protected entity: T;
-
-  readonly #caches = new Store<string, Store<string, this>>();
 
   protected constructor(
     client: Client,
@@ -25,34 +24,15 @@ export abstract class BaseClass<T> {
     }
 
     const className = this.constructor.name;
-    if (!this.#caches.has(className)) {
-      this.#caches.set(className, new Store(null, this.client.options));
-    }
-
     const cacheKey = this.getCacheKey();
-    if (cacheKey) {
-      const classCache = this.#caches.get(className);
 
-      if (classCache?.has(cacheKey)) {
-        this.client.emit("cacheHit", {
-          key: cacheKey,
-          value: this,
-          className,
-        });
-        classCache?.add(cacheKey, this);
-      } else {
-        this.client.emit("cacheMiss", {
-          key: cacheKey,
-          value: this,
-          className,
-        });
-        classCache?.set(cacheKey, this);
-      }
+    if (cacheKey) {
+      this.client.caches.set(className, cacheKey, this);
     }
   }
 
   get cache(): Store<string, this> {
-    return this.#caches.get(this.constructor.name) as Store<string, this>;
+    return this.client.caches.get(this.constructor.name);
   }
 
   abstract toJson(): T;

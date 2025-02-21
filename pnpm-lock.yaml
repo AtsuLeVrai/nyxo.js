@@ -84,9 +84,6 @@ importers:
 
   internals/playground:
     dependencies:
-      fzstd:
-        specifier: ^0.1.1
-        version: 0.1.1
       nyx.js:
         specifier: workspace:*
         version: link:../../packages/nyxjs
@@ -310,6 +307,9 @@ importers:
       lru-cache:
         specifier: 11.0.2
         version: 11.0.2
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -3446,7 +3446,8 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  fzstd@0.1.1: {}
+  fzstd@0.1.1:
+    optional: true
 
   get-intrinsic@1.2.7:
     dependencies:
