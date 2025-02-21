@@ -8,12 +8,10 @@ export class HeartbeatManager {
   #missedHeartbeats = 0;
   #totalBeats = 0;
   #lastSend = 0;
-
   #intervalMs = 0;
   #isAcked = true;
   #isReconnecting = false;
   #retryAttempts = 0;
-
   #interval: NodeJS.Timeout | null = null;
   #reconnectTimeout: NodeJS.Timeout | null = null;
 
@@ -111,10 +109,7 @@ export class HeartbeatManager {
       "debug",
       `Sending heartbeat - Total beats: ${this.#totalBeats}`,
     );
-    this.#gateway.send(
-      GatewayOpcodes.Heartbeat,
-      this.#gateway.session.sequence,
-    );
+    this.#gateway.send(GatewayOpcodes.Heartbeat, this.#gateway.sequence);
   }
 
   #startHeartbeat(interval: number): void {
@@ -148,10 +143,10 @@ export class HeartbeatManager {
 
     this.#gateway.emit(
       "debug",
-      `Missed beat - Count: ${this.#missedHeartbeats}/${this.#options.maxMissedHeartbeats}`,
+      `Missed beat - Count: ${this.#missedHeartbeats}/${this.#options.maxRetries}`,
     );
 
-    if (this.#missedHeartbeats >= this.#options.maxMissedHeartbeats) {
+    if (this.#missedHeartbeats >= this.#options.maxRetries) {
       this.destroy();
 
       if (this.#options.autoReconnect) {

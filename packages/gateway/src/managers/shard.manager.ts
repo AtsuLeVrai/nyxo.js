@@ -2,7 +2,89 @@ import { setTimeout } from "node:timers/promises";
 import { Store } from "@nyxjs/store";
 import type { Gateway } from "../core/index.js";
 import type { ShardOptions } from "../options/index.js";
-import type { ShardData, ShardStatus } from "../types/index.js";
+
+export type ShardStatus =
+  | "disconnected"
+  | "connecting"
+  | "ready"
+  | "resuming"
+  | "reconnecting";
+
+export interface ShardBase {
+  shardId: number;
+  totalShards: number;
+}
+
+export interface ShardData extends ShardBase {
+  guildCount: number;
+  guilds: Set<string>;
+  status: ShardStatus;
+  bucket: number;
+  rateLimit: {
+    remaining: number;
+    reset: number;
+  };
+}
+
+export type ShardEventType =
+  | "stats"
+  | "ready"
+  | "disconnect"
+  | "reconnect"
+  | "resume"
+  | "rateLimit";
+
+export interface ShardEventBase extends ShardBase {
+  type: ShardEventType;
+}
+
+export interface ShardStatsEvent extends ShardEventBase {
+  type: "stats";
+  guildCount: number;
+}
+
+export interface ShardReadyEvent extends ShardEventBase {
+  type: "ready";
+  sessionId: string;
+  latency: number;
+  guildCount: number;
+}
+
+export interface ShardDisconnectEvent extends ShardEventBase {
+  type: "disconnect";
+  code: number;
+  reason: string;
+  wasClean: boolean;
+}
+
+export interface ShardReconnectEvent extends ShardEventBase {
+  type: "reconnect";
+  attempts: number;
+  delay: number;
+}
+
+export interface ShardResumeEvent extends ShardEventBase {
+  type: "resume";
+  sessionId: string;
+  replayedEvents: number;
+  latency: number;
+}
+
+export interface ShardRateLimitEvent extends ShardEventBase {
+  type: "rateLimit";
+  bucket: number;
+  timeout: number;
+  remaining: number;
+  reset: number;
+}
+
+export type ShardEvent =
+  | ShardStatsEvent
+  | ShardReadyEvent
+  | ShardDisconnectEvent
+  | ShardReconnectEvent
+  | ShardResumeEvent
+  | ShardRateLimitEvent;
 
 export class ShardManager {
   #shards = new Store<number, ShardData>();
@@ -73,7 +155,8 @@ export class ShardManager {
     for (const [shardId, shard] of this.#shards.entries()) {
       if (this.isShardBucketAvailable(shard.bucket)) {
         if (shard.status === "reconnecting") {
-          this.#gateway.emit("shardReconnect", {
+          this.#gateway.emit("shardUpdate", {
+            type: "reconnect",
             shardId,
             totalShards: shard.totalShards,
             attempts: ++attempts,
@@ -173,7 +256,8 @@ export class ShardManager {
     shard.status = status;
 
     if (status === "disconnected" && oldStatus !== "disconnected") {
-      this.#gateway.emit("shardDisconnect", {
+      this.#gateway.emit("shardUpdate", {
+        type: "disconnect",
         shardId,
         totalShards: shard.totalShards,
         code: 1006,
@@ -183,10 +267,11 @@ export class ShardManager {
     }
 
     if (status === "resuming") {
-      this.#gateway.emit("shardResume", {
+      this.#gateway.emit("shardUpdate", {
+        type: "resume",
         shardId,
         totalShards: shard.totalShards,
-        sessionId: this.#gateway.session.sessionId ?? "",
+        sessionId: this.#gateway.sessionId ?? "",
         replayedEvents: 0,
         latency: this.#gateway.heartbeat.latency,
       });
@@ -222,7 +307,8 @@ export class ShardManager {
 
     for (const shard of this.#shards.values()) {
       if (shard.rateLimit.remaining === 0) {
-        this.#gateway.emit("shardRateLimit", {
+        this.#gateway.emit("shardUpdate", {
+          type: "rateLimit",
           shardId: shard.shardId,
           totalShards: shard.totalShards,
           bucket: shard.bucket,
@@ -402,10 +488,11 @@ export class ShardManager {
       },
     });
 
-    this.#gateway.emit("shardReady", {
+    this.#gateway.emit("shardUpdate", {
+      type: "ready",
       shardId,
       totalShards,
-      sessionId: this.#gateway.session.sessionId ?? "",
+      sessionId: this.#gateway.sessionId ?? "",
       latency: this.#gateway.heartbeat.latency,
       guildCount: 0,
     });

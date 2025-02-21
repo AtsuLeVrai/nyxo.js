@@ -14,17 +14,15 @@ import { HeartbeatManager, ShardManager } from "../managers/index.js";
 import { GatewayOptions } from "../options/index.js";
 import {
   CompressionService,
+  ConnectionState,
   EncodingService,
   HealthService,
-  ReconnectionService,
-  SessionService,
+  type HealthStatus,
 } from "../services/index.js";
 import {
-  ConnectionState,
   type GatewayEventHandlers,
   GatewayOpcodes,
   type GatewaySendEvents,
-  type HealthStatus,
   type PayloadEntity,
 } from "../types/index.js";
 
@@ -34,9 +32,11 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
   readonly compression: CompressionService;
   readonly encoding: EncodingService;
   readonly health: HealthService;
-  readonly session: SessionService;
-  readonly reconnection: ReconnectionService;
   readonly #operationHandler: OperationHandler;
+
+  #sessionId: string | null = null;
+  #resumeUrl: string | null = null;
+  #sequence = 0;
 
   #ws: WebSocket | null = null;
   #connectStartTime = 0;
@@ -59,10 +59,8 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
     this.heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
     this.shard = new ShardManager(this, this.#options.shard);
 
-    this.compression = new CompressionService(this.#options.compression);
+    this.compression = new CompressionService(this.#options.compressionType);
     this.encoding = new EncodingService(this.#options.encodingType);
-    this.session = new SessionService();
-    this.reconnection = new ReconnectionService(this.#options.reconnection);
     this.health = new HealthService(this.#options.health);
 
     this.#operationHandler = new OperationHandler(this);
@@ -70,7 +68,7 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
     this.#startHealthCheck();
   }
 
-  get options(): Readonly<GatewayOptions> {
+  get options(): GatewayOptions {
     return this.#options;
   }
 
@@ -84,6 +82,27 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
 
   get webSocket(): WebSocket | null {
     return this.#ws;
+  }
+
+  get sequence(): number {
+    return this.#sequence;
+  }
+
+  get sessionId(): string | null {
+    return this.#sessionId;
+  }
+
+  get resumeUrl(): string | null {
+    return this.#resumeUrl;
+  }
+
+  setSession(sessionId: string, resumeUrl: string): void {
+    this.#sessionId = sessionId;
+    this.#resumeUrl = resumeUrl;
+  }
+
+  updateSequence(sequence: number): void {
+    this.#sequence = sequence;
   }
 
   async connect(): Promise<void> {
@@ -195,7 +214,7 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
     const payload: PayloadEntity = {
       op: opcode,
       d: data,
-      s: this.session.sequence,
+      s: this.sequence,
       t: null,
     };
 
@@ -215,8 +234,11 @@ export class Gateway extends EventEmitter<GatewayEventHandlers> {
         this.#ws = null;
       }
 
-      this.session.reset();
-      this.reconnection.reset();
+      this.#sessionId = null;
+      this.#resumeUrl = null;
+      this.#sequence = 0;
+
+      this.encoding.destroy();
       this.compression.destroy();
       this.heartbeat.destroy();
       if (this.shard.isEnabled()) {

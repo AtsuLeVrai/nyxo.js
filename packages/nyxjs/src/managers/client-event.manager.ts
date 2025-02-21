@@ -62,17 +62,9 @@ const REST_EVENTS: readonly (keyof RestEventHandlers)[] = [
 ];
 
 const GATEWAY_EVENTS: readonly (keyof GatewayEventHandlers)[] = [
-  "sessionState",
-  "sessionClose",
-  "sessionInvalid",
+  "sessionUpdate",
   "healthStatus",
-  "shardSpawn",
-  "shardDestroy",
-  "shardReady",
-  "shardDisconnect",
-  "shardReconnect",
-  "shardResume",
-  "shardRateLimit",
+  "shardUpdate",
   "debug",
   "error",
   "dispatch",

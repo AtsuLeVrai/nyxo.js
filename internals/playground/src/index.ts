@@ -37,6 +37,7 @@ const client = new Client({
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
+  compressionType: "zstd-stream",
 });
 
 client.on("error", (...args) => {
@@ -79,44 +80,12 @@ client.on("healthStatus", (health) => {
   console.log("[HEALTH STATUS]", health);
 });
 
-client.on("sessionState", (session) => {
-  console.log("[SESSION STATE]", session);
+client.on("sessionUpdate", (session) => {
+  console.log("[SESSION UPDATE]", session);
 });
 
-client.on("sessionClose", (session) => {
-  console.log("[SESSION CLOSE]", session);
-});
-
-client.on("sessionInvalid", (session) => {
-  console.log("[SESSION INVALID]", session);
-});
-
-client.on("shardSpawn", (stats) => {
-  console.log("[SHARD SPAWN]", stats);
-});
-
-client.on("shardDestroy", (stats) => {
-  console.log("[SHARD DESTROY]", stats);
-});
-
-client.on("shardReady", (data) => {
-  console.log("[SHARD READY]", data);
-});
-
-client.on("shardDisconnect", (data) => {
-  console.log("[SHARD DISCONNECT]", data);
-});
-
-client.on("shardReconnect", (data) => {
-  console.log("[SHARD RECONNECT]", data);
-});
-
-client.on("shardResume", (data) => {
-  console.log("[SHARD RESUME]", data);
-});
-
-client.on("shardRateLimit", (data) => {
-  console.log("[SHARD RATE LIMIT]", data);
+client.on("shardUpdate", (stats) => {
+  console.log("[SHARD UPDATE]", stats);
 });
 
 client.on("cacheHit", (data) => {

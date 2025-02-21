@@ -84,6 +84,9 @@ importers:
 
   internals/playground:
     dependencies:
+      fzstd:
+        specifier: ^0.1.1
+        version: 0.1.1
       nyx.js:
         specifier: workspace:*
         version: link:../../packages/nyxjs
@@ -3443,8 +3446,7 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  fzstd@0.1.1:
-    optional: true
+  fzstd@0.1.1: {}
 
   get-intrinsic@1.2.7:
     dependencies:

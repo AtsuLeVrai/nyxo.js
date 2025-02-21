@@ -1,12 +1,7 @@
 import { OptionalDeps } from "@nyxjs/core";
 import type { Decompress } from "fzstd";
 import type { Inflate } from "zlib-sync";
-import type {
-  CompressionOptions,
-  CompressionType,
-  ZlibCompressionOptions,
-  ZstdCompressionOptions,
-} from "../options/index.js";
+import type { CompressionType } from "../options/index.js";
 
 interface CompressionModules {
   zlib?: typeof import("zlib-sync");
@@ -21,52 +16,35 @@ export class CompressionService {
   #modules: CompressionModules | null = null;
   #chunks: Uint8Array[] = [];
 
-  readonly #options?: CompressionOptions;
+  readonly #type?: CompressionType;
 
-  constructor(options?: CompressionOptions) {
-    this.#options = options;
+  constructor(type?: CompressionType) {
+    this.#type = type;
   }
 
   get type(): CompressionType | undefined {
-    return this.#options?.compressionType;
+    return this.#type;
   }
 
   isInitialized(): boolean {
     return this.#zlibInflate !== null || this.#zstdStream !== null;
   }
 
-  isZlib(
-    options: CompressionOptions | undefined,
-  ): options is ZlibCompressionOptions {
-    return options?.compressionType === "zlib-stream";
-  }
-
-  isZstd(
-    options: CompressionOptions | undefined,
-  ): options is ZstdCompressionOptions {
-    return options?.compressionType === "zstd-stream";
-  }
-
   async initialize(): Promise<void> {
-    if (!this.#options) {
-      return;
-    }
-
     this.destroy();
 
     try {
       this.#modules = await this.#createCompressionService();
 
-      if (this.isZlib(this.#options)) {
+      if (this.type === "zlib-stream") {
         this.#initializeZlib();
-      } else if (this.isZstd(this.#options)) {
+      } else if (this.type === "zstd-stream") {
         this.#initializeZstd();
       }
     } catch (error) {
-      throw new Error(
-        `Failed to initialize ${this.#options.compressionType} compression`,
-        { cause: error },
-      );
+      throw new Error(`Failed to initialize ${this.type} compression`, {
+        cause: error,
+      });
     }
   }
 
@@ -100,13 +78,13 @@ export class CompressionService {
   }
 
   #initializeZlib(): void {
-    if (!(this.#options && this.isZlib(this.#options) && this.#modules?.zlib)) {
+    if (!(this.type === "zlib-stream" && this.#modules?.zlib)) {
       throw new Error("Zlib compression options or module not available");
     }
 
     this.#zlibInflate = new this.#modules.zlib.Inflate({
-      chunkSize: this.#options.zlibChunkSize,
-      windowBits: this.#options.zlibWindowBits,
+      chunkSize: 128 * 1024,
+      windowBits: 15,
     });
 
     if (!this.#zlibInflate || this.#zlibInflate.err) {
@@ -115,7 +93,7 @@ export class CompressionService {
   }
 
   #initializeZstd(): void {
-    if (!(this.#options && this.isZstd(this.#options) && this.#modules?.zstd)) {
+    if (!(this.type === "zstd-stream" && this.#modules?.zstd)) {
       throw new Error("Zstd compression options or module not available");
     }
 
@@ -177,23 +155,23 @@ export class CompressionService {
   async #createCompressionService(): Promise<CompressionModules> {
     const modules: CompressionModules = {};
 
-    if (this.#options?.compressionType === "zlib-stream") {
+    if (this.type === "zlib-stream") {
       const zlibModule = await OptionalDeps.import("zlib-sync");
       if (zlibModule) {
         modules.zlib = zlibModule as typeof import("zlib-sync");
       }
-    } else if (this.#options?.compressionType === "zstd-stream") {
+    } else if (this.type === "zstd-stream") {
       const zstdModule = await OptionalDeps.import("fzstd");
       if (zstdModule) {
         modules.zstd = zstdModule as typeof import("fzstd");
       }
     }
 
-    if (this.isZlib(this.#options) && !modules.zlib) {
+    if (this.type === "zlib-stream" && !modules.zlib) {
       throw new Error("zlib-sync module required but not available");
     }
 
-    if (this.isZstd(this.#options) && !modules.zstd) {
+    if (this.type === "zstd-stream" && !modules.zstd) {
       throw new Error("fzstd module required but not available");
     }
 

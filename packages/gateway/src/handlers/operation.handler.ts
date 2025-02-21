@@ -23,6 +23,8 @@ const NON_RESUMABLE_CODES: number[] = [
 ] as const;
 
 export class OperationHandler {
+  #reconnectionAttempts = 0;
+
   readonly #gateway: Gateway;
 
   constructor(gateway: Gateway) {
@@ -31,7 +33,7 @@ export class OperationHandler {
 
   handlePayload(payload: PayloadEntity): void {
     if (payload.s !== null) {
-      this.#gateway.session.updateSequence(payload.s);
+      this.#gateway.updateSequence(payload.s);
     }
 
     switch (payload.op) {
@@ -75,9 +77,10 @@ export class OperationHandler {
   async handleClose(code: number): Promise<void> {
     this.#gateway.heartbeat.destroy();
 
-    if (this.#gateway.session.sessionId) {
-      this.#gateway.emit("sessionClose", {
-        sessionId: this.#gateway.session.sessionId,
+    if (this.#gateway.sessionId) {
+      this.#gateway.emit("sessionUpdate", {
+        type: "close",
+        sessionId: this.#gateway.sessionId,
         code,
       });
     }
@@ -86,16 +89,16 @@ export class OperationHandler {
   }
 
   async handleInvalidSession(resumable: boolean): Promise<void> {
-    this.#gateway.emit("sessionInvalid", {
+    this.#gateway.emit("sessionUpdate", {
+      type: "invalid",
       resumable,
     });
 
     this.#gateway.emit("debug", `Invalid session (resumable: ${resumable})`);
 
-    if (resumable && this.#gateway.session.canResume()) {
+    if (resumable && this.#canResume()) {
       await this.#handleResume();
     } else {
-      this.#gateway.session.reset();
       await this.handleReconnect();
     }
   }
@@ -103,7 +106,7 @@ export class OperationHandler {
   async handleHello(hello: HelloEntity): Promise<void> {
     this.#gateway.heartbeat.start(hello.heartbeat_interval);
 
-    if (this.#gateway.session.canResume()) {
+    if (this.#canResume()) {
       this.#sendResume();
     } else {
       await this.#identify();
@@ -170,8 +173,7 @@ export class OperationHandler {
   }
 
   #handleReady(data: ReadyEntity): void {
-    this.#gateway.session.setSession(data.session_id, data.resume_gateway_url);
-    this.#gateway.reconnection.reset();
+    this.#gateway.setSession(data.session_id, data.resume_gateway_url);
 
     if (this.#gateway.shard.isEnabled()) {
       const shard = this.#gateway.shard.getShardInfo(data.shard?.[0] ?? 0);
@@ -183,7 +185,8 @@ export class OperationHandler {
     }
 
     const readyTime = Date.now() - this.#gateway.connectStartTime;
-    this.#gateway.emit("sessionState", {
+    this.#gateway.emit("sessionUpdate", {
+      type: "state",
       sessionId: data.session_id,
       resumeUrl: data.resume_gateway_url,
     });
@@ -202,7 +205,7 @@ export class OperationHandler {
   }
 
   #sendResume(): void {
-    const sessionId = this.#gateway.session.sessionId;
+    const sessionId = this.#gateway.sessionId;
     if (!sessionId) {
       throw new Error("No session ID available to resume");
     }
@@ -212,7 +215,7 @@ export class OperationHandler {
     this.#gateway.send(GatewayOpcodes.Resume, {
       token: this.#gateway.options.token,
       session_id: sessionId,
-      seq: this.#gateway.session.sequence,
+      seq: this.#gateway.sequence,
     });
   }
 
@@ -266,17 +269,17 @@ export class OperationHandler {
       return;
     }
 
-    this.#gateway.reconnection.increment();
+    this.#incrementReconnectionAttempts();
 
-    const delay = this.#gateway.reconnection.getDelay();
+    const delay = this.#getReconnectionDelay();
     this.#gateway.emit(
       "debug",
-      `Waiting ${delay}ms before reconnecting (attempt ${this.#gateway.reconnection.attempts})`,
+      `Waiting ${delay}ms before reconnecting (attempt ${this.#reconnectionAttempts})`,
     );
     await setTimeout(delay);
 
     try {
-      if (this.shouldResume(code) && this.#gateway.session.canResume()) {
+      if (this.shouldResume(code) && this.#canResume()) {
         this.#gateway.emit("debug", "Attempting to resume previous session");
         await this.#handleResume();
       } else {
@@ -294,7 +297,7 @@ export class OperationHandler {
   }
 
   async #handleResume(): Promise<void> {
-    const resumeUrl = this.#gateway.session.resumeUrl;
+    const resumeUrl = this.#gateway.resumeUrl;
     if (!resumeUrl) {
       throw new Error("No resume URL available for session resumption");
     }
@@ -311,5 +314,21 @@ export class OperationHandler {
 
       await this.#handleDisconnect(4000);
     }
+  }
+
+  #canResume(): boolean {
+    return Boolean(this.#gateway.sessionId && this.#gateway.sequence > 0);
+  }
+
+  #incrementReconnectionAttempts(): void {
+    this.#reconnectionAttempts++;
+  }
+
+  #getReconnectionDelay(): number {
+    return (
+      this.#gateway.options.backoffSchedule[this.#reconnectionAttempts] ??
+      this.#gateway.options.backoffSchedule.at(-1) ??
+      0
+    );
   }
 }

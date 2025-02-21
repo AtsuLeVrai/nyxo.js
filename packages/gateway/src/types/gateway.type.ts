@@ -66,20 +66,8 @@ import type {
   VoiceServerUpdateEntity,
   WebhookUpdateEntity,
 } from "../events/index.js";
-import type { HealthStatus } from "./health.type.js";
-import type {
-  SessionClose,
-  SessionInvalid,
-  SessionState,
-} from "./session.type.js";
-import type {
-  ShardDisconnect,
-  ShardRateLimit,
-  ShardReady,
-  ShardReconnect,
-  ShardResume,
-  ShardStats,
-} from "./shard.type.js";
+import type { ShardEvent } from "../managers/index.js";
+import type { HealthStatus } from "../services/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
@@ -187,18 +175,38 @@ export interface PayloadEntity {
   t: keyof GatewayReceiveEvents | null;
 }
 
+export type SessionEventType = "state" | "close" | "invalid";
+
+export interface SessionEventBase {
+  type: SessionEventType;
+}
+
+export interface SessionStateEvent extends SessionEventBase {
+  type: "state";
+  sessionId: string;
+  resumeUrl: string;
+}
+
+export interface SessionCloseEvent extends SessionEventBase {
+  type: "close";
+  code: number;
+  sessionId: string;
+}
+
+export interface SessionInvalidEvent extends SessionEventBase {
+  type: "invalid";
+  resumable: boolean;
+}
+
+export type SessionEvent =
+  | SessionStateEvent
+  | SessionCloseEvent
+  | SessionInvalidEvent;
+
 export interface GatewayEventHandlers {
-  sessionState: [session: SessionState];
-  sessionClose: [session: SessionClose];
-  sessionInvalid: [session: SessionInvalid];
+  sessionUpdate: [session: SessionEvent];
   healthStatus: [health: HealthStatus];
-  shardSpawn: [stats: ShardStats];
-  shardDestroy: [stats: ShardStats];
-  shardReady: [data: ShardReady];
-  shardDisconnect: [data: ShardDisconnect];
-  shardReconnect: [data: ShardReconnect];
-  shardResume: [data: ShardResume];
-  shardRateLimit: [data: ShardRateLimit];
+  shardUpdate: [shard: ShardEvent];
   debug: [message: string, context?: Record<string, unknown>];
   error: [message: string | Error, context?: Record<string, unknown>];
   dispatch: <K extends keyof GatewayReceiveEvents>(

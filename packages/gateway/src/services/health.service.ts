@@ -1,6 +1,25 @@
 import WebSocket from "ws";
 import type { HealthOptions } from "../options/index.js";
-import { ConnectionState, type HealthStatus } from "../types/index.js";
+
+export interface HealthDetails {
+  connectionState: 0 | 1 | 2 | 3;
+  missedHeartbeats: number;
+  latency: number;
+}
+
+export interface HealthStatus {
+  isHealthy: boolean;
+  state: ConnectionState;
+  issues: string[];
+  details: HealthDetails;
+}
+
+export enum ConnectionState {
+  Optimal = "optimal",
+  Degraded = "degraded",
+  Unhealthy = "unhealthy",
+  Disconnected = "disconnected",
+}
 
 export class HealthService {
   readonly #options: HealthOptions;
