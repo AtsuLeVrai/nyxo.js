@@ -9,6 +9,8 @@
     "pnpm": ">=10"
   },
   "scripts": {
+    "dev": "turbo run dev",
+    "start": "turbo run start",
     "build": "turbo run build",
     "build:prod": "turbo run build:prod",
     "format": "turbo run format",

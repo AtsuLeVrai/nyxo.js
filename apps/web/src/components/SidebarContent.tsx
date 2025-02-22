@@ -2,10 +2,7 @@ import { motion } from "framer-motion";
 import {
   Book,
   BookOpen,
-  Code,
-  Command,
   ExternalLink,
-  FileText,
   LayoutPanelLeft,
   Mic,
   Moon,
@@ -31,16 +28,9 @@ interface NavSection {
 
 const navigationSections: NavSection[] = [
   {
-    title: "Getting Started",
-    items: [
-      { href: "#", icon: BookOpen, label: "Introduction" },
-      { href: "#", icon: Code, label: "Installation" },
-      { href: "#", icon: FileText, label: "Quick Start" },
-    ],
-  },
-  {
     title: "Core Concepts",
     items: [
+      { href: "#", icon: BookOpen, label: "Introduction" },
       { href: "#", icon: Book, label: "Commands" },
       { href: "#", icon: Book, label: "Events" },
     ],
@@ -48,7 +38,6 @@ const navigationSections: NavSection[] = [
   {
     title: "Packages",
     items: [
-      { href: "#", icon: Command, label: "Cli" },
       { href: "#", icon: Package, label: "Core" },
       { href: "#", icon: Network, label: "Gateway" },
       { href: "#", icon: Moon, label: "Nyx.js" },

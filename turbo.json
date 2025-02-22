@@ -10,9 +10,21 @@
     "GATEWAY_VERSION"
   ],
   "tasks": {
+    "dev": {
+      "dependsOn": ["^dev"],
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "cache": false
+    },
+    "start": {
+      "dependsOn": ["^start"],
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "cache": false
+    },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"],
+      "outputs": ["dist/**", ".next/**"],
       "env": ["NODE_ENV"],
       "cache": true
     },

@@ -3,7 +3,7 @@
   "extends": ["../../biome.json"],
   "overrides": [
     {
-      "include": ["./src/commands/**/*.ts"],
+      "include": ["./src/**/*.ts"],
       "linter": {
         "rules": {
           "suspicious": {
