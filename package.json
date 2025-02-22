@@ -35,11 +35,13 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@biomejs/biome",
+      "@discordjs/opus",
       "@swc/core",
       "bufferutil",
       "erlpack",
       "esbuild",
       "sharp",
+      "sodium-native",
       "zlib-sync"
     ]
   }

@@ -2,6 +2,7 @@ import { deepmerge } from "deepmerge-ts";
 import { get, unset } from "lodash-es";
 import { LRUCache } from "lru-cache";
 import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 export type StorePredicate<K extends string | number | symbol, V> =
   | ((value: V, key: K, map: Store<K, V>) => boolean)
@@ -29,12 +30,11 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
   ) {
     super();
 
-    this.#options = {
-      maxSize: 10000,
-      ttl: 0,
-      evictionStrategy: "lru",
-      ...options,
-    };
+    try {
+      this.#options = StoreOptions.parse(options);
+    } catch (error) {
+      throw new Error(fromError(error).message);
+    }
 
     if (this.#options.evictionStrategy === "lru") {
       this.#lruCache = new LRUCache<K, number>({

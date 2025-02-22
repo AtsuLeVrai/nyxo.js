@@ -3,12 +3,10 @@ import {
   Book,
   BookOpen,
   ExternalLink,
-  LayoutPanelLeft,
   Mic,
   Moon,
   Network,
   Package,
-  Puzzle,
   Server,
 } from "lucide-react";
 import Link from "next/link";
@@ -41,8 +39,6 @@ const navigationSections: NavSection[] = [
       { href: "#", icon: Package, label: "Core" },
       { href: "#", icon: Network, label: "Gateway" },
       { href: "#", icon: Moon, label: "Nyx.js" },
-      { href: "#", icon: LayoutPanelLeft, label: "Panel" },
-      { href: "#", icon: Puzzle, label: "Plugins" },
       { href: "#", icon: Server, label: "Rest" },
       { href: "#", icon: Mic, label: "Voice" },
     ],

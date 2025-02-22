@@ -20,13 +20,13 @@ import {
   type HealthStatus,
 } from "../services/index.js";
 import {
-  type GatewayEventHandlers,
+  type GatewayEvents,
   GatewayOpcodes,
   type GatewaySendEvents,
   type PayloadEntity,
 } from "../types/index.js";
 
-export class Gateway extends EventEmitter<GatewayEventHandlers> {
+export class Gateway extends EventEmitter<GatewayEvents> {
   readonly heartbeat: HeartbeatManager;
   readonly shard: ShardManager;
   readonly compression: CompressionService;

@@ -34,7 +34,7 @@ export interface BucketUpdatedEvent extends BucketEventBase {
 
 export type BucketEvent = BucketExpiredEvent | BucketUpdatedEvent;
 
-export interface RestEventHandlers {
+export interface RestEvents {
   debug: [message: string, context?: Record<string, unknown>];
   error: [error: Error | string, context?: Record<string, unknown>];
   requestFinish: [request: ApiRequest];

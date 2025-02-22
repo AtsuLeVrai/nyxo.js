@@ -31,9 +31,9 @@ import {
   WebhookRouter,
 } from "../routes/index.js";
 import { type ApiRequestOptions, HttpService } from "../services/index.js";
-import type { RestEventHandlers } from "../types/index.js";
+import type { RestEvents } from "../types/index.js";
 
-export class Rest extends EventEmitter<RestEventHandlers> {
+export class Rest extends EventEmitter<RestEvents> {
   readonly #options: RestOptions;
   readonly #http: HttpService;
   readonly #rateLimiter: RateLimitManager;

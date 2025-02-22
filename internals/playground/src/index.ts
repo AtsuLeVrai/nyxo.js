@@ -1,18 +1,41 @@
+import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
+import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
-import {
-  ApplicationCommandOptionType,
-  Client,
-  type CreateGlobalApplicationCommandSchema,
-  GatewayIntentsBits,
-  Guild,
-} from "nyx.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
   throw new Error("No env found");
 }
 
-const client = new Client({
+const rest = new Rest({
+  token: env.DISCORD_TOKEN,
+});
+
+rest.on("debug", (...args) => {
+  console.log("[REST - DEBUG]", ...args);
+});
+
+rest.on("error", (...args) => {
+  console.log("[REST - ERROR]", ...args);
+});
+
+rest.on("requestFinish", (...args) => {
+  console.log("[REST - REQUEST FINISH]", ...args);
+});
+
+rest.on("retryAttempt", (...args) => {
+  console.log("[REST - RETRY ATTEMPT]", ...args);
+});
+
+rest.on("rateLimitExceeded", (...args) => {
+  console.log("[REST - RATE LIMIT EXCEEDED]", ...args);
+});
+
+rest.on("bucketUpdate", (...args) => {
+  console.log("[REST - BUCKET UPDATE]", ...args);
+});
+
+const gateway = new Gateway(rest, {
   token: env.DISCORD_TOKEN,
   intents: [
     GatewayIntentsBits.Guilds,
@@ -39,134 +62,50 @@ const client = new Client({
   ],
 });
 
-client.on("error", (...args) => {
-  console.log("[ERROR]", ...args);
+gateway.on("sessionUpdate", (...args) => {
+  console.log("[GATEWAY - SESSION UPDATE]", ...args);
 });
 
-client.on("requestFinish", (...args) => {
-  console.log("[REQUEST]", ...args);
+gateway.on("healthStatus", (...args) => {
+  console.log("[GATEWAY - HEALTH STATUS]", ...args);
 });
 
-client.on("retryAttempt", (...args) => {
-  console.log("[RETRY]", ...args);
+gateway.on("shardUpdate", (...args) => {
+  console.log("[GATEWAY - SHARD UPDATE]", ...args);
 });
 
-client.on("debug", (...args) => {
-  console.log("[DEBUG]", ...args);
+gateway.on("debug", (...args) => {
+  console.log("[GATEWAY - DEBUG]", ...args);
 });
 
-client.on("rateLimitExceeded", (...args) => {
-  console.log("[RATE LIMIT EXCEEDED]", ...args);
+gateway.on("error", (...args) => {
+  console.log("[GATEWAY - ERROR]", ...args);
 });
 
-client.on("bucketUpdate", (...args) => {
-  console.log("[BUCKET UPDATE]", ...args);
-});
-
-// client.on("dispatch", (event, data) => {
-//   console.log("[DISPATCH]", event, data);
-// });
-
-client.on("healthStatus", (health) => {
-  console.log("[HEALTH STATUS]", health);
-});
-
-client.on("sessionUpdate", (session) => {
-  console.log("[SESSION UPDATE]", session);
-});
-
-client.on("shardUpdate", (stats) => {
-  console.log("[SHARD UPDATE]", stats);
-});
-
-client.on("cacheHit", (data) => {
-  console.log("[CACHE HIT]", data);
-});
-
-client.on("cacheMiss", (data) => {
-  console.log("[CACHE MISS]", data);
-});
-
-client.on("ready", (ready) => {
-  console.log(
-    "[READY] Bot is ready",
-    ready.guilds.map((guild) => guild.id),
-  );
-});
-
-const APPLICATION_COMMANDS: CreateGlobalApplicationCommandSchema[] = [
-  {
-    name: "ping",
-    description: "Ping the bot",
-    options: [
-      {
-        type: ApplicationCommandOptionType.User,
-        name: "name",
-        description: "Your name",
-      },
-    ],
-  },
-];
-
-client.on("guildCreate", async (guild) => {
-  if (!(guild instanceof Guild)) {
-    return;
-  }
-
-  await client.rest.commands.bulkOverwriteGuildApplicationCommands(
-    client.token.id,
-    guild.id,
-    APPLICATION_COMMANDS,
-  );
-
-  console.log(
-    "[GUILD CREATE]",
-    guild.channels.map((channel) => channel.toJson()),
-  );
-});
-
-client.on("interactionCreate", async (interaction) => {
-  console.log("[INTERACTION]", interaction);
-  if (
-    !(interaction.isApplicationCommand() || interaction.isGuildInteraction())
-  ) {
-    return;
-  }
-
-  if (interaction.commandName === "ping") {
-    await interaction.reply({
-      content: `Pong! ${interaction.getUserOption("name")}`,
-    });
-  }
+gateway.on("dispatch", (...args) => {
+  console.log("[GATEWAY - DISPATCH]", ...args);
 });
 
 async function shutdown(): Promise<void> {
-  console.log("Shutdown in progress...");
-
   try {
-    // Clean gateway disconnection
-    await client.destroy();
-    console.log("Shutdown completed");
+    await rest.destroy();
+    gateway.destroy();
     process.exit(0);
-  } catch (error) {
-    console.error("Error during shutdown:", error);
+  } catch {
     process.exit(1);
   }
 }
 
-// Handle shutdown signals
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
-// Handle uncaught errors
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled rejection:", error);
 });
 
-process.on("uncaughtException", (error) => {
+process.on("uncaughtException", async (error) => {
   console.error("Uncaught exception:", error);
-  shutdown(); // Attempt clean shutdown on fatal error
+  await shutdown();
 });
 
-// Connect to gateway
-client.connect();
+gateway.connect();

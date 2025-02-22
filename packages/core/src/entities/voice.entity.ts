@@ -23,7 +23,7 @@ export const VoiceStateEntity = z.object({
   channel_id: Snowflake.nullable(),
   user_id: Snowflake,
   member: GuildMemberEntity.optional(),
-  session_id: Snowflake,
+  session_id: z.string(),
   deaf: z.boolean(),
   mute: z.boolean(),
   self_deaf: z.boolean(),

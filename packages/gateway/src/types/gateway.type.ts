@@ -203,7 +203,7 @@ export type SessionEvent =
   | SessionCloseEvent
   | SessionInvalidEvent;
 
-export interface GatewayEventHandlers {
+export interface GatewayEvents {
   sessionUpdate: [session: SessionEvent];
   healthStatus: [health: HealthStatus];
   shardUpdate: [shard: ShardEvent];
