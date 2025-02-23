@@ -88,13 +88,24 @@ const voice = new VoiceManager(gateway);
 
 async function main(): Promise<void> {
   await gateway.connect();
+  console.log("Gateway connected, joining voice channel...");
+
   voice.joinVoiceChannel("936969912600121384", "1232694742350041089");
-  await setTimeout(3000);
-  await voice.playAudio("936969912600121384", "./song.mp3");
+
+  await setTimeout(5000);
+
+  try {
+    console.log("Attempting to play audio...");
+    await voice.playAudio("936969912600121384", "./src/song.mp3");
+    console.log("Audio playback completed successfully");
+  } catch (error) {
+    console.error("Error during audio playback:", error);
+    throw error;
+  }
 }
 
 main().catch((error) => {
-  console.error("Failed to start application", error);
+  console.error("Application failed to start:", error);
   process.exit(1);
 });
 

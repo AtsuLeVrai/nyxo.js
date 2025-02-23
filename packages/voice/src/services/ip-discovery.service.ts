@@ -2,6 +2,7 @@ import type { Socket } from "node:dgram";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import type { VoiceConnection } from "../core/index.js";
+import { VoiceGatewayOpcodes } from "../types/index.js";
 
 export const IpDiscoveryOptions = z
   .object({
@@ -178,6 +179,14 @@ export class IpDiscoveryService {
       const port = message.readUInt16BE(72);
 
       this.#connection.emit("ipDiscovered", ip, port);
+      this.#connection.send(VoiceGatewayOpcodes.SelectProtocol, {
+        protocol: "udp",
+        data: {
+          address: ip,
+          port,
+          mode: this.#connection.mode,
+        },
+      });
     } catch (error) {
       this.#connection.emit(
         "error",

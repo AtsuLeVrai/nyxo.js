@@ -89,6 +89,22 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     return this.#ssrc;
   }
 
+  get hasValidSession(): boolean {
+    return this.#hasValidSession;
+  }
+
+  get udpIp(): string | null {
+    return this.#udpIp;
+  }
+
+  get udpPort(): number | null {
+    return this.#udpPort;
+  }
+
+  get mode(): VoiceEncryptionMode {
+    return this.#mode;
+  }
+
   async connect(): Promise<void> {
     try {
       const wsUrl = `wss://${this.#options.endpoint}?v=${this.#options.version}`;
@@ -125,16 +141,8 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     this.#udp = createSocket("udp4");
     this.#ipDiscovery = new IpDiscoveryService(this, this.#udp, this.#options);
 
-    this.#udp.on("error", (error) => {
-      this.emit("error", error);
-    });
-
-    this.#udp.on("message", (message) => {
-      this.#handleUdpMessage(message);
-    });
-
     try {
-      const discoveredInfo = await this.#ipDiscovery.discover(
+      const discoveredInfo = await this.#ipDiscovery?.discover(
         this.#ssrc,
         ip,
         port,
@@ -378,35 +386,25 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
   }
 
   #createAudioPacket(opusPacket: Buffer): Buffer {
+    // RTP Header (12 bytes) + Opus packet
     const packetBuffer = Buffer.alloc(12 + opusPacket.length);
 
-    packetBuffer[0] = 0x80; // Version + Flags
-    packetBuffer[1] = 0x78; // Payload Type
-    packetBuffer.writeUInt16BE(this.#sequence, 2);
+    // RTP Header:
+    // [0] Version (2), Padding (0), Extension (0), CSRC Count (0) = 0x80
+    packetBuffer[0] = 0x80;
+    // [1] Marker (0), Payload Type (0x78) = 0x78
+    packetBuffer[1] = 0x78;
+    // [2-3] Sequence Number (16 bits)
+    packetBuffer.writeUInt16BE(this.#sequence & 0xffff, 2);
+    // [4-7] Timestamp (32 bits)
     packetBuffer.writeUInt32BE(this.#timestamp, 4);
+    // [8-11] SSRC (32 bits)
     packetBuffer.writeUInt32BE(this.#ssrc, 8);
+
+    // Copy the Opus packet after the header
     opusPacket.copy(packetBuffer, 12);
 
     return packetBuffer;
-  }
-
-  #handleUdpMessage(message: Buffer): void {
-    if (message.length === 74) {
-      const ipBuffer = message.subarray(8, 72);
-      const ip = ipBuffer.toString().split("\0")[0];
-      const port = message.readUInt16BE(72);
-
-      if (ip) {
-        this.send(VoiceGatewayOpcodes.SelectProtocol, {
-          protocol: "udp",
-          data: {
-            address: ip,
-            port,
-            mode: this.#mode,
-          },
-        });
-      }
-    }
   }
 
   #handleSpeaking(data: VoiceSpeakingPayload): void {

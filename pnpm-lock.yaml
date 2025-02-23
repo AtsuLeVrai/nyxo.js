@@ -292,7 +292,7 @@ importers:
   packages/voice:
     dependencies:
       '@discordjs/opus':
-        specifier: 0.10.0
+        specifier: ^0.10.0
         version: 0.10.0
       '@nyxjs/core':
         specifier: workspace:*
@@ -303,9 +303,9 @@ importers:
       eventemitter3:
         specifier: 5.0.1
         version: 5.0.1
-      prism-media:
-        specifier: 1.3.5
-        version: 1.3.5(@discordjs/opus@0.10.0)(ffmpeg-static@5.2.0)
+      ffmpeg-static:
+        specifier: 5.2.0
+        version: 5.2.0
       sodium-native:
         specifier: 4.3.2
         version: 4.3.2
@@ -2142,23 +2142,6 @@ packages:
   pretty-bytes@6.1.1:
     resolution: {integrity: sha512-mQUvGU6aUFQ+rNvTIAcZuWGRT9a6f6Yrg9bHs4ImKF+HZCEK+plBvnAZYSIQztknZF2qnzNtr6F8s0+IuptdlQ==}
     engines: {node: ^14.13.1 || >=16.0.0}
-
-  prism-media@1.3.5:
-    resolution: {integrity: sha512-IQdl0Q01m4LrkN1EGIE9lphov5Hy7WWlH6ulf5QdGePLlPas9p2mhgddTEHrlaXYjjFToM1/rWuwF37VF4taaA==}
-    peerDependencies:
-      '@discordjs/opus': '>=0.8.0 <1.0.0'
-      ffmpeg-static: ^5.0.2 || ^4.2.7 || ^3.0.0 || ^2.4.0
-      node-opus: ^0.3.3
-      opusscript: ^0.0.8
-    peerDependenciesMeta:
-      '@discordjs/opus':
-        optional: true
-      ffmpeg-static:
-        optional: true
-      node-opus:
-        optional: true
-      opusscript:
-        optional: true
 
   prism-react-renderer@2.4.1:
     resolution: {integrity: sha512-ey8Ls/+Di31eqzUxC46h8MksNuGx/n0AAC8uKpwFau4RPDYLuE3EXTp8N8G2vX2N7UC/+IXeNUnlWBGGcAG+Ig==}
@@ -4145,11 +4128,6 @@ snapshots:
       source-map-js: 1.2.1
 
   pretty-bytes@6.1.1: {}
-
-  prism-media@1.3.5(@discordjs/opus@0.10.0)(ffmpeg-static@5.2.0):
-    optionalDependencies:
-      '@discordjs/opus': 0.10.0
-      ffmpeg-static: 5.2.0
 
   prism-react-renderer@2.4.1(react@19.0.0):
     dependencies:

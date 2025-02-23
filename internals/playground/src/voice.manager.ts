@@ -1,12 +1,17 @@
 import { createReadStream } from "node:fs";
-import type { VoiceStateEntity } from "@nyxjs/core";
+import { BitFieldManager, type VoiceStateEntity } from "@nyxjs/core";
 import type {
   Gateway,
   GatewayReceiveEvents,
   VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import { Store } from "@nyxjs/store";
-import { AudioType, VoiceConnection, VoiceGatewayVersion } from "@nyxjs/voice";
+import {
+  AudioType,
+  VoiceConnection,
+  VoiceGatewayVersion,
+  VoiceSpeakingFlags,
+} from "@nyxjs/voice";
 
 export class VoiceManager {
   #connections = new Store<string, VoiceConnection>();
@@ -26,6 +31,7 @@ export class VoiceManager {
   }
 
   joinVoiceChannel(guildId: string, channelId: string): void {
+    console.log("Joining voice channel...");
     this.#pendingConnections.set(guildId, {});
 
     this.#gateway.updateVoiceState({
@@ -33,6 +39,80 @@ export class VoiceManager {
       channel_id: channelId,
       self_mute: false,
       self_deaf: false,
+    });
+  }
+
+  async playAudio(guildId: string, input: string): Promise<void> {
+    const connection = this.#connections.get(guildId);
+    if (!connection) {
+      throw new Error("No voice connection found");
+    }
+
+    console.log(`[Voice Debug] Starting playback of: ${input}`);
+
+    if (!connection.hasValidSession) {
+      console.log("[Voice Debug] Waiting for session...");
+      await new Promise<void>((resolve) => {
+        connection.once("sessionDescription", () => {
+          resolve();
+        });
+      });
+    }
+
+    if (!connection.ssrc) {
+      throw new Error("Voice connection not properly initialized (no SSRC)");
+    }
+
+    const audioStream =
+      typeof input === "string" ? createReadStream(input) : input;
+    console.log("[Voice Debug] Created input stream");
+
+    const transformedStream = connection.audio.createAudioResource(
+      audioStream,
+      {
+        type: AudioType.Ffmpeg,
+        volume: 1,
+        bitrate: 128000,
+      },
+    );
+    console.log("[Voice Debug] Created transformed stream");
+
+    console.log("Input stream format:", audioStream);
+    console.log("Transformed stream format:", transformedStream);
+
+    const flags = BitFieldManager.combine(
+      VoiceSpeakingFlags.Priority,
+      VoiceSpeakingFlags.Microphone,
+    );
+
+    console.log(`[Voice Debug] Setting speaking flags: ${flags.toNumber()}`);
+    connection.setSpeaking(true, flags.toNumber());
+
+    let packetCount = 0;
+    return new Promise((resolve, reject) => {
+      transformedStream.on("data", (chunk: Buffer) => {
+        try {
+          packetCount++;
+          if (packetCount % 100 === 0) {
+            console.log(`[Voice Debug] Sent ${packetCount} packets`);
+          }
+          connection.sendAudioPacket(chunk);
+        } catch (error) {
+          console.error("[Voice Debug] Error sending packet:", error);
+          reject(error);
+        }
+      });
+
+      transformedStream.on("end", () => {
+        console.log(`[Voice Debug] Stream ended after ${packetCount} packets`);
+        resolve();
+      });
+
+      transformedStream.on("error", (error) => {
+        console.error("[Voice Debug] Stream error:", error);
+        connection.stopSpeaking();
+        reject(error);
+      });
     });
   }
 
@@ -52,52 +132,98 @@ export class VoiceManager {
     }
   }
 
-  async playAudio(guildId: string, input: string): Promise<void> {
-    const connection = this.#connections.get(guildId);
-    if (!connection) {
-      throw new Error("No voice connection found");
-    }
-
-    const inputStream = createReadStream(input);
-
-    const audioStream = connection.audio.createAudioResource(inputStream, {
-      type: AudioType.Ffmpeg,
-      bitrate: 128000,
-      volume: 1,
-    });
-
-    connection.setSpeaking(true);
-
-    audioStream.on("data", (chunk: Buffer) => {
-      try {
-        connection.sendAudioPacket(chunk);
-      } catch (error) {
-        console.error("Failed to send audio packet:", error);
-      }
-    });
-
-    audioStream.on("end", () => {
-      console.log("Audio stream ended");
-      connection.stopSpeaking();
-    });
-
-    audioStream.on("error", (error) => {
-      console.error("Audio stream error:", error);
-      connection.stopSpeaking();
-    });
-
-    return new Promise((resolve, reject) => {
-      audioStream.on("end", resolve);
-      audioStream.on("error", reject);
-    });
-  }
-
   destroy(): void {
     for (const connection of this.#connections.values()) {
       connection.destroy();
     }
     this.#connections.clear();
     this.#pendingConnections.clear();
+  }
+
+  async #tryConnection(guildId: string): Promise<void> {
+    const pending = this.#pendingConnections.get(guildId);
+
+    if (!(pending?.state && pending.server && pending.server.endpoint)) {
+      return;
+    }
+
+    try {
+      console.log("Attempting to establish voice connection...");
+
+      const connection = new VoiceConnection({
+        endpoint: pending.server.endpoint,
+        token: pending.server.token,
+        sessionId: pending.state.session_id,
+        guildId: guildId,
+        userId: "1011252785989308526",
+        version: VoiceGatewayVersion.V8,
+      });
+
+      connection.on("debug", (...args) => {
+        console.log("[VOICE - DEBUG]", ...args);
+      });
+
+      connection.on("error", (...args) => {
+        console.log("[VOICE - ERROR]", ...args);
+      });
+
+      connection.on("resumed", (...args) => {
+        console.log("[VOICE - RESUMED]", ...args);
+      });
+
+      connection.on("sessionDescription", (...args) => {
+        console.log("[VOICE - SESSION DESCRIPTION]", ...args);
+      });
+
+      connection.on("ready", (...args) => {
+        console.log("[VOICE - READY]", ...args);
+      });
+
+      connection.on("ipDiscovered", (...args) => {
+        console.log("[VOICE - IP DISCOVERED]", ...args);
+      });
+
+      connection.on("ipTimeout", (...args) => {
+        console.log("[VOICE - IP TIMEOUT]", ...args);
+      });
+
+      connection.on("ipRetrying", (...args) => {
+        console.log("[VOICE - IP RETRYING]", ...args);
+      });
+
+      connection.on("speaking", (...args) => {
+        console.log("[VOICE - SPEAKING]", ...args);
+      });
+
+      await connection.connect();
+      this.#connections.set(guildId, connection);
+      this.#pendingConnections.delete(guildId);
+    } catch (error) {
+      console.error("Failed to establish voice connection:", error);
+      this.#pendingConnections.delete(guildId);
+      throw error;
+    }
+  }
+
+  async #handleVoiceStateUpdate(data: VoiceStateEntity): Promise<void> {
+    const guildId = data.guild_id;
+    if (!guildId) {
+      return;
+    }
+
+    const pending = this.#pendingConnections.get(guildId);
+    if (pending) {
+      pending.state = data;
+      await this.#tryConnection(guildId);
+    }
+  }
+
+  async #handleVoiceServerUpdate(data: VoiceServerUpdateEntity): Promise<void> {
+    const pending = this.#pendingConnections.get(data.guild_id);
+    if (pending) {
+      pending.server = data;
+      await this.#tryConnection(data.guild_id);
+    }
   }
 
   async #handleDispatch<K extends keyof GatewayReceiveEvents>(
@@ -111,71 +237,6 @@ export class VoiceManager {
       case "VOICE_SERVER_UPDATE":
         await this.#handleVoiceServerUpdate(d as VoiceServerUpdateEntity);
         break;
-
-      default:
-        break;
-    }
-  }
-
-  async #handleVoiceStateUpdate(data: VoiceStateEntity): Promise<void> {
-    const guildId = data.guild_id;
-    if (!guildId) {
-      return;
-    }
-
-    const pending = this.#pendingConnections.get(guildId);
-
-    if (pending) {
-      pending.state = data;
-      await this.#tryConnection(guildId);
-    }
-  }
-
-  async #handleVoiceServerUpdate(data: VoiceServerUpdateEntity): Promise<void> {
-    const guildId = data.guild_id;
-    const pending = this.#pendingConnections.get(guildId);
-
-    if (pending) {
-      pending.server = data;
-      await this.#tryConnection(guildId);
-    }
-  }
-
-  async #tryConnection(guildId: string): Promise<void> {
-    const pending = this.#pendingConnections.get(guildId);
-
-    if (!(pending?.state && pending.server && pending.server.endpoint)) {
-      return;
-    }
-
-    try {
-      const connection = new VoiceConnection({
-        endpoint: pending.server.endpoint,
-        token: pending.server.token,
-        sessionId: pending.state.session_id,
-        guildId: guildId,
-        userId: "1011252785989308526",
-        version: VoiceGatewayVersion.V8,
-      });
-
-      await connection.connect();
-      this.#connections.set(guildId, connection);
-      this.#pendingConnections.delete(guildId);
-
-      connection.on("error", (...args) => {
-        console.error("Voice connection error:", ...args);
-      });
-
-      connection.on("debug", (...args) => {
-        console.log("Voice connection debug:", ...args);
-      });
-
-      connection.on("ready", (...args) => {
-        console.log("Voice connection ready!", ...args);
-      });
-    } catch (error) {
-      console.error("Failed to connect to voice:", error);
-      this.#pendingConnections.delete(guildId);
     }
   }
 }

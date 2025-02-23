@@ -1,4 +1,3 @@
-import type { CipherGCM, DecipherGCM } from "node:crypto";
 import { createCipheriv, createDecipheriv } from "node:crypto";
 import sodium from "sodium-native";
 import { VoiceEncryptionMode } from "../types/index.js";
@@ -7,18 +6,18 @@ export class VoiceEncryptionService {
   #encryptionMode: VoiceEncryptionMode =
     VoiceEncryptionMode.AeadAes256GcmRtpSize;
   #secretKey: Buffer | null = null;
-  #cipher: CipherGCM | null = null;
-  #decipher: DecipherGCM | null = null;
-  #nonce = Buffer.alloc(24);
   #rtpHeaderSize = 12;
 
   initialize(
     secretKey: Buffer,
     mode: VoiceEncryptionMode = VoiceEncryptionMode.AeadAes256GcmRtpSize,
   ): void {
+    if (!this.isModeSupported(mode)) {
+      throw new Error(`Unsupported encryption mode: ${mode}`);
+    }
+
     this.#encryptionMode = mode;
     this.#secretKey = secretKey;
-    this.#resetCiphers();
   }
 
   encryptPacket(packet: Buffer, sequenceNumber: number): Buffer {
@@ -61,31 +60,36 @@ export class VoiceEncryptionService {
     }
   }
 
+  isModeSupported(mode: VoiceEncryptionMode): boolean {
+    return [
+      VoiceEncryptionMode.AeadAes256GcmRtpSize,
+      VoiceEncryptionMode.AeadXChaCha20Poly1305RtpSize,
+    ].includes(mode);
+  }
+
   destroy(): void {
     this.#secretKey = null;
-    this.#cipher = null;
-    this.#decipher = null;
-    this.#nonce.fill(0);
   }
 
   #encryptAesGcm(rtpHeader: Buffer, payload: Buffer, nonce: Buffer): Buffer {
-    if (!this.#cipher) {
-      if (!this.#secretKey) {
-        throw new Error("Encryption not initialized");
-      }
-
-      this.#cipher = createCipheriv("aes-256-gcm", this.#secretKey, nonce, {
-        authTagLength: 16,
-      });
-
-      this.#cipher.setAAD(rtpHeader);
+    if (!this.#secretKey) {
+      throw new Error("Encryption not initialized");
     }
 
-    const encrypted = this.#cipher.update(payload);
-    const final = this.#cipher.final();
-    const authTag = this.#cipher.getAuthTag();
+    const cipher = createCipheriv(
+      "aes-256-gcm",
+      this.#secretKey,
+      nonce.subarray(0, 12),
+      {
+        authTagLength: 16,
+      },
+    );
 
-    this.#cipher = null;
+    cipher.setAAD(rtpHeader);
+
+    const encrypted = cipher.update(payload);
+    const final = cipher.final();
+    const authTag = cipher.getAuthTag();
 
     return Buffer.concat([rtpHeader, encrypted, final, authTag]);
   }
@@ -95,28 +99,28 @@ export class VoiceEncryptionService {
     encryptedPayload: Buffer,
     nonce: Buffer,
   ): Buffer {
-    if (!this.#decipher) {
-      if (!this.#secretKey) {
-        throw new Error("Encryption not initialized");
-      }
-
-      this.#decipher = createDecipheriv("aes-256-gcm", this.#secretKey, nonce, {
-        authTagLength: 16,
-      });
-
-      this.#decipher.setAAD(rtpHeader);
+    if (!this.#secretKey) {
+      throw new Error("Encryption not initialized");
     }
+
+    const decipher = createDecipheriv(
+      "aes-256-gcm",
+      this.#secretKey,
+      nonce.subarray(0, 12),
+      {
+        authTagLength: 16,
+      },
+    );
 
     const encryptedLength = encryptedPayload.length - 16;
     const authTag = encryptedPayload.subarray(encryptedLength);
     const encrypted = encryptedPayload.subarray(0, encryptedLength);
 
-    this.#decipher.setAuthTag(authTag);
+    decipher.setAAD(rtpHeader);
+    decipher.setAuthTag(authTag);
 
-    const decrypted = this.#decipher.update(encrypted);
-    const final = this.#decipher.final();
-
-    this.#decipher = null;
+    const decrypted = decipher.update(encrypted);
+    const final = decipher.final();
 
     return Buffer.concat([rtpHeader, decrypted, final]);
   }
@@ -169,13 +173,8 @@ export class VoiceEncryptionService {
   }
 
   #createNonce(sequenceNumber: number): Buffer {
-    const nonce = Buffer.alloc(24);
+    const nonce = Buffer.alloc(12);
     nonce.writeUInt32BE(sequenceNumber, 0);
     return nonce;
-  }
-
-  #resetCiphers(): void {
-    this.#cipher = null;
-    this.#decipher = null;
   }
 }
