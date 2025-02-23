@@ -1,4 +1,4 @@
-import { Readable, Transform, type TransformCallback } from "node:stream";
+import { type Readable, Transform, type TransformCallback } from "node:stream";
 import opus from "@discordjs/opus";
 import prism from "prism-media";
 import { z } from "zod";
@@ -37,9 +37,9 @@ export const AudioStreamOptions = z
 export type AudioStreamOptions = z.input<typeof AudioStreamOptions>;
 
 export class VoiceAudioService {
+  readonly #options: AudioOptions;
   readonly #encoder: opus.OpusEncoder;
   readonly #ffmpeg: typeof prism.FFmpeg;
-  readonly #options: AudioOptions;
   readonly #silenceFrame: Buffer;
 
   constructor(options: AudioOptions) {
@@ -55,7 +55,7 @@ export class VoiceAudioService {
   }
 
   createAudioResource(
-    input: string | Buffer | Readable,
+    input: Readable,
     options: AudioStreamOptions = {},
   ): Transform {
     const parseOptions = AudioStreamOptions.safeParse(options);
@@ -64,17 +64,18 @@ export class VoiceAudioService {
     }
 
     const transformers: Transform[] = [];
-    const inputStream = this.#createInputStream(input, parseOptions.data);
+    const resource = new Transform({
+      transform(chunk: Buffer, _: string, callback: TransformCallback): void {
+        callback(null, chunk);
+      },
+    });
 
-    if (parseOptions.data.type !== AudioType.Raw || parseOptions.data.filters) {
-      const transcoder = this.#createTranscoder(parseOptions.data);
-      transformers.push(transcoder);
-    }
+    input.pipe(resource);
 
-    if (
-      parseOptions.data.volume !== undefined &&
-      parseOptions.data.volume !== 1
-    ) {
+    const transcoder = this.#createTranscoder(parseOptions.data);
+    transformers.push(transcoder);
+
+    if (parseOptions.data.volume !== 1) {
       transformers.push(
         this.#createVolumeTransformer(parseOptions.data.volume),
       );
@@ -85,11 +86,12 @@ export class VoiceAudioService {
       channels: this.#options.channels,
       frameSize: this.#options.frameSize,
     });
-    transformers.push(opusEncoder);
 
+    transformers.push(opusEncoder);
     return transformers.reduce((stream, transformer) => {
-      return stream.pipe(transformer);
-    }, inputStream);
+      stream.pipe(transformer);
+      return transformer;
+    }, resource);
   }
 
   encodeFrame(frame: Buffer, options?: { frameSize?: number }): Buffer {
@@ -134,44 +136,6 @@ export class VoiceAudioService {
     }
 
     return adjusted;
-  }
-
-  #createInputStream(
-    input: string | Buffer | Readable,
-    options: AudioStreamOptions,
-  ): Transform {
-    if (Buffer.isBuffer(input) || input instanceof Readable) {
-      const resource = new Transform({
-        transform(chunk: Buffer, _: string, callback: TransformCallback): void {
-          callback(null, chunk);
-        },
-      });
-
-      if (Buffer.isBuffer(input)) {
-        resource.write(input);
-        resource.end();
-      } else {
-        input.pipe(resource);
-      }
-
-      return resource;
-    }
-
-    const transform = new Transform({
-      transform(chunk: Buffer, _: string, callback: TransformCallback): void {
-        callback(null, chunk);
-      },
-    });
-
-    const ffmpegArgs = ["-i", input];
-    if (options.seek) {
-      ffmpegArgs.unshift("-ss", String(options.seek));
-    }
-
-    const ffmpeg = new this.#ffmpeg({ args: ffmpegArgs });
-    ffmpeg.pipe(transform);
-
-    return transform;
   }
 
   #createTranscoder(options: AudioStreamOptions): Transform {

@@ -1,13 +1,20 @@
 import type { VoiceConnection } from "../core/index.js";
-import { type VoiceHeartbeatDataV8, VoiceOpcodes } from "../types/index.js";
+import {
+  VoiceGatewayOpcodes,
+  type VoiceHeartbeatAckPayload,
+  type VoiceHeartbeatPayload,
+} from "../types/index.js";
+
+const MAX_MISSED_HEARTBEATS = 3;
+const INITIAL_SEQUENCE = -1;
 
 export class VoiceHeartbeatManager {
   #interval: NodeJS.Timeout | null = null;
   #missedHeartbeats = 0;
   #lastHeartbeatAck: number | null = null;
   #lastHeartbeatSend: number | null = null;
-  #nonce = 0;
-  #sequenceAck = -1;
+  #nonce = Date.now();
+  #sequenceAck = INITIAL_SEQUENCE;
 
   readonly #connection: VoiceConnection;
 
@@ -33,7 +40,17 @@ export class VoiceHeartbeatManager {
   start(interval: number): void {
     this.destroy();
 
+    this.sendHeartbeat();
     this.#interval = setInterval(() => {
+      if (this.#missedHeartbeats >= MAX_MISSED_HEARTBEATS) {
+        this.#connection.emit(
+          "error",
+          "Too many missed heartbeats, disconnecting",
+        );
+        this.#connection.destroy();
+        return;
+      }
+
       this.sendHeartbeat();
     }, interval);
 
@@ -44,33 +61,50 @@ export class VoiceHeartbeatManager {
   }
 
   sendHeartbeat(): void {
-    if (!this.#connection.isConnectionValid()) {
+    if (!this.#connection.canSend()) {
       return;
     }
 
     this.#lastHeartbeatSend = Date.now();
-    this.#nonce++;
 
-    const heartbeatData: VoiceHeartbeatDataV8 = {
+    const heartbeatData: VoiceHeartbeatPayload = {
       t: this.#nonce,
       seq_ack: this.#sequenceAck,
     };
 
-    this.#connection.send(VoiceOpcodes.Heartbeat, heartbeatData);
-    this.#missedHeartbeats++;
+    try {
+      this.#connection.send(VoiceGatewayOpcodes.Heartbeat, heartbeatData);
+      this.#missedHeartbeats++;
+    } catch (error) {
+      this.#connection.emit(
+        "error",
+        new Error("Failed to send heartbeat", { cause: error }),
+      );
+    }
   }
 
-  ackHeartbeat(nonce: number): void {
-    if (nonce !== this.#nonce) {
-      this.#connection.emit("warn", "Received invalid heartbeat ack");
+  ackHeartbeat(data: VoiceHeartbeatAckPayload): void {
+    if (data.t !== this.#nonce) {
+      this.#connection.emit(
+        "error",
+        `Received invalid heartbeat ack (expected ${this.#nonce}, got ${data.t})`,
+      );
       return;
     }
 
     this.#lastHeartbeatAck = Date.now();
     this.#missedHeartbeats = 0;
+    this.#nonce = Date.now();
   }
 
   updateSequenceAck(seq: number): void {
+    if (seq < 0) {
+      this.#connection.emit(
+        "error",
+        `Received invalid sequence number: ${seq}`,
+      );
+      return;
+    }
     this.#sequenceAck = seq;
   }
 
@@ -83,7 +117,7 @@ export class VoiceHeartbeatManager {
     this.#missedHeartbeats = 0;
     this.#lastHeartbeatAck = null;
     this.#lastHeartbeatSend = null;
-    this.#nonce = 0;
-    this.#sequenceAck = -1;
+    this.#nonce = Date.now();
+    this.#sequenceAck = INITIAL_SEQUENCE;
   }
 }

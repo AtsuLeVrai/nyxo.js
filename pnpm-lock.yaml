@@ -99,6 +99,9 @@ importers:
       '@nyxjs/voice':
         specifier: workspace:*
         version: link:../../packages/voice
+      ffmpeg-static:
+        specifier: 5.2.0
+        version: 5.2.0
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -291,6 +294,9 @@ importers:
       '@discordjs/opus':
         specifier: 0.10.0
         version: 0.10.0
+      '@nyxjs/core':
+        specifier: workspace:*
+        version: link:../core
       '@nyxjs/store':
         specifier: workspace:*
         version: link:../store
@@ -1276,9 +1282,9 @@ packages:
   '@tailwindcss/postcss@4.0.8':
     resolution: {integrity: sha512-SUwlrXjn1ycmUbA0o0n3Y0LqlXqxN5R8HR+ti+OBbRS79wl2seDmiypEs3xJCuQXe07ol81s1AmRMitBmPveJA==}
 
-  '@tokenizer/inflate@0.2.6':
-    resolution: {integrity: sha512-SdR/i05U7Xhnsq36iyIq/ZiGGw4PKzw4ww3bOq80Pjj4wyXpqyTcgrgdDdGlcatnlvzNJx8CQw3hp6QZvkUwhA==}
-    engines: {node: '>=16'}
+  '@tokenizer/inflate@0.2.7':
+    resolution: {integrity: sha512-MADQgmZT1eKjp06jpI2yozxaU9uVs4GzzgSL+uEq7bVcJ9V1ZXQkeGNql1fsSI0gMy1vhvNTNbUqrx+pZfJVmg==}
+    engines: {node: '>=18'}
 
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
@@ -2684,7 +2690,6 @@ snapshots:
       concat-stream: 2.0.0
       http-response-object: 3.0.2
       parse-cache-control: 1.0.1
-    optional: true
 
   '@discordjs/node-pre-gyp@0.4.5':
     dependencies:
@@ -3277,7 +3282,7 @@ snapshots:
       postcss: 8.5.2
       tailwindcss: 4.0.8
 
-  '@tokenizer/inflate@0.2.6':
+  '@tokenizer/inflate@0.2.7':
     dependencies:
       debug: 4.4.0
       fflate: 0.8.2
@@ -3299,8 +3304,7 @@ snapshots:
 
   '@types/mime-types@2.1.4': {}
 
-  '@types/node@10.17.60':
-    optional: true
+  '@types/node@10.17.60': {}
 
   '@types/node@22.13.1':
     dependencies:
@@ -3470,8 +3474,7 @@ snapshots:
     dependencies:
       balanced-match: 1.0.2
 
-  buffer-from@1.1.2:
-    optional: true
+  buffer-from@1.1.2: {}
 
   bufferutil@4.0.9:
     dependencies:
@@ -3491,8 +3494,7 @@ snapshots:
 
   caniuse-lite@1.0.30001700: {}
 
-  caseless@0.12.0:
-    optional: true
+  caseless@0.12.0: {}
 
   chai@5.2.0:
     dependencies:
@@ -3544,7 +3546,6 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
       typedarray: 0.0.6
-    optional: true
 
   console-control-strings@1.1.0: {}
 
@@ -3597,8 +3598,7 @@ snapshots:
       graceful-fs: 4.2.11
       tapable: 2.2.1
 
-  env-paths@2.2.1:
-    optional: true
+  env-paths@2.2.1: {}
 
   erlpack@0.1.4:
     dependencies:
@@ -3705,7 +3705,6 @@ snapshots:
       progress: 2.0.3
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   figures@6.1.0:
     dependencies:
@@ -3713,7 +3712,7 @@ snapshots:
 
   file-type@20.1.0:
     dependencies:
-      '@tokenizer/inflate': 0.2.6
+      '@tokenizer/inflate': 0.2.7
       strtok3: 10.2.1
       token-types: 6.0.0
       uint8array-extras: 1.4.0
@@ -3843,7 +3842,6 @@ snapshots:
   http-response-object@3.0.2:
     dependencies:
       '@types/node': 10.17.60
-    optional: true
 
   https-proxy-agent@5.0.1:
     dependencies:
@@ -4105,8 +4103,7 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
-  parse-cache-control@1.0.1:
-    optional: true
+  parse-cache-control@1.0.1: {}
 
   path-is-absolute@1.0.1: {}
 
@@ -4160,8 +4157,7 @@ snapshots:
       clsx: 2.1.1
       react: 19.0.0
 
-  progress@2.0.3:
-    optional: true
+  progress@2.0.3: {}
 
   punycode@2.3.1: {}
 
@@ -4445,8 +4441,7 @@ snapshots:
       turbo-windows-64: 2.4.2
       turbo-windows-arm64: 2.4.2
 
-  typedarray@0.0.6:
-    optional: true
+  typedarray@0.0.6: {}
 
   typescript@5.7.3: {}
 

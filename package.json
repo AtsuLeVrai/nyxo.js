@@ -40,6 +40,7 @@
       "bufferutil",
       "erlpack",
       "esbuild",
+      "ffmpeg-static",
       "sharp",
       "sodium-native",
       "zlib-sync"

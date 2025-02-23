@@ -34,7 +34,8 @@
     "@nyxjs/gateway": "workspace:*",
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
-    "@nyxjs/voice": "workspace:*"
+    "@nyxjs/voice": "workspace:*",
+    "ffmpeg-static": "5.2.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

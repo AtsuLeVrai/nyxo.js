@@ -1,14 +1,11 @@
 import type { CipherGCM, DecipherGCM } from "node:crypto";
 import { createCipheriv, createDecipheriv } from "node:crypto";
 import sodium from "sodium-native";
-
-export enum VoiceEncryptionMode {
-  AeadAes256Gcm = "aead_aes256_gcm_rtpsize",
-  AeadXchacha20Poly1305 = "aead_xchacha20_poly1305_rtpsize",
-}
+import { VoiceEncryptionMode } from "../types/index.js";
 
 export class VoiceEncryptionService {
-  #encryptionMode: VoiceEncryptionMode = VoiceEncryptionMode.AeadAes256Gcm;
+  #encryptionMode: VoiceEncryptionMode =
+    VoiceEncryptionMode.AeadAes256GcmRtpSize;
   #secretKey: Buffer | null = null;
   #cipher: CipherGCM | null = null;
   #decipher: DecipherGCM | null = null;
@@ -17,7 +14,7 @@ export class VoiceEncryptionService {
 
   initialize(
     secretKey: Buffer,
-    mode: VoiceEncryptionMode = VoiceEncryptionMode.AeadAes256Gcm,
+    mode: VoiceEncryptionMode = VoiceEncryptionMode.AeadAes256GcmRtpSize,
   ): void {
     this.#encryptionMode = mode;
     this.#secretKey = secretKey;
@@ -35,9 +32,9 @@ export class VoiceEncryptionService {
     const nonce = this.#createNonce(sequenceNumber);
 
     switch (this.#encryptionMode) {
-      case VoiceEncryptionMode.AeadAes256Gcm:
+      case VoiceEncryptionMode.AeadAes256GcmRtpSize:
         return this.#encryptAesGcm(rtpHeader, payload, nonce);
-      case VoiceEncryptionMode.AeadXchacha20Poly1305:
+      case VoiceEncryptionMode.AeadXChaCha20Poly1305RtpSize:
         return this.#encryptXchaCha20(rtpHeader, payload, nonce);
       default:
         throw new Error(`Unsupported encryption mode: ${this.#encryptionMode}`);
@@ -55,9 +52,9 @@ export class VoiceEncryptionService {
     const nonce = this.#createNonce(sequenceNumber);
 
     switch (this.#encryptionMode) {
-      case VoiceEncryptionMode.AeadAes256Gcm:
+      case VoiceEncryptionMode.AeadAes256GcmRtpSize:
         return this.#decryptAesGcm(rtpHeader, encryptedPayload, nonce);
-      case VoiceEncryptionMode.AeadXchacha20Poly1305:
+      case VoiceEncryptionMode.AeadXChaCha20Poly1305RtpSize:
         return this.#decryptXchaCha20(rtpHeader, encryptedPayload, nonce);
       default:
         throw new Error(`Unsupported encryption mode: ${this.#encryptionMode}`);

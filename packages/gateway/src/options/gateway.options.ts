@@ -2,7 +2,6 @@ import { ApiVersion, BitFieldManager } from "@nyxjs/core";
 import { z } from "zod";
 import { UpdatePresenceEntity } from "../events/index.js";
 import { GatewayIntentsBits } from "../types/index.js";
-import { HealthOptions } from "./health.options.js";
 import { HeartbeatOptions } from "./heartbeat.options.js";
 import { ShardOptions } from "./shard.options.js";
 
@@ -29,7 +28,6 @@ export const GatewayOptions = z
       .array(z.number().positive())
       .default([1000, 5000, 10000]),
     presence: UpdatePresenceEntity.optional(),
-    health: HealthOptions.default({}),
     heartbeat: HeartbeatOptions.default({}),
     shard: ShardOptions.default({}),
   })

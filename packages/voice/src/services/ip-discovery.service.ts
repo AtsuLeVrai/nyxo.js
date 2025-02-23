@@ -76,7 +76,7 @@ export class IpDiscoveryService {
         }
 
         this.#retryCount++;
-        this.#connection.emit("retrying", this.#retryCount);
+        this.#connection.emit("ipRetrying", this.#retryCount);
 
         // Wait before retrying
         await new Promise((resolve) =>
@@ -92,13 +92,13 @@ export class IpDiscoveryService {
         }
       };
 
-      const onError = (error: Error): void => {
+      const onError = (error: Error | string): void => {
         cleanup();
         reject(error);
       };
 
-      this.#connection.once("discovered", onDiscovered);
-      this.#connection.once("timeout", onTimeout);
+      this.#connection.once("ipDiscovered", onDiscovered);
+      this.#connection.once("ipTimeout", onTimeout);
       this.#connection.once("error", onError);
 
       this.#sendDiscoveryPacket(ssrc, ip, port)
@@ -120,17 +120,9 @@ export class IpDiscoveryService {
 
   #createDiscoveryPacket(ssrc: number): Buffer {
     const packet = Buffer.alloc(74);
-
-    // Type: 0x1 for request
     packet.writeUInt16BE(REQUEST_TYPE, 0);
-
-    // Length: 70
     packet.writeUInt16BE(PACKET_LENGTH, 2);
-
-    // SSRC
     packet.writeUInt32BE(ssrc, 4);
-
-    // Rest of the packet is left as null bytes
     return packet;
   }
 
@@ -163,7 +155,7 @@ export class IpDiscoveryService {
 
     this.#timeoutHandle = setTimeout(() => {
       this.#timeoutHandle = null;
-      this.#connection.emit("timeout");
+      this.#connection.emit("ipTimeout");
     }, this.#options.timeout);
   }
 
@@ -185,7 +177,7 @@ export class IpDiscoveryService {
 
       const port = message.readUInt16BE(72);
 
-      this.#connection.emit("discovered", ip, port);
+      this.#connection.emit("ipDiscovered", ip, port);
     } catch (error) {
       this.#connection.emit(
         "error",

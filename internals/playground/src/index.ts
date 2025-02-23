@@ -1,6 +1,8 @@
+import { setTimeout } from "node:timers/promises";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
+import { VoiceManager } from "./voice.manager.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
@@ -66,10 +68,6 @@ gateway.on("sessionUpdate", (...args) => {
   console.log("[GATEWAY - SESSION UPDATE]", ...args);
 });
 
-gateway.on("healthStatus", (...args) => {
-  console.log("[GATEWAY - HEALTH STATUS]", ...args);
-});
-
 gateway.on("shardUpdate", (...args) => {
   console.log("[GATEWAY - SHARD UPDATE]", ...args);
 });
@@ -86,10 +84,25 @@ gateway.on("dispatch", (...args) => {
   console.log("[GATEWAY - DISPATCH]", ...args);
 });
 
+const voice = new VoiceManager(gateway);
+
+async function main(): Promise<void> {
+  await gateway.connect();
+  voice.joinVoiceChannel("936969912600121384", "1232694742350041089");
+  await setTimeout(3000);
+  await voice.playAudio("936969912600121384", "./song.mp3");
+}
+
+main().catch((error) => {
+  console.error("Failed to start application", error);
+  process.exit(1);
+});
+
 async function shutdown(): Promise<void> {
   try {
     await rest.destroy();
     gateway.destroy();
+    voice.destroy();
     process.exit(0);
   } catch {
     process.exit(1);
@@ -107,5 +120,3 @@ process.on("uncaughtException", async (error) => {
   console.error("Uncaught exception:", error);
   await shutdown();
 });
-
-gateway.connect();

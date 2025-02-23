@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@discordjs/opus": "0.10.0",
+    "@nyxjs/core": "workspace:*",
     "@nyxjs/store": "workspace:*",
     "eventemitter3": "5.0.1",
     "prism-media": "1.3.5",
