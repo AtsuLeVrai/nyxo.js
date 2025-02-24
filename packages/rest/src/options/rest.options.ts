@@ -3,20 +3,64 @@ import { z } from "zod";
 import { RateLimitOptions } from "./rate-limit.options.js";
 import { RetryOptions } from "./retry.options.js";
 
-/** @see {@link https://discord.com/developers/docs/reference#user-agent} */
+/**
+ * Regular expression pattern for validating Discord bot user agents
+ * @see {@link https://discord.com/developers/docs/reference#user-agent}
+ */
 export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
 
+/**
+ * Configuration options for the REST client
+ *
+ * Controls authentication, API version, endpoints, and behavior
+ * for requests to the Discord API.
+ */
 export const RestOptions = z
   .object({
+    /**
+     * Discord Bot or Bearer token for authentication
+     * Required for all API requests
+     */
     token: z.string(),
+
+    /**
+     * Type of authentication to use with the token
+     * @default "Bot"
+     */
     authType: z.enum(["Bot", "Bearer"]).default("Bot"),
+
+    /**
+     * Discord API version to use
+     * @default ApiVersion.V10
+     */
     version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
+
+    /**
+     * User agent string to send with requests
+     * Must follow Discord's user agent format requirements
+     * @default "DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"
+     */
     userAgent: z
       .string()
       .regex(DISCORD_USER_AGENT_REGEX)
       .default("DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"),
+
+    /**
+     * Base URL for Discord API requests
+     * @default "https://discord.com"
+     */
     baseUrl: z.string().url().default("https://discord.com"),
+
+    /**
+     * Rate limit handling configuration
+     * @default {}
+     */
     rateLimit: RateLimitOptions.default({}),
+
+    /**
+     * Request retry configuration
+     * @default {}
+     */
     retry: RetryOptions.default({}),
   })
   .readonly();

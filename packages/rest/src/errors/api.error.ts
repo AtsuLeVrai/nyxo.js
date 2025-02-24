@@ -26,13 +26,14 @@ export class ApiError extends BaseApiError {
   readonly errors?: Record<string, { _errors: JsonErrorField[] }>;
 
   constructor(
+    requestId: string,
     error: JsonErrorResponse,
     status: number,
     headers: Record<string, unknown>,
     method: string,
     path: string,
   ) {
-    super(error.message, {
+    super(requestId, error.message, {
       statusCode: status,
       method,
       path,

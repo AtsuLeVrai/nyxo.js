@@ -1,8 +1,6 @@
-import { setTimeout } from "node:timers/promises";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
-import { VoiceManager } from "./voice.manager.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
@@ -13,28 +11,32 @@ const rest = new Rest({
   token: env.DISCORD_TOKEN,
 });
 
-rest.on("debug", (...args) => {
-  console.log("[REST - DEBUG]", ...args);
+rest.on("requestStart", (...args) => {
+  console.log("[REST - REQUEST START]", ...args);
 });
 
-rest.on("error", (...args) => {
-  console.log("[REST - ERROR]", ...args);
+rest.on("requestComplete", (...args) => {
+  console.log("[REST - REQUEST COMPLETE]", ...args);
 });
 
-rest.on("requestFinish", (...args) => {
-  console.log("[REST - REQUEST FINISH]", ...args);
+rest.on("requestFailure", (...args) => {
+  console.log("[REST - REQUEST FAILURE]", ...args);
+});
+
+rest.on("rateLimitHit", (...args) => {
+  console.log("[REST - RATE LIMIT HIT]", ...args);
+});
+
+rest.on("rateLimitUpdate", (...args) => {
+  console.log("[REST - RATE LIMIT UPDATE]", ...args);
+});
+
+rest.on("rateLimitExpire", (...args) => {
+  console.log("[REST - RATE LIMIT EXPIRE]", ...args);
 });
 
 rest.on("retryAttempt", (...args) => {
   console.log("[REST - RETRY ATTEMPT]", ...args);
-});
-
-rest.on("rateLimitExceeded", (...args) => {
-  console.log("[REST - RATE LIMIT EXCEEDED]", ...args);
-});
-
-rest.on("bucketUpdate", (...args) => {
-  console.log("[REST - BUCKET UPDATE]", ...args);
 });
 
 const gateway = new Gateway(rest, {
@@ -84,24 +86,8 @@ gateway.on("dispatch", (...args) => {
   console.log("[GATEWAY - DISPATCH]", ...args);
 });
 
-const voice = new VoiceManager(gateway);
-
 async function main(): Promise<void> {
   await gateway.connect();
-  console.log("Gateway connected, joining voice channel...");
-
-  voice.joinVoiceChannel("936969912600121384", "1232694742350041089");
-
-  await setTimeout(5000);
-
-  try {
-    console.log("Attempting to play audio...");
-    await voice.playAudio("936969912600121384", "./src/song.mp3");
-    console.log("Audio playback completed successfully");
-  } catch (error) {
-    console.error("Error during audio playback:", error);
-    throw error;
-  }
 }
 
 main().catch((error) => {
@@ -113,7 +99,6 @@ async function shutdown(): Promise<void> {
   try {
     await rest.destroy();
     gateway.destroy();
-    voice.destroy();
     process.exit(0);
   } catch {
     process.exit(1);

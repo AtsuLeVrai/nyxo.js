@@ -7,11 +7,17 @@ export interface BaseApiErrorContext {
 }
 
 export abstract class BaseApiError extends Error {
+  readonly requestId: string;
   readonly context: BaseApiErrorContext;
 
-  protected constructor(message: string, context: BaseApiErrorContext) {
+  protected constructor(
+    message: string,
+    requestId: string,
+    context: BaseApiErrorContext,
+  ) {
     super(message);
     this.name = this.constructor.name;
+    this.requestId = requestId;
     this.context = {
       ...context,
       timestamp: new Date().toISOString(),
@@ -21,6 +27,6 @@ export abstract class BaseApiError extends Error {
   abstract toJson(): unknown;
 
   override toString(): string {
-    return `${this.name}: ${this.message} (${this.context.method} ${this.context.path})`;
+    return `${this.name}: [${this.requestId}] ${this.message} (${this.context.method} ${this.context.path})`;
   }
 }

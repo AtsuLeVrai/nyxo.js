@@ -18,9 +18,11 @@ export class RateLimitError extends BaseApiError {
   readonly retryAfter: number;
 
   constructor(
+    requestId: string,
     context: Omit<RateLimitContext, "statusCode" | "timestamp" | "headers">,
   ) {
     super(
+      requestId,
       `Rate limit exceeded for ${context.path} (${context.method}): retry after ${context.retryAfter}ms`,
       {
         statusCode: 429,
