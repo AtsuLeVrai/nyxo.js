@@ -66,7 +66,6 @@ import type {
   VoiceServerUpdateEntity,
   WebhookUpdateEntity,
 } from "../events/index.js";
-import type { ShardEvent } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
@@ -174,45 +173,6 @@ export interface PayloadEntity {
   t: keyof GatewayReceiveEvents | null;
 }
 
-export type SessionEventType = "state" | "close" | "invalid";
-
-export interface SessionEventBase {
-  type: SessionEventType;
-}
-
-export interface SessionStateEvent extends SessionEventBase {
-  type: "state";
-  sessionId: string;
-  resumeUrl: string;
-}
-
-export interface SessionCloseEvent extends SessionEventBase {
-  type: "close";
-  code: number;
-  sessionId: string;
-}
-
-export interface SessionInvalidEvent extends SessionEventBase {
-  type: "invalid";
-  resumable: boolean;
-}
-
-export type SessionEvent =
-  | SessionStateEvent
-  | SessionCloseEvent
-  | SessionInvalidEvent;
-
-export interface GatewayEvents {
-  sessionUpdate: [session: SessionEvent];
-  shardUpdate: [shard: ShardEvent];
-  debug: [message: string, context?: Record<string, unknown>];
-  error: [message: string | Error, context?: Record<string, unknown>];
-  dispatch: <K extends keyof GatewayReceiveEvents>(
-    event: K,
-    data: GatewayReceiveEvents[K],
-  ) => void;
-}
-
 /**
  * @see {@link https://discord.com/developers/docs/events/gateway#list-of-intents}
  */
@@ -257,3 +217,5 @@ export enum GatewayOpcodes {
   HeartbeatAck = 11,
   RequestSoundboardSounds = 31,
 }
+
+export * from "./gateway.events.types.js";

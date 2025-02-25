@@ -1,17 +1,12 @@
 import { createReadStream } from "node:fs";
-import { BitFieldManager, type VoiceStateEntity } from "@nyxjs/core";
+import type { VoiceStateEntity } from "@nyxjs/core";
 import type {
   Gateway,
   GatewayReceiveEvents,
   VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import { Store } from "@nyxjs/store";
-import {
-  AudioType,
-  VoiceConnection,
-  VoiceGatewayVersion,
-  VoiceSpeakingFlags,
-} from "@nyxjs/voice";
+import { AudioType, VoiceConnection, VoiceGatewayVersion } from "@nyxjs/voice";
 
 export class VoiceManager {
   #connections = new Store<string, VoiceConnection>();
@@ -79,14 +74,6 @@ export class VoiceManager {
 
     console.log("Input stream format:", audioStream);
     console.log("Transformed stream format:", transformedStream);
-
-    const flags = BitFieldManager.combine(
-      VoiceSpeakingFlags.Priority,
-      VoiceSpeakingFlags.Microphone,
-    );
-
-    console.log(`[Voice Debug] Setting speaking flags: ${flags.toNumber()}`);
-    connection.setSpeaking(true, flags.toNumber());
 
     let packetCount = 0;
     return new Promise((resolve, reject) => {

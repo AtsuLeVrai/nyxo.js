@@ -66,20 +66,88 @@ const gateway = new Gateway(rest, {
   ],
 });
 
-gateway.on("sessionUpdate", (...args) => {
-  console.log("[GATEWAY - SESSION UPDATE]", ...args);
+gateway.on("connectionStart", (...args) => {
+  console.log("[GATEWAY - CONNECTION START]", ...args);
 });
 
-gateway.on("shardUpdate", (...args) => {
-  console.log("[GATEWAY - SHARD UPDATE]", ...args);
+gateway.on("connectionComplete", (...args) => {
+  console.log("[GATEWAY - CONNECTION COMPLETE]", ...args);
 });
 
-gateway.on("debug", (...args) => {
-  console.log("[GATEWAY - DEBUG]", ...args);
+gateway.on("connectionFailure", (...args) => {
+  console.log("[GATEWAY - CONNECTION FAILURE]", ...args);
+});
+
+gateway.on("payloadSend", (...args) => {
+  console.log("[GATEWAY - PAYLOAD SEND]", ...args);
+});
+
+gateway.on("payloadReceive", (...args) => {
+  console.log("[GATEWAY - PAYLOAD RECEIVE]", ...args);
+});
+
+gateway.on("heartbeatStart", (...args) => {
+  console.log("[GATEWAY - HEARTBEAT START]", ...args);
+});
+
+gateway.on("heartbeatSend", (...args) => {
+  console.log("[GATEWAY - HEARTBEAT SEND]", ...args);
+});
+
+gateway.on("heartbeatAck", (...args) => {
+  console.log("[GATEWAY - HEARTBEAT ACK]", ...args);
+});
+
+gateway.on("heartbeatTimeout", (...args) => {
+  console.log("[GATEWAY - HEARTBEAT TIMEOUT]", ...args);
+});
+
+gateway.on("sessionStart", (...args) => {
+  console.log("[GATEWAY - SESSION START]", ...args);
+});
+
+gateway.on("sessionInvalid", (...args) => {
+  console.log("[GATEWAY - SESSION INVALID]", ...args);
+});
+
+gateway.on("sessionResume", (...args) => {
+  console.log("[GATEWAY - SESSION RESUME]", ...args);
+});
+
+gateway.on("shardCreate", (...args) => {
+  console.log("[GATEWAY - SHARD CREATE]", ...args);
+});
+
+gateway.on("shardReady", (...args) => {
+  console.log("[GATEWAY - SHARD READY]", ...args);
+});
+
+gateway.on("shardDisconnect", (...args) => {
+  console.log("[GATEWAY - SHARD DISCONNECT]", ...args);
+});
+
+gateway.on("shardReconnect", (...args) => {
+  console.log("[GATEWAY - SHARD RECONNECT]", ...args);
+});
+
+gateway.on("shardGuildAdd", (...args) => {
+  console.log("[GATEWAY - SHARD GUILD ADD]", ...args);
+});
+
+gateway.on("shardGuildRemove", (...args) => {
+  console.log("[GATEWAY - SHARD GUILD REMOVE]", ...args);
+});
+
+gateway.on("shardRateLimit", (...args) => {
+  console.log("[GATEWAY - SHARD RATE LIMIT]", ...args);
+});
+
+gateway.on("sessionLimitUpdate", (...args) => {
+  console.log("[GATEWAY - SESSION LIMIT UPDATE]", ...args);
 });
 
 gateway.on("error", (...args) => {
-  console.log("[GATEWAY - ERROR]", ...args);
+  console.error("[GATEWAY - ERROR]", ...args);
 });
 
 gateway.on("dispatch", (...args) => {
