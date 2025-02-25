@@ -35,7 +35,9 @@
     "@nyxjs/rest": "workspace:*",
     "@nyxjs/store": "workspace:*",
     "@nyxjs/voice": "workspace:*",
-    "ffmpeg-static": "5.2.0"
+    "erlpack": "^0.1.4",
+    "fzstd": "^0.1.1",
+    "zlib-sync": "^0.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

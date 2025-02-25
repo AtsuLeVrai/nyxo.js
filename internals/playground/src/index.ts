@@ -64,6 +64,8 @@ const gateway = new Gateway(rest, {
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
+  compressionType: "zlib-stream",
+  encodingType: "etf",
 });
 
 gateway.on("connectionStart", (...args) => {

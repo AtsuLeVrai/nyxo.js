@@ -1,6 +1,6 @@
 import { setTimeout } from "node:timers/promises";
 import type { UnavailableGuildEntity } from "@nyxjs/core";
-import type { GatewayBotResponseEntity, Rest } from "@nyxjs/rest";
+import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { z } from "zod";
@@ -253,20 +253,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
       try {
         // Initialize required services
-        const initializationPromises: [
-          Promise<GatewayBotResponseEntity>,
-          ...Promise<void>[],
-        ] = [this.#rest.gateway.getGatewayBot()];
-
-        if (this.encoding.type === "etf") {
-          initializationPromises.push(this.encoding.initialize());
-        }
-
-        if (this.compression.type) {
-          initializationPromises.push(this.compression.initialize());
-        }
-
-        const [gatewayInfo] = await Promise.all(initializationPromises);
+        const [gatewayInfo] = await Promise.all([
+          this.#rest.gateway.getGatewayBot(),
+          this.encoding.initialize(),
+          this.compression.initialize(),
+        ]);
         connectionStartEvent.gatewayUrl = gatewayInfo.url;
 
         this.emit("connectionStart", connectionStartEvent);

@@ -1,4 +1,5 @@
 import type { ApiVersion } from "@nyxjs/core";
+import type { CompressionType, EncodingType } from "../options/index.js";
 import type { GatewayOpcodes, GatewayReceiveEvents } from "./index.js";
 
 /**
@@ -17,10 +18,10 @@ export interface WebSocketConnectionEventBase extends GatewayEventBase {
   gatewayUrl: string;
 
   /** Encoding type being used */
-  encoding: string;
+  encoding: EncodingType;
 
   /** Compression type if any */
-  compression: string | null;
+  compression: CompressionType | null;
 }
 
 /**
