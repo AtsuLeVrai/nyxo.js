@@ -9,16 +9,6 @@ import type { CompressionType } from "../options/index.js";
 const ZLIB_FLUSH = Buffer.from([0x00, 0x00, 0xff, 0xff]);
 
 /**
- * Required external modules for compression/decompression
- */
-interface CompressionModules {
-  /** zlib-sync module for zlib stream compression */
-  zlib?: typeof import("zlib-sync");
-  /** fzstd module for Zstandard compression */
-  zstd?: typeof import("fzstd");
-}
-
-/**
  * Service responsible for decompressing Gateway payload data
  *
  * Supports Zlib and Zstandard compression algorithms as specified by Discord's Gateway
@@ -29,9 +19,6 @@ export class CompressionService {
 
   /** Zlib inflate stream */
   #zlibInflate: Inflate | null = null;
-
-  /** Loaded external compression modules */
-  #modules: CompressionModules | null = null;
 
   /** Buffer for Zstandard output chunks */
   #chunks: Uint8Array[] = [];
@@ -79,14 +66,11 @@ export class CompressionService {
     }
 
     try {
-      // Load required external modules
-      this.#modules = await this.#createCompressionModules();
-
       // Initialize the appropriate decompression algorithm
       if (this.#type === "zlib-stream") {
-        this.#initializeZlib();
+        await this.#initializeZlib();
       } else if (this.#type === "zstd-stream") {
-        this.#initializeZstd();
+        await this.#initializeZstd();
       }
     } catch (error) {
       throw new Error(
@@ -139,7 +123,6 @@ export class CompressionService {
   destroy(): void {
     this.#zlibInflate = null;
     this.#zstdStream = null;
-    this.#modules = null;
     this.#chunks = [];
   }
 
@@ -148,13 +131,16 @@ export class CompressionService {
    *
    * @throws {Error} If Zlib initialization fails
    */
-  #initializeZlib(): void {
-    if (!(this.#type === "zlib-stream" && this.#modules?.zlib)) {
-      throw new Error("Zlib compression options or module not available");
+  async #initializeZlib(): Promise<void> {
+    const zlibModule: typeof import("zlib-sync") = (await OptionalDeps.import(
+      "zlib-sync",
+    )) as typeof import("zlib-sync");
+    if (!zlibModule) {
+      throw new Error("zlib-sync module required but not available");
     }
 
     // Create Zlib inflate instance with appropriate options
-    this.#zlibInflate = new this.#modules.zlib.Inflate({
+    this.#zlibInflate = new zlibModule.Inflate({
       chunkSize: 128 * 1024, // 128KB chunk size for efficient memory usage
       windowBits: 15, // Standard window size for maximum compatibility
     });
@@ -170,13 +156,16 @@ export class CompressionService {
    *
    * @throws {Error} If Zstandard initialization fails
    */
-  #initializeZstd(): void {
-    if (!(this.#type === "zstd-stream" && this.#modules?.zstd)) {
-      throw new Error("Zstd compression options or module not available");
+  async #initializeZstd(): Promise<void> {
+    const zstdModule: typeof import("fzstd") = (await OptionalDeps.import(
+      "fzstd",
+    )) as typeof import("fzstd");
+    if (!zstdModule) {
+      throw new Error("fzstd module required but not available");
     }
 
     // Create Zstandard decompress instance with chunk collector
-    this.#zstdStream = new this.#modules.zstd.Decompress((chunk) =>
+    this.#zstdStream = new zstdModule.Decompress((chunk) =>
       this.#chunks.push(chunk),
     );
 
@@ -206,7 +195,7 @@ export class CompressionService {
     }
 
     // Process the data through the inflate stream
-    this.#zlibInflate.push(data, this.#modules?.zlib?.Z_SYNC_FLUSH);
+    this.#zlibInflate.push(data, 2);
 
     // Check for decompression errors
     if (this.#zlibInflate.err) {
@@ -255,39 +244,5 @@ export class CompressionService {
     }
 
     return Buffer.from(combined);
-  }
-
-  /**
-   * Creates and loads the necessary compression modules
-   *
-   * @returns The loaded compression modules
-   * @throws {Error} If required modules cannot be loaded
-   */
-  async #createCompressionModules(): Promise<CompressionModules> {
-    const modules: CompressionModules = {};
-
-    // Load modules based on the selected compression type
-    if (this.#type === "zlib-stream") {
-      const zlibModule = await OptionalDeps.import("zlib-sync");
-      if (zlibModule) {
-        modules.zlib = zlibModule as typeof import("zlib-sync");
-      }
-    } else if (this.#type === "zstd-stream") {
-      const zstdModule = await OptionalDeps.import("fzstd");
-      if (zstdModule) {
-        modules.zstd = zstdModule as typeof import("fzstd");
-      }
-    }
-
-    // Validate required modules are available
-    if (this.#type === "zlib-stream" && !modules.zlib) {
-      throw new Error("zlib-sync module required but not available");
-    }
-
-    if (this.#type === "zstd-stream" && !modules.zstd) {
-      throw new Error("fzstd module required but not available");
-    }
-
-    return modules;
   }
 }
