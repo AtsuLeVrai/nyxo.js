@@ -376,7 +376,6 @@ export class ShardManager {
     if (status === "disconnected" && oldStatus !== "disconnected") {
       const disconnectEvent: ShardDisconnectEvent = {
         timestamp: new Date().toISOString(),
-
         shardId,
         totalShards: shard.totalShards,
         code: 1006, // Default WebSocket close code for abnormal closure
@@ -696,7 +695,7 @@ export class ShardManager {
     );
 
     // Spawn buckets in chunks of maxConcurrency
-    const chunkSize = this.maxConcurrency;
+    const chunkSize = this.#maxConcurrency;
     for (let i = 0; i < orderedBuckets.length; i += chunkSize) {
       const chunk = orderedBuckets.slice(i, i + chunkSize);
 

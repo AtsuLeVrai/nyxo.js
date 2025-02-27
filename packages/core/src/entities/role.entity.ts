@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { parseBitField } from "../utils/index.js";
+import { BitFieldManager, Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-flags}
@@ -38,7 +37,7 @@ export const RoleEntity = z.object({
   managed: z.boolean(),
   mentionable: z.boolean(),
   tags: RoleTagsEntity.optional(),
-  flags: parseBitField<RoleFlags>(),
+  flags: z.custom<RoleFlags>(BitFieldManager.isValidBitField),
 });
 
 export type RoleEntity = z.infer<typeof RoleEntity>;

@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { parseBitField } from "../utils/index.js";
+import { BitFieldManager, Snowflake } from "../managers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-flags}
@@ -30,7 +29,7 @@ export const SkuEntity = z.object({
   application_id: Snowflake,
   name: z.string(),
   slug: z.string(),
-  flags: parseBitField<SkuFlags>(),
+  flags: z.custom<SkuFlags>(BitFieldManager.isValidBitField),
   dependent_sku_id: Snowflake.nullable(),
   manifest_labels: z.array(z.string()).nullable(),
   access_type: z.number().optional(),

@@ -241,72 +241,91 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If connection fails
    */
   async connect(): Promise<void> {
+    // Reset connection state if reconnecting
+    if (this.#ws !== null) {
+      this.destroy();
+    }
+
+    this.#connectStartTime = Date.now();
+
+    // Prepare connection event data
+    const connectionStartEvent: ConnectionStartEvent = {
+      timestamp: new Date().toISOString(),
+      gatewayUrl: "",
+      encoding: this.encoding.type,
+      compression: this.compression.type,
+    };
+
     try {
-      this.#connectStartTime = Date.now();
+      // Initialize required services in parallel
+      const [gatewayInfo] = await Promise.all([
+        this.#rest.gateway.getGatewayBot(),
+        this.encoding.initialize(),
+        this.compression.initialize(),
+      ]);
 
-      const connectionStartEvent: ConnectionStartEvent = {
-        timestamp: new Date().toISOString(),
-        gatewayUrl: "",
-        encoding: this.encoding.type,
-        compression: this.compression.type,
-      };
+      connectionStartEvent.gatewayUrl = gatewayInfo.url;
+      this.emit("connectionStart", connectionStartEvent);
 
-      try {
-        // Initialize required services
-        const [gatewayInfo] = await Promise.all([
-          this.#rest.gateway.getGatewayBot(),
-          this.encoding.initialize(),
-          this.compression.initialize(),
-        ]);
-        connectionStartEvent.gatewayUrl = gatewayInfo.url;
+      // Set up sharding if enabled
+      if (this.shard.isEnabled()) {
+        const guilds = await this.#rest.users.getCurrentUserGuilds();
+        await this.shard.spawn(
+          guilds.length,
+          gatewayInfo.session_start_limit.max_concurrency,
+          gatewayInfo.shards,
+        );
+      }
 
-        this.emit("connectionStart", connectionStartEvent);
+      // Set up WebSocket connection
+      await this.#initializeWebSocket(gatewayInfo.url);
 
-        // Set up sharding if enabled
-        if (this.shard.isEnabled()) {
-          const guilds = await this.#rest.users.getCurrentUserGuilds();
-          await this.shard.spawn(
-            guilds.length,
-            gatewayInfo.session_start_limit.max_concurrency,
-            gatewayInfo.shards,
-          );
-        }
-
-        // Wait for READY event
-        return new Promise<void>((resolve, reject) => {
-          const readyHandler = (event: keyof GatewayReceiveEvents): void => {
-            if (event === "READY") {
-              this.removeListener("error", errorHandler);
-              resolve();
-            }
-          };
-
-          const errorHandler = (error: Error | string): void => {
-            this.removeListener("dispatch", readyHandler);
-            reject(error);
-          };
-
-          this.once("dispatch", readyHandler);
-          this.once("error", errorHandler);
-
-          this.#initializeWebSocket(gatewayInfo.url).catch(errorHandler);
-        });
-      } catch (error) {
-        const failureEvent: ConnectionFailureEvent = {
-          timestamp: new Date().toISOString(),
-          gatewayUrl: connectionStartEvent.gatewayUrl,
-          encoding: this.encoding.type,
-          compression: this.compression.type,
-          error: error instanceof Error ? error : new Error(String(error)),
-          duration: Date.now() - this.#connectStartTime,
-          attemptNumber: this.#reconnectionAttempts + 1,
+      // Wait for READY event with proper cleanup
+      return new Promise<void>((resolve, reject) => {
+        const cleanup = (): void => {
+          this.removeListener("dispatch", readyHandler);
+          this.removeListener("error", errorHandler);
+          this.removeListener("connectionFailure", failureHandler);
         };
 
-        this.emit("connectionFailure", failureEvent);
-        throw error;
-      }
+        const readyHandler = (event: keyof GatewayReceiveEvents): void => {
+          if (event === "READY") {
+            cleanup();
+            resolve();
+          }
+        };
+
+        const errorHandler = (error: Error | string): void => {
+          cleanup();
+          reject(error);
+        };
+
+        const failureHandler = (event: ConnectionFailureEvent): void => {
+          cleanup();
+          reject(event.error);
+        };
+
+        this.once("dispatch", readyHandler);
+        this.once("error", errorHandler);
+        this.once("connectionFailure", failureHandler);
+      });
     } catch (error) {
-      throw new Error("Failed to connect to gateway", { cause: error });
+      const failureEvent: ConnectionFailureEvent = {
+        timestamp: new Date().toISOString(),
+        gatewayUrl: connectionStartEvent.gatewayUrl,
+        encoding: this.encoding.type,
+        compression: this.compression.type,
+        error: error instanceof Error ? error : new Error(String(error)),
+        duration: Date.now() - this.#connectStartTime,
+        attemptNumber: this.#reconnectionAttempts + 1,
+      };
+
+      this.emit("connectionFailure", failureEvent);
+
+      // Enhanced error reporting with more context
+      throw new Error("Failed to connect to gateway", {
+        cause: error,
+      });
     }
   }
 
@@ -326,7 +345,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const payload: PayloadEntity = {
       op: opcode,
       d: data,
-      s: this.sequence,
+      s: this.#sequence,
       t: null,
     };
 
@@ -335,7 +354,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const payloadSendEvent: PayloadSendEvent = {
       timestamp: new Date().toISOString(),
       opcode,
-      sequence: this.sequence,
+      sequence: this.#sequence,
       payloadSize:
         typeof encoded === "string"
           ? Buffer.byteLength(encoded)
@@ -589,7 +608,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     // Calculate connection time
-    const readyTime = Date.now() - this.connectStartTime;
+    const readyTime = Date.now() - this.#connectStartTime;
 
     // Emit session start event
     const sessionStartEvent: SessionStartEvent = {
@@ -666,11 +685,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param code - WebSocket close code
    */
   async #handleDisconnect(code: number): Promise<void> {
-    if (!this.options.heartbeat.autoReconnect) {
+    if (!this.#options.heartbeat.autoReconnect) {
       return;
     }
 
-    this.#incrementReconnectionAttempts();
+    this.#reconnectionAttempts++;
 
     const delay = this.#getReconnectionDelay();
     await setTimeout(delay);
@@ -730,7 +749,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     this.send(GatewayOpcodes.Resume, {
-      token: this.options.token,
+      token: this.#options.token,
       session_id: this.#sessionId,
       seq: this.#sequence,
     });
@@ -741,15 +760,15 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   async #identify(): Promise<void> {
     const payload: IdentifyEntity = {
-      token: this.options.token,
+      token: this.#options.token,
       properties: {
         os: process.platform,
         browser: "nyx.js",
         device: "nyx.js",
       },
       compress: this.compression.isInitialized(),
-      large_threshold: this.options.largeThreshold,
-      intents: this.options.intents,
+      large_threshold: this.#options.largeThreshold,
+      intents: this.#options.intents,
     };
 
     // Add shard info if sharding is enabled
@@ -758,8 +777,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     // Add presence if provided
-    if (this.options.presence) {
-      payload.presence = this.options.presence;
+    if (this.#options.presence) {
+      payload.presence = this.#options.presence;
     }
 
     // Validate payload
@@ -779,7 +798,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   #buildGatewayUrl(baseUrl: string): string {
     const params = new URLSearchParams({
-      v: String(this.options.version),
+      v: String(this.#options.version),
       encoding: this.encoding.type,
     });
 
@@ -802,21 +821,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   /**
-   * Increments the reconnection attempt counter
-   */
-  #incrementReconnectionAttempts(): void {
-    this.#reconnectionAttempts++;
-  }
-
-  /**
    * Gets the reconnection delay based on attempt count
    *
    * @returns Delay in milliseconds
    */
   #getReconnectionDelay(): number {
     return (
-      this.options.backoffSchedule[this.#reconnectionAttempts] ??
-      this.options.backoffSchedule.at(-1) ??
+      this.#options.backoffSchedule[this.#reconnectionAttempts] ??
+      this.#options.backoffSchedule.at(-1) ??
       0
     );
   }

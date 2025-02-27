@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { LocaleKey, OAuth2Scope } from "../enums/index.js";
-import { Snowflake } from "../managers/index.js";
-import { parseBitField } from "../utils/index.js";
+import { BitFieldManager, Snowflake } from "../managers/index.js";
 import {
   GuildStageVoiceChannelEntity,
   GuildVoiceChannelEntity,
@@ -298,7 +297,7 @@ export const GuildMemberEntity = z.object({
   premium_since: z.string().datetime().nullish(),
   deaf: z.boolean(),
   mute: z.boolean(),
-  flags: parseBitField<GuildMemberFlags>(),
+  flags: z.custom<GuildMemberFlags>(BitFieldManager.isValidBitField),
   pending: z.boolean().optional(),
   permissions: z.string().optional(),
   communication_disabled_until: z.string().datetime().nullish(),
@@ -395,7 +394,9 @@ export const GuildEntity = z.object({
   mfa_level: z.nativeEnum(MfaLevel),
   application_id: Snowflake.nullable(),
   system_channel_id: Snowflake.nullable(),
-  system_channel_flags: parseBitField<SystemChannelFlags>(),
+  system_channel_flags: z.custom<SystemChannelFlags>(
+    BitFieldManager.isValidBitField,
+  ),
   rules_channel_id: Snowflake.nullable(),
   max_presences: z.number().int().nullish(),
   max_members: z.number().int(),

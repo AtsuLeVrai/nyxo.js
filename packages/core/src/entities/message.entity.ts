@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { parseBitField } from "../utils/index.js";
+import { BitFieldManager, Snowflake } from "../managers/index.js";
 import { ApplicationEntity } from "./application.entity.js";
 import { AnyThreadChannelEntity, ChannelType } from "./channel.entity.js";
 import { EmojiEntity } from "./emoji.entity.js";
@@ -172,7 +171,7 @@ export const AttachmentEntity = z.object({
   ephemeral: z.boolean().optional(),
   duration_secs: z.number().optional(),
   waveform: z.string().optional(),
-  flags: parseBitField<AttachmentFlags>().optional(),
+  flags: z.custom<AttachmentFlags>(BitFieldManager.isValidBitField).optional(),
 });
 
 export type AttachmentEntity = z.infer<typeof AttachmentEntity>;
@@ -418,7 +417,7 @@ export const MessageEntity = z.object({
   activity: MessageActivityEntity.optional(),
   application: ApplicationEntity.partial().optional(),
   application_id: Snowflake.optional(),
-  flags: parseBitField<MessageFlags>().optional(),
+  flags: z.custom<MessageFlags>(BitFieldManager.isValidBitField).optional(),
   components: z.array(ActionRowEntity).optional(),
   sticker_items: z.array(StickerItemEntity).optional(),
   /** @deprecated The stickers sent with the message */

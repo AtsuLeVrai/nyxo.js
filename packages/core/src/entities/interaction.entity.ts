@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { type BitwisePermissionFlags, LocaleKey } from "../enums/index.js";
-import { Snowflake } from "../managers/index.js";
-import { parseBitField } from "../utils/index.js";
+import { BitFieldManager, Snowflake } from "../managers/index.js";
 import {
   ApplicationCommandOptionChoiceEntity,
   ApplicationCommandOptionType,
@@ -284,7 +283,7 @@ export const InteractionCallbackMessagesEntity = z
       .max(10)
       .optional(),
     allowed_mentions: z.lazy(() => AllowedMentionsEntity).optional(),
-    flags: parseBitField<MessageFlags>().optional(),
+    flags: z.custom<MessageFlags>(BitFieldManager.isValidBitField).optional(),
     components: z.array(ActionRowEntity).optional(),
     attachments: z.array(z.lazy(() => AttachmentEntity)).optional(),
     poll: PollCreateRequestEntity.optional(),
@@ -398,7 +397,9 @@ export const InteractionEntity = z.object({
   version: z.literal(1),
   // TODO: Fix circular reference error in zod
   // message: MessageEntity.optional(),
-  app_permissions: parseBitField<BitwisePermissionFlags>(),
+  app_permissions: z.custom<BitwisePermissionFlags>(
+    BitFieldManager.isValidBitField,
+  ),
   locale: LocaleKey.optional(),
   guild_locale: LocaleKey.optional(),
   entitlements: z.array(EntitlementEntity),
