@@ -86,9 +86,6 @@ export class Rest extends EventEmitter<RestEvents> {
       "content-type": "application/json",
       "x-ratelimit-precision": "millisecond",
       "user-agent": this.#options.userAgent,
-      accept: "application/json",
-      connection: "keep-alive",
-      "x-api-version": `v${this.#options.version}`,
     };
 
     // Initialize HTTP connection pool
