@@ -88,7 +88,7 @@ export type InstallParamsEntity = z.infer<typeof InstallParamsEntity>;
  */
 export const ApplicationIntegrationTypeConfigurationEntity = z.object({
   /** Install params for each installation context's default in-app authorization link */
-  oauth2_install_params: InstallParamsEntity.optional(),
+  oauth2_install_params: z.lazy(() => InstallParamsEntity).optional(),
 });
 
 export type ApplicationIntegrationTypeConfigurationEntity = z.infer<
@@ -125,7 +125,7 @@ export const ApplicationEntity = z.object({
   bot_require_code_grant: z.boolean(),
 
   /** Partial user object for the bot user associated with the app */
-  bot: UserEntity.optional(),
+  bot: z.lazy(() => UserEntity).optional(),
 
   /** URL of the app's Terms of Service */
   terms_of_service_url: z.string().url().optional(),
@@ -134,19 +134,19 @@ export const ApplicationEntity = z.object({
   privacy_policy_url: z.string().url().optional(),
 
   /** Partial user object for the owner of the app */
-  owner: UserEntity.optional(),
+  owner: z.lazy(() => UserEntity).optional(),
 
   /** Hex encoded key for verification in interactions and the GameSDK's GetTicket */
   verify_key: z.string().regex(/^[0-9a-f]+$/i),
 
   /** If the app belongs to a team, this will be a list of the members of that team */
-  team: TeamEntity.nullable(),
+  team: z.lazy(() => TeamEntity).nullable(),
 
   /** Guild associated with the app. For example, a developer support server */
   guild_id: Snowflake.optional(),
 
   /** Partial object of the associated guild */
-  guild: GuildEntity.partial().optional(),
+  guild: z.lazy(() => GuildEntity.partial()).optional(),
 
   /** ID of the "Game SKU" that is created, if exists */
   primary_sku_id: Snowflake.optional(),
@@ -188,12 +188,12 @@ export const ApplicationEntity = z.object({
   tags: z.array(z.string().max(20)).max(5).optional(),
 
   /** Settings for the app's default in-app authorization link, if enabled */
-  install_params: InstallParamsEntity.optional(),
+  install_params: z.lazy(() => InstallParamsEntity).optional(),
 
   /** Default scopes and permissions for each supported installation context */
   integration_types_config: z.record(
     z.nativeEnum(ApplicationIntegrationType),
-    ApplicationIntegrationTypeConfigurationEntity,
+    z.lazy(() => ApplicationIntegrationTypeConfigurationEntity),
   ),
 
   /** Default custom authorization URL for the app, if enabled */
