@@ -256,11 +256,15 @@ export const ButtonEntity = z
     label: z.string().max(80).optional(),
 
     /** Emoji that appears on the button */
-    emoji: EmojiEntity.pick({
-      name: true,
-      id: true,
-      animated: true,
-    }).optional(),
+    emoji: z
+      .lazy(() =>
+        EmojiEntity.pick({
+          name: true,
+          id: true,
+          animated: true,
+        }),
+      )
+      .optional(),
 
     /** A developer-defined identifier for the button, max 100 characters */
     custom_id: z.string().max(100).optional(),

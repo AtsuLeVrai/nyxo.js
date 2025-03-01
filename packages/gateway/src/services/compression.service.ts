@@ -203,7 +203,7 @@ export class CompressionService {
     }
 
     // Return the decompressed result
-    return Buffer.from(this.#zlibInflate.result || []);
+    return Buffer.from(this.#zlibInflate.result as Uint8Array);
   }
 
   /**

@@ -39,7 +39,7 @@ export enum InviteType {
  */
 export const InviteStageInstanceEntity = z.object({
   /** The members speaking in the Stage */
-  members: z.array(GuildMemberEntity.partial()),
+  members: z.array(z.lazy(() => GuildMemberEntity.partial())),
 
   /** The number of users in the Stage */
   participant_count: z.number().int(),
@@ -90,22 +90,22 @@ export const InviteEntity = z.object({
   code: z.string(),
 
   /** The guild this invite is for */
-  guild: GuildEntity.partial().optional(),
+  guild: z.lazy(() => GuildEntity.partial()).optional(),
 
   /** The channel this invite is for */
-  channel: AnyChannelEntity.nullable(),
+  channel: z.lazy(() => AnyChannelEntity).nullable(),
 
   /** The user who created the invite */
-  inviter: UserEntity.partial().optional(),
+  inviter: z.lazy(() => UserEntity.partial()).optional(),
 
   /** The type of target for this voice channel invite */
   target_type: z.nativeEnum(InviteTargetType).optional(),
 
   /** The user whose stream to display for this voice channel stream invite */
-  target_user: UserEntity.partial().optional(),
+  target_user: z.lazy(() => UserEntity.partial()).optional(),
 
   /** The embedded application to open for this voice channel embedded application invite */
-  target_application: ApplicationEntity.partial().optional(),
+  target_application: z.lazy(() => ApplicationEntity.partial()).optional(),
 
   /** Approximate count of online members (returned when `with_counts` is true) */
   approximate_presence_count: z.number().int().optional(),
@@ -120,10 +120,10 @@ export const InviteEntity = z.object({
    * Stage instance data if there is a public Stage instance in the Stage channel
    * @deprecated This field is deprecated according to Discord documentation
    */
-  stage_instance: InviteStageInstanceEntity.optional(),
+  stage_instance: z.lazy(() => InviteStageInstanceEntity).optional(),
 
   /** Guild scheduled event data, only included if `guild_scheduled_event_id` contains a valid guild scheduled event ID */
-  guild_scheduled_event: GuildScheduledEventEntity.optional(),
+  guild_scheduled_event: z.lazy(() => GuildScheduledEventEntity).optional(),
 });
 
 export type InviteEntity = z.infer<typeof InviteEntity>;

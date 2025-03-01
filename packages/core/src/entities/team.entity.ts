@@ -41,7 +41,7 @@ export const TeamMemberEntity = z.object({
   team_id: Snowflake,
 
   /** A partial user object containing information about the team member */
-  user: UserEntity.partial(),
+  user: z.lazy(() => UserEntity.partial()),
 
   /** The role of the user in the team */
   role: z.nativeEnum(TeamMemberRole),
@@ -62,7 +62,7 @@ export const TeamEntity = z.object({
   id: Snowflake,
 
   /** The members of the team */
-  members: z.array(TeamMemberEntity),
+  members: z.array(z.lazy(() => TeamMemberEntity)),
 
   /** The name of the team */
   name: z.string(),

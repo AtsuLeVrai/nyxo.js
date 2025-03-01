@@ -314,7 +314,7 @@ export const UserEntity = z.object({
   public_flags: z.custom<UserFlags>(BitFieldManager.isValidBitField).optional(),
 
   /** Data for the user's avatar decoration */
-  avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
+  avatar_decoration_data: z.lazy(() => AvatarDecorationDataEntity).nullish(),
 });
 
 export type UserEntity = z.infer<typeof UserEntity>;

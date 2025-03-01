@@ -172,7 +172,7 @@ export const GuildScheduledEventRecurrenceRuleEntity = z.object({
 
   /** List of specific days within a specific week (1-5) to recur on */
   by_n_weekday: z
-    .array(GuildScheduledEventRecurrenceRuleNWeekdayEntity)
+    .array(z.lazy(() => GuildScheduledEventRecurrenceRuleNWeekdayEntity))
     .nullable(),
 
   /** Set of specific months to recur on */
@@ -203,10 +203,10 @@ export const GuildScheduledEventUserEntity = z.object({
   guild_scheduled_event_id: Snowflake,
 
   /** User which subscribed to an event */
-  user: UserEntity,
+  user: z.lazy(() => UserEntity),
 
   /** Guild member data for this user for the guild which this event belongs to, if any */
-  member: GuildMemberEntity.optional(),
+  member: z.lazy(() => GuildMemberEntity).optional(),
 });
 
 export type GuildScheduledEventUserEntity = z.infer<
@@ -277,10 +277,12 @@ export const GuildScheduledEventEntity = z.object({
   entity_id: Snowflake.nullable(),
 
   /** Additional metadata for the guild scheduled event */
-  entity_metadata: GuildScheduledEventEntityMetadataEntity.nullable(),
+  entity_metadata: z
+    .lazy(() => GuildScheduledEventEntityMetadataEntity)
+    .nullable(),
 
   /** The user that created the scheduled event */
-  creator: UserEntity.optional(),
+  creator: z.lazy(() => UserEntity).optional(),
 
   /** The number of users subscribed to the scheduled event */
   user_count: z.number().int().optional(),
@@ -289,7 +291,9 @@ export const GuildScheduledEventEntity = z.object({
   image: z.string().nullish(),
 
   /** The definition for how often this event should recur */
-  recurrence_rule: GuildScheduledEventRecurrenceRuleEntity.nullable(),
+  recurrence_rule: z
+    .lazy(() => GuildScheduledEventRecurrenceRuleEntity)
+    .nullable(),
 });
 
 export type GuildScheduledEventEntity = z.infer<

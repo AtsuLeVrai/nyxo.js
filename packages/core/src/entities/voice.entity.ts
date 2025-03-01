@@ -41,7 +41,7 @@ export const VoiceStateEntity = z.object({
   user_id: Snowflake,
 
   /** The guild member this voice state is for, if applicable */
-  member: GuildMemberEntity.optional(),
+  member: z.lazy(() => GuildMemberEntity).optional(),
 
   /** The session ID for this voice state */
   session_id: z.string(),

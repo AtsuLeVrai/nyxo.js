@@ -52,7 +52,7 @@ export const PollResultsEntity = z.object({
   /**
    * The counts for each answer
    */
-  answer_counts: z.array(PollAnswerCountEntity),
+  answer_counts: z.array(z.lazy(() => PollAnswerCountEntity)),
 });
 
 export type PollResultsEntity = z.infer<typeof PollResultsEntity>;
@@ -74,7 +74,10 @@ export const PollMediaEntity = z
      * The emoji of the field (custom or default emoji)
      */
     emoji: z
-      .union([EmojiEntity.pick({ id: true }), EmojiEntity.pick({ name: true })])
+      .union([
+        z.lazy(() => EmojiEntity.pick({ id: true })),
+        z.lazy(() => EmojiEntity.pick({ name: true })),
+      ])
       .optional(),
   })
   .superRefine((media, ctx) => {
@@ -102,9 +105,11 @@ export const PollAnswerEntity = z.object({
   /**
    * The data of the answer
    */
-  poll_media: PollMediaEntity.sourceType().extend({
-    text: z.string().min(1).max(55).optional(),
-  }),
+  poll_media: z.lazy(() =>
+    PollMediaEntity.sourceType().extend({
+      text: z.string().min(1).max(55).optional(),
+    }),
+  ),
 });
 
 export type PollAnswerEntity = z.infer<typeof PollAnswerEntity>;
@@ -124,7 +129,7 @@ export const PollCreateRequestEntity = z.object({
    * Each of the answers available in the poll, up to 10
    */
   answers: z
-    .array(PollAnswerEntity.omit({ answer_id: true }))
+    .array(z.lazy(() => PollAnswerEntity.omit({ answer_id: true })))
     .min(1)
     .max(10),
 
@@ -163,12 +168,15 @@ export const PollEntity = z.object({
   /**
    * The question of the poll
    */
-  question: PollMediaEntity,
+  question: z.lazy(() => PollMediaEntity),
 
   /**
    * Each of the answers available in the poll
    */
-  answers: z.array(PollAnswerEntity).min(1).max(10),
+  answers: z
+    .array(z.lazy(() => PollAnswerEntity))
+    .min(1)
+    .max(10),
 
   /**
    * The time when the poll ends
@@ -191,7 +199,7 @@ export const PollEntity = z.object({
    * The results of the poll
    * May not be present in certain responses where results are not fetched
    */
-  results: PollResultsEntity.optional(),
+  results: z.lazy(() => PollResultsEntity).optional(),
 });
 
 export type PollEntity = z.infer<typeof PollEntity>;

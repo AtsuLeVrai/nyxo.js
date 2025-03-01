@@ -82,7 +82,7 @@ export const RoleEntity = z.object({
   mentionable: z.boolean(),
 
   /** Additional role information */
-  tags: RoleTagsEntity.optional(),
+  tags: z.lazy(() => RoleTagsEntity).optional(),
 
   /** Role flags combined as a bitfield */
   flags: z.custom<RoleFlags>(BitFieldManager.isValidBitField),

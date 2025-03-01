@@ -38,7 +38,7 @@ export const WebhookEntity = z.object({
   channel_id: Snowflake.nullish(),
 
   /** The user this webhook was created by (not returned when getting a webhook with its token) */
-  user: UserEntity.nullish(),
+  user: z.lazy(() => UserEntity).nullish(),
 
   /** The default name of the webhook */
   name: z.string().nullish(),
@@ -53,10 +53,10 @@ export const WebhookEntity = z.object({
   application_id: Snowflake.nullable(),
 
   /** The guild of the channel that this webhook is following (returned for Channel Follower Webhooks) */
-  source_guild: GuildEntity.partial().nullish(),
+  source_guild: z.lazy(() => GuildEntity.partial()).nullish(),
 
   /** The channel that this webhook is following (returned for Channel Follower Webhooks) */
-  source_channel: AnyChannelEntity.nullish(),
+  source_channel: z.lazy(() => AnyChannelEntity).nullish(),
 
   /** The URL used for executing the webhook (returned by the webhooks OAuth2 flow) */
   url: z.string().url().optional(),

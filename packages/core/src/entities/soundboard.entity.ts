@@ -31,7 +31,7 @@ export const SoundboardSoundEntity = z.object({
   available: z.boolean(),
 
   /** The user who created this sound */
-  user: UserEntity.optional(),
+  user: z.lazy(() => UserEntity).optional(),
 });
 
 export type SoundboardSoundEntity = z.infer<typeof SoundboardSoundEntity>;
