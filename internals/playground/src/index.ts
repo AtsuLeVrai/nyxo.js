@@ -1,6 +1,11 @@
+import type {
+  ApplicationCommandInteractionDataEntity,
+  InteractionEntity,
+} from "@nyxjs/core";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
-import { Rest } from "@nyxjs/rest";
+import { type CreateGlobalApplicationCommandSchema, Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
+import { VoiceManager } from "./voice.manager.js";
 
 const env = config({ debug: true }).parsed;
 if (!env?.DISCORD_TOKEN) {
@@ -152,12 +157,39 @@ gateway.on("error", (...args) => {
   console.error("[GATEWAY - ERROR]", ...args);
 });
 
-gateway.on("dispatch", (...args) => {
-  console.log("[GATEWAY - DISPATCH]", ...args);
+const voice = new VoiceManager(gateway);
+
+gateway.on("dispatch", async (event, data) => {
+  console.log("[GATEWAY - DISPATCH]", event, data);
+
+  if (event === "INTERACTION_CREATE") {
+    const interaction = data as InteractionEntity;
+
+    if (
+      (interaction.data as ApplicationCommandInteractionDataEntity)?.name ===
+      "join"
+    ) {
+      voice.joinVoiceChannel("936969912600121384", "1232694742350041089");
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await voice.playAudio("936969912600121384", "./src/song.mp3");
+    }
+  }
 });
+
+const commands: CreateGlobalApplicationCommandSchema[] = [
+  {
+    name: "join",
+    description: "Join the voice channel",
+  },
+];
 
 async function main(): Promise<void> {
   await gateway.connect();
+  await rest.commands.bulkOverwriteGuildApplicationCommands(
+    "1011252785989308526",
+    "936969912600121384",
+    commands,
+  );
 }
 
 main().catch((error) => {

@@ -1,13 +1,11 @@
 import { type Socket, createSocket } from "node:dgram";
-import { Snowflake } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
-import { z } from "zod";
+import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { VoiceHeartbeatManager } from "../managers/index.js";
+import { VoiceConnectionOptions } from "../options/index.js";
 import {
-  AudioOptions,
-  IpDiscoveryOptions,
   IpDiscoveryService,
   VoiceAudioService,
   VoiceEncryptionService,
@@ -16,7 +14,6 @@ import {
   type VoiceConnectionEvents,
   VoiceEncryptionMode,
   VoiceGatewayOpcodes,
-  VoiceGatewayVersion,
   type VoiceHeartbeatAckPayload,
   type VoiceHelloPayload,
   type VoiceIdentifyPayload,
@@ -30,21 +27,6 @@ import {
 } from "../types/index.js";
 
 const NON_RESUMABLE_CODES = [4004, 4006, 4011, 4012, 4014, 4015, 4016];
-
-export const VoiceConnectionOptions = z
-  .object({
-    endpoint: z.string(),
-    token: z.string(),
-    sessionId: z.string(),
-    guildId: Snowflake,
-    userId: Snowflake,
-    version: z.nativeEnum(VoiceGatewayVersion).default(VoiceGatewayVersion.V8),
-    ...AudioOptions.unwrap().shape,
-    ...IpDiscoveryOptions.unwrap().shape,
-  })
-  .readonly();
-
-export type VoiceConnectionOptions = z.infer<typeof VoiceConnectionOptions>;
 
 export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
   readonly heartbeat: VoiceHeartbeatManager;
@@ -73,7 +55,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     }
 
     this.heartbeat = new VoiceHeartbeatManager(this);
-    this.audio = new VoiceAudioService(this.#options);
+    this.audio = new VoiceAudioService(this, this.#options.audioOptions);
     this.encryption = new VoiceEncryptionService();
   }
 
@@ -139,7 +121,11 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
 
   async initializeUdp(ip: string, port: number): Promise<void> {
     this.#udp = createSocket("udp4");
-    this.#ipDiscovery = new IpDiscoveryService(this, this.#udp, this.#options);
+    this.#ipDiscovery = new IpDiscoveryService(
+      this,
+      this.#udp,
+      this.#options.ipDiscovery,
+    );
 
     try {
       const discoveredInfo = await this.#ipDiscovery?.discover(
@@ -199,9 +185,8 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       throw new Error("UDP destination not set");
     }
 
-    const packet = this.#createAudioPacket(opusPacket);
+    const packet = this.audio.createRtpPacket(opusPacket);
     const encrypted = this.encryption.encryptPacket(packet, this.#sequence);
-
     this.#udp.send(encrypted, this.#udpPort, this.#udpIp, (error) => {
       if (error) {
         this.emit(
@@ -212,7 +197,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     });
 
     this.#sequence++;
-    this.#timestamp += this.#options.frameSize;
+    this.#timestamp += this.#options.audioOptions.frameSize;
   }
 
   setSpeaking(speaking: boolean, flags = VoiceSpeakingFlags.Microphone): void {
@@ -383,28 +368,6 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     };
 
     this.send(VoiceGatewayOpcodes.Resume, resumePayload);
-  }
-
-  #createAudioPacket(opusPacket: Buffer): Buffer {
-    // RTP Header (12 bytes) + Opus packet
-    const packetBuffer = Buffer.alloc(12 + opusPacket.length);
-
-    // RTP Header:
-    // [0] Version (2), Padding (0), Extension (0), CSRC Count (0) = 0x80
-    packetBuffer[0] = 0x80;
-    // [1] Marker (0), Payload Type (0x78) = 0x78
-    packetBuffer[1] = 0x78;
-    // [2-3] Sequence Number (16 bits)
-    packetBuffer.writeUInt16BE(this.#sequence & 0xffff, 2);
-    // [4-7] Timestamp (32 bits)
-    packetBuffer.writeUInt32BE(this.#timestamp, 4);
-    // [8-11] SSRC (32 bits)
-    packetBuffer.writeUInt32BE(this.#ssrc, 8);
-
-    // Copy the Opus packet after the header
-    opusPacket.copy(packetBuffer, 12);
-
-    return packetBuffer;
   }
 
   #handleSpeaking(data: VoiceSpeakingPayload): void {

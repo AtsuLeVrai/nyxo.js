@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+import { readFileSync } from "node:fs";
 import type { VoiceStateEntity } from "@nyxjs/core";
 import type {
   Gateway,
@@ -6,7 +6,12 @@ import type {
   VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import { Store } from "@nyxjs/store";
-import { AudioType, VoiceConnection, VoiceGatewayVersion } from "@nyxjs/voice";
+import {
+  AudioType,
+  VoiceConnection,
+  VoiceGatewayVersion,
+  VoiceSpeakingFlags,
+} from "@nyxjs/voice";
 
 export class VoiceManager {
   #connections = new Store<string, VoiceConnection>();
@@ -58,49 +63,60 @@ export class VoiceManager {
       throw new Error("Voice connection not properly initialized (no SSRC)");
     }
 
-    const audioStream =
-      typeof input === "string" ? createReadStream(input) : input;
-    console.log("[Voice Debug] Created input stream");
+    try {
+      // Charger le fichier audio directement dans un Buffer
+      const audioBuffer = readFileSync(input);
+      console.log("[Voice Debug] Audio buffer size:", audioBuffer.length);
 
-    const transformedStream = connection.audio.createAudioResource(
-      audioStream,
-      {
-        type: AudioType.Ffmpeg,
-        volume: 1,
-        bitrate: 128000,
-      },
-    );
-    console.log("[Voice Debug] Created transformed stream");
+      // Indiquer que nous commençons à parler
+      connection.setSpeaking(true, VoiceSpeakingFlags.Microphone);
 
-    console.log("Input stream format:", audioStream);
-    console.log("Transformed stream format:", transformedStream);
+      // Traiter l'audio et l'envoyer
+      const transformedStream = connection.audio.createAudioResource(
+        audioBuffer,
+        {
+          type: AudioType.Ffmpeg,
+          volume: 1,
+          bitrate: 128000,
+        },
+      );
+      console.log("[Voice Debug] Created audio resource");
 
-    let packetCount = 0;
-    return new Promise((resolve, reject) => {
-      transformedStream.on("data", (chunk: Buffer) => {
-        try {
-          packetCount++;
-          if (packetCount % 100 === 0) {
-            console.log(`[Voice Debug] Sent ${packetCount} packets`);
+      let packetCount = 0;
+      return new Promise((resolve, reject) => {
+        transformedStream.on("data", (chunk: Buffer) => {
+          try {
+            packetCount++;
+            if (packetCount % 100 === 0) {
+              console.log(`[Voice Debug] Sent ${packetCount} packets`);
+            }
+            connection.sendAudioPacket(chunk);
+          } catch (error) {
+            console.error("[Voice Debug] Error sending packet:", error);
+            connection.setSpeaking(false);
+            reject(error);
           }
-          connection.sendAudioPacket(chunk);
-        } catch (error) {
-          console.error("[Voice Debug] Error sending packet:", error);
+        });
+
+        transformedStream.on("end", () => {
+          console.log(
+            `[Voice Debug] Stream ended after ${packetCount} packets`,
+          );
+          connection.stopSpeaking();
+          resolve();
+        });
+
+        transformedStream.on("error", (error) => {
+          console.error("[Voice Debug] Stream error:", error);
+          connection.stopSpeaking();
           reject(error);
-        }
+        });
       });
-
-      transformedStream.on("end", () => {
-        console.log(`[Voice Debug] Stream ended after ${packetCount} packets`);
-        resolve();
-      });
-
-      transformedStream.on("error", (error) => {
-        console.error("[Voice Debug] Stream error:", error);
-        connection.stopSpeaking();
-        reject(error);
-      });
-    });
+    } catch (error) {
+      console.error("[Voice Debug] Error in playAudio:", error);
+      connection.stopSpeaking();
+      throw error;
+    }
   }
 
   leaveVoiceChannel(guildId: string): void {
@@ -142,44 +158,58 @@ export class VoiceManager {
         token: pending.server.token,
         sessionId: pending.state.session_id,
         guildId: guildId,
-        userId: "1011252785989308526",
+        userId: pending.state.user_id || "1011252785989308526", // Utiliser l'ID réel quand disponible
         version: VoiceGatewayVersion.V8,
+        audioOptions: {
+          sampleRate: 48000,
+          channels: 2,
+          frameSize: 960,
+          bitrate: 128000,
+        },
+        ipDiscovery: {
+          maxRetries: 3,
+          timeout: 5000,
+          retryDelay: 1000,
+        },
       });
 
       connection.on("debug", (...args) => {
         console.log("[VOICE - DEBUG]", ...args);
       });
 
-      connection.on("error", (...args) => {
-        console.log("[VOICE - ERROR]", ...args);
+      connection.on("error", (error) => {
+        console.error("[VOICE - ERROR]", error);
       });
 
-      connection.on("resumed", (...args) => {
-        console.log("[VOICE - RESUMED]", ...args);
+      connection.on("resumed", () => {
+        console.log("[VOICE - RESUMED]");
       });
 
-      connection.on("sessionDescription", (...args) => {
-        console.log("[VOICE - SESSION DESCRIPTION]", ...args);
+      connection.on("sessionDescription", (_data) => {
+        console.log("[VOICE - SESSION DESCRIPTION]", "Secret key received");
       });
 
-      connection.on("ready", (...args) => {
-        console.log("[VOICE - READY]", ...args);
+      connection.on("ready", (data) => {
+        console.log("[VOICE - READY]", `SSRC: ${data.ssrc}`);
       });
 
-      connection.on("ipDiscovered", (...args) => {
-        console.log("[VOICE - IP DISCOVERED]", ...args);
+      connection.on("ipDiscovered", (ip, port) => {
+        console.log("[VOICE - IP DISCOVERED]", ip, port);
       });
 
-      connection.on("ipTimeout", (...args) => {
-        console.log("[VOICE - IP TIMEOUT]", ...args);
+      connection.on("ipTimeout", () => {
+        console.log("[VOICE - IP TIMEOUT]");
       });
 
-      connection.on("ipRetrying", (...args) => {
-        console.log("[VOICE - IP RETRYING]", ...args);
+      connection.on("ipRetrying", (count) => {
+        console.log("[VOICE - IP RETRYING]", count);
       });
 
-      connection.on("speaking", (...args) => {
-        console.log("[VOICE - SPEAKING]", ...args);
+      connection.on("speaking", (data) => {
+        console.log(
+          "[VOICE - SPEAKING]",
+          `SSRC: ${data.ssrc}, Speaking: ${data.speaking}`,
+        );
       });
 
       await connection.connect();

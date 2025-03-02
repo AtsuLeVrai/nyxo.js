@@ -1,9 +1,11 @@
 import { spawn } from "node:child_process";
-import { type Readable, Transform, type TransformCallback } from "node:stream";
+import { Transform, type TransformCallback } from "node:stream";
 import opus from "@discordjs/opus";
 import ffmpeg from "ffmpeg-static";
-import { z } from "zod";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import type { VoiceConnection } from "../core/index.js";
+import { type AudioOptions, AudioStreamOptions } from "../options/index.js";
 
 export enum AudioType {
   Raw = "raw",
@@ -11,39 +13,17 @@ export enum AudioType {
   Ffmpeg = "ffmpeg",
 }
 
-export const AudioOptions = z
-  .object({
-    sampleRate: z.number().int().positive().default(48000),
-    channels: z.number().int().positive().default(2),
-    frameSize: z.number().int().positive().default(960),
-    bitrate: z.number().int().positive().default(128000),
-    volume: z.number().min(0).max(2).default(1),
-    normalize: z.boolean().default(true),
-  })
-  .readonly();
-
-export type AudioOptions = z.infer<typeof AudioOptions>;
-
-export const AudioStreamOptions = z
-  .object({
-    type: z.nativeEnum(AudioType).default(AudioType.Ffmpeg),
-    seek: z.number().int().nonnegative().default(0),
-    volume: z.number().min(0).max(2).default(1),
-    bitrate: z.number().int().positive().default(128000),
-    filters: z.array(z.string()).default([]),
-  })
-  .strict()
-  .readonly();
-
-export type AudioStreamOptions = z.input<typeof AudioStreamOptions>;
-
 export class VoiceAudioService {
-  readonly #options: AudioOptions;
-  readonly #encoder: opus.OpusEncoder;
-  readonly #silenceFrame: Buffer;
+  #connection: VoiceConnection;
+  #options: AudioOptions;
+  #encoder: opus.OpusEncoder;
+  #silenceFrame: Buffer;
+  #sequenceNumber = 0;
+  #timestamp = 0;
 
-  constructor(options: z.input<typeof AudioOptions>) {
-    this.#options = AudioOptions.parse(options);
+  constructor(connection: VoiceConnection, options: AudioOptions) {
+    this.#connection = connection;
+    this.#options = options;
     this.#encoder = new opus.OpusEncoder(
       this.#options.sampleRate,
       this.#options.channels,
@@ -55,7 +35,7 @@ export class VoiceAudioService {
   }
 
   createAudioResource(
-    input: Readable,
+    input: Buffer,
     options: AudioStreamOptions = {},
   ): Transform {
     const parseOptions = AudioStreamOptions.safeParse(options);
@@ -68,22 +48,31 @@ export class VoiceAudioService {
         try {
           const expectedSize =
             this.#options.frameSize * 2 * this.#options.channels;
-          let chunkResized = chunk;
+
+          let processedChunk: Buffer;
+
+          // Resize the chunk if necessary
           if (chunk.length !== expectedSize) {
             if (chunk.length < expectedSize) {
               const paddedChunk = Buffer.alloc(expectedSize);
               chunk.copy(paddedChunk);
-              chunkResized = paddedChunk;
+              processedChunk = paddedChunk;
             } else {
-              chunkResized = chunk.subarray(0, expectedSize);
+              processedChunk = chunk.subarray(0, expectedSize);
             }
+          } else {
+            processedChunk = chunk;
           }
 
-          const processedChunk =
-            parseOptions.data.volume !== 1
-              ? this.adjustVolume(chunkResized, parseOptions.data.volume)
-              : chunkResized;
+          // Apply volume adjustment if needed
+          if (parseOptions.data.volume !== 1) {
+            processedChunk = this.adjustVolume(
+              processedChunk,
+              parseOptions.data.volume,
+            );
+          }
 
+          // Encode the audio chunk to Opus format
           let encoded: Buffer;
           try {
             encoded = this.#encoder.encode(processedChunk);
@@ -91,7 +80,13 @@ export class VoiceAudioService {
             encoded = this.#encoder.encode(this.#silenceFrame);
           }
 
-          callback(null, encoded);
+          // If we have SSRC and secret key, we can encrypt and prepare RTP packets
+          if (this.#connection.ssrc !== 0) {
+            const packet = this.createRtpPacket(encoded);
+            callback(null, packet);
+          } else {
+            callback(null, encoded);
+          }
         } catch (error) {
           try {
             const encoded = this.#encoder.encode(this.#silenceFrame);
@@ -103,91 +98,67 @@ export class VoiceAudioService {
       },
     });
 
-    const ffmpegArgs = [
-      "-i",
-      "pipe:0",
-      "-f",
-      "s16le",
-      "-ar",
-      String(this.#options.sampleRate),
-      "-ac",
-      String(this.#options.channels),
-      "-acodec",
-      "pcm_s16le",
-      "-analyzeduration",
-      "0",
-      "-f",
-      "s16le",
-      "-ar",
-      String(this.#options.sampleRate),
-      "-ac",
-      String(this.#options.channels),
-      "-acodec",
-      "pcm_s16le",
-    ];
-
-    if (parseOptions.data.filters.length > 0) {
-      ffmpegArgs.push("-af", parseOptions.data.filters.join(","));
+    if (options.type === AudioType.Ffmpeg) {
+      this.#processWithFfmpeg(input, encoderStream, parseOptions.data);
+    } else {
+      // For raw or opus input, just push the data to the encoder
+      setImmediate(() => {
+        encoderStream.write(input);
+        encoderStream.end();
+      });
     }
-
-    if (parseOptions.data.seek > 0) {
-      ffmpegArgs.unshift("-ss", String(parseOptions.data.seek));
-    }
-
-    ffmpegArgs.push("-loglevel", "error", "pipe:1");
-
-    const ffmpegProcess = spawn(ffmpeg as unknown as string, ffmpegArgs);
-
-    let buffer = Buffer.alloc(0);
-
-    ffmpegProcess.stdout.on("data", (data: Buffer) => {
-      buffer = Buffer.concat([buffer, data]);
-      const frameSize = this.#options.frameSize * 2 * this.#options.channels;
-
-      while (buffer.length >= frameSize) {
-        const frame = buffer.subarray(0, frameSize);
-        buffer = buffer.subarray(frameSize);
-
-        if (frame.length === frameSize) {
-          encoderStream.write(frame);
-        }
-      }
-    });
-
-    ffmpegProcess.on("error", (error) => {
-      encoderStream.emit("error", error);
-    });
-
-    ffmpegProcess.on("close", (code) => {
-      if (code !== 0) {
-        encoderStream.emit(
-          "error",
-          new Error(`FFmpeg exited with code ${code}`),
-        );
-      }
-      if (buffer.length > 0) {
-        encoderStream.write(buffer);
-      }
-      encoderStream.end();
-    });
-
-    input.pipe(ffmpegProcess.stdin);
 
     return encoderStream;
   }
 
-  createSilence(duration: number): Buffer {
-    const frameCount = Math.ceil(
-      (duration / 1000) * (this.#options.sampleRate / this.#options.frameSize),
-    );
+  createRtpPacket(opusPacket: Buffer): Buffer {
+    if (this.#connection.ssrc === 0) {
+      throw new Error("SSRC not set. Call setSsrc before creating RTP packets");
+    }
+
+    // Create the RTP header
+    const header = Buffer.alloc(12);
+
+    // Version + Flags (0x80)
+    header.writeUInt8(0x80, 0);
+
+    // Payload Type (0x78)
+    header.writeUInt8(0x78, 1);
+
+    // Sequence
+    header.writeUInt16BE(this.#sequenceNumber, 2);
+    this.#sequenceNumber = (this.#sequenceNumber + 1) & 0xffff;
+
+    // Timestamp
+    header.writeUInt32BE(this.#timestamp, 4);
+    this.#timestamp = (this.#timestamp + this.#options.frameSize) >>> 0;
+
+    // SSRC
+    header.writeUInt32BE(this.#connection.ssrc, 8);
+
+    return Buffer.concat([header, opusPacket]);
+  }
+
+  createSilencePackets(duration: number): Buffer[] {
+    const frameSize = this.#options.frameSize;
+    const sampleRate = this.#options.sampleRate;
+
+    // Calculate number of frames needed
+    const frameCount = Math.ceil((duration / 1000) * (sampleRate / frameSize));
 
     const silenceFrames: Buffer[] = [];
 
+    // Generate silence packets
     for (let i = 0; i < frameCount; i++) {
-      silenceFrames.push(this.#encoder.encode(this.#silenceFrame));
+      const encoded = this.#encoder.encode(this.#silenceFrame);
+      if (this.#connection.ssrc !== 0) {
+        silenceFrames.push(this.createRtpPacket(encoded));
+      } else {
+        silenceFrames.push(encoded);
+      }
     }
 
-    return Buffer.concat(silenceFrames);
+    return silenceFrames;
   }
 
   adjustVolume(pcmData: Buffer, volume: number): Buffer {
@@ -234,5 +205,70 @@ export class VoiceAudioService {
 
   getBitrate(): number {
     return this.#options.bitrate;
+  }
+
+  #processWithFfmpeg(
+    input: Buffer,
+    encoderStream: Transform,
+    options: z.infer<typeof AudioStreamOptions>,
+  ): void {
+    const ffmpegArgs = [
+      "-i",
+      "pipe:0",
+      "-f",
+      "s16le",
+      "-ar",
+      String(this.#options.sampleRate),
+      "-ac",
+      String(this.#options.channels),
+      "-acodec",
+      "pcm_s16le",
+    ];
+
+    if (options.filters.length > 0) {
+      ffmpegArgs.push("-af", options.filters.join(","));
+    }
+
+    if (options.seek > 0) {
+      ffmpegArgs.unshift("-ss", String(options.seek));
+    }
+
+    ffmpegArgs.push("-loglevel", "error", "pipe:1");
+
+    const ffmpegProcess = spawn(ffmpeg as unknown as string, ffmpegArgs);
+    let buffer = Buffer.alloc(0);
+
+    ffmpegProcess.stdout.on("data", (data: Buffer) => {
+      buffer = Buffer.concat([buffer, data]);
+      const frameSize = this.#options.frameSize * 2 * this.#options.channels;
+
+      while (buffer.length >= frameSize) {
+        const frame = buffer.subarray(0, frameSize);
+        buffer = buffer.subarray(frameSize);
+
+        encoderStream.write(frame);
+      }
+    });
+
+    ffmpegProcess.on("error", (error) => {
+      encoderStream.emit("error", error);
+    });
+
+    ffmpegProcess.on("close", (code) => {
+      if (code !== 0) {
+        encoderStream.emit(
+          "error",
+          new Error(`FFmpeg exited with code ${code}`),
+        );
+      }
+      if (buffer.length > 0) {
+        encoderStream.write(buffer);
+      }
+      encoderStream.end();
+    });
+
+    // Write input buffer to ffmpeg's stdin
+    ffmpegProcess.stdin.write(input);
+    ffmpegProcess.stdin.end();
   }
 }

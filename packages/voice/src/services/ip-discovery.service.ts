@@ -1,18 +1,6 @@
 import type { Socket } from "node:dgram";
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
 import type { VoiceConnection } from "../core/index.js";
-import { VoiceGatewayOpcodes } from "../types/index.js";
-
-export const IpDiscoveryOptions = z
-  .object({
-    maxRetries: z.number().default(3),
-    timeout: z.number().default(5000),
-    retryDelay: z.number().default(1000),
-  })
-  .readonly();
-
-export type IpDiscoveryOptions = z.infer<typeof IpDiscoveryOptions>;
+import type { IpDiscoveryOptions } from "../options/index.js";
 
 const REQUEST_TYPE = 0x1;
 const RESPONSE_TYPE = 0x2;
@@ -21,7 +9,7 @@ const PACKET_LENGTH = 70;
 export class IpDiscoveryService {
   readonly #connection: VoiceConnection;
   readonly #udp: Socket;
-  readonly #options: Required<IpDiscoveryOptions>;
+  readonly #options: IpDiscoveryOptions;
   #timeoutHandle: NodeJS.Timeout | null = null;
   #retryCount = 0;
   #discovering = false;
@@ -29,17 +17,11 @@ export class IpDiscoveryService {
   constructor(
     connection: VoiceConnection,
     udpSocket: Socket,
-    options: z.input<typeof IpDiscoveryOptions> = {},
+    options: IpDiscoveryOptions,
   ) {
     this.#connection = connection;
     this.#udp = udpSocket;
-
-    try {
-      this.#options = IpDiscoveryOptions.parse(options);
-    } catch (error) {
-      throw new Error(fromError(error).message);
-    }
-
+    this.#options = options;
     this.#udp.on("message", this.#handleMessage.bind(this));
   }
 
@@ -179,14 +161,6 @@ export class IpDiscoveryService {
       const port = message.readUInt16BE(72);
 
       this.#connection.emit("ipDiscovered", ip, port);
-      this.#connection.send(VoiceGatewayOpcodes.SelectProtocol, {
-        protocol: "udp",
-        data: {
-          address: ip,
-          port,
-          mode: this.#connection.mode,
-        },
-      });
     } catch (error) {
       this.#connection.emit(
         "error",
