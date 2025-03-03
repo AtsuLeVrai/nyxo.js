@@ -1,4 +1,4 @@
-import { ApiVersion, BitFieldManager } from "@nyxjs/core";
+import { ApiVersion, BitFieldManager, Token } from "@nyxjs/core";
 import { z } from "zod";
 import { UpdatePresenceEntity } from "../events/index.js";
 import { GatewayIntentsBits } from "../types/index.js";
@@ -37,116 +37,114 @@ export type CompressionType = z.infer<typeof CompressionType>;
  * These options control the behavior of the WebSocket connection to Discord's
  * Gateway API, including authentication, sharding, compression, and more.
  */
-export const GatewayOptions = z
-  .object({
-    /**
-     * Discord bot token for authentication
-     *
-     * This token is required for connecting to the Gateway.
-     *
-     * @see {@link https://discord.com/developers/docs/reference#authentication}
-     */
-    token: z.string().min(1).describe("Discord bot token for authentication"),
+export const GatewayOptions = z.object({
+  /**
+   * Discord bot token for authentication
+   *
+   * This token is required for connecting to the Gateway.
+   *
+   * @see {@link https://discord.com/developers/docs/reference#authentication}
+   */
+  token: Token.optional(),
 
-    /**
-     * Gateway intents to request
-     *
-     * Intents determine which events the bot will receive from Discord.
-     * Can be specified as an array of intent flags or a precalculated bit field.
-     *
-     * @see {@link https://discord.com/developers/docs/topics/gateway#gateway-intents}
-     */
-    intents: z
-      .union([
-        z.array(z.nativeEnum(GatewayIntentsBits)).transform((value) => {
-          return BitFieldManager.combine(value).toNumber();
-        }),
-        z.number().int().positive(),
-      ])
-      .describe("Gateway intents to request"),
+  /**
+   * Gateway intents to request
+   *
+   * Intents determine which events the bot will receive from Discord.
+   * Can be specified as an array of intent flags or a precalculated bit field.
+   *
+   * @see {@link https://discord.com/developers/docs/topics/gateway#gateway-intents}
+   */
+  intents: z
+    .union([
+      z.array(z.nativeEnum(GatewayIntentsBits)).transform((value) => {
+        return BitFieldManager.combine(value).toNumber();
+      }),
+      z.number().int().positive(),
+    ])
+    .describe("Gateway intents to request"),
 
-    /**
-     * Discord API version to use
-     *
-     * Currently only v10 is supported.
-     */
-    version: z
-      .literal(ApiVersion.V10)
-      .default(ApiVersion.V10)
-      .describe("Discord API version to use"),
+  /**
+   * Discord API version to use
+   *
+   * Currently only v10 is supported.
+   */
+  version: z
+    .literal(ApiVersion.V10)
+    .default(ApiVersion.V10)
+    .describe("Discord API version to use"),
 
-    /**
-     * Number of members in a guild before the members are no longer returned in the guild create event
-     *
-     * Used to limit the initial payload size for large guilds.
-     *
-     * @see {@link https://discord.com/developers/docs/resources/guild#guild-object}
-     */
-    largeThreshold: z
-      .number()
-      .int()
-      .min(50)
-      .max(250)
-      .default(50)
-      .describe("Member threshold for large guild optimizations"),
+  /**
+   * Number of members in a guild before the members are no longer returned in the guild create event
+   *
+   * Used to limit the initial payload size for large guilds.
+   *
+   * @see {@link https://discord.com/developers/docs/resources/guild#guild-object}
+   */
+  largeThreshold: z
+    .number()
+    .int()
+    .min(50)
+    .max(250)
+    .default(50)
+    .describe("Member threshold for large guild optimizations"),
 
-    /**
-     * Payload encoding format to use
-     *
-     * Defaults to JSON for maximum compatibility.
-     */
-    encodingType: EncodingType.default("json").describe(
-      "Payload encoding format to use",
-    ),
+  /**
+   * Payload encoding format to use
+   *
+   * Defaults to JSON for maximum compatibility.
+   */
+  encodingType: EncodingType.default("json").describe(
+    "Payload encoding format to use",
+  ),
 
-    /**
-     * Payload compression format to use
-     *
-     * Optional. When not specified, no compression is used.
-     */
-    compressionType: CompressionType.optional().describe(
-      "Payload compression format to use",
-    ),
+  /**
+   * Payload compression format to use
+   *
+   * Optional. When not specified, no compression is used.
+   */
+  compressionType: CompressionType.optional().describe(
+    "Payload compression format to use",
+  ),
 
-    /**
-     * Backoff schedule for reconnection attempts in milliseconds
-     *
-     * These values determine the wait time between reconnection attempts
-     * in case of connection failures.
-     */
-    backoffSchedule: z
-      .array(z.number().positive())
-      .default([1000, 5000, 10000])
-      .describe("Backoff schedule for reconnection attempts in milliseconds"),
+  /**
+   * Backoff schedule for reconnection attempts in milliseconds
+   *
+   * These values determine the wait time between reconnection attempts
+   * in case of connection failures.
+   */
+  backoffSchedule: z
+    .array(z.number().positive())
+    .default([1000, 5000, 10000])
+    .describe("Backoff schedule for reconnection attempts in milliseconds"),
 
-    /**
-     * Initial presence data to set upon connecting
-     *
-     * Optional. When specified, this presence will be set immediately after connection.
-     *
-     * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence}
-     */
-    presence: UpdatePresenceEntity.optional().describe(
-      "Initial presence data to set upon connecting",
-    ),
+  /**
+   * Initial presence data to set upon connecting
+   *
+   * Optional. When specified, this presence will be set immediately after connection.
+   *
+   * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence}
+   */
+  presence: UpdatePresenceEntity.optional().describe(
+    "Initial presence data to set upon connecting",
+  ),
 
-    /**
-     * Heartbeat configuration options
-     *
-     * Controls the behavior of the connection heartbeat system.
-     */
-    heartbeat: HeartbeatOptions.default({}).describe(
-      "Heartbeat configuration options",
-    ),
+  /**
+   * Heartbeat configuration options
+   *
+   * Controls the behavior of the connection heartbeat system.
+   */
+  heartbeat: HeartbeatOptions.default({}).describe(
+    "Heartbeat configuration options",
+  ),
 
-    /**
-     * Sharding configuration options
-     *
-     * Controls how the client is sharded across multiple gateway connections.
-     */
-    shard: ShardOptions.default({}).describe("Sharding configuration options"),
-  })
-  .readonly();
+  /**
+   * Sharding configuration options
+   *
+   * Controls how the client is sharded across multiple gateway connections.
+   */
+  shard: ShardOptions.default({}).describe("Sharding configuration options"),
+});
 
 /**
  * Type definition for GatewayOptions

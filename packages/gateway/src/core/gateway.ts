@@ -104,7 +104,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     super();
 
     try {
-      this.#options = GatewayOptions.parse(options);
+      const parsedOptions = { ...options };
+      if (!parsedOptions.token) {
+        parsedOptions.token = rest.token;
+      }
+
+      this.#options = GatewayOptions.parse(parsedOptions);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
@@ -744,6 +749,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Sends a resume payload
    */
   #sendResume(): void {
+    if (!this.#options.token) {
+      throw new Error(
+        "No token available for identification. Please provide a token through Gateway options or ensure REST client has a valid token.",
+      );
+    }
+
     if (!this.#sessionId) {
       throw new Error("No session ID available to resume");
     }
@@ -759,6 +770,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Sends an identify payload
    */
   async #identify(): Promise<void> {
+    if (!this.#options.token) {
+      throw new Error(
+        "No token available for identification. Please provide a token through Gateway options or ensure REST client has a valid token.",
+      );
+    }
+
     const payload: IdentifyEntity = {
       token: this.#options.token,
       properties: {

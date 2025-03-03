@@ -1,3 +1,4 @@
+import type { Token } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import { type Dispatcher, Pool } from "undici";
 import type { z } from "zod";
@@ -105,6 +106,10 @@ export class Rest extends EventEmitter<RestEvents> {
     // Initialize managers
     this.#rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
     this.#retry = new RetryManager(this, this.#options.retry);
+  }
+
+  get token(): Token {
+    return this.#options.token;
   }
 
   /**
@@ -446,14 +451,12 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Check for API errors
     if (result.statusCode >= 400 && this.#isJsonErrorEntity(result.data)) {
-      throw new ApiError(
-        requestId,
-        result.data,
-        result.statusCode,
-        result.headers,
-        options.method,
-        options.path,
-      );
+      throw new ApiError(requestId, result.data, {
+        statusCode: result.statusCode,
+        headers: result.headers,
+        method: options.method,
+        path: options.path,
+      });
     }
 
     // Emit event when request completes successfully
@@ -652,10 +655,9 @@ export class Rest extends EventEmitter<RestEvents> {
       throw new ApiError(
         requestId,
         { code: 0, message: "Failed to parse response body" },
-        response.statusCode,
-        headers,
-        "GET",
-        "/",
+        {
+          statusCode: response.statusCode,
+        },
       );
     }
   }

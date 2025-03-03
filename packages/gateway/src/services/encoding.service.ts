@@ -47,14 +47,15 @@ export class EncodingService {
     }
 
     try {
-      const erlpackModule = await OptionalDeps.import("erlpack");
-      if (erlpackModule) {
-        this.#erlpack = erlpackModule as typeof import("erlpack");
-      } else {
+      const result =
+        await OptionalDeps.safeImport<typeof import("erlpack")>("erlpack");
+      if (!result.success) {
         throw new Error(
           "erlpack module required for ETF encoding but not available",
         );
       }
+
+      this.#erlpack = result.data;
     } catch (error) {
       throw new Error(`Failed to initialize ${this.#type} encoding service`, {
         cause: error,

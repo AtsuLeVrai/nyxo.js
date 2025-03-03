@@ -5,7 +5,7 @@ import {
   ApplicationCommandType,
   ApplicationIntegrationType,
   InteractionContextType,
-  createAvailableLocale,
+  Locale,
 } from "@nyxjs/core";
 import { z } from "zod";
 
@@ -25,13 +25,16 @@ export type EditApplicationCommandPermissionsSchema = z.input<
  */
 export const CreateGlobalApplicationCommandSchema = z.object({
   name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-  name_localizations: createAvailableLocale(
-    z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-  ).nullish(),
+  name_localizations: z
+    .record(
+      z.nativeEnum(Locale),
+      z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+    )
+    .nullish(),
   description: z.string().min(1).max(100).optional(),
-  description_localizations: createAvailableLocale(
-    z.string().min(1).max(100),
-  ).nullish(),
+  description_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+    .nullish(),
   options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
   default_member_permissions: z.string().nullish(),
   /** @deprecated User `contexts instead` */

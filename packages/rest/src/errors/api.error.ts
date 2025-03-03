@@ -28,17 +28,9 @@ export class ApiError extends BaseApiError {
   constructor(
     requestId: string,
     error: JsonErrorResponse,
-    status: number,
-    headers: Record<string, unknown>,
-    method: string,
-    path: string,
+    context: BaseApiErrorContext,
   ) {
-    super(requestId, error.message, {
-      statusCode: status,
-      method,
-      path,
-      headers,
-    });
+    super(error.message, requestId, context);
     this.code = error.code;
     this.errors = error.errors;
   }

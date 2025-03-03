@@ -22,8 +22,8 @@ export class RateLimitError extends BaseApiError {
     context: Omit<RateLimitContext, "statusCode" | "timestamp" | "headers">,
   ) {
     super(
-      requestId,
       `Rate limit exceeded for ${context.path} (${context.method}): retry after ${context.retryAfter}ms`,
+      requestId,
       {
         statusCode: 429,
         ...context,

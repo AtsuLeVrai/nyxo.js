@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LocaleKey, OAuth2Scope } from "../enums/index.js";
+import { Locale, OAuth2Scope } from "../enums/index.js";
 import { BitFieldManager, Snowflake } from "../managers/index.js";
 import {
   GuildStageVoiceChannelEntity,
@@ -804,7 +804,7 @@ export const GuildEntity = z.object({
   premium_subscription_count: z.number().int().optional(),
 
   /** The preferred locale of a Community guild; used in server discovery and notices from Discord, and sent in interactions */
-  preferred_locale: LocaleKey,
+  preferred_locale: z.nativeEnum(Locale),
 
   /** The ID of the channel where admins and moderators of Community guilds receive notices from Discord */
   public_updates_channel_id: Snowflake.nullable(),

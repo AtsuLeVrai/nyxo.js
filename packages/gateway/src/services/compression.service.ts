@@ -132,15 +132,14 @@ export class CompressionService {
    * @throws {Error} If Zlib initialization fails
    */
   async #initializeZlib(): Promise<void> {
-    const zlibModule: typeof import("zlib-sync") = (await OptionalDeps.import(
-      "zlib-sync",
-    )) as typeof import("zlib-sync");
-    if (!zlibModule) {
+    const result =
+      await OptionalDeps.safeImport<typeof import("zlib-sync")>("zlib-sync");
+    if (!result.success) {
       throw new Error("zlib-sync module required but not available");
     }
 
     // Create Zlib inflate instance with appropriate options
-    this.#zlibInflate = new zlibModule.Inflate({
+    this.#zlibInflate = new result.data.Inflate({
       chunkSize: 128 * 1024, // 128KB chunk size for efficient memory usage
       windowBits: 15, // Standard window size for maximum compatibility
     });
@@ -157,15 +156,14 @@ export class CompressionService {
    * @throws {Error} If Zstandard initialization fails
    */
   async #initializeZstd(): Promise<void> {
-    const zstdModule: typeof import("fzstd") = (await OptionalDeps.import(
-      "fzstd",
-    )) as typeof import("fzstd");
-    if (!zstdModule) {
+    const result =
+      await OptionalDeps.safeImport<typeof import("fzstd")>("fzstd");
+    if (!result.success) {
       throw new Error("fzstd module required but not available");
     }
 
     // Create Zstandard decompress instance with chunk collector
-    this.#zstdStream = new zstdModule.Decompress((chunk) =>
+    this.#zstdStream = new result.data.Decompress((chunk) =>
       this.#chunks.push(chunk),
     );
 

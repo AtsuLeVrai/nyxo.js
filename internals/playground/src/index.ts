@@ -3,7 +3,7 @@ import type {
   InteractionEntity,
 } from "@nyxjs/core";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
-import { type CreateGlobalApplicationCommandSchema, Rest } from "@nyxjs/rest";
+import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
 import { VoiceManager } from "./voice.manager.js";
 
@@ -45,7 +45,6 @@ rest.on("retryAttempt", (...args) => {
 });
 
 const gateway = new Gateway(rest, {
-  token: env.DISCORD_TOKEN,
   intents: [
     GatewayIntentsBits.Guilds,
     GatewayIntentsBits.GuildMembers,
@@ -176,20 +175,20 @@ gateway.on("dispatch", async (event, data) => {
   }
 });
 
-const commands: CreateGlobalApplicationCommandSchema[] = [
-  {
-    name: "join",
-    description: "Join the voice channel",
-  },
-];
+// const commands: CreateGlobalApplicationCommandSchema[] = [
+//   {
+//     name: "join",
+//     description: "Join the voice channel",
+//   },
+// ];
 
 async function main(): Promise<void> {
   await gateway.connect();
-  await rest.commands.bulkOverwriteGuildApplicationCommands(
-    "1011252785989308526",
-    "936969912600121384",
-    commands,
-  );
+  // await rest.commands.bulkOverwriteGuildApplicationCommands(
+  //   "1011252785989308526",
+  //   "936969912600121384",
+  //   commands,
+  // );
 }
 
 main().catch((error) => {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type BitwisePermissionFlags, LocaleKey } from "../enums/index.js";
+import { type BitwisePermissionFlags, Locale } from "../enums/index.js";
 import { BitFieldManager, Snowflake } from "../managers/index.js";
 import {
   ApplicationCommandOptionChoiceEntity,
@@ -614,10 +614,10 @@ export const InteractionEntity = z.object({
   ),
 
   /** Selected language of the invoking user */
-  locale: LocaleKey.optional(),
+  locale: z.nativeEnum(Locale).optional(),
 
   /** Guild's preferred locale, if invoked in a guild */
-  guild_locale: LocaleKey.optional(),
+  guild_locale: z.nativeEnum(Locale).optional(),
 
   /** For monetized apps, any entitlements for the invoking user */
   entitlements: z.array(z.lazy(() => EntitlementEntity)).optional(),

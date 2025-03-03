@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LocaleKey } from "../enums/index.js";
+import { Locale } from "../enums/index.js";
 import { BitFieldManager, Snowflake } from "../managers/index.js";
 import { IntegrationEntity } from "./guild.entity.js";
 
@@ -296,7 +296,7 @@ export const UserEntity = z.object({
   accent_color: z.number().int().nullish(),
 
   /** The user's chosen language option */
-  locale: LocaleKey.optional(),
+  locale: z.nativeEnum(Locale).optional(),
 
   /** Whether the email on this account has been verified */
   verified: z.boolean().optional(),

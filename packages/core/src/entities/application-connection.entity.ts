@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createAvailableLocale } from "../enums/index.js";
+import { Locale } from "../enums/index.js";
 
 /**
  * Types of application role connection metadata for verification
@@ -53,17 +53,17 @@ export const ApplicationRoleConnectionMetadataEntity = z.object({
   name: z.string().min(1).max(100),
 
   /** Translations of the name in available locales */
-  name_localizations: createAvailableLocale(
-    z.string().min(1).max(100),
-  ).optional(),
+  name_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+    .optional(),
 
   /** Description of the metadata field (1-200 characters) */
   description: z.string().min(1).max(200),
 
   /** Translations of the description in available locales */
-  description_localizations: createAvailableLocale(
-    z.string().min(1).max(200),
-  ).optional(),
+  description_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(200))
+    .optional(),
 });
 
 export type ApplicationRoleConnectionMetadataEntity = z.infer<

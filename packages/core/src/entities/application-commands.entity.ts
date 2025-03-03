@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AvailableLocale, createAvailableLocale } from "../enums/index.js";
+import { Locale } from "../enums/index.js";
 import { Snowflake } from "../managers/index.js";
 import { ApplicationIntegrationType } from "./application.entity.js";
 import { ChannelType } from "./channel.entity.js";
@@ -102,7 +102,7 @@ export const ApplicationCommandOptionChoiceEntity = z.object({
   name: z.string().min(1).max(100),
 
   /** Localization dictionary for the name field */
-  name_localizations: AvailableLocale.nullish(),
+  name_localizations: z.record(z.nativeEnum(Locale), z.string()).nullish(),
 
   /** Value for the choice (string, integer, or double) */
   value: z.union([z.string(), z.number()]),
@@ -121,17 +121,20 @@ export const BaseApplicationCommandOptionEntity = z.object({
   name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
 
   /** Localization dictionary for the name field */
-  name_localizations: createAvailableLocale(
-    z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-  ).nullish(),
+  name_localizations: z
+    .record(
+      z.nativeEnum(Locale),
+      z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+    )
+    .nullish(),
 
   /** 1-100 character description */
   description: z.string().min(1).max(100),
 
   /** Localization dictionary for the description field */
-  description_localizations: createAvailableLocale(
-    z.string().min(1).max(100),
-  ).nullish(),
+  description_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+    .nullish(),
 });
 
 /**
@@ -441,9 +444,12 @@ export const BaseApplicationCommandEntity = z.object({
   name: z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
 
   /** Localization dictionary for the name field */
-  name_localizations: createAvailableLocale(
-    z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
-  ).nullish(),
+  name_localizations: z
+    .record(
+      z.nativeEnum(Locale),
+      z.string().min(1).max(32).regex(APPLICATION_COMMAND_NAME_REGEX),
+    )
+    .nullish(),
 
   /** Set of permissions represented as a bit set */
   default_member_permissions: z.string().nullable(),
@@ -482,9 +488,9 @@ export const ChatInputApplicationCommandEntity =
     description: z.string().min(1).max(100),
 
     /** Localization dictionary for the description field */
-    description_localizations: createAvailableLocale(
-      z.string().min(1).max(100),
-    ).nullish(),
+    description_localizations: z
+      .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+      .nullish(),
 
     /** Parameters for the command (max of 25) */
     options: z.array(ApplicationCommandOptionEntity).max(25).optional(),
@@ -536,9 +542,9 @@ export const EntryPointApplicationCommandEntity =
     description: z.string().min(1).max(100),
 
     /** Localization dictionary for the description field */
-    description_localizations: createAvailableLocale(
-      z.string().min(1).max(100),
-    ).nullish(),
+    description_localizations: z
+      .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+      .nullish(),
 
     /** How the interaction should be handled */
     handler: z.nativeEnum(ApplicationCommandEntryPointType),
