@@ -38,6 +38,7 @@
       "@discordjs/opus",
       "@swc/core",
       "bufferutil",
+      "canvas",
       "erlpack",
       "esbuild",
       "ffmpeg-static",
