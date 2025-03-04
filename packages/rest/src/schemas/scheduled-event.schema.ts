@@ -7,7 +7,7 @@ import {
   Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { type FileInput, fileHandler } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
@@ -22,8 +22,8 @@ export const CreateGuildScheduledEventSchema = z.object({
   description: z.string().min(1).max(1000).optional(),
   entity_type: z.nativeEnum(GuildScheduledEventType),
   image: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .optional(),
   recurrence_rule: GuildScheduledEventRecurrenceRuleEntity.optional(),
 });

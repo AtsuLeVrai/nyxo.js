@@ -15,7 +15,7 @@ import {
   WelcomeScreenChannelEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { type FileInput, fileHandler } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
@@ -24,8 +24,8 @@ export const CreateGuildSchema = z.object({
   name: z.string().min(2).max(100),
   region: z.string().nullish(),
   icon: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .optional(),
   verification_level: z.nativeEnum(VerificationLevel).optional(),
   default_message_notifications: z
@@ -57,21 +57,21 @@ export const ModifyGuildSchema = z.object({
   afk_channel_id: Snowflake.nullish(),
   afk_timeout: z.number().optional(),
   icon: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
   owner_id: Snowflake.optional(),
   splash: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
   discovery_splash: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
   banner: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
   system_channel_id: Snowflake.nullish(),
   system_channel_flags: z.nativeEnum(SystemChannelFlags).optional(),
@@ -218,8 +218,8 @@ export const CreateGuildRoleSchema = z.object({
   color: z.number().int().default(0),
   hoist: z.boolean().default(false),
   icon: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullable(),
   unicode_emoji: z.string().emoji().optional(),
   mentionable: z.boolean().default(false),

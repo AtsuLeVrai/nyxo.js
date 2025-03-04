@@ -1,7 +1,4 @@
-import type {
-  ApplicationCommandInteractionDataEntity,
-  InteractionEntity,
-} from "@nyxjs/core";
+import { type AnyInteractionEntity, InteractionType } from "@nyxjs/core";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
@@ -162,11 +159,11 @@ gateway.on("dispatch", async (event, data) => {
   console.log("[GATEWAY - DISPATCH]", event, data);
 
   if (event === "INTERACTION_CREATE") {
-    const interaction = data as InteractionEntity;
+    const interaction = data as AnyInteractionEntity;
 
     if (
-      (interaction.data as ApplicationCommandInteractionDataEntity)?.name ===
-      "join"
+      interaction.data?.type === InteractionType.ApplicationCommand &&
+      interaction.data.name === "join"
     ) {
       voice.joinVoiceChannel("936969912600121384", "1232694742350041089");
       await new Promise((resolve) => setTimeout(resolve, 5000));

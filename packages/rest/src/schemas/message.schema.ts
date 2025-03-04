@@ -9,7 +9,7 @@ import {
   Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { type FileInput, fileHandler } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params}
@@ -37,7 +37,7 @@ export const CreateMessageSchema = z.object({
   message_reference: MessageReferenceEntity.optional(),
   components: ActionRowEntity.optional(),
   sticker_ids: z.array(Snowflake).max(3).optional(),
-  files: z.custom<FileInput | FileInput[]>(FileHandler.isValidInput).optional(),
+  files: z.custom<FileInput | FileInput[]>(fileHandler.isValidInput).optional(),
   /** @deprecated Do not use `payload_json`. This is done automatically! */
   payload_json: z.string().optional(),
   attachments: z.array(AttachmentEntity).max(10).optional(),

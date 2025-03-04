@@ -63,7 +63,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/node": "^22.13.9",
-    "@types/ws": "^8.5.14",
+    "@types/ws": "^8.18.0",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.2",
     "vitest": "^3.0.7"

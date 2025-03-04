@@ -1,6 +1,6 @@
 import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { type FileInput, fileHandler } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
@@ -8,12 +8,12 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
 export const ModifyCurrentUserSchema = z.object({
   username: z.string().optional(),
   avatar: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
   banner: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
 });
 

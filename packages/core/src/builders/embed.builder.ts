@@ -12,7 +12,7 @@ import {
 } from "../entities/index.js";
 
 export class EmbedBuilder {
-  #embed: z.input<typeof EmbedEntity>;
+  readonly #embed: z.input<typeof EmbedEntity>;
 
   constructor(data: z.input<typeof EmbedEntity> = {}) {
     this.#embed = data;
@@ -82,6 +82,11 @@ export class EmbedBuilder {
     return this;
   }
 
+  setFields(fields: z.input<typeof EmbedFieldEntity>[]): this {
+    this.#embed.fields = fields;
+    return this;
+  }
+
   addField(field: z.input<typeof EmbedFieldEntity>): this {
     if (!this.#embed.fields) {
       this.#embed.fields = [];
@@ -94,37 +99,6 @@ export class EmbedBuilder {
   addFields(...fields: z.input<typeof EmbedFieldEntity>[]): this {
     for (const field of fields) {
       this.addField(field);
-    }
-
-    return this;
-  }
-
-  removeField(index: number): this {
-    if (this.#embed.fields && this.#embed.fields.length > index) {
-      this.#embed.fields.splice(index, 1);
-    }
-
-    return this;
-  }
-
-  clearFields(): this {
-    this.#embed.fields = [];
-    return this;
-  }
-
-  copyFrom(embed: z.infer<typeof EmbedEntity> | EmbedBuilder): this {
-    if (embed instanceof EmbedBuilder) {
-      this.#embed = { ...this.#embed, ...embed.toJson() };
-    } else {
-      this.#embed = { ...this.#embed, ...embed };
-    }
-
-    return this;
-  }
-
-  merge(...embeds: z.infer<typeof EmbedEntity>[]): this {
-    for (const embed of embeds) {
-      this.#embed = { ...this.#embed, ...embed };
     }
 
     return this;

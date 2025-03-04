@@ -138,42 +138,6 @@ export const BaseApplicationCommandOptionEntity = z.object({
 });
 
 /**
- * SubCommand Option - A subcommand within a command
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
- */
-export const SubCommandOptionEntity = BaseApplicationCommandOptionEntity.extend(
-  {
-    /** Subcommand type */
-    type: z.literal(ApplicationCommandOptionType.SubCommand),
-
-    /** Parameters for this subcommand (up to 25) */
-    options: z
-      .array(z.lazy(() => SimpleApplicationCommandOptionEntity))
-      .max(25)
-      .optional(),
-  },
-);
-
-export type SubCommandOptionEntity = z.infer<typeof SubCommandOptionEntity>;
-
-/**
- * SubCommandGroup Option - A group of subcommands
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
- */
-export const SubCommandGroupOptionEntity =
-  BaseApplicationCommandOptionEntity.extend({
-    /** Subcommand group type */
-    type: z.literal(ApplicationCommandOptionType.SubCommandGroup),
-
-    /** Subcommands in this group (up to 25) */
-    options: z.array(SubCommandOptionEntity).max(25),
-  });
-
-export type SubCommandGroupOptionEntity = z.infer<
-  typeof SubCommandGroupOptionEntity
->;
-
-/**
  * String Option - For string inputs
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
@@ -342,28 +306,6 @@ export const AttachmentOptionEntity = BaseApplicationCommandOptionEntity.extend(
 export type AttachmentOptionEntity = z.infer<typeof AttachmentOptionEntity>;
 
 /**
- * Union of all possible command options with discriminated union pattern
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
- */
-export const ApplicationCommandOptionEntity = z.discriminatedUnion("type", [
-  SubCommandOptionEntity,
-  SubCommandGroupOptionEntity,
-  StringOptionEntity,
-  IntegerOptionEntity,
-  NumberOptionEntity,
-  ChannelOptionEntity,
-  BooleanOptionEntity,
-  UserOptionEntity,
-  RoleOptionEntity,
-  MentionableOptionEntity,
-  AttachmentOptionEntity,
-]);
-
-export type ApplicationCommandOptionEntity = z.infer<
-  typeof ApplicationCommandOptionEntity
->;
-
-/**
  * Simple command options (excluding subcommands and groups)
  */
 export const SimpleApplicationCommandOptionEntity = z.discriminatedUnion(
@@ -383,6 +325,51 @@ export const SimpleApplicationCommandOptionEntity = z.discriminatedUnion(
 
 export type SimpleApplicationCommandOptionEntity = z.infer<
   typeof SimpleApplicationCommandOptionEntity
+>;
+
+/**
+ * SubCommand Option - A subcommand within a command
+ * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ */
+export const SubOptionEntity = BaseApplicationCommandOptionEntity.extend({
+  /** Subcommand type */
+  type: z.literal(ApplicationCommandOptionType.SubCommand),
+
+  /** Parameters for this subcommand (up to 25) */
+  options: z
+    .array(z.lazy(() => SimpleApplicationCommandOptionEntity))
+    .max(25)
+    .optional(),
+});
+
+export type SubOptionEntity = z.infer<typeof SubOptionEntity>;
+
+/**
+ * SubCommandGroup Option - A group of subcommands
+ * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ */
+export const SubGroupOptionEntity = BaseApplicationCommandOptionEntity.extend({
+  /** Subcommand group type */
+  type: z.literal(ApplicationCommandOptionType.SubCommandGroup),
+
+  /** Subcommands in this group (up to 25) */
+  options: z.array(SubOptionEntity).max(25),
+});
+
+export type SubGroupOptionEntity = z.infer<typeof SubGroupOptionEntity>;
+
+/**
+ * Union of all possible command options with discriminated union pattern
+ * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ */
+export const ApplicationCommandOptionEntity = z.discriminatedUnion("type", [
+  SubOptionEntity,
+  SubGroupOptionEntity,
+  ...SimpleApplicationCommandOptionEntity.options,
+]);
+
+export type ApplicationCommandOptionEntity = z.infer<
+  typeof ApplicationCommandOptionEntity
 >;
 
 /**
@@ -454,7 +441,10 @@ export const BaseApplicationCommandEntity = z.object({
   /** Set of permissions represented as a bit set */
   default_member_permissions: z.string().nullable(),
 
-  /** Whether command is available in DMs with the app (deprecated - use contexts instead) */
+  /**
+   * Whether command is available in DMs with the app
+   * @deprecated - use contexts instead
+   */
   dm_permission: z.boolean().optional(),
 
   /** Whether command is enabled by default when app is added to guild (deprecated) */

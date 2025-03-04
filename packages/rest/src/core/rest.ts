@@ -4,7 +4,7 @@ import { type Dispatcher, Pool } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError, type JsonErrorResponse } from "../errors/index.js";
-import { FileHandler, HeaderHandler } from "../handlers/index.js";
+import { HeaderHandler, fileHandler } from "../handlers/index.js";
 import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
@@ -578,7 +578,7 @@ export class Rest extends EventEmitter<RestEvents> {
     }
 
     // Create multipart form data
-    const formData = await FileHandler.createFormData(
+    const formData = await fileHandler.createFormData(
       options.files,
       options.body,
     );

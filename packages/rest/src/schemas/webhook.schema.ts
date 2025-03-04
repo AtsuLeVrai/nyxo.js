@@ -1,6 +1,6 @@
 import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { type FileInput, fileHandler } from "../handlers/index.js";
 import { CreateMessageSchema } from "./message.schema.js";
 
 /**
@@ -9,8 +9,8 @@ import { CreateMessageSchema } from "./message.schema.js";
 export const CreateWebhookSchema = z.object({
   name: z.string().min(1).max(80),
   avatar: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
 });
 
@@ -22,8 +22,8 @@ export type CreateWebhookSchema = z.input<typeof CreateWebhookSchema>;
 export const ModifyWebhookSchema = z.object({
   name: z.string().min(1).max(80).optional(),
   avatar: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .nullish(),
   channel_id: Snowflake.optional(),
 });

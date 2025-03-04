@@ -7,7 +7,7 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { type FileInput, fileHandler } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum}
@@ -57,12 +57,12 @@ export const EditCurrentApplicationSchema = z.object({
     ])
     .optional(),
   icon: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .optional(),
   cover_image: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
+    .custom<FileInput>(fileHandler.isValidSingleInput)
+    .transform(fileHandler.toDataUri)
     .optional(),
   interactions_endpoint_url: z.string().url().optional(),
   tags: z.array(z.string().max(20)).max(5).optional(),
