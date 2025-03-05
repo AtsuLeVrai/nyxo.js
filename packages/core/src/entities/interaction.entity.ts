@@ -18,6 +18,7 @@ import {
   AllowedMentionsEntity,
   AttachmentEntity,
   EmbedEntity,
+  MessageEntity,
   type MessageFlags,
 } from "./message.entity.js";
 import { PollCreateRequestEntity } from "./poll.entity.js";
@@ -382,12 +383,12 @@ export const InteractionResolvedDataEntity = z.object({
     .optional(),
 
   /** Map of message IDs to partial message objects */
-  // messages: z
-  //   .record(
-  //     Snowflake,
-  //     z.lazy(() => MessageEntity.partial()),
-  //   )
-  //   .optional(),
+  messages: z
+    .record(
+      Snowflake,
+      z.lazy(() => MessageEntity),
+    )
+    .optional(),
 
   /** Map of attachment IDs to attachment objects */
   attachments: z
@@ -555,7 +556,7 @@ export const InteractionCallbackResourceEntity = z.object({
   activity_instance: InteractionCallbackActivityInstanceEntity.optional(),
 
   /** Message created by the interaction */
-  // message: z.lazy(() => MessageEntity.partial()).optional(),
+  message: z.lazy(() => MessageEntity).optional(),
 });
 
 export type InteractionCallbackResourceEntity = z.infer<
@@ -811,7 +812,7 @@ export const GuildInteractionEntity = BaseInteractionEntity.extend({
   guild_locale: z.nativeEnum(Locale).optional(),
 
   /** For components, the message they were attached to */
-  // message: z.lazy(() => MessageEntity.partial()).optional(),
+  message: z.lazy(() => MessageEntity).optional(),
 });
 
 export type GuildInteractionEntity = z.infer<typeof GuildInteractionEntity>;
@@ -833,7 +834,7 @@ export const BotDmInteractionEntity = BaseInteractionEntity.extend({
   user: z.lazy(() => UserEntity),
 
   /** For components, the message they were attached to */
-  // message: z.lazy(() => MessageEntity.partial()).optional(),
+  message: z.lazy(() => MessageEntity).optional(),
 });
 
 export type BotDmInteractionEntity = z.infer<typeof BotDmInteractionEntity>;
@@ -855,7 +856,7 @@ export const PrivateChannelInteractionEntity = BaseInteractionEntity.extend({
   user: z.lazy(() => UserEntity),
 
   /** For components, the message they were attached to */
-  // message: z.lazy(() => MessageEntity.partial()).optional(),
+  message: z.lazy(() => MessageEntity).optional(),
 });
 
 export type PrivateChannelInteractionEntity = z.infer<
