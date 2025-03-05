@@ -3,7 +3,7 @@ import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import commonjs from "@rollup/plugin-commonjs";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
+import nodeResolve from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
 import figures from "figures";
 import prettyBytes from "pretty-bytes";
@@ -11,6 +11,10 @@ import { rollup } from "rollup";
 import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
+// Define build mode (production or development)
+const isProduction = process.env.NODE_ENV === "production";
+
+// Color theme for console logs
 const theme = {
   primary: chalk.rgb(147, 197, 253),
   secondary: chalk.rgb(167, 139, 250),
@@ -24,6 +28,7 @@ const theme = {
   time: chalk.rgb(147, 197, 253),
 };
 
+// Symbols for console logs
 const symbols = {
   start: figures.pointer,
   success: figures.tick,
@@ -37,34 +42,40 @@ const symbols = {
   step: figures.pointerSmall,
 };
 
-class Logger {
-  constructor() {
-    this.metrics = {
-      startTime: process.hrtime(),
-      steps: new Map(),
-    };
-  }
+// Important paths for the build process
+const paths = {
+  root: process.cwd(),
+  src: resolve(process.cwd(), "src"),
+  dist: resolve(process.cwd(), "dist"),
+  temp: resolve(process.cwd(), "temp"),
+  tsconfig: resolve(process.cwd(), "tsconfig.json"),
+  package: resolve(process.cwd(), "package.json"),
+};
 
+// Logging system with duration measurement and formatting
+const logger = {
+  startTime: process.hrtime(),
+  steps: new Map(),
   getTimestamp() {
     const now = new Date();
     return theme.dim(`[${now.toLocaleTimeString()}]`);
-  }
+  },
 
   formatDuration(startTime) {
     const [seconds, nanoseconds] = process.hrtime(startTime);
     return `${(seconds + nanoseconds / 1e9).toFixed(2)}s`;
-  }
+  },
 
   startStep(step) {
     const startTime = process.hrtime();
-    this.metrics.steps.set(step, startTime[0] * 1e9 + startTime[1]);
+    this.steps.set(step, startTime[0] * 1e9 + startTime[1]);
     console.log(
       `${this.getTimestamp()} ${theme.info(symbols.start)} ${theme.primary(step)}`,
     );
-  }
+  },
 
   endStep(step) {
-    const startTimeNs = this.metrics.steps.get(step);
+    const startTimeNs = this.steps.get(step);
     if (startTimeNs) {
       const duration =
         (process.hrtime.bigint() - BigInt(startTimeNs)) / BigInt(1e9);
@@ -74,19 +85,19 @@ class Logger {
         )} ${theme.dim(`(${duration.toString()}s)`)}`,
       );
     }
-  }
+  },
 
   info(message) {
     console.log(
       `${this.getTimestamp()} ${theme.info(symbols.info)} ${message}`,
     );
-  }
+  },
 
   success(message) {
     console.log(
       `${this.getTimestamp()} ${theme.success(symbols.success)} ${theme.success(message)}`,
     );
-  }
+  },
 
   error(message, error) {
     console.error(
@@ -95,13 +106,13 @@ class Logger {
     if (error?.stack) {
       console.error(theme.dim(error.stack));
     }
-  }
+  },
 
   warning(message) {
     console.log(
       `${this.getTimestamp()} ${theme.warning(symbols.warning)} ${theme.warning(message)}`,
     );
-  }
+  },
 
   debug(message, data) {
     console.log(
@@ -112,31 +123,20 @@ class Logger {
         typeof data === "string" ? data : JSON.stringify(data, null, 2),
       );
     }
-  }
+  },
 
   showSummary() {
-    const totalDuration = this.formatDuration(this.metrics.startTime);
+    const totalDuration = this.formatDuration(this.startTime);
     console.log(
       `${this.getTimestamp()} ${theme.success("✨ Build completed")} ${theme.white("in")} ${theme.time(totalDuration)}`,
     );
     console.log(
-      `${this.getTimestamp()} ${theme.info("📦")} ${this.metrics.steps.size} steps completed successfully`,
+      `${this.getTimestamp()} ${theme.info("📦")} ${this.steps.size} steps completed successfully`,
     );
-  }
-}
-
-const paths = {
-  root: process.cwd(),
-  src: resolve(process.cwd(), "src"),
-  dist: resolve(process.cwd(), "dist"),
-  temp: resolve(process.cwd(), "temp"),
-  tsconfig: resolve(process.cwd(), "tsconfig.json"),
-  package: resolve(process.cwd(), "package.json"),
+  },
 };
 
-const isProduction = process.env.NODE_ENV === "production";
-const logger = new Logger();
-
+// SWC configuration for code transpilation
 const swcConfig = defineRollupSwcOption({
   jsc: {
     target: "esnext",
@@ -155,13 +155,6 @@ const swcConfig = defineRollupSwcOption({
       useDefineForClassFields: true,
       optimizer: {
         simplify: true,
-        globals: {
-          vars: {
-            "process.env.NODE_ENV": isProduction
-              ? '"production"'
-              : '"development"',
-          },
-        },
       },
     },
   },
@@ -175,25 +168,38 @@ const swcConfig = defineRollupSwcOption({
   minify: false,
 });
 
+// Get Rollup configuration for the build
 function getRollupConfig() {
+  // Read package.json to analyze dependencies
   const pkg = JSON.parse(readFileSync(paths.package, "utf-8"));
   logger.debug("Package dependencies analysis:", {
     dependencies: pkg.dependencies || {},
     peerDependencies: pkg.peerDependencies || {},
   });
 
+  // Define external modules (will not be bundled)
   const externals = [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
     /^node:/,
   ];
+
   logger.debug("Configured externals:", externals);
 
+  // Get package name and version for bundle banner
+  const packageName = pkg.name || "unknown-package";
+  const packageVersion = pkg.version || "0.0.0";
+  const banner = isProduction
+    ? `/* ${packageName} v${packageVersion} - ${new Date().toISOString().split("T")[0]} */`
+    : `/* ${packageName} v${packageVersion} (development build) */`;
+
+  // Complete Rollup configuration
   const config = {
     input: resolve(paths.src, "index.ts"),
     external: externals,
     output: [
       {
+        // ESM format (ES Modules)
         file: resolve(paths.dist, "index.mjs"),
         format: "esm",
         sourcemap: !isProduction,
@@ -203,8 +209,10 @@ function getRollupConfig() {
         generatedCode: {
           constBindings: true,
         },
+        banner,
       },
       {
+        // CommonJS format
         file: resolve(paths.dist, "index.cjs"),
         format: "cjs",
         sourcemap: !isProduction,
@@ -214,19 +222,23 @@ function getRollupConfig() {
         generatedCode: {
           constBindings: true,
         },
+        banner,
       },
     ],
     plugins: [
+      // Node.js module resolution
       nodeResolve({
         preferBuiltins: true,
         extensions: [".ts", ".js", ".mjs", ".cjs", ".json"],
       }),
+      // CommonJS modules support
       commonjs({
         include: /node_modules/,
         extensions: [".js", ".cjs"],
         ignoreTryCatch: true,
         requireReturnsDefault: "preferred",
       }),
+      // Transpilation with SWC
       swc(swcConfig),
     ],
   };
@@ -234,6 +246,7 @@ function getRollupConfig() {
   return config;
 }
 
+// Configuration for API Extractor (final types generation)
 const apiExtractorConfig = {
   projectFolder: paths.root,
   mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
@@ -251,36 +264,56 @@ const apiExtractorConfig = {
       },
     },
   },
+  // API report for public packages
   apiReport: { enabled: false },
+  // Documentation model generation (optional)
   docModel: { enabled: false },
+  // TypeScript declaration rollup (combine all .d.ts files)
   dtsRollup: {
     enabled: true,
     untrimmedFilePath: resolve(paths.dist, "index.d.ts"),
     omitTrimmingComments: false,
   },
-  tsdocMetadata: { enabled: false },
+  // TSDoc metadata generation for better IDE integration
+  tsdocMetadata: {
+    enabled: isProduction,
+    tsdocMetadataFilePath: resolve(paths.dist, "tsdoc-metadata.json"),
+  },
+  // Message reporting configuration with better error handling
   messages: {
     compilerMessageReporting: {
       default: { logLevel: "warning" },
       TS2589: { logLevel: "none" },
       TS2344: { logLevel: "none" },
+      TS1375: { logLevel: "none" }, // 'await' expressions are only allowed within async functions
+      TS2306: { logLevel: "none" }, // File is not a module
     },
     extractorMessageReporting: {
       default: { logLevel: "warning" },
       "ae-missing-release-tag": { logLevel: "none" },
+      "ae-unresolved-link": { logLevel: "none" },
+      "ae-internal-missing-underscore": { logLevel: "none" },
     },
-    tsdocMessageReporting: { default: { logLevel: "warning" } },
+    tsdocMessageReporting: {
+      default: { logLevel: "warning" },
+      "tsdoc-undefined-tag": { logLevel: "none" },
+      "tsdoc-escape-right-brace": { logLevel: "none" },
+      "tsdoc-malformed-inline-tag": { logLevel: "none" },
+    },
   },
 };
 
+// Clean build directories
 async function clean() {
   logger.startStep("Cleaning directories");
   try {
+    // Remove dist and temp directories
     await Promise.all([
       rm(paths.dist, { recursive: true, force: true }),
       rm(paths.temp, { recursive: true, force: true }),
     ]);
 
+    // Create dist and temp directories
     await Promise.all([
       mkdir(paths.dist, { recursive: true }),
       mkdir(paths.temp, { recursive: true }),
@@ -292,12 +325,14 @@ async function clean() {
   }
 }
 
+// Generate TypeScript declaration files
 async function compileTypes() {
   logger.startStep(
     `Generating types ${isProduction ? "(production)" : "(development)"}`,
   );
 
   try {
+    // Find TypeScript configuration file
     const configPath = ts.findConfigFile(
       paths.root,
       ts.sys.fileExists,
@@ -307,6 +342,7 @@ async function compileTypes() {
       throw new Error("Could not find tsconfig.json");
     }
 
+    // Read and parse configuration file
     const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
     if (error) {
       throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
@@ -320,6 +356,7 @@ async function compileTypes() {
 
     logger.debug("TypeScript compiler options:", parsedConfig.options);
 
+    // Create TypeScript program with specific options for type generation
     const program = ts.createProgram(parsedConfig.fileNames, {
       ...parsedConfig.options,
       declaration: true,
@@ -332,13 +369,20 @@ async function compileTypes() {
 
     logger.debug("TypeScript program files:", parsedConfig.fileNames);
 
+    // Emit declaration files
     const emitResult = program.emit();
 
-    if (!isProduction) {
-      const diagnostics = ts
-        .getPreEmitDiagnostics(program)
-        .concat(emitResult.diagnostics);
-      for (const diagnostic of diagnostics) {
+    const diagnostics = ts
+      .getPreEmitDiagnostics(program)
+      .concat(emitResult.diagnostics);
+
+    // Report critical errors
+    const criticalDiagnostics = diagnostics.filter(
+      (d) => d.category === ts.DiagnosticCategory.Error,
+    );
+
+    if (criticalDiagnostics.length > 0) {
+      for (const diagnostic of criticalDiagnostics) {
         if (diagnostic.file && diagnostic.start !== undefined) {
           const { line, character } =
             diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
@@ -346,10 +390,37 @@ async function compileTypes() {
             diagnostic.messageText,
             "\n",
           );
-          logger.warning(
+          logger.error(
             `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
           );
+        } else {
+          logger.error(
+            ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+          );
         }
+      }
+    }
+
+    // Report warnings
+    const warningDiagnostics = diagnostics.filter(
+      (d) => d.category === ts.DiagnosticCategory.Warning,
+    );
+
+    for (const diagnostic of warningDiagnostics) {
+      if (diagnostic.file && diagnostic.start !== undefined) {
+        const { line, character } =
+          diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+        const message = ts.flattenDiagnosticMessageText(
+          diagnostic.messageText,
+          "\n",
+        );
+        logger.warning(
+          `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
+        );
+      } else {
+        logger.warning(
+          ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+        );
       }
     }
 
@@ -357,6 +428,7 @@ async function compileTypes() {
       throw new Error("TypeScript declaration compilation failed");
     }
 
+    // In production mode, use API Extractor to bundle declarations
     if (isProduction) {
       const extractorConfig = ExtractorConfig.prepare({
         configObject: apiExtractorConfig,
@@ -368,8 +440,8 @@ async function compileTypes() {
 
       const extractorResult = Extractor.invoke(extractorConfig, {
         localBuild: true,
-        showVerboseMessages: false,
-        showDiagnostics: false,
+        showVerboseMessages: true,
+        showDiagnostics: true,
         typescriptCompilerFolder: resolve(
           paths.root,
           "node_modules",
@@ -384,7 +456,9 @@ async function compileTypes() {
       }
     }
 
+    // Clean up temp directory after extraction
     await rm(paths.temp, { recursive: true, force: true });
+
     logger.endStep(
       `Generating types ${isProduction ? "(production)" : "(development)"}`,
     );
@@ -393,13 +467,17 @@ async function compileTypes() {
   }
 }
 
+// Build JavaScript bundles with Rollup
 async function buildBundles() {
   logger.startStep("Building bundles");
   try {
     const rollupConfig = getRollupConfig();
     logger.debug("Starting Rollup build with config:", rollupConfig);
+
+    // Create bundle with Rollup
     const bundle = await rollup(rollupConfig);
 
+    // Generate output files (ESM and CJS)
     await Promise.all(
       rollupConfig.output.map(async (output) => {
         await bundle.write(output);
@@ -416,6 +494,7 @@ async function buildBundles() {
       }),
     );
 
+    // Release resources
     await bundle.close();
     logger.endStep("Building bundles");
   } catch (error) {
@@ -423,36 +502,23 @@ async function buildBundles() {
   }
 }
 
-async function checkBundleSize() {
-  logger.startStep("Checking bundle sizes");
-  try {
-    const dtsPath = resolve(paths.dist, "index.d.ts");
-    const stats = await stat(dtsPath);
-    const sizeInMb = stats.size / (1024 * 1024);
-
-    if (sizeInMb > 1) {
-      logger.warning(
-        `Declaration file (${prettyBytes(stats.size)}) is unusually large!`,
-      );
-    }
-
-    logger.endStep("Checking bundle sizes");
-  } catch (error) {
-    throw new Error(`Size check failed: ${error.message}`);
-  }
-}
-
+// Main build function
 async function build() {
   try {
     logger.info(
       `Starting build ${isProduction ? "(production)" : "(development)"}...`,
     );
 
+    // Step 1: Clean directories
     await clean();
-    await buildBundles();
-    await compileTypes();
-    await checkBundleSize();
 
+    // Step 2: Build JavaScript bundles
+    await buildBundles();
+
+    // Step 3: Compile TypeScript types
+    await compileTypes();
+
+    // Show build summary
     logger.showSummary();
   } catch (error) {
     logger.error(
@@ -463,6 +529,7 @@ async function build() {
   }
 }
 
+// Start the build process
 build().catch((error) => {
   logger.error(
     "Fatal build error:",

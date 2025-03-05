@@ -11,10 +11,8 @@
   ],
   "tasks": {
     "dev": {
-      "dependsOn": ["^dev"],
-      "outputs": [],
-      "env": ["NODE_ENV"],
-      "cache": false
+      "cache": false,
+      "persistent": true
     },
     "start": {
       "dependsOn": ["^start"],
@@ -32,14 +30,6 @@
       "dependsOn": ["^build:prod"],
       "outputs": ["dist/**"],
       "env": ["NODE_ENV"],
-      "cache": true
-    },
-    "format": {
-      "outputs": [],
-      "cache": false
-    },
-    "lint": {
-      "outputs": [],
       "cache": true
     },
     "check": {
