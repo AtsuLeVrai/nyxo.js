@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { GuildMemberEntity } from "./guild.entity.js";
-import { UserEntity } from "./user.entity.js";
+import type { Snowflake } from "../managers/index.js";
+import type { GuildMemberEntity } from "./guild.entity.js";
+import type { UserEntity } from "./user.entity.js";
 
 /**
  * Represents the months for recurring scheduled events.
@@ -198,20 +198,16 @@ export type GuildScheduledEventRecurrenceRuleEntity = z.infer<
  * Represents a user who has subscribed to a guild scheduled event.
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-user-object-guild-scheduled-event-user-structure}
  */
-export const GuildScheduledEventUserEntity = z.object({
+export interface GuildScheduledEventUserEntity {
   /** The scheduled event id which the user subscribed to */
-  guild_scheduled_event_id: Snowflake,
+  guild_scheduled_event_id: Snowflake;
 
   /** User which subscribed to an event */
-  user: z.lazy(() => UserEntity),
+  user: UserEntity;
 
   /** Guild member data for this user for the guild which this event belongs to, if any */
-  member: z.lazy(() => GuildMemberEntity).optional(),
-});
-
-export type GuildScheduledEventUserEntity = z.infer<
-  typeof GuildScheduledEventUserEntity
->;
+  member?: GuildMemberEntity;
+}
 
 /**
  * Represents additional metadata for a guild scheduled event entity.
@@ -233,69 +229,61 @@ export type GuildScheduledEventEntityMetadataEntity = z.infer<
  * Represents a scheduled event in a guild.
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-structure}
  */
-export const GuildScheduledEventEntity = z.object({
+export interface GuildScheduledEventEntity {
   /** The id of the scheduled event */
-  id: Snowflake,
+  id: Snowflake;
 
   /** The guild id which the scheduled event belongs to */
-  guild_id: Snowflake,
+  guild_id: Snowflake;
 
   /**
    * The channel id in which the scheduled event will be hosted,
    * or null if entity_type is EXTERNAL
    */
-  channel_id: Snowflake.nullish(),
+  channel_id?: Snowflake | null;
 
   /**
    * The id of the user that created the scheduled event
    * May be null for events created before October 25th, 2021
    */
-  creator_id: Snowflake.nullish(),
+  creator_id?: Snowflake | null;
 
   /** The name of the scheduled event (1-100 characters) */
-  name: z.string().min(1).max(100),
+  name: string;
 
   /** The description of the scheduled event (1-1000 characters) */
-  description: z.string().min(1).max(1000).nullish(),
+  description?: string | null;
 
   /** The time the scheduled event will start */
-  scheduled_start_time: z.string().datetime(),
+  scheduled_start_time: string;
 
   /** The time the scheduled event will end, required if entity_type is EXTERNAL */
-  scheduled_end_time: z.string().datetime().nullish(),
+  scheduled_end_time?: string | null;
 
   /** The privacy level of the scheduled event */
-  privacy_level: z.nativeEnum(GuildScheduledEventPrivacyLevel),
+  privacy_level: GuildScheduledEventPrivacyLevel;
 
   /** The status of the scheduled event */
-  status: z.nativeEnum(GuildScheduledEventStatus),
+  status: GuildScheduledEventStatus;
 
   /** The type of the scheduled event */
-  entity_type: z.nativeEnum(GuildScheduledEventType),
+  entity_type: GuildScheduledEventType;
 
   /** The id of an entity associated with a guild scheduled event */
-  entity_id: Snowflake.nullable(),
+  entity_id: Snowflake | null;
 
   /** Additional metadata for the guild scheduled event */
-  entity_metadata: z
-    .lazy(() => GuildScheduledEventEntityMetadataEntity)
-    .nullable(),
+  entity_metadata: GuildScheduledEventEntityMetadataEntity | null;
 
   /** The user that created the scheduled event */
-  creator: z.lazy(() => UserEntity).optional(),
+  creator?: UserEntity;
 
   /** The number of users subscribed to the scheduled event */
-  user_count: z.number().int().optional(),
+  user_count?: number;
 
   /** The cover image hash of the scheduled event */
-  image: z.string().nullish(),
+  image?: string | null;
 
   /** The definition for how often this event should recur */
-  recurrence_rule: z
-    .lazy(() => GuildScheduledEventRecurrenceRuleEntity)
-    .nullable(),
-});
-
-export type GuildScheduledEventEntity = z.infer<
-  typeof GuildScheduledEventEntity
->;
+  recurrence_rule: GuildScheduledEventRecurrenceRuleEntity | null;
+}

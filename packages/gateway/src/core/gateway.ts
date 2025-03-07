@@ -5,16 +5,6 @@ import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { z } from "zod";
 import { fromError, fromZodError } from "zod-validation-error";
-import {
-  type GuildCreateEntity,
-  type HelloEntity,
-  IdentifyEntity,
-  type ReadyEntity,
-  type RequestGuildMembersEntity,
-  type RequestSoundboardSoundsEntity,
-  type UpdatePresenceEntity,
-  type UpdateVoiceStateEntity,
-} from "../events/index.js";
 import { HeartbeatManager, ShardManager } from "../managers/index.js";
 import { GatewayOptions } from "../options/index.js";
 import { CompressionService, EncodingService } from "../services/index.js";
@@ -26,12 +16,21 @@ import {
   GatewayOpcodes,
   type GatewayReceiveEvents,
   type GatewaySendEvents,
+  type GuildCreateEntity,
+  type HelloEntity,
+  IdentifyEntity,
   type PayloadEntity,
   type PayloadReceiveEvent,
   type PayloadSendEvent,
+  type ReadyEntity,
+  type RequestGuildMembersEntity,
+  type RequestSoundboardSoundsEntity,
+  ResumeEntity,
   type SessionInvalidEvent,
   type SessionResumeEvent,
   type SessionStartEvent,
+  UpdatePresenceEntity,
+  UpdateVoiceStateEntity,
 } from "../types/index.js";
 
 /**
@@ -199,7 +198,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   updatePresence(presence: z.input<typeof UpdatePresenceEntity>): void {
     this.#validateConnection();
-    this.send(GatewayOpcodes.PresenceUpdate, presence);
+
+    const result = UpdatePresenceEntity.safeParse(presence);
+    if (!result.success) {
+      throw new Error(fromZodError(result.error).message);
+    }
+
+    this.send(GatewayOpcodes.PresenceUpdate, result.data);
   }
 
   /**
@@ -210,7 +215,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   updateVoiceState(options: z.input<typeof UpdateVoiceStateEntity>): void {
     this.#validateConnection();
-    this.send(GatewayOpcodes.VoiceStateUpdate, options);
+
+    const result = UpdateVoiceStateEntity.safeParse(options);
+    if (!result.success) {
+      throw new Error(fromZodError(result.error).message);
+    }
+
+    this.send(GatewayOpcodes.VoiceStateUpdate, result.data);
   }
 
   /**
@@ -759,11 +770,18 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       throw new Error("No session ID available to resume");
     }
 
-    this.send(GatewayOpcodes.Resume, {
+    const payload: ResumeEntity = {
       token: this.#options.token,
       session_id: this.#sessionId,
       seq: this.#sequence,
-    });
+    };
+
+    const result = ResumeEntity.safeParse(payload);
+    if (!result.success) {
+      throw new Error(fromZodError(result.error).message);
+    }
+
+    this.send(GatewayOpcodes.Resume, result.data);
   }
 
   /**

@@ -214,6 +214,12 @@ export const AutoModerationRuleTriggerMetadataEntity = z.object({
 
   /** Whether to automatically detect mention raids */
   mention_raid_protection_enabled: z.boolean().optional(),
+
+  /** Validation results for regex patterns */
+  regex_validation: z.array(AutoModerationRegexMetadataEntity).optional(),
+
+  /** The type of keyword matching strategy used */
+  keyword_match_type: z.nativeEnum(AutoModerationKeywordMatchType).optional(),
 });
 
 export type AutoModerationRuleTriggerMetadataEntity = z.infer<
@@ -221,88 +227,40 @@ export type AutoModerationRuleTriggerMetadataEntity = z.infer<
 >;
 
 /**
- * Extended trigger metadata with validation fields
- */
-export const AutoModerationRuleTriggerMetadataWithValidationEntity =
-  AutoModerationRuleTriggerMetadataEntity.extend({
-    /** Validation results for regex patterns */
-    regex_validation: z.array(AutoModerationRegexMetadataEntity).optional(),
-
-    /** The type of keyword matching strategy used */
-    keyword_match_type: z.nativeEnum(AutoModerationKeywordMatchType).optional(),
-  });
-
-export type AutoModerationRuleTriggerMetadataWithValidationEntity = z.infer<
-  typeof AutoModerationRuleTriggerMetadataWithValidationEntity
->;
-
-/**
  * A rule that automatically takes actions based on content in a guild
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-auto-moderation-rule-structure}
  */
-export const AutoModerationRuleEntity = z
-  .object({
-    /** The id of this rule */
-    id: Snowflake,
+export interface AutoModerationRuleEntity {
+  /** The id of this rule */
+  id: Snowflake;
 
-    /** The id of the guild which this rule belongs to */
-    guild_id: Snowflake,
+  /** The id of the guild which this rule belongs to */
+  guild_id: Snowflake;
 
-    /** The rule name */
-    name: z.string(),
+  /** The rule name */
+  name: string;
 
-    /** The user which first created this rule */
-    creator_id: Snowflake,
+  /** The user which first created this rule */
+  creator_id: Snowflake;
 
-    /** The rule event type */
-    event_type: z.nativeEnum(AutoModerationEventType),
+  /** The rule event type */
+  event_type: AutoModerationEventType;
 
-    /** The rule trigger type */
-    trigger_type: z.nativeEnum(AutoModerationRuleTriggerType),
+  /** The rule trigger type */
+  trigger_type: AutoModerationRuleTriggerType;
 
-    /** The rule trigger metadata */
-    trigger_metadata: AutoModerationRuleTriggerMetadataEntity,
+  /** The rule trigger metadata */
+  trigger_metadata: AutoModerationRuleTriggerMetadataEntity;
 
-    /** The actions which will execute when the rule is triggered */
-    actions: z.array(AutoModerationActionEntity).max(3),
+  /** The actions which will execute when the rule is triggered */
+  actions: AutoModerationActionEntity[];
 
-    /** Whether the rule is enabled */
-    enabled: z.boolean(),
+  /** Whether the rule is enabled */
+  enabled: boolean;
 
-    /** The role ids that should not be affected by the rule (Maximum of 20) */
-    exempt_roles: z.array(Snowflake).max(20),
+  /** The role ids that should not be affected by the rule (Maximum of 20) */
+  exempt_roles: Snowflake[];
 
-    /** The channel ids that should not be affected by the rule (Maximum of 50) */
-    exempt_channels: z.array(Snowflake).max(50),
-  })
-
-  .superRefine((data, ctx) => {
-    if (
-      (data.trigger_type === 1 || data.trigger_type === 6) &&
-      !data.trigger_metadata.keyword_filter
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          "keyword_filter is required for Keyword and MemberProfile trigger types",
-      });
-    }
-
-    if (data.trigger_type === 5 && !data.trigger_metadata.mention_total_limit) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "mention_total_limit is required for MentionSpam trigger type",
-      });
-    }
-
-    const hasTimeout = data.actions.some((action) => action.type === 3);
-    if (hasTimeout && data.trigger_type !== 1 && data.trigger_type !== 5) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          "TIMEOUT action only supported for Keyword and MentionSpam rules",
-      });
-    }
-  });
-
-export type AutoModerationRuleEntity = z.infer<typeof AutoModerationRuleEntity>;
+  /** The channel ids that should not be affected by the rule (Maximum of 50) */
+  exempt_channels: Snowflake[];
+}

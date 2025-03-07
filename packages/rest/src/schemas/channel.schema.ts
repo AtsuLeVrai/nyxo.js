@@ -1,15 +1,19 @@
 import {
-  AnnouncementThreadChannelEntity,
-  AnyThreadChannelEntity,
+  BitFieldManager,
   BitwisePermissionFlags,
   type ChannelEntity,
+  type ChannelFlags,
   ChannelType,
-  GuildAnnouncementChannelEntity,
-  GuildTextChannelEntity,
+  DefaultReactionEntity,
+  ForumLayoutType,
+  ForumTagEntity,
   InviteTargetType,
+  OverwriteEntity,
   OverwriteType,
   Snowflake,
+  SortOrderType,
   type ThreadMemberEntity,
+  VideoQualityMode,
 } from "@nyxjs/core";
 import { z } from "zod";
 import { CreateMessageSchema } from "./message.schema.js";
@@ -28,11 +32,35 @@ export type ModifyChannelGroupDmSchema = z.input<
 >;
 
 /** @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel} */
-export const ModifyChannelGuildChannelSchema = z.discriminatedUnion("type", [
-  GuildTextChannelEntity,
-  GuildAnnouncementChannelEntity,
-  AnnouncementThreadChannelEntity,
-]);
+export const ModifyChannelGuildChannelSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  type: z
+    .union([
+      z.literal(ChannelType.GuildText),
+      z.literal(ChannelType.AnnouncementThread),
+      z.literal(ChannelType.GuildAnnouncement),
+    ])
+    .optional(),
+  position: z.number().int().optional(),
+  topic: z.string().min(0).max(1024).optional(),
+  nsfw: z.boolean().optional(),
+  rate_limit_per_user: z.number().int().min(0).max(21600).optional(),
+  bitrate: z.number().int().min(8000).optional(),
+  user_limit: z.number().int().min(0).max(99).optional(),
+  permission_overwrites: z.array(OverwriteEntity.partial()).optional(),
+  parent_id: Snowflake.optional(),
+  rtc_region: z.string().optional(),
+  video_quality_mode: z.nativeEnum(VideoQualityMode).optional(),
+  default_auto_archive_duration: z
+    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
+    .optional(),
+  flags: z.custom<ChannelFlags>(BitFieldManager.isValidBitField),
+  available_tags: z.array(ForumTagEntity).optional(),
+  default_reaction_emoji: DefaultReactionEntity.optional(),
+  default_thread_rate_limit_per_user: z.number().int().optional(),
+  default_sort_order: z.nativeEnum(SortOrderType).optional(),
+  default_forum_layout: z.nativeEnum(ForumLayoutType).optional(),
+});
 
 export type ModifyChannelGuildChannelSchema = z.input<
   typeof ModifyChannelGuildChannelSchema
@@ -41,7 +69,18 @@ export type ModifyChannelGuildChannelSchema = z.input<
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-thread}
  */
-export const ModifyChannelThreadSchema = AnyThreadChannelEntity;
+export const ModifyChannelThreadSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  archived: z.boolean().optional(),
+  auto_archive_duration: z
+    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
+    .optional(),
+  locked: z.boolean().optional(),
+  invitable: z.boolean().optional(),
+  rate_limit_per_user: z.number().int().max(21600).optional(),
+  flags: z.custom<ChannelFlags>(BitFieldManager.isValidBitField).optional(),
+  applied_tags: z.array(Snowflake).optional(),
+});
 
 export type ModifyChannelThreadSchema = z.input<
   typeof ModifyChannelThreadSchema

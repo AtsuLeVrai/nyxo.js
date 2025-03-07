@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { Snowflake } from "../managers/index.js";
 import { ChannelType } from "./channel.entity.js";
-import { EmojiEntity } from "./emoji.entity.js";
 
 /**
  * Defines the different types of components that can be used in Discord messages.
@@ -135,11 +134,18 @@ export const SelectMenuOptionEntity = z.object({
   description: z.string().max(100).optional(),
 
   /** Emoji that will be displayed with this option */
-  emoji: EmojiEntity.pick({
-    id: true,
-    name: true,
-    animated: true,
-  }).optional(),
+  emoji: z
+    .object({
+      /** ID of the emoji */
+      id: z.string(),
+
+      /** Name of the emoji */
+      name: z.string(),
+
+      /** Whether this emoji is animated */
+      animated: z.boolean(),
+    })
+    .optional(),
 
   /** Whether this option is selected by default */
   default: z.boolean().optional(),
@@ -257,13 +263,16 @@ export const ButtonEntity = z
 
     /** Emoji that appears on the button */
     emoji: z
-      .lazy(() =>
-        EmojiEntity.pick({
-          name: true,
-          id: true,
-          animated: true,
-        }),
-      )
+      .object({
+        /** ID of the emoji */
+        id: z.string(),
+
+        /** Name of the emoji */
+        name: z.string(),
+
+        /** Whether this emoji is animated */
+        animated: z.boolean(),
+      })
       .optional(),
 
     /** A developer-defined identifier for the button, max 100 characters */

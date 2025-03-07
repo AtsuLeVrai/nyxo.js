@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../managers/index.js";
 
 /**
  * Represents the privacy level options for a Stage instance.
@@ -21,30 +20,28 @@ export enum StageInstancePrivacyLevel {
  * A Stage instance holds information about a live stage.
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object}
  */
-export const StageInstanceEntity = z.object({
+export interface StageInstanceEntity {
   /** The ID of this Stage instance */
-  id: Snowflake,
+  id: Snowflake;
 
   /** The guild ID of the associated Stage channel */
-  guild_id: Snowflake,
+  guild_id: Snowflake;
 
   /** The ID of the associated Stage channel */
-  channel_id: Snowflake,
+  channel_id: Snowflake;
 
   /** The topic of the Stage instance (1-120 characters) */
-  topic: z.string().min(1).max(120),
+  topic: string;
 
   /** The privacy level of the Stage instance */
-  privacy_level: z.nativeEnum(StageInstancePrivacyLevel),
+  privacy_level: StageInstancePrivacyLevel;
 
   /**
    * Whether or not Stage Discovery is disabled
    * @deprecated This field is deprecated by Discord
    */
-  discoverable_disabled: z.boolean(),
+  discoverable_disabled: boolean;
 
   /** The ID of the scheduled event for this Stage instance, if any */
-  guild_scheduled_event_id: Snowflake.nullable(),
-});
-
-export type StageInstanceEntity = z.infer<typeof StageInstanceEntity>;
+  guild_scheduled_event_id: Snowflake | null;
+}

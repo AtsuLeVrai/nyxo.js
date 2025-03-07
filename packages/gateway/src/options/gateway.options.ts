@@ -1,7 +1,6 @@
 import { ApiVersion, BitFieldManager, Token } from "@nyxjs/core";
 import { z } from "zod";
-import { UpdatePresenceEntity } from "../events/index.js";
-import { GatewayIntentsBits } from "../types/index.js";
+import { GatewayIntentsBits, UpdatePresenceEntity } from "../types/index.js";
 import { HeartbeatOptions } from "./heartbeat.options.js";
 import { ShardOptions } from "./shard.options.js";
 

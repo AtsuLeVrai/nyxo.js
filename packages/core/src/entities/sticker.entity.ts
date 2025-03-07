@@ -1,6 +1,5 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { UserEntity } from "./user.entity.js";
+import type { Snowflake } from "../managers/index.js";
+import type { UserEntity } from "./user.entity.js";
 
 /**
  * Represents the possible formats that a sticker can be in.
@@ -36,86 +35,80 @@ export enum StickerType {
  * Represents a sticker that can be sent in messages.
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object}
  */
-export const StickerEntity = z.object({
+export interface StickerEntity {
   /** ID of the sticker */
-  id: Snowflake,
+  id: Snowflake;
 
   /** For standard stickers, ID of the pack the sticker is from */
-  pack_id: Snowflake.optional(),
+  pack_id?: Snowflake;
 
   /** Name of the sticker */
-  name: z.string(),
+  name: string;
 
   /** Description of the sticker */
-  description: z.string().nullable(),
+  description: string | null;
 
   /** Autocomplete/suggestion tags for the sticker (max 200 characters) */
-  tags: z.string().max(200),
+  tags: string;
 
   /** Type of sticker */
-  type: z.nativeEnum(StickerType),
+  type: StickerType;
 
   /** Type of sticker format */
-  format_type: z.nativeEnum(StickerFormatType),
+  format_type: StickerFormatType;
 
   /** Whether this guild sticker can be used, may be false due to loss of Server Boosts */
-  available: z.boolean().optional(),
+  available?: boolean;
 
   /** ID of the guild that owns this sticker */
-  guild_id: Snowflake.optional(),
+  guild_id?: Snowflake;
 
   /** The user that uploaded the guild sticker */
-  user: z.lazy(() => UserEntity).optional(),
+  user?: UserEntity;
 
   /** The standard sticker's sort order within its pack */
-  sort_value: z.number().int().optional(),
-});
-
-export type StickerEntity = z.infer<typeof StickerEntity>;
+  sort_value?: number;
+}
 
 /**
  * Represents a pack of standard stickers.
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-pack-object}
  */
-export const StickerPackEntity = z.object({
+export interface StickerPackEntity {
   /** ID of the sticker pack */
-  id: Snowflake,
+  id: Snowflake;
 
   /** The stickers in the pack */
-  stickers: z.array(z.lazy(() => StickerEntity)),
+  stickers: StickerEntity[];
 
   /** Name of the sticker pack */
-  name: z.string(),
+  name: string;
 
   /** ID of the pack's SKU */
-  sku_id: Snowflake,
+  sku_id: Snowflake;
 
   /** ID of a sticker in the pack which is shown as the pack's icon */
-  cover_sticker_id: Snowflake.optional(),
+  cover_sticker_id?: Snowflake;
 
   /** Description of the sticker pack */
-  description: z.string(),
+  description: string;
 
   /** ID of the sticker pack's banner image */
-  banner_asset_id: Snowflake.optional(),
-});
-
-export type StickerPackEntity = z.infer<typeof StickerPackEntity>;
+  banner_asset_id?: Snowflake;
+}
 
 /**
  * Represents the smallest amount of data required to render a sticker.
  * This is a partial sticker object.
  * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-item-object}
  */
-export const StickerItemEntity = z.object({
+export interface StickerItemEntity {
   /** ID of the sticker */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Name of the sticker */
-  name: z.string(),
+  name: string;
 
   /** Type of sticker format */
-  format_type: z.nativeEnum(StickerFormatType),
-});
-
-export type StickerItemEntity = z.infer<typeof StickerItemEntity>;
+  format_type: StickerFormatType;
+}

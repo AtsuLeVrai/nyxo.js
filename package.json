@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/source",
-  "packageManager": "pnpm@10.5.0",
+  "packageManager": "pnpm@10.6.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -13,7 +13,6 @@
     "start": "turbo run start",
     "build": "turbo run build",
     "build:prod": "turbo run build:prod",
-    "build:watch": "turbo run build:watch",
     "check": "turbo run check",
     "type-check": "turbo run type-check",
     "test": "vitest",
@@ -24,12 +23,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@vitest/coverage-v8": "^3.0.7",
-    "@vitest/ui": "^3.0.7",
+    "@vitest/coverage-v8": "^3.0.8",
+    "@vitest/ui": "^3.0.8",
     "husky": "^9.1.7",
     "turbo": "^2.4.4",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.8"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -1,14 +1,19 @@
 import {
-  AnyChannelEntity,
   type AnyThreadChannelEntity,
+  ChannelType,
   DefaultMessageNotificationLevel,
+  DefaultReactionEntity,
   ExplicitContentFilterLevel,
+  ForumLayoutType,
+  ForumTagEntity,
   GuildFeature,
   GuildMemberFlags,
   GuildOnboardingMode,
-  GuildOnboardingPromptEntity,
+  type GuildOnboardingPromptEntity,
+  OverwriteEntity,
   RoleEntity,
   Snowflake,
+  SortOrderType,
   SystemChannelFlags,
   type ThreadMemberEntity,
   VerificationLevel,
@@ -16,6 +21,34 @@ import {
 } from "@nyxjs/core";
 import { z } from "zod";
 import { type FileInput, fileHandler } from "../handlers/index.js";
+
+/**
+ * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
+ */
+export const CreateGuildChannelSchema = z.object({
+  name: z.string().min(1).max(100),
+  type: z.nativeEnum(ChannelType),
+  topic: z.string().min(0).max(1024).optional(),
+  bitrate: z.number().int().min(8000).optional(),
+  user_limit: z.number().int().min(0).max(99).optional(),
+  rate_limit_per_user: z.number().int().min(0).max(21600).optional(),
+  position: z.number().int().optional(),
+  permission_overwrites: z.array(OverwriteEntity.partial()).optional(),
+  parent_id: Snowflake.optional(),
+  nsfw: z.boolean().optional(),
+  rtc_region: z.string().optional(),
+  video_quality_mode: z.number().int().optional(),
+  default_auto_archive_duration: z
+    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
+    .optional(),
+  default_reaction_emoji: DefaultReactionEntity.optional(),
+  available_tags: z.array(ForumTagEntity).optional(),
+  default_sort_order: z.nativeEnum(SortOrderType).optional(),
+  default_forum_layout: z.nativeEnum(ForumLayoutType).optional(),
+  default_thread_rate_limit_per_user: z.number().int().optional(),
+});
+
+export type CreateGuildChannelSchema = z.input<typeof CreateGuildChannelSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
@@ -33,7 +66,7 @@ export const CreateGuildSchema = z.object({
     .optional(),
   explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel).optional(),
   roles: z.array(RoleEntity).optional(),
-  channels: z.array(AnyChannelEntity).optional(),
+  channels: z.array(CreateGuildChannelSchema).optional(),
   afk_channel_id: Snowflake.optional(),
   afk_timeout: z.number().optional(),
   system_channel_id: Snowflake.optional(),
@@ -85,13 +118,6 @@ export const ModifyGuildSchema = z.object({
 });
 
 export type ModifyGuildSchema = z.input<typeof ModifyGuildSchema>;
-
-/**
- * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
- */
-export const CreateGuildChannelSchema = AnyChannelEntity;
-
-export type CreateGuildChannelSchema = z.input<typeof CreateGuildChannelSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions}
@@ -312,7 +338,7 @@ export type ModifyGuildWelcomeScreenSchema = z.input<
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-onboarding}
  */
 export const ModifyGuildOnboardingSchema = z.object({
-  prompts: z.array(GuildOnboardingPromptEntity),
+  prompts: z.array(z.custom<GuildOnboardingPromptEntity>()),
   default_channel_ids: z.array(Snowflake),
   enabled: z.boolean(),
   mode: z.nativeEnum(GuildOnboardingMode),

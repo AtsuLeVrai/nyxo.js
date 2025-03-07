@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { BitFieldManager, Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../managers/index.js";
 
 /**
  * Represents the flags that can be applied to a SKU.
@@ -45,45 +44,43 @@ export enum SkuType {
  * that can be made available to an application's users or guilds.
  * @see {@link https://discord.com/developers/docs/resources/sku#sku-object-sku-structure}
  */
-export const SkuEntity = z.object({
+export interface SkuEntity {
   /** ID of the SKU */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of SKU */
-  type: z.nativeEnum(SkuType),
+  type: SkuType;
 
   /** ID of the parent application */
-  application_id: Snowflake,
+  application_id: Snowflake;
 
   /** Customer-facing name of your premium offering */
-  name: z.string(),
+  name: string;
 
   /** System-generated URL slug based on the SKU's name */
-  slug: z.string(),
+  slug: string;
 
   /** SKU flags combined as a bitfield */
-  flags: z.custom<SkuFlags>(BitFieldManager.isValidBitField),
+  flags: SkuFlags;
 
   /** Optional ID of a dependent SKU */
-  dependent_sku_id: Snowflake.nullable(),
+  dependent_sku_id: Snowflake | null;
 
   /** Optional manifest labels */
-  manifest_labels: z.array(z.string()).nullable(),
+  manifest_labels: string[] | null;
 
   /** Access type for the SKU */
-  access_type: z.number(),
+  access_type: number;
 
   /** Features for the SKU */
-  features: z.array(z.string()),
+  features: string[];
 
   /** Optional release date for the SKU */
-  release_date: z.string().datetime().nullable(),
+  release_date: string | null;
 
   /** Whether the SKU is premium */
-  premium: z.boolean(),
+  premium: boolean;
 
   /** Whether to show age gate */
-  show_age_gate: z.boolean(),
-});
-
-export type SkuEntity = z.infer<typeof SkuEntity>;
+  show_age_gate: boolean;
+}

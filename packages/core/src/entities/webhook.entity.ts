@@ -1,8 +1,7 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { AnyChannelEntity } from "./channel.entity.js";
-import { GuildEntity } from "./guild.entity.js";
-import { UserEntity } from "./user.entity.js";
+import type { Snowflake } from "../managers/index.js";
+import type { AnyChannelEntity } from "./channel.entity.js";
+import type { GuildEntity } from "./guild.entity.js";
+import type { UserEntity } from "./user.entity.js";
 
 /**
  * Represents the types of webhooks available in Discord.
@@ -24,42 +23,40 @@ export enum WebhookType {
  * Webhooks do not require a bot user or authentication to use.
  * @see {@link https://discord.com/developers/docs/resources/webhook#webhook-object}
  */
-export const WebhookEntity = z.object({
+export interface WebhookEntity {
   /** The ID of the webhook */
-  id: Snowflake,
+  id: Snowflake;
 
   /** The type of the webhook */
-  type: z.nativeEnum(WebhookType),
+  type: WebhookType;
 
   /** The guild ID this webhook is for, if any */
-  guild_id: Snowflake.nullish(),
+  guild_id?: Snowflake | null;
 
   /** The channel ID this webhook is for, if any */
-  channel_id: Snowflake.nullish(),
+  channel_id?: Snowflake | null;
 
   /** The user this webhook was created by (not returned when getting a webhook with its token) */
-  user: z.lazy(() => UserEntity).nullish(),
+  user?: UserEntity | null;
 
   /** The default name of the webhook */
-  name: z.string().nullish(),
+  name?: string | null;
 
   /** The default user avatar hash of the webhook */
-  avatar: z.string().nullish(),
+  avatar?: string | null;
 
   /** The secure token of the webhook (returned for Incoming Webhooks) */
-  token: z.string().optional(),
+  token?: string;
 
   /** The bot/OAuth2 application that created this webhook */
-  application_id: Snowflake.nullable(),
+  application_id: Snowflake | null;
 
   /** The guild of the channel that this webhook is following (returned for Channel Follower Webhooks) */
-  source_guild: z.lazy(() => GuildEntity.partial()).nullish(),
+  source_guild?: Partial<GuildEntity> | null;
 
   /** The channel that this webhook is following (returned for Channel Follower Webhooks) */
-  source_channel: z.lazy(() => AnyChannelEntity).nullish(),
+  source_channel?: AnyChannelEntity | null;
 
   /** The URL used for executing the webhook (returned by the webhooks OAuth2 flow) */
-  url: z.string().url().optional(),
-});
-
-export type WebhookEntity = z.infer<typeof WebhookEntity>;
+  url?: string;
+}

@@ -1,16 +1,16 @@
 import { z } from "zod";
 import { BitFieldManager, Snowflake } from "../managers/index.js";
-import { ApplicationEntity } from "./application.entity.js";
-import { AnyThreadChannelEntity, ChannelType } from "./channel.entity.js";
-import { EmojiEntity } from "./emoji.entity.js";
-import {
+import type { ApplicationEntity } from "./application.entity.js";
+import type { AnyThreadChannelEntity, ChannelType } from "./channel.entity.js";
+import type { EmojiEntity } from "./emoji.entity.js";
+import type {
   InteractionResolvedDataEntity,
   InteractionType,
 } from "./interaction.entity.js";
-import { ActionRowEntity } from "./message-components.entity.js";
-import { PollEntity } from "./poll.entity.js";
-import { StickerEntity, StickerItemEntity } from "./sticker.entity.js";
-import { UserEntity } from "./user.entity.js";
+import type { ActionRowEntity } from "./message-components.entity.js";
+import type { PollEntity } from "./poll.entity.js";
+import type { StickerEntity, StickerItemEntity } from "./sticker.entity.js";
+import type { UserEntity } from "./user.entity.js";
 
 /**
  * Defines the types of mentions that can be allowed in messages.
@@ -256,23 +256,19 @@ export enum MessageType {
  * Represents data for role subscription purchase events.
  * @see {@link https://discord.com/developers/docs/resources/message#role-subscription-data-object-role-subscription-data-object-structure}
  */
-export const RoleSubscriptionDataEntity = z.object({
+export interface RoleSubscriptionDataEntity {
   /** ID of the SKU and listing that the user subscribed to */
-  role_subscription_listing_id: Snowflake,
+  role_subscription_listing_id: Snowflake;
 
   /** Name of the tier that the user is subscribed to */
-  tier_name: z.string(),
+  tier_name: string;
 
   /** The cumulative number of months that the user has been subscribed for */
-  total_months_subscribed: z.number(),
+  total_months_subscribed: number;
 
   /** Whether this notification is for a renewal rather than a new purchase */
-  is_renewal: z.boolean(),
-});
-
-export type RoleSubscriptionDataEntity = z.infer<
-  typeof RoleSubscriptionDataEntity
->;
+  is_renewal: boolean;
+}
 
 /**
  * Controls which mentions are allowed in a message.
@@ -298,21 +294,19 @@ export type AllowedMentionsEntity = z.infer<typeof AllowedMentionsEntity>;
  * Represents a channel mention in message content.
  * @see {@link https://discord.com/developers/docs/resources/message#channel-mention-object-channel-mention-structure}
  */
-export const ChannelMentionEntity = z.object({
+export interface ChannelMentionEntity {
   /** ID of the channel */
-  id: Snowflake,
+  id: Snowflake;
 
   /** ID of the guild containing the channel */
-  guild_id: Snowflake,
+  guild_id: Snowflake;
 
   /** The type of channel */
-  type: z.nativeEnum(ChannelType),
+  type: ChannelType;
 
   /** The name of the channel */
-  name: z.string(),
-});
-
-export type ChannelMentionEntity = z.infer<typeof ChannelMentionEntity>;
+  name: string;
+}
 
 /**
  * Represents a file attached to a message.
@@ -543,43 +537,37 @@ export type EmbedEntity = z.infer<typeof EmbedEntity>;
  * Represents the breakdown of reaction counts for normal and super reactions.
  * @see {@link https://discord.com/developers/docs/resources/message#reaction-count-details-object-reaction-count-details-structure}
  */
-export const ReactionCountDetailsEntity = z.object({
+export interface ReactionCountDetailsEntity {
   /** Count of super reactions */
-  burst: z.number().int(),
+  burst: number;
 
   /** Count of normal reactions */
-  normal: z.number().int(),
-});
-
-export type ReactionCountDetailsEntity = z.infer<
-  typeof ReactionCountDetailsEntity
->;
+  normal: number;
+}
 
 /**
  * Represents a reaction to a message.
  * @see {@link https://discord.com/developers/docs/resources/message#reaction-object-reaction-structure}
  */
-export const ReactionEntity = z.object({
+export interface ReactionEntity {
   /** Total number of times this emoji has been used to react */
-  count: z.number().int(),
+  count: number;
 
   /** Breakdown of normal and super reaction counts */
-  count_details: ReactionCountDetailsEntity,
+  count_details: ReactionCountDetailsEntity;
 
   /** Whether the current user reacted using this emoji */
-  me: z.boolean(),
+  me: boolean;
 
   /** Whether the current user super-reacted using this emoji */
-  me_burst: z.boolean(),
+  me_burst: boolean;
 
   /** Emoji information */
-  emoji: EmojiEntity.partial(),
+  emoji: Partial<EmojiEntity>;
 
   /** HEX colors used for super reaction */
-  burst_colors: z.array(z.string()).optional(),
-});
-
-export type ReactionEntity = z.infer<typeof ReactionEntity>;
+  burst_colors?: string[];
+}
 
 /**
  * Represents a reference to another message.
@@ -610,212 +598,107 @@ export type MessageReferenceEntity = z.infer<typeof MessageReferenceEntity>;
  * Represents call information associated with a message.
  * @see {@link https://discord.com/developers/docs/resources/message#message-call-object-message-call-object-structure}
  */
-export const MessageCallEntity = z.object({
+export interface MessageCallEntity {
   /** Array of user IDs that participated in the call */
-  participants: z.array(Snowflake),
+  participants: Snowflake[];
 
   /** Time when the call ended */
-  ended_timestamp: z.string().datetime().nullish(),
-});
-
-export type MessageCallEntity = z.infer<typeof MessageCallEntity>;
+  ended_timestamp?: string | null;
+}
 
 /**
  * Represents metadata about a message component interaction.
  * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-message-component-interaction-metadata-structure}
  */
-export const MessageComponentInteractionMetadataEntity = z.object({
+export interface MessageComponentInteractionMetadataEntity {
   /** ID of the interaction */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of interaction */
-  type: z.lazy(() => z.nativeEnum(InteractionType)),
+  type: InteractionType;
 
   /** User who triggered the interaction */
-  user: UserEntity,
+  user: UserEntity;
 
   /** IDs for installation context(s) related to an interaction */
-  authorizing_integration_owners: z.record(z.string(), Snowflake),
+  authorizing_integration_owners: Record<string, Snowflake>;
 
   /** ID of the original response message, present only on follow-up messages */
-  original_response_message_id: Snowflake.optional(),
+  original_response_message_id?: Snowflake;
 
   /** ID of the message that contained the interactive component */
-  interacted_message_id: Snowflake.optional(),
-});
-
-export type MessageComponentInteractionMetadataEntity = z.infer<
-  typeof MessageComponentInteractionMetadataEntity
->;
+  interacted_message_id?: Snowflake;
+}
 
 /**
  * Represents metadata about an application command interaction.
  * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-application-command-interaction-metadata-structure}
  */
-export const ApplicationCommandInteractionMetadataEntity = z.object({
+export interface ApplicationCommandInteractionMetadataEntity {
   /** ID of the interaction */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of interaction */
-  type: z.lazy(() => z.nativeEnum(InteractionType)),
+  type: InteractionType;
 
   /** User who triggered the interaction */
-  user: UserEntity,
+  user: UserEntity;
 
   /** IDs for installation context(s) related to an interaction */
-  authorizing_integration_owners: z.record(z.string(), Snowflake),
+  authorizing_integration_owners: Record<string, Snowflake>;
 
   /** ID of the original response message, present only on follow-up messages */
-  original_response_message_id: Snowflake.optional(),
+  original_response_message_id?: Snowflake;
 
   /** The user the command was run on, present only on user command interactions */
-  target_user: UserEntity.optional(),
+  target_user?: UserEntity;
 
   /** The ID of the message the command was run on, present only on message command interactions */
-  target_message_id: Snowflake.optional(),
-});
-
-export type ApplicationCommandInteractionMetadataEntity = z.infer<
-  typeof ApplicationCommandInteractionMetadataEntity
->;
+  target_message_id?: Snowflake;
+}
 
 /**
  * Represents metadata about a modal submit interaction.
  * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-modal-submit-interaction-metadata-structure}
  */
-export const ModalSubmitInteractionMetadataEntity = z.object({
+export interface ModalSubmitInteractionMetadataEntity {
   /** ID of the interaction */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of interaction */
-  type: z.lazy(() => z.nativeEnum(InteractionType)),
+  type: InteractionType;
 
   /** User who triggered the interaction */
-  user: UserEntity,
+  user: UserEntity;
 
   /** IDs for installation context(s) related to an interaction */
-  authorizing_integration_owners: z.record(z.string(), Snowflake),
+  authorizing_integration_owners: Record<string, Snowflake>;
 
   /** ID of the original response message, present only on follow-up messages */
-  original_response_message_id: Snowflake.optional(),
+  original_response_message_id?: Snowflake;
 
   /** Metadata for the interaction that was used to open the modal */
-  triggering_interaction_metadata: z
-    .union([
-      ApplicationCommandInteractionMetadataEntity,
-      MessageComponentInteractionMetadataEntity,
-    ])
-    .optional(),
-});
-
-export type ModalSubmitInteractionMetadataEntity = z.infer<
-  typeof ModalSubmitInteractionMetadataEntity
->;
+  triggering_interaction_metadata?:
+    | ApplicationCommandInteractionMetadataEntity
+    | MessageComponentInteractionMetadataEntity;
+}
 
 /**
  * Represents an activity associated with a message.
  * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-activity-structure}
  */
-export const MessageActivityEntity = z.object({
+export interface MessageActivityEntity {
   /** Type of message activity */
-  type: z.nativeEnum(MessageActivityType),
+  type: MessageActivityType;
 
   /** Party ID from a Rich Presence event */
-  party_id: z.string().optional(),
-});
-
-export type MessageActivityEntity = z.infer<typeof MessageActivityEntity>;
-
-export interface MessageSnapshotEntity {
-  /** A partial message with minimal fields */
-  message: {
-    /** Type of message */
-    type: MessageType;
-
-    /** Contents of the message */
-    content: string;
-
-    /** Any embedded content */
-    embeds: z.input<typeof EmbedEntity>[];
-
-    /** Any attached files */
-    attachments: AttachmentEntity[];
-
-    /** When this message was sent */
-    timestamp: string;
-
-    /** When this message was edited (null if never) */
-    edited_timestamp: string | null;
-
-    /** Message flags combined as a bitfield */
-    flags?: MessageFlags;
-
-    /** Users specifically mentioned in the message */
-    mentions: UserEntity[];
-
-    /** Roles specifically mentioned in this message */
-    mention_roles: string[];
-
-    /** @deprecated The stickers sent with the message */
-    stickers?: StickerEntity[];
-
-    /** Sticker items sent with the message */
-    sticker_items?: StickerItemEntity[];
-
-    /** Components in the message (buttons, select menus, etc.) */
-    components?: z.input<typeof ActionRowEntity>[];
-  };
+  party_id?: string;
 }
 
 /**
- * The message snapshot object contains a minimal subset of fields from a message
- * used in message forwarding.
- * @see {@link https://discord.com/developers/docs/resources/message#message-snapshot-object Message Snapshot Object}
+ * Represents a Discord message.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-object}
  */
-// TODO: Try to find a way to make this work with the new `MessageSnapshotEntity` z.ZodObject type
-export const MessageSnapshotEntity: z.ZodType<MessageSnapshotEntity> = z.object(
-  {
-    /** A partial message with minimal fields */
-    message: z.object({
-      /** Type of message */
-      type: z.nativeEnum(MessageType),
-
-      /** Contents of the message */
-      content: z.string().max(2000),
-
-      /** Any embedded content */
-      embeds: z.array(EmbedEntity).max(10),
-
-      /** Any attached files */
-      attachments: z.array(AttachmentEntity),
-
-      /** When this message was sent */
-      timestamp: z.string().datetime(),
-
-      /** When this message was edited (null if never) */
-      edited_timestamp: z.string().datetime().nullable(),
-
-      /** Message flags combined as a bitfield */
-      flags: z.custom<MessageFlags>(BitFieldManager.isValidBitField).optional(),
-
-      /** Users specifically mentioned in the message */
-      mentions: z.array(UserEntity),
-
-      /** Roles specifically mentioned in this message */
-      mention_roles: z.array(Snowflake),
-
-      /** @deprecated The stickers sent with the message */
-      stickers: z.array(StickerEntity).optional(),
-
-      /** Sticker items sent with the message */
-      sticker_items: z.array(StickerItemEntity).optional(),
-
-      /** Components in the message (buttons, select menus, etc.) */
-      components: z.array(ActionRowEntity).optional(),
-    }),
-  },
-);
-
 export interface MessageEntity {
   /** ID of the message */
   id: Snowflake;
@@ -851,7 +734,7 @@ export interface MessageEntity {
   attachments: AttachmentEntity[];
 
   /** Any embedded content */
-  embeds: z.input<typeof EmbedEntity>[];
+  embeds: EmbedEntity[];
 
   /** Whether this message is pinned */
   pinned: boolean;
@@ -884,7 +767,7 @@ export interface MessageEntity {
   flags?: MessageFlags;
 
   /** Components in the message (buttons, select menus, etc.) */
-  components?: z.input<typeof ActionRowEntity>[];
+  components?: ActionRowEntity[];
 
   /** Sticker items sent with the message */
   sticker_items?: StickerItemEntity[];
@@ -905,7 +788,7 @@ export interface MessageEntity {
   call?: MessageCallEntity;
 
   /** Data showing the source of a crosspost, channel follow add, pin, or reply message */
-  message_reference?: z.input<typeof MessageReferenceEntity>;
+  message_reference?: MessageReferenceEntity;
 
   /** Metadata about the interaction that generated this message */
   interaction_metadata?:
@@ -927,119 +810,25 @@ export interface MessageEntity {
 }
 
 /**
- * Represents a Discord message.
- * @see {@link https://discord.com/developers/docs/resources/message#message-object Message Object}
+ * The message snapshot object contains a minimal subset of fields from a message
+ * used in message forwarding.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-snapshot-object}
  */
-// TODO: Try to find a way to make this work with the new `MessageEntity` z.ZodObject type
-export const MessageEntity: z.ZodType<MessageEntity> = z.object({
-  /** ID of the message */
-  id: Snowflake,
-
-  /** ID of the channel the message was sent in */
-  channel_id: Snowflake,
-
-  /** The author of this message */
-  author: UserEntity,
-
-  /** Contents of the message (up to 2000 characters) */
-  content: z.string().max(2000),
-
-  /** When this message was sent */
-  timestamp: z.string().datetime(),
-
-  /** When this message was edited (null if never) */
-  edited_timestamp: z.string().datetime().nullable(),
-
-  /** Whether this was a TTS message */
-  tts: z.boolean(),
-
-  /** Whether this message mentions everyone */
-  mention_everyone: z.boolean(),
-
-  /** Users specifically mentioned in the message */
-  mentions: z.array(UserEntity),
-
-  /** Roles specifically mentioned in this message */
-  mention_roles: z.array(Snowflake),
-
-  /** Any attached files */
-  attachments: z.array(AttachmentEntity),
-
-  /** Any embedded content */
-  embeds: z.array(EmbedEntity).max(10),
-
-  /** Whether this message is pinned */
-  pinned: z.boolean(),
-
-  /** Type of message */
-  type: z.nativeEnum(MessageType),
-
-  /** Channels specifically mentioned in this message */
-  mention_channels: z.array(ChannelMentionEntity).optional(),
-
-  /** Reactions to the message */
-  reactions: z.array(ReactionEntity).optional(),
-
-  /** Used for validating a message was sent */
-  nonce: z.union([z.string(), z.number().int()]).optional(),
-
-  /** If the message is generated by a webhook, this is the webhook's ID */
-  webhook_id: Snowflake.optional(),
-
-  /** Sent with Rich Presence-related chat embeds */
-  activity: MessageActivityEntity.optional(),
-
-  /** Sent with Rich Presence-related chat embeds */
-  application: ApplicationEntity.partial().optional(),
-
-  /** If the message is an Interaction or application-owned webhook, this is the ID of the application */
-  application_id: Snowflake.optional(),
-
-  /** Message flags combined as a bitfield */
-  flags: z.custom<MessageFlags>(BitFieldManager.isValidBitField).optional(),
-
-  /** Components in the message (buttons, select menus, etc.) */
-  components: z.array(ActionRowEntity).optional(),
-
-  /** Sticker items sent with the message  */
-  sticker_items: z.array(StickerItemEntity).optional(),
-
-  /** @deprecated The stickers sent with the message */
-  stickers: z.array(StickerEntity).optional(),
-
-  /** Approximate position of the message in a thread */
-  position: z.number().int().optional(),
-
-  /** Data from a role subscription purchase event */
-  role_subscription_data: RoleSubscriptionDataEntity.optional(),
-
-  /** Poll data if this message contains a poll */
-  poll: PollEntity.optional(),
-
-  /** Call data if this message is a call */
-  call: MessageCallEntity.optional(),
-
-  /** Data showing the source of a crosspost, channel follow add, pin, or reply message */
-  message_reference: z.lazy(() => MessageReferenceEntity).optional(),
-
-  /** Metadata about the interaction that generated this message */
-  interaction_metadata: z
-    .union([
-      ApplicationCommandInteractionMetadataEntity,
-      MessageComponentInteractionMetadataEntity,
-      ModalSubmitInteractionMetadataEntity,
-    ])
-    .optional(),
-
-  /** Thread associated with this message */
-  thread: z.lazy(() => AnyThreadChannelEntity).optional(),
-
-  /** Metadata about the interaction that generated this message */
-  resolved: z.lazy(() => InteractionResolvedDataEntity.optional()),
-
-  /** For messages with type Forward, contains the message snapshots */
-  message_snapshots: z.array(z.lazy(() => MessageSnapshotEntity)).optional(),
-
-  /** The message associated with the message_reference */
-  referenced_message: z.lazy(() => MessageEntity).nullish(),
-});
+export interface MessageSnapshotEntity {
+  /** A partial message with minimal fields */
+  message: Pick<
+    MessageEntity,
+    | "type"
+    | "content"
+    | "embeds"
+    | "attachments"
+    | "timestamp"
+    | "edited_timestamp"
+    | "flags"
+    | "mentions"
+    | "mention_roles"
+    | "stickers"
+    | "sticker_items"
+    | "components"
+  >;
+}
