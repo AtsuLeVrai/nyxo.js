@@ -214,7 +214,8 @@ export const TokenOptions = z
      */
     prefix: z.boolean().default(true),
   })
-  .default({});
+  .strict()
+  .readonly();
 
 export type TokenOptions = z.infer<typeof TokenOptions>;
 

@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Locale } from "../enums/index.js";
+import type { Locale } from "../enums/index.js";
 
 /**
  * Types of application role connection metadata for verification
@@ -31,41 +30,26 @@ export enum ApplicationRoleConnectionMetadataType {
   BooleanNotEqual = 8,
 }
 
-/** Regex pattern for application role connection metadata keys (a-z, 0-9, or _, 1-50 characters) */
-export const APPLICATION_ROLE_CONNECTION_METADATA_KEY_REGEX = /^[a-z0-9_]+$/;
-
 /**
  * Represents role connection metadata for an application
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#application-role-connection-metadata-object-application-role-connection-metadata-structure}
  */
-export const ApplicationRoleConnectionMetadataEntity = z.object({
+export interface ApplicationRoleConnectionMetadataEntity {
   /** Type of metadata value */
-  type: z.nativeEnum(ApplicationRoleConnectionMetadataType),
+  type: ApplicationRoleConnectionMetadataType;
 
   /** Dictionary key for the metadata field (a-z, 0-9, or _, 1-50 characters) */
-  key: z
-    .string()
-    .min(1)
-    .max(50)
-    .regex(APPLICATION_ROLE_CONNECTION_METADATA_KEY_REGEX),
+  key: string;
 
   /** Name of the metadata field (1-100 characters) */
-  name: z.string().min(1).max(100),
+  name: string;
 
   /** Translations of the name in available locales */
-  name_localizations: z
-    .record(z.nativeEnum(Locale), z.string().min(1).max(100))
-    .optional(),
+  name_localizations?: Record<Locale, string>;
 
   /** Description of the metadata field (1-200 characters) */
-  description: z.string().min(1).max(200),
+  description: string;
 
   /** Translations of the description in available locales */
-  description_localizations: z
-    .record(z.nativeEnum(Locale), z.string().min(1).max(200))
-    .optional(),
-});
-
-export type ApplicationRoleConnectionMetadataEntity = z.infer<
-  typeof ApplicationRoleConnectionMetadataEntity
->;
+  description_localizations?: Record<Locale, string>;
+}

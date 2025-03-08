@@ -1,5 +1,5 @@
 import type { Snowflake } from "../managers/index.js";
-import type { ApplicationCommandEntity } from "./application-commands.entity.js";
+import type { AnyApplicationCommandEntity } from "./application-commands.entity.js";
 import type { AutoModerationRuleEntity } from "./auto-moderation.entity.js";
 import type { AnyThreadChannelEntity } from "./channel.entity.js";
 import type { IntegrationEntity } from "./guild.entity.js";
@@ -337,7 +337,7 @@ export interface AuditLogEntryEntity {
  */
 export interface AuditLogEntity {
   /** List of application commands referenced in the audit log */
-  application_commands: ApplicationCommandEntity[];
+  application_commands: AnyApplicationCommandEntity[];
 
   /** List of audit log entries, sorted from most to least recent */
   audit_log_entries: AuditLogEntryEntity[];

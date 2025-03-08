@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { ChannelType } from "./channel.entity.js";
+import type { Snowflake } from "../managers/index.js";
+import type { ChannelType } from "./channel.entity.js";
+import type { EmojiEntity } from "./emoji.entity.js";
 
 /**
  * Defines the different types of components that can be used in Discord messages.
@@ -72,311 +72,182 @@ export enum ButtonStyle {
  * Represents a text input component used in modals and forms.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#text-input-object-text-input-structure}
  */
-export const TextInputEntity = z.object({
+export interface TextInputEntity {
   /** The type of component - always 4 for a text input */
-  type: z.literal(ComponentType.TextInput).default(ComponentType.TextInput),
+  type: ComponentType.TextInput;
 
   /** A developer-defined identifier for the input, max 100 characters */
-  custom_id: z.string().max(100),
+  custom_id: string;
 
   /** The Text Input Style */
-  style: z.nativeEnum(TextInputStyle),
+  style: TextInputStyle;
 
   /** Label for this component, max 45 characters */
-  label: z.string().max(45),
+  label: string;
 
   /** Minimum input length for a text input, min 0, max 4000 */
-  min_length: z.number().int().min(0).max(4000).optional(),
+  min_length?: number;
 
   /** Maximum input length for a text input, min 1, max 4000 */
-  max_length: z.number().int().min(1).max(4000).optional(),
+  max_length?: number;
 
   /** Whether this component is required to be filled, default true */
-  required: z.boolean().default(true),
+  required?: boolean;
 
   /** Pre-filled value for this component, max 4000 characters */
-  value: z.string().max(4000).optional(),
+  value?: string;
 
   /** Custom placeholder text if the input is empty, max 100 characters */
-  placeholder: z.string().max(100).optional(),
-});
-
-export type TextInputEntity = z.infer<typeof TextInputEntity>;
+  placeholder?: string;
+}
 
 /**
  * Represents a default value for a select menu.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-default-value-structure}
  */
-export const SelectMenuDefaultValueEntity = z.object({
+export interface SelectMenuDefaultValueEntity {
   /** ID of the default value (user, role, or channel) */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of default value - "user", "role", or "channel" */
-  type: z.enum(["user", "role", "channel"]),
-});
-
-export type SelectMenuDefaultValueEntity = z.infer<
-  typeof SelectMenuDefaultValueEntity
->;
+  type: "user" | "role" | "channel";
+}
 
 /**
  * Represents an option in a string select menu.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-option-structure}
  */
-export const SelectMenuOptionEntity = z.object({
+export interface SelectMenuOptionEntity {
   /** User-facing name of the option, max 100 characters */
-  label: z.string().max(100),
+  label: string;
 
   /** Dev-defined value of the option, max 100 characters */
-  value: z.string().max(100),
+  value: string;
 
   /** Additional description of the option, max 100 characters */
-  description: z.string().max(100).optional(),
+  description?: string;
 
   /** Emoji that will be displayed with this option */
-  emoji: z
-    .object({
-      /** ID of the emoji */
-      id: z.string(),
-
-      /** Name of the emoji */
-      name: z.string(),
-
-      /** Whether this emoji is animated */
-      animated: z.boolean(),
-    })
-    .optional(),
+  emoji?: Pick<EmojiEntity, "id" | "name" | "animated">;
 
   /** Whether this option is selected by default */
-  default: z.boolean().optional(),
-});
-
-export type SelectMenuOptionEntity = z.infer<typeof SelectMenuOptionEntity>;
+  default?: boolean;
+}
 
 /**
  * Base structure for all select menu components.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
  */
-export const SelectMenuBaseEntity = z.object({
+export interface SelectMenuBaseEntity {
   /** A developer-defined identifier for the select menu, max 100 characters */
-  custom_id: z.string().max(100),
+  custom_id: string;
 
   /** Custom placeholder text if nothing is selected, max 150 characters */
-  placeholder: z.string().max(150).optional(),
+  placeholder?: string;
 
   /** Minimum number of items that must be chosen (defaults to 1, min 0, max 25) */
-  min_values: z.number().int().min(0).max(25).default(1),
+  min_values?: number;
 
   /** Maximum number of items that can be chosen (defaults to 1, max 25) */
-  max_values: z.number().int().min(1).max(25).default(1),
+  max_values?: number;
 
   /** Whether the select menu is disabled */
-  disabled: z.boolean().optional(),
+  disabled?: boolean;
 
   /** Predefined values for auto-populated select menus */
-  default_values: z.array(SelectMenuDefaultValueEntity).optional(),
-});
-
-export type SelectMenuBaseEntity = z.infer<typeof SelectMenuBaseEntity>;
+  default_values?: SelectMenuDefaultValueEntity[];
+}
 
 /** Represents a string select menu component. */
-export const StringSelectMenuEntity = SelectMenuBaseEntity.extend({
+export interface StringSelectMenuEntity extends SelectMenuBaseEntity {
   /** The type of component - always 3 for a string select menu */
-  type: z
-    .literal(ComponentType.StringSelect)
-    .default(ComponentType.StringSelect),
+  type: ComponentType.StringSelect;
 
   /** Array of select options (max 25) */
-  options: z.array(SelectMenuOptionEntity).min(1).max(25),
-});
-
-export type StringSelectMenuEntity = z.infer<typeof StringSelectMenuEntity>;
+  options: SelectMenuOptionEntity[];
+}
 
 /**
  * Represents a channel select menu component.
  */
-export const ChannelSelectMenuEntity = SelectMenuBaseEntity.extend({
+export interface ChannelSelectMenuEntity extends SelectMenuBaseEntity {
   /** The type of component - always 8 for a channel select menu */
-  type: z
-    .literal(ComponentType.ChannelSelect)
-    .default(ComponentType.ChannelSelect),
+  type: ComponentType.ChannelSelect;
 
   /** Types of channels that can be selected */
-  channel_types: z.array(z.nativeEnum(ChannelType)).optional(),
-});
-
-export type ChannelSelectMenuEntity = z.infer<typeof ChannelSelectMenuEntity>;
+  channel_types?: ChannelType[];
+}
 
 /** Represents a user select menu component. */
-export const UserSelectMenuEntity = SelectMenuBaseEntity.extend({
+export interface UserSelectMenuEntity extends SelectMenuBaseEntity {
   /** The type of component - always 5 for a user select menu */
-  type: z.literal(ComponentType.UserSelect).default(ComponentType.UserSelect),
-});
-
-export type UserSelectMenuEntity = z.infer<typeof UserSelectMenuEntity>;
+  type: ComponentType.UserSelect;
+}
 
 /** Represents a role select menu component. */
-export const RoleSelectMenuEntity = SelectMenuBaseEntity.extend({
+export interface RoleSelectMenuEntity extends SelectMenuBaseEntity {
   /** The type of component - always 6 for a role select menu */
-  type: z.literal(ComponentType.RoleSelect).default(ComponentType.RoleSelect),
-});
-
-export type RoleSelectMenuEntity = z.infer<typeof RoleSelectMenuEntity>;
+  type: ComponentType.RoleSelect;
+}
 
 /** Represents a mentionable (user or role) select menu component. */
-export const MentionableSelectMenuEntity = SelectMenuBaseEntity.extend({
+export interface MentionableSelectMenuEntity extends SelectMenuBaseEntity {
   /** The type of component - always 7 for a mentionable select menu */
-  type: z
-    .literal(ComponentType.MentionableSelect)
-    .default(ComponentType.MentionableSelect),
-});
-
-export type MentionableSelectMenuEntity = z.infer<
-  typeof MentionableSelectMenuEntity
->;
+  type: ComponentType.MentionableSelect;
+}
 
 /** Union type for all select menu components. */
-export const SelectMenuEntity = z.discriminatedUnion("type", [
-  StringSelectMenuEntity,
-  ChannelSelectMenuEntity,
-  UserSelectMenuEntity,
-  RoleSelectMenuEntity,
-  MentionableSelectMenuEntity,
-]);
-
-export type SelectMenuEntity = z.infer<typeof SelectMenuEntity>;
+export type AnySelectMenuEntity =
+  | StringSelectMenuEntity
+  | ChannelSelectMenuEntity
+  | UserSelectMenuEntity
+  | RoleSelectMenuEntity
+  | MentionableSelectMenuEntity;
 
 /**
  * Represents a button component in a message.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object-button-structure}
  */
-export const ButtonEntity = z
-  .object({
-    /** The type of component - always 2 for a button */
-    type: z.literal(ComponentType.Button).default(ComponentType.Button),
+export interface ButtonEntity {
+  /** The type of component - always 2 for a button */
+  type: ComponentType.Button;
 
-    /** The style of the button */
-    style: z.nativeEnum(ButtonStyle).default(ButtonStyle.Primary),
+  /** The style of the button */
+  style: ButtonStyle;
 
-    /** Text that appears on the button, max 80 characters */
-    label: z.string().max(80).optional(),
+  /** Text that appears on the button, max 80 characters */
+  label?: string;
 
-    /** Emoji that appears on the button */
-    emoji: z
-      .object({
-        /** ID of the emoji */
-        id: z.string(),
+  /** Emoji that appears on the button */
+  emoji?: Pick<EmojiEntity, "id" | "name" | "animated">;
 
-        /** Name of the emoji */
-        name: z.string(),
+  /** A developer-defined identifier for the button, max 100 characters */
+  custom_id?: string;
 
-        /** Whether this emoji is animated */
-        animated: z.boolean(),
-      })
-      .optional(),
+  /** The ID of the SKU for premium purchase buttons */
+  sku_id?: string;
 
-    /** A developer-defined identifier for the button, max 100 characters */
-    custom_id: z.string().max(100).optional(),
+  /** URL for link buttons */
+  url?: string;
 
-    /** The ID of the SKU for premium purchase buttons */
-    sku_id: z.string().optional(),
-
-    /** URL for link buttons */
-    url: z.string().url().optional(),
-
-    /** Whether the button is disabled */
-    disabled: z.boolean().default(false),
-  })
-  .superRefine((button, ctx) => {
-    if (button.style === ButtonStyle.Link && !button.url) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Link buttons must have a url",
-      });
-    } else if (button.style === ButtonStyle.Link && button.custom_id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Link buttons cannot have a custom_id",
-      });
-    } else if (button.style === ButtonStyle.Premium && !button.sku_id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Premium buttons must have a sku_id",
-      });
-    } else if (button.style !== ButtonStyle.Link && !button.custom_id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Non-link buttons must have a custom_id",
-      });
-    }
-
-    if (!(button.label || button.emoji)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Buttons must have either a label or an emoji",
-      });
-    }
-  });
-
-export type ButtonEntity = z.infer<typeof ButtonEntity>;
+  /** Whether the button is disabled */
+  disabled?: boolean;
+}
 
 /** Union type for all possible component types. */
-export const ComponentEntity = z.discriminatedUnion("type", [
-  ButtonEntity.sourceType(),
-  TextInputEntity,
-  ...SelectMenuEntity.options,
-]);
-
-export type ComponentEntity = z.infer<typeof ComponentEntity>;
+export type AnyComponentEntity =
+  | ButtonEntity
+  | TextInputEntity
+  | AnySelectMenuEntity;
 
 /**
  * Represents a container for components in a message.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#action-rows}
  */
-export const ActionRowEntity = z
-  .object({
-    /** The type of component - always 1 for an action row */
-    type: z.literal(ComponentType.ActionRow).default(ComponentType.ActionRow),
+export interface ActionRowEntity {
+  /** The type of component - always 1 for an action row */
+  type: ComponentType.ActionRow;
 
-    /** Components in this action row (max 5) */
-    components: z.array(ComponentEntity).max(5),
-  })
-  .superRefine((row, ctx) => {
-    const hasButton = row.components.some((c) => "style" in c);
-    const hasSelectMenu = row.components.some(
-      (c) => "options" in c || "channel_types" in c,
-    );
-    const hasTextInput = row.components.some(
-      (c) => c.type === ComponentType.TextInput,
-    );
-
-    if (hasTextInput) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Action rows in messages cannot contain text inputs",
-      });
-    }
-
-    if (hasButton && hasSelectMenu) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Action rows cannot contain both buttons and select menus",
-      });
-    }
-
-    if (hasSelectMenu && row.components.length > 1) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Action rows can only contain one select menu",
-      });
-    }
-
-    if (hasButton && row.components.length > 5) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Action rows can only contain up to 5 buttons",
-      });
-    }
-  });
-
-export type ActionRowEntity = z.infer<typeof ActionRowEntity>;
+  /** Components in this action row (max 5) */
+  components: AnyComponentEntity[];
+}

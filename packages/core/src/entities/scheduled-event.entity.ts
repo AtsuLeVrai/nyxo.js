@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { Snowflake } from "../managers/index.js";
 import type { GuildMemberEntity } from "./guild.entity.js";
 import type { UserEntity } from "./user.entity.js";
@@ -136,63 +135,49 @@ export enum GuildScheduledEventPrivacyLevel {
  * Represents a specific week day within a specific week for recurrence rules.
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-nweekday-structure}
  */
-export const GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.object({
+export interface GuildScheduledEventRecurrenceRuleWeekdayEntity {
   /** The week to reoccur on (1-5) */
-  n: z.number().int().min(1).max(5),
+  n: number;
 
   /** The day within the week to reoccur on */
-  day: z.nativeEnum(GuildScheduledEventRecurrenceRuleWeekday),
-});
-
-export type GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.infer<
-  typeof GuildScheduledEventRecurrenceRuleNWeekdayEntity
->;
+  day: GuildScheduledEventRecurrenceRuleWeekday;
+}
 
 /**
  * Represents the recurrence rule for a guild scheduled event.
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-structure}
  */
-export const GuildScheduledEventRecurrenceRuleEntity = z.object({
+export interface GuildScheduledEventRecurrenceRuleEntity {
   /** Starting time of the recurrence interval */
-  start: z.string().datetime(),
+  start: string;
 
   /** Ending time of the recurrence interval */
-  end: z.string().datetime().nullable(),
+  end: string | null;
 
   /** How often the event occurs */
-  frequency: z.nativeEnum(GuildScheduledEventRecurrenceRuleFrequency),
+  frequency: GuildScheduledEventRecurrenceRuleFrequency;
 
   /** The spacing between events, defined by frequency */
-  interval: z.number().int().positive(),
+  interval: number;
 
   /** Set of specific days within a week for the event to recur on */
-  by_weekday: z
-    .array(z.nativeEnum(GuildScheduledEventRecurrenceRuleWeekday))
-    .nullable(),
+  by_weekday: GuildScheduledEventRecurrenceRuleWeekday[] | null;
 
   /** List of specific days within a specific week (1-5) to recur on */
-  by_n_weekday: z
-    .array(z.lazy(() => GuildScheduledEventRecurrenceRuleNWeekdayEntity))
-    .nullable(),
+  by_n_weekday: GuildScheduledEventRecurrenceRuleWeekdayEntity[] | null;
 
   /** Set of specific months to recur on */
-  by_month: z
-    .array(z.nativeEnum(GuildScheduledEventRecurrenceRuleMonth))
-    .nullable(),
+  by_month: GuildScheduledEventRecurrenceRuleMonth[] | null;
 
   /** Set of specific dates within a month to recur on */
-  by_month_day: z.array(z.number().int()).nullable(),
+  by_month_day: number[] | null;
 
   /** Set of days within a year to recur on (1-364) */
-  by_year_day: z.array(z.number().int()).nullable(),
+  by_year_day: number[] | null;
 
   /** The total number of times the event is allowed to recur before stopping */
-  count: z.number().int().positive().nullable(),
-});
-
-export type GuildScheduledEventRecurrenceRuleEntity = z.infer<
-  typeof GuildScheduledEventRecurrenceRuleEntity
->;
+  count: number | null;
+}
 
 /**
  * Represents a user who has subscribed to a guild scheduled event.
@@ -213,17 +198,13 @@ export interface GuildScheduledEventUserEntity {
  * Represents additional metadata for a guild scheduled event entity.
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-metadata}
  */
-export const GuildScheduledEventEntityMetadataEntity = z.object({
+export interface GuildScheduledEventEntityMetadataEntity {
   /**
    * Location of the event (1-100 characters)
    * Required for events with entity_type EXTERNAL
    */
-  location: z.string().min(1).max(100).optional(),
-});
-
-export type GuildScheduledEventEntityMetadataEntity = z.infer<
-  typeof GuildScheduledEventEntityMetadataEntity
->;
+  location?: string;
+}
 
 /**
  * Represents a scheduled event in a guild.

@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { BitFieldManager, Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../managers/index.js";
 import type { ApplicationEntity } from "./application.entity.js";
 import type { AnyThreadChannelEntity, ChannelType } from "./channel.entity.js";
 import type { EmojiEntity } from "./emoji.entity.js";
@@ -274,21 +273,19 @@ export interface RoleSubscriptionDataEntity {
  * Controls which mentions are allowed in a message.
  * @see {@link https://discord.com/developers/docs/resources/message#allowed-mentions-object-allowed-mentions-structure}
  */
-export const AllowedMentionsEntity = z.object({
+export interface AllowedMentionsEntity {
   /** An array of allowed mention types to parse from the content */
-  parse: z.array(z.nativeEnum(AllowedMentionType)),
+  parse: AllowedMentionType[];
 
   /** Array of role IDs to mention (max 100) */
-  roles: z.array(Snowflake).max(100).optional(),
+  roles?: Snowflake[];
 
   /** Array of user IDs to mention (max 100) */
-  users: z.array(Snowflake).max(100).optional(),
+  users?: Snowflake[];
 
   /** For replies, whether to mention the author of the message being replied to */
-  replied_user: z.boolean().optional(),
-});
-
-export type AllowedMentionsEntity = z.infer<typeof AllowedMentionsEntity>;
+  replied_user?: boolean;
+}
 
 /**
  * Represents a channel mention in message content.
@@ -312,226 +309,208 @@ export interface ChannelMentionEntity {
  * Represents a file attached to a message.
  * @see {@link https://discord.com/developers/docs/resources/message#attachment-object-attachment-structure}
  */
-export const AttachmentEntity = z.object({
+export interface AttachmentEntity {
   /** Attachment ID */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Name of the attached file */
-  filename: z.string(),
+  filename: string;
 
   /** Title of the file */
-  title: z.string().optional(),
+  title?: string;
 
   /** Description of the file (max 1024 characters) */
-  description: z.string().max(1024).optional(),
+  description?: string;
 
   /** The attachment's media type */
-  content_type: z.string().optional(),
+  content_type?: string;
 
   /** Size of file in bytes */
-  size: z.number().int(),
+  size: number;
 
   /** Source URL of file */
-  url: z.string().url(),
+  url: string;
 
   /** A proxied URL of the file */
-  proxy_url: z.string().url(),
+  proxy_url: string;
 
   /** Height of file (if image) */
-  height: z.number().int().nullish(),
+  height?: number | null;
 
   /** Width of file (if image) */
-  width: z.number().int().nullish(),
+  width?: number | null;
 
   /** Whether this attachment is ephemeral */
-  ephemeral: z.boolean().optional(),
+  ephemeral?: boolean;
 
   /** The duration of the audio file (for voice messages) */
-  duration_secs: z.number().optional(),
+  duration_secs?: number;
 
   /** Base64 encoded bytearray representing a sampled waveform (for voice messages) */
-  waveform: z.string().optional(),
+  waveform?: string;
 
   /** Attachment flags */
-  flags: z.custom<AttachmentFlags>(BitFieldManager.isValidBitField).optional(),
-});
-
-export type AttachmentEntity = z.infer<typeof AttachmentEntity>;
+  flags?: AttachmentFlags;
+}
 
 /**
  * Represents a field in an embed.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-field-structure}
  */
-export const EmbedFieldEntity = z.object({
+export interface EmbedFieldEntity {
   /** Name of the field (1-256 characters) */
-  name: z.string().min(1).max(256),
+  name: string;
 
   /** Value of the field (1-1024 characters) */
-  value: z.string().min(1).max(1024),
+  value: string;
 
   /** Whether or not this field should display inline */
-  inline: z.boolean().optional(),
-});
-
-export type EmbedFieldEntity = z.infer<typeof EmbedFieldEntity>;
+  inline?: boolean;
+}
 
 /**
  * Represents the footer of an embed.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-footer-structure}
  */
-export const EmbedFooterEntity = z.object({
+export interface EmbedFooterEntity {
   /** Footer text (1-2048 characters) */
-  text: z.string().min(1).max(2048),
+  text: string;
 
   /** URL of footer icon */
-  icon_url: z.string().url().optional(),
+  icon_url?: string;
 
   /** A proxied URL of the footer icon */
-  proxy_icon_url: z.string().url().optional(),
-});
-
-export type EmbedFooterEntity = z.infer<typeof EmbedFooterEntity>;
+  proxy_icon_url?: string;
+}
 
 /**
  * Represents the author of an embed.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-author-structure}
  */
-export const EmbedAuthorEntity = z.object({
+export interface EmbedAuthorEntity {
   /** Name of author (1-256 characters) */
-  name: z.string().min(1).max(256),
+  name: string;
 
   /** URL of author */
-  url: z.string().url().optional(),
+  url?: string;
 
   /** URL of author icon */
-  icon_url: z.string().url().optional(),
+  icon_url?: string;
 
   /** A proxied URL of author icon */
-  proxy_icon_url: z.string().url().optional(),
-});
-
-export type EmbedAuthorEntity = z.infer<typeof EmbedAuthorEntity>;
+  proxy_icon_url?: string;
+}
 
 /**
  * Represents the provider of an embed.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-provider-structure}
  */
-export const EmbedProviderEntity = z.object({
+export interface EmbedProviderEntity {
   /** Name of provider */
-  name: z.string().optional(),
+  name?: string;
 
   /** URL of provider */
-  url: z.string().url().optional(),
-});
-
-export type EmbedProviderEntity = z.infer<typeof EmbedProviderEntity>;
+  url?: string;
+}
 
 /**
  * Represents an image in an embed.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-image-structure}
  */
-export const EmbedImageEntity = z.object({
+export interface EmbedImageEntity {
   /** Source URL of image */
-  url: z.string().url(),
+  url: string;
 
   /** A proxied URL of the image */
-  proxy_url: z.string().url().optional(),
+  proxy_url?: string;
 
   /** Height of image */
-  height: z.number().int().optional(),
+  height?: number;
 
   /** Width of image */
-  width: z.number().int().optional(),
-});
-
-export type EmbedImageEntity = z.infer<typeof EmbedImageEntity>;
+  width?: number;
+}
 
 /**
  * Represents a video in an embed.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-video-structure}
  */
-export const EmbedVideoEntity = z.object({
+export interface EmbedVideoEntity {
   /** Source URL of video */
-  url: z.string().url().optional(),
+  url?: string;
 
   /** A proxied URL of the video */
-  proxy_url: z.string().url().optional(),
+  proxy_url?: string;
 
   /** Height of video */
-  height: z.number().int().optional(),
+  height?: number;
 
   /** Width of video */
-  width: z.number().int().optional(),
-});
-
-export type EmbedVideoEntity = z.infer<typeof EmbedVideoEntity>;
+  width?: number;
+}
 
 /**
  * Represents a thumbnail in an embed.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-thumbnail-structure}
  */
-export const EmbedThumbnailEntity = z.object({
+export interface EmbedThumbnailEntity {
   /** Source URL of thumbnail */
-  url: z.string().url(),
+  url: string;
 
   /** A proxied URL of the thumbnail */
-  proxy_url: z.string().url().optional(),
+  proxy_url?: string;
 
   /** Height of thumbnail */
-  height: z.number().int().optional(),
+  height?: number;
 
   /** Width of thumbnail */
-  width: z.number().int().optional(),
-});
-
-export type EmbedThumbnailEntity = z.infer<typeof EmbedThumbnailEntity>;
+  width?: number;
+}
 
 /**
  * Represents an embed in a message.
  * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-structure}
  */
-export const EmbedEntity = z.object({
+export interface EmbedEntity {
   /** Title of embed (0-256 characters) */
-  title: z.string().max(256).optional(),
+  title?: string;
 
   /** Type of embed (always "rich" for webhook embeds) */
-  type: z.nativeEnum(EmbedType).default(EmbedType.Rich),
+  type: EmbedType;
 
   /** Description of embed (0-4096 characters) */
-  description: z.string().max(4096).optional(),
+  description?: string;
 
   /** URL of embed */
-  url: z.string().url().optional(),
+  url?: string;
 
   /** Timestamp of embed content */
-  timestamp: z.string().datetime().optional(),
+  timestamp?: string;
 
   /** Color code of the embed */
-  color: z.number().int().optional(),
+  color?: number;
 
   /** Footer information */
-  footer: EmbedFooterEntity.optional(),
+  footer?: EmbedFooterEntity;
 
   /** Image information */
-  image: EmbedImageEntity.optional(),
+  image?: EmbedImageEntity;
 
   /** Thumbnail information */
-  thumbnail: EmbedThumbnailEntity.optional(),
+  thumbnail?: EmbedThumbnailEntity;
 
   /** Video information */
-  video: EmbedVideoEntity.optional(),
+  video?: EmbedVideoEntity;
 
   /** Provider information */
-  provider: EmbedProviderEntity.optional(),
+  provider?: EmbedProviderEntity;
 
   /** Author information */
-  author: EmbedAuthorEntity.optional(),
+  author?: EmbedAuthorEntity;
 
   /** Fields information (max 25) */
-  fields: z.array(EmbedFieldEntity).max(25).optional(),
-});
-
-export type EmbedEntity = z.infer<typeof EmbedEntity>;
+  fields?: EmbedFieldEntity[];
+}
 
 /**
  * Represents the breakdown of reaction counts for normal and super reactions.
@@ -573,26 +552,22 @@ export interface ReactionEntity {
  * Represents a reference to another message.
  * @see {@link https://discord.com/developers/docs/resources/message#message-reference-structure}
  */
-export const MessageReferenceEntity = z.object({
+export interface MessageReferenceEntity {
   /** Type of reference */
-  type: z
-    .nativeEnum(MessageReferenceType)
-    .default(MessageReferenceType.Default),
+  type: MessageReferenceType;
 
   /** ID of the originating message */
-  message_id: Snowflake.optional(),
+  message_id?: Snowflake;
 
   /** ID of the originating message's channel */
-  channel_id: Snowflake.optional(),
+  channel_id?: Snowflake;
 
   /** ID of the originating message's guild */
-  guild_id: Snowflake.optional(),
+  guild_id?: Snowflake;
 
   /** When sending, whether to error if the referenced message doesn't exist */
-  fail_if_not_exists: z.boolean().optional(),
-});
-
-export type MessageReferenceEntity = z.infer<typeof MessageReferenceEntity>;
+  fail_if_not_exists?: boolean;
+}
 
 /**
  * Represents call information associated with a message.

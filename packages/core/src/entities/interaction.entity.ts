@@ -1,27 +1,26 @@
-import { z } from "zod";
 import type { BitwisePermissionFlags, Locale } from "../enums/index.js";
-import { BitFieldManager, type Snowflake } from "../managers/index.js";
-import {
+import type { Snowflake } from "../managers/index.js";
+import type {
   ApplicationCommandOptionChoiceEntity,
-  type ApplicationCommandOptionType,
-  type ApplicationCommandType,
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
 } from "./application-commands.entity.js";
 import type { ChannelEntity } from "./channel.entity.js";
 import type { EntitlementEntity } from "./entitlement.entity.js";
 import type { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
-import {
+import type {
   ActionRowEntity,
-  type ComponentType,
-  type SelectMenuOptionEntity,
+  ComponentType,
+  SelectMenuOptionEntity,
 } from "./message-components.entity.js";
-import {
+import type {
   AllowedMentionsEntity,
   AttachmentEntity,
   EmbedEntity,
-  type MessageEntity,
-  type MessageFlags,
+  MessageEntity,
+  MessageFlags,
 } from "./message.entity.js";
-import { PollCreateRequestEntity } from "./poll.entity.js";
+import type { PollCreateRequestEntity } from "./poll.entity.js";
 import type { RoleEntity } from "./role.entity.js";
 import type { UserEntity } from "./user.entity.js";
 
@@ -339,154 +338,70 @@ export interface InteractionCallbackResponseEntity {
  * Interaction callback message entity for sending message responses
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-messages}
  */
-export const InteractionCallbackMessagesEntity = z
-  .object({
-    /** Whether the response is TTS */
-    tts: z.boolean().optional(),
+export interface InteractionCallbackMessagesEntity {
+  /** Whether the response is TTS */
+  tts: boolean;
 
-    /** Message content */
-    content: z.string().optional(),
+  /** Message content */
+  content?: string;
 
-    /** Supports up to 10 embeds */
-    embeds: z
-      .array(z.lazy(() => EmbedEntity))
-      .max(10)
-      .optional(),
+  /** Supports up to 10 embeds */
+  embeds?: EmbedEntity[];
 
-    /** Allowed mentions object */
-    allowed_mentions: z.lazy(() => AllowedMentionsEntity).optional(),
+  /** Allowed mentions object */
+  allowed_mentions?: AllowedMentionsEntity;
 
-    /** Message flags combined as a bitfield */
-    flags: z.custom<MessageFlags>(BitFieldManager.isValidBitField).optional(),
+  /** Message flags combined as a bitfield */
+  flags?: MessageFlags;
 
-    /** Message components */
-    components: z.array(z.lazy(() => ActionRowEntity)).optional(),
+  /** Message components */
+  components?: ActionRowEntity[];
 
-    /** Attachment objects with filename and description */
-    attachments: z.array(z.lazy(() => AttachmentEntity)).optional(),
+  /** Attachment objects with filename and description */
+  attachments?: AttachmentEntity[];
 
-    /** Details about the poll */
-    poll: z.lazy(() => PollCreateRequestEntity).optional(),
-  })
-  .refine(
-    (data) => {
-      // At least one field must be provided
-      return (
-        (data.content !== undefined && data.content !== "") ||
-        (data.embeds && data.embeds.length > 0) ||
-        (data.components && data.components.length > 0) ||
-        (data.attachments && data.attachments.length > 0) ||
-        data.poll !== undefined
-      );
-    },
-    {
-      message:
-        "At least one of content, embeds, components, attachments or poll must be provided",
-    },
-  );
-
-export type InteractionCallbackMessagesEntity = z.infer<
-  typeof InteractionCallbackMessagesEntity
->;
+  /** Details about the poll */
+  poll?: PollCreateRequestEntity;
+}
 
 /**
  * Interaction callback modal entity for responding with a popup modal
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#modal}
  */
-export const InteractionCallbackModalEntity = z.object({
+export interface InteractionCallbackModalEntity {
   /** Developer-defined identifier for the modal, max 100 characters */
-  custom_id: z.string().max(100),
+  custom_id: string;
 
   /** Title of the popup modal, max 45 characters */
-  title: z.string().max(45),
+  title: string;
 
   /** Between 1 and 5 (inclusive) components that make up the modal */
-  components: z
-    .array(z.lazy(() => ActionRowEntity))
-    .min(1)
-    .max(5),
-});
-
-export type InteractionCallbackModalEntity = z.infer<
-  typeof InteractionCallbackModalEntity
->;
+  components: ActionRowEntity[];
+}
 
 /**
  * Interaction callback autocomplete entity for responding with suggested choices
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#autocomplete}
  */
-export const InteractionCallbackAutocompleteEntity = z.object({
+export interface InteractionCallbackAutocompleteEntity {
   /** Autocomplete choices (max of 25 choices) */
-  choices: z.array(z.lazy(() => ApplicationCommandOptionChoiceEntity)).max(25),
-});
-
-export type InteractionCallbackAutocompleteEntity = z.infer<
-  typeof InteractionCallbackAutocompleteEntity
->;
+  choices: ApplicationCommandOptionChoiceEntity[];
+}
 
 /**
  * Interaction response structure for responding to interactions
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-structure}
  */
-export const InteractionResponseEntity = z
-  .object({
-    /** Type of response */
-    type: z.nativeEnum(InteractionCallbackType),
+export interface InteractionResponseEntity {
+  /** Type of response */
+  type: InteractionCallbackType;
 
-    /** An optional response message */
-    data: z
-      .union([
-        InteractionCallbackMessagesEntity,
-        InteractionCallbackModalEntity,
-        InteractionCallbackAutocompleteEntity,
-      ])
-      .optional(),
-  })
-  .superRefine((data, ctx) => {
-    // Validate that the appropriate data is provided for each type
-    if (
-      data.type === InteractionCallbackType.ChannelMessageWithSource &&
-      !data.data
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Data is required for CHANNEL_MESSAGE_WITH_SOURCE",
-      });
-    }
-
-    if (
-      data.type ===
-        InteractionCallbackType.ApplicationCommandAutocompleteResult &&
-      !(data.data && "choices" in data.data)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          "Choices are required for APPLICATION_COMMAND_AUTOCOMPLETE_RESULT",
-      });
-    }
-
-    if (
-      data.type === InteractionCallbackType.Modal &&
-      !(data.data && "custom_id" in data.data)
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Modal data is required for MODAL response",
-      });
-    }
-
-    if (data.type === InteractionCallbackType.UpdateMessage && !data.data) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Data is required for UPDATE_MESSAGE",
-      });
-    }
-  });
-
-export type InteractionResponseEntity = z.infer<
-  typeof InteractionResponseEntity
->;
+  /** An optional response message */
+  data?:
+    | InteractionCallbackMessagesEntity
+    | InteractionCallbackModalEntity
+    | InteractionCallbackAutocompleteEntity;
+}
 
 /**
  * Base Interaction object structure

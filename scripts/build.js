@@ -186,13 +186,6 @@ function getRollupConfig() {
 
   logger.debug("Configured externals:", externals);
 
-  // Get package name and version for bundle banner
-  const packageName = pkg.name || "unknown-package";
-  const packageVersion = pkg.version || "0.0.0";
-  const banner = isProduction
-    ? `/* ${packageName} v${packageVersion} - ${new Date().toISOString().split("T")[0]} */`
-    : `/* ${packageName} v${packageVersion} (development build) */`;
-
   // Complete Rollup configuration
   const config = {
     input: resolve(paths.src, "index.ts"),
@@ -209,7 +202,6 @@ function getRollupConfig() {
         generatedCode: {
           constBindings: true,
         },
-        banner,
       },
       {
         // CommonJS format
@@ -222,7 +214,6 @@ function getRollupConfig() {
         generatedCode: {
           constBindings: true,
         },
-        banner,
       },
     ],
     plugins: [

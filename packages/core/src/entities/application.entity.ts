@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { OAuth2Scope } from "../enums/index.js";
+import type { OAuth2Scope } from "../enums/index.js";
 import type { Snowflake } from "../managers/index.js";
 import type { GuildEntity } from "./guild.entity.js";
 import type { TeamEntity } from "./team.entity.js";
@@ -72,28 +71,22 @@ export enum ApplicationIntegrationType {
  * Represents the settings for an application's default in-app authorization link.
  * @see {@link https://discord.com/developers/docs/resources/application#install-params-object-install-params-structure}
  */
-export const InstallParamsEntity = z.object({
+export interface InstallParamsEntity {
   /** Scopes to add the application to the server with */
-  scopes: z.array(z.nativeEnum(OAuth2Scope)),
+  scopes: OAuth2Scope[];
 
   /** Permissions to request for the bot role */
-  permissions: z.string(),
-});
-
-export type InstallParamsEntity = z.infer<typeof InstallParamsEntity>;
+  permissions: string;
+}
 
 /**
  * Configuration for default scopes and permissions for each supported installation context.
  * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object}
  */
-export const ApplicationIntegrationTypeConfigurationEntity = z.object({
+export interface ApplicationIntegrationTypeConfigurationEntity {
   /** Install params for each installation context's default in-app authorization link */
-  oauth2_install_params: z.lazy(() => InstallParamsEntity).optional(),
-});
-
-export type ApplicationIntegrationTypeConfigurationEntity = z.infer<
-  typeof ApplicationIntegrationTypeConfigurationEntity
->;
+  oauth2_install_params?: InstallParamsEntity;
+}
 
 /**
  * Represents a Discord application, which are containers for developer platform features.

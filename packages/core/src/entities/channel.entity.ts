@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../managers/index.js";
 import type { GuildMemberEntity } from "./guild.entity.js";
 import type { UserEntity } from "./user.entity.js";
 
@@ -118,38 +117,34 @@ export enum ChannelType {
  * Forum tag object structure
  * @see {@link https://discord.com/developers/docs/resources/channel#forum-tag-object-forum-tag-structure}
  */
-export const ForumTagEntity = z.object({
+export interface ForumTagEntity {
   /** ID of the tag */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Name of the tag (0-20 characters) */
-  name: z.string(),
+  name: string;
 
   /** Whether this tag can only be added/removed by members with MANAGE_THREADS permission */
-  moderated: z.boolean(),
+  moderated: boolean;
 
   /** ID of a guild's custom emoji, null if no emoji */
-  emoji_id: Snowflake.nullable(),
+  emoji_id: Snowflake | null;
 
   /** Unicode character of the emoji, null if no emoji or if custom emoji is used */
-  emoji_name: z.string().nullable(),
-});
-
-export type ForumTagEntity = z.infer<typeof ForumTagEntity>;
+  emoji_name: string | null;
+}
 
 /**
  * Default reaction object for forum posts
  * @see {@link https://discord.com/developers/docs/resources/channel#default-reaction-object}
  */
-export const DefaultReactionEntity = z.object({
+export interface DefaultReactionEntity {
   /** ID of a guild's custom emoji, null if standard emoji */
-  emoji_id: Snowflake.nullable(),
+  emoji_id: Snowflake | null;
 
   /** Unicode character of the emoji, null if custom emoji is used */
-  emoji_name: z.string().nullable(),
-});
-
-export type DefaultReactionEntity = z.infer<typeof DefaultReactionEntity>;
+  emoji_name: string | null;
+}
 
 /**
  * Represents a user's membership in a thread
@@ -200,21 +195,19 @@ export interface ThreadMetadataEntity {
  * Channel permission overwrite object
  * @see {@link https://discord.com/developers/docs/resources/channel#overwrite-object}
  */
-export const OverwriteEntity = z.object({
+export interface OverwriteEntity {
   /** Role or user ID */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of overwrite: 0 for role or 1 for member */
-  type: z.nativeEnum(OverwriteType),
+  type: OverwriteType;
 
   /** Permission bit set for allowed permissions */
-  allow: z.string(),
+  allow: string;
 
   /** Permission bit set for denied permissions */
-  deny: z.string(),
-});
-
-export type OverwriteEntity = z.infer<typeof OverwriteEntity>;
+  deny: string;
+}
 
 /**
  * Represents an announcement channel that has been followed

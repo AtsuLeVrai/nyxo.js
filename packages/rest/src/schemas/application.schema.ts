@@ -2,8 +2,7 @@ import {
   ApplicationEventWebhookStatus,
   ApplicationFlags,
   ApplicationIntegrationType,
-  ApplicationIntegrationTypeConfigurationEntity,
-  InstallParamsEntity,
+  OAuth2Scope,
   type Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
@@ -35,6 +34,21 @@ export interface ActivityInstanceEntity {
   users: Snowflake[];
 }
 
+export const InstallParamsSchema = z.object({
+  scopes: z.array(z.nativeEnum(OAuth2Scope)),
+  permissions: z.string(),
+});
+
+export type InstallParamsSchema = z.input<typeof InstallParamsSchema>;
+
+export const ApplicationIntegrationTypeConfigurationSchema = z.object({
+  oauth2_install_params: z.lazy(() => InstallParamsSchema).optional(),
+});
+
+export type ApplicationIntegrationTypeConfigurationSchema = z.input<
+  typeof ApplicationIntegrationTypeConfigurationSchema
+>;
+
 /**
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
  */
@@ -42,11 +56,11 @@ export const EditCurrentApplicationSchema = z.object({
   custom_install_url: z.string().url().optional(),
   description: z.string().optional(),
   role_connections_verification_url: z.string().url().optional(),
-  install_params: InstallParamsEntity.optional(),
+  install_params: InstallParamsSchema.optional(),
   integration_types_config: z
     .record(
       z.nativeEnum(ApplicationIntegrationType),
-      ApplicationIntegrationTypeConfigurationEntity,
+      ApplicationIntegrationTypeConfigurationSchema,
     )
     .optional(),
   flags: z

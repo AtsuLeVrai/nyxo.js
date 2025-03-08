@@ -1,4 +1,3 @@
-import { type AnyInteractionEntity, InteractionType } from "@nyxjs/core";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
@@ -153,23 +152,23 @@ gateway.on("error", (...args) => {
   console.error("[GATEWAY - ERROR]", ...args);
 });
 
-const voice = new VoiceManager(gateway);
+const _voice = new VoiceManager(gateway);
 
 gateway.on("dispatch", async (event, data) => {
   console.log("[GATEWAY - DISPATCH]", event, data);
 
-  if (event === "INTERACTION_CREATE") {
-    const interaction = data as AnyInteractionEntity;
-
-    if (
-      interaction.data?.type === InteractionType.ApplicationCommand &&
-      interaction.data.name === "join"
-    ) {
-      voice.joinVoiceChannel("936969912600121384", "1232694742350041089");
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      await voice.playAudio("936969912600121384", "./src/song.mp3");
-    }
-  }
+  // if (event === "INTERACTION_CREATE") {
+  //   const interaction = data as AnyInteractionEntity;
+  //
+  //   if (
+  //     interaction.data?.type === InteractionType.ApplicationCommand &&
+  //     interaction.data.name === "join"
+  //   ) {
+  //     voice.joinVoiceChannel("936969912600121384", "1232694742350041089");
+  //     await new Promise((resolve) => setTimeout(resolve, 5000));
+  //     await voice.playAudio("936969912600121384", "./src/song.mp3");
+  //   }
+  // }
 });
 
 // const commands: CreateGlobalApplicationCommandSchema[] = [

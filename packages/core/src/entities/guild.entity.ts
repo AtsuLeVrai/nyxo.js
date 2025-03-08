@@ -1,6 +1,5 @@
-import { z } from "zod";
 import type { Locale, OAuth2Scope } from "../enums/index.js";
-import { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../managers/index.js";
 import type {
   GuildStageVoiceChannelEntity,
   GuildVoiceChannelEntity,
@@ -377,23 +376,19 @@ export interface GuildOnboardingEntity {
  * Structure for welcome screen channels
  * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-channel-structure}
  */
-export const WelcomeScreenChannelEntity = z.object({
+export interface WelcomeScreenChannelEntity {
   /** ID of the channel */
-  channel_id: Snowflake,
+  channel_id: Snowflake;
 
   /** Description of the channel shown in the welcome screen */
-  description: z.string(),
+  description: string;
 
   /** ID of the emoji if custom, null otherwise */
-  emoji_id: Snowflake.nullable(),
+  emoji_id: Snowflake | null;
 
   /** Name of the emoji if standard, the unicode character if standard, or null if no emoji is set */
-  emoji_name: z.string().nullable(),
-});
-
-export type WelcomeScreenChannelEntity = z.infer<
-  typeof WelcomeScreenChannelEntity
->;
+  emoji_name: string | null;
+}
 
 /**
  * Structure for guild welcome screen

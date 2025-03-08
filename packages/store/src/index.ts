@@ -14,6 +14,7 @@ export const StoreOptions = z
     ttl: z.number().int().min(0).default(0),
     evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
   })
+  .strict()
   .readonly();
 
 export type StoreOptions = z.infer<typeof StoreOptions>;

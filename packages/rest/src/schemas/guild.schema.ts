@@ -1,26 +1,69 @@
 import {
   type AnyThreadChannelEntity,
+  BitFieldManager,
   ChannelType,
   DefaultMessageNotificationLevel,
-  DefaultReactionEntity,
   ExplicitContentFilterLevel,
   ForumLayoutType,
-  ForumTagEntity,
   GuildFeature,
   GuildMemberFlags,
   GuildOnboardingMode,
   type GuildOnboardingPromptEntity,
-  OverwriteEntity,
-  RoleEntity,
+  type RoleFlags,
   Snowflake,
   SortOrderType,
   SystemChannelFlags,
   type ThreadMemberEntity,
   VerificationLevel,
-  WelcomeScreenChannelEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
 import { type FileInput, fileHandler } from "../handlers/index.js";
+import {
+  DefaultReactionSchema,
+  ForumTagSchema,
+  OverwriteSchema,
+} from "./channel.schema.js";
+
+export const RoleTagsSchema = z
+  .object({
+    bot_id: Snowflake.optional(),
+    integration_id: Snowflake.optional(),
+    premium_subscriber: z.null().optional(),
+    subscription_listing_id: Snowflake.optional(),
+    available_for_purchase: z.null().optional(),
+    guild_connections: z.null().optional(),
+  })
+  .partial();
+
+export type RoleTagsSchema = z.input<typeof RoleTagsSchema>;
+
+export const RoleSchema = z.object({
+  id: Snowflake,
+  name: z.string().min(1).max(100),
+  color: z.number().int(),
+  hoist: z.boolean(),
+  icon: z.string().nullable().optional(),
+  unicode_emoji: z.string().nullable().optional(),
+  position: z.number().int(),
+  permissions: z.string(),
+  managed: z.boolean(),
+  mentionable: z.boolean(),
+  tags: RoleTagsSchema.optional(),
+  flags: z.custom<RoleFlags>(BitFieldManager.isValidBitField),
+});
+
+export type RoleSchema = z.input<typeof RoleSchema>;
+
+export const WelcomeScreenChannelSchema = z.object({
+  channel_id: Snowflake,
+  description: z.string(),
+  emoji_id: Snowflake.nullable(),
+  emoji_name: z.string().nullable(),
+});
+
+export type WelcomeScreenChannelSchema = z.input<
+  typeof WelcomeScreenChannelSchema
+>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
@@ -33,7 +76,7 @@ export const CreateGuildChannelSchema = z.object({
   user_limit: z.number().int().min(0).max(99).optional(),
   rate_limit_per_user: z.number().int().min(0).max(21600).optional(),
   position: z.number().int().optional(),
-  permission_overwrites: z.array(OverwriteEntity.partial()).optional(),
+  permission_overwrites: z.array(OverwriteSchema.partial()).optional(),
   parent_id: Snowflake.optional(),
   nsfw: z.boolean().optional(),
   rtc_region: z.string().optional(),
@@ -41,8 +84,8 @@ export const CreateGuildChannelSchema = z.object({
   default_auto_archive_duration: z
     .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
     .optional(),
-  default_reaction_emoji: DefaultReactionEntity.optional(),
-  available_tags: z.array(ForumTagEntity).optional(),
+  default_reaction_emoji: DefaultReactionSchema.optional(),
+  available_tags: z.array(ForumTagSchema).optional(),
   default_sort_order: z.nativeEnum(SortOrderType).optional(),
   default_forum_layout: z.nativeEnum(ForumLayoutType).optional(),
   default_thread_rate_limit_per_user: z.number().int().optional(),
@@ -65,7 +108,7 @@ export const CreateGuildSchema = z.object({
     .nativeEnum(DefaultMessageNotificationLevel)
     .optional(),
   explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel).optional(),
-  roles: z.array(RoleEntity).optional(),
+  roles: z.array(RoleSchema).optional(),
   channels: z.array(CreateGuildChannelSchema).optional(),
   afk_channel_id: Snowflake.optional(),
   afk_timeout: z.number().optional(),
@@ -326,7 +369,7 @@ export type ModifyGuildWidgetSettingsSchema = z.input<
  */
 export const ModifyGuildWelcomeScreenSchema = z.object({
   enabled: z.boolean().nullish(),
-  welcome_channels: z.array(WelcomeScreenChannelEntity).nullish(),
+  welcome_channels: z.array(WelcomeScreenChannelSchema).nullish(),
   description: z.string().nullish(),
 });
 
