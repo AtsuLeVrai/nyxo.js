@@ -1,6 +1,6 @@
 <div align="center" style="padding: 30px;">
-<h1 style="font-size: 3em; font-weight: bold;">@nyxjs/voice 🎙️</h1>
-<p style="font-size: 1.2em; margin-top: 10px;">Voice Connections and Interactions for Nyx.js</p>
+<h1 style="font-size: 3em; font-weight: bold;">@nyxjs/database 🗄️</h1>
+<p style="font-size: 1.2em; margin-top: 10px;">Database and Data Management for Nyx.js</p>
 <img src="../../public/nyxjs_banner.png" alt="Nyx.js Banner" width="6912" style="margin-top: 20px; border-radius: 8px;">
 </div>
 
