@@ -47,10 +47,10 @@
     "@nyxjs/core": "workspace:*",
     "@nyxjs/store": "workspace:*",
     "eventemitter3": "^5.0.1",
-    "file-type": "^20.4.0",
+    "file-type": "^20.4.1",
     "form-data": "^4.0.2",
     "mime-types": "^2.1.35",
-    "undici": "^6.21.1",
+    "undici": "^6.21.2",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
   },

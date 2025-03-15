@@ -21,7 +21,7 @@
     "@microsoft/api-extractor": "^7.52.1",
     "@rollup/plugin-commonjs": "28.0.2",
     "@rollup/plugin-node-resolve": "16.0.0",
-    "@swc/core": "^1.11.8",
+    "@swc/core": "^1.11.9",
     "chalk": "^5.4.1",
     "figures": "6.1.0",
     "pretty-bytes": "6.1.1",
