@@ -1,15 +1,16 @@
-import type { Snowflake } from "../managers/index.js";
-import type { AnyApplicationCommandEntity } from "./application-commands.entity.js";
-import type { AutoModerationRuleEntity } from "./auto-moderation.entity.js";
-import type { AnyThreadChannelEntity } from "./channel.entity.js";
-import type { IntegrationEntity } from "./guild.entity.js";
-import type { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
-import type { UserEntity } from "./user.entity.js";
-import type { WebhookEntity } from "./webhook.entity.js";
+import { z } from "zod";
+import { Snowflake } from "../managers/index.js";
+import { AnyApplicationCommandEntity } from "./application-commands.entity.js";
+import { AutoModerationRuleEntity } from "./auto-moderation.entity.js";
+import { AnyThreadChannelEntity } from "./channel.entity.js";
+import { IntegrationEntity } from "./guild.entity.js";
+import { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
+import { UserEntity } from "./user.entity.js";
+import { WebhookEntity } from "./webhook.entity.js";
 
 /**
  * Audit log events enumeration
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-audit-log-events}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/audit-log.md#audit-log-entry-object-audit-log-events}
  */
 export enum AuditLogEvent {
   /** Server settings were updated */
@@ -213,150 +214,169 @@ export enum AuditLogEvent {
 
 /**
  * Represents a change to an entity in an audit log
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/audit-log.md#audit-log-change-object}
  */
-export interface AuditLogChangeEntity {
+export const AuditLogChangeEntity = z.object({
   /** Name of the changed entity */
-  key: string;
+  key: z.string(),
 
   /** New value of the entity */
-  new_value?: unknown;
+  new_value: z.unknown().optional(),
 
   /** Old value of the entity */
-  old_value?: unknown;
-}
+  old_value: z.unknown().optional(),
+});
+
+export type AuditLogChangeEntity = z.infer<typeof AuditLogChangeEntity>;
 
 /**
  * Represents permission changes for application commands in an audit log
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-exceptions}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/audit-log.md#audit-log-change-object-audit-log-change-exceptions}
  */
-export interface AuditLogCommandPermissionChangeEntity {
+export const AuditLogCommandPermissionChangeEntity = z.object({
   /** ID of the command or the application the permissions were changed for */
-  key: Snowflake;
+  key: Snowflake,
 
   /** Old permission overwrites */
-  old_value: Record<string, unknown>;
+  old_value: z.record(z.string(), z.unknown()),
 
   /** New permission overwrites */
-  new_value: Record<string, unknown>;
-}
+  new_value: z.record(z.string(), z.unknown()),
+});
+
+export type AuditLogCommandPermissionChangeEntity = z.infer<
+  typeof AuditLogCommandPermissionChangeEntity
+>;
 
 /**
  * Represents role changes in an audit log
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-change-object-audit-log-change-exceptions}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/audit-log.md#audit-log-change-object-audit-log-change-exceptions}
  */
-export interface AuditLogRoleChangeEntity {
+export const AuditLogRoleChangeEntity = z.object({
   /** Type of role change ($add or $remove) */
-  key: "$add" | "$remove";
+  key: z.union([z.literal("$add"), z.literal("$remove")]),
 
   /** Array of role objects */
-  new_value: {
-    /** Role ID */
-    id: string;
+  new_value: z.array(
+    z.object({
+      /** Role ID */
+      id: z.string(),
 
-    /** Role name */
-    name: string;
-  }[];
-}
+      /** Role name */
+      name: z.string(),
+    }),
+  ),
+});
+
+export type AuditLogRoleChangeEntity = z.infer<typeof AuditLogRoleChangeEntity>;
 
 /**
  * Represents optional additional info for an audit log entry
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/audit-log.md#audit-log-entry-object-optional-audit-entry-info}
  */
-export interface AuditLogEntryInfoEntity {
+export const AuditLogEntryInfoEntity = z.object({
   /** ID of the app whose permissions were targeted */
-  application_id?: Snowflake;
+  application_id: Snowflake.optional(),
 
   /** Name of the Auto Moderation rule that was triggered */
-  auto_moderation_rule_name?: string;
+  auto_moderation_rule_name: z.string().optional(),
 
   /** Trigger type of the Auto Moderation rule that was triggered */
-  auto_moderation_rule_trigger_type?: string;
+  auto_moderation_rule_trigger_type: z.string().optional(),
 
   /** Channel in which the entities were targeted */
-  channel_id?: Snowflake;
+  channel_id: Snowflake.optional(),
 
   /** Number of entities that were targeted */
-  count?: string;
+  count: z.string().optional(),
 
   /** Number of days after which inactive members were kicked */
-  delete_member_days?: string;
+  delete_member_days: z.string().optional(),
 
   /** ID of the overwritten entity */
-  id?: Snowflake;
+  id: Snowflake.optional(),
 
   /** Number of members removed by the prune */
-  members_removed?: string;
+  members_removed: z.string().optional(),
 
   /** ID of the message that was targeted */
-  message_id?: Snowflake;
+  message_id: Snowflake.optional(),
 
   /** Name of the role if type is "0" (role), or name of the invite if type is "1" (invite) */
-  role_name?: string;
+  role_name: z.string().optional(),
 
   /** Type of overwritten entity - role ("0") or member ("1") */
-  type?: "0" | "1";
+  type: z.union([z.literal("0"), z.literal("1")]).optional(),
 
   /** Type of integration which performed the action */
-  integration_type?: string;
-}
+  integration_type: z.string().optional(),
+});
+
+export type AuditLogEntryInfoEntity = z.infer<typeof AuditLogEntryInfoEntity>;
 
 /**
  * Represents an entry in the audit log
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/audit-log.md#audit-log-entry-object}
  */
-export interface AuditLogEntryEntity {
+export const AuditLogEntryEntity = z.object({
   /** ID of the affected entity (webhook, user, role, etc.) */
-  target_id: string | null;
+  target_id: z.string().nullable(),
 
   /** Changes made to the target_id */
-  changes?:
-    | AuditLogChangeEntity[]
-    | AuditLogCommandPermissionChangeEntity[]
-    | AuditLogRoleChangeEntity[];
+  changes: z
+    .union([
+      z.array(AuditLogChangeEntity),
+      z.array(AuditLogCommandPermissionChangeEntity),
+      z.array(AuditLogRoleChangeEntity),
+    ])
+    .optional(),
 
   /** User or app that made the changes */
-  user_id: Snowflake | null;
+  user_id: Snowflake.nullable(),
 
   /** ID of the entry */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Type of action that occurred */
-  action_type: AuditLogEvent;
+  action_type: z.nativeEnum(AuditLogEvent),
 
   /** Additional info for certain event types */
-  options?: AuditLogEntryInfoEntity;
+  options: AuditLogEntryInfoEntity.optional(),
 
   /** Reason for the change (0-512 characters) */
-  reason?: string;
-}
+  reason: z.string().min(0).max(512).optional(),
+});
+
+export type AuditLogEntryEntity = z.infer<typeof AuditLogEntryEntity>;
 
 /**
  * Represents a guild's audit log
- * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-object}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/audit-log.md#audit-log-object}
  */
-export interface AuditLogEntity {
+export const AuditLogEntity = z.object({
   /** List of application commands referenced in the audit log */
-  application_commands: AnyApplicationCommandEntity[];
+  application_commands: z.array(AnyApplicationCommandEntity),
 
   /** List of audit log entries, sorted from most to least recent */
-  audit_log_entries: AuditLogEntryEntity[];
+  audit_log_entries: z.array(AuditLogEntryEntity),
 
   /** List of auto moderation rules referenced in the audit log */
-  auto_moderation_rules: AutoModerationRuleEntity[];
+  auto_moderation_rules: z.array(AutoModerationRuleEntity),
 
   /** List of scheduled events referenced in the audit log */
-  guild_scheduled_events: GuildScheduledEventEntity[];
+  guild_scheduled_events: z.array(GuildScheduledEventEntity),
 
   /** List of partial integration objects */
-  integrations: Partial<IntegrationEntity>[];
+  integrations: z.array(IntegrationEntity.partial()),
 
   /** List of threads referenced in the audit log */
-  threads: AnyThreadChannelEntity[];
+  threads: z.array(AnyThreadChannelEntity),
 
   /** List of users referenced in the audit log */
-  users: UserEntity[];
+  users: z.array(UserEntity),
 
   /** List of webhooks referenced in the audit log */
-  webhooks: WebhookEntity[];
-}
+  webhooks: z.array(WebhookEntity),
+});
+
+export type AuditLogEntity = z.infer<typeof AuditLogEntity>;

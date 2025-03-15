@@ -44,10 +44,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
-  },
-  "peerDependencies": {
-    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

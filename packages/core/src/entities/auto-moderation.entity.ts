@@ -1,8 +1,9 @@
-import type { Snowflake } from "../managers/index.js";
+import { z } from "zod";
+import { Snowflake } from "../managers/index.js";
 
 /**
  * Strategies for keyword matching in auto-moderation
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-keyword-matching-strategies}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#keyword-matching-strategies}
  */
 export enum AutoModerationKeywordMatchType {
   /** Word must start with the keyword */
@@ -20,7 +21,7 @@ export enum AutoModerationKeywordMatchType {
 
 /**
  * Maximum limits for auto-moderation rule configurations
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata-field-limits}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#trigger-metadata-field-limits}
  */
 export enum AutoModerationRuleLimit {
   /** Maximum number of keywords in a filter */
@@ -44,7 +45,7 @@ export enum AutoModerationRuleLimit {
 
 /**
  * Maximum number of rules per guild for each trigger type
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#trigger-types}
  */
 export enum AutoModerationMaxRuleType {
   /** Maximum number of member profile rules */
@@ -65,7 +66,7 @@ export enum AutoModerationMaxRuleType {
 
 /**
  * Types of actions that can be taken when a rule is triggered
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#action-types}
  */
 export enum AutoModerationActionType {
   /** Blocks a member's message and prevents it from being posted */
@@ -83,7 +84,7 @@ export enum AutoModerationActionType {
 
 /**
  * Event contexts in which a rule should be checked
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#event-types}
  */
 export enum AutoModerationEventType {
   /** When a member sends or edits a message in the guild */
@@ -95,7 +96,7 @@ export enum AutoModerationEventType {
 
 /**
  * Preset word lists for content filtering
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-keyword-preset-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#keyword-preset-types}
  */
 export enum AutoModerationKeywordPresetType {
   /** Words that may be considered forms of swearing or cursing */
@@ -110,7 +111,7 @@ export enum AutoModerationKeywordPresetType {
 
 /**
  * Types of content that can trigger a rule
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#trigger-types}
  */
 export enum AutoModerationRuleTriggerType {
   /** Check if content contains words from a user defined list of keywords */
@@ -131,108 +132,267 @@ export enum AutoModerationRuleTriggerType {
 
 /**
  * Regex metadata for auto-moderation rules
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#trigger-metadata}
  */
-export interface AutoModerationRegexMetadataEntity {
+export const AutoModerationRegexMetadataEntity = z.object({
   /** Regular expression pattern */
-  pattern: string;
+  pattern: z.string().max(AutoModerationRuleLimit.MaxRegexLength),
 
   /** Whether the regex pattern is valid */
-  valid: boolean;
-}
+  valid: z.boolean(),
+});
+
+export type AutoModerationRegexMetadataEntity = z.infer<
+  typeof AutoModerationRegexMetadataEntity
+>;
 
 /**
  * Metadata for auto-moderation actions
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-action-metadata}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#action-metadata}
  */
-export interface AutoModerationActionMetadataEntity {
-  /** Channel to which user content should be logged */
-  channel_id: Snowflake;
+export const AutoModerationActionMetadataEntity = z
+  .object({
+    /** Channel to which user content should be logged */
+    channel_id: Snowflake.optional(),
 
-  /** Timeout duration in seconds (maximum of 2419200 seconds, which is 4 weeks) */
-  duration_seconds: number;
+    /** Timeout duration in seconds (maximum of 2419200 seconds, which is 4 weeks) */
+    duration_seconds: z.number().int().min(1).max(2419200).optional(),
 
-  /** Additional explanation that will be shown to members whenever their message is blocked (maximum of 150 characters) */
-  custom_message: string;
-}
+    /** Additional explanation that will be shown to members whenever their message is blocked (maximum of 150 characters) */
+    custom_message: z.string().max(150).optional(),
+  })
+  .refine(
+    (data) => {
+      // Si le channel_id est présent, assurez-vous qu'au moins une des propriétés est définie pour être valide
+      return data.channel_id || data.duration_seconds || data.custom_message;
+    },
+    {
+      message:
+        "At least one of channel_id, duration_seconds, or custom_message must be present",
+    },
+  );
+
+export type AutoModerationActionMetadataEntity = z.infer<
+  typeof AutoModerationActionMetadataEntity
+>;
 
 /**
  * Action to be taken when a rule is triggered
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object-auto-moderation-action-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#auto-moderation-action-object}
  */
-export interface AutoModerationActionEntity {
-  /** The type of action */
-  type: AutoModerationActionType;
+export const AutoModerationActionEntity = z
+  .object({
+    /** The type of action */
+    type: z.nativeEnum(AutoModerationActionType),
 
-  /** Additional metadata needed during execution for this specific action type */
-  metadata?: AutoModerationActionMetadataEntity;
-}
+    /** Additional metadata needed during execution for this specific action type */
+    metadata: AutoModerationActionMetadataEntity.optional(),
+  })
+  .refine(
+    (data) => {
+      // Valider que le metadata est présent pour les types d'action qui en ont besoin
+      if (data.type === AutoModerationActionType.SendAlertMessage) {
+        return !!data.metadata?.channel_id;
+      }
+
+      if (data.type === AutoModerationActionType.Timeout) {
+        return !!data.metadata?.duration_seconds;
+      }
+
+      return true;
+    },
+    {
+      message: "Required metadata fields missing for this action type",
+    },
+  );
+
+export type AutoModerationActionEntity = z.infer<
+  typeof AutoModerationActionEntity
+>;
 
 /**
  * Additional data used to determine whether a rule should be triggered
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#trigger-metadata}
  */
-export interface AutoModerationRuleTriggerMetadataEntity {
-  /** Substrings which will be searched for in content (Maximum of 1000) */
-  keyword_filter?: string[];
+export const AutoModerationRuleTriggerMetadataEntity = z
+  .object({
+    /** Substrings which will be searched for in content (Maximum of 1000) */
+    keyword_filter: z
+      .array(z.string().max(AutoModerationRuleLimit.MaxKeywordLength))
+      .max(AutoModerationRuleLimit.MaxKeywordFilter)
+      .optional(),
 
-  /** Regular expression patterns which will be matched against content (Maximum of 10) */
-  regex_patterns?: string[];
+    /** Regular expression patterns which will be matched against content (Maximum of 10) */
+    regex_patterns: z
+      .array(z.string().max(AutoModerationRuleLimit.MaxRegexLength))
+      .max(AutoModerationRuleLimit.MaxRegexPatterns)
+      .optional(),
 
-  /** The internally pre-defined wordsets which will be searched for in content */
-  presets?: AutoModerationKeywordPresetType[];
+    /** The internally pre-defined wordsets which will be searched for in content */
+    presets: z.array(z.nativeEnum(AutoModerationKeywordPresetType)).optional(),
 
-  /** Substrings which should not trigger the rule (Maximum of 100 or 1000) */
-  allow_list?: string[];
+    /** Substrings which should not trigger the rule (Maximum of 100 or 1000 depending on trigger type) */
+    allow_list: z
+      .array(z.string().max(AutoModerationRuleLimit.MaxKeywordLength))
+      .max(AutoModerationRuleLimit.MaxAllowListPreset)
+      .optional(),
 
-  /** Total number of unique role and user mentions allowed per message (Maximum of 50) */
-  mention_total_limit?: number;
+    /** Total number of unique role and user mentions allowed per message (Maximum of 50) */
+    mention_total_limit: z.number().int().min(1).max(50).optional(),
 
-  /** Whether to automatically detect mention raids */
-  mention_raid_protection_enabled?: boolean;
+    /** Whether to automatically detect mention raids */
+    mention_raid_protection_enabled: z.boolean().optional(),
 
-  /** Validation results for regex patterns */
-  regex_validation?: AutoModerationRegexMetadataEntity[];
+    /** Validation results for regex patterns */
+    regex_validation: z.array(AutoModerationRegexMetadataEntity).optional(),
 
-  /** The type of keyword matching strategy used */
-  keyword_match_type?: AutoModerationKeywordMatchType[];
-}
+    /** The type of keyword matching strategy used */
+    keyword_match_type: z
+      .array(z.nativeEnum(AutoModerationKeywordMatchType))
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Validation plus spécifique en fonction des données
+    if (data.allow_list && data.allow_list.length > 0) {
+      if (data.presets && data.presets.length > 0) {
+        // Pour KeywordPreset, la limite est plus grande
+        if (
+          data.allow_list.length > AutoModerationRuleLimit.MaxAllowListPreset
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_big,
+            type: "array",
+            maximum: AutoModerationRuleLimit.MaxAllowListPreset,
+            inclusive: true,
+            path: ["allow_list"],
+            message: `allow_list can contain at most ${AutoModerationRuleLimit.MaxAllowListPreset} items for KeywordPreset trigger type`,
+          });
+        }
+      } else if (
+        data.allow_list.length > AutoModerationRuleLimit.MaxAllowListKeyword
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_big,
+          type: "array",
+          maximum: AutoModerationRuleLimit.MaxAllowListKeyword,
+          inclusive: true,
+          path: ["allow_list"],
+          message: `allow_list can contain at most ${AutoModerationRuleLimit.MaxAllowListKeyword} items for this trigger type`,
+        });
+      }
+    }
+  });
+
+export type AutoModerationRuleTriggerMetadataEntity = z.infer<
+  typeof AutoModerationRuleTriggerMetadataEntity
+>;
 
 /**
  * A rule that automatically takes actions based on content in a guild
- * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-auto-moderation-rule-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/auto-moderation.md#auto-moderation-rule-object}
  */
-export interface AutoModerationRuleEntity {
-  /** The id of this rule */
-  id: Snowflake;
+export const AutoModerationRuleEntity = z
+  .object({
+    /** The id of this rule */
+    id: Snowflake,
 
-  /** The id of the guild which this rule belongs to */
-  guild_id: Snowflake;
+    /** The id of the guild which this rule belongs to */
+    guild_id: Snowflake,
 
-  /** The rule name */
-  name: string;
+    /** The rule name */
+    name: z.string().min(1).max(100),
 
-  /** The user which first created this rule */
-  creator_id: Snowflake;
+    /** The user which first created this rule */
+    creator_id: Snowflake,
 
-  /** The rule event type */
-  event_type: AutoModerationEventType;
+    /** The rule event type */
+    event_type: z.nativeEnum(AutoModerationEventType),
 
-  /** The rule trigger type */
-  trigger_type: AutoModerationRuleTriggerType;
+    /** The rule trigger type */
+    trigger_type: z.nativeEnum(AutoModerationRuleTriggerType),
 
-  /** The rule trigger metadata */
-  trigger_metadata: AutoModerationRuleTriggerMetadataEntity;
+    /** The rule trigger metadata */
+    trigger_metadata: AutoModerationRuleTriggerMetadataEntity,
 
-  /** The actions which will execute when the rule is triggered */
-  actions: AutoModerationActionEntity[];
+    /** The actions which will execute when the rule is triggered */
+    actions: z.array(AutoModerationActionEntity).min(1).max(3),
 
-  /** Whether the rule is enabled */
-  enabled: boolean;
+    /** Whether the rule is enabled */
+    enabled: z.boolean(),
 
-  /** The role ids that should not be affected by the rule (Maximum of 20) */
-  exempt_roles: Snowflake[];
+    /** The role ids that should not be affected by the rule (Maximum of 20) */
+    exempt_roles: z.array(Snowflake).max(20),
 
-  /** The channel ids that should not be affected by the rule (Maximum of 50) */
-  exempt_channels: Snowflake[];
-}
+    /** The channel ids that should not be affected by the rule (Maximum of 50) */
+    exempt_channels: z.array(Snowflake).max(50),
+  })
+  .superRefine((data, ctx) => {
+    // Vérifications supplémentaires basées sur le trigger_type
+    switch (data.trigger_type) {
+      case AutoModerationRuleTriggerType.Keyword:
+      case AutoModerationRuleTriggerType.MemberProfile:
+        if (
+          !data.trigger_metadata.keyword_filter ||
+          data.trigger_metadata.keyword_filter.length === 0
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["trigger_metadata", "keyword_filter"],
+            message:
+              "keyword_filter is required for KEYWORD and MEMBER_PROFILE trigger types",
+          });
+        }
+        break;
+
+      case AutoModerationRuleTriggerType.KeywordPreset:
+        if (
+          !data.trigger_metadata.presets ||
+          data.trigger_metadata.presets.length === 0
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["trigger_metadata", "presets"],
+            message: "presets is required for KEYWORD_PRESET trigger type",
+          });
+        }
+        break;
+
+      case AutoModerationRuleTriggerType.MentionSpam:
+        if (
+          !(
+            data.trigger_metadata.mention_total_limit ||
+            data.trigger_metadata.mention_raid_protection_enabled
+          )
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["trigger_metadata"],
+            message:
+              "Either mention_total_limit or mention_raid_protection_enabled must be set for MENTION_SPAM trigger type",
+          });
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    // Vérification des actions pour le type Timeout (uniquement pour KEYWORD et MENTION_SPAM)
+    const hasTimeoutAction = data.actions.some(
+      (action) => action.type === AutoModerationActionType.Timeout,
+    );
+    if (
+      hasTimeoutAction &&
+      data.trigger_type !== AutoModerationRuleTriggerType.Keyword &&
+      data.trigger_type !== AutoModerationRuleTriggerType.MentionSpam
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["actions"],
+        message:
+          "TIMEOUT action can only be set up for KEYWORD and MENTION_SPAM rules",
+      });
+    }
+  });
+
+export type AutoModerationRuleEntity = z.infer<typeof AutoModerationRuleEntity>;

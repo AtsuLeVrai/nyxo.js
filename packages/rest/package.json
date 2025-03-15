@@ -63,6 +63,7 @@
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.13.10",
     "cross-env": "^7.0.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "undici-types": "7.5.0"
   }
 }

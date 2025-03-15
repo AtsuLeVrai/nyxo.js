@@ -1,12 +1,13 @@
-import type { ApplicationEntity } from "./application.entity.js";
-import type { AnyChannelEntity } from "./channel.entity.js";
-import type { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
-import type { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
-import type { UserEntity } from "./user.entity.js";
+import { z } from "zod";
+import { ApplicationEntity } from "./application.entity.js";
+import { AnyChannelEntity } from "./channel.entity.js";
+import { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
+import { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
+import { UserEntity } from "./user.entity.js";
 
 /**
  * Represents the types of targets for voice channel invites.
- * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-target-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/invite.md#invite-target-types}
  */
 export enum InviteTargetType {
   /** Stream in a voice channel */
@@ -18,7 +19,7 @@ export enum InviteTargetType {
 
 /**
  * Represents the different types of invites.
- * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/invite.md#invite-types}
  */
 export enum InviteType {
   /** Normal guild invite */
@@ -34,87 +35,103 @@ export enum InviteType {
 /**
  * Represents stage instance data for a stage channel invite.
  * @deprecated This object is deprecated according to Discord documentation.
- * @see {@link https://discord.com/developers/docs/resources/invite#invite-stage-instance-object-invite-stage-instance-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/invite.md#invite-stage-instance-object}
  */
-export interface InviteStageInstanceEntity {
+export const InviteStageInstanceEntity = z.object({
   /** The members speaking in the Stage */
-  members: Partial<GuildMemberEntity>[];
+  members: z.array(GuildMemberEntity.partial()),
 
   /** The number of users in the Stage */
-  participant_count: number;
+  participant_count: z.number().int().nonnegative(),
 
   /** The number of users speaking in the Stage */
-  speaker_count: number;
+  speaker_count: z.number().int().nonnegative(),
 
   /** The topic of the Stage instance (1-120 characters) */
-  topic: string;
-}
+  topic: z.string().min(1).max(120),
+});
+
+export type InviteStageInstanceEntity = z.infer<
+  typeof InviteStageInstanceEntity
+>;
 
 /**
  * Represents additional metadata about an invite.
- * @see {@link https://discord.com/developers/docs/resources/invite#invite-metadata-object-invite-metadata-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/invite.md#invite-metadata-object}
  */
-export interface InviteMetadataEntity {
+export const InviteMetadataEntity = z.object({
   /** Number of times this invite has been used */
-  uses: number;
+  uses: z.number().int().nonnegative(),
 
   /** Max number of times this invite can be used (0 = unlimited) */
-  max_uses: number;
+  max_uses: z.number().int().nonnegative(),
 
   /** Duration (in seconds) after which the invite expires (0 = never) */
-  max_age: number;
+  max_age: z.number().int().nonnegative(),
 
   /** Whether this invite only grants temporary membership */
-  temporary: boolean;
+  temporary: z.boolean(),
 
   /** When this invite was created */
-  created_at: string;
-}
+  created_at: z.string().datetime(),
+});
+
+export type InviteMetadataEntity = z.infer<typeof InviteMetadataEntity>;
 
 /**
  * Represents a Discord invite that can be used to add a user to a guild or group DM channel.
- * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/invite.md#invite-object}
  */
-export interface InviteEntity {
+export const InviteEntity = z.object({
   /** The type of invite */
-  type: InviteType;
+  type: z.nativeEnum(InviteType),
 
   /** The unique invite code (unique ID) */
-  code: string;
+  code: z.string(),
 
   /** The guild this invite is for */
-  guild?: Partial<GuildEntity>;
+  guild: GuildEntity.partial().optional(),
 
   /** The channel this invite is for */
-  channel: AnyChannelEntity | null;
+  channel: AnyChannelEntity.nullable(),
 
   /** The user who created the invite */
-  inviter?: Partial<UserEntity>;
+  inviter: UserEntity.partial().optional(),
 
   /** The type of target for this voice channel invite */
-  target_type?: InviteTargetType;
+  target_type: z.nativeEnum(InviteTargetType).optional(),
 
   /** The user whose stream to display for this voice channel stream invite */
-  target_user?: Partial<UserEntity>;
+  target_user: UserEntity.partial().optional(),
 
   /** The embedded application to open for this voice channel embedded application invite */
-  target_application?: Partial<ApplicationEntity>;
+  target_application: ApplicationEntity.partial().optional(),
 
   /** Approximate count of online members (returned when `with_counts` is true) */
-  approximate_presence_count?: number;
+  approximate_presence_count: z.number().int().nonnegative().optional(),
 
   /** Approximate count of total members (returned when `with_counts` is true) */
-  approximate_member_count?: number;
+  approximate_member_count: z.number().int().nonnegative().optional(),
 
   /** The expiration date of this invite (returned when `with_expiration` is true) */
-  expires_at?: string | null;
+  expires_at: z.string().datetime().nullable().optional(),
 
   /**
    * Stage instance data if there is a public Stage instance in the Stage channel
    * @deprecated This field is deprecated according to Discord documentation
    */
-  stage_instance?: InviteStageInstanceEntity;
+  stage_instance: InviteStageInstanceEntity.optional(),
 
   /** Guild scheduled event data, only included if `guild_scheduled_event_id` contains a valid guild scheduled event ID */
-  guild_scheduled_event?: GuildScheduledEventEntity;
-}
+  guild_scheduled_event: GuildScheduledEventEntity.optional(),
+});
+
+export type InviteEntity = z.infer<typeof InviteEntity>;
+
+/**
+ * Represents a complete invite with metadata
+ */
+export const InviteWithMetadataEntity =
+  InviteEntity.merge(InviteMetadataEntity);
+
+export type InviteWithMetadataEntity = z.infer<typeof InviteWithMetadataEntity>;

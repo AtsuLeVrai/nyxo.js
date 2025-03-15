@@ -1,12 +1,13 @@
-import type { Locale } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
-import type { ApplicationIntegrationType } from "./application.entity.js";
-import type { ChannelType } from "./channel.entity.js";
-import type { InteractionContextType } from "./interaction.entity.js";
+import { z } from "zod";
+import { Locale } from "../enums/index.js";
+import { Snowflake } from "../managers/index.js";
+import { ApplicationIntegrationType } from "./application.entity.js";
+import { ChannelType } from "./channel.entity.js";
+import { InteractionContextType } from "./interaction.entity.js";
 
 /**
  * Available application command option types
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-type}
  */
 export enum ApplicationCommandOptionType {
   /** Denotes a subcommand */
@@ -45,7 +46,7 @@ export enum ApplicationCommandOptionType {
 
 /**
  * Permission types for application commands
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permission-type}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-permissions-object-application-command-permission-type}
  */
 export enum ApplicationCommandPermissionType {
   /** Role permission */
@@ -60,7 +61,7 @@ export enum ApplicationCommandPermissionType {
 
 /**
  * Types of application commands
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-types}
  */
 export enum ApplicationCommandType {
   /** Slash commands; text-based commands that show up when a user types / */
@@ -78,7 +79,7 @@ export enum ApplicationCommandType {
 
 /**
  * Handlers for EntryPoint commands
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-entry-point-command-handler-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-entry-point-command-handler-types}
  */
 export enum ApplicationCommandEntryPointType {
   /** The app handles the interaction using an interaction token */
@@ -90,379 +91,477 @@ export enum ApplicationCommandEntryPointType {
 
 /**
  * Represents a choice for a command option
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-choice-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-choice-structure}
  */
-export interface ApplicationCommandOptionChoiceEntity {
+export const ApplicationCommandOptionChoiceEntity = z.object({
   /** 1-100 character choice name */
-  name: string;
+  name: z.string().min(1).max(100),
 
   /** Localization dictionary for the name field */
-  name_localizations?: Record<Locale, string> | null;
+  name_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+    .nullish(),
 
   /** Value for the choice (string, integer, or double) */
-  value: string | number;
-}
+  value: z.union([z.string(), z.number()]),
+});
+
+export type ApplicationCommandOptionChoiceEntity = z.infer<
+  typeof ApplicationCommandOptionChoiceEntity
+>;
 
 /**
  * Base structure for all command options
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface BaseApplicationCommandOptionEntity {
+export const BaseApplicationCommandOptionEntity = z.object({
   /** 1-32 character name matching the regex pattern */
-  name: string;
+  name: z
+    .string()
+    .min(1)
+    .max(32)
+    .regex(/^[-_'\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u),
 
   /** Localization dictionary for the name field */
-  name_localizations?: Record<Locale, string> | null;
+  name_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(32))
+    .nullish(),
 
   /** 1-100 character description */
-  description: string;
+  description: z.string().min(1).max(100),
 
   /** Localization dictionary for the description field */
-  description_localizations?: Record<Locale, string> | null;
-}
+  description_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+    .nullish(),
+});
+
+export type BaseApplicationCommandOptionEntity = z.infer<
+  typeof BaseApplicationCommandOptionEntity
+>;
 
 /**
  * String Option - For string inputs
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface StringOptionEntity extends BaseApplicationCommandOptionEntity {
+export const StringOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** String option type */
-  type: ApplicationCommandOptionType.String;
+  type: z.literal(ApplicationCommandOptionType.String),
 
   /** Whether this option is required */
-  required?: boolean;
+  required: z.boolean().optional().default(false),
 
   /** Minimum allowed length (0-6000) */
-  min_length?: number;
+  min_length: z.number().int().min(0).max(6000).optional(),
 
   /** Maximum allowed length (1-6000) */
-  max_length?: number;
+  max_length: z.number().int().min(1).max(6000).optional(),
 
   /** Whether autocomplete interactions are enabled */
-  autocomplete?: boolean;
+  autocomplete: z.boolean().optional(),
 
   /** Choices for the user to pick from (up to 25) */
-  choices?: ApplicationCommandOptionChoiceEntity[];
-}
+  choices: z.array(ApplicationCommandOptionChoiceEntity).max(25).optional(),
+});
+
+export type StringOptionEntity = z.infer<typeof StringOptionEntity>;
 
 /**
  * Integer Option - For integer inputs
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface IntegerOptionEntity
-  extends BaseApplicationCommandOptionEntity {
+export const IntegerOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** Integer option type */
-  type: ApplicationCommandOptionType.Integer;
+  type: z.literal(ApplicationCommandOptionType.Integer),
 
   /** Whether this option is required */
-  required?: boolean;
+  required: z.boolean().optional().default(false),
 
   /** Minimum value */
-  min_value?: number;
+  min_value: z.number().int().optional(),
 
   /** Maximum value */
-  max_value?: number;
+  max_value: z.number().int().optional(),
 
   /** Whether autocomplete interactions are enabled */
-  autocomplete?: boolean;
+  autocomplete: z.boolean().optional(),
 
   /** Choices for the user to pick from (up to 25) */
-  choices?: ApplicationCommandOptionChoiceEntity[];
-}
+  choices: z.array(ApplicationCommandOptionChoiceEntity).max(25).optional(),
+});
+
+export type IntegerOptionEntity = z.infer<typeof IntegerOptionEntity>;
 
 /**
  * Number Option - For floating point number inputs
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface NumberOptionEntity extends BaseApplicationCommandOptionEntity {
+export const NumberOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** Number option type */
-  type: ApplicationCommandOptionType.Number;
+  type: z.literal(ApplicationCommandOptionType.Number),
 
   /** Whether this option is required */
-  required?: boolean;
+  required: z.boolean().optional().default(false),
 
   /** Minimum value */
-  min_value?: number;
+  min_value: z.number().optional(),
 
   /** Maximum value */
-  max_value?: number;
+  max_value: z.number().optional(),
 
   /** Whether autocomplete interactions are enabled */
-  autocomplete?: boolean;
+  autocomplete: z.boolean().optional(),
 
   /** Choices for the user to pick from (up to 25) */
-  choices?: ApplicationCommandOptionChoiceEntity[];
-}
+  choices: z.array(ApplicationCommandOptionChoiceEntity).max(25).optional(),
+});
+
+export type NumberOptionEntity = z.infer<typeof NumberOptionEntity>;
 
 /**
  * Channel Option - For channel selection
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface ChannelOptionEntity
-  extends BaseApplicationCommandOptionEntity {
+export const ChannelOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** Channel option type */
-  type: ApplicationCommandOptionType.Channel;
+  type: z.literal(ApplicationCommandOptionType.Channel),
 
   /** Whether this option is required */
-  required?: boolean;
+  required: z.boolean().optional().default(false),
 
   /** The channel types that will be shown */
-  channel_types?: ChannelType[];
-}
+  channel_types: z.array(z.nativeEnum(ChannelType)).optional(),
+});
+
+export type ChannelOptionEntity = z.infer<typeof ChannelOptionEntity>;
 
 /**
  * Boolean Option - For true/false inputs
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface BooleanOptionEntity
-  extends BaseApplicationCommandOptionEntity {
+export const BooleanOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** Boolean option type */
-  type: ApplicationCommandOptionType.Boolean;
+  type: z.literal(ApplicationCommandOptionType.Boolean),
 
   /** Whether this option is required */
-  required?: boolean;
-}
+  required: z.boolean().optional().default(false),
+});
+
+export type BooleanOptionEntity = z.infer<typeof BooleanOptionEntity>;
 
 /**
  * User Option - For user selection
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface UserOptionEntity extends BaseApplicationCommandOptionEntity {
+export const UserOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** User option type */
-  type: ApplicationCommandOptionType.User;
+  type: z.literal(ApplicationCommandOptionType.User),
 
   /** Whether this option is required */
-  required?: boolean;
-}
+  required: z.boolean().optional().default(false),
+});
+
+export type UserOptionEntity = z.infer<typeof UserOptionEntity>;
 
 /**
  * Role Option - For role selection
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface RoleOptionEntity extends BaseApplicationCommandOptionEntity {
+export const RoleOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** Role option type */
-  type: ApplicationCommandOptionType.Role;
+  type: z.literal(ApplicationCommandOptionType.Role),
 
   /** Whether this option is required */
-  required?: boolean;
-}
+  required: z.boolean().optional().default(false),
+});
+
+export type RoleOptionEntity = z.infer<typeof RoleOptionEntity>;
 
 /**
  * Mentionable Option - For selecting users or roles
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface MentionableOptionEntity
-  extends BaseApplicationCommandOptionEntity {
-  /** Mentionable option type */
-  type: ApplicationCommandOptionType.Mentionable;
+export const MentionableOptionEntity =
+  BaseApplicationCommandOptionEntity.extend({
+    /** Mentionable option type */
+    type: z.literal(ApplicationCommandOptionType.Mentionable),
 
-  /** Whether this option is required */
-  required?: boolean;
-}
+    /** Whether this option is required */
+    required: z.boolean().optional().default(false),
+  });
+
+export type MentionableOptionEntity = z.infer<typeof MentionableOptionEntity>;
 
 /**
  * Attachment Option - For file uploads
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface AttachmentOptionEntity
-  extends BaseApplicationCommandOptionEntity {
-  /** Attachment option type */
-  type: ApplicationCommandOptionType.Attachment;
+export const AttachmentOptionEntity = BaseApplicationCommandOptionEntity.extend(
+  {
+    /** Attachment option type */
+    type: z.literal(ApplicationCommandOptionType.Attachment),
 
-  /** Whether this option is required */
-  required?: boolean;
-}
+    /** Whether this option is required */
+    required: z.boolean().optional().default(false),
+  },
+);
+
+export type AttachmentOptionEntity = z.infer<typeof AttachmentOptionEntity>;
 
 /**
  * Simple command options (excluding subcommands and groups)
  */
-export type SimpleApplicationCommandOptionEntity =
-  | StringOptionEntity
-  | IntegerOptionEntity
-  | NumberOptionEntity
-  | ChannelOptionEntity
-  | BooleanOptionEntity
-  | UserOptionEntity
-  | RoleOptionEntity
-  | MentionableOptionEntity
-  | AttachmentOptionEntity;
+export const SimpleApplicationCommandOptionEntity = z.discriminatedUnion(
+  "type",
+  [
+    StringOptionEntity,
+    IntegerOptionEntity,
+    NumberOptionEntity,
+    ChannelOptionEntity,
+    BooleanOptionEntity,
+    UserOptionEntity,
+    RoleOptionEntity,
+    MentionableOptionEntity,
+    AttachmentOptionEntity,
+  ],
+);
+
+export type SimpleApplicationCommandEntity = z.infer<
+  typeof SimpleApplicationCommandOptionEntity
+>;
 
 /**
  * SubCommand Option - A subcommand within a command
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface SubOptionEntity extends BaseApplicationCommandOptionEntity {
+export const SubOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** Subcommand type */
-  type: ApplicationCommandOptionType.SubCommand;
+  type: z.literal(ApplicationCommandOptionType.SubCommand),
 
   /** Parameters for this subcommand (up to 25) */
-  options: SimpleApplicationCommandOptionEntity[];
-}
+  options: z.lazy(() =>
+    z.array(SimpleApplicationCommandOptionEntity).max(25).optional(),
+  ),
+});
+
+export type SubOptionEntity = z.infer<typeof SubOptionEntity>;
 
 /**
  * SubCommandGroup Option - A group of subcommands
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export interface SubGroupOptionEntity
-  extends BaseApplicationCommandOptionEntity {
+export const SubGroupOptionEntity = BaseApplicationCommandOptionEntity.extend({
   /** Subcommand group type */
-  type: ApplicationCommandOptionType.SubCommandGroup;
+  type: z.literal(ApplicationCommandOptionType.SubCommandGroup),
 
   /** Subcommands in this group (up to 25) */
-  options: SubOptionEntity[];
-}
+  options: z.lazy(() => z.array(SubOptionEntity).max(25).optional()),
+});
+
+export type SubGroupOptionEntity = z.infer<typeof SubGroupOptionEntity>;
 
 /**
  * Union of all possible command options with discriminated union pattern
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-structure}
  */
-export type AnyApplicationCommandOptionEntity =
-  | SubOptionEntity
-  | SubGroupOptionEntity
-  | SimpleApplicationCommandOptionEntity;
+export const AnyApplicationCommandOptionEntity = z.discriminatedUnion("type", [
+  SubOptionEntity,
+  SubGroupOptionEntity,
+  ...SimpleApplicationCommandOptionEntity.options,
+]);
+
+export type AnyApplicationCommandOptionEntity = z.infer<
+  typeof AnyApplicationCommandOptionEntity
+>;
 
 /**
  * Permission structure for application commands
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-application-command-permissions-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-permissions-object-application-command-permissions-structure}
  */
-export interface ApplicationCommandPermissionEntity {
+export const ApplicationCommandPermissionEntity = z.object({
   /** ID of the role, user, or channel */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Type of permission (role, user, or channel) */
-  type: ApplicationCommandPermissionType;
+  type: z.nativeEnum(ApplicationCommandPermissionType),
 
   /** true to allow, false to disallow */
-  permission: boolean;
-}
+  permission: z.boolean(),
+});
+
+export type ApplicationCommandPermissionEntity = z.infer<
+  typeof ApplicationCommandPermissionEntity
+>;
 
 /**
  * Permissions structure for guild commands
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-permissions-object-guild-application-command-permissions-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-permissions-object-guild-application-command-permissions-structure}
  */
-export interface GuildApplicationCommandPermissionEntity {
+export const GuildApplicationCommandPermissionEntity = z.object({
   /** ID of the command or the application ID */
-  id: Snowflake;
+  id: Snowflake,
 
   /** ID of the application the command belongs to */
-  application_id: Snowflake;
+  application_id: Snowflake,
 
   /** ID of the guild */
-  guild_id: Snowflake;
+  guild_id: Snowflake,
 
   /** Permissions for the command in the guild (max 100) */
-  permissions: ApplicationCommandPermissionEntity[];
-}
+  permissions: z.array(ApplicationCommandPermissionEntity).max(100),
+});
+
+export type GuildApplicationCommandPermissionEntity = z.infer<
+  typeof GuildApplicationCommandPermissionEntity
+>;
 
 /**
  * Base Application Command structure - shared by all command types
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-structure}
  */
-export interface BaseApplicationCommandEntity {
+export const BaseApplicationCommandEntity = z.object({
   /** Unique ID of command */
-  id: Snowflake;
+  id: Snowflake,
 
   /** ID of the parent application */
-  application_id: Snowflake;
+  application_id: Snowflake,
 
   /** Guild ID of the command, if not global */
-  guild_id?: Snowflake;
+  guild_id: Snowflake.optional(),
 
   /** 1-32 character name matching regex pattern */
-  name: string;
+  name: z
+    .string()
+    .min(1)
+    .max(32)
+    .regex(/^[-_'\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u),
 
   /** Localization dictionary for the name field */
-  name_localizations?: Record<Locale, string> | null;
+  name_localizations: z
+    .record(z.nativeEnum(Locale), z.string().min(1).max(32))
+    .nullish(),
 
   /** Set of permissions represented as a bit set */
-  default_member_permissions: string | null;
+  default_member_permissions: z.string().nullable(),
 
   /**
    * Whether command is available in DMs with the app
    * @deprecated - use contexts instead
    */
-  dm_permission?: boolean;
+  dm_permission: z.boolean().optional(),
 
   /** Whether command is enabled by default when app is added to guild (deprecated) */
-  default_permission?: boolean | null;
+  default_permission: z.boolean().nullish(),
 
   /** Whether command is age-restricted */
-  nsfw?: boolean;
+  nsfw: z.boolean().optional(),
 
   /** Installation contexts where command is available */
-  integration_types?: ApplicationIntegrationType[];
+  integration_types: z
+    .array(z.nativeEnum(ApplicationIntegrationType))
+    .optional(),
 
   /** Interaction contexts where command can be used */
-  contexts?: InteractionContextType[];
+  contexts: z.array(z.nativeEnum(InteractionContextType)).optional(),
 
   /** Autoincrementing version identifier */
-  version: Snowflake;
-}
+  version: Snowflake,
+});
+
+export type BaseApplicationCommandEntity = z.infer<
+  typeof BaseApplicationCommandEntity
+>;
 
 /**
  * Chat Input Command - Slash commands with /
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-structure}
  */
-export interface ChatInputApplicationCommandEntity
-  extends BaseApplicationCommandEntity {
-  /** Chat input command type */
-  type: ApplicationCommandType.ChatInput;
+export const ChatInputApplicationCommandEntity =
+  BaseApplicationCommandEntity.extend({
+    /** Chat input command type */
+    type: z.literal(ApplicationCommandType.ChatInput),
 
-  /** 1-100 character description */
-  description: string;
+    /** 1-100 character description */
+    description: z.string().min(1).max(100),
 
-  /** Localization dictionary for the description field */
-  description_localizations?: Record<Locale, string> | null;
+    /** Localization dictionary for the description field */
+    description_localizations: z
+      .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+      .nullish(),
 
-  /** Parameters for the command (max of 25) */
-  options?: AnyApplicationCommandOptionEntity[];
-}
+    /** Parameters for the command (max of 25) */
+    options: z.array(AnyApplicationCommandOptionEntity).max(25).optional(),
+  });
+
+export type ChatInputApplicationCommandEntity = z.infer<
+  typeof ChatInputApplicationCommandEntity
+>;
 
 /**
  * User Command - Context menu command for users
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-structure}
  */
-export interface UserApplicationCommandEntity
-  extends BaseApplicationCommandEntity {
-  /** User command type */
-  type: ApplicationCommandType.User;
-}
+export const UserApplicationCommandEntity = BaseApplicationCommandEntity.extend(
+  {
+    /** User command type */
+    type: z.literal(ApplicationCommandType.User),
+  },
+);
+
+export type UserApplicationCommandEntity = z.infer<
+  typeof UserApplicationCommandEntity
+>;
 
 /**
  * Message Command - Context menu command for messages
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-structure}
  */
-export interface MessageApplicationCommandEntity
-  extends BaseApplicationCommandEntity {
-  /** Message command type */
-  type: ApplicationCommandType.Message;
-}
+export const MessageApplicationCommandEntity =
+  BaseApplicationCommandEntity.extend({
+    /** Message command type */
+    type: z.literal(ApplicationCommandType.Message),
+  });
+
+export type MessageApplicationCommandEntity = z.infer<
+  typeof MessageApplicationCommandEntity
+>;
 
 /**
  * Entry Point Command - Primary way to launch an app's Activity
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-structure}
  */
-export interface EntryPointApplicationCommandEntity
-  extends BaseApplicationCommandEntity {
-  /** Entry point command type */
-  type: ApplicationCommandType.PrimaryEntryPoint;
+export const EntryPointApplicationCommandEntity =
+  BaseApplicationCommandEntity.extend({
+    /** Entry point command type */
+    type: z.literal(ApplicationCommandType.PrimaryEntryPoint),
 
-  /** 1-100 character description */
-  description: string;
+    /** 1-100 character description */
+    description: z.string().min(1).max(100),
 
-  /** Localization dictionary for the description field */
-  description_localizations?: Record<Locale, string> | null;
+    /** Localization dictionary for the description field */
+    description_localizations: z
+      .record(z.nativeEnum(Locale), z.string().min(1).max(100))
+      .nullish(),
 
-  /** How the interaction should be handled */
-  handler: ApplicationCommandEntryPointType;
-}
+    /** How the interaction should be handled */
+    handler: z.nativeEnum(ApplicationCommandEntryPointType),
+  });
+
+export type EntryPointApplicationCommandEntity = z.infer<
+  typeof EntryPointApplicationCommandEntity
+>;
 
 /**
  * Union of all application command types with discriminated union pattern
- * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-structure}
  */
-export type AnyApplicationCommandEntity =
-  | ChatInputApplicationCommandEntity
-  | UserApplicationCommandEntity
-  | MessageApplicationCommandEntity
-  | EntryPointApplicationCommandEntity;
+export const AnyApplicationCommandEntity = z.discriminatedUnion("type", [
+  ChatInputApplicationCommandEntity,
+  UserApplicationCommandEntity,
+  MessageApplicationCommandEntity,
+  EntryPointApplicationCommandEntity,
+]);
+
+export type AnyApplicationCommandEntity = z.infer<
+  typeof AnyApplicationCommandEntity
+>;

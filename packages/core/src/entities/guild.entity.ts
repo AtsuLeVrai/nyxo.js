@@ -1,17 +1,18 @@
-import type { Locale, OAuth2Scope } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
-import type {
+import { z } from "zod";
+import { Locale, OAuth2Scope } from "../enums/index.js";
+import { Snowflake } from "../managers/index.js";
+import {
   GuildStageVoiceChannelEntity,
   GuildVoiceChannelEntity,
 } from "./channel.entity.js";
-import type { EmojiEntity } from "./emoji.entity.js";
-import type { RoleEntity } from "./role.entity.js";
-import type { StickerEntity } from "./sticker.entity.js";
-import type { AvatarDecorationDataEntity, UserEntity } from "./user.entity.js";
+import { EmojiEntity } from "./emoji.entity.js";
+import { RoleEntity } from "./role.entity.js";
+import { StickerEntity } from "./sticker.entity.js";
+import { AvatarDecorationDataEntity, UserEntity } from "./user.entity.js";
 
 /**
  * Types of prompts that can be used in guild onboarding
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#onboarding-prompt-types}
  */
 export enum GuildOnboardingPromptType {
   /** Multiple choice prompt type */
@@ -23,7 +24,7 @@ export enum GuildOnboardingPromptType {
 
 /**
  * Modes for guild onboarding which define criteria for enabling onboarding
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-mode}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#onboarding-mode}
  */
 export enum GuildOnboardingMode {
   /** Counts only Default Channels towards constraints */
@@ -35,7 +36,7 @@ export enum GuildOnboardingMode {
 
 /**
  * Behaviors for handling expired integrations
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-expire-behaviors}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#integration-expire-behaviors}
  */
 export enum IntegrationExpirationBehavior {
   /** Remove role from member when integration expires */
@@ -47,7 +48,7 @@ export enum IntegrationExpirationBehavior {
 
 /**
  * Flags for guild members
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-flags}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-member-flags}
  */
 export enum GuildMemberFlags {
   /** Member has left and rejoined the guild */
@@ -80,7 +81,7 @@ export enum GuildMemberFlags {
 
 /**
  * Features that can be enabled on guilds
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-features}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-features}
  */
 export enum GuildFeature {
   /** Guild has access to set an animated guild banner image */
@@ -173,7 +174,7 @@ export enum GuildFeature {
 
 /**
  * Flags for controlling the system channel behavior
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-system-channel-flags}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#system-channel-flags}
  */
 export enum SystemChannelFlags {
   /** Suppress member join notifications */
@@ -197,7 +198,7 @@ export enum SystemChannelFlags {
 
 /**
  * Guild premium tier (Server Boost level)
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-premium-tier}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#premium-tier}
  */
 export enum PremiumTier {
   /** Guild has not unlocked any Server Boost perks */
@@ -215,7 +216,7 @@ export enum PremiumTier {
 
 /**
  * NSFW level of a guild
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-nsfw-level}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-nsfw-level}
  */
 export enum NsfwLevel {
   /** Default NSFW level */
@@ -233,7 +234,7 @@ export enum NsfwLevel {
 
 /**
  * Verification level required for a guild
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-verification-level}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#verification-level}
  */
 export enum VerificationLevel {
   /** Unrestricted verification level */
@@ -254,7 +255,7 @@ export enum VerificationLevel {
 
 /**
  * MFA level required for administrative actions in a guild
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-mfa-level}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#mfa-level}
  */
 export enum MfaLevel {
   /** Guild has no MFA/2FA requirement for moderation actions */
@@ -266,7 +267,7 @@ export enum MfaLevel {
 
 /**
  * Explicit content filter level for a guild
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-explicit-content-filter-level}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#explicit-content-filter-level}
  */
 export enum ExplicitContentFilterLevel {
   /** Media content will not be scanned */
@@ -281,7 +282,7 @@ export enum ExplicitContentFilterLevel {
 
 /**
  * Default message notification level for a guild
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-default-message-notification-level}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#default-message-notification-level}
  */
 export enum DefaultMessageNotificationLevel {
   /** Members will receive notifications for all messages by default */
@@ -292,502 +293,561 @@ export enum DefaultMessageNotificationLevel {
 }
 
 /**
- * Option structure for onboarding prompts
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-prompt-option-structure}
+ * Zod schema for Guild Onboarding Prompt Option
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#prompt-option-structure}
  */
-export interface GuildOnboardingPromptOptionEntity {
+export const GuildOnboardingPromptOptionEntity = z.object({
   /** ID of the prompt option */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Channel IDs that will be pre-selected for users who select this option */
-  channel_ids: Snowflake[];
+  channel_ids: z.array(Snowflake),
 
   /** Role IDs that will be assigned to users who select this option */
-  role_ids: Snowflake[];
+  role_ids: z.array(Snowflake),
 
   /** Emoji object for the option */
-  emoji?: EmojiEntity;
+  emoji: EmojiEntity.optional(),
 
   /** Emoji ID of the option (used when creating/updating) */
-  emoji_id?: Snowflake;
+  emoji_id: Snowflake.optional(),
 
   /** Emoji name of the option (used when creating/updating) */
-  emoji_name?: string;
+  emoji_name: z.string().optional(),
 
   /** Whether the emoji is animated (used when creating/updating) */
-  emoji_animated?: boolean;
+  emoji_animated: z.boolean().optional(),
 
   /** Title of the option */
-  title: string;
+  title: z.string(),
 
   /** Description of the option */
-  description: string | null;
-}
+  description: z.string().nullable(),
+});
+
+export type GuildOnboardingPromptOptionEntity = z.infer<
+  typeof GuildOnboardingPromptOptionEntity
+>;
 
 /**
- * Structure for onboarding prompts
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-onboarding-prompt-structure}
+ * Zod schema for Guild Onboarding Prompt
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#onboarding-prompt-structure}
  */
-export interface GuildOnboardingPromptEntity {
+export const GuildOnboardingPromptEntity = z.object({
   /** ID of the prompt */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Type of prompt */
-  type: GuildOnboardingPromptType;
+  type: z.nativeEnum(GuildOnboardingPromptType),
 
   /** Options available within the prompt */
-  options: GuildOnboardingPromptOptionEntity[];
+  options: z.array(GuildOnboardingPromptOptionEntity),
 
   /** Title of the prompt */
-  title: string;
+  title: z.string(),
 
   /** Whether users can only select one option for the prompt */
-  single_select: boolean;
+  single_select: z.boolean(),
 
-  /** Whether the prompt is required before a user completes onboarding */
-  required: boolean;
+  /** Whether the prompt is required before a user completes the onboarding flow */
+  required: z.boolean(),
 
   /** Whether the prompt is present in the onboarding flow */
-  in_onboarding: boolean;
-}
+  in_onboarding: z.boolean(),
+});
+
+export type GuildOnboardingPromptEntity = z.infer<
+  typeof GuildOnboardingPromptEntity
+>;
 
 /**
- * Structure for guild onboarding
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-onboarding-object-guild-onboarding-structure}
+ * Zod schema for Guild Onboarding
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-onboarding-structure}
  */
-export interface GuildOnboardingEntity {
+export const GuildOnboardingEntity = z.object({
   /** ID of the guild this onboarding is part of */
-  guild_id: Snowflake;
+  guild_id: Snowflake,
 
   /** Prompts shown during onboarding and in customize community */
-  prompts: GuildOnboardingPromptEntity[];
+  prompts: z.array(GuildOnboardingPromptEntity),
 
   /** Channel IDs that members get opted into automatically */
-  default_channel_ids: Snowflake[];
+  default_channel_ids: z.array(Snowflake),
 
   /** Whether onboarding is enabled in the guild */
-  enabled: boolean;
+  enabled: z.boolean(),
 
   /** Current mode of onboarding */
-  mode: GuildOnboardingMode;
-}
+  mode: z.nativeEnum(GuildOnboardingMode),
+});
+
+export type GuildOnboardingEntity = z.infer<typeof GuildOnboardingEntity>;
 
 /**
- * Structure for welcome screen channels
- * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-channel-structure}
+ * Zod schema for Welcome Screen Channel
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#welcome-screen-channel-structure}
  */
-export interface WelcomeScreenChannelEntity {
+export const WelcomeScreenChannelEntity = z.object({
   /** ID of the channel */
-  channel_id: Snowflake;
+  channel_id: Snowflake,
 
   /** Description of the channel shown in the welcome screen */
-  description: string;
+  description: z.string(),
 
   /** ID of the emoji if custom, null otherwise */
-  emoji_id: Snowflake | null;
+  emoji_id: Snowflake.nullable(),
 
   /** Name of the emoji if standard, the unicode character if standard, or null if no emoji is set */
-  emoji_name: string | null;
-}
+  emoji_name: z.string().nullable(),
+});
+
+export type WelcomeScreenChannelEntity = z.infer<
+  typeof WelcomeScreenChannelEntity
+>;
 
 /**
- * Structure for guild welcome screen
- * @see {@link https://discord.com/developers/docs/resources/guild#welcome-screen-object-welcome-screen-structure}
+ * Zod schema for Guild Welcome Screen
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#welcome-screen-structure}
  */
-export interface WelcomeScreenEntity {
+export const WelcomeScreenEntity = z.object({
   /** Guild description shown in the welcome screen */
-  description: string | null;
+  description: z.string().nullable(),
 
   /** Channels shown in the welcome screen, up to 5 */
-  welcome_channels: WelcomeScreenChannelEntity[];
-}
+  welcome_channels: z.array(WelcomeScreenChannelEntity).max(5),
+});
+
+export type WelcomeScreenEntity = z.infer<typeof WelcomeScreenEntity>;
 
 /**
- * Structure for guild bans
- * @see {@link https://discord.com/developers/docs/resources/guild#ban-object-ban-structure}
+ * Zod schema for Guild Ban
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#ban-structure}
  */
-export interface BanEntity {
+export const BanEntity = z.object({
   /** Reason for the ban */
-  reason: string | null;
+  reason: z.string().nullable(),
 
   /** Banned user */
-  user: UserEntity;
-}
+  user: UserEntity,
+});
+
+export type BanEntity = z.infer<typeof BanEntity>;
 
 /**
- * Structure for integration applications
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-application-object-integration-application-structure}
+ * Zod schema for Integration Application
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#integration-application-structure}
  */
-export interface IntegrationApplicationEntity {
+export const IntegrationApplicationEntity = z.object({
   /** ID of the app */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Name of the app */
-  name: string;
+  name: z.string(),
 
   /** Icon hash of the app */
-  icon: string | null;
+  icon: z.string().nullable(),
 
   /** Description of the app */
-  description: string;
+  description: z.string(),
 
   /** Bot associated with this application */
-  bot?: UserEntity;
-}
+  bot: UserEntity.optional(),
+});
+
+export type IntegrationApplicationEntity = z.infer<
+  typeof IntegrationApplicationEntity
+>;
 
 /**
- * Structure for integration accounts
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-account-object-integration-account-structure}
+ * Zod schema for Integration Account
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#integration-account-structure}
  */
-export interface IntegrationAccountEntity {
+export const IntegrationAccountEntity = z.object({
   /** ID of the account */
-  id: string;
+  id: z.string(),
 
   /** Name of the account */
-  name: string;
-}
+  name: z.string(),
+});
+
+export type IntegrationAccountEntity = z.infer<typeof IntegrationAccountEntity>;
 
 /**
- * Structure for guild integrations
- * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure}
+ * Zod schema for Guild Integration
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#integration-structure}
  */
-export interface IntegrationEntity {
+export const IntegrationEntity = z.object({
   /** Integration ID */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Integration name */
-  name: string;
+  name: z.string(),
 
   /** Integration type (twitch, youtube, discord, guild_subscription) */
-  type: "twitch" | "youtube" | "discord" | "guild_subscription";
+  type: z.enum(["twitch", "youtube", "discord", "guild_subscription"]),
 
   /** Is this integration enabled */
-  enabled: boolean;
+  enabled: z.boolean(),
 
   /** Is this integration syncing */
-  syncing?: boolean;
+  syncing: z.boolean().optional(),
 
   /** ID that this integration uses for "subscribers" */
-  role_id?: Snowflake;
+  role_id: Snowflake.optional(),
 
   /** Whether emoticons should be synced for this integration (twitch only currently) */
-  enable_emoticons?: boolean;
+  enable_emoticons: z.boolean().optional(),
 
   /** The behavior of expiring subscribers */
-  expire_behavior?: IntegrationExpirationBehavior;
+  expire_behavior: z.nativeEnum(IntegrationExpirationBehavior).optional(),
 
   /** The grace period (in days) before expiring subscribers */
-  expire_grace_period?: number;
+  expire_grace_period: z.number().int().optional(),
 
   /** User for this integration */
-  user?: UserEntity;
+  user: UserEntity.optional(),
 
   /** Integration account information */
-  account: IntegrationAccountEntity;
+  account: IntegrationAccountEntity,
 
   /** When this integration was last synced */
-  synced_at?: string;
+  synced_at: z.string().optional(),
 
   /** How many subscribers this integration has */
-  subscriber_count?: number;
+  subscriber_count: z.number().int().optional(),
 
   /** Has this integration been revoked */
-  revoked?: boolean;
+  revoked: z.boolean().optional(),
 
   /** The bot/OAuth2 application for discord integrations */
-  application?: IntegrationApplicationEntity;
+  application: IntegrationApplicationEntity.optional(),
 
   /** The scopes the application has been authorized for */
-  scopes?: OAuth2Scope[];
-}
+  scopes: z.array(z.nativeEnum(OAuth2Scope)).optional(),
+});
+
+export type IntegrationEntity = z.infer<typeof IntegrationEntity>;
 
 /**
- * Structure for guild members
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-member-object-guild-member-structure}
+ * Zod schema for Guild Member
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-member-object}
  */
-export interface GuildMemberEntity {
+export const GuildMemberEntity = z.object({
   /** The user this guild member represents */
-  user: UserEntity;
+  user: UserEntity,
 
   /** This user's guild nickname */
-  nick?: string | null;
+  nick: z.string().nullish(),
 
   /** The member's guild avatar hash */
-  avatar?: string | null;
+  avatar: z.string().nullish(),
 
   /** The member's guild banner hash */
-  banner?: string | null;
+  banner: z.string().nullish(),
 
   /** Array of role IDs */
-  roles: Snowflake[];
+  roles: z.array(Snowflake),
 
   /** When the user joined the guild */
-  joined_at: string;
+  joined_at: z.string(),
 
   /** When the user started boosting the guild */
-  premium_since?: string | null;
+  premium_since: z.string().nullish(),
 
   /** Whether the user is deafened in voice channels */
-  deaf: boolean;
+  deaf: z.boolean(),
 
   /** Whether the user is muted in voice channels */
-  mute: boolean;
+  mute: z.boolean(),
 
   /** Guild member flags */
-  flags: GuildMemberFlags;
+  flags: z.nativeEnum(GuildMemberFlags),
 
   /** Whether the user has not yet passed the guild's Membership Screening requirements */
-  pending?: boolean;
+  pending: z.boolean().optional(),
 
   /** Total permissions of the member in the channel, including overwrites */
-  permissions?: string;
+  permissions: z.string().optional(),
 
   /** When the user's timeout will expire and the user will be able to communicate in the guild again */
-  communication_disabled_until?: string | null;
+  communication_disabled_until: z.string().nullish(),
 
   /** Data for the member's guild avatar decoration */
-  avatar_decoration_data?: AvatarDecorationDataEntity | null;
-}
+  avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
+});
+
+export type GuildMemberEntity = z.infer<typeof GuildMemberEntity>;
 
 /**
- * Structure for guild widget settings
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-settings-object-guild-widget-settings-structure}
+ * Zod schema for Guild Widget Settings
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-widget-settings-structure}
  */
-export interface GuildWidgetSettingsEntity {
+export const GuildWidgetSettingsEntity = z.object({
   /** Whether the widget is enabled */
-  enabled: boolean;
+  enabled: z.boolean(),
 
   /** The widget channel ID */
-  channel_id: Snowflake | null;
-}
+  channel_id: Snowflake.nullable(),
+});
+
+export type GuildWidgetSettingsEntity = z.infer<
+  typeof GuildWidgetSettingsEntity
+>;
 
 /**
- * Structure for guild widgets
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-widget-object-guild-widget-structure}
+ * Zod schema for Guild Widget
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-widget-structure}
  */
-export interface GuildWidgetEntity {
+export const GuildWidgetEntity = z.object({
   /** Guild ID */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Guild name */
-  name: string;
+  name: z.string(),
 
   /** Instant invite for the guilds specified widget invite channel */
-  instant_invite: string | null;
+  instant_invite: z.string().nullable(),
 
   /** Voice and stage channels which are accessible by @everyone */
-  channels: Partial<GuildVoiceChannelEntity | GuildStageVoiceChannelEntity>[];
+  channels: z.array(
+    z.union([
+      GuildVoiceChannelEntity.partial(),
+      GuildStageVoiceChannelEntity.partial(),
+    ]),
+  ),
 
   /** Special widget user objects that includes users presence (Limit 100) */
-  members: UserEntity[];
+  members: z.array(UserEntity).max(100),
 
   /** Number of online members in this guild */
-  presence_count: number;
-}
+  presence_count: z.number().int(),
+});
+
+export type GuildWidgetEntity = z.infer<typeof GuildWidgetEntity>;
 
 /**
- * Structure for guild previews
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-preview-object-guild-preview-structure}
+ * Zod schema for Guild Preview
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-preview-structure}
  */
-export interface GuildPreviewEntity {
+export const GuildPreviewEntity = z.object({
   /** Guild ID */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Guild name (2-100 characters) */
-  name: string;
+  name: z.string().min(2).max(100),
 
   /** Icon hash */
-  icon: string | null;
+  icon: z.string().nullable(),
 
   /** Splash hash */
-  splash: string | null;
+  splash: z.string().nullable(),
 
   /** Discovery splash hash */
-  discovery_splash: string | null;
+  discovery_splash: z.string().nullable(),
 
   /** Custom guild emojis */
-  emojis: EmojiEntity[];
+  emojis: z.array(EmojiEntity),
 
   /** Enabled guild features */
-  features: GuildFeature[];
+  features: z.array(z.nativeEnum(GuildFeature)),
 
   /** Approximate number of members in this guild */
-  approximate_member_count: number;
+  approximate_member_count: z.number().int(),
 
   /** Approximate number of online members in this guild */
-  approximate_presence_count: number;
+  approximate_presence_count: z.number().int(),
 
   /** The description of the guild */
-  description: string | null;
+  description: z.string().nullable(),
 
   /** Custom guild stickers */
-  stickers: StickerEntity[];
-}
+  stickers: z.array(StickerEntity),
+});
+
+export type GuildPreviewEntity = z.infer<typeof GuildPreviewEntity>;
 
 /**
- * Structure for unavailable guilds
- * @see {@link https://discord.com/developers/docs/resources/guild#unavailable-guild-object}
+ * Zod schema for Unavailable Guild
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#unavailable-guild-object}
  */
-export interface UnavailableGuildEntity {
+export const UnavailableGuildEntity = z.object({
   /** Guild ID */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Indicates if the guild is unavailable due to an outage */
-  unavailable: true;
-}
+  unavailable: z.literal(true),
+});
+
+export type UnavailableGuildEntity = z.infer<typeof UnavailableGuildEntity>;
 
 /**
- * Structure for incidents data
- * @see {@link https://discord.com/developers/docs/resources/guild#incidents-data-object}
+ * Zod schema for Incidents Data
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#incidents-data-structure}
  */
-export interface IncidentsDataEntity {
+export const IncidentsDataEntity = z.object({
   /** When invites get enabled again */
-  invites_disabled_until: string | null;
+  invites_disabled_until: z.string().nullable(),
 
   /** When direct messages get enabled again */
-  dms_disabled_until: string | null;
+  dms_disabled_until: z.string().nullable(),
 
   /** When the dm spam was detected */
-  dm_spam_detected_at?: string | null;
+  dm_spam_detected_at: z.string().nullish(),
 
   /** When the raid was detected */
-  raid_detected_at?: string | null;
-}
+  raid_detected_at: z.string().nullish(),
+});
+
+export type IncidentsDataEntity = z.infer<typeof IncidentsDataEntity>;
 
 /**
- * Structure for guilds
- * @see {@link https://discord.com/developers/docs/resources/guild#guild-object-guild-structure}
+ * Zod schema for Guild
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/guild.md#guild-structure}
  */
-export interface GuildEntity {
+export const GuildEntity = z.object({
   /** Guild ID */
-  id: Snowflake;
+  id: Snowflake,
 
   /** Guild name (2-100 characters, excluding trailing and leading whitespace) */
-  name: string;
+  name: z
+    .string()
+    .min(2)
+    .max(100)
+    .refine((val) => val.trim().length >= 2, {
+      message: "Guild name must not consist only of whitespace",
+    }),
 
   /** Icon hash */
-  icon: string | null;
+  icon: z.string().nullable(),
 
   /** Icon hash, returned when in the template object */
-  icon_hash?: string | null;
+  icon_hash: z.string().nullish(),
 
   /** Splash hash */
-  splash: string | null;
+  splash: z.string().nullable(),
 
   /** Discovery splash hash */
-  discovery_splash: string | null;
+  discovery_splash: z.string().nullable(),
 
   /** True if the user is the owner of the guild */
-  owner?: boolean;
+  owner: z.boolean().optional(),
 
   /** ID of owner */
-  owner_id: Snowflake;
+  owner_id: Snowflake,
 
   /** Total permissions for the user in the guild (excludes overwrites) */
-  permissions?: string;
+  permissions: z.string().optional(),
 
   /** Voice region id for the guild (deprecated) */
-  region?: string | null;
+  region: z.string().nullish(),
 
   /** ID of AFK channel */
-  afk_channel_id: Snowflake | null;
+  afk_channel_id: Snowflake.nullable(),
 
   /** AFK timeout in seconds */
-  afk_timeout: number;
+  afk_timeout: z.union([
+    z.literal(60),
+    z.literal(300),
+    z.literal(900),
+    z.literal(1800),
+    z.literal(3600),
+  ]),
 
   /** True if the server widget is enabled */
-  widget_enabled?: boolean;
+  widget_enabled: z.boolean().optional(),
 
   /** The channel id that the widget will generate an invite to, or null if set to no invite */
-  widget_channel_id?: string | null;
+  widget_channel_id: Snowflake.nullish(),
 
   /** Verification level required for the guild */
-  verification_level: VerificationLevel;
+  verification_level: z.nativeEnum(VerificationLevel),
 
   /** Default message notifications level */
-  default_message_notifications: DefaultMessageNotificationLevel;
+  default_message_notifications: z.nativeEnum(DefaultMessageNotificationLevel),
 
   /** Explicit content filter level */
-  explicit_content_filter: ExplicitContentFilterLevel;
+  explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel),
 
   /** Roles in the guild */
-  roles: RoleEntity[];
+  roles: z.array(RoleEntity),
 
   /** Custom guild emojis */
-  emojis: EmojiEntity[];
+  emojis: z.array(EmojiEntity),
 
   /** Enabled guild features */
-  features: GuildFeature[];
+  features: z.array(z.nativeEnum(GuildFeature)),
 
   /** Required MFA level for the guild */
-  mfa_level: MfaLevel;
+  mfa_level: z.nativeEnum(MfaLevel),
 
   /** Application ID of the guild creator if it is bot-created */
-  application_id: Snowflake | null;
+  application_id: Snowflake.nullable(),
 
   /** The ID of the channel where guild notices such as welcome messages and boost events are posted */
-  system_channel_id: Snowflake | null;
+  system_channel_id: Snowflake.nullable(),
 
   /** System channel flags */
-  system_channel_flags: SystemChannelFlags;
+  system_channel_flags: z.nativeEnum(SystemChannelFlags),
 
   /** The ID of the channel where Community guilds can display rules and/or guidelines */
-  rules_channel_id: Snowflake | null;
+  rules_channel_id: Snowflake.nullable(),
 
   /** The maximum number of presences for the guild (null is always returned, apart from the largest of guilds) */
-  max_presences?: number | null;
+  max_presences: z.number().int().nullish(),
 
   /** The maximum number of members for the guild */
-  max_members: number;
+  max_members: z.number().int(),
 
   /** The vanity url code for the guild */
-  vanity_url_code: string | null;
+  vanity_url_code: z.string().nullable(),
 
   /** The description of a guild */
-  description: string | null;
+  description: z.string().nullable(),
 
   /** Banner hash */
-  banner: string | null;
+  banner: z.string().nullable(),
 
   /** Premium tier (Server Boost level) */
-  premium_tier: PremiumTier;
+  premium_tier: z.nativeEnum(PremiumTier),
 
   /** The number of boosts this guild currently has */
-  premium_subscription_count?: number;
+  premium_subscription_count: z.number().int().optional(),
 
   /** The preferred locale of a Community guild; used in server discovery and notices from Discord, and sent in interactions */
-  preferred_locale: Locale;
+  preferred_locale: z.nativeEnum(Locale),
 
   /** The ID of the channel where admins and moderators of Community guilds receive notices from Discord */
-  public_updates_channel_id: Snowflake | null;
+  public_updates_channel_id: Snowflake.nullable(),
 
   /** The maximum amount of users in a video channel */
-  max_video_channel_users?: number;
+  max_video_channel_users: z.number().int().optional(),
 
   /** The maximum amount of users in a stage video channel */
-  max_stage_video_channel_users?: number;
+  max_stage_video_channel_users: z.number().int().optional(),
 
   /** Approximate number of members in this guild, returned from the GET /guilds/<id> endpoint when with_counts is true */
-  approximate_member_count?: number;
+  approximate_member_count: z.number().int().optional(),
 
   /** Approximate number of non-offline members in this guild, returned from the GET /guilds/<id> endpoint when with_counts is true */
-  approximate_presence_count?: number;
+  approximate_presence_count: z.number().int().optional(),
 
   /** The welcome screen of a Community guild, shown to new members */
-  welcome_screen?: WelcomeScreenEntity;
+  welcome_screen: WelcomeScreenEntity.optional(),
 
   /** Guild NSFW level */
-  nsfw_level: NsfwLevel;
+  nsfw_level: z.nativeEnum(NsfwLevel),
 
   /** Custom guild stickers */
-  stickers?: StickerEntity[];
+  stickers: z.array(StickerEntity).optional(),
 
   /** Whether the guild has the boost progress bar enabled */
-  premium_progress_bar_enabled: boolean;
+  premium_progress_bar_enabled: z.boolean(),
 
   /** The ID of the channel where admins and moderators of Community guilds receive safety alerts from Discord */
-  safety_alerts_channel_id: Snowflake | null;
+  safety_alerts_channel_id: Snowflake.nullable(),
 
   /** The incidents data for this guild */
-  incidents_data?: IncidentsDataEntity | null;
-}
+  incidents_data: IncidentsDataEntity.nullish(),
+});
+
+export type GuildEntity = z.infer<typeof GuildEntity>;

@@ -1,10 +1,11 @@
-import type { Locale } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
-import type { IntegrationEntity } from "./guild.entity.js";
+import { z } from "zod";
+import { Locale } from "../enums/index.js";
+import { Snowflake } from "../managers/index.js";
+import { IntegrationEntity } from "./guild.entity.js";
 
 /**
  * Represents the visibility options for a user's connection.
- * @see {@link https://discord.com/developers/docs/resources/user#connection-object-visibility-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#connection-object-visibility-types}
  */
 export enum ConnectionVisibility {
   /** Invisible to everyone except the user themselves */
@@ -16,7 +17,7 @@ export enum ConnectionVisibility {
 
 /**
  * Represents the supported external service types for user connections.
- * @see {@link https://discord.com/developers/docs/resources/user#connection-object-services}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#services}
  */
 export enum ConnectionService {
   /** Amazon Music connection */
@@ -100,7 +101,7 @@ export enum ConnectionService {
 
 /**
  * Represents the premium subscription levels a user can have.
- * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#premium-types}
  */
 export enum PremiumType {
   /** User has no Nitro subscription */
@@ -118,7 +119,7 @@ export enum PremiumType {
 
 /**
  * Represents the badges/flags that can be applied to a user account.
- * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#user-flags}
  */
 export enum UserFlags {
   /** Discord Employee */
@@ -169,120 +170,159 @@ export enum UserFlags {
 
 /**
  * Represents the role connection object that an application has attached to a user.
- * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#application-role-connection-object}
  */
-export interface ApplicationRoleConnectionEntity {
+export const ApplicationRoleConnectionEntity = z.object({
   /** The vanity name of the platform a bot has connected (max 50 characters) */
-  platform_name: string | null;
+  platform_name: z.string().max(50).nullable(),
 
   /** The username on the platform a bot has connected (max 100 characters) */
-  platform_username: string | null;
+  platform_username: z.string().max(100).nullable(),
 
   /** Object mapping application role connection metadata keys to their string value (max 100 characters) */
-  metadata: Record<string, string>;
-}
+  metadata: z.record(z.string().max(100)),
+});
+
+export type ApplicationRoleConnectionEntity = z.infer<
+  typeof ApplicationRoleConnectionEntity
+>;
 
 /**
  * Represents a connection that the user has attached to their Discord account.
- * @see {@link https://discord.com/developers/docs/resources/user#connection-object}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#connection-object}
  */
-export interface ConnectionEntity {
+export const ConnectionEntity = z.object({
   /** ID of the connection account */
-  id: string;
+  id: z.string(),
 
   /** The username of the connection account */
-  name: string;
+  name: z.string(),
 
   /** The service of this connection */
-  type: ConnectionService;
+  type: z.nativeEnum(ConnectionService),
 
   /** Whether the connection is revoked */
-  revoked?: boolean;
+  revoked: z.boolean().optional(),
 
   /** An array of partial server integrations */
-  integrations?: Partial<IntegrationEntity>[];
+  integrations: z.array(z.lazy(() => IntegrationEntity.partial())).optional(),
 
   /** Whether the connection is verified */
-  verified: boolean;
+  verified: z.boolean(),
 
   /** Whether friend sync is enabled for this connection */
-  friend_sync: boolean;
+  friend_sync: z.boolean(),
 
   /** Whether activities related to this connection will be shown in presence updates */
-  show_activity: boolean;
+  show_activity: z.boolean(),
 
   /** Whether this connection has a corresponding third party OAuth2 token */
-  two_way_link: boolean;
+  two_way_link: z.boolean(),
 
   /** Visibility of this connection */
-  visibility: ConnectionVisibility;
-}
+  visibility: z.nativeEnum(ConnectionVisibility),
+});
+
+export type ConnectionEntity = z.infer<typeof ConnectionEntity>;
 
 /**
  * Represents the data for a user's avatar decoration.
- * @see {@link https://discord.com/developers/docs/resources/user#avatar-decoration-data-object}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#avatar-decoration-data-object}
  */
-export interface AvatarDecorationDataEntity {
+export const AvatarDecorationDataEntity = z.object({
   /** The avatar decoration hash */
-  asset: string;
+  asset: z.string(),
 
   /** ID of the avatar decoration's SKU */
-  sku_id: Snowflake;
+  sku_id: Snowflake,
+});
+
+export type AvatarDecorationDataEntity = z.infer<
+  typeof AvatarDecorationDataEntity
+>;
+
+/**
+ * Validates a username name according to Discord's requirements.
+ * - Must not contain certain substrings
+ * - Must follow nickname guidelines
+ * - Can be up to 32 characters
+ *
+ * @param username The username to validate
+ * @returns Whether the name is valid
+ */
+export function isValidUsername(username: string): boolean {
+  // Username cannot contain certain substrings
+  const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];
+  const forbiddenNames = ["everyone", "here"];
+
+  // Check for forbidden substrings
+  for (const substring of forbiddenSubstrings) {
+    if (username.includes(substring)) {
+      return false;
+    }
+  }
+
+  // Check if username is a forbidden name
+  return !forbiddenNames.includes(username);
 }
 
 /**
  * Represents a Discord user account.
- * @see {@link https://discord.com/developers/docs/resources/user#user-object}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#user-object}
  */
-export interface UserEntity {
+export const UserEntity = z.object({
   /** The user's ID */
-  id: Snowflake;
+  id: Snowflake,
 
   /** The user's username, not unique across the platform */
-  username: string;
+  username: z.string().min(2).max(32).refine(isValidUsername, {
+    message: "Username contains forbidden characters or is a reserved name",
+  }),
 
   /** The user's Discord-tag (4-digit discriminator) */
-  discriminator: string;
+  discriminator: z.string(),
 
   /** The user's display name, if it is set. For bots, this is the application name */
-  global_name: string | null;
+  global_name: z.string().nullable(),
 
   /** The user's avatar hash */
-  avatar: string | null;
+  avatar: z.string().nullable(),
 
   /** Whether the user belongs to an OAuth2 application */
-  bot?: boolean;
+  bot: z.boolean().optional(),
 
   /** Whether the user is an Official Discord System user */
-  system?: boolean;
+  system: z.boolean().optional(),
 
   /** Whether the user has two-factor authentication enabled */
-  mfa_enabled?: boolean;
+  mfa_enabled: z.boolean().optional(),
 
   /** The user's banner hash */
-  banner?: string | null;
+  banner: z.string().nullish(),
 
   /** The user's banner color encoded as an integer representation of hexadecimal color code */
-  accent_color?: number | null;
+  accent_color: z.number().nullish(),
 
   /** The user's chosen language option */
-  locale?: Locale;
+  locale: z.nativeEnum(Locale).optional(),
 
   /** Whether the email on this account has been verified */
-  verified?: boolean;
+  verified: z.boolean().optional(),
 
   /** The user's email */
-  email?: string | null;
+  email: z.string().email().nullish(),
 
   /** The flags on a user's account */
-  flags?: UserFlags;
+  flags: z.nativeEnum(UserFlags).optional(),
 
   /** The type of Nitro subscription on a user's account */
-  premium_type?: PremiumType;
+  premium_type: z.nativeEnum(PremiumType).optional(),
 
   /** The public flags on a user's account */
-  public_flags?: UserFlags;
+  public_flags: z.nativeEnum(UserFlags).optional(),
 
   /** Data for the user's avatar decoration */
-  avatar_decoration_data?: AvatarDecorationDataEntity | null;
-}
+  avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
+});
+
+export type UserEntity = z.infer<typeof UserEntity>;

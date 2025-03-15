@@ -9,6 +9,10 @@ import type {
   RateLimitScope,
 } from "../types/index.js";
 
+/**
+ * TODO: Changer complement le system de RateLimitManager, eviter de throw des Error et plutot return les data necessaire
+ */
+
 // Regular expressions for route pattern detection
 const WEBHOOK_REGEX = /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/;
 const EMOJI_REGEX = /^\/guilds\/(\d+)\/emojis/;

@@ -1,8 +1,9 @@
-import type { Snowflake } from "../managers/index.js";
+import { z } from "zod";
+import { Snowflake } from "../managers/index.js";
 
 /**
  * Entitlement types representing how a user acquired access to a premium offering
- * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-types}
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/entitlement.md#entitlement-types}
  */
 export enum EntitlementType {
   /** Entitlement was purchased by user */
@@ -31,43 +32,55 @@ export enum EntitlementType {
 }
 
 /**
- * Represents an entitlement that grants a user or guild access to a premium offering in an application
- * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-structure}
+ * Zod schema for Entitlement
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/entitlement.md#entitlement-structure}
  */
-export interface EntitlementEntity {
+export const EntitlementEntity = z.object({
   /** ID of the entitlement */
-  id: Snowflake;
+  id: Snowflake,
 
   /** ID of the SKU */
-  sku_id: Snowflake;
+  sku_id: Snowflake,
 
   /** ID of the parent application */
-  application_id: Snowflake;
+  application_id: Snowflake,
 
   /** ID of the user that is granted access to the entitlement's sku (may be null) */
-  user_id?: Snowflake;
+  user_id: Snowflake.optional(),
 
   /** Type of entitlement */
-  type: EntitlementType;
+  type: z.nativeEnum(EntitlementType),
 
   /** Whether the entitlement was deleted */
-  deleted: boolean;
+  deleted: z.boolean(),
 
   /** Start date at which the entitlement is valid (may be null) */
-  starts_at: string | null;
+  starts_at: z
+    .string()
+    .nullable()
+    .refine((val) => val === null || !Number.isNaN(Date.parse(val)), {
+      message: "starts_at must be a valid ISO8601 timestamp or null",
+    }),
 
   /** Date at which the entitlement is no longer valid (may be null) */
-  ends_at: string | null;
+  ends_at: z
+    .string()
+    .nullable()
+    .refine((val) => val === null || !Number.isNaN(Date.parse(val)), {
+      message: "ends_at must be a valid ISO8601 timestamp or null",
+    }),
 
   /** ID of the guild that is granted access to the entitlement's sku (may be null) */
-  guild_id?: Snowflake;
+  guild_id: Snowflake.optional(),
 
   /** For consumable entitlements, whether or not the entitlement has been consumed */
-  consumed?: boolean;
+  consumed: z.boolean().optional(),
 
   /** ID of the promotion that granted the entitlement (may be null) */
-  promotion_id?: Snowflake | null;
+  promotion_id: Snowflake.nullish(),
 
   /** ID of the subscription that granted the entitlement (may be null) */
-  subscription_id?: Snowflake | null;
-}
+  subscription_id: Snowflake.nullish(),
+});
+
+export type EntitlementEntity = z.infer<typeof EntitlementEntity>;
