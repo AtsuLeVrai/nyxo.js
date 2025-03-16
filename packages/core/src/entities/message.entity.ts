@@ -280,13 +280,13 @@ export type RoleSubscriptionDataEntity = z.infer<
  */
 export const AllowedMentionsEntity = z.object({
   /** An array of allowed mention types to parse from the content */
-  parse: z.array(z.nativeEnum(AllowedMentionType)),
+  parse: z.nativeEnum(AllowedMentionType).array(),
 
   /** Array of role IDs to mention (max 100) */
-  roles: z.array(Snowflake).max(100).optional(),
+  roles: Snowflake.array().max(100).optional(),
 
   /** Array of user IDs to mention (max 100) */
-  users: z.array(Snowflake).max(100).optional(),
+  users: Snowflake.array().max(100).optional(),
 
   /** For replies, whether to mention the author of the message being replied to */
   replied_user: z.boolean().optional(),
@@ -534,7 +534,7 @@ export const EmbedEntity = z.object({
   author: EmbedAuthorEntity.optional(),
 
   /** Fields information (max 25) */
-  fields: z.array(EmbedFieldEntity).max(25).optional(),
+  fields: EmbedFieldEntity.array().max(25).optional(),
 });
 
 export type EmbedEntity = z.infer<typeof EmbedEntity>;
@@ -576,7 +576,7 @@ export const ReactionEntity = z.object({
   emoji: EmojiEntity.partial(),
 
   /** HEX colors used for super reaction */
-  burst_colors: z.array(z.string()).optional(),
+  burst_colors: z.string().array().optional(),
 });
 
 export type ReactionEntity = z.infer<typeof ReactionEntity>;
@@ -610,7 +610,7 @@ export type MessageReferenceEntity = z.infer<typeof MessageReferenceEntity>;
  */
 export const MessageCallEntity = z.object({
   /** Array of user IDs that participated in the call */
-  participants: z.array(Snowflake),
+  participants: Snowflake.array(),
 
   /** Time when the call ended */
   ended_timestamp: z.string().nullable().optional(),
@@ -869,16 +869,16 @@ export const MessageEntity: z.ZodSchema<MessageEntity> = z.lazy(() =>
     mention_everyone: z.boolean(),
 
     /** Users specifically mentioned in the message */
-    mentions: z.array(UserEntity),
+    mentions: UserEntity.array(),
 
     /** Roles specifically mentioned in this message */
-    mention_roles: z.array(Snowflake),
+    mention_roles: Snowflake.array(),
 
     /** Any attached files */
-    attachments: z.array(AttachmentEntity),
+    attachments: AttachmentEntity.array(),
 
     /** Any embedded content */
-    embeds: z.array(EmbedEntity),
+    embeds: EmbedEntity.array(),
 
     /** Whether this message is pinned */
     pinned: z.boolean(),
@@ -887,10 +887,10 @@ export const MessageEntity: z.ZodSchema<MessageEntity> = z.lazy(() =>
     type: z.nativeEnum(MessageType),
 
     /** Channels specifically mentioned in this message */
-    mention_channels: z.array(ChannelMentionEntity).optional(),
+    mention_channels: ChannelMentionEntity.array().optional(),
 
     /** Reactions to the message */
-    reactions: z.array(ReactionEntity).optional(),
+    reactions: ReactionEntity.array().optional(),
 
     /** Used for validating a message was sent */
     nonce: z.union([z.string(), z.number()]).optional(),
@@ -911,13 +911,13 @@ export const MessageEntity: z.ZodSchema<MessageEntity> = z.lazy(() =>
     flags: z.nativeEnum(MessageFlags).optional(),
 
     /** Components in the message (buttons, select menus, etc.) */
-    components: z.array(ActionRowEntity).optional(),
+    components: ActionRowEntity.array().optional(),
 
     /** Sticker items sent with the message */
-    sticker_items: z.array(StickerItemEntity).optional(),
+    sticker_items: StickerItemEntity.array().optional(),
 
     /** @deprecated The stickers sent with the message */
-    stickers: z.array(StickerEntity).optional(),
+    stickers: StickerEntity.array().optional(),
 
     /** Approximate position of the message in a thread */
     position: z.number().optional(),
@@ -950,7 +950,7 @@ export const MessageEntity: z.ZodSchema<MessageEntity> = z.lazy(() =>
     resolved: InteractionResolvedDataEntity.optional(),
 
     /** For messages with type Forward, contains the message snapshots */
-    // message_snapshots: z.array(MessageSnapshotEntity).optional(),
+    // message_snapshots: MessageSnapshotEntity.array().optional(),
 
     /** The message associated with the message_reference */
     referenced_message: MessageEntity.nullable().optional(),

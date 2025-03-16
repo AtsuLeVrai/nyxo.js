@@ -1,61 +1,20 @@
 import {
+  GuildScheduledEventEntityMetadataEntity,
   GuildScheduledEventPrivacyLevel,
-  GuildScheduledEventRecurrenceRuleFrequency,
-  GuildScheduledEventRecurrenceRuleMonth,
-  GuildScheduledEventRecurrenceRuleWeekday,
+  GuildScheduledEventRecurrenceRuleEntity,
   GuildScheduledEventStatus,
   GuildScheduledEventType,
   Snowflake,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { type FileInput, fileHandler } from "../handlers/index.js";
-
-export const GuildScheduledEventEntityMetadataSchema = z.object({
-  location: z.string().min(1).max(100).optional(),
-});
-
-export type GuildScheduledEventEntityMetadataSchema = z.input<
-  typeof GuildScheduledEventEntityMetadataSchema
->;
-
-export const GuildScheduledEventRecurrenceRuleWeekdaySchema = z.object({
-  n: z.number().int().min(1).max(5),
-  day: z.nativeEnum(GuildScheduledEventRecurrenceRuleWeekday),
-});
-
-export type GuildScheduledEventRecurrenceRuleWeekdaySchema = z.input<
-  typeof GuildScheduledEventRecurrenceRuleWeekdaySchema
->;
-
-export const GuildScheduledEventRecurrenceRuleSchema = z.object({
-  start: z.string().datetime(),
-  end: z.string().datetime().nullable(),
-  frequency: z.nativeEnum(GuildScheduledEventRecurrenceRuleFrequency),
-  interval: z.number().int().positive(),
-  by_weekday: z
-    .array(z.nativeEnum(GuildScheduledEventRecurrenceRuleWeekday))
-    .nullable(),
-  by_n_weekday: z
-    .array(GuildScheduledEventRecurrenceRuleWeekdaySchema)
-    .nullable(),
-  by_month: z
-    .array(z.nativeEnum(GuildScheduledEventRecurrenceRuleMonth))
-    .nullable(),
-  by_month_day: z.array(z.number().int().min(1).max(31)).nullable(),
-  by_year_day: z.array(z.number().int().min(1).max(364)).nullable(),
-  count: z.number().int().positive().nullable(),
-});
-
-export type GuildScheduledEventRecurrenceRuleSchema = z.input<
-  typeof GuildScheduledEventRecurrenceRuleSchema
->;
+import { FileHandler, type FileInput } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
  */
 export const CreateGuildScheduledEventSchema = z.object({
   channel_id: Snowflake.optional(),
-  entity_metadata: GuildScheduledEventEntityMetadataSchema.optional(),
+  entity_metadata: GuildScheduledEventEntityMetadataEntity.optional(),
   name: z.string().min(1).max(100),
   privacy_level: z.nativeEnum(GuildScheduledEventPrivacyLevel),
   scheduled_start_time: z.string().datetime(),
@@ -63,10 +22,10 @@ export const CreateGuildScheduledEventSchema = z.object({
   description: z.string().min(1).max(1000).optional(),
   entity_type: z.nativeEnum(GuildScheduledEventType),
   image: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .optional(),
-  recurrence_rule: GuildScheduledEventRecurrenceRuleSchema.optional(),
+  recurrence_rule: GuildScheduledEventRecurrenceRuleEntity.optional(),
 });
 
 export type CreateGuildScheduledEventSchema = z.input<

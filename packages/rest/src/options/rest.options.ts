@@ -1,6 +1,5 @@
 import { ApiVersion, Token, TokenType } from "@nyxjs/core";
 import { z } from "zod";
-import { RateLimitOptions } from "./rate-limit.options.js";
 import { RetryOptions } from "./retry.options.js";
 
 /**
@@ -50,12 +49,6 @@ export const RestOptions = z
      * @default "https://discord.com"
      */
     baseUrl: z.string().url().default("https://discord.com"),
-
-    /**
-     * Rate limit handling configuration
-     * @default {}
-     */
-    rateLimit: RateLimitOptions.default({}),
 
     /**
      * Request retry configuration

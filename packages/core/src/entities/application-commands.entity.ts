@@ -90,6 +90,12 @@ export enum ApplicationCommandEntryPointType {
 }
 
 /**
+ * Regular expression pattern for validating command names
+ */
+export const APPLICATION_COMMAND_NAME_REGEX =
+  /^[-_'\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$/u;
+
+/**
  * Represents a choice for a command option
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Application_Commands.md#application-command-object-application-command-option-choice-structure}
  */
@@ -161,7 +167,7 @@ export const StringOptionEntity = BaseApplicationCommandOptionEntity.extend({
   autocomplete: z.boolean().optional(),
 
   /** Choices for the user to pick from (up to 25) */
-  choices: z.array(ApplicationCommandOptionChoiceEntity).max(25).optional(),
+  choices: ApplicationCommandOptionChoiceEntity.array().max(25).optional(),
 });
 
 export type StringOptionEntity = z.infer<typeof StringOptionEntity>;
@@ -187,7 +193,7 @@ export const IntegerOptionEntity = BaseApplicationCommandOptionEntity.extend({
   autocomplete: z.boolean().optional(),
 
   /** Choices for the user to pick from (up to 25) */
-  choices: z.array(ApplicationCommandOptionChoiceEntity).max(25).optional(),
+  choices: ApplicationCommandOptionChoiceEntity.array().max(25).optional(),
 });
 
 export type IntegerOptionEntity = z.infer<typeof IntegerOptionEntity>;
@@ -213,7 +219,7 @@ export const NumberOptionEntity = BaseApplicationCommandOptionEntity.extend({
   autocomplete: z.boolean().optional(),
 
   /** Choices for the user to pick from (up to 25) */
-  choices: z.array(ApplicationCommandOptionChoiceEntity).max(25).optional(),
+  choices: ApplicationCommandOptionChoiceEntity.array().max(25).optional(),
 });
 
 export type NumberOptionEntity = z.infer<typeof NumberOptionEntity>;
@@ -230,7 +236,7 @@ export const ChannelOptionEntity = BaseApplicationCommandOptionEntity.extend({
   required: z.boolean().optional().default(false),
 
   /** The channel types that will be shown */
-  channel_types: z.array(z.nativeEnum(ChannelType)).optional(),
+  channel_types: z.nativeEnum(ChannelType).array().optional(),
 });
 
 export type ChannelOptionEntity = z.infer<typeof ChannelOptionEntity>;
@@ -340,7 +346,7 @@ export const SubOptionEntity = BaseApplicationCommandOptionEntity.extend({
 
   /** Parameters for this subcommand (up to 25) */
   options: z.lazy(() =>
-    z.array(SimpleApplicationCommandOptionEntity).max(25).optional(),
+    SimpleApplicationCommandOptionEntity.array().max(25).optional(),
   ),
 });
 
@@ -355,7 +361,7 @@ export const SubGroupOptionEntity = BaseApplicationCommandOptionEntity.extend({
   type: z.literal(ApplicationCommandOptionType.SubCommandGroup),
 
   /** Subcommands in this group (up to 25) */
-  options: z.lazy(() => z.array(SubOptionEntity).max(25).optional()),
+  options: z.lazy(() => SubOptionEntity.array().max(25).optional()),
 });
 
 export type SubGroupOptionEntity = z.infer<typeof SubGroupOptionEntity>;
@@ -408,7 +414,7 @@ export const GuildApplicationCommandPermissionEntity = z.object({
   guild_id: Snowflake,
 
   /** Permissions for the command in the guild (max 100) */
-  permissions: z.array(ApplicationCommandPermissionEntity).max(100),
+  permissions: ApplicationCommandPermissionEntity.array().max(100),
 });
 
 export type GuildApplicationCommandPermissionEntity = z.infer<
@@ -462,7 +468,7 @@ export const BaseApplicationCommandEntity = z.object({
     .optional(),
 
   /** Interaction contexts where command can be used */
-  contexts: z.array(z.nativeEnum(InteractionContextType)).optional(),
+  contexts: z.nativeEnum(InteractionContextType).array().optional(),
 
   /** Autoincrementing version identifier */
   version: Snowflake,
@@ -490,7 +496,7 @@ export const ChatInputApplicationCommandEntity =
       .nullish(),
 
     /** Parameters for the command (max of 25) */
-    options: z.array(AnyApplicationCommandOptionEntity).max(25).optional(),
+    options: AnyApplicationCommandOptionEntity.array().max(25).optional(),
   });
 
 export type ChatInputApplicationCommandEntity = z.infer<

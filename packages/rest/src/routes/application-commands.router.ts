@@ -1,9 +1,8 @@
 import type {
-  ApplicationCommandEntity,
+  AnyApplicationCommandEntity,
   GuildApplicationCommandPermissionEntity,
   Snowflake,
 } from "@nyxjs/core";
-import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
 import {
@@ -53,7 +52,7 @@ export class ApplicationCommandRouter {
   getGlobalCommands(
     applicationId: Snowflake,
     withLocalizations = false,
-  ): Promise<ApplicationCommandEntity[]> {
+  ): Promise<AnyApplicationCommandEntity[]> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
       {
@@ -68,7 +67,7 @@ export class ApplicationCommandRouter {
   createGlobalApplicationCommand(
     applicationId: Snowflake,
     options: CreateGlobalApplicationCommandSchema,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<AnyApplicationCommandEntity> {
     const result = CreateGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -88,7 +87,7 @@ export class ApplicationCommandRouter {
   getGlobalApplicationCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<AnyApplicationCommandEntity> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.applicationsCommandsId(
         applicationId,
@@ -104,7 +103,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
     options: EditGlobalApplicationCommandSchema,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<AnyApplicationCommandEntity> {
     const result = EditGlobalApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -140,9 +139,8 @@ export class ApplicationCommandRouter {
   bulkOverwriteGlobalApplicationCommands(
     applicationId: Snowflake,
     commands: CreateGlobalApplicationCommandSchema[],
-  ): Promise<ApplicationCommandEntity[]> {
-    const result = z
-      .array(CreateGlobalApplicationCommandSchema)
+  ): Promise<AnyApplicationCommandEntity[]> {
+    const result = CreateGlobalApplicationCommandSchema.array()
       .max(200)
       .safeParse(commands);
     if (!result.success) {
@@ -164,7 +162,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     withLocalizations = false,
-  ): Promise<ApplicationCommandEntity[]> {
+  ): Promise<AnyApplicationCommandEntity[]> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
         applicationId,
@@ -183,7 +181,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     options: CreateGuildApplicationCommandSchema,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<AnyApplicationCommandEntity> {
     const result = CreateGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -207,7 +205,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<AnyApplicationCommandEntity> {
     return this.#rest.get(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
@@ -225,7 +223,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
     options: EditGuildApplicationCommandSchema,
-  ): Promise<ApplicationCommandEntity> {
+  ): Promise<AnyApplicationCommandEntity> {
     const result = EditGuildApplicationCommandSchema.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
@@ -267,9 +265,8 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commands: CreateGlobalApplicationCommandSchema[],
-  ): Promise<ApplicationCommandEntity[]> {
-    const result = z
-      .array(CreateGlobalApplicationCommandSchema)
+  ): Promise<AnyApplicationCommandEntity[]> {
+    const result = CreateGlobalApplicationCommandSchema.array()
       .max(200)
       .safeParse(commands);
     if (!result.success) {

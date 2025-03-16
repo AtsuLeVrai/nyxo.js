@@ -1,5 +1,3 @@
-import { BaseApiError, type BaseApiErrorContext } from "../base/index.js";
-
 export interface JsonErrorField {
   code: string;
   message: string;
@@ -12,43 +10,54 @@ export interface JsonErrorResponse {
   errors?: Record<string, { _errors: JsonErrorField[] }>;
 }
 
-export interface ApiErrorJson {
-  name: string;
-  message: string;
-  context: BaseApiErrorContext & {
-    code: number;
-    errors?: Record<string, { _errors: JsonErrorField[] }>;
-  };
+export interface ApiErrorContext {
+  statusCode: number;
+  path?: string;
+  method?: string;
+  headers?: Record<string, unknown>;
 }
 
-export class ApiError extends BaseApiError {
+export class ApiError extends Error {
+  readonly requestId: string;
+  readonly statusCode: number;
+  readonly path?: string;
+  readonly method?: string;
+  readonly timestamp: string;
   readonly code: number;
   readonly errors?: Record<string, { _errors: JsonErrorField[] }>;
 
   constructor(
     requestId: string,
-    error: JsonErrorResponse,
-    context: BaseApiErrorContext,
+    jsonError: JsonErrorResponse,
+    context: ApiErrorContext,
   ) {
-    super(error.message, requestId, context);
-    this.code = error.code;
-    this.errors = error.errors;
+    super(jsonError.message);
+    this.name = this.constructor.name;
+    this.requestId = requestId;
+    this.statusCode = context.statusCode;
+    this.path = context.path;
+    this.method = context.method;
+    this.timestamp = new Date().toISOString();
+    this.code = jsonError.code;
+    this.errors = jsonError.errors;
   }
 
-  toJson(): ApiErrorJson {
+  toJson(): Record<string, unknown> {
     return {
       name: this.name,
       message: this.message,
-      context: {
-        ...this.context,
-        code: this.code,
-        errors: this.errors,
-      },
+      requestId: this.requestId,
+      statusCode: this.statusCode,
+      path: this.path,
+      method: this.method,
+      timestamp: this.timestamp,
+      code: this.code,
+      errors: this.errors,
     };
   }
 
   override toString(): string {
-    const baseMessage = super.toString();
+    const baseMessage = `${this.name}: [${this.requestId}] ${this.message} (${this.method} ${this.path})`;
 
     if (!this.errors) {
       return baseMessage;

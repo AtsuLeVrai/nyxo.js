@@ -23,7 +23,7 @@ export const EmojiEntity = z.object({
    * Array of role IDs that can use this emoji
    * @remarks Roles allowed to use this emoji
    */
-  roles: z.array(Snowflake).optional(),
+  roles: Snowflake.array().optional(),
 
   /**
    * The user that created this emoji

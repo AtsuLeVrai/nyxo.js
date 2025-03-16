@@ -257,7 +257,7 @@ export const ChannelEntity = z.object({
   position: z.number().int().optional(),
 
   /** Explicit permission overwrites for members and roles */
-  permission_overwrites: z.array(OverwriteEntity).optional(),
+  permission_overwrites: OverwriteEntity.array().optional(),
 
   /** The name of the channel (1-100 characters) */
   name: z.string().min(1).max(100).nullable().optional(),
@@ -281,7 +281,7 @@ export const ChannelEntity = z.object({
   rate_limit_per_user: z.number().int().optional(),
 
   /** Recipients of the DM */
-  recipients: z.array(UserEntity).optional(),
+  recipients: UserEntity.array().optional(),
 
   /** Icon hash of the group DM */
   icon: z.string().nullable().optional(),
@@ -337,7 +337,7 @@ export const ChannelEntity = z.object({
   available_tags: ForumTagEntity.optional(),
 
   /** IDs of tags applied to a thread in a forum or media channel */
-  applied_tags: z.array(Snowflake).optional(),
+  applied_tags: Snowflake.array().optional(),
 
   /** Default emoji for the add reaction button on threads */
   default_reaction_emoji: DefaultReactionEntity.nullable().optional(),
@@ -398,7 +398,7 @@ export const DmChannelEntity = ChannelEntity.omit({
   available_tags: true,
 }).extend({
   type: z.literal(ChannelType.Dm),
-  recipients: z.array(UserEntity),
+  recipients: UserEntity.array(),
 });
 
 export type DmChannelEntity = z.infer<typeof DmChannelEntity>;
@@ -452,7 +452,7 @@ export const GroupDmChannelEntity = ChannelEntity.omit({
   available_tags: true,
 }).extend({
   type: z.literal(ChannelType.GroupDm),
-  recipients: z.array(UserEntity),
+  recipients: UserEntity.array(),
   owner_id: Snowflake,
 });
 
@@ -680,7 +680,7 @@ export const GuildForumChannelEntity = ChannelEntity.omit({
 }).extend({
   type: z.literal(ChannelType.GuildForum),
   guild_id: Snowflake.optional(),
-  available_tags: z.array(ForumTagEntity),
+  available_tags: ForumTagEntity.array(),
 });
 
 export type GuildForumChannelEntity = z.infer<typeof GuildForumChannelEntity>;
@@ -709,7 +709,7 @@ export const GuildMediaChannelEntity = ChannelEntity.omit({
 }).extend({
   type: z.literal(ChannelType.GuildMedia),
   guild_id: Snowflake.optional(),
-  available_tags: z.array(ForumTagEntity),
+  available_tags: ForumTagEntity.array(),
 });
 
 export type GuildMediaChannelEntity = z.infer<typeof GuildMediaChannelEntity>;

@@ -74,7 +74,7 @@ export enum ApplicationIntegrationType {
  */
 export const InstallParamsEntity = z.object({
   /** Scopes to add the application to the server with */
-  scopes: z.array(z.nativeEnum(OAuth2Scope)),
+  scopes: z.nativeEnum(OAuth2Scope).array(),
 
   /** Permissions to request for the bot role */
   permissions: z.string(),
@@ -116,7 +116,7 @@ export const ApplicationEntity = z.object({
   description: z.string(),
 
   /** List of RPC origin URLs, if RPC is enabled */
-  rpc_origins: z.array(z.string().url()).optional(),
+  rpc_origins: z.string().url().array().optional(),
 
   /** When false, only the app owner can add the app to guilds */
   bot_public: z.boolean(),
@@ -167,7 +167,7 @@ export const ApplicationEntity = z.object({
   approximate_user_install_count: z.number().int().nonnegative().optional(),
 
   /** Array of redirect URIs for the app */
-  redirect_uris: z.array(z.string().url()).optional(),
+  redirect_uris: z.string().url().array().optional(),
 
   /** Interactions endpoint URL for the app */
   interactions_endpoint_url: z.string().url().nullish(),
@@ -182,10 +182,10 @@ export const ApplicationEntity = z.object({
   event_webhooks_status: z.nativeEnum(ApplicationEventWebhookStatus),
 
   /** List of webhook event types the app subscribes to */
-  event_webhooks_types: z.array(z.string()).optional(),
+  event_webhooks_types: z.string().array().optional(),
 
   /** List of tags describing the content and functionality of the app (max 5 tags) */
-  tags: z.array(z.string().max(20)).max(5).optional(),
+  tags: z.string().max(20).array().max(5).optional(),
 
   /** Settings for the app's default in-app authorization link, if enabled */
   install_params: InstallParamsEntity.optional(),

@@ -56,9 +56,12 @@ export const GatewayOptions = z.object({
    */
   intents: z
     .union([
-      z.array(z.nativeEnum(GatewayIntentsBits)).transform((value) => {
-        return BitFieldManager.combine(value).toNumber();
-      }),
+      z
+        .nativeEnum(GatewayIntentsBits)
+        .array()
+        .transform((value) => {
+          return BitFieldManager.combine(value).toNumber();
+        }),
       z.number().int().positive(),
     ])
     .describe("Gateway intents to request"),

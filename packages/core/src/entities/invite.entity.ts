@@ -39,7 +39,7 @@ export enum InviteType {
  */
 export const InviteStageInstanceEntity = z.object({
   /** The members speaking in the Stage */
-  members: z.array(GuildMemberEntity.partial()),
+  members: GuildMemberEntity.partial().array(),
 
   /** The number of users in the Stage */
   participant_count: z.number().int().nonnegative(),

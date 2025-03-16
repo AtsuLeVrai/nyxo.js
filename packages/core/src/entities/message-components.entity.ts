@@ -164,7 +164,7 @@ export const BaseSelectMenuEntity = z.object({
   disabled: z.boolean().optional(),
 
   /** Predefined values for auto-populated select menus */
-  default_values: z.array(SelectMenuDefaultValueEntity).optional(),
+  default_values: SelectMenuDefaultValueEntity.array().optional(),
 });
 
 /**
@@ -175,7 +175,7 @@ export const StringSelectMenuEntity = BaseSelectMenuEntity.extend({
   type: z.literal(ComponentType.StringSelect),
 
   /** Array of select options (max 25) */
-  options: z.array(SelectMenuOptionEntity).min(1).max(25),
+  options: SelectMenuOptionEntity.array().min(1).max(25),
 });
 
 export type StringSelectMenuEntity = z.infer<typeof StringSelectMenuEntity>;
@@ -188,7 +188,7 @@ export const ChannelSelectMenuEntity = BaseSelectMenuEntity.extend({
   type: z.literal(ComponentType.ChannelSelect),
 
   /** Types of channels that can be selected */
-  channel_types: z.array(z.nativeEnum(ChannelType)).optional(),
+  channel_types: z.nativeEnum(ChannelType).array().optional(),
 });
 
 export type ChannelSelectMenuEntity = z.infer<typeof ChannelSelectMenuEntity>;
@@ -329,7 +329,7 @@ export const ActionRowEntity = z
     type: z.literal(ComponentType.ActionRow),
 
     /** Components in this action row (max 5) */
-    components: z.array(AnyComponentEntity).max(5),
+    components: AnyComponentEntity.array().max(5),
   })
   .refine(
     (data) => {

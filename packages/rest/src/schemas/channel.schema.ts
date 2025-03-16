@@ -4,8 +4,11 @@ import {
   type ChannelEntity,
   type ChannelFlags,
   ChannelType,
+  DefaultReactionEntity,
   ForumLayoutType,
+  ForumTagEntity,
   InviteTargetType,
+  OverwriteEntity,
   OverwriteType,
   Snowflake,
   SortOrderType,
@@ -15,33 +18,6 @@ import {
 import { z } from "zod";
 import { CreateMessageSchema } from "./message.schema.js";
 import { CreateGroupDmSchema } from "./user.schema.js";
-
-export const OverwriteSchema = z.object({
-  id: Snowflake,
-  type: z.nativeEnum(OverwriteType),
-  allow: z.string(),
-  deny: z.string(),
-});
-
-export type OverwriteSchema = z.input<typeof OverwriteSchema>;
-
-export const ForumTagSchema = z.object({
-  id: Snowflake,
-  name: z.string().max(20),
-  moderated: z.boolean(),
-  emoji_id: Snowflake.nullable(),
-
-  emoji_name: z.string().nullable(),
-});
-
-export type ForumTagSchema = z.input<typeof ForumTagSchema>;
-
-export const DefaultReactionSchema = z.object({
-  emoji_id: Snowflake.nullable(),
-  emoji_name: z.string().nullable(),
-});
-
-export type DefaultReactionSchema = z.input<typeof DefaultReactionSchema>;
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-group-dm}
@@ -71,7 +47,7 @@ export const ModifyChannelGuildChannelSchema = z.object({
   rate_limit_per_user: z.number().int().min(0).max(21600).optional(),
   bitrate: z.number().int().min(8000).optional(),
   user_limit: z.number().int().min(0).max(99).optional(),
-  permission_overwrites: z.array(OverwriteSchema.partial()).optional(),
+  permission_overwrites: OverwriteEntity.partial().array().optional(),
   parent_id: Snowflake.optional(),
   rtc_region: z.string().optional(),
   video_quality_mode: z.nativeEnum(VideoQualityMode).optional(),
@@ -79,8 +55,8 @@ export const ModifyChannelGuildChannelSchema = z.object({
     .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
     .optional(),
   flags: z.custom<ChannelFlags>(BitFieldManager.isValidBitField),
-  available_tags: z.array(ForumTagSchema).optional(),
-  default_reaction_emoji: DefaultReactionSchema.optional(),
+  available_tags: ForumTagEntity.array().optional(),
+  default_reaction_emoji: DefaultReactionEntity.optional(),
   default_thread_rate_limit_per_user: z.number().int().optional(),
   default_sort_order: z.nativeEnum(SortOrderType).optional(),
   default_forum_layout: z.nativeEnum(ForumLayoutType).optional(),
@@ -103,7 +79,7 @@ export const ModifyChannelThreadSchema = z.object({
   invitable: z.boolean().optional(),
   rate_limit_per_user: z.number().int().max(21600).optional(),
   flags: z.custom<ChannelFlags>(BitFieldManager.isValidBitField).optional(),
-  applied_tags: z.array(Snowflake).optional(),
+  applied_tags: Snowflake.array().optional(),
 });
 
 export type ModifyChannelThreadSchema = z.input<
@@ -214,7 +190,7 @@ export const StartThreadInForumOrMediaChannelSchema = CreateMessageSchema.pick({
     .optional(),
   rate_limit_per_user: z.number().int().max(21600).nullish(),
   message: StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
-  applied_tags: z.array(Snowflake).optional(),
+  applied_tags: Snowflake.array().optional(),
 });
 
 export type StartThreadInForumOrMediaChannelSchema = z.input<

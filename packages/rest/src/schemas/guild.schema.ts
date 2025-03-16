@@ -1,69 +1,26 @@
 import {
   type AnyThreadChannelEntity,
-  BitFieldManager,
   ChannelType,
   DefaultMessageNotificationLevel,
+  DefaultReactionEntity,
   ExplicitContentFilterLevel,
   ForumLayoutType,
+  ForumTagEntity,
   GuildFeature,
   GuildMemberFlags,
   GuildOnboardingMode,
-  type GuildOnboardingPromptEntity,
-  type RoleFlags,
+  GuildOnboardingPromptEntity,
+  OverwriteEntity,
+  RoleEntity,
   Snowflake,
   SortOrderType,
   SystemChannelFlags,
   type ThreadMemberEntity,
   VerificationLevel,
+  WelcomeScreenChannelEntity,
 } from "@nyxjs/core";
 import { z } from "zod";
-import { type FileInput, fileHandler } from "../handlers/index.js";
-import {
-  DefaultReactionSchema,
-  ForumTagSchema,
-  OverwriteSchema,
-} from "./channel.schema.js";
-
-export const RoleTagsSchema = z
-  .object({
-    bot_id: Snowflake.optional(),
-    integration_id: Snowflake.optional(),
-    premium_subscriber: z.null().optional(),
-    subscription_listing_id: Snowflake.optional(),
-    available_for_purchase: z.null().optional(),
-    guild_connections: z.null().optional(),
-  })
-  .partial();
-
-export type RoleTagsSchema = z.input<typeof RoleTagsSchema>;
-
-export const RoleSchema = z.object({
-  id: Snowflake,
-  name: z.string().min(1).max(100),
-  color: z.number().int(),
-  hoist: z.boolean(),
-  icon: z.string().nullable().optional(),
-  unicode_emoji: z.string().nullable().optional(),
-  position: z.number().int(),
-  permissions: z.string(),
-  managed: z.boolean(),
-  mentionable: z.boolean(),
-  tags: RoleTagsSchema.optional(),
-  flags: z.custom<RoleFlags>(BitFieldManager.isValidBitField),
-});
-
-export type RoleSchema = z.input<typeof RoleSchema>;
-
-export const WelcomeScreenChannelSchema = z.object({
-  channel_id: Snowflake,
-  description: z.string(),
-  emoji_id: Snowflake.nullable(),
-  emoji_name: z.string().nullable(),
-});
-
-export type WelcomeScreenChannelSchema = z.input<
-  typeof WelcomeScreenChannelSchema
->;
+import { FileHandler, type FileInput } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
@@ -76,7 +33,7 @@ export const CreateGuildChannelSchema = z.object({
   user_limit: z.number().int().min(0).max(99).optional(),
   rate_limit_per_user: z.number().int().min(0).max(21600).optional(),
   position: z.number().int().optional(),
-  permission_overwrites: z.array(OverwriteSchema.partial()).optional(),
+  permission_overwrites: OverwriteEntity.partial().array().optional(),
   parent_id: Snowflake.optional(),
   nsfw: z.boolean().optional(),
   rtc_region: z.string().optional(),
@@ -84,8 +41,8 @@ export const CreateGuildChannelSchema = z.object({
   default_auto_archive_duration: z
     .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
     .optional(),
-  default_reaction_emoji: DefaultReactionSchema.optional(),
-  available_tags: z.array(ForumTagSchema).optional(),
+  default_reaction_emoji: DefaultReactionEntity.optional(),
+  available_tags: ForumTagEntity.array().optional(),
   default_sort_order: z.nativeEnum(SortOrderType).optional(),
   default_forum_layout: z.nativeEnum(ForumLayoutType).optional(),
   default_thread_rate_limit_per_user: z.number().int().optional(),
@@ -100,16 +57,16 @@ export const CreateGuildSchema = z.object({
   name: z.string().min(2).max(100),
   region: z.string().nullish(),
   icon: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .optional(),
   verification_level: z.nativeEnum(VerificationLevel).optional(),
   default_message_notifications: z
     .nativeEnum(DefaultMessageNotificationLevel)
     .optional(),
   explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel).optional(),
-  roles: z.array(RoleSchema).optional(),
-  channels: z.array(CreateGuildChannelSchema).optional(),
+  roles: RoleEntity.array().optional(),
+  channels: CreateGuildChannelSchema.array().optional(),
   afk_channel_id: Snowflake.optional(),
   afk_timeout: z.number().optional(),
   system_channel_id: Snowflake.optional(),
@@ -133,28 +90,28 @@ export const ModifyGuildSchema = z.object({
   afk_channel_id: Snowflake.nullish(),
   afk_timeout: z.number().optional(),
   icon: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .nullish(),
   owner_id: Snowflake.optional(),
   splash: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .nullish(),
   discovery_splash: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .nullish(),
   banner: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .nullish(),
   system_channel_id: Snowflake.nullish(),
   system_channel_flags: z.nativeEnum(SystemChannelFlags).optional(),
   rules_channel_id: Snowflake.nullish(),
   public_updates_channel_id: Snowflake.nullish(),
   preferred_locale: z.string().optional(),
-  features: z.array(z.nativeEnum(GuildFeature)).optional(),
+  features: z.nativeEnum(GuildFeature).array().optional(),
   description: z.string().nullish(),
   premium_progress_bar_enabled: z.boolean().optional(),
   safety_alerts_channel_id: Snowflake.nullish(),
@@ -165,14 +122,14 @@ export type ModifyGuildSchema = z.input<typeof ModifyGuildSchema>;
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions}
  */
-export const ModifyGuildChannelPositionsSchema = z.array(
-  z.object({
+export const ModifyGuildChannelPositionsSchema = z
+  .object({
     id: Snowflake,
     position: z.number().nullish(),
     lock_permissions: z.boolean().optional(),
     parent_id: Snowflake.nullish(),
-  }),
-);
+  })
+  .array();
 
 export type ModifyGuildChannelPositionsSchema = z.input<
   typeof ModifyGuildChannelPositionsSchema
@@ -216,7 +173,7 @@ export type SearchGuildMembersQuerySchema = z.input<
 export const AddGuildMemberSchema = z.object({
   access_token: z.string(),
   nick: z.string().optional(),
-  roles: z.array(Snowflake).optional(),
+  roles: Snowflake.array().optional(),
   mute: z.boolean().optional(),
   deaf: z.boolean().optional(),
 });
@@ -228,7 +185,7 @@ export type AddGuildMemberSchema = z.input<typeof AddGuildMemberSchema>;
  */
 export const ModifyGuildMemberSchema = z.object({
   nick: z.string().nullish(),
-  roles: z.array(Snowflake).optional(),
+  roles: Snowflake.array().optional(),
   mute: z.boolean().optional(),
   deaf: z.boolean().optional(),
   channel_id: Snowflake.nullish(),
@@ -264,7 +221,7 @@ export type CreateGuildBanSchema = z.input<typeof CreateGuildBanSchema>;
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-json-params}
  */
 export const BulkGuildBanSchema = z.object({
-  user_ids: z.array(Snowflake).max(200),
+  user_ids: Snowflake.array().max(200),
   delete_message_seconds: z.number().min(0).max(604800).default(0),
 });
 
@@ -287,8 +244,8 @@ export const CreateGuildRoleSchema = z.object({
   color: z.number().int().default(0),
   hoist: z.boolean().default(false),
   icon: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .nullable(),
   unicode_emoji: z.string().emoji().optional(),
   mentionable: z.boolean().default(false),
@@ -299,12 +256,12 @@ export type CreateGuildRoleSchema = z.input<typeof CreateGuildRoleSchema>;
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params}
  */
-export const ModifyGuildRolePositionsSchema = z.array(
-  z.object({
+export const ModifyGuildRolePositionsSchema = z
+  .object({
     id: Snowflake,
     position: z.number().int().nullish(),
-  }),
-);
+  })
+  .array();
 
 export type ModifyGuildRolePositionsSchema = z.input<
   typeof ModifyGuildRolePositionsSchema
@@ -335,7 +292,7 @@ export type GetGuildPruneCountQuerySchema = z.input<
 export const BeginGuildPruneSchema = z.object({
   days: z.number().min(1).max(30).default(7),
   compute_prune_count: z.boolean().default(true),
-  include_roles: z.array(Snowflake),
+  include_roles: Snowflake.array(),
   /** @deprecated */
   reason: z.string().optional(),
 });
@@ -369,7 +326,7 @@ export type ModifyGuildWidgetSettingsSchema = z.input<
  */
 export const ModifyGuildWelcomeScreenSchema = z.object({
   enabled: z.boolean().nullish(),
-  welcome_channels: z.array(WelcomeScreenChannelSchema).nullish(),
+  welcome_channels: WelcomeScreenChannelEntity.array().nullish(),
   description: z.string().nullish(),
 });
 
@@ -381,8 +338,8 @@ export type ModifyGuildWelcomeScreenSchema = z.input<
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-onboarding}
  */
 export const ModifyGuildOnboardingSchema = z.object({
-  prompts: z.array(z.custom<GuildOnboardingPromptEntity>()),
-  default_channel_ids: z.array(Snowflake),
+  prompts: GuildOnboardingPromptEntity.array(),
+  default_channel_ids: Snowflake.array(),
   enabled: z.boolean(),
   mode: z.nativeEnum(GuildOnboardingMode),
 });

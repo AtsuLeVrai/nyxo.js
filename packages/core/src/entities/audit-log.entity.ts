@@ -257,15 +257,15 @@ export const AuditLogRoleChangeEntity = z.object({
   key: z.union([z.literal("$add"), z.literal("$remove")]),
 
   /** Array of role objects */
-  new_value: z.array(
-    z.object({
+  new_value: z
+    .object({
       /** Role ID */
       id: z.string(),
 
       /** Role name */
       name: z.string(),
-    }),
-  ),
+    })
+    .array(),
 });
 
 export type AuditLogRoleChangeEntity = z.infer<typeof AuditLogRoleChangeEntity>;
@@ -325,9 +325,9 @@ export const AuditLogEntryEntity = z.object({
   /** Changes made to the target_id */
   changes: z
     .union([
-      z.array(AuditLogChangeEntity),
-      z.array(AuditLogCommandPermissionChangeEntity),
-      z.array(AuditLogRoleChangeEntity),
+      AuditLogChangeEntity.array(),
+      AuditLogCommandPermissionChangeEntity.array(),
+      AuditLogRoleChangeEntity.array(),
     ])
     .optional(),
 
@@ -355,28 +355,28 @@ export type AuditLogEntryEntity = z.infer<typeof AuditLogEntryEntity>;
  */
 export const AuditLogEntity = z.object({
   /** List of application commands referenced in the audit log */
-  application_commands: z.array(AnyApplicationCommandEntity),
+  application_commands: AnyApplicationCommandEntity.array(),
 
   /** List of audit log entries, sorted from most to least recent */
-  audit_log_entries: z.array(AuditLogEntryEntity),
+  audit_log_entries: AuditLogEntryEntity.array(),
 
   /** List of auto moderation rules referenced in the audit log */
-  auto_moderation_rules: z.array(AutoModerationRuleEntity),
+  auto_moderation_rules: AutoModerationRuleEntity.array(),
 
   /** List of scheduled events referenced in the audit log */
-  guild_scheduled_events: z.array(GuildScheduledEventEntity),
+  guild_scheduled_events: GuildScheduledEventEntity.array(),
 
   /** List of partial integration objects */
-  integrations: z.array(IntegrationEntity.partial()),
+  integrations: IntegrationEntity.partial().array(),
 
   /** List of threads referenced in the audit log */
-  threads: z.array(AnyThreadChannelEntity),
+  threads: AnyThreadChannelEntity.array(),
 
   /** List of users referenced in the audit log */
-  users: z.array(UserEntity),
+  users: UserEntity.array(),
 
   /** List of webhooks referenced in the audit log */
-  webhooks: z.array(WebhookEntity),
+  webhooks: WebhookEntity.array(),
 });
 
 export type AuditLogEntity = z.infer<typeof AuditLogEntity>;

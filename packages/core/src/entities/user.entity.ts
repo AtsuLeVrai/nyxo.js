@@ -205,7 +205,10 @@ export const ConnectionEntity = z.object({
   revoked: z.boolean().optional(),
 
   /** An array of partial server integrations */
-  integrations: z.array(z.lazy(() => IntegrationEntity.partial())).optional(),
+  integrations: z
+    .lazy(() => IntegrationEntity.partial())
+    .array()
+    .optional(),
 
   /** Whether the connection is verified */
   verified: z.boolean(),

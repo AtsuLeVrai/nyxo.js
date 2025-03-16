@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nyxjs/bot",
+  "version": "1.0.0-PRIVATE",
+  "description": "Discord bot made with Nyx.js",
+  "readme": "README.md",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AtsuLeVrai/nyx.js",
+    "directory": "packages/gateway"
+  },
+  "bugs": {
+    "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
+  },
+  "author": {
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p .",
+    "check": "biome check --write --unsafe .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/gateway": "workspace:*",
+    "@nyxjs/rest": "workspace:*",
+    "@nyxjs/store": "workspace:*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.13.10",
+    "dotenv": "16.4.7",
+    "tsx": "4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,6 +1,6 @@
 import { Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { type FileInput, fileHandler } from "../handlers/index.js";
+import { FileHandler, type FileInput } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
@@ -8,12 +8,12 @@ import { type FileInput, fileHandler } from "../handlers/index.js";
 export const ModifyCurrentUserSchema = z.object({
   username: z.string().optional(),
   avatar: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .nullish(),
   banner: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .nullish(),
 });
 
@@ -37,7 +37,7 @@ export type GetCurrentUserGuildsQuerySchema = z.input<
  * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params}
  */
 export const CreateGroupDmSchema = z.object({
-  access_tokens: z.array(z.string()).min(2).max(10),
+  access_tokens: z.string().array().min(2).max(10),
   nicks: z.record(Snowflake, z.string()),
 });
 

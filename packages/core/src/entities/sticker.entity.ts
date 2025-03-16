@@ -82,7 +82,7 @@ export const StickerPackEntity = z.object({
   id: Snowflake,
 
   /** The stickers in the pack */
-  stickers: z.array(StickerEntity),
+  stickers: StickerEntity.array(),
 
   /** Name of the sticker pack */
   name: z.string(),

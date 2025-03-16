@@ -112,7 +112,7 @@ export enum GuildScheduledEventStatus {
  * Represents the different types of entities that can be associated with a guild scheduled event.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/Guild_Scheduled_Event.mdx#guild-scheduled-event-entity-types}
  */
-export enum GuildScheduledEventEntityType {
+export enum GuildScheduledEventType {
   /** Event takes place in a stage channel (1) */
   StageInstance = 1,
 
@@ -136,7 +136,7 @@ export enum GuildScheduledEventPrivacyLevel {
  * Represents a specific week day within a specific week for recurrence rules.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/Guild_Scheduled_Event.mdx#guild-scheduled-event-recurrence-rule---n_weekday-structure}
  */
-export const GuildScheduledEventRecurrenceRuleNWeekday = z.object({
+export const GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.object({
   /** The week to reoccur on (1-5) */
   n: z.number().int().min(1).max(5),
 
@@ -144,15 +144,15 @@ export const GuildScheduledEventRecurrenceRuleNWeekday = z.object({
   day: z.nativeEnum(GuildScheduledEventRecurrenceRuleWeekday),
 });
 
-export type GuildScheduledEventRecurrenceRuleNWeekday = z.infer<
-  typeof GuildScheduledEventRecurrenceRuleNWeekday
+export type GuildScheduledEventRecurrenceRuleNWeekdayEntity = z.infer<
+  typeof GuildScheduledEventRecurrenceRuleNWeekdayEntity
 >;
 
 /**
  * Represents the recurrence rule for a guild scheduled event.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/Guild_Scheduled_Event.mdx#guild-scheduled-event-recurrence-rule-object}
  */
-export const GuildScheduledEventRecurrenceRule = z.object({
+export const GuildScheduledEventRecurrenceRuleEntity = z.object({
   /** Starting time of the recurrence interval */
   start: z.string().datetime(),
 
@@ -188,7 +188,7 @@ export const GuildScheduledEventRecurrenceRule = z.object({
 
   /** List of specific days within a specific week (1-5) to recur on */
   by_n_weekday: z
-    .array(GuildScheduledEventRecurrenceRuleNWeekday)
+    .array(GuildScheduledEventRecurrenceRuleNWeekdayEntity)
     .nullable()
     .refine(
       (nWeekdays) => {
@@ -244,21 +244,21 @@ export const GuildScheduledEventRecurrenceRule = z.object({
     ),
 
   /** Set of days within a year to recur on (1-364) */
-  by_year_day: z.array(z.number().int().min(1).max(364)).nullable(),
+  by_year_day: z.number().int().min(1).max(364).array().nullable(),
 
   /** The total number of times the event is allowed to recur before stopping */
   count: z.number().int().positive().nullable(),
 });
 
-export type GuildScheduledEventRecurrenceRule = z.infer<
-  typeof GuildScheduledEventRecurrenceRule
+export type GuildScheduledEventRecurrenceRuleEntity = z.infer<
+  typeof GuildScheduledEventRecurrenceRuleEntity
 >;
 
 /**
  * Represents a user who has subscribed to a guild scheduled event.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/Guild_Scheduled_Event.mdx#guild-scheduled-event-user-object}
  */
-export const GuildScheduledEventUser = z.object({
+export const GuildScheduledEventUserEntity = z.object({
   /** The scheduled event id which the user subscribed to */
   guild_scheduled_event_id: Snowflake,
 
@@ -269,13 +269,15 @@ export const GuildScheduledEventUser = z.object({
   member: GuildMemberEntity.optional(),
 });
 
-export type GuildScheduledEventUser = z.infer<typeof GuildScheduledEventUser>;
+export type GuildScheduledEventUserEntity = z.infer<
+  typeof GuildScheduledEventUserEntity
+>;
 
 /**
  * Represents additional metadata for a guild scheduled event entity.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/Guild_Scheduled_Event.mdx#guild-scheduled-event-entity-metadata}
  */
-export const GuildScheduledEventEntityMetadata = z.object({
+export const GuildScheduledEventEntityMetadataEntity = z.object({
   /**
    * Location of the event (1-100 characters)
    * Required for events with entity_type EXTERNAL
@@ -283,8 +285,8 @@ export const GuildScheduledEventEntityMetadata = z.object({
   location: z.string().min(1).max(100).optional(),
 });
 
-export type GuildScheduledEventEntityMetadata = z.infer<
-  typeof GuildScheduledEventEntityMetadata
+export type GuildScheduledEventEntityMetadataEntity = z.infer<
+  typeof GuildScheduledEventEntityMetadataEntity
 >;
 
 /**
@@ -330,13 +332,13 @@ export const GuildScheduledEventEntity = z
     status: z.nativeEnum(GuildScheduledEventStatus),
 
     /** The type of the scheduled event */
-    entity_type: z.nativeEnum(GuildScheduledEventEntityType),
+    entity_type: z.nativeEnum(GuildScheduledEventType),
 
     /** The id of an entity associated with a guild scheduled event */
     entity_id: Snowflake.nullable(),
 
     /** Additional metadata for the guild scheduled event */
-    entity_metadata: GuildScheduledEventEntityMetadata.nullable(),
+    entity_metadata: GuildScheduledEventEntityMetadataEntity.nullable(),
 
     /** The user that created the scheduled event */
     creator: UserEntity.optional(),
@@ -348,14 +350,14 @@ export const GuildScheduledEventEntity = z
     image: z.string().nullish(),
 
     /** The definition for how often this event should recur */
-    recurrence_rule: GuildScheduledEventRecurrenceRule.nullable(),
+    recurrence_rule: GuildScheduledEventRecurrenceRuleEntity.nullable(),
   })
   .refine(
     (event) => {
       // Field requirements by entity type
       if (
-        event.entity_type === GuildScheduledEventEntityType.StageInstance ||
-        event.entity_type === GuildScheduledEventEntityType.Voice
+        event.entity_type === GuildScheduledEventType.StageInstance ||
+        event.entity_type === GuildScheduledEventType.Voice
       ) {
         // For STAGE_INSTANCE and VOICE, channel_id must be non-null and entity_metadata must be null
         if (event.channel_id === null) {
@@ -364,7 +366,7 @@ export const GuildScheduledEventEntity = z
         if (event.entity_metadata !== null) {
           return false;
         }
-      } else if (event.entity_type === GuildScheduledEventEntityType.External) {
+      } else if (event.entity_type === GuildScheduledEventType.External) {
         // For EXTERNAL, channel_id must be null, entity_metadata must be non-null with location,
         // and scheduled_end_time must be non-null
         if (event.channel_id !== null) {

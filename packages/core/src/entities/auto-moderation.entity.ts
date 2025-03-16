@@ -218,22 +218,28 @@ export const AutoModerationRuleTriggerMetadataEntity = z
   .object({
     /** Substrings which will be searched for in content (Maximum of 1000) */
     keyword_filter: z
-      .array(z.string().max(AutoModerationRuleLimit.MaxKeywordLength))
+      .string()
+      .max(AutoModerationRuleLimit.MaxKeywordLength)
+      .array()
       .max(AutoModerationRuleLimit.MaxKeywordFilter)
       .optional(),
 
     /** Regular expression patterns which will be matched against content (Maximum of 10) */
     regex_patterns: z
-      .array(z.string().max(AutoModerationRuleLimit.MaxRegexLength))
+      .string()
+      .max(AutoModerationRuleLimit.MaxRegexLength)
+      .array()
       .max(AutoModerationRuleLimit.MaxRegexPatterns)
       .optional(),
 
     /** The internally pre-defined wordsets which will be searched for in content */
-    presets: z.array(z.nativeEnum(AutoModerationKeywordPresetType)).optional(),
+    presets: z.nativeEnum(AutoModerationKeywordPresetType).array().optional(),
 
     /** Substrings which should not trigger the rule (Maximum of 100 or 1000 depending on trigger type) */
     allow_list: z
-      .array(z.string().max(AutoModerationRuleLimit.MaxKeywordLength))
+      .string()
+      .max(AutoModerationRuleLimit.MaxKeywordLength)
+      .array()
       .max(AutoModerationRuleLimit.MaxAllowListPreset)
       .optional(),
 
@@ -244,11 +250,12 @@ export const AutoModerationRuleTriggerMetadataEntity = z
     mention_raid_protection_enabled: z.boolean().optional(),
 
     /** Validation results for regex patterns */
-    regex_validation: z.array(AutoModerationRegexMetadataEntity).optional(),
+    regex_validation: AutoModerationRegexMetadataEntity.array().optional(),
 
     /** The type of keyword matching strategy used */
     keyword_match_type: z
-      .array(z.nativeEnum(AutoModerationKeywordMatchType))
+      .nativeEnum(AutoModerationKeywordMatchType)
+      .array()
       .optional(),
   })
   .superRefine((data, ctx) => {
@@ -315,16 +322,16 @@ export const AutoModerationRuleEntity = z
     trigger_metadata: AutoModerationRuleTriggerMetadataEntity,
 
     /** The actions which will execute when the rule is triggered */
-    actions: z.array(AutoModerationActionEntity).min(1).max(3),
+    actions: AutoModerationActionEntity.array().min(1).max(3),
 
     /** Whether the rule is enabled */
     enabled: z.boolean(),
 
     /** The role ids that should not be affected by the rule (Maximum of 20) */
-    exempt_roles: z.array(Snowflake).max(20),
+    exempt_roles: Snowflake.array().max(20),
 
     /** The channel ids that should not be affected by the rule (Maximum of 50) */
-    exempt_channels: z.array(Snowflake).max(50),
+    exempt_channels: Snowflake.array().max(50),
   })
   .superRefine((data, ctx) => {
     // Vérifications supplémentaires basées sur le trigger_type

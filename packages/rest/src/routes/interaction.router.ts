@@ -1,14 +1,15 @@
-import type {
-  InteractionCallbackResponseEntity,
-  MessageEntity,
-  Snowflake,
+import {
+  type InteractionCallbackResponseEntity,
+  InteractionResponseEntity,
+  type MessageEntity,
+  type Snowflake,
 } from "@nyxjs/core";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
 import {
   EditWebhookMessageSchema,
   ExecuteWebhookSchema,
-  InteractionResponseSchema,
 } from "../schemas/index.js";
 
 export class InteractionRouter {
@@ -68,10 +69,10 @@ export class InteractionRouter {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: InteractionResponseSchema,
+    options: z.input<typeof InteractionResponseEntity>,
     withResponse = true,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
-    const result = InteractionResponseSchema.safeParse(options);
+    const result = InteractionResponseEntity.safeParse(options);
     if (!result.success) {
       throw new Error(fromZodError(result.error).message);
     }

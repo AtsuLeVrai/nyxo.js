@@ -27,7 +27,10 @@ export const ShardOptions = z
      * Useful for distributed deployments where different processes handle different shards.
      */
     shardList: z
-      .array(z.number().int().nonnegative())
+      .number()
+      .int()
+      .nonnegative()
+      .array()
       .optional()
       .describe("List of specific shard IDs to spawn"),
 

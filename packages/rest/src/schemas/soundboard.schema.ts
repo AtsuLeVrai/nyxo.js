@@ -1,6 +1,6 @@
 import { Snowflake, type SoundboardSoundEntity } from "@nyxjs/core";
 import { z } from "zod";
-import { type FileInput, fileHandler } from "../handlers/index.js";
+import { FileHandler, type FileInput } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params}
@@ -27,8 +27,8 @@ export interface ListGuildSoundboardSoundsResponseEntity {
 export const CreateGuildSoundboardSoundSchema = z.object({
   name: z.string().min(2).max(32),
   sound: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri),
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri),
   volume: z.number().min(0).max(1).nullish().default(1),
   emoji_id: Snowflake.nullish(),
   emoji_name: z.string().nullish(),

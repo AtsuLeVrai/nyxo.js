@@ -527,7 +527,7 @@ export const ActivityEntity = z.object({
   secrets: ActivitySecretsEntity.optional(),
   instance: z.boolean().optional(),
   flags: z.nativeEnum(ActivityFlags).optional(),
-  buttons: z.array(ActivityButtonsEntity).optional(),
+  buttons: ActivityButtonsEntity.array().optional(),
 });
 
 export type ActivityEntity = z.infer<typeof ActivityEntity>;
@@ -582,7 +582,7 @@ export type UpdatePresenceStatusType = z.infer<typeof UpdatePresenceStatusType>;
  */
 export const UpdatePresenceEntity = z.object({
   since: z.number().nullable(),
-  activities: z.array(ActivityEntity),
+  activities: ActivityEntity.array(),
   status: UpdatePresenceStatusType,
   afk: z.boolean(),
 });
@@ -625,7 +625,7 @@ export const RequestGuildMembersEntity = z.object({
   query: z.string().optional(),
   limit: z.number().int(),
   presences: z.boolean().optional(),
-  user_ids: z.union([Snowflake, z.array(Snowflake)]).optional(),
+  user_ids: z.union([Snowflake, Snowflake.array()]).optional(),
   nonce: z.string().optional(),
 });
 
@@ -637,7 +637,7 @@ export type RequestGuildMembersEntity = z.infer<
  * @see {@link https://discord.com/developers/docs/events/gateway-events#request-soundboard-sounds-request-soundboard-sounds-structure}
  */
 export const RequestSoundboardSoundsEntity = z.object({
-  guild_ids: z.array(Snowflake),
+  guild_ids: Snowflake.array(),
 });
 
 export type RequestSoundboardSoundsEntity = z.infer<

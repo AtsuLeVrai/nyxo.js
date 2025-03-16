@@ -64,7 +64,7 @@ export const TeamEntity = z
     id: Snowflake,
 
     /** The members of the team */
-    members: z.array(TeamMemberEntity),
+    members: TeamMemberEntity.array(),
 
     /** The name of the team */
     name: z.string(),

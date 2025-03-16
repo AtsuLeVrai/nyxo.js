@@ -4,7 +4,7 @@ import { type Dispatcher, Pool } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError, type JsonErrorResponse } from "../errors/index.js";
-import { HeaderHandler, fileHandler } from "../handlers/index.js";
+import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
@@ -41,8 +41,27 @@ import type {
   RestEvents,
 } from "../types/index.js";
 
-/** Regular expression to clean leading slashes from API paths */
-const PATH_REGEX = /^\/+/;
+/**
+ * Constants for REST client
+ */
+const REST_CONSTANTS = {
+  /** Regular expression to clean leading slashes from API paths */
+  PATH_REGEX: /^\/+/,
+
+  /** Default HTTP pool configuration */
+  POOL_CONFIG: {
+    connections: 32,
+    pipelining: 1,
+    connectTimeout: 30000,
+    keepAliveTimeout: 60000,
+    keepAliveMaxTimeout: 300000,
+    headersTimeout: 30000,
+    bodyTimeout: 300000,
+    maxHeaderSize: 16384,
+    allowH2: false,
+    strictContentLength: true,
+  },
+};
 
 /**
  * Main REST client for Discord API
@@ -56,9 +75,6 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /** HTTP connection pool */
   readonly #pool: Pool;
-
-  /** Base headers sent with every request */
-  readonly #baseHeaders: Record<string, string>;
 
   /** Rate limit handler */
   readonly #rateLimiter: RateLimitManager;
@@ -81,30 +97,11 @@ export class Rest extends EventEmitter<RestEvents> {
       throw new Error(fromError(error).message);
     }
 
-    // Initialize base headers for all requests
-    this.#baseHeaders = {
-      authorization: `${this.#options.authType} ${this.#options.token}`,
-      "content-type": "application/json",
-      "x-ratelimit-precision": "millisecond",
-      "user-agent": this.#options.userAgent,
-    };
-
     // Initialize HTTP connection pool
-    this.#pool = new Pool(this.#options.baseUrl, {
-      connections: 32,
-      pipelining: 1,
-      connectTimeout: 30000,
-      keepAliveTimeout: 60000,
-      keepAliveMaxTimeout: 300000,
-      headersTimeout: 30000,
-      bodyTimeout: 300000,
-      maxHeaderSize: 16384,
-      allowH2: false,
-      strictContentLength: true,
-    });
+    this.#pool = new Pool(this.#options.baseUrl, REST_CONSTANTS.POOL_CONFIG);
 
     // Initialize managers
-    this.#rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
+    this.#rateLimiter = new RateLimitManager(this);
     this.#retry = new RetryManager(this, this.#options.retry);
   }
 
@@ -113,7 +110,7 @@ export class Rest extends EventEmitter<RestEvents> {
   }
 
   /**
-   * Access to application-related endpoints
+   * Access to the REST client configuration options
    */
   get applications(): ApplicationRouter {
     return new ApplicationRouter(this);
@@ -300,8 +297,9 @@ export class Rest extends EventEmitter<RestEvents> {
     return this.#retry.execute(
       async () => {
         try {
-          // Check rate limits before making the request
-          this.#rateLimiter.checkRateLimit(
+          // Check rate limits before making the request - using enforceRateLimit
+          // which will throw an error if the rate limit is exceeded
+          this.#rateLimiter.enforceRateLimit(
             options.path,
             options.method,
             requestId,
@@ -329,7 +327,7 @@ export class Rest extends EventEmitter<RestEvents> {
             method: options.method,
             headers: this.#buildRequestHeaders(options),
             statusCode:
-              error instanceof ApiError ? error.context.statusCode : undefined,
+              error instanceof ApiError ? error.statusCode : undefined,
             requestId: requestId,
             duration: 0,
           });
@@ -531,7 +529,7 @@ export class Rest extends EventEmitter<RestEvents> {
       return new URL(`/api/v${this.#options.version}`, this.#options.baseUrl);
     }
 
-    const cleanPath = path.replace(PATH_REGEX, "");
+    const cleanPath = path.replace(REST_CONSTANTS.PATH_REGEX, "");
     return new URL(
       `/api/v${this.#options.version}/${cleanPath}`,
       this.#options.baseUrl,
@@ -546,7 +544,12 @@ export class Rest extends EventEmitter<RestEvents> {
    * @private
    */
   #buildRequestHeaders(options: ApiRequestOptions): Record<string, string> {
-    const headers = { ...this.#baseHeaders };
+    const headers = {
+      authorization: `${this.#options.authType} ${this.#options.token}`,
+      "content-type": "application/json",
+      "x-ratelimit-precision": "millisecond",
+      "user-agent": this.#options.userAgent,
+    };
 
     // Merge in custom headers
     if (options.headers) {
@@ -555,7 +558,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Add audit log reason if provided
     if (options.reason) {
-      headers["x-audit-log-reason"] = encodeURIComponent(options.reason);
+      Object.assign("x-audit-log-reason", encodeURIComponent(options.reason));
     }
 
     return headers;
@@ -578,7 +581,7 @@ export class Rest extends EventEmitter<RestEvents> {
     }
 
     // Create multipart form data
-    const formData = await fileHandler.createFormData(
+    const formData = await FileHandler.createFormData(
       options.files,
       options.body,
     );

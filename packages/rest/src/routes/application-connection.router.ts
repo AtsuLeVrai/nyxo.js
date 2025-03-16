@@ -1,11 +1,10 @@
-import type {
+import {
   ApplicationRoleConnectionMetadataEntity,
-  Snowflake,
+  type Snowflake,
 } from "@nyxjs/core";
-import { z } from "zod";
+import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import { ApplicationRoleConnectionMetadataSchema } from "../schemas/index.js";
 
 export class ApplicationConnectionRouter {
   static readonly ROUTES = {
@@ -37,10 +36,9 @@ export class ApplicationConnectionRouter {
    */
   updateApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
-    metadata: ApplicationRoleConnectionMetadataSchema[],
+    metadata: z.input<typeof ApplicationRoleConnectionMetadataEntity>[],
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    const result = z
-      .array(ApplicationRoleConnectionMetadataSchema)
+    const result = ApplicationRoleConnectionMetadataEntity.array()
       .max(5)
       .safeParse(metadata);
     if (!result.success) {

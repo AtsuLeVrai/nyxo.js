@@ -1,6 +1,5 @@
 export * from "./application.schema.js";
 export * from "./application-commands.schema.js";
-export * from "./application-connection.schema.js";
 export * from "./audit-log.schema.js";
 export * from "./auto-moderation.schema.js";
 export * from "./channel.schema.js";
@@ -9,7 +8,6 @@ export * from "./entitlement.schema.js";
 export * from "./gateway.schema.js";
 export * from "./guild.schema.js";
 export * from "./guild-template.schema.js";
-export * from "./interaction.schema.js";
 export * from "./invite.schema.js";
 export * from "./message.schema.js";
 export * from "./oauth2.schema.js";

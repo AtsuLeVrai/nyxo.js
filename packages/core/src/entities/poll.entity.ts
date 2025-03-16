@@ -41,7 +41,7 @@ export const PollResultsEntity = z.object({
   is_finalized: z.boolean(),
 
   /** The counts for each answer */
-  answer_counts: z.array(PollAnswerCountEntity),
+  answer_counts: PollAnswerCountEntity.array(),
 });
 
 /**
@@ -147,7 +147,7 @@ export const PollEntity = z.object({
   }),
 
   /** Each of the answers available in the poll */
-  answers: z.array(PollAnswerEntity).min(2).max(10),
+  answers: PollAnswerEntity.array().min(2).max(10),
 
   /**
    * The time when the poll ends

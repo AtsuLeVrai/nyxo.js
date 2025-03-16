@@ -1,6 +1,6 @@
 import { type EmojiEntity, Snowflake } from "@nyxjs/core";
 import { z } from "zod";
-import { type FileInput, fileHandler } from "../handlers/index.js";
+import { FileHandler, type FileInput } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params}
@@ -8,9 +8,9 @@ import { type FileInput, fileHandler } from "../handlers/index.js";
 export const CreateGuildEmojiSchema = z.object({
   name: z.string(),
   image: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri),
-  roles: z.array(Snowflake).optional(),
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri),
+  roles: Snowflake.array().optional(),
 });
 
 export type CreateGuildEmojiSchema = z.input<typeof CreateGuildEmojiSchema>;
@@ -20,7 +20,7 @@ export type CreateGuildEmojiSchema = z.input<typeof CreateGuildEmojiSchema>;
  */
 export const ModifyGuildEmojiSchema = z.object({
   name: z.string().optional(),
-  roles: z.array(Snowflake).nullish(),
+  roles: Snowflake.array().nullish(),
 });
 
 export type ModifyGuildEmojiSchema = z.input<typeof ModifyGuildEmojiSchema>;

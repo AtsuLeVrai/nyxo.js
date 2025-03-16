@@ -35,7 +35,7 @@ export enum ApplicationRoleConnectionMetadataType {
  * Zod schema for ApplicationRoleConnectionMetadata
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/application_role_connection_metadata.md#application-role-connection-metadata-structure}
  */
-export const ApplicationRoleConnectionMetadataSchema = z.object({
+export const ApplicationRoleConnectionMetadataEntity = z.object({
   /** Type of metadata value */
   type: z.nativeEnum(ApplicationRoleConnectionMetadataType),
 
@@ -61,5 +61,5 @@ export const ApplicationRoleConnectionMetadataSchema = z.object({
 });
 
 export type ApplicationRoleConnectionMetadataEntity = z.infer<
-  typeof ApplicationRoleConnectionMetadataSchema
+  typeof ApplicationRoleConnectionMetadataEntity
 >;

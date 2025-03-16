@@ -1,13 +1,60 @@
 import { setTimeout } from "node:timers/promises";
+import type { Dispatcher } from "undici";
 import type { Rest } from "../core/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
 import type { RetryOptions } from "../options/index.js";
-import {
-  type HandleError,
-  type RetryContext,
-  RetryReason,
-  type RetryState,
-} from "../types/index.js";
+
+/**
+ * Retry-related constants
+ */
+const RETRY_CONSTANTS = {
+  JITTER_FACTOR: 0.1, // ±10% jitter to prevent thundering herd
+};
+
+/**
+ * Possible reasons for retrying a request
+ */
+export enum RetryReason {
+  RateLimited = "RATE_LIMITED",
+  ServerError = "SERVER_ERROR",
+  NetworkError = "NETWORK_ERROR",
+  Timeout = "TIMEOUT",
+  Unknown = "UNKNOWN",
+}
+
+/**
+ * Context information for a retry operation
+ */
+export interface RetryContext {
+  /** The HTTP method of the request */
+  method: Dispatcher.HttpMethod;
+  /** The API path being requested */
+  path: string;
+}
+
+/**
+ * Result of an error evaluation for retry
+ */
+export interface RetryDecision {
+  /** Whether the operation should be retried */
+  shouldRetry: boolean;
+  /** Time in milliseconds to wait before retrying */
+  timeout: number;
+  /** The reason for retrying */
+  reason?: RetryReason;
+}
+
+/**
+ * State of the current retry operation
+ */
+export interface RetryState {
+  /** Number of retry attempts so far */
+  retryCount: number;
+  /** Unique identifier for the request */
+  requestId?: string;
+  /** Time to wait before retrying from the last error */
+  retryAfter?: number;
+}
 
 /**
  * Manages retry logic for failed API requests
@@ -59,13 +106,13 @@ export class RetryManager {
       try {
         return await operation();
       } catch (error) {
-        const retryDetails = this.#handleError(error, context);
+        const decision = this.evaluateError(error, context);
 
-        if (!retryDetails.shouldRetry) {
+        if (!decision.shouldRetry) {
           throw error;
         }
 
-        await setTimeout(retryDetails.timeout);
+        await setTimeout(decision.timeout);
         this.#state.retryCount++;
       }
     }
@@ -77,68 +124,31 @@ export class RetryManager {
    * @param error - The error that occurred
    * @param context - Context information about the operation
    * @returns Decision about retrying
-   * @private
    */
-  #handleError(error: unknown, context: RetryContext): HandleError {
+  evaluateError(error: unknown, context: RetryContext): RetryDecision {
     // Check if we've exceeded maximum retries
     if (this.#state.retryCount >= this.#options.maxRetries) {
       return { shouldRetry: false, timeout: 0 };
     }
 
     // Check if this method is eligible for retries
-    if (!this.#options.methods.includes(context.method)) {
+    if (!this.#options.methods.has(context.method)) {
       return { shouldRetry: false, timeout: 0 };
     }
 
     // Handle rate limit errors
     if (error instanceof RateLimitError) {
-      const timeout = this.#calculateTimeout(error.retryAfter);
-      this.#state.retryAfter = error.retryAfter;
-
-      this.#emitRetryEvent(error, timeout, context, RetryReason.RateLimited);
-      return {
-        shouldRetry: true,
-        timeout,
-        reason: RetryReason.RateLimited,
-      };
+      return this.#handleRateLimitError(error, context);
     }
 
     // Handle API errors
     if (error instanceof ApiError) {
-      // Check if status code is eligible for retry
-      if (!this.#options.statusCodes.includes(error.context.statusCode)) {
-        return { shouldRetry: false, timeout: 0 };
-      }
-
-      // Handle retry-after header if present
-      if (this.#options.retryAfter && error.context.headers?.["retry-after"]) {
-        const retryAfter = Number(error.context.headers["retry-after"]) * 1000;
-        const timeout = this.#calculateTimeout(retryAfter);
-        const reason = RetryReason.ServerError;
-
-        this.#emitRetryEvent(error, timeout, context, reason);
-        return { shouldRetry: true, timeout, reason };
-      }
-
-      const timeout = this.#calculateTimeout();
-      const reason = RetryReason.ServerError;
-
-      this.#emitRetryEvent(error, timeout, context, reason);
-      return { shouldRetry: true, timeout, reason };
+      return this.#handleApiError(error, context);
     }
 
     // Handle network errors
     if (error instanceof Error) {
-      const errorCode = this.#getErrorCode(error);
-      if (this.#options.errorCodes.includes(errorCode)) {
-        const timeout = this.#calculateTimeout();
-        const reason = errorCode.includes("TIMEOUT")
-          ? RetryReason.Timeout
-          : RetryReason.NetworkError;
-
-        this.#emitRetryEvent(error, timeout, context, reason);
-        return { shouldRetry: true, timeout, reason };
-      }
+      return this.#handleNetworkError(error, context);
     }
 
     return { shouldRetry: false, timeout: 0 };
@@ -149,15 +159,15 @@ export class RetryManager {
    *
    * @param baseTimeout - Base timeout in milliseconds (optional)
    * @returns Calculated timeout with exponential backoff and jitter
-   * @private
    */
-  #calculateTimeout(baseTimeout?: number): number {
+  calculateTimeout(baseTimeout?: number): number {
     const base = baseTimeout ?? this.#options.minTimeout;
     const factor = this.#options.timeoutFactor ** this.#state.retryCount;
     const timeout = base * factor;
 
-    // Add jitter (±10%) to prevent thundering herd problems
-    const jitter = timeout * 0.1 * (Math.random() * 2 - 1);
+    // Add jitter to prevent thundering herd problems
+    const jitter =
+      timeout * RETRY_CONSTANTS.JITTER_FACTOR * (Math.random() * 2 - 1);
 
     return Math.min(
       Math.max(timeout + jitter, this.#options.minTimeout),
@@ -170,14 +180,17 @@ export class RetryManager {
    *
    * @param error - The error to extract a code from
    * @returns A normalized error code string
-   * @private
    */
-  #getErrorCode(error: Error): string {
+  getErrorCode(error: Error): string {
     const message = error.message.toUpperCase();
-    return (
-      this.#options.errorCodes.find((code) => message.includes(code)) ??
-      RetryReason.Unknown
-    );
+
+    for (const code of this.#options.errorCodes) {
+      if (message.includes(code)) {
+        return code;
+      }
+    }
+
+    return RetryReason.Unknown;
   }
 
   /**
@@ -187,9 +200,8 @@ export class RetryManager {
    * @param timeout - The timeout before the next attempt
    * @param context - Context information about the operation
    * @param reason - The categorized reason for the retry
-   * @private
    */
-  #emitRetryEvent(
+  emitRetryEvent(
     error: Error,
     timeout: number,
     context: RetryContext,
@@ -206,5 +218,84 @@ export class RetryManager {
       method: context.method,
       reason: reason.toString(),
     });
+  }
+
+  /**
+   * Handles a rate limit error
+   *
+   * @param error - The rate limit error
+   * @param context - The retry context
+   * @returns Retry decision
+   * @private
+   */
+  #handleRateLimitError(
+    error: RateLimitError,
+    context: RetryContext,
+  ): RetryDecision {
+    const timeout = this.calculateTimeout(error.retryAfter * 1000);
+    this.#state.retryAfter = error.retryAfter;
+
+    this.emitRetryEvent(error, timeout, context, RetryReason.RateLimited);
+
+    return {
+      shouldRetry: true,
+      timeout,
+      reason: RetryReason.RateLimited,
+    };
+  }
+
+  /**
+   * Handles an API error
+   *
+   * @param error - The API error
+   * @param context - The retry context
+   * @returns Retry decision
+   * @private
+   */
+  #handleApiError(error: ApiError, context: RetryContext): RetryDecision {
+    // Check if status code is eligible for retry
+    if (!this.#options.statusCodes.has(error.statusCode)) {
+      return { shouldRetry: false, timeout: 0 };
+    }
+
+    const timeout = this.calculateTimeout();
+    const reason = RetryReason.ServerError;
+
+    this.emitRetryEvent(error, timeout, context, reason);
+
+    return {
+      shouldRetry: true,
+      timeout,
+      reason,
+    };
+  }
+
+  /**
+   * Handles a network error
+   *
+   * @param error - The network error
+   * @param context - The retry context
+   * @returns Retry decision
+   * @private
+   */
+  #handleNetworkError(error: Error, context: RetryContext): RetryDecision {
+    const errorCode = this.getErrorCode(error);
+
+    if (!this.#options.errorCodes.has(errorCode)) {
+      return { shouldRetry: false, timeout: 0 };
+    }
+
+    const timeout = this.calculateTimeout();
+    const reason = errorCode.includes("TIMEOUT")
+      ? RetryReason.Timeout
+      : RetryReason.NetworkError;
+
+    this.emitRetryEvent(error, timeout, context, reason);
+
+    return {
+      shouldRetry: true,
+      timeout,
+      reason,
+    };
   }
 }

@@ -100,13 +100,13 @@ export const SkuEntity = z.object({
   dependent_sku_id: Snowflake.nullable(),
 
   /** Optional manifest labels */
-  manifest_labels: z.array(z.string()).nullable(),
+  manifest_labels: z.string().array().nullable(),
 
   /** Access type for the SKU */
   access_type: z.number().int(),
 
   /** Features for the SKU */
-  features: z.array(z.string()),
+  features: z.string().array(),
 
   /** Optional release date for the SKU */
   release_date: z.string().nullable(),

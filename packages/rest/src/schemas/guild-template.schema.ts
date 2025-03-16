@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type FileInput, fileHandler } from "../handlers/index.js";
+import { FileHandler, type FileInput } from "../handlers/index.js";
 
 /**
  * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template-json-params}
@@ -7,8 +7,8 @@ import { type FileInput, fileHandler } from "../handlers/index.js";
 export const CreateGuildFromGuildTemplateSchema = z.object({
   name: z.string().min(2).max(100),
   icon: z
-    .custom<FileInput>(fileHandler.isValidSingleInput)
-    .transform(fileHandler.toDataUri)
+    .custom<FileInput>(FileHandler.isValidSingleInput)
+    .transform(FileHandler.toDataUri)
     .optional(),
 });
 

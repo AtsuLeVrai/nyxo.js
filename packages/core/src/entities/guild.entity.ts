@@ -301,10 +301,10 @@ export const GuildOnboardingPromptOptionEntity = z.object({
   id: Snowflake,
 
   /** Channel IDs that will be pre-selected for users who select this option */
-  channel_ids: z.array(Snowflake),
+  channel_ids: Snowflake.array(),
 
   /** Role IDs that will be assigned to users who select this option */
-  role_ids: z.array(Snowflake),
+  role_ids: Snowflake.array(),
 
   /** Emoji object for the option */
   emoji: EmojiEntity.optional(),
@@ -341,7 +341,7 @@ export const GuildOnboardingPromptEntity = z.object({
   type: z.nativeEnum(GuildOnboardingPromptType),
 
   /** Options available within the prompt */
-  options: z.array(GuildOnboardingPromptOptionEntity),
+  options: GuildOnboardingPromptOptionEntity.array(),
 
   /** Title of the prompt */
   title: z.string(),
@@ -369,10 +369,10 @@ export const GuildOnboardingEntity = z.object({
   guild_id: Snowflake,
 
   /** Prompts shown during onboarding and in customize community */
-  prompts: z.array(GuildOnboardingPromptEntity),
+  prompts: GuildOnboardingPromptEntity.array(),
 
   /** Channel IDs that members get opted into automatically */
-  default_channel_ids: z.array(Snowflake),
+  default_channel_ids: Snowflake.array(),
 
   /** Whether onboarding is enabled in the guild */
   enabled: z.boolean(),
@@ -414,7 +414,7 @@ export const WelcomeScreenEntity = z.object({
   description: z.string().nullable(),
 
   /** Channels shown in the welcome screen, up to 5 */
-  welcome_channels: z.array(WelcomeScreenChannelEntity).max(5),
+  welcome_channels: WelcomeScreenChannelEntity.array().max(5),
 });
 
 export type WelcomeScreenEntity = z.infer<typeof WelcomeScreenEntity>;
@@ -523,7 +523,7 @@ export const IntegrationEntity = z.object({
   application: IntegrationApplicationEntity.optional(),
 
   /** The scopes the application has been authorized for */
-  scopes: z.array(z.nativeEnum(OAuth2Scope)).optional(),
+  scopes: z.nativeEnum(OAuth2Scope).array().optional(),
 });
 
 export type IntegrationEntity = z.infer<typeof IntegrationEntity>;
@@ -546,7 +546,7 @@ export const GuildMemberEntity = z.object({
   banner: z.string().nullish(),
 
   /** Array of role IDs */
-  roles: z.array(Snowflake),
+  roles: Snowflake.array(),
 
   /** When the user joined the guild */
   joined_at: z.string(),
@@ -609,15 +609,15 @@ export const GuildWidgetEntity = z.object({
   instant_invite: z.string().nullable(),
 
   /** Voice and stage channels which are accessible by @everyone */
-  channels: z.array(
-    z.union([
+  channels: z
+    .union([
       GuildVoiceChannelEntity.partial(),
       GuildStageVoiceChannelEntity.partial(),
-    ]),
-  ),
+    ])
+    .array(),
 
   /** Special widget user objects that includes users presence (Limit 100) */
-  members: z.array(UserEntity).max(100),
+  members: UserEntity.array().max(100),
 
   /** Number of online members in this guild */
   presence_count: z.number().int(),
@@ -646,10 +646,10 @@ export const GuildPreviewEntity = z.object({
   discovery_splash: z.string().nullable(),
 
   /** Custom guild emojis */
-  emojis: z.array(EmojiEntity),
+  emojis: EmojiEntity.array(),
 
   /** Enabled guild features */
-  features: z.array(z.nativeEnum(GuildFeature)),
+  features: z.nativeEnum(GuildFeature).array(),
 
   /** Approximate number of members in this guild */
   approximate_member_count: z.number().int(),
@@ -661,7 +661,7 @@ export const GuildPreviewEntity = z.object({
   description: z.string().nullable(),
 
   /** Custom guild stickers */
-  stickers: z.array(StickerEntity),
+  stickers: StickerEntity.array(),
 });
 
 export type GuildPreviewEntity = z.infer<typeof GuildPreviewEntity>;
@@ -769,13 +769,13 @@ export const GuildEntity = z.object({
   explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel),
 
   /** Roles in the guild */
-  roles: z.array(RoleEntity),
+  roles: RoleEntity.array(),
 
   /** Custom guild emojis */
-  emojis: z.array(EmojiEntity),
+  emojis: EmojiEntity.array(),
 
   /** Enabled guild features */
-  features: z.array(z.nativeEnum(GuildFeature)),
+  features: z.nativeEnum(GuildFeature).array(),
 
   /** Required MFA level for the guild */
   mfa_level: z.nativeEnum(MfaLevel),
@@ -838,7 +838,7 @@ export const GuildEntity = z.object({
   nsfw_level: z.nativeEnum(NsfwLevel),
 
   /** Custom guild stickers */
-  stickers: z.array(StickerEntity).optional(),
+  stickers: StickerEntity.array().optional(),
 
   /** Whether the guild has the boost progress bar enabled */
   premium_progress_bar_enabled: z.boolean(),
