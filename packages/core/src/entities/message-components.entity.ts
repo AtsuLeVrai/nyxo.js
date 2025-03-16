@@ -144,12 +144,27 @@ export const SelectMenuOptionEntity = z.object({
 export type SelectMenuOptionEntity = z.infer<typeof SelectMenuOptionEntity>;
 
 /**
- * Zod schema for base select menu properties
+ * Complete Select Menu Entity with all possible properties
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/message_components.md#select-menu-object}
  */
-export const BaseSelectMenuEntity = z.object({
+export const SelectMenuEntity = z.object({
+  /** Type of select menu component */
+  type: z.union([
+    z.literal(ComponentType.StringSelect),
+    z.literal(ComponentType.UserSelect),
+    z.literal(ComponentType.RoleSelect),
+    z.literal(ComponentType.MentionableSelect),
+    z.literal(ComponentType.ChannelSelect),
+  ]),
+
   /** A developer-defined identifier for the select menu, max 100 characters */
   custom_id: z.string().max(100),
+
+  /** Array of select options (max 25) - only for string select */
+  options: SelectMenuOptionEntity.array().min(1).max(25).optional(),
+
+  /** Types of channels that can be selected - only for channel select */
+  channel_types: z.nativeEnum(ChannelType).array().optional(),
 
   /** Custom placeholder text if nothing is selected, max 150 characters */
   placeholder: z.string().max(150).optional(),
@@ -167,10 +182,14 @@ export const BaseSelectMenuEntity = z.object({
   default_values: SelectMenuDefaultValueEntity.array().optional(),
 });
 
+export type SelectMenuEntity = z.infer<typeof SelectMenuEntity>;
+
 /**
  * Zod schema for string select menu
  */
-export const StringSelectMenuEntity = BaseSelectMenuEntity.extend({
+export const StringSelectMenuEntity = SelectMenuEntity.omit({
+  channel_types: true,
+}).extend({
   /** The type of component - always 3 for a string select menu */
   type: z.literal(ComponentType.StringSelect),
 
@@ -183,12 +202,11 @@ export type StringSelectMenuEntity = z.infer<typeof StringSelectMenuEntity>;
 /**
  * Zod schema for channel select menu
  */
-export const ChannelSelectMenuEntity = BaseSelectMenuEntity.extend({
+export const ChannelSelectMenuEntity = SelectMenuEntity.omit({
+  options: true,
+}).extend({
   /** The type of component - always 8 for a channel select menu */
   type: z.literal(ComponentType.ChannelSelect),
-
-  /** Types of channels that can be selected */
-  channel_types: z.nativeEnum(ChannelType).array().optional(),
 });
 
 export type ChannelSelectMenuEntity = z.infer<typeof ChannelSelectMenuEntity>;
@@ -196,7 +214,10 @@ export type ChannelSelectMenuEntity = z.infer<typeof ChannelSelectMenuEntity>;
 /**
  * Zod schema for user select menu
  */
-export const UserSelectMenuEntity = BaseSelectMenuEntity.extend({
+export const UserSelectMenuEntity = SelectMenuEntity.omit({
+  options: true,
+  channel_types: true,
+}).extend({
   /** The type of component - always 5 for a user select menu */
   type: z.literal(ComponentType.UserSelect),
 });
@@ -206,7 +227,10 @@ export type UserSelectMenuEntity = z.infer<typeof UserSelectMenuEntity>;
 /**
  * Zod schema for role select menu
  */
-export const RoleSelectMenuEntity = BaseSelectMenuEntity.extend({
+export const RoleSelectMenuEntity = SelectMenuEntity.omit({
+  options: true,
+  channel_types: true,
+}).extend({
   /** The type of component - always 6 for a role select menu */
   type: z.literal(ComponentType.RoleSelect),
 });
@@ -216,7 +240,10 @@ export type RoleSelectMenuEntity = z.infer<typeof RoleSelectMenuEntity>;
 /**
  * Zod schema for mentionable select menu
  */
-export const MentionableSelectMenuEntity = BaseSelectMenuEntity.extend({
+export const MentionableSelectMenuEntity = SelectMenuEntity.omit({
+  options: true,
+  channel_types: true,
+}).extend({
   /** The type of component - always 7 for a mentionable select menu */
   type: z.literal(ComponentType.MentionableSelect),
 });

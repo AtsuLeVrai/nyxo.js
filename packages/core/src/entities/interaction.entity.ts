@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { BitwisePermissionFlags, Locale } from "../enums/index.js";
+import { Locale } from "../enums/index.js";
 import { Snowflake } from "../managers/index.js";
 import {
   ApplicationCommandOptionChoiceEntity,
   ApplicationCommandOptionType,
   ApplicationCommandType,
 } from "./application-commands.entity.js";
+import { ApplicationIntegrationType } from "./application.entity.js";
 import { ChannelEntity } from "./channel.entity.js";
 import { EntitlementEntity } from "./entitlement.entity.js";
 import { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
@@ -108,19 +109,34 @@ export type InteractionCallbackActivityInstanceEntity = z.infer<
 >;
 
 /**
- * Base structure for command options
+ * Comprehensive command option entity with all possible properties
+ * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md}
  */
-export const BaseCommandOptionEntity = z.object({
+export const CommandOptionEntity: z.AnyZodObject = z.object({
   /** Name of the parameter */
   name: z.string(),
 
   /** Type of the option */
   type: z.nativeEnum(ApplicationCommandOptionType),
+
+  /** Value of the option resulting from user input */
+  value: z.union([z.string(), z.number(), z.boolean()]).optional(),
+
+  /** Options for this option (for subcommands and groups) */
+  options: z.lazy(() => CommandOptionEntity.array()).optional(),
+
+  /** True if this option is the currently focused option for autocomplete */
+  focused: z.boolean().optional(),
 });
 
-export type BaseCommandOptionEntity = z.infer<typeof BaseCommandOptionEntity>;
+export type CommandOptionEntity = z.infer<typeof CommandOptionEntity>;
 
-export const SimpleCommandOptionEntity = BaseCommandOptionEntity.extend({
+/**
+ * Simple option for basic command parameters
+ */
+export const AnySimpleCommandOptionEntity = CommandOptionEntity.omit({
+  options: true,
+}).extend({
   /** Role option type */
   type: z.union([
     z.literal(3),
@@ -136,24 +152,24 @@ export const SimpleCommandOptionEntity = BaseCommandOptionEntity.extend({
 
   /** Value of the option resulting from user input */
   value: z.union([z.string(), z.number(), z.boolean()]),
-
-  /** True if this option is the currently focused option for autocomplete */
-  focused: z.boolean().optional(),
 });
 
-export type SimpleCommandOptionEntity = z.infer<
-  typeof SimpleCommandOptionEntity
+export type AnySimpleCommandOptionEntity = z.infer<
+  typeof AnySimpleCommandOptionEntity
 >;
 
 /**
  * SubCommand option
  */
-export const SubCommandOptionEntity = BaseCommandOptionEntity.extend({
+export const SubCommandOptionEntity = CommandOptionEntity.omit({
+  value: true,
+  focused: true,
+}).extend({
   /** SubCommand option type */
   type: z.literal(1),
 
   /** Options for this subcommand */
-  options: z.lazy(() => SimpleCommandOptionEntity.array()).optional(),
+  options: z.lazy(() => AnySimpleCommandOptionEntity.array()).optional(),
 });
 
 export type SubCommandOptionEntity = z.infer<typeof SubCommandOptionEntity>;
@@ -161,7 +177,10 @@ export type SubCommandOptionEntity = z.infer<typeof SubCommandOptionEntity>;
 /**
  * SubCommandGroup option
  */
-export const SubCommandGroupOptionEntity = BaseCommandOptionEntity.extend({
+export const SubCommandGroupOptionEntity = CommandOptionEntity.omit({
+  value: true,
+  focused: true,
+}).extend({
   /** SubCommandGroup option type */
   type: z.literal(2),
 
@@ -176,13 +195,13 @@ export type SubCommandGroupOptionEntity = z.infer<
 /**
  * Union of all command options
  */
-export const CommandOptionEntity = z.union([
+export const AnyCommandOptionEntity = z.union([
   SubCommandOptionEntity,
   SubCommandGroupOptionEntity,
-  SimpleCommandOptionEntity,
+  AnySimpleCommandOptionEntity,
 ]);
 
-export type CommandOptionEntity = z.infer<typeof CommandOptionEntity>;
+export type AnyCommandOptionEntity = z.infer<typeof AnyCommandOptionEntity>;
 
 /**
  * Resolved data structure containing detailed Discord objects from an interaction
@@ -247,7 +266,7 @@ export const ApplicationCommandInteractionDataEntity = z.object({
   resolved: InteractionResolvedDataEntity.optional(),
 
   /** Parameters and values from the user */
-  options: CommandOptionEntity.array().optional(),
+  options: AnyCommandOptionEntity.array().optional(),
 
   /** ID of the guild the command is registered to */
   guild_id: Snowflake.optional(),
@@ -488,7 +507,7 @@ export type InteractionResponseEntity = z.infer<
 >;
 
 /**
- * Base Interaction object structure
+ * Complete Interaction object structure with all possible properties
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-object}
  */
 export const InteractionEntity = z.object({
@@ -504,50 +523,53 @@ export const InteractionEntity = z.object({
   /** Interaction data payload */
   data: InteractionDataEntity.optional(),
 
+  /** Guild that the interaction was sent from */
+  guild: GuildEntity.partial().optional(),
+
+  /** Guild ID that the interaction was sent from */
+  guild_id: Snowflake.optional(),
+
+  /** Channel that the interaction was sent from */
+  channel: ChannelEntity.partial().optional(),
+
+  /** Channel ID that the interaction was sent from */
+  channel_id: Snowflake.optional(),
+
+  /** Guild member data for the invoking user, including permissions */
+  member: GuildMemberEntity.optional(),
+
+  /** User object for the invoking user, if invoked in a DM */
+  user: UserEntity.optional(),
+
   /** Continuation token for responding to the interaction */
   token: z.string(),
 
   /** Read-only property, always 1 */
   version: z.literal(1),
 
+  /** For components, the message they were attached to */
+  message: MessageEntity.optional(),
+
   /** Bitwise set of permissions the app has in the source location of the interaction */
-  app_permissions: z.nativeEnum(BitwisePermissionFlags),
+  app_permissions: z.string(), // BitField representation
 
   /** Selected language of the invoking user */
   locale: z.nativeEnum(Locale).optional(),
+
+  /** Guild's preferred locale, if invoked in a guild */
+  guild_locale: z.nativeEnum(Locale).optional(),
 
   /** For monetized apps, any entitlements for the invoking user */
   entitlements: EntitlementEntity.array().optional(),
 
   /** Mapping of installation contexts that the interaction was authorized for */
-  authorizing_integration_owners: z.record(z.string(), Snowflake),
+  authorizing_integration_owners: z.record(
+    z.union([z.nativeEnum(ApplicationIntegrationType), z.string()]),
+    z.union([Snowflake, z.literal("0")]),
+  ),
 
   /** Context where the interaction was triggered from */
   context: z.nativeEnum(InteractionContextType).optional(),
-
-  /** Guild ID that the interaction was sent from */
-  guild_id: Snowflake.optional(),
-
-  /** Guild that the interaction was sent from */
-  guild: GuildEntity.partial().optional(),
-
-  /** Guild member data for the invoking user */
-  member: GuildMemberEntity.optional(),
-
-  /** Channel ID that the interaction was sent from */
-  channel_id: Snowflake.optional(),
-
-  /** Channel that the interaction was sent from */
-  channel: ChannelEntity.partial().optional(),
-
-  /** Guild's preferred locale, if invoked in a guild */
-  guild_locale: z.nativeEnum(Locale).optional(),
-
-  /** For components, the message they were attached to */
-  message: MessageEntity.optional(),
-
-  /** User object for the invoking user */
-  user: UserEntity.optional(),
 });
 
 export type InteractionEntity = z.infer<typeof InteractionEntity>;
@@ -568,12 +590,6 @@ export const GuildInteractionEntity = InteractionEntity.extend({
   /** Guild member data for the invoking user */
   member: GuildMemberEntity,
 
-  /** Channel ID that the interaction was sent from */
-  channel_id: Snowflake.optional(),
-
-  /** Channel that the interaction was sent from */
-  channel: ChannelEntity.partial().optional(),
-
   /** Guild's preferred locale, if invoked in a guild */
   guild_locale: z.nativeEnum(Locale).optional(),
 });
@@ -583,7 +599,12 @@ export type GuildInteractionEntity = z.infer<typeof GuildInteractionEntity>;
 /**
  * Bot DM-specific interaction entity
  */
-export const BotDmInteractionEntity = InteractionEntity.extend({
+export const BotDmInteractionEntity = InteractionEntity.omit({
+  guild: true,
+  guild_id: true,
+  guild_locale: true,
+  member: true,
+}).extend({
   /** Bot DM context identifier */
   context: z.literal(InteractionContextType.BotDm),
 
@@ -602,7 +623,12 @@ export type BotDmInteractionEntity = z.infer<typeof BotDmInteractionEntity>;
 /**
  * Private channel-specific interaction entity
  */
-export const PrivateChannelInteractionEntity = InteractionEntity.extend({
+export const PrivateChannelInteractionEntity = InteractionEntity.omit({
+  guild: true,
+  guild_id: true,
+  guild_locale: true,
+  member: true,
+}).extend({
   /** Private channel context identifier */
   context: z.literal(InteractionContextType.PrivateChannel),
 
@@ -623,7 +649,7 @@ export type PrivateChannelInteractionEntity = z.infer<
 /**
  * Union of all context-specific interaction entities
  */
-export const AnyInteractionEntity = z.union([
+export const AnyInteractionEntity = z.discriminatedUnion("context", [
   GuildInteractionEntity,
   BotDmInteractionEntity,
   PrivateChannelInteractionEntity,

@@ -1,4 +1,5 @@
 import {
+  AutoArchiveDuration,
   BitFieldManager,
   BitwisePermissionFlags,
   type ChannelEntity,
@@ -51,9 +52,7 @@ export const ModifyChannelGuildChannelSchema = z.object({
   parent_id: Snowflake.optional(),
   rtc_region: z.string().optional(),
   video_quality_mode: z.nativeEnum(VideoQualityMode).optional(),
-  default_auto_archive_duration: z
-    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
-    .optional(),
+  default_auto_archive_duration: AutoArchiveDuration.optional(),
   flags: z.custom<ChannelFlags>(BitFieldManager.isValidBitField),
   available_tags: ForumTagEntity.array().optional(),
   default_reaction_emoji: DefaultReactionEntity.optional(),
@@ -72,9 +71,7 @@ export type ModifyChannelGuildChannelSchema = z.input<
 export const ModifyChannelThreadSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   archived: z.boolean().optional(),
-  auto_archive_duration: z
-    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
-    .optional(),
+  auto_archive_duration: AutoArchiveDuration.optional(),
   locked: z.boolean().optional(),
   invitable: z.boolean().optional(),
   rate_limit_per_user: z.number().int().max(21600).optional(),
@@ -130,9 +127,7 @@ export type AddGroupDmRecipientSchema = z.input<
  */
 export const StartThreadFromMessageSchema = z.object({
   name: z.string().min(1).max(100),
-  auto_archive_duration: z
-    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
-    .optional(),
+  auto_archive_duration: AutoArchiveDuration.optional(),
   rate_limit_per_user: z.number().int().max(21600).nullish(),
 });
 
@@ -185,9 +180,7 @@ export const StartThreadInForumOrMediaChannelSchema = CreateMessageSchema.pick({
   payload_json: true,
 }).extend({
   name: z.string().min(1).max(100),
-  auto_archive_duration: z
-    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
-    .optional(),
+  auto_archive_duration: AutoArchiveDuration.optional(),
   rate_limit_per_user: z.number().int().max(21600).nullish(),
   message: StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
   applied_tags: Snowflake.array().optional(),

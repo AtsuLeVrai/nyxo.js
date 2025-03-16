@@ -1,5 +1,6 @@
 import {
   type AnyThreadChannelEntity,
+  AutoArchiveDuration,
   ChannelType,
   DefaultMessageNotificationLevel,
   DefaultReactionEntity,
@@ -38,9 +39,7 @@ export const CreateGuildChannelSchema = z.object({
   nsfw: z.boolean().optional(),
   rtc_region: z.string().optional(),
   video_quality_mode: z.number().int().optional(),
-  default_auto_archive_duration: z
-    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
-    .optional(),
+  default_auto_archive_duration: AutoArchiveDuration.optional(),
   default_reaction_emoji: DefaultReactionEntity.optional(),
   available_tags: ForumTagEntity.array().optional(),
   default_sort_order: z.nativeEnum(SortOrderType).optional(),

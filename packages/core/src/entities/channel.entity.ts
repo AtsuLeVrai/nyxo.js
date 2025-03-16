@@ -152,6 +152,18 @@ export const DefaultReactionEntity = z.object({
 export type DefaultReactionEntity = z.infer<typeof DefaultReactionEntity>;
 
 /**
+ * Union of all auto-archive durations
+ */
+export const AutoArchiveDuration = z.union([
+  z.literal(60),
+  z.literal(1440),
+  z.literal(4320),
+  z.literal(10080),
+]);
+
+export type AutoArchiveDuration = z.infer<typeof AutoArchiveDuration>;
+
+/**
  * Thread-specific metadata
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/channel.md#thread-metadata-object}
  */
@@ -160,12 +172,7 @@ export const ThreadMetadataEntity = z.object({
   archived: z.boolean(),
 
   /** Duration in minutes to automatically archive the thread after inactivity */
-  auto_archive_duration: z.union([
-    z.literal(60),
-    z.literal(1440),
-    z.literal(4320),
-    z.literal(10080),
-  ]),
+  auto_archive_duration: AutoArchiveDuration,
 
   /** Timestamp when the thread's archive status was last changed */
   archive_timestamp: z.string(),
@@ -320,9 +327,7 @@ export const ChannelEntity = z.object({
   member: ThreadMemberEntity.optional(),
 
   /** Default auto archive duration for newly created threads */
-  default_auto_archive_duration: z
-    .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080)])
-    .optional(),
+  default_auto_archive_duration: AutoArchiveDuration.optional(),
 
   /** Computed permissions for the invoking user in the channel */
   permissions: z.string().optional(),

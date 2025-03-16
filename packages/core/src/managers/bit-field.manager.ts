@@ -1,3 +1,42 @@
+import { z } from "zod";
+import { fromError, fromZodError } from "zod-validation-error";
+
+/** The maximum value a 64-bit bitfield can hold (2^64 - 1) */
+const MAX_BIT_VALUE = (1n << 64n) - 1n;
+
+/**
+ * Zod schema for a BitField value. Can validate strings, numbers, and bigints as valid bit fields.
+ */
+export const BitField = z.union([
+  z.bigint().refine((value) => value >= 0n && value <= MAX_BIT_VALUE, {
+    message: "BitField value must be a non-negative bigint within 64-bit range",
+  }),
+  z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  z.string().refine(
+    (value) => {
+      try {
+        const bigintValue = BigInt(value);
+        return bigintValue >= 0n && bigintValue <= MAX_BIT_VALUE;
+      } catch {
+        return false;
+      }
+    },
+    {
+      message: "BitField string must be convertible to a valid bigint",
+    },
+  ),
+]);
+
+/**
+ * Type definition for a validated BitField
+ */
+export type BitField = z.infer<typeof BitField>;
+
+/**
+ * Zod schema for all BitField-resolvable values
+ */
+export const BitFieldResolvable = z.union([BitField, BitField.array()]);
+
 /**
  * Represents a value that can be resolved to a bitfield.
  *
@@ -11,29 +50,9 @@
  * @template T - The custom type that can be resolved to bits
  */
 export type BitFieldResolvable<T = unknown> =
-  | bigint
-  | number
-  | string
+  | BitField
   | T
   | BitFieldResolvable<T>[];
-
-/** The maximum value a 64-bit bitfield can hold (2^64 - 1) */
-const MAX_BIT_VALUE = (1n << 64n) - 1n;
-
-/**
- * Validates and normalizes a bigint value to ensure it's within valid bitfield range.
- *
- * @param value - The bigint value to validate
- * @returns The validated and masked bigint value
- * @throws {RangeError} If the value is negative
- */
-function validateBigInt(value: bigint): bigint {
-  if (value < 0n) {
-    throw new RangeError("BitField values cannot be negative");
-  }
-
-  return value & MAX_BIT_VALUE;
-}
 
 /**
  * A utility class for managing bitfields with type safety.
@@ -85,6 +104,33 @@ export class BitFieldManager<T> {
   }
 
   /**
+   * Safely validates and converts a value to a bigint using the BitField schema
+   *
+   * @param value - The value to validate and convert
+   * @returns The validated bigint value
+   * @throws {Error} If the value is invalid
+   */
+  static safeBigInt(value: unknown): bigint {
+    try {
+      if (typeof value === "bigint") {
+        const result = BitField.parse(value);
+        return BigInt(result);
+      }
+      if (typeof value === "number" || typeof value === "string") {
+        const result = BitField.parse(value);
+        return BigInt(result);
+      }
+
+      throw new Error("Value must be a bigint, number, or string");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(`Invalid BitField: ${fromZodError(error).message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Resolves a set of input values to a single bigint representing the combined bits.
    *
    * @template F - The type of values to resolve
@@ -100,25 +146,22 @@ export class BitFieldManager<T> {
 
       // Handle bigint values
       if (typeof bit === "bigint") {
-        return acc | validateBigInt(bit);
+        return acc | BitFieldManager.safeBigInt(bit);
       }
 
       // Handle number values
       if (typeof bit === "number") {
-        if (
-          !Number.isInteger(bit) ||
-          bit < 0 ||
-          bit > Number.MAX_SAFE_INTEGER
-        ) {
+        try {
+          return acc | BigInt(BitField.parse(bit));
+        } catch (_error) {
           throw new RangeError("Invalid number value for BitField resolution");
         }
-        return acc | BigInt(bit);
       }
 
       // Handle string values (parsing to bigint)
       if (typeof bit === "string") {
         try {
-          return acc | validateBigInt(BigInt(bit));
+          return acc | BitFieldManager.safeBigInt(bit);
         } catch {
           throw new Error(
             `Could not resolve string "${bit}" to a BitField value`,
@@ -134,7 +177,9 @@ export class BitFieldManager<T> {
       // Handle any other value (likely a custom flag type)
       try {
         // Try to use the value directly, assuming it can be converted to a bigint somehow
-        return acc | validateBigInt(BigInt(bit as unknown as number));
+        return (
+          acc | BitFieldManager.safeBigInt(BigInt(bit as unknown as number))
+        );
       } catch {
         throw new TypeError(
           `Could not resolve ${String(bit)} to a BitField value`,
@@ -144,43 +189,13 @@ export class BitFieldManager<T> {
   }
 
   /**
-   * Checks if a value is a valid bitfield.
+   * Checks if a value is a valid bitfield using Zod schema validation.
    *
    * @param value - The value to check
    * @returns Whether the value can be safely used as a bitfield
    */
-  static isValidBitField(value: unknown): boolean {
-    // Handle bigint values
-    if (typeof value === "bigint") {
-      return value >= 0n && value <= MAX_BIT_VALUE;
-    }
-
-    // Handle number values
-    if (typeof value === "number") {
-      return (
-        Number.isInteger(value) &&
-        value >= 0 &&
-        value <= Number.MAX_SAFE_INTEGER
-      );
-    }
-
-    // Handle string values
-    if (typeof value === "string") {
-      try {
-        const bigintValue = BigInt(value);
-        return bigintValue >= 0n && bigintValue <= MAX_BIT_VALUE;
-      } catch {
-        return false;
-      }
-    }
-
-    // Handle array values recursively
-    if (Array.isArray(value)) {
-      return value.every((item) => BitFieldManager.isValidBitField(item));
-    }
-
-    // Any other value type is not directly valid
-    return false;
+  static isValidBitField(value: unknown): value is BitField {
+    return BitFieldResolvable.safeParse(value).success;
   }
 
   /**
@@ -250,6 +265,12 @@ export class BitFieldManager<T> {
    */
   static deserialize<F>(value: string): BitFieldManager<F> {
     try {
+      const parsed = BitField.safeParse(value);
+      if (!parsed.success) {
+        throw new Error(
+          `Invalid serialized BitField: ${fromError(parsed.error).message}`,
+        );
+      }
       return new BitFieldManager<F>(BigInt(value));
     } catch (error) {
       throw new Error("Invalid serialized BitField", { cause: error });
@@ -326,9 +347,8 @@ export class BitFieldManager<T> {
    * @returns This instance for chaining
    */
   add(...flags: BitFieldResolvable<T>[]): this {
-    this.#bitfield = validateBigInt(
-      this.#bitfield | BitFieldManager.resolve<T>(...flags),
-    );
+    const newValue = this.#bitfield | BitFieldManager.resolve<T>(...flags);
+    this.#bitfield = BigInt(BitField.parse(newValue));
     return this;
   }
 
@@ -339,9 +359,8 @@ export class BitFieldManager<T> {
    * @returns This instance for chaining
    */
   remove(...flags: BitFieldResolvable<T>[]): this {
-    this.#bitfield = validateBigInt(
-      this.#bitfield & ~BitFieldManager.resolve<T>(...flags),
-    );
+    const newValue = this.#bitfield & ~BitFieldManager.resolve<T>(...flags);
+    this.#bitfield = BigInt(BitField.parse(newValue));
     return this;
   }
 
@@ -352,9 +371,8 @@ export class BitFieldManager<T> {
    * @returns This instance for chaining
    */
   toggle(...flags: BitFieldResolvable<T>[]): this {
-    this.#bitfield = validateBigInt(
-      this.#bitfield ^ BitFieldManager.resolve<T>(...flags),
-    );
+    const newValue = this.#bitfield ^ BitFieldManager.resolve<T>(...flags);
+    this.#bitfield = BigInt(BitField.parse(newValue));
     return this;
   }
 
@@ -365,7 +383,8 @@ export class BitFieldManager<T> {
    * @returns This instance for chaining
    */
   set(...flags: BitFieldResolvable<T>[]): this {
-    this.#bitfield = validateBigInt(BitFieldManager.resolve<T>(...flags));
+    const newValue = BitFieldManager.resolve<T>(...flags);
+    this.#bitfield = BigInt(BitField.parse(newValue));
     return this;
   }
 
@@ -624,7 +643,8 @@ export class BitFieldManager<T> {
     }
 
     const mask = ((1n << BigInt(end - start)) - 1n) << BigInt(start);
-    return new BitFieldManager<T>(this.#bitfield & mask);
+    const newValue = this.#bitfield & mask;
+    return new BitFieldManager<T>(BitField.parse(newValue));
   }
 
   /**
@@ -639,7 +659,8 @@ export class BitFieldManager<T> {
       throw new RangeError("Bit position must be between 0 and 63");
     }
 
-    this.#bitfield |= 1n << BigInt(position);
+    const newValue = this.#bitfield | (1n << BigInt(position));
+    this.#bitfield = BigInt(BitField.parse(newValue));
     return this;
   }
 
@@ -655,7 +676,8 @@ export class BitFieldManager<T> {
       throw new RangeError("Bit position must be between 0 and 63");
     }
 
-    this.#bitfield &= ~(1n << BigInt(position));
+    const newValue = this.#bitfield & ~(1n << BigInt(position));
+    this.#bitfield = BigInt(BitField.parse(newValue));
     return this;
   }
 
@@ -671,7 +693,8 @@ export class BitFieldManager<T> {
       throw new RangeError("Bit position must be between 0 and 63");
     }
 
-    this.#bitfield ^= 1n << BigInt(position);
+    const newValue = this.#bitfield ^ (1n << BigInt(position));
+    this.#bitfield = BigInt(BitField.parse(newValue));
     return this;
   }
 
@@ -720,7 +743,9 @@ export class BitFieldManager<T> {
       const bit1 = (this.#bitfield >> BigInt(pos1)) & 1n;
       const bit2 = (this.#bitfield >> BigInt(pos2)) & 1n;
       if (bit1 !== bit2) {
-        this.#bitfield ^= (1n << BigInt(pos1)) | (1n << BigInt(pos2));
+        const newValue =
+          this.#bitfield ^ ((1n << BigInt(pos1)) | (1n << BigInt(pos2)));
+        this.#bitfield = BigInt(BitField.parse(newValue));
       }
     }
     return this;

@@ -2,19 +2,79 @@ import { readFileSync } from "node:fs";
 import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
-import commonjs from "@rollup/plugin-commonjs";
-import nodeResolve from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
 import figures from "figures";
 import prettyBytes from "pretty-bytes";
-import { rollup } from "rollup";
-import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
+import { rolldown } from "rolldown";
 import ts from "typescript";
 
-// Define build mode (production or development)
-const isProduction = process.env.NODE_ENV === "production";
+/**
+ * @typedef {Object} PackageJson
+ * @property {string} name
+ * @property {string} version
+ * @property {Record<string, string>} [dependencies]
+ * @property {Record<string, string>} [peerDependencies]
+ */
+
+/**
+ * @typedef {Object} BuildPaths
+ * @property {string} root
+ * @property {string} src
+ * @property {string} dist
+ * @property {string} temp
+ * @property {string} tsconfig
+ * @property {string} package
+ */
+
+/**
+ * @typedef {Object} LoggingTheme
+ * @property {Function} primary
+ * @property {Function} secondary
+ * @property {Function} success
+ * @property {Function} error
+ * @property {Function} warning
+ * @property {Function} info
+ * @property {Function} highlight
+ * @property {Function} dim
+ * @property {Function} white
+ * @property {Function} time
+ */
+
+/**
+ * @typedef {Object} LoggingSymbols
+ * @property {string} start
+ * @property {string} success
+ * @property {string} error
+ * @property {string} warning
+ * @property {string} info
+ * @property {string} debug
+ * @property {string} pending
+ * @property {string} complete
+ * @property {string} dot
+ * @property {string} step
+ */
+
+/** @type {boolean} */
+const isProduction = process.NODE_ENV === "production";
+
+// Initialize paths
+const root = process.cwd();
+
+/**
+ * Creates path objects for the build process
+ * @type {BuildPaths}
+ */
+const paths = {
+  root,
+  src: resolve(root, "src"),
+  dist: resolve(root, "dist"),
+  temp: resolve(root, "temp"),
+  tsconfig: resolve(root, "tsconfig.json"),
+  package: resolve(root, "package.json"),
+};
 
 // Color theme for console logs
+/** @type {LoggingTheme} */
 const theme = {
   primary: chalk.rgb(147, 197, 253),
   secondary: chalk.rgb(167, 139, 250),
@@ -29,6 +89,7 @@ const theme = {
 };
 
 // Symbols for console logs
+/** @type {LoggingSymbols} */
 const symbols = {
   start: figures.pointer,
   success: figures.tick,
@@ -42,202 +103,237 @@ const symbols = {
   step: figures.pointerSmall,
 };
 
-// Important paths for the build process
-const paths = {
-  root: process.cwd(),
-  src: resolve(process.cwd(), "src"),
-  dist: resolve(process.cwd(), "dist"),
-  temp: resolve(process.cwd(), "temp"),
-  tsconfig: resolve(process.cwd(), "tsconfig.json"),
-  package: resolve(process.cwd(), "package.json"),
-};
+/**
+ * Creates an enhanced logger with timing capabilities
+ * @returns {Object} Logger object
+ */
+function createLogger() {
+  const startTime = process.hrtime();
+  /** @type {Map<string, number>} */
+  const steps = new Map();
 
-// Logging system with duration measurement and formatting
-const logger = {
-  startTime: process.hrtime(),
-  steps: new Map(),
-  getTimestamp() {
-    const now = new Date();
-    return theme.dim(`[${now.toLocaleTimeString()}]`);
-  },
+  return {
+    startTime,
+    steps,
 
-  formatDuration(startTime) {
-    const [seconds, nanoseconds] = process.hrtime(startTime);
-    return `${(seconds + nanoseconds / 1e9).toFixed(2)}s`;
-  },
-
-  startStep(step) {
-    const startTime = process.hrtime();
-    this.steps.set(step, startTime[0] * 1e9 + startTime[1]);
-    console.log(
-      `${this.getTimestamp()} ${theme.info(symbols.start)} ${theme.primary(step)}`,
-    );
-  },
-
-  endStep(step) {
-    const startTimeNs = this.steps.get(step);
-    if (startTimeNs) {
-      const duration =
-        (process.hrtime.bigint() - BigInt(startTimeNs)) / BigInt(1e9);
-      console.log(
-        `${this.getTimestamp()} ${theme.success(symbols.success)} ${theme.success(
-          step,
-        )} ${theme.dim(`(${duration.toString()}s)`)}`,
-      );
-    }
-  },
-
-  info(message) {
-    console.log(
-      `${this.getTimestamp()} ${theme.info(symbols.info)} ${message}`,
-    );
-  },
-
-  success(message) {
-    console.log(
-      `${this.getTimestamp()} ${theme.success(symbols.success)} ${theme.success(message)}`,
-    );
-  },
-
-  error(message, error) {
-    console.error(
-      `${this.getTimestamp()} ${theme.error(symbols.error)} ${theme.error(message)}`,
-    );
-    if (error?.stack) {
-      console.error(theme.dim(error.stack));
-    }
-  },
-
-  warning(message) {
-    console.log(
-      `${this.getTimestamp()} ${theme.warning(symbols.warning)} ${theme.warning(message)}`,
-    );
-  },
-
-  debug(message, data) {
-    console.log(
-      `${this.getTimestamp()} ${theme.secondary(symbols.debug)} ${theme.secondary(message)}`,
-    );
-    if (data) {
-      console.log(
-        typeof data === "string" ? data : JSON.stringify(data, null, 2),
-      );
-    }
-  },
-
-  showSummary() {
-    const totalDuration = this.formatDuration(this.startTime);
-    console.log(
-      `${this.getTimestamp()} ${theme.success("✨ Build completed")} ${theme.white("in")} ${theme.time(totalDuration)}`,
-    );
-    console.log(
-      `${this.getTimestamp()} ${theme.info("📦")} ${this.steps.size} steps completed successfully`,
-    );
-  },
-};
-
-// SWC configuration for code transpilation
-const swcConfig = defineRollupSwcOption({
-  jsc: {
-    target: "esnext",
-    parser: {
-      syntax: "typescript",
-      tsx: false,
-      decorators: true,
-      dynamicImport: true,
-      importAssertions: true,
+    /**
+     * Gets a formatted timestamp for logs
+     * @returns {string} Formatted timestamp
+     */
+    getTimestamp() {
+      const now = new Date();
+      return theme.dim(`[${now.toLocaleTimeString()}]`);
     },
-    externalHelpers: true,
-    keepClassNames: true,
-    transform: {
-      legacyDecorator: false,
-      decoratorMetadata: true,
-      useDefineForClassFields: true,
-      optimizer: {
-        simplify: true,
-      },
-    },
-  },
-  module: {
-    type: "es6",
-    strict: true,
-    lazy: false,
-    importInterop: "node",
-  },
-  sourceMaps: !isProduction,
-  minify: false,
-});
 
-// Get Rollup configuration for the build
-function getRollupConfig() {
-  // Read package.json to analyze dependencies
-  const pkg = JSON.parse(readFileSync(paths.package, "utf-8"));
-  logger.debug("Package dependencies analysis:", {
-    dependencies: pkg.dependencies || {},
-    peerDependencies: pkg.peerDependencies || {},
-  });
+    /**
+     * Formats a duration from hrtime
+     * @param {[number, number]} startTime - The hrtime to measure from
+     * @returns {string} Formatted duration string
+     */
+    formatDuration(startTime) {
+      const [seconds, nanoseconds] = process.hrtime(startTime);
+      return `${(seconds + nanoseconds / 1e9).toFixed(2)}s`;
+    },
+
+    /**
+     * Start timing a build step
+     * @param {string} step - The name of the step
+     */
+    startStep(step) {
+      const startTime = process.hrtime();
+      this.steps.set(step, startTime[0] * 1e9 + startTime[1]);
+      console.log(
+        `${this.getTimestamp()} ${theme.info(symbols.start)} ${theme.primary(step)}`,
+      );
+    },
+
+    /**
+     * End timing a build step and log the duration
+     * @param {string} step - The name of the step
+     */
+    endStep(step) {
+      const startTimeNs = this.steps.get(step);
+      if (startTimeNs) {
+        const duration =
+          (process.hrtime.bigint() - BigInt(startTimeNs)) / BigInt(1e9);
+        console.log(
+          `${this.getTimestamp()} ${theme.success(symbols.success)} ${theme.success(
+            step,
+          )} ${theme.dim(`(${duration.toString()}s)`)}`,
+        );
+      }
+    },
+
+    /**
+     * Log an informational message
+     * @param {string} message - The message to log
+     */
+    info(message) {
+      console.log(
+        `${this.getTimestamp()} ${theme.info(symbols.info)} ${message}`,
+      );
+    },
+
+    /**
+     * Log a success message
+     * @param {string} message - The message to log
+     */
+    success(message) {
+      console.log(
+        `${this.getTimestamp()} ${theme.success(symbols.success)} ${theme.success(message)}`,
+      );
+    },
+
+    /**
+     * Log an error message
+     * @param {string} message - The message to log
+     * @param {Error} [error] - Optional error object
+     */
+    error(message, error) {
+      console.error(
+        `${this.getTimestamp()} ${theme.error(symbols.error)} ${theme.error(message)}`,
+      );
+      if (error?.stack) {
+        console.error(theme.dim(error.stack));
+      }
+    },
+
+    /**
+     * Log a warning message
+     * @param {string} message - The message to log
+     */
+    warning(message) {
+      console.log(
+        `${this.getTimestamp()} ${theme.warning(symbols.warning)} ${theme.warning(message)}`,
+      );
+    },
+
+    /**
+     * Log a debug message (only when DEBUG=true)
+     * @param {string} message - The message to log
+     * @param {any} [data] - Optional data to log
+     */
+    debug(message, data) {
+      console.log(
+        `${this.getTimestamp()} ${theme.secondary(symbols.debug)} ${theme.secondary(message)}`,
+      );
+      if (data) {
+        console.log(
+          typeof data === "string" ? data : JSON.stringify(data, null, 2),
+        );
+      }
+    },
+
+    /**
+     * Show a summary of the build
+     */
+    showSummary() {
+      const totalDuration = this.formatDuration(this.startTime);
+      console.log(
+        `${this.getTimestamp()} ${theme.success("✨ Build completed")} ${theme.white("in")} ${theme.time(totalDuration)}`,
+      );
+      console.log(
+        `${this.getTimestamp()} ${theme.info("📦")} ${this.steps.size} steps completed successfully`,
+      );
+    },
+  };
+}
+
+// Initialize logger
+const logger = createLogger();
+
+/**
+ * Reads and parses package.json
+ * @returns {PackageJson} Parsed package.json content
+ */
+function readPackageJson() {
+  try {
+    return JSON.parse(readFileSync(paths.package, "utf-8"));
+  } catch (error) {
+    logger.error(
+      "Failed to read package.json",
+      error instanceof Error ? error : new Error(String(error)),
+    );
+    return { name: "", version: "" };
+  }
+}
+
+/**
+ * Get Rolldown configuration for the build
+ * @returns {import("rolldown").InputOptions} Rolldown configuration
+ */
+function getRolldownConfig() {
+  const pkg = readPackageJson();
 
   // Define external modules (will not be bundled)
+  /** @type {(string|RegExp)[]} */
   const externals = [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
     /^node:/,
   ];
 
+  logger.debug("Package dependencies analysis:", {
+    dependencies: pkg.dependencies || {},
+    peerDependencies: pkg.peerDependencies || {},
+  });
+
   logger.debug("Configured externals:", externals);
 
-  // Complete Rollup configuration
+  // Define outputs
+  /** @type {Object[]} */
+  const outputs = [
+    {
+      // ESM format (ES Modules)
+      file: resolve(paths.dist, "index.mjs"),
+      format: "esm",
+      sourcemap: !isProduction,
+      esModule: true,
+      exports: "named",
+    },
+    {
+      // CommonJS format
+      file: resolve(paths.dist, "index.cjs"),
+      format: "cjs",
+      sourcemap: !isProduction,
+      esModule: true,
+      exports: "named",
+    },
+  ];
+
+  /**
+   * Complete Rolldown configuration
+   * @type {import("rolldown").InputOptions}
+   */
   const config = {
     input: resolve(paths.src, "index.ts"),
     external: externals,
-    output: [
-      {
-        // ESM format (ES Modules)
-        file: resolve(paths.dist, "index.mjs"),
-        format: "esm",
-        sourcemap: !isProduction,
-        interop: "auto",
-        esModule: true,
-        exports: "named",
-        generatedCode: {
-          constBindings: true,
-        },
-      },
-      {
-        // CommonJS format
-        file: resolve(paths.dist, "index.cjs"),
-        format: "cjs",
-        sourcemap: !isProduction,
-        interop: "auto",
-        esModule: true,
-        exports: "named",
-        generatedCode: {
-          constBindings: true,
-        },
-      },
-    ],
-    plugins: [
-      // Node.js module resolution
-      nodeResolve({
-        preferBuiltins: true,
-        extensions: [".ts", ".js", ".mjs", ".cjs", ".json"],
-      }),
-      // CommonJS modules support
-      commonjs({
-        include: /node_modules/,
-        extensions: [".js", ".cjs"],
-        ignoreTryCatch: true,
-        requireReturnsDefault: "preferred",
-      }),
-      // Transpilation with SWC
-      swc(swcConfig),
-    ],
+    output: outputs,
+    treeshake: {
+      moduleSideEffects: false,
+      propertyReadSideEffects: false,
+    },
+    onLog: (level, log, pos) => {
+      if (level === "error") {
+        logger.error(
+          `${log}${pos ? ` at ${pos.file}:${pos.line}:${pos.column}` : ""}`,
+        );
+      } else if (level === "warn") {
+        logger.warning(log);
+      } else {
+        logger.debug(`Rolldown ${level}: ${log}`);
+      }
+    },
   };
-  logger.debug("Rollup configuration:", config);
+
+  logger.debug("Rolldown configuration:", config);
   return config;
 }
 
-// Configuration for API Extractor (final types generation)
+/**
+ * Get API Extractor configuration
+ * @returns {Object} API Extractor configuration
+ */
 const apiExtractorConfig = {
   projectFolder: paths.root,
   mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
@@ -294,7 +390,10 @@ const apiExtractorConfig = {
   },
 };
 
-// Clean build directories
+/**
+ * Clean build directories
+ * @returns {Promise<void>}
+ */
 async function clean() {
   logger.startStep("Cleaning directories");
   try {
@@ -312,15 +411,19 @@ async function clean() {
 
     logger.endStep("Cleaning directories");
   } catch (error) {
-    throw new Error(`Cleaning failed: ${error.message}`);
+    throw new Error(
+      `Cleaning failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
-// Generate TypeScript declaration files
+/**
+ * Generate TypeScript declaration files
+ * @returns {Promise<void>}
+ */
 async function compileTypes() {
-  logger.startStep(
-    `Generating types ${isProduction ? "(production)" : "(development)"}`,
-  );
+  const buildMode = isProduction ? "production" : "development";
+  logger.startStep(`Generating types (${buildMode})`);
 
   try {
     // Find TypeScript configuration file
@@ -329,12 +432,14 @@ async function compileTypes() {
       ts.sys.fileExists,
       "tsconfig.json",
     );
+
     if (!configPath) {
       throw new Error("Could not find tsconfig.json");
     }
 
     // Read and parse configuration file
     const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
+
     if (error) {
       throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
     }
@@ -358,11 +463,15 @@ async function compileTypes() {
       sourceMap: !isProduction,
     });
 
-    logger.debug("TypeScript program files:", parsedConfig.fileNames);
+    logger.debug(
+      "TypeScript program files count:",
+      parsedConfig.fileNames.length,
+    );
 
     // Emit declaration files
     const emitResult = program.emit();
 
+    // Get diagnostics
     const diagnostics = ts
       .getPreEmitDiagnostics(program)
       .concat(emitResult.diagnostics);
@@ -427,7 +536,7 @@ async function compileTypes() {
         packageJsonFullPath: resolve(paths.root, "package.json"),
       });
 
-      logger.debug("API Extractor configuration:", extractorConfig);
+      logger.debug("API Extractor configuration prepared");
 
       const extractorResult = Extractor.invoke(extractorConfig, {
         localBuild: true,
@@ -450,50 +559,63 @@ async function compileTypes() {
     // Clean up temp directory after extraction
     await rm(paths.temp, { recursive: true, force: true });
 
-    logger.endStep(
-      `Generating types ${isProduction ? "(production)" : "(development)"}`,
-    );
+    logger.endStep(`Generating types (${buildMode})`);
   } catch (error) {
-    throw new Error(`Type generation failed: ${error.message}`);
+    throw new Error(
+      `Type generation failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
-// Build JavaScript bundles with Rollup
+/**
+ * Build JavaScript bundles with Rolldown
+ * @returns {Promise<void>}
+ */
 async function buildBundles() {
   logger.startStep("Building bundles");
   try {
-    const rollupConfig = getRollupConfig();
-    logger.debug("Starting Rollup build with config:", rollupConfig);
+    const rolldownConfig = getRolldownConfig();
 
-    // Create bundle with Rollup
-    const bundle = await rollup(rollupConfig);
+    // Create bundle with Rolldown
+    const bundle = await rolldown(rolldownConfig);
 
     // Generate output files (ESM and CJS)
-    await Promise.all(
-      rollupConfig.output.map(async (output) => {
-        await bundle.write(output);
-        const stats = await stat(output.file);
-        logger.info(
-          `Generated ${output.format.toUpperCase()} bundle: ${theme.highlight(prettyBytes(stats.size))}`,
-        );
-        logger.debug("Bundle details:", {
-          format: output.format,
-          file: output.file,
-          size: prettyBytes(stats.size),
-          rawSize: stats.size,
-        });
-      }),
-    );
+    if (Array.isArray(rolldownConfig.output)) {
+      await Promise.all(
+        rolldownConfig.output.map(async (output) => {
+          await bundle.write(output);
+          const filePath = output.file;
+          const stats = await stat(filePath);
+          const formattedSize = prettyBytes(stats.size);
+
+          logger.info(
+            `Generated ${output.format.toUpperCase()} bundle: ${theme.highlight(formattedSize)}`,
+          );
+
+          logger.debug("Bundle details:", {
+            format: output.format,
+            file: filePath,
+            size: formattedSize,
+            rawSize: stats.size,
+          });
+        }),
+      );
+    }
 
     // Release resources
     await bundle.close();
     logger.endStep("Building bundles");
   } catch (error) {
-    throw new Error(`Bundle creation failed: ${error.message}`);
+    throw new Error(
+      `Bundle creation failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
-// Main build function
+/**
+ * Main build function
+ * @returns {Promise<void>}
+ */
 async function build() {
   try {
     logger.info(
