@@ -125,7 +125,6 @@ function getRollupConfig() {
           },
         },
         sourceMaps: !isProduction,
-        minify: isProduction,
       }),
     ],
   };
