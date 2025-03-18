@@ -6,19 +6,42 @@ import type { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
 
+/**
+ * Router for Discord Application Connection-related API endpoints.
+ * Provides methods to interact with application role connection metadata,
+ * which is used for integration with Discord's role connection verification feature.
+ */
 export class ApplicationConnectionRouter {
+  /**
+   * API route constants for application connection-related endpoints.
+   */
   static readonly ROUTES = {
+    /**
+     * Route for application role connection metadata endpoint
+     * @param applicationId - ID of the application
+     * @returns The formatted route string
+     */
     applicationsRoleConnectionsMetadata: (applicationId: Snowflake) =>
       `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
 
+  /** The REST client used for making API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new ApplicationConnectionRouter instance.
+   * @param rest - The REST client to use for making API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
 
   /**
+   * Fetches the role connection metadata records for an application.
+   * These records define the metadata fields that can be used for role connection verification.
+   *
+   * @param applicationId - ID of the application to fetch metadata for
+   * @returns A promise that resolves to an array of application role connection metadata records
    * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records}
    */
   getApplicationRoleConnectionMetadata(
@@ -32,6 +55,13 @@ export class ApplicationConnectionRouter {
   }
 
   /**
+   * Updates the role connection metadata records for an application.
+   * These records define how the application can be used for role connection verification.
+   *
+   * @param applicationId - ID of the application to update metadata for
+   * @param metadata - Array of metadata records to update (maximum of 5 records)
+   * @returns A promise that resolves to the updated array of application role connection metadata records
+   * @throws Error if the provided metadata fails validation
    * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records}
    */
   updateApplicationRoleConnectionMetadata(

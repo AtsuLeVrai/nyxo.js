@@ -29,7 +29,7 @@ export const EmojiEntity = z.object({
    * The user that created this emoji
    * @remarks This field will be returned when the emoji is retrieved with the `MANAGE_GUILD_EXPRESSIONS` permission
    */
-  user: UserEntity.optional(),
+  user: z.lazy(() => UserEntity).optional(),
 
   /**
    * Whether this emoji must be wrapped in colons

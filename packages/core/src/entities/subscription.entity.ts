@@ -81,6 +81,7 @@ export const SubscriptionEntity = z
         "When subscription status is ENDING, canceled_at should not be null",
       path: ["canceled_at"],
     },
-  );
+  )
+  .sourceType();
 
 export type SubscriptionEntity = z.infer<typeof SubscriptionEntity>;

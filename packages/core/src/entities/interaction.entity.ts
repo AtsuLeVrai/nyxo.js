@@ -238,10 +238,20 @@ export const InteractionResolvedDataEntity = z.object({
     .optional(),
 
   /** Map of message IDs to partial message objects */
-  messages: z.record(z.string(), MessageEntity).optional(),
+  messages: z
+    .record(
+      z.string(),
+      z.lazy(() => MessageEntity),
+    )
+    .optional(),
 
   /** Map of attachment IDs to attachment objects */
-  attachments: z.record(z.string(), AttachmentEntity).optional(),
+  attachments: z
+    .record(
+      z.string(),
+      z.lazy(() => AttachmentEntity),
+    )
+    .optional(),
 });
 
 export type InteractionResolvedDataEntity = z.infer<
@@ -392,7 +402,7 @@ export const InteractionCallbackResourceEntity = z.object({
   activity_instance: InteractionCallbackActivityInstanceEntity.optional(),
 
   /** Message created by the interaction */
-  message: MessageEntity.optional(),
+  message: z.lazy(() => MessageEntity).optional(),
 });
 
 export type InteractionCallbackResourceEntity = z.infer<
@@ -427,10 +437,14 @@ export const InteractionCallbackMessagesEntity = z.object({
   content: z.string().optional(),
 
   /** Supports up to 10 embeds */
-  embeds: EmbedEntity.array().max(10).optional(),
+  embeds: z
+    .lazy(() => EmbedEntity)
+    .array()
+    .max(10)
+    .optional(),
 
   /** Allowed mentions object */
-  allowed_mentions: AllowedMentionsEntity.optional(),
+  allowed_mentions: z.lazy(() => AllowedMentionsEntity).optional(),
 
   /** Message flags combined as a bitfield */
   flags: z.nativeEnum(MessageFlags).optional(),
@@ -439,7 +453,10 @@ export const InteractionCallbackMessagesEntity = z.object({
   components: ActionRowEntity.array().optional(),
 
   /** Attachment objects with filename and description */
-  attachments: AttachmentEntity.array().optional(),
+  attachments: z
+    .lazy(() => AttachmentEntity)
+    .array()
+    .optional(),
 
   /** Details about the poll */
   poll: PollCreateRequestEntity.optional(),
@@ -548,7 +565,7 @@ export const InteractionEntity = z.object({
   version: z.literal(1),
 
   /** For components, the message they were attached to */
-  message: MessageEntity.optional(),
+  message: z.lazy(() => MessageEntity).optional(),
 
   /** Bitwise set of permissions the app has in the source location of the interaction */
   app_permissions: z.string(), // BitField representation

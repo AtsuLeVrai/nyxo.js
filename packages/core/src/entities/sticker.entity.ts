@@ -65,7 +65,7 @@ export const StickerEntity = z.object({
   guild_id: Snowflake.optional(),
 
   /** The user that uploaded the guild sticker */
-  user: UserEntity.optional(),
+  user: z.lazy(() => UserEntity).optional(),
 
   /** The standard sticker's sort order within its pack */
   sort_value: z.number().int().optional(),

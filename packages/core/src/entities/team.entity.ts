@@ -86,6 +86,7 @@ export const TeamEntity = z
         "The owner_user_id must match one of the accepted team member's user id",
       path: ["owner_user_id"],
     },
-  );
+  )
+  .sourceType();
 
 export type TeamEntity = z.infer<typeof TeamEntity>;

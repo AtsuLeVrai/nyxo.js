@@ -288,7 +288,10 @@ export const ChannelEntity = z.object({
   rate_limit_per_user: z.number().int().optional(),
 
   /** Recipients of the DM */
-  recipients: UserEntity.array().optional(),
+  recipients: z
+    .lazy(() => UserEntity)
+    .array()
+    .optional(),
 
   /** Icon hash of the group DM */
   icon: z.string().nullable().optional(),
@@ -403,7 +406,7 @@ export const DmChannelEntity = ChannelEntity.omit({
   available_tags: true,
 }).extend({
   type: z.literal(ChannelType.Dm),
-  recipients: UserEntity.array(),
+  recipients: z.lazy(() => UserEntity).array(),
 });
 
 export type DmChannelEntity = z.infer<typeof DmChannelEntity>;
@@ -457,7 +460,7 @@ export const GroupDmChannelEntity = ChannelEntity.omit({
   available_tags: true,
 }).extend({
   type: z.literal(ChannelType.GroupDm),
-  recipients: UserEntity.array(),
+  recipients: z.lazy(() => UserEntity).array(),
   owner_id: Snowflake,
 });
 

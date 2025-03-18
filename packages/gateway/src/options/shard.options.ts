@@ -117,7 +117,8 @@ export const ShardOptions = z
         "Shard list must contain only valid shard IDs for the total shards provided",
       path: ["shardList"],
     },
-  );
+  )
+  .sourceType();
 
 /**
  * Type definition for ShardOptions

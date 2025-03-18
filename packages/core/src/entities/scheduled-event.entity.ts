@@ -387,7 +387,8 @@ export const GuildScheduledEventEntity = z
     {
       message: "Entity type has specific field requirements that must be met",
     },
-  );
+  )
+  .sourceType();
 
 export type GuildScheduledEventEntity = z.infer<
   typeof GuildScheduledEventEntity

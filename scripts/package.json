@@ -21,8 +21,8 @@
     "@microsoft/api-extractor": "^7.52.1",
     "chalk": "^5.4.1",
     "figures": "6.1.0",
-    "pretty-bytes": "6.1.1",
-    "rolldown": "1.0.0-beta.4",
+    "rollup": "4.36.0",
+    "rollup-plugin-swc3": "0.12.1",
     "typescript": "^5.8.2"
   }
 }

@@ -307,7 +307,7 @@ export const GuildOnboardingPromptOptionEntity = z.object({
   role_ids: Snowflake.array(),
 
   /** Emoji object for the option */
-  emoji: EmojiEntity.optional(),
+  emoji: z.lazy(() => EmojiEntity).optional(),
 
   /** Emoji ID of the option (used when creating/updating) */
   emoji_id: Snowflake.optional(),
@@ -428,7 +428,7 @@ export const BanEntity = z.object({
   reason: z.string().nullable(),
 
   /** Banned user */
-  user: UserEntity,
+  user: z.lazy(() => UserEntity),
 });
 
 export type BanEntity = z.infer<typeof BanEntity>;
@@ -451,7 +451,7 @@ export const IntegrationApplicationEntity = z.object({
   description: z.string(),
 
   /** Bot associated with this application */
-  bot: UserEntity.optional(),
+  bot: z.lazy(() => UserEntity).optional(),
 });
 
 export type IntegrationApplicationEntity = z.infer<
@@ -505,7 +505,7 @@ export const IntegrationEntity = z.object({
   expire_grace_period: z.number().int().optional(),
 
   /** User for this integration */
-  user: UserEntity.optional(),
+  user: z.lazy(() => UserEntity).optional(),
 
   /** Integration account information */
   account: IntegrationAccountEntity,
@@ -534,7 +534,7 @@ export type IntegrationEntity = z.infer<typeof IntegrationEntity>;
  */
 export const GuildMemberEntity = z.object({
   /** The user this guild member represents */
-  user: UserEntity,
+  user: z.lazy(() => UserEntity),
 
   /** This user's guild nickname */
   nick: z.string().nullish(),
@@ -573,7 +573,7 @@ export const GuildMemberEntity = z.object({
   communication_disabled_until: z.string().nullish(),
 
   /** Data for the member's guild avatar decoration */
-  avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
+  avatar_decoration_data: z.lazy(() => AvatarDecorationDataEntity).nullish(),
 });
 
 export type GuildMemberEntity = z.infer<typeof GuildMemberEntity>;
@@ -611,13 +611,16 @@ export const GuildWidgetEntity = z.object({
   /** Voice and stage channels which are accessible by @everyone */
   channels: z
     .union([
-      GuildVoiceChannelEntity.partial(),
-      GuildStageVoiceChannelEntity.partial(),
+      z.lazy(() => GuildVoiceChannelEntity.partial()),
+      z.lazy(() => GuildStageVoiceChannelEntity.partial()),
     ])
     .array(),
 
   /** Special widget user objects that includes users presence (Limit 100) */
-  members: UserEntity.array().max(100),
+  members: z
+    .lazy(() => UserEntity)
+    .array()
+    .max(100),
 
   /** Number of online members in this guild */
   presence_count: z.number().int(),
@@ -646,7 +649,7 @@ export const GuildPreviewEntity = z.object({
   discovery_splash: z.string().nullable(),
 
   /** Custom guild emojis */
-  emojis: EmojiEntity.array(),
+  emojis: z.lazy(() => EmojiEntity).array(),
 
   /** Enabled guild features */
   features: z.nativeEnum(GuildFeature).array(),
@@ -661,7 +664,7 @@ export const GuildPreviewEntity = z.object({
   description: z.string().nullable(),
 
   /** Custom guild stickers */
-  stickers: StickerEntity.array(),
+  stickers: z.lazy(() => StickerEntity).array(),
 });
 
 export type GuildPreviewEntity = z.infer<typeof GuildPreviewEntity>;
@@ -769,10 +772,10 @@ export const GuildEntity = z.object({
   explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel),
 
   /** Roles in the guild */
-  roles: RoleEntity.array(),
+  roles: z.lazy(() => RoleEntity).array(),
 
   /** Custom guild emojis */
-  emojis: EmojiEntity.array(),
+  emojis: z.lazy(() => EmojiEntity).array(),
 
   /** Enabled guild features */
   features: z.nativeEnum(GuildFeature).array(),
@@ -838,7 +841,10 @@ export const GuildEntity = z.object({
   nsfw_level: z.nativeEnum(NsfwLevel),
 
   /** Custom guild stickers */
-  stickers: StickerEntity.array().optional(),
+  stickers: z
+    .lazy(() => StickerEntity)
+    .array()
+    .optional(),
 
   /** Whether the guild has the boost progress bar enabled */
   premium_progress_bar_enabled: z.boolean(),

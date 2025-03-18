@@ -13,25 +13,69 @@ import {
   EditGuildApplicationCommandSchema,
 } from "../schemas/index.js";
 
+/**
+ * Router for Discord Application Command-related API endpoints.
+ * Provides methods to interact with application commands such as creating, editing,
+ * and managing permissions for both global and guild-specific commands.
+ */
 export class ApplicationCommandRouter {
+  /**
+   * API route constants for application command-related endpoints.
+   */
   static readonly ROUTES = {
+    /**
+     * Route for fetching or managing global commands for an application
+     * @param applicationId - ID of the application
+     */
     applicationsCommands: (applicationId: Snowflake) =>
       `/applications/${applicationId}/commands` as const,
+
+    /**
+     * Route for a specific global command
+     * @param applicationId - ID of the application
+     * @param commandId - ID of the command
+     */
     applicationsCommandsId: (applicationId: Snowflake, commandId: Snowflake) =>
       `/applications/${applicationId}/commands/${commandId}` as const,
+
+    /**
+     * Route for fetching or managing guild-specific commands
+     * @param applicationId - ID of the application
+     * @param guildId - ID of the guild
+     */
     applicationsGuildCommands: (applicationId: Snowflake, guildId: Snowflake) =>
       `/applications/${applicationId}/guilds/${guildId}/commands` as const,
+
+    /**
+     * Route for a specific guild command
+     * @param applicationId - ID of the application
+     * @param guildId - ID of the guild
+     * @param commandId - ID of the command
+     */
     applicationsGuildCommandsId: (
       applicationId: Snowflake,
       guildId: Snowflake,
       commandId: Snowflake,
     ) =>
       `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}` as const,
+
+    /**
+     * Route for fetching permissions for all commands in a guild
+     * @param applicationId - ID of the application
+     * @param guildId - ID of the guild
+     */
     applicationsGuildCommandsPermissions: (
       applicationId: Snowflake,
       guildId: Snowflake,
     ) =>
       `/applications/${applicationId}/guilds/${guildId}/commands/permissions` as const,
+
+    /**
+     * Route for fetching or managing permissions for a specific command in a guild
+     * @param applicationId - ID of the application
+     * @param guildId - ID of the guild
+     * @param commandId - ID of the command
+     */
     applicationsGuildCommandsPermissionsId: (
       applicationId: Snowflake,
       guildId: Snowflake,
@@ -40,13 +84,22 @@ export class ApplicationCommandRouter {
       `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const,
   } as const;
 
+  /** The REST client used for making API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new ApplicationCommandRouter instance.
+   * @param rest - The REST client to use for making API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
 
   /**
+   * Fetches all global commands for the application.
+   * @param applicationId - ID of the application
+   * @param withLocalizations - Whether to include full localization dictionaries in the response
+   * @returns A promise that resolves to an array of application commands
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-commands}
    */
   getGlobalCommands(
@@ -62,6 +115,12 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Creates a new global command for the application.
+   * If a command with the same name already exists, it will be updated.
+   * @param applicationId - ID of the application
+   * @param options - Options for creating the command
+   * @returns A promise that resolves to the created or updated command
+   * @throws Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command}
    */
   createGlobalApplicationCommand(
@@ -82,6 +141,10 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Fetches a specific global command for the application.
+   * @param applicationId - ID of the application
+   * @param commandId - ID of the command to fetch
+   * @returns A promise that resolves to the command object
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-command}
    */
   getGlobalApplicationCommand(
@@ -97,6 +160,12 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Edits a global application command.
+   * @param applicationId - ID of the application
+   * @param commandId - ID of the command to edit
+   * @param options - New properties for the command
+   * @returns A promise that resolves to the updated command
+   * @throws Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command}
    */
   editGlobalApplicationCommand(
@@ -119,6 +188,10 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Deletes a global application command.
+   * @param applicationId - ID of the application
+   * @param commandId - ID of the command to delete
+   * @returns A promise that resolves when the command is deleted
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-global-application-command}
    */
   deleteGlobalApplicationCommand(
@@ -134,6 +207,12 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Overwrites all global commands for the application.
+   * This will replace all existing commands with the provided ones.
+   * @param applicationId - ID of the application
+   * @param commands - Array of command objects to register
+   * @returns A promise that resolves to an array of the newly registered commands
+   * @throws Error if the provided commands fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands}
    */
   bulkOverwriteGlobalApplicationCommands(
@@ -156,6 +235,11 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Fetches all guild-specific commands for the application in a specific guild.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param withLocalizations - Whether to include full localization dictionaries in the response
+   * @returns A promise that resolves to an array of application commands
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-commands}
    */
   getGuildApplicationCommands(
@@ -175,6 +259,13 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Creates a new guild-specific command.
+   * If a command with the same name already exists in the guild, it will be updated.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param options - Options for creating the command
+   * @returns A promise that resolves to the created or updated command
+   * @throws Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command}
    */
   createGuildApplicationCommand(
@@ -199,6 +290,11 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Fetches a specific guild command.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param commandId - ID of the command to fetch
+   * @returns A promise that resolves to the command object
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command}
    */
   getGuildApplicationCommand(
@@ -216,6 +312,13 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Edits a guild-specific application command.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param commandId - ID of the command to edit
+   * @param options - New properties for the command
+   * @returns A promise that resolves to the updated command
+   * @throws Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command}
    */
   editGuildApplicationCommand(
@@ -242,6 +345,11 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Deletes a guild-specific application command.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param commandId - ID of the command to delete
+   * @returns A promise that resolves when the command is deleted
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-guild-application-command}
    */
   deleteGuildApplicationCommand(
@@ -259,14 +367,21 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Overwrites all guild-specific commands for the application in a specific guild.
+   * This will replace all existing commands with the provided ones.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param commands - Array of command objects to register
+   * @returns A promise that resolves to an array of the newly registered commands
+   * @throws Error if the provided commands fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-guild-application-commands}
    */
   bulkOverwriteGuildApplicationCommands(
     applicationId: Snowflake,
     guildId: Snowflake,
-    commands: CreateGlobalApplicationCommandSchema[],
+    commands: CreateGuildApplicationCommandSchema[],
   ): Promise<AnyApplicationCommandEntity[]> {
-    const result = CreateGlobalApplicationCommandSchema.array()
+    const result = CreateGuildApplicationCommandSchema.array()
       .max(200)
       .safeParse(commands);
     if (!result.success) {
@@ -285,6 +400,10 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Fetches permissions for all commands in a guild.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @returns A promise that resolves to an array of command permission objects
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command-permissions}
    */
   getGuildApplicationCommandPermissions(
@@ -300,6 +419,11 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Fetches permissions for a specific command in a guild.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param commandId - ID of the command
+   * @returns A promise that resolves to the command permission object
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-application-command-permissions}
    */
   getApplicationCommandPermissions(
@@ -317,6 +441,15 @@ export class ApplicationCommandRouter {
   }
 
   /**
+   * Edits permissions for a specific command in a guild.
+   * This will overwrite existing permissions for the command.
+   * Requires a Bearer token with proper permissions.
+   * @param applicationId - ID of the application
+   * @param guildId - ID of the guild
+   * @param commandId - ID of the command
+   * @param options - New permission settings for the command
+   * @returns A promise that resolves to the updated command permission object
+   * @throws Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions}
    */
   editApplicationCommandPermissions(

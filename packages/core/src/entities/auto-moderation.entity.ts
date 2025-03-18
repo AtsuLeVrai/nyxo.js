@@ -170,7 +170,8 @@ export const AutoModerationActionMetadataEntity = z
       message:
         "At least one of channel_id, duration_seconds, or custom_message must be present",
     },
-  );
+  )
+  .sourceType();
 
 export type AutoModerationActionMetadataEntity = z.infer<
   typeof AutoModerationActionMetadataEntity
@@ -204,7 +205,8 @@ export const AutoModerationActionEntity = z
     {
       message: "Required metadata fields missing for this action type",
     },
-  );
+  )
+  .sourceType();
 
 export type AutoModerationActionEntity = z.infer<
   typeof AutoModerationActionEntity
@@ -288,7 +290,8 @@ export const AutoModerationRuleTriggerMetadataEntity = z
         });
       }
     }
-  });
+  })
+  .sourceType();
 
 export type AutoModerationRuleTriggerMetadataEntity = z.infer<
   typeof AutoModerationRuleTriggerMetadataEntity
@@ -400,6 +403,7 @@ export const AutoModerationRuleEntity = z
           "TIMEOUT action can only be set up for KEYWORD and MENTION_SPAM rules",
       });
     }
-  });
+  })
+  .sourceType();
 
 export type AutoModerationRuleEntity = z.infer<typeof AutoModerationRuleEntity>;

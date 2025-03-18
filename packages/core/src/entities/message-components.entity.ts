@@ -331,7 +331,7 @@ export const ButtonEntity = z
         "Button configuration is invalid. Link buttons must have URL, Premium buttons must have sku_id, others must have custom_id",
     },
   )
-  .innerType();
+  .sourceType();
 
 export type ButtonEntity = z.infer<typeof ButtonEntity>;
 
@@ -384,6 +384,7 @@ export const ActionRowEntity = z
       message:
         "An Action Row cannot contain both a select menu and buttons, and can only contain one select menu",
     },
-  );
+  )
+  .sourceType();
 
 export type ActionRowEntity = z.infer<typeof ActionRowEntity>;
