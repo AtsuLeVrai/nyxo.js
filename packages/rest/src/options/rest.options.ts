@@ -1,5 +1,6 @@
 import { ApiVersion, Token, TokenType } from "@nyxjs/core";
 import { z } from "zod";
+import { QueueOptions } from "./queue.options.js";
 import { RetryOptions } from "./retry.options.js";
 
 /**
@@ -55,6 +56,12 @@ export const RestOptions = z
      * @default {}
      */
     retry: RetryOptions.default({}),
+
+    /**
+     * Request queue configuration
+     * @default {}
+     */
+    queue: QueueOptions.default({}),
   })
   .readonly();
 

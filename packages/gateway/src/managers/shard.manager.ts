@@ -1,5 +1,4 @@
 import { setTimeout } from "node:timers/promises";
-import { Store } from "@nyxjs/store";
 import type { Gateway } from "../core/index.js";
 import type { ShardOptions } from "../options/index.js";
 import type {
@@ -36,7 +35,7 @@ const DEFAULT_RATE_LIMIT = {
    * Duration in milliseconds for rate limit window
    */
   WINDOW_DURATION_MS: 60_000,
-};
+} as const;
 
 /**
  * Data structure representing a shard
@@ -81,7 +80,7 @@ export interface ShardData {
  */
 export class ShardManager {
   /** Map of shards by shard ID */
-  #shards = new Store<number, ShardData>();
+  #shards = new Map<number, ShardData>();
 
   /** Maximum number of concurrent identifies allowed */
   #maxConcurrency = 1;

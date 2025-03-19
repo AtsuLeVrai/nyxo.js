@@ -40,6 +40,30 @@ rest.on("retryAttempt", (event) => {
   console.log("[REST] Retry attempt", event);
 });
 
+rest.on("queueAdd", (event) => {
+  console.log("[REST] Queue add", event);
+});
+
+rest.on("queueProcess", (event) => {
+  console.log("[REST] Queue process", event);
+});
+
+rest.on("queueComplete", (event) => {
+  console.log("[REST] Queue complete", event);
+});
+
+rest.on("queueTimeout", (event) => {
+  console.log("[REST] Queue timeout", event);
+});
+
+rest.on("queueState", (event) => {
+  console.log("[REST] Queue state", event);
+});
+
+rest.on("queueReject", (event) => {
+  console.log("[REST] Queue reject", event);
+});
+
 const gateway = new Gateway(rest, {
   intents: [
     GatewayIntentsBits.Guilds,
@@ -152,6 +176,18 @@ gateway.on("error", (error) => {
 
 gateway.on("dispatch", (event, data) => {
   console.log("[GATEWAY] Event dispatched", event, data);
+});
+
+gateway.on("circuitStateChange", (event) => {
+  console.log("[GATEWAY] Circuit state changed", event);
+});
+
+gateway.on("circuitBlocked", (event) => {
+  console.log("[GATEWAY] Circuit blocked", event);
+});
+
+gateway.on("circuitFailure", (event) => {
+  console.log("[GATEWAY] Circuit failure", event);
 });
 
 gateway.connect().catch(console.error);

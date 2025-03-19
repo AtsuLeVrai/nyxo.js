@@ -79,9 +79,6 @@ importers:
       '@nyxjs/rest':
         specifier: workspace:*
         version: link:../rest
-      '@nyxjs/store':
-        specifier: workspace:*
-        version: link:../store
       eventemitter3:
         specifier: ^5.0.1
         version: 5.0.1

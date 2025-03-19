@@ -97,7 +97,7 @@ const RATE_LIMIT_CONFIG = {
     GLOBAL: "x-ratelimit-global",
     RETRY_AFTER: "retry-after",
   },
-};
+} as const;
 
 /**
  * Manages rate limits for Discord API requests to ensure
@@ -129,6 +129,34 @@ export class RateLimitManager {
    */
   constructor(rest: Rest) {
     this.#rest = rest;
+  }
+
+  /**
+   * Gets the rate limit buckets currently being tracked
+   */
+  get buckets(): Map<string, RateLimitBucket> {
+    return this.#buckets;
+  }
+
+  /**
+   * Gets the route buckets currently being tracked
+   */
+  get routeBuckets(): Map<string, string> {
+    return this.#routeBuckets;
+  }
+
+  /**
+   * Gets the invalid request tracking information
+   */
+  get invalidRequests(): InvalidRequestTracking {
+    return this.#invalidRequests;
+  }
+
+  /**
+   * Gets the timestamps for global request tracking
+   */
+  get globalRequestTimes(): number[] {
+    return this.#globalRequestTimes;
   }
 
   /**

@@ -187,16 +187,64 @@ export interface RetryAttemptEvent extends RestEventBase {
 }
 
 /**
- * Union of all event types for discrimination
+ * Event payload for queue state changes
  */
-export type RestEvent =
-  | RequestStartEvent
-  | RequestCompleteEvent
-  | RequestFailureEvent
-  | RateLimitHitEvent
-  | RateLimitUpdateEvent
-  | RateLimitExpireEvent
-  | RetryAttemptEvent;
+export interface QueueStateEvent {
+  /**
+   * Timestamp of the event
+   */
+  timestamp: string;
+
+  /**
+   * Number of items currently in the queue
+   */
+  queueSize: number;
+
+  /**
+   * Number of requests currently executing
+   */
+  running: number;
+
+  /**
+   * Maximum allowed concurrent requests
+   */
+  concurrency: number;
+}
+
+/**
+ * Event payload for request processing events
+ */
+export interface QueueProcessEvent {
+  /**
+   * Timestamp of the event
+   */
+  timestamp: string;
+
+  /**
+   * Unique ID of the request
+   */
+  requestId: string;
+
+  /**
+   * Time spent in queue (ms)
+   */
+  queueTime: number;
+
+  /**
+   * API path for the request
+   */
+  path: string;
+
+  /**
+   * HTTP method for the request
+   */
+  method: Dispatcher.HttpMethod;
+
+  /**
+   * Priority level of the request
+   */
+  priority: number;
+}
 
 /**
  * Map of event names to their corresponding payload types
@@ -222,4 +270,22 @@ export interface RestEvents {
 
   /** Emitted when a request retry is attempted */
   retryAttempt: [event: RetryAttemptEvent];
+
+  /** Emitted when an item is added to the queue */
+  queueAdd: [event: QueueProcessEvent];
+
+  /** Emitted when an item starts processing from the queue */
+  queueProcess: [event: QueueProcessEvent];
+
+  /** Emitted when an item is completed (successfully or with error) */
+  queueComplete: [event: QueueProcessEvent & { success: boolean }];
+
+  /** Emitted when an item times out in the queue */
+  queueTimeout: [event: QueueProcessEvent];
+
+  /** Emitted when queue state changes (size, running count) */
+  queueState: [event: QueueStateEvent];
+
+  /** Emitted when an item is rejected due to queue being full */
+  queueReject: [event: QueueProcessEvent & { reason: string }];
 }

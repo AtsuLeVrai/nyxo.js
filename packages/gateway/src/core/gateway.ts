@@ -7,7 +7,12 @@ import type { z } from "zod";
 import { fromError, fromZodError } from "zod-validation-error";
 import { HeartbeatManager, ShardManager } from "../managers/index.js";
 import { GatewayOptions } from "../options/index.js";
-import { CompressionService, EncodingService } from "../services/index.js";
+import {
+  CircuitBreakerService,
+  CompressionService,
+  EncodingService,
+  FailureType,
+} from "../services/index.js";
 import {
   type ConnectionCompleteEvent,
   type ConnectionFailureEvent,
@@ -56,18 +61,6 @@ const NON_RESUMABLE_CODES: readonly number[] = [
  * - Handling sharding
  */
 export class Gateway extends EventEmitter<GatewayEvents> {
-  /** Heartbeat manager */
-  readonly heartbeat: HeartbeatManager;
-
-  /** Shard manager */
-  readonly shard: ShardManager;
-
-  /** Compression service */
-  readonly compression: CompressionService;
-
-  /** Encoding service */
-  readonly encoding: EncodingService;
-
   /** Current session ID */
   #sessionId: string | null = null;
 
@@ -88,6 +81,21 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   /** Discord REST API client */
   readonly #rest: Rest;
+
+  /** Heartbeat manager */
+  readonly #heartbeat: HeartbeatManager;
+
+  /** Shard manager */
+  readonly #shard: ShardManager;
+
+  /** Compression service */
+  readonly #compression: CompressionService;
+
+  /** Encoding service */
+  readonly #encoding: EncodingService;
+
+  /** Circuit breaker service */
+  readonly #circuitBreaker: CircuitBreakerService;
 
   /** Gateway configuration options */
   readonly #options: GatewayOptions;
@@ -115,10 +123,15 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     this.#rest = rest;
 
-    this.heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
-    this.shard = new ShardManager(this, this.#options.shard);
-    this.compression = new CompressionService(this.#options.compressionType);
-    this.encoding = new EncodingService(this.#options.encodingType);
+    this.#heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
+    this.#shard = new ShardManager(this, this.#options.shard);
+    this.#compression = new CompressionService(this.#options.compressionType);
+    this.#encoding = new EncodingService(this.#options.encodingType);
+    this.#circuitBreaker = new CircuitBreakerService(
+      this,
+      this.#rest,
+      this.#options.circuitBreaker,
+    );
   }
 
   /**
@@ -168,6 +181,41 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   get resumeUrl(): string | null {
     return this.#resumeUrl;
+  }
+
+  /**
+   * Gets the HeartbeatManager instance
+   */
+  get heartbeat(): HeartbeatManager {
+    return this.#heartbeat;
+  }
+
+  /**
+   * Gets the ShardManager instance
+   */
+  get shard(): ShardManager {
+    return this.#shard;
+  }
+
+  /**
+   * Gets the CompressionService instance
+   */
+  get compression(): CompressionService {
+    return this.#compression;
+  }
+
+  /**
+   * Gets the EncodingService instance
+   */
+  get encoding(): EncodingService {
+    return this.#encoding;
+  }
+
+  /**
+   * Gets the CircuitBreakerService instance
+   */
+  get circuitBreaker(): CircuitBreakerService {
+    return this.#circuitBreaker;
   }
 
   /**
@@ -257,6 +305,17 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If connection fails
    */
   async connect(): Promise<void> {
+    // Check if the circuit breaker is open
+    if (!this.#circuitBreaker.canExecute("connect")) {
+      const remainingTimeout = this.#circuitBreaker.remainingTimeout;
+
+      const error = new Error(
+        `Connection attempt blocked by circuit breaker. Wait ${Math.ceil(remainingTimeout / 1000)} seconds before retrying.`,
+      );
+
+      throw error;
+    }
+
     // Reset connection state if reconnecting
     if (this.#ws !== null) {
       this.destroy();
@@ -268,25 +327,25 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const connectionStartEvent: ConnectionStartEvent = {
       timestamp: new Date().toISOString(),
       gatewayUrl: "",
-      encoding: this.encoding.type,
-      compression: this.compression.type,
+      encoding: this.#encoding.type,
+      compression: this.#compression.type,
     };
 
     try {
       // Initialize required services in parallel
       const [gatewayInfo] = await Promise.all([
         this.#rest.gateway.getGatewayBot(),
-        this.encoding.initialize(),
-        this.compression.initialize(),
+        this.#encoding.initialize(),
+        this.#compression.initialize(),
       ]);
 
       connectionStartEvent.gatewayUrl = gatewayInfo.url;
       this.emit("connectionStart", connectionStartEvent);
 
       // Set up sharding if enabled
-      if (this.shard.isEnabled()) {
+      if (this.#shard.isEnabled()) {
         const guilds = await this.#rest.users.getCurrentUserGuilds();
-        await this.shard.spawn(
+        await this.#shard.spawn(
           guilds.length,
           gatewayInfo.session_start_limit.max_concurrency,
           gatewayInfo.shards,
@@ -297,7 +356,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       await this.#initializeWebSocket(gatewayInfo.url);
 
       // Wait for READY event with proper cleanup
-      return new Promise<void>((resolve, reject) => {
+      const result = await new Promise<void>((resolve, reject) => {
         const cleanup = (): void => {
           this.removeListener("dispatch", readyHandler);
           this.removeListener("error", errorHandler);
@@ -325,18 +384,32 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this.once("error", errorHandler);
         this.once("connectionFailure", failureHandler);
       });
+
+      // Reset reconnection attempts
+      this.#circuitBreaker.recordSuccess();
+      return result;
     } catch (error) {
       const failureEvent: ConnectionFailureEvent = {
         timestamp: new Date().toISOString(),
         gatewayUrl: connectionStartEvent.gatewayUrl,
-        encoding: this.encoding.type,
-        compression: this.compression.type,
+        encoding: this.#encoding.type,
+        compression: this.#compression.type,
         error: error instanceof Error ? error : new Error(String(error)),
         duration: Date.now() - this.#connectStartTime,
         attemptNumber: this.#reconnectionAttempts + 1,
       };
 
       this.emit("connectionFailure", failureEvent);
+
+      // Record failure in circuit breaker
+      const failureType = CircuitBreakerService.detectFailureType(
+        error instanceof Error ? error : new Error(String(error)),
+      );
+
+      this.#circuitBreaker.recordFailure(
+        error instanceof Error ? error : new Error(String(error)),
+        failureType,
+      );
 
       // Enhanced error reporting with more context
       throw new Error("Failed to connect to gateway", {
@@ -365,7 +438,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       t: null,
     };
 
-    const encoded = this.encoding.encode(payload);
+    const encoded = this.#encoding.encode(payload);
 
     const payloadSendEvent: PayloadSendEvent = {
       timestamp: new Date().toISOString(),
@@ -403,15 +476,15 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.#sequence = 0;
 
       // Destroy services
-      this.encoding.destroy();
-      this.compression.destroy();
-      this.heartbeat.destroy();
+      this.#encoding.destroy();
+      this.#compression.destroy();
+      this.#heartbeat.destroy();
+      this.#circuitBreaker.destroy();
 
-      if (this.shard.isEnabled()) {
-        this.shard.destroy();
+      if (this.#shard.isEnabled()) {
+        this.#shard.destroy();
       }
 
-      // Clear event listeners
       this.removeAllListeners();
     } catch (error) {
       throw new Error("Failed to destroy gateway connection", {
@@ -449,8 +522,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
           const connectionCompleteEvent: ConnectionCompleteEvent = {
             timestamp: new Date().toISOString(),
             gatewayUrl: wsUrl,
-            encoding: this.encoding.type,
-            compression: this.compression.type,
+            encoding: this.#encoding.type,
+            compression: this.#compression.type,
             duration: Date.now() - this.#connectStartTime,
             resuming: Boolean(this.#sessionId && this.#sequence > 0),
           };
@@ -474,12 +547,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     let processedData = data;
 
     // Decompress if needed
-    if (this.compression.isInitialized()) {
-      processedData = this.compression.decompress(data);
+    if (this.#compression.isInitialized()) {
+      processedData = this.#compression.decompress(data);
     }
 
     // Decode the payload
-    const payload = this.encoding.decode(processedData);
+    const payload = this.#encoding.decode(processedData);
 
     // Emit receive event
     const payloadReceiveEvent: PayloadReceiveEvent = {
@@ -519,11 +592,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         break;
 
       case GatewayOpcodes.Heartbeat:
-        this.heartbeat.sendHeartbeat();
+        this.#heartbeat.sendHeartbeat();
         break;
 
       case GatewayOpcodes.HeartbeatAck:
-        this.heartbeat.ackHeartbeat();
+        this.#heartbeat.ackHeartbeat();
         break;
 
       case GatewayOpcodes.InvalidSession:
@@ -547,7 +620,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param hello - Hello payload data
    */
   async #handleHello(hello: HelloEntity): Promise<void> {
-    this.heartbeat.start(hello.heartbeat_interval);
+    this.#heartbeat.start(hello.heartbeat_interval);
 
     if (this.#canResume()) {
       this.#sendResume();
@@ -574,20 +647,20 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       }
 
       case "GUILD_CREATE": {
-        if (this.shard.isEnabled()) {
+        if (this.#shard.isEnabled()) {
           const data = payload.d as GuildCreateEntity;
           if ("id" in data && !("unavailable" in data)) {
-            this.shard.addGuildToShard(data.id);
+            this.#shard.addGuildToShard(data.id);
           }
         }
         break;
       }
 
       case "GUILD_DELETE": {
-        if (this.shard.isEnabled()) {
+        if (this.#shard.isEnabled()) {
           const data = payload.d as UnavailableGuildEntity;
           if ("id" in data) {
-            this.shard.removeGuildFromShard(data.id);
+            this.#shard.removeGuildFromShard(data.id);
           }
         }
         break;
@@ -614,12 +687,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.setSession(data.session_id, data.resume_gateway_url);
 
     // Handle sharding if enabled
-    if (this.shard.isEnabled()) {
-      const shard = this.shard.getShardInfo(data.shard?.[0] ?? 0);
+    if (this.#shard.isEnabled()) {
+      const shard = this.#shard.getShardInfo(data.shard?.[0] ?? 0);
       if (shard) {
-        this.shard.setShardStatus(shard.shardId, "ready");
+        this.#shard.setShardStatus(shard.shardId, "ready");
         const guildIds = data.guilds.map((guild) => guild.id);
-        this.shard.addGuildsToShard(shard.shardId, guildIds);
+        this.#shard.addGuildsToShard(shard.shardId, guildIds);
       }
     }
 
@@ -635,7 +708,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       version: data.v,
       readyTimeout: readyTime,
       guildCount: data.guilds.length,
-      shardCount: this.shard.totalShards,
+      shardCount: this.#shard.totalShards,
     };
 
     this.emit("sessionStart", sessionStartEvent);
@@ -647,7 +720,17 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param code - Close code
    */
   async #handleClose(code: number): Promise<void> {
-    this.heartbeat.destroy();
+    this.#heartbeat.destroy();
+
+    // Record failure if not a clean close
+    if (code !== 1000 && code !== 1001) {
+      const error = new Error(`WebSocket closed with code ${code}`);
+      const failureType =
+        code === 4004 ? FailureType.Authentication : FailureType.WebSocket;
+
+      this.#circuitBreaker.recordFailure(error, failureType);
+    }
+
     await this.#handleDisconnect(code);
   }
 
@@ -665,6 +748,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     };
 
     this.emit("sessionInvalid", sessionInvalidEvent);
+
+    // Record failure if not resumable
+    if (!resumable) {
+      this.#circuitBreaker.recordFailure(
+        new Error("Non-resumable invalid session"),
+        FailureType.Gateway,
+      );
+    }
 
     if (resumable && this.#canResume()) {
       await this.#handleResume();
@@ -687,7 +778,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Handles reconnect events
    */
   async #handleReconnect(): Promise<void> {
-    if (this.heartbeat.isReconnecting()) {
+    if (this.#heartbeat.isReconnecting()) {
       return;
     }
 
@@ -711,6 +802,19 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     await setTimeout(delay);
 
     try {
+      // Attempt reconnection
+      if (!this.#circuitBreaker.canExecute("reconnect")) {
+        // Wait for the circuit breaker to reset
+        const additionalDelay = Math.min(
+          this.#circuitBreaker.remainingTimeout,
+          60000, // Max 1 minute
+        );
+
+        await setTimeout(additionalDelay);
+        await this.#handleDisconnect(code);
+        return;
+      }
+
       if (this.#shouldResume(code) && this.#canResume()) {
         await this.#handleResume();
       } else {
@@ -719,6 +823,17 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       }
     } catch (error) {
       this.emit("error", new Error("Reconnection failed", { cause: error }));
+
+      // Record failure in circuit breaker
+      const failureType = CircuitBreakerService.detectFailureType(
+        error instanceof Error ? error : new Error(String(error)),
+      );
+
+      this.#circuitBreaker.recordFailure(
+        error instanceof Error ? error : new Error(String(error)),
+        failureType,
+      );
+
       await this.#handleDisconnect(code);
     }
   }
@@ -801,14 +916,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         browser: "nyx.js",
         device: "nyx.js",
       },
-      compress: this.compression.isInitialized(),
+      compress: this.#compression.isInitialized(),
       large_threshold: this.#options.largeThreshold,
       intents: this.#options.intents,
     };
 
     // Add shard info if sharding is enabled
-    if (this.shard.isEnabled() && this.shard.totalShards > 0) {
-      payload.shard = await this.shard.getAvailableShard();
+    if (this.#shard.isEnabled() && this.#shard.totalShards > 0) {
+      payload.shard = await this.#shard.getAvailableShard();
     }
 
     // Add presence if provided
@@ -834,11 +949,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   #buildGatewayUrl(baseUrl: string): string {
     const params = new URLSearchParams({
       v: String(this.#options.version),
-      encoding: this.encoding.type,
+      encoding: this.#encoding.type,
     });
 
-    if (this.compression.type) {
-      params.append("compress", this.compression.type);
+    if (this.#compression.type) {
+      params.append("compress", this.#compression.type);
     }
 
     return `${baseUrl}?${params.toString()}`;

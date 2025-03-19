@@ -9,7 +9,7 @@ import type { RetryOptions } from "../options/index.js";
  */
 const RETRY_CONSTANTS = {
   JITTER_FACTOR: 0.1, // ±10% jitter to prevent thundering herd
-};
+} as const;
 
 /**
  * Possible reasons for retrying a request
@@ -80,6 +80,13 @@ export class RetryManager {
   constructor(rest: Rest, options: RetryOptions) {
     this.#rest = rest;
     this.#options = options;
+  }
+
+  /**
+   * Current state of the retry operation
+   */
+  get state(): RetryState {
+    return this.#state;
   }
 
   /**

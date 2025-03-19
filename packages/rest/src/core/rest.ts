@@ -5,7 +5,11 @@ import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError, type JsonErrorResponse } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
-import { RateLimitManager, RetryManager } from "../managers/index.js";
+import {
+  QueueManager,
+  RateLimitManager,
+  RetryManager,
+} from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
   ApplicationCommandRouter,
@@ -61,7 +65,7 @@ const REST_CONSTANTS = {
     allowH2: false,
     strictContentLength: true,
   },
-};
+} as const;
 
 /**
  * Main REST client for Discord API
@@ -81,6 +85,9 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /** Retry handler */
   readonly #retry: RetryManager;
+
+  /** Queue handler */
+  readonly #queue: QueueManager;
 
   /**
    * Creates a new REST client
@@ -103,10 +110,42 @@ export class Rest extends EventEmitter<RestEvents> {
     // Initialize managers
     this.#rateLimiter = new RateLimitManager(this);
     this.#retry = new RetryManager(this, this.#options.retry);
+    this.#queue = new QueueManager(this, this.#options.queue);
   }
 
+  /**
+   * Access to the Discord API token
+   */
   get token(): Token {
     return this.#options.token;
+  }
+
+  /**
+   * Access to the Discord API base URL
+   */
+  get options(): RestOptions {
+    return this.#options;
+  }
+
+  /**
+   * Access to the Discord API base URL
+   */
+  get retry(): RetryManager {
+    return this.#retry;
+  }
+
+  /**
+   * Access to the Discord API base URL
+   */
+  get rateLimiter(): RateLimitManager {
+    return this.#rateLimiter;
+  }
+
+  /**
+   * Access to the Discord API base URL
+   */
+  get queue(): QueueManager {
+    return this.#queue;
   }
 
   /**
@@ -294,49 +333,53 @@ export class Rest extends EventEmitter<RestEvents> {
   request<T>(options: ApiRequestOptions): Promise<T> {
     const requestId = crypto.randomUUID();
 
-    return this.#retry.execute(
-      async () => {
-        try {
-          // Check rate limits before making the request - using enforceRateLimit
-          // which will throw an error if the rate limit is exceeded
-          this.#rateLimiter.enforceRateLimit(
-            options.path,
-            options.method,
-            requestId,
-          );
+    // Wrap the actual request in a function that can be queued
+    const executeRequest = (): Promise<T> =>
+      this.#retry.execute(
+        async () => {
+          try {
+            // Check rate limits before making the request
+            this.#rateLimiter.enforceRateLimit(
+              options.path,
+              options.method,
+              requestId,
+            );
 
-          // Make the actual HTTP request
-          const response = await this.#makeHttpRequest<T>(options, requestId);
+            // Make the actual HTTP request
+            const response = await this.#makeHttpRequest<T>(options, requestId);
 
-          // Update rate limit information
-          this.#rateLimiter.updateRateLimit(
-            options.path,
-            options.method,
-            response.headers,
-            response.statusCode,
-            requestId,
-          );
+            // Update rate limit information
+            this.#rateLimiter.updateRateLimit(
+              options.path,
+              options.method,
+              response.headers,
+              response.statusCode,
+              requestId,
+            );
 
-          return response.data;
-        } catch (error) {
-          // Emit failure event
-          this.emit("requestFailure", {
-            timestamp: new Date().toISOString(),
-            error: error instanceof Error ? error : new Error(String(error)),
-            path: options.path,
-            method: options.method,
-            headers: this.#buildRequestHeaders(options),
-            statusCode:
-              error instanceof ApiError ? error.statusCode : undefined,
-            requestId: requestId,
-            duration: 0,
-          });
-          throw error;
-        }
-      },
-      { method: options.method, path: options.path },
-      requestId,
-    );
+            return response.data;
+          } catch (error) {
+            // Emit failure event
+            this.emit("requestFailure", {
+              timestamp: new Date().toISOString(),
+              error: error instanceof Error ? error : new Error(String(error)),
+              path: options.path,
+              method: options.method,
+              headers: this.#buildRequestHeaders(options),
+              statusCode:
+                error instanceof ApiError ? error.statusCode : undefined,
+              requestId: requestId,
+              duration: 0,
+            });
+            throw error;
+          }
+        },
+        { method: options.method, path: options.path },
+        requestId,
+      );
+
+    // Add to queue (or execute immediately if queue is disabled)
+    return this.#queue.enqueue<T>(options, requestId, executeRequest);
   }
 
   /**

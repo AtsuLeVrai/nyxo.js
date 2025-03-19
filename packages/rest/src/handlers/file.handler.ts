@@ -24,7 +24,7 @@ const FILE_CONSTANTS = {
   ]),
   ATTACHMENT_MAX_SIZE: 10 * 1024 * 1024, // 10MB
   ASSET_MAX_SIZE: 256 * 1024, // 256KB
-};
+} as const;
 
 // Types
 export type DataUri = `data:${string};base64,${string}`;

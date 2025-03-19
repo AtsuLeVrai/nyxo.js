@@ -1,5 +1,10 @@
 import type { ApiVersion } from "@nyxjs/core";
 import type { CompressionType, EncodingType } from "../options/index.js";
+import type {
+  CircuitState,
+  CircuitStateChangeEvent,
+  FailureType,
+} from "../services/index.js";
 import type { GatewayReceiveEvents } from "./index.js";
 
 /**
@@ -310,28 +315,58 @@ export interface SessionLimitUpdateEvent extends GatewayEventBase {
 }
 
 /**
- * Union of all event types for discrimination
+ * Event emitted when a failure is recorded
  */
-export type GatewayEvent =
-  | ConnectionStartEvent
-  | ConnectionCompleteEvent
-  | ConnectionFailureEvent
-  | PayloadSendEvent
-  | PayloadReceiveEvent
-  | HeartbeatSendEvent
-  | HeartbeatAckEvent
-  | HeartbeatTimeoutEvent
-  | SessionStartEvent
-  | SessionInvalidEvent
-  | SessionResumeEvent
-  | ShardCreateEvent
-  | ShardReadyEvent
-  | ShardDisconnectEvent
-  | ShardReconnectEvent
-  | ShardGuildAddEvent
-  | ShardGuildRemoveEvent
-  | ShardRateLimitEvent
-  | SessionLimitUpdateEvent;
+export interface CircuitFailureEvent {
+  /** Event timestamp */
+  timestamp: string;
+
+  /** Failure type */
+  failureType: FailureType;
+
+  /** Current circuit state */
+  state: CircuitState;
+
+  /** Number of consecutive failures */
+  failureCount: number;
+
+  /** Original error */
+  error: Error;
+}
+
+/**
+ * Event emitted when an operation is blocked by the circuit
+ */
+export interface CircuitBlockedEvent {
+  /** Event timestamp */
+  timestamp: string;
+
+  /** Type of blocked operation */
+  operationType: string;
+
+  /** Current circuit state */
+  state: CircuitState;
+
+  /** Remaining time before the next test in milliseconds */
+  remainingTimeout: number;
+}
+
+/**
+ * Types of events emitted by the circuit breaker
+ */
+export interface CircuitBreakerEvents {
+  /** Emitted during a state change */
+  stateChange: [event: CircuitStateChangeEvent];
+
+  /** Emitted when a failure is recorded */
+  failure: [event: CircuitFailureEvent];
+
+  /** Emitted when an operation is blocked */
+  blocked: [event: CircuitBlockedEvent];
+
+  /** Emitted when the circuit is reset */
+  reset: [timestamp: string];
+}
 
 /**
  * Map of event names to their corresponding payload types
@@ -405,6 +440,15 @@ export interface GatewayEvents {
     event: keyof GatewayReceiveEvents,
     data: GatewayReceiveEvents[keyof GatewayReceiveEvents],
   ];
+
+  /** Emitted when a circuit breaker state changes */
+  circuitStateChange: [event: CircuitStateChangeEvent];
+
+  /** Emitted when an operation is blocked by the circuit */
+  circuitBlocked: [event: CircuitBlockedEvent];
+
+  /** Emitted when a failure is recorded by the circuit */
+  circuitFailure: [event: CircuitFailureEvent];
 }
 
 /**
