@@ -33,7 +33,8 @@
     "@nyxjs/core": "workspace:*",
     "@nyxjs/gateway": "workspace:*",
     "@nyxjs/rest": "workspace:*",
-    "@nyxjs/store": "workspace:*"
+    "@nyxjs/store": "workspace:*",
+    "@nyxjs/voice": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
