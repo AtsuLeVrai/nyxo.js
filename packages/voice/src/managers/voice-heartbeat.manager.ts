@@ -4,13 +4,17 @@ import { VoiceOpcodes } from "../types/index.js";
 /**
  * Manages heartbeat intervals and tracking for voice connections
  *
- * Tracks missed heartbeats and handles reconnection when necessary
+ * Responsible for:
+ * - Sending periodic heartbeats to maintain the voice WebSocket connection
+ * - Tracking heartbeat acknowledgements and calculating latency
+ * - Detecting and handling missed heartbeats
+ * - Initiating reconnection when heartbeats fail
  */
 export class VoiceHeartbeatManager {
   /** Voice client reference */
   readonly #connection: VoiceConnection;
 
-  /** Interval ID for heartbeat */
+  /** Interval ID for heartbeat timer */
   #interval: NodeJS.Timeout | null = null;
 
   /** Timestamp of last heartbeat sent */
@@ -33,6 +37,9 @@ export class VoiceHeartbeatManager {
 
   /** Whether the client is currently reconnecting */
   #reconnecting = false;
+
+  /** Total heartbeats sent */
+  #totalHeartbeatsSent = 0;
 
   /**
    * Creates a new voice heartbeat manager
@@ -60,6 +67,20 @@ export class VoiceHeartbeatManager {
   }
 
   /**
+   * Gets the number of missed heartbeats
+   */
+  get missedHeartbeats(): number {
+    return this.#missedHeartbeats;
+  }
+
+  /**
+   * Gets the total number of heartbeats sent
+   */
+  get totalHeartbeatsSent(): number {
+    return this.#totalHeartbeatsSent;
+  }
+
+  /**
    * Gets whether the client is currently reconnecting
    */
   isReconnecting(): boolean {
@@ -67,20 +88,50 @@ export class VoiceHeartbeatManager {
   }
 
   /**
+   * Gets whether heartbeating is active
+   */
+  isActive(): boolean {
+    return this.#interval !== null;
+  }
+
+  /**
    * Starts the heartbeat interval
    *
    * @param interval - Heartbeat interval in milliseconds
+   * @throws {Error} If interval is invalid or heartbeating is already active
    */
   start(interval: number): void {
+    // Clean up any existing interval
     this.stop();
 
-    this.#heartbeatInterval = interval;
-    this.#lastHeartbeatAck = Date.now();
+    if (interval <= 0) {
+      throw new Error(
+        `Invalid heartbeat interval: ${interval}ms (must be positive)`,
+      );
+    }
 
-    this.#interval = setInterval(() => {
-      this.#checkHeartbeat();
+    this.#heartbeatInterval = interval;
+    this.#lastHeartbeatAck = Date.now(); // Initialize to avoid immediate timeout
+
+    // Use jitter to prevent thundering herd
+    const initialDelay = Math.random() * interval;
+
+    // First heartbeat after a random delay
+    setTimeout(() => {
       this.sendHeartbeat();
-    }, interval);
+
+      // Setup the interval for subsequent heartbeats
+      this.#interval = setInterval(() => {
+        this.#checkHeartbeat();
+        this.sendHeartbeat();
+      }, interval);
+    }, initialDelay);
+
+    this.#connection.emit("heartbeatStart", {
+      interval,
+      initialDelay,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   /**
@@ -104,6 +155,7 @@ export class VoiceHeartbeatManager {
       const currentNonce = Date.now();
       this.#nonce = currentNonce;
       this.#lastHeartbeatSent = currentNonce;
+      this.#totalHeartbeatsSent++;
 
       // For v8, include sequence acknowledgement
       if (this.#connection.gatewayVersion >= 8) {
@@ -114,10 +166,18 @@ export class VoiceHeartbeatManager {
       } else {
         this.#connection.send(VoiceOpcodes.Heartbeat, currentNonce);
       }
+
+      this.#connection.emit("heartbeatSend", {
+        nonce: currentNonce,
+        total: this.#totalHeartbeatsSent,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
       this.#connection.emit(
         "error",
-        error instanceof Error ? error : new Error(String(error)),
+        error instanceof Error
+          ? error
+          : new Error(`Failed to send heartbeat: ${String(error)}`),
       );
     }
   }
@@ -135,7 +195,10 @@ export class VoiceHeartbeatManager {
     // Calculate and emit latency if nonce matches
     if (receivedNonce && receivedNonce === this.#nonce) {
       const latency = now - this.#lastHeartbeatSent;
-      this.#connection.emit("heartbeatAck", latency);
+      this.#connection.emit("heartbeatAck", {
+        latency,
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 
@@ -163,9 +226,16 @@ export class VoiceHeartbeatManager {
 
     const timeSinceLastAck = Date.now() - this.#lastHeartbeatAck;
 
-    // Check if we've missed a heartbeat
+    // Check if we've missed a heartbeat (1.5x interval is a good threshold)
     if (timeSinceLastAck > this.#heartbeatInterval * 1.5) {
       this.#missedHeartbeats++;
+
+      // Emit heartbeat timeout event
+      this.#connection.emit("heartbeatTimeout", {
+        missedHeartbeats: this.#missedHeartbeats,
+        maxRetries: this.#maxMissedHeartbeats,
+        timestamp: new Date().toISOString(),
+      });
 
       if (this.#missedHeartbeats >= this.#maxMissedHeartbeats) {
         this.#handleMissedHeartbeats();
@@ -183,10 +253,9 @@ export class VoiceHeartbeatManager {
     }
 
     this.#reconnecting = true;
-    this.#connection.emit(
-      "debug",
-      `Missed ${this.#missedHeartbeats} heartbeats, reconnecting`,
-    );
+
+    // Stop heartbeating
+    this.stop();
 
     // Request reconnection from the voice client
     this.#connection

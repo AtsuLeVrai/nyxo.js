@@ -5,8 +5,12 @@ import { EncryptionMode } from "../types/index.js";
 /**
  * Service for handling voice data encryption
  *
- * Provides encryption capabilities for Discord voice data
- * using the recommended encryption modes (AES256-GCM or XChaCha20-Poly1305)
+ * Provides encryption capabilities for Discord voice data using:
+ * - AES-256-GCM (recommended, hardware accelerated)
+ * - XChaCha20-Poly1305 (required fallback)
+ *
+ * Deprecated modes are not supported as they will be discontinued by Discord
+ * on November 18, 2024.
  */
 export class VoiceEncryptionService {
   /** Currently selected encryption mode */
@@ -26,6 +30,13 @@ export class VoiceEncryptionService {
   }
 
   /**
+   * Gets the current nonce counter value
+   */
+  get nonce(): number {
+    return this.#nonce;
+  }
+
+  /**
    * Checks if the encryption service is initialized
    */
   isInitialized(): boolean {
@@ -37,19 +48,24 @@ export class VoiceEncryptionService {
    *
    * @param mode - Encryption mode to use
    * @param key - Secret key for encryption
+   * @throws {Error} If mode is unsupported or key is invalid
    */
   initialize(mode: EncryptionMode, key: Uint8Array): void {
-    // Validate the encryption mode (only support recommended modes)
-    if (
-      mode !== EncryptionMode.AeadAes256GcmRtpsize &&
-      mode !== EncryptionMode.AeadXChaCha20Poly1305Rtpsize
-    ) {
+    // Define supported encryption modes
+    const supportedModes = [
+      EncryptionMode.AeadAes256GcmRtpsize,
+      EncryptionMode.AeadXChaCha20Poly1305Rtpsize,
+    ];
+
+    // Validate the encryption mode
+    if (!supportedModes.includes(mode)) {
       throw new Error(
-        `Encryption mode ${mode} is not recommended by Discord. Please use AeadAes256GcmRtpsize or AeadXChaCha20Poly1305Rtpsize.`,
+        `Encryption mode ${mode} is not supported. Discord will discontinue ` +
+          `deprecated modes on November 18, 2024. Please use one of: ${supportedModes.join(", ")}`,
       );
     }
 
-    // Validate the key size for the selected mode
+    // Validate the key size for the selected mode (both use 32-byte keys)
     if (key.length !== 32) {
       throw new Error(
         `Encryption requires a 32-byte key, got ${key.length} bytes`,
@@ -63,6 +79,8 @@ export class VoiceEncryptionService {
 
   /**
    * Gets the next nonce for encryption
+   *
+   * @returns The next nonce value
    */
   getNextNonce(): number {
     return this.#nonce++;
@@ -72,6 +90,7 @@ export class VoiceEncryptionService {
    * Creates a nonce for the current encryption mode
    *
    * @returns Nonce suitable for the selected encryption mode
+   * @throws {Error} If encryption service is not initialized
    */
   createNonce(): Buffer {
     if (!this.isInitialized()) {
@@ -85,6 +104,7 @@ export class VoiceEncryptionService {
       nonce.writeUInt32BE(nonceValue, 8); // Write to the last 4 bytes
       return nonce;
     }
+
     // For XChaCha20-Poly1305, we use a 24-byte nonce (first 20 bytes are 0)
     const nonceValue = this.getNextNonce();
     const nonce = Buffer.allocUnsafe(24).fill(0);
@@ -95,11 +115,15 @@ export class VoiceEncryptionService {
   /**
    * Encrypts audio data using the selected encryption mode
    *
+   * For Discord's RTP encoding, the RTP header and any extensions are kept
+   * unencrypted, while the payload is encrypted.
+   *
    * @param header - RTP header
-   * @param buffer - Audio data to encrypt
+   * @param data - Audio data to encrypt (must include header)
    * @returns Encrypted audio data
+   * @throws {Error} If encryption service not initialized or encryption fails
    */
-  encrypt(header: Buffer, buffer: Buffer): Buffer {
+  encrypt(header: Buffer, data: Buffer): Buffer {
     if (!this.isInitialized()) {
       throw new Error("Encryption service not initialized");
     }
@@ -112,8 +136,8 @@ export class VoiceEncryptionService {
     const rtpSize = this.#calculateRtpSize(header);
 
     // Split the buffer into header (unencrypted) and payload (to be encrypted)
-    const rtpHeader = buffer.subarray(0, rtpSize);
-    const payload = buffer.subarray(rtpSize);
+    const rtpHeader = data.subarray(0, rtpSize);
+    const payload = data.subarray(rtpSize);
 
     // Create the nonce
     const nonce = this.createNonce();
@@ -121,6 +145,7 @@ export class VoiceEncryptionService {
     if (this.#mode === EncryptionMode.AeadAes256GcmRtpsize) {
       return this.#encryptAesGcm(payload, nonce, rtpHeader);
     }
+
     return this.#encryptXChaCha20Poly1305(payload, nonce, rtpHeader);
   }
 
@@ -129,6 +154,7 @@ export class VoiceEncryptionService {
    *
    * @param data - Encrypted packet (includes RTP header)
    * @returns Decrypted audio data
+   * @throws {Error} If decryption fails
    */
   decrypt(data: Buffer): Buffer {
     if (!this.isInitialized()) {
@@ -145,11 +171,12 @@ export class VoiceEncryptionService {
     if (this.#mode === EncryptionMode.AeadAes256GcmRtpsize) {
       return this.#decryptAesGcm(data, rtpSize);
     }
+
     return this.#decryptXChaCha20Poly1305(data, rtpSize);
   }
 
   /**
-   * Resets the encryption service
+   * Resets the encryption service state
    */
   reset(): void {
     this.#mode = null;
@@ -159,6 +186,9 @@ export class VoiceEncryptionService {
 
   /**
    * Calculates the RTP size (unencrypted portion)
+   *
+   * Discord's voice implementation uses the RTP Size for encryption, which
+   * means the RTP header and any extensions remain unencrypted.
    *
    * @param header - RTP header
    * @returns Size of the unencrypted portion

@@ -6,7 +6,11 @@ import { EncryptionMode, type VoicePacket } from "../types/index.js";
 /**
  * UDP Connection manager for Discord voice
  *
- * Handles UDP socket connection, IP discovery and packet transmission for voice data
+ * Responsible for:
+ * - Creating and managing the UDP socket connection
+ * - Performing IP discovery to determine external IP and port
+ * - Encrypting and sending voice packets
+ * - Handling incoming voice packets
  */
 export class UdpManager {
   /** Voice client reference */
@@ -21,10 +25,10 @@ export class UdpManager {
   /** Voice server port */
   #serverPort: number | null = null;
 
-  /** Local UDP IP address */
+  /** Local UDP IP address (external) */
   #localIp: string | null = null;
 
-  /** Local UDP port */
+  /** Local UDP port (external) */
   #localPort: number | null = null;
 
   /** SSRC for voice connection */
@@ -38,6 +42,9 @@ export class UdpManager {
 
   /** Whether the connection is ready */
   #ready = false;
+
+  /** Nonce counter for voice packets */
+  #nonceCounter = 0;
 
   /**
    * Creates a new UDP manager
@@ -85,18 +92,27 @@ export class UdpManager {
   }
 
   /**
+   * Gets the next nonce counter value
+   */
+  getNextNonce(): number {
+    return this.#nonceCounter++;
+  }
+
+  /**
    * Initializes the UDP connection
    *
    * @param serverIp - Voice server IP address
    * @param serverPort - Voice server port
    * @param ssrc - Voice SSRC
    * @returns Promise that resolves when connection is initialized
+   * @throws {Error} If UDP connection fails
    */
   async connect(
     serverIp: string,
     serverPort: number,
     ssrc: number,
   ): Promise<void> {
+    // Destroy any existing socket first
     if (this.#socket) {
       this.destroy();
     }
@@ -105,6 +121,7 @@ export class UdpManager {
     this.#serverPort = serverPort;
     this.#ssrc = ssrc;
     this.#ready = false;
+    this.#nonceCounter = 0;
 
     this.#socket = dgram.createSocket("udp4");
 
@@ -150,15 +167,19 @@ export class UdpManager {
    *
    * @param mode - Encryption mode
    * @param key - Secret key
+   * @throws {Error} If an unsupported encryption mode is provided
    */
   setEncryption(mode: EncryptionMode, key: Uint8Array): void {
     // Only support recommended encryption modes
-    if (
-      mode !== EncryptionMode.AeadAes256GcmRtpsize &&
-      mode !== EncryptionMode.AeadXChaCha20Poly1305Rtpsize
-    ) {
+    const supportedModes = [
+      EncryptionMode.AeadAes256GcmRtpsize,
+      EncryptionMode.AeadXChaCha20Poly1305Rtpsize,
+    ];
+
+    if (!supportedModes.includes(mode)) {
       throw new Error(
-        `Encryption mode ${mode} is not recommended. Please use AeadAes256GcmRtpsize or AeadXChaCha20Poly1305Rtpsize.`,
+        `Encryption mode ${mode} is not supported. ` +
+          `Please use one of: ${supportedModes.join(", ")}`,
       );
     }
 
@@ -172,7 +193,7 @@ export class UdpManager {
    * Sends a packet to the voice server
    *
    * @param packet - Voice packet to send
-   * @throws Error if the UDP socket is not connected
+   * @throws {Error} If the UDP socket is not connected or encryption is not set up
    */
   send(packet: VoicePacket): void {
     if (!(this.#socket && this.#serverIp && this.#serverPort)) {
@@ -199,11 +220,12 @@ export class UdpManager {
         // Use the encryption service to encrypt the packet
         finalPacket = this.#encryptionService.encrypt(
           header,
-          Buffer.concat([header, packet.data]),
+          Buffer.concat([packet.data]),
         );
       } else {
-        // If encryption is not initialized, just send the raw packet
-        finalPacket = Buffer.concat([header, packet.data]);
+        throw new Error(
+          "Encryption not initialized. Cannot send voice packet.",
+        );
       }
 
       // Send the packet
@@ -247,12 +269,18 @@ export class UdpManager {
         this.#localIp = null;
         this.#localPort = null;
         this.#ready = false;
+        this.#nonceCounter = 0;
       }
     }
   }
 
   /**
    * Performs IP discovery to determine the local external IP and port
+   *
+   * This follows Discord's IP discovery protocol to identify the public
+   * IP and port that Discord will receive packets from.
+   *
+   * @throws {Error} If IP discovery fails
    * @private
    */
   async #performIpDiscovery(): Promise<void> {
@@ -292,7 +320,8 @@ export class UdpManager {
 
           // Set up a timeout for discovery
           const timeout = setTimeout(() => {
-            reject(new Error("IP discovery timed out"));
+            this.#socket?.removeListener("message", handleDiscovery);
+            reject(new Error("IP discovery timed out after 5 seconds"));
           }, 5000);
 
           // One-time handler for discovery response
@@ -312,8 +341,11 @@ export class UdpManager {
             this.#localIp = ip;
             this.#localPort = port;
 
-            this.#connection.emit("ipDiscovery", ip, port);
-            this.#connection.emit("udpReady", ip, port);
+            this.#connection.emit("ipDiscovery", {
+              ip,
+              port,
+              timestamp: new Date().toISOString(),
+            });
 
             resolve();
           };
@@ -344,29 +376,18 @@ export class UdpManager {
         return;
       }
 
-      // Extract SSRC
-      const _ssrc = packet.readUInt32BE(8);
-      _ssrc;
+      // Extract SSRC from the packet
+      const packetSsrc = packet.readUInt32BE(8);
 
-      // For speaking detection
-      // When we receive a packet with an SSRC, it means that user is speaking
-      // We could emit a speaking event here if we wanted to track who's speaking
-
-      // This is mostly useful for client applications, not bots
-      // However, we'll leave this comment here for future implementation if needed
-
-      // Actual decryption and playback of voice is rarely needed for bots
-      // If encryption is set up and we want to decode, we could do:
-      /*
-      if (this.#encryptionService.isInitialized()) {
-        try {
-          const decrypted = this.#encryptionService.decrypt(packet);
-          // Do something with the decrypted audio...
-        } catch (error) {
-          // Handle decryption error
-        }
+      // Emit speaking event if needed
+      // This allows tracking which users are speaking based on SSRC
+      if (packetSsrc !== this.#ssrc) {
+        this.#connection.emit("userSpeaking", packetSsrc);
       }
-      */
+
+      // Discord voice uses separate SSRCs for each user
+      // We don't typically need to decode received audio for bots
+      // But the structure is here if needed for future implementation
     } catch (_error) {
       // Silently ignore malformed packets
       // This is expected as we might receive non-RTP packets

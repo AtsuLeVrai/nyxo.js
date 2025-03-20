@@ -1,4 +1,6 @@
 import { setTimeout } from "node:timers/promises";
+import type { VoiceStateEntity } from "@nyxjs/core";
+import type { VoiceServerUpdateEntity } from "@nyxjs/gateway";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { z } from "zod";
@@ -10,8 +12,8 @@ import {
   EncryptionMode,
   NON_RESUMABLE_VOICE_CLOSE_CODES,
   SpeakingFlags,
-  type VoiceCloseEventCodes,
   type VoiceConnectionEvents,
+  VoiceGatewayVersion,
   type VoiceHello,
   type VoiceIdentify,
   VoiceOpcodes,
@@ -19,16 +21,19 @@ import {
   type VoiceReady,
   type VoiceResume,
   type VoiceSelectProtocol,
-  type VoiceServer,
   type VoiceSessionDescription,
   type VoiceSpeaking,
-  type VoiceState,
 } from "../types/index.js";
 
 /**
  * Discord Voice Client for connecting to voice channels
  *
- * Handles WebSocket and UDP connections for voice communication
+ * This class handles:
+ * - Establishing and maintaining WebSocket connections to Discord's Voice Gateways
+ * - Coordinating voice heartbeats
+ * - Managing UDP connections for voice data transmission
+ * - Handling encryption for voice packets
+ * - Managing session lifecycle and resumption
  */
 export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
   /** Current session ID */
@@ -65,7 +70,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
   #ready = false;
 
   /** Voice gateway version */
-  readonly #gatewayVersion: number;
+  readonly #gatewayVersion: VoiceGatewayVersion;
 
   /** UDP connection manager */
   readonly #udp: UdpManager;
@@ -80,7 +85,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
   readonly #options: VoiceConnectionOptions;
 
   /**
-   * Creates a new Voice Client
+   * Creates a new Voice Connection client
    *
    * @param options - Voice client configuration options
    * @throws {Error} If options validation fails
@@ -181,6 +186,13 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
   }
 
   /**
+   * Gets the connection options
+   */
+  get options(): VoiceConnectionOptions {
+    return this.#options;
+  }
+
+  /**
    * Updates the sequence number
    *
    * @param sequence - New sequence number
@@ -190,33 +202,52 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
   }
 
   /**
+   * Sets the user ID for this connection
+   * Should be called before connecting
+   *
+   * @param userId - Discord user ID
+   */
+  setUserId(userId: string): void {
+    this.#userId = userId;
+  }
+
+  /**
    * Connects to a voice channel
    *
-   * @param state - Voice state update data
-   * @param server - Voice server update data
+   * @param options - Voice state and server update data
    * @returns Promise that resolves when connection is ready
+   * @throws {Error} If connection fails
    */
   async connect(
-    state: VoiceState & { session_id: string },
-    server: VoiceServer,
+    options: Pick<
+      VoiceStateEntity & VoiceServerUpdateEntity,
+      "guild_id" | "channel_id" | "session_id" | "token" | "endpoint"
+    >,
   ): Promise<void> {
-    if (!(server.token && server.endpoint)) {
-      throw new Error("Invalid voice server data");
+    if (!(options.token && options.endpoint)) {
+      throw new Error("Invalid voice server data: missing token or endpoint");
     }
 
     // Store connection information
-    this.#serverId = state.guild_id;
-    this.#channelId = state.channel_id;
-    this.#sessionId = state.session_id;
-    this.#token = server.token;
-    this.#endpoint = server.endpoint;
+    this.#serverId = options.guild_id;
+    this.#channelId = options.channel_id;
+    this.#sessionId = options.session_id;
+    this.#token = options.token;
+    this.#endpoint = options.endpoint;
 
     // Reset connection state if reconnecting
     if (this.#ws) {
-      this.disconnect();
+      this.disconnect(false);
     }
 
     this.#ready = false;
+
+    // Emit the connecting event
+    this.emit("connecting", {
+      serverId: this.#serverId,
+      channelId: this.#channelId,
+      timestamp: new Date().toISOString(),
+    });
 
     try {
       // Connect to the voice WebSocket
@@ -227,7 +258,6 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
         const cleanup = (): void => {
           this.removeListener("ready", readyHandler);
           this.removeListener("error", errorHandler);
-          this.removeListener("disconnected", disconnectHandler);
         };
 
         const readyHandler = (): void => {
@@ -240,64 +270,116 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
           reject(error);
         };
 
-        const disconnectHandler = (code: number, reason: string): void => {
-          cleanup();
-          reject(new Error(`Disconnected: ${code} - ${reason}`));
-        };
-
         this.once("ready", readyHandler);
         this.once("error", errorHandler);
-        this.once("disconnected", disconnectHandler);
       });
 
       // Connection is now ready
       this.#reconnectionAttempts = 0;
-      this.emit("connected", this.#serverId, this.#channelId || "");
+
+      this.emit("connected", {
+        serverId: this.#serverId,
+        channelId: this.#channelId as string,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
-      // Emit appropriate error
-      const wrappedError = new Error("Failed to connect to voice channel", {
-        cause: error instanceof Error ? error : new Error(String(error)),
+      // Emit connection failure
+      this.emit("connectionFailure", {
+        serverId: this.#serverId,
+        channelId: this.#channelId,
+        attempt: this.#reconnectionAttempts + 1,
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error : new Error(String(error)),
       });
 
-      this.emit("error", wrappedError);
-      throw wrappedError;
+      // Enhanced error reporting with more context
+      throw new Error("Failed to connect to voice channel", {
+        cause: error instanceof Error ? error : new Error(String(error)),
+      });
     }
   }
 
   /**
    * Reconnects to the voice channel
    *
+   * Attempts to reuse the existing session information if possible.
+   *
    * @returns Promise that resolves when reconnection is complete
+   * @throws {Error} If reconnection fails
    */
   async reconnect(): Promise<void> {
     if (!(this.#sessionId && this.#token && this.#endpoint)) {
       throw new Error("Cannot reconnect without an existing connection");
     }
 
-    // Destroy existing connection
+    // Destroy existing connection but keep session info
     this.disconnect(false);
 
     // Attempt to reconnect
     this.#reconnectionAttempts++;
     const delay = this.#getReconnectionDelay();
 
+    this.emit("reconnecting", {
+      attempt: this.#reconnectionAttempts,
+      delay,
+      sessionId: this.#sessionId,
+    });
+
     if (delay > 0) {
       await setTimeout(delay);
     }
 
     // Reconnect to WebSocket
-    return this.#connectWebSocket();
+    try {
+      await this.#connectWebSocket();
+      return new Promise<void>((resolve, reject) => {
+        const cleanup = (): void => {
+          this.removeListener("ready", readyHandler);
+          this.removeListener("resumed", resumedHandler);
+          this.removeListener("error", errorHandler);
+        };
+
+        const readyHandler = (): void => {
+          cleanup();
+          resolve();
+        };
+
+        const resumedHandler = (): void => {
+          cleanup();
+          resolve();
+        };
+
+        const errorHandler = (error: Error): void => {
+          cleanup();
+          reject(error);
+        };
+
+        this.once("ready", readyHandler);
+        this.once("resumed", resumedHandler);
+        this.once("error", errorHandler);
+      });
+    } catch (error) {
+      throw new Error("Failed to reconnect to voice channel", {
+        cause: error instanceof Error ? error : new Error(String(error)),
+      });
+    }
   }
 
   /**
    * Sets the speaking state
    *
-   * @param speaking - Speaking flags
-   * @param delay - Voice delay (0 for bots)
+   * Must be called before sending voice data. For bots, the delay should
+   * typically be 0 as they don't have user-facing delay requirements.
+   *
+   * @param speaking - Speaking flags (bitfield)
+   * @param delay - Voice delay in milliseconds (0 for bots)
+   * @throws {Error} If the connection is not ready
    */
-  setSpeaking(speaking: number, delay = 0): void {
-    if (!(this.#ready && this.#ssrc)) {
-      throw new Error("Voice connection not ready");
+  setSpeaking(speaking: SpeakingFlags, delay = 0): void {
+    this.#validateConnection();
+
+    if (!this.#ssrc) {
+      throw new Error("Cannot set speaking state: SSRC not available");
     }
 
     const payload: VoiceSpeaking = {
@@ -321,12 +403,8 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       const ws = this.#ws;
       this.#ws = null;
 
-      try {
-        ws.removeAllListeners();
-        ws.close(1000);
-      } catch (error) {
-        this.emit("debug", `Error closing WebSocket: ${error}`);
-      }
+      ws.removeAllListeners();
+      ws.close(1000);
     }
 
     // Reset state
@@ -335,12 +413,20 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     this.#encryption.reset();
 
     if (emitEvent) {
-      this.emit("disconnected", 1000, "Disconnected by client");
+      this.emit("disconnected", {
+        code: 1000,
+        reason: "Disconnected by client",
+        serverId: this.#serverId,
+        channelId: this.#channelId,
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 
   /**
-   * Destroys the voice client and cleans up resources
+   * Destroys the voice client and cleans up all resources
+   *
+   * Should be called when the client is no longer needed.
    */
   destroy(): void {
     this.disconnect();
@@ -356,33 +442,28 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
    * @throws {Error} If the connection is not valid
    */
   send<T>(opcode: VoiceOpcodes, data: T): void {
-    if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
-      throw new Error("WebSocket connection not open");
-    }
+    this.#validateConnection();
 
     const payload: VoicePayloadEntity<T> = {
       op: opcode,
       d: data,
     };
 
-    // Emit debug message
-    this.emit("debug", `Sending payload: ${JSON.stringify(payload)}`);
-
-    this.#ws.send(JSON.stringify(payload));
-    this.emit("packet", opcode, data);
-  }
-
-  /**
-   * Sets the user ID
-   *
-   * @param userId - User ID
-   */
-  setUserId(userId: string): void {
-    this.#userId = userId;
+    try {
+      this.#ws?.send(JSON.stringify(payload));
+      this.emit("packet", opcode, data);
+    } catch (error) {
+      throw new Error(`Failed to send voice payload: ${opcode}`, {
+        cause: error instanceof Error ? error : new Error(String(error)),
+      });
+    }
   }
 
   /**
    * Connects to the voice WebSocket
+   *
+   * @returns Promise that resolves when WebSocket connection is established
+   * @throws {Error} If WebSocket connection fails
    * @private
    */
   async #connectWebSocket(): Promise<void> {
@@ -395,7 +476,6 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       try {
         // Build the WebSocket URL
         const wsUrl = this.#buildGatewayUrl();
-        this.emit("debug", `Connecting to voice WebSocket: ${wsUrl}`);
 
         // Create and connect the WebSocket
         const ws = new WebSocket(wsUrl);
@@ -414,18 +494,19 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
 
         // Wait for WebSocket to open
         ws.once("open", () => {
-          this.emit("debug", "Voice WebSocket connection opened");
           resolve();
         });
       } catch (error) {
-        this.emit("debug", `Failed to connect to voice WebSocket: ${error}`);
         reject(error);
       }
     });
   }
 
   /**
-   * Builds the voice gateway URL
+   * Builds the voice gateway URL with the appropriate version
+   *
+   * @returns Complete Gateway URL with parameters
+   * @throws {Error} If no endpoint is available
    * @private
    */
   #buildGatewayUrl(): string {
@@ -458,9 +539,6 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
         typeof data === "string" ? data : data.toString(),
       );
 
-      // Debug mode logging
-      this.emit("debug", `Received payload: ${JSON.stringify(payload)}`);
-
       // Update sequence if provided
       if (payload.s !== undefined && payload.s !== null) {
         this.updateSequence(payload.s);
@@ -487,20 +565,21 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
    */
   #handleClose(code: number, reason: Buffer): void {
     const reasonStr = reason.toString() || "No reason provided";
-    this.emit("debug", `Voice WebSocket closed: ${code} - ${reasonStr}`);
 
     // Stop services
     this.#stopServices();
 
     // Emit disconnected event
-    this.emit("disconnected", code, reasonStr);
+    this.emit("disconnected", {
+      code,
+      reason: reasonStr,
+      serverId: this.#serverId,
+      channelId: this.#channelId,
+      timestamp: new Date().toISOString(),
+    });
 
     // Handle reconnection
     if (this.#options.autoReconnect && this.#shouldReconnect(code)) {
-      this.emit(
-        "debug",
-        `Attempting to reconnect, attempt ${this.#reconnectionAttempts + 1}`,
-      );
       this.reconnect().catch((error) => {
         this.emit(
           "error",
@@ -547,6 +626,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
 
       case VoiceOpcodes.Speaking:
         // Additional speaking handling could be implemented here
+        // This could track which users are speaking if needed
         break;
 
       case VoiceOpcodes.Resumed:
@@ -555,10 +635,10 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
 
       case VoiceOpcodes.ClientDisconnect:
         // Client disconnect handling
+        // This indicates another user has disconnected from the voice channel
         break;
 
       default:
-        // Unknown opcode
         break;
     }
   }
@@ -567,6 +647,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
    * Handles the Ready opcode
    *
    * @param data - Ready payload
+   * @throws {Error} If Ready payload is invalid or UDP connection fails
    * @private
    */
   async #handleReady(data: VoiceReady): Promise<void> {
@@ -576,6 +657,19 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       }
 
       this.#ssrc = data.ssrc;
+
+      // Verify that at least one of the required encryption modes is available
+      const hasRequiredMode = data.modes.some(
+        (mode) =>
+          mode === EncryptionMode.AeadAes256GcmRtpsize ||
+          mode === EncryptionMode.AeadXChaCha20Poly1305Rtpsize,
+      );
+
+      if (!hasRequiredMode) {
+        throw new Error(
+          `Voice server does not support required encryption modes. Required: aead_aes256_gcm_rtpsize or aead_xchacha20_poly1305_rtpsize. Available: ${data.modes.join(", ")}`,
+        );
+      }
 
       // Initialize the UDP connection
       await this.#udp.connect(data.ip, data.port, data.ssrc);
@@ -589,11 +683,14 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
           cause: error instanceof Error ? error : new Error(String(error)),
         }),
       );
+      throw error; // Re-throw to allow connect() to handle it
     }
   }
 
   /**
    * Handles the SessionDescription opcode
+   *
+   * This finalizes the voice connection setup by initializing encryption.
    *
    * @param data - Session description payload
    * @private
@@ -622,12 +719,13 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       }
 
       // Emit ready event with SSRC
-      this.emit(
-        "ready",
-        this.#ssrc as number,
-        this.#udp.localIp || "",
-        this.#udp.localPort || 0,
-      );
+      this.emit("ready", {
+        ssrc: this.#ssrc as number,
+        ip: this.#udp.localIp as string,
+        port: this.#udp.localPort as number,
+        encryptionMode: data.mode,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
       this.emit(
         "error",
@@ -671,10 +769,18 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
 
   /**
    * Handles the Resumed opcode
+   *
    * @private
    */
   #handleResumed(): void {
-    this.emit("debug", "Voice session resumed");
+    // If we were ready before, mark as ready again
+    if (this.#ssrc) {
+      this.#ready = true;
+
+      // Re-send speaking state to ensure it's current
+      this.setSpeaking(SpeakingFlags.Microphone);
+    }
+
     this.emit("resumed", this.#sessionId || "");
   }
 
@@ -682,6 +788,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
    * Selects the protocol for voice communication
    *
    * @param availableModes - Available encryption modes
+   * @throws {Error} If no compatible encryption mode is available
    * @private
    */
   #selectProtocol(availableModes: EncryptionMode[]): void {
@@ -702,11 +809,17 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     ) {
       mode = EncryptionMode.AeadXChaCha20Poly1305Rtpsize;
     }
-    // Fallback to any available mode
-    else if (availableModes.length > 0) {
-      mode = availableModes[0] as EncryptionMode;
-    } else {
-      throw new Error("No encryption modes available");
+    // Try AES256-GCM as another option
+    else if (availableModes.includes(EncryptionMode.AeadAes256GcmRtpsize)) {
+      mode = EncryptionMode.AeadAes256GcmRtpsize;
+    }
+    // No valid encryption mode available
+    else {
+      throw new Error(
+        "No supported encryption modes available. Discord requires " +
+          "aead_aes256_gcm_rtpsize or aead_xchacha20_poly1305_rtpsize " +
+          "as of November 18, 2024.",
+      );
     }
 
     // Create the payload
@@ -733,15 +846,33 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       );
     }
 
+    if (!this.#userId) {
+      throw new Error(
+        "User ID is required for identification. Call setUserId() before connecting.",
+      );
+    }
+
     // Create the payload
     const payload: VoiceIdentify = {
       server_id: this.#serverId,
-      user_id: this.#userId || "",
+      user_id: this.#userId,
       session_id: this.#sessionId,
       token: this.#token,
+      // For v8, we can add max_dave_protocol_version to indicate DAVE protocol support
+      // Set to 0 to indicate no support
+      max_dave_protocol_version: 0,
     };
 
-    this.send(VoiceOpcodes.Identify, payload);
+    try {
+      this.send(VoiceOpcodes.Identify, payload);
+    } catch (error) {
+      this.emit(
+        "error",
+        new Error("Failed to send Identify payload", {
+          cause: error instanceof Error ? error : new Error(String(error)),
+        }),
+      );
+    }
   }
 
   /**
@@ -763,11 +894,20 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     };
 
     // Add seq_ack for v8
-    if (this.#gatewayVersion >= 8) {
+    if (this.#gatewayVersion >= VoiceGatewayVersion.V8) {
       payload.seq_ack = this.#sequence;
     }
 
-    this.send(VoiceOpcodes.Resume, payload);
+    try {
+      this.send(VoiceOpcodes.Resume, payload);
+    } catch (error) {
+      this.emit(
+        "error",
+        new Error("Failed to send Resume payload", {
+          cause: error instanceof Error ? error : new Error(String(error)),
+        }),
+      );
+    }
   }
 
   /**
@@ -784,12 +924,11 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
    * Determines if the client should reconnect based on close code
    *
    * @param code - WebSocket close code
+   * @returns True if reconnection should be attempted
    * @private
    */
   #shouldReconnect(code: number): boolean {
-    return !NON_RESUMABLE_VOICE_CLOSE_CODES.includes(
-      code as VoiceCloseEventCodes,
-    );
+    return !NON_RESUMABLE_VOICE_CLOSE_CODES.includes(code);
   }
 
   /**
@@ -813,5 +952,17 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       this.#options.backoffSchedule.length - 1,
     );
     return this.#options.backoffSchedule[index] || 0;
+  }
+
+  /**
+   * Validates that the WebSocket connection is open
+   *
+   * @throws {Error} If the connection is not open
+   * @private
+   */
+  #validateConnection(): void {
+    if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
+      throw new Error("WebSocket connection is not open");
+    }
   }
 }

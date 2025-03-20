@@ -1,5 +1,11 @@
-import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
+import type { VoiceStateEntity } from "@nyxjs/core";
+import {
+  Gateway,
+  GatewayIntentsBits,
+  type VoiceServerUpdateEntity,
+} from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
+import { SpeakingFlags, VoiceConnection } from "@nyxjs/voice";
 import { config } from "dotenv";
 
 const { parsed } = config({ debug: true });
@@ -174,10 +180,6 @@ gateway.on("error", (error) => {
   console.error("[GATEWAY] Error occurred", error);
 });
 
-gateway.on("dispatch", (event, data) => {
-  console.log("[GATEWAY] Event dispatched", event, data);
-});
-
 gateway.on("circuitStateChange", (event) => {
   console.log("[GATEWAY] Circuit state changed", event);
 });
@@ -190,4 +192,131 @@ gateway.on("circuitFailure", (event) => {
   console.log("[GATEWAY] Circuit failure", event);
 });
 
-gateway.connect().catch(console.error);
+let voiceState: VoiceStateEntity | null = null;
+let voiceServer: VoiceServerUpdateEntity | null = null;
+
+gateway.on("dispatch", async (event, data) => {
+  console.log("[GATEWAY] Event dispatched", event, data);
+
+  if (
+    event === "VOICE_STATE_UPDATE" &&
+    (data as VoiceStateEntity).user_id ===
+      (await rest.users.getCurrentUser()).id
+  ) {
+    voiceState = data as VoiceStateEntity;
+  }
+
+  if (event === "VOICE_SERVER_UPDATE") {
+    voiceServer = data as VoiceServerUpdateEntity;
+  }
+});
+
+const voice = new VoiceConnection();
+
+voice.on("connecting", (event) => {
+  console.log("[VOICE] Connecting", event);
+});
+
+voice.on("connected", (event) => {
+  console.log("[VOICE] Connected", event);
+});
+
+voice.on("connectionFailure", (event) => {
+  console.log("[VOICE] Connection failed", event);
+});
+
+voice.on("disconnected", (event) => {
+  console.log("[VOICE] Disconnected", event);
+});
+
+voice.on("error", (error) => {
+  console.error("[VOICE] Error", error);
+});
+
+voice.on("ready", (event) => {
+  console.log("[VOICE] Ready", event);
+});
+
+voice.on("heartbeatStart", (event) => {
+  console.log("[VOICE] Heartbeat started", event);
+});
+
+voice.on("heartbeatSend", (event) => {
+  console.log("[VOICE] Heartbeat sent", event);
+});
+
+voice.on("heartbeatAck", (event) => {
+  console.log("[VOICE] Heartbeat acknowledged", event);
+});
+
+voice.on("heartbeatTimeout", (event) => {
+  console.log("[VOICE] Heartbeat timed out", event);
+});
+
+voice.on("packet", (opcode, data) => {
+  console.log("[VOICE] Packet received", opcode, data);
+});
+
+voice.on("resuming", (sessionId) => {
+  console.log("[VOICE] Resuming", sessionId);
+});
+
+voice.on("resumed", (sessionId) => {
+  console.log("[VOICE] Resumed", sessionId);
+});
+
+voice.on("reconnecting", (event) => {
+  console.log("[VOICE] Reconnecting", event);
+});
+
+voice.on("ipDiscovery", (event) => {
+  console.log("[VOICE] IP discovery", event);
+});
+
+voice.on("udpPacket", (packet) => {
+  console.log("[VOICE] UDP packet received", packet);
+});
+
+voice.on("userSpeaking", (ssrc) => {
+  console.log("[VOICE] User speaking", ssrc);
+});
+
+async function main(): Promise<void> {
+  await gateway.connect();
+
+  const user = await rest.users.getCurrentUser();
+  voice.setUserId(user.id);
+  gateway.updateVoiceState({
+    guild_id: "936969912600121384",
+    channel_id: "1352014310838374460",
+    self_mute: false,
+    self_deaf: false,
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  if (!(voiceState && voiceServer)) {
+    throw new Error("Voice state or server not available");
+  }
+
+  await voice.connect({
+    token: voiceServer.token,
+    session_id: voiceState.session_id,
+    channel_id: voiceState.channel_id,
+    guild_id: voiceState.guild_id as string,
+    endpoint: voiceServer.endpoint,
+  });
+  voice.setSpeaking(SpeakingFlags.Microphone);
+}
+
+main().catch(console.error);
+
+process.on("SIGINT", async () => {
+  await rest.destroy();
+  gateway.destroy();
+  voice.destroy();
+  process.exit(0);
+});
+
+process.on("unhandledRejection", (error) => {
+  console.error("Unhandled rejection", error);
+});

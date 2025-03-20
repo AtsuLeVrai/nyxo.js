@@ -44,6 +44,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@nyxjs/core": "workspace:*",
+    "@nyxjs/gateway": "workspace:*",
     "eventemitter3": "^5.0.1",
     "sodium-native": "4.3.3",
     "ws": "^8.18.1",

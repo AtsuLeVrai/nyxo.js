@@ -15,12 +15,17 @@
     "build:prod": "turbo run build:prod",
     "check": "turbo run check",
     "type-check": "turbo run type-check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@vitest/coverage-v8": "3.0.9",
     "husky": "^9.1.7",
-    "turbo": "^2.4.4"
+    "turbo": "^2.4.4",
+    "vitest": "3.0.9"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
