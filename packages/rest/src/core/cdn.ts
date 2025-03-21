@@ -1,6 +1,4 @@
 import type { Snowflake } from "@nyxjs/core";
-import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
 
 /**
  * Base URLs for Discord CDN resources
@@ -8,101 +6,73 @@ import { fromZodError } from "zod-validation-error";
 const CDN_URLS = {
   /** Primary CDN endpoint for Discord assets */
   BASE: "https://cdn.discordapp.com",
-
   /** Media proxy used for specific assets like GIF stickers */
   MEDIA_PROXY: "https://media.discordapp.net",
 } as const;
 
-/** Regular expression to detect animated asset hashes */
-const ANIMATED_HASH = /^a_/;
-
 /**
  * Valid image sizes for Discord CDN (powers of 2)
  */
-export const ImageSize = z.union([
-  z.literal(16),
-  z.literal(32),
-  z.literal(64),
-  z.literal(128),
-  z.literal(256),
-  z.literal(512),
-  z.literal(1024),
-  z.literal(2048),
-  z.literal(4096),
-]);
-
-export type ImageSize = z.infer<typeof ImageSize>;
-
-/**
- * Base options for all image URL generation
- */
-export const BaseImageOptions = z.object({
-  /** Size in pixels (must be a power of 2 between 16 and 4096) */
-  size: ImageSize.optional(),
-});
-
-export type BaseImageOptions = z.infer<typeof BaseImageOptions>;
+const VALID_IMAGE_SIZES = [
+  16, 32, 64, 128, 256, 512, 1024, 2048, 4096,
+] as const;
+type ImageSize = (typeof VALID_IMAGE_SIZES)[number];
 
 /**
  * Valid formats for non-animated images
  */
-export const RasterFormat = z.enum(["png", "jpeg", "webp"]);
-export type RasterFormat = z.infer<typeof RasterFormat>;
+type RasterFormat = "png" | "jpeg" | "webp";
 
 /**
  * Valid formats for potentially animated images
  */
-export const AnimatedFormat = z.enum(["png", "jpeg", "webp", "gif"]);
-export type AnimatedFormat = z.infer<typeof AnimatedFormat>;
+type AnimatedFormat = "png" | "jpeg" | "webp" | "gif";
 
 /**
  * Valid formats for stickers
  */
-export const StickerFormat = z.enum(["png", "gif", "json"]);
-export type StickerFormat = z.infer<typeof StickerFormat>;
+type StickerFormat = "png" | "gif" | "json";
+
+/**
+ * Base options for all image URL generation
+ */
+interface BaseImageOptions {
+  /** Size in pixels (must be a power of 2 between 16 and 4096) */
+  size?: ImageSize;
+}
 
 /**
  * Options for standard images
  */
-export const ImageOptions = BaseImageOptions.extend({
+interface ImageOptions extends BaseImageOptions {
   /** Image format to request */
-  format: RasterFormat.default("png"),
-});
-
-export type ImageOptions = z.infer<typeof ImageOptions>;
+  format?: RasterFormat;
+}
 
 /**
  * Options for potentially animated images
  */
-export const AnimatedImageOptions = BaseImageOptions.extend({
+interface AnimatedImageOptions extends BaseImageOptions {
   /** Image format to request */
-  format: AnimatedFormat.default("png"),
-
+  format?: AnimatedFormat;
   /** Force GIF for animated assets even when not needed */
-  animated: z.boolean().default(false),
-});
-
-export type AnimatedImageOptions = z.infer<typeof AnimatedImageOptions>;
+  animated?: boolean;
+}
 
 /**
  * Options for sticker images
  */
-export const StickerFormatOptions = BaseImageOptions.extend({
+interface StickerFormatOptions extends BaseImageOptions {
   /** Sticker format to request */
-  format: StickerFormat.default("png"),
-
+  format?: StickerFormat;
   /** Whether to use the media proxy for GIF stickers */
-  useMediaProxy: z.boolean().default(true),
-});
-
-export type StickerFormatOptions = z.infer<typeof StickerFormatOptions>;
+  useMediaProxy?: boolean;
+}
 
 /**
- * Validates Discord asset hash format
+ * Regular expression to detect animated asset hashes
  */
-const Hash = z.string().regex(/^[a-fA-F0-9_]+$/, {
-  message: "Invalid Discord asset hash format",
-});
+const ANIMATED_HASH = /^a_/;
 
 /**
  * Utility for generating URLs for Discord CDN resources
@@ -115,16 +85,30 @@ export const Cdn = {
    * @returns Validated size or undefined if not provided
    * @throws Error if size is invalid
    */
-  validateSize(size: number | undefined): number | undefined {
+  validateSize(size?: number): number | undefined {
     if (size === undefined) {
       return undefined;
     }
 
-    const result = ImageSize.safeParse(size);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (!VALID_IMAGE_SIZES.includes(size as ImageSize)) {
+      throw new Error(
+        `Invalid image size: ${size}. Must be one of: ${VALID_IMAGE_SIZES.join(", ")}`,
+      );
     }
-    return result.data;
+
+    return size;
+  },
+
+  /**
+   * Validates that a hash is in a valid format
+   *
+   * @param hash - Discord asset hash to validate
+   * @throws Error if hash is invalid
+   */
+  validateHash(hash: string): void {
+    if (!(hash.match(/^[a-fA-F0-9_]+$/) || hash.match(/^a_[a-fA-F0-9_]+$/))) {
+      throw new Error("Invalid Discord asset hash format");
+    }
   },
 
   /**
@@ -136,13 +120,15 @@ export const Cdn = {
    */
   getFormatFromHash(
     hash: string,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    if (options?.format) {
+    if (options.format) {
       return options.format;
     }
 
-    return ANIMATED_HASH.test(hash) || options?.animated ? "gif" : "png";
+    const isAnimated =
+      !!options.animated || (!!hash && ANIMATED_HASH.test(hash));
+    return isAnimated ? "gif" : "png";
   },
 
   /**
@@ -155,14 +141,16 @@ export const Cdn = {
    */
   buildUrl(
     path: string[],
-    options?: z.input<typeof BaseImageOptions>,
+    options: BaseImageOptions = {},
     baseUrl: typeof CDN_URLS.BASE | typeof CDN_URLS.MEDIA_PROXY = CDN_URLS.BASE,
   ): string {
     const url = new URL(path.join("/"), baseUrl);
-    const validatedSize = this.validateSize(options?.size);
+    const validatedSize = this.validateSize(options.size);
+
     if (validatedSize) {
       url.searchParams.set("size", validatedSize.toString());
     }
+
     return url.toString();
   },
 
@@ -175,17 +163,10 @@ export const Cdn = {
    */
   emoji(
     emojiId: Snowflake,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    const result = AnimatedImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    return this.buildUrl(
-      ["emojis", `${emojiId}.${result.data.format}`],
-      result.data,
-    );
+    const format = options.format || "png";
+    return this.buildUrl(["emojis", `${emojiId}.${format}`], options);
   },
 
   /**
@@ -199,16 +180,11 @@ export const Cdn = {
   guildIcon(
     guildId: Snowflake,
     hash: string,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = AnimatedImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const format = this.getFormatFromHash(hash, result.data);
-    return this.buildUrl(["icons", guildId, `${hash}.${format}`], result.data);
+    this.validateHash(hash);
+    const format = this.getFormatFromHash(hash, options);
+    return this.buildUrl(["icons", guildId, `${hash}.${format}`], options);
   },
 
   /**
@@ -222,18 +198,11 @@ export const Cdn = {
   guildSplash(
     guildId: Snowflake,
     hash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    return this.buildUrl(
-      ["splashes", guildId, `${hash}.${result.data.format}`],
-      result.data,
-    );
+    this.validateHash(hash);
+    const format = options.format || "png";
+    return this.buildUrl(["splashes", guildId, `${hash}.${format}`], options);
   },
 
   /**
@@ -247,17 +216,13 @@ export const Cdn = {
   guildDiscoverySplash(
     guildId: Snowflake,
     hash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    this.validateHash(hash);
+    const format = options.format || "png";
     return this.buildUrl(
-      ["discovery-splashes", guildId, `${hash}.${result.data.format}`],
-      result.data,
+      ["discovery-splashes", guildId, `${hash}.${format}`],
+      options,
     );
   },
 
@@ -272,19 +237,11 @@ export const Cdn = {
   guildBanner(
     guildId: Snowflake,
     hash: string,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = AnimatedImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const format = this.getFormatFromHash(hash, result.data);
-    return this.buildUrl(
-      ["banners", guildId, `${hash}.${format}`],
-      result.data,
-    );
+    this.validateHash(hash);
+    const format = this.getFormatFromHash(hash, options);
+    return this.buildUrl(["banners", guildId, `${hash}.${format}`], options);
   },
 
   /**
@@ -298,16 +255,11 @@ export const Cdn = {
   userBanner(
     userId: Snowflake,
     hash: string,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = AnimatedImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const format = this.getFormatFromHash(hash, result.data);
-    return this.buildUrl(["banners", userId, `${hash}.${format}`], result.data);
+    this.validateHash(hash);
+    const format = this.getFormatFromHash(hash, options);
+    return this.buildUrl(["banners", userId, `${hash}.${format}`], options);
   },
 
   /**
@@ -331,6 +283,7 @@ export const Cdn = {
    * @returns URL to the default avatar image
    */
   defaultUserAvatarSystem(userId: Snowflake): string {
+    // Convert to BigInt, shift right 22 bits, mod 6
     const index = Number((BigInt(userId) >> 22n) % 6n);
     return this.buildUrl(["embed/avatars", `${index}.png`]);
   },
@@ -346,16 +299,11 @@ export const Cdn = {
   userAvatar(
     userId: Snowflake,
     hash: string,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = AnimatedImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const format = this.getFormatFromHash(hash, result.data);
-    return this.buildUrl(["avatars", userId, `${hash}.${format}`], result.data);
+    this.validateHash(hash);
+    const format = this.getFormatFromHash(hash, options);
+    return this.buildUrl(["avatars", userId, `${hash}.${format}`], options);
   },
 
   /**
@@ -371,18 +319,13 @@ export const Cdn = {
     guildId: Snowflake,
     userId: Snowflake,
     hash: string,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = AnimatedImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const format = this.getFormatFromHash(hash, result.data);
+    this.validateHash(hash);
+    const format = this.getFormatFromHash(hash, options);
     return this.buildUrl(
       ["guilds", guildId, "users", userId, "avatars", `${hash}.${format}`],
-      result.data,
+      options,
     );
   },
 
@@ -407,17 +350,13 @@ export const Cdn = {
   applicationIcon(
     applicationId: Snowflake,
     hash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    this.validateHash(hash);
+    const format = options.format || "png";
     return this.buildUrl(
-      ["app-icons", applicationId, `${hash}.${result.data.format}`],
-      result.data,
+      ["app-icons", applicationId, `${hash}.${format}`],
+      options,
     );
   },
 
@@ -432,17 +371,13 @@ export const Cdn = {
   applicationCover(
     applicationId: Snowflake,
     hash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    this.validateHash(hash);
+    const format = options.format || "png";
     return this.buildUrl(
-      ["app-icons", applicationId, `${hash}.${result.data.format}`],
-      result.data,
+      ["app-icons", applicationId, `${hash}.${format}`],
+      options,
     );
   },
 
@@ -457,16 +392,12 @@ export const Cdn = {
   applicationAsset(
     applicationId: Snowflake,
     assetId: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    const format = options.format || "png";
     return this.buildUrl(
-      ["app-assets", applicationId, `${assetId}.${result.data.format}`],
-      result.data,
+      ["app-assets", applicationId, `${assetId}.${format}`],
+      options,
     );
   },
 
@@ -483,14 +414,10 @@ export const Cdn = {
     applicationId: Snowflake,
     achievementId: Snowflake,
     iconHash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(iconHash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    this.validateHash(iconHash);
+    const format = options.format || "png";
     return this.buildUrl(
       [
         "app-assets",
@@ -498,9 +425,9 @@ export const Cdn = {
         "achievements",
         achievementId,
         "icons",
-        `${iconHash}.${result.data.format}`,
+        `${iconHash}.${format}`,
       ],
-      result.data,
+      options,
     );
   },
 
@@ -515,21 +442,12 @@ export const Cdn = {
   storePageAsset(
     applicationId: Snowflake,
     assetId: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    const format = options.format || "png";
     return this.buildUrl(
-      [
-        "app-assets",
-        applicationId,
-        "store",
-        `${assetId}.${result.data.format}`,
-      ],
-      result.data,
+      ["app-assets", applicationId, "store", `${assetId}.${format}`],
+      options,
     );
   },
 
@@ -542,21 +460,17 @@ export const Cdn = {
    */
   stickerPackBanner(
     bannerId: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    const format = options.format || "png";
     return this.buildUrl(
       [
         "app-assets",
         "710982414301790216", // Discord's sticker application ID
         "store",
-        `${bannerId}.${result.data.format}`,
+        `${bannerId}.${format}`,
       ],
-      result.data,
+      options,
     );
   },
 
@@ -571,18 +485,11 @@ export const Cdn = {
   teamIcon(
     teamId: Snowflake,
     hash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    return this.buildUrl(
-      ["team-icons", teamId, `${hash}.${result.data.format}`],
-      result.data,
-    );
+    this.validateHash(hash);
+    const format = options.format || "png";
+    return this.buildUrl(["team-icons", teamId, `${hash}.${format}`], options);
   },
 
   /**
@@ -594,26 +501,21 @@ export const Cdn = {
    */
   sticker(
     stickerId: Snowflake,
-    options: z.input<typeof StickerFormatOptions> = {},
+    options: Partial<StickerFormatOptions> = {},
   ): string {
-    const result = StickerFormatOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
+    const format = options.format || "png";
+    const useMediaProxy = options.useMediaProxy ?? true;
 
     // Special handling for GIF stickers
-    if (result.data.format === "gif" && result.data.useMediaProxy) {
+    if (format === "gif" && useMediaProxy) {
       return this.buildUrl(
         ["stickers", `${stickerId}.gif`],
-        result.data,
+        options,
         CDN_URLS.MEDIA_PROXY,
       );
     }
 
-    return this.buildUrl(
-      ["stickers", `${stickerId}.${result.data.format}`],
-      result.data,
-    );
+    return this.buildUrl(["stickers", `${stickerId}.${format}`], options);
   },
 
   /**
@@ -627,18 +529,11 @@ export const Cdn = {
   roleIcon(
     roleId: Snowflake,
     hash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    return this.buildUrl(
-      ["role-icons", roleId, `${hash}.${result.data.format}`],
-      result.data,
-    );
+    this.validateHash(hash);
+    const format = options.format || "png";
+    return this.buildUrl(["role-icons", roleId, `${hash}.${format}`], options);
   },
 
   /**
@@ -652,17 +547,13 @@ export const Cdn = {
   guildScheduledEventCover(
     eventId: Snowflake,
     hash: string,
-    options: z.input<typeof ImageOptions> = {},
+    options: Partial<ImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = ImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
+    this.validateHash(hash);
+    const format = options.format || "png";
     return this.buildUrl(
-      ["guild-events", eventId, `${hash}.${result.data.format}`],
-      result.data,
+      ["guild-events", eventId, `${hash}.${format}`],
+      options,
     );
   },
 
@@ -679,18 +570,13 @@ export const Cdn = {
     guildId: Snowflake,
     userId: Snowflake,
     hash: string,
-    options: z.input<typeof AnimatedImageOptions> = {},
+    options: Partial<AnimatedImageOptions> = {},
   ): string {
-    Hash.parse(hash);
-    const result = AnimatedImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const format = this.getFormatFromHash(hash, result.data);
+    this.validateHash(hash);
+    const format = this.getFormatFromHash(hash, options);
     return this.buildUrl(
       ["guilds", guildId, "users", userId, "banners", `${hash}.${format}`],
-      result.data,
+      options,
     );
   },
 
@@ -707,16 +593,11 @@ export const Cdn = {
     channelId: Snowflake,
     attachmentId: Snowflake,
     filename: string,
-    options: z.input<typeof BaseImageOptions> = {},
+    options: Partial<BaseImageOptions> = {},
   ): string {
-    const result = BaseImageOptions.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.buildUrl(
       ["attachments", channelId, attachmentId, encodeURIComponent(filename)],
-      result.data,
+      options,
     );
   },
 } as const;

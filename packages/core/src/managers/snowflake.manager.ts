@@ -16,16 +16,30 @@ const PROCESS_ID_SHIFT = 12n; // Bit shift for process ID (17 - 5 = 12)
  * Zod schema for validating Discord Snowflake IDs.
  * Snowflakes are string representations of 64-bit integers with specific bit structure.
  */
-export const Snowflake = z.string().refine((value) => {
-  try {
-    // Extract timestamp from the snowflake and validate it's within reasonable range
-    const timestamp = Number(BigInt(value) >> TIMESTAMP_SHIFT) + DISCORD_EPOCH;
-    // Allow timestamps from Discord epoch up to one hour in the future (to account for clock drift)
-    return timestamp >= DISCORD_EPOCH && timestamp <= Date.now() + 3600000;
-  } catch {
-    return false;
-  }
-}, "Invalid Snowflake format");
+export const Snowflake = z
+  .string()
+  .min(1, "Snowflake cannot be empty")
+  .regex(/^\d+$/, "Snowflake must contain only digits")
+  .refine(
+    (value) => value.length >= 17,
+    "Snowflake must be at least 17 digits long",
+  )
+  .refine((value) => {
+    try {
+      const bigIntValue = BigInt(value);
+      const timestamp = Number(bigIntValue >> TIMESTAMP_SHIFT) + DISCORD_EPOCH;
+
+      // Vérifier que le timestamp n'est pas exactement égal à DISCORD_EPOCH
+      if (timestamp === DISCORD_EPOCH) {
+        return false;
+      }
+
+      // Vérifier que le timestamp est dans une plage raisonnable
+      return timestamp > DISCORD_EPOCH && timestamp <= Date.now() + 3600000;
+    } catch {
+      return false;
+    }
+  }, "Invalid Snowflake format or timestamp");
 
 /**
  * Type definition for a validated Snowflake ID
@@ -292,9 +306,19 @@ export class SnowflakeManager {
    * @param other - Snowflake to compare with
    * @returns 1 if this Snowflake is newer, -1 if older, 0 if equal
    */
-  compare(other: SnowflakeResolvable): number {
+  compare(other: SnowflakeResolvable | SnowflakeManager): number {
     const thisId = this.toBigInt();
-    const otherId = new SnowflakeManager(other).toBigInt();
+
+    // Determine how to get the BigInt from 'other'
+    let otherId: bigint;
+
+    if (other instanceof SnowflakeManager) {
+      // If other is already a SnowflakeManager, just get its BigInt value
+      otherId = other.toBigInt();
+    } else {
+      // Otherwise, create a new SnowflakeManager and get the BigInt
+      otherId = new SnowflakeManager(other).toBigInt();
+    }
 
     if (thisId === otherId) {
       return 0;

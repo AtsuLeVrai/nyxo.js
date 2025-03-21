@@ -1,4 +1,4 @@
-import { ApiVersion, BitFieldManager, Token } from "@nyxjs/core";
+import { ApiVersion, BitFieldManager } from "@nyxjs/core";
 import { z } from "zod";
 import { GatewayIntentsBits, UpdatePresenceEntity } from "../types/index.js";
 import { CircuitBreakerOptions } from "./circuit-breaker.options.js";
@@ -45,7 +45,7 @@ export const GatewayOptions = z.object({
    *
    * @see {@link https://discord.com/developers/docs/reference#authentication}
    */
-  token: Token.optional(),
+  token: z.string().optional(),
 
   /**
    * Gateway intents to request

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fromError, fromZodError } from "zod-validation-error";
+import { fromZodError } from "zod-validation-error";
 
 /** The maximum value a 64-bit bitfield can hold (2^64 - 1) */
 const MAX_BIT_VALUE = (1n << 64n) - 1n;
@@ -256,28 +256,6 @@ export class BitFieldManager<T> {
   }
 
   /**
-   * Creates a BitFieldManager from a serialized string representation.
-   *
-   * @template F - The type of values to deserialize
-   * @param value - The serialized string to deserialize
-   * @returns A new BitFieldManager with the deserialized value
-   * @throws {Error} If the string cannot be parsed as a bigint
-   */
-  static deserialize<F>(value: string): BitFieldManager<F> {
-    try {
-      const parsed = BitField.safeParse(value);
-      if (!parsed.success) {
-        throw new Error(
-          `Invalid serialized BitField: ${fromError(parsed.error).message}`,
-        );
-      }
-      return new BitFieldManager<F>(BigInt(value));
-    } catch (error) {
-      throw new Error("Invalid serialized BitField", { cause: error });
-    }
-  }
-
-  /**
    * Checks if this bitfield has a specific bit or set of bits.
    *
    * @param val - The bit(s) to check for
@@ -439,15 +417,6 @@ export class BitFieldManager<T> {
   }
 
   /**
-   * Converts this bitfield to a binary string.
-   *
-   * @returns The binary string representation
-   */
-  toBinaryString(): string {
-    return this.toString(2);
-  }
-
-  /**
    * Converts this bitfield to a number.
    *
    * @returns The number representation
@@ -470,78 +439,6 @@ export class BitFieldManager<T> {
   }
 
   /**
-   * Counts the number of leading zeros in the binary representation.
-   *
-   * @returns The number of leading zeros
-   */
-  leadingZeros(): number {
-    let count = 0;
-    const value = this.#bitfield;
-
-    for (let i = 63; i >= 0; i--) {
-      if ((value & (1n << BigInt(i))) === 0n) {
-        count++;
-      } else {
-        break;
-      }
-    }
-
-    return count;
-  }
-
-  /**
-   * Counts the number of trailing zeros in the binary representation.
-   *
-   * @returns The number of trailing zeros
-   */
-  trailingZeros(): number {
-    if (this.#bitfield === 0n) {
-      return 64;
-    }
-
-    let count = 0;
-    let value = this.#bitfield;
-
-    while ((value & 1n) === 0n) {
-      count++;
-      value >>= 1n;
-    }
-
-    return count;
-  }
-
-  /**
-   * Returns the most significant (highest) bit that is set.
-   *
-   * @returns The most significant bit as a bigint
-   */
-  getMostSignificantBit(): bigint {
-    return this.#bitfield === 0n ? 0n : 1n << BigInt(this.bitLength() - 1);
-  }
-
-  /**
-   * Returns the least significant (lowest) bit that is set.
-   *
-   * @returns The least significant bit as a bigint
-   */
-  getLeastSignificantBit(): bigint {
-    if (this.#bitfield === 0n) {
-      return 0n;
-    }
-
-    return 1n << BigInt(this.trailingZeros());
-  }
-
-  /**
-   * Returns the number of bits needed to represent this bitfield.
-   *
-   * @returns The bit length
-   */
-  bitLength(): number {
-    return 64 - this.leadingZeros();
-  }
-
-  /**
    * Checks if a specific bit position is set.
    *
    * @param position - The bit position to check (0-63)
@@ -554,15 +451,6 @@ export class BitFieldManager<T> {
     }
 
     return (this.#bitfield & (1n << BigInt(position))) !== 0n;
-  }
-
-  /**
-   * Serializes this bitfield to a string.
-   *
-   * @returns The serialized string representation
-   */
-  serialize(): string {
-    return this.#bitfield.toString();
   }
 
   /**
@@ -607,44 +495,6 @@ export class BitFieldManager<T> {
   isSuperset(other: BitFieldResolvable<T>): boolean {
     const otherBits = BitFieldManager.resolve<T>(other);
     return (this.#bitfield & otherBits) === otherBits;
-  }
-
-  /**
-   * Calculates the Hamming distance between this bitfield and another.
-   * The Hamming distance is the number of bits that differ.
-   *
-   * @param other - The bitfield to compare with
-   * @returns The Hamming distance
-   */
-  hammingDistance(other: BitFieldResolvable<T>): number {
-    const distance = this.#bitfield ^ BitFieldManager.resolve<T>(other);
-    return this.#getSetBitCount(distance);
-  }
-
-  /**
-   * Returns a new BitFieldManager with only the bits within the given range.
-   *
-   * @param start - The start bit position (inclusive)
-   * @param end - The end bit position (exclusive)
-   * @returns A new BitFieldManager with the masked bits
-   * @throws {RangeError} If the range is invalid
-   */
-  mask(start: number, end: number): BitFieldManager<T> {
-    if (
-      !Number.isInteger(start) ||
-      start < 0 ||
-      start >= 64 ||
-      !Number.isInteger(end) ||
-      end < 0 ||
-      end >= 64 ||
-      start >= end
-    ) {
-      throw new RangeError("Invalid mask range. Must be 0 ≤ start < end < 64");
-    }
-
-    const mask = ((1n << BigInt(end - start)) - 1n) << BigInt(start);
-    const newValue = this.#bitfield & mask;
-    return new BitFieldManager<T>(BitField.parse(newValue));
   }
 
   /**
@@ -717,38 +567,6 @@ export class BitFieldManager<T> {
     }
 
     return positions;
-  }
-
-  /**
-   * Swaps the values of two bit positions.
-   *
-   * @param pos1 - The first bit position (0-63)
-   * @param pos2 - The second bit position (0-63)
-   * @returns This instance for chaining
-   * @throws {RangeError} If any position is out of range
-   */
-  swapBits(pos1: number, pos2: number): this {
-    if (
-      !Number.isInteger(pos1) ||
-      pos1 < 0 ||
-      pos1 >= 64 ||
-      !Number.isInteger(pos2) ||
-      pos2 < 0 ||
-      pos2 >= 64
-    ) {
-      throw new RangeError("Bit positions must be between 0 and 63");
-    }
-
-    if (pos1 !== pos2) {
-      const bit1 = (this.#bitfield >> BigInt(pos1)) & 1n;
-      const bit2 = (this.#bitfield >> BigInt(pos2)) & 1n;
-      if (bit1 !== bit2) {
-        const newValue =
-          this.#bitfield ^ ((1n << BigInt(pos1)) | (1n << BigInt(pos2)));
-        this.#bitfield = BigInt(BitField.parse(newValue));
-      }
-    }
-    return this;
   }
 
   /**

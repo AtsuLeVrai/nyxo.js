@@ -1,4 +1,3 @@
-import type { Token } from "@nyxjs/core";
 import { EventEmitter } from "eventemitter3";
 import { type Dispatcher, Pool } from "undici";
 import type { z } from "zod";
@@ -116,7 +115,7 @@ export class Rest extends EventEmitter<RestEvents> {
   /**
    * Access to the Discord API token
    */
-  get token(): Token {
+  get token(): string {
     return this.#options.token;
   }
 

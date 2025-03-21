@@ -1,4 +1,4 @@
-import { ApiVersion, Token, TokenType } from "@nyxjs/core";
+import { ApiVersion } from "@nyxjs/core";
 import { z } from "zod";
 import { QueueOptions } from "./queue.options.js";
 import { RetryOptions } from "./retry.options.js";
@@ -21,13 +21,13 @@ export const RestOptions = z
      * Discord Bot or Bearer token for authentication
      * Required for all API requests
      */
-    token: Token,
+    token: z.string(),
 
     /**
      * Type of authentication to use with the token
      * @default "Bot"
      */
-    authType: TokenType.default("Bot"),
+    authType: z.enum(["Bot", "Bearer"]).default("Bot"),
 
     /**
      * Discord API version to use
