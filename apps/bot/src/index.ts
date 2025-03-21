@@ -217,10 +217,6 @@ gateway.on("dispatch", (event, data) => {
 //   console.log("[VOICE] Connected", event);
 // });
 //
-// voice.on("connectionFailure", (event) => {
-//   console.log("[VOICE] Connection failed", event);
-// });
-//
 // voice.on("disconnected", (event) => {
 //   console.log("[VOICE] Disconnected", event);
 // });
@@ -232,29 +228,9 @@ gateway.on("dispatch", (event, data) => {
 // voice.on("ready", (event) => {
 //   console.log("[VOICE] Ready", event);
 // });
-//
-// voice.on("heartbeatStart", (event) => {
-//   console.log("[VOICE] Heartbeat started", event);
-// });
-//
-// voice.on("heartbeatSend", (event) => {
-//   console.log("[VOICE] Heartbeat sent", event);
-// });
-//
-// voice.on("heartbeatAck", (event) => {
-//   console.log("[VOICE] Heartbeat acknowledged", event);
-// });
-//
+
 // voice.on("heartbeatTimeout", (event) => {
 //   console.log("[VOICE] Heartbeat timed out", event);
-// });
-//
-// voice.on("packet", (opcode, data) => {
-//   console.log("[VOICE] Packet received", opcode, data);
-// });
-//
-// voice.on("resuming", (sessionId) => {
-//   console.log("[VOICE] Resuming", sessionId);
 // });
 //
 // voice.on("resumed", (sessionId) => {
@@ -263,14 +239,6 @@ gateway.on("dispatch", (event, data) => {
 //
 // voice.on("reconnecting", (event) => {
 //   console.log("[VOICE] Reconnecting", event);
-// });
-//
-// voice.on("ipDiscovery", (event) => {
-//   console.log("[VOICE] IP discovery", event);
-// });
-//
-// voice.on("udpPacket", (packet) => {
-//   console.log("[VOICE] UDP packet received", packet);
 // });
 //
 // voice.on("userSpeaking", (ssrc) => {
@@ -301,7 +269,6 @@ async function main(): Promise<void> {
   //   guild_id: voiceState.guild_id as string,
   //   endpoint: voiceServer.endpoint,
   // });
-  // voice.setSpeaking(SpeakingFlags.Microphone);
 }
 
 main().catch(console.error);

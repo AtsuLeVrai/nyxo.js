@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import sodium from "sodium-native";
+import { BufferHandler } from "../handlers/index.js";
 import { EncryptionMode } from "../types/index.js";
 
 /**
@@ -97,19 +98,15 @@ export class VoiceEncryptionService {
       throw new Error("Encryption service not initialized");
     }
 
+    const nonceValue = this.getNextNonce();
+
     if (this.#mode === EncryptionMode.AeadAes256GcmRtpsize) {
       // For AES-GCM mode, we use a 12-byte nonce
-      const nonceValue = this.getNextNonce();
-      const nonce = Buffer.allocUnsafe(12).fill(0);
-      nonce.writeUInt32BE(nonceValue, 8); // Write to the last 4 bytes
-      return nonce;
+      return BufferHandler.createNonce(nonceValue, 12);
     }
 
-    // For XChaCha20-Poly1305, we use a 24-byte nonce (first 20 bytes are 0)
-    const nonceValue = this.getNextNonce();
-    const nonce = Buffer.allocUnsafe(24).fill(0);
-    nonce.writeUInt32BE(nonceValue, 20); // Write to the last 4 bytes
-    return nonce;
+    // For XChaCha20-Poly1305, we use a 24-byte nonce
+    return BufferHandler.createNonce(nonceValue, 24);
   }
 
   /**
@@ -168,11 +165,25 @@ export class VoiceEncryptionService {
     // Calculate the unencrypted portion size (RTP header + extensions)
     const rtpSize = this.#calculateRtpSize(data);
 
+    // Extract the components of the encrypted packet
+    const { rtpHeader, encryptedData, authTag, nonceCounter } =
+      BufferHandler.extractEncryptedComponents(data, rtpSize);
+
     if (this.#mode === EncryptionMode.AeadAes256GcmRtpsize) {
-      return this.#decryptAesGcm(data, rtpSize);
+      return this.#decryptAesGcm(
+        rtpHeader,
+        encryptedData,
+        authTag,
+        nonceCounter,
+      );
     }
 
-    return this.#decryptXChaCha20Poly1305(data, rtpSize);
+    return this.#decryptXChaCha20Poly1305(
+      rtpHeader,
+      encryptedData,
+      authTag,
+      nonceCounter,
+    );
   }
 
   /**
@@ -213,6 +224,25 @@ export class VoiceEncryptionService {
   }
 
   /**
+   * Assembles a final packet from components
+   *
+   * @param rtpHeader - RTP header (unencrypted)
+   * @param encryptedData - Encrypted audio data
+   * @param authTag - Authentication tag
+   * @param nonceCounter - Nonce counter value
+   * @returns Assembled packet buffer
+   * @private
+   */
+  #assemblePacket(
+    rtpHeader: Buffer,
+    encryptedData: Buffer,
+    authTag: Buffer,
+    nonceCounter: Buffer,
+  ): Buffer {
+    return Buffer.concat([rtpHeader, encryptedData, authTag, nonceCounter]);
+  }
+
+  /**
    * Encrypts data using AES-256-GCM
    *
    * @param data - Data to encrypt
@@ -239,43 +269,31 @@ export class VoiceEncryptionService {
     const authTag = cipher.getAuthTag();
 
     // Extract the last 4 bytes of the nonce (the counter)
-    const nonceCounter = Buffer.allocUnsafe(4);
-    nonce.copy(nonceCounter, 0, 8, 12);
+    const nonceCounter = BufferHandler.extractNonceCounter(nonce, 4);
 
-    // Structure: [unencrypted_header, encrypted_data, auth_tag, nonce_counter]
-    return Buffer.concat([rtpHeader, encrypted, authTag, nonceCounter]);
+    // Assemble the final packet
+    return this.#assemblePacket(rtpHeader, encrypted, authTag, nonceCounter);
   }
 
   /**
    * Decrypts data using AES-256-GCM
    *
-   * @param data - Encrypted data (includes RTP header)
-   * @param rtpSize - Size of the RTP header (unencrypted portion)
+   * @param rtpHeader - RTP header (unencrypted portion)
+   * @param encryptedData - Encrypted data
+   * @param authTag - Authentication tag
+   * @param nonceCounter - Nonce counter
    * @returns Decrypted data
    * @private
    */
-  #decryptAesGcm(data: Buffer, rtpSize: number): Buffer {
+  #decryptAesGcm(
+    rtpHeader: Buffer,
+    encryptedData: Buffer,
+    authTag: Buffer,
+    nonceCounter: Buffer,
+  ): Buffer {
     if (!this.#secretKey) {
       throw new Error("Secret key not set");
     }
-
-    // Extract the unencrypted RTP header
-    const rtpHeader = data.subarray(0, rtpSize);
-
-    // Extract the rest of the data
-    const remaining = data.subarray(rtpSize);
-
-    // The last 4 bytes are the nonce counter
-    const nonceCounter = remaining.subarray(remaining.length - 4);
-
-    // The 16 bytes before that are the auth tag
-    const authTag = remaining.subarray(
-      remaining.length - 20,
-      remaining.length - 4,
-    );
-
-    // The rest is the encrypted data
-    const encryptedData = remaining.subarray(0, remaining.length - 20);
 
     // Create the full nonce (12 bytes)
     const nonce = Buffer.allocUnsafe(12).fill(0);
@@ -350,43 +368,31 @@ export class VoiceEncryptionService {
     const encrypted = cipher.subarray(0, cipher.length - 16);
 
     // Extract the last 4 bytes of the nonce (the counter)
-    const nonceCounter = Buffer.allocUnsafe(4);
-    nonce.copy(nonceCounter, 0, 20, 24);
+    const nonceCounter = BufferHandler.extractNonceCounter(nonce, 20);
 
-    // Structure: [unencrypted_header, encrypted_data, auth_tag, nonce_counter]
-    return Buffer.concat([rtpHeader, encrypted, authTag, nonceCounter]);
+    // Assemble the final packet
+    return this.#assemblePacket(rtpHeader, encrypted, authTag, nonceCounter);
   }
 
   /**
    * Decrypts data using XChaCha20-Poly1305
    *
-   * @param data - Encrypted data (includes RTP header)
-   * @param rtpSize - Size of the RTP header (unencrypted portion)
+   * @param rtpHeader - RTP header (unencrypted portion)
+   * @param encryptedData - Encrypted data
+   * @param authTag - Authentication tag
+   * @param nonceCounter - Nonce counter
    * @returns Decrypted data
    * @private
    */
-  #decryptXChaCha20Poly1305(data: Buffer, rtpSize: number): Buffer {
+  #decryptXChaCha20Poly1305(
+    rtpHeader: Buffer,
+    encryptedData: Buffer,
+    authTag: Buffer,
+    nonceCounter: Buffer,
+  ): Buffer {
     if (!this.#secretKey) {
       throw new Error("Secret key not set");
     }
-
-    // Extract the unencrypted RTP header
-    const rtpHeader = data.subarray(0, rtpSize);
-
-    // Extract the rest of the data
-    const remaining = data.subarray(rtpSize);
-
-    // The last 4 bytes are the nonce counter
-    const nonceCounter = remaining.subarray(remaining.length - 4);
-
-    // The 16 bytes before that are the auth tag
-    const authTag = remaining.subarray(
-      remaining.length - 20,
-      remaining.length - 4,
-    );
-
-    // The rest is the encrypted data
-    const encryptedData = remaining.subarray(0, remaining.length - 20);
 
     // Create the full nonce (24 bytes)
     const nonce = Buffer.allocUnsafe(24).fill(0);

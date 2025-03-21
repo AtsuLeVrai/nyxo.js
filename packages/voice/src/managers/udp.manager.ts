@@ -1,6 +1,7 @@
 import dgram from "node:dgram";
 import type { VoiceConnection } from "../core/index.js";
-import { VoiceEncryptionService } from "../services/index.js";
+import { BufferHandler } from "../handlers/index.js";
+import type { VoiceEncryptionService } from "../services/index.js";
 import { EncryptionMode, type VoicePacket } from "../types/index.js";
 
 /**
@@ -50,10 +51,14 @@ export class UdpManager {
    * Creates a new UDP manager
    *
    * @param connection - Voice client instance
+   * @param encryptionService - Voice encryption service
    */
-  constructor(connection: VoiceConnection) {
+  constructor(
+    connection: VoiceConnection,
+    encryptionService: VoiceEncryptionService,
+  ) {
     this.#connection = connection;
-    this.#encryptionService = new VoiceEncryptionService();
+    this.#encryptionService = encryptionService;
   }
 
   /**
@@ -137,11 +142,7 @@ export class UdpManager {
         reject(error);
       });
 
-      this.#socket.on("message", (message) => {
-        this.#connection.emit("udpPacket", message);
-        this.#handlePacket(message);
-      });
-
+      this.#socket.on("message", (packet) => this.#handlePacket(packet));
       this.#socket.on("listening", async () => {
         try {
           const address = this.#socket?.address();
@@ -205,12 +206,13 @@ export class UdpManager {
     }
 
     // Create the RTP header
-    const header = Buffer.allocUnsafe(12);
-    header.writeUInt8(packet.version, 0);
-    header.writeUInt8(packet.payloadType, 1);
-    header.writeUInt16BE(packet.sequence, 2);
-    header.writeUInt32BE(packet.timestamp, 4);
-    header.writeUInt32BE(packet.ssrc, 8);
+    const header = BufferHandler.createRtpHeader(
+      packet.version,
+      packet.payloadType,
+      packet.sequence,
+      packet.timestamp,
+      packet.ssrc,
+    );
 
     try {
       // Encrypt the audio data
@@ -294,16 +296,7 @@ export class UdpManager {
       }
 
       // Prepare the IP discovery packet
-      const discoveryPacket = Buffer.allocUnsafe(74).fill(0);
-
-      // Packet type (0x1 for request)
-      discoveryPacket.writeUInt16BE(0x1, 0);
-
-      // Length (always 70)
-      discoveryPacket.writeUInt16BE(70, 2);
-
-      // SSRC
-      discoveryPacket.writeUInt32BE(this.#ssrc, 4);
+      const discoveryPacket = BufferHandler.createIpDiscoveryPacket(this.#ssrc);
 
       // Send the discovery packet
       this.#socket?.send(
@@ -340,13 +333,6 @@ export class UdpManager {
 
             this.#localIp = ip;
             this.#localPort = port;
-
-            this.#connection.emit("ipDiscovery", {
-              ip,
-              port,
-              timestamp: new Date().toISOString(),
-            });
-
             resolve();
           };
 

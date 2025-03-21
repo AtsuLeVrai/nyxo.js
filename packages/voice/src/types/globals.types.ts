@@ -656,23 +656,6 @@ export interface VoiceConnectedEvent extends VoiceEventBase {
 }
 
 /**
- * Event emitted when a voice connection fails
- */
-export interface VoiceConnectionFailureEvent extends VoiceEventBase {
-  /** Guild ID */
-  serverId: string | null;
-
-  /** Channel ID */
-  channelId: string | null;
-
-  /** Current retry attempt number (1-based) */
-  attempt: number;
-
-  /** Error that caused the failure */
-  error: Error;
-}
-
-/**
  * Event emitted when disconnected from voice
  */
 export interface VoiceDisconnectedEvent extends VoiceEventBase {
@@ -707,36 +690,6 @@ export interface VoiceReadyEvent extends VoiceEventBase {
 }
 
 /**
- * Event emitted when heartbeat interval starts
- */
-export interface VoiceHeartbeatStartEvent extends VoiceEventBase {
-  /** Heartbeat interval in milliseconds */
-  interval: number;
-
-  /** Initial delay before first heartbeat */
-  initialDelay: number;
-}
-
-/**
- * Event emitted when a heartbeat is sent
- */
-export interface VoiceHeartbeatSendEvent extends VoiceEventBase {
-  /** Nonce value */
-  nonce: number;
-
-  /** Total heartbeats sent */
-  total: number;
-}
-
-/**
- * Event emitted when a heartbeat is acknowledged
- */
-export interface VoiceHeartbeatAckEvent extends VoiceEventBase {
-  /** Latency in milliseconds */
-  latency: number;
-}
-
-/**
  * Event emitted when a heartbeat times out
  */
 export interface VoiceHeartbeatTimeoutEvent extends VoiceEventBase {
@@ -745,31 +698,6 @@ export interface VoiceHeartbeatTimeoutEvent extends VoiceEventBase {
 
   /** Maximum retries configured */
   maxRetries: number;
-}
-
-/**
- * Event emitted when reconnecting to voice
- */
-export interface VoiceReconnectingEvent extends VoiceEventBase {
-  /** Current reconnection attempt (1-based) */
-  attempt: number;
-
-  /** Delay before reconnection in milliseconds */
-  delay: number;
-
-  /** Session ID being resumed */
-  sessionId: string | null;
-}
-
-/**
- * Event emitted when IP discovery completes
- */
-export interface VoiceIpDiscoveryEvent extends VoiceEventBase {
-  /** Discovered IP address */
-  ip: string;
-
-  /** Discovered port */
-  port: number;
 }
 
 /**
@@ -787,11 +715,6 @@ export interface VoiceConnectionEvents {
   connected: [event: VoiceConnectedEvent];
 
   /**
-   * Emitted when a connection attempt fails
-   */
-  connectionFailure: [event: VoiceConnectionFailureEvent];
-
-  /**
    * Emitted when the voice client disconnects
    */
   disconnected: [event: VoiceDisconnectedEvent];
@@ -807,34 +730,9 @@ export interface VoiceConnectionEvents {
   ready: [event: VoiceReadyEvent];
 
   /**
-   * Emitted when heartbeat system is started
-   */
-  heartbeatStart: [event: VoiceHeartbeatStartEvent];
-
-  /**
-   * Emitted when a heartbeat is sent
-   */
-  heartbeatSend: [event: VoiceHeartbeatSendEvent];
-
-  /**
-   * Emitted when a heartbeat acknowledgement is received
-   */
-  heartbeatAck: [event: VoiceHeartbeatAckEvent];
-
-  /**
    * Emitted when a heartbeat times out
    */
   heartbeatTimeout: [event: VoiceHeartbeatTimeoutEvent];
-
-  /**
-   * Emitted when the voice client receives a packet
-   */
-  packet: [opcode: VoiceOpcodes, data: unknown];
-
-  /**
-   * Emitted when the voice client attempts to resume a session
-   */
-  resuming: [sessionId: string | null];
 
   /**
    * Emitted when the voice client successfully resumes a session
@@ -847,16 +745,6 @@ export interface VoiceConnectionEvents {
   reconnecting: [
     event: { attempt: number; delay: number; sessionId: string | null },
   ];
-
-  /**
-   * Emitted when IP discovery completes
-   */
-  ipDiscovery: [event: VoiceIpDiscoveryEvent];
-
-  /**
-   * Emitted when the UDP manager receives a packet
-   */
-  udpPacket: [packet: Buffer];
 
   /**
    * Emitted when a user starts speaking

@@ -100,12 +100,12 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
     }
 
     this.#gatewayVersion = this.#options.gatewayVersion;
-    this.#udp = new UdpManager(this);
+    this.#encryption = new VoiceEncryptionService();
+    this.#udp = new UdpManager(this, this.#encryption);
     this.#heartbeat = new VoiceHeartbeatManager(
       this,
       this.#options.heartbeat.maxMissed,
     );
-    this.#encryption = new VoiceEncryptionService();
   }
 
   /**
@@ -284,13 +284,10 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       });
     } catch (error) {
       // Emit connection failure
-      this.emit("connectionFailure", {
-        serverId: this.#serverId,
-        channelId: this.#channelId,
-        attempt: this.#reconnectionAttempts + 1,
-        timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error : new Error(String(error)),
-      });
+      this.emit(
+        "error",
+        new Error("Failed to connect to voice channel", { cause: error }),
+      );
 
       // Enhanced error reporting with more context
       throw new Error("Failed to connect to voice channel", {
@@ -451,7 +448,6 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
 
     try {
       this.#ws?.send(JSON.stringify(payload));
-      this.emit("packet", opcode, data);
     } catch (error) {
       throw new Error(`Failed to send voice payload: ${opcode}`, {
         cause: error instanceof Error ? error : new Error(String(error)),
@@ -598,8 +594,6 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
    * @private
    */
   #handlePayload(payload: VoicePayloadEntity): void {
-    this.emit("packet", payload.op, payload.d);
-
     switch (payload.op) {
       case VoiceOpcodes.Ready:
         this.#handleReady(payload.d as VoiceReady).catch((error) => {
@@ -621,7 +615,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
         break;
 
       case VoiceOpcodes.HeartbeatAck:
-        this.#heartbeat.ackHeartbeat(payload.d as number);
+        this.#heartbeat.ackHeartbeat();
         break;
 
       case VoiceOpcodes.Speaking:
@@ -884,7 +878,7 @@ export class VoiceConnection extends EventEmitter<VoiceConnectionEvents> {
       throw new Error("Cannot resume without server ID, session ID, and token");
     }
 
-    this.emit("resuming", this.#sessionId);
+    this.emit("resumed", this.#sessionId);
 
     // Create the payload
     const payload: VoiceResume = {

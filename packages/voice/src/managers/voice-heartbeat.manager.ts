@@ -32,9 +32,6 @@ export class VoiceHeartbeatManager {
   /** Maximum number of missed heartbeats before reconnect */
   readonly #maxMissedHeartbeats: number;
 
-  /** Nonce for next heartbeat */
-  #nonce = 0;
-
   /** Whether the client is currently reconnecting */
   #reconnecting = false;
 
@@ -126,12 +123,6 @@ export class VoiceHeartbeatManager {
         this.sendHeartbeat();
       }, interval);
     }, initialDelay);
-
-    this.#connection.emit("heartbeatStart", {
-      interval,
-      initialDelay,
-      timestamp: new Date().toISOString(),
-    });
   }
 
   /**
@@ -153,7 +144,6 @@ export class VoiceHeartbeatManager {
   sendHeartbeat(): void {
     try {
       const currentNonce = Date.now();
-      this.#nonce = currentNonce;
       this.#lastHeartbeatSent = currentNonce;
       this.#totalHeartbeatsSent++;
 
@@ -166,12 +156,6 @@ export class VoiceHeartbeatManager {
       } else {
         this.#connection.send(VoiceOpcodes.Heartbeat, currentNonce);
       }
-
-      this.#connection.emit("heartbeatSend", {
-        nonce: currentNonce,
-        total: this.#totalHeartbeatsSent,
-        timestamp: new Date().toISOString(),
-      });
     } catch (error) {
       this.#connection.emit(
         "error",
@@ -184,22 +168,10 @@ export class VoiceHeartbeatManager {
 
   /**
    * Acknowledges a heartbeat
-   *
-   * @param receivedNonce - Nonce received in heartbeat ACK
    */
-  ackHeartbeat(receivedNonce?: number): void {
-    const now = Date.now();
-    this.#lastHeartbeatAck = now;
+  ackHeartbeat(): void {
+    this.#lastHeartbeatAck = Date.now();
     this.#missedHeartbeats = 0;
-
-    // Calculate and emit latency if nonce matches
-    if (receivedNonce && receivedNonce === this.#nonce) {
-      const latency = now - this.#lastHeartbeatSent;
-      this.#connection.emit("heartbeatAck", {
-        latency,
-        timestamp: new Date().toISOString(),
-      });
-    }
   }
 
   /**
