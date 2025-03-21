@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.13.11",
     "@types/sodium-native": "2.3.9",
     "@types/ws": "^8.18.0",
     "cross-env": "^7.0.3",
