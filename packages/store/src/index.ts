@@ -86,7 +86,13 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * Parsed and validated options for this Store instance
    * @private
    */
-  readonly #options: Required<StoreOptions>;
+  readonly #options: StoreOptions;
+
+  /**
+   * Cleanup interval ID
+   * @private
+   */
+  #cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   /**
    * Creates a new Store instance.
@@ -107,7 +113,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
       throw new Error(fromError(error).message);
     }
 
-    if (this.#options.evictionStrategy === "lru") {
+    if (this.#options.evictionStrategy === "lru" && this.#options.maxSize > 0) {
       this.#lruCache = new LRUCache<K, number>({
         max: this.#options.maxSize,
       });
@@ -427,6 +433,16 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
   }
 
   /**
+   * Stop cleanup interval when instance is no longer needed
+   */
+  destroy(): void {
+    if (this.#cleanupInterval) {
+      clearInterval(this.#cleanupInterval);
+      this.#cleanupInterval = null;
+    }
+  }
+
+  /**
    * Sets multiple entries in the store at once.
    *
    * @param {readonly (readonly [K, V])[]} entries - The entries to set
@@ -445,7 +461,9 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    */
   #startCleanupInterval(): void {
     const cleanupInterval = Math.min(this.#options.ttl / 2, 60000);
-    setInterval(() => this.#cleanup(), cleanupInterval);
+    this.#cleanupInterval = setInterval(() => this.#cleanup(), cleanupInterval);
+    // Force an immediate cleanup run
+    this.#cleanup();
   }
 
   /**
@@ -455,7 +473,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    */
   #cleanup(): void {
     const now = Date.now();
-    for (const [key, expiry] of this.#ttlMap) {
+    for (const [key, expiry] of this.#ttlMap.entries()) {
       if (now >= expiry) {
         this.delete(key);
       }
@@ -469,8 +487,8 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @private
    */
   #updateAccessTime(key: K): void {
-    if (this.#options.evictionStrategy === "lru") {
-      this.#lruCache?.set(key, Date.now());
+    if (this.#options.evictionStrategy === "lru" && this.#lruCache) {
+      this.#lruCache.set(key, Date.now());
     }
   }
 
@@ -486,11 +504,15 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
     }
 
     if (this.#options.evictionStrategy === "lru" && this.#lruCache) {
-      const leastUsedKey = this.#lruCache.keys().next().value;
-      if (leastUsedKey) {
+      // Get the oldest accessed key
+      const oldestIterator = this.#lruCache.entries();
+      const oldest = oldestIterator.next().value;
+      if (oldest) {
+        const [leastUsedKey] = oldest;
         this.delete(leastUsedKey);
       }
     } else {
+      // FIFO - remove the first key added
       const firstKey = this.keys().next().value;
       if (firstKey) {
         this.delete(firstKey);

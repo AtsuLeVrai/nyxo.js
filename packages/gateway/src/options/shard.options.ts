@@ -6,6 +6,77 @@ import { z } from "zod";
  * Sharding is used to distribute the bot's connections across multiple WebSocket
  * connections for scaling and performance.
  */
+export const ShardScalingOptions = z
+  .object({
+    /**
+     * Strategy for scaling shards
+     *
+     * - "balanced": Distributes shards evenly across sessions
+     * - "minimal-disruption": Minimizes disruption when scaling up or down
+     */
+    strategy: z.enum(["balanced", "minimal-disruption"]).default("balanced"),
+
+    /**
+     * Whether to wait for all shards to be ready before starting the bot
+     *
+     * This is useful for ensuring all shards are connected and ready before processing events.
+     */
+    waitForReady: z.boolean().default(true),
+
+    /**
+     * Timeout for waiting for all shards to be ready in milliseconds
+     *
+     * If all shards are not ready within this time, the bot will start anyway.
+     */
+    timeout: z.number().int().default(30000),
+  })
+  .strict()
+  .readonly();
+
+export type ShardScalingOptions = z.infer<typeof ShardScalingOptions>;
+
+export const HealthCheckOptions = z
+  .object({
+    /**
+     * Interval for health checks in milliseconds
+     *
+     * Health checks are used to monitor the bot's status and ensure it's running smoothly.
+     */
+    interval: z.number().int().positive().default(30000),
+
+    /**
+     * Threshold for considering the bot "unhealthy" in milliseconds
+     *
+     * If the bot does not respond to a health check within this time, it is considered unhealthy.
+     */
+    latencyThreshold: z.number().int().positive().default(500),
+
+    /**
+     * Heartbeat failure threshold before considering the bot "unhealthy"
+     */
+    heartbeatFailureThreshold: z.number().int().positive().default(3),
+
+    /**
+     * Threshold for considering the bot "stalled" in milliseconds
+     */
+    stalledThreshold: z.number().int().positive().default(90000),
+
+    /**
+     * Whether to automatically restart the bot if a health check fails
+     */
+    autoRevive: z.boolean().default(true),
+  })
+  .strict()
+  .readonly();
+
+export type HealthCheckOptions = z.infer<typeof HealthCheckOptions>;
+
+/**
+ * Options for configuring Gateway sharding behavior
+ *
+ * Sharding is used to distribute the bot's connections across multiple WebSocket
+ * connections for scaling and performance.
+ */
 export const ShardOptions = z
   .object({
     /**
@@ -100,6 +171,20 @@ export const ShardOptions = z
       .default(false)
       .optional()
       .describe("Force sharding even if not recommended"),
+
+    /**
+     * Scaling options for shards
+     *
+     * Used to configure scaling behavior for shards
+     */
+    scaling: ShardScalingOptions.default({}),
+
+    /**
+     * Health check options for monitoring bot status
+     *
+     * Used to configure health checks for monitoring the bot's status and ensuring it's running smoothly.
+     */
+    healthCheck: HealthCheckOptions.default({}),
   })
   .strict()
   .readonly()

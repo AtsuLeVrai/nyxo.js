@@ -198,123 +198,6 @@ export interface SessionResumeEvent extends SessionEventBase {
 }
 
 /**
- * Base interface for shard-related events
- */
-export interface ShardEventBase extends GatewayEventBase {
-  /** Shard ID */
-  shardId: number;
-
-  /** Total number of shards */
-  totalShards: number;
-}
-
-/**
- * Event emitted when a shard is created
- */
-export interface ShardCreateEvent extends ShardEventBase {
-  /** Bucket ID for rate limiting */
-  bucket: number;
-}
-
-/**
- * Event emitted when a shard connects
- */
-export interface ShardReadyEvent extends ShardEventBase {
-  /** Number of guilds in this shard */
-  guildCount: number;
-
-  /** Session ID for this shard */
-  sessionId: string;
-
-  /** Latency in milliseconds */
-  latency: number;
-}
-
-/**
- * Event emitted when a shard disconnects
- */
-export interface ShardDisconnectEvent extends ShardEventBase {
-  /** Close code */
-  code: number;
-
-  /** Close reason */
-  reason: string;
-
-  /** Whether the disconnect was clean */
-  wasClean: boolean;
-}
-
-/**
- * Event emitted when a shard needs to reconnect
- */
-export interface ShardReconnectEvent extends ShardEventBase {
-  /** Current retry attempt number (1-based) */
-  attemptNumber: number;
-
-  /** Delay before reconnect in milliseconds */
-  delayMs: number;
-}
-
-/**
- * Event emitted when a guild is added to a shard
- */
-export interface ShardGuildAddEvent extends ShardEventBase {
-  /** Guild ID that was added */
-  guildId: string;
-
-  /** New total guild count for this shard */
-  newGuildCount: number;
-}
-
-/**
- * Event emitted when a guild is removed from a shard
- */
-export interface ShardGuildRemoveEvent extends ShardEventBase {
-  /** Guild ID that was removed */
-  guildId: string;
-
-  /** New total guild count for this shard */
-  newGuildCount: number;
-}
-
-/**
- * Event emitted when a shard hits rate limits
- */
-export interface ShardRateLimitEvent extends ShardEventBase {
-  /** Rate limit bucket ID */
-  bucket: number;
-
-  /** Time until reset in milliseconds */
-  timeout: number;
-
-  /** Remaining requests in this window */
-  remaining: number;
-
-  /** Reset timestamp */
-  reset: number;
-}
-
-/**
- * Event emitted when a session limit update is calculated
- */
-export interface SessionLimitUpdateEvent extends GatewayEventBase {
-  /** Old session limit value */
-  oldLimit: number;
-
-  /** Newly calculated session limit */
-  newLimit: number;
-
-  /** Number of guilds that triggered this update */
-  guildCount: number;
-
-  /** Total number of shards */
-  totalShards: number;
-
-  /** Reason for session limit update */
-  reason: "large_bot" | "very_large_bot" | "scaling_adjustment";
-}
-
-/**
  * Event emitted when a failure is recorded
  */
 export interface CircuitFailureEvent {
@@ -352,20 +235,273 @@ export interface CircuitBlockedEvent {
 }
 
 /**
- * Types of events emitted by the circuit breaker
+ * Event emitted when a session limit is updated
  */
-export interface CircuitBreakerEvents {
-  /** Emitted during a state change */
-  stateChange: [event: CircuitStateChangeEvent];
+export interface SessionLimitUpdateEvent extends GatewayEventBase {
+  /** Previous session limit */
+  oldLimit: number;
 
-  /** Emitted when a failure is recorded */
-  failure: [event: CircuitFailureEvent];
+  /** New session limit */
+  newLimit: number;
 
-  /** Emitted when an operation is blocked */
-  blocked: [event: CircuitBlockedEvent];
+  /** Number of guilds used for calculation */
+  guildCount: number;
 
-  /** Emitted when the circuit is reset */
-  reset: [timestamp: string];
+  /** Total number of shards */
+  totalShards: number;
+
+  /** Reason for the update */
+  reason: "large_bot" | "very_large_bot" | "scaling_adjustment";
+}
+
+/**
+ * Event emitted when a shard is created
+ */
+export interface ShardCreateEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** Rate limit bucket ID */
+  bucket: number;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when a shard disconnects
+ */
+export interface ShardDisconnectEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** WebSocket close code */
+  code: number;
+
+  /** Reason for disconnect */
+  reason: string;
+
+  /** Whether the disconnect was clean */
+  wasClean: boolean;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when a guild is added to a shard
+ */
+export interface ShardGuildAddEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** ID of the guild that was added */
+  guildId: string;
+
+  /** New total guild count for this shard */
+  newGuildCount: number;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when a guild is removed from a shard
+ */
+export interface ShardGuildRemoveEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** ID of the guild that was removed */
+  guildId: string;
+
+  /** New total guild count for this shard */
+  newGuildCount: number;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when a shard's health metrics are updated
+ */
+export interface ShardHealthCheckEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Health metrics data */
+  metrics: {
+    /** Latency in milliseconds */
+    latency: number;
+
+    /** Average latency over time */
+    averageLatency: number;
+
+    /** Number of successful heartbeats */
+    successfulHeartbeats: number;
+
+    /** Number of failed heartbeats */
+    failedHeartbeats: number;
+
+    /** Time when the last successful heartbeat was received */
+    lastHeartbeat: number;
+
+    /** Number of reconnections */
+    reconnectCount: number;
+
+    /** Number of session resumptions */
+    resumeCount: number;
+
+    /** Score between 0-100 indicating shard health */
+    score: number;
+  };
+
+  /** Current shard status */
+  status: string;
+
+  /** Health score (0-100) */
+  score: number;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when a shard hits rate limits
+ */
+export interface ShardRateLimitEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** Rate limit bucket ID */
+  bucket: number;
+
+  /** Time until reset in milliseconds */
+  timeout: number;
+
+  /** Remaining requests in this window */
+  remaining: number;
+
+  /** Reset timestamp */
+  reset: number;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when a shard becomes ready
+ */
+export interface ShardReadyEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** Session ID for this shard */
+  sessionId: string;
+
+  /** Latency in milliseconds */
+  latency: number;
+
+  /** Number of guilds in this shard */
+  guildCount: number;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when a shard needs to reconnect
+ */
+export interface ShardReconnectEvent extends GatewayEventBase {
+  /** ID of the shard */
+  shardId: number;
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** Current retry attempt number */
+  attemptNumber: number;
+
+  /** Delay before retry in milliseconds */
+  delayMs: number;
+
+  /** Previous shard status */
+  previousStatus?: string;
+
+  /** Process ID when using multi-process mode */
+  processId?: string;
+}
+
+/**
+ * Event emitted when scaling the number of shards
+ */
+export interface ShardScalingEvent extends GatewayEventBase {
+  /** Previous number of shards */
+  oldShardCount: number;
+
+  /** New number of shards */
+  newShardCount: number;
+
+  /** ID of the process initiating the scaling */
+  initiator: string;
+
+  /** Scaling strategy being used */
+  strategy: "balanced" | "minimal-disruption";
+
+  /** Reason for scaling */
+  reason: "scale_up" | "scale_down" | "rebalance";
+}
+
+/**
+ * Event emitted when shard scaling is complete
+ */
+export interface ShardScalingCompleteEvent extends GatewayEventBase {
+  /** Previous number of shards */
+  oldShardCount: number;
+
+  /** New number of shards */
+  newShardCount: number;
+
+  /** Whether scaling was successful */
+  successful: boolean;
+
+  /** Total duration of the scaling operation in milliseconds */
+  duration: number;
+}
+
+/**
+ * Event emitted when shard scaling fails
+ */
+export interface ShardScalingFailedEvent extends GatewayEventBase {
+  /** Previous number of shards */
+  oldShardCount: number;
+
+  /** Target number of shards */
+  newShardCount: number;
+
+  /** Error that caused the failure */
+  error: Error | unknown;
+
+  /** Reason for failure */
+  reason: string;
 }
 
 /**
@@ -408,17 +544,13 @@ export interface GatewayEvents {
   /** Emitted when a session is resumed */
   sessionResume: [event: SessionResumeEvent];
 
+  sessionLimitUpdate: [event: SessionLimitUpdateEvent];
+
   /** Emitted when a shard is created */
   shardCreate: [event: ShardCreateEvent];
 
-  /** Emitted when a shard connects */
-  shardReady: [event: ShardReadyEvent];
-
   /** Emitted when a shard disconnects */
   shardDisconnect: [event: ShardDisconnectEvent];
-
-  /** Emitted when a shard needs to reconnect */
-  shardReconnect: [event: ShardReconnectEvent];
 
   /** Emitted when a guild is added to a shard */
   shardGuildAdd: [event: ShardGuildAddEvent];
@@ -426,11 +558,42 @@ export interface GatewayEvents {
   /** Emitted when a guild is removed from a shard */
   shardGuildRemove: [event: ShardGuildRemoveEvent];
 
+  /** Emitted when multiple guilds are added to a shard */
+  shardGuildBulkAdd: [
+    event: {
+      timestamp: string;
+      shardId: number;
+      totalShards: number;
+      guildIds: string[];
+      addedCount: number;
+      newGuildCount: number;
+      processId: string;
+    },
+  ];
+
+  /** Emitted when a shard's health status is updated */
+  shardHealthUpdate: [event: ShardHealthCheckEvent];
+
   /** Emitted when a shard hits rate limits */
   shardRateLimit: [event: ShardRateLimitEvent];
 
-  /** Emitted when session limits are recalculated */
-  sessionLimitUpdate: [event: SessionLimitUpdateEvent];
+  /** Emitted when a shard becomes ready */
+  shardReady: [event: ShardReadyEvent];
+
+  /** Emitted when a shard is resuming */
+  shardResuming: [event: ShardReadyEvent];
+
+  /** Emitted when a shard needs to reconnect */
+  shardReconnect: [event: ShardReconnectEvent];
+
+  /** Emitted when scaling the number of shards */
+  shardScaling: [event: ShardScalingEvent];
+
+  /** Emitted when shard scaling is complete */
+  shardScalingComplete: [event: ShardScalingCompleteEvent];
+
+  /** Emitted when shard scaling fails */
+  shardScalingFailed: [event: ShardScalingFailedEvent];
 
   /** Emitted when an error occurs */
   error: [error: Error | string];
