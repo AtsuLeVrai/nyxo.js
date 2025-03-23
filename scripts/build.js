@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
-import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import chalk from "chalk";
 import figures from "figures";
 import { rollup } from "rollup";
+import dts from "rollup-plugin-dts";
 import { swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
@@ -77,7 +77,7 @@ function readPackageJson() {
   }
 }
 
-// Rollup configuration
+// Rollup configuration for JS bundles
 function getRollupConfig() {
   const pkg = readPackageJson();
 
@@ -132,51 +132,27 @@ function getRollupConfig() {
   return { config, outputs };
 }
 
-// Simplified API Extractor configuration
-const apiExtractorConfig = {
-  projectFolder: paths.root,
-  mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
-  compiler: {
-    tsconfigFilePath: paths.tsconfig,
-    overrideTsconfig: {
-      compilerOptions: {
-        types: ["node"],
-        skipLibCheck: true,
-        isolatedModules: true,
-        strict: true,
-      },
+// Rollup configuration for d.ts bundle
+function getDtsRollupConfig() {
+  const pkg = readPackageJson();
+
+  // External modules (will not be bundled)
+  const externals = [
+    ...Object.keys(pkg.dependencies || {}),
+    ...Object.keys(pkg.peerDependencies || {}),
+    /^node:/,
+  ];
+
+  return {
+    input: resolve(paths.temp, "index.d.ts"),
+    output: {
+      file: resolve(paths.dist, "index.d.ts"),
+      format: "es",
     },
-  },
-  apiReport: { enabled: false },
-  docModel: { enabled: false },
-  dtsRollup: {
-    enabled: true,
-    untrimmedFilePath: resolve(paths.dist, "index.d.ts"),
-  },
-  tsdocMetadata: {
-    enabled: isProduction,
-    tsdocMetadataFilePath: resolve(paths.dist, "tsdoc-metadata.json"),
-  },
-  messages: {
-    compilerMessageReporting: {
-      default: { logLevel: "warning" },
-      TS2589: { logLevel: "none" },
-      TS2344: { logLevel: "none" },
-      TS1375: { logLevel: "none" },
-      TS2306: { logLevel: "none" },
-    },
-    extractorMessageReporting: {
-      default: { logLevel: "warning" },
-      "ae-missing-release-tag": { logLevel: "none" },
-      "ae-unresolved-link": { logLevel: "none" },
-      "ae-internal-missing-underscore": { logLevel: "none" },
-    },
-    tsdocMessageReporting: {
-      default: { logLevel: "warning" },
-      "tsdoc-undefined-tag": { logLevel: "none" },
-    },
-  },
-};
+    external: externals,
+    plugins: [dts()],
+  };
+}
 
 // Clean directories
 async function clean() {
@@ -197,7 +173,7 @@ async function clean() {
   }
 }
 
-// Generate TypeScript declaration files
+// Generate TypeScript declaration files using rollup-plugin-dts
 async function compileTypes() {
   try {
     // Find tsconfig.json file
@@ -266,24 +242,20 @@ async function compileTypes() {
       throw new Error("TypeScript declaration compilation failed");
     }
 
-    // In production mode, use API Extractor to bundle declarations
+    // In production mode, use rollup-plugin-dts to bundle declarations
     if (isProduction) {
-      const extractorConfig = ExtractorConfig.prepare({
-        configObject: apiExtractorConfig,
-        configObjectFullPath: paths.root,
-        packageJsonFullPath: resolve(paths.root, "package.json"),
-      });
+      const dtsConfig = getDtsRollupConfig();
 
-      const extractorResult = Extractor.invoke(extractorConfig, {
-        localBuild: true,
-        showVerboseMessages: false,
-        showDiagnostics: true,
-      });
+      try {
+        // Create the .d.ts bundle
+        const dtsBundle = await rollup(dtsConfig);
+        await dtsBundle.write(dtsConfig.output);
+        await dtsBundle.close();
 
-      if (!extractorResult.succeeded) {
-        throw new Error(
-          `API Extractor failed with ${extractorResult.errorCount} errors`,
-        );
+        const stats = await stat(dtsConfig.output.file);
+        Logger.success(`Declaration bundle generated (${stats.size} bytes)`);
+      } catch (rollupError) {
+        throw new Error(`Declaration bundling failed: ${rollupError.message}`);
       }
     }
 

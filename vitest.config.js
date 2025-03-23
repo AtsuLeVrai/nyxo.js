@@ -8,7 +8,6 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "**/dist/**"],
     testTimeout: 10000,
     coverage: {
-      enabled: true,
       provider: "v8",
       reporter: ["text", "json", "html"],
       exclude: ["**/node_modules/**", "**/*.d.ts", "**/*.test.ts"],
