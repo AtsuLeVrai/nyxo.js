@@ -1,7 +1,5 @@
-import { z } from "zod";
-
 /**
- * Schema for Gateway Session Start Limit object.
+ * Interface for Gateway Session Start Limit object.
  * This provides information about rate limits for session starts.
  *
  * @remarks
@@ -11,24 +9,42 @@ import { z } from "zod";
  *
  * @see {@link https://discord.com/developers/docs/events/gateway#session-start-limit-object-session-start-limit-structure}
  */
-export const SessionStartLimitEntity = z.object({
-  /** Total number of session starts allowed per reset period */
-  total: z.number().int().positive(),
+export interface SessionStartLimitEntity {
+  /**
+   * Total number of session starts allowed per reset period
+   *
+   * @positive
+   * @integer
+   */
+  total: number;
 
-  /** Remaining number of session starts allowed */
-  remaining: z.number().int().nonnegative(),
+  /**
+   * Remaining number of session starts allowed
+   *
+   * @nonnegative
+   * @integer
+   */
+  remaining: number;
 
-  /** Number of milliseconds after which the limit resets */
-  reset_after: z.number().int().nonnegative(),
+  /**
+   * Number of milliseconds after which the limit resets
+   *
+   * @nonnegative
+   * @integer
+   */
+  reset_after: number;
 
-  /** Maximum number of concurrent sessions that can be used */
-  max_concurrency: z.number().int().positive(),
-});
-
-export type SessionStartLimitEntity = z.infer<typeof SessionStartLimitEntity>;
+  /**
+   * Maximum number of concurrent sessions that can be used
+   *
+   * @positive
+   * @integer
+   */
+  max_concurrency: number;
+}
 
 /**
- * Schema for basic Gateway response.
+ * Interface for basic Gateway response.
  * This contains the WebSocket URL for connecting to Discord's gateway.
  *
  * @remarks
@@ -36,15 +52,17 @@ export type SessionStartLimitEntity = z.infer<typeof SessionStartLimitEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-example-response}
  */
-export const GatewayResponseEntity = z.object({
-  /** The WebSocket URL that clients can connect to */
-  url: z.string().url(),
-});
-
-export type GatewayResponseEntity = z.infer<typeof GatewayResponseEntity>;
+export interface GatewayResponseEntity {
+  /**
+   * The WebSocket URL that clients can connect to
+   *
+   * @format url
+   */
+  url: string;
+}
 
 /**
- * Schema for Gateway Bot response.
+ * Interface for Gateway Bot response.
  * This extends the basic Gateway response with additional information needed by bots.
  *
  * @remarks
@@ -53,12 +71,15 @@ export type GatewayResponseEntity = z.infer<typeof GatewayResponseEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot-json-response}
  */
-export const GatewayBotResponseEntity = GatewayResponseEntity.extend({
-  /** Recommended number of shards to use when connecting */
-  shards: z.number().int().positive(),
+export interface GatewayBotResponseEntity extends GatewayResponseEntity {
+  /**
+   * Recommended number of shards to use when connecting
+   *
+   * @positive
+   * @integer
+   */
+  shards: number;
 
   /** Session start limit information */
-  session_start_limit: SessionStartLimitEntity,
-});
-
-export type GatewayBotResponseEntity = z.infer<typeof GatewayBotResponseEntity>;
+  session_start_limit: SessionStartLimitEntity;
+}

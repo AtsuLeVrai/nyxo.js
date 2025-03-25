@@ -1,6 +1,6 @@
 import type { Dispatcher } from "undici";
 import type { Rest } from "../core/index.js";
-import type { QueueOptions } from "../options/index.js";
+import { type QueueOptions, validateQueueOptions } from "../options/index.js";
 import type {
   ApiRequestOptions,
   QueueProcessEvent,
@@ -109,7 +109,7 @@ export class QueueManager {
    */
   constructor(rest: Rest, options: QueueOptions) {
     this.#rest = rest;
-    this.#options = options;
+    this.#options = validateQueueOptions(options);
   }
 
   /**

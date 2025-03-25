@@ -1,7 +1,6 @@
 import type { AuditLogEntity, Snowflake } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import { GetGuildAuditLogQuerySchema } from "../schemas/index.js";
+import type { GetGuildAuditLogQuerySchema } from "../schemas/index.js";
 
 /**
  * Router for Discord Audit Log-related API endpoints.
@@ -41,7 +40,7 @@ export class AuditLogRouter {
    * Fetches the audit log for a guild.
    *
    * @param guildId - ID of the guild to fetch audit logs from
-   * @param options - Query parameters to filter audit log entries
+   * @param query - Query parameters to filter audit log entries
    * @returns A promise that resolves to the guild's audit log
    * @throws Error if the provided options fail validation
    * @remarks Requires the VIEW_AUDIT_LOG permission.
@@ -49,15 +48,10 @@ export class AuditLogRouter {
    */
   getGuildAuditLog(
     guildId: Snowflake,
-    options: GetGuildAuditLogQuerySchema = {},
+    query: GetGuildAuditLogQuerySchema = {},
   ): Promise<AuditLogEntity> {
-    const result = GetGuildAuditLogQuerySchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {
-      query: result.data,
+      query,
     });
   }
 }

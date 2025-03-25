@@ -1,10 +1,10 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import { FileHandler } from "../handlers/index.js";
+import type {
   CreateApplicationEmojiSchema,
   CreateGuildEmojiSchema,
-  type ListApplicationEmojisEntity,
+  ListApplicationEmojisEntity,
   ModifyApplicationEmojiSchema,
   ModifyGuildEmojiSchema,
 } from "../schemas/index.js";
@@ -92,13 +92,12 @@ export class EmojiRouter {
     options: CreateGuildEmojiSchema,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const result = await CreateGuildEmojiSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.image) {
+      options.image = await FileHandler.toDataUri(options.image);
     }
 
     return this.#rest.post(EmojiRouter.ROUTES.guildEmojis(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -124,13 +123,8 @@ export class EmojiRouter {
     options: ModifyGuildEmojiSchema,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const result = ModifyGuildEmojiSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(EmojiRouter.ROUTES.guildEmoji(guildId, emojiId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -205,20 +199,19 @@ export class EmojiRouter {
    * - Application emojis can be used without the USE_EXTERNAL_EMOJIS permission
    * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji}
    */
-  createApplicationEmoji(
+  async createApplicationEmoji(
     applicationId: Snowflake,
     options: CreateApplicationEmojiSchema,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const result = CreateApplicationEmojiSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.image) {
+      options.image = await FileHandler.toDataUri(options.image);
     }
 
     return this.#rest.post(
       EmojiRouter.ROUTES.applicationEmojis(applicationId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );
@@ -240,15 +233,10 @@ export class EmojiRouter {
     options: ModifyApplicationEmojiSchema,
     reason?: string,
   ): Promise<EmojiEntity> {
-    const result = ModifyApplicationEmojiSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       EmojiRouter.ROUTES.applicationEmoji(applicationId, emojiId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );

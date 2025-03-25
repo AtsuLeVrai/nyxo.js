@@ -1,40 +1,46 @@
-import { Snowflake, SubscriptionEntity } from "@nyxjs/core";
-import { z } from "zod";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
- * Schema for query parameters when listing SKU subscriptions.
+ * Interface for query parameters when listing SKU subscriptions.
  *
  * These parameters allow filtering and pagination of subscription results
  * when retrieving subscriptions for a specific SKU.
  *
  * @see {@link https://discord.com/developers/docs/resources/subscription#query-string-params}
  */
-export const SubscriptionQuerySchema = z.object({
+export interface SubscriptionQuerySchema {
   /**
    * List subscriptions before this ID.
    * Used for backward pagination.
+   *
+   * @optional
    */
-  before: Snowflake.optional(),
+  before?: Snowflake;
 
   /**
    * List subscriptions after this ID.
    * Used for forward pagination.
+   *
+   * @optional
    */
-  after: Snowflake.optional(),
+  after?: Snowflake;
 
   /**
    * Number of results to return (1-100).
    * Defaults to 50 if not specified.
+   *
+   * @minimum 1
+   * @maximum 100
+   * @default 50
+   * @integer
    */
-  limit: z.number().int().min(1).max(100).default(50),
+  limit?: number;
 
   /**
    * User ID for which to return subscriptions.
    * Required except for OAuth queries.
    *
-   * Reuses the validation from SubscriptionEntity.
+   * @optional
    */
-  user_id: SubscriptionEntity.shape.user_id.optional(),
-});
-
-export type SubscriptionQuerySchema = z.input<typeof SubscriptionQuerySchema>;
+  user_id?: Snowflake;
+}

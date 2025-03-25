@@ -7,9 +7,9 @@ import type {
   Snowflake,
   UserEntity,
 } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import { FileHandler } from "../handlers/index.js";
+import type {
   CreateGroupDmSchema,
   GetCurrentUserGuildsQuerySchema,
   ModifyCurrentUserSchema,
@@ -131,13 +131,16 @@ export class UserRouter {
   async modifyCurrentUser(
     options: ModifyCurrentUserSchema,
   ): Promise<UserEntity> {
-    const result = await ModifyCurrentUserSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.avatar) {
+      options.avatar = await FileHandler.toDataUri(options.avatar);
+    }
+
+    if (options.banner) {
+      options.banner = await FileHandler.toDataUri(options.banner);
     }
 
     return this.#rest.patch(UserRouter.ROUTES.userCurrent, {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 
@@ -157,13 +160,8 @@ export class UserRouter {
   getCurrentUserGuilds(
     query: GetCurrentUserGuildsQuerySchema = {},
   ): Promise<GuildEntity[]> {
-    const result = GetCurrentUserGuildsQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(UserRouter.ROUTES.userCurrentGuilds, {
-      query: result.data,
+      query,
     });
   }
 
@@ -228,13 +226,8 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
   createGroupDm(options: CreateGroupDmSchema): Promise<ChannelEntity> {
-    const result = CreateGroupDmSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 
@@ -284,16 +277,10 @@ export class UserRouter {
     applicationId: Snowflake,
     connection: UpdateCurrentUserApplicationRoleConnectionSchema,
   ): Promise<ApplicationRoleConnectionEntity> {
-    const result =
-      UpdateCurrentUserApplicationRoleConnectionSchema.safeParse(connection);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(
       UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(connection),
       },
     );
   }

@@ -6,15 +6,13 @@ import type {
   Snowflake,
   ThreadMemberEntity,
 } from "@nyxjs/core";
-import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import type {
   AddGroupDmRecipientSchema,
   CreateChannelInviteSchema,
   EditChannelPermissionsSchema,
   ListPublicArchivedThreadsQuerySchema,
-  type ListPublicArchivedThreadsResponseEntity,
+  ListPublicArchivedThreadsResponseEntity,
   ListThreadMembersQuerySchema,
   ModifyChannelGroupDmSchema,
   ModifyChannelGuildChannelSchema,
@@ -149,19 +147,8 @@ export class ChannelRouter {
       | ModifyChannelGroupDmSchema,
     reason?: string,
   ): Promise<ChannelEntity> {
-    const result = z
-      .union([
-        ModifyChannelGuildChannelSchema,
-        ModifyChannelThreadSchema,
-        ModifyChannelGroupDmSchema,
-      ])
-      .safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(ChannelRouter.ROUTES.channelBase(channelId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -205,15 +192,10 @@ export class ChannelRouter {
     permissions: EditChannelPermissionsSchema,
     reason?: string,
   ): Promise<void> {
-    const result = EditChannelPermissionsSchema.safeParse(permissions);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(
       ChannelRouter.ROUTES.channelPermission(channelId, overwriteId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(permissions),
         reason,
       },
     );
@@ -251,13 +233,8 @@ export class ChannelRouter {
     options: CreateChannelInviteSchema,
     reason?: string,
   ): Promise<InviteEntity> {
-    const result = CreateChannelInviteSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(ChannelRouter.ROUTES.channelInvites(channelId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -403,15 +380,10 @@ export class ChannelRouter {
     userId: Snowflake,
     options: AddGroupDmRecipientSchema,
   ): Promise<void> {
-    const result = AddGroupDmRecipientSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(
       ChannelRouter.ROUTES.channelRecipients(channelId, userId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -454,15 +426,10 @@ export class ChannelRouter {
     options: StartThreadFromMessageSchema,
     reason?: string,
   ): Promise<ChannelEntity> {
-    const result = StartThreadFromMessageSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       ChannelRouter.ROUTES.channelStartThreadFromMessage(channelId, messageId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );
@@ -485,15 +452,10 @@ export class ChannelRouter {
     options: StartThreadWithoutMessageSchema,
     reason?: string,
   ): Promise<ChannelEntity> {
-    const result = StartThreadWithoutMessageSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       ChannelRouter.ROUTES.channelStartThreadWithoutMessage(channelId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );
@@ -519,20 +481,10 @@ export class ChannelRouter {
       | StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
     reason?: string,
   ): Promise<ChannelEntity> {
-    const result = z
-      .union([
-        StartThreadInForumOrMediaChannelSchema,
-        StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
-      ])
-      .safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       ChannelRouter.ROUTES.channelStartThreadInForumOrMediaChannel(channelId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );
@@ -633,7 +585,7 @@ export class ChannelRouter {
    * Lists members of a thread.
    *
    * @param channelId - ID of the thread
-   * @param options - Query parameters for the request
+   * @param query - Query parameters for the request
    * @returns A promise that resolves to an array of thread members
    * @remarks
    * - When with_member is true, results will be paginated and include guild member information
@@ -642,17 +594,12 @@ export class ChannelRouter {
    */
   listThreadMembers(
     channelId: Snowflake,
-    options: ListThreadMembersQuerySchema = {},
+    query: ListThreadMembersQuerySchema = {},
   ): Promise<ThreadMemberEntity[]> {
-    const result = ListThreadMembersQuerySchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       ChannelRouter.ROUTES.channelThreadMembers(channelId),
       {
-        query: result.data,
+        query,
       },
     );
   }
@@ -661,7 +608,7 @@ export class ChannelRouter {
    * Lists public archived threads in a channel.
    *
    * @param channelId - ID of the channel
-   * @param options - Query parameters for the request
+   * @param query - Query parameters for the request
    * @returns A promise that resolves to a list of public archived threads
    * @remarks
    * - Returns threads of type PUBLIC_THREAD for GUILD_TEXT channels
@@ -672,17 +619,12 @@ export class ChannelRouter {
    */
   listPublicArchivedThreads(
     channelId: Snowflake,
-    options: ListPublicArchivedThreadsQuerySchema = {},
+    query: ListPublicArchivedThreadsQuerySchema = {},
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
-    const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       ChannelRouter.ROUTES.channelPublicArchivedThreads(channelId),
       {
-        query: result.data,
+        query,
       },
     );
   }
@@ -691,7 +633,7 @@ export class ChannelRouter {
    * Lists private archived threads in a channel.
    *
    * @param channelId - ID of the channel
-   * @param options - Query parameters for the request
+   * @param query - Query parameters for the request
    * @returns A promise that resolves to a list of private archived threads
    * @remarks
    * - Returns threads of type PRIVATE_THREAD
@@ -701,17 +643,12 @@ export class ChannelRouter {
    */
   listPrivateArchivedThreads(
     channelId: Snowflake,
-    options: ListPublicArchivedThreadsQuerySchema = {},
+    query: ListPublicArchivedThreadsQuerySchema = {},
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
-    const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       ChannelRouter.ROUTES.channelPrivateArchivedThreads(channelId),
       {
-        query: result.data,
+        query,
       },
     );
   }
@@ -730,17 +667,12 @@ export class ChannelRouter {
    */
   listJoinedPrivateArchivedThreads(
     channelId: Snowflake,
-    options: ListPublicArchivedThreadsQuerySchema = {},
+    query: ListPublicArchivedThreadsQuerySchema = {},
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
-    const result = ListPublicArchivedThreadsQuerySchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       ChannelRouter.ROUTES.channelJoinedPrivateArchivedThreads(channelId),
       {
-        query: result.data,
+        query,
       },
     );
   }

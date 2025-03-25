@@ -3,9 +3,9 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import { FileHandler } from "../handlers/index.js";
+import type {
   CreateGuildScheduledEventSchema,
   GetGuildScheduledEventUsersQuerySchema,
   ModifyGuildScheduledEventSchema,
@@ -96,7 +96,7 @@ export class ScheduledEventRouter {
    * A guild can have a maximum of 100 events with SCHEDULED or ACTIVE status at any time.
    *
    * @param guildId - The ID of the guild to create the event in
-   * @param event - The event data to use for creation
+   * @param options - The event data to use for creation
    * @param reason - Optional audit log reason for the creation
    * @returns A promise resolving to the created guild scheduled event entity
    * @throws Error if the event data is invalid
@@ -104,18 +104,17 @@ export class ScheduledEventRouter {
    */
   async createGuildScheduledEvent(
     guildId: Snowflake,
-    event: CreateGuildScheduledEventSchema,
+    options: CreateGuildScheduledEventSchema,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    const result = await CreateGuildScheduledEventSchema.safeParseAsync(event);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.image) {
+      options.image = await FileHandler.toDataUri(options.image);
     }
 
     return this.#rest.post(
       ScheduledEventRouter.ROUTES.guildScheduledEvents(guildId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );
@@ -155,27 +154,26 @@ export class ScheduledEventRouter {
    *
    * @param guildId - The ID of the guild the event belongs to
    * @param eventId - The ID of the scheduled event to modify
-   * @param modify - The modifications to apply to the event
+   * @param options - The modifications to apply to the event
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the modified guild scheduled event entity
    * @throws Error if the modification data is invalid
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event}
    */
-  modifyGuildScheduledEvent(
+  async modifyGuildScheduledEvent(
     guildId: Snowflake,
     eventId: Snowflake,
-    modify: ModifyGuildScheduledEventSchema,
+    options: ModifyGuildScheduledEventSchema,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    const result = ModifyGuildScheduledEventSchema.safeParse(modify);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.image) {
+      options.image = await FileHandler.toDataUri(options.image);
     }
 
     return this.#rest.patch(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );
@@ -217,15 +215,10 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     query: GetGuildScheduledEventUsersQuerySchema = {},
   ): Promise<GuildScheduledEventUserEntity[]> {
-    const result = GetGuildScheduledEventUsersQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       ScheduledEventRouter.ROUTES.guildScheduledEventUsers(guildId, eventId),
       {
-        query: result.data,
+        query,
       },
     );
   }

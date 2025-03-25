@@ -1,7 +1,5 @@
 import { EventEmitter } from "eventemitter3";
 import { type Dispatcher, Pool } from "undici";
-import type { z } from "zod";
-import { fromError } from "zod-validation-error";
 import { ApiError, type JsonErrorResponse } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
 import {
@@ -9,7 +7,7 @@ import {
   RateLimitManager,
   RetryManager,
 } from "../managers/index.js";
-import { RestOptions } from "../options/index.js";
+import { type RestOptions, validateRestOptions } from "../options/index.js";
 import {
   ApplicationCommandRouter,
   ApplicationConnectionRouter,
@@ -94,19 +92,18 @@ export class Rest extends EventEmitter<RestEvents> {
    * @param options - Configuration options for the REST client
    * @throws Error if options validation fails
    */
-  constructor(options: z.input<typeof RestOptions>) {
+  constructor(options: RestOptions) {
     super();
 
     try {
-      this.#options = RestOptions.parse(options);
+      // Utiliser la nouvelle fonction de validation au lieu du schéma Zod
+      this.#options = validateRestOptions(options);
     } catch (error) {
-      throw new Error(fromError(error).message);
+      throw new Error(error instanceof Error ? error.message : String(error));
     }
 
-    // Initialize HTTP connection pool
+    // Initialiser le reste comme avant...
     this.#pool = new Pool(this.#options.baseUrl, REST_CONSTANTS.POOL_CONFIG);
-
-    // Initialize managers
     this.#rateLimiter = new RateLimitManager(this);
     this.#retry = new RetryManager(this, this.#options.retry);
     this.#queue = new QueueManager(this, this.#options.queue);

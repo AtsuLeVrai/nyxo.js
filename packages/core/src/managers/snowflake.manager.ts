@@ -1,123 +1,92 @@
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
-
 /**
  * Constants for Discord Snowflake ID generation and parsing
  */
-const DISCORD_EPOCH = 1420070400000; // Discord Epoch (January 1, 2015)
-const MAX_INCREMENT = 4095; // Maximum increment value (12 bits)
-const MAX_PROCESS_ID = 31; // Maximum process ID (5 bits)
-const MAX_WORKER_ID = 31; // Maximum worker ID (5 bits)
-const TIMESTAMP_SHIFT = 22n; // Bit shift for timestamp (64 - 42 = 22)
-const WORKER_ID_SHIFT = 17n; // Bit shift for worker ID (22 - 5 = 17)
-const PROCESS_ID_SHIFT = 12n; // Bit shift for process ID (17 - 5 = 12)
-
-/**
- * Zod schema for validating Discord Snowflake IDs.
- * Snowflakes are string representations of 64-bit integers with specific bit structure.
- */
-export const Snowflake = z
-  .string()
-  .min(1, "Snowflake cannot be empty")
-  .regex(/^\d+$/, "Snowflake must contain only digits")
-  .refine(
-    (value) => value.length >= 17,
-    "Snowflake must be at least 17 digits long",
-  )
-  .refine((value) => {
-    try {
-      const bigIntValue = BigInt(value);
-      const timestamp = Number(bigIntValue >> TIMESTAMP_SHIFT) + DISCORD_EPOCH;
-
-      // Vérifier que le timestamp n'est pas exactement égal à DISCORD_EPOCH
-      if (timestamp === DISCORD_EPOCH) {
-        return false;
-      }
-
-      // Vérifier que le timestamp est dans une plage raisonnable
-      return timestamp > DISCORD_EPOCH && timestamp <= Date.now() + 3600000;
-    } catch {
-      return false;
-    }
-  }, "Invalid Snowflake format or timestamp");
+export const DISCORD_EPOCH = 1420070400000; // Discord Epoch (January 1, 2015)
+export const MAX_INCREMENT = 4095; // Maximum increment value (12 bits)
+export const MAX_PROCESS_ID = 31; // Maximum process ID (5 bits)
+export const MAX_WORKER_ID = 31; // Maximum worker ID (5 bits)
+export const TIMESTAMP_SHIFT = 22n; // Bit shift for timestamp (64 - 42 = 22)
+export const WORKER_ID_SHIFT = 17n; // Bit shift for worker ID (22 - 5 = 17)
+export const PROCESS_ID_SHIFT = 12n; // Bit shift for process ID (17 - 5 = 12)
 
 /**
  * Type definition for a validated Snowflake ID
+ * @minLength 1 Snowflake cannot be empty
+ * @pattern ^\d+$ Snowflake must contain only digits
+ * @validate Snowflake must be at least 17 digits long
+ * @validate Invalid Snowflake format or timestamp
  */
-export type Snowflake = z.infer<typeof Snowflake>;
-
-/**
- * Zod schema for Snowflake generation options
- */
-export const SnowflakeOptions = z
-  .object({
-    /**
-     * Worker ID (5 bits, 0-31)
-     * Used to differentiate between different servers/workers generating IDs
-     */
-    workerId: z.number().int().min(0).max(MAX_WORKER_ID).default(0),
-
-    /**
-     * Process ID (5 bits, 0-31)
-     * Used to differentiate between different processes on the same worker
-     */
-    processId: z.number().int().min(0).max(MAX_PROCESS_ID).default(0),
-
-    /**
-     * Sequence/increment number (12 bits, 0-4095)
-     * Used to differentiate between IDs generated in the same millisecond
-     */
-    increment: z.number().int().min(0).max(MAX_INCREMENT).default(0),
-
-    /**
-     * Custom epoch in milliseconds since Unix epoch
-     * Defaults to Discord's epoch (January 1, 2015)
-     */
-    epoch: z.number().int().default(DISCORD_EPOCH),
-  })
-  .strict()
-  .readonly();
+export type Snowflake = string;
 
 /**
  * Type definition for Snowflake generation options
+ * @strict
+ * @readonly
  */
-export type SnowflakeOptions = z.infer<typeof SnowflakeOptions>;
+export interface SnowflakeOptions {
+  /**
+   * Worker ID (5 bits, 0-31)
+   * Used to differentiate between different servers/workers generating IDs
+   * @minimum 0
+   * @maximum 31
+   * @default 0
+   */
+  workerId: number;
 
-/**
- * Zod schema for values that can be resolved to a Snowflake
- */
-export const SnowflakeResolvable = z.union([
-  z.string(), // String representation of a Snowflake
-  z.number(), // Timestamp or raw number
-  z.bigint(), // BigInt representation of a Snowflake
-  z.date(), // Date object to generate a Snowflake from
-]);
+  /**
+   * Process ID (5 bits, 0-31)
+   * Used to differentiate between different processes on the same worker
+   * @minimum 0
+   * @maximum 31
+   * @default 0
+   */
+  processId: number;
+
+  /**
+   * Sequence/increment number (12 bits, 0-4095)
+   * Used to differentiate between IDs generated in the same millisecond
+   * @minimum 0
+   * @maximum 4095
+   * @default 0
+   */
+  increment: number;
+
+  /**
+   * Custom epoch in milliseconds since Unix epoch
+   * Defaults to Discord's epoch (January 1, 2015)
+   * @default 1420070400000
+   */
+  epoch: number;
+}
 
 /**
  * Type definition for values that can be resolved to a Snowflake
  */
-export type SnowflakeResolvable = z.infer<typeof SnowflakeResolvable>;
+export type SnowflakeResolvable =
+  | string // String representation of a Snowflake
+  | number // Timestamp or raw number
+  | bigint // BigInt representation of a Snowflake
+  | Date; // Date object to generate a Snowflake from
 
 /**
- * Zod schema for a deconstructed Snowflake with its components
+ * Type definition for a deconstructed Snowflake with its components
  */
-export const SnowflakeEntity = z.object({
+export interface SnowflakeEntity {
   /** Timestamp in milliseconds */
-  timestamp: z.number(),
-  /** Worker ID (0-31) */
-  workerId: z.number(),
-  /** Process ID (0-31) */
-  processId: z.number(),
-  /** Increment (0-4095) */
-  increment: z.number(),
-  /** Date object representation of the timestamp */
-  date: z.date(),
-});
+  timestamp: number;
 
-/**
- * Type definition for a deconstructed Snowflake
- */
-export type SnowflakeEntity = z.infer<typeof SnowflakeEntity>;
+  /** Worker ID (0-31) */
+  workerId: number;
+
+  /** Process ID (0-31) */
+  processId: number;
+
+  /** Increment (0-4095) */
+  increment: number;
+
+  /** Date object representation of the timestamp */
+  date: Date;
+}
 
 /**
  * Class for managing Discord Snowflake IDs.
@@ -158,14 +127,12 @@ export class SnowflakeManager {
    */
   constructor(
     snowflake: SnowflakeResolvable,
-    options: z.input<typeof SnowflakeOptions> = {},
+    options: Partial<SnowflakeOptions> = {},
   ) {
-    try {
-      this.#options = SnowflakeOptions.parse(options);
-    } catch (error) {
-      throw new Error(`Invalid Snowflake options: ${fromError(error).message}`);
-    }
+    // Validate options and set defaults
+    this.#options = this.#validateOptions(options);
 
+    // Resolve and validate the snowflake ID
     this.#id = this.#resolveId(snowflake, this.#options);
   }
 
@@ -178,7 +145,7 @@ export class SnowflakeManager {
    */
   static from(
     snowflake: SnowflakeResolvable,
-    options: z.input<typeof SnowflakeOptions> = {},
+    options: Partial<SnowflakeOptions> = {},
   ): SnowflakeManager {
     return new SnowflakeManager(snowflake, options);
   }
@@ -192,7 +159,7 @@ export class SnowflakeManager {
    */
   static fromTimestamp(
     timestamp: number | Date,
-    options: z.input<typeof SnowflakeOptions> = {},
+    options: Partial<SnowflakeOptions> = {},
   ): SnowflakeManager {
     const time = timestamp instanceof Date ? timestamp.getTime() : timestamp;
     return new SnowflakeManager(time, options);
@@ -205,7 +172,24 @@ export class SnowflakeManager {
    * @returns True if the string is a valid Snowflake
    */
   static isValid(snowflake: string): snowflake is Snowflake {
-    return Snowflake.safeParse(snowflake).success;
+    if (!(snowflake && /^\d+$/.test(snowflake)) || snowflake.length < 17) {
+      return false;
+    }
+
+    try {
+      const bigIntValue = BigInt(snowflake);
+      const timestamp = Number(bigIntValue >> TIMESTAMP_SHIFT) + DISCORD_EPOCH;
+
+      // Check if timestamp is exactly equal to DISCORD_EPOCH
+      if (timestamp === DISCORD_EPOCH) {
+        return false;
+      }
+
+      // Check if timestamp is within a reasonable range
+      return timestamp > DISCORD_EPOCH && timestamp <= Date.now() + 3600000;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -217,7 +201,7 @@ export class SnowflakeManager {
    */
   static resolve(
     resolvable: SnowflakeResolvable,
-    options: z.input<typeof SnowflakeOptions> = {},
+    options: Partial<SnowflakeOptions> = {},
   ): Snowflake {
     return new SnowflakeManager(resolvable, options).toString();
   }
@@ -291,13 +275,13 @@ export class SnowflakeManager {
    * @returns Object containing the Snowflake's components
    */
   deconstruct(): SnowflakeEntity {
-    return SnowflakeEntity.parse({
+    return {
       timestamp: this.getTimestamp(),
       workerId: this.getWorkerId(),
       processId: this.getProcessId(),
       increment: this.getIncrement(),
       date: this.toDate(),
-    });
+    };
   }
 
   /**
@@ -358,6 +342,53 @@ export class SnowflakeManager {
   }
 
   /**
+   * Validates the provided options and sets defaults
+   *
+   * @param options - Partial options to validate
+   * @returns Complete validated options with defaults
+   * @private
+   */
+  #validateOptions(options: Partial<SnowflakeOptions>): SnowflakeOptions {
+    // Default options
+    const validatedOptions: SnowflakeOptions = {
+      workerId: options.workerId ?? 0,
+      processId: options.processId ?? 0,
+      increment: options.increment ?? 0,
+      epoch: options.epoch ?? DISCORD_EPOCH,
+    };
+
+    // Validate ranges
+    if (
+      validatedOptions.workerId < 0 ||
+      validatedOptions.workerId > MAX_WORKER_ID
+    ) {
+      throw new Error(
+        `Invalid worker ID: must be between 0 and ${MAX_WORKER_ID}`,
+      );
+    }
+
+    if (
+      validatedOptions.processId < 0 ||
+      validatedOptions.processId > MAX_PROCESS_ID
+    ) {
+      throw new Error(
+        `Invalid process ID: must be between 0 and ${MAX_PROCESS_ID}`,
+      );
+    }
+
+    if (
+      validatedOptions.increment < 0 ||
+      validatedOptions.increment > MAX_INCREMENT
+    ) {
+      throw new Error(
+        `Invalid increment: must be between 0 and ${MAX_INCREMENT}`,
+      );
+    }
+
+    return validatedOptions;
+  }
+
+  /**
    * Resolves a value to a Snowflake ID.
    *
    * @param snowflake - Value to resolve
@@ -370,17 +401,15 @@ export class SnowflakeManager {
     snowflake: SnowflakeResolvable,
     options: SnowflakeOptions,
   ): Snowflake {
-    const parsedResolvable = SnowflakeResolvable.parse(snowflake);
-
     // Handle Date objects by generating a Snowflake from the timestamp
-    if (parsedResolvable instanceof Date) {
-      return this.#generate(parsedResolvable.getTime(), options);
+    if (snowflake instanceof Date) {
+      return this.#generate(snowflake.getTime(), options);
     }
 
     // Handle BigInt values
-    if (typeof parsedResolvable === "bigint") {
-      const stringValue = parsedResolvable.toString();
-      if (!Snowflake.safeParse(stringValue).success) {
+    if (typeof snowflake === "bigint") {
+      const stringValue = snowflake.toString();
+      if (!SnowflakeManager.isValid(stringValue)) {
         throw new Error("Invalid bigint snowflake value");
       }
 
@@ -388,17 +417,17 @@ export class SnowflakeManager {
     }
 
     // Handle number values (treat as timestamps)
-    if (typeof parsedResolvable === "number") {
-      if (parsedResolvable < 0 || !Number.isInteger(parsedResolvable)) {
+    if (typeof snowflake === "number") {
+      if (snowflake < 0 || !Number.isInteger(snowflake)) {
         throw new Error("Invalid timestamp value");
       }
 
-      return this.#generate(parsedResolvable, options);
+      return this.#generate(snowflake, options);
     }
 
     // Handle string values
-    const stringValue = String(parsedResolvable);
-    if (!Snowflake.safeParse(stringValue).success) {
+    const stringValue = String(snowflake);
+    if (!SnowflakeManager.isValid(stringValue)) {
       throw new Error("Invalid snowflake provided");
     }
 
@@ -437,6 +466,10 @@ export class SnowflakeManager {
     ).toString();
 
     // Validate the generated Snowflake
-    return Snowflake.parse(snowflake);
+    if (!SnowflakeManager.isValid(snowflake)) {
+      throw new Error("Generated invalid snowflake");
+    }
+
+    return snowflake as Snowflake;
   }
 }

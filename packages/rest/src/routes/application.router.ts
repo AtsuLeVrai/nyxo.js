@@ -1,8 +1,8 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
-  type ActivityInstanceEntity,
+import { FileHandler } from "../handlers/index.js";
+import type {
+  ActivityInstanceEntity,
   EditCurrentApplicationSchema,
 } from "../schemas/index.js";
 
@@ -64,13 +64,16 @@ export class ApplicationRouter {
   async editCurrentApplication(
     options: EditCurrentApplicationSchema,
   ): Promise<ApplicationEntity> {
-    const result = await EditCurrentApplicationSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.icon) {
+      options.icon = await FileHandler.toDataUri(options.icon);
+    }
+
+    if (options.cover_image) {
+      options.cover_image = await FileHandler.toDataUri(options.cover_image);
     }
 
     return this.#rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 

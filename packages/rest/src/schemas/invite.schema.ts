@@ -1,31 +1,34 @@
-import { Snowflake } from "@nyxjs/core";
-import { z } from "zod";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
- * Schema for the query parameters when retrieving an invite
+ * Interface for the query parameters when retrieving an invite.
  * Defines the optional parameters that can be provided when getting
- * invite details from Discord's API
+ * invite details from Discord's API.
  *
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}
  */
-export const GetInviteQuerySchema = z.object({
+export interface GetInviteQuerySchema {
   /**
-   * Whether the invite should contain approximate member counts
-   * When true, the response will include approximate_presence_count and approximate_member_count fields
+   * Whether the invite should contain approximate member counts.
+   * When true, the response will include approximate_presence_count and approximate_member_count fields.
+   *
+   * @optional
    */
-  with_counts: z.boolean().optional(),
+  with_counts?: boolean;
 
   /**
-   * Whether the invite should contain the expiration date
-   * When true, the response will include the expires_at field
+   * Whether the invite should contain the expiration date.
+   * When true, the response will include the expires_at field.
+   *
+   * @optional
    */
-  with_expiration: z.boolean().optional(),
+  with_expiration?: boolean;
 
   /**
-   * The guild scheduled event to include with the invite
-   * When provided and valid, the response will include guild_scheduled_event data
+   * The guild scheduled event to include with the invite.
+   * When provided and valid, the response will include guild_scheduled_event data.
+   *
+   * @optional
    */
-  guild_scheduled_event_id: Snowflake.optional(),
-});
-
-export type GetInviteQuerySchema = z.input<typeof GetInviteQuerySchema>;
+  guild_scheduled_event_id?: Snowflake;
+}

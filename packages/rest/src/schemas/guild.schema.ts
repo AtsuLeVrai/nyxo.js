@@ -1,6 +1,6 @@
-import {
+import type {
   AnyChannelEntity,
-  type AnyThreadChannelEntity,
+  AnyThreadChannelEntity,
   DefaultMessageNotificationLevel,
   ExplicitContentFilterLevel,
   GuildFeature,
@@ -10,178 +10,318 @@ import {
   RoleEntity,
   Snowflake,
   SystemChannelFlags,
-  type ThreadMemberEntity,
+  ThreadMemberEntity,
   VerificationLevel,
   WelcomeScreenChannelEntity,
 } from "@nyxjs/core";
-import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import type { FileInput } from "../handlers/index.js";
 
 /**
- * Schema for creating a new guild channel
+ * Interface for creating a new guild channel
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
  */
-export const CreateGuildChannelSchema = AnyChannelEntity;
-
-export type CreateGuildChannelSchema = z.input<typeof CreateGuildChannelSchema>;
+export type CreateGuildChannelSchema = AnyChannelEntity;
 
 /**
- * Schema for creating a new guild
+ * Interface for creating a new guild
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
  */
-export const CreateGuildSchema = z.object({
-  /** Guild name (2-100 characters) */
-  name: z.string().min(2).max(100),
+export interface CreateGuildSchema {
+  /**
+   * Guild name (2-100 characters)
+   *
+   * @minLength 2
+   * @maxLength 100
+   */
+  name: string;
 
-  /** Voice region id for the guild (deprecated) */
-  region: z.string().nullish(),
+  /**
+   * Voice region id for the guild (deprecated)
+   *
+   * @nullable
+   * @optional
+   */
+  region?: string | null;
 
-  /** Base64 128x128 image for the guild icon */
-  icon: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
-    .optional(),
+  /**
+   * Base64 128x128 image for the guild icon
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
+   * @optional
+   */
+  icon?: FileInput;
 
-  /** Verification level required for the guild */
-  verification_level: z.nativeEnum(VerificationLevel).optional(),
+  /**
+   * Verification level required for the guild
+   *
+   * @optional
+   */
+  verification_level?: VerificationLevel;
 
-  /** Default message notification level */
-  default_message_notifications: z
-    .nativeEnum(DefaultMessageNotificationLevel)
-    .optional(),
+  /**
+   * Default message notification level
+   *
+   * @optional
+   */
+  default_message_notifications?: DefaultMessageNotificationLevel;
 
-  /** Explicit content filter level */
-  explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel).optional(),
+  /**
+   * Explicit content filter level
+   *
+   * @optional
+   */
+  explicit_content_filter?: ExplicitContentFilterLevel;
 
-  /** New guild roles */
-  roles: RoleEntity.array().optional(),
+  /**
+   * New guild roles
+   *
+   * @optional
+   */
+  roles?: RoleEntity[];
 
-  /** New guild's channels */
-  channels: CreateGuildChannelSchema.array().optional(),
+  /**
+   * New guild's channels
+   *
+   * @optional
+   */
+  channels?: CreateGuildChannelSchema[];
 
-  /** ID for afk channel */
-  afk_channel_id: Snowflake.optional(),
+  /**
+   * ID for afk channel
+   *
+   * @optional
+   */
+  afk_channel_id?: Snowflake;
 
-  /** AFK timeout in seconds */
-  afk_timeout: z.number().optional(),
+  /**
+   * AFK timeout in seconds
+   *
+   * @optional
+   */
+  afk_timeout?: number;
 
-  /** ID of the channel where guild notices such as welcome messages and boost events are posted */
-  system_channel_id: Snowflake.optional(),
+  /**
+   * ID of the channel where guild notices such as welcome messages and boost events are posted
+   *
+   * @optional
+   */
+  system_channel_id?: Snowflake;
 
-  /** System channel flags */
-  system_channel_flags: z.nativeEnum(SystemChannelFlags).optional(),
-});
-
-export type CreateGuildSchema = z.input<typeof CreateGuildSchema>;
+  /**
+   * System channel flags
+   *
+   * @optional
+   */
+  system_channel_flags?: SystemChannelFlags;
+}
 
 /**
- * Schema for modifying an existing guild
+ * Interface for modifying an existing guild
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-json-params}
  */
-export const ModifyGuildSchema = z.object({
-  /** Guild name (2-100 characters) */
-  name: z.string().min(2).max(100).optional(),
+export interface ModifyGuildSchema {
+  /**
+   * Guild name (2-100 characters)
+   *
+   * @minLength 2
+   * @maxLength 100
+   * @optional
+   */
+  name?: string;
 
-  /** Voice region id for the guild (deprecated) */
-  region: z.string().nullish(),
+  /**
+   * Voice region id for the guild (deprecated)
+   *
+   * @nullable
+   * @optional
+   */
+  region?: string | null;
 
-  /** Verification level required for the guild */
-  verification_level: z.nativeEnum(VerificationLevel).nullish(),
+  /**
+   * Verification level required for the guild
+   *
+   * @nullable
+   * @optional
+   */
+  verification_level?: VerificationLevel | null;
 
-  /** Default message notification level */
-  default_message_notifications: z
-    .nativeEnum(DefaultMessageNotificationLevel)
-    .nullish(),
+  /**
+   * Default message notification level
+   *
+   * @nullable
+   * @optional
+   */
+  default_message_notifications?: DefaultMessageNotificationLevel | null;
 
-  /** Explicit content filter level */
-  explicit_content_filter: z.nativeEnum(ExplicitContentFilterLevel).nullish(),
+  /**
+   * Explicit content filter level
+   *
+   * @nullable
+   * @optional
+   */
+  explicit_content_filter?: ExplicitContentFilterLevel | null;
 
-  /** ID for afk channel */
-  afk_channel_id: Snowflake.nullish(),
+  /**
+   * ID for afk channel
+   *
+   * @nullable
+   * @optional
+   */
+  afk_channel_id?: Snowflake | null;
 
-  /** AFK timeout in seconds */
-  afk_timeout: z.number().optional(),
+  /**
+   * AFK timeout in seconds
+   *
+   * @optional
+   */
+  afk_timeout?: number;
 
-  /** Base64 1024x1024 png/jpeg/gif image for the guild icon */
-  icon: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
-    .nullish(),
+  /**
+   * Base64 1024x1024 png/jpeg/gif image for the guild icon
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
+   * @nullable
+   * @optional
+   */
+  icon?: FileInput | null;
 
-  /** User ID to transfer guild ownership to (must be owner) */
-  owner_id: Snowflake.optional(),
+  /**
+   * User ID to transfer guild ownership to (must be owner)
+   *
+   * @optional
+   */
+  owner_id?: Snowflake;
 
-  /** Base64 16:9 png/jpeg image for the guild splash */
-  splash: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
-    .nullish(),
+  /**
+   * Base64 16:9 png/jpeg image for the guild splash
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
+   * @nullable
+   * @optional
+   */
+  splash?: FileInput | null;
 
-  /** Base64 16:9 png/jpeg image for the guild discovery splash */
-  discovery_splash: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
-    .nullish(),
+  /**
+   * Base64 16:9 png/jpeg image for the guild discovery splash
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
+   * @nullable
+   * @optional
+   */
+  discovery_splash?: FileInput | null;
 
-  /** Base64 16:9 png/jpeg image for the guild banner */
-  banner: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
-    .nullish(),
+  /**
+   * Base64 16:9 png/jpeg image for the guild banner
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
+   * @nullable
+   * @optional
+   */
+  banner?: FileInput | null;
 
-  /** ID of the channel where guild notices are posted */
-  system_channel_id: Snowflake.nullish(),
+  /**
+   * ID of the channel where guild notices are posted
+   *
+   * @nullable
+   * @optional
+   */
+  system_channel_id?: Snowflake | null;
 
-  /** System channel flags */
-  system_channel_flags: z.nativeEnum(SystemChannelFlags).optional(),
+  /**
+   * System channel flags
+   *
+   * @optional
+   */
+  system_channel_flags?: SystemChannelFlags;
 
-  /** ID of the channel where Community guilds display rules */
-  rules_channel_id: Snowflake.nullish(),
+  /**
+   * ID of the channel where Community guilds display rules
+   *
+   * @nullable
+   * @optional
+   */
+  rules_channel_id?: Snowflake | null;
 
-  /** ID of the channel where admins and moderators receive notices */
-  public_updates_channel_id: Snowflake.nullish(),
+  /**
+   * ID of the channel where admins and moderators receive notices
+   *
+   * @nullable
+   * @optional
+   */
+  public_updates_channel_id?: Snowflake | null;
 
-  /** Preferred locale of a Community guild */
-  preferred_locale: z.string().optional(),
+  /**
+   * Preferred locale of a Community guild
+   *
+   * @optional
+   */
+  preferred_locale?: string;
 
-  /** Enabled guild features */
-  features: z.nativeEnum(GuildFeature).array().optional(),
+  /**
+   * Enabled guild features
+   *
+   * @optional
+   */
+  features?: GuildFeature[];
 
-  /** Description for the guild */
-  description: z.string().nullish(),
+  /**
+   * Description for the guild
+   *
+   * @nullable
+   * @optional
+   */
+  description?: string | null;
 
-  /** Whether the guild's boost progress bar should be enabled */
-  premium_progress_bar_enabled: z.boolean().optional(),
+  /**
+   * Whether the guild's boost progress bar should be enabled
+   *
+   * @optional
+   */
+  premium_progress_bar_enabled?: boolean;
 
-  /** ID of the channel where admins and moderators receive safety alerts */
-  safety_alerts_channel_id: Snowflake.nullish(),
-});
-
-export type ModifyGuildSchema = z.input<typeof ModifyGuildSchema>;
+  /**
+   * ID of the channel where admins and moderators receive safety alerts
+   *
+   * @nullable
+   * @optional
+   */
+  safety_alerts_channel_id?: Snowflake | null;
+}
 
 /**
- * Schema for modifying guild channel positions
+ * Interface for modifying guild channel positions
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions}
  */
-export const ModifyGuildChannelPositionsSchema = z
-  .object({
-    /** Channel ID */
-    id: Snowflake,
+export interface ModifyGuildChannelPositionsItem {
+  /** Channel ID */
+  id: Snowflake;
 
-    /** Sorting position of the channel */
-    position: z.number().nullish(),
+  /**
+   * Sorting position of the channel
+   *
+   * @nullable
+   * @optional
+   */
+  position?: number | null;
 
-    /** Syncs the permission overwrites with the new parent, if moving to a new category */
-    lock_permissions: z.boolean().optional(),
+  /**
+   * Syncs the permission overwrites with the new parent, if moving to a new category
+   *
+   * @optional
+   */
+  lock_permissions?: boolean;
 
-    /** The new parent ID for the channel that is moved */
-    parent_id: Snowflake.nullish(),
-  })
-  .array();
+  /**
+   * The new parent ID for the channel that is moved
+   *
+   * @nullable
+   * @optional
+   */
+  parent_id?: Snowflake | null;
+}
 
-export type ModifyGuildChannelPositionsSchema = z.input<
-  typeof ModifyGuildChannelPositionsSchema
->;
+export type ModifyGuildChannelPositionsSchema =
+  ModifyGuildChannelPositionsItem[];
 
 /**
  * Interface for the response when listing active guild threads
@@ -196,133 +336,214 @@ export interface ListActiveGuildThreadsEntity {
 }
 
 /**
- * Schema for query parameters when listing guild members
+ * Interface for query parameters when listing guild members
  * @see {@link https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params}
  */
-export const ListGuildMembersQuerySchema = z.object({
-  /** Max number of members to return (1-1000) */
-  limit: z.number().min(1).max(1000).default(1),
+export interface ListGuildMembersQuerySchema {
+  /**
+   * Max number of members to return (1-1000)
+   *
+   * @minimum 1
+   * @maximum 1000
+   * @default 1
+   */
+  limit?: number;
 
-  /** The highest user id in the previous page */
-  after: Snowflake.optional(),
-});
-
-export type ListGuildMembersQuerySchema = z.input<
-  typeof ListGuildMembersQuerySchema
->;
+  /**
+   * The highest user id in the previous page
+   *
+   * @optional
+   */
+  after?: Snowflake;
+}
 
 /**
- * Schema for query parameters when searching guild members
+ * Interface for query parameters when searching guild members
  * @see {@link https://discord.com/developers/docs/resources/guild#search-guild-members-query-string-params}
  */
-export const SearchGuildMembersQuerySchema = z.object({
+export interface SearchGuildMembersQuerySchema {
   /** Query string to match username(s) and nickname(s) against */
-  query: z.string(),
+  query: string;
 
-  /** Max number of members to return (1-1000) */
-  limit: z.number().min(1).max(1000).default(1),
-});
-
-export type SearchGuildMembersQuerySchema = z.input<
-  typeof SearchGuildMembersQuerySchema
->;
+  /**
+   * Max number of members to return (1-1000)
+   *
+   * @minimum 1
+   * @maximum 1000
+   * @default 1
+   */
+  limit: number;
+}
 
 /**
- * Schema for adding a member to a guild
+ * Interface for adding a member to a guild
  * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member-json-params}
  */
-export const AddGuildMemberSchema = z.object({
+export interface AddGuildMemberSchema {
   /** OAuth2 access token granted with the guilds.join scope */
-  access_token: z.string(),
+  access_token: string;
 
-  /** Value to set user's nickname to */
-  nick: z.string().optional(),
+  /**
+   * Value to set user's nickname to
+   *
+   * @optional
+   */
+  nick?: string;
 
-  /** Array of role IDs the member is assigned */
-  roles: Snowflake.array().optional(),
+  /**
+   * Array of role IDs the member is assigned
+   *
+   * @optional
+   */
+  roles?: Snowflake[];
 
-  /** Whether the user is muted in voice channels */
-  mute: z.boolean().optional(),
+  /**
+   * Whether the user is muted in voice channels
+   *
+   * @optional
+   */
+  mute?: boolean;
 
-  /** Whether the user is deafened in voice channels */
-  deaf: z.boolean().optional(),
-});
-
-export type AddGuildMemberSchema = z.input<typeof AddGuildMemberSchema>;
+  /**
+   * Whether the user is deafened in voice channels
+   *
+   * @optional
+   */
+  deaf?: boolean;
+}
 
 /**
- * Schema for modifying a guild member
+ * Interface for modifying a guild member
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params}
  */
-export const ModifyGuildMemberSchema = z.object({
-  /** Value to set user's nickname to */
-  nick: z.string().nullish(),
+export interface ModifyGuildMemberSchema {
+  /**
+   * Value to set user's nickname to
+   *
+   * @nullable
+   * @optional
+   */
+  nick?: string | null;
 
-  /** Array of role IDs the member is assigned */
-  roles: Snowflake.array().optional(),
+  /**
+   * Array of role IDs the member is assigned
+   *
+   * @optional
+   */
+  roles?: Snowflake[];
 
-  /** Whether the user is muted in voice channels */
-  mute: z.boolean().optional(),
+  /**
+   * Whether the user is muted in voice channels
+   *
+   * @optional
+   */
+  mute?: boolean;
 
-  /** Whether the user is deafened in voice channels */
-  deaf: z.boolean().optional(),
+  /**
+   * Whether the user is deafened in voice channels
+   *
+   * @optional
+   */
+  deaf?: boolean;
 
-  /** ID of channel to move user to (if they are connected to voice) */
-  channel_id: Snowflake.nullish(),
+  /**
+   * ID of channel to move user to (if they are connected to voice)
+   *
+   * @nullable
+   * @optional
+   */
+  channel_id?: Snowflake | null;
 
-  /** When the user's timeout will expire (up to 28 days in the future) */
-  communication_disabled_until: z.string().datetime().optional(),
+  /**
+   * When the user's timeout will expire (up to 28 days in the future)
+   *
+   * @format datetime
+   * @optional
+   */
+  communication_disabled_until?: string;
 
-  /** Guild member flags */
-  flags: z.nativeEnum(GuildMemberFlags).optional(),
-});
-
-export type ModifyGuildMemberSchema = z.input<typeof ModifyGuildMemberSchema>;
+  /**
+   * Guild member flags
+   *
+   * @optional
+   */
+  flags?: GuildMemberFlags;
+}
 
 /**
- * Schema for query parameters when getting guild bans
+ * Interface for query parameters when getting guild bans
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-bans-query-string-params}
  */
-export const GetGuildBansQuerySchema = z.object({
-  /** Number of users to return (up to maximum 1000) */
-  limit: z.number().min(1).max(1000).default(1000),
+export interface GetGuildBansQuerySchema {
+  /**
+   * Number of users to return (up to maximum 1000)
+   *
+   * @minimum 1
+   * @maximum 1000
+   * @default 1000
+   */
+  limit?: number;
 
-  /** Consider only users before given user ID */
-  before: Snowflake.optional(),
+  /**
+   * Consider only users before given user ID
+   *
+   * @optional
+   */
+  before?: Snowflake;
 
-  /** Consider only users after given user ID */
-  after: Snowflake.optional(),
-});
-
-export type GetGuildBansQuerySchema = z.input<typeof GetGuildBansQuerySchema>;
+  /**
+   * Consider only users after given user ID
+   *
+   * @optional
+   */
+  after?: Snowflake;
+}
 
 /**
- * Schema for creating a guild ban
+ * Interface for creating a guild ban
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-ban-json-params}
  */
-export const CreateGuildBanSchema = z.object({
-  /** Number of days to delete messages for (0-7) (deprecated) */
-  delete_message_days: z.number().min(0).max(7).optional(),
+export interface CreateGuildBanSchema {
+  /**
+   * Number of days to delete messages for (0-7) (deprecated)
+   *
+   * @minimum 0
+   * @maximum 7
+   * @optional
+   */
+  delete_message_days?: number;
 
-  /** Number of seconds to delete messages for (0-604800) */
-  delete_message_seconds: z.number().min(0).max(604800).optional(),
-});
-
-export type CreateGuildBanSchema = z.input<typeof CreateGuildBanSchema>;
+  /**
+   * Number of seconds to delete messages for (0-604800)
+   *
+   * @minimum 0
+   * @maximum 604800
+   * @optional
+   */
+  delete_message_seconds?: number;
+}
 
 /**
- * Schema for bulk guild ban
+ * Interface for bulk guild ban
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-json-params}
  */
-export const BulkGuildBanSchema = z.object({
-  /** List of user IDs to ban (max 200) */
-  user_ids: Snowflake.array().max(200),
+export interface BulkGuildBanSchema {
+  /**
+   * List of user IDs to ban (max 200)
+   *
+   * @maxItems 200
+   */
+  user_ids: Snowflake[];
 
-  /** Number of seconds to delete messages for (0-604800) */
-  delete_message_seconds: z.number().min(0).max(604800).default(0),
-});
-
-export type BulkGuildBanSchema = z.input<typeof BulkGuildBanSchema>;
+  /**
+   * Number of seconds to delete messages for (0-604800)
+   *
+   * @minimum 0
+   * @maximum 604800
+   * @default 0
+   */
+  delete_message_seconds: number;
+}
 
 /**
  * Interface for bulk guild ban response
@@ -337,98 +558,139 @@ export interface BulkGuildBanResponseEntity {
 }
 
 /**
- * Schema for creating a guild role
+ * Interface for creating a guild role
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role-json-params}
  */
-export const CreateGuildRoleSchema = z.object({
-  /** Name of the role (max 100 characters) */
-  name: z.string().max(100).default("new role"),
+export interface CreateGuildRoleSchema {
+  /**
+   * Name of the role (max 100 characters)
+   *
+   * @maxLength 100
+   * @default "new role"
+   */
+  name: string;
 
   /** Bitwise value of the enabled/disabled permissions */
-  permissions: z.string(),
+  permissions: string;
 
-  /** RGB color value */
-  color: z.number().int().default(0),
+  /**
+   * RGB color value
+   *
+   * @integer
+   * @default 0
+   */
+  color: number;
 
-  /** Whether the role should be displayed separately in the sidebar */
-  hoist: z.boolean().default(false),
+  /**
+   * Whether the role should be displayed separately in the sidebar
+   *
+   * @default false
+   */
+  hoist: boolean;
 
-  /** The role's icon image */
-  icon: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri)
-    .nullable(),
+  /**
+   * The role's icon image
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
+   * @nullable
+   */
+  icon: FileInput | null;
 
-  /** The role's unicode emoji as a standard emoji */
-  unicode_emoji: z.string().emoji().optional(),
+  /**
+   * The role's unicode emoji as a standard emoji
+   *
+   * @optional
+   * @format emoji
+   */
+  unicode_emoji?: string;
 
-  /** Whether the role should be mentionable */
-  mentionable: z.boolean().default(false),
-});
-
-export type CreateGuildRoleSchema = z.input<typeof CreateGuildRoleSchema>;
+  /**
+   * Whether the role should be mentionable
+   *
+   * @default false
+   */
+  mentionable: boolean;
+}
 
 /**
- * Schema for modifying guild role positions
+ * Interface for modifying guild role positions
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params}
  */
-export const ModifyGuildRolePositionsSchema = z
-  .object({
-    /** Role ID */
-    id: Snowflake,
+export interface ModifyGuildRolePositionsItem {
+  /** Role ID */
+  id: Snowflake;
 
-    /** Sorting position of the role */
-    position: z.number().int().nullish(),
-  })
-  .array();
+  /**
+   * Sorting position of the role
+   *
+   * @integer
+   * @nullable
+   * @optional
+   */
+  position?: number | null;
+}
 
-export type ModifyGuildRolePositionsSchema = z.input<
-  typeof ModifyGuildRolePositionsSchema
->;
+export type ModifyGuildRolePositionsSchema = ModifyGuildRolePositionsItem[];
 
 /**
- * Schema for modifying a guild role
+ * Interface for modifying a guild role
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-json-params}
  */
-export const ModifyGuildRoleSchema = CreateGuildRoleSchema.partial().nullable();
-
-export type ModifyGuildRoleSchema = z.input<typeof ModifyGuildRoleSchema>;
+export type ModifyGuildRoleSchema = Partial<CreateGuildRoleSchema> | null;
 
 /**
- * Schema for query parameters when getting guild prune count
+ * Interface for query parameters when getting guild prune count
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params}
  */
-export const GetGuildPruneCountQuerySchema = z.object({
-  /** Number of days to count prune for (1-30) */
-  days: z.number().min(1).max(30).default(7),
+export interface GetGuildPruneCountQuerySchema {
+  /**
+   * Number of days to count prune for (1-30)
+   *
+   * @minimum 1
+   * @maximum 30
+   * @default 7
+   */
+  days?: number;
 
-  /** Comma-delimited array of role IDs to include */
-  include_roles: z.string().optional(),
-});
-
-export type GetGuildPruneCountQuerySchema = z.input<
-  typeof GetGuildPruneCountQuerySchema
->;
+  /**
+   * Comma-delimited array of role IDs to include
+   *
+   * @optional
+   */
+  include_roles?: string;
+}
 
 /**
- * Schema for beginning a guild prune operation
+ * Interface for beginning a guild prune operation
  * @see {@link https://discord.com/developers/docs/resources/guild#begin-guild-prune-json-params}
  */
-export const BeginGuildPruneSchema = z.object({
-  /** Number of days to prune (1-30) */
-  days: z.number().min(1).max(30).default(7),
+export interface BeginGuildPruneSchema {
+  /**
+   * Number of days to prune (1-30)
+   *
+   * @minimum 1
+   * @maximum 30
+   * @default 7
+   */
+  days: number;
 
-  /** Whether 'pruned' is returned in the response */
-  compute_prune_count: z.boolean().default(true),
+  /**
+   * Whether 'pruned' is returned in the response
+   *
+   * @default true
+   */
+  compute_prune_count: boolean;
 
   /** Array of role IDs to include */
-  include_roles: Snowflake.array(),
+  include_roles: Snowflake[];
 
-  /** @deprecated Reason for the prune (deprecated) */
-  reason: z.string().optional(),
-});
-
-export type BeginGuildPruneSchema = z.input<typeof BeginGuildPruneSchema>;
+  /**
+   * @deprecated Reason for the prune (deprecated)
+   *
+   * @optional
+   */
+  reason?: string;
+}
 
 /**
  * Widget style options for guild widget images
@@ -442,58 +704,61 @@ export type WidgetStyleOptions =
   | "banner4";
 
 /**
- * Schema for modifying guild widget settings
+ * Interface for modifying guild widget settings
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-widget-json-params}
  */
-export const ModifyGuildWidgetSettingsSchema = z.object({
+export interface ModifyGuildWidgetSettingsSchema {
   /** Whether the widget is enabled */
-  enabled: z.boolean(),
+  enabled: boolean;
 
   /** The widget channel ID */
-  channel_id: Snowflake.nullable(),
-});
-
-export type ModifyGuildWidgetSettingsSchema = z.input<
-  typeof ModifyGuildWidgetSettingsSchema
->;
+  channel_id: Snowflake | null;
+}
 
 /**
- * Schema for modifying guild welcome screen
+ * Interface for modifying guild welcome screen
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-welcome-screen-json-params}
  */
-export const ModifyGuildWelcomeScreenSchema = z.object({
-  /** Whether the welcome screen is enabled */
-  enabled: z.boolean().nullish(),
+export interface ModifyGuildWelcomeScreenSchema {
+  /**
+   * Whether the welcome screen is enabled
+   *
+   * @nullable
+   * @optional
+   */
+  enabled?: boolean | null;
 
-  /** Channels shown in the welcome screen and their display options */
-  welcome_channels: WelcomeScreenChannelEntity.array().nullish(),
+  /**
+   * Channels shown in the welcome screen and their display options
+   *
+   * @nullable
+   * @optional
+   */
+  welcome_channels?: WelcomeScreenChannelEntity[] | null;
 
-  /** The server description to show in the welcome screen */
-  description: z.string().nullish(),
-});
-
-export type ModifyGuildWelcomeScreenSchema = z.input<
-  typeof ModifyGuildWelcomeScreenSchema
->;
+  /**
+   * The server description to show in the welcome screen
+   *
+   * @nullable
+   * @optional
+   */
+  description?: string | null;
+}
 
 /**
- * Schema for modifying guild onboarding
+ * Interface for modifying guild onboarding
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-onboarding}
  */
-export const ModifyGuildOnboardingSchema = z.object({
+export interface ModifyGuildOnboardingSchema {
   /** Prompts shown during onboarding and in customize community */
-  prompts: GuildOnboardingPromptEntity.array(),
+  prompts: GuildOnboardingPromptEntity[];
 
   /** Channel IDs that members get opted into automatically */
-  default_channel_ids: Snowflake.array(),
+  default_channel_ids: Snowflake[];
 
   /** Whether onboarding is enabled in the guild */
-  enabled: z.boolean(),
+  enabled: boolean;
 
   /** Current mode of onboarding */
-  mode: z.nativeEnum(GuildOnboardingMode),
-});
-
-export type ModifyGuildOnboardingSchema = z.input<
-  typeof ModifyGuildOnboardingSchema
->;
+  mode: GuildOnboardingMode;
+}

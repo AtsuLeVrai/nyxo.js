@@ -1,8 +1,7 @@
-import { StageInstanceEntity, StageInstancePrivacyLevel } from "@nyxjs/core";
-import { z } from "zod";
+import type { Snowflake, StageInstancePrivacyLevel } from "@nyxjs/core";
 
 /**
- * Schema for creating a new Stage instance.
+ * Interface for creating a new Stage instance.
  *
  * A Stage instance holds information about a live stage in a Stage channel.
  * Creating a Stage instance requires the user to be a moderator of the Stage channel,
@@ -10,49 +9,48 @@ import { z } from "zod";
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params}
  */
-export const CreateStageInstanceSchema = z.object({
+export interface CreateStageInstanceSchema {
   /**
    * The ID of the Stage channel.
-   * Reuses the validation from StageInstanceEntity.
    */
-  channel_id: StageInstanceEntity.shape.channel_id,
+  channel_id: Snowflake;
 
   /**
    * The topic of the Stage instance (1-120 characters).
    * This is the blurb that gets shown below the channel's name, among other places.
-   * Reuses the validation from StageInstanceEntity.
+   *
+   * @minLength 1
+   * @maxLength 120
    */
-  topic: StageInstanceEntity.shape.topic,
+  topic: string;
 
   /**
    * The privacy level of the Stage instance.
    * Defaults to GUILD_ONLY (2) if not specified.
-   * Reuses the validation from StageInstanceEntity.
+   *
+   * @default StageInstancePrivacyLevel.GuildOnly
    */
-  privacy_level: StageInstanceEntity.shape.privacy_level
-    .optional()
-    .default(StageInstancePrivacyLevel.GuildOnly),
+  privacy_level?: StageInstancePrivacyLevel;
 
   /**
    * Whether to notify @everyone that a Stage instance has started.
    * The stage moderator must have the MENTION_EVERYONE permission for this notification to be sent.
+   *
+   * @optional
    */
-  send_start_notification: z.boolean().optional(),
+  send_start_notification?: boolean;
 
   /**
    * The ID of the scheduled event associated with this Stage instance, if any.
-   * Reuses the validation from StageInstanceEntity.
+   *
+   * @optional
+   * @nullable
    */
-  guild_scheduled_event_id:
-    StageInstanceEntity.shape.guild_scheduled_event_id.optional(),
-});
-
-export type CreateStageInstanceSchema = z.input<
-  typeof CreateStageInstanceSchema
->;
+  guild_scheduled_event_id?: Snowflake | null;
+}
 
 /**
- * Schema for modifying an existing Stage instance.
+ * Interface for modifying an existing Stage instance.
  *
  * Updating a Stage instance requires the user to be a moderator of the Stage channel,
  * which means having the MANAGE_CHANNELS, MUTE_MEMBERS, and MOVE_MEMBERS permissions.
@@ -61,20 +59,20 @@ export type CreateStageInstanceSchema = z.input<
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}
  */
-export const ModifyStageInstanceSchema = z.object({
+export interface ModifyStageInstanceSchema {
   /**
    * The topic of the Stage instance (1-120 characters).
-   * Reuses the validation from StageInstanceEntity.
+   *
+   * @minLength 1
+   * @maxLength 120
+   * @optional
    */
-  topic: StageInstanceEntity.shape.topic.optional(),
+  topic?: string;
 
   /**
    * The privacy level of the Stage instance.
-   * Reuses the validation from StageInstanceEntity.
+   *
+   * @optional
    */
-  privacy_level: StageInstanceEntity.shape.privacy_level.optional(),
-});
-
-export type ModifyStageInstanceSchema = z.input<
-  typeof ModifyStageInstanceSchema
->;
+  privacy_level?: StageInstancePrivacyLevel;
+}

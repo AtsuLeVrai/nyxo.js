@@ -3,9 +3,8 @@ import type {
   GuildApplicationCommandPermissionEntity,
   Snowflake,
 } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import type {
   CreateGlobalApplicationCommandSchema,
   CreateGuildApplicationCommandSchema,
   EditApplicationCommandPermissionsSchema,
@@ -127,15 +126,10 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     options: CreateGlobalApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    const result = CreateGlobalApplicationCommandSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -173,17 +167,12 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditGlobalApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    const result = EditGlobalApplicationCommandSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       ApplicationCommandRouter.ROUTES.applicationsCommandsId(
         applicationId,
         commandId,
       ),
-      { body: JSON.stringify(result.data) },
+      { body: JSON.stringify(options) },
     );
   }
 
@@ -219,17 +208,10 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     commands: CreateGlobalApplicationCommandSchema[],
   ): Promise<AnyApplicationCommandEntity[]> {
-    const result = CreateGlobalApplicationCommandSchema.array()
-      .max(200)
-      .safeParse(commands);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(
       ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(commands),
       },
     );
   }
@@ -273,18 +255,13 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     options: CreateGuildApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    const result = CreateGuildApplicationCommandSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
         applicationId,
         guildId,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -327,11 +304,6 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditGuildApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    const result = EditGuildApplicationCommandSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
@@ -339,7 +311,7 @@ export class ApplicationCommandRouter {
         commandId,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -381,20 +353,13 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commands: CreateGuildApplicationCommandSchema[],
   ): Promise<AnyApplicationCommandEntity[]> {
-    const result = CreateGuildApplicationCommandSchema.array()
-      .max(200)
-      .safeParse(commands);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
         applicationId,
         guildId,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(commands),
       },
     );
   }
@@ -458,11 +423,6 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditApplicationCommandPermissionsSchema,
   ): Promise<GuildApplicationCommandPermissionEntity> {
-    const result = EditApplicationCommandPermissionsSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsPermissionsId(
         applicationId,
@@ -470,7 +430,7 @@ export class ApplicationCommandRouter {
         commandId,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }

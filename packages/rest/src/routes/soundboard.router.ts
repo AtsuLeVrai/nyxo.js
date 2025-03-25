@@ -1,9 +1,9 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import { FileHandler } from "../handlers/index.js";
+import type {
   CreateGuildSoundboardSoundSchema,
-  type ListGuildSoundboardSoundsResponseEntity,
+  ListGuildSoundboardSoundsResponseEntity,
   ModifyGuildSoundboardSoundSchema,
   SendSoundboardSoundSchema,
 } from "../schemas/index.js";
@@ -86,15 +86,10 @@ export class SoundboardRouter {
     channelId: Snowflake,
     options: SendSoundboardSoundSchema,
   ): Promise<void> {
-    const result = SendSoundboardSoundSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       SoundboardRouter.ROUTES.channelSendSoundboardSound(channelId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -167,16 +162,14 @@ export class SoundboardRouter {
     options: CreateGuildSoundboardSoundSchema,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    const result =
-      await CreateGuildSoundboardSoundSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.sound) {
+      options.sound = await FileHandler.toDataUri(options.sound);
     }
 
     return this.#rest.post(
       SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );
@@ -207,15 +200,10 @@ export class SoundboardRouter {
     options: ModifyGuildSoundboardSoundSchema,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    const result = ModifyGuildSoundboardSoundSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );

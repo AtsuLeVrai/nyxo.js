@@ -1,9 +1,8 @@
-import { z } from "zod";
-import { OAuth2Scope } from "../enums/index.js";
-import { Snowflake } from "../managers/index.js";
-import { GuildEntity } from "./guild.entity.js";
-import { TeamEntity } from "./team.entity.js";
-import { UserEntity } from "./user.entity.js";
+import type { OAuth2Scope } from "../enums/index.js";
+import type { Snowflake } from "../managers/index.js";
+import type { GuildEntity } from "./guild.entity.js";
+import type { TeamEntity } from "./team.entity.js";
+import type { UserEntity } from "./user.entity.js";
 
 /**
  * Represents the flags that can be applied to an application.
@@ -69,135 +68,161 @@ export enum ApplicationIntegrationType {
 }
 
 /**
- * Zod schema for Installation Parameters
+ * Installation Parameters
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/application.md#install-params-structure}
  */
-export const InstallParamsEntity = z.object({
+export interface InstallParamsEntity {
   /** Scopes to add the application to the server with */
-  scopes: z.nativeEnum(OAuth2Scope).array(),
+  scopes: OAuth2Scope[];
 
   /** Permissions to request for the bot role */
-  permissions: z.string(),
-});
-
-export type InstallParamsEntity = z.infer<typeof InstallParamsEntity>;
+  permissions: string;
+}
 
 /**
- * Zod schema for Application Integration Type Configuration
+ * Application Integration Type Configuration
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/application.md#application-integration-type-configuration-object}
  */
-export const ApplicationIntegrationTypeConfigurationEntity = z.object({
+export interface ApplicationIntegrationTypeConfigurationEntity {
   /** Install params for each installation context's default in-app authorization link */
-  oauth2_install_params: InstallParamsEntity.optional(),
-});
-
-export type ApplicationIntegrationTypeConfigurationEntity = z.infer<
-  typeof ApplicationIntegrationTypeConfigurationEntity
->;
+  oauth2_install_params?: InstallParamsEntity;
+}
 
 /**
- * Zod schema for Application
+ * Application
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/application.md#application-structure}
  */
-export const ApplicationEntity = z.object({
+export interface ApplicationEntity {
   /** ID of the app */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Name of the app */
-  name: z.string(),
+  name: string;
 
   /** Icon hash of the app */
-  icon: z.string().nullable(),
+  icon: string | null;
 
   /** Icon hash returned when in the template object */
-  icon_hash: z.string().nullish(),
+  icon_hash?: string | null;
 
   /** Description of the app */
-  description: z.string(),
+  description: string;
 
-  /** List of RPC origin URLs, if RPC is enabled */
-  rpc_origins: z.string().url().array().optional(),
+  /**
+   * List of RPC origin URLs, if RPC is enabled
+   * @format url
+   */
+  rpc_origins?: string[];
 
   /** When false, only the app owner can add the app to guilds */
-  bot_public: z.boolean(),
+  bot_public: boolean;
 
   /** When true, the app's bot will only join upon completion of the full OAuth2 code grant flow */
-  bot_require_code_grant: z.boolean(),
+  bot_require_code_grant: boolean;
 
   /** Partial user object for the bot user associated with the app */
-  bot: UserEntity.partial().optional(),
+  bot?: Partial<UserEntity>;
 
-  /** URL of the app's Terms of Service */
-  terms_of_service_url: z.string().url().optional(),
+  /**
+   * URL of the app's Terms of Service
+   * @format url
+   */
+  terms_of_service_url?: string;
 
-  /** URL of the app's Privacy Policy */
-  privacy_policy_url: z.string().url().optional(),
+  /**
+   * URL of the app's Privacy Policy
+   * @format url
+   */
+  privacy_policy_url?: string;
 
   /** Partial user object for the owner of the app */
-  owner: UserEntity.partial().optional(),
+  owner?: Partial<UserEntity>;
 
   /** Hex encoded key for verification in interactions and the GameSDK's GetTicket */
-  verify_key: z.string(),
+  verify_key: string;
 
   /** If the app belongs to a team, this will be a list of the members of that team */
-  team: TeamEntity.nullable(),
+  team: TeamEntity | null;
 
   /** Guild associated with the app. For example, a developer support server */
-  guild_id: Snowflake.optional(),
+  guild_id?: Snowflake;
 
   /** Partial object of the associated guild */
-  guild: GuildEntity.partial().optional(),
+  guild?: Partial<GuildEntity>;
 
   /** ID of the "Game SKU" that is created, if exists */
-  primary_sku_id: Snowflake.optional(),
+  primary_sku_id?: Snowflake;
 
   /** URL slug that links to the store page, if the app is sold on Discord */
-  slug: z.string().optional(),
+  slug?: string;
 
   /** App's default rich presence invite cover image hash */
-  cover_image: z.string().optional(),
+  cover_image?: string;
 
   /** App's public flags */
-  flags: z.nativeEnum(ApplicationFlags).optional(),
+  flags?: ApplicationFlags;
 
-  /** Approximate count of guilds the app has been added to */
-  approximate_guild_count: z.number().int().nonnegative().optional(),
+  /**
+   * Approximate count of guilds the app has been added to
+   * @minimum 0
+   */
+  approximate_guild_count?: number;
 
-  /** Approximate count of users that have installed the app */
-  approximate_user_install_count: z.number().int().nonnegative().optional(),
+  /**
+   * Approximate count of users that have installed the app
+   * @minimum 0
+   */
+  approximate_user_install_count?: number;
 
-  /** Array of redirect URIs for the app */
-  redirect_uris: z.string().url().array().optional(),
+  /**
+   * Array of redirect URIs for the app
+   * @format url
+   */
+  redirect_uris?: string[];
 
-  /** Interactions endpoint URL for the app */
-  interactions_endpoint_url: z.string().url().nullish(),
+  /**
+   * Interactions endpoint URL for the app
+   * @format url
+   */
+  interactions_endpoint_url?: string | null;
 
-  /** Role connection verification URL for the app */
-  role_connections_verification_url: z.string().url().nullish(),
+  /**
+   * Role connection verification URL for the app
+   * @format url
+   */
+  role_connections_verification_url?: string | null;
 
-  /** Event webhooks URL for the app to receive webhook events */
-  event_webhooks_url: z.string().url().nullish(),
+  /**
+   * Event webhooks URL for the app to receive webhook events
+   * @format url
+   */
+  event_webhooks_url?: string | null;
 
   /** Status indicating if webhook events are enabled for the app */
-  event_webhooks_status: z.nativeEnum(ApplicationEventWebhookStatus),
+  event_webhooks_status: ApplicationEventWebhookStatus;
 
   /** List of webhook event types the app subscribes to */
-  event_webhooks_types: z.string().array().optional(),
+  event_webhooks_types?: string[];
 
-  /** List of tags describing the content and functionality of the app (max 5 tags) */
-  tags: z.string().max(20).array().max(5).optional(),
+  /**
+   * List of tags describing the content and functionality of the app (max 5 tags)
+   * @maxLength 20
+   * @maxItems 5
+   */
+  tags?: string[];
 
   /** Settings for the app's default in-app authorization link, if enabled */
-  install_params: InstallParamsEntity.optional(),
+  install_params?: InstallParamsEntity;
 
   /** Default scopes and permissions for each supported installation context */
-  integration_types_config: z.record(
-    z.nativeEnum(ApplicationIntegrationType),
-    ApplicationIntegrationTypeConfigurationEntity,
-  ),
+  integration_types_config: Record<
+    ApplicationIntegrationType,
+    ApplicationIntegrationTypeConfigurationEntity
+  >;
 
-  /** Default custom authorization URL for the app, if enabled */
-  custom_install_url: z.string().url().optional(),
-});
-
-export type ApplicationEntity = z.infer<typeof ApplicationEntity>;
+  /**
+   * Default custom authorization URL for the app, if enabled
+   * @format url
+   */
+  custom_install_url?: string;
+}

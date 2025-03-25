@@ -1,7 +1,6 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import { GetInviteQuerySchema } from "../schemas/index.js";
+import type { GetInviteQuerySchema } from "../schemas/index.js";
 
 /**
  * Router class for Discord Invite-related endpoints
@@ -40,9 +39,6 @@ export class InviteRouter {
    *
    * @param code - The unique invite code
    * @param query - Optional query parameters to include additional data
-   * @param query.with_counts - Whether to include approximate member counts
-   * @param query.with_expiration - Whether to include the expiration date
-   * @param query.guild_scheduled_event_id - The guild scheduled event to include
    * @returns A Promise resolving to the invite object with metadata
    * @throws Error if validation of query parameters fails
    * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
@@ -51,13 +47,8 @@ export class InviteRouter {
     code: string,
     query: GetInviteQuerySchema = {},
   ): Promise<InviteEntity & InviteMetadataEntity> {
-    const result = GetInviteQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(InviteRouter.ROUTES.inviteBase(code), {
-      query: result.data,
+      query,
     });
   }
 

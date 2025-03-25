@@ -1,8 +1,6 @@
 import { deepmerge } from "deepmerge-ts";
 import { get, unset } from "lodash-es";
 import { LRUCache } from "lru-cache";
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
 
 /**
  * A predicate used for finding or filtering items in the store.
@@ -16,38 +14,37 @@ export type StorePredicate<K extends string | number | symbol, V> =
   | Partial<V>;
 
 /**
- * Configuration options schema for the Store.
- *
- * @property {number} maxSize - Maximum number of items to store before eviction (default: 10000)
- * @property {number} ttl - Time to live in milliseconds for items (default: 0, meaning no expiration)
- * @property {string} evictionStrategy - Strategy for evicting items when maxSize is reached (default: "lru")
+ * Configuration options for the Store.
  */
-export const StoreOptions = z
-  .object({
-    /**
-     * Maximum number of items to store before eviction (default: 10000)
-     */
-    maxSize: z.number().int().min(0).default(10000),
+export interface StoreOptions {
+  /**
+   * Maximum number of items to store before eviction (default: 10000)
+   * @minimum 0
+   */
+  readonly maxSize?: number;
 
-    /**
-     * Time to live in milliseconds for items (default: 0, meaning no expiration)
-     */
-    ttl: z.number().int().min(0).default(0),
+  /**
+   * Time to live in milliseconds for items (default: 0, meaning no expiration)
+   * @minimum 0
+   */
+  readonly ttl?: number;
 
-    /**
-     * Strategy for evicting items when maxSize is reached (default: "lru")
-     * - "fifo": First-in-first-out - oldest entries are evicted first
-     * - "lru": Least recently used - least accessed entries are evicted first
-     */
-    evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
-  })
-  .strict()
-  .readonly();
+  /**
+   * Strategy for evicting items when maxSize is reached (default: "lru")
+   * - "fifo": First-in-first-out - oldest entries are evicted first
+   * - "lru": Least recently used - least accessed entries are evicted first
+   */
+  readonly evictionStrategy?: "fifo" | "lru";
+}
 
 /**
- * Configuration options type for the Store.
+ * Default configuration options for the Store.
  */
-export type StoreOptions = z.infer<typeof StoreOptions>;
+const DEFAULT_STORE_OPTIONS: StoreOptions = {
+  maxSize: 10000,
+  ttl: 0,
+  evictionStrategy: "lru",
+};
 
 /**
  * An enhanced Map implementation with additional features like TTL, eviction strategies,
@@ -98,22 +95,29 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * Creates a new Store instance.
    *
    * @param {readonly (readonly [K, V])[] | null} entries - Initial entries to populate the store with
-   * @param {z.input<typeof StoreOptions>} options - Configuration options for the store
+   * @param {StoreOptions} options - Configuration options for the store
    * @throws {Error} If the provided options fail validation
    */
   constructor(
     entries?: readonly (readonly [K, V])[] | null,
-    options: z.input<typeof StoreOptions> = {},
+    options: StoreOptions = {},
   ) {
     super();
 
+    // Validate options and merge with defaults
     try {
-      this.#options = StoreOptions.parse(options);
+      this.#options = this.#validateOptions(options);
     } catch (error) {
-      throw new Error(fromError(error).message);
+      throw new Error(
+        error instanceof Error ? error.message : "Invalid store options",
+      );
     }
 
-    if (this.#options.evictionStrategy === "lru" && this.#options.maxSize > 0) {
+    if (
+      this.#options.evictionStrategy === "lru" &&
+      this.#options.maxSize &&
+      this.#options.maxSize > 0
+    ) {
       this.#lruCache = new LRUCache<K, number>({
         max: this.#options.maxSize,
       });
@@ -123,7 +127,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
       this.#bulkSet(entries);
     }
 
-    if (this.#options.ttl > 0) {
+    if (this.#options.ttl && this.#options.ttl > 0) {
       this.#startCleanupInterval();
     }
   }
@@ -286,12 +290,13 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @override Overrides Map.get
    */
   override get(key: K): V | undefined {
+    if (this.isExpired(key)) {
+      this.delete(key);
+      return undefined;
+    }
+
     const value = super.get(key);
     if (value !== undefined) {
-      if (this.isExpired(key)) {
-        this.delete(key);
-        return undefined;
-      }
       this.#updateAccessTime(key);
     }
     return value;
@@ -323,7 +328,23 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    */
   isExpired(key: K): boolean {
     const expiry = this.#ttlMap.get(key);
-    return expiry !== undefined && Date.now() >= expiry;
+    if (expiry === undefined) {
+      // If no TTL is set and the global TTL is greater than 0,
+      // use the global TTL as the default
+      // Check if we need to add a TTL for this key
+      if (
+        this.#options.ttl &&
+        this.#options.ttl > 0 &&
+        super.has(key) &&
+        !this.#ttlMap.has(key)
+      ) {
+        // For existing keys without explicit TTL, set TTL based on defaults
+        this.#ttlMap.set(key, Date.now() + (this.#options.ttl || 0));
+        return false;
+      }
+      return false;
+    }
+    return Date.now() >= expiry;
   }
 
   /**
@@ -341,6 +362,12 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    */
   override set(key: K, value: V): this {
     this.#evict();
+
+    // Set default TTL if global TTL is enabled and no custom TTL exists for this key
+    if (this.#options.ttl && this.#options.ttl > 0 && !this.#ttlMap.has(key)) {
+      this.#ttlMap.set(key, Date.now() + (this.#options.ttl || 0));
+    }
+
     super.set(key, value);
     this.#updateAccessTime(key);
     return this;
@@ -443,6 +470,44 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
   }
 
   /**
+   * Validates the options for the Store and returns the validated options merged with defaults.
+   *
+   * @param {StoreOptions} options - The options to validate
+   * @returns {StoreOptions} The validated options merged with defaults
+   * @private
+   */
+  #validateOptions(options: StoreOptions): StoreOptions {
+    if (
+      options.maxSize !== undefined &&
+      (typeof options.maxSize !== "number" ||
+        options.maxSize < 0 ||
+        !Number.isInteger(options.maxSize))
+    ) {
+      throw new Error("maxSize must be a non-negative integer");
+    }
+
+    if (
+      options.ttl !== undefined &&
+      (typeof options.ttl !== "number" ||
+        options.ttl < 0 ||
+        !Number.isInteger(options.ttl))
+    ) {
+      throw new Error("ttl must be a non-negative integer");
+    }
+
+    if (
+      options.evictionStrategy !== undefined &&
+      options.evictionStrategy !== "fifo" &&
+      options.evictionStrategy !== "lru"
+    ) {
+      throw new Error('evictionStrategy must be either "fifo" or "lru"');
+    }
+
+    // Return the validated options merged with defaults
+    return { ...DEFAULT_STORE_OPTIONS, ...options };
+  }
+
+  /**
    * Sets multiple entries in the store at once.
    *
    * @param {readonly (readonly [K, V])[]} entries - The entries to set
@@ -460,7 +525,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @private
    */
   #startCleanupInterval(): void {
-    const cleanupInterval = Math.min(this.#options.ttl / 2, 60000);
+    const cleanupInterval = Math.min((this.#options.ttl || 0) / 2, 60000);
     this.#cleanupInterval = setInterval(() => this.#cleanup(), cleanupInterval);
     // Force an immediate cleanup run
     this.#cleanup();
@@ -499,16 +564,23 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @private
    */
   #evict(): void {
-    if (!this.#options.maxSize || this.size < this.#options.maxSize) {
+    if (!this.#options.maxSize || this.size < (this.#options.maxSize || 0)) {
       return;
     }
 
     if (this.#options.evictionStrategy === "lru" && this.#lruCache) {
-      // Get the oldest accessed key
-      const oldestIterator = this.#lruCache.entries();
-      const oldest = oldestIterator.next().value;
-      if (oldest) {
-        const [leastUsedKey] = oldest;
+      // Find the least recently used key
+      let oldestTime = Number.POSITIVE_INFINITY;
+      let leastUsedKey: K | null = null;
+
+      for (const [key, accessTime] of this.#lruCache.entries()) {
+        if (accessTime < oldestTime) {
+          oldestTime = accessTime;
+          leastUsedKey = key;
+        }
+      }
+
+      if (leastUsedKey) {
         this.delete(leastUsedKey);
       }
     } else {

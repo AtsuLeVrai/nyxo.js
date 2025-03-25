@@ -1,7 +1,6 @@
 import type { Snowflake, StageInstanceEntity } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import type {
   CreateStageInstanceSchema,
   ModifyStageInstanceSchema,
 } from "../schemas/index.js";
@@ -74,13 +73,8 @@ export class StageInstanceRouter {
     options: CreateStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    const result = CreateStageInstanceSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(StageInstanceRouter.ROUTES.stageInstancesBase, {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -116,15 +110,10 @@ export class StageInstanceRouter {
     options: ModifyStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    const result = ModifyStageInstanceSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       StageInstanceRouter.ROUTES.stageInstance(channelId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );

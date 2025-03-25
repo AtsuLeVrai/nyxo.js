@@ -1,8 +1,7 @@
-import { VoiceStateEntity } from "@nyxjs/core";
-import { z } from "zod";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
- * Schema for modifying the current user's voice state in a guild.
+ * Interface for modifying the current user's voice state in a guild.
  *
  * Updates the current user's voice state. Returns 204 No Content on success.
  * Fires a Voice State Update Gateway event.
@@ -16,37 +15,37 @@ import { z } from "zod";
  *
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state-json-params}
  */
-export const ModifyCurrentUserVoiceStateSchema = z.object({
+export interface ModifyCurrentUserVoiceStateSchema {
   /**
    * The ID of the channel the user is currently in.
    * Must point to a stage channel.
-   * Reuses the validation from VoiceStateEntity.
+   *
+   * @optional
    */
-  channel_id: VoiceStateEntity.shape.channel_id.optional(),
+  channel_id?: Snowflake | null;
 
   /**
    * Toggles the user's suppress state.
    * Requires MUTE_MEMBERS permission to unsuppress yourself.
-   * Reuses the validation from VoiceStateEntity.
+   *
+   * @optional
    */
-  suppress: VoiceStateEntity.shape.suppress.optional(),
+  suppress?: boolean;
 
   /**
    * Sets the user's request to speak timestamp.
    * Requires REQUEST_TO_SPEAK permission to request to speak.
    * Can be set to any present or future time.
-   * Reuses the validation from VoiceStateEntity.
+   *
+   * @format datetime
+   * @nullable
+   * @optional
    */
-  request_to_speak_timestamp:
-    VoiceStateEntity.shape.request_to_speak_timestamp.nullish(),
-});
-
-export type ModifyCurrentUserVoiceStateSchema = z.input<
-  typeof ModifyCurrentUserVoiceStateSchema
->;
+  request_to_speak_timestamp?: string | null;
+}
 
 /**
- * Schema for modifying another user's voice state in a guild.
+ * Interface for modifying another user's voice state in a guild.
  *
  * Updates another user's voice state. Fires a Voice State Update Gateway event.
  *
@@ -59,22 +58,18 @@ export type ModifyCurrentUserVoiceStateSchema = z.input<
  *
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state-json-params}
  */
-export const ModifyUserVoiceStateSchema = z.object({
+export interface ModifyUserVoiceStateSchema {
   /**
    * The ID of the channel the user is currently in.
    * Must point to a stage channel.
-   * Reuses the validation from VoiceStateEntity.
    */
-  channel_id: VoiceStateEntity.shape.channel_id,
+  channel_id: Snowflake | null;
 
   /**
    * Toggles the user's suppress state.
    * Requires MUTE_MEMBERS permission.
-   * Reuses the validation from VoiceStateEntity.
+   *
+   * @optional
    */
-  suppress: VoiceStateEntity.shape.suppress.optional(),
-});
-
-export type ModifyUserVoiceStateSchema = z.input<
-  typeof ModifyUserVoiceStateSchema
->;
+  suppress?: boolean;
+}

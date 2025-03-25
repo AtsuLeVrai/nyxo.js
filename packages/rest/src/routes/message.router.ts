@@ -1,7 +1,6 @@
 import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import type {
   BulkDeleteMessagesSchema,
   CreateMessageSchema,
   EditMessageSchema,
@@ -121,13 +120,8 @@ export class MessageRouter {
     channelId: Snowflake,
     query: GetChannelMessagesQuerySchema = {},
   ): Promise<MessageEntity[]> {
-    const result = GetChannelMessagesQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(MessageRouter.ROUTES.channelMessages(channelId), {
-      query: result.data,
+      query,
     });
   }
 
@@ -166,12 +160,7 @@ export class MessageRouter {
     channelId: Snowflake,
     options: CreateMessageSchema,
   ): Promise<MessageEntity> {
-    const result = CreateMessageSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const { files, ...rest } = result.data;
+    const { files, ...rest } = options;
     return this.#rest.post(MessageRouter.ROUTES.channelMessages(channelId), {
       body: JSON.stringify(rest),
       files: files,
@@ -292,14 +281,9 @@ export class MessageRouter {
     emoji: string,
     query: GetReactionsQuerySchema = {},
   ): Promise<UserEntity[]> {
-    const result = GetReactionsQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
-      { query: result.data },
+      { query },
     );
   }
 
@@ -359,12 +343,7 @@ export class MessageRouter {
     messageId: Snowflake,
     options: EditMessageSchema,
   ): Promise<MessageEntity> {
-    const result = EditMessageSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    const { files, ...rest } = result.data;
+    const { files, ...rest } = options;
     return this.#rest.patch(
       MessageRouter.ROUTES.channelMessage(channelId, messageId),
       {
@@ -412,15 +391,10 @@ export class MessageRouter {
     options: BulkDeleteMessagesSchema,
     reason?: string,
   ): Promise<void> {
-    const result = BulkDeleteMessagesSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       MessageRouter.ROUTES.channelMessagesBulkDelete(channelId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         reason,
       },
     );

@@ -3,9 +3,8 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import type {
   ModifyCurrentUserVoiceStateSchema,
   ModifyUserVoiceStateSchema,
 } from "../schemas/index.js";
@@ -128,15 +127,10 @@ export class VoiceRouter {
     guildId: Snowflake,
     options: ModifyCurrentUserVoiceStateSchema,
   ): Promise<void> {
-    const result = ModifyCurrentUserVoiceStateSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -166,15 +160,10 @@ export class VoiceRouter {
     userId: Snowflake,
     options: ModifyUserVoiceStateSchema,
   ): Promise<void> {
-    const result = ModifyUserVoiceStateSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }

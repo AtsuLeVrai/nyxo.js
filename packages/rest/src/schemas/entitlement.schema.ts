@@ -1,8 +1,7 @@
-import { Snowflake } from "@nyxjs/core";
-import { z } from "zod";
+import type { Snowflake } from "@nyxjs/core";
 
 /**
- * Schema for query parameters when listing entitlements.
+ * Interface for query parameters when listing entitlements.
  * These parameters allow filtering and pagination of entitlement results.
  *
  * @remarks
@@ -10,35 +9,66 @@ import { z } from "zod";
  *
  * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
  */
-export const ListEntitlementQuerySchema = z.object({
-  /** User ID to look up entitlements for */
-  user_id: Snowflake.optional(),
+export interface ListEntitlementQuerySchema {
+  /**
+   * User ID to look up entitlements for
+   *
+   * @optional
+   */
+  user_id?: Snowflake;
 
-  /** Optional comma-delimited list of SKU IDs to check entitlements for */
-  sku_ids: z.string().optional(),
+  /**
+   * Optional comma-delimited list of SKU IDs to check entitlements for
+   *
+   * @optional
+   */
+  sku_ids?: string;
 
-  /** Retrieve entitlements before this entitlement ID */
-  before: Snowflake.optional(),
+  /**
+   * Retrieve entitlements before this entitlement ID
+   *
+   * @optional
+   */
+  before?: Snowflake;
 
-  /** Retrieve entitlements after this entitlement ID */
-  after: Snowflake.optional(),
+  /**
+   * Retrieve entitlements after this entitlement ID
+   *
+   * @optional
+   */
+  after?: Snowflake;
 
-  /** Number of entitlements to return (1-100, default 100) */
-  limit: z.number().int().min(1).max(100).default(100),
+  /**
+   * Number of entitlements to return (1-100, default 100)
+   *
+   * @minimum 1
+   * @maximum 100
+   * @default 100
+   * @integer
+   */
+  limit?: number;
 
-  /** Guild ID to look up entitlements for */
-  guild_id: Snowflake.optional(),
+  /**
+   * Guild ID to look up entitlements for
+   *
+   * @optional
+   */
+  guild_id?: Snowflake;
 
-  /** Whether to exclude ended entitlements (defaults to false) */
-  exclude_ended: z.boolean().default(false),
+  /**
+   * Whether to exclude ended entitlements (defaults to false)
+   *
+   * @default false
+   */
+  exclude_ended?: boolean;
 
-  /** Whether to exclude deleted entitlements (defaults to true) */
-  exclude_deleted: z.boolean().default(true),
-});
-
-export type ListEntitlementQuerySchema = z.input<
-  typeof ListEntitlementQuerySchema
->;
+  /**
+   * Whether to exclude deleted entitlements (defaults to true)
+   *
+   * @default true
+   */
+  exclude_deleted?: boolean;
+}
 
 /**
  * Enum specifying the owner type for test entitlements.
@@ -55,7 +85,7 @@ export enum EntitlementOwnerType {
 }
 
 /**
- * Schema for creating a test entitlement.
+ * Interface for creating a test entitlement.
  * Test entitlements allow developers to test premium offerings without making actual purchases.
  *
  * @remarks
@@ -64,17 +94,13 @@ export enum EntitlementOwnerType {
  *
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
  */
-export const CreateTestEntitlementSchema = z.object({
+export interface CreateTestEntitlementSchema {
   /** ID of the SKU to grant the entitlement to */
-  sku_id: z.string(),
+  sku_id: string;
 
   /** ID of the guild or user to grant the entitlement to */
-  owner_id: z.string(),
+  owner_id: string;
 
   /** Whether this is for a guild (1) or user (2) subscription */
-  owner_type: z.nativeEnum(EntitlementOwnerType),
-});
-
-export type CreateTestEntitlementSchema = z.input<
-  typeof CreateTestEntitlementSchema
->;
+  owner_type: EntitlementOwnerType;
+}

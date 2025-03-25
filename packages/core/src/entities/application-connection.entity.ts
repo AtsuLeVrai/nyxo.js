@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Locale } from "../enums/index.js";
+import type { Locale } from "../enums/index.js";
 
 /**
  * Types of application role connection metadata for verification
@@ -32,34 +31,37 @@ export enum ApplicationRoleConnectionMetadataType {
 }
 
 /**
- * Zod schema for ApplicationRoleConnectionMetadata
+ * Application Role Connection Metadata
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/application_role_connection_metadata.md#application-role-connection-metadata-structure}
  */
-export const ApplicationRoleConnectionMetadataEntity = z.object({
+export interface ApplicationRoleConnectionMetadataEntity {
   /** Type of metadata value */
-  type: z.nativeEnum(ApplicationRoleConnectionMetadataType),
+  type: ApplicationRoleConnectionMetadataType;
 
-  /** Dictionary key for the metadata field (a-z, 0-9, or _, 1-50 characters) */
-  key: z.string().regex(/^[a-z0-9_]{1,50}$/, {
-    message:
-      "Key must be 1-50 characters and contain only a-z, 0-9, or _ characters",
-  }),
+  /**
+   * Dictionary key for the metadata field (a-z, 0-9, or _, 1-50 characters)
+   * @pattern ^[a-z0-9_]{1,50}$
+   * @validate Key must be 1-50 characters and contain only a-z, 0-9, or _ characters
+   */
+  key: string;
 
-  /** Name of the metadata field (1-100 characters) */
-  name: z.string().min(1).max(100),
+  /**
+   * Name of the metadata field (1-100 characters)
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
 
   /** Translations of the name in available locales */
-  name_localizations: z.record(z.nativeEnum(Locale), z.string()).optional(),
+  name_localizations?: Record<Locale, string>;
 
-  /** Description of the metadata field (1-200 characters) */
-  description: z.string().min(1).max(200),
+  /**
+   * Description of the metadata field (1-200 characters)
+   * @minLength 1
+   * @maxLength 200
+   */
+  description: string;
 
   /** Translations of the description in available locales */
-  description_localizations: z
-    .record(z.nativeEnum(Locale), z.string())
-    .optional(),
-});
-
-export type ApplicationRoleConnectionMetadataEntity = z.infer<
-  typeof ApplicationRoleConnectionMetadataEntity
->;
+  description_localizations?: Record<Locale, string>;
+}

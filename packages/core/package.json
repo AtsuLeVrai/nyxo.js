@@ -43,13 +43,9 @@
     "check": "biome check --write --unsafe .",
     "type-check": "tsc --noEmit"
   },
-  "dependencies": {
-    "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0"
-  },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/node": "^22.13.11",
+    "@types/node": "^22.13.13",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.2"
   }

@@ -1,9 +1,8 @@
-import { EmojiEntity } from "@nyxjs/core";
-import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import type { FileInput } from "../handlers/index.js";
 
 /**
- * Schema for creating a guild emoji.
+ * Interface for creating a guild emoji.
  *
  * @remarks
  * Creating an emoji requires the CREATE_GUILD_EXPRESSIONS permission.
@@ -11,23 +10,32 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params}
  */
-export const CreateGuildEmojiSchema = z.object({
-  /** Name of the emoji (1-32 characters) */
-  name: EmojiEntity.shape.name.unwrap(),
+export interface CreateGuildEmojiSchema {
+  /**
+   * Name of the emoji (1-32 characters)
+   *
+   * @minLength 1
+   * @maxLength 32
+   */
+  name: string;
 
-  /** The 128x128 emoji image as file data or URL, will be converted to a data URI */
-  image: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri),
+  /**
+   * The 128x128 emoji image as file data or URL, will be converted to a data URI
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
+   */
+  image: FileInput;
 
-  /** Array of role IDs allowed to use this emoji (optional) */
-  roles: EmojiEntity.shape.roles.optional(),
-});
-
-export type CreateGuildEmojiSchema = z.input<typeof CreateGuildEmojiSchema>;
+  /**
+   * Array of role IDs allowed to use this emoji (optional)
+   *
+   * @optional
+   */
+  roles?: Snowflake[];
+}
 
 /**
- * Schema for modifying a guild emoji.
+ * Interface for modifying a guild emoji.
  *
  * @remarks
  * Modifying an emoji requires either CREATE_GUILD_EXPRESSIONS or MANAGE_GUILD_EXPRESSIONS
@@ -36,15 +44,24 @@ export type CreateGuildEmojiSchema = z.input<typeof CreateGuildEmojiSchema>;
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji-json-params}
  */
-export const ModifyGuildEmojiSchema = z.object({
-  /** New name of the emoji */
-  name: EmojiEntity.shape.name.unwrap().optional(),
+export interface ModifyGuildEmojiSchema {
+  /**
+   * New name of the emoji
+   *
+   * @optional
+   * @minLength 1
+   * @maxLength 32
+   */
+  name?: string;
 
-  /** New array of role IDs allowed to use this emoji, or null to remove all role restrictions */
-  roles: EmojiEntity.shape.roles.nullish(),
-});
-
-export type ModifyGuildEmojiSchema = z.input<typeof ModifyGuildEmojiSchema>;
+  /**
+   * New array of role IDs allowed to use this emoji, or null to remove all role restrictions
+   *
+   * @nullable
+   * @optional
+   */
+  roles?: Snowflake[] | null;
+}
 
 /**
  * Response interface for listing application emojis.
@@ -61,8 +78,8 @@ export interface ListApplicationEmojisEntity {
 }
 
 /**
- * Schema for creating an application emoji.
- * Derived from CreateGuildEmojiSchema but without the roles field,
+ * Interface for creating an application emoji.
+ * Based on CreateGuildEmojiSchema but without the roles field,
  * as application emojis don't support role restrictions.
  *
  * @remarks
@@ -70,24 +87,15 @@ export interface ListApplicationEmojisEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji-json-params}
  */
-export const CreateApplicationEmojiSchema = CreateGuildEmojiSchema.omit({
-  roles: true,
-});
-
-export type CreateApplicationEmojiSchema = z.input<
-  typeof CreateApplicationEmojiSchema
+export type CreateApplicationEmojiSchema = Omit<
+  CreateGuildEmojiSchema,
+  "roles"
 >;
 
 /**
- * Schema for modifying an application emoji.
+ * Interface for modifying an application emoji.
  * Only the name can be modified for application emojis.
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params}
  */
-export const ModifyApplicationEmojiSchema = ModifyGuildEmojiSchema.pick({
-  name: true,
-});
-
-export type ModifyApplicationEmojiSchema = z.input<
-  typeof ModifyApplicationEmojiSchema
->;
+export type ModifyApplicationEmojiSchema = Pick<ModifyGuildEmojiSchema, "name">;

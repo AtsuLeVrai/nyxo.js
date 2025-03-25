@@ -1,7 +1,7 @@
 import type { GuildEntity, GuildTemplateEntity, Snowflake } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import { FileHandler } from "../handlers/index.js";
+import type {
   CreateGuildFromGuildTemplateSchema,
   CreateGuildTemplateSchema,
   ModifyGuildTemplateSchema,
@@ -91,16 +91,14 @@ export class GuildTemplateRouter {
     code: string,
     options: CreateGuildFromGuildTemplateSchema,
   ): Promise<GuildEntity> {
-    const result =
-      await CreateGuildFromGuildTemplateSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.icon) {
+      options.icon = await FileHandler.toDataUri(options.icon);
     }
 
     return this.#rest.post(
       GuildTemplateRouter.ROUTES.guildTemplateDefault(code),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -131,13 +129,8 @@ export class GuildTemplateRouter {
     guildId: Snowflake,
     options: CreateGuildTemplateSchema,
   ): Promise<GuildTemplateEntity> {
-    const result = CreateGuildTemplateSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 
@@ -175,15 +168,10 @@ export class GuildTemplateRouter {
     code: string,
     options: ModifyGuildTemplateSchema,
   ): Promise<GuildTemplateEntity> {
-    const result = ModifyGuildTemplateSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }

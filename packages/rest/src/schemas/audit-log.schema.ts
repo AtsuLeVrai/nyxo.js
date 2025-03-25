@@ -1,8 +1,7 @@
-import { AuditLogEvent, Snowflake } from "@nyxjs/core";
-import { z } from "zod";
+import type { AuditLogEvent, Snowflake } from "@nyxjs/core";
 
 /**
- * Schema for query parameters used when fetching guild audit logs.
+ * Interface for query parameters used when fetching guild audit logs.
  * These parameters allow filtering the audit log entries by various criteria.
  *
  * @remarks
@@ -14,23 +13,42 @@ import { z } from "zod";
  *
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params}
  */
-export const GetGuildAuditLogQuerySchema = z.object({
-  /** Filter entries by the user who performed the action */
-  user_id: Snowflake.optional(),
+export interface GetGuildAuditLogQuerySchema {
+  /**
+   * Filter entries by the user who performed the action
+   *
+   * @optional
+   */
+  user_id?: Snowflake;
 
-  /** Filter entries by a specific audit log event type */
-  action_type: z.nativeEnum(AuditLogEvent).optional(),
+  /**
+   * Filter entries by a specific audit log event type
+   *
+   * @optional
+   */
+  action_type?: AuditLogEvent;
 
-  /** Return entries with ID less than this snowflake (newer than) */
-  before: Snowflake.optional(),
+  /**
+   * Return entries with ID less than this snowflake (newer than)
+   *
+   * @optional
+   */
+  before?: Snowflake;
 
-  /** Return entries with ID greater than this snowflake (older than) */
-  after: Snowflake.optional(),
+  /**
+   * Return entries with ID greater than this snowflake (older than)
+   *
+   * @optional
+   */
+  after?: Snowflake;
 
-  /** Maximum number of entries to return (1-100), defaults to 50 */
-  limit: z.number().int().min(1).max(100).default(50),
-});
-
-export type GetGuildAuditLogQuerySchema = z.input<
-  typeof GetGuildAuditLogQuerySchema
->;
+  /**
+   * Maximum number of entries to return (1-100), defaults to 50
+   *
+   * @minimum 1
+   * @maximum 100
+   * @default 50
+   * @integer
+   */
+  limit?: number;
+}

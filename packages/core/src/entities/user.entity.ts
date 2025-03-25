@@ -1,7 +1,6 @@
-import { z } from "zod";
-import { Locale } from "../enums/index.js";
-import { Snowflake } from "../managers/index.js";
-import { IntegrationEntity } from "./guild.entity.js";
+import type { Locale } from "../enums/index.js";
+import type { Snowflake } from "../managers/index.js";
+import type { IntegrationEntity } from "./guild.entity.js";
 
 /**
  * Represents the visibility options for a user's connection.
@@ -172,77 +171,75 @@ export enum UserFlags {
  * Represents the role connection object that an application has attached to a user.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#application-role-connection-object}
  */
-export const ApplicationRoleConnectionEntity = z.object({
-  /** The vanity name of the platform a bot has connected (max 50 characters) */
-  platform_name: z.string().max(50).nullable(),
+export interface ApplicationRoleConnectionEntity {
+  /**
+   * The vanity name of the platform a bot has connected
+   * @maxLength 50
+   * @nullable
+   */
+  platform_name: string | null;
 
-  /** The username on the platform a bot has connected (max 100 characters) */
-  platform_username: z.string().max(100).nullable(),
+  /**
+   * The username on the platform a bot has connected
+   * @maxLength 100
+   * @nullable
+   */
+  platform_username: string | null;
 
-  /** Object mapping application role connection metadata keys to their string value (max 100 characters) */
-  metadata: z.record(z.string().max(100)),
-});
-
-export type ApplicationRoleConnectionEntity = z.infer<
-  typeof ApplicationRoleConnectionEntity
->;
+  /**
+   * Object mapping application role connection metadata keys to their string value
+   * @elementMaxLength 100
+   */
+  metadata: Record<string, string>;
+}
 
 /**
  * Represents a connection that the user has attached to their Discord account.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#connection-object}
  */
-export const ConnectionEntity = z.object({
+export interface ConnectionEntity {
   /** ID of the connection account */
-  id: z.string(),
+  id: string;
 
   /** The username of the connection account */
-  name: z.string(),
+  name: string;
 
   /** The service of this connection */
-  type: z.nativeEnum(ConnectionService),
+  type: ConnectionService;
 
   /** Whether the connection is revoked */
-  revoked: z.boolean().optional(),
+  revoked?: boolean;
 
   /** An array of partial server integrations */
-  integrations: z
-    .lazy(() => IntegrationEntity.partial())
-    .array()
-    .optional(),
+  integrations?: Partial<IntegrationEntity>[];
 
   /** Whether the connection is verified */
-  verified: z.boolean(),
+  verified: boolean;
 
   /** Whether friend sync is enabled for this connection */
-  friend_sync: z.boolean(),
+  friend_sync: boolean;
 
   /** Whether activities related to this connection will be shown in presence updates */
-  show_activity: z.boolean(),
+  show_activity: boolean;
 
   /** Whether this connection has a corresponding third party OAuth2 token */
-  two_way_link: z.boolean(),
+  two_way_link: boolean;
 
   /** Visibility of this connection */
-  visibility: z.nativeEnum(ConnectionVisibility),
-});
-
-export type ConnectionEntity = z.infer<typeof ConnectionEntity>;
+  visibility: ConnectionVisibility;
+}
 
 /**
  * Represents the data for a user's avatar decoration.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#avatar-decoration-data-object}
  */
-export const AvatarDecorationDataEntity = z.object({
+export interface AvatarDecorationDataEntity {
   /** The avatar decoration hash */
-  asset: z.string(),
+  asset: string;
 
   /** ID of the avatar decoration's SKU */
-  sku_id: Snowflake,
-});
-
-export type AvatarDecorationDataEntity = z.infer<
-  typeof AvatarDecorationDataEntity
->;
+  sku_id: Snowflake;
+}
 
 /**
  * Validates a username name according to Discord's requirements.
@@ -273,59 +270,63 @@ export function isValidUsername(username: string): boolean {
  * Represents a Discord user account.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/User.md#user-object}
  */
-export const UserEntity = z.object({
+export interface UserEntity {
   /** The user's ID */
-  id: Snowflake,
+  id: Snowflake;
 
-  /** The user's username, not unique across the platform */
-  username: z.string().min(2).max(32).refine(isValidUsername, {
-    message: "Username contains forbidden characters or is a reserved name",
-  }),
+  /**
+   * The user's username, not unique across the platform
+   * @minLength 2
+   * @maxLength 32
+   * @validate Username contains forbidden characters or is a reserved name
+   */
+  username: string;
 
   /** The user's Discord-tag (4-digit discriminator) */
-  discriminator: z.string(),
+  discriminator: string;
 
   /** The user's display name, if it is set. For bots, this is the application name */
-  global_name: z.string().nullable(),
+  global_name: string | null;
 
   /** The user's avatar hash */
-  avatar: z.string().nullable(),
+  avatar: string | null;
 
   /** Whether the user belongs to an OAuth2 application */
-  bot: z.boolean().optional(),
+  bot?: boolean;
 
   /** Whether the user is an Official Discord System user */
-  system: z.boolean().optional(),
+  system?: boolean;
 
   /** Whether the user has two-factor authentication enabled */
-  mfa_enabled: z.boolean().optional(),
+  mfa_enabled?: boolean;
 
   /** The user's banner hash */
-  banner: z.string().nullish(),
+  banner?: string | null;
 
   /** The user's banner color encoded as an integer representation of hexadecimal color code */
-  accent_color: z.number().nullish(),
+  accent_color?: number | null;
 
   /** The user's chosen language option */
-  locale: z.nativeEnum(Locale).optional(),
+  locale?: Locale;
 
   /** Whether the email on this account has been verified */
-  verified: z.boolean().optional(),
+  verified?: boolean;
 
-  /** The user's email */
-  email: z.string().email().nullish(),
+  /**
+   * The user's email
+   * @format email
+   */
+  email?: string | null;
 
   /** The flags on a user's account */
-  flags: z.nativeEnum(UserFlags).optional(),
+  flags?: UserFlags;
 
   /** The type of Nitro subscription on a user's account */
-  premium_type: z.nativeEnum(PremiumType).optional(),
+  premium_type?: PremiumType;
 
   /** The public flags on a user's account */
-  public_flags: z.nativeEnum(UserFlags).optional(),
+  public_flags?: UserFlags;
 
   /** Data for the user's avatar decoration */
-  avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
-});
-
-export type UserEntity = z.infer<typeof UserEntity>;
+  avatar_decoration_data?: AvatarDecorationDataEntity | null;
+}

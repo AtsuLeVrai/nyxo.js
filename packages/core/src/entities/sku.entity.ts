@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../managers/index.js";
 
 /**
  * Represents the flags that can be applied to a SKU.
@@ -45,77 +44,50 @@ export enum SkuType {
  * that can be made available to an application's users or guilds.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/SKU.md#sku-object}
  */
-export const SkuEntity = z.object({
+export interface SkuEntity {
   /** ID of the SKU */
-  id: Snowflake,
+  id: Snowflake;
 
-  /** Type of SKU */
-  type: z.nativeEnum(SkuType).refine(
-    (type) => {
-      // For subscription integration and testing, use type 5 (SUBSCRIPTION)
-      // rather than type 6 (SUBSCRIPTION_GROUP)
-      return type !== SkuType.SubscriptionGroup;
-    },
-    {
-      message:
-        "For integration and testing entitlements, use the SKU with type 5 (SUBSCRIPTION) instead of type 6 (SUBSCRIPTION_GROUP)",
-    },
-  ),
+  /**
+   * Type of SKU
+   * @validate For integration and testing entitlements, use the SKU with type 5 (SUBSCRIPTION) instead of type 6 (SUBSCRIPTION_GROUP)
+   */
+  type: SkuType;
 
   /** ID of the parent application */
-  application_id: Snowflake,
+  application_id: Snowflake;
 
   /** Customer-facing name of your premium offering */
-  name: z.string(),
+  name: string;
 
   /** System-generated URL slug based on the SKU's name */
-  slug: z.string(),
+  slug: string;
 
   /**
    * SKU flags combined as a bitfield.
    * Can be used to differentiate user and server subscriptions with a bitwise & operator.
+   * @validate SKU flags must contain at least one valid flag (Available, GuildSubscription, or UserSubscription)
    */
-  flags: z
-    .number()
-    .int()
-    .refine(
-      (flags) => {
-        // Validate that the flags are a valid combination
-        const isAvailable = (flags & SkuFlags.Available) === SkuFlags.Available;
-        const isGuildSubscription =
-          (flags & SkuFlags.GuildSubscription) === SkuFlags.GuildSubscription;
-        const isUserSubscription =
-          (flags & SkuFlags.UserSubscription) === SkuFlags.UserSubscription;
-
-        // SKU should have at least one valid flag
-        return isAvailable || isGuildSubscription || isUserSubscription;
-      },
-      {
-        message:
-          "SKU flags must contain at least one valid flag (Available, GuildSubscription, or UserSubscription)",
-      },
-    ),
+  flags: number;
 
   /** Optional ID of a dependent SKU */
-  dependent_sku_id: Snowflake.nullable(),
+  dependent_sku_id: Snowflake | null;
 
   /** Optional manifest labels */
-  manifest_labels: z.string().array().nullable(),
+  manifest_labels: string[] | null;
 
   /** Access type for the SKU */
-  access_type: z.number().int(),
+  access_type: number;
 
   /** Features for the SKU */
-  features: z.string().array(),
+  features: string[];
 
   /** Optional release date for the SKU */
-  release_date: z.string().nullable(),
+  release_date: string | null;
 
   /** Whether the SKU is premium */
-  premium: z.boolean(),
+  premium: boolean;
 
   /** Whether to show age gate */
-  show_age_gate: z.boolean(),
-});
-
-export type SkuEntity = z.infer<typeof SkuEntity>;
+  show_age_gate: boolean;
+}

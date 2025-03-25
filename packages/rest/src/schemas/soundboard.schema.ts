@@ -1,9 +1,8 @@
-import { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
-import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
+import type { FileInput } from "../handlers/index.js";
 
 /**
- * Schema for sending a soundboard sound to a voice channel.
+ * Interface for sending a soundboard sound to a voice channel.
  *
  * Requires the `SPEAK` and `USE_SOUNDBOARD` permissions, and also the
  * `USE_EXTERNAL_SOUNDS` permission if the sound is from a different server.
@@ -12,20 +11,18 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params}
  */
-export const SendSoundboardSoundSchema = z.object({
+export interface SendSoundboardSoundSchema {
   /** The ID of the soundboard sound to play */
-  sound_id: Snowflake,
+  sound_id: Snowflake;
 
   /**
    * The ID of the guild the soundboard sound is from.
    * Required to play sounds from different servers.
+   *
+   * @optional
    */
-  source_guild_id: Snowflake.optional(),
-});
-
-export type SendSoundboardSoundSchema = z.input<
-  typeof SendSoundboardSoundSchema
->;
+  source_guild_id?: Snowflake;
+}
 
 /**
  * Response structure for listing guild soundboard sounds.
@@ -39,54 +36,61 @@ export interface ListGuildSoundboardSoundsResponseEntity {
 }
 
 /**
- * Schema for creating a new soundboard sound in a guild.
+ * Interface for creating a new soundboard sound in a guild.
  *
  * Requires the `CREATE_GUILD_EXPRESSIONS` permission.
  * Soundboard sounds have a max file size of 512kb and a max duration of 5.2 seconds.
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound-json-params}
  */
-export const CreateGuildSoundboardSoundSchema = z.object({
+export interface CreateGuildSoundboardSoundSchema {
   /**
    * Name of the soundboard sound (2-32 characters).
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @minLength 2
+   * @maxLength 32
    */
-  name: SoundboardSoundEntity.shape.name,
+  name: string;
 
   /**
    * The MP3 or OGG sound data, base64 encoded.
    * Similar to image data.
+   *
+   * @transform Converted to data URI using FileHandler.toDataUri
    */
-  sound: z
-    .custom<FileInput>(FileHandler.isValidSingleInput)
-    .transform(FileHandler.toDataUri),
+  sound: FileInput;
 
   /**
    * The volume of the soundboard sound, from 0 to 1.
    * Defaults to 1 if not specified.
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @minimum 0
+   * @maximum 1
+   * @default 1
+   * @nullable
+   * @optional
    */
-  volume: SoundboardSoundEntity.shape.volume.nullish().default(1),
+  volume?: number | null;
 
   /**
    * The ID of the custom emoji for the soundboard sound.
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @nullable
+   * @optional
    */
-  emoji_id: SoundboardSoundEntity.shape.emoji_id.nullish(),
+  emoji_id?: Snowflake | null;
 
   /**
    * The unicode character of a standard emoji for the soundboard sound.
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @nullable
+   * @optional
    */
-  emoji_name: SoundboardSoundEntity.shape.emoji_name.nullish(),
-});
-
-export type CreateGuildSoundboardSoundSchema = z.input<
-  typeof CreateGuildSoundboardSoundSchema
->;
+  emoji_name?: string | null;
+}
 
 /**
- * Schema for modifying an existing soundboard sound in a guild.
+ * Interface for modifying an existing soundboard sound in a guild.
  *
  * For sounds created by the current user, requires either the
  * `CREATE_GUILD_EXPRESSIONS` or `MANAGE_GUILD_EXPRESSIONS` permission.
@@ -96,32 +100,39 @@ export type CreateGuildSoundboardSoundSchema = z.input<
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params}
  */
-export const ModifyGuildSoundboardSoundSchema = z.object({
+export interface ModifyGuildSoundboardSoundSchema {
   /**
    * Name of the soundboard sound (2-32 characters).
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @minLength 2
+   * @maxLength 32
+   * @optional
    */
-  name: SoundboardSoundEntity.shape.name.optional(),
+  name?: string;
 
   /**
    * The volume of the soundboard sound, from 0 to 1.
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @minimum 0
+   * @maximum 1
+   * @nullable
+   * @optional
    */
-  volume: SoundboardSoundEntity.shape.volume.nullish(),
+  volume?: number | null;
 
   /**
    * The ID of the custom emoji for the soundboard sound.
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @nullable
+   * @optional
    */
-  emoji_id: SoundboardSoundEntity.shape.emoji_id.nullish(),
+  emoji_id?: Snowflake | null;
 
   /**
    * The unicode character of a standard emoji for the soundboard sound.
-   * Reuses the validation from SoundboardSoundEntity.
+   *
+   * @nullable
+   * @optional
    */
-  emoji_name: SoundboardSoundEntity.shape.emoji_name.nullish(),
-});
-
-export type ModifyGuildSoundboardSoundSchema = z.input<
-  typeof ModifyGuildSoundboardSoundSchema
->;
+  emoji_name?: string | null;
+}

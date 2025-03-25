@@ -1,6 +1,5 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { UserEntity } from "./user.entity.js";
+import type { Snowflake } from "../managers/index.js";
+import type { UserEntity } from "./user.entity.js";
 
 /**
  * Represents the possible states of a user's membership in a team.
@@ -33,60 +32,40 @@ export enum TeamMemberRole {
  * Represents a member of a team within Discord, typically used for applications owned by teams.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/topics/Teams.md#team-member-object}
  */
-export const TeamMemberEntity = z.object({
+export interface TeamMemberEntity {
   /** The user's membership state on the team */
-  membership_state: z.nativeEnum(MembershipState),
+  membership_state: MembershipState;
 
   /** The ID of the team that the user is a member of */
-  team_id: Snowflake,
+  team_id: Snowflake;
 
   /** A partial user object containing information about the team member */
-  user: UserEntity.partial(),
+  user: Partial<UserEntity>;
 
   /** The role of the user in the team */
-  role: z.nativeEnum(TeamMemberRole),
-});
-
-export type TeamMemberEntity = z.infer<typeof TeamMemberEntity>;
+  role: TeamMemberRole;
+}
 
 /**
  * Represents a team on Discord that can own applications.
  * Teams help multiple users work together on applications and share management rights.
  * Teams can have a maximum of 25 apps.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/topics/Teams.md#team-object}
+ * @validate The owner_user_id must match one of the accepted team member's user id
  */
-export const TeamEntity = z
-  .object({
-    /** The team's icon hash */
-    icon: z.string().nullable(),
+export interface TeamEntity {
+  /** The team's icon hash */
+  icon: string | null;
 
-    /** The unique ID of the team */
-    id: Snowflake,
+  /** The unique ID of the team */
+  id: Snowflake;
 
-    /** The members of the team */
-    members: TeamMemberEntity.array(),
+  /** The members of the team */
+  members: TeamMemberEntity[];
 
-    /** The name of the team */
-    name: z.string(),
+  /** The name of the team */
+  name: string;
 
-    /** The user ID of the team owner */
-    owner_user_id: Snowflake,
-  })
-  .refine(
-    (team) => {
-      // Validate that owner_user_id is one of the member's user.id
-      return team.members.some(
-        (member) =>
-          member.user.id === team.owner_user_id &&
-          member.membership_state === MembershipState.Accepted,
-      );
-    },
-    {
-      message:
-        "The owner_user_id must match one of the accepted team member's user id",
-      path: ["owner_user_id"],
-    },
-  )
-  .sourceType();
-
-export type TeamEntity = z.infer<typeof TeamEntity>;
+  /** The user ID of the team owner */
+  owner_user_id: Snowflake;
+}

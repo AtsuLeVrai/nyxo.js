@@ -1,7 +1,6 @@
 import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import { SubscriptionQuerySchema } from "../schemas/index.js";
+import type { SubscriptionQuerySchema } from "../schemas/index.js";
 
 /**
  * Router class for handling Discord Subscription endpoints.
@@ -74,15 +73,10 @@ export class SubscriptionRouter {
     skuId: Snowflake,
     query: SubscriptionQuerySchema = {},
   ): Promise<SubscriptionEntity[]> {
-    const result = SubscriptionQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       SubscriptionRouter.ROUTES.skuSubscriptionsBase(skuId),
       {
-        query: result.data,
+        query,
       },
     );
   }

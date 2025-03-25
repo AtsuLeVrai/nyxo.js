@@ -1,5 +1,4 @@
-import { ApplicationEntity, OAuth2Scope, UserEntity } from "@nyxjs/core";
-import { z } from "zod";
+import type { ApplicationEntity, OAuth2Scope, UserEntity } from "@nyxjs/core";
 
 /**
  * Represents OAuth2 authorization information returned by the API
@@ -7,30 +6,32 @@ import { z } from "zod";
  *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information-response-structure}
  */
-export const AuthorizationEntity = z.object({
+export interface AuthorizationEntity {
   /**
    * The application associated with this authorization
    * Partial application object with basic information
    */
-  application: z.lazy(() => ApplicationEntity.partial()),
+  application: Partial<ApplicationEntity>;
 
   /**
    * The scopes that the user has authorized the application for
    * Array of OAuth2 scope strings
    */
-  scopes: z.nativeEnum(OAuth2Scope).array(),
+  scopes: OAuth2Scope[];
 
   /**
    * When the access token expires
    * ISO8601 timestamp
+   *
+   * @format date-time
    */
-  expires: z.string(),
+  expires: string;
 
   /**
    * The user who has authorized, if the user has authorized with the 'identify' scope
    * Optional user object
+   *
+   * @optional
    */
-  user: z.lazy(() => UserEntity).optional(),
-});
-
-export type AuthorizationEntity = z.infer<typeof AuthorizationEntity>;
+  user?: UserEntity;
+}

@@ -1,7 +1,6 @@
 import type { EntitlementEntity, Snowflake } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import type {
   CreateTestEntitlementSchema,
   ListEntitlementQuerySchema,
 } from "../schemas/index.js";
@@ -64,15 +63,10 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     query: ListEntitlementQuerySchema = {},
   ): Promise<EntitlementEntity[]> {
-    const result = ListEntitlementQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(
       EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
-        query: result.data,
+        query,
       },
     );
   }
@@ -136,15 +130,10 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     test: CreateTestEntitlementSchema,
   ): Promise<EntitlementEntity> {
-    const result = CreateTestEntitlementSchema.safeParse(test);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(test),
       },
     );
   }

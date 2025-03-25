@@ -1,77 +1,74 @@
-import { z } from "zod";
-import { Snowflake } from "../managers/index.js";
-import { GuildMemberEntity } from "./guild.entity.js";
+import type { Snowflake } from "../managers/index.js";
+import type { GuildMemberEntity } from "./guild.entity.js";
 
 /**
  * Represents a Discord voice region, which can be used when setting a voice or stage channel's rtc_region.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/Voice.md#voice-region-object}
  */
-export const VoiceRegionEntity = z.object({
+export interface VoiceRegionEntity {
   /** Unique ID for the region */
-  id: z.string(),
+  id: string;
 
   /** Name of the region */
-  name: z.string(),
+  name: string;
 
   /** True for a single server that is closest to the current user's client */
-  optimal: z.boolean(),
+  optimal: boolean;
 
   /** Whether this is a deprecated voice region (avoid switching to these) */
-  deprecated: z.boolean(),
+  deprecated: boolean;
 
   /** Whether this is a custom voice region (used for events/etc) */
-  custom: z.boolean(),
-});
-
-export type VoiceRegionEntity = z.infer<typeof VoiceRegionEntity>;
+  custom: boolean;
+}
 
 /**
  * Represents a user's voice connection status in Discord.
  * Used to represent a user's voice connection status.
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/Voice.md#voice-state-object}
  */
-export const VoiceStateEntity = z.object({
+export interface VoiceStateEntity {
   /** The guild ID this voice state is for, if applicable */
-  guild_id: Snowflake.optional(),
+  guild_id?: Snowflake;
 
   /** The channel ID this user is connected to (null if disconnected) */
-  channel_id: Snowflake.nullable(),
+  channel_id: Snowflake | null;
 
   /** The user ID this voice state is for */
-  user_id: Snowflake,
+  user_id: Snowflake;
 
   /** The guild member this voice state is for, if applicable */
-  member: GuildMemberEntity.optional(),
+  member?: GuildMemberEntity;
 
   /** The session ID for this voice state */
-  session_id: z.string(),
+  session_id: string;
 
   /** Whether this user is deafened by the server */
-  deaf: z.boolean(),
+  deaf: boolean;
 
   /** Whether this user is muted by the server */
-  mute: z.boolean(),
+  mute: boolean;
 
   /** Whether this user is locally deafened */
-  self_deaf: z.boolean(),
+  self_deaf: boolean;
 
   /** Whether this user is locally muted */
-  self_mute: z.boolean(),
+  self_mute: boolean;
 
   /** Whether this user is streaming using "Go Live" */
-  self_stream: z.boolean().optional(),
+  self_stream?: boolean;
 
   /** Whether this user's camera is enabled */
-  self_video: z.boolean(),
+  self_video: boolean;
 
   /** Whether this user's permission to speak is denied */
-  suppress: z.boolean(),
+  suppress: boolean;
 
   /**
    * The time at which the user requested to speak
    * This is an ISO8601 timestamp string
+   * @format datetime
+   * @nullable
    */
-  request_to_speak_timestamp: z.string().datetime().nullable(),
-});
-
-export type VoiceStateEntity = z.infer<typeof VoiceStateEntity>;
+  request_to_speak_timestamp: string | null;
+}

@@ -1,4 +1,4 @@
-import {
+import type {
   ActionRowEntity,
   AllowedMentionsEntity,
   AttachmentEntity,
@@ -8,133 +8,164 @@ import {
   PollCreateRequestEntity,
   Snowflake,
 } from "@nyxjs/core";
-import { z } from "zod";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import type { FileInput } from "../handlers/index.js";
 
 /**
- * Schema for query parameters when retrieving channel messages
+ * Interface for query parameters when retrieving channel messages
  * Defines pagination parameters for fetching messages from a channel
  *
  * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params}
  */
-export const GetChannelMessagesQuerySchema = z.object({
+export interface GetChannelMessagesQuerySchema {
   /**
    * Get messages around this message ID
    * This parameter is mutually exclusive with before and after
+   *
+   * @optional
    */
-  around: Snowflake.optional(),
+  around?: Snowflake;
 
   /**
    * Get messages before this message ID
    * This parameter is mutually exclusive with around and after
+   *
+   * @optional
    */
-  before: Snowflake.optional(),
+  before?: Snowflake;
 
   /**
    * Get messages after this message ID
    * This parameter is mutually exclusive with around and before
+   *
+   * @optional
    */
-  after: Snowflake.optional(),
+  after?: Snowflake;
 
   /**
    * Maximum number of messages to return (1-100)
+   *
+   * @minimum 1
+   * @maximum 100
    * @default 50
+   * @integer
    */
-  limit: z.number().int().min(1).max(100).default(50),
-});
-
-export type GetChannelMessagesQuerySchema = z.input<
-  typeof GetChannelMessagesQuerySchema
->;
+  limit?: number;
+}
 
 /**
- * Schema for creating a new message in a channel
+ * Interface for creating a new message in a channel
  * Defines the parameters for sending messages via Discord's API
  * At least one of content, embeds, sticker_ids, components, files, or poll is required
  *
  * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params}
  */
-export const CreateMessageSchema = z.object({
+export interface CreateMessageSchema {
   /**
    * Message content (up to 2000 characters)
+   *
+   * @maxLength 2000
+   * @optional
    */
-  content: z.string().max(2000).optional(),
+  content?: string;
 
   /**
    * Used to verify a message was sent (up to 25 characters)
    * Can be an integer or string that will appear in the Message Create event
+   *
+   * @maxLength 25
+   * @optional
    */
-  nonce: z.union([z.string().max(25), z.number().int().max(25)]).optional(),
+  nonce?: string | number;
 
   /**
    * Whether this is a text-to-speech message
+   *
+   * @optional
    */
-  tts: z.boolean().optional(),
+  tts?: boolean;
 
   /**
    * Rich embedded content for the message (up to 10 embeds)
+   *
+   * @maxItems 10
+   * @optional
    */
-  embeds: EmbedEntity.array().max(10).optional(),
+  embeds?: EmbedEntity[];
 
   /**
    * Controls mentions in the message
+   *
+   * @optional
    */
-  allowed_mentions: AllowedMentionsEntity.optional(),
+  allowed_mentions?: AllowedMentionsEntity;
 
   /**
    * Include to make the message a reply to another message
+   *
+   * @optional
    */
-  message_reference: MessageReferenceEntity.optional(),
+  message_reference?: MessageReferenceEntity;
 
   /**
    * Interactive components to include with the message
+   *
+   * @optional
    */
-  components: ActionRowEntity.optional(),
+  components?: ActionRowEntity;
 
   /**
    * IDs of up to 3 stickers to send in the message
+   *
+   * @maxItems 3
+   * @optional
    */
-  sticker_ids: Snowflake.array().max(3).optional(),
+  sticker_ids?: Snowflake[];
 
   /**
    * File contents to be attached to the message
+   *
+   * @optional
    */
-  files: z.custom<FileInput | FileInput[]>(FileHandler.isValidInput).optional(),
+  files?: FileInput | FileInput[];
 
   /**
    * @deprecated Do not use `payload_json`. This is done automatically!
+   *
+   * @optional
    */
-  payload_json: z.string().optional(),
+  payload_json?: string;
 
   /**
    * Information about attachments
+   *
+   * @maxItems 10
+   * @optional
    */
-  attachments: AttachmentEntity.array().max(10).optional(),
+  attachments?: AttachmentEntity[];
 
   /**
    * Message flags combined as a bitfield
    * Only SUPPRESS_EMBEDS and SUPPRESS_NOTIFICATIONS can be set
+   *
+   * @optional
    */
-  flags: z
-    .union([
-      z.literal(MessageFlags.SuppressEmbeds),
-      z.literal(MessageFlags.SuppressNotifications),
-    ])
-    .optional(),
+  flags?: MessageFlags.SuppressEmbeds | MessageFlags.SuppressNotifications;
 
   /**
    * If true and nonce is present, it will be checked for uniqueness
    * If another message was created with the same nonce, that message will be returned
+   *
+   * @optional
    */
-  enforce_nonce: z.boolean().optional(),
+  enforce_nonce?: boolean;
 
   /**
    * Poll to include with the message
+   *
+   * @optional
    */
-  poll: PollCreateRequestEntity.optional(),
-});
-
-export type CreateMessageSchema = z.input<typeof CreateMessageSchema>;
+  poll?: PollCreateRequestEntity;
+}
 
 /**
  * Types of reactions that can be retrieved
@@ -150,61 +181,67 @@ export enum ReactionTypeFlag {
 }
 
 /**
- * Schema for query parameters when retrieving reactions on a message
+ * Interface for query parameters when retrieving reactions on a message
  *
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-query-string-params}
  */
-export const GetReactionsQuerySchema = z.object({
+export interface GetReactionsQuerySchema {
   /**
    * Type of reaction to get (normal or burst)
+   *
    * @default ReactionTypeFlag.Normal
+   * @optional
    */
-  type: z.nativeEnum(ReactionTypeFlag).optional(),
+  type?: ReactionTypeFlag;
 
   /**
    * Get users after this user ID for pagination
+   *
+   * @optional
    */
-  after: Snowflake.optional(),
+  after?: Snowflake;
 
   /**
    * Maximum number of users to return (1-100)
+   *
+   * @minimum 1
+   * @maximum 100
    * @default 25
+   * @integer
    */
-  limit: z.number().int().min(1).max(100).default(25),
-});
-
-export type GetReactionsQuerySchema = z.input<typeof GetReactionsQuerySchema>;
+  limit?: number;
+}
 
 /**
- * Schema for editing an existing message
+ * Interface for editing an existing message
  * Reuses fields from CreateMessageSchema but only includes those that can be edited
  *
  * @see {@link https://discord.com/developers/docs/resources/message#edit-message-jsonform-params}
  */
-export const EditMessageSchema = CreateMessageSchema.pick({
-  content: true,
-  embeds: true,
-  flags: true,
-  allowed_mentions: true,
-  components: true,
-  files: true,
-  payload_json: true,
-  attachments: true,
-});
-
-export type EditMessageSchema = z.input<typeof EditMessageSchema>;
+export type EditMessageSchema = Pick<
+  CreateMessageSchema,
+  | "content"
+  | "embeds"
+  | "flags"
+  | "allowed_mentions"
+  | "components"
+  | "files"
+  | "payload_json"
+  | "attachments"
+>;
 
 /**
- * Schema for bulk deleting messages
+ * Interface for bulk deleting messages
  *
  * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages-json-params}
  */
-export const BulkDeleteMessagesSchema = z.object({
+export interface BulkDeleteMessagesSchema {
   /**
    * Array of message IDs to delete (2-100)
    * Messages cannot be older than 2 weeks
+   *
+   * @minItems 2
+   * @maxItems 100
    */
-  messages: Snowflake.array().min(2).max(100),
-});
-
-export type BulkDeleteMessagesSchema = z.input<typeof BulkDeleteMessagesSchema>;
+  messages: Snowflake[];
+}

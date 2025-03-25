@@ -1,13 +1,11 @@
-import {
-  type InteractionCallbackResponseEntity,
+import type {
+  InteractionCallbackResponseEntity,
   InteractionResponseEntity,
-  type MessageEntity,
-  type Snowflake,
+  MessageEntity,
+  Snowflake,
 } from "@nyxjs/core";
-import type { z } from "zod";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import type {
   EditWebhookMessageSchema,
   ExecuteWebhookSchema,
 } from "../schemas/index.js";
@@ -163,21 +161,16 @@ export class InteractionRouter {
   createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: z.input<typeof InteractionResponseEntity>,
+    options: InteractionResponseEntity,
     withResponse = true,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
-    const result = InteractionResponseEntity.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       InteractionRouter.ROUTES.interactionCreateResponse(
         interactionId,
         interactionToken,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
         query: { with_response: withResponse },
       },
     );
@@ -218,18 +211,13 @@ export class InteractionRouter {
     interactionToken: string,
     options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
-    const result = EditWebhookMessageSchema.partial().safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       InteractionRouter.ROUTES.webhookOriginalResponseEdit(
         applicationId,
         interactionToken,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -271,18 +259,13 @@ export class InteractionRouter {
     interactionToken: string,
     options: ExecuteWebhookSchema,
   ): Promise<MessageEntity> {
-    const result = ExecuteWebhookSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(
       InteractionRouter.ROUTES.webhookFollowupMessageCreate(
         applicationId,
         interactionToken,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }
@@ -327,11 +310,6 @@ export class InteractionRouter {
     messageId: Snowflake,
     options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
-    const result = EditWebhookMessageSchema.partial().safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(
       InteractionRouter.ROUTES.webhookFollowupMessageEdit(
         applicationId,
@@ -339,7 +317,7 @@ export class InteractionRouter {
         messageId,
       ),
       {
-        body: JSON.stringify(result.data),
+        body: JSON.stringify(options),
       },
     );
   }

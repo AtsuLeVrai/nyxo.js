@@ -1,30 +1,29 @@
-import { z } from "zod";
-import { Locale } from "../enums/index.js";
-import { Snowflake } from "../managers/index.js";
-import {
+import type { Locale } from "../enums/index.js";
+import type { Snowflake } from "../managers/index.js";
+import type {
   ApplicationCommandOptionChoiceEntity,
   ApplicationCommandOptionType,
   ApplicationCommandType,
 } from "./application-commands.entity.js";
-import { ApplicationIntegrationType } from "./application.entity.js";
-import { ChannelEntity } from "./channel.entity.js";
-import { EntitlementEntity } from "./entitlement.entity.js";
-import { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
-import {
+import type { ApplicationIntegrationType } from "./application.entity.js";
+import type { ChannelEntity } from "./channel.entity.js";
+import type { EntitlementEntity } from "./entitlement.entity.js";
+import type { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
+import type {
   ActionRowEntity,
   ComponentType,
   SelectMenuOptionEntity,
 } from "./message-components.entity.js";
-import {
+import type {
   AllowedMentionsEntity,
   AttachmentEntity,
   EmbedEntity,
   MessageEntity,
   MessageFlags,
 } from "./message.entity.js";
-import { PollCreateRequestEntity } from "./poll.entity.js";
-import { RoleEntity } from "./role.entity.js";
-import { UserEntity } from "./user.entity.js";
+import type { PollCreateRequestEntity } from "./poll.entity.js";
+import type { RoleEntity } from "./role.entity.js";
+import type { UserEntity } from "./user.entity.js";
 
 /**
  * Enumeration of all interaction types
@@ -99,577 +98,470 @@ export enum InteractionContextType {
  * Represents an Activity Instance resource for interaction callbacks
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-callback-interaction-callback-activity-instance-resource}
  */
-export const InteractionCallbackActivityInstanceEntity = z.object({
+export interface InteractionCallbackActivityInstanceEntity {
   /** Instance ID of the Activity */
-  id: z.string(),
-});
-
-export type InteractionCallbackActivityInstanceEntity = z.infer<
-  typeof InteractionCallbackActivityInstanceEntity
->;
+  id: string;
+}
 
 /**
  * Comprehensive command option entity with all possible properties
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md}
  */
-export const CommandOptionEntity: z.AnyZodObject = z.object({
+export interface CommandOptionEntity {
   /** Name of the parameter */
-  name: z.string(),
+  name: string;
 
   /** Type of the option */
-  type: z.nativeEnum(ApplicationCommandOptionType),
+  type: ApplicationCommandOptionType;
 
   /** Value of the option resulting from user input */
-  value: z.union([z.string(), z.number(), z.boolean()]).optional(),
+  value?: string | number | boolean;
 
   /** Options for this option (for subcommands and groups) */
-  options: z.lazy(() => CommandOptionEntity.array()).optional(),
+  options?: CommandOptionEntity[];
 
   /** True if this option is the currently focused option for autocomplete */
-  focused: z.boolean().optional(),
-});
-
-export type CommandOptionEntity = z.infer<typeof CommandOptionEntity>;
+  focused?: boolean;
+}
 
 /**
  * Simple option for basic command parameters
  */
-export const AnySimpleCommandOptionEntity = CommandOptionEntity.omit({
-  options: true,
-}).extend({
+export interface AnySimpleCommandOptionEntity
+  extends Omit<CommandOptionEntity, "options" | "type" | "value"> {
   /** Role option type */
-  type: z.union([
-    z.literal(3),
-    z.literal(10),
-    z.literal(4),
-    z.literal(5),
-    z.literal(6),
-    z.literal(7),
-    z.literal(8),
-    z.literal(9),
-    z.literal(11),
-  ]),
+  type:
+    | ApplicationCommandOptionType.String
+    | ApplicationCommandOptionType.Number
+    | ApplicationCommandOptionType.Integer
+    | ApplicationCommandOptionType.Boolean
+    | ApplicationCommandOptionType.User
+    | ApplicationCommandOptionType.Channel
+    | ApplicationCommandOptionType.Role
+    | ApplicationCommandOptionType.Mentionable
+    | ApplicationCommandOptionType.Attachment;
 
   /** Value of the option resulting from user input */
-  value: z.union([z.string(), z.number(), z.boolean()]),
-});
-
-export type AnySimpleCommandOptionEntity = z.infer<
-  typeof AnySimpleCommandOptionEntity
->;
+  value: string | number | boolean;
+}
 
 /**
  * SubCommand option
  */
-export const SubCommandOptionEntity = CommandOptionEntity.omit({
-  value: true,
-  focused: true,
-}).extend({
+export interface SubCommandOptionEntity
+  extends Omit<CommandOptionEntity, "value" | "focused" | "type"> {
   /** SubCommand option type */
-  type: z.literal(1),
+  type: 1;
 
   /** Options for this subcommand */
-  options: z.lazy(() => AnySimpleCommandOptionEntity.array()).optional(),
-});
-
-export type SubCommandOptionEntity = z.infer<typeof SubCommandOptionEntity>;
+  options?: AnySimpleCommandOptionEntity[];
+}
 
 /**
  * SubCommandGroup option
  */
-export const SubCommandGroupOptionEntity = CommandOptionEntity.omit({
-  value: true,
-  focused: true,
-}).extend({
+export interface SubCommandGroupOptionEntity
+  extends Omit<CommandOptionEntity, "value" | "focused" | "type"> {
   /** SubCommandGroup option type */
-  type: z.literal(2),
+  type: 2;
 
   /** SubCommand options for this group */
-  options: z.lazy(() => SubCommandOptionEntity.array()),
-});
-
-export type SubCommandGroupOptionEntity = z.infer<
-  typeof SubCommandGroupOptionEntity
->;
+  options: SubCommandOptionEntity[];
+}
 
 /**
  * Union of all command options
  */
-export const AnyCommandOptionEntity = z.union([
-  SubCommandOptionEntity,
-  SubCommandGroupOptionEntity,
-  AnySimpleCommandOptionEntity,
-]);
-
-export type AnyCommandOptionEntity = z.infer<typeof AnyCommandOptionEntity>;
+export type AnyCommandOptionEntity =
+  | SubCommandOptionEntity
+  | SubCommandGroupOptionEntity
+  | AnySimpleCommandOptionEntity;
 
 /**
  * Resolved data structure containing detailed Discord objects from an interaction
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#resolved-data-structure}
  */
-export const InteractionResolvedDataEntity = z.object({
+export interface InteractionResolvedDataEntity {
   /** Map of user IDs to user objects */
-  users: z.record(z.string(), UserEntity).optional(),
+  users?: Record<string, UserEntity>;
 
   /** Map of user IDs to partial member objects (missing user, deaf, and mute fields) */
-  members: z
-    .record(
-      z.string(),
-      GuildMemberEntity.omit({ user: true, deaf: true, mute: true }),
-    )
-    .optional(),
+  members?: Record<string, Omit<GuildMemberEntity, "user" | "deaf" | "mute">>;
 
   /** Map of role IDs to role objects */
-  roles: z.record(z.string(), RoleEntity).optional(),
+  roles?: Record<string, RoleEntity>;
 
   /** Map of channel IDs to partial channel objects */
-  channels: z
-    .record(
-      z.string(),
-      ChannelEntity.pick({
-        id: true,
-        name: true,
-        type: true,
-        permissions: true,
-        thread_metadata: true,
-        parent_id: true,
-      }),
-    )
-    .optional(),
+  channels?: Record<
+    string,
+    Pick<
+      ChannelEntity,
+      "id" | "name" | "type" | "permissions" | "thread_metadata" | "parent_id"
+    >
+  >;
 
   /** Map of message IDs to partial message objects */
-  messages: z
-    .record(
-      z.string(),
-      z.lazy(() => MessageEntity),
-    )
-    .optional(),
+  messages?: Record<string, MessageEntity>;
 
   /** Map of attachment IDs to attachment objects */
-  attachments: z
-    .record(
-      z.string(),
-      z.lazy(() => AttachmentEntity),
-    )
-    .optional(),
-});
-
-export type InteractionResolvedDataEntity = z.infer<
-  typeof InteractionResolvedDataEntity
->;
+  attachments?: Record<string, AttachmentEntity>;
+}
 
 /**
  * Application command interaction data structure
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#application-command-data-structure}
  */
-export const ApplicationCommandInteractionDataEntity = z.object({
+export interface ApplicationCommandInteractionDataEntity {
   /** ID of the invoked command */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Name of the invoked command */
-  name: z.string(),
+  name: string;
 
   /** Type of the invoked command */
-  type: z.nativeEnum(ApplicationCommandType),
+  type: ApplicationCommandType;
 
   /** Converted users + roles + channels + attachments */
-  resolved: InteractionResolvedDataEntity.optional(),
+  resolved?: InteractionResolvedDataEntity;
 
   /** Parameters and values from the user */
-  options: AnyCommandOptionEntity.array().optional(),
+  options?: AnyCommandOptionEntity[];
 
   /** ID of the guild the command is registered to */
-  guild_id: Snowflake.optional(),
+  guild_id?: Snowflake;
 
   /** ID of the user or message targeted by a user or message command */
-  target_id: Snowflake.optional(),
-});
-
-export type ApplicationCommandInteractionDataEntity = z.infer<
-  typeof ApplicationCommandInteractionDataEntity
->;
+  target_id?: Snowflake;
+}
 
 /**
  * Message component interaction data structure
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#message-component-data-structure}
  */
-export const MessageComponentInteractionDataEntity = z.object({
+export interface MessageComponentInteractionDataEntity {
   /** Developer-defined identifier for the component */
-  custom_id: z.string(),
+  custom_id: string;
 
   /** Type of component */
-  component_type: z.nativeEnum(ComponentType),
+  component_type: ComponentType;
 
   /** Values selected by the user (for select menu components) */
-  values: SelectMenuOptionEntity.array().optional(),
+  values?: SelectMenuOptionEntity[];
 
   /** Resolved entities from selected options */
-  resolved: InteractionResolvedDataEntity.optional(),
-});
-
-export type MessageComponentInteractionDataEntity = z.infer<
-  typeof MessageComponentInteractionDataEntity
->;
+  resolved?: InteractionResolvedDataEntity;
+}
 
 /**
  * Modal submit interaction data structure
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#modal-submit-data-structure}
  */
-export const ModalSubmitInteractionDataEntity = z.object({
+export interface ModalSubmitInteractionDataEntity {
   /** Developer-defined identifier for the modal */
-  custom_id: z.string(),
+  custom_id: string;
 
   /** Components submitted with the modal */
-  components: ActionRowEntity.array(),
-});
-
-export type ModalSubmitInteractionDataEntity = z.infer<
-  typeof ModalSubmitInteractionDataEntity
->;
+  components: ActionRowEntity[];
+}
 
 /**
  * Union of all interaction data types
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-object-interaction-data}
  */
-export const InteractionDataEntity = z.union([
-  ApplicationCommandInteractionDataEntity,
-  MessageComponentInteractionDataEntity,
-  ModalSubmitInteractionDataEntity,
-]);
-
-export type InteractionDataEntity = z.infer<typeof InteractionDataEntity>;
+export type InteractionDataEntity =
+  | ApplicationCommandInteractionDataEntity
+  | MessageComponentInteractionDataEntity
+  | ModalSubmitInteractionDataEntity;
 
 /**
  * Message interaction structure sent on message objects when responding to an interaction
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#message-interaction-structure}
  */
-export const MessageInteractionEntity = z.object({
+export interface MessageInteractionEntity {
   /** ID of the interaction */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of interaction */
-  type: z.nativeEnum(InteractionType),
+  type: InteractionType;
 
   /** Name of the application command */
-  name: z.string(),
+  name: string;
 
   /** User who invoked the interaction */
-  user: UserEntity,
+  user: UserEntity;
 
   /** Member who invoked the interaction in the guild */
-  member: GuildMemberEntity.partial().optional(),
-});
-
-export type MessageInteractionEntity = z.infer<typeof MessageInteractionEntity>;
+  member?: Partial<GuildMemberEntity>;
+}
 
 /**
  * Interaction callback object containing information about the interaction response
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-callback-interaction-callback-object}
  */
-export const InteractionCallbackEntity = z.object({
+export interface InteractionCallbackEntity {
   /** ID of the interaction */
-  id: Snowflake,
+  id: Snowflake;
 
   /** Type of interaction */
-  type: z.nativeEnum(InteractionType),
+  type: InteractionType;
 
   /** Instance ID of the Activity if one was launched or joined */
-  activity_instance_id: z.string().optional(),
+  activity_instance_id?: string;
 
   /** ID of the message that was created by the interaction */
-  response_message_id: Snowflake.optional(),
+  response_message_id?: Snowflake;
 
   /** Whether or not the message is in a loading state */
-  response_message_loading: z.boolean().optional(),
+  response_message_loading?: boolean;
 
   /** Whether or not the response message was ephemeral */
-  response_message_ephemeral: z.boolean().optional(),
-});
-
-export type InteractionCallbackEntity = z.infer<
-  typeof InteractionCallbackEntity
->;
+  response_message_ephemeral?: boolean;
+}
 
 /**
  * Interaction callback resource object containing the response data
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-callback-resource-object}
  */
-export const InteractionCallbackResourceEntity = z.object({
+export interface InteractionCallbackResourceEntity {
   /** Interaction callback type */
-  type: z.nativeEnum(InteractionCallbackType),
+  type: InteractionCallbackType;
 
   /** Activity instance information when launching an activity */
-  activity_instance: InteractionCallbackActivityInstanceEntity.optional(),
+  activity_instance?: InteractionCallbackActivityInstanceEntity;
 
   /** Message created by the interaction */
-  message: z.lazy(() => MessageEntity).optional(),
-});
-
-export type InteractionCallbackResourceEntity = z.infer<
-  typeof InteractionCallbackResourceEntity
->;
+  message?: MessageEntity;
+}
 
 /**
  * Interaction callback response object
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-callback-response-object}
  */
-export const InteractionCallbackResponseEntity = z.object({
+export interface InteractionCallbackResponseEntity {
   /** The interaction object associated with the interaction response */
-  interaction: InteractionCallbackEntity,
+  interaction: InteractionCallbackEntity;
 
   /** The resource that was created by the interaction response */
-  resource: InteractionCallbackResourceEntity.optional(),
-});
-
-export type InteractionCallbackResponseEntity = z.infer<
-  typeof InteractionCallbackResponseEntity
->;
+  resource?: InteractionCallbackResourceEntity;
+}
 
 /**
  * Interaction callback message entity for sending message responses
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-response-object-messages}
  */
-export const InteractionCallbackMessagesEntity = z.object({
+export interface InteractionCallbackMessagesEntity {
   /** Whether the response is TTS */
-  tts: z.boolean(),
+  tts: boolean;
 
   /** Message content */
-  content: z.string().optional(),
+  content?: string;
 
-  /** Supports up to 10 embeds */
-  embeds: z
-    .lazy(() => EmbedEntity)
-    .array()
-    .max(10)
-    .optional(),
+  /**
+   * Supports up to 10 embeds
+   * @maxItems 10
+   */
+  embeds?: EmbedEntity[];
 
   /** Allowed mentions object */
-  allowed_mentions: z.lazy(() => AllowedMentionsEntity).optional(),
+  allowed_mentions?: AllowedMentionsEntity;
 
   /** Message flags combined as a bitfield */
-  flags: z.nativeEnum(MessageFlags).optional(),
+  flags?: MessageFlags;
 
   /** Message components */
-  components: ActionRowEntity.array().optional(),
+  components?: ActionRowEntity[];
 
   /** Attachment objects with filename and description */
-  attachments: z
-    .lazy(() => AttachmentEntity)
-    .array()
-    .optional(),
+  attachments?: AttachmentEntity[];
 
   /** Details about the poll */
-  poll: PollCreateRequestEntity.optional(),
-});
-
-export type InteractionCallbackMessagesEntity = z.infer<
-  typeof InteractionCallbackMessagesEntity
->;
+  poll?: PollCreateRequestEntity;
+}
 
 /**
  * Interaction callback modal entity for responding with a popup modal
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#modal}
  */
-export const InteractionCallbackModalEntity = z.object({
-  /** Developer-defined identifier for the modal, max 100 characters */
-  custom_id: z.string().max(100),
+export interface InteractionCallbackModalEntity {
+  /**
+   * Developer-defined identifier for the modal
+   * @maxLength 100
+   */
+  custom_id: string;
 
-  /** Title of the popup modal, max 45 characters */
-  title: z.string().max(45),
+  /**
+   * Title of the popup modal
+   * @maxLength 45
+   */
+  title: string;
 
-  /** Between 1 and 5 (inclusive) components that make up the modal */
-  components: ActionRowEntity.array().min(1).max(5),
-});
-
-export type InteractionCallbackModalEntity = z.infer<
-  typeof InteractionCallbackModalEntity
->;
+  /**
+   * Between 1 and 5 (inclusive) components that make up the modal
+   * @minItems 1
+   * @maxItems 5
+   */
+  components: ActionRowEntity[];
+}
 
 /**
  * Interaction callback autocomplete entity for responding with suggested choices
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#autocomplete}
  */
-export const InteractionCallbackAutocompleteEntity = z.object({
-  /** Autocomplete choices (max of 25 choices) */
-  choices: z
-    .lazy(() => ApplicationCommandOptionChoiceEntity)
-    .array()
-    .max(25),
-});
-
-export type InteractionCallbackAutocompleteEntity = z.infer<
-  typeof InteractionCallbackAutocompleteEntity
->;
+export interface InteractionCallbackAutocompleteEntity {
+  /**
+   * Autocomplete choices
+   * @maxItems 25
+   */
+  choices: ApplicationCommandOptionChoiceEntity[];
+}
 
 /**
  * Interaction response structure for responding to interactions
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-response-structure}
  */
-export const InteractionResponseEntity = z.object({
+export interface InteractionResponseEntity {
   /** Type of response */
-  type: z.nativeEnum(InteractionCallbackType),
+  type: InteractionCallbackType;
 
   /** An optional response message */
-  data: z
-    .union([
-      InteractionCallbackMessagesEntity,
-      InteractionCallbackModalEntity,
-      InteractionCallbackAutocompleteEntity,
-    ])
-    .optional(),
-});
-
-export type InteractionResponseEntity = z.infer<
-  typeof InteractionResponseEntity
->;
+  data?:
+    | InteractionCallbackMessagesEntity
+    | InteractionCallbackModalEntity
+    | InteractionCallbackAutocompleteEntity;
+}
 
 /**
  * Complete Interaction object structure with all possible properties
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-object}
  */
-export const InteractionEntity = z.object({
+export interface InteractionEntity {
   /** ID of the interaction */
-  id: Snowflake,
+  id: Snowflake;
 
   /** ID of the application this interaction is for */
-  application_id: Snowflake,
+  application_id: Snowflake;
 
   /** Type of interaction */
-  type: z.nativeEnum(InteractionType),
+  type: InteractionType;
 
   /** Interaction data payload */
-  data: InteractionDataEntity.optional(),
+  data?: InteractionDataEntity;
 
   /** Guild that the interaction was sent from */
-  guild: GuildEntity.partial().optional(),
+  guild?: Partial<GuildEntity>;
 
   /** Guild ID that the interaction was sent from */
-  guild_id: Snowflake.optional(),
+  guild_id?: Snowflake;
 
   /** Channel that the interaction was sent from */
-  channel: ChannelEntity.partial().optional(),
+  channel?: Partial<ChannelEntity>;
 
   /** Channel ID that the interaction was sent from */
-  channel_id: Snowflake.optional(),
+  channel_id?: Snowflake;
 
   /** Guild member data for the invoking user, including permissions */
-  member: GuildMemberEntity.optional(),
+  member?: GuildMemberEntity;
 
   /** User object for the invoking user, if invoked in a DM */
-  user: UserEntity.optional(),
+  user?: UserEntity;
 
   /** Continuation token for responding to the interaction */
-  token: z.string(),
+  token: string;
 
   /** Read-only property, always 1 */
-  version: z.literal(1),
+  version: 1;
 
   /** For components, the message they were attached to */
-  message: z.lazy(() => MessageEntity).optional(),
+  message?: MessageEntity;
 
   /** Bitwise set of permissions the app has in the source location of the interaction */
-  app_permissions: z.string(), // BitField representation
+  app_permissions: string; // BitField representation
 
   /** Selected language of the invoking user */
-  locale: z.nativeEnum(Locale).optional(),
+  locale?: Locale;
 
   /** Guild's preferred locale, if invoked in a guild */
-  guild_locale: z.nativeEnum(Locale).optional(),
+  guild_locale?: Locale;
 
   /** For monetized apps, any entitlements for the invoking user */
-  entitlements: EntitlementEntity.array().optional(),
+  entitlements?: EntitlementEntity[];
 
   /** Mapping of installation contexts that the interaction was authorized for */
-  authorizing_integration_owners: z.record(
-    z.union([z.nativeEnum(ApplicationIntegrationType), z.string()]),
-    z.union([Snowflake, z.literal("0")]),
-  ),
+  authorizing_integration_owners: Record<
+    ApplicationIntegrationType | string,
+    Snowflake | "0"
+  >;
 
   /** Context where the interaction was triggered from */
-  context: z.nativeEnum(InteractionContextType).optional(),
-});
-
-export type InteractionEntity = z.infer<typeof InteractionEntity>;
+  context?: InteractionContextType;
+}
 
 /**
  * Guild-specific interaction entity
  */
-export const GuildInteractionEntity = InteractionEntity.extend({
+export interface GuildInteractionEntity extends InteractionEntity {
   /** Guild context identifier */
-  context: z.literal(InteractionContextType.Guild),
+  context: InteractionContextType.Guild;
 
   /** Guild ID that the interaction was sent from */
-  guild_id: Snowflake,
+  guild_id: Snowflake;
 
   /** Guild that the interaction was sent from */
-  guild: GuildEntity.partial(),
+  guild: Partial<GuildEntity>;
 
   /** Guild member data for the invoking user */
-  member: GuildMemberEntity,
+  member: GuildMemberEntity;
 
   /** Guild's preferred locale, if invoked in a guild */
-  guild_locale: z.nativeEnum(Locale).optional(),
-});
-
-export type GuildInteractionEntity = z.infer<typeof GuildInteractionEntity>;
+  guild_locale?: Locale;
+}
 
 /**
  * Bot DM-specific interaction entity
  */
-export const BotDmInteractionEntity = InteractionEntity.omit({
-  guild: true,
-  guild_id: true,
-  guild_locale: true,
-  member: true,
-}).extend({
+export interface BotDmInteractionEntity
+  extends Omit<
+    InteractionEntity,
+    "guild" | "guild_id" | "guild_locale" | "member"
+  > {
   /** Bot DM context identifier */
-  context: z.literal(InteractionContextType.BotDm),
+  context: InteractionContextType.BotDm;
 
   /** Channel ID that the interaction was sent from */
-  channel_id: Snowflake,
+  channel_id: Snowflake;
 
   /** Channel that the interaction was sent from */
-  channel: ChannelEntity.partial(),
+  channel: Partial<ChannelEntity>;
 
   /** User object for the invoking user */
-  user: UserEntity,
-});
-
-export type BotDmInteractionEntity = z.infer<typeof BotDmInteractionEntity>;
+  user: UserEntity;
+}
 
 /**
  * Private channel-specific interaction entity
  */
-export const PrivateChannelInteractionEntity = InteractionEntity.omit({
-  guild: true,
-  guild_id: true,
-  guild_locale: true,
-  member: true,
-}).extend({
+export interface PrivateChannelInteractionEntity
+  extends Omit<
+    InteractionEntity,
+    "guild" | "guild_id" | "guild_locale" | "member"
+  > {
   /** Private channel context identifier */
-  context: z.literal(InteractionContextType.PrivateChannel),
+  context: InteractionContextType.PrivateChannel;
 
   /** Channel ID that the interaction was sent from */
-  channel_id: Snowflake,
+  channel_id: Snowflake;
 
   /** Channel that the interaction was sent from */
-  channel: ChannelEntity.partial(),
+  channel: Partial<ChannelEntity>;
 
   /** User object for the invoking user */
-  user: UserEntity,
-});
-
-export type PrivateChannelInteractionEntity = z.infer<
-  typeof PrivateChannelInteractionEntity
->;
+  user: UserEntity;
+}
 
 /**
  * Union of all context-specific interaction entities
  */
-export const AnyInteractionEntity = z.discriminatedUnion("context", [
-  GuildInteractionEntity,
-  BotDmInteractionEntity,
-  PrivateChannelInteractionEntity,
-]);
-
-export type AnyInteractionEntity = z.infer<typeof AnyInteractionEntity>;
+export type AnyInteractionEntity =
+  | GuildInteractionEntity
+  | BotDmInteractionEntity
+  | PrivateChannelInteractionEntity;

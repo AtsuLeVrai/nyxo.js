@@ -15,12 +15,12 @@ import type {
   VoiceRegionEntity,
   WelcomeScreenEntity,
 } from "@nyxjs/core";
-import { fromZodError } from "zod-validation-error";
 import type { Rest } from "../core/index.js";
-import {
+import { FileHandler } from "../handlers/index.js";
+import type {
   AddGuildMemberSchema,
   BeginGuildPruneSchema,
-  type BulkGuildBanResponseEntity,
+  BulkGuildBanResponseEntity,
   BulkGuildBanSchema,
   CreateGuildBanSchema,
   CreateGuildChannelSchema,
@@ -28,7 +28,7 @@ import {
   CreateGuildSchema,
   GetGuildBansQuerySchema,
   GetGuildPruneCountQuerySchema,
-  type ListActiveGuildThreadsEntity,
+  ListActiveGuildThreadsEntity,
   ListGuildMembersQuerySchema,
   ModifyGuildChannelPositionsSchema,
   ModifyGuildMemberSchema,
@@ -39,7 +39,7 @@ import {
   ModifyGuildWelcomeScreenSchema,
   ModifyGuildWidgetSettingsSchema,
   SearchGuildMembersQuerySchema,
-  type WidgetStyleOptions,
+  WidgetStyleOptions,
 } from "../schemas/index.js";
 
 /**
@@ -323,13 +323,12 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
    */
   async createGuild(options: CreateGuildSchema): Promise<GuildEntity> {
-    const result = await CreateGuildSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.icon) {
+      options.icon = await FileHandler.toDataUri(options.icon);
     }
 
     return this.#rest.post(GuildRouter.ROUTES.guilds, {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 
@@ -374,13 +373,12 @@ export class GuildRouter {
     options: ModifyGuildSchema,
     reason?: string,
   ): Promise<GuildEntity> {
-    const result = await ModifyGuildSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.icon) {
+      options.icon = await FileHandler.toDataUri(options.icon);
     }
 
     return this.#rest.patch(GuildRouter.ROUTES.guildBase(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -425,13 +423,8 @@ export class GuildRouter {
     options: CreateGuildChannelSchema,
     reason?: string,
   ): Promise<ChannelEntity> {
-    const result = CreateGuildChannelSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(GuildRouter.ROUTES.guildChannels(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -450,13 +443,8 @@ export class GuildRouter {
     guildId: Snowflake,
     options: ModifyGuildChannelPositionsSchema,
   ): Promise<void> {
-    const result = ModifyGuildChannelPositionsSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(GuildRouter.ROUTES.guildChannels(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 
@@ -503,13 +491,8 @@ export class GuildRouter {
     guildId: Snowflake,
     query: ListGuildMembersQuerySchema = {},
   ): Promise<GuildMemberEntity[]> {
-    const result = ListGuildMembersQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(GuildRouter.ROUTES.guildMembers(guildId), {
-      query: result.data,
+      query,
     });
   }
 
@@ -526,13 +509,8 @@ export class GuildRouter {
     guildId: Snowflake,
     query: SearchGuildMembersQuerySchema,
   ): Promise<GuildMemberEntity[]> {
-    const result = SearchGuildMembersQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(GuildRouter.ROUTES.guildMembersSearch(guildId), {
-      query: result.data,
+      query,
     });
   }
 
@@ -552,13 +530,8 @@ export class GuildRouter {
     userId: Snowflake,
     options: AddGuildMemberSchema,
   ): Promise<GuildMemberEntity> {
-    const result = AddGuildMemberSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(GuildRouter.ROUTES.guildMember(guildId, userId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 
@@ -579,13 +552,8 @@ export class GuildRouter {
     options: ModifyGuildMemberSchema,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    const result = ModifyGuildMemberSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(GuildRouter.ROUTES.guildMember(guildId, userId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -715,13 +683,8 @@ export class GuildRouter {
     guildId: Snowflake,
     query: GetGuildBansQuerySchema = {},
   ): Promise<BanEntity[]> {
-    const result = GetGuildBansQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(GuildRouter.ROUTES.guildBans(guildId), {
-      query: result.data,
+      query,
     });
   }
 
@@ -756,13 +719,8 @@ export class GuildRouter {
     options: CreateGuildBanSchema,
     reason?: string,
   ): Promise<void> {
-    const result = CreateGuildBanSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(GuildRouter.ROUTES.guildBan(guildId, userId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -803,13 +761,8 @@ export class GuildRouter {
     options: BulkGuildBanSchema,
     reason?: string,
   ): Promise<BulkGuildBanResponseEntity> {
-    const result = BulkGuildBanSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(GuildRouter.ROUTES.guildBulkBan(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -853,13 +806,12 @@ export class GuildRouter {
     options: CreateGuildRoleSchema,
     reason?: string,
   ): Promise<RoleEntity> {
-    const result = await CreateGuildRoleSchema.safeParseAsync(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
+    if (options.icon) {
+      options.icon = await FileHandler.toDataUri(options.icon);
     }
 
     return this.#rest.post(GuildRouter.ROUTES.guildRoles(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -878,13 +830,8 @@ export class GuildRouter {
     guildId: Snowflake,
     options: ModifyGuildRolePositionsSchema,
   ): Promise<RoleEntity[]> {
-    const result = ModifyGuildRolePositionsSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(GuildRouter.ROUTES.guildRoles(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
     });
   }
 
@@ -906,13 +853,8 @@ export class GuildRouter {
     options: ModifyGuildRoleSchema,
     reason?: string,
   ): Promise<RoleEntity> {
-    const result = ModifyGuildRoleSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(GuildRouter.ROUTES.guildRole(guildId, roleId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -972,13 +914,8 @@ export class GuildRouter {
     guildId: Snowflake,
     query: GetGuildPruneCountQuerySchema = {},
   ): Promise<{ pruned: number }> {
-    const result = GetGuildPruneCountQuerySchema.safeParse(query);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.get(GuildRouter.ROUTES.guildPrune(guildId), {
-      query: result.data,
+      query,
     });
   }
 
@@ -998,13 +935,8 @@ export class GuildRouter {
     options: BeginGuildPruneSchema,
     reason?: string,
   ): Promise<{ pruned: number | null }> {
-    const result = BeginGuildPruneSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.post(GuildRouter.ROUTES.guildPrune(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -1097,13 +1029,8 @@ export class GuildRouter {
     options: ModifyGuildWidgetSettingsSchema,
     reason?: string,
   ): Promise<GuildWidgetSettingsEntity> {
-    const result = ModifyGuildWidgetSettingsSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(GuildRouter.ROUTES.guildWidgetSettings(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -1178,13 +1105,8 @@ export class GuildRouter {
     options: ModifyGuildWelcomeScreenSchema,
     reason?: string,
   ): Promise<WelcomeScreenEntity> {
-    const result = ModifyGuildWelcomeScreenSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.patch(GuildRouter.ROUTES.guildWelcomeScreen(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
@@ -1216,13 +1138,8 @@ export class GuildRouter {
     options: ModifyGuildOnboardingSchema,
     reason?: string,
   ): Promise<GuildOnboardingEntity> {
-    const result = ModifyGuildOnboardingSchema.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
     return this.#rest.put(GuildRouter.ROUTES.guildOnboarding(guildId), {
-      body: JSON.stringify(result.data),
+      body: JSON.stringify(options),
       reason,
     });
   }
