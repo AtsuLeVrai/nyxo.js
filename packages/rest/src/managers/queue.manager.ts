@@ -3,8 +3,13 @@ import type { Rest } from "../core/index.js";
 import type { QueueOptions } from "../options/index.js";
 import type {
   ApiRequestOptions,
+  QueueAddEvent,
+  QueueCompleteEvent,
+  QueueEventBase,
   QueueProcessEvent,
-  QueueStateEvent,
+  QueueRejectEvent,
+  QueueStateChangeEvent,
+  QueueTimeoutEvent,
 } from "../types/index.js";
 
 /**
@@ -145,6 +150,7 @@ export class QueueManager {
    * that resolves when the request completes
    *
    * @param options - Request options
+   * @param requestId - Unique ID for this request
    * @param executor - Function that executes the actual request
    * @returns Promise that resolves with the request result
    * @throws Error if the queue is full
@@ -161,9 +167,11 @@ export class QueueManager {
 
     // Check if queue is full
     if (this.#queue.length >= this.#options.maxQueueSize) {
-      const rejectEvent: QueueProcessEvent & { reason: string } = {
+      // Create reject event with the new unified format
+      const rejectEvent: QueueRejectEvent = {
+        type: "reject",
         timestamp: new Date().toISOString(),
-        requestId: requestId,
+        requestId,
         queueTime: 0,
         path: options.path || "unknown",
         method: options.method || "GET",
@@ -174,7 +182,7 @@ export class QueueManager {
         reason: "Queue size limit exceeded",
       };
 
-      this.#rest.emit("queueReject", rejectEvent);
+      this.#rest.emit("queue", rejectEvent);
       return Promise.reject(
         new Error(`Queue size limit exceeded (${this.#options.maxQueueSize})`),
       );
@@ -234,19 +242,39 @@ export class QueueManager {
       item.reject(new Error(reason));
     }
 
-    // Emit state change
-    this.#emitStateChange();
+    // Emit state change with trigger information
+    this.#rest.emit("queue", this.getState("clear"));
   }
 
   /**
    * Gets the current state of the queue
+   *
+   * @param trigger - What triggered the state change
    */
-  getState(): QueueStateEvent {
+  getState(trigger?: QueueStateChangeEvent["trigger"]): QueueStateChangeEvent {
     return {
+      type: "stateChange",
       timestamp: new Date().toISOString(),
+      requestId: crypto.randomUUID(), // State changes don't necessarily have a request ID
       queueSize: this.#queue.length,
       running: this.#runningCount,
       concurrency: this.#options.concurrency,
+      trigger,
+    };
+  }
+
+  /**
+   * Creates a base queue event
+   *
+   * @param item - The queue item
+   * @returns Base queue event properties
+   */
+  #createBaseQueueEvent<T = unknown>(
+    item: QueueItem<T>,
+  ): Omit<QueueEventBase, "type"> {
+    return {
+      timestamp: new Date().toISOString(),
+      requestId: item.id,
     };
   }
 
@@ -269,18 +297,18 @@ export class QueueManager {
     // Insert at the determined position
     this.#queue.splice(index, 0, item as QueueItem);
 
-    // Emit add event
-    this.#rest.emit("queueAdd", {
-      timestamp: new Date().toISOString(),
-      requestId: item.id,
+    // Emit add event with the new unified format
+    this.#rest.emit("queue", {
+      ...this.#createBaseQueueEvent(item),
+      type: "add",
       queueTime: 0,
       path: item.path,
       method: item.method,
       priority: item.priority,
-    });
+    } as QueueAddEvent);
 
     // Emit state change
-    this.#emitStateChange();
+    this.#rest.emit("queue", this.getState("add"));
   }
 
   /**
@@ -310,15 +338,15 @@ export class QueueManager {
         // Calculate time spent in queue
         const queueTime = Date.now() - item.timestamp;
 
-        // Emit process event
-        this.#rest.emit("queueProcess", {
-          timestamp: new Date().toISOString(),
-          requestId: item.id,
+        // Emit process event with the new unified format
+        this.#rest.emit("queue", {
+          ...this.#createBaseQueueEvent(item),
+          type: "process",
           queueTime,
           path: item.path,
           method: item.method,
           priority: item.priority,
-        });
+        } as QueueProcessEvent);
 
         // Clear timeout if set
         if (item.timeoutId) {
@@ -327,7 +355,7 @@ export class QueueManager {
 
         // Increment running counter
         this.#runningCount++;
-        this.#emitStateChange();
+        this.#rest.emit("queue", this.getState("process"));
 
         // Execute the request
         this.#executeItem(item, queueTime).catch(() => {
@@ -355,34 +383,34 @@ export class QueueManager {
       // Resolve the promise
       item.resolve(result);
 
-      // Emit complete event
-      this.#rest.emit("queueComplete", {
-        timestamp: new Date().toISOString(),
-        requestId: item.id,
+      // Emit complete event with the new unified format
+      this.#rest.emit("queue", {
+        ...this.#createBaseQueueEvent(item),
+        type: "complete",
         queueTime,
         path: item.path,
         method: item.method,
         priority: item.priority,
         success: true,
-      });
+      } as QueueCompleteEvent);
     } catch (error) {
       // Reject the promise
       item.reject(error);
 
-      // Emit complete event with error
-      this.#rest.emit("queueComplete", {
-        timestamp: new Date().toISOString(),
-        requestId: item.id,
+      // Emit complete event with error using the new unified format
+      this.#rest.emit("queue", {
+        ...this.#createBaseQueueEvent(item),
+        type: "complete",
         queueTime,
         path: item.path,
         method: item.method,
         priority: item.priority,
         success: false,
-      });
+      } as QueueCompleteEvent);
     } finally {
       // Decrement running counter
       this.#runningCount--;
-      this.#emitStateChange();
+      this.#rest.emit("queue", this.getState("complete"));
 
       // Process next items
       await this.#processQueue();
@@ -402,17 +430,17 @@ export class QueueManager {
     );
     if (index !== -1) {
       this.#queue.splice(index, 1);
-      this.#emitStateChange();
+      this.#rest.emit("queue", this.getState("timeout"));
 
-      // Emit timeout event
-      this.#rest.emit("queueTimeout", {
-        timestamp: new Date().toISOString(),
-        requestId: item.id,
+      // Emit timeout event with the new unified format
+      this.#rest.emit("queue", {
+        ...this.#createBaseQueueEvent(item),
+        type: "timeout",
         queueTime: Date.now() - item.timestamp,
         path: item.path,
         method: item.method,
         priority: item.priority,
-      });
+      } as QueueTimeoutEvent);
 
       // Reject the promise
       item.reject(
@@ -458,14 +486,5 @@ export class QueueManager {
     }
 
     return priority;
-  }
-
-  /**
-   * Emits a state change event
-   *
-   * @private
-   */
-  #emitStateChange(): void {
-    this.#rest.emit("queueState", this.getState());
   }
 }

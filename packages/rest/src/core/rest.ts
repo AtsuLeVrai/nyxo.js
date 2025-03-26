@@ -98,13 +98,11 @@ export class Rest extends EventEmitter<RestEvents> {
     super();
 
     try {
-      // Utiliser la nouvelle fonction de validation au lieu du schéma Zod
       this.#options = RestOptions.parse(options);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
 
-    // Initialiser le reste comme avant...
     this.#pool = new Pool(this.#options.baseUrl, REST_CONSTANTS.POOL_CONFIG);
     this.#rateLimiter = new RateLimitManager(this);
     this.#retry = new RetryManager(this, this.#options.retry);
@@ -357,18 +355,20 @@ export class Rest extends EventEmitter<RestEvents> {
 
             return response.data;
           } catch (error) {
-            // Emit failure event
-            this.emit("requestFailure", {
+            // Emit failure event using the unified event system
+            this.emit("request", {
+              type: "failure",
               timestamp: new Date().toISOString(),
-              error: error instanceof Error ? error : new Error(String(error)),
+              requestId,
               path: options.path,
               method: options.method,
               headers: this.#buildRequestHeaders(options),
               statusCode:
                 error instanceof ApiError ? error.statusCode : undefined,
-              requestId: requestId,
               duration: 0,
+              error: error instanceof Error ? error : new Error(String(error)),
             });
+
             throw error;
           }
         },
@@ -455,6 +455,7 @@ export class Rest extends EventEmitter<RestEvents> {
    */
   async destroy(): Promise<void> {
     await this.#pool.close();
+    this.#queue.clear();
     this.#rateLimiter.destroy();
     this.removeAllListeners();
   }
@@ -473,8 +474,9 @@ export class Rest extends EventEmitter<RestEvents> {
   ): Promise<HttpResponse<T>> {
     const requestStart = Date.now();
 
-    // Emit event when request starts
-    this.emit("requestStart", {
+    // Emit unified request start event
+    this.emit("request", {
+      type: "start",
       timestamp: new Date().toISOString(),
       requestId,
       path: options.path,
@@ -498,8 +500,12 @@ export class Rest extends EventEmitter<RestEvents> {
       });
     }
 
-    // Emit event when request completes successfully
-    this.emit("requestComplete", {
+    // Calculate request duration
+    const duration = Date.now() - requestStart;
+
+    // Emit unified request complete event
+    this.emit("request", {
+      type: "complete",
       timestamp: new Date().toISOString(),
       requestId,
       path: options.path,
@@ -507,7 +513,8 @@ export class Rest extends EventEmitter<RestEvents> {
       headers: this.#buildRequestHeaders(options),
       statusCode: result.statusCode,
       responseHeaders: result.headers,
-      duration: Date.now() - requestStart,
+      duration,
+      responseSize: responseBody.length,
     });
 
     return result;
@@ -599,7 +606,9 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Add audit log reason if provided
     if (options.reason) {
-      Object.assign("x-audit-log-reason", encodeURIComponent(options.reason));
+      Object.assign(headers, {
+        "x-audit-log-reason": encodeURIComponent(options.reason),
+      });
     }
 
     return headers;

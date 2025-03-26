@@ -118,7 +118,16 @@ export class ApiError extends Error {
     jsonError: JsonErrorResponse,
     context: ApiErrorContext,
   ) {
-    super(jsonError.message);
+    // Format field error details
+    const formattedFieldErrors = formatFieldErrors(jsonError.errors);
+
+    // Create an enhanced error message
+    const enhancedMessage = formattedFieldErrors
+      ? `${jsonError.message}. Details: ${formattedFieldErrors}`
+      : jsonError.message;
+
+    super(enhancedMessage);
+
     this.name = this.constructor.name;
     this.requestId = requestId;
     this.statusCode = context.statusCode;
@@ -155,19 +164,37 @@ export class ApiError extends Error {
    * @returns {string} A formatted string representation of the error
    */
   override toString(): string {
-    const baseMessage = `${this.name}: [${this.requestId}] ${this.message} (${this.method} ${this.path})`;
+    return `${this.name}: [${this.requestId}] ${this.message} (${this.method} ${this.path})`;
+  }
+}
 
-    if (!this.errors) {
-      return baseMessage;
+/**
+ * Formats field errors into a readable string
+ *
+ * @param errors - The errors object containing field-specific errors
+ * @returns A formatted string of errors or undefined if no errors
+ */
+function formatFieldErrors(
+  errors?: Record<string, { _errors: JsonErrorField[] }>,
+): string | undefined {
+  if (!errors) {
+    return undefined;
+  }
+
+  const errorParts: string[] = [];
+
+  // Loop through all error fields
+  for (const [fieldName, fieldData] of Object.entries(errors)) {
+    if (fieldData._errors?.length === 0) {
+      continue;
     }
 
-    const fieldErrors = Object.entries(this.errors)
-      .map(
-        ([field, { _errors }]) =>
-          `${field}: ${_errors.map((e) => e.message).join(", ")}`,
-      )
-      .join("\n");
-
-    return `${baseMessage}\nField Errors:\n${fieldErrors}`;
+    // Extract error messages for this field
+    const fieldErrors = fieldData._errors
+      .map((err) => `"${err.message}"`)
+      .join(", ");
+    errorParts.push(`${fieldName}: ${fieldErrors}`);
   }
+
+  return errorParts.length > 0 ? errorParts.join("; ") : undefined;
 }

@@ -1,6 +1,7 @@
 import type { Dispatcher } from "undici";
 import type { Rest } from "../core/index.js";
 import { RateLimitError } from "../errors/index.js";
+import type { RateLimitEvent } from "../types/index.js";
 
 /**
  * Possible rate limit scopes returned by the Discord API
@@ -316,6 +317,24 @@ export class RateLimitManager {
   }
 
   /**
+   * Creates a base rate limit event object
+   *
+   * @param requestId - The request ID
+   * @param bucketId - The bucket ID or hash
+   * @returns Base rate limit event
+   */
+  #createBaseRateLimitEvent(
+    requestId: string,
+    bucketId: string,
+  ): Omit<RateLimitEvent, "type"> {
+    return {
+      timestamp: new Date().toISOString(),
+      requestId,
+      bucketId,
+    };
+  }
+
+  /**
    * Creates a rate limit error from a result
    *
    * @param requestId - The request ID
@@ -377,11 +396,10 @@ export class RateLimitManager {
       const retryAfter =
         (this.#invalidRequests.windowStart + 600_000 - now) / 1000;
 
-      // Emit an event when hitting Cloudflare's invalid request limit
-      this.#rest.emit("rateLimitHit", {
-        timestamp: new Date().toISOString(),
-        requestId,
-        bucketId: "cloudflare",
+      // Emit an event when hitting Cloudflare's invalid request limit with the unified format
+      this.#rest.emit("rateLimit", {
+        ...this.#createBaseRateLimitEvent(requestId, "cloudflare"),
+        type: "hit",
         resetAfter: retryAfter,
         global: true,
         route: "ANY",
@@ -440,11 +458,10 @@ export class RateLimitManager {
       if (waitTime > 0) {
         const retryAfter = waitTime / 1000;
 
-        // Emit an event when hitting the global rate limit
-        this.#rest.emit("rateLimitHit", {
-          timestamp: new Date().toISOString(),
-          requestId,
-          bucketId: "global",
+        // Emit an event when hitting the global rate limit with the unified format
+        this.#rest.emit("rateLimit", {
+          ...this.#createBaseRateLimitEvent(requestId, "global"),
+          type: "hit",
           resetAfter: retryAfter,
           global: true,
           reason: "Global rate limit exceeded",
@@ -496,11 +513,10 @@ export class RateLimitManager {
     const isGlobal = headers[HEADERS.GLOBAL] === "true";
     const bucketId = headers[HEADERS.BUCKET] || "unknown";
 
-    // Emit an event when hitting a rate limit from the API
-    this.#rest.emit("rateLimitHit", {
-      timestamp: new Date().toISOString(),
-      requestId,
-      bucketId,
+    // Emit an event when hitting a rate limit from the API with the unified format
+    this.#rest.emit("rateLimit", {
+      ...this.#createBaseRateLimitEvent(requestId, bucketId),
+      type: "hit",
       resetAfter: retryAfter,
       global: isGlobal,
       route: path,
@@ -556,11 +572,10 @@ export class RateLimitManager {
     this.#buckets.set(bucketHash, bucket);
     this.#routeBuckets.set(routeKey, bucketHash);
 
-    // Emit an event with the updated bucket info
-    this.#rest.emit("rateLimitUpdate", {
-      timestamp: new Date().toISOString(),
-      requestId,
-      bucketId: bucketHash,
+    // Emit an event with the updated bucket info using the unified format
+    this.#rest.emit("rateLimit", {
+      ...this.#createBaseRateLimitEvent(requestId, bucketHash),
+      type: "update",
       remaining: bucket.remaining,
       limit: bucket.limit,
       resetAfter: bucket.resetAfter,
@@ -591,11 +606,10 @@ export class RateLimitManager {
     if (bucket.remaining <= 0 && bucket.reset > now) {
       const retryAfter = (bucket.reset - now) / 1000;
 
-      // Emit an event for hitting a bucket limit
-      this.#rest.emit("rateLimitHit", {
-        timestamp: new Date().toISOString(),
-        requestId,
-        bucketId: bucket.hash,
+      // Emit an event for hitting a bucket limit using the unified format
+      this.#rest.emit("rateLimit", {
+        ...this.#createBaseRateLimitEvent(requestId, bucket.hash),
+        type: "hit",
         resetAfter: retryAfter,
         global: false,
         route: path,
@@ -617,11 +631,10 @@ export class RateLimitManager {
     if (bucket.remaining === 1 && bucket.reset - now < 1000) {
       const retryAfter = 1000 / 1000;
 
-      // Emit an event for hitting the safety margin
-      this.#rest.emit("rateLimitHit", {
-        timestamp: new Date().toISOString(),
-        requestId,
-        bucketId: bucket.hash,
+      // Emit an event for hitting the safety margin using the unified format
+      this.#rest.emit("rateLimit", {
+        ...this.#createBaseRateLimitEvent(requestId, bucket.hash),
+        type: "hit",
         resetAfter: retryAfter,
         global: false,
         route: path,
@@ -664,11 +677,10 @@ export class RateLimitManager {
     if (bucket.remaining <= 1 && bucket.reset > now) {
       const retryAfter = (bucket.reset - now) / 1000;
 
-      // Emit an event for hitting an emoji route limit
-      this.#rest.emit("rateLimitHit", {
-        timestamp: new Date().toISOString(),
-        requestId,
-        bucketId: bucket.hash,
+      // Emit an event for hitting an emoji route limit using the unified format
+      this.#rest.emit("rateLimit", {
+        ...this.#createBaseRateLimitEvent(requestId, bucket.hash),
+        type: "hit",
         resetAfter: retryAfter,
         global: false,
         route: path,
@@ -702,11 +714,10 @@ export class RateLimitManager {
       if (bucket.reset < now) {
         this.#buckets.delete(hash);
 
-        // Emit an event when a bucket expires
-        this.#rest.emit("rateLimitExpire", {
-          timestamp: new Date().toISOString(),
-          requestId: bucket.requestId,
-          bucketId: hash,
+        // Emit an event when a bucket expires using the unified format
+        this.#rest.emit("rateLimit", {
+          ...this.#createBaseRateLimitEvent(bucket.requestId, hash),
+          type: "expire",
           lifespan: now - (bucket.reset - bucket.resetAfter),
         });
       }

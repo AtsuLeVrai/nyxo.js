@@ -18,56 +18,20 @@ const rest = new Rest({
   token: parsed.DISCORD_TOKEN,
 });
 
-rest.on("requestStart", (event) => {
-  console.log("[REST] Request started", event);
+rest.on("request", (event) => {
+  console.log("[REST] Request event", event);
 });
 
-rest.on("requestComplete", (event) => {
-  console.log("[REST] Request completed", event);
+rest.on("rateLimit", (event) => {
+  console.log("[REST] Rate limit event", event);
 });
 
-rest.on("requestFailure", (event) => {
-  console.log("[REST] Request failed", event);
+rest.on("queue", (event) => {
+  console.log("[REST] Queue event", event);
 });
 
-rest.on("rateLimitHit", (event) => {
-  console.log("[REST] Rate limit hit", event);
-});
-
-rest.on("rateLimitUpdate", (event) => {
-  console.log("[REST] Rate limit updated", event);
-});
-
-rest.on("rateLimitExpire", (event) => {
-  console.log("[REST] Rate limit expired", event);
-});
-
-rest.on("retryAttempt", (event) => {
-  console.log("[REST] Retry attempt", event);
-});
-
-rest.on("queueAdd", (event) => {
-  console.log("[REST] Queue add", event);
-});
-
-rest.on("queueProcess", (event) => {
-  console.log("[REST] Queue process", event);
-});
-
-rest.on("queueComplete", (event) => {
-  console.log("[REST] Queue complete", event);
-});
-
-rest.on("queueTimeout", (event) => {
-  console.log("[REST] Queue timeout", event);
-});
-
-rest.on("queueState", (event) => {
-  console.log("[REST] Queue state", event);
-});
-
-rest.on("queueReject", (event) => {
-  console.log("[REST] Queue reject", event);
+rest.on("retry", (event) => {
+  console.log("[REST] Retry event", event);
 });
 
 const gateway = new Gateway(rest, {
@@ -198,30 +162,34 @@ gateway.on("dispatch", async (event, data) => {
   if (event === "MESSAGE_CREATE") {
     const message = data as MessageEntity;
     if (message.content === "!ping") {
-      await rest.messages.createMessage(message.channel_id, {
-        content: "Pong",
-        embeds: [
-          {
-            type: EmbedType.Rich,
-            title: "Pong".repeat(150000),
-            description: "Pong!",
-            color: 0x00ff00,
-          },
-        ],
-        components: [
-          {
-            type: ComponentType.ActionRow,
-            components: [
-              {
-                type: ComponentType.Button,
-                style: ButtonStyle.Success,
-                label: "Pong",
-                custom_id: "ping",
-              },
-            ],
-          },
-        ],
-      });
+      try {
+        await rest.messages.createMessage(message.channel_id, {
+          content: "Pong",
+          embeds: [
+            {
+              type: EmbedType.Rich,
+              title: "Pong".repeat(150000),
+              description: "Pong!",
+              color: 0x00ff00,
+            },
+          ],
+          components: [
+            {
+              type: ComponentType.ActionRow,
+              components: [
+                {
+                  type: ComponentType.Button,
+                  style: ButtonStyle.Success,
+                  label: "Pong",
+                  custom_id: "ping",
+                },
+              ],
+            },
+          ],
+        });
+      } catch (error) {
+        console.error("Failed to send message", error);
+      }
     }
   }
 });

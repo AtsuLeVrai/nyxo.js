@@ -3,6 +3,7 @@ import type { Dispatcher } from "undici";
 import type { Rest } from "../core/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
 import type { RetryOptions } from "../options/index.js";
+import type { RetryEvent } from "../types/index.js";
 
 /**
  * Retry-related constants
@@ -201,20 +202,21 @@ export class RetryManager {
   }
 
   /**
-   * Emits a retry attempt event
+   * Creates the retry event object
    *
    * @param error - The error that triggered the retry
    * @param timeout - The timeout before the next attempt
    * @param context - Context information about the operation
    * @param reason - The categorized reason for the retry
+   * @returns The retry event object
    */
-  emitRetryEvent(
+  #createRetryEvent(
     error: Error,
     timeout: number,
     context: RetryContext,
     reason: RetryReason,
-  ): void {
-    this.#rest.emit("retryAttempt", {
+  ): RetryEvent {
+    return {
       timestamp: new Date().toISOString(),
       requestId: this.#state.requestId ?? "",
       error,
@@ -224,7 +226,7 @@ export class RetryManager {
       path: context.path,
       method: context.method,
       reason: reason.toString(),
-    });
+    };
   }
 
   /**
@@ -242,7 +244,10 @@ export class RetryManager {
     const timeout = this.calculateTimeout(error.retryAfter * 1000);
     this.#state.retryAfter = error.retryAfter;
 
-    this.emitRetryEvent(error, timeout, context, RetryReason.RateLimited);
+    this.#rest.emit(
+      "retry",
+      this.#createRetryEvent(error, timeout, context, RetryReason.RateLimited),
+    );
 
     return {
       shouldRetry: true,
@@ -268,7 +273,10 @@ export class RetryManager {
     const timeout = this.calculateTimeout();
     const reason = RetryReason.ServerError;
 
-    this.emitRetryEvent(error, timeout, context, reason);
+    this.#rest.emit(
+      "retry",
+      this.#createRetryEvent(error, timeout, context, reason),
+    );
 
     return {
       shouldRetry: true,
@@ -297,7 +305,10 @@ export class RetryManager {
       ? RetryReason.Timeout
       : RetryReason.NetworkError;
 
-    this.emitRetryEvent(error, timeout, context, reason);
+    this.#rest.emit(
+      "retry",
+      this.#createRetryEvent(error, timeout, context, reason),
+    );
 
     return {
       shouldRetry: true,

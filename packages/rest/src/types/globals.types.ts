@@ -46,9 +46,6 @@ export interface RestEventBase {
 
   /** Unique identifier for this request */
   requestId: string;
-
-  /** Unique identifier for correlating related events */
-  correlationId?: string;
 }
 
 /**
@@ -66,14 +63,31 @@ export interface HttpRequestEventBase extends RestEventBase {
 }
 
 /**
- * Event emitted when an HTTP request is initiated
+ * Types of request events
  */
-export type RequestStartEvent = HttpRequestEventBase;
+export type RequestEventType = "start" | "complete" | "failure";
 
 /**
- * Event emitted when an HTTP request completes
+ * Base interface for request events
  */
-export interface RequestCompleteEvent extends HttpRequestEventBase {
+export interface RequestEventBase extends HttpRequestEventBase {
+  /** Type of request event */
+  type: RequestEventType;
+}
+
+/**
+ * Event emitted when a request is started
+ */
+export interface RequestStartEvent extends RequestEventBase {
+  type: "start";
+}
+
+/**
+ * Event emitted when a request completes successfully
+ */
+export interface RequestCompleteEvent extends RequestEventBase {
+  type: "complete";
+
   /** HTTP status code received */
   statusCode: number;
 
@@ -88,9 +102,11 @@ export interface RequestCompleteEvent extends HttpRequestEventBase {
 }
 
 /**
- * Event emitted when an HTTP request fails
+ * Event emitted when a request fails
  */
-export interface RequestFailureEvent extends HttpRequestEventBase {
+export interface RequestFailureEvent extends RequestEventBase {
+  type: "failure";
+
   /** Error object or message */
   error: Error;
 
@@ -105,11 +121,43 @@ export interface RequestFailureEvent extends HttpRequestEventBase {
 }
 
 /**
- * Base interface for rate limit related events
+ * Union type for all request events
+ */
+export type RequestEvent =
+  | RequestStartEvent
+  | RequestCompleteEvent
+  | RequestFailureEvent;
+
+/**
+ * Types of rate limit events
+ */
+export type RateLimitEventType = "hit" | "update" | "expire";
+
+/**
+ * Base interface for rate limit events
  */
 export interface RateLimitEventBase extends RestEventBase {
+  /** Type of rate limit event */
+  type: RateLimitEventType;
+
   /** Rate limit bucket hash or identifier */
   bucketId: string;
+}
+
+/**
+ * Event emitted when a rate limit is hit
+ */
+export interface RateLimitHitEvent extends RateLimitEventBase {
+  type: "hit";
+
+  /** Time in milliseconds until the rate limit resets */
+  resetAfter: number;
+
+  /** Global rate limit flag */
+  global: boolean;
+
+  /** Retry-After header value if present */
+  retryAfter?: number;
 
   /** Route associated with this rate limit */
   route?: string;
@@ -122,23 +170,11 @@ export interface RateLimitEventBase extends RestEventBase {
 }
 
 /**
- * Event emitted when a rate limit is hit
- */
-export interface RateLimitHitEvent extends RateLimitEventBase {
-  /** Time in milliseconds until the rate limit resets */
-  resetAfter: number;
-
-  /** Global rate limit flag */
-  global: boolean;
-
-  /** Retry-After header value if present */
-  retryAfter?: number;
-}
-
-/**
  * Event emitted when rate limit information is updated
  */
 export interface RateLimitUpdateEvent extends RateLimitEventBase {
+  type: "update";
+
   /** Remaining requests in the current window */
   remaining: number;
 
@@ -150,20 +186,139 @@ export interface RateLimitUpdateEvent extends RateLimitEventBase {
 
   /** Full reset timestamp in ISO format */
   resetAt: string;
+
+  /** Route associated with this rate limit */
+  route?: string;
 }
 
 /**
  * Event emitted when a rate limit bucket expires
  */
 export interface RateLimitExpireEvent extends RateLimitEventBase {
+  type: "expire";
+
   /** Time in milliseconds the bucket was alive */
   lifespan: number;
 }
 
 /**
+ * Union type for all rate limit events
+ */
+export type RateLimitEvent =
+  | RateLimitHitEvent
+  | RateLimitUpdateEvent
+  | RateLimitExpireEvent;
+
+/**
+ * Types of queue events
+ */
+export type QueueEventType =
+  | "add"
+  | "process"
+  | "complete"
+  | "timeout"
+  | "reject"
+  | "stateChange";
+
+/**
+ * Base interface for queue events
+ */
+export interface QueueEventBase extends RestEventBase {
+  /** Type of queue event */
+  type: QueueEventType;
+}
+
+/**
+ * Base interface for queue processing events
+ */
+export interface QueueProcessingEventBase extends QueueEventBase {
+  /** Time spent in queue (ms) */
+  queueTime: number;
+
+  /** API path for the request */
+  path: string;
+
+  /** HTTP method for the request */
+  method: Dispatcher.HttpMethod;
+
+  /** Priority level of the request */
+  priority: number;
+}
+
+/**
+ * Event emitted when an item is added to the queue
+ */
+export interface QueueAddEvent extends QueueProcessingEventBase {
+  type: "add";
+}
+
+/**
+ * Event emitted when an item starts processing from the queue
+ */
+export interface QueueProcessEvent extends QueueProcessingEventBase {
+  type: "process";
+}
+
+/**
+ * Event emitted when an item is completed
+ */
+export interface QueueCompleteEvent extends QueueProcessingEventBase {
+  type: "complete";
+
+  /** Whether the request completed successfully */
+  success: boolean;
+}
+
+/**
+ * Event emitted when an item times out in the queue
+ */
+export interface QueueTimeoutEvent extends QueueProcessingEventBase {
+  type: "timeout";
+}
+
+/**
+ * Event emitted when an item is rejected due to queue being full
+ */
+export interface QueueRejectEvent extends QueueProcessingEventBase {
+  type: "reject";
+  /** Reason for rejection */
+  reason: string;
+}
+
+/**
+ * Event emitted when queue state changes
+ */
+export interface QueueStateChangeEvent extends QueueEventBase {
+  type: "stateChange";
+
+  /** Number of items currently in the queue */
+  queueSize: number;
+
+  /** Number of requests currently executing */
+  running: number;
+
+  /** Maximum allowed concurrent requests */
+  concurrency: number;
+
+  /** What triggered the state change */
+  trigger?: "add" | "process" | "complete" | "timeout" | "reject" | "clear";
+}
+
+/**
+ * Union type for all queue events
+ */
+export type QueueEvent =
+  | QueueAddEvent
+  | QueueProcessEvent
+  | QueueCompleteEvent
+  | QueueTimeoutEvent
+  | QueueRejectEvent
+  | QueueStateChangeEvent;
+
+/**
  * Event emitted when a request retry is attempted
  */
-export interface RetryAttemptEvent extends RestEventBase {
+export interface RetryEvent extends RestEventBase {
   /** Original error that triggered the retry */
   error: Error;
 
@@ -187,105 +342,18 @@ export interface RetryAttemptEvent extends RestEventBase {
 }
 
 /**
- * Event payload for queue state changes
- */
-export interface QueueStateEvent {
-  /**
-   * Timestamp of the event
-   */
-  timestamp: string;
-
-  /**
-   * Number of items currently in the queue
-   */
-  queueSize: number;
-
-  /**
-   * Number of requests currently executing
-   */
-  running: number;
-
-  /**
-   * Maximum allowed concurrent requests
-   */
-  concurrency: number;
-}
-
-/**
- * Event payload for request processing events
- */
-export interface QueueProcessEvent {
-  /**
-   * Timestamp of the event
-   */
-  timestamp: string;
-
-  /**
-   * Unique ID of the request
-   */
-  requestId: string;
-
-  /**
-   * Time spent in queue (ms)
-   */
-  queueTime: number;
-
-  /**
-   * API path for the request
-   */
-  path: string;
-
-  /**
-   * HTTP method for the request
-   */
-  method: Dispatcher.HttpMethod;
-
-  /**
-   * Priority level of the request
-   */
-  priority: number;
-}
-
-/**
  * Map of event names to their corresponding payload types
  */
 export interface RestEvents {
-  /** Emitted when a request is about to be sent */
-  requestStart: [event: RequestStartEvent];
+  /** Unified event for the complete HTTP request lifecycle */
+  request: [event: RequestEvent];
 
-  /** Emitted when a request completes successfully */
-  requestComplete: [event: RequestCompleteEvent];
+  /** Unified event for all rate limit related operations */
+  rateLimit: [event: RateLimitEvent];
 
-  /** Emitted when a request fails */
-  requestFailure: [event: RequestFailureEvent];
+  /** Unified event for all queue operations */
+  queue: [event: QueueEvent];
 
-  /** Emitted when a rate limit is hit */
-  rateLimitHit: [event: RateLimitHitEvent];
-
-  /** Emitted when rate limit information is updated */
-  rateLimitUpdate: [event: RateLimitUpdateEvent];
-
-  /** Emitted when a rate limit bucket expires */
-  rateLimitExpire: [event: RateLimitExpireEvent];
-
-  /** Emitted when a request retry is attempted */
-  retryAttempt: [event: RetryAttemptEvent];
-
-  /** Emitted when an item is added to the queue */
-  queueAdd: [event: QueueProcessEvent];
-
-  /** Emitted when an item starts processing from the queue */
-  queueProcess: [event: QueueProcessEvent];
-
-  /** Emitted when an item is completed (successfully or with error) */
-  queueComplete: [event: QueueProcessEvent & { success: boolean }];
-
-  /** Emitted when an item times out in the queue */
-  queueTimeout: [event: QueueProcessEvent];
-
-  /** Emitted when queue state changes (size, running count) */
-  queueState: [event: QueueStateEvent];
-
-  /** Emitted when an item is rejected due to queue being full */
-  queueReject: [event: QueueProcessEvent & { reason: string }];
+  /** Event for retry attempts */
+  retry: [event: RetryEvent];
 }
