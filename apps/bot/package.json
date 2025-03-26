@@ -23,9 +23,7 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p .",
     "check": "biome check --write --unsafe .",
     "type-check": "tsc --noEmit"
   },

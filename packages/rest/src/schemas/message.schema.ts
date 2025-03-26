@@ -111,7 +111,7 @@ export interface CreateMessageSchema {
    *
    * @optional
    */
-  components?: ActionRowEntity;
+  components?: ActionRowEntity[];
 
   /**
    * IDs of up to 3 stickers to send in the message

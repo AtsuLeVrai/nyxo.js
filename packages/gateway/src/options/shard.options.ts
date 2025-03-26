@@ -1,68 +1,27 @@
 import { z } from "zod";
 
 /**
- * Options for configuring Gateway sharding behavior
- *
- * Sharding is used to distribute the bot's connections across multiple WebSocket
- * connections for scaling and performance.
+ * Options for configuring health checks for shards
  */
-export const ShardScalingOptions = z
-  .object({
-    /**
-     * Strategy for scaling shards
-     *
-     * - "balanced": Distributes shards evenly across sessions
-     * - "minimal-disruption": Minimizes disruption when scaling up or down
-     */
-    strategy: z.enum(["balanced", "minimal-disruption"]).default("balanced"),
-
-    /**
-     * Whether to wait for all shards to be ready before starting the bot
-     *
-     * This is useful for ensuring all shards are connected and ready before processing events.
-     */
-    waitForReady: z.boolean().default(true),
-
-    /**
-     * Timeout for waiting for all shards to be ready in milliseconds
-     *
-     * If all shards are not ready within this time, the bot will start anyway.
-     */
-    timeout: z.number().int().default(30000),
-  })
-  .strict()
-  .readonly();
-
-export type ShardScalingOptions = z.infer<typeof ShardScalingOptions>;
-
 export const ShardHealthCheckOptions = z
   .object({
     /**
      * Interval for health checks in milliseconds
-     *
-     * Health checks are used to monitor the bot's status and ensure it's running smoothly.
      */
     interval: z.number().int().positive().default(30000),
 
     /**
-     * Threshold for considering the bot "unhealthy" in milliseconds
-     *
-     * If the bot does not respond to a health check within this time, it is considered unhealthy.
+     * Threshold for considering a shard "unhealthy" based on latency in milliseconds
      */
     latencyThreshold: z.number().int().positive().default(500),
 
     /**
-     * Heartbeat failure threshold before considering the bot "unhealthy"
-     */
-    heartbeatFailureThreshold: z.number().int().positive().default(3),
-
-    /**
-     * Threshold for considering the bot "stalled" in milliseconds
+     * Threshold for considering a shard "stalled" in milliseconds
      */
     stalledThreshold: z.number().int().positive().default(90000),
 
     /**
-     * Whether to automatically restart the bot if a health check fails
+     * Whether to automatically attempt to revive unhealthy shards
      */
     autoRevive: z.boolean().default(true),
   })
@@ -73,9 +32,6 @@ export type ShardHealthCheckOptions = z.infer<typeof ShardHealthCheckOptions>;
 
 /**
  * Options for configuring Gateway sharding behavior
- *
- * Sharding is used to distribute the bot's connections across multiple WebSocket
- * connections for scaling and performance.
  */
 export const ShardOptions = z
   .object({
@@ -129,60 +85,17 @@ export const ShardOptions = z
       .describe("Threshold for enabling sharding based on guild count"),
 
     /**
-     * Threshold for treating a bot as "very large" which applies additional scaling optimizations
-     *
-     * For very large bots, additional validations and optimizations are applied.
-     */
-    veryLargeThreshold: z
-      .number()
-      .positive()
-      .default(150000)
-      .describe("Threshold for treating a bot as 'very large'"),
-
-    /**
-     * Minimum session limit to enforce for large bots
-     *
-     * Ensures enough sessions are allocated for proper functionality of large bots.
-     */
-    minSessionLimit: z
-      .number()
-      .positive()
-      .default(2000)
-      .describe("Minimum session limit to enforce for large bots"),
-
-    /**
-     * Number of sessions to allocate per guild (divided by 1000)
-     *
-     * Used to calculate appropriate session limits for large bots.
-     */
-    sessionsPerGuilds: z
-      .number()
-      .positive()
-      .default(5)
-      .describe("Number of sessions to allocate per 1000 guilds"),
-
-    /**
      * Whether to force sharding even if not recommended
      *
-     * By default, sharding is only enabled when the bot is very large or the guild count exceeds the threshold.
+     * By default, sharding is only enabled when the guild count exceeds the threshold.
      */
     force: z
       .boolean()
       .default(false)
-      .optional()
       .describe("Force sharding even if not recommended"),
 
     /**
-     * Scaling options for shards
-     *
-     * Used to configure scaling behavior for shards
-     */
-    scaling: ShardScalingOptions.default({}),
-
-    /**
-     * Health check options for monitoring bot status
-     *
-     * Used to configure health checks for monitoring the bot's status and ensuring it's running smoothly.
+     * Health check options for monitoring shard status
      */
     healthCheck: ShardHealthCheckOptions.default({}),
   })
@@ -202,8 +115,7 @@ export const ShardOptions = z
         "Shard list must contain only valid shard IDs for the total shards provided",
       path: ["shardList"],
     },
-  )
-  .sourceType();
+  );
 
 /**
  * Type definition for ShardOptions

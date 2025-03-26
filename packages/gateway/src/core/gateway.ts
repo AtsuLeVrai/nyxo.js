@@ -475,7 +475,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param code - WebSocket close code
    * @throws {Error} If destruction fails
    */
-  async destroy(code = 1000): Promise<void> {
+  destroy(code = 1000): void {
     try {
       // Close the WebSocket connection
       this.#closeWebSocket(code);
@@ -492,7 +492,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.#circuitBreaker.destroy();
 
       if (this.#shard.isEnabled()) {
-        await this.#shard.destroy();
+        this.#shard.destroy();
       }
 
       // Clear any event listeners
@@ -663,7 +663,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     switch (payload.op) {
       case GatewayOpcodes.Dispatch:
-        await this.#handleDispatch(payload);
+        this.#handleDispatch(payload);
         break;
 
       case GatewayOpcodes.Hello:
@@ -711,7 +711,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param payload - Dispatch payload
    */
-  async #handleDispatch(payload: PayloadEntity): Promise<void> {
+  #handleDispatch(payload: PayloadEntity): void {
     if (!payload.t) {
       return;
     }
@@ -719,7 +719,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     switch (payload.t) {
       case "READY": {
         const data = payload.d as ReadyEntity;
-        await this.#handleReady(data);
+        this.#handleReady(data);
         break;
       }
 
@@ -727,7 +727,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         if (this.#shard.isEnabled()) {
           const data = payload.d as GuildCreateEntity;
           if ("id" in data && !("unavailable" in data)) {
-            await this.#shard.addGuildToShard(data.id);
+            this.#shard.addGuildToShard(data.id);
           }
         }
         break;
@@ -737,7 +737,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         if (this.#shard.isEnabled()) {
           const data = payload.d as UnavailableGuildEntity;
           if ("id" in data) {
-            await this.#shard.removeGuildFromShard(data.id);
+            this.#shard.removeGuildFromShard(data.id);
           }
         }
         break;
@@ -760,7 +760,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param data - Ready payload data
    */
-  async #handleReady(data: ReadyEntity): Promise<void> {
+  #handleReady(data: ReadyEntity): void {
     // Update session information
     this.setSession(data.session_id, data.resume_gateway_url);
 
@@ -768,9 +768,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     if (this.#shard.isEnabled()) {
       const shard = this.#shard.getShardInfo(data.shard?.[0] ?? 0);
       if (shard) {
-        await this.#shard.setShardStatus(shard.shardId, "ready");
+        this.#shard.setShardStatus(shard.shardId, "ready");
         const guildIds = data.guilds.map((guild) => guild.id);
-        await this.#shard.addGuildsToShard(shard.shardId, guildIds);
+        this.#shard.addGuildsToShard(shard.shardId, guildIds);
       }
     }
 

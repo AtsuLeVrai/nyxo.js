@@ -1,11 +1,10 @@
 import { readFileSync } from "node:fs";
 import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
+import { Extractor, ExtractorConfig } from "@microsoft/api-extractor";
 import chalk from "chalk";
+import esbuild from "esbuild";
 import figures from "figures";
-import { rollup } from "rollup";
-import dts from "rollup-plugin-dts";
-import { swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -77,83 +76,6 @@ function readPackageJson() {
   }
 }
 
-// Rollup configuration for JS bundles
-function getRollupConfig() {
-  const pkg = readPackageJson();
-
-  // External modules (will not be bundled)
-  const externals = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.peerDependencies || {}),
-    /^node:/,
-  ];
-
-  // Output definitions
-  const outputs = [
-    {
-      file: resolve(paths.dist, "index.mjs"),
-      format: "esm",
-      sourcemap: !isProduction,
-      exports: "named",
-    },
-    {
-      file: resolve(paths.dist, "index.cjs"),
-      format: "cjs",
-      sourcemap: !isProduction,
-      exports: "named",
-    },
-  ];
-
-  // Rollup configuration
-  const config = {
-    input: resolve(paths.src, "index.ts"),
-    external: externals,
-    treeshake: true,
-    plugins: [
-      swc({
-        jsc: {
-          target: "esnext",
-          parser: {
-            syntax: "typescript",
-            tsx: false,
-            decorators: true,
-            dynamicImport: true,
-          },
-          transform: {
-            decoratorMetadata: true,
-            useDefineForClassFields: true,
-          },
-        },
-        sourceMaps: !isProduction,
-      }),
-    ],
-  };
-
-  return { config, outputs };
-}
-
-// Rollup configuration for d.ts bundle
-function getDtsRollupConfig() {
-  const pkg = readPackageJson();
-
-  // External modules (will not be bundled)
-  const externals = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.peerDependencies || {}),
-    /^node:/,
-  ];
-
-  return {
-    input: resolve(paths.temp, "index.d.ts"),
-    output: {
-      file: resolve(paths.dist, "index.d.ts"),
-      format: "es",
-    },
-    external: externals,
-    plugins: [dts()],
-  };
-}
-
 // Clean directories
 async function clean() {
   try {
@@ -173,7 +95,53 @@ async function clean() {
   }
 }
 
-// Generate TypeScript declaration files using rollup-plugin-dts
+// Build JavaScript bundles with Rollup
+async function buildBundles() {
+  try {
+    const pkg = readPackageJson();
+
+    // External modules (will not be bundled)
+    const external = [
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {}),
+    ];
+
+    // Common options for all builds
+    const commonOptions = {
+      entryPoints: [resolve(paths.src, "index.ts")],
+      bundle: true,
+      platform: "node",
+      target: "esnext",
+      sourcemap: !isProduction,
+      external: external,
+    };
+
+    // Build ESM and CJS bundles
+    await Promise.all([
+      esbuild.build({
+        ...commonOptions,
+        outfile: resolve(paths.dist, "index.mjs"),
+        format: "esm",
+      }),
+      esbuild.build({
+        ...commonOptions,
+        outfile: resolve(paths.dist, "index.cjs"),
+        format: "cjs",
+      }),
+    ]);
+
+    // Log the build results
+    const esmStats = await stat(resolve(paths.dist, "index.mjs"));
+    const cjsStats = await stat(resolve(paths.dist, "index.cjs"));
+
+    Logger.success(`ESM bundle generated (${esmStats.size} bytes)`);
+    Logger.success(`CJS bundle generated (${cjsStats.size} bytes)`);
+  } catch (error) {
+    throw new Error(`Bundle creation failed: ${error.message}`);
+  }
+}
+
+// Generate TypeScript declaration files using tsc
 async function compileTypes() {
   try {
     // Find tsconfig.json file
@@ -202,6 +170,7 @@ async function compileTypes() {
     const program = ts.createProgram(parsedConfig.fileNames, {
       ...parsedConfig.options,
       declaration: true,
+      declarationMap: !isProduction,
       emitDeclarationOnly: true,
       declarationDir: isProduction ? paths.temp : paths.dist,
       outDir: isProduction ? paths.temp : paths.dist,
@@ -242,24 +211,11 @@ async function compileTypes() {
       throw new Error("TypeScript declaration compilation failed");
     }
 
-    // In production mode, use rollup-plugin-dts to bundle declarations
+    // In production mode, use API Extractor to bundle declarations
     if (isProduction) {
-      const dtsConfig = getDtsRollupConfig();
-
-      try {
-        // Create the .d.ts bundle
-        const dtsBundle = await rollup(dtsConfig);
-        await dtsBundle.write(dtsConfig.output);
-        await dtsBundle.close();
-
-        const stats = await stat(dtsConfig.output.file);
-        Logger.success(`Declaration bundle generated (${stats.size} bytes)`);
-      } catch (rollupError) {
-        throw new Error(`Declaration bundling failed: ${rollupError.message}`);
-      }
+      await runApiExtractor();
     }
 
-    // Clean up temp directory after extraction
     await rm(paths.temp, { recursive: true, force: true });
 
     Logger.success("Type generation completed");
@@ -268,31 +224,80 @@ async function compileTypes() {
   }
 }
 
-// Build JavaScript bundles with Rollup
-async function buildBundles() {
+// Run API Extractor to bundle .d.ts files
+async function runApiExtractor() {
   try {
-    const { config, outputs } = getRollupConfig();
+    Logger.debug("Running API Extractor");
 
-    // Create bundle with Rollup
-    const bundle = await rollup(config);
+    // Create in-memory API Extractor configuration
+    // Only keeping the minimal required configuration for d.ts bundling
+    const apiExtractorConfig = {
+      $schema:
+        "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+      projectFolder: paths.root,
+      mainEntryPointFilePath: resolve(paths.temp, "index.d.ts"),
 
-    // Generate output files (ESM and CJS)
-    await Promise.all(
-      outputs.map(async (output) => {
-        await bundle.write(output);
-        const filePath = output.file;
-        const stats = await stat(filePath);
+      // Required section
+      compiler: {
+        tsconfigFilePath: paths.tsconfig,
+        skipLibCheck: true,
+      },
 
-        Logger.success(
-          `${output.format.toUpperCase()} bundle generated (${stats.size} bytes)`,
-        );
-      }),
-    );
+      // The only section we actually want to use
+      dtsRollup: {
+        enabled: true,
+        untrimmedFilePath: "",
+        betaTrimmedFilePath: "",
+        publicTrimmedFilePath: resolve(paths.dist, "index.d.ts"),
+      },
 
-    // Release resources
-    await bundle.close();
+      // Disabling everything else
+      apiReport: { enabled: false },
+      docModel: { enabled: false },
+      tsdocMetadata: { enabled: false },
+
+      // Message configuration
+      messages: {
+        compilerMessageReporting: {
+          default: { logLevel: "warning" },
+        },
+        extractorMessageReporting: {
+          default: { logLevel: "warning" },
+          "ae-missing-release-tag": { logLevel: "none" },
+        },
+        tsdocMessageReporting: {
+          default: { logLevel: "warning" },
+        },
+      },
+    };
+
+    // Prepare the configuration for API Extractor
+    const extractorConfig = ExtractorConfig.prepare({
+      configObject: apiExtractorConfig,
+      configObjectFullPath: paths.root,
+      packageJsonFullPath: paths.package,
+    });
+
+    // Run API Extractor
+    const extractorResult = Extractor.invoke(extractorConfig, {
+      localBuild: true,
+      showVerboseMessages: true,
+    });
+
+    if (extractorResult.succeeded) {
+      Logger.success("API Extractor completed successfully");
+    } else {
+      Logger.warn("API Extractor completed with warnings");
+    }
+
+    // Verify the output file existence
+    const outputDtsPath = resolve(paths.dist, "index.d.ts");
+    const stats = await stat(outputDtsPath);
+    Logger.success(`Declaration bundle generated (${stats.size} bytes)`);
+
+    return extractorResult;
   } catch (error) {
-    throw new Error(`Bundle creation failed: ${error.message}`);
+    throw new Error(`API Extractor failed: ${error.message}`);
   }
 }
 

@@ -1,5 +1,11 @@
+import {
+  ButtonStyle,
+  ComponentType,
+  EmbedType,
+  type MessageEntity,
+} from "@nyxjs/core";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
-import { Rest } from "@nyxjs/rest";
+import { ApiError, Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
 
 const { parsed } = config({ debug: true });
@@ -186,8 +192,38 @@ gateway.on("circuitFailure", (event) => {
   console.log("[GATEWAY] Circuit failure", event);
 });
 
-gateway.on("dispatch", (event, data) => {
+gateway.on("dispatch", async (event, data) => {
   console.log("[GATEWAY] Event dispatched", event, data);
+
+  if (event === "MESSAGE_CREATE") {
+    const message = data as MessageEntity;
+    if (message.content === "!ping") {
+      await rest.messages.createMessage(message.channel_id, {
+        content: "Pong",
+        embeds: [
+          {
+            type: EmbedType.Rich,
+            title: "Pong".repeat(150000),
+            description: "Pong!",
+            color: 0x00ff00,
+          },
+        ],
+        components: [
+          {
+            type: ComponentType.ActionRow,
+            components: [
+              {
+                type: ComponentType.Button,
+                style: ButtonStyle.Success,
+                label: "Pong",
+                custom_id: "ping",
+              },
+            ],
+          },
+        ],
+      });
+    }
+  }
 });
 
 async function main(): Promise<void> {
@@ -198,10 +234,14 @@ main().catch(console.error);
 
 process.on("SIGINT", async () => {
   await rest.destroy();
-  await gateway.destroy();
+  gateway.destroy();
   process.exit(0);
 });
 
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled rejection", error);
+
+  if (error instanceof ApiError) {
+    console.error("API Error", JSON.stringify(error.errors, null, 2));
+  }
 });

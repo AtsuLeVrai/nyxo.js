@@ -34,6 +34,7 @@
       "@biomejs/biome",
       "bufferutil",
       "erlpack",
+      "esbuild",
       "sharp",
       "zlib-sync"
     ]
