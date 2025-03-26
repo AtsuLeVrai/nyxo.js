@@ -119,7 +119,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         parsedOptions.token = rest.token;
       }
 
-      this.#options = GatewayOptions.parse(options);
+      this.#options = GatewayOptions.parse(parsedOptions);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
