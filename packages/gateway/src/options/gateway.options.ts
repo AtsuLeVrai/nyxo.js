@@ -1,6 +1,9 @@
 import { ApiVersion, BitFieldManager } from "@nyxjs/core";
 import { z } from "zod";
-import { GatewayIntentsBits, UpdatePresenceEntity } from "../types/index.js";
+import {
+  GatewayIntentsBits,
+  type UpdatePresenceEntity,
+} from "../types/index.js";
 import { CircuitBreakerOptions } from "./circuit-breaker.options.js";
 import { HeartbeatOptions } from "./heartbeat.options.js";
 import { ShardOptions } from "./shard.options.js";
@@ -128,9 +131,10 @@ export const GatewayOptions = z.object({
    *
    * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence}
    */
-  presence: UpdatePresenceEntity.optional().describe(
-    "Initial presence data to set upon connecting",
-  ),
+  presence: z
+    .custom<UpdatePresenceEntity>()
+    .optional()
+    .describe("Initial presence data to set upon connecting"),
 
   /**
    * Heartbeat configuration options

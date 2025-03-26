@@ -1,36 +1,35 @@
-import {
+import type {
   AnyChannelEntity,
-  type AnyInteractionEntity,
+  AnyInteractionEntity,
   AnyThreadChannelEntity,
   ApiVersion,
   ApplicationEntity,
   AuditLogEntryEntity,
   AutoModerationActionEntity,
-  type AutoModerationRuleEntity,
+  AutoModerationRuleEntity,
   AutoModerationRuleTriggerType,
   AvatarDecorationDataEntity,
   EmojiEntity,
-  type EntitlementEntity,
-  type GuildApplicationCommandPermissionEntity,
+  EntitlementEntity,
+  GuildApplicationCommandPermissionEntity,
   GuildEntity,
   GuildMemberEntity,
   GuildScheduledEventEntity,
   IntegrationEntity,
   InviteTargetType,
-  type MessageEntity,
+  MessageEntity,
   RoleEntity,
   Snowflake,
   SoundboardSoundEntity,
   StageInstanceEntity,
   StickerEntity,
-  type SubscriptionEntity,
+  SubscriptionEntity,
   ThreadMemberEntity,
   UnavailableGuildEntity,
   UserEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import { ReactionTypeFlag } from "@nyxjs/rest";
-import { z } from "zod";
+import type { ReactionTypeFlag } from "@nyxjs/rest";
 import { GatewayOpcodes } from "./index.js";
 
 /**
@@ -39,34 +38,40 @@ import { GatewayOpcodes } from "./index.js";
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#auto-moderation-action-execution-auto-moderation-action-execution-event-fields}
  */
-export const AutoModerationActionExecutionEntity = z.object({
+export interface AutoModerationActionExecutionEntity {
   /** ID of the guild in which action was executed */
-  guild_id: Snowflake,
-  /** Action which was executed */
-  action: AutoModerationActionEntity,
-  /** ID of the rule which action belongs to */
-  rule_id: Snowflake,
-  /** Trigger type of rule which was triggered */
-  rule_trigger_type: z.nativeEnum(AutoModerationRuleTriggerType),
-  /** ID of the user which generated the content which triggered the rule */
-  user_id: Snowflake,
-  /** ID of the channel in which user content was posted */
-  channel_id: Snowflake.optional(),
-  /** ID of any user message which content belongs to */
-  message_id: Snowflake.optional(),
-  /** ID of any system auto moderation messages posted as a result of this action */
-  alert_system_message_id: Snowflake.optional(),
-  /** User-generated text content (requires MESSAGE_CONTENT intent) */
-  content: z.string().optional(),
-  /** Word or phrase configured in the rule that triggered the rule */
-  matched_keyword: z.string().nullable(),
-  /** Substring in content that triggered the rule (requires MESSAGE_CONTENT intent) */
-  matched_content: z.string().nullable(),
-});
+  guild_id: Snowflake;
 
-export type AutoModerationActionExecutionEntity = z.infer<
-  typeof AutoModerationActionExecutionEntity
->;
+  /** Action which was executed */
+  action: AutoModerationActionEntity;
+
+  /** ID of the rule which action belongs to */
+  rule_id: Snowflake;
+
+  /** Trigger type of rule which was triggered */
+  rule_trigger_type: AutoModerationRuleTriggerType;
+
+  /** ID of the user which generated the content which triggered the rule */
+  user_id: Snowflake;
+
+  /** ID of the channel in which user content was posted */
+  channel_id?: Snowflake;
+
+  /** ID of any user message which content belongs to */
+  message_id?: Snowflake;
+
+  /** ID of any system auto moderation messages posted as a result of this action */
+  alert_system_message_id?: Snowflake;
+
+  /** User-generated text content (requires MESSAGE_CONTENT intent) */
+  content?: string;
+
+  /** Word or phrase configured in the rule that triggered the rule */
+  matched_keyword: string | null;
+
+  /** Substring in content that triggered the rule (requires MESSAGE_CONTENT intent) */
+  matched_content: string | null;
+}
 
 /**
  * Channel Pins Update Event
@@ -75,16 +80,16 @@ export type AutoModerationActionExecutionEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#channel-pins-update-channel-pins-update-event-fields}
  */
-export const ChannelPinsUpdateEntity = z.object({
+export interface ChannelPinsUpdateEntity {
   /** ID of the guild */
-  guild_id: Snowflake.nullish(),
-  /** ID of the channel */
-  channel_id: Snowflake,
-  /** Time at which the most recent pinned message was pinned */
-  last_pin_timestamp: z.string().nullable(),
-});
+  guild_id?: Snowflake | null;
 
-export type ChannelPinsUpdateEntity = z.infer<typeof ChannelPinsUpdateEntity>;
+  /** ID of the channel */
+  channel_id: Snowflake;
+
+  /** Time at which the most recent pinned message was pinned */
+  last_pin_timestamp: string | null;
+}
 
 /**
  * Thread Members Update Event
@@ -94,22 +99,22 @@ export type ChannelPinsUpdateEntity = z.infer<typeof ChannelPinsUpdateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-members-update-thread-members-update-event-fields}
  */
-export const ThreadMembersUpdateEntity = z.object({
+export interface ThreadMembersUpdateEntity {
   /** ID of the thread */
-  id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake,
-  /** Approximate number of members in the thread, capped at 50 */
-  member_count: z.number().int(),
-  /** Users who were added to the thread */
-  added_members: ThreadMemberEntity.array().optional(),
-  /** ID of the users who were removed from the thread */
-  removed_member_ids: z.string().array().optional(),
-});
+  id: Snowflake;
 
-export type ThreadMembersUpdateEntity = z.infer<
-  typeof ThreadMembersUpdateEntity
->;
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** Approximate number of members in the thread, capped at 50 */
+  member_count: number;
+
+  /** Users who were added to the thread */
+  added_members?: ThreadMemberEntity[];
+
+  /** ID of the users who were removed from the thread */
+  removed_member_ids?: string[];
+}
 
 /**
  * Thread Member Update Event
@@ -117,12 +122,10 @@ export type ThreadMembersUpdateEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-member-update-thread-member-update-event-extra-fields}
  */
-export const ThreadMemberUpdateEntity = ThreadMemberEntity.extend({
+export interface ThreadMemberUpdateEntity extends ThreadMemberEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-});
-
-export type ThreadMemberUpdateEntity = z.infer<typeof ThreadMemberUpdateEntity>;
+  guild_id: Snowflake;
+}
 
 /**
  * Thread List Sync Event
@@ -130,18 +133,19 @@ export type ThreadMemberUpdateEntity = z.infer<typeof ThreadMemberUpdateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-list-sync-thread-list-sync-event-fields}
  */
-export const ThreadListSyncEntity = z.object({
+export interface ThreadListSyncEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** Parent channel IDs whose threads are being synced */
-  channel_ids: Snowflake.array().optional(),
-  /** All active threads in the given channels that the current user can access */
-  threads: AnyThreadChannelEntity.array(),
-  /** All thread member objects from the synced threads for the current user */
-  members: ThreadMemberEntity.array(),
-});
+  guild_id: Snowflake;
 
-export type ThreadListSyncEntity = z.infer<typeof ThreadListSyncEntity>;
+  /** Parent channel IDs whose threads are being synced */
+  channel_ids?: Snowflake[];
+
+  /** All active threads in the given channels that the current user can access */
+  threads: AnyThreadChannelEntity[];
+
+  /** All thread member objects from the synced threads for the current user */
+  members: ThreadMemberEntity[];
+}
 
 /**
  * Soundboard Sounds Event
@@ -150,14 +154,13 @@ export type ThreadListSyncEntity = z.infer<typeof ThreadListSyncEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#soundboard-sounds-soundboard-sounds-event-fields}
  */
-export const SoundboardSoundsEntity = z.object({
+export interface SoundboardSoundsEntity {
   /** The guild's soundboard sounds */
-  soundboard_sounds: SoundboardSoundEntity.array(),
-  /** ID of the guild */
-  guild_id: Snowflake,
-});
+  soundboard_sounds: SoundboardSoundEntity[];
 
-export type SoundboardSoundsEntity = z.infer<typeof SoundboardSoundsEntity>;
+  /** ID of the guild */
+  guild_id: Snowflake;
+}
 
 /**
  * Guild Soundboard Sounds Update Event
@@ -165,11 +168,8 @@ export type SoundboardSoundsEntity = z.infer<typeof SoundboardSoundsEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sounds-update-guild-soundboard-sounds-update-event-fields}
  */
-export const GuildSoundboardSoundsUpdateEntity = SoundboardSoundsEntity;
-
-export type GuildSoundboardSoundsUpdateEntity = z.infer<
-  typeof GuildSoundboardSoundsUpdateEntity
->;
+export interface GuildSoundboardSoundsUpdateEntity
+  extends SoundboardSoundsEntity {}
 
 /**
  * Guild Soundboard Sound Delete Event
@@ -177,16 +177,13 @@ export type GuildSoundboardSoundsUpdateEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sound-delete-guild-soundboard-sound-delete-event-fields}
  */
-export const GuildSoundboardSoundDeleteEntity = z.object({
+export interface GuildSoundboardSoundDeleteEntity {
   /** ID of the sound that was deleted */
-  sound_id: Snowflake,
-  /** ID of the guild the sound was in */
-  guild_id: Snowflake,
-});
+  sound_id: Snowflake;
 
-export type GuildSoundboardSoundDeleteEntity = z.infer<
-  typeof GuildSoundboardSoundDeleteEntity
->;
+  /** ID of the guild the sound was in */
+  guild_id: Snowflake;
+}
 
 /**
  * Guild Scheduled Event User Remove Event
@@ -194,18 +191,16 @@ export type GuildSoundboardSoundDeleteEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-user-remove-guild-scheduled-event-user-remove-event-fields}
  */
-export const GuildScheduledEventUserRemoveEntity = z.object({
+export interface GuildScheduledEventUserRemoveEntity {
   /** ID of the guild scheduled event */
-  guild_scheduled_event_id: Snowflake,
-  /** ID of the user */
-  user_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake,
-});
+  guild_scheduled_event_id: Snowflake;
 
-export type GuildScheduledEventUserRemoveEntity = z.infer<
-  typeof GuildScheduledEventUserRemoveEntity
->;
+  /** ID of the user */
+  user_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id: Snowflake;
+}
 
 /**
  * Guild Scheduled Event User Add Event
@@ -213,12 +208,8 @@ export type GuildScheduledEventUserRemoveEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-user-add-guild-scheduled-event-user-add-event-fields}
  */
-export const GuildScheduledEventUserAddEntity =
-  GuildScheduledEventUserRemoveEntity;
-
-export type GuildScheduledEventUserAddEntity = z.infer<
-  typeof GuildScheduledEventUserAddEntity
->;
+export interface GuildScheduledEventUserAddEntity
+  extends GuildScheduledEventUserRemoveEntity {}
 
 /**
  * Activity Buttons Entity
@@ -226,14 +217,13 @@ export type GuildScheduledEventUserAddEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-buttons}
  */
-export const ActivityButtonsEntity = z.object({
+export interface ActivityButtonsEntity {
   /** Text shown on the button (1-32 characters) */
-  label: z.string(),
-  /** URL opened when clicking the button (1-512 characters) */
-  url: z.string().url(),
-});
+  label: string;
 
-export type ActivityButtonsEntity = z.infer<typeof ActivityButtonsEntity>;
+  /** URL opened when clicking the button (1-512 characters) */
+  url: string;
+}
 
 /**
  * Activity Flags
@@ -259,16 +249,16 @@ export enum ActivityFlags {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-secrets}
  */
-export const ActivitySecretsEntity = z.object({
+export interface ActivitySecretsEntity {
   /** Secret for joining a party */
-  join: z.string().optional(),
-  /** Secret for spectating a game */
-  spectate: z.string().optional(),
-  /** Secret for a specific instanced match */
-  match: z.string().optional(),
-});
+  join?: string;
 
-export type ActivitySecretsEntity = z.infer<typeof ActivitySecretsEntity>;
+  /** Secret for spectating a game */
+  spectate?: string;
+
+  /** Secret for a specific instanced match */
+  match?: string;
+}
 
 /**
  * Activity Asset Image
@@ -276,18 +266,19 @@ export type ActivitySecretsEntity = z.infer<typeof ActivitySecretsEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-asset-image}
  */
-export const ActivityAssetImageEntity = z.object({
+export interface ActivityAssetImageEntity {
   /** Text displayed when hovering over the large image of the activity */
-  large_text: z.string().optional(),
-  /** Large image asset */
-  large_image: z.string().optional(),
-  /** Text displayed when hovering over the small image of the activity */
-  small_text: z.string().optional(),
-  /** Small image asset */
-  small_image: z.string().optional(),
-});
+  large_text?: string;
 
-export type ActivityAssetImageEntity = z.infer<typeof ActivityAssetImageEntity>;
+  /** Large image asset */
+  large_image?: string;
+
+  /** Text displayed when hovering over the small image of the activity */
+  small_text?: string;
+
+  /** Small image asset */
+  small_image?: string;
+}
 
 /**
  * Activity Party
@@ -295,14 +286,13 @@ export type ActivityAssetImageEntity = z.infer<typeof ActivityAssetImageEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-party}
  */
-export const ActivityPartyEntity = z.object({
+export interface ActivityPartyEntity {
   /** ID of the party */
-  id: z.string().optional(),
-  /** Used to show the party's current and maximum size */
-  size: z.tuple([z.number(), z.number()]).optional(),
-});
+  id?: string;
 
-export type ActivityPartyEntity = z.infer<typeof ActivityPartyEntity>;
+  /** Used to show the party's current and maximum size */
+  size?: [number, number];
+}
 
 /**
  * Activity Emoji
@@ -310,16 +300,16 @@ export type ActivityPartyEntity = z.infer<typeof ActivityPartyEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-emoji}
  */
-export const ActivityEmojiEntity = z.object({
+export interface ActivityEmojiEntity {
   /** Name of the emoji */
-  name: z.string(),
-  /** ID of the emoji */
-  id: Snowflake.optional(),
-  /** Whether the emoji is animated */
-  animated: z.boolean().optional(),
-});
+  name: string;
 
-export type ActivityEmojiEntity = z.infer<typeof ActivityEmojiEntity>;
+  /** ID of the emoji */
+  id?: Snowflake;
+
+  /** Whether the emoji is animated */
+  animated?: boolean;
+}
 
 /**
  * Activity Timestamps
@@ -327,14 +317,13 @@ export type ActivityEmojiEntity = z.infer<typeof ActivityEmojiEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-timestamps}
  */
-export const ActivityTimestampsEntity = z.object({
+export interface ActivityTimestampsEntity {
   /** Unix time (in milliseconds) of when the activity started */
-  start: z.number().int().optional(),
-  /** Unix time (in milliseconds) of when the activity ends */
-  end: z.number().int().optional(),
-});
+  start?: number;
 
-export type ActivityTimestampsEntity = z.infer<typeof ActivityTimestampsEntity>;
+  /** Unix time (in milliseconds) of when the activity ends */
+  end?: number;
+}
 
 /**
  * Activity Types
@@ -362,40 +351,52 @@ export enum ActivityType {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-structure}
  */
-export const ActivityEntity = z.object({
+export interface ActivityEntity {
   /** Activity's name */
-  name: z.string(),
-  /** Activity type */
-  type: z.nativeEnum(ActivityType),
-  /** Stream URL, is validated when type is 1 */
-  url: z.string().nullish(),
-  /** Unix timestamp (in milliseconds) of when the activity was added to the user's session */
-  created_at: z.union([z.number().int(), z.string()]),
-  /** Unix timestamps for start and/or end of the game */
-  timestamps: ActivityTimestampsEntity.optional(),
-  /** Application ID for the game */
-  application_id: Snowflake.optional(),
-  /** What the player is currently doing */
-  details: z.string().nullish(),
-  /** User's current party status, or text used for a custom status */
-  state: z.string().nullish(),
-  /** Emoji used for a custom status */
-  emoji: ActivityEmojiEntity.nullish(),
-  /** Information for the current party of the player */
-  party: ActivityPartyEntity.optional(),
-  /** Images for the presence and their hover texts */
-  assets: ActivityAssetImageEntity.optional(),
-  /** Secrets for Rich Presence joining and spectating */
-  secrets: ActivitySecretsEntity.optional(),
-  /** Whether or not the activity is an instanced game session */
-  instance: z.boolean().optional(),
-  /** Activity flags ORed together, describes what the payload includes */
-  flags: z.nativeEnum(ActivityFlags).optional(),
-  /** Custom buttons shown in the Rich Presence (max 2) */
-  buttons: ActivityButtonsEntity.array().optional(),
-});
+  name: string;
 
-export type ActivityEntity = z.infer<typeof ActivityEntity>;
+  /** Activity type */
+  type: ActivityType;
+
+  /** Stream URL, is validated when type is 1 */
+  url?: string | null;
+
+  /** Unix timestamp (in milliseconds) of when the activity was added to the user's session */
+  created_at: number | string;
+
+  /** Unix timestamps for start and/or end of the game */
+  timestamps?: ActivityTimestampsEntity;
+
+  /** Application ID for the game */
+  application_id?: Snowflake;
+
+  /** What the player is currently doing */
+  details?: string | null;
+
+  /** User's current party status, or text used for a custom status */
+  state?: string | null;
+
+  /** Emoji used for a custom status */
+  emoji?: ActivityEmojiEntity | null;
+
+  /** Information for the current party of the player */
+  party?: ActivityPartyEntity;
+
+  /** Images for the presence and their hover texts */
+  assets?: ActivityAssetImageEntity;
+
+  /** Secrets for Rich Presence joining and spectating */
+  secrets?: ActivitySecretsEntity;
+
+  /** Whether or not the activity is an instanced game session */
+  instance?: boolean;
+
+  /** Activity flags ORed together, describes what the payload includes */
+  flags?: ActivityFlags;
+
+  /** Custom buttons shown in the Rich Presence (max 2) */
+  buttons?: ActivityButtonsEntity[];
+}
 
 /**
  * Client Status Object
@@ -403,16 +404,16 @@ export type ActivityEntity = z.infer<typeof ActivityEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#client-status-object}
  */
-export const ClientStatusEntity = z.object({
+export interface ClientStatusEntity {
   /** User's status set for an active desktop (Windows, Linux, Mac) application session */
-  desktop: z.string().optional(),
-  /** User's status set for an active mobile (iOS, Android) application session */
-  mobile: z.string().optional(),
-  /** User's status set for an active web (browser, bot user) application session */
-  web: z.string().optional(),
-});
+  desktop?: string;
 
-export type ClientStatusEntity = z.infer<typeof ClientStatusEntity>;
+  /** User's status set for an active mobile (iOS, Android) application session */
+  mobile?: string;
+
+  /** User's status set for an active web (browser, bot user) application session */
+  web?: string;
+}
 
 /**
  * Presence Update
@@ -421,35 +422,34 @@ export type ClientStatusEntity = z.infer<typeof ClientStatusEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#presence-update-presence-update-event-fields}
  */
-export const PresenceEntity = z.object({
+export interface PresenceEntity {
   /** User whose presence is being updated */
-  user: UserEntity,
-  /** ID of the guild */
-  guild_id: Snowflake,
-  /** Either "idle", "dnd", "online", or "offline" */
-  status: z.string(),
-  /** User's current activities */
-  activities: ActivityEntity.array(),
-  /** User's platform-dependent status */
-  client_status: ClientStatusEntity,
-});
+  user: UserEntity;
 
-export type PresenceEntity = z.infer<typeof PresenceEntity>;
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** Either "idle", "dnd", "online", or "offline" */
+  status: string;
+
+  /** User's current activities */
+  activities: ActivityEntity[];
+
+  /** User's platform-dependent status */
+  client_status: ClientStatusEntity;
+}
 
 /**
  * Update Presence Status Type
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-status-types}
  */
-export const UpdatePresenceStatusType = z.enum([
-  "online",
-  "dnd",
-  "idle",
-  "invisible",
-  "offline",
-]);
-
-export type UpdatePresenceStatusType = z.infer<typeof UpdatePresenceStatusType>;
+export type UpdatePresenceStatusType =
+  | "online"
+  | "dnd"
+  | "idle"
+  | "invisible"
+  | "offline";
 
 /**
  * Guild Role Delete
@@ -457,14 +457,13 @@ export type UpdatePresenceStatusType = z.infer<typeof UpdatePresenceStatusType>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-delete-guild-role-delete-event-fields}
  */
-export const GuildRoleDeleteEntity = z.object({
+export interface GuildRoleDeleteEntity {
   /** ID of the role */
-  role_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake,
-});
+  role_id: Snowflake;
 
-export type GuildRoleDeleteEntity = z.infer<typeof GuildRoleDeleteEntity>;
+  /** ID of the guild */
+  guild_id: Snowflake;
+}
 
 /**
  * Guild Role Update
@@ -472,14 +471,13 @@ export type GuildRoleDeleteEntity = z.infer<typeof GuildRoleDeleteEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-update-guild-role-update-event-fields}
  */
-export const GuildRoleUpdateEntity = z.object({
+export interface GuildRoleUpdateEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** Role that was updated */
-  role: RoleEntity,
-});
+  guild_id: Snowflake;
 
-export type GuildRoleUpdateEntity = z.infer<typeof GuildRoleUpdateEntity>;
+  /** Role that was updated */
+  role: RoleEntity;
+}
 
 /**
  * Guild Role Create
@@ -487,9 +485,7 @@ export type GuildRoleUpdateEntity = z.infer<typeof GuildRoleUpdateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-create-guild-role-create-event-fields}
  */
-export const GuildRoleCreateEntity = GuildRoleUpdateEntity;
-
-export type GuildRoleCreateEntity = z.infer<typeof GuildRoleCreateEntity>;
+export interface GuildRoleCreateEntity extends GuildRoleUpdateEntity {}
 
 /**
  * Guild Members Chunk
@@ -498,24 +494,28 @@ export type GuildRoleCreateEntity = z.infer<typeof GuildRoleCreateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-members-chunk-guild-members-chunk-event-fields}
  */
-export const GuildMembersChunkEntity = z.object({
+export interface GuildMembersChunkEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** Set of guild members */
-  members: GuildMemberEntity.array(),
-  /** Chunk index in the expected chunks for this response (0 <= chunk_index < chunk_count) */
-  chunk_index: z.number().int(),
-  /** Total number of expected chunks for this response */
-  chunk_count: z.number().int(),
-  /** When passing an invalid ID to REQUEST_GUILD_MEMBERS, it will be returned here */
-  not_found: Snowflake.array().optional(),
-  /** When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here */
-  presences: PresenceEntity.array().optional(),
-  /** Nonce used in the Guild Members Request */
-  nonce: z.string().optional(),
-});
+  guild_id: Snowflake;
 
-export type GuildMembersChunkEntity = z.infer<typeof GuildMembersChunkEntity>;
+  /** Set of guild members */
+  members: GuildMemberEntity[];
+
+  /** Chunk index in the expected chunks for this response (0 <= chunk_index < chunk_count) */
+  chunk_index: number;
+
+  /** Total number of expected chunks for this response */
+  chunk_count: number;
+
+  /** When passing an invalid ID to REQUEST_GUILD_MEMBERS, it will be returned here */
+  not_found?: Snowflake[];
+
+  /** When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here */
+  presences?: PresenceEntity[];
+
+  /** Nonce used in the Guild Members Request */
+  nonce?: string;
+}
 
 /**
  * Guild Member Update
@@ -523,38 +523,49 @@ export type GuildMembersChunkEntity = z.infer<typeof GuildMembersChunkEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-update-guild-member-update-event-fields}
  */
-export const GuildMemberUpdateEntity = z.object({
+export interface GuildMemberUpdateEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** User role ids */
-  roles: Snowflake.array(),
-  /** User */
-  user: UserEntity,
-  /** Nickname of the user in the guild */
-  nick: z.string().nullish(),
-  /** Member's guild avatar hash */
-  avatar: z.string().nullable(),
-  /** Member's guild banner hash */
-  banner: z.string().nullable(),
-  /** When the user joined the guild */
-  joined_at: z.string().nullable(),
-  /** When the user starting boosting the guild */
-  premium_since: z.string().nullish(),
-  /** Whether the user is deafened in voice channels */
-  deaf: z.boolean().optional(),
-  /** Whether the user is muted in voice channels */
-  mute: z.boolean().optional(),
-  /** Whether the user has not yet passed the guild's Membership Screening requirements */
-  pending: z.boolean().optional(),
-  /** When the user's timeout will expire and the user will be able to communicate in the guild again */
-  communication_disabled_until: z.string().nullish(),
-  /** Guild member flags represented as a bit set, defaults to 0 */
-  flags: z.number().optional(),
-  /** Data for the member's guild avatar decoration */
-  avatar_decoration_data: AvatarDecorationDataEntity.nullish(),
-});
+  guild_id: Snowflake;
 
-export type GuildMemberUpdateEntity = z.infer<typeof GuildMemberUpdateEntity>;
+  /** User role ids */
+  roles: Snowflake[];
+
+  /** User */
+  user: UserEntity;
+
+  /** Nickname of the user in the guild */
+  nick?: string | null;
+
+  /** Member's guild avatar hash */
+  avatar: string | null;
+
+  /** Member's guild banner hash */
+  banner: string | null;
+
+  /** When the user joined the guild */
+  joined_at: string | null;
+
+  /** When the user starting boosting the guild */
+  premium_since?: string | null;
+
+  /** Whether the user is deafened in voice channels */
+  deaf?: boolean;
+
+  /** Whether the user is muted in voice channels */
+  mute?: boolean;
+
+  /** Whether the user has not yet passed the guild's Membership Screening requirements */
+  pending?: boolean;
+
+  /** When the user's timeout will expire and the user will be able to communicate in the guild again */
+  communication_disabled_until?: string | null;
+
+  /** Guild member flags represented as a bit set, defaults to 0 */
+  flags?: number;
+
+  /** Data for the member's guild avatar decoration */
+  avatar_decoration_data?: AvatarDecorationDataEntity | null;
+}
 
 /**
  * Guild Member Remove
@@ -562,14 +573,13 @@ export type GuildMemberUpdateEntity = z.infer<typeof GuildMemberUpdateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-remove-guild-member-remove-event-fields}
  */
-export const GuildMemberRemoveEntity = z.object({
+export interface GuildMemberRemoveEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** User who was removed */
-  user: UserEntity,
-});
+  guild_id: Snowflake;
 
-export type GuildMemberRemoveEntity = z.infer<typeof GuildMemberRemoveEntity>;
+  /** User who was removed */
+  user: UserEntity;
+}
 
 /**
  * Guild Member Add
@@ -577,12 +587,10 @@ export type GuildMemberRemoveEntity = z.infer<typeof GuildMemberRemoveEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-add-guild-member-add-extra-fields}
  */
-export const GuildMemberAddEntity = GuildMemberEntity.extend({
+export interface GuildMemberAddEntity extends GuildMemberEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-});
-
-export type GuildMemberAddEntity = z.infer<typeof GuildMemberAddEntity>;
+  guild_id: Snowflake;
+}
 
 /**
  * Guild Integrations Update
@@ -590,14 +598,10 @@ export type GuildMemberAddEntity = z.infer<typeof GuildMemberAddEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-integrations-update-guild-integrations-update-event-fields}
  */
-export const GuildIntegrationsUpdateEntity = z.object({
+export interface GuildIntegrationsUpdateEntity {
   /** ID of the guild whose integrations were updated */
-  guild_id: Snowflake,
-});
-
-export type GuildIntegrationsUpdateEntity = z.infer<
-  typeof GuildIntegrationsUpdateEntity
->;
+  guild_id: Snowflake;
+}
 
 /**
  * Guild Stickers Update
@@ -605,16 +609,13 @@ export type GuildIntegrationsUpdateEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-stickers-update-guild-stickers-update-event-fields}
  */
-export const GuildStickersUpdateEntity = z.object({
+export interface GuildStickersUpdateEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** Array of stickers */
-  stickers: StickerEntity.array(),
-});
+  guild_id: Snowflake;
 
-export type GuildStickersUpdateEntity = z.infer<
-  typeof GuildStickersUpdateEntity
->;
+  /** Array of stickers */
+  stickers: StickerEntity[];
+}
 
 /**
  * Guild Emojis Update
@@ -622,14 +623,13 @@ export type GuildStickersUpdateEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-emojis-update-guild-emojis-update-event-fields}
  */
-export const GuildEmojisUpdateEntity = z.object({
+export interface GuildEmojisUpdateEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** Array of emojis */
-  emojis: EmojiEntity.array(),
-});
+  guild_id: Snowflake;
 
-export type GuildEmojisUpdateEntity = z.infer<typeof GuildEmojisUpdateEntity>;
+  /** Array of emojis */
+  emojis: EmojiEntity[];
+}
 
 /**
  * Guild Ban Remove
@@ -637,14 +637,13 @@ export type GuildEmojisUpdateEntity = z.infer<typeof GuildEmojisUpdateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-ban-remove-guild-ban-remove-event-fields}
  */
-export const GuildBanRemoveEntity = z.object({
+export interface GuildBanRemoveEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** User who was unbanned */
-  user: UserEntity,
-});
+  guild_id: Snowflake;
 
-export type GuildBanRemoveEntity = z.infer<typeof GuildBanRemoveEntity>;
+  /** User who was unbanned */
+  user: UserEntity;
+}
 
 /**
  * Guild Ban Add
@@ -652,14 +651,13 @@ export type GuildBanRemoveEntity = z.infer<typeof GuildBanRemoveEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-ban-add-guild-ban-add-event-fields}
  */
-export const GuildBanAddEntity = z.object({
+export interface GuildBanAddEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** User who was banned */
-  user: UserEntity,
-});
+  guild_id: Snowflake;
 
-export type GuildBanAddEntity = z.infer<typeof GuildBanAddEntity>;
+  /** User who was banned */
+  user: UserEntity;
+}
 
 /**
  * Guild Audit Log Entry Create
@@ -668,14 +666,10 @@ export type GuildBanAddEntity = z.infer<typeof GuildBanAddEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-audit-log-entry-create-guild-audit-log-entry-create-event-extra-fields}
  */
-export const GuildAuditLogEntryCreateEntity = AuditLogEntryEntity.extend({
+export interface GuildAuditLogEntryCreateEntity extends AuditLogEntryEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-});
-
-export type GuildAuditLogEntryCreateEntity = z.infer<
-  typeof GuildAuditLogEntryCreateEntity
->;
+  guild_id: Snowflake;
+}
 
 /**
  * Guild Create
@@ -686,34 +680,43 @@ export type GuildAuditLogEntryCreateEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-create-guild-create-extra-fields}
  */
-export const GuildCreateEntity = GuildEntity.extend({
+export interface GuildCreateEntity extends GuildEntity {
   /** When this guild was joined at */
-  joined_at: z.string(),
-  /** true if this is considered a large guild */
-  large: z.boolean(),
-  /** true if this guild is unavailable due to an outage */
-  unavailable: z.boolean().optional(),
-  /** Total number of members in this guild */
-  member_count: z.number().int(),
-  /** States of members currently in voice channels; lacks the guild_id key */
-  voice_states: VoiceStateEntity.partial().array(),
-  /** Users in the guild */
-  members: GuildMemberEntity.array(),
-  /** Channels in the guild */
-  channels: AnyChannelEntity.array(),
-  /** All active threads in the guild that current user has permission to view */
-  threads: AnyThreadChannelEntity.array(),
-  /** Presences of the members in the guild */
-  presences: PresenceEntity.partial().array(),
-  /** Stage instances in the guild */
-  stage_instances: StageInstanceEntity.array(),
-  /** Scheduled events in the guild */
-  guild_scheduled_events: GuildScheduledEventEntity.array(),
-  /** Soundboard sounds in the guild */
-  soundboard_sounds: SoundboardSoundEntity.array(),
-});
+  joined_at: string;
 
-export type GuildCreateEntity = z.infer<typeof GuildCreateEntity>;
+  /** true if this is considered a large guild */
+  large: boolean;
+
+  /** true if this guild is unavailable due to an outage */
+  unavailable?: boolean;
+
+  /** Total number of members in this guild */
+  member_count: number;
+
+  /** States of members currently in voice channels; lacks the guild_id key */
+  voice_states: Partial<VoiceStateEntity>[];
+
+  /** Users in the guild */
+  members: GuildMemberEntity[];
+
+  /** Channels in the guild */
+  channels: AnyChannelEntity[];
+
+  /** All active threads in the guild that current user has permission to view */
+  threads: AnyThreadChannelEntity[];
+
+  /** Presences of the members in the guild */
+  presences: Partial<PresenceEntity>[];
+
+  /** Stage instances in the guild */
+  stage_instances: StageInstanceEntity[];
+
+  /** Scheduled events in the guild */
+  guild_scheduled_events: GuildScheduledEventEntity[];
+
+  /** Soundboard sounds in the guild */
+  soundboard_sounds: SoundboardSoundEntity[];
+}
 
 /**
  * Hello
@@ -722,30 +725,26 @@ export type GuildCreateEntity = z.infer<typeof GuildCreateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#hello-hello-structure}
  */
-export const HelloEntity = z.object({
+export interface HelloEntity {
   /** Interval (in milliseconds) an app should heartbeat with */
-  heartbeat_interval: z.number().int(),
-});
-
-export type HelloEntity = z.infer<typeof HelloEntity>;
+  heartbeat_interval: number;
+}
 
 /**
  * Identify Connection Properties
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#identify-identify-connection-properties}
  */
-export const IdentifyConnectionPropertiesEntity = z.object({
+export interface IdentifyConnectionPropertiesEntity {
   /** Your operating system */
-  os: z.string(),
-  /** Your library name */
-  browser: z.string(),
-  /** Your library name */
-  device: z.string(),
-});
+  os: string;
 
-export type IdentifyConnectionPropertiesEntity = z.infer<
-  typeof IdentifyConnectionPropertiesEntity
->;
+  /** Your library name */
+  browser: string;
+
+  /** Your library name */
+  device: string;
+}
 
 /**
  * Integration Delete
@@ -753,16 +752,16 @@ export type IdentifyConnectionPropertiesEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-delete-integration-delete-event-fields}
  */
-export const IntegrationDeleteEntity = z.object({
+export interface IntegrationDeleteEntity {
   /** Integration ID */
-  id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake,
-  /** ID of the bot/OAuth2 application for this discord integration */
-  application_id: Snowflake.optional(),
-});
+  id: Snowflake;
 
-export type IntegrationDeleteEntity = z.infer<typeof IntegrationDeleteEntity>;
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** ID of the bot/OAuth2 application for this discord integration */
+  application_id?: Snowflake;
+}
 
 /**
  * Integration Update
@@ -770,12 +769,10 @@ export type IntegrationDeleteEntity = z.infer<typeof IntegrationDeleteEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-update-integration-update-event-additional-fields}
  */
-export const IntegrationUpdateEntity = IntegrationEntity.extend({
+export interface IntegrationUpdateEntity extends IntegrationEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-});
-
-export type IntegrationUpdateEntity = z.infer<typeof IntegrationUpdateEntity>;
+  guild_id: Snowflake;
+}
 
 /**
  * Integration Create
@@ -783,9 +780,7 @@ export type IntegrationUpdateEntity = z.infer<typeof IntegrationUpdateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-create-integration-create-event-additional-fields}
  */
-export const IntegrationCreateEntity = IntegrationUpdateEntity;
-
-export type IntegrationCreateEntity = z.infer<typeof IntegrationCreateEntity>;
+export interface IntegrationCreateEntity extends IntegrationUpdateEntity {}
 
 /**
  * Invite Delete
@@ -793,16 +788,16 @@ export type IntegrationCreateEntity = z.infer<typeof IntegrationCreateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#invite-delete-invite-delete-event-fields}
  */
-export const InviteDeleteEntity = z.object({
+export interface InviteDeleteEntity {
   /** Channel of the invite */
-  channel_id: Snowflake,
-  /** Guild of the invite */
-  guild_id: Snowflake.optional(),
-  /** Unique invite code */
-  code: z.string(),
-});
+  channel_id: Snowflake;
 
-export type InviteDeleteEntity = z.infer<typeof InviteDeleteEntity>;
+  /** Guild of the invite */
+  guild_id?: Snowflake;
+
+  /** Unique invite code */
+  code: string;
+}
 
 /**
  * Invite Create
@@ -810,34 +805,43 @@ export type InviteDeleteEntity = z.infer<typeof InviteDeleteEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#invite-create-invite-create-event-fields}
  */
-export const InviteCreateEntity = z.object({
+export interface InviteCreateEntity {
   /** Channel the invite is for */
-  channel_id: Snowflake,
-  /** Unique invite code */
-  code: z.string(),
-  /** Time at which the invite was created */
-  created_at: z.string(),
-  /** Guild of the invite */
-  guild_id: Snowflake.optional(),
-  /** User that created the invite */
-  inviter: UserEntity.optional(),
-  /** How long the invite is valid for (in seconds) */
-  max_age: z.number().int(),
-  /** Maximum number of times the invite can be used */
-  max_uses: z.number().int(),
-  /** Type of target for this voice channel invite */
-  target_type: z.nativeEnum(InviteTargetType).optional(),
-  /** User whose stream to display for this voice channel stream invite */
-  target_user: UserEntity.optional(),
-  /** Embedded application to open for this voice channel embedded application invite */
-  target_application: ApplicationEntity.optional(),
-  /** Whether or not the invite is temporary (invited users will be kicked on disconnect) */
-  temporary: z.boolean(),
-  /** How many times the invite has been used (always will be 0) */
-  uses: z.number().int(),
-});
+  channel_id: Snowflake;
 
-export type InviteCreateEntity = z.infer<typeof InviteCreateEntity>;
+  /** Unique invite code */
+  code: string;
+
+  /** Time at which the invite was created */
+  created_at: string;
+
+  /** Guild of the invite */
+  guild_id?: Snowflake;
+
+  /** User that created the invite */
+  inviter?: UserEntity;
+
+  /** How long the invite is valid for (in seconds) */
+  max_age: number;
+
+  /** Maximum number of times the invite can be used */
+  max_uses: number;
+
+  /** Type of target for this voice channel invite */
+  target_type?: InviteTargetType;
+
+  /** User whose stream to display for this voice channel stream invite */
+  target_user?: UserEntity;
+
+  /** Embedded application to open for this voice channel embedded application invite */
+  target_application?: ApplicationEntity;
+
+  /** Whether or not the invite is temporary (invited users will be kicked on disconnect) */
+  temporary: boolean;
+
+  /** How many times the invite has been used (always will be 0) */
+  uses: number;
+}
 
 /**
  * Message Reaction Remove Emoji
@@ -845,20 +849,19 @@ export type InviteCreateEntity = z.infer<typeof InviteCreateEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-emoji-message-reaction-remove-emoji-event-fields}
  */
-export const MessageReactionRemoveEmojiEntity = z.object({
+export interface MessageReactionRemoveEmojiEntity {
   /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-  /** ID of the message */
-  message_id: Snowflake,
-  /** Emoji that was removed */
-  emoji: EmojiEntity.partial(),
-});
+  channel_id: Snowflake;
 
-export type MessageReactionRemoveEmojiEntity = z.infer<
-  typeof MessageReactionRemoveEmojiEntity
->;
+  /** ID of the guild */
+  guild_id?: Snowflake;
+
+  /** ID of the message */
+  message_id: Snowflake;
+
+  /** Emoji that was removed */
+  emoji: Partial<EmojiEntity>;
+}
 
 /**
  * Message Reaction Remove All
@@ -866,18 +869,16 @@ export type MessageReactionRemoveEmojiEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-all-message-reaction-remove-all-event-fields}
  */
-export const MessageReactionRemoveAllEntity = z.object({
+export interface MessageReactionRemoveAllEntity {
   /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the message */
-  message_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-});
+  channel_id: Snowflake;
 
-export type MessageReactionRemoveAllEntity = z.infer<
-  typeof MessageReactionRemoveAllEntity
->;
+  /** ID of the message */
+  message_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id?: Snowflake;
+}
 
 /**
  * Message Reaction Remove
@@ -885,36 +886,32 @@ export type MessageReactionRemoveAllEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-message-reaction-remove-event-fields}
  */
-export const MessageReactionRemoveEntity = z.object({
+export interface MessageReactionRemoveEntity {
   /** ID of the user */
-  user_id: Snowflake,
-  /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the message */
-  message_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-  /** Emoji used to react */
-  emoji: z.union([
-    z.object({
-      id: Snowflake.nullable(),
-      name: z.string(),
-    }),
-    z.object({
-      id: Snowflake.nullable(),
-      name: z.string(),
-      animated: z.boolean(),
-    }),
-  ]),
-  /** true if this was a super-reaction */
-  burst: z.boolean(),
-  /** The type of reaction */
-  type: z.nativeEnum(ReactionTypeFlag),
-});
+  user_id: Snowflake;
 
-export type MessageReactionRemoveEntity = z.infer<
-  typeof MessageReactionRemoveEntity
->;
+  /** ID of the channel */
+  channel_id: Snowflake;
+
+  /** ID of the message */
+  message_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id?: Snowflake;
+
+  /** Emoji used to react */
+  emoji: {
+    id: Snowflake | null;
+    name: string;
+    animated?: boolean;
+  };
+
+  /** true if this was a super-reaction */
+  burst: boolean;
+
+  /** The type of reaction */
+  type: ReactionTypeFlag;
+}
 
 /**
  * Message Reaction Add
@@ -922,40 +919,41 @@ export type MessageReactionRemoveEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-add-message-reaction-add-event-fields}
  */
-export const MessageReactionAddEntity = z.object({
+export interface MessageReactionAddEntity {
   /** ID of the user */
-  user_id: Snowflake,
-  /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the message */
-  message_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-  /** Member who reacted if this happened in a guild */
-  member: GuildMemberEntity.optional(),
-  /** Emoji used to react */
-  emoji: z.union([
-    z.object({
-      id: Snowflake.nullable(),
-      name: z.string(),
-    }),
-    z.object({
-      id: Snowflake.nullable(),
-      name: z.string(),
-      animated: z.boolean(),
-    }),
-  ]),
-  /** ID of the user who authored the message which was reacted to */
-  message_author_id: Snowflake.optional(),
-  /** true if this is a super-reaction */
-  burst: z.boolean(),
-  /** Colors used for super-reaction animation in "#rrggbb" format */
-  burst_colors: z.string().array().optional(),
-  /** The type of reaction */
-  type: z.nativeEnum(ReactionTypeFlag),
-});
+  user_id: Snowflake;
 
-export type MessageReactionAddEntity = z.infer<typeof MessageReactionAddEntity>;
+  /** ID of the channel */
+  channel_id: Snowflake;
+
+  /** ID of the message */
+  message_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id?: Snowflake;
+
+  /** Member who reacted if this happened in a guild */
+  member?: GuildMemberEntity;
+
+  /** Emoji used to react */
+  emoji: {
+    id: Snowflake | null;
+    name: string;
+    animated?: boolean;
+  };
+
+  /** ID of the user who authored the message which was reacted to */
+  message_author_id?: Snowflake;
+
+  /** true if this is a super-reaction */
+  burst: boolean;
+
+  /** Colors used for super-reaction animation in "#rrggbb" format */
+  burst_colors?: string[];
+
+  /** The type of reaction */
+  type: ReactionTypeFlag;
+}
 
 /**
  * Message Delete Bulk
@@ -963,16 +961,16 @@ export type MessageReactionAddEntity = z.infer<typeof MessageReactionAddEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-delete-bulk-message-delete-bulk-event-fields}
  */
-export const MessageDeleteBulkEntity = z.object({
+export interface MessageDeleteBulkEntity {
   /** IDs of the messages */
-  ids: Snowflake.array(),
-  /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-});
+  ids: Snowflake[];
 
-export type MessageDeleteBulkEntity = z.infer<typeof MessageDeleteBulkEntity>;
+  /** ID of the channel */
+  channel_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id?: Snowflake;
+}
 
 /**
  * Message Delete
@@ -980,16 +978,16 @@ export type MessageDeleteBulkEntity = z.infer<typeof MessageDeleteBulkEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-delete-message-delete-event-fields}
  */
-export const MessageDeleteEntity = z.object({
+export interface MessageDeleteEntity {
   /** ID of the message */
-  id: Snowflake,
-  /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-});
+  id: Snowflake;
 
-export type MessageDeleteEntity = z.infer<typeof MessageDeleteEntity>;
+  /** ID of the channel */
+  channel_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id?: Snowflake;
+}
 
 /**
  * Message Create
@@ -1000,8 +998,10 @@ export type MessageDeleteEntity = z.infer<typeof MessageDeleteEntity>;
 export interface MessageCreateEntity extends Omit<MessageEntity, "mentions"> {
   /** Users specifically mentioned in the message */
   mentions?: (UserEntity | Partial<GuildMemberEntity>)[];
+
   /** ID of the guild the message was sent in - unless it is an ephemeral message */
   guild_id?: Snowflake;
+
   /** Member properties for this message's author */
   member?: Partial<GuildMemberEntity>;
 }
@@ -1012,22 +1012,22 @@ export interface MessageCreateEntity extends Omit<MessageEntity, "mentions"> {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-remove-message-poll-vote-remove-fields}
  */
-export const MessagePollVoteRemoveEntity = z.object({
+export interface MessagePollVoteRemoveEntity {
   /** ID of the user */
-  user_id: Snowflake,
-  /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the message */
-  message_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-  /** ID of the answer */
-  answer_id: z.number().int(),
-});
+  user_id: Snowflake;
 
-export type MessagePollVoteRemoveEntity = z.infer<
-  typeof MessagePollVoteRemoveEntity
->;
+  /** ID of the channel */
+  channel_id: Snowflake;
+
+  /** ID of the message */
+  message_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id?: Snowflake;
+
+  /** ID of the answer */
+  answer_id: number;
+}
 
 /**
  * Message Poll Vote Add
@@ -1035,9 +1035,7 @@ export type MessagePollVoteRemoveEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-add-message-poll-vote-add-fields}
  */
-export const MessagePollVoteAddEntity = MessagePollVoteRemoveEntity;
-
-export type MessagePollVoteAddEntity = z.infer<typeof MessagePollVoteAddEntity>;
+export interface MessagePollVoteAddEntity extends MessagePollVoteRemoveEntity {}
 
 /**
  * Ready
@@ -1047,27 +1045,31 @@ export type MessagePollVoteAddEntity = z.infer<typeof MessagePollVoteAddEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#ready-ready-event-fields}
  */
-export const ReadyEntity = z.object({
+export interface ReadyEntity {
   /** API version */
-  v: z.nativeEnum(ApiVersion),
-  /** Information about the user including email */
-  user: UserEntity,
-  /** Guilds the user is in */
-  guilds: UnavailableGuildEntity.array(),
-  /** Used for resuming connections */
-  session_id: z.string(),
-  /** Gateway URL for resuming connections */
-  resume_gateway_url: z.string(),
-  /** Shard information associated with this session, if sent when identifying */
-  shard: z.tuple([z.number(), z.number()]).optional(),
-  /** Contains id and flags */
-  application: z.object({
-    id: z.string(),
-    flags: z.number(),
-  }),
-});
+  v: ApiVersion;
 
-export type ReadyEntity = z.infer<typeof ReadyEntity>;
+  /** Information about the user including email */
+  user: UserEntity;
+
+  /** Guilds the user is in */
+  guilds: UnavailableGuildEntity[];
+
+  /** Used for resuming connections */
+  session_id: string;
+
+  /** Gateway URL for resuming connections */
+  resume_gateway_url: string;
+
+  /** Shard information associated with this session, if sent when identifying */
+  shard?: [number, number];
+
+  /** Contains id and flags */
+  application: {
+    id: string;
+    flags: number;
+  };
+}
 
 /**
  * Typing Start
@@ -1075,20 +1077,22 @@ export type ReadyEntity = z.infer<typeof ReadyEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#typing-start-typing-start-event-fields}
  */
-export const TypingEntity = z.object({
+export interface TypingEntity {
   /** ID of the channel */
-  channel_id: Snowflake,
-  /** ID of the guild */
-  guild_id: Snowflake.optional(),
-  /** ID of the user */
-  user_id: Snowflake,
-  /** Unix time (in seconds) of when the user started typing */
-  timestamp: z.number().int(),
-  /** Member who started typing if this happened in a guild */
-  member: GuildMemberEntity.optional(),
-});
+  channel_id: Snowflake;
 
-export type TypingEntity = z.infer<typeof TypingEntity>;
+  /** ID of the guild */
+  guild_id?: Snowflake;
+
+  /** ID of the user */
+  user_id: Snowflake;
+
+  /** Unix time (in seconds) of when the user started typing */
+  timestamp: number;
+
+  /** Member who started typing if this happened in a guild */
+  member?: GuildMemberEntity;
+}
 
 /**
  * Voice Server Update
@@ -1096,16 +1100,16 @@ export type TypingEntity = z.infer<typeof TypingEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-server-update-voice-server-update-event-fields}
  */
-export const VoiceServerUpdateEntity = z.object({
+export interface VoiceServerUpdateEntity {
   /** Voice connection token */
-  token: z.string(),
-  /** Guild this voice server update is for */
-  guild_id: Snowflake,
-  /** Voice server host */
-  endpoint: z.string().nullable(),
-});
+  token: string;
 
-export type VoiceServerUpdateEntity = z.infer<typeof VoiceServerUpdateEntity>;
+  /** Guild this voice server update is for */
+  guild_id: Snowflake;
+
+  /** Voice server host */
+  endpoint: string | null;
+}
 
 /**
  * Voice Channel Effect Send Animation Types
@@ -1126,28 +1130,31 @@ export enum VoiceChannelEffectSendAnimationType {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-channel-effect-send-voice-channel-effect-send-event-fields}
  */
-export const VoiceChannelEffectSendEntity = z.object({
+export interface VoiceChannelEffectSendEntity {
   /** ID of the channel the effect was sent in */
-  channel_id: Snowflake,
-  /** ID of the guild the effect was sent in */
-  guild_id: Snowflake,
-  /** ID of the user who sent the effect */
-  user_id: Snowflake,
-  /** The emoji sent, for emoji reaction and soundboard effects */
-  emoji: EmojiEntity.nullish(),
-  /** The type of emoji animation, for emoji reaction and soundboard effects */
-  animation_type: z.nativeEnum(VoiceChannelEffectSendAnimationType).optional(),
-  /** The ID of the emoji animation, for emoji reaction and soundboard effects */
-  animation_id: z.number().optional(),
-  /** The ID of the soundboard sound, for soundboard effects */
-  sound_id: z.union([Snowflake, z.number()]).optional(),
-  /** The volume of the soundboard sound, from 0 to 1, for soundboard effects */
-  sound_volume: z.number().optional(),
-});
+  channel_id: Snowflake;
 
-export type VoiceChannelEffectSendEntity = z.infer<
-  typeof VoiceChannelEffectSendEntity
->;
+  /** ID of the guild the effect was sent in */
+  guild_id: Snowflake;
+
+  /** ID of the user who sent the effect */
+  user_id: Snowflake;
+
+  /** The emoji sent, for emoji reaction and soundboard effects */
+  emoji?: EmojiEntity | null;
+
+  /** The type of emoji animation, for emoji reaction and soundboard effects */
+  animation_type?: VoiceChannelEffectSendAnimationType;
+
+  /** The ID of the emoji animation, for emoji reaction and soundboard effects */
+  animation_id?: number;
+
+  /** The ID of the soundboard sound, for soundboard effects */
+  sound_id?: Snowflake | number;
+
+  /** The volume of the soundboard sound, from 0 to 1, for soundboard effects */
+  sound_volume?: number;
+}
 
 /**
  * Webhooks Update
@@ -1155,14 +1162,13 @@ export type VoiceChannelEffectSendEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#webhooks-update-webhooks-update-event-fields}
  */
-export const WebhookUpdateEntity = z.object({
+export interface WebhookUpdateEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** ID of the channel */
-  channel_id: Snowflake,
-});
+  guild_id: Snowflake;
 
-export type WebhookUpdateEntity = z.infer<typeof WebhookUpdateEntity>;
+  /** ID of the channel */
+  channel_id: Snowflake;
+}
 
 /**
  * Gateway Receive Events
@@ -1334,18 +1340,19 @@ export interface GatewayReceiveEvents {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-gateway-presence-update-structure}
  */
-export const UpdatePresenceEntity = z.object({
+export interface UpdatePresenceEntity {
   /** Unix time (in milliseconds) of when the client went idle, or null if the client is not idle */
-  since: z.number().nullable(),
-  /** User's activities */
-  activities: ActivityEntity.array(),
-  /** User's new status */
-  status: UpdatePresenceStatusType,
-  /** Whether or not the client is afk */
-  afk: z.boolean(),
-});
+  since: number | null;
 
-export type UpdatePresenceEntity = z.infer<typeof UpdatePresenceEntity>;
+  /** User's activities */
+  activities: ActivityEntity[];
+
+  /** User's new status */
+  status: UpdatePresenceStatusType;
+
+  /** Whether or not the client is afk */
+  afk: boolean;
+}
 
 /**
  * Identify
@@ -1353,24 +1360,28 @@ export type UpdatePresenceEntity = z.infer<typeof UpdatePresenceEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#identify-identify-structure}
  */
-export const IdentifyEntity = z.object({
+export interface IdentifyEntity {
   /** Authentication token */
-  token: z.string(),
-  /** Connection properties */
-  properties: IdentifyConnectionPropertiesEntity,
-  /** Whether this connection supports compression of packets */
-  compress: z.boolean().optional(),
-  /** Value between 50 and 250, total number of members where the gateway will stop sending offline members */
-  large_threshold: z.number().optional(),
-  /** Used for Guild Sharding */
-  shard: z.tuple([z.number(), z.number()]).optional(),
-  /** Presence structure for initial presence information */
-  presence: UpdatePresenceEntity.optional(),
-  /** Gateway Intents you wish to receive */
-  intents: z.number().int(),
-});
+  token: string;
 
-export type IdentifyEntity = z.infer<typeof IdentifyEntity>;
+  /** Connection properties */
+  properties: IdentifyConnectionPropertiesEntity;
+
+  /** Whether this connection supports compression of packets */
+  compress?: boolean;
+
+  /** Value between 50 and 250, total number of members where the gateway will stop sending offline members */
+  large_threshold?: number;
+
+  /** Used for Guild Sharding */
+  shard?: [number, number];
+
+  /** Presence structure for initial presence information */
+  presence?: UpdatePresenceEntity;
+
+  /** Gateway Intents you wish to receive */
+  intents: number;
+}
 
 /**
  * Resume
@@ -1378,16 +1389,16 @@ export type IdentifyEntity = z.infer<typeof IdentifyEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#resume-resume-structure}
  */
-export const ResumeEntity = z.object({
+export interface ResumeEntity {
   /** Session token */
-  token: z.string(),
-  /** Session ID */
-  session_id: z.string(),
-  /** Last sequence number received */
-  seq: z.number().int(),
-});
+  token: string;
 
-export type ResumeEntity = z.infer<typeof ResumeEntity>;
+  /** Session ID */
+  session_id: string;
+
+  /** Last sequence number received */
+  seq: number;
+}
 
 /**
  * Request Guild Members
@@ -1395,24 +1406,25 @@ export type ResumeEntity = z.infer<typeof ResumeEntity>;
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#request-guild-members-request-guild-members-structure}
  */
-export const RequestGuildMembersEntity = z.object({
+export interface RequestGuildMembersEntity {
   /** ID of the guild to get members for */
-  guild_id: Snowflake,
-  /** String that username starts with, or an empty string to return all members */
-  query: z.string().optional(),
-  /** Maximum number of members to send matching the query */
-  limit: z.number().int(),
-  /** Used to specify if we want the presences of the matched members */
-  presences: z.boolean().optional(),
-  /** Used to specify which users you wish to fetch */
-  user_ids: z.union([Snowflake, Snowflake.array()]).optional(),
-  /** Nonce to identify the Guild Members Chunk response */
-  nonce: z.string().optional(),
-});
+  guild_id: Snowflake;
 
-export type RequestGuildMembersEntity = z.infer<
-  typeof RequestGuildMembersEntity
->;
+  /** String that username starts with, or an empty string to return all members */
+  query?: string;
+
+  /** Maximum number of members to send matching the query */
+  limit: number;
+
+  /** Used to specify if we want the presences of the matched members */
+  presences?: boolean;
+
+  /** Used to specify which users you wish to fetch */
+  user_ids?: Snowflake | Snowflake[];
+
+  /** Nonce to identify the Guild Members Chunk response */
+  nonce?: string;
+}
 
 /**
  * Request Soundboard Sounds
@@ -1420,14 +1432,10 @@ export type RequestGuildMembersEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#request-soundboard-sounds-request-soundboard-sounds-structure}
  */
-export const RequestSoundboardSoundsEntity = z.object({
+export interface RequestSoundboardSoundsEntity {
   /** IDs of the guilds to get soundboard sounds for */
-  guild_ids: Snowflake.array(),
-});
-
-export type RequestSoundboardSoundsEntity = z.infer<
-  typeof RequestSoundboardSoundsEntity
->;
+  guild_ids: Snowflake[];
+}
 
 /**
  * Update Voice State
@@ -1435,18 +1443,19 @@ export type RequestSoundboardSoundsEntity = z.infer<
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#update-voice-state-gateway-voice-state-update-structure}
  */
-export const UpdateVoiceStateEntity = z.object({
+export interface UpdateVoiceStateEntity {
   /** ID of the guild */
-  guild_id: Snowflake,
-  /** ID of the voice channel client wants to join (null if disconnecting) */
-  channel_id: Snowflake.nullable(),
-  /** Whether the client is muted */
-  self_mute: z.boolean(),
-  /** Whether the client deafened */
-  self_deaf: z.boolean(),
-});
+  guild_id: Snowflake;
 
-export type UpdateVoiceStateEntity = z.infer<typeof UpdateVoiceStateEntity>;
+  /** ID of the voice channel client wants to join (null if disconnecting) */
+  channel_id: Snowflake | null;
+
+  /** Whether the client is muted */
+  self_mute: boolean;
+
+  /** Whether the client deafened */
+  self_deaf: boolean;
+}
 
 /**
  * Gateway Send Events

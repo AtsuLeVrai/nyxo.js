@@ -65,6 +65,7 @@ rest.on("queueReject", (event) => {
 });
 
 const gateway = new Gateway(rest, {
+  token: parsed.DISCORD_TOKEN,
   intents: [
     GatewayIntentsBits.Guilds,
     GatewayIntentsBits.GuildMembers,
@@ -88,12 +89,6 @@ const gateway = new Gateway(rest, {
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
-  encodingType: "etf",
-  compressionType: "zstd-stream",
-  shard: {
-    totalShards: "auto",
-    force: true,
-  },
 });
 
 gateway.on("connectionStart", (event) => {
@@ -204,7 +199,7 @@ main().catch(console.error);
 
 process.on("SIGINT", async () => {
   await rest.destroy();
-  gateway.destroy();
+  await gateway.destroy();
   process.exit(0);
 });
 

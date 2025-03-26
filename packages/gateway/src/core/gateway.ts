@@ -4,7 +4,7 @@ import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import type { z } from "zod";
-import { fromError, fromZodError } from "zod-validation-error";
+import { fromError } from "zod-validation-error";
 import { HeartbeatManager, ShardManager } from "../managers/index.js";
 import { GatewayOptions } from "../options/index.js";
 import {
@@ -23,19 +23,19 @@ import {
   type GatewaySendEvents,
   type GuildCreateEntity,
   type HelloEntity,
-  IdentifyEntity,
+  type IdentifyEntity,
   type PayloadEntity,
   type PayloadReceiveEvent,
   type PayloadSendEvent,
   type ReadyEntity,
   type RequestGuildMembersEntity,
   type RequestSoundboardSoundsEntity,
-  ResumeEntity,
+  type ResumeEntity,
   type SessionInvalidEvent,
   type SessionResumeEvent,
   type SessionStartEvent,
-  UpdatePresenceEntity,
-  UpdateVoiceStateEntity,
+  type UpdatePresenceEntity,
+  type UpdateVoiceStateEntity,
 } from "../types/index.js";
 
 /**
@@ -119,7 +119,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         parsedOptions.token = rest.token;
       }
 
-      this.#options = GatewayOptions.parse(parsedOptions);
+      this.#options = GatewayOptions.parse(options);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
@@ -247,15 +247,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param presence - New presence data
    * @throws {Error} If the connection is not valid
    */
-  updatePresence(presence: z.input<typeof UpdatePresenceEntity>): void {
+  updatePresence(presence: UpdatePresenceEntity): void {
     this.#validateConnection();
-
-    const result = UpdatePresenceEntity.safeParse(presence);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    this.send(GatewayOpcodes.PresenceUpdate, result.data);
+    this.send(GatewayOpcodes.PresenceUpdate, presence);
   }
 
   /**
@@ -264,15 +258,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param options - Voice state update options
    * @throws {Error} If the connection is not valid
    */
-  updateVoiceState(options: z.input<typeof UpdateVoiceStateEntity>): void {
+  updateVoiceState(options: UpdateVoiceStateEntity): void {
     this.#validateConnection();
-
-    const result = UpdateVoiceStateEntity.safeParse(options);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    this.send(GatewayOpcodes.VoiceStateUpdate, result.data);
+    this.send(GatewayOpcodes.VoiceStateUpdate, options);
   }
 
   /**
@@ -281,9 +269,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param options - Request options
    * @throws {Error} If the connection is not valid
    */
-  requestGuildMembers(
-    options: z.input<typeof RequestGuildMembersEntity>,
-  ): void {
+  requestGuildMembers(options: RequestGuildMembersEntity): void {
     this.#validateConnection();
     this.send(GatewayOpcodes.RequestGuildMembers, options);
   }
@@ -294,9 +280,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param options - Request options
    * @throws {Error} If the connection is not valid
    */
-  requestSoundboardSounds(
-    options: z.input<typeof RequestSoundboardSoundsEntity>,
-  ): void {
+  requestSoundboardSounds(options: RequestSoundboardSoundsEntity): void {
     this.#validateConnection();
     this.send(GatewayOpcodes.RequestSoundboardSounds, options);
   }
@@ -1020,12 +1004,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       seq: this.#sequence,
     };
 
-    const result = ResumeEntity.safeParse(payload);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    this.send(GatewayOpcodes.Resume, result.data);
+    this.send(GatewayOpcodes.Resume, payload);
   }
 
   /**
@@ -1060,13 +1039,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       payload.presence = this.#options.presence;
     }
 
-    // Validate payload
-    const result = IdentifyEntity.safeParse(payload);
-    if (!result.success) {
-      throw new Error(fromZodError(result.error).message);
-    }
-
-    this.send(GatewayOpcodes.Identify, result.data);
+    this.send(GatewayOpcodes.Identify, payload);
   }
 
   /**

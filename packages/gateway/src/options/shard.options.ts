@@ -35,7 +35,7 @@ export const ShardScalingOptions = z
 
 export type ShardScalingOptions = z.infer<typeof ShardScalingOptions>;
 
-export const HealthCheckOptions = z
+export const ShardHealthCheckOptions = z
   .object({
     /**
      * Interval for health checks in milliseconds
@@ -69,7 +69,7 @@ export const HealthCheckOptions = z
   .strict()
   .readonly();
 
-export type HealthCheckOptions = z.infer<typeof HealthCheckOptions>;
+export type ShardHealthCheckOptions = z.infer<typeof ShardHealthCheckOptions>;
 
 /**
  * Options for configuring Gateway sharding behavior
@@ -184,7 +184,7 @@ export const ShardOptions = z
      *
      * Used to configure health checks for monitoring the bot's status and ensuring it's running smoothly.
      */
-    healthCheck: HealthCheckOptions.default({}),
+    healthCheck: ShardHealthCheckOptions.default({}),
   })
   .strict()
   .readonly()

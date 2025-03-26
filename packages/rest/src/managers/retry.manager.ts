@@ -2,7 +2,7 @@ import { setTimeout } from "node:timers/promises";
 import type { Dispatcher } from "undici";
 import type { Rest } from "../core/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
-import { type RetryOptions, validateRetryOptions } from "../options/index.js";
+import type { RetryOptions } from "../options/index.js";
 
 /**
  * Retry-related constants
@@ -79,7 +79,7 @@ export class RetryManager {
    */
   constructor(rest: Rest, options: RetryOptions) {
     this.#rest = rest;
-    this.#options = validateRetryOptions(options);
+    this.#options = options;
   }
 
   /**
