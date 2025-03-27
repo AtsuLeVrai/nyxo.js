@@ -1,10 +1,4 @@
-import type { ApiVersion } from "@nyxjs/core";
 import type { CompressionType, EncodingType } from "../options/index.js";
-import type {
-  CircuitState,
-  CircuitStateChangeEvent,
-  FailureType,
-} from "../services/index.js";
 import type { GatewayReceiveEvents } from "./index.js";
 
 /**
@@ -16,28 +10,35 @@ export interface GatewayEventBase {
 }
 
 /**
- * Base interface for WebSocket connection-related events
+ * Base interface for all connection state objects
  */
-export interface WebSocketConnectionEventBase extends GatewayEventBase {
+export interface ConnectionStateBase extends GatewayEventBase {
+  /** Current connection status */
+  status: string;
+
   /** URL of the gateway websocket */
-  gatewayUrl: string;
+  gatewayUrl: string | null;
+}
+
+/**
+ * Represents a connection in the initialization phase
+ */
+export interface ConnectionStartingState extends ConnectionStateBase {
+  status: "starting";
 
   /** Encoding type being used */
   encoding: EncodingType;
 
-  /** Compression type if any */
+  /** Compression type being used */
   compression: CompressionType | null;
 }
 
 /**
- * Event emitted when a WebSocket connection is initiated
+ * Represents a successfully established connection
  */
-export type ConnectionStartEvent = WebSocketConnectionEventBase;
+export interface ConnectionConnectedState extends ConnectionStateBase {
+  status: "connected";
 
-/**
- * Event emitted when a WebSocket connection completes
- */
-export interface ConnectionCompleteEvent extends WebSocketConnectionEventBase {
   /** Connection establishment duration in milliseconds */
   duration: number;
 
@@ -46,94 +47,87 @@ export interface ConnectionCompleteEvent extends WebSocketConnectionEventBase {
 }
 
 /**
- * Event emitted when a WebSocket connection fails
+ * Represents a failed connection attempt
  */
-export interface ConnectionFailureEvent extends WebSocketConnectionEventBase {
-  /** Error object or message */
+export interface ConnectionFailedState extends ConnectionStateBase {
+  status: "failed";
+
+  /** Error that caused the failure */
   error: Error;
+
+  /** Current retry attempt number */
+  attempt: number;
 
   /** Connection attempt duration in milliseconds */
   duration: number;
-
-  /** Current retry attempt number (1-based) */
-  attemptNumber: number;
 }
 
 /**
- * Base interface for payload-related events
+ * Union type representing all possible connection states
  */
-export interface PayloadEventBase extends GatewayEventBase {
-  /** Gateway opcode */
-  opcode: GatewayOpcodes;
+export type ConnectionState =
+  | ConnectionStartingState
+  | ConnectionConnectedState
+  | ConnectionFailedState;
 
-  /** Sequence number if available */
-  sequence?: number;
+/**
+ * Base interface for all heartbeat events
+ */
+export type HeartbeatStatus = "started" | "sent" | "ack" | "timeout";
 
-  /** Size of the payload in bytes */
-  payloadSize: number;
+/**
+ * Base interface for all heartbeat state objects
+ */
+export interface HeartbeatStateBase extends GatewayEventBase {
+  /** Current heartbeat status */
+  status: HeartbeatStatus;
 }
 
 /**
- * Event emitted when a payload is sent
+ * Represents a newly started heartbeat system
  */
-export type PayloadSendEvent = PayloadEventBase;
-
-/**
- * Event emitted when a payload is received
- */
-export interface PayloadReceiveEvent extends PayloadEventBase {
-  /** Event type if applicable */
-  eventType: keyof GatewayReceiveEvents | null;
-}
-
-/**
- * Base interface for heartbeat-related events
- */
-export interface HeartbeatEventBase extends GatewayEventBase {
-  /** Current sequence number */
-  sequence: number;
+export interface HeartbeatStartedState extends HeartbeatStateBase {
+  status: "started";
 
   /** Heartbeat interval in milliseconds */
   interval: number;
-}
 
-/**
- * Event emitted when the heartbeat system is started
- */
-export interface HeartbeatStartEvent extends HeartbeatEventBase {
   /** Initial delay before first heartbeat in milliseconds */
   initialDelay: number;
-
-  /** Whether this is an initial start or a restart */
-  isRestart: boolean;
-
-  /** Previous interval if this is a restart, 0 otherwise */
-  previousInterval: number;
 }
 
 /**
- * Event emitted when a heartbeat is sent
+ * Represents a sent heartbeat
  */
-export interface HeartbeatSendEvent extends HeartbeatEventBase {
+export interface HeartbeatSentState extends HeartbeatStateBase {
+  status: "sent";
+
+  /** Current sequence number */
+  sequence: number;
+
   /** Total number of heartbeats sent */
   totalBeats: number;
 }
 
 /**
- * Event emitted when a heartbeat acknowledgement is received
+ * Represents a received heartbeat acknowledgement
  */
-export interface HeartbeatAckEvent extends HeartbeatEventBase {
+export interface HeartbeatAckState extends HeartbeatStateBase {
+  status: "ack";
+
   /** Latency in milliseconds */
   latency: number;
 
-  /** Average latency over time */
-  averageLatency: number;
+  /** Current sequence number */
+  sequence: number;
 }
 
 /**
- * Event emitted when a heartbeat times out
+ * Represents a timed out heartbeat
  */
-export interface HeartbeatTimeoutEvent extends HeartbeatEventBase {
+export interface HeartbeatTimeoutState extends HeartbeatStateBase {
+  status: "timeout";
+
   /** Number of consecutive missed heartbeats */
   missedHeartbeats: number;
 
@@ -142,40 +136,65 @@ export interface HeartbeatTimeoutEvent extends HeartbeatEventBase {
 }
 
 /**
- * Base interface for session-related events
+ * Union type representing all possible heartbeat states
  */
-export interface SessionEventBase extends GatewayEventBase {
+export type HeartbeatState =
+  | HeartbeatStartedState
+  | HeartbeatSentState
+  | HeartbeatAckState
+  | HeartbeatTimeoutState;
+
+/**
+ * Base interface for all session status objects
+ */
+export type SessionStatus = "started" | "resumed" | "invalidated";
+
+/**
+ * Base interface for all session state objects
+ */
+export interface SessionStateBase extends GatewayEventBase {
+  /** Current session status */
+  status: SessionStatus;
+
   /** Session ID */
   sessionId: string;
 }
 
 /**
- * Event emitted when a session is established
+ * Represents a newly started session
  */
-export interface SessionStartEvent extends SessionEventBase {
+export interface SessionStartedState extends SessionStateBase {
+  status: "started";
+
   /** Resume URL provided by Discord */
   resumeUrl: string;
 
   /** User ID associated with this session */
   userId: string;
 
-  /** Gateway version */
-  version: ApiVersion;
-
-  /** Number of shards in use */
-  shardCount: number;
-
   /** Number of guilds in this session */
   guildCount: number;
-
-  /** Number of channels in this session */
-  readyTimeout: number;
 }
 
 /**
- * Event emitted when a session is invalidated
+ * Represents a resumed session
  */
-export interface SessionInvalidEvent extends SessionEventBase {
+export interface SessionResumedState extends SessionStateBase {
+  status: "resumed";
+
+  /** Latency of the resume process in milliseconds */
+  latency: number;
+
+  /** Number of events replayed during resume */
+  replayedEvents: number;
+}
+
+/**
+ * Represents an invalidated session
+ */
+export interface SessionInvalidatedState extends SessionStateBase {
+  status: "invalidated";
+
   /** Whether the session can be resumed */
   resumable: boolean;
 
@@ -184,90 +203,40 @@ export interface SessionInvalidEvent extends SessionEventBase {
 }
 
 /**
- * Event emitted when a session is resumed
+ * Union type representing all possible session states
  */
-export interface SessionResumeEvent extends SessionEventBase {
-  /** Resume URL used */
-  resumeUrl: string;
-
-  /** Number of events replayed during resume */
-  replayedEvents: number;
-
-  /** Latency of the resume process in milliseconds */
-  resumeLatency: number;
-}
+export type SessionState =
+  | SessionStartedState
+  | SessionResumedState
+  | SessionInvalidatedState;
 
 /**
- * Event emitted when a failure is recorded
+ * Base interface for all shard status objects
  */
-export interface CircuitFailureEvent {
-  /** Event timestamp */
-  timestamp: string;
-
-  /** Failure type */
-  failureType: FailureType;
-
-  /** Current circuit state */
-  state: CircuitState;
-
-  /** Number of consecutive failures */
-  failureCount: number;
-
-  /** Original error */
-  error: Error;
-}
+export type ShardEventStatus =
+  | "created"
+  | "ready"
+  | "disconnected"
+  | "reconnecting"
+  | "healthUpdate"
+  | "rateLimit";
 
 /**
- * Event emitted when an operation is blocked by the circuit
+ * Base interface for all shard state objects
  */
-export interface CircuitBlockedEvent {
-  /** Event timestamp */
-  timestamp: string;
+export interface ShardStateBase extends GatewayEventBase {
+  /** Current shard status */
+  status: ShardEventStatus;
 
-  /** Type of blocked operation */
-  operationType: string;
-
-  /** Current circuit state */
-  state: CircuitState;
-
-  /** Remaining time before the next test in milliseconds */
-  remainingTimeout: number;
-}
-
-/**
- * Event emitted when a session limit is updated
- */
-export interface SessionLimitUpdateEvent extends GatewayEventBase {
-  /** Previous session limit */
-  oldLimit: number;
-
-  /** New session limit */
-  newLimit: number;
-
-  /** Number of guilds used for calculation */
-  guildCount: number;
-
-  /** Total number of shards */
-  totalShards: number;
-
-  /** Reason for the update */
-  reason: "large_bot" | "very_large_bot" | "scaling_adjustment";
-}
-
-/**
- * Base interface for all shard events
- */
-export interface ShardEventBase {
-  /** Event timestamp (ISO string) */
-  timestamp: string;
-}
-
-/**
- * Event emitted when a shard is created
- */
-export interface ShardCreateEvent extends ShardEventBase {
   /** ID of the shard */
   shardId: number;
+}
+
+/**
+ * Represents a newly created shard
+ */
+export interface ShardCreatedState extends ShardStateBase {
+  status: "created";
 
   /** Total number of shards */
   totalShards: number;
@@ -277,11 +246,23 @@ export interface ShardCreateEvent extends ShardEventBase {
 }
 
 /**
- * Event emitted when a shard is disconnected
+ * Represents a ready shard
  */
-export interface ShardDisconnectEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
+export interface ShardReadyState extends ShardStateBase {
+  status: "ready";
+
+  /** Total number of shards */
+  totalShards: number;
+
+  /** Number of guilds in this shard */
+  guildCount: number;
+}
+
+/**
+ * Represents a disconnected shard
+ */
+export interface ShardDisconnectedState extends ShardStateBase {
+  status: "disconnected";
 
   /** Total number of shards */
   totalShards: number;
@@ -294,65 +275,20 @@ export interface ShardDisconnectEvent extends ShardEventBase {
 }
 
 /**
- * Event emitted when a guild is added to a shard
+ * Represents a reconnecting shard
  */
-export interface ShardGuildAddEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
+export interface ShardReconnectingState extends ShardStateBase {
+  status: "reconnecting";
 
-  /** Total number of shards */
-  totalShards: number;
-
-  /** ID of the guild that was added */
-  guildId: string;
-
-  /** New total guild count for this shard */
-  newGuildCount: number;
+  /** Delay before retry in milliseconds */
+  delayMs: number;
 }
 
 /**
- * Event emitted when a guild is removed from a shard
+ * Represents a health update for a shard
  */
-export interface ShardGuildRemoveEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
-
-  /** Total number of shards */
-  totalShards: number;
-
-  /** ID of the guild that was removed */
-  guildId: string;
-
-  /** New total guild count for this shard */
-  newGuildCount: number;
-}
-
-/**
- * Event emitted when multiple guilds are added to a shard
- */
-export interface ShardGuildBulkAddEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
-
-  /** Total number of shards */
-  totalShards: number;
-
-  /** IDs of the guilds that were added */
-  guildIds: string[];
-
-  /** Number of guilds added */
-  addedCount: number;
-
-  /** New total guild count for this shard */
-  newGuildCount: number;
-}
-
-/**
- * Event emitted when a shard's health status is updated
- */
-export interface ShardHealthUpdateEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
+export interface ShardHealthUpdateState extends ShardStateBase {
+  status: "healthUpdate";
 
   /** Health metrics data */
   metrics: {
@@ -366,22 +302,15 @@ export interface ShardHealthUpdateEvent extends ShardEventBase {
     failedHeartbeats: number;
   };
 
-  /** Current shard status */
-  status: string;
-
   /** Health score (0-100) */
   score: number;
 }
 
 /**
- * Event emitted when a shard hits rate limits
+ * Represents a rate-limited shard
  */
-export interface ShardRateLimitEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
-
-  /** Total number of shards */
-  totalShards: number;
+export interface ShardRateLimitState extends ShardStateBase {
+  status: "rateLimit";
 
   /** Rate limit bucket ID */
   bucket: number;
@@ -389,191 +318,173 @@ export interface ShardRateLimitEvent extends ShardEventBase {
   /** Time until reset in milliseconds */
   timeout: number;
 
-  /** Remaining requests in this window */
-  remaining: number;
-
   /** Reset timestamp */
   reset: number;
 }
 
 /**
- * Event emitted when a shard becomes ready
+ * Union type representing all possible shard states
  */
-export interface ShardReadyEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
-
-  /** Total number of shards */
-  totalShards: number;
-
-  /** Session ID for this shard */
-  sessionId: string;
-
-  /** Latency in milliseconds */
-  latency: number;
-
-  /** Number of guilds in this shard */
-  guildCount: number;
-}
+export type ShardState =
+  | ShardCreatedState
+  | ShardReadyState
+  | ShardDisconnectedState
+  | ShardReconnectingState
+  | ShardHealthUpdateState
+  | ShardRateLimitState;
 
 /**
- * Event emitted when a shard needs to reconnect
+ * Base interface for all scaling status objects
  */
-export interface ShardReconnectEvent extends ShardEventBase {
-  /** ID of the shard */
-  shardId: number;
-
-  /** Total number of shards */
-  totalShards: number;
-
-  /** Delay before retry in milliseconds */
-  delayMs: number;
-}
+export type ScalingStatus = "started" | "completed" | "failed";
 
 /**
- * Event emitted when scaling the number of shards
+ * Base interface for all scaling state objects
  */
-export interface ShardScalingEvent extends ShardEventBase {
+export interface ScalingStateBase extends GatewayEventBase {
+  /** Current scaling status */
+  status: ScalingStatus;
+
   /** Previous number of shards */
-  oldShardCount: number;
+  oldCount: number;
 
   /** New number of shards */
-  newShardCount: number;
+  newCount: number;
+}
+
+/**
+ * Represents a started scaling operation
+ */
+export interface ScalingStartedState extends ScalingStateBase {
+  status: "started";
 
   /** Reason for scaling */
-  reason: "scale_up" | "scale_down";
+  reason: string;
 }
 
 /**
- * Event emitted when shard scaling is complete
+ * Represents a completed scaling operation
  */
-export interface ShardScalingCompleteEvent extends ShardEventBase {
-  /** Previous number of shards */
-  oldShardCount: number;
-
-  /** New number of shards */
-  newShardCount: number;
+export interface ScalingCompletedState extends ScalingStateBase {
+  status: "completed";
 
   /** Whether scaling was successful */
   successful: boolean;
 }
 
 /**
- * Event emitted when shard scaling fails
+ * Represents a failed scaling operation
  */
-export interface ShardScalingFailedEvent extends ShardEventBase {
-  /** Previous number of shards */
-  oldShardCount: number;
-
-  /** Target number of shards */
-  newShardCount: number;
+export interface ScalingFailedState extends ScalingStateBase {
+  status: "failed";
 
   /** Error that caused the failure */
-  error: Error | unknown;
-
-  /** Reason for failure */
-  reason: string;
+  error: Error;
 }
 
 /**
- * Map of event names to their corresponding payload types
+ * Union type representing all possible scaling states
+ */
+export type ScalingState =
+  | ScalingStartedState
+  | ScalingCompletedState
+  | ScalingFailedState;
+
+/**
+ * Base interface for all circuit breaker status objects
+ */
+export type CircuitBreakerStatus = "open" | "halfOpen" | "closed" | "blocked";
+
+/**
+ * Base interface for all circuit breaker state objects
+ */
+export interface CircuitBreakerStateBase {
+  /** Current circuit breaker status */
+  status: CircuitBreakerStatus;
+}
+
+/**
+ * Represents an open circuit
+ */
+export interface CircuitBreakerOpenState extends CircuitBreakerStateBase {
+  status: "open";
+
+  /** Time until reset in milliseconds */
+  resetTimeout: number;
+
+  /** Type of failure that triggered the circuit */
+  failureType?: string;
+
+  /** Number of consecutive failures */
+  failureCount: number;
+}
+
+/**
+ * Represents a half-open circuit
+ */
+export interface CircuitBreakerHalfOpenState extends CircuitBreakerStateBase {
+  status: "halfOpen";
+}
+
+/**
+ * Represents a closed circuit
+ */
+export interface CircuitBreakerClosedState extends CircuitBreakerStateBase {
+  status: "closed";
+}
+
+/**
+ * Represents a blocked operation due to circuit breaker
+ */
+export interface CircuitBreakerBlockedState extends CircuitBreakerStateBase {
+  status: "blocked";
+
+  /** Type of blocked operation */
+  operation: string;
+
+  /** Remaining time before the next test in milliseconds */
+  remainingTimeout: number;
+}
+
+/**
+ * Union type representing all possible circuit breaker states
+ */
+export type CircuitBreakerState =
+  | CircuitBreakerOpenState
+  | CircuitBreakerHalfOpenState
+  | CircuitBreakerClosedState
+  | CircuitBreakerBlockedState;
+
+/**
+ * Strongly typed event map for the gateway
  */
 export interface GatewayEvents {
-  /** Emitted when a WebSocket connection is initiated */
-  connectionStart: [event: ConnectionStartEvent];
+  /** Emitted when connection state changes */
+  connection: [state: ConnectionState];
 
-  /** Emitted when a WebSocket connection completes */
-  connectionComplete: [event: ConnectionCompleteEvent];
+  /** Emitted when heartbeat state changes */
+  heartbeat: [state: HeartbeatState];
 
-  /** Emitted when a WebSocket connection fails */
-  connectionFailure: [event: ConnectionFailureEvent];
+  /** Emitted when session state changes */
+  session: [state: SessionState];
 
-  /** Emitted when a payload is sent */
-  payloadSend: [event: PayloadSendEvent];
+  /** Emitted when shard state changes */
+  shard: [state: ShardState];
 
-  /** Emitted when a payload is received */
-  payloadReceive: [event: PayloadReceiveEvent];
+  /** Emitted when scaling state changes */
+  scaling: [state: ScalingState];
 
-  /** Emitted when heartbeat system is started */
-  heartbeatStart: [event: HeartbeatStartEvent];
-
-  /** Emitted when a heartbeat is sent */
-  heartbeatSend: [event: HeartbeatSendEvent];
-
-  /** Emitted when a heartbeat acknowledgement is received */
-  heartbeatAck: [event: HeartbeatAckEvent];
-
-  /** Emitted when a heartbeat times out */
-  heartbeatTimeout: [event: HeartbeatTimeoutEvent];
-
-  /** Emitted when a session is established */
-  sessionStart: [event: SessionStartEvent];
-
-  /** Emitted when a session is invalidated */
-  sessionInvalid: [event: SessionInvalidEvent];
-
-  /** Emitted when a session is resumed */
-  sessionResume: [event: SessionResumeEvent];
-
-  /** Emitted when a session limit is updated */
-  sessionLimitUpdate: [event: SessionLimitUpdateEvent];
-
-  /** Emitted when a shard is created */
-  shardCreate: [event: ShardCreateEvent];
-
-  /** Emitted when a shard disconnects */
-  shardDisconnect: [event: ShardDisconnectEvent];
-
-  /** Emitted when a guild is added to a shard */
-  shardGuildAdd: [event: ShardGuildAddEvent];
-
-  /** Emitted when a guild is removed from a shard */
-  shardGuildRemove: [event: ShardGuildRemoveEvent];
-
-  /** Emitted when multiple guilds are added to a shard */
-  shardGuildBulkAdd: [event: ShardGuildBulkAddEvent];
-
-  /** Emitted when a shard's health status is updated */
-  shardHealthUpdate: [event: ShardHealthUpdateEvent];
-
-  /** Emitted when a shard hits rate limits */
-  shardRateLimit: [event: ShardRateLimitEvent];
-
-  /** Emitted when a shard becomes ready */
-  shardReady: [event: ShardReadyEvent];
-
-  /** Emitted when a shard is resuming */
-  shardResuming: [event: ShardReadyEvent];
-
-  /** Emitted when a shard needs to reconnect */
-  shardReconnect: [event: ShardReconnectEvent];
-
-  /** Emitted when scaling the number of shards */
-  shardScaling: [event: ShardScalingEvent];
-
-  /** Emitted when shard scaling is complete */
-  shardScalingComplete: [event: ShardScalingCompleteEvent];
-
-  /** Emitted when shard scaling fails */
-  shardScalingFailed: [event: ShardScalingFailedEvent];
+  /** Emitted when circuit breaker state changes */
+  circuitBreaker: [state: CircuitBreakerState];
 
   /** Emitted when an error occurs */
-  error: [error: Error | string];
+  error: [error: Error];
 
   /** Emitted when an event is received from the gateway */
   dispatch: [
     event: keyof GatewayReceiveEvents,
     data: GatewayReceiveEvents[keyof GatewayReceiveEvents],
   ];
-
-  /** Emitted when a circuit breaker state changes */
-  circuitStateChange: [event: CircuitStateChangeEvent];
-
-  /** Emitted when an operation is blocked by the circuit */
-  circuitBlocked: [event: CircuitBlockedEvent];
-
-  /** Emitted when a failure is recorded by the circuit */
-  circuitFailure: [event: CircuitFailureEvent];
 }
 
 /**

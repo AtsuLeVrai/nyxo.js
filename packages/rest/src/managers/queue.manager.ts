@@ -7,7 +7,6 @@ import type {
   QueueCompleteEvent,
   QueueEventBase,
   QueueProcessEvent,
-  QueueRejectEvent,
   QueueStateChangeEvent,
   QueueTimeoutEvent,
 } from "../types/index.js";
@@ -168,8 +167,8 @@ export class QueueManager {
     // Check if queue is full
     if (this.#queue.length >= this.#options.maxQueueSize) {
       // Create reject event with the new unified format
-      const rejectEvent: QueueRejectEvent = {
-        type: "reject",
+      this.#rest.emit("queue", {
+        status: "reject",
         timestamp: new Date().toISOString(),
         requestId,
         queueTime: 0,
@@ -180,9 +179,8 @@ export class QueueManager {
           options.method || "GET",
         ),
         reason: "Queue size limit exceeded",
-      };
+      });
 
-      this.#rest.emit("queue", rejectEvent);
       return Promise.reject(
         new Error(`Queue size limit exceeded (${this.#options.maxQueueSize})`),
       );
@@ -253,7 +251,7 @@ export class QueueManager {
    */
   getState(trigger?: QueueStateChangeEvent["trigger"]): QueueStateChangeEvent {
     return {
-      type: "stateChange",
+      status: "stateChange",
       timestamp: new Date().toISOString(),
       requestId: crypto.randomUUID(), // State changes don't necessarily have a request ID
       queueSize: this.#queue.length,
@@ -271,7 +269,7 @@ export class QueueManager {
    */
   #createBaseQueueEvent<T = unknown>(
     item: QueueItem<T>,
-  ): Omit<QueueEventBase, "type"> {
+  ): Omit<QueueEventBase, "status"> {
     return {
       timestamp: new Date().toISOString(),
       requestId: item.id,
@@ -300,7 +298,7 @@ export class QueueManager {
     // Emit add event with the new unified format
     this.#rest.emit("queue", {
       ...this.#createBaseQueueEvent(item),
-      type: "add",
+      status: "add",
       queueTime: 0,
       path: item.path,
       method: item.method,
@@ -341,7 +339,7 @@ export class QueueManager {
         // Emit process event with the new unified format
         this.#rest.emit("queue", {
           ...this.#createBaseQueueEvent(item),
-          type: "process",
+          status: "process",
           queueTime,
           path: item.path,
           method: item.method,
@@ -386,7 +384,7 @@ export class QueueManager {
       // Emit complete event with the new unified format
       this.#rest.emit("queue", {
         ...this.#createBaseQueueEvent(item),
-        type: "complete",
+        status: "complete",
         queueTime,
         path: item.path,
         method: item.method,
@@ -400,7 +398,7 @@ export class QueueManager {
       // Emit complete event with error using the new unified format
       this.#rest.emit("queue", {
         ...this.#createBaseQueueEvent(item),
-        type: "complete",
+        status: "complete",
         queueTime,
         path: item.path,
         method: item.method,
@@ -435,7 +433,7 @@ export class QueueManager {
       // Emit timeout event with the new unified format
       this.#rest.emit("queue", {
         ...this.#createBaseQueueEvent(item),
-        type: "timeout",
+        status: "timeout",
         queueTime: Date.now() - item.timestamp,
         path: item.path,
         method: item.method,

@@ -1,11 +1,5 @@
 import type { Gateway } from "../core/index.js";
 import type { HeartbeatOptions } from "../options/index.js";
-import type {
-  HeartbeatAckEvent,
-  HeartbeatSendEvent,
-  HeartbeatStartEvent,
-  HeartbeatTimeoutEvent,
-} from "../types/index.js";
 import { GatewayOpcodes } from "../types/index.js";
 
 /**
@@ -196,16 +190,12 @@ export class HeartbeatManager {
     this.#handleAck();
     this.#updateLatency(now);
 
-    // Emit heartbeat ack event
-    const ackEvent: HeartbeatAckEvent = {
+    this.#gateway.emit("heartbeat", {
+      status: "ack",
       timestamp: new Date().toISOString(),
       sequence: this.#gateway.sequence,
-      interval: this.#intervalMs,
       latency: this.#latency,
-      averageLatency: this.averageLatency(),
-    };
-
-    this.#gateway.emit("heartbeatAck", ackEvent);
+    });
   }
 
   /**
@@ -222,15 +212,13 @@ export class HeartbeatManager {
 
     this.#isAcked = false;
 
-    // Emit heartbeat send event
-    const sendEvent: HeartbeatSendEvent = {
+    this.#gateway.emit("heartbeat", {
+      status: "sent",
       timestamp: new Date().toISOString(),
       sequence: this.#gateway.sequence,
-      interval: this.#intervalMs,
       totalBeats: this.#totalBeats,
-    };
+    });
 
-    this.#gateway.emit("heartbeatSend", sendEvent);
     this.#gateway.send(GatewayOpcodes.Heartbeat, this.#gateway.sequence);
   }
 
@@ -241,9 +229,6 @@ export class HeartbeatManager {
    * @private
    */
   #startHeartbeat(interval: number): void {
-    const isRestart = this.#intervalMs > 0;
-    const previousInterval = this.#intervalMs;
-
     // Clean up existing timers
     this.destroy();
     this.#intervalMs = interval;
@@ -251,17 +236,12 @@ export class HeartbeatManager {
     // Use jitter to prevent thundering herd problem
     const initialDelay = interval * Math.random();
 
-    // Emit heartbeat start event
-    const startEvent: HeartbeatStartEvent = {
+    this.#gateway.emit("heartbeat", {
+      status: "started",
       timestamp: new Date().toISOString(),
-      sequence: this.#gateway.sequence,
       interval: this.#intervalMs,
       initialDelay,
-      isRestart,
-      previousInterval,
-    };
-
-    this.#gateway.emit("heartbeatStart", startEvent);
+    });
 
     setTimeout(() => {
       this.sendHeartbeat();
@@ -292,16 +272,12 @@ export class HeartbeatManager {
   #handleMissedHeartbeat(): void {
     this.#missedHeartbeats++;
 
-    // Emit heartbeat timeout event
-    const timeoutEvent: HeartbeatTimeoutEvent = {
+    this.#gateway.emit("heartbeat", {
+      status: "timeout",
       timestamp: new Date().toISOString(),
-      sequence: this.#gateway.sequence,
-      interval: this.#intervalMs,
       missedHeartbeats: this.#missedHeartbeats,
       maxRetries: this.#options.maxRetries,
-    };
-
-    this.#gateway.emit("heartbeatTimeout", timeoutEvent);
+    });
 
     // If we've reached the max retries, destroy the heartbeat and reconnect if configured
     if (this.#missedHeartbeats >= this.#options.maxRetries) {

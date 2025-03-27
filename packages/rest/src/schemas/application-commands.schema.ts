@@ -49,7 +49,7 @@ export interface CreateGlobalApplicationCommandSchema {
    * @maxLength 100
    * @optional
    */
-  description?: string;
+  description: string;
 
   /**
    * Localization dictionary for the description field
@@ -72,7 +72,7 @@ export interface CreateGlobalApplicationCommandSchema {
    *
    * @nullable
    */
-  default_member_permissions: string | null;
+  default_member_permissions?: string | null;
 
   /**
    * Whether the command is available in DMs with the app

@@ -326,7 +326,7 @@ export class RateLimitManager {
   #createBaseRateLimitEvent(
     requestId: string,
     bucketId: string,
-  ): Omit<RateLimitEvent, "type"> {
+  ): Omit<RateLimitEvent, "status"> {
     return {
       timestamp: new Date().toISOString(),
       requestId,
@@ -399,7 +399,7 @@ export class RateLimitManager {
       // Emit an event when hitting Cloudflare's invalid request limit with the unified format
       this.#rest.emit("rateLimit", {
         ...this.#createBaseRateLimitEvent(requestId, "cloudflare"),
-        type: "hit",
+        status: "hit",
         resetAfter: retryAfter,
         global: true,
         route: "ANY",
@@ -461,7 +461,7 @@ export class RateLimitManager {
         // Emit an event when hitting the global rate limit with the unified format
         this.#rest.emit("rateLimit", {
           ...this.#createBaseRateLimitEvent(requestId, "global"),
-          type: "hit",
+          status: "hit",
           resetAfter: retryAfter,
           global: true,
           reason: "Global rate limit exceeded",
@@ -516,7 +516,7 @@ export class RateLimitManager {
     // Emit an event when hitting a rate limit from the API with the unified format
     this.#rest.emit("rateLimit", {
       ...this.#createBaseRateLimitEvent(requestId, bucketId),
-      type: "hit",
+      status: "hit",
       resetAfter: retryAfter,
       global: isGlobal,
       route: path,
@@ -575,7 +575,7 @@ export class RateLimitManager {
     // Emit an event with the updated bucket info using the unified format
     this.#rest.emit("rateLimit", {
       ...this.#createBaseRateLimitEvent(requestId, bucketHash),
-      type: "update",
+      status: "update",
       remaining: bucket.remaining,
       limit: bucket.limit,
       resetAfter: bucket.resetAfter,
@@ -609,7 +609,7 @@ export class RateLimitManager {
       // Emit an event for hitting a bucket limit using the unified format
       this.#rest.emit("rateLimit", {
         ...this.#createBaseRateLimitEvent(requestId, bucket.hash),
-        type: "hit",
+        status: "hit",
         resetAfter: retryAfter,
         global: false,
         route: path,
@@ -634,7 +634,7 @@ export class RateLimitManager {
       // Emit an event for hitting the safety margin using the unified format
       this.#rest.emit("rateLimit", {
         ...this.#createBaseRateLimitEvent(requestId, bucket.hash),
-        type: "hit",
+        status: "hit",
         resetAfter: retryAfter,
         global: false,
         route: path,
@@ -680,7 +680,7 @@ export class RateLimitManager {
       // Emit an event for hitting an emoji route limit using the unified format
       this.#rest.emit("rateLimit", {
         ...this.#createBaseRateLimitEvent(requestId, bucket.hash),
-        type: "hit",
+        status: "hit",
         resetAfter: retryAfter,
         global: false,
         route: path,
@@ -717,7 +717,7 @@ export class RateLimitManager {
         // Emit an event when a bucket expires using the unified format
         this.#rest.emit("rateLimit", {
           ...this.#createBaseRateLimitEvent(bucket.requestId, hash),
-          type: "expire",
+          status: "expire",
           lifespan: now - (bucket.reset - bucket.resetAfter),
         });
       }

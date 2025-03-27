@@ -357,7 +357,7 @@ export class Rest extends EventEmitter<RestEvents> {
           } catch (error) {
             // Emit failure event using the unified event system
             this.emit("request", {
-              type: "failure",
+              status: "failure",
               timestamp: new Date().toISOString(),
               requestId,
               path: options.path,
@@ -476,7 +476,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Emit unified request start event
     this.emit("request", {
-      type: "start",
+      status: "start",
       timestamp: new Date().toISOString(),
       requestId,
       path: options.path,
@@ -505,7 +505,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Emit unified request complete event
     this.emit("request", {
-      type: "complete",
+      status: "complete",
       timestamp: new Date().toISOString(),
       requestId,
       path: options.path,

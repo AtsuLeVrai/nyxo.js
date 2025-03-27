@@ -72,21 +72,21 @@ export type RequestEventType = "start" | "complete" | "failure";
  */
 export interface RequestEventBase extends HttpRequestEventBase {
   /** Type of request event */
-  type: RequestEventType;
+  status: RequestEventType;
 }
 
 /**
  * Event emitted when a request is started
  */
 export interface RequestStartEvent extends RequestEventBase {
-  type: "start";
+  status: "start";
 }
 
 /**
  * Event emitted when a request completes successfully
  */
 export interface RequestCompleteEvent extends RequestEventBase {
-  type: "complete";
+  status: "complete";
 
   /** HTTP status code received */
   statusCode: number;
@@ -105,7 +105,7 @@ export interface RequestCompleteEvent extends RequestEventBase {
  * Event emitted when a request fails
  */
 export interface RequestFailureEvent extends RequestEventBase {
-  type: "failure";
+  status: "failure";
 
   /** Error object or message */
   error: Error;
@@ -138,7 +138,7 @@ export type RateLimitEventType = "hit" | "update" | "expire";
  */
 export interface RateLimitEventBase extends RestEventBase {
   /** Type of rate limit event */
-  type: RateLimitEventType;
+  status: RateLimitEventType;
 
   /** Rate limit bucket hash or identifier */
   bucketId: string;
@@ -148,7 +148,7 @@ export interface RateLimitEventBase extends RestEventBase {
  * Event emitted when a rate limit is hit
  */
 export interface RateLimitHitEvent extends RateLimitEventBase {
-  type: "hit";
+  status: "hit";
 
   /** Time in milliseconds until the rate limit resets */
   resetAfter: number;
@@ -173,7 +173,7 @@ export interface RateLimitHitEvent extends RateLimitEventBase {
  * Event emitted when rate limit information is updated
  */
 export interface RateLimitUpdateEvent extends RateLimitEventBase {
-  type: "update";
+  status: "update";
 
   /** Remaining requests in the current window */
   remaining: number;
@@ -195,7 +195,7 @@ export interface RateLimitUpdateEvent extends RateLimitEventBase {
  * Event emitted when a rate limit bucket expires
  */
 export interface RateLimitExpireEvent extends RateLimitEventBase {
-  type: "expire";
+  status: "expire";
 
   /** Time in milliseconds the bucket was alive */
   lifespan: number;
@@ -225,7 +225,7 @@ export type QueueEventType =
  */
 export interface QueueEventBase extends RestEventBase {
   /** Type of queue event */
-  type: QueueEventType;
+  status: QueueEventType;
 }
 
 /**
@@ -249,21 +249,21 @@ export interface QueueProcessingEventBase extends QueueEventBase {
  * Event emitted when an item is added to the queue
  */
 export interface QueueAddEvent extends QueueProcessingEventBase {
-  type: "add";
+  status: "add";
 }
 
 /**
  * Event emitted when an item starts processing from the queue
  */
 export interface QueueProcessEvent extends QueueProcessingEventBase {
-  type: "process";
+  status: "process";
 }
 
 /**
  * Event emitted when an item is completed
  */
 export interface QueueCompleteEvent extends QueueProcessingEventBase {
-  type: "complete";
+  status: "complete";
 
   /** Whether the request completed successfully */
   success: boolean;
@@ -273,14 +273,14 @@ export interface QueueCompleteEvent extends QueueProcessingEventBase {
  * Event emitted when an item times out in the queue
  */
 export interface QueueTimeoutEvent extends QueueProcessingEventBase {
-  type: "timeout";
+  status: "timeout";
 }
 
 /**
  * Event emitted when an item is rejected due to queue being full
  */
 export interface QueueRejectEvent extends QueueProcessingEventBase {
-  type: "reject";
+  status: "reject";
   /** Reason for rejection */
   reason: string;
 }
@@ -289,7 +289,7 @@ export interface QueueRejectEvent extends QueueProcessingEventBase {
  * Event emitted when queue state changes
  */
 export interface QueueStateChangeEvent extends QueueEventBase {
-  type: "stateChange";
+  status: "stateChange";
 
   /** Number of items currently in the queue */
   queueSize: number;

@@ -351,7 +351,7 @@ export interface InteractionCallbackResponseEntity {
  */
 export interface InteractionCallbackMessagesEntity {
   /** Whether the response is TTS */
-  tts: boolean;
+  tts?: boolean;
 
   /** Message content */
   content?: string;
