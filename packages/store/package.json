@@ -46,12 +46,14 @@
   "dependencies": {
     "deepmerge-ts": "^7.1.5",
     "lodash-es": "^4.17.21",
-    "lru-cache": "^11.1.0"
+    "lru-cache": "^11.1.0",
+    "zod": "3.24.2",
+    "zod-validation-error": "3.4.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "^22.13.13",
+    "@types/node": "^22.13.14",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.2"
   }

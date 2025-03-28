@@ -390,10 +390,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         error instanceof Error ? error : new Error(String(error)),
       );
 
-      this.#circuitBreaker.recordFailure(
-        error instanceof Error ? error : new Error(String(error)),
-        failureType,
-      );
+      this.#circuitBreaker.recordFailure(failureType);
 
       // Enhanced error reporting with more context
       throw new Error("Failed to connect to gateway", {
@@ -759,13 +756,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     // Record failure if not a clean close
     if (code !== 1000 && code !== 1001) {
-      const error = new Error(
-        `WebSocket closed with code ${code}: ${reason || "No reason provided"}`,
-      );
       const failureType =
         code === 4004 ? FailureType.Authentication : FailureType.WebSocket;
 
-      this.#circuitBreaker.recordFailure(error, failureType);
+      this.#circuitBreaker.recordFailure(failureType);
     } else {
       // For clean closures, clear session information
       this.#sessionId = null;
@@ -792,10 +786,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     // Record failure if not resumable
     if (!resumable) {
-      this.#circuitBreaker.recordFailure(
-        new Error("Non-resumable invalid session"),
-        FailureType.Gateway,
-      );
+      this.#circuitBreaker.recordFailure(FailureType.Gateway);
 
       // Clear session info if not resumable
       this.#sessionId = null;
@@ -891,10 +882,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         error instanceof Error ? error : new Error(String(error)),
       );
 
-      this.#circuitBreaker.recordFailure(
-        error instanceof Error ? error : new Error(String(error)),
-        failureType,
-      );
+      this.#circuitBreaker.recordFailure(failureType);
 
       // Try again after a delay
       await sleep(5000);

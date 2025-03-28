@@ -1,6 +1,8 @@
 import { deepmerge } from "deepmerge-ts";
 import { get, unset } from "lodash-es";
 import { LRUCache } from "lru-cache";
+import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 /**
  * A predicate used for finding or filtering items in the store.
@@ -16,35 +18,31 @@ export type StorePredicate<K extends string | number | symbol, V> =
 /**
  * Configuration options for the Store.
  */
-export interface StoreOptions {
-  /**
-   * Maximum number of items to store before eviction (default: 10000)
-   * @minimum 0
-   */
-  readonly maxSize?: number;
+export const StoreOptions = z
+  .object({
+    /**
+     * Maximum number of items to store before eviction (default: 10000)
+     * @minimum 0
+     */
+    maxSize: z.number().int().nonnegative().default(10000),
 
-  /**
-   * Time to live in milliseconds for items (default: 0, meaning no expiration)
-   * @minimum 0
-   */
-  readonly ttl?: number;
+    /**
+     * Time to live in milliseconds for items (default: 0, meaning no expiration)
+     * @minimum 0
+     */
+    ttl: z.number().int().nonnegative().default(0),
 
-  /**
-   * Strategy for evicting items when maxSize is reached (default: "lru")
-   * - "fifo": First-in-first-out - oldest entries are evicted first
-   * - "lru": Least recently used - least accessed entries are evicted first
-   */
-  readonly evictionStrategy?: "fifo" | "lru";
-}
+    /**
+     * Strategy for evicting items when maxSize is reached (default: "lru")
+     * - "fifo": First-in-first-out - oldest entries are evicted first
+     * - "lru": Least recently used - least accessed entries are evicted first
+     */
+    evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
+  })
+  .strict()
+  .readonly();
 
-/**
- * Default configuration options for the Store.
- */
-const DEFAULT_STORE_OPTIONS: StoreOptions = {
-  maxSize: 10000,
-  ttl: 0,
-  evictionStrategy: "lru",
-};
+export type StoreOptions = z.infer<typeof StoreOptions>;
 
 /**
  * An enhanced Map implementation with additional features like TTL, eviction strategies,
@@ -100,17 +98,15 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    */
   constructor(
     entries?: readonly (readonly [K, V])[] | null,
-    options: StoreOptions = {},
+    options: z.input<typeof StoreOptions> = {},
   ) {
     super();
 
     // Validate options and merge with defaults
     try {
-      this.#options = this.#validateOptions(options);
+      this.#options = StoreOptions.parse(options);
     } catch (error) {
-      throw new Error(
-        error instanceof Error ? error.message : "Invalid store options",
-      );
+      throw new Error(fromError(error).message);
     }
 
     if (
@@ -467,44 +463,6 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
       clearInterval(this.#cleanupInterval);
       this.#cleanupInterval = null;
     }
-  }
-
-  /**
-   * Validates the options for the Store and returns the validated options merged with defaults.
-   *
-   * @param {StoreOptions} options - The options to validate
-   * @returns {StoreOptions} The validated options merged with defaults
-   * @private
-   */
-  #validateOptions(options: StoreOptions): StoreOptions {
-    if (
-      options.maxSize !== undefined &&
-      (typeof options.maxSize !== "number" ||
-        options.maxSize < 0 ||
-        !Number.isInteger(options.maxSize))
-    ) {
-      throw new Error("maxSize must be a non-negative integer");
-    }
-
-    if (
-      options.ttl !== undefined &&
-      (typeof options.ttl !== "number" ||
-        options.ttl < 0 ||
-        !Number.isInteger(options.ttl))
-    ) {
-      throw new Error("ttl must be a non-negative integer");
-    }
-
-    if (
-      options.evictionStrategy !== undefined &&
-      options.evictionStrategy !== "fifo" &&
-      options.evictionStrategy !== "lru"
-    ) {
-      throw new Error('evictionStrategy must be either "fifo" or "lru"');
-    }
-
-    // Return the validated options merged with defaults
-    return { ...DEFAULT_STORE_OPTIONS, ...options };
   }
 
   /**

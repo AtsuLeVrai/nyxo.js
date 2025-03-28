@@ -15,54 +15,52 @@ export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
  * Controls authentication, API version, endpoints, and behavior
  * for requests to the Discord API.
  */
-export const RestOptions = z
-  .object({
-    /**
-     * Discord Bot or Bearer token for authentication
-     * Required for all API requests
-     */
-    token: z.string(),
+export const RestOptions = z.object({
+  /**
+   * Discord Bot or Bearer token for authentication
+   * Required for all API requests
+   */
+  token: z.string(),
 
-    /**
-     * Type of authentication to use with the token
-     * @default "Bot"
-     */
-    authType: z.enum(["Bot", "Bearer"]).default("Bot"),
+  /**
+   * Type of authentication to use with the token
+   * @default "Bot"
+   */
+  authType: z.enum(["Bot", "Bearer"]).default("Bot"),
 
-    /**
-     * Discord API version to use
-     * @default ApiVersion.V10
-     */
-    version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
+  /**
+   * Discord API version to use
+   * @default ApiVersion.V10
+   */
+  version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
 
-    /**
-     * User agent string to send with requests
-     * Must follow Discord's user agent format requirements
-     * @default "DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"
-     */
-    userAgent: z
-      .string()
-      .regex(DISCORD_USER_AGENT_REGEX)
-      .default("DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"),
+  /**
+   * User agent string to send with requests
+   * Must follow Discord's user agent format requirements
+   * @default "DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"
+   */
+  userAgent: z
+    .string()
+    .regex(DISCORD_USER_AGENT_REGEX)
+    .default("DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"),
 
-    /**
-     * Base URL for Discord API requests
-     * @default "https://discord.com"
-     */
-    baseUrl: z.string().url().default("https://discord.com"),
+  /**
+   * Base URL for Discord API requests
+   * @default "https://discord.com"
+   */
+  baseUrl: z.string().url().default("https://discord.com"),
 
-    /**
-     * Request retry configuration
-     * @default {}
-     */
-    retry: RetryOptions.default({}),
+  /**
+   * Request retry configuration
+   * @default {}
+   */
+  retry: RetryOptions.default({}),
 
-    /**
-     * Request queue configuration
-     * @default {}
-     */
-    queue: QueueOptions.default({}),
-  })
-  .readonly();
+  /**
+   * Request queue configuration
+   * @default {}
+   */
+  queue: QueueOptions.default({}),
+});
 
 export type RestOptions = z.infer<typeof RestOptions>;

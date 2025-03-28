@@ -6,7 +6,7 @@ import type {
   ApplicationCommandType,
 } from "./application-commands.entity.js";
 import type { ApplicationIntegrationType } from "./application.entity.js";
-import type { ChannelEntity } from "./channel.entity.js";
+import type { AnyChannelEntity } from "./channel.entity.js";
 import type { EntitlementEntity } from "./entitlement.entity.js";
 import type { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
 import type {
@@ -151,7 +151,7 @@ export interface AnySimpleCommandOptionEntity
 export interface SubCommandOptionEntity
   extends Omit<CommandOptionEntity, "value" | "focused" | "type"> {
   /** SubCommand option type */
-  type: 1;
+  type: ApplicationCommandOptionType.SubCommand;
 
   /** Options for this subcommand */
   options?: AnySimpleCommandOptionEntity[];
@@ -163,7 +163,7 @@ export interface SubCommandOptionEntity
 export interface SubCommandGroupOptionEntity
   extends Omit<CommandOptionEntity, "value" | "focused" | "type"> {
   /** SubCommandGroup option type */
-  type: 2;
+  type: ApplicationCommandOptionType.SubCommandGroup;
 
   /** SubCommand options for this group */
   options: SubCommandOptionEntity[];
@@ -183,28 +183,25 @@ export type AnyCommandOptionEntity =
  */
 export interface InteractionResolvedDataEntity {
   /** Map of user IDs to user objects */
-  users?: Record<string, UserEntity>;
+  users?: Record<Snowflake, UserEntity>;
 
   /** Map of user IDs to partial member objects (missing user, deaf, and mute fields) */
-  members?: Record<string, Omit<GuildMemberEntity, "user" | "deaf" | "mute">>;
-
-  /** Map of role IDs to role objects */
-  roles?: Record<string, RoleEntity>;
-
-  /** Map of channel IDs to partial channel objects */
-  channels?: Record<
-    string,
-    Pick<
-      ChannelEntity,
-      "id" | "name" | "type" | "permissions" | "thread_metadata" | "parent_id"
-    >
+  members?: Record<
+    Snowflake,
+    Omit<GuildMemberEntity, "user" | "deaf" | "mute">
   >;
 
+  /** Map of role IDs to role objects */
+  roles?: Record<Snowflake, RoleEntity>;
+
+  /** Map of channel IDs to partial channel objects */
+  channels?: Record<Snowflake, Partial<AnyChannelEntity>>;
+
   /** Map of message IDs to partial message objects */
-  messages?: Record<string, MessageEntity>;
+  messages?: Record<Snowflake, Partial<MessageEntity>>;
 
   /** Map of attachment IDs to attachment objects */
-  attachments?: Record<string, AttachmentEntity>;
+  attachments?: Record<Snowflake, AttachmentEntity>;
 }
 
 /**
@@ -365,8 +362,11 @@ export interface InteractionCallbackMessagesEntity {
   /** Allowed mentions object */
   allowed_mentions?: AllowedMentionsEntity;
 
-  /** Message flags combined as a bitfield */
-  flags?: MessageFlags;
+  /** Message flags combined as a bitfield (only SUPPRESS_EMBEDS, EPHEMERAL, and SUPPRESS_NOTIFICATIONS can be set) */
+  flags?:
+    | MessageFlags.SuppressEmbeds
+    | MessageFlags.Ephemeral
+    | MessageFlags.SuppressNotifications;
 
   /** Message components */
   components?: ActionRowEntity[];
@@ -416,18 +416,32 @@ export interface InteractionCallbackAutocompleteEntity {
 }
 
 /**
+ * Type guard to ensure correct data type is used based on callback type
+ */
+export type InteractionCallbackData<T extends InteractionCallbackType> =
+  T extends InteractionCallbackType.ApplicationCommandAutocompleteResult
+    ? InteractionCallbackAutocompleteEntity
+    : T extends InteractionCallbackType.Modal
+      ? InteractionCallbackModalEntity
+      : T extends
+            | InteractionCallbackType.ChannelMessageWithSource
+            | InteractionCallbackType.DeferredChannelMessageWithSource
+            | InteractionCallbackType.UpdateMessage
+            | InteractionCallbackType.DeferredUpdateMessage
+            | InteractionCallbackType.PremiumRequired
+        ? InteractionCallbackMessagesEntity
+        : never;
+
+/**
  * Interaction response structure for responding to interactions
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-response-structure}
  */
-export interface InteractionResponseEntity {
+export interface InteractionResponseEntity<T extends InteractionCallbackType> {
   /** Type of response */
-  type: InteractionCallbackType;
+  type: T;
 
   /** An optional response message */
-  data?:
-    | InteractionCallbackMessagesEntity
-    | InteractionCallbackModalEntity
-    | InteractionCallbackAutocompleteEntity;
+  data?: InteractionCallbackData<T>;
 }
 
 /**
@@ -454,7 +468,7 @@ export interface InteractionEntity {
   guild_id?: Snowflake;
 
   /** Channel that the interaction was sent from */
-  channel?: Partial<ChannelEntity>;
+  channel?: Partial<AnyChannelEntity>;
 
   /** Channel ID that the interaction was sent from */
   channel_id?: Snowflake;
@@ -469,13 +483,13 @@ export interface InteractionEntity {
   token: string;
 
   /** Read-only property, always 1 */
-  version: 1;
+  version: number;
 
   /** For components, the message they were attached to */
   message?: MessageEntity;
 
   /** Bitwise set of permissions the app has in the source location of the interaction */
-  app_permissions: string; // BitField representation
+  app_permissions: string;
 
   /** Selected language of the invoking user */
   locale?: Locale;
@@ -484,11 +498,11 @@ export interface InteractionEntity {
   guild_locale?: Locale;
 
   /** For monetized apps, any entitlements for the invoking user */
-  entitlements?: EntitlementEntity[];
+  entitlements: EntitlementEntity[];
 
   /** Mapping of installation contexts that the interaction was authorized for */
   authorizing_integration_owners: Record<
-    ApplicationIntegrationType | string,
+    ApplicationIntegrationType,
     Snowflake | "0"
   >;
 
@@ -499,7 +513,11 @@ export interface InteractionEntity {
 /**
  * Guild-specific interaction entity
  */
-export interface GuildInteractionEntity extends InteractionEntity {
+export interface GuildInteractionEntity
+  extends Omit<
+    InteractionEntity,
+    "guild" | "guild_id" | "member" | "guild_locale" | "context"
+  > {
   /** Guild context identifier */
   context: InteractionContextType.Guild;
 
@@ -522,7 +540,14 @@ export interface GuildInteractionEntity extends InteractionEntity {
 export interface BotDmInteractionEntity
   extends Omit<
     InteractionEntity,
-    "guild" | "guild_id" | "guild_locale" | "member"
+    | "guild"
+    | "guild_id"
+    | "guild_locale"
+    | "member"
+    | "channel"
+    | "channel_id"
+    | "user"
+    | "context"
   > {
   /** Bot DM context identifier */
   context: InteractionContextType.BotDm;
@@ -531,7 +556,7 @@ export interface BotDmInteractionEntity
   channel_id: Snowflake;
 
   /** Channel that the interaction was sent from */
-  channel: Partial<ChannelEntity>;
+  channel: Partial<AnyChannelEntity>;
 
   /** User object for the invoking user */
   user: UserEntity;
@@ -543,7 +568,14 @@ export interface BotDmInteractionEntity
 export interface PrivateChannelInteractionEntity
   extends Omit<
     InteractionEntity,
-    "guild" | "guild_id" | "guild_locale" | "member"
+    | "guild"
+    | "guild_id"
+    | "guild_locale"
+    | "member"
+    | "channel"
+    | "channel_id"
+    | "user"
+    | "context"
   > {
   /** Private channel context identifier */
   context: InteractionContextType.PrivateChannel;
@@ -552,7 +584,7 @@ export interface PrivateChannelInteractionEntity
   channel_id: Snowflake;
 
   /** Channel that the interaction was sent from */
-  channel: Partial<ChannelEntity>;
+  channel: Partial<AnyChannelEntity>;
 
   /** User object for the invoking user */
   user: UserEntity;

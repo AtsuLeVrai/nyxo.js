@@ -243,10 +243,10 @@ export class CircuitBreakerService {
     }
 
     // Emit an event for the blocked operation
-    this.#gateway.emit("circuitBlocked", {
+    this.#gateway.emit("circuitBreaker", {
+      status: "blocked",
       timestamp: new Date().toISOString(),
-      operationType,
-      state: this.#state,
+      operation: operationType,
       remainingTimeout: this.remainingTimeout,
     });
 
@@ -284,14 +284,10 @@ export class CircuitBreakerService {
   /**
    * Records an operation failure
    *
-   * @param error - Error that caused the failure
    * @param failureType - Type of failure
    * @returns true if the circuit is now open, false otherwise
    */
-  recordFailure(
-    error: Error,
-    failureType: FailureType = FailureType.Unknown,
-  ): boolean {
+  recordFailure(failureType: FailureType = FailureType.Unknown): boolean {
     // Update the failure counter for this type
     this.#failureCounts[failureType]++;
 
@@ -299,27 +295,18 @@ export class CircuitBreakerService {
     this.#lastFailureTime = Date.now();
     this.#lastFailureType = failureType;
 
-    // Emit a failure event
-    this.#gateway.emit("circuitFailure", {
-      timestamp: new Date().toISOString(),
-      failureType,
-      state: this.#state,
-      failureCount: this.#failureCounts[failureType],
-      error,
-    });
-
     // Check the specific rules for this failure type
     const typeOptions = this.#options.failureTypeOptions[failureType];
     if (typeOptions?.breakImmediately) {
       // Immediately open the circuit for this critical type
-      this.#transitionTo(CircuitState.Open, failureType);
+      this.#transitionTo(CircuitState.Open);
       return true;
     }
 
     // Check if the failure threshold is reached
     const threshold = typeOptions?.threshold ?? this.#options.failureThreshold;
     if (this.#failureCounts[failureType] >= threshold) {
-      this.#transitionTo(CircuitState.Open, failureType);
+      this.#transitionTo(CircuitState.Open);
       return true;
     }
 
@@ -369,16 +356,14 @@ export class CircuitBreakerService {
    * Performs a circuit state transition
    *
    * @param newState - New state
-   * @param failureType - Type of failure that caused the transition
    * @private
    */
-  #transitionTo(newState: CircuitState, failureType?: FailureType): void {
+  #transitionTo(newState: CircuitState): void {
     // Do nothing if the state doesn't change
     if (this.#state === newState) {
       return;
     }
 
-    const previousState = this.#state;
     this.#state = newState;
 
     // Cancel the existing timer if there is one
@@ -401,15 +386,5 @@ export class CircuitBreakerService {
         this.#options.maxResetTimeout,
       );
     }
-
-    // Emit a state change event
-    this.#gateway.emit("circuitStateChange", {
-      timestamp: new Date().toISOString(),
-      previousState,
-      newState,
-      failureType,
-      failureCount: failureType ? this.#failureCounts[failureType] : 0,
-      resetTimeout: this.#currentResetTimeout,
-    });
   }
 }

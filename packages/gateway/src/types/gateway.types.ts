@@ -398,7 +398,7 @@ export type CircuitBreakerStatus = "open" | "halfOpen" | "closed" | "blocked";
 /**
  * Base interface for all circuit breaker state objects
  */
-export interface CircuitBreakerStateBase {
+export interface CircuitBreakerStateBase extends GatewayEventBase {
   /** Current circuit breaker status */
   status: CircuitBreakerStatus;
 }
