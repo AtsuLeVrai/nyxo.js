@@ -102,6 +102,11 @@ export class ApiError extends Error {
   readonly code: number;
 
   /**
+   * Request headers from the API response
+   */
+  readonly headers?: Record<string, unknown>;
+
+  /**
    * Field-specific errors if any
    */
   readonly errors?: Record<string, { _errors: JsonErrorField[] }>;
@@ -135,6 +140,7 @@ export class ApiError extends Error {
     this.method = context.method;
     this.timestamp = new Date().toISOString();
     this.code = jsonError.code;
+    this.headers = context.headers;
     this.errors = jsonError.errors;
   }
 
@@ -175,7 +181,7 @@ export class ApiError extends Error {
  * @returns A formatted string of errors or undefined if no errors
  */
 function formatFieldErrors(
-  errors?: Record<string, { _errors: JsonErrorField[] }>,
+  errors?: Record<string, unknown>,
 ): string | undefined {
   if (!errors) {
     return undefined;
@@ -183,18 +189,24 @@ function formatFieldErrors(
 
   const errorParts: string[] = [];
 
-  // Loop through all error fields
-  for (const [fieldName, fieldData] of Object.entries(errors)) {
-    if (fieldData._errors?.length === 0) {
-      continue;
+  // Recursive function to handle nested error structures
+  const processErrors = (obj: Record<string, unknown>, path = ""): void => {
+    for (const [key, value] of Object.entries(obj)) {
+      const currentPath = path ? `${path}.${key}` : key;
+
+      if (key === "_errors" && Array.isArray(value) && value.length > 0) {
+        // We found errors, extract messages
+        const fieldErrors = value
+          .map((err: JsonErrorField) => `"${err.message}"`)
+          .join(", ");
+        errorParts.push(`${path || "general"}: ${fieldErrors}`);
+      } else if (value && typeof value === "object") {
+        // Recursively process nested objects
+        processErrors(value as Record<string, unknown>, currentPath);
+      }
     }
+  };
 
-    // Extract error messages for this field
-    const fieldErrors = fieldData._errors
-      .map((err) => `"${err.message}"`)
-      .join(", ");
-    errorParts.push(`${fieldName}: ${fieldErrors}`);
-  }
-
+  processErrors(errors);
   return errorParts.length > 0 ? errorParts.join("; ") : undefined;
 }

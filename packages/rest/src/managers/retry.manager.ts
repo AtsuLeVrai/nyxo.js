@@ -202,34 +202,6 @@ export class RetryManager {
   }
 
   /**
-   * Creates the retry event object
-   *
-   * @param error - The error that triggered the retry
-   * @param timeout - The timeout before the next attempt
-   * @param context - Context information about the operation
-   * @param reason - The categorized reason for the retry
-   * @returns The retry event object
-   */
-  #createRetryEvent(
-    error: Error,
-    timeout: number,
-    context: RetryContext,
-    reason: RetryReason,
-  ): RetryEvent {
-    return {
-      timestamp: new Date().toISOString(),
-      requestId: this.#state.requestId ?? "",
-      error,
-      attemptNumber: this.#state.retryCount + 1,
-      maxAttempts: this.#options.maxRetries,
-      delayMs: timeout,
-      path: context.path,
-      method: context.method,
-      reason: reason.toString(),
-    };
-  }
-
-  /**
    * Handles a rate limit error
    *
    * @param error - The rate limit error
@@ -244,10 +216,7 @@ export class RetryManager {
     const timeout = this.calculateTimeout(error.retryAfter * 1000);
     this.#state.retryAfter = error.retryAfter;
 
-    this.#rest.emit(
-      "retry",
-      this.#createRetryEvent(error, timeout, context, RetryReason.RateLimited),
-    );
+    this.#emitRetryEvent(error, timeout, context, RetryReason.RateLimited);
 
     return {
       shouldRetry: true,
@@ -273,10 +242,7 @@ export class RetryManager {
     const timeout = this.calculateTimeout();
     const reason = RetryReason.ServerError;
 
-    this.#rest.emit(
-      "retry",
-      this.#createRetryEvent(error, timeout, context, reason),
-    );
+    this.#emitRetryEvent(error, timeout, context, reason);
 
     return {
       shouldRetry: true,
@@ -305,15 +271,42 @@ export class RetryManager {
       ? RetryReason.Timeout
       : RetryReason.NetworkError;
 
-    this.#rest.emit(
-      "retry",
-      this.#createRetryEvent(error, timeout, context, reason),
-    );
+    this.#emitRetryEvent(error, timeout, context, reason);
 
     return {
       shouldRetry: true,
       timeout,
       reason,
     };
+  }
+
+  /**
+   * Emits a retry event
+   *
+   * @param error - The error that triggered the retry
+   * @param timeout - The timeout before the next attempt
+   * @param context - Context information about the operation
+   * @param reason - The categorized reason for the retry
+   * @private
+   */
+  #emitRetryEvent(
+    error: Error,
+    timeout: number,
+    context: RetryContext,
+    reason: RetryReason,
+  ): void {
+    const event: RetryEvent = {
+      timestamp: new Date().toISOString(),
+      requestId: this.#state.requestId ?? "",
+      error,
+      attempt: this.#state.retryCount + 1,
+      maxAttempts: this.#options.maxRetries,
+      delayMs: timeout,
+      path: context.path,
+      method: context.method,
+      reason: reason.toString(),
+    };
+
+    this.#rest.emit("retry", event);
   }
 }

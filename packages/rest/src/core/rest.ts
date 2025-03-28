@@ -333,44 +333,26 @@ export class Rest extends EventEmitter<RestEvents> {
     const executeRequest = (): Promise<T> =>
       this.#retry.execute(
         async () => {
-          try {
-            // Check rate limits before making the request
-            this.#rateLimiter.enforceRateLimit(
-              options.path,
-              options.method,
-              requestId,
-            );
+          // Check rate limits before making the request
+          this.#rateLimiter.enforceRateLimit(
+            options.path,
+            options.method,
+            requestId,
+          );
 
-            // Make the actual HTTP request
-            const response = await this.#makeHttpRequest<T>(options, requestId);
+          // Make the actual HTTP request
+          const response = await this.#makeHttpRequest<T>(options, requestId);
 
-            // Update rate limit information
-            this.#rateLimiter.updateRateLimit(
-              options.path,
-              options.method,
-              response.headers,
-              response.statusCode,
-              requestId,
-            );
+          // Update rate limit information
+          this.#rateLimiter.updateRateLimit(
+            options.path,
+            options.method,
+            response.headers,
+            response.statusCode,
+            requestId,
+          );
 
-            return response.data;
-          } catch (error) {
-            // Emit failure event using the unified event system
-            this.emit("request", {
-              status: "failure",
-              timestamp: new Date().toISOString(),
-              requestId,
-              path: options.path,
-              method: options.method,
-              headers: this.#buildRequestHeaders(options),
-              statusCode:
-                error instanceof ApiError ? error.statusCode : undefined,
-              duration: 0,
-              error: error instanceof Error ? error : new Error(String(error)),
-            });
-
-            throw error;
-          }
+          return response.data;
         },
         { method: options.method, path: options.path },
         requestId,
@@ -473,51 +455,74 @@ export class Rest extends EventEmitter<RestEvents> {
     requestId: string,
   ): Promise<HttpResponse<T>> {
     const requestStart = Date.now();
+    const requestHeaders = this.#buildRequestHeaders(options);
 
-    // Emit unified request start event
-    this.emit("request", {
-      status: "start",
+    this.emit("requestStart", {
       timestamp: new Date().toISOString(),
       requestId,
       path: options.path,
       method: options.method,
-      headers: this.#buildRequestHeaders(options),
+      headers: requestHeaders,
     });
 
-    // Prepare and execute the request
-    const preparedRequest = await this.#prepareRequest(options);
-    const response = await this.#pool.request(preparedRequest.options);
-    const responseBody = await this.#readResponseBody(response);
-    const result = this.#processResponse<T>(response, responseBody, requestId);
+    try {
+      // Prepare and execute the request
+      const preparedRequest = await this.#prepareRequest(options);
+      const response = await this.#pool.request(preparedRequest.options);
+      const responseBody = await this.#readResponseBody(response);
+      const result = this.#processResponse<T>(
+        response,
+        responseBody,
+        requestId,
+      );
 
-    // Check for API errors
-    if (result.statusCode >= 400 && this.#isJsonErrorEntity(result.data)) {
-      throw new ApiError(requestId, result.data, {
-        statusCode: result.statusCode,
-        headers: result.headers,
-        method: options.method,
+      // Check for API errors
+      if (result.statusCode >= 400 && this.#isJsonErrorEntity(result.data)) {
+        throw new ApiError(requestId, result.data, {
+          statusCode: result.statusCode,
+          headers: result.headers,
+          method: options.method,
+          path: options.path,
+        });
+      }
+
+      // Calculate request duration
+      const duration = Date.now() - requestStart;
+
+      // Emit request success event
+      this.emit("requestSuccess", {
+        timestamp: new Date().toISOString(),
+        requestId,
         path: options.path,
+        method: options.method,
+        headers: result.headers,
+        statusCode: result.statusCode,
+        duration,
+        responseSize: responseBody.length,
       });
+
+      return result;
+    } catch (error) {
+      // Calculate request duration
+      const duration = Date.now() - requestStart;
+
+      // Emit request failure event
+      this.emit("requestFailure", {
+        timestamp: new Date().toISOString(),
+        requestId,
+        path: options.path,
+        method: options.method,
+        error: error instanceof Error ? error : new Error(String(error)),
+        statusCode: error instanceof ApiError ? error.statusCode : undefined,
+        headers:
+          error instanceof ApiError
+            ? (error.headers as Record<string, string>)
+            : undefined,
+        duration,
+      });
+
+      throw error;
     }
-
-    // Calculate request duration
-    const duration = Date.now() - requestStart;
-
-    // Emit unified request complete event
-    this.emit("request", {
-      status: "complete",
-      timestamp: new Date().toISOString(),
-      requestId,
-      path: options.path,
-      method: options.method,
-      headers: this.#buildRequestHeaders(options),
-      statusCode: result.statusCode,
-      responseHeaders: result.headers,
-      duration,
-      responseSize: responseBody.length,
-    });
-
-    return result;
   }
 
   /**

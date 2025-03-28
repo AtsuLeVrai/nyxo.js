@@ -1,15 +1,7 @@
 import type { Dispatcher } from "undici";
 import type { Rest } from "../core/index.js";
 import type { QueueOptions } from "../options/index.js";
-import type {
-  ApiRequestOptions,
-  QueueAddEvent,
-  QueueCompleteEvent,
-  QueueEventBase,
-  QueueProcessEvent,
-  QueueStateChangeEvent,
-  QueueTimeoutEvent,
-} from "../types/index.js";
+import type { ApiRequestOptions, QueueCompleteEvent } from "../types/index.js";
 
 /**
  * Priority levels for queue items
@@ -106,6 +98,14 @@ export class QueueManager {
   #processing = false;
 
   /**
+   * Last queue state - used to track significant changes
+   */
+  #lastState = {
+    size: 0,
+    running: 0,
+  };
+
+  /**
    * Creates a new queue manager
    *
    * @param rest - The Rest client instance
@@ -166,12 +166,10 @@ export class QueueManager {
 
     // Check if queue is full
     if (this.#queue.length >= this.#options.maxQueueSize) {
-      // Create reject event with the new unified format
-      this.#rest.emit("queue", {
-        status: "reject",
+      // Emit reject event
+      this.#rest.emit("queueReject", {
         timestamp: new Date().toISOString(),
         requestId,
-        queueTime: 0,
         path: options.path || "unknown",
         method: options.method || "GET",
         priority: this.#getPriority(
@@ -239,41 +237,6 @@ export class QueueManager {
       // Reject the promise
       item.reject(new Error(reason));
     }
-
-    // Emit state change with trigger information
-    this.#rest.emit("queue", this.getState("clear"));
-  }
-
-  /**
-   * Gets the current state of the queue
-   *
-   * @param trigger - What triggered the state change
-   */
-  getState(trigger?: QueueStateChangeEvent["trigger"]): QueueStateChangeEvent {
-    return {
-      status: "stateChange",
-      timestamp: new Date().toISOString(),
-      requestId: crypto.randomUUID(), // State changes don't necessarily have a request ID
-      queueSize: this.#queue.length,
-      running: this.#runningCount,
-      concurrency: this.#options.concurrency,
-      trigger,
-    };
-  }
-
-  /**
-   * Creates a base queue event
-   *
-   * @param item - The queue item
-   * @returns Base queue event properties
-   */
-  #createBaseQueueEvent<T = unknown>(
-    item: QueueItem<T>,
-  ): Omit<QueueEventBase, "status"> {
-    return {
-      timestamp: new Date().toISOString(),
-      requestId: item.id,
-    };
   }
 
   /**
@@ -294,19 +257,6 @@ export class QueueManager {
 
     // Insert at the determined position
     this.#queue.splice(index, 0, item as QueueItem);
-
-    // Emit add event with the new unified format
-    this.#rest.emit("queue", {
-      ...this.#createBaseQueueEvent(item),
-      status: "add",
-      queueTime: 0,
-      path: item.path,
-      method: item.method,
-      priority: item.priority,
-    } as QueueAddEvent);
-
-    // Emit state change
-    this.#rest.emit("queue", this.getState("add"));
   }
 
   /**
@@ -336,16 +286,6 @@ export class QueueManager {
         // Calculate time spent in queue
         const queueTime = Date.now() - item.timestamp;
 
-        // Emit process event with the new unified format
-        this.#rest.emit("queue", {
-          ...this.#createBaseQueueEvent(item),
-          status: "process",
-          queueTime,
-          path: item.path,
-          method: item.method,
-          priority: item.priority,
-        } as QueueProcessEvent);
-
         // Clear timeout if set
         if (item.timeoutId) {
           clearTimeout(item.timeoutId);
@@ -353,7 +293,6 @@ export class QueueManager {
 
         // Increment running counter
         this.#runningCount++;
-        this.#rest.emit("queue", this.getState("process"));
 
         // Execute the request
         this.#executeItem(item, queueTime).catch(() => {
@@ -361,6 +300,9 @@ export class QueueManager {
           // The actual error is handled in executeItem
         });
       }
+
+      // Check if state changed significantly
+      this.#checkStateChange();
     } finally {
       this.#processing = false;
     }
@@ -381,34 +323,20 @@ export class QueueManager {
       // Resolve the promise
       item.resolve(result);
 
-      // Emit complete event with the new unified format
-      this.#rest.emit("queue", {
-        ...this.#createBaseQueueEvent(item),
-        status: "complete",
-        queueTime,
-        path: item.path,
-        method: item.method,
-        priority: item.priority,
-        success: true,
-      } as QueueCompleteEvent);
+      // Emit complete event (success)
+      this.#emitQueueComplete(item, queueTime, true);
     } catch (error) {
       // Reject the promise
       item.reject(error);
 
-      // Emit complete event with error using the new unified format
-      this.#rest.emit("queue", {
-        ...this.#createBaseQueueEvent(item),
-        status: "complete",
-        queueTime,
-        path: item.path,
-        method: item.method,
-        priority: item.priority,
-        success: false,
-      } as QueueCompleteEvent);
+      // Emit complete event (failure)
+      this.#emitQueueComplete(item, queueTime, false);
     } finally {
       // Decrement running counter
       this.#runningCount--;
-      this.#rest.emit("queue", this.getState("complete"));
+
+      // Check if state changed significantly
+      this.#checkStateChange();
 
       // Process next items
       await this.#processQueue();
@@ -426,19 +354,22 @@ export class QueueManager {
     const index = this.#queue.findIndex(
       (queueItem) => queueItem.id === item.id,
     );
+
     if (index !== -1) {
       this.#queue.splice(index, 1);
-      this.#rest.emit("queue", this.getState("timeout"));
 
-      // Emit timeout event with the new unified format
-      this.#rest.emit("queue", {
-        ...this.#createBaseQueueEvent(item),
-        status: "timeout",
-        queueTime: Date.now() - item.timestamp,
+      // Emit timeout event
+      this.#rest.emit("queueTimeout", {
+        timestamp: new Date().toISOString(),
+        requestId: item.id,
         path: item.path,
         method: item.method,
         priority: item.priority,
-      } as QueueTimeoutEvent);
+        queueTime: Date.now() - item.timestamp,
+      });
+
+      // Check if state changed significantly
+      this.#checkStateChange();
 
       // Reject the promise
       item.reject(
@@ -484,5 +415,58 @@ export class QueueManager {
     }
 
     return priority;
+  }
+
+  /**
+   * Checks if queue state has changed significantly and emits event if needed
+   *
+   * @private
+   */
+  #checkStateChange(): void {
+    const currentSize = this.#queue.length;
+    const currentRunning = this.#runningCount;
+
+    // Significant state changes:
+    // - Queue was empty, now has items
+    // - Queue had items, now empty
+    // - No requests were running, now some are
+    // - Requests were running, now none are
+    const significantChange =
+      (this.#lastState.size === 0 && currentSize > 0) ||
+      (this.#lastState.size > 0 && currentSize === 0) ||
+      (this.#lastState.running === 0 && currentRunning > 0) ||
+      (this.#lastState.running > 0 && currentRunning === 0);
+
+    if (significantChange) {
+      // Update last state
+      this.#lastState.size = currentSize;
+      this.#lastState.running = currentRunning;
+    }
+  }
+
+  /**
+   * Emits a queue complete event
+   *
+   * @param item - The queue item that completed
+   * @param queueTime - Time spent in queue (ms)
+   * @param success - Whether the request succeeded
+   * @private
+   */
+  #emitQueueComplete<T>(
+    item: QueueItem<T>,
+    queueTime: number,
+    success: boolean,
+  ): void {
+    const event: QueueCompleteEvent = {
+      timestamp: new Date().toISOString(),
+      requestId: item.id,
+      path: item.path,
+      method: item.method,
+      priority: item.priority,
+      queueTime,
+      success,
+    };
+
+    this.#rest.emit("queueComplete", event);
   }
 }

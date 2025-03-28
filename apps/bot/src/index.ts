@@ -18,20 +18,44 @@ const rest = new Rest({
   token: parsed.DISCORD_TOKEN,
 });
 
-rest.on("request", (event) => {
-  console.log("[REST] Request event", event);
+rest.on("requestStart", (event) => {
+  console.log("[REST] Request start:", event);
 });
 
-rest.on("rateLimit", (event) => {
-  console.log("[REST] Rate limit event", event);
+rest.on("requestSuccess", (event) => {
+  console.log("[REST] Request success:", event);
 });
 
-rest.on("queue", (event) => {
-  console.log("[REST] Queue event", event);
+rest.on("requestFailure", (event) => {
+  console.log("[REST] Request failure:", event);
+});
+
+rest.on("rateLimitHit", (event) => {
+  console.log("[REST] Rate limit hit:", event);
+});
+
+rest.on("rateLimitUpdate", (event) => {
+  console.log("[REST] Rate limit update:", event);
+});
+
+rest.on("rateLimitExpire", (event) => {
+  console.log("[REST] Rate limit expire:", event);
+});
+
+rest.on("queueComplete", (event) => {
+  console.log("[REST] Queue complete:", event);
+});
+
+rest.on("queueTimeout", (event) => {
+  console.log("[REST] Queue timeout:", event);
+});
+
+rest.on("queueReject", (event) => {
+  console.log("[REST] Queue reject:", event);
 });
 
 rest.on("retry", (event) => {
-  console.log("[REST] Retry event", event);
+  console.log("[REST] Retry:", event);
 });
 
 const gateway = new Gateway(rest, {
@@ -104,7 +128,7 @@ gateway.on("dispatch", async (event, data) => {
           embeds: [
             {
               type: EmbedType.Rich,
-              title: "Pong",
+              title: "Pong".repeat(3000),
               description: "Pong!",
               color: 0x57f287,
             },
