@@ -33,7 +33,7 @@ export interface ShardData {
   /** Current connection status */
   status: ShardStatus;
 
-  /** Rate limit bucket ID */
+  /** Rate limit bucket ID (based on max_concurrency from Discord) */
   bucket: number;
 
   /** Time when this shard was last updated */
@@ -66,6 +66,7 @@ export interface ShardData {
 
 /**
  * Default rate limit values for shard buckets
+ * Based on Discord documentation at https://discord.com/developers/docs/events/gateway#rate-limiting
  */
 const DEFAULT_RATE_LIMIT = {
   /**
@@ -83,18 +84,17 @@ const DEFAULT_RATE_LIMIT = {
  * ShardManager is responsible for managing sharded Gateway connections
  *
  * This class handles shard creation, tracking, and management, including:
- * - Coordinating shard spawning
- * - Assigning guilds to appropriate shards
+ * - Coordinating shard spawning according to Discord's max_concurrency parameter
+ * - Assigning guilds to appropriate shards using Discord's sharding formula
  * - Managing rate limits for identify requests
- * - Tracking shard connection status
+ * - Tracking shard connection status and health
  * - Dynamic scaling of shards
- * - Basic health monitoring
  */
 export class ShardManager {
   /** Map of shards by shard ID */
   #shards = new Map<number, ShardData>();
 
-  /** Maximum number of concurrent identifies allowed */
+  /** Maximum number of concurrent identifies allowed (from Discord's Gateway Bot endpoint) */
   #maxConcurrency = 1;
 
   /** Interval for running health checks */
@@ -131,6 +131,7 @@ export class ShardManager {
    * Gets the maximum concurrency for identify requests
    *
    * This value is provided by Discord during the Gateway bot info request.
+   * It determines how many shards can be started concurrently within a rate limit window.
    */
   get maxConcurrency(): number {
     return this.#maxConcurrency;
@@ -149,6 +150,7 @@ export class ShardManager {
    * Sharding is enabled if either:
    * - totalShards is explicitly configured in the options
    * - The guild count exceeds the largeThreshold
+   * - Force option is enabled
    */
   isEnabled(): boolean {
     const totalGuildCount = this.#calculateTotalGuildCount();
@@ -161,6 +163,9 @@ export class ShardManager {
 
   /**
    * Spawns the required number of shards based on guild count and Discord recommendations
+   *
+   * This method respects Discord's max_concurrency parameter, grouping shards into buckets
+   * and spawning them according to rate limits.
    *
    * @param guildCount - Current number of guilds the bot is in
    * @param maxConcurrency - Maximum concurrency value from Discord
@@ -409,6 +414,8 @@ export class ShardManager {
   /**
    * Calculates the rate limit bucket for a shard
    *
+   * Based on Discord documentation: rate_limit_key = shard_id % max_concurrency
+   *
    * @param shardId - The shard ID
    * @returns The rate limit bucket ID
    */
@@ -434,7 +441,6 @@ export class ShardManager {
    * Dynamically scales the number of shards up or down
    *
    * @param newTotalShards - New total number of shards to scale to
-   * @returns Promise that resolves when scaling is complete
    * @throws {Error} If scaling fails or times out
    */
   scaleShards(newTotalShards: number): void {
@@ -444,43 +450,12 @@ export class ShardManager {
       return;
     }
 
-    // Emit scaling event
-    this.#gateway.emit("scaling", {
-      status: "started",
-      timestamp: new Date().toISOString(),
-      oldCount: currentShardCount,
-      newCount: newTotalShards,
-      reason: newTotalShards > currentShardCount ? "scale_up" : "scale_down",
-    });
-
-    try {
-      if (newTotalShards > currentShardCount) {
-        // Scaling up - spawn new shards
-        this.#scaleUp(currentShardCount, newTotalShards);
-      } else {
-        // Scaling down - remove excess shards
-        this.#scaleDown(currentShardCount, newTotalShards);
-      }
-
-      // Emit completion event
-      this.#gateway.emit("scaling", {
-        status: "completed",
-        timestamp: new Date().toISOString(),
-        oldCount: currentShardCount,
-        newCount: newTotalShards,
-        successful: true,
-      });
-    } catch (error) {
-      // Emit failure event
-      this.#gateway.emit("scaling", {
-        status: "failed",
-        timestamp: new Date().toISOString(),
-        newCount: newTotalShards,
-        oldCount: currentShardCount,
-        error: error instanceof Error ? error : new Error(String(error)),
-      });
-
-      throw error;
+    if (newTotalShards > currentShardCount) {
+      // Scaling up - spawn new shards
+      this.#scaleUp(currentShardCount, newTotalShards);
+    } else {
+      // Scaling down - remove excess shards
+      this.#scaleDown(currentShardCount, newTotalShards);
     }
   }
 
@@ -500,11 +475,14 @@ export class ShardManager {
       if (this.isShardBucketAvailable(shard.bucket)) {
         // Emit reconnect event if needed
         if (shard.status === "reconnecting" || shard.status === "unhealthy") {
-          this.#gateway.emit("shard", {
-            status: "reconnecting",
+          this.#gateway.emit("reconnectionScheduled", {
             timestamp: new Date().toISOString(),
-            shardId,
             delayMs: this.#options.spawnDelay,
+            reason:
+              shard.status === "unhealthy"
+                ? "heartbeat_timeout"
+                : "connection_closed",
+            previousAttempts: 0, // Could track this in shard data
           });
         }
 
@@ -537,54 +515,68 @@ export class ShardManager {
     newStatus: ShardStatus,
   ): void {
     // Handle status-specific events
-    if (newStatus === "disconnected" && oldStatus !== "disconnected") {
-      this.#gateway.emit("shard", {
-        status: "disconnected",
-        timestamp: new Date().toISOString(),
-        shardId,
-        totalShards: shard.totalShards,
-        code: 1006, // Default WebSocket close code for abnormal closure
-        reason: "Connection closed",
-      });
-    }
-
-    if (newStatus === "ready" && oldStatus !== "ready") {
-      // Update health information
-      shard.health.lastHeartbeat = Date.now();
-      shard.health.failedHeartbeats = 0;
-
-      const sessionId = this.#gateway.sessionId;
-      if (sessionId) {
-        // Store session ID for this shard for potential resumption later
-        this.#sessionMap.set(shardId, sessionId);
+    switch (newStatus) {
+      case "disconnected": {
+        if (oldStatus !== "disconnected") {
+          this.#gateway.emit("shardDisconnect", {
+            timestamp: new Date().toISOString(),
+            shardId,
+            totalShards: shard.totalShards,
+            closeCode: 1006, // Default WebSocket close code for abnormal closure
+            reason: "Connection closed",
+            willReconnect: this.#options.healthCheck.autoRevive,
+          });
+        }
+        break;
       }
 
-      this.#gateway.emit("shard", {
-        status: "ready",
-        timestamp: new Date().toISOString(),
-        shardId,
-        totalShards: shard.totalShards,
-        guildCount: shard.guildCount,
-      });
-    }
+      case "ready": {
+        if (oldStatus !== "ready") {
+          // Update health information
+          shard.health.lastHeartbeat = Date.now();
+          shard.health.failedHeartbeats = 0;
 
-    if (newStatus === "resuming") {
-      const sessionId =
-        this.#sessionMap.get(shardId) || this.#gateway.sessionId;
-      if (!sessionId) {
-        throw new Error(`Cannot resume shard ${shardId} without session ID`);
+          const sessionId = this.#gateway.sessionId;
+          if (sessionId) {
+            // Store session ID for this shard for potential resumption later
+            this.#sessionMap.set(shardId, sessionId);
+          }
+
+          this.#gateway.emit("shardReady", {
+            timestamp: new Date().toISOString(),
+            shardId,
+            totalShards: shard.totalShards,
+            guildCount: shard.guildCount,
+          });
+        }
+        break;
       }
 
-      this.#gateway.emit("shard", {
-        status: "reconnecting",
-        timestamp: new Date().toISOString(),
-        shardId,
-        delayMs: this.#options.spawnDelay,
-      });
-    }
+      case "resuming": {
+        const sessionId =
+          this.#sessionMap.get(shardId) || this.#gateway.sessionId;
+        if (!sessionId) {
+          throw new Error(`Cannot resume shard ${shardId} without session ID`);
+        }
 
-    if (newStatus === "unhealthy" && this.#options.healthCheck.autoRevive) {
-      this.reviveShard(shardId);
+        this.#gateway.emit("reconnectionScheduled", {
+          timestamp: new Date().toISOString(),
+          delayMs: this.#options.spawnDelay,
+          reason: "invalid_session",
+          previousAttempts: 0, // Could track this in shard data
+        });
+        break;
+      }
+
+      case "unhealthy":
+        if (this.#options.healthCheck.autoRevive) {
+          this.reviveShard(shardId);
+        }
+        break;
+
+      default:
+        // Handle other statuses if needed
+        break;
     }
   }
 
@@ -629,15 +621,6 @@ export class ShardManager {
     // Mark as unhealthy and increment failed heartbeats
     shard.health.failedHeartbeats++;
 
-    // Emit health update event
-    this.#gateway.emit("shard", {
-      status: "healthUpdate",
-      timestamp: new Date().toISOString(),
-      shardId,
-      metrics: { ...shard.health },
-      score: shard.health.failedHeartbeats > 2 ? 0 : 50,
-    });
-
     // If too many failed heartbeats, mark as unhealthy
     if (shard.health.failedHeartbeats >= 3) {
       this.setShardStatus(shardId, "unhealthy");
@@ -656,20 +639,6 @@ export class ShardManager {
         (shard) => shard.rateLimit.reset,
       ),
     );
-
-    // Emit rate limit events for shards that are rate limited
-    for (const shard of this.#shards.values()) {
-      if (shard.rateLimit.remaining === 0) {
-        this.#gateway.emit("shard", {
-          status: "rateLimit",
-          timestamp: new Date().toISOString(),
-          shardId: shard.shardId,
-          bucket: shard.bucket,
-          timeout: nextReset - Date.now(),
-          reset: nextReset,
-        });
-      }
-    }
 
     // Calculate delay until next reset
     const delay = Math.max(0, nextReset - Date.now());
@@ -771,6 +740,7 @@ export class ShardManager {
 
   /**
    * Redistributes all guilds across all shards for better balance
+   * Uses Discord's sharding formula to ensure consistent routing
    *
    * @private
    */
@@ -966,7 +936,8 @@ export class ShardManager {
   /**
    * Spawns shards in their rate limit buckets
    *
-   * Respects rate limits by spawning in chunks.
+   * Respects rate limits by spawning in chunks according to Discord's guidelines.
+   * Buckets are spawned in order as recommended by Discord documentation.
    *
    * @param buckets - Map of bucket IDs to arrays of shard IDs
    * @param totalShards - Total number of shards
@@ -1031,13 +1002,11 @@ export class ShardManager {
       },
     });
 
-    // Emit creation event
-    this.#gateway.emit("shard", {
-      status: "ready",
+    // Emit creation event using the new event system
+    this.#gateway.emit("shardCreate", {
       timestamp: new Date().toISOString(),
       shardId,
       totalShards,
-      guildCount: 0,
     });
   }
 }

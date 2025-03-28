@@ -83,35 +83,73 @@ const gateway = new Gateway(rest, {
     GatewayIntentsBits.DirectMessagePolls,
   ],
   shard: {
-    // force: true,
+    force: true,
     totalShards: "auto",
   },
 });
 
-gateway.on("connection", (state) => {
-  console.log("[GATEWAY] Connection state", state);
+// Connection lifecycle events
+gateway.on("connectionAttempt", (event) => {
+  console.log("[GATEWAY] Connection attempt:", event);
 });
 
-gateway.on("heartbeat", (state) => {
-  console.log("[GATEWAY] Heartbeat state", state);
+gateway.on("connectionSuccess", (event) => {
+  console.log("[GATEWAY] Connection success:", event);
 });
 
-gateway.on("session", (state) => {
-  console.log("[GATEWAY] Session state", state);
+gateway.on("connectionFailure", (event) => {
+  console.log("[GATEWAY] Connection failure:", event);
 });
 
-gateway.on("shard", (state) => {
-  console.log("[GATEWAY] Shard state", state);
+gateway.on("reconnectionScheduled", (event) => {
+  console.log("[GATEWAY] Reconnection scheduled:", event);
 });
 
-gateway.on("scaling", (state) => {
-  console.log("[GATEWAY] Scaling state", state);
+// Heartbeat communication events
+gateway.on("heartbeatSent", (event) => {
+  console.log("[GATEWAY] Heartbeat sent:", event);
 });
 
-gateway.on("circuitBreaker", (state) => {
-  console.log("[GATEWAY] Circuit breaker state", state);
+gateway.on("heartbeatAcknowledge", (event) => {
+  console.log("[GATEWAY] Heartbeat acknowledged:", event);
 });
 
+gateway.on("heartbeatTimeout", (event) => {
+  console.log("[GATEWAY] Heartbeat timeout:", event);
+});
+
+// Session events
+gateway.on("sessionStart", (event) => {
+  console.log("[GATEWAY] Session start:", event);
+});
+
+gateway.on("sessionResume", (event) => {
+  console.log("[GATEWAY] Session resume:", event);
+});
+
+gateway.on("sessionInvalidate", (event) => {
+  console.log("[GATEWAY] Session invalidate:", event);
+});
+
+// Shard events
+gateway.on("shardCreate", (event) => {
+  console.log("[GATEWAY] Shard create:", event);
+});
+
+gateway.on("shardReady", (event) => {
+  console.log("[GATEWAY] Shard ready:", event);
+});
+
+gateway.on("shardDisconnect", (event) => {
+  console.log("[GATEWAY] Shard disconnect:", event);
+});
+
+// Rate limit event
+gateway.on("rateLimitDetected", (event) => {
+  console.log("[GATEWAY] Rate limit detected:", event);
+});
+
+// Discord gateway events
 gateway.on("error", (error) => {
   console.error("[GATEWAY] Error", error);
 });
@@ -128,7 +166,7 @@ gateway.on("dispatch", async (event, data) => {
           embeds: [
             {
               type: EmbedType.Rich,
-              title: "Pong".repeat(3000),
+              title: "Pong",
               description: "Pong!",
               color: 0x57f287,
             },

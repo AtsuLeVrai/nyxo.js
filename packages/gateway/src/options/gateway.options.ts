@@ -4,7 +4,6 @@ import {
   GatewayIntentsBits,
   type UpdatePresenceEntity,
 } from "../types/index.js";
-import { CircuitBreakerOptions } from "./circuit-breaker.options.js";
 import { HeartbeatOptions } from "./heartbeat.options.js";
 import { ShardOptions } from "./shard.options.js";
 
@@ -151,13 +150,6 @@ export const GatewayOptions = z.object({
    * Controls how the client is sharded across multiple gateway connections.
    */
   shard: ShardOptions.default({}).describe("Sharding configuration options"),
-
-  /**
-   * Circuit breaker configuration options
-   *
-   * Controls the behavior of the circuit breaker system.
-   */
-  circuitBreaker: CircuitBreakerOptions.default({}),
 });
 
 /**

@@ -1,6 +1,6 @@
 import { OptionalDeps } from "@nyxjs/core";
-import type { Decompress } from "fzstd";
-import type { Inflate } from "zlib-sync";
+import type fzstd from "fzstd";
+import type zlibSync from "zlib-sync";
 import type { CompressionType } from "../options/index.js";
 
 /**
@@ -15,10 +15,10 @@ const ZLIB_FLUSH = Buffer.from([0x00, 0x00, 0xff, 0xff]);
  */
 export class CompressionService {
   /** Zstandard decompression stream */
-  #zstdStream: Decompress | null = null;
+  #zstdStream: fzstd.Decompress | null = null;
 
   /** Zlib inflate stream */
-  #zlibInflate: Inflate | null = null;
+  #zlibInflate: zlibSync.Inflate | null = null;
 
   /** Buffer for Zstandard output chunks */
   #chunks: Uint8Array[] = [];

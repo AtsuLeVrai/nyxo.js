@@ -2,485 +2,243 @@ import type { CompressionType, EncodingType } from "../options/index.js";
 import type { GatewayReceiveEvents } from "./index.js";
 
 /**
- * Base interface for all Gateway events
+ * Base for all Gateway events
  */
 export interface GatewayEventBase {
-  /** Timestamp when the event occurred (ISO string) */
+  /** ISO timestamp when the event occurred */
   timestamp: string;
 }
 
 /**
- * Base interface for all connection state objects
+ * Emitted when a connection attempt is made to the gateway
  */
-export interface ConnectionStateBase extends GatewayEventBase {
-  /** Current connection status */
-  status: string;
-
-  /** URL of the gateway websocket */
-  gatewayUrl: string | null;
-}
-
-/**
- * Represents a connection in the initialization phase
- */
-export interface ConnectionStartingState extends ConnectionStateBase {
-  status: "starting";
+export interface ConnectionAttemptEvent extends GatewayEventBase {
+  /** Gateway URL being connected to */
+  gatewayUrl: string;
 
   /** Encoding type being used */
   encoding: EncodingType;
 
-  /** Compression type being used */
+  /** Compression type being used (if any) */
   compression: CompressionType | null;
 }
 
 /**
- * Represents a successfully established connection
+ * Emitted when a connection to the gateway is established successfully
  */
-export interface ConnectionConnectedState extends ConnectionStateBase {
-  status: "connected";
+export interface ConnectionSuccessEvent extends GatewayEventBase {
+  /** Gateway URL that was connected to */
+  gatewayUrl: string;
 
-  /** Connection establishment duration in milliseconds */
-  duration: number;
-
-  /** Whether the connection is being resumed */
-  resuming: boolean;
+  /** Whether this was a resumed connection */
+  resumed: boolean;
 }
 
 /**
- * Represents a failed connection attempt
+ * Emitted when a connection attempt to the gateway fails
  */
-export interface ConnectionFailedState extends ConnectionStateBase {
-  status: "failed";
+export interface ConnectionFailureEvent extends GatewayEventBase {
+  /** Gateway URL that was attempted */
+  gatewayUrl: string | null;
 
   /** Error that caused the failure */
   error: Error;
 
-  /** Current retry attempt number */
-  attempt: number;
-
-  /** Connection attempt duration in milliseconds */
-  duration: number;
+  /** Which attempt number this was */
+  attemptNumber: number;
 }
 
 /**
- * Union type representing all possible connection states
+ * Emitted when a reconnection to the gateway is scheduled
  */
-export type ConnectionState =
-  | ConnectionStartingState
-  | ConnectionConnectedState
-  | ConnectionFailedState;
+export interface ReconnectionEvent extends GatewayEventBase {
+  /** Delay in milliseconds before the reconnection attempt */
+  delayMs: number;
 
-/**
- * Base interface for all heartbeat events
- */
-export type HeartbeatStatus = "started" | "sent" | "ack" | "timeout";
+  /** Reason for the reconnection */
+  reason:
+    | "heartbeat_timeout"
+    | "connection_closed"
+    | "invalid_session"
+    | "rate_limited"
+    | "manual"
+    | string;
 
-/**
- * Base interface for all heartbeat state objects
- */
-export interface HeartbeatStateBase extends GatewayEventBase {
-  /** Current heartbeat status */
-  status: HeartbeatStatus;
+  /** Number of previous connection attempts */
+  previousAttempts: number;
 }
 
 /**
- * Represents a newly started heartbeat system
+ * Heartbeat Events
  */
-export interface HeartbeatStartedState extends HeartbeatStateBase {
-  status: "started";
-
-  /** Heartbeat interval in milliseconds */
-  interval: number;
-
-  /** Initial delay before first heartbeat in milliseconds */
-  initialDelay: number;
-}
-
-/**
- * Represents a sent heartbeat
- */
-export interface HeartbeatSentState extends HeartbeatStateBase {
-  status: "sent";
-
+export interface HeartbeatEvent extends GatewayEventBase {
   /** Current sequence number */
   sequence: number;
 
-  /** Total number of heartbeats sent */
-  totalBeats: number;
+  /** Total number of heartbeats sent since connection */
+  totalSent?: number;
+
+  /** Latency in milliseconds (only for acknowledgement) */
+  latencyMs?: number;
 }
 
 /**
- * Represents a received heartbeat acknowledgement
+ * Emitted when a heartbeat timeout occurs
  */
-export interface HeartbeatAckState extends HeartbeatStateBase {
-  status: "ack";
-
-  /** Latency in milliseconds */
-  latency: number;
-
-  /** Current sequence number */
-  sequence: number;
-}
-
-/**
- * Represents a timed out heartbeat
- */
-export interface HeartbeatTimeoutState extends HeartbeatStateBase {
-  status: "timeout";
-
+export interface HeartbeatTimeoutEvent extends GatewayEventBase {
   /** Number of consecutive missed heartbeats */
-  missedHeartbeats: number;
+  missedCount: number;
 
   /** Maximum number of retries configured */
   maxRetries: number;
+
+  /** Whether automatic reconnection will be triggered */
+  willReconnect: boolean;
 }
 
 /**
- * Union type representing all possible heartbeat states
+ * Session Events
  */
-export type HeartbeatState =
-  | HeartbeatStartedState
-  | HeartbeatSentState
-  | HeartbeatAckState
-  | HeartbeatTimeoutState;
-
-/**
- * Base interface for all session status objects
- */
-export type SessionStatus = "started" | "resumed" | "invalidated";
-
-/**
- * Base interface for all session state objects
- */
-export interface SessionStateBase extends GatewayEventBase {
-  /** Current session status */
-  status: SessionStatus;
-
-  /** Session ID */
+export interface SessionEvent extends GatewayEventBase {
+  /** Session ID assigned by Discord */
   sessionId: string;
-}
 
-/**
- * Represents a newly started session
- */
-export interface SessionStartedState extends SessionStateBase {
-  status: "started";
+  /** Last sequence number received */
+  duration: number;
 
   /** Resume URL provided by Discord */
-  resumeUrl: string;
+  resumeUrl?: string;
 
   /** User ID associated with this session */
-  userId: string;
+  userId?: string;
 
   /** Number of guilds in this session */
-  guildCount: number;
+  guildCount?: number;
 }
 
 /**
- * Represents a resumed session
+ * Emitted when a session is resumed
  */
-export interface SessionResumedState extends SessionStateBase {
-  status: "resumed";
+export interface SessionResumeEvent extends GatewayEventBase {
+  /** Session ID */
+  sessionId: string;
 
-  /** Latency of the resume process in milliseconds */
-  latency: number;
+  /** Last sequence number that was received */
+  sequence: number;
 
   /** Number of events replayed during resume */
   replayedEvents: number;
+
+  /** Resume processing latency in milliseconds */
+  latencyMs: number;
 }
 
 /**
- * Represents an invalidated session
+ * Emitted when a session is invalidated
  */
-export interface SessionInvalidatedState extends SessionStateBase {
-  status: "invalidated";
+export interface SessionInvalidateEvent extends GatewayEventBase {
+  /** Session ID that was invalidated */
+  sessionId: string;
 
   /** Whether the session can be resumed */
   resumable: boolean;
 
-  /** Reason for invalidation if available */
-  reason?: string;
+  /** Reason for invalidation */
+  reason:
+    | "server_request"
+    | "heartbeat_timeout"
+    | "authentication_failed"
+    | "rate_limited"
+    | string;
 }
 
 /**
- * Union type representing all possible session states
+ * Shard Events
  */
-export type SessionState =
-  | SessionStartedState
-  | SessionResumedState
-  | SessionInvalidatedState;
-
-/**
- * Base interface for all shard status objects
- */
-export type ShardEventStatus =
-  | "created"
-  | "ready"
-  | "disconnected"
-  | "reconnecting"
-  | "healthUpdate"
-  | "rateLimit";
-
-/**
- * Base interface for all shard state objects
- */
-export interface ShardStateBase extends GatewayEventBase {
-  /** Current shard status */
-  status: ShardEventStatus;
-
+export interface ShardEvent extends GatewayEventBase {
   /** ID of the shard */
   shardId: number;
-}
-
-/**
- * Represents a newly created shard
- */
-export interface ShardCreatedState extends ShardStateBase {
-  status: "created";
 
   /** Total number of shards */
   totalShards: number;
-
-  /** Rate limit bucket ID */
-  bucket: number;
 }
 
 /**
- * Represents a ready shard
+ * Emitted when a shard is created
  */
-export interface ShardReadyState extends ShardStateBase {
-  status: "ready";
-
-  /** Total number of shards */
-  totalShards: number;
-
+export interface ShardReadyEvent extends ShardEvent {
   /** Number of guilds in this shard */
   guildCount: number;
 }
 
 /**
- * Represents a disconnected shard
+ * Emitted when a shard disconnects
  */
-export interface ShardDisconnectedState extends ShardStateBase {
-  status: "disconnected";
-
-  /** Total number of shards */
-  totalShards: number;
-
+export interface ShardDisconnectEvent extends ShardEvent {
   /** WebSocket close code */
-  code: number;
+  closeCode: number;
 
   /** Reason for disconnect */
   reason: string;
+
+  /** Whether this shard will try to reconnect */
+  willReconnect: boolean;
 }
 
 /**
- * Represents a reconnecting shard
+ * Rate limit management event
+ * (Consolidated from circuit breaker and other rate limit handling)
  */
-export interface ShardReconnectingState extends ShardStateBase {
-  status: "reconnecting";
+export interface RateLimitEvent extends GatewayEventBase {
+  /** Type of rate limit */
+  type: "global" | "identify" | "gateway" | "guild" | string;
 
-  /** Delay before retry in milliseconds */
-  delayMs: number;
-}
+  /** Time until the rate limit resets in milliseconds */
+  resetAfterMs: number;
 
-/**
- * Represents a health update for a shard
- */
-export interface ShardHealthUpdateState extends ShardStateBase {
-  status: "healthUpdate";
+  /** ISO timestamp when the rate limit will reset */
+  resetAt: string;
 
-  /** Health metrics data */
-  metrics: {
-    /** Latency in milliseconds */
-    latency: number;
+  /** Optional bucket ID or resource identifier */
+  resourceId?: string;
 
-    /** Time of last successful heartbeat */
-    lastHeartbeat: number;
+  /** Whether connections are being throttled */
+  isThrottling: boolean;
 
-    /** Number of failed heartbeats */
-    failedHeartbeats: number;
-  };
-
-  /** Health score (0-100) */
-  score: number;
-}
-
-/**
- * Represents a rate-limited shard
- */
-export interface ShardRateLimitState extends ShardStateBase {
-  status: "rateLimit";
-
-  /** Rate limit bucket ID */
-  bucket: number;
-
-  /** Time until reset in milliseconds */
-  timeout: number;
-
-  /** Reset timestamp */
-  reset: number;
-}
-
-/**
- * Union type representing all possible shard states
- */
-export type ShardState =
-  | ShardCreatedState
-  | ShardReadyState
-  | ShardDisconnectedState
-  | ShardReconnectingState
-  | ShardHealthUpdateState
-  | ShardRateLimitState;
-
-/**
- * Base interface for all scaling status objects
- */
-export type ScalingStatus = "started" | "completed" | "failed";
-
-/**
- * Base interface for all scaling state objects
- */
-export interface ScalingStateBase extends GatewayEventBase {
-  /** Current scaling status */
-  status: ScalingStatus;
-
-  /** Previous number of shards */
-  oldCount: number;
-
-  /** New number of shards */
-  newCount: number;
-}
-
-/**
- * Represents a started scaling operation
- */
-export interface ScalingStartedState extends ScalingStateBase {
-  status: "started";
-
-  /** Reason for scaling */
-  reason: string;
-}
-
-/**
- * Represents a completed scaling operation
- */
-export interface ScalingCompletedState extends ScalingStateBase {
-  status: "completed";
-
-  /** Whether scaling was successful */
-  successful: boolean;
-}
-
-/**
- * Represents a failed scaling operation
- */
-export interface ScalingFailedState extends ScalingStateBase {
-  status: "failed";
-
-  /** Error that caused the failure */
-  error: Error;
-}
-
-/**
- * Union type representing all possible scaling states
- */
-export type ScalingState =
-  | ScalingStartedState
-  | ScalingCompletedState
-  | ScalingFailedState;
-
-/**
- * Base interface for all circuit breaker status objects
- */
-export type CircuitBreakerStatus = "open" | "halfOpen" | "closed" | "blocked";
-
-/**
- * Base interface for all circuit breaker state objects
- */
-export interface CircuitBreakerStateBase extends GatewayEventBase {
-  /** Current circuit breaker status */
-  status: CircuitBreakerStatus;
-}
-
-/**
- * Represents an open circuit
- */
-export interface CircuitBreakerOpenState extends CircuitBreakerStateBase {
-  status: "open";
-
-  /** Time until reset in milliseconds */
-  resetTimeout: number;
-
-  /** Type of failure that triggered the circuit */
-  failureType?: string;
-
-  /** Number of consecutive failures */
+  /** Number of failed attempts */
   failureCount: number;
 }
-
-/**
- * Represents a half-open circuit
- */
-export interface CircuitBreakerHalfOpenState extends CircuitBreakerStateBase {
-  status: "halfOpen";
-}
-
-/**
- * Represents a closed circuit
- */
-export interface CircuitBreakerClosedState extends CircuitBreakerStateBase {
-  status: "closed";
-}
-
-/**
- * Represents a blocked operation due to circuit breaker
- */
-export interface CircuitBreakerBlockedState extends CircuitBreakerStateBase {
-  status: "blocked";
-
-  /** Type of blocked operation */
-  operation: string;
-
-  /** Remaining time before the next test in milliseconds */
-  remainingTimeout: number;
-}
-
-/**
- * Union type representing all possible circuit breaker states
- */
-export type CircuitBreakerState =
-  | CircuitBreakerOpenState
-  | CircuitBreakerHalfOpenState
-  | CircuitBreakerClosedState
-  | CircuitBreakerBlockedState;
 
 /**
  * Strongly typed event map for the gateway
  */
 export interface GatewayEvents {
-  /** Emitted when connection state changes */
-  connection: [state: ConnectionState];
+  // Connection lifecycle events
+  connectionAttempt: [event: ConnectionAttemptEvent];
+  connectionSuccess: [event: ConnectionSuccessEvent];
+  connectionFailure: [event: ConnectionFailureEvent];
+  reconnectionScheduled: [event: ReconnectionEvent];
 
-  /** Emitted when heartbeat state changes */
-  heartbeat: [state: HeartbeatState];
+  // Heartbeat communication events
+  heartbeatSent: [event: HeartbeatEvent];
+  heartbeatAcknowledge: [event: HeartbeatEvent];
+  heartbeatTimeout: [event: HeartbeatTimeoutEvent];
 
-  /** Emitted when session state changes */
-  session: [state: SessionState];
+  // Session events
+  sessionStart: [event: SessionEvent];
+  sessionResume: [event: SessionResumeEvent];
+  sessionInvalidate: [event: SessionInvalidateEvent];
 
-  /** Emitted when shard state changes */
-  shard: [state: ShardState];
+  // Shard events
+  shardCreate: [event: ShardEvent];
+  shardReady: [event: ShardReadyEvent];
+  shardDisconnect: [event: ShardDisconnectEvent];
 
-  /** Emitted when scaling state changes */
-  scaling: [state: ScalingState];
+  // Rate limit event (fusion of circuit breaker)
+  rateLimitDetected: [event: RateLimitEvent];
 
-  /** Emitted when circuit breaker state changes */
-  circuitBreaker: [state: CircuitBreakerState];
-
-  /** Emitted when an error occurs */
+  // Discord gateway events (unchanged)
   error: [error: Error];
-
-  /** Emitted when an event is received from the gateway */
   dispatch: [
     event: keyof GatewayReceiveEvents,
     data: GatewayReceiveEvents[keyof GatewayReceiveEvents],
@@ -488,6 +246,7 @@ export interface GatewayEvents {
 }
 
 /**
+ * Gateway Payload Structure
  * @see {@link https://discord.com/developers/docs/events/gateway-events#payload-structure}
  */
 export interface PayloadEntity {
@@ -498,6 +257,7 @@ export interface PayloadEntity {
 }
 
 /**
+ * Gateway Intents
  * @see {@link https://discord.com/developers/docs/events/gateway#list-of-intents}
  */
 export enum GatewayIntentsBits {
@@ -525,6 +285,7 @@ export enum GatewayIntentsBits {
 }
 
 /**
+ * Gateway Opcodes
  * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-opcodes}
  */
 export enum GatewayOpcodes {

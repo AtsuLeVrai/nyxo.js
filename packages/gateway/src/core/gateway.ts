@@ -7,14 +7,8 @@ import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { HeartbeatManager, ShardManager } from "../managers/index.js";
 import { GatewayOptions } from "../options/index.js";
+import { CompressionService, EncodingService } from "../services/index.js";
 import {
-  CircuitBreakerService,
-  CompressionService,
-  EncodingService,
-  FailureType,
-} from "../services/index.js";
-import {
-  type ConnectionState,
   type GatewayEvents,
   GatewayOpcodes,
   type GatewayReceiveEvents,
@@ -90,9 +84,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   /** Encoding service */
   readonly #encoding: EncodingService;
 
-  /** Circuit breaker service */
-  readonly #circuitBreaker: CircuitBreakerService;
-
   /** Gateway configuration options */
   readonly #options: GatewayOptions;
 
@@ -123,11 +114,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#shard = new ShardManager(this, this.#options.shard);
     this.#compression = new CompressionService(this.#options.compressionType);
     this.#encoding = new EncodingService(this.#options.encodingType);
-    this.#circuitBreaker = new CircuitBreakerService(
-      this,
-      this.#rest,
-      this.#options.circuitBreaker,
-    );
   }
 
   /**
@@ -208,13 +194,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   /**
-   * Gets the CircuitBreakerService instance
-   */
-  get circuitBreaker(): CircuitBreakerService {
-    return this.#circuitBreaker;
-  }
-
-  /**
    * Updates session information
    *
    * @param sessionId - New session ID
@@ -285,25 +264,16 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If connection fails
    */
   async connect(): Promise<void> {
-    // Check if the circuit breaker is open
-    if (!this.#circuitBreaker.canExecute("connect")) {
-      const remainingTimeout = this.#circuitBreaker.remainingTimeout;
-
-      throw new Error(
-        `Connection attempt blocked by circuit breaker. Wait ${Math.ceil(remainingTimeout / 1000)} seconds before retrying.`,
-      );
-    }
-
     // Reset connection state if reconnecting
     if (this.#ws !== null) {
-      // Don't destroy everything, just close the WebSocket
+      // Close the WebSocket but don't destroy everything
       this.#closeWebSocket();
     }
 
     this.#connectStartTime = Date.now();
 
     try {
-      // Initialize required services in parallel
+      // Initialize services
       const [gatewayInfo, guilds] = await Promise.all([
         this.#rest.gateway.getGatewayBot(),
         this.#rest.users.getCurrentUserGuilds(),
@@ -311,15 +281,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         this.#compression.initialize(),
       ]);
 
-      this.emit("connection", {
-        status: "starting",
-        timestamp: new Date().toISOString(),
-        gatewayUrl: gatewayInfo.url,
-        encoding: this.#encoding.type,
-        compression: this.#compression.type,
-      });
-
-      // Set up sharding if enabled
+      // Initialize sharding if enabled
       if (this.#shard.isEnabled()) {
         await this.#shard.spawn(
           guilds.length,
@@ -328,74 +290,32 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         );
       }
 
+      // Emit connection attempt event
+      this.emit("connectionAttempt", {
+        timestamp: new Date().toISOString(),
+        gatewayUrl: gatewayInfo.url,
+        encoding: this.#encoding.type,
+        compression: this.#compression.type,
+      });
+
       // Set up WebSocket connection
       await this.#initializeWebSocket(gatewayInfo.url);
 
-      // Wait for READY event with proper cleanup
-      const result = await new Promise<void>((resolve, reject) => {
-        // Set timeout for the connection
-        const connectionTimeout = setTimeout(() => {
-          cleanup();
-          reject(new Error("Connection timed out waiting for READY event"));
-        }, 30000); // 30 second timeout
+      // Wait for READY event
+      await this.#waitForReady();
 
-        const cleanup = (): void => {
-          clearTimeout(connectionTimeout);
-          this.removeListener("dispatch", readyHandler);
-          this.removeListener("error", errorHandler);
-          this.removeListener("connection", failureHandler);
-        };
-
-        const readyHandler = (event: keyof GatewayReceiveEvents): void => {
-          if (event === "READY") {
-            cleanup();
-            resolve();
-          }
-        };
-
-        const errorHandler = (error: Error | string): void => {
-          cleanup();
-          reject(error);
-        };
-
-        const failureHandler = (event: ConnectionState): void => {
-          cleanup();
-          if (event.status === "failed") {
-            reject(event.error);
-          }
-        };
-
-        this.once("dispatch", readyHandler);
-        this.once("error", errorHandler);
-        this.once("connection", failureHandler);
-      });
-
-      // Reset reconnection attempts
-      this.#circuitBreaker.recordSuccess();
+      // Reset reconnection attempts on successful connection
       this.#reconnectionAttempts = 0;
-
-      return result;
     } catch (error) {
-      this.emit("connection", {
-        status: "failed",
+      this.emit("connectionFailure", {
         timestamp: new Date().toISOString(),
         gatewayUrl: null,
         error: error instanceof Error ? error : new Error(String(error)),
-        duration: Date.now() - this.#connectStartTime,
-        attempt: this.#reconnectionAttempts + 1,
+        attemptNumber: this.#reconnectionAttempts + 1,
       });
 
-      // Record failure in circuit breaker
-      const failureType = CircuitBreakerService.detectFailureType(
-        error instanceof Error ? error : new Error(String(error)),
-      );
-
-      this.#circuitBreaker.recordFailure(failureType);
-
-      // Enhanced error reporting with more context
-      throw new Error("Failed to connect to gateway", {
-        cause: error,
-      });
+      // Throw enhanced error with more context
+      throw new Error("Failed to connect to gateway", { cause: error });
     }
   }
 
@@ -463,7 +383,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.#encoding.destroy();
       this.#compression.destroy();
       this.#heartbeat.destroy();
-      this.#circuitBreaker.destroy();
 
       if (this.#shard.isEnabled()) {
         this.#shard.destroy();
@@ -483,6 +402,42 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   isConnectionValid(): boolean {
     return this.#ws?.readyState === WebSocket.OPEN;
+  }
+
+  /**
+   * Waits for the READY event after connection
+   *
+   * @private
+   */
+  async #waitForReady(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      // Set timeout for the connection
+      const connectionTimeout = setTimeout(() => {
+        cleanup();
+        reject(new Error("Connection timed out waiting for READY event"));
+      }, 30000); // 30 second timeout
+
+      const cleanup = (): void => {
+        clearTimeout(connectionTimeout);
+        this.removeListener("dispatch", readyHandler);
+        this.removeListener("error", errorHandler);
+      };
+
+      const readyHandler = (event: keyof GatewayReceiveEvents): void => {
+        if (event === "READY") {
+          cleanup();
+          resolve();
+        }
+      };
+
+      const errorHandler = (error: Error | string): void => {
+        cleanup();
+        reject(error);
+      };
+
+      this.once("dispatch", readyHandler);
+      this.once("error", errorHandler);
+    });
   }
 
   /**
@@ -532,12 +487,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         ws.once("open", () => {
           clearTimeout(connectionTimeout);
 
-          this.emit("connection", {
-            status: "connected",
+          this.emit("connectionSuccess", {
             timestamp: new Date().toISOString(),
             gatewayUrl: wsUrl,
-            duration: Date.now() - this.#connectStartTime,
-            resuming: Boolean(this.#sessionId && this.#sequence > 0),
+            resumed: Boolean(this.#sessionId && this.#sequence > 0),
           });
 
           resolve();
@@ -711,8 +664,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     // Forward the dispatch event
     this.emit(
       "dispatch",
-      payload.t as keyof GatewayReceiveEvents,
-      payload.d as never,
+      payload.t,
+      payload.d as GatewayReceiveEvents[typeof payload.t],
     );
   }
 
@@ -735,13 +688,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       }
     }
 
-    this.emit("session", {
-      status: "started",
+    this.emit("sessionStart", {
       timestamp: new Date().toISOString(),
       sessionId: data.session_id,
       resumeUrl: data.resume_gateway_url,
       userId: data.user.id,
       guildCount: data.guilds.length,
+      duration: Date.now() - this.#connectStartTime,
     });
   }
 
@@ -752,19 +705,30 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param reason - Close reason if provided
    */
   async #handleClose(code: number, reason?: string): Promise<void> {
+    // Destroy heartbeat to stop sending
     this.#heartbeat.destroy();
 
-    // Record failure if not a clean close
-    if (code !== 1000 && code !== 1001) {
-      const failureType =
-        code === 4004 ? FailureType.Authentication : FailureType.WebSocket;
-
-      this.#circuitBreaker.recordFailure(failureType);
-    } else {
-      // For clean closures, clear session information
+    // For clean closures, clear session information
+    if (code === 1000 || code === 1001) {
       this.#sessionId = null;
       this.#resumeUrl = null;
       this.#sequence = 0;
+    }
+
+    // Emit disconnect event for any active shards
+    if (this.#shard.isEnabled()) {
+      for (const shard of this.#shard.shards) {
+        if (shard.status !== "disconnected") {
+          this.emit("shardDisconnect", {
+            timestamp: new Date().toISOString(),
+            shardId: shard.shardId,
+            totalShards: shard.totalShards,
+            closeCode: code,
+            reason: reason || "Connection closed",
+            willReconnect: this.#options.heartbeat.autoReconnect,
+          });
+        }
+      }
     }
 
     await this.#handleDisconnect(code, reason);
@@ -776,19 +740,15 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param resumable - Whether the session is resumable
    */
   async #handleInvalidSession(resumable: boolean): Promise<void> {
-    this.emit("session", {
-      status: "invalidated",
+    this.emit("sessionInvalidate", {
       timestamp: new Date().toISOString(),
       sessionId: this.#sessionId ?? "",
       resumable,
-      reason: resumable ? "resumable" : "not_resumable",
+      reason: resumable ? "server_request" : "authentication_failed",
     });
 
-    // Record failure if not resumable
+    // Clear session info if not resumable
     if (!resumable) {
-      this.#circuitBreaker.recordFailure(FailureType.Gateway);
-
-      // Clear session info if not resumable
       this.#sessionId = null;
       this.#resumeUrl = null;
       this.#sequence = 0;
@@ -852,20 +812,18 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     try {
       const delay = this.#getReconnectionDelay();
+
+      // Emit reconnection scheduled event
+      this.emit("reconnectionScheduled", {
+        timestamp: new Date().toISOString(),
+        delayMs: delay,
+        reason: this.#shouldResume(code)
+          ? "connection_closed"
+          : "invalid_session",
+        previousAttempts: this.#reconnectionAttempts - 1,
+      });
+
       await sleep(delay);
-
-      // Attempt reconnection
-      if (!this.#circuitBreaker.canExecute("reconnect")) {
-        // Wait for the circuit breaker to reset
-        const additionalDelay = Math.min(
-          this.#circuitBreaker.remainingTimeout,
-          60000, // Max 1 minute
-        );
-
-        await sleep(additionalDelay);
-        await this.#handleDisconnect(code, reason);
-        return;
-      }
 
       if (this.#shouldResume(code) && this.#canResume()) {
         await this.#handleResume();
@@ -876,13 +834,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       }
     } catch (error) {
       this.emit("error", new Error("Reconnection failed", { cause: error }));
-
-      // Record failure in circuit breaker
-      const failureType = CircuitBreakerService.detectFailureType(
-        error instanceof Error ? error : new Error(String(error)),
-      );
-
-      this.#circuitBreaker.recordFailure(failureType);
 
       // Try again after a delay
       await sleep(5000);
@@ -905,12 +856,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       await this.#initializeWebSocket(this.#resumeUrl);
       this.#sendResume();
 
-      this.emit("session", {
-        status: "resumed",
+      this.emit("sessionResume", {
         timestamp: new Date().toISOString(),
         sessionId: this.#sessionId ?? "",
+        sequence: this.#sequence,
         replayedEvents: 0,
-        latency: this.#heartbeat.latency,
+        latencyMs: this.#heartbeat.latency,
       });
     } catch (_error) {
       // If resume fails, try clean reconnect

@@ -5,11 +5,14 @@ import { GatewayOpcodes } from "../types/index.js";
 /**
  * Manages Gateway heartbeat operations
  *
- * This class is responsible for:
- * - Sending periodic heartbeats to keep the Gateway connection alive
- * - Tracking heartbeat acknowledgements
- * - Calculating connection latency
- * - Handling missed heartbeats and reconnection logic
+ * This class implements Discord's heartbeating protocol which keeps the websocket connection alive.
+ * Per Discord documentation, it:
+ * - Sends periodic heartbeats at specified intervals
+ * - Tracks heartbeat acknowledgements from Discord
+ * - Calculates connection latency
+ * - Handles missed heartbeats and reconnection logic
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway#sending-heartbeats}
  */
 export class HeartbeatManager {
   /** Current latency in milliseconds */
@@ -139,9 +142,9 @@ export class HeartbeatManager {
   }
 
   /**
-   * Starts the heartbeat service
+   * Starts the heartbeat service with the interval specified by Discord
    *
-   * @param interval - Heartbeat interval in milliseconds
+   * @param interval - Heartbeat interval in milliseconds from Discord's Hello message
    * @throws {Error} If the interval is invalid or the service is already running
    */
   start(interval: number): void {
@@ -184,22 +187,23 @@ export class HeartbeatManager {
 
   /**
    * Acknowledges a heartbeat and calculates latency
+   * Called when Discord responds with a Heartbeat ACK (opcode 11)
    */
   ackHeartbeat(): void {
     const now = Date.now();
     this.#handleAck();
     this.#updateLatency(now);
 
-    this.#gateway.emit("heartbeat", {
-      status: "ack",
+    this.#gateway.emit("heartbeatAcknowledge", {
       timestamp: new Date().toISOString(),
       sequence: this.#gateway.sequence,
-      latency: this.#latency,
+      latencyMs: this.#latency,
     });
   }
 
   /**
    * Sends a heartbeat to the gateway
+   * This sends opcode 1 with the current sequence number
    */
   sendHeartbeat(): void {
     this.#lastSend = Date.now();
@@ -212,11 +216,10 @@ export class HeartbeatManager {
 
     this.#isAcked = false;
 
-    this.#gateway.emit("heartbeat", {
-      status: "sent",
+    this.#gateway.emit("heartbeatSent", {
       timestamp: new Date().toISOString(),
       sequence: this.#gateway.sequence,
-      totalBeats: this.#totalBeats,
+      totalSent: this.#totalBeats,
     });
 
     this.#gateway.send(GatewayOpcodes.Heartbeat, this.#gateway.sequence);
@@ -224,6 +227,7 @@ export class HeartbeatManager {
 
   /**
    * Starts the heartbeat with the specified interval
+   * Implements Discord's recommended jitter to prevent thundering herd
    *
    * @param interval - Heartbeat interval in milliseconds
    * @private
@@ -234,14 +238,10 @@ export class HeartbeatManager {
     this.#intervalMs = interval;
 
     // Use jitter to prevent thundering herd problem
+    // Discord documentation recommends adding random jitter to the first heartbeat
     const initialDelay = interval * Math.random();
 
-    this.#gateway.emit("heartbeat", {
-      status: "started",
-      timestamp: new Date().toISOString(),
-      interval: this.#intervalMs,
-      initialDelay,
-    });
+    // We don't emit a specific event for starting heartbeats in the new event system
 
     setTimeout(() => {
       this.sendHeartbeat();
@@ -254,6 +254,7 @@ export class HeartbeatManager {
 
   /**
    * Handles heartbeat acknowledgement
+   * Resets missed heartbeat counters and reconnection status
    *
    * @private
    */
@@ -266,17 +267,21 @@ export class HeartbeatManager {
 
   /**
    * Handles a missed heartbeat
+   * After too many missed heartbeats, the connection is considered zombied
+   * and should be terminated per Discord guidelines
    *
    * @private
    */
   #handleMissedHeartbeat(): void {
     this.#missedHeartbeats++;
 
-    this.#gateway.emit("heartbeat", {
-      status: "timeout",
+    this.#gateway.emit("heartbeatTimeout", {
       timestamp: new Date().toISOString(),
-      missedHeartbeats: this.#missedHeartbeats,
+      missedCount: this.#missedHeartbeats,
       maxRetries: this.#options.maxRetries,
+      willReconnect:
+        this.#missedHeartbeats >= this.#options.maxRetries &&
+        this.#options.autoReconnect,
     });
 
     // If we've reached the max retries, destroy the heartbeat and reconnect if configured
@@ -291,6 +296,7 @@ export class HeartbeatManager {
 
   /**
    * Handles reconnection after missed heartbeats
+   * Per Discord documentation, a failed heartbeat should result in a reconnection
    *
    * @private
    */
@@ -301,6 +307,14 @@ export class HeartbeatManager {
 
     this.#isReconnecting = true;
     this.#retryAttempts++;
+
+    // Emit reconnection event
+    this.#gateway.emit("reconnectionScheduled", {
+      timestamp: new Date().toISOString(),
+      delayMs: this.#options.reconnectDelay,
+      reason: "heartbeat_timeout",
+      previousAttempts: this.#retryAttempts - 1,
+    });
 
     this.#reconnectTimeout = setTimeout(() => {
       if (this.#intervalMs > 0) {

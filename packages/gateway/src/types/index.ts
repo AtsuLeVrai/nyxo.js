@@ -1,2 +1,2 @@
-export * from "./events.types.js";
+export * from "./dispatch.types.js";
 export * from "./gateway.types.js";
