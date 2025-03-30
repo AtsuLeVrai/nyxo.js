@@ -452,7 +452,7 @@ export class BitFieldManager<T> {
     let position = 0n;
 
     while (value > 0n) {
-      if (value & 1n) {
+      if (value && 1n) {
         result.push(1n << position);
       }
       value >>= 1n;
@@ -624,7 +624,7 @@ export class BitFieldManager<T> {
     let position = 0;
 
     while (value > 0n) {
-      if (value & 1n) {
+      if (value && 1n) {
         positions.push(position);
       }
       value >>= 1n;

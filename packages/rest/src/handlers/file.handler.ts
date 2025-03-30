@@ -393,7 +393,7 @@ export const FileHandler = {
       const sizeRatio = Math.sqrt(options.maxSize / buffer.length) * 0.9;
 
       if (!(metadata.width && metadata.height)) {
-        throw new Error("Unable to determine image dimensions");
+        return { processedBuffer: buffer, finalContentType: contentType };
       }
 
       const newWidth = Math.floor(metadata.width * sizeRatio);

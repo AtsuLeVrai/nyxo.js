@@ -1,11 +1,19 @@
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+} from "@nyxjs/builders";
+import {
+  type AnyInteractionEntity,
   ButtonStyle,
-  ComponentType,
-  EmbedType,
+  InteractionCallbackType,
   type MessageEntity,
+  TextInputStyle,
 } from "@nyxjs/core";
 import { Gateway, GatewayIntentsBits } from "@nyxjs/gateway";
-import { ApiError, Rest } from "@nyxjs/rest";
+import { Rest } from "@nyxjs/rest";
 import { config } from "dotenv";
 
 const { parsed } = config({ debug: true });
@@ -160,33 +168,70 @@ gateway.on("dispatch", async (event, data) => {
   if (event === "MESSAGE_CREATE") {
     const message = data as MessageEntity;
     if (message.content === "!ping") {
+      const embed = new EmbedBuilder()
+        .setTitle("Test")
+        .setDescription("Test")
+        .setColor(0x57f287)
+        .setFooter({ text: "Test" })
+        .setImage({ url: "https://example.com/image.png" })
+        .setThumbnail({ url: "https://example.com/thumbnail.png" })
+        .setTimestamp()
+        .addFields(
+          { name: "Field 1", value: "Value 1" },
+          { name: "Field 2", value: "Value 2" },
+        )
+        .build();
+
+      const components = ActionRowBuilder.createButtonRow(
+        new ButtonBuilder()
+          .setLabel("Pong")
+          .setStyle(ButtonStyle.Success)
+          .setCustomId("ping"),
+      ).build();
+
       try {
         await rest.messages.createMessage(message.channel_id, {
           content: "Pong",
-          embeds: [
-            {
-              type: EmbedType.Rich,
-              title: "Pong",
-              description: "Pong!",
-              color: 0x57f287,
-            },
-          ],
-          components: [
-            {
-              type: ComponentType.ActionRow,
-              components: [
-                {
-                  type: ComponentType.Button,
-                  style: ButtonStyle.Success,
-                  label: "Pong",
-                  custom_id: "ping",
-                },
-              ],
-            },
-          ],
+          embeds: [embed],
+          components: [components],
         });
       } catch (error) {
         console.error("Failed to send message", error);
+      }
+    }
+  }
+
+  if (event === "INTERACTION_CREATE") {
+    const interaction = data as AnyInteractionEntity;
+    if (
+      interaction.data &&
+      "name" in interaction.data &&
+      interaction.data.name === "ping"
+    ) {
+      const modal = new ModalBuilder()
+        .setTitle("Test Modal")
+        .setCustomId("test_modal")
+        .addComponents(
+          ActionRowBuilder.createTextInputRow(
+            new TextInputBuilder()
+              .setCustomId("name_input")
+              .setLabel("Name")
+              .setStyle(TextInputStyle.Short),
+          ),
+        )
+        .build();
+
+      try {
+        await rest.interactions.createInteractionResponse<InteractionCallbackType.Modal>(
+          interaction.id,
+          interaction.token,
+          {
+            type: InteractionCallbackType.Modal,
+            data: modal,
+          },
+        );
+      } catch (error) {
+        console.error("Failed to respond to interaction", error);
       }
     }
   }
@@ -206,8 +251,4 @@ process.on("SIGINT", async () => {
 
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled rejection", error);
-
-  if (error instanceof ApiError) {
-    console.error("API Error", JSON.stringify(error.errors, null, 2));
-  }
 });

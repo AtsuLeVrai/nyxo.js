@@ -143,23 +143,25 @@ async function buildBundles() {
 
 // Generate TypeScript declaration files using tsc
 async function compileTypes() {
+  // Find tsconfig.json file
+  const configPath = ts.findConfigFile(
+    paths.root,
+    ts.sys.fileExists,
+    "tsconfig.json",
+  );
+  if (!configPath) {
+    Logger.error("tsconfig.json not found");
+    return false;
+  }
+
+  // Read and parse configuration file
+  const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
+  if (error) {
+    Logger.error(`Error reading tsconfig.json: ${error.messageText}`);
+    return false;
+  }
+
   try {
-    // Find tsconfig.json file
-    const configPath = ts.findConfigFile(
-      paths.root,
-      ts.sys.fileExists,
-      "tsconfig.json",
-    );
-    if (!configPath) {
-      throw new Error("tsconfig.json not found");
-    }
-
-    // Read and parse configuration file
-    const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
-    if (error) {
-      throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
-    }
-
     const parsedConfig = ts.parseJsonConfigFileContent(
       config,
       ts.sys,
@@ -208,7 +210,8 @@ async function compileTypes() {
     }
 
     if (emitResult.emitSkipped) {
-      throw new Error("TypeScript declaration compilation failed");
+      Logger.error("TypeScript declaration compilation failed");
+      return false;
     }
 
     // In production mode, use API Extractor to bundle declarations
@@ -219,8 +222,10 @@ async function compileTypes() {
     await rm(paths.temp, { recursive: true, force: true });
 
     Logger.success("Type generation completed");
+    return true;
   } catch (error) {
-    throw new Error(`Type generation failed: ${error.message}`);
+    Logger.error(`Type generation failed: ${error.message}`);
+    return false;
   }
 }
 
@@ -317,7 +322,10 @@ async function build() {
     await buildBundles();
 
     // Step 3: Compile TypeScript types
-    await compileTypes();
+    const typesSuccess = await compileTypes();
+    if (!typesSuccess) {
+      throw new Error("Type generation failed");
+    }
 
     // Build summary
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

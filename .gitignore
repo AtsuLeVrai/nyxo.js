@@ -1,4 +1,6 @@
-# Compiled output
+# Combined comprehensive .gitignore
+
+### Build outputs ###
 dist/
 tmp/
 temp/
@@ -11,16 +13,33 @@ build/
 .vercel/
 .astro/
 dist-storybook/
+build/Release/
 
-# Dependencies
+### Dependencies ###
 node_modules/
+jspm_packages/
+bower_components/
+web_modules/
 .pnp/
 .pnp.js
-bower_components/
-jspm_packages/
-web_modules/
 
-# Environment variables
+### Package management ###
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.yarn-integrity
+.npm/
+*.tgz
+.pnpm-debug.log*
+
+### Environment variables ###
 .env
 .env.*
 !.env.example
@@ -29,14 +48,66 @@ web_modules/
 .env.production.local
 .env.local
 
-# Testing and coverage
-coverage/
+### Logs ###
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+libpeerconnection.log
 testem.log
+
+### Reports and debugging ###
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 *.lcov
+connect.lock/
+
+### Testing and coverage ###
+coverage/
 .nyc_output/
 lib-cov/
 
-# IDE and editors
+### Cache and temporary files ###
+.cache/
+.parcel-cache/
+.temp/
+.eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.rollup.cache/
+.docusaurus/
+.fusebox/
+.dynamodb/
+.serverless/
+.sass-cache/
+
+### TypeScript specific ###
+*.tsbuildinfo
+typings/
+
+### Runtime data ###
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+### IDE and editors ###
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+.history/
+
+# Other IDEs
+.idea/
 .project
 .classpath
 .c9/
@@ -45,41 +116,53 @@ lib-cov/
 *.sublime-workspace
 *.swp
 *.swo
-.history/
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
+.vscode-test
 
-# Logs and debugging
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-.pnpm-debug.log*
-libpeerconnection.log
-/connect.lock
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+*.icloud
 
-# Cache and temporary files
-.eslintcache
-.stylelintcache
-.temp/
-.cache/
-.parcel-cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-.rollup.cache/
-.npm/
-.docusaurus/
-.fusebox/
-.dynamodb/
-.serverless/
+### Windows ###
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+### Node.js specific ###
+.lock-wscript
+.node_repl_history
+.npm
+.grunt/
+
+### Build tools and runtime ###
+.gradle/
+.maven/
+.dart_tool/
 .heft/
 .rush/
 .rush-logs/
@@ -87,34 +170,7 @@ common/temp/
 common/deploy/
 common/autoinstallers/*/.npmrc
 
-# Build tools and runtime
-.gradle/
-.maven/
-.dart_tool/
-.lock-wscript/
-*.pid
-*.seed
-*.pid.lock
-.grunt/
-build/Release/
-
-# TypeScript specific
-*.tsbuildinfo
-
-# Package management
-*.tgz
-.yarn/cache/
-.yarn/unplugged/
-.yarn/build-state.yml
-.yarn/install-state.gz
-.yarn-integrity
-
-# OS specific
-.DS_Store
-Thumbs.db
-*.pem
-.sass-cache/
-
-# Misc
-/typings/
-.node_repl_history
+### Cargo / Rust ###
+/target
+Cargo.lock
+*.node

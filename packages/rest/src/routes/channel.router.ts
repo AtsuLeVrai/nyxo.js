@@ -657,7 +657,7 @@ export class ChannelRouter {
    * Lists private archived threads that the current user has joined.
    *
    * @param channelId - ID of the channel
-   * @param options - Query parameters for the request
+   * @param query - Query parameters for the request
    * @returns A promise that resolves to a list of joined private archived threads
    * @remarks
    * - Returns threads of type PRIVATE_THREAD that the current user has joined
