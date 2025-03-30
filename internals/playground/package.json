@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/bot",
+  "name": "@nyxjs/playground",
   "version": "1.0.0-PRIVATE",
-  "description": "Discord bot made with Nyx.js",
+  "description": "Playground for Nyx.js",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",

@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/rest",
   "version": "1.0.0",
-  "description": "Efficient REST API Management for Nyx.js",
+  "description": "Type-Safe Discord REST API Client with Advanced Rate Limiting",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",

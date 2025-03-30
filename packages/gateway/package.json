@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/gateway",
   "version": "1.0.0",
-  "description": "Efficient WebSocket and Shard Management for Nyx.js",
+  "description": "High-Performance Discord Gateway Client for Scalable Bots",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",

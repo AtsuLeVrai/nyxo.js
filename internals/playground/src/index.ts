@@ -90,10 +90,8 @@ const gateway = new Gateway(rest, {
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
-  shard: {
-    force: true,
-    totalShards: "auto",
-  },
+  encodingType: "etf",
+  compressionType: "zstd-stream",
 });
 
 // Connection lifecycle events
