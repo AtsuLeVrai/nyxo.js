@@ -1,4 +1,4 @@
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type {
   GatewayBotResponseEntity,
   GatewayResponseEntity,
@@ -13,7 +13,7 @@ import type {
  * to receive events about various actions and state changes.
  * These methods provide the necessary information to establish and maintain gateway connections.
  */
-export class GatewayRouter {
+export class GatewayRouter extends BaseRouter {
   /**
    * API route constants for gateway-related endpoints.
    */
@@ -25,17 +25,6 @@ export class GatewayRouter {
     gatewayBot: "/gateway/bot" as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new GatewayRouter instance.
-   * @param rest - The REST client to use for making API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Gets the gateway WebSocket URL.
    *
@@ -46,7 +35,7 @@ export class GatewayRouter {
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
    */
   getGateway(): Promise<GatewayResponseEntity> {
-    return this.#rest.get(GatewayRouter.ROUTES.gatewayDefault);
+    return this.rest.get(GatewayRouter.ROUTES.gatewayDefault);
   }
 
   /**
@@ -68,6 +57,6 @@ export class GatewayRouter {
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot}
    */
   getGatewayBot(): Promise<GatewayBotResponseEntity> {
-    return this.#rest.get(GatewayRouter.ROUTES.gatewayBot);
+    return this.rest.get(GatewayRouter.ROUTES.gatewayBot);
   }
 }

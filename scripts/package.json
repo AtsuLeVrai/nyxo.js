@@ -12,8 +12,6 @@
     "pnpm": ">=10"
   },
   "scripts": {
-    "format": "biome format --write .",
-    "lint": "biome lint --write --unsafe .",
     "check": "biome check --write --unsafe ."
   },
   "devDependencies": {

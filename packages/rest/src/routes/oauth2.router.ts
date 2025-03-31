@@ -1,5 +1,5 @@
 import type { ApplicationEntity } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type { AuthorizationEntity } from "../schemas/index.js";
 
 /**
@@ -9,7 +9,7 @@ import type { AuthorizationEntity } from "../schemas/index.js";
  * @see {@link https://discord.com/developers/docs/topics/oauth2}
  */
 // biome-ignore lint/style/useNamingConvention: This is a router class, not an entity class
-export class OAuth2Router {
+export class OAuth2Router extends BaseRouter {
   /**
    * Collection of route URLs for OAuth2-related endpoints
    */
@@ -31,17 +31,6 @@ export class OAuth2Router {
     oauth2CurrentAuthorization: "/oauth2/@me" as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new OAuth2Router instance
-   * @param rest - The REST client used to make requests to the Discord API
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Retrieves information about the current bot application
    * This endpoint requires authentication with a bot token
@@ -51,7 +40,7 @@ export class OAuth2Router {
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
    */
   getCurrentBotApplicationInformation(): Promise<ApplicationEntity> {
-    return this.#rest.get(OAuth2Router.ROUTES.oauth2CurrentApplication);
+    return this.rest.get(OAuth2Router.ROUTES.oauth2CurrentApplication);
   }
 
   /**
@@ -63,6 +52,6 @@ export class OAuth2Router {
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
    */
   getCurrentAuthorizationInformation(): Promise<AuthorizationEntity> {
-    return this.#rest.get(OAuth2Router.ROUTES.oauth2CurrentAuthorization);
+    return this.rest.get(OAuth2Router.ROUTES.oauth2CurrentAuthorization);
   }
 }

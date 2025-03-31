@@ -3,7 +3,7 @@ import type {
   GuildApplicationCommandPermissionEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type {
   CreateGlobalApplicationCommandSchema,
   CreateGuildApplicationCommandSchema,
@@ -17,7 +17,7 @@ import type {
  * Provides methods to interact with application commands such as creating, editing,
  * and managing permissions for both global and guild-specific commands.
  */
-export class ApplicationCommandRouter {
+export class ApplicationCommandRouter extends BaseRouter {
   /**
    * API route constants for application command-related endpoints.
    */
@@ -83,17 +83,6 @@ export class ApplicationCommandRouter {
       `/applications/${applicationId}/guilds/${guildId}/commands/${commandId}/permissions` as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new ApplicationCommandRouter instance.
-   * @param rest - The REST client to use for making API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches all global commands for the application.
    * @param applicationId - ID of the application
@@ -105,7 +94,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     withLocalizations = false,
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
       {
         query: { with_localizations: withLocalizations },
@@ -126,7 +115,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     options: CreateGlobalApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.#rest.post(
+    return this.rest.post(
       ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
       {
         body: JSON.stringify(options),
@@ -145,7 +134,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationCommandRouter.ROUTES.applicationsCommandsId(
         applicationId,
         commandId,
@@ -167,7 +156,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditGlobalApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.#rest.patch(
+    return this.rest.patch(
       ApplicationCommandRouter.ROUTES.applicationsCommandsId(
         applicationId,
         commandId,
@@ -187,7 +176,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     commandId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ApplicationCommandRouter.ROUTES.applicationsCommandsId(
         applicationId,
         commandId,
@@ -208,7 +197,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     commands: CreateGlobalApplicationCommandSchema[],
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.#rest.put(
+    return this.rest.put(
       ApplicationCommandRouter.ROUTES.applicationsCommands(applicationId),
       {
         body: JSON.stringify(commands),
@@ -229,7 +218,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     withLocalizations = false,
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
         applicationId,
         guildId,
@@ -255,7 +244,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     options: CreateGuildApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.#rest.post(
+    return this.rest.post(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
         applicationId,
         guildId,
@@ -279,7 +268,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
         guildId,
@@ -304,7 +293,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditGuildApplicationCommandSchema,
   ): Promise<AnyApplicationCommandEntity> {
-    return this.#rest.patch(
+    return this.rest.patch(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
         guildId,
@@ -329,7 +318,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsId(
         applicationId,
         guildId,
@@ -353,7 +342,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commands: CreateGuildApplicationCommandSchema[],
   ): Promise<AnyApplicationCommandEntity[]> {
-    return this.#rest.put(
+    return this.rest.put(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommands(
         applicationId,
         guildId,
@@ -375,7 +364,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsPermissions(
         applicationId,
         guildId,
@@ -396,7 +385,7 @@ export class ApplicationCommandRouter {
     guildId: Snowflake,
     commandId: Snowflake,
   ): Promise<GuildApplicationCommandPermissionEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsPermissionsId(
         applicationId,
         guildId,
@@ -423,7 +412,7 @@ export class ApplicationCommandRouter {
     commandId: Snowflake,
     options: EditApplicationCommandPermissionsSchema,
   ): Promise<GuildApplicationCommandPermissionEntity> {
-    return this.#rest.put(
+    return this.rest.put(
       ApplicationCommandRouter.ROUTES.applicationsGuildCommandsPermissionsId(
         applicationId,
         guildId,

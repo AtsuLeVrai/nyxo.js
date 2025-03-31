@@ -1,5 +1,5 @@
 import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import { FileHandler } from "../handlers/index.js";
 import type {
   ActivityInstanceEntity,
@@ -11,7 +11,7 @@ import type {
  * Provides methods to interact with application resources such as fetching
  * application information, editing applications, and managing activity instances.
  */
-export class ApplicationRouter {
+export class ApplicationRouter extends BaseRouter {
   /**
    * API route constants for application-related endpoints.
    */
@@ -32,17 +32,6 @@ export class ApplicationRouter {
       `/applications/${applicationId}/activity-instances/${instanceId}` as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new ApplicationRouter instance.
-   * @param rest - The REST client to use for making API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches the current application's information.
    * Retrieves details about the authenticated application.
@@ -50,7 +39,7 @@ export class ApplicationRouter {
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(ApplicationRouter.ROUTES.applicationsMe);
+    return this.rest.get(ApplicationRouter.ROUTES.applicationsMe);
   }
 
   /**
@@ -72,7 +61,7 @@ export class ApplicationRouter {
       options.cover_image = await FileHandler.toDataUri(options.cover_image);
     }
 
-    return this.#rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
+    return this.rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
       body: JSON.stringify(options),
     });
   }
@@ -89,7 +78,7 @@ export class ApplicationRouter {
     applicationId: Snowflake,
     instanceId: string,
   ): Promise<ActivityInstanceEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationRouter.ROUTES.applicationsActivityInstance(
         applicationId,
         instanceId,

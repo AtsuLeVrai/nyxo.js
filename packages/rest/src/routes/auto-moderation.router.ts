@@ -1,5 +1,5 @@
 import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type {
   CreateAutoModerationRuleSchema,
   ModifyAutoModerationRuleSchema,
@@ -13,7 +13,7 @@ import type {
  * Auto Moderation enables automatic message moderation through server-defined rules
  * based on keywords, spam detection, and other trigger types.
  */
-export class AutoModerationRouter {
+export class AutoModerationRouter extends BaseRouter {
   /**
    * API route constants for auto moderation-related endpoints.
    */
@@ -36,17 +36,6 @@ export class AutoModerationRouter {
       `/guilds/${guildId}/auto-moderation/rules/${ruleId}` as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new AutoModerationRouter instance.
-   * @param rest - The REST client to use for making API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches all auto moderation rules for a guild.
    *
@@ -58,7 +47,7 @@ export class AutoModerationRouter {
   listAutoModerationRules(
     guildId: Snowflake,
   ): Promise<AutoModerationRuleEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       AutoModerationRouter.ROUTES.guildAutoModerationRules(guildId),
     );
   }
@@ -76,7 +65,7 @@ export class AutoModerationRouter {
     guildId: Snowflake,
     ruleId: Snowflake,
   ): Promise<AutoModerationRuleEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
     );
   }
@@ -97,7 +86,7 @@ export class AutoModerationRouter {
     options: CreateAutoModerationRuleSchema,
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
-    return this.#rest.post(
+    return this.rest.post(
       AutoModerationRouter.ROUTES.guildAutoModerationRules(guildId),
       {
         body: JSON.stringify(options),
@@ -125,7 +114,7 @@ export class AutoModerationRouter {
     options: ModifyAutoModerationRuleSchema,
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
-    return this.#rest.patch(
+    return this.rest.patch(
       AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
       {
         body: JSON.stringify(options),
@@ -149,7 +138,7 @@ export class AutoModerationRouter {
     ruleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
       {
         reason,

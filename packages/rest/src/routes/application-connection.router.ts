@@ -2,14 +2,14 @@ import type {
   ApplicationRoleConnectionMetadataEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 
 /**
  * Router for Discord Application Connection-related API endpoints.
  * Provides methods to interact with application role connection metadata,
  * which is used for integration with Discord's role connection verification feature.
  */
-export class ApplicationConnectionRouter {
+export class ApplicationConnectionRouter extends BaseRouter {
   /**
    * API route constants for application connection-related endpoints.
    */
@@ -23,17 +23,6 @@ export class ApplicationConnectionRouter {
       `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new ApplicationConnectionRouter instance.
-   * @param rest - The REST client to use for making API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches the role connection metadata records for an application.
    * These records define the metadata fields that can be used for role connection verification.
@@ -45,7 +34,7 @@ export class ApplicationConnectionRouter {
   getApplicationRoleConnectionMetadata(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
         applicationId,
       ),
@@ -66,7 +55,7 @@ export class ApplicationConnectionRouter {
     applicationId: Snowflake,
     metadata: ApplicationRoleConnectionMetadataEntity[],
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.#rest.put(
+    return this.rest.put(
       ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
         applicationId,
       ),

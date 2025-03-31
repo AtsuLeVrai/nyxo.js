@@ -3,7 +3,7 @@ import type {
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type {
   ModifyCurrentUserVoiceStateSchema,
   ModifyUserVoiceStateSchema,
@@ -19,7 +19,7 @@ import type {
  *
  * @see {@link https://discord.com/developers/docs/resources/voice}
  */
-export class VoiceRouter {
+export class VoiceRouter extends BaseRouter {
   /**
    * Collection of route patterns for voice-related endpoints.
    */
@@ -48,19 +48,6 @@ export class VoiceRouter {
   } as const;
 
   /**
-   * The REST client used to make API requests.
-   */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new instance of the VoiceRouter.
-   * @param rest - The REST client to use for API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
-  /**
    * Lists all available voice regions.
    *
    * Returns an array of voice region objects that can be used when setting
@@ -70,7 +57,7 @@ export class VoiceRouter {
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
   listVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(VoiceRouter.ROUTES.voiceRegionsBase);
+    return this.rest.get(VoiceRouter.ROUTES.voiceRegionsBase);
   }
 
   /**
@@ -81,7 +68,7 @@ export class VoiceRouter {
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
   getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
     );
   }
@@ -98,7 +85,7 @@ export class VoiceRouter {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<VoiceStateEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
     );
   }
@@ -127,7 +114,7 @@ export class VoiceRouter {
     guildId: Snowflake,
     options: ModifyCurrentUserVoiceStateSchema,
   ): Promise<void> {
-    return this.#rest.patch(
+    return this.rest.patch(
       VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
       {
         body: JSON.stringify(options),
@@ -160,7 +147,7 @@ export class VoiceRouter {
     userId: Snowflake,
     options: ModifyUserVoiceStateSchema,
   ): Promise<void> {
-    return this.#rest.patch(
+    return this.rest.patch(
       VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
       {
         body: JSON.stringify(options),

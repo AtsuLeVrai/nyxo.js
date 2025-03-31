@@ -1,5 +1,5 @@
 import type { SkuEntity, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 
 /**
  * Router class for handling Discord SKU (Stock Keeping Unit) endpoints.
@@ -12,7 +12,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/sku}
  */
-export class SkuRouter {
+export class SkuRouter extends BaseRouter {
   /**
    * Collection of route patterns for SKU-related endpoints.
    */
@@ -25,19 +25,6 @@ export class SkuRouter {
     applicationSkus: (applicationId: Snowflake) =>
       `/applications/${applicationId}/skus` as const,
   } as const;
-
-  /**
-   * The REST client used to make API requests.
-   */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new instance of the SkuRouter.
-   * @param rest - The REST client to use for API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
 
   /**
    * Lists all SKUs for a given application.
@@ -55,6 +42,6 @@ export class SkuRouter {
    * @see {@link https://discord.com/developers/docs/resources/sku#list-skus}
    */
   listSkus(applicationId: Snowflake): Promise<SkuEntity[]> {
-    return this.#rest.get(SkuRouter.ROUTES.applicationSkus(applicationId));
+    return this.rest.get(SkuRouter.ROUTES.applicationSkus(applicationId));
   }
 }

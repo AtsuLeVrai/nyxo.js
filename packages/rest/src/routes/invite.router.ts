@@ -1,5 +1,5 @@
 import type { InviteEntity, InviteMetadataEntity } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type { GetInviteQuerySchema } from "../schemas/index.js";
 
 /**
@@ -8,7 +8,7 @@ import type { GetInviteQuerySchema } from "../schemas/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/invite}
  */
-export class InviteRouter {
+export class InviteRouter extends BaseRouter {
   /**
    * Collection of route URLs for invite-related endpoints
    */
@@ -21,17 +21,6 @@ export class InviteRouter {
      */
     inviteBase: (code: string) => `/invites/${code}` as const,
   } as const;
-
-  /** The REST client used to make requests to the Discord API */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new InviteRouter instance
-   * @param rest - The REST client used to make requests to the Discord API
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
 
   /**
    * Retrieves an invite by its code
@@ -47,7 +36,7 @@ export class InviteRouter {
     code: string,
     query: GetInviteQuerySchema = {},
   ): Promise<InviteEntity & InviteMetadataEntity> {
-    return this.#rest.get(InviteRouter.ROUTES.inviteBase(code), {
+    return this.rest.get(InviteRouter.ROUTES.inviteBase(code), {
       query,
     });
   }
@@ -63,7 +52,7 @@ export class InviteRouter {
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.#rest.delete(InviteRouter.ROUTES.inviteBase(code), {
+    return this.rest.delete(InviteRouter.ROUTES.inviteBase(code), {
       reason,
     });
   }

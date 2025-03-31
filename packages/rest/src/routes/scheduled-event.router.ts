@@ -3,7 +3,7 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import { FileHandler } from "../handlers/index.js";
 import type {
   CreateGuildScheduledEventSchema,
@@ -18,7 +18,7 @@ import type {
  * allowing applications to create, read, update, and delete scheduled events
  * in guilds, as well as retrieve users subscribed to events.
  */
-export class ScheduledEventRouter {
+export class ScheduledEventRouter extends BaseRouter {
   /**
    * Collection of route patterns for scheduled event endpoints.
    */
@@ -51,19 +51,6 @@ export class ScheduledEventRouter {
   } as const;
 
   /**
-   * The REST client used to make API requests.
-   */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new instance of the ScheduledEventRouter.
-   * @param rest - The REST client to use for API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
-  /**
    * Lists all scheduled events for a guild.
    *
    * Retrieves a list of all scheduled events for the specified guild,
@@ -78,7 +65,7 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       ScheduledEventRouter.ROUTES.guildScheduledEvents(guildId),
       {
         query: { with_user_count: withUserCount },
@@ -111,7 +98,7 @@ export class ScheduledEventRouter {
       options.image = await FileHandler.toDataUri(options.image);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       ScheduledEventRouter.ROUTES.guildScheduledEvents(guildId),
       {
         body: JSON.stringify(options),
@@ -134,7 +121,7 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
       {
         query: { with_user_count: withUserCount },
@@ -170,7 +157,7 @@ export class ScheduledEventRouter {
       options.image = await FileHandler.toDataUri(options.image);
     }
 
-    return this.#rest.patch(
+    return this.rest.patch(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
       {
         body: JSON.stringify(options),
@@ -191,7 +178,7 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     eventId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
     );
   }
@@ -215,7 +202,7 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     query: GetGuildScheduledEventUsersQuerySchema = {},
   ): Promise<GuildScheduledEventUserEntity[]> {
-    return this.#rest.get(
+    return this.rest.get(
       ScheduledEventRouter.ROUTES.guildScheduledEventUsers(guildId, eventId),
       {
         query,

@@ -3,7 +3,7 @@ import type { Snowflake } from "@nyxjs/core";
 /**
  * Base URLs for Discord CDN resources
  */
-const CDN_URLS = {
+export const CDN_URLS = {
   /** Primary CDN endpoint for Discord assets */
   BASE: "https://cdn.discordapp.com",
   /** Media proxy used for specific assets like GIF stickers */
@@ -13,30 +13,30 @@ const CDN_URLS = {
 /**
  * Valid image sizes for Discord CDN (powers of 2)
  */
-const VALID_IMAGE_SIZES = [
+export const VALID_IMAGE_SIZES = [
   16, 32, 64, 128, 256, 512, 1024, 2048, 4096,
 ] as const;
-type ImageSize = (typeof VALID_IMAGE_SIZES)[number];
+export type ImageSize = (typeof VALID_IMAGE_SIZES)[number];
 
 /**
  * Valid formats for non-animated images
  */
-type RasterFormat = "png" | "jpeg" | "webp";
+export type RasterFormat = "png" | "jpeg" | "webp";
 
 /**
  * Valid formats for potentially animated images
  */
-type AnimatedFormat = "png" | "jpeg" | "webp" | "gif";
+export type AnimatedFormat = "png" | "jpeg" | "webp" | "gif";
 
 /**
  * Valid formats for stickers
  */
-type StickerFormat = "png" | "gif" | "json";
+export type StickerFormat = "png" | "gif" | "json";
 
 /**
  * Base options for all image URL generation
  */
-interface BaseImageOptions {
+export interface BaseImageOptions {
   /** Size in pixels (must be a power of 2 between 16 and 4096) */
   size?: ImageSize;
 }
@@ -44,7 +44,7 @@ interface BaseImageOptions {
 /**
  * Options for standard images
  */
-interface ImageOptions extends BaseImageOptions {
+export interface ImageOptions extends BaseImageOptions {
   /** Image format to request */
   format?: RasterFormat;
 }
@@ -52,7 +52,7 @@ interface ImageOptions extends BaseImageOptions {
 /**
  * Options for potentially animated images
  */
-interface AnimatedImageOptions extends BaseImageOptions {
+export interface AnimatedImageOptions extends BaseImageOptions {
   /** Image format to request */
   format?: AnimatedFormat;
   /** Force GIF for animated assets even when not needed */
@@ -62,7 +62,7 @@ interface AnimatedImageOptions extends BaseImageOptions {
 /**
  * Options for sticker images
  */
-interface StickerFormatOptions extends BaseImageOptions {
+export interface StickerFormatOptions extends BaseImageOptions {
   /** Sticker format to request */
   format?: StickerFormat;
   /** Whether to use the media proxy for GIF stickers */
@@ -72,7 +72,7 @@ interface StickerFormatOptions extends BaseImageOptions {
 /**
  * Regular expression to detect animated asset hashes
  */
-const ANIMATED_HASH = /^a_/;
+export const ANIMATED_HASH = /^a_/;
 
 /**
  * Utility for generating URLs for Discord CDN resources

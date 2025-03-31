@@ -5,7 +5,7 @@ import type {
   MessageEntity,
   Snowflake,
 } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type {
   EditWebhookMessageSchema,
   ExecuteWebhookSchema,
@@ -20,7 +20,7 @@ import type {
  *
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding}
  */
-export class InteractionRouter {
+export class InteractionRouter extends BaseRouter {
   /**
    * Collection of route URLs for interaction-related endpoints
    */
@@ -134,18 +134,6 @@ export class InteractionRouter {
       `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new InteractionRouter instance
-   *
-   * @param rest - The REST client used to make requests to the Discord API
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Creates a response to an interaction
    * Interaction tokens are valid for 15 minutes, but you must respond
@@ -165,7 +153,7 @@ export class InteractionRouter {
     options: InteractionResponseEntity<T>,
     withResponse = true,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
-    return this.#rest.post(
+    return this.rest.post(
       InteractionRouter.ROUTES.interactionCreateResponse(
         interactionId,
         interactionToken,
@@ -189,7 +177,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
   ): Promise<MessageEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       InteractionRouter.ROUTES.webhookOriginalResponseGet(
         applicationId,
         interactionToken,
@@ -212,7 +200,7 @@ export class InteractionRouter {
     interactionToken: string,
     options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
-    return this.#rest.patch(
+    return this.rest.patch(
       InteractionRouter.ROUTES.webhookOriginalResponseEdit(
         applicationId,
         interactionToken,
@@ -235,7 +223,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       InteractionRouter.ROUTES.webhookOriginalResponseDelete(
         applicationId,
         interactionToken,
@@ -260,7 +248,7 @@ export class InteractionRouter {
     interactionToken: string,
     options: ExecuteWebhookSchema,
   ): Promise<MessageEntity> {
-    return this.#rest.post(
+    return this.rest.post(
       InteractionRouter.ROUTES.webhookFollowupMessageCreate(
         applicationId,
         interactionToken,
@@ -285,7 +273,7 @@ export class InteractionRouter {
     interactionToken: string,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       InteractionRouter.ROUTES.webhookFollowupMessageGet(
         applicationId,
         interactionToken,
@@ -311,7 +299,7 @@ export class InteractionRouter {
     messageId: Snowflake,
     options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
-    return this.#rest.patch(
+    return this.rest.patch(
       InteractionRouter.ROUTES.webhookFollowupMessageEdit(
         applicationId,
         interactionToken,
@@ -337,7 +325,7 @@ export class InteractionRouter {
     interactionToken: string,
     messageId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       InteractionRouter.ROUTES.webhookFollowupMessageDelete(
         applicationId,
         interactionToken,

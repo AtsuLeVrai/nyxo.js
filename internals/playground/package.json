@@ -32,7 +32,11 @@
     "@nyxjs/core": "workspace:*",
     "@nyxjs/gateway": "workspace:*",
     "@nyxjs/rest": "workspace:*",
-    "@nyxjs/store": "workspace:*"
+    "@nyxjs/store": "workspace:*",
+    "bufferutil": "^4.0.9",
+    "erlpack": "^0.1.4",
+    "fzstd": "^0.1.1",
+    "zlib-sync": "^0.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

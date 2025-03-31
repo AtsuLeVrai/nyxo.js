@@ -1,5 +1,5 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import { FileHandler } from "../handlers/index.js";
 import type {
   CreateGuildSoundboardSoundSchema,
@@ -17,7 +17,7 @@ import type {
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard}
  */
-export class SoundboardRouter {
+export class SoundboardRouter extends BaseRouter {
   /**
    * Collection of route patterns for soundboard-related endpoints.
    */
@@ -54,19 +54,6 @@ export class SoundboardRouter {
   } as const;
 
   /**
-   * The REST client used to make API requests.
-   */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new instance of the SoundboardRouter.
-   * @param rest - The REST client to use for API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
-  /**
    * Sends a soundboard sound to a voice channel the user is connected to.
    *
    * Requires the `SPEAK` and `USE_SOUNDBOARD` permissions, and also the
@@ -86,7 +73,7 @@ export class SoundboardRouter {
     channelId: Snowflake,
     options: SendSoundboardSoundSchema,
   ): Promise<void> {
-    return this.#rest.post(
+    return this.rest.post(
       SoundboardRouter.ROUTES.channelSendSoundboardSound(channelId),
       {
         body: JSON.stringify(options),
@@ -101,7 +88,7 @@ export class SoundboardRouter {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.#rest.get(SoundboardRouter.ROUTES.soundboardDefaultSounds);
+    return this.rest.get(SoundboardRouter.ROUTES.soundboardDefaultSounds);
   }
 
   /**
@@ -117,7 +104,7 @@ export class SoundboardRouter {
   listGuildSoundboardSounds(
     guildId: Snowflake,
   ): Promise<ListGuildSoundboardSoundsResponseEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
     );
   }
@@ -137,7 +124,7 @@ export class SoundboardRouter {
     guildId: Snowflake,
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.get(
+    return this.rest.get(
       SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
     );
   }
@@ -166,7 +153,7 @@ export class SoundboardRouter {
       options.sound = await FileHandler.toDataUri(options.sound);
     }
 
-    return this.#rest.post(
+    return this.rest.post(
       SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
       {
         body: JSON.stringify(options),
@@ -200,7 +187,7 @@ export class SoundboardRouter {
     options: ModifyGuildSoundboardSoundSchema,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.patch(
+    return this.rest.patch(
       SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
       {
         body: JSON.stringify(options),
@@ -229,7 +216,7 @@ export class SoundboardRouter {
     soundId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.rest.delete(
       SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
       {
         reason,

@@ -1,5 +1,5 @@
 import type { AuditLogEntity, Snowflake } from "@nyxjs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type { GetGuildAuditLogQuerySchema } from "../schemas/index.js";
 
 /**
@@ -11,7 +11,7 @@ import type { GetGuildAuditLogQuerySchema } from "../schemas/index.js";
  * Viewing audit logs requires the VIEW_AUDIT_LOG permission.
  * All audit log entries are stored by Discord for 45 days.
  */
-export class AuditLogRouter {
+export class AuditLogRouter extends BaseRouter {
   /**
    * API route constants for audit log-related endpoints.
    */
@@ -24,17 +24,6 @@ export class AuditLogRouter {
     guildAuditLogs: (guildId: Snowflake) =>
       `/guilds/${guildId}/audit-logs` as const,
   } as const;
-
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new AuditLogRouter instance.
-   * @param rest - The REST client to use for making API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
 
   /**
    * Fetches the audit log for a guild.
@@ -50,7 +39,7 @@ export class AuditLogRouter {
     guildId: Snowflake,
     query: GetGuildAuditLogQuerySchema = {},
   ): Promise<AuditLogEntity> {
-    return this.#rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {
+    return this.rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {
       query,
     });
   }
