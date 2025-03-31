@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxjs/builders",
   "version": "1.0.0",
-  "description": "Builders for Nyx.js",
+  "description": "Type-Safe Message and Component Builders for Discord Applications",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -19,8 +19,7 @@
     "./package.json": "./package.json"
   },
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=10"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public"
@@ -44,7 +43,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nyxjs/core": "workspace:*"
+    "@nyxjs/core": "workspace:^"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

@@ -8,18 +8,17 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=10"
+    "node": ">=22"
   },
   "scripts": {
     "check": "biome check --write --unsafe ."
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@microsoft/api-extractor": "7.52.2",
+    "@biomejs/biome": "^1.9.4",
+    "@microsoft/api-extractor": "^7.52.2",
     "chalk": "^5.4.1",
-    "esbuild": "0.25.1",
-    "figures": "6.1.0",
+    "esbuild": "^0.25.2",
+    "figures": "^6.1.0",
     "typescript": "^5.8.2"
   }
 }

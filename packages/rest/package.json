@@ -19,8 +19,7 @@
     "./package.json": "./package.json"
   },
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=10"
+    "node": ">=22"
   },
   "publishConfig": {
     "access": "public"
@@ -44,14 +43,14 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nyxjs/core": "workspace:*",
+    "@nyxjs/core": "workspace:^",
     "eventemitter3": "^5.0.1",
     "file-type": "^20.4.1",
     "form-data": "^4.0.2",
-    "mime-types": "^2.1.35",
-    "undici": "^6.21.2",
-    "zod": "3.24.2",
-    "zod-validation-error": "3.4.0"
+    "mime-types": "^3.0.1",
+    "undici": "^7.6.0",
+    "zod": "^3.24.2",
+    "zod-validation-error": "^3.4.0"
   },
   "optionalDependencies": {
     "sharp": "^0.33.5"
@@ -62,6 +61,6 @@
     "@types/node": "^22.13.14",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.2",
-    "undici-types": "7.5.0"
+    "undici-types": "^7.5.0"
   }
 }

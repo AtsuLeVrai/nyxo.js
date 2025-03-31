@@ -1,11 +1,38 @@
-<div align="center" style="padding: 30px;">
-<h1 style="font-size: 3em; font-weight: bold;">@nyxjs/core ⚙️</h1>
-<p style="font-size: 1.2em; margin-top: 10px;">Fundamental Components and Utilities for Nyx.js</p>
-<img src="../../public/nyxjs_banner.png" alt="Nyx.js Banner" width="6912" style="margin-top: 20px; border-radius: 8px;">
+<div align="center">
+  <h1>🏗️ @nyxjs/builders</h1>
+  <h3>Type-Safe Message and Component Builders for Discord Applications</h3>
+
+  <p align="center">
+    <a href="https://github.com/AtsuLeVrai/nyx.js/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyx.js?style=for-the-badge&logo=gnu&color=A42E2B" alt="License">
+    </a>
+    <a href="https://www.typescriptlang.org/">
+      <img src="https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
+    </a>
+    <a href="https://nodejs.org/">
+      <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?style=for-the-badge&logo=node.js" alt="Node.js">
+    </a>
+  </p>
+
+  <br />
+  <img src="../../public/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="border-radius: 8px;">
 </div>
 
-## 📄 License
+## 🚀 About
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+`@nyxjs/builders` provides a set of type-safe builders for creating Discord messages, components, embeds, and other
+interactive elements. It enables a fluent and intuitive API for constructing complex Discord UI components with proper
+validation at compile time.
+
+> [!NOTE]
+> This package is part of the Nyx.js ecosystem but can be used independently in any Discord bot or Node.js application.
+
+## ⚠️ Project Status
+
+> [!IMPORTANT]
+> **Current Status: Alpha Development**  
+> This project is still in early development stages. Nothing is production-ready yet.
+
+## 📜 License
+
+This package is [AGPL-3.0 licensed](LICENSE).
