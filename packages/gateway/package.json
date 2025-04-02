@@ -58,8 +58,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/node": "^22.13.14",
-    "@types/ws": "^8.18.0",
+    "@types/node": "^22.13.17",
+    "@types/ws": "^8.18.1",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.2"
   }

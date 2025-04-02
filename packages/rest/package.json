@@ -48,7 +48,7 @@
     "file-type": "^20.4.1",
     "form-data": "^4.0.2",
     "mime-types": "^3.0.1",
-    "undici": "^7.6.0",
+    "undici": "^7.7.0",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
   },
@@ -58,9 +58,9 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/mime-types": "^2.1.4",
-    "@types/node": "^22.13.14",
+    "@types/node": "^22.13.17",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.2",
-    "undici-types": "^7.5.0"
+    "undici-types": "^7.7.0"
   }
 }

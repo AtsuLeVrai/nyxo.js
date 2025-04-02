@@ -660,7 +660,7 @@ __metadata:
   dependencies:
     "@biomejs/biome": "npm:^1.9.4"
     "@nyxjs/core": "workspace:^"
-    "@types/node": "npm:^22.13.14"
+    "@types/node": "npm:^22.13.17"
     cross-env: "npm:^7.0.3"
     typescript: "npm:^5.8.2"
   languageName: unknown
@@ -671,7 +671,7 @@ __metadata:
   resolution: "@nyxjs/core@workspace:packages/core"
   dependencies:
     "@biomejs/biome": "npm:^1.9.4"
-    "@types/node": "npm:^22.13.14"
+    "@types/node": "npm:^22.13.17"
     cross-env: "npm:^7.0.3"
     typescript: "npm:^5.8.2"
   languageName: unknown
@@ -684,8 +684,8 @@ __metadata:
     "@biomejs/biome": "npm:^1.9.4"
     "@nyxjs/core": "workspace:^"
     "@nyxjs/rest": "workspace:^"
-    "@types/node": "npm:^22.13.14"
-    "@types/ws": "npm:^8.18.0"
+    "@types/node": "npm:^22.13.17"
+    "@types/ws": "npm:^8.18.1"
     bufferutil: "npm:^4.0.9"
     cross-env: "npm:^7.0.3"
     erlpack: "npm:^0.1.4"
@@ -718,7 +718,7 @@ __metadata:
     "@nyxjs/gateway": "workspace:^"
     "@nyxjs/rest": "workspace:^"
     "@nyxjs/store": "workspace:^"
-    "@types/node": "npm:^22.13.14"
+    "@types/node": "npm:^22.13.17"
     bufferutil: "npm:^4.0.9"
     dotenv: "npm:^16.4.7"
     erlpack: "npm:^0.1.4"
@@ -736,7 +736,7 @@ __metadata:
     "@biomejs/biome": "npm:^1.9.4"
     "@nyxjs/core": "workspace:^"
     "@types/mime-types": "npm:^2.1.4"
-    "@types/node": "npm:^22.13.14"
+    "@types/node": "npm:^22.13.17"
     cross-env: "npm:^7.0.3"
     eventemitter3: "npm:^5.0.1"
     file-type: "npm:^20.4.1"
@@ -744,8 +744,8 @@ __metadata:
     mime-types: "npm:^3.0.1"
     sharp: "npm:^0.33.5"
     typescript: "npm:^5.8.2"
-    undici: "npm:^7.6.0"
-    undici-types: "npm:^7.5.0"
+    undici: "npm:^7.7.0"
+    undici-types: "npm:^7.7.0"
     zod: "npm:^3.24.2"
     zod-validation-error: "npm:^3.4.0"
   dependenciesMeta:
@@ -771,7 +771,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@nyxjs/source@workspace:."
   dependencies:
-    "@biomejs/biome": "npm:^1.9.4"
     "@vitest/coverage-v8": "npm:^3.1.1"
     "@vitest/ui": "npm:^3.1.1"
     husky: "npm:^9.1.7"
@@ -786,7 +785,7 @@ __metadata:
   dependencies:
     "@biomejs/biome": "npm:^1.9.4"
     "@types/lodash-es": "npm:^4.17.12"
-    "@types/node": "npm:^22.13.14"
+    "@types/node": "npm:^22.13.17"
     cross-env: "npm:^7.0.3"
     deepmerge-ts: "npm:^7.1.5"
     lodash-es: "npm:^4.17.21"
@@ -1064,7 +1063,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^22.13.14":
+"@types/node@npm:*":
   version: 22.13.14
   resolution: "@types/node@npm:22.13.14"
   dependencies:
@@ -1073,12 +1072,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ws@npm:^8.18.0":
-  version: 8.18.0
-  resolution: "@types/ws@npm:8.18.0"
+"@types/node@npm:^22.13.17":
+  version: 22.13.17
+  resolution: "@types/node@npm:22.13.17"
+  dependencies:
+    undici-types: "npm:~6.20.0"
+  checksum: 10c0/77a052fec0fe02f60557e1c5f3f28eb09cd9bee426be88328a94689150a3c0df5b4b6b69fad28157fb34521693dad0b311ecd7f613845d681ff973991310c20e
+  languageName: node
+  linkType: hard
+
+"@types/ws@npm:^8.18.1":
+  version: 8.18.1
+  resolution: "@types/ws@npm:8.18.1"
   dependencies:
     "@types/node": "npm:*"
-  checksum: 10c0/a56d2e0d1da7411a1f3548ce02b51a50cbe9e23f025677d03df48f87e4a3c72e1342fbf1d12e487d7eafa8dc670c605152b61bbf9165891ec0e9694b0d3ea8d4
+  checksum: 10c0/61aff1129143fcc4312f083bc9e9e168aa3026b7dd6e70796276dcfb2c8211c4292603f9c4864fae702f2ed86e4abd4d38aa421831c2fd7f856c931a481afbab
   languageName: node
   linkType: hard
 
@@ -2567,6 +2575,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nyx.js@workspace:packages/nyxjs":
+  version: 0.0.0-use.local
+  resolution: "nyx.js@workspace:packages/nyxjs"
+  dependencies:
+    "@biomejs/biome": "npm:^1.9.4"
+    "@nyxjs/builders": "workspace:^"
+    "@nyxjs/core": "workspace:^"
+    "@nyxjs/gateway": "workspace:^"
+    "@nyxjs/rest": "workspace:^"
+    "@nyxjs/store": "workspace:^"
+    "@types/node": "npm:^22.13.17"
+    cross-env: "npm:^7.0.3"
+    eventemitter3: "npm:^5.0.1"
+    typescript: "npm:^5.8.2"
+    zod: "npm:^3.24.2"
+    zod-validation-error: "npm:^3.4.0"
+  languageName: unknown
+  linkType: soft
+
 "p-map@npm:^7.0.2":
   version: 7.0.3
   resolution: "p-map@npm:7.0.3"
@@ -3319,10 +3346,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:^7.5.0":
-  version: 7.5.0
-  resolution: "undici-types@npm:7.5.0"
-  checksum: 10c0/be7acfcd4be2c8146477254dd5a3c4e27ef16784228123f1fcc08bb26f26c7366605488b40e6ab8388fc082def95d46b4c0c637c0610e888aab5c47dc22dfce8
+"undici-types@npm:^7.7.0":
+  version: 7.7.0
+  resolution: "undici-types@npm:7.7.0"
+  checksum: 10c0/158e4b44edc158fbb0376c39e1df88356f9b96f630321a77e81066512b748ac786be8ff55c2c41234ba4e1e3a3726b98b4ee355501785ab5b037f6bdd85a944e
   languageName: node
   linkType: hard
 
@@ -3333,10 +3360,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^7.6.0":
-  version: 7.6.0
-  resolution: "undici@npm:7.6.0"
-  checksum: 10c0/53824a217c47dfc00961b8f504ebfa30f469357f2e5444320cbe446774dd4a836c37317a5d4ddf1ac61ab936ef05e081cc6a32ec60ac9e65dea841468397430d
+"undici@npm:^7.7.0":
+  version: 7.7.0
+  resolution: "undici@npm:7.7.0"
+  checksum: 10c0/2e535e56b5d462337e0dc57012659dab016a2596bc23dd44637c2b81b6947eb236c3390ccc9293f399032d363474f66cf836bc5ee14889fbcf820fa42181c629
   languageName: node
   linkType: hard
 

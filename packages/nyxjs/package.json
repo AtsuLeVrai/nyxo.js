@@ -1,18 +1,33 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/playground",
-  "version": "1.0.0-PRIVATE",
-  "description": "Playground for Nyx.js",
+  "name": "nyx.js",
+  "version": "1.0.0",
+  "description": "A Next-Generation Discord Bot Framework",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
   "engines": {
     "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/AtsuLeVrai/nyx.js",
-    "directory": "packages/gateway"
+    "directory": "packages/nyx.js"
   },
   "bugs": {
     "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
@@ -22,7 +37,8 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "build": "cross-env NODE_ENV=development node ../../scripts/build.js",
+    "build:prod": "cross-env NODE_ENV=production node ../../scripts/build.js",
     "check": "biome check --write --unsafe .",
     "type-check": "tsc --noEmit"
   },
@@ -32,16 +48,14 @@
     "@nyxjs/gateway": "workspace:^",
     "@nyxjs/rest": "workspace:^",
     "@nyxjs/store": "workspace:^",
-    "bufferutil": "^4.0.9",
-    "erlpack": "^0.1.4",
-    "fzstd": "^0.1.1",
-    "zlib-sync": "^0.1.9"
+    "eventemitter3": "^5.0.1",
+    "zod": "^3.24.2",
+    "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.13.17",
-    "dotenv": "^16.4.7",
-    "tsx": "^4.19.3",
+    "cross-env": "^7.0.3",
     "typescript": "^5.8.2"
   }
 }

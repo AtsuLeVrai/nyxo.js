@@ -63,6 +63,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   /** Timestamp when connection started */
   #connectStartTime = 0;
 
+  /** Timestamp when the connection was last ready */
+  #readyAt: number | null = null;
+
   /** Number of reconnection attempts made */
   #reconnectionAttempts = 0;
 
@@ -98,12 +101,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     super();
 
     try {
-      const parsedOptions = { ...options };
-      if (!parsedOptions.token) {
-        parsedOptions.token = rest.token;
-      }
-
-      this.#options = GatewayOptions.parse(parsedOptions);
+      this.#options = GatewayOptions.parse(options);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
@@ -114,6 +112,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#shard = new ShardManager(this, this.#options.shard);
     this.#compression = new CompressionService(this.#options.compressionType);
     this.#encoding = new EncodingService(this.#options.encodingType);
+  }
+
+  /**
+   * Gets the bot token
+   */
+  get token(): string {
+    return this.#options.token;
   }
 
   /**
@@ -135,6 +140,20 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   get connectStartTime(): number {
     return this.#connectStartTime;
+  }
+
+  /**
+   * Gets the timestamp when the connection was last ready
+   */
+  get readyAt(): number {
+    return this.#readyAt ?? 0;
+  }
+
+  /**
+   * Gets the uptime of the connection in milliseconds
+   */
+  get uptime(): number {
+    return this.#readyAt ? Date.now() - this.#readyAt : 0;
   }
 
   /**
@@ -220,7 +239,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If the connection is not valid
    */
   updatePresence(presence: UpdatePresenceEntity): void {
-    this.#validateConnection();
+    if (!this.isConnectionValid()) {
+      throw new Error("Cannot update presence, WebSocket is not open");
+    }
+
     this.send(GatewayOpcodes.PresenceUpdate, presence);
   }
 
@@ -231,7 +253,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If the connection is not valid
    */
   updateVoiceState(options: UpdateVoiceStateEntity): void {
-    this.#validateConnection();
+    if (!this.isConnectionValid()) {
+      throw new Error("Cannot update voice state, WebSocket is not open");
+    }
+
     this.send(GatewayOpcodes.VoiceStateUpdate, options);
   }
 
@@ -242,7 +267,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If the connection is not valid
    */
   requestGuildMembers(options: RequestGuildMembersEntity): void {
-    this.#validateConnection();
+    if (!this.isConnectionValid()) {
+      throw new Error("Cannot request guild members, WebSocket is not open");
+    }
+
     this.send(GatewayOpcodes.RequestGuildMembers, options);
   }
 
@@ -253,7 +281,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If the connection is not valid
    */
   requestSoundboardSounds(options: RequestSoundboardSoundsEntity): void {
-    this.#validateConnection();
+    if (!this.isConnectionValid()) {
+      throw new Error(
+        "Cannot request soundboard sounds, WebSocket is not open",
+      );
+    }
+
     this.send(GatewayOpcodes.RequestSoundboardSounds, options);
   }
 
@@ -330,7 +363,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     opcode: T,
     data: GatewaySendEvents[T],
   ): void {
-    this.#validateConnection();
+    if (!this.isConnectionValid()) {
+      throw new Error("Cannot send data, WebSocket is not open");
+    }
 
     const payload: PayloadEntity = {
       op: opcode,
@@ -402,6 +437,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   isConnectionValid(): boolean {
     return this.#ws?.readyState === WebSocket.OPEN;
+  }
+
+  /**
+   * Checks if the connection is ready
+   */
+  isReady(): boolean {
+    return this.#ws?.readyState === WebSocket.OPEN && this.#sessionId !== null;
   }
 
   /**
@@ -688,6 +730,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       }
     }
 
+    // Emit the ready event
+    this.#readyAt = Date.now();
+
     this.emit("sessionStart", {
       timestamp: new Date().toISOString(),
       sessionId: data.session_id,
@@ -880,12 +925,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Sends a resume payload
    */
   #sendResume(): void {
-    if (!this.#options.token) {
-      throw new Error(
-        "No token available for identification. Please provide a token through Gateway options or ensure REST client has a valid token.",
-      );
-    }
-
     if (!this.#sessionId) {
       throw new Error("No session ID available to resume");
     }
@@ -903,12 +942,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Sends an identify payload
    */
   async #identify(): Promise<void> {
-    if (!this.#options.token) {
-      throw new Error(
-        "No token available for identification. Please provide a token through Gateway options or ensure REST client has a valid token.",
-      );
-    }
-
     const payload: IdentifyEntity = {
       token: this.#options.token,
       properties: {
@@ -951,17 +984,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     return `${baseUrl}?${params.toString()}`;
-  }
-
-  /**
-   * Validates that the connection is open
-   *
-   * @throws {Error} If the connection is not valid
-   */
-  #validateConnection(): void {
-    if (!this.isConnectionValid()) {
-      throw new Error("WebSocket connection is not open");
-    }
   }
 
   /**

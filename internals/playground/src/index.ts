@@ -67,6 +67,7 @@ rest.on("retry", (event) => {
 });
 
 const gateway = new Gateway(rest, {
+  token: parsed.DISCORD_TOKEN,
   intents: [
     GatewayIntentsBits.Guilds,
     GatewayIntentsBits.GuildMembers,

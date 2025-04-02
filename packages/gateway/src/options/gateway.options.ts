@@ -47,7 +47,7 @@ export const GatewayOptions = z.object({
    *
    * @see {@link https://discord.com/developers/docs/reference#authentication}
    */
-  token: z.string().optional(),
+  token: z.string(),
 
   /**
    * Gateway intents to request

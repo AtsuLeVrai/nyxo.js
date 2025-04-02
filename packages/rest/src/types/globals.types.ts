@@ -38,14 +38,6 @@ export interface ApiRequestOptions extends Dispatcher.RequestOptions {
 }
 
 /**
- * Verbosity level for events
- * - minimal: Only essential events (errors, critical operations)
- * - normal: Standard operational events
- * - verbose: All events including detailed debugging information
- */
-export type EventVerbosity = "minimal" | "normal" | "verbose";
-
-/**
  * Base properties shared by all events
  */
 export interface EventBase {
