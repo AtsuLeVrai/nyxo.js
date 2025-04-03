@@ -95,7 +95,7 @@ async function clean() {
   }
 }
 
-// Build JavaScript bundles with Rollup
+// Build JavaScript bundles
 async function buildBundles() {
   try {
     const pkg = readPackageJson();
@@ -106,43 +106,149 @@ async function buildBundles() {
       ...Object.keys(pkg.peerDependencies || {}),
     ];
 
-    // Common options for all builds
-    const commonOptions = {
-      entryPoints: [resolve(paths.src, "index.ts")],
-      bundle: true,
-      platform: "node",
-      target: "esnext",
-      sourcemap: !isProduction,
-      external: external,
-    };
+    if (isProduction) {
+      // Production mode: use esbuild for speed and optimization
+      Logger.debug("Building bundles with esbuild (production mode)");
 
-    // Build ESM and CJS bundles
-    await Promise.all([
-      esbuild.build({
-        ...commonOptions,
-        outfile: resolve(paths.dist, "index.mjs"),
-        format: "esm",
-      }),
-      esbuild.build({
-        ...commonOptions,
-        outfile: resolve(paths.dist, "index.cjs"),
-        format: "cjs",
-      }),
-    ]);
+      // Common options for all builds
+      const commonOptions = {
+        entryPoints: [resolve(paths.src, "index.ts")],
+        bundle: true,
+        platform: "node",
+        target: "esnext",
+        sourcemap: false,
+        minify: true,
+        external: external,
+      };
 
-    // Log the build results
-    const esmStats = await stat(resolve(paths.dist, "index.mjs"));
-    const cjsStats = await stat(resolve(paths.dist, "index.cjs"));
+      // Build ESM and CJS bundles
+      await Promise.all([
+        esbuild.build({
+          ...commonOptions,
+          outfile: resolve(paths.dist, "index.js"),
+          format: "esm",
+        }),
+        esbuild.build({
+          ...commonOptions,
+          outfile: resolve(paths.dist, "index.cjs"),
+          format: "cjs",
+        }),
+      ]);
 
-    Logger.success(`ESM bundle generated (${esmStats.size} bytes)`);
-    Logger.success(`CJS bundle generated (${cjsStats.size} bytes)`);
+      // Log the build results
+      const esmStats = await stat(resolve(paths.dist, "index.js"));
+      const cjsStats = await stat(resolve(paths.dist, "index.cjs"));
+
+      Logger.success(`ESM bundle generated (${esmStats.size} bytes)`);
+      Logger.success(`CJS bundle generated (${cjsStats.size} bytes)`);
+    } else {
+      // Development mode: use TypeScript directly for better error messages
+      Logger.debug("Building with TypeScript compiler (development mode)");
+
+      // Find tsconfig.json file
+      const configPath = ts.findConfigFile(
+        paths.root,
+        ts.sys.fileExists,
+        "tsconfig.json",
+      );
+
+      if (!configPath) {
+        Logger.error("tsconfig.json not found");
+        return false;
+      }
+
+      // Read and parse configuration file
+      const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
+      if (error) {
+        Logger.error(`Error reading tsconfig.json: ${error.messageText}`);
+        return false;
+      }
+
+      const parsedConfig = ts.parseJsonConfigFileContent(
+        config,
+        ts.sys,
+        paths.root,
+      );
+
+      // Create TypeScript program with specific options
+      const compilerOptions = {
+        ...parsedConfig.options,
+        outDir: paths.dist,
+        declaration: true,
+        declarationMap: true,
+        sourceMap: true,
+        module: ts.ModuleKind.NodeNext,
+        moduleResolution: ts.ModuleResolutionKind.NodeNext,
+      };
+
+      const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
+
+      // Emit compiled files
+      const emitResult = program.emit();
+      const diagnostics = ts
+        .getPreEmitDiagnostics(program)
+        .concat(emitResult.diagnostics);
+
+      // Report errors
+      const errors = diagnostics.filter(
+        (d) => d.category === ts.DiagnosticCategory.Error,
+      );
+
+      if (errors.length > 0) {
+        for (const diagnostic of errors) {
+          if (diagnostic.file && diagnostic.start !== undefined) {
+            const { line, character } =
+              diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
+            const message = ts.flattenDiagnosticMessageText(
+              diagnostic.messageText,
+              "\n",
+            );
+            Logger.error(
+              `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
+            );
+          } else {
+            Logger.error(
+              ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+            );
+          }
+        }
+        return false;
+      }
+
+      if (emitResult.emitSkipped) {
+        Logger.error("TypeScript compilation failed");
+        return false;
+      }
+
+      Logger.success("TypeScript compilation completed successfully");
+
+      // Check for the emitted files
+      try {
+        const esmStats = await stat(resolve(paths.dist, "index.js"));
+        Logger.success(`JS output generated (${esmStats.size} bytes)`);
+        const dtsStats = await stat(resolve(paths.dist, "index.d.ts"));
+        Logger.success(`Declaration files generated (${dtsStats.size} bytes)`);
+      } catch (statError) {
+        Logger.warn(`Could not verify output files: ${statError.message}`);
+      }
+    }
+
+    return true;
   } catch (error) {
     throw new Error(`Bundle creation failed: ${error.message}`);
   }
 }
 
-// Generate TypeScript declaration files using tsc
+// Generate TypeScript declaration files
 async function compileTypes() {
+  // Skip if we're in development mode as TypeScript already generated declarations
+  if (!isProduction) {
+    Logger.debug(
+      "Skipping separate declaration generation in development mode",
+    );
+    return true;
+  }
+
   // Find tsconfig.json file
   const configPath = ts.findConfigFile(
     paths.root,
@@ -162,22 +268,24 @@ async function compileTypes() {
   }
 
   try {
+    Logger.debug("Generating type declarations for production");
+
     const parsedConfig = ts.parseJsonConfigFileContent(
       config,
       ts.sys,
       paths.root,
     );
 
-    // Create TypeScript program with specific options
+    // Create TypeScript program with specific options for declarations only
     const program = ts.createProgram(parsedConfig.fileNames, {
       ...parsedConfig.options,
       declaration: true,
-      declarationMap: !isProduction,
+      declarationMap: false,
       emitDeclarationOnly: true,
-      declarationDir: isProduction ? paths.temp : paths.dist,
-      outDir: isProduction ? paths.temp : paths.dist,
+      declarationDir: paths.temp,
+      outDir: paths.temp,
       noEmit: false,
-      sourceMap: !isProduction,
+      sourceMap: false,
     });
 
     // Emit declaration files
@@ -214,12 +322,8 @@ async function compileTypes() {
       return false;
     }
 
-    // In production mode, use API Extractor to bundle declarations
-    if (isProduction) {
-      await runApiExtractor();
-    }
-
-    await rm(paths.temp, { recursive: true, force: true });
+    // Use API Extractor to bundle declarations
+    await runApiExtractor();
 
     Logger.success("Type generation completed");
     return true;
@@ -319,13 +423,22 @@ async function build() {
     await clean();
 
     // Step 2: Build JavaScript bundles
-    await buildBundles();
-
-    // Step 3: Compile TypeScript types
-    const typesSuccess = await compileTypes();
-    if (!typesSuccess) {
-      throw new Error("Type generation failed");
+    // In development mode, this also generates declarations
+    const bundlesSuccess = await buildBundles();
+    if (!bundlesSuccess) {
+      throw new Error("Bundle creation failed");
     }
+
+    // Step 3: In production mode only, compile and bundle TypeScript types
+    if (isProduction) {
+      const typesSuccess = await compileTypes();
+      if (!typesSuccess) {
+        throw new Error("Type generation failed");
+      }
+    }
+
+    // Clean up temporary files
+    await rm(paths.temp, { recursive: true, force: true });
 
     // Build summary
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

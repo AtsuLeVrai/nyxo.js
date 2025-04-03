@@ -93,10 +93,6 @@ export type ClientCacheOptions = z.infer<typeof ClientCacheOptions>;
  */
 export const ClientOptions = z
   .object({
-    // REST and Gateway options are included from their respective definitions
-    ...RestOptions.shape,
-    ...GatewayOptions.shape,
-
     /**
      * Settings to control the client's caching behavior.
      * Caching reduces API calls by storing frequently accessed entities.
@@ -104,6 +100,10 @@ export const ClientOptions = z
      * @see {@link ClientCacheOptions} for detailed cache configuration.
      */
     cache: ClientCacheOptions.default({}),
+
+    // REST and Gateway options are included from their respective definitions
+    ...RestOptions.shape,
+    ...GatewayOptions.shape,
   })
   .readonly();
 
