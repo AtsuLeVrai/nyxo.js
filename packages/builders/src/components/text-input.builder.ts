@@ -6,7 +6,7 @@ import {
 import { ComponentBuilder } from "./component.builder.js";
 
 /**
- * Builder for creating text input components for modals.
+ * Builder for creating text input components for classes.
  *
  * @example
  * ```typescript

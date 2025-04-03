@@ -155,7 +155,7 @@ export class ActionRowBuilder<
   }
 
   /**
-   * Creates a specialized action row for text inputs (used in modals).
+   * Creates a specialized action row for text inputs (used in classes).
    *
    * @param textInputs Optional initial text inputs
    * @returns A new ActionRowBuilder specialized for text inputs
@@ -259,7 +259,7 @@ export class ActionRowBuilder<
       throw new Error("Action row cannot contain more than one select menu");
     }
 
-    // Check for text inputs (only allowed in modals)
+    // Check for text inputs (only allowed in classes)
     const hasTextInput = builtComponents.some(
       (c) => c.type === ComponentType.TextInput,
     );

@@ -6,7 +6,9 @@
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
