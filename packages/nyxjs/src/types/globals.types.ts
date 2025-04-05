@@ -1,5 +1,5 @@
 import type { GuildApplicationCommandPermissionEntity } from "@nyxjs/core";
-import type { GatewayEvents } from "@nyxjs/gateway";
+import type { GatewayEvents, PresenceEntity } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import type {
   AnyChannel,
@@ -7,14 +7,36 @@ import type {
   AnyThreadChannel,
   AutoModerationActionExecution,
   AutoModerationRule,
+  ChannelPins,
   Entitlement,
   Guild,
+  GuildAuditLogEntry,
+  GuildBan,
+  GuildEmojisUpdate,
+  GuildMember,
+  GuildMembersChunk,
+  GuildRoleCreate,
+  GuildRoleDelete,
+  GuildRoleUpdate,
+  GuildSoundboardSoundDelete,
+  GuildStickersUpdate,
+  Integration,
+  Invite,
   Message,
+  MessagePollVote,
   Ready,
+  SoundboardSound,
+  SoundboardSounds,
   StageInstance,
   Subscription,
+  ThreadListSync,
+  ThreadMember,
+  ThreadMembers,
+  Typing,
   User,
+  VoiceChannelEffectSend,
   VoiceState,
+  Webhook,
 } from "../classes/index.js";
 
 /**
@@ -94,7 +116,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is pinned or unpinned in a channel.
    * @param pinUpdate Information about the pin update
    */
-  channelPinsUpdate: [pinUpdate: unknown];
+  channelPinsUpdate: [pinUpdate: ChannelPins];
 
   /**
    * Emitted when a new thread is created or when the client is added to a private thread.
@@ -123,20 +145,20 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This helps synchronize thread state when joining a guild or gaining access to a channel.
    * @param threads Collection of active threads in the channel
    */
-  threadListSync: [threads: unknown];
+  threadListSync: [threads: ThreadListSync];
 
   /**
    * Emitted when the thread member object for the current user is updated.
    * @param oldMember The thread member before the update
    * @param newMember The thread member after the update
    */
-  threadMemberUpdate: [oldMember: unknown | null, newMember: unknown];
+  threadMemberUpdate: [oldMember: ThreadMember | null, newMember: ThreadMember];
 
   /**
    * Emitted when users are added to or removed from a thread.
    * @param update Information about the members update
    */
-  threadMembersUpdate: [update: unknown];
+  threadMembersUpdate: [update: ThreadMembers];
 
   /**
    * Emitted when a new entitlement (subscription or one-time purchase) is created.
@@ -188,83 +210,89 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a new audit log entry is created in a guild.
    * @param entry The newly created audit log entry
    */
-  guildAuditLogEntryCreate: [entry: unknown];
+  guildAuditLogEntryCreate: [entry: GuildAuditLogEntry];
 
   /**
    * Emitted when a user is banned from a guild.
    * @param ban Information about the ban, including the user and the guild
    */
-  guildBanAdd: [ban: unknown];
+  guildBanAdd: [ban: GuildBan];
 
   /**
    * Emitted when a user is unbanned from a guild.
    * @param ban Information about the removed ban
    */
-  guildBanRemove: [ban: unknown];
+  guildBanRemove: [ban: GuildBan];
 
   /**
    * Emitted when a guild's emojis are updated (added, removed, or modified).
    * @param oldEmojis The guild's emojis before the update
    * @param newEmojis The guild's emojis after the update
    */
-  guildEmojisUpdate: [oldEmojis: unknown | null, newEmojis: unknown];
+  guildEmojisUpdate: [
+    oldEmojis: GuildEmojisUpdate | null,
+    newEmojis: GuildEmojisUpdate,
+  ];
 
   /**
    * Emitted when a guild's stickers are updated (added, removed, or modified).
    * @param oldStickers The guild's stickers before the update
    * @param newStickers The guild's stickers after the update
    */
-  guildStickersUpdate: [oldStickers: unknown | null, newStickers: unknown];
+  guildStickersUpdate: [
+    oldStickers: GuildStickersUpdate | null,
+    newStickers: GuildStickersUpdate,
+  ];
 
   /**
    * Emitted when a guild's integrations are updated.
    * @param integrations Information about the updated integrations
    */
-  guildIntegrationsUpdate: [integrations: unknown];
+  guildIntegrationsUpdate: [integrations: Integration];
 
   /**
    * Emitted when a new user joins a guild.
    * @param member The member who joined the guild
    */
-  guildMemberAdd: [member: unknown];
+  guildMemberAdd: [member: GuildMember];
 
   /**
    * Emitted when a user leaves or is removed from a guild.
    * @param member The member who was removed from the guild
    */
-  guildMemberRemove: [member: unknown];
+  guildMemberRemove: [member: GuildMember];
 
   /**
    * Emitted when a guild member is updated (roles, nickname, etc.).
    * @param oldMember The member before the update
    * @param newMember The member after the update
    */
-  guildMemberUpdate: [oldMember: unknown | null, newMember: unknown];
+  guildMemberUpdate: [oldMember: GuildMember | null, newMember: GuildMember];
 
   /**
    * Emitted in response to a Guild Request Members request.
    * @param members The chunk of requested guild members
    */
-  guildMembersChunk: [members: unknown];
+  guildMembersChunk: [members: GuildMembersChunk];
 
   /**
    * Emitted when a role is created in a guild.
    * @param role The newly created role
    */
-  guildRoleCreate: [role: unknown];
+  guildRoleCreate: [role: GuildRoleCreate];
 
   /**
    * Emitted when a guild role is updated.
    * @param oldRole The role before the update
    * @param newRole The role after the update
    */
-  guildRoleUpdate: [oldRole: unknown | null, newRole: unknown];
+  guildRoleUpdate: [oldRole: GuildRoleUpdate | null, newRole: GuildRoleUpdate];
 
   /**
    * Emitted when a guild role is deleted.
    * @param role The deleted role
    */
-  guildRoleDelete: [role: unknown];
+  guildRoleDelete: [role: GuildRoleDelete];
 
   /**
    * Emitted when a scheduled event is created in a guild.
@@ -301,63 +329,69 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a soundboard sound is created in a guild.
    * @param sound The newly created soundboard sound
    */
-  guildSoundboardSoundCreate: [sound: unknown];
+  guildSoundboardSoundCreate: [sound: SoundboardSound];
 
   /**
    * Emitted when a soundboard sound is updated in a guild.
    * @param oldSound The soundboard sound before the update
    * @param newSound The soundboard sound after the update
    */
-  guildSoundboardSoundUpdate: [oldSound: unknown | null, newSound: unknown];
+  guildSoundboardSoundUpdate: [
+    oldSound: SoundboardSound | null,
+    newSound: SoundboardSound,
+  ];
 
   /**
    * Emitted when a soundboard sound is deleted from a guild.
    * @param sound The deleted soundboard sound
    */
-  guildSoundboardSoundDelete: [sound: unknown];
+  guildSoundboardSoundDelete: [sound: GuildSoundboardSoundDelete];
 
   /**
    * Emitted when a guild's soundboard sounds are updated as a whole.
    * @param sounds Information about the updated soundboard sounds
    */
-  guildSoundboardSoundsUpdate: [sounds: unknown];
+  guildSoundboardSoundsUpdate: [sounds: SoundboardSounds];
 
   /**
    * Emitted in response to a Request Soundboard Sounds request.
    * @param sounds The requested soundboard sounds
    */
-  soundboardSounds: [sounds: unknown];
+  soundboardSounds: [sounds: SoundboardSounds];
 
   /**
    * Emitted when a guild integration is created.
    * @param integration The newly created integration
    */
-  integrationCreate: [integration: unknown];
+  integrationCreate: [integration: Integration];
 
   /**
    * Emitted when a guild integration is updated.
    * @param oldIntegration The integration before the update
    * @param newIntegration The integration after the update
    */
-  integrationUpdate: [oldIntegration: unknown | null, newIntegration: unknown];
+  integrationUpdate: [
+    oldIntegration: Integration | null,
+    newIntegration: Integration,
+  ];
 
   /**
    * Emitted when a guild integration is deleted.
    * @param integration The deleted integration
    */
-  integrationDelete: [integration: unknown];
+  integrationDelete: [integration: Integration];
 
   /**
    * Emitted when an invite to a channel is created.
    * @param invite The newly created invite
    */
-  inviteCreate: [invite: unknown];
+  inviteCreate: [invite: Invite];
 
   /**
    * Emitted when an invite to a channel is deleted.
    * @param invite The deleted invite
    */
-  inviteDelete: [invite: unknown];
+  inviteDelete: [invite: Invite];
 
   /**
    * Emitted when a message is sent in a channel the client can see.
@@ -413,13 +447,16 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldPresence The presence before the update
    * @param newPresence The presence after the update
    */
-  presenceUpdate: [oldPresence: unknown | null, newPresence: unknown];
+  presenceUpdate: [
+    oldPresence: PresenceEntity | null,
+    newPresence: PresenceEntity,
+  ];
 
   /**
    * Emitted when a user starts typing in a channel.
    * @param typing Information about the typing activity
    */
-  typingStart: [typing: unknown];
+  typingStart: [typing: Typing];
 
   /**
    * Emitted when properties about the user (username, avatar, etc.) change.
@@ -432,7 +469,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when someone sends an effect in a voice channel the client is connected to.
    * @param effect Information about the sent effect
    */
-  voiceChannelEffectSend: [effect: unknown];
+  voiceChannelEffectSend: [effect: VoiceChannelEffectSend];
 
   /**
    * Emitted when a user joins, leaves, or moves between voice channels.
@@ -452,7 +489,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a webhook is created, updated, or deleted in a guild channel.
    * @param webhook Information about the webhook update
    */
-  webhooksUpdate: [webhook: unknown];
+  webhooksUpdate: [webhook: Webhook];
 
   /**
    * Emitted when a user uses an interaction with the client, such as an Application Command.
@@ -508,11 +545,11 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user votes on a message poll.
    * @param vote Information about the poll vote
    */
-  messagePollVoteAdd: [vote: unknown];
+  messagePollVoteAdd: [vote: MessagePollVote];
 
   /**
    * Emitted when a user removes their vote from a message poll.
    * @param vote Information about the removed poll vote
    */
-  messagePollVoteRemove: [vote: unknown];
+  messagePollVoteRemove: [vote: MessagePollVote];
 }

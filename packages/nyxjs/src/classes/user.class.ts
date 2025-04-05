@@ -14,6 +14,7 @@ import {
   UserFlags,
   formatUser,
 } from "@nyxjs/core";
+import type { TypingEntity } from "@nyxjs/gateway";
 import type {
   CreateGroupDmSchema,
   GetCurrentUserGuildsQuerySchema,
@@ -482,5 +483,67 @@ export class User extends BaseClass<UserEntity> {
    */
   isActiveDeveloper(): boolean {
     return this.hasPublicFlag(UserFlags.ActiveDeveloper);
+  }
+}
+
+/**
+ * Represents a typing event.
+ * Sent when a user starts typing in a channel.
+ */
+export class Typing extends BaseClass<TypingEntity> {
+  /**
+   * ID of the channel
+   */
+  get channelId(): Snowflake {
+    return this.data.channel_id;
+  }
+
+  /**
+   * ID of the guild
+   */
+  get guildId(): Snowflake | undefined {
+    return this.data.guild_id;
+  }
+
+  /**
+   * ID of the user
+   */
+  get userId(): Snowflake {
+    return this.data.user_id;
+  }
+
+  /**
+   * Unix time (in seconds) of when the user started typing
+   */
+  get timestamp(): number {
+    return this.data.timestamp;
+  }
+
+  /**
+   * Member who started typing if this happened in a guild
+   */
+  get member(): GuildMemberEntity | undefined {
+    return this.data.member;
+  }
+
+  /**
+   * Whether this typing event happened in a guild
+   */
+  get inGuild(): boolean {
+    return Boolean(this.data.guild_id);
+  }
+
+  /**
+   * Whether member data is available for this typing event
+   */
+  get hasMemberData(): boolean {
+    return Boolean(this.data.member);
+  }
+
+  /**
+   * The Date object representation of the timestamp
+   */
+  get timestampDate(): Date {
+    return new Date(this.data.timestamp * 1000);
   }
 }

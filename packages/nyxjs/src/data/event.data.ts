@@ -1,8 +1,15 @@
-import type { AnyChannelEntity } from "@nyxjs/core";
+import type {
+  AnyChannelEntity,
+  BanEntity,
+  IntegrationEntity,
+  InviteEntity,
+  Snowflake,
+} from "@nyxjs/core";
 import type {
   GatewayEvents,
   GatewayReceiveEvents,
   GuildCreateEntity,
+  GuildMemberAddEntity,
   MessageCreateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
@@ -11,14 +18,36 @@ import {
   type AnyThreadChannel,
   AutoModerationActionExecution,
   AutoModerationRule,
+  ChannelPins,
   Entitlement,
   Guild,
+  GuildAuditLogEntry,
+  GuildBan,
+  GuildEmojisUpdate,
+  GuildMember,
+  GuildMembersChunk,
+  GuildRoleCreate,
+  GuildRoleDelete,
+  GuildRoleUpdate,
+  GuildSoundboardSoundDelete,
+  GuildStickersUpdate,
+  Integration,
+  Invite,
   Message,
+  MessagePollVote,
   Ready,
+  SoundboardSound,
+  SoundboardSounds,
   StageInstance,
   Subscription,
+  ThreadListSync,
+  ThreadMember,
+  ThreadMembers,
+  Typing,
   User,
+  VoiceChannelEffectSend,
   VoiceState,
+  Webhook,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
 import { ChannelFactory, InteractionFactory } from "../factories/index.js";
@@ -152,8 +181,8 @@ export const StandardGatewayDispatchEventMappings = [
 
     return [deletedChannel];
   }),
-  defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (_client, data) => [
-    data,
+  defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (client, data) => [
+    ChannelPins.from(client, data),
   ]),
   defineEvent("THREAD_CREATE", "threadCreate", (client, data) => {
     const thread = ChannelFactory.create(client, data);
@@ -195,15 +224,17 @@ export const StandardGatewayDispatchEventMappings = [
 
     return [deletedThread as AnyThreadChannel];
   }),
-  defineEvent("THREAD_LIST_SYNC", "threadListSync", (_client, data) => [data]),
-  defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (_client, data) => [
+  defineEvent("THREAD_LIST_SYNC", "threadListSync", (client, data) => [
+    ThreadListSync.from(client, data),
+  ]),
+  defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (client, data) => [
     null,
-    data,
+    ThreadMember.from(client, data),
   ]),
   defineEvent(
     "THREAD_MEMBERS_UPDATE",
     "threadMembersUpdate",
-    (_client, data) => [data],
+    (client, data) => [ThreadMembers.from(client, data)],
   ),
   defineEvent("ENTITLEMENT_CREATE", "entitlementCreate", (client, data) => {
     const entitlement = Entitlement.from(client, data);
@@ -268,44 +299,55 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_AUDIT_LOG_ENTRY_CREATE",
     "guildAuditLogEntryCreate",
-    (_client, data) => [data],
+    (client, data) => [GuildAuditLogEntry.from(client, data)],
   ),
-  defineEvent("GUILD_BAN_ADD", "guildBanAdd", (_client, data) => [data]),
-  defineEvent("GUILD_BAN_REMOVE", "guildBanRemove", (_client, data) => [data]),
-  defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", (_client, data) => [
+  defineEvent("GUILD_BAN_ADD", "guildBanAdd", (client, data) => [
+    GuildBan.from(client, data as BanEntity & { guild_id: Snowflake }),
+  ]),
+  defineEvent("GUILD_BAN_REMOVE", "guildBanRemove", (client, data) => [
+    GuildBan.from(client, data as BanEntity & { guild_id: Snowflake }),
+  ]),
+  defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", (client, data) => [
     null,
-    data,
+    GuildEmojisUpdate.from(client, data),
   ]),
   defineEvent(
     "GUILD_STICKERS_UPDATE",
     "guildStickersUpdate",
-    (_client, data) => [null, data],
+    (client, data) => [null, GuildStickersUpdate.from(client, data)],
   ),
   defineEvent(
     "GUILD_INTEGRATIONS_UPDATE",
     "guildIntegrationsUpdate",
-    (_client, data) => [data],
+    (client, data) => [
+      Integration.from(
+        client,
+        data as IntegrationEntity & { guild_id: Snowflake },
+      ),
+    ],
   ),
-  defineEvent("GUILD_MEMBER_ADD", "guildMemberAdd", (_client, data) => [data]),
-  defineEvent("GUILD_MEMBER_REMOVE", "guildMemberRemove", (_client, data) => [
-    data,
+  defineEvent("GUILD_MEMBER_ADD", "guildMemberAdd", (client, data) => [
+    GuildMember.from(client, data),
   ]),
-  defineEvent("GUILD_MEMBER_UPDATE", "guildMemberUpdate", (_client, data) => [
+  defineEvent("GUILD_MEMBER_REMOVE", "guildMemberRemove", (client, data) => [
+    GuildMember.from(client, data as GuildMemberAddEntity),
+  ]),
+  defineEvent("GUILD_MEMBER_UPDATE", "guildMemberUpdate", (client, data) => [
     null,
-    data,
+    GuildMember.from(client, data as GuildMemberAddEntity),
   ]),
-  defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (_client, data) => [
-    data,
+  defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (client, data) => [
+    GuildMembersChunk.from(client, data),
   ]),
-  defineEvent("GUILD_ROLE_CREATE", "guildRoleCreate", (_client, data) => [
-    data,
+  defineEvent("GUILD_ROLE_CREATE", "guildRoleCreate", (client, data) => [
+    GuildRoleCreate.from(client, data),
   ]),
-  defineEvent("GUILD_ROLE_UPDATE", "guildRoleUpdate", (_client, data) => [
+  defineEvent("GUILD_ROLE_UPDATE", "guildRoleUpdate", (client, data) => [
     null,
-    data,
+    GuildRoleUpdate.from(client, data),
   ]),
-  defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (_client, data) => [
-    data,
+  defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (client, data) => [
+    GuildRoleDelete.from(client, data),
   ]),
   defineEvent(
     "GUILD_SCHEDULED_EVENT_CREATE",
@@ -335,38 +377,51 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_CREATE",
     "guildSoundboardSoundCreate",
-    (_client, data) => [data],
+    (client, data) => [SoundboardSound.from(client, data)],
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_UPDATE",
     "guildSoundboardSoundUpdate",
-    (_client, data) => [null, data],
+    (client, data) => [null, SoundboardSound.from(client, data)],
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_DELETE",
     "guildSoundboardSoundDelete",
-    (_client, data) => [data],
+    (client, data) => [GuildSoundboardSoundDelete.from(client, data)],
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUNDS_UPDATE",
     "guildSoundboardSoundsUpdate",
-    (_client, data) => [data],
+    (client, data) => [SoundboardSounds.from(client, data)],
   ),
-  defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (_client, data) => [
-    data,
+  defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (client, data) => [
+    SoundboardSounds.from(client, data),
   ]),
-  defineEvent("INTEGRATION_CREATE", "integrationCreate", (_client, data) => [
-    data,
+  defineEvent("INTEGRATION_CREATE", "integrationCreate", (client, data) => [
+    Integration.from(client, data),
   ]),
-  defineEvent("INTEGRATION_UPDATE", "integrationUpdate", (_client, data) => [
+  defineEvent("INTEGRATION_UPDATE", "integrationUpdate", (client, data) => [
     null,
-    data,
+    Integration.from(client, data),
   ]),
-  defineEvent("INTEGRATION_DELETE", "integrationDelete", (_client, data) => [
-    data,
+  defineEvent("INTEGRATION_DELETE", "integrationDelete", (client, data) => [
+    Integration.from(
+      client,
+      data as IntegrationEntity & { guild_id: Snowflake },
+    ),
   ]),
-  defineEvent("INVITE_CREATE", "inviteCreate", (_client, data) => [data]),
-  defineEvent("INVITE_DELETE", "inviteDelete", (_client, data) => [data]),
+  defineEvent("INVITE_CREATE", "inviteCreate", (client, data) => [
+    Invite.from(
+      client,
+      data as unknown as InviteEntity & { guild_id?: Snowflake },
+    ),
+  ]),
+  defineEvent("INVITE_DELETE", "inviteDelete", (client, data) => [
+    Invite.from(
+      client,
+      data as unknown as InviteEntity & { guild_id?: Snowflake },
+    ),
+  ]),
   defineEvent("MESSAGE_CREATE", "messageCreate", (client, data) => {
     const message = Message.from(client, data);
     if (client.messages?.set) {
@@ -420,20 +475,20 @@ export const StandardGatewayDispatchEventMappings = [
     "messageReactionRemoveEmoji",
     (_client, data) => [data],
   ),
-  defineEvent(
-    "MESSAGE_POLL_VOTE_ADD",
-    "messagePollVoteAdd",
-    (_client, data) => [data],
-  ),
+  defineEvent("MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd", (client, data) => [
+    MessagePollVote.from(client, data),
+  ]),
   defineEvent(
     "MESSAGE_POLL_VOTE_REMOVE",
     "messagePollVoteRemove",
-    (_client, data) => [data],
+    (client, data) => [MessagePollVote.from(client, data)],
   ),
   defineEvent("PRESENCE_UPDATE", "presenceUpdate", (_client, data) => {
     return [null, data];
   }),
-  defineEvent("TYPING_START", "typingStart", (_client, data) => [data]),
+  defineEvent("TYPING_START", "typingStart", (client, data) => [
+    Typing.from(client, data),
+  ]),
   defineEvent("USER_UPDATE", "userUpdate", (client, data) => {
     const newUser = User.from(client, data);
 
@@ -452,7 +507,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "VOICE_CHANNEL_EFFECT_SEND",
     "voiceChannelEffectSend",
-    (_client, data) => [data],
+    (client, data) => [VoiceChannelEffectSend.from(client, data)],
   ),
   defineEvent("VOICE_STATE_UPDATE", "voiceStateUpdate", (client, data) => {
     const newState = VoiceState.from(client, data);
@@ -471,7 +526,9 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (_client, data) => [
     data,
   ]),
-  defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (_client, data) => [data]),
+  defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (client, data) => [
+    Webhook.from(client, data),
+  ]),
   defineEvent("INTERACTION_CREATE", "interactionCreate", (client, data) => [
     InteractionFactory.create(client, data),
   ]),

@@ -38,7 +38,7 @@ import { ClientOptions } from "../options/index.js";
  *
  * @example
  * ```typescript
- * import { Client, GatewayIntents } from "@nyxjs/framework";
+ * import { Client, GatewayIntents } from "nyx.js";
  *
  * const client = new Client({
  *   token: "YOUR_BOT_TOKEN",
@@ -57,9 +57,9 @@ import { ClientOptions } from "../options/index.js";
  *   console.log(`Logged in as ${client.user?.username}!`);
  * });
  *
- * client.on("messageCreate", (message) => {
+ * client.on("messageCreate", async (message) => {
  *   if (message.content === "!ping") {
- *     message.channel.send("Pong!");
+ *    await message.reply("Pong!");
  *   }
  * });
  *

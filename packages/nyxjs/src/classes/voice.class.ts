@@ -1,9 +1,14 @@
 import type {
+  EmojiEntity,
   Snowflake,
   VoiceRegionEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
-import type { GuildMemberAddEntity } from "@nyxjs/gateway";
+import {
+  type GuildMemberAddEntity,
+  VoiceChannelEffectSendAnimationType,
+  type VoiceChannelEffectSendEntity,
+} from "@nyxjs/gateway";
 import { BaseClass } from "../bases/index.js";
 import { GuildMember } from "./guild.class.js";
 
@@ -359,5 +364,110 @@ export class VoiceRegion extends BaseClass<VoiceRegionEntity> {
    */
   isRecommended(): boolean {
     return !this.deprecated && (this.optimal || this.custom);
+  }
+}
+
+/**
+ * Represents a voice channel effect send event.
+ * Sent when someone sends an effect, such as an emoji reaction or a soundboard sound,
+ * in a voice channel the current user is connected to.
+ */
+export class VoiceChannelEffectSend extends BaseClass<VoiceChannelEffectSendEntity> {
+  /**
+   * ID of the channel the effect was sent in
+   */
+  get channelId(): Snowflake {
+    return this.data.channel_id;
+  }
+
+  /**
+   * ID of the guild the effect was sent in
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * ID of the user who sent the effect
+   */
+  get userId(): Snowflake {
+    return this.data.user_id;
+  }
+
+  /**
+   * The emoji sent, for emoji reaction and soundboard effects
+   */
+  get emoji(): EmojiEntity | null | undefined {
+    return this.data.emoji;
+  }
+
+  /**
+   * The type of emoji animation, for emoji reaction and soundboard effects
+   */
+  get animationType(): VoiceChannelEffectSendAnimationType | undefined {
+    return this.data.animation_type;
+  }
+
+  /**
+   * The ID of the emoji animation, for emoji reaction and soundboard effects
+   */
+  get animationId(): number | undefined {
+    return this.data.animation_id;
+  }
+
+  /**
+   * The ID of the soundboard sound, for soundboard effects
+   */
+  get soundId(): Snowflake | number | undefined {
+    return this.data.sound_id;
+  }
+
+  /**
+   * The volume of the soundboard sound, from 0 to 1, for soundboard effects
+   */
+  get soundVolume(): number | undefined {
+    return this.data.sound_volume;
+  }
+
+  /**
+   * Whether this effect is an emoji reaction
+   */
+  get isEmojiReaction(): boolean {
+    return Boolean(this.data.emoji && !this.data.sound_id);
+  }
+
+  /**
+   * Whether this effect is a soundboard sound
+   */
+  get isSoundboardSound(): boolean {
+    return Boolean(this.data.sound_id);
+  }
+
+  /**
+   * Whether this effect has an animation
+   */
+  get hasAnimation(): boolean {
+    return (
+      this.data.animation_type !== undefined &&
+      this.data.animation_id !== undefined
+    );
+  }
+
+  /**
+   * Whether this effect is a premium animation (Nitro subscriber)
+   */
+  get isPremiumAnimation(): boolean {
+    return (
+      this.data.animation_type === VoiceChannelEffectSendAnimationType.Premium
+    );
+  }
+
+  /**
+   * Whether this effect is a basic animation
+   */
+  get isBasicAnimation(): boolean {
+    return (
+      this.data.animation_type === VoiceChannelEffectSendAnimationType.Basic
+    );
   }
 }

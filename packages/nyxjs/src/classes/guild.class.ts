@@ -1,11 +1,24 @@
 import type {
   AnyChannelEntity,
   AnyThreadChannelEntity,
+  AuditLogChangeEntity,
+  AuditLogEntryInfoEntity,
+  AuditLogEvent,
+  BanEntity,
+  EmojiEntity,
   GuildMemberEntity,
   GuildScheduledEventEntity,
+  IntegrationAccountEntity,
+  IntegrationApplicationEntity,
+  IntegrationEntity,
+  IntegrationExpirationBehavior,
+  OAuth2Scope,
+  RoleEntity,
+  RoleTagsEntity,
   Snowflake,
   SoundboardSoundEntity,
   StageInstanceEntity,
+  StickerEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
 import {
@@ -15,11 +28,19 @@ import {
   type UserEntity,
 } from "@nyxjs/core";
 import type {
+  GuildAuditLogEntryCreateEntity,
   GuildCreateEntity,
+  GuildEmojisUpdateEntity,
   GuildMemberAddEntity,
+  GuildMembersChunkEntity,
+  GuildRoleCreateEntity,
+  GuildRoleDeleteEntity,
+  GuildRoleUpdateEntity,
+  GuildStickersUpdateEntity,
   PresenceEntity,
 } from "@nyxjs/gateway";
 import { BaseClass } from "../bases/index.js";
+import { User } from "./user.class.js";
 
 /**
  * Represents a GUILD_CREATE event dispatched when a guild becomes available.
@@ -289,5 +310,673 @@ export class GuildMember extends BaseClass<GuildMemberAddEntity> {
    */
   get avatarDecorationData(): AvatarDecorationDataEntity | null {
     return this.data.avatar_decoration_data || null;
+  }
+}
+
+/**
+ * Represents a guild ban event.
+ * Contains information about a user who was banned from a guild.
+ */
+export class GuildBan extends BaseClass<BanEntity & { guild_id: Snowflake }> {
+  /**
+   * ID of the guild where the ban occurred
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Reason for the ban, if provided
+   */
+  get reason(): string | null {
+    return this.data.reason;
+  }
+
+  /**
+   * The user who was banned
+   */
+  get user(): User {
+    return new User(this.client, this.data.user);
+  }
+
+  /**
+   * Whether a reason was provided for the ban
+   */
+  get hasReason(): boolean {
+    return Boolean(this.data.reason);
+  }
+}
+
+/**
+ * Represents a guild integration.
+ * An integration is a connection between a guild and an external service like Twitch, YouTube, or Discord.
+ */
+export class Integration extends BaseClass<
+  IntegrationEntity & { guild_id: Snowflake }
+> {
+  /**
+   * Integration ID
+   */
+  get id(): Snowflake {
+    return this.data.id;
+  }
+
+  /**
+   * ID of the guild this integration belongs to
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Integration name
+   */
+  get name(): string {
+    return this.data.name;
+  }
+
+  /**
+   * Integration type (twitch, youtube, discord, guild_subscription)
+   */
+  get type(): "twitch" | "youtube" | "discord" | "guild_subscription" {
+    return this.data.type;
+  }
+
+  /**
+   * Whether this integration is enabled
+   */
+  get enabled(): boolean {
+    return Boolean(this.data.enabled);
+  }
+
+  /**
+   * Whether this integration is syncing
+   */
+  get syncing(): boolean {
+    return Boolean(this.data.syncing);
+  }
+
+  /**
+   * ID of the role that this integration uses for "subscribers"
+   */
+  get roleId(): Snowflake | undefined {
+    return this.data.role_id;
+  }
+
+  /**
+   * Whether emoticons should be synced for this integration
+   */
+  get enableEmoticons(): boolean {
+    return Boolean(this.data.enable_emoticons);
+  }
+
+  /**
+   * The behavior of expiring subscribers
+   */
+  get expireBehavior(): IntegrationExpirationBehavior | undefined {
+    return this.data.expire_behavior;
+  }
+
+  /**
+   * The grace period (in days) before expiring subscribers
+   */
+  get expireGracePeriod(): number | undefined {
+    return this.data.expire_grace_period;
+  }
+
+  /**
+   * User for this integration
+   */
+  get user(): User | undefined {
+    if (!this.data.user) {
+      return undefined;
+    }
+    return new User(this.client, this.data.user);
+  }
+
+  /**
+   * Integration account information
+   */
+  get account(): IntegrationAccountEntity {
+    return this.data.account;
+  }
+
+  /**
+   * When this integration was last synced
+   */
+  get syncedAt(): string | undefined {
+    return this.data.synced_at;
+  }
+
+  /**
+   * How many subscribers this integration has
+   */
+  get subscriberCount(): number | undefined {
+    return this.data.subscriber_count;
+  }
+
+  /**
+   * Whether this integration has been revoked
+   */
+  get revoked(): boolean {
+    return Boolean(this.data.revoked);
+  }
+
+  /**
+   * The bot/OAuth2 application for discord integrations
+   */
+  get application(): IntegrationApplicationEntity | undefined {
+    return this.data.application;
+  }
+
+  /**
+   * The scopes the application has been authorized for
+   */
+  get scopes(): OAuth2Scope[] | undefined {
+    return this.data.scopes;
+  }
+
+  /**
+   * Whether this integration is for Twitch
+   */
+  get isTwitch(): boolean {
+    return this.data.type === "twitch";
+  }
+
+  /**
+   * Whether this integration is for YouTube
+   */
+  get isYouTube(): boolean {
+    return this.data.type === "youtube";
+  }
+
+  /**
+   * Whether this integration is for Discord
+   */
+  get isDiscord(): boolean {
+    return this.data.type === "discord";
+  }
+
+  /**
+   * Whether this integration is for guild subscriptions
+   */
+  get isGuildSubscription(): boolean {
+    return this.data.type === "guild_subscription";
+  }
+
+  /**
+   * Whether this integration has application data
+   */
+  get hasApplication(): boolean {
+    return Boolean(this.data.application);
+  }
+
+  /**
+   * Whether this integration has a connected user
+   */
+  get hasUser(): boolean {
+    return Boolean(this.data.user);
+  }
+}
+
+/**
+ * Represents a guild audit log entry.
+ * Audit logs keep track of administrative actions taken in a guild.
+ */
+export class GuildAuditLogEntry extends BaseClass<GuildAuditLogEntryCreateEntity> {
+  /**
+   * ID of the affected entity (webhook, user, role, etc.)
+   */
+  get targetId(): string | null {
+    return this.data.target_id;
+  }
+
+  /**
+   * Changes made to the target_id
+   */
+  get changes(): AuditLogChangeEntity[] | undefined {
+    return this.data.changes;
+  }
+
+  /**
+   * User or app that made the changes
+   */
+  get userId(): Snowflake | null {
+    return this.data.user_id;
+  }
+
+  /**
+   * ID of the entry
+   */
+  get id(): Snowflake {
+    return this.data.id;
+  }
+
+  /**
+   * Type of action that occurred
+   */
+  get actionType(): AuditLogEvent {
+    return this.data.action_type;
+  }
+
+  /**
+   * Additional info for certain action types
+   */
+  get options(): AuditLogEntryInfoEntity | undefined {
+    return this.data.options;
+  }
+
+  /**
+   * Reason for the change (0-512 characters)
+   */
+  get reason(): string | undefined {
+    return this.data.reason;
+  }
+
+  /**
+   * ID of the guild where this audit log entry was created
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Whether this audit log entry has a reason
+   */
+  get hasReason(): boolean {
+    return Boolean(this.data.reason);
+  }
+
+  /**
+   * Whether this audit log entry has changes
+   */
+  get hasChanges(): boolean {
+    return this.data.changes?.length > 0;
+  }
+
+  /**
+   * Whether this audit log entry has additional options
+   */
+  get hasOptions(): boolean {
+    return Boolean(this.data.options);
+  }
+}
+
+/**
+ * Represents a guild emojis update event.
+ * Sent when a guild's emojis have been updated.
+ */
+export class GuildEmojisUpdate extends BaseClass<GuildEmojisUpdateEntity> {
+  /**
+   * ID of the guild
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Array of emojis
+   */
+  get emojis(): EmojiEntity[] {
+    return this.data.emojis;
+  }
+
+  /**
+   * Whether this guild has any emojis
+   */
+  get hasEmojis(): boolean {
+    return this.data.emojis.length > 0;
+  }
+
+  /**
+   * The number of emojis in the guild
+   */
+  get emojiCount(): number {
+    return this.data.emojis.length;
+  }
+}
+
+/**
+ * Represents a guild stickers update event.
+ * Sent when a guild's stickers have been updated.
+ */
+export class GuildStickersUpdate extends BaseClass<GuildStickersUpdateEntity> {
+  /**
+   * ID of the guild
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Array of stickers
+   */
+  get stickers(): StickerEntity[] {
+    return this.data.stickers;
+  }
+
+  /**
+   * Whether this guild has any stickers
+   */
+  get hasStickers(): boolean {
+    return this.data.stickers.length > 0;
+  }
+
+  /**
+   * The number of stickers in the guild
+   */
+  get stickerCount(): number {
+    return this.data.stickers.length;
+  }
+}
+
+/**
+ * Represents a guild members chunk event.
+ * Sent in response to Guild Request Members.
+ */
+export class GuildMembersChunk extends BaseClass<GuildMembersChunkEntity> {
+  /**
+   * ID of the guild
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Set of guild members
+   */
+  get members(): GuildMemberEntity[] {
+    return this.data.members;
+  }
+
+  /**
+   * Chunk index in the expected chunks for this response (0 <= chunk_index < chunk_count)
+   */
+  get chunkIndex(): number {
+    return this.data.chunk_index;
+  }
+
+  /**
+   * Total number of expected chunks for this response
+   */
+  get chunkCount(): number {
+    return this.data.chunk_count;
+  }
+
+  /**
+   * When passing an invalid ID to REQUEST_GUILD_MEMBERS, it will be returned here
+   */
+  get notFound(): Snowflake[] | undefined {
+    return this.data.not_found;
+  }
+
+  /**
+   * When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here
+   */
+  get presences(): PresenceEntity[] | undefined {
+    return this.data.presences;
+  }
+
+  /**
+   * Nonce used in the Guild Members Request
+   */
+  get nonce(): string | undefined {
+    return this.data.nonce;
+  }
+
+  /**
+   * Whether this is the last chunk
+   */
+  get isLastChunk(): boolean {
+    return this.data.chunk_index === this.data.chunk_count - 1;
+  }
+
+  /**
+   * Whether this chunk has member presences
+   */
+  get hasPresences(): boolean {
+    return this.data.presences?.length > 0;
+  }
+
+  /**
+   * Whether this chunk has invalid member IDs
+   */
+  get hasNotFound(): boolean {
+    return this.data.not_found?.length > 0;
+  }
+
+  /**
+   * Whether this chunk has a nonce
+   */
+  get hasNonce(): boolean {
+    return Boolean(this.data.nonce);
+  }
+}
+
+/**
+ * Represents a guild role create event.
+ * Sent when a guild role is created.
+ */
+export class GuildRoleCreate extends BaseClass<GuildRoleCreateEntity> {
+  /**
+   * ID of the guild
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Role that was created
+   */
+  get role(): RoleEntity {
+    return this.data.role;
+  }
+
+  /**
+   * ID of the role
+   */
+  get roleId(): Snowflake {
+    return this.data.role.id;
+  }
+
+  /**
+   * Name of the role
+   */
+  get name(): string {
+    return this.data.role.name;
+  }
+
+  /**
+   * Role color (integer representation of hexadecimal color code)
+   */
+  get color(): number {
+    return this.data.role.color;
+  }
+
+  /**
+   * Whether the role is hoisted (displayed separately in the sidebar)
+   */
+  get hoist(): boolean {
+    return Boolean(this.data.role.hoist);
+  }
+
+  /**
+   * Position of the role in the server's role hierarchy
+   */
+  get position(): number {
+    return this.data.role.position;
+  }
+
+  /**
+   * Permission bit set as a string
+   */
+  get permissions(): string {
+    return this.data.role.permissions;
+  }
+
+  /**
+   * Whether the role is managed by an integration
+   */
+  get managed(): boolean {
+    return Boolean(this.data.role.managed);
+  }
+
+  /**
+   * Whether the role is mentionable
+   */
+  get mentionable(): boolean {
+    return Boolean(this.data.role.mentionable);
+  }
+
+  /**
+   * Role flags
+   */
+  get flags(): number {
+    return this.data.role.flags;
+  }
+}
+
+/**
+ * Represents a guild role update event.
+ * Sent when a guild role is updated.
+ */
+export class GuildRoleUpdate extends BaseClass<GuildRoleUpdateEntity> {
+  /**
+   * ID of the guild
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * Role that was updated
+   */
+  get role(): RoleEntity {
+    return this.data.role;
+  }
+
+  /**
+   * ID of the role
+   */
+  get roleId(): Snowflake {
+    return this.data.role.id;
+  }
+
+  /**
+   * Name of the role
+   */
+  get name(): string {
+    return this.data.role.name;
+  }
+
+  /**
+   * Role color (integer representation of hexadecimal color code)
+   */
+  get color(): number {
+    return this.data.role.color;
+  }
+
+  /**
+   * Whether the role is hoisted (displayed separately in the sidebar)
+   */
+  get hoist(): boolean {
+    return Boolean(this.data.role.hoist);
+  }
+
+  /**
+   * Role icon hash
+   */
+  get icon(): string | null {
+    return this.data.role.icon ?? null;
+  }
+
+  /**
+   * Role unicode emoji
+   */
+  get unicodeEmoji(): string | null {
+    return this.data.role.unicode_emoji ?? null;
+  }
+
+  /**
+   * Position of the role in the server's role hierarchy
+   */
+  get position(): number {
+    return this.data.role.position;
+  }
+
+  /**
+   * Permission bit set as a string
+   */
+  get permissions(): string {
+    return this.data.role.permissions;
+  }
+
+  /**
+   * Whether the role is managed by an integration
+   */
+  get managed(): boolean {
+    return Boolean(this.data.role.managed);
+  }
+
+  /**
+   * Whether the role is mentionable
+   */
+  get mentionable(): boolean {
+    return Boolean(this.data.role.mentionable);
+  }
+
+  /**
+   * Role tags information
+   */
+  get tags(): RoleTagsEntity | undefined {
+    return this.data.role.tags;
+  }
+
+  /**
+   * Role flags
+   */
+  get flags(): number {
+    return this.data.role.flags;
+  }
+
+  /**
+   * Whether the role has an icon
+   */
+  get hasIcon(): boolean {
+    return Boolean(this.data.role.icon);
+  }
+
+  /**
+   * Whether the role has a unicode emoji
+   */
+  get hasUnicodeEmoji(): boolean {
+    return Boolean(this.data.role.unicode_emoji);
+  }
+
+  /**
+   * Whether the role has tags
+   */
+  get hasTags(): boolean {
+    return Boolean(this.data.role.tags);
+  }
+}
+
+/**
+ * Represents a guild role delete event.
+ * Sent when a guild role is deleted.
+ */
+export class GuildRoleDelete extends BaseClass<GuildRoleDeleteEntity> {
+  /**
+   * ID of the role that was deleted
+   */
+  get roleId(): Snowflake {
+    return this.data.role_id;
+  }
+
+  /**
+   * ID of the guild where the role was deleted
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
   }
 }

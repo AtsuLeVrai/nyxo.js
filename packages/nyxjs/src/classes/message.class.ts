@@ -30,6 +30,7 @@ import {
 } from "@nyxjs/core";
 import type {
   MessageCreateEntity,
+  MessagePollVoteAddEntity,
   MessageReactionAddEntity,
 } from "@nyxjs/gateway";
 import type {
@@ -1136,5 +1137,53 @@ export class MessageReaction extends BaseClass<MessageReactionAddEntity> {
    */
   isSuperReaction(): boolean {
     return this.burst;
+  }
+}
+
+/**
+ * Represents a vote on a message poll.
+ * Sent when a user votes on a poll.
+ */
+export class MessagePollVote extends BaseClass<MessagePollVoteAddEntity> {
+  /**
+   * ID of the user who voted
+   */
+  get userId(): Snowflake {
+    return this.data.user_id;
+  }
+
+  /**
+   * ID of the channel the message is in
+   */
+  get channelId(): Snowflake {
+    return this.data.channel_id;
+  }
+
+  /**
+   * ID of the message with the poll
+   */
+  get messageId(): Snowflake {
+    return this.data.message_id;
+  }
+
+  /**
+   * ID of the guild where the vote happened, if applicable
+   */
+  get guildId(): Snowflake | undefined {
+    return this.data.guild_id;
+  }
+
+  /**
+   * ID of the poll answer that was selected
+   */
+  get answerId(): number {
+    return this.data.answer_id;
+  }
+
+  /**
+   * Whether this vote happened in a guild
+   */
+  get inGuild(): boolean {
+    return Boolean(this.data.guild_id);
   }
 }
