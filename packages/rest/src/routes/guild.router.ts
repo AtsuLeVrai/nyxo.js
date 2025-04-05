@@ -1,6 +1,6 @@
 import type {
+  AnyChannelEntity,
   BanEntity,
-  ChannelEntity,
   GuildEntity,
   GuildMemberEntity,
   GuildOnboardingEntity,
@@ -392,7 +392,7 @@ export class GuildRouter extends BaseRouter {
    * @returns An array of channel objects
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-channels}
    */
-  getChannels(guildId: Snowflake): Promise<ChannelEntity[]> {
+  getChannels(guildId: Snowflake): Promise<AnyChannelEntity[]> {
     return this.rest.get(GuildRouter.ROUTES.guildChannels(guildId));
   }
 
@@ -411,7 +411,7 @@ export class GuildRouter extends BaseRouter {
     guildId: Snowflake,
     options: CreateGuildChannelSchema,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<AnyChannelEntity> {
     return this.rest.post(GuildRouter.ROUTES.guildChannels(guildId), {
       body: JSON.stringify(options),
       reason,

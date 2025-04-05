@@ -2,8 +2,8 @@ import {
   type ApplicationRoleConnectionEntity,
   type AvatarDecorationDataEntity,
   BitFieldManager,
-  type ChannelEntity,
   type ConnectionEntity,
+  type DmChannelEntity,
   type FormattedUser,
   type GuildEntity,
   type GuildMemberEntity,
@@ -284,7 +284,7 @@ export class User extends BaseClass<UserEntity> {
    * @throws Error if creating the DM channel fails
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
-  createDm(): Promise<ChannelEntity> {
+  createDm(): Promise<DmChannelEntity> {
     return this.client.rest.users.createDm(this.id);
   }
 
@@ -299,7 +299,7 @@ export class User extends BaseClass<UserEntity> {
    * @throws Error if creating the group DM channel fails
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
-  addToGroupDm(options: CreateGroupDmSchema): Promise<ChannelEntity> {
+  addToGroupDm(options: CreateGroupDmSchema): Promise<DmChannelEntity> {
     return this.client.rest.users.createGroupDm(options);
   }
 

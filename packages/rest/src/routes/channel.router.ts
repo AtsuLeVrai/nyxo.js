@@ -1,6 +1,9 @@
 import type {
-  ChannelEntity,
+  AnyChannelEntity,
+  AnyThreadChannelEntity,
   FollowedChannelEntity,
+  GuildForumChannelEntity,
+  GuildMediaChannelEntity,
   InviteEntity,
   MessageEntity,
   Snowflake,
@@ -111,7 +114,7 @@ export class ChannelRouter extends BaseRouter {
    * @remarks If the channel is a thread, the response includes a thread member object for the current user
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel}
    */
-  getChannel(channelId: Snowflake): Promise<ChannelEntity> {
+  getChannel(channelId: Snowflake): Promise<AnyChannelEntity> {
     return this.rest.get(ChannelRouter.ROUTES.channelBase(channelId));
   }
 
@@ -135,7 +138,7 @@ export class ChannelRouter extends BaseRouter {
       | ModifyChannelThreadSchema
       | ModifyChannelGroupDmSchema,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<AnyChannelEntity> {
     return this.rest.patch(ChannelRouter.ROUTES.channelBase(channelId), {
       body: JSON.stringify(options),
       reason,
@@ -155,7 +158,10 @@ export class ChannelRouter extends BaseRouter {
    * - Deleting a guild channel cannot be undone
    * @see {@link https://discord.com/developers/docs/resources/channel#deleteclose-channel}
    */
-  deleteChannel(channelId: Snowflake, reason?: string): Promise<ChannelEntity> {
+  deleteChannel(
+    channelId: Snowflake,
+    reason?: string,
+  ): Promise<AnyChannelEntity> {
     return this.rest.delete(ChannelRouter.ROUTES.channelBase(channelId), {
       reason,
     });
@@ -245,7 +251,7 @@ export class ChannelRouter extends BaseRouter {
     channelId: Snowflake,
     overwriteId: Snowflake,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<AnyChannelEntity> {
     return this.rest.delete(
       ChannelRouter.ROUTES.channelPermission(channelId, overwriteId),
       {
@@ -414,7 +420,7 @@ export class ChannelRouter extends BaseRouter {
     messageId: Snowflake,
     options: StartThreadFromMessageSchema,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<AnyThreadChannelEntity> {
     return this.rest.post(
       ChannelRouter.ROUTES.channelStartThreadFromMessage(channelId, messageId),
       {
@@ -440,7 +446,7 @@ export class ChannelRouter extends BaseRouter {
     channelId: Snowflake,
     options: StartThreadWithoutMessageSchema,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<AnyThreadChannelEntity> {
     return this.rest.post(
       ChannelRouter.ROUTES.channelStartThreadWithoutMessage(channelId),
       {
@@ -469,7 +475,7 @@ export class ChannelRouter extends BaseRouter {
       | StartThreadInForumOrMediaChannelSchema
       | StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
     reason?: string,
-  ): Promise<ChannelEntity> {
+  ): Promise<GuildForumChannelEntity | GuildMediaChannelEntity> {
     return this.rest.post(
       ChannelRouter.ROUTES.channelStartThreadInForumOrMediaChannel(channelId),
       {

@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - internals/*
+  - packages/*
+  - scripts
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - bufferutil
+  - erlpack
+  - esbuild
+  - sharp
+  - zlib-sync

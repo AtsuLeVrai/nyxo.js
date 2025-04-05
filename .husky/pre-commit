@@ -1,2 +1,2 @@
-yarn check
+pnpm run check
 git update-index --again

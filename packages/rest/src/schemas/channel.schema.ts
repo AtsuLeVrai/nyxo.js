@@ -1,7 +1,7 @@
 import type {
+  AnyThreadChannelEntity,
   AutoArchiveDuration,
   BitwisePermissionFlags,
-  ChannelEntity,
   ChannelFlags,
   ChannelType,
   DefaultReactionEntity,
@@ -534,7 +534,7 @@ export interface ListPublicArchivedThreadsQuerySchema {
  */
 export interface ListPublicArchivedThreadsResponseEntity {
   /** Array of thread channel objects */
-  threads: ChannelEntity[];
+  threads: AnyThreadChannelEntity[];
 
   /** Array of thread member objects for threads the current user has joined */
   members: ThreadMemberEntity[];

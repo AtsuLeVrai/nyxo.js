@@ -78,6 +78,46 @@ export const ClientCacheOptions = z
      * @default 1000
      */
     emojiLimit: z.number().int().positive().default(1000),
+
+    /**
+     * Maximum number of entitlement objects to store in the cache.
+     * When this limit is reached, least recently used entitlements will be evicted.
+     *
+     * Higher values increase memory usage but reduce API calls.
+     *
+     * @default 1000
+     */
+    entitlementLimit: z.number().int().positive().default(1000),
+
+    /**
+     * Maximum number of subscription objects to store in the cache.
+     * When this limit is reached, least recently used subscriptions will be evicted.
+     *
+     * Higher values increase memory usage but reduce API calls.
+     *
+     * @default 1000
+     */
+    subscriptionLimit: z.number().int().positive().default(1000),
+
+    /**
+     * Maximum number of message objects to store in the cache.
+     * When this limit is reached, least recently used messages will be evicted.
+     *
+     * Higher values increase memory usage but reduce API calls.
+     *
+     * @default 1000
+     */
+    messageLimit: z.number().int().positive().default(1000),
+
+    /**
+     * Maximum number of voice state objects to store in the cache.
+     * When this limit is reached, least recently used voice states will be evicted.
+     *
+     * Higher values increase memory usage but reduce API calls.
+     *
+     * @default 1000
+     */
+    voiceStateLimit: z.number().int().positive().default(1000),
   })
   .readonly();
 

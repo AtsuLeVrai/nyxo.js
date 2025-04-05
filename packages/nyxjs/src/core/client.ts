@@ -1,4 +1,4 @@
-import type { GuildEntity, Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "@nyxjs/core";
 import {
   Gateway,
   type GatewayIntentsBits,
@@ -8,7 +8,16 @@ import { Rest } from "@nyxjs/rest";
 import { Store } from "@nyxjs/store";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { type AnyChannel, type Emoji, User } from "../classes/index.js";
+import {
+  type AnyChannel,
+  type Emoji,
+  type Entitlement,
+  type Guild,
+  type Message,
+  type Subscription,
+  User,
+  type VoiceState,
+} from "../classes/index.js";
 import {
   GatewayKeyofEventMappings,
   RestKeyofEventMappings,
@@ -96,7 +105,31 @@ export class Client extends ClientEventHandler {
    * Cache store for Guild entities
    * @private
    */
-  readonly #guilds: Store<Snowflake, GuildEntity>;
+  readonly #guilds: Store<Snowflake, Guild>;
+
+  /**
+   * Cache store for Entitlement entities
+   * @private
+   */
+  readonly #entitlements: Store<Snowflake, Entitlement>;
+
+  /**
+   * Cache store for Subscription entities
+   * @private
+   */
+  readonly #subscriptions: Store<Snowflake, Subscription>;
+
+  /**
+   * Cache store for Message entities
+   * @private
+   */
+  readonly #messages: Store<Snowflake, Message>;
+
+  /**
+   * Cache store for VoiceState entities
+   * @private
+   */
+  readonly #voiceStates: Store<Snowflake, VoiceState>;
 
   /**
    * The current authenticated user (bot user)
@@ -152,13 +185,33 @@ export class Client extends ClientEventHandler {
       ttl: this.#options.cache.ttl,
     });
 
-    this.#guilds = new Store<Snowflake, GuildEntity>(null, {
+    this.#guilds = new Store<Snowflake, Guild>(null, {
       maxSize: this.#options.cache.guildLimit,
       ttl: this.#options.cache.ttl,
     });
 
     this.#emojis = new Store<Snowflake, Emoji>(null, {
       maxSize: this.#options.cache.emojiLimit,
+      ttl: this.#options.cache.ttl,
+    });
+
+    this.#entitlements = new Store<Snowflake, Entitlement>(null, {
+      maxSize: this.#options.cache.entitlementLimit,
+      ttl: this.#options.cache.ttl,
+    });
+
+    this.#subscriptions = new Store<Snowflake, Subscription>(null, {
+      maxSize: this.#options.cache.subscriptionLimit,
+      ttl: this.#options.cache.ttl,
+    });
+
+    this.#messages = new Store<Snowflake, Message>(null, {
+      maxSize: this.#options.cache.messageLimit,
+      ttl: this.#options.cache.ttl,
+    });
+
+    this.#voiceStates = new Store<Snowflake, VoiceState>(null, {
+      maxSize: this.#options.cache.voiceStateLimit,
       ttl: this.#options.cache.ttl,
     });
   }
@@ -201,7 +254,7 @@ export class Client extends ClientEventHandler {
   /**
    * Cache store for Guild entities
    */
-  get guilds(): Store<Snowflake, GuildEntity> {
+  get guilds(): Store<Snowflake, Guild> {
     return this.#guilds;
   }
 
@@ -210,6 +263,34 @@ export class Client extends ClientEventHandler {
    */
   get emojis(): Store<Snowflake, Emoji> {
     return this.#emojis;
+  }
+
+  /**
+   * Cache store for Entitlement entities
+   */
+  get entitlements(): Store<Snowflake, Entitlement> {
+    return this.#entitlements;
+  }
+
+  /**
+   * Cache store for Subscription entities
+   */
+  get subscriptions(): Store<Snowflake, Subscription> {
+    return this.#subscriptions;
+  }
+
+  /**
+   * Cache store for Message entities
+   */
+  get messages(): Store<Snowflake, Message> {
+    return this.#messages;
+  }
+
+  /**
+   * Cache store for VoiceState entities
+   */
+  get voiceStates(): Store<Snowflake, VoiceState> {
+    return this.#voiceStates;
   }
 
   /**
@@ -360,7 +441,7 @@ export class Client extends ClientEventHandler {
    * @param guildId - The ID of the guild to get
    * @returns The guild object or undefined
    */
-  getGuild(guildId: Snowflake): GuildEntity | undefined {
+  getGuild(guildId: Snowflake): Guild | undefined {
     return this.#guilds.get(guildId);
   }
 

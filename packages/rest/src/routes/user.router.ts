@@ -1,7 +1,7 @@
 import type {
   ApplicationRoleConnectionEntity,
-  ChannelEntity,
   ConnectionEntity,
+  DmChannelEntity,
   GuildEntity,
   GuildMemberEntity,
   Snowflake,
@@ -191,7 +191,7 @@ export class UserRouter extends BaseRouter {
    * @returns A promise resolving to the DM channel entity
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
-  createDm(recipientId: Snowflake): Promise<ChannelEntity> {
+  createDm(recipientId: Snowflake): Promise<DmChannelEntity> {
     return this.rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify({ recipient_id: recipientId }),
     });
@@ -212,7 +212,7 @@ export class UserRouter extends BaseRouter {
    * @throws Error if the options are invalid
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
-  createGroupDm(options: CreateGroupDmSchema): Promise<ChannelEntity> {
+  createGroupDm(options: CreateGroupDmSchema): Promise<DmChannelEntity> {
     return this.rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify(options),
     });

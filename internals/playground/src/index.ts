@@ -1,17 +1,16 @@
+import { config } from "dotenv";
 import {
   ActionRowBuilder,
   ButtonBuilder,
+  ButtonStyle,
+  Client,
   EmbedBuilder,
+  GatewayIntentsBits,
+  InteractionCallbackType,
   ModalBuilder,
   TextInputBuilder,
-} from "@nyxjs/builders";
-import {
-  ButtonStyle,
-  InteractionCallbackType,
   TextInputStyle,
-} from "@nyxjs/core";
-import { config } from "dotenv";
-import { Client, GatewayIntentsBits } from "nyx.js";
+} from "nyx.js";
 
 const { parsed } = config({ debug: true });
 
@@ -44,8 +43,6 @@ const client = new Client({
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
-  encodingType: "etf",
-  compressionType: "zstd-stream",
 });
 
 client.on("requestStart", (event) => {
@@ -180,7 +177,7 @@ client.on("messageCreate", async (message) => {
     ).build();
 
     try {
-      await client.rest.messages.createMessage(message.channel_id, {
+      await message.reply({
         content: "Pong",
         embeds: [embed],
         components: [components],

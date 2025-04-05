@@ -2154,7 +2154,7 @@ export class ForumChannel extends Channel<GuildForumChannelEntity> {
       );
     return new PublicThreadChannel(
       this.client,
-      data as PublicThreadChannelEntity,
+      data as unknown as PublicThreadChannelEntity,
     );
   }
 }
@@ -2380,7 +2380,7 @@ export class MediaChannel extends Channel<GuildMediaChannelEntity> {
       );
     return new PublicThreadChannel(
       this.client,
-      data as PublicThreadChannelEntity,
+      data as unknown as PublicThreadChannelEntity,
     );
   }
 }

@@ -1,11 +1,17 @@
-import type { AnyInteractionEntity } from "@nyxjs/core";
-import type { GatewayEvents, MessageCreateEntity } from "@nyxjs/gateway";
+import type {
+  AnyChannelEntity,
+  AnyInteractionEntity,
+  AnyThreadChannelEntity,
+} from "@nyxjs/core";
+import type { GatewayEvents } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import type {
-  AnyChannel,
-  AnyThreadChannel,
+  Entitlement,
+  Message,
   Ready,
+  Subscription,
   User,
+  VoiceState,
 } from "../classes/index.js";
 
 /**
@@ -62,7 +68,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldRule The rule before the update
    * @param newRule The rule after the update
    */
-  autoModerationRuleUpdate: [oldRule: unknown, newRule: unknown];
+  autoModerationRuleUpdate: [oldRule: unknown | null, newRule: unknown];
 
   /**
    * Emitted when an Auto Moderation rule is deleted from a guild.
@@ -80,20 +86,23 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a new guild channel is created.
    * @param channel The newly created channel
    */
-  channelCreate: [channel: AnyChannel];
+  channelCreate: [channel: AnyChannelEntity];
 
   /**
    * Emitted when a channel is updated (name, topic, permissions, etc.).
    * @param oldChannel The channel before the update
    * @param newChannel The channel after the update
    */
-  channelUpdate: [oldChannel: AnyChannel, newChannel: AnyChannel];
+  channelUpdate: [
+    oldChannel: AnyChannelEntity | null,
+    newChannel: AnyChannelEntity,
+  ];
 
   /**
    * Emitted when a channel is deleted.
    * @param channel The deleted channel
    */
-  channelDelete: [channel: AnyChannel];
+  channelDelete: [channel: AnyChannelEntity];
 
   /**
    * Emitted when a message is pinned or unpinned in a channel.
@@ -105,20 +114,28 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a new thread is created or when the client is added to a private thread.
    * @param thread The newly created thread or private thread the client was added to
    */
-  threadCreate: [thread: AnyThreadChannel];
+  threadCreate: [thread: AnyThreadChannelEntity];
 
   /**
    * Emitted when a thread is updated (name, archived status, auto archive duration, etc.).
    * @param oldThread The thread before the update
    * @param newThread The thread after the update
    */
-  threadUpdate: [oldThread: AnyThreadChannel, newThread: AnyThreadChannel];
+  threadUpdate: [
+    oldThread: AnyThreadChannelEntity | null,
+    newThread: AnyThreadChannelEntity,
+  ];
 
   /**
    * Emitted when a thread is deleted.
    * @param thread The deleted thread
    */
-  threadDelete: [thread: AnyThreadChannel];
+  threadDelete: [
+    thread: Pick<
+      AnyThreadChannelEntity,
+      "id" | "guild_id" | "parent_id" | "type"
+    >,
+  ];
 
   /**
    * Emitted when gaining access to a channel, containing all active threads in that channel.
@@ -132,7 +149,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldMember The thread member before the update
    * @param newMember The thread member after the update
    */
-  threadMemberUpdate: [oldMember: unknown, newMember: unknown];
+  threadMemberUpdate: [oldMember: unknown | null, newMember: unknown];
 
   /**
    * Emitted when users are added to or removed from a thread.
@@ -144,20 +161,23 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a new entitlement (subscription or one-time purchase) is created.
    * @param entitlement The newly created entitlement
    */
-  entitlementCreate: [entitlement: unknown];
+  entitlementCreate: [entitlement: Entitlement];
 
   /**
    * Emitted when an entitlement is updated.
-   * @param oldEntitlement The entitlement before the update
+   * @param oldEntitlement The entitlement before the update or null if it was created
    * @param newEntitlement The entitlement after the update
    */
-  entitlementUpdate: [oldEntitlement: unknown, newEntitlement: unknown];
+  entitlementUpdate: [
+    oldEntitlement: Entitlement | null,
+    newEntitlement: Entitlement,
+  ];
 
   /**
    * Emitted when an entitlement is deleted.
    * @param entitlement The deleted entitlement
    */
-  entitlementDelete: [entitlement: unknown];
+  entitlementDelete: [entitlement: Entitlement];
 
   /**
    * Emitted in three scenarios:
@@ -173,7 +193,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldGuild The guild before the update
    * @param newGuild The guild after the update
    */
-  guildUpdate: [oldGuild: unknown, newGuild: unknown];
+  guildUpdate: [oldGuild: unknown | null, newGuild: unknown];
 
   /**
    * Emitted when:
@@ -206,14 +226,14 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldEmojis The guild's emojis before the update
    * @param newEmojis The guild's emojis after the update
    */
-  guildEmojisUpdate: [oldEmojis: unknown, newEmojis: unknown];
+  guildEmojisUpdate: [oldEmojis: unknown | null, newEmojis: unknown];
 
   /**
    * Emitted when a guild's stickers are updated (added, removed, or modified).
    * @param oldStickers The guild's stickers before the update
    * @param newStickers The guild's stickers after the update
    */
-  guildStickersUpdate: [oldStickers: unknown, newStickers: unknown];
+  guildStickersUpdate: [oldStickers: unknown | null, newStickers: unknown];
 
   /**
    * Emitted when a guild's integrations are updated.
@@ -238,7 +258,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldMember The member before the update
    * @param newMember The member after the update
    */
-  guildMemberUpdate: [oldMember: unknown, newMember: unknown];
+  guildMemberUpdate: [oldMember: unknown | null, newMember: unknown];
 
   /**
    * Emitted in response to a Guild Request Members request.
@@ -257,7 +277,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldRole The role before the update
    * @param newRole The role after the update
    */
-  guildRoleUpdate: [oldRole: unknown, newRole: unknown];
+  guildRoleUpdate: [oldRole: unknown | null, newRole: unknown];
 
   /**
    * Emitted when a guild role is deleted.
@@ -276,7 +296,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldEvent The scheduled event before the update
    * @param newEvent The scheduled event after the update
    */
-  guildScheduledEventUpdate: [oldEvent: unknown, newEvent: unknown];
+  guildScheduledEventUpdate: [oldEvent: unknown | null, newEvent: unknown];
 
   /**
    * Emitted when a scheduled event is deleted from a guild.
@@ -307,7 +327,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldSound The soundboard sound before the update
    * @param newSound The soundboard sound after the update
    */
-  guildSoundboardSoundUpdate: [oldSound: unknown, newSound: unknown];
+  guildSoundboardSoundUpdate: [oldSound: unknown | null, newSound: unknown];
 
   /**
    * Emitted when a soundboard sound is deleted from a guild.
@@ -338,7 +358,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldIntegration The integration before the update
    * @param newIntegration The integration after the update
    */
-  integrationUpdate: [oldIntegration: unknown, newIntegration: unknown];
+  integrationUpdate: [oldIntegration: unknown | null, newIntegration: unknown];
 
   /**
    * Emitted when a guild integration is deleted.
@@ -362,20 +382,20 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is sent in a channel the client can see.
    * @param message The created message
    */
-  messageCreate: [message: MessageCreateEntity];
+  messageCreate: [message: Message];
 
   /**
    * Emitted when a message is edited.
    * @param oldMessage The message before the update
    * @param newMessage The message after the update
    */
-  messageUpdate: [oldMessage: unknown, newMessage: unknown];
+  messageUpdate: [oldMessage: Message | null, newMessage: Message];
 
   /**
    * Emitted when a message is deleted.
    * @param message The deleted message
    */
-  messageDelete: [message: unknown];
+  messageDelete: [message: Message];
 
   /**
    * Emitted when multiple messages are deleted at once (bulk delete).
@@ -412,7 +432,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldPresence The presence before the update
    * @param newPresence The presence after the update
    */
-  presenceUpdate: [oldPresence: unknown, newPresence: unknown];
+  presenceUpdate: [oldPresence: unknown | null, newPresence: unknown];
 
   /**
    * Emitted when a user starts typing in a channel.
@@ -425,7 +445,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldUser The user before the update
    * @param newUser The user after the update
    */
-  userUpdate: [oldUser: User, newUser: User];
+  userUpdate: [oldUser: User | null, newUser: User];
 
   /**
    * Emitted when someone sends an effect in a voice channel the client is connected to.
@@ -438,7 +458,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldState The voice state before the update
    * @param newState The voice state after the update
    */
-  voiceStateUpdate: [oldState: unknown, newState: unknown];
+  voiceStateUpdate: [oldState: VoiceState | null, newState: VoiceState];
 
   /**
    * Emitted when a guild's voice server is updated.
@@ -470,7 +490,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldInstance The stage instance before the update
    * @param newInstance The stage instance after the update
    */
-  stageInstanceUpdate: [oldInstance: unknown, newInstance: unknown];
+  stageInstanceUpdate: [oldInstance: unknown | null, newInstance: unknown];
 
   /**
    * Emitted when a stage instance is deleted or closed.
@@ -482,20 +502,23 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a premium app subscription is created.
    * @param subscription The created premium app subscription
    */
-  subscriptionCreate: [subscription: unknown];
+  subscriptionCreate: [subscription: Subscription];
 
   /**
    * Emitted when a premium app subscription is updated.
    * @param oldSubscription The subscription before the update
    * @param newSubscription The subscription after the update
    */
-  subscriptionUpdate: [oldSubscription: unknown, newSubscription: unknown];
+  subscriptionUpdate: [
+    oldSubscription: Subscription | null,
+    newSubscription: Subscription,
+  ];
 
   /**
    * Emitted when a premium app subscription is deleted.
    * @param subscription The deleted subscription
    */
-  subscriptionDelete: [subscription: unknown];
+  subscriptionDelete: [subscription: Subscription];
 
   /**
    * Emitted when a user votes on a message poll.
