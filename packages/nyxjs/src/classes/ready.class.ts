@@ -2,10 +2,10 @@ import type {
   ApiVersion,
   ApplicationEntity,
   UnavailableGuildEntity,
-  UserEntity,
 } from "@nyxjs/core";
 import type { ReadyEntity } from "@nyxjs/gateway";
 import { BaseClass } from "../bases/index.js";
+import { User } from "./user.class.js";
 
 /**
  * Represents a READY event dispatched when a client has completed the initial handshake with the gateway.
@@ -23,8 +23,8 @@ export class Ready extends BaseClass<ReadyEntity> {
   /**
    * Information about the user including email
    */
-  get user(): UserEntity {
-    return this.data.user;
+  get user(): User {
+    return User.from(this.client, this.data.user);
   }
 
   /**

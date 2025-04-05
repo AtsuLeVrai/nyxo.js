@@ -1,6 +1,5 @@
 import type {
   InteractionCallbackResponseEntity,
-  InteractionCallbackType,
   InteractionResponseEntity,
   MessageEntity,
   Snowflake,
@@ -147,10 +146,10 @@ export class InteractionRouter extends BaseRouter {
    * @throws Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#create-interaction-response}
    */
-  createInteractionResponse<T extends InteractionCallbackType>(
+  createInteractionResponse(
     interactionId: Snowflake,
     interactionToken: string,
-    options: InteractionResponseEntity<T>,
+    options: InteractionResponseEntity,
     withResponse = true,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
     return this.rest.post(

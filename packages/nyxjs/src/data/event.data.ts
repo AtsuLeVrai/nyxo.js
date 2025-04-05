@@ -21,7 +21,7 @@ import {
   VoiceState,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
-import { ChannelFactory } from "../factories/index.js";
+import { ChannelFactory, InteractionFactory } from "../factories/index.js";
 import type { GatewayEventMapping } from "../handlers/index.js";
 import type { ClientEvents } from "../types/index.js";
 
@@ -472,8 +472,8 @@ export const StandardGatewayDispatchEventMappings = [
     data,
   ]),
   defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (_client, data) => [data]),
-  defineEvent("INTERACTION_CREATE", "interactionCreate", (_client, data) => [
-    data,
+  defineEvent("INTERACTION_CREATE", "interactionCreate", (client, data) => [
+    InteractionFactory.create(client, data),
   ]),
   defineEvent(
     "STAGE_INSTANCE_CREATE",

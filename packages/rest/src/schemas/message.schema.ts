@@ -149,7 +149,7 @@ export interface CreateMessageSchema {
    *
    * @optional
    */
-  flags?: MessageFlags.SuppressEmbeds | MessageFlags.SuppressNotifications;
+  flags?: MessageFlags;
 
   /**
    * If true and nonce is present, it will be checked for uniqueness

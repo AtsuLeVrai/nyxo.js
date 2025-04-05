@@ -19,6 +19,7 @@ import {
   AnnouncementThreadChannel,
   type AnyChannel,
   CategoryChannel,
+  Channel,
   DmChannel,
   ForumChannel,
   GroupDmChannel,
@@ -97,7 +98,7 @@ export const ChannelFactory = {
         return new MediaChannel(client, data as GuildMediaChannelEntity);
 
       default:
-        throw new Error("Unsupported channel type");
+        throw new Channel(client, data);
     }
   },
 } as const;

@@ -57,7 +57,7 @@ import { User } from "./user.class.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/channel}
  */
-export abstract class Channel<
+export class Channel<
   T extends AnyChannelEntity = AnyChannelEntity,
 > extends BaseClass<T> {
   /**
@@ -592,15 +592,6 @@ export class DmChannel extends Channel<DmChannelEntity> {
   unpinMessage(messageId: Snowflake, reason?: string): Promise<void> {
     return this.client.rest.channels.unpinMessage(this.id, messageId, reason);
   }
-
-  /**
-   * Returns a string representation of the DM channel
-   *
-   * @returns A string representation in the format `DM`
-   */
-  override toString(): string {
-    return "DM";
-  }
 }
 
 /**
@@ -943,15 +934,6 @@ export class GroupDmChannel extends Channel<GroupDmChannelEntity> {
    */
   removeRecipient(userId: Snowflake): Promise<void> {
     return this.client.rest.channels.groupDmRemoveRecipient(this.id, userId);
-  }
-
-  /**
-   * Returns a string representation of the group DM channel
-   *
-   * @returns A string representation in the format `Group DM`
-   */
-  override toString(): string {
-    return "Group DM";
   }
 }
 

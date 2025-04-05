@@ -149,7 +149,8 @@ export class Client extends ClientEventHandler {
    * The current authenticated user (bot user)
    * @private
    */
-  #user: User | null = null;
+  // @ts-expect-error: The user property is initialized in the constructor
+  #user: User;
 
   /**
    * Creates a new Discord client instance.
@@ -186,6 +187,10 @@ export class Client extends ClientEventHandler {
     // Listen for gateway events
     this.#gateway.on("dispatch", (event, data) => {
       this.handleGatewayDispatch(this, event, data);
+    });
+
+    this.on("ready", (ready) => {
+      this.#user = ready.user;
     });
 
     // Initialize caches
@@ -334,7 +339,7 @@ export class Client extends ClientEventHandler {
   /**
    * The current authenticated user (bot user)
    */
-  get user(): User | null {
+  get user(): User {
     return this.#user;
   }
 
@@ -378,9 +383,6 @@ export class Client extends ClientEventHandler {
     this.#users.clear();
     this.#channels.clear();
     this.#guilds.clear();
-
-    // Reset state
-    this.#user = null;
 
     // Remove event listeners from the client itself
     this.removeAllListeners();

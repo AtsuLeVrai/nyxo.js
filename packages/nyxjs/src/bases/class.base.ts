@@ -190,6 +190,7 @@ export abstract class BaseClass<T extends object> {
     if ("id" in this.data) {
       return `${this.constructor.name}(${(this.data as unknown as { id: Snowflake }).id})`;
     }
+
     return this.constructor.name;
   }
 }

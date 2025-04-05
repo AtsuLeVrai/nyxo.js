@@ -7,10 +7,7 @@ import {
   Client,
   EmbedBuilder,
   GatewayIntentsBits,
-  InteractionCallbackType,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
+  formatUser,
 } from "nyx.js";
 
 const { parsed } = config({ debug: true });
@@ -134,12 +131,13 @@ client.on("error", (error) => {
   console.error("[GATEWAY] Error", error);
 });
 
-client.on("dispatch", (event, data) => {
-  console.log("[GATEWAY] Event dispatched", event, data);
+client.on("dispatch", (_event, _data) => {
+  // This event is emitted when a dispatch event is received from the gateway
+  // console.log("[GATEWAY] Event dispatched", event, data);
 });
 
 client.on("ready", (ready) => {
-  console.log("[CLIENT] Client is ready: ", ready.toString());
+  console.log("[CLIENT] Client is ready: ", ready.guilds.length);
 });
 
 client.on("messageCreate", async (message) => {
@@ -176,33 +174,24 @@ client.on("messageCreate", async (message) => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-  if (
-    interaction.data &&
-    "name" in interaction.data &&
-    interaction.data.name === "ping"
-  ) {
-    const modal = new ModalBuilder()
-      .setTitle("Test Modal")
-      .setCustomId("test_modal")
-      .addComponents(
-        ActionRowBuilder.createTextInputRow(
-          new TextInputBuilder()
-            .setCustomId("name_input")
-            .setLabel("Name")
-            .setStyle(TextInputStyle.Short),
-        ),
+  if (interaction.isSlashCommand() && interaction.name === "ping") {
+    const embed = new EmbedBuilder()
+      .setTitle("Test")
+      .setDescription("Test")
+      .setColor(0x57f287)
+      .setFooter({ text: "Test" })
+      .setTimestamp()
+      .addFields(
+        { name: "Field 1", value: "Value 1" },
+        { name: "Field 2", value: "Value 2" },
       )
       .build();
 
     try {
-      await client.rest.interactions.createInteractionResponse<InteractionCallbackType.Modal>(
-        interaction.id,
-        interaction.token,
-        {
-          type: InteractionCallbackType.Modal,
-          data: modal,
-        },
-      );
+      await interaction.reply({
+        content: `Pong ${formatUser(client.user.id)}`,
+        embeds: [embed],
+      });
     } catch (error) {
       console.error("Failed to respond to interaction", error);
     }

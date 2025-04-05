@@ -1,11 +1,9 @@
-import type {
-  AnyInteractionEntity,
-  GuildApplicationCommandPermissionEntity,
-} from "@nyxjs/core";
+import type { GuildApplicationCommandPermissionEntity } from "@nyxjs/core";
 import type { GatewayEvents } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import type {
   AnyChannel,
+  AnyInteraction,
   AnyThreadChannel,
   AutoModerationActionExecution,
   AutoModerationRule,
@@ -460,7 +458,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user uses an interaction with the client, such as an Application Command.
    * @param interaction The created interaction
    */
-  interactionCreate: [interaction: AnyInteractionEntity];
+  interactionCreate: [interaction: AnyInteraction];
 
   /**
    * Emitted when a stage instance (stage channel event) is created.

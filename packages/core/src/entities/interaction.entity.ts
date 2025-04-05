@@ -416,32 +416,18 @@ export interface InteractionCallbackAutocompleteEntity {
 }
 
 /**
- * Type guard to ensure correct data type is used based on callback type
- */
-export type InteractionCallbackData<T extends InteractionCallbackType> =
-  T extends InteractionCallbackType.ApplicationCommandAutocompleteResult
-    ? InteractionCallbackAutocompleteEntity
-    : T extends InteractionCallbackType.Modal
-      ? InteractionCallbackModalEntity
-      : T extends
-            | InteractionCallbackType.ChannelMessageWithSource
-            | InteractionCallbackType.DeferredChannelMessageWithSource
-            | InteractionCallbackType.UpdateMessage
-            | InteractionCallbackType.DeferredUpdateMessage
-            | InteractionCallbackType.PremiumRequired
-        ? InteractionCallbackMessagesEntity
-        : never;
-
-/**
  * Interaction response structure for responding to interactions
  * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/interactions/Receiving_and_Responding.md#interaction-response-structure}
  */
-export interface InteractionResponseEntity<T extends InteractionCallbackType> {
+export interface InteractionResponseEntity {
   /** Type of response */
-  type: T;
+  type: InteractionCallbackType;
 
   /** An optional response message */
-  data?: InteractionCallbackData<T>;
+  data?:
+    | InteractionCallbackAutocompleteEntity
+    | InteractionCallbackModalEntity
+    | InteractionCallbackMessagesEntity;
 }
 
 /**
