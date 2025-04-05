@@ -1,5 +1,8 @@
 import type {
   AutoModerationActionEntity,
+  AutoModerationEventType,
+  AutoModerationRuleEntity,
+  AutoModerationRuleTriggerMetadataEntity,
   AutoModerationRuleTriggerType,
   Snowflake,
 } from "@nyxjs/core";
@@ -87,5 +90,89 @@ export class AutoModerationActionExecution extends BaseClass<AutoModerationActio
    */
   get matchedContent(): string | null {
     return this.data.matched_content;
+  }
+}
+
+/**
+ * Represents an AUTO_MODERATION_RULE_CREATE event dispatched when a new rule is created.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#auto-moderation-rule-create}
+ */
+export class AutoModerationRule extends BaseClass<AutoModerationRuleEntity> {
+  /**
+   * ID of the guild in which rule was created
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * ID of the user who created the rule
+   */
+  get creatorId(): Snowflake {
+    return this.data.creator_id;
+  }
+
+  /**
+   * ID of the rule
+   */
+  get id(): Snowflake {
+    return this.data.id;
+  }
+
+  /**
+   * Name of the rule
+   */
+  get name(): string {
+    return this.data.name;
+  }
+
+  /**
+   * Event type of the rule
+   */
+  get eventType(): AutoModerationEventType {
+    return this.data.event_type;
+  }
+
+  /**
+   * Trigger type of the rule
+   */
+  get triggerType(): AutoModerationRuleTriggerType {
+    return this.data.trigger_type;
+  }
+
+  /**
+   * Metadata of the rule
+   */
+  get triggerMetadata(): AutoModerationRuleTriggerMetadataEntity {
+    return this.data.trigger_metadata;
+  }
+
+  /**
+   * Actions of the rule
+   */
+  get actions(): AutoModerationActionEntity[] {
+    return this.data.actions;
+  }
+
+  /**
+   * Whether the rule is enabled
+   */
+  get enabled(): boolean {
+    return this.data.enabled;
+  }
+
+  /**
+   * Role IDs that should not be affected by the rule
+   */
+  get exemptRoles(): Snowflake[] {
+    return this.data.exempt_roles || [];
+  }
+
+  /**
+   * Channel IDs that should not be affected by the rule
+   */
+  get exemptChannels(): Snowflake[] {
+    return this.data.exempt_channels || [];
   }
 }

@@ -118,6 +118,26 @@ export const ClientCacheOptions = z
      * @default 1000
      */
     voiceStateLimit: z.number().int().positive().default(1000),
+
+    /**
+     * Maximum number of auto moderation rule objects to store in the cache.
+     * When this limit is reached, least recently used auto moderation rules will be evicted.
+     *
+     * Higher values increase memory usage but reduce API calls.
+     *
+     * @default 1000
+     */
+    autoModerationRuleLimit: z.number().int().positive().default(1000),
+
+    /**
+     * Maximum number of stage instance objects to store in the cache.
+     * When this limit is reached, least recently used stage instances will be evicted.
+     *
+     * Higher values increase memory usage but reduce API calls.
+     *
+     * @default 1000
+     */
+    stageInstanceLimit: z.number().int().positive().default(1000),
   })
   .readonly();
 

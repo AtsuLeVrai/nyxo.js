@@ -1,3 +1,4 @@
+import type { AnyChannelEntity } from "@nyxjs/core";
 import type {
   GatewayEvents,
   GatewayReceiveEvents,
@@ -6,15 +7,21 @@ import type {
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import {
+  type AnyChannel,
+  type AnyThreadChannel,
+  AutoModerationActionExecution,
+  AutoModerationRule,
   Entitlement,
   Guild,
   Message,
   Ready,
+  StageInstance,
   Subscription,
   User,
   VoiceState,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
+import { ChannelFactory } from "../factories/index.js";
 import type { GatewayEventMapping } from "../handlers/index.js";
 import type { ClientEvents } from "../types/index.js";
 
@@ -46,7 +53,6 @@ export function defineEvent<
  */
 export const StandardGatewayDispatchEventMappings = [
   defineEvent("READY", "ready", (client, data) => [Ready.from(client, data)]),
-  defineEvent("RESUMED", "resumed", (_client, data) => [data]),
   defineEvent(
     "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
     "applicationCommandPermissionsUpdate",
@@ -55,35 +61,140 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "AUTO_MODERATION_RULE_CREATE",
     "autoModerationRuleCreate",
-    (_client, data) => [data],
+    (client, data) => {
+      const autoModerationRule = AutoModerationRule.from(client, data);
+      if (client.autoModerationRules?.set) {
+        client.autoModerationRules.set(
+          autoModerationRule.guildId,
+          autoModerationRule,
+        );
+      }
+
+      return [autoModerationRule];
+    },
   ),
   defineEvent(
     "AUTO_MODERATION_RULE_UPDATE",
     "autoModerationRuleUpdate",
-    (_client, data) => [null, data],
+    (client, data) => {
+      const newAutoModerationRule = AutoModerationRule.from(client, data);
+
+      let oldAutoModerationRule: AutoModerationRule | null = null;
+      const cachedAutoModerationRule = client.autoModerationRules?.get?.(
+        newAutoModerationRule.guildId,
+      );
+      if (cachedAutoModerationRule) {
+        oldAutoModerationRule =
+          cachedAutoModerationRule.clone?.() || cachedAutoModerationRule;
+      }
+
+      if (client.autoModerationRules?.set) {
+        client.autoModerationRules.set(
+          newAutoModerationRule.guildId,
+          newAutoModerationRule,
+        );
+      }
+
+      return [oldAutoModerationRule, newAutoModerationRule];
+    },
   ),
   defineEvent(
     "AUTO_MODERATION_RULE_DELETE",
     "autoModerationRuleDelete",
-    (_client, data) => [data],
+    (client, data) => {
+      const deletedAutoModerationRule = AutoModerationRule.from(client, data);
+
+      const cachedAutoModerationRule = client.autoModerationRules?.get?.(
+        deletedAutoModerationRule.guildId,
+      );
+      if (cachedAutoModerationRule && client.autoModerationRules?.delete) {
+        client.autoModerationRules.delete(deletedAutoModerationRule.guildId);
+      }
+
+      return [deletedAutoModerationRule];
+    },
   ),
   defineEvent(
     "AUTO_MODERATION_ACTION_EXECUTION",
     "autoModerationActionExecution",
-    (_client, data) => [data],
+    (client, data) => [AutoModerationActionExecution.from(client, data)],
   ),
-  defineEvent("CHANNEL_CREATE", "channelCreate", (_client, data) => [data]),
-  defineEvent("CHANNEL_UPDATE", "channelUpdate", (_client, data) => [
-    data,
-    data,
-  ]),
-  defineEvent("CHANNEL_DELETE", "channelDelete", (_client, data) => [data]),
+  defineEvent("CHANNEL_CREATE", "channelCreate", (client, data) => {
+    const channel = ChannelFactory.create(client, data);
+    if (client.channels?.set) {
+      client.channels.set(channel.id, channel);
+    }
+
+    return [channel];
+  }),
+  defineEvent("CHANNEL_UPDATE", "channelUpdate", (client, data) => {
+    const newChannel = ChannelFactory.create(client, data);
+
+    let oldChannel: AnyChannel | null = null;
+    const cachedChannel = client.channels?.get?.(newChannel.id);
+    if (cachedChannel) {
+      oldChannel = cachedChannel.clone?.() || cachedChannel;
+    }
+
+    if (client.channels?.set) {
+      client.channels.set(newChannel.id, newChannel);
+    }
+
+    return [oldChannel, newChannel];
+  }),
+  defineEvent("CHANNEL_DELETE", "channelDelete", (client, data) => {
+    const deletedChannel = ChannelFactory.create(client, data);
+
+    const cachedChannel = client.channels?.get?.(deletedChannel.id);
+    if (cachedChannel && client.channels?.delete) {
+      client.channels.delete(deletedChannel.id);
+    }
+
+    return [deletedChannel];
+  }),
   defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (_client, data) => [
     data,
   ]),
-  defineEvent("THREAD_CREATE", "threadCreate", (_client, data) => [data]),
-  defineEvent("THREAD_UPDATE", "threadUpdate", (_client, data) => [data, data]),
-  defineEvent("THREAD_DELETE", "threadDelete", (_client, data) => [data]),
+  defineEvent("THREAD_CREATE", "threadCreate", (client, data) => {
+    const thread = ChannelFactory.create(client, data);
+    if (client.channels?.set) {
+      client.channels.set(thread.id, thread);
+    }
+
+    return [thread as AnyThreadChannel];
+  }),
+  defineEvent("THREAD_UPDATE", "threadUpdate", (client, data) => {
+    const newThread = ChannelFactory.create(client, data);
+
+    let oldThread: AnyThreadChannel | null = null;
+    const cachedThread = client.channels?.get?.(
+      newThread.id,
+    ) as AnyThreadChannel;
+    if (cachedThread) {
+      oldThread = cachedThread.clone?.() || cachedThread;
+    }
+
+    if (client.channels?.set) {
+      client.channels.set(newThread.id, newThread);
+    }
+
+    return [oldThread, newThread as AnyThreadChannel];
+  }),
+  defineEvent("THREAD_DELETE", "threadDelete", (client, data) => {
+    const deletedThread = ChannelFactory.create(
+      client,
+      data as AnyChannelEntity,
+    );
+
+    const cachedThread = client.channels?.get?.(
+      deletedThread.id,
+    ) as AnyThreadChannel;
+    if (cachedThread && client.channels?.delete) {
+      client.channels.delete(deletedThread.id);
+    }
+
+    return [deletedThread as AnyThreadChannel];
+  }),
   defineEvent("THREAD_LIST_SYNC", "threadListSync", (_client, data) => [data]),
   defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (_client, data) => [
     null,
@@ -147,7 +258,13 @@ export const StandardGatewayDispatchEventMappings = [
     }
     return [oldGuild, newGuild];
   }),
-  defineEvent("GUILD_DELETE", "guildDelete", (_client, data) => [data]),
+  defineEvent("GUILD_DELETE", "guildDelete", (client, data) => {
+    const guild = Guild.from(client, data as GuildCreateEntity);
+    if (client.guilds?.delete) {
+      client.guilds.delete(guild.id);
+    }
+    return [guild];
+  }),
   defineEvent(
     "GUILD_AUDIT_LOG_ENTRY_CREATE",
     "guildAuditLogEntryCreate",
@@ -156,13 +273,13 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("GUILD_BAN_ADD", "guildBanAdd", (_client, data) => [data]),
   defineEvent("GUILD_BAN_REMOVE", "guildBanRemove", (_client, data) => [data]),
   defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", (_client, data) => [
-    data,
+    null,
     data,
   ]),
   defineEvent(
     "GUILD_STICKERS_UPDATE",
     "guildStickersUpdate",
-    (_client, data) => [data, data],
+    (_client, data) => [null, data],
   ),
   defineEvent(
     "GUILD_INTEGRATIONS_UPDATE",
@@ -174,7 +291,7 @@ export const StandardGatewayDispatchEventMappings = [
     data,
   ]),
   defineEvent("GUILD_MEMBER_UPDATE", "guildMemberUpdate", (_client, data) => [
-    data,
+    null,
     data,
   ]),
   defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (_client, data) => [
@@ -184,7 +301,7 @@ export const StandardGatewayDispatchEventMappings = [
     data,
   ]),
   defineEvent("GUILD_ROLE_UPDATE", "guildRoleUpdate", (_client, data) => [
-    data,
+    null,
     data,
   ]),
   defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (_client, data) => [
@@ -198,7 +315,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SCHEDULED_EVENT_UPDATE",
     "guildScheduledEventUpdate",
-    (_client, data) => [data, data],
+    (_client, data) => [null, data],
   ),
   defineEvent(
     "GUILD_SCHEDULED_EVENT_DELETE",
@@ -223,7 +340,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_UPDATE",
     "guildSoundboardSoundUpdate",
-    (_client, data) => [data, data],
+    (_client, data) => [null, data],
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_DELETE",
@@ -242,7 +359,7 @@ export const StandardGatewayDispatchEventMappings = [
     data,
   ]),
   defineEvent("INTEGRATION_UPDATE", "integrationUpdate", (_client, data) => [
-    data,
+    null,
     data,
   ]),
   defineEvent("INTEGRATION_DELETE", "integrationDelete", (_client, data) => [
@@ -314,7 +431,7 @@ export const StandardGatewayDispatchEventMappings = [
     (_client, data) => [data],
   ),
   defineEvent("PRESENCE_UPDATE", "presenceUpdate", (_client, data) => {
-    return [data, data];
+    return [null, data];
   }),
   defineEvent("TYPING_START", "typingStart", (_client, data) => [data]),
   defineEvent("USER_UPDATE", "userUpdate", (client, data) => {
@@ -361,20 +478,50 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "STAGE_INSTANCE_CREATE",
     "stageInstanceCreate",
-    (_client, data) => [data],
+    (client, data) => {
+      const stageInstance = StageInstance.from(client, data);
+      if (client.stageInstances?.set) {
+        client.stageInstances.set(stageInstance.guildId, stageInstance);
+      }
+
+      return [stageInstance];
+    },
   ),
   defineEvent(
     "STAGE_INSTANCE_UPDATE",
     "stageInstanceUpdate",
-    (_client, data) => {
-      return [data, data];
+    (client, data) => {
+      const newStageInstance = StageInstance.from(client, data);
+
+      let oldStageInstance: StageInstance | null = null;
+      const cachedStageInstance = client.stageInstances?.get?.(
+        newStageInstance.guildId,
+      );
+      if (cachedStageInstance) {
+        oldStageInstance = cachedStageInstance.clone?.() || cachedStageInstance;
+      }
+
+      if (client.stageInstances?.set) {
+        client.stageInstances.set(newStageInstance.guildId, newStageInstance);
+      }
+
+      return [oldStageInstance, newStageInstance];
     },
   ),
   defineEvent(
     "STAGE_INSTANCE_DELETE",
     "stageInstanceDelete",
-    (_client, data) => {
-      return [data];
+    (client, data) => {
+      const deletedStageInstance = StageInstance.from(client, data);
+
+      const cachedStageInstance = client.stageInstances?.get?.(
+        deletedStageInstance.guildId,
+      );
+      if (cachedStageInstance && client.stageInstances?.delete) {
+        client.stageInstances.delete(deletedStageInstance.guildId);
+      }
+
+      return [deletedStageInstance];
     },
   ),
   defineEvent("SUBSCRIPTION_CREATE", "subscriptionCreate", (client, data) => {
@@ -423,9 +570,6 @@ export const RestKeyofEventMappings: (keyof RestEvents)[] = [
   "rateLimitHit",
   "rateLimitUpdate",
   "rateLimitExpire",
-  "queueComplete",
-  "queueTimeout",
-  "queueReject",
   "retry",
 ];
 

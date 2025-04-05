@@ -10,10 +10,12 @@ import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import {
   type AnyChannel,
+  type AutoModerationRule,
   type Emoji,
   type Entitlement,
   type Guild,
   type Message,
+  type StageInstance,
   type Subscription,
   User,
   type VoiceState,
@@ -132,6 +134,18 @@ export class Client extends ClientEventHandler {
   readonly #voiceStates: Store<Snowflake, VoiceState>;
 
   /**
+   * Cache store for AutoModerationRule entities
+   * @private
+   */
+  readonly #autoModerationRules: Store<Snowflake, AutoModerationRule>;
+
+  /**
+   * Cache store for StageInstance entities
+   * @private
+   */
+  readonly #stageInstances: Store<Snowflake, StageInstance>;
+
+  /**
    * The current authenticated user (bot user)
    * @private
    */
@@ -214,6 +228,16 @@ export class Client extends ClientEventHandler {
       maxSize: this.#options.cache.voiceStateLimit,
       ttl: this.#options.cache.ttl,
     });
+
+    this.#autoModerationRules = new Store<Snowflake, AutoModerationRule>(null, {
+      maxSize: this.#options.cache.autoModerationRuleLimit,
+      ttl: this.#options.cache.ttl,
+    });
+
+    this.#stageInstances = new Store<Snowflake, StageInstance>(null, {
+      maxSize: this.#options.cache.stageInstanceLimit,
+      ttl: this.#options.cache.ttl,
+    });
   }
 
   /**
@@ -291,6 +315,20 @@ export class Client extends ClientEventHandler {
    */
   get voiceStates(): Store<Snowflake, VoiceState> {
     return this.#voiceStates;
+  }
+
+  /**
+   * Cache store for AutoModerationRule entities
+   */
+  get autoModerationRules(): Store<Snowflake, AutoModerationRule> {
+    return this.#autoModerationRules;
+  }
+
+  /**
+   * Cache store for StageInstance entities
+   */
+  get stageInstances(): Store<Snowflake, StageInstance> {
+    return this.#stageInstances;
   }
 
   /**

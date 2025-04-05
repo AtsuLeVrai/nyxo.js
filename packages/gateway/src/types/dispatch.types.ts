@@ -168,8 +168,7 @@ export interface SoundboardSoundsEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sounds-update-guild-soundboard-sounds-update-event-fields}
  */
-export interface GuildSoundboardSoundsUpdateEntity
-  extends SoundboardSoundsEntity {}
+export type GuildSoundboardSoundsUpdateEntity = SoundboardSoundsEntity;
 
 /**
  * Guild Soundboard Sound Delete Event
@@ -208,8 +207,8 @@ export interface GuildScheduledEventUserRemoveEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-user-add-guild-scheduled-event-user-add-event-fields}
  */
-export interface GuildScheduledEventUserAddEntity
-  extends GuildScheduledEventUserRemoveEntity {}
+export type GuildScheduledEventUserAddEntity =
+  GuildScheduledEventUserRemoveEntity;
 
 /**
  * Activity Buttons Entity
@@ -485,7 +484,7 @@ export interface GuildRoleUpdateEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-create-guild-role-create-event-fields}
  */
-export interface GuildRoleCreateEntity extends GuildRoleUpdateEntity {}
+export type GuildRoleCreateEntity = GuildRoleUpdateEntity;
 
 /**
  * Guild Members Chunk
@@ -780,7 +779,7 @@ export interface IntegrationUpdateEntity extends IntegrationEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-create-integration-create-event-additional-fields}
  */
-export interface IntegrationCreateEntity extends IntegrationUpdateEntity {}
+export type IntegrationCreateEntity = IntegrationUpdateEntity;
 
 /**
  * Invite Delete
@@ -900,11 +899,7 @@ export interface MessageReactionRemoveEntity {
   guild_id?: Snowflake;
 
   /** Emoji used to react */
-  emoji: {
-    id: Snowflake | null;
-    name: string;
-    animated?: boolean;
-  };
+  emoji: Pick<EmojiEntity, "id" | "name" | "animated">;
 
   /** true if this was a super-reaction */
   burst: boolean;
@@ -936,11 +931,7 @@ export interface MessageReactionAddEntity {
   member?: GuildMemberEntity;
 
   /** Emoji used to react */
-  emoji: {
-    id: Snowflake | null;
-    name: string;
-    animated?: boolean;
-  };
+  emoji: Pick<EmojiEntity, "id" | "name" | "animated">;
 
   /** ID of the user who authored the message which was reacted to */
   message_author_id?: Snowflake;
@@ -1035,7 +1026,7 @@ export interface MessagePollVoteRemoveEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-add-message-poll-vote-add-fields}
  */
-export interface MessagePollVoteAddEntity extends MessagePollVoteRemoveEntity {}
+export type MessagePollVoteAddEntity = MessagePollVoteRemoveEntity;
 
 /**
  * Ready

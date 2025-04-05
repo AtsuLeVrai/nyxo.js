@@ -117,7 +117,7 @@ async function buildBundles() {
         platform: "node",
         target: "esnext",
         sourcemap: false,
-        minify: true,
+        minify: false,
         external: external,
       };
 

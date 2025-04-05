@@ -3,6 +3,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
   Client,
   EmbedBuilder,
   GatewayIntentsBits,
@@ -67,18 +68,6 @@ client.on("rateLimitUpdate", (event) => {
 
 client.on("rateLimitExpire", (event) => {
   console.log("[REST] Rate limit expire:", event);
-});
-
-client.on("queueComplete", (event) => {
-  console.log("[REST] Queue complete:", event);
-});
-
-client.on("queueTimeout", (event) => {
-  console.log("[REST] Queue timeout:", event);
-});
-
-client.on("queueReject", (event) => {
-  console.log("[REST] Queue reject:", event);
 });
 
 client.on("retry", (event) => {
@@ -160,8 +149,6 @@ client.on("messageCreate", async (message) => {
       .setDescription("Test")
       .setColor(0x57f287)
       .setFooter({ text: "Test" })
-      .setImage({ url: "https://example.com/image.png" })
-      .setThumbnail({ url: "https://example.com/thumbnail.png" })
       .setTimestamp()
       .addFields(
         { name: "Field 1", value: "Value 1" },
@@ -219,6 +206,19 @@ client.on("interactionCreate", async (interaction) => {
     } catch (error) {
       console.error("Failed to respond to interaction", error);
     }
+  }
+});
+
+client.on("channelCreate", (channel) => {
+  console.log("[CHANNEL] Channel created:", channel);
+
+  if (channel.type === ChannelType.GuildText) {
+    console.log(
+      "[CHANNEL] Channel is a text channel:",
+      channel,
+      "parent:",
+      channel.parentId,
+    );
   }
 });
 

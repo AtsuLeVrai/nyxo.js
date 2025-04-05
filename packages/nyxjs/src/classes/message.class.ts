@@ -7,6 +7,7 @@ import {
   type AttachmentEntity,
   type ChannelMentionEntity,
   type EmbedEntity,
+  type EmojiEntity,
   type GuildMemberEntity,
   type InteractionResolvedDataEntity,
   type MessageActivityEntity,
@@ -966,11 +967,7 @@ export class MessageReaction extends BaseClass<MessageReactionAddEntity> {
   /**
    * Emoji used to react
    */
-  get emoji(): {
-    id: Snowflake | null;
-    name: string;
-    animated?: boolean;
-  } {
+  get emoji(): Pick<EmojiEntity, "id" | "name" | "animated"> {
     return this.data.emoji;
   }
 
@@ -1082,10 +1079,11 @@ export class MessageReaction extends BaseClass<MessageReactionAddEntity> {
    * await otherMessage.react(emoji);
    * ```
    */
-  getFormattedEmoji(): string {
+  getFormattedEmoji(): string | null {
     if (this.emoji.id) {
       return `${this.emoji.name}:${this.emoji.id}`;
     }
+
     return this.emoji.name;
   }
 

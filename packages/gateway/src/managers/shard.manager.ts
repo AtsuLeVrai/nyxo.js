@@ -1,5 +1,4 @@
-import { setTimeout } from "node:timers/promises";
-import type { Snowflake } from "@nyxjs/core";
+import { type Snowflake, sleep } from "@nyxjs/core";
 import type { Gateway } from "../core/index.js";
 import type { ShardOptions } from "../options/index.js";
 
@@ -645,7 +644,7 @@ export class ShardManager {
 
     // Wait for the rate limit to reset
     if (delay > 0) {
-      await setTimeout(delay);
+      await sleep(delay);
     }
 
     this.#resetExpiredRateLimits();
@@ -963,7 +962,7 @@ export class ShardManager {
       const currentIndex = orderedBuckets.findIndex(([id]) => id === bucketId);
 
       if (currentIndex < orderedBuckets.length - 1) {
-        await setTimeout(this.#options.spawnDelay);
+        await sleep(this.#options.spawnDelay);
       }
     }
   }

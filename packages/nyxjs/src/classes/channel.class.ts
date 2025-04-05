@@ -2399,6 +2399,7 @@ export type AnyThreadChannel =
 export type AnyChannel =
   | TextChannel
   | DmChannel
+  | GroupDmChannel
   | VoiceChannel
   | CategoryChannel
   | AnnouncementChannel

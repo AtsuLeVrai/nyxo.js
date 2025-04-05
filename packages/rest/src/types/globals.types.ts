@@ -160,41 +160,6 @@ export interface RateLimitExpireEvent extends EventBase {
 }
 
 /**
- * Base properties for queue item events
- */
-export interface QueueItemEventBase extends HttpEventBase {
-  /** Time spent in queue in milliseconds */
-  queueTime: number;
-
-  /** Priority level of this item */
-  priority: number;
-}
-
-/**
- * Event emitted when a queued request completes
- */
-export interface QueueCompleteEvent extends QueueItemEventBase {
-  /** Whether the request succeeded */
-  success: boolean;
-}
-
-/**
- * Event emitted when a queued request times out
- */
-export interface QueueTimeoutEvent extends QueueItemEventBase {}
-
-/**
- * Event emitted when a request is rejected (queue full)
- */
-export interface QueueRejectEvent extends HttpEventBase {
-  /** Reason for the rejection */
-  reason: string;
-
-  /** Priority level that would have been assigned */
-  priority: number;
-}
-
-/**
  * Event emitted when a request retry is attempted
  */
 export interface RetryEvent extends HttpEventBase {
@@ -227,11 +192,6 @@ export interface RestEvents {
   rateLimitHit: [event: RateLimitHitEvent];
   rateLimitUpdate: [event: RateLimitUpdateEvent];
   rateLimitExpire: [event: RateLimitExpireEvent];
-
-  /** Queue events */
-  queueComplete: [event: QueueCompleteEvent];
-  queueTimeout: [event: QueueTimeoutEvent];
-  queueReject: [event: QueueRejectEvent];
 
   /** Retry events */
   retry: [event: RetryEvent];

@@ -1,5 +1,4 @@
-import { setTimeout as sleep } from "node:timers/promises";
-import type { UnavailableGuildEntity } from "@nyxjs/core";
+import { type UnavailableGuildEntity, sleep } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";

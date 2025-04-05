@@ -4,11 +4,7 @@ import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError, type JsonErrorResponse } from "../errors/index.js";
 import { FileHandler, HeaderHandler } from "../handlers/index.js";
-import {
-  QueueManager,
-  RateLimitManager,
-  RetryManager,
-} from "../managers/index.js";
+import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
   ApplicationCommandRouter,
@@ -85,9 +81,6 @@ export class Rest extends EventEmitter<RestEvents> {
   /** Retry handler */
   readonly #retry: RetryManager;
 
-  /** Queue handler */
-  readonly #queue: QueueManager;
-
   /**
    * Creates a new REST client
    *
@@ -106,7 +99,6 @@ export class Rest extends EventEmitter<RestEvents> {
     this.#pool = new Pool(this.#options.baseUrl, REST_CONSTANTS.POOL_CONFIG);
     this.#rateLimiter = new RateLimitManager(this);
     this.#retry = new RetryManager(this, this.#options.retry);
-    this.#queue = new QueueManager(this, this.#options.queue);
   }
 
   /**
@@ -135,13 +127,6 @@ export class Rest extends EventEmitter<RestEvents> {
    */
   get rateLimiter(): RateLimitManager {
     return this.#rateLimiter;
-  }
-
-  /**
-   * Access to the Discord API base URL
-   */
-  get queue(): QueueManager {
-    return this.#queue;
   }
 
   /**
@@ -327,39 +312,35 @@ export class Rest extends EventEmitter<RestEvents> {
    * @throws ApiError for failed requests
    */
   request<T>(options: ApiRequestOptions): Promise<T> {
+    // Generate a unique request ID for tracking
     const requestId = crypto.randomUUID();
 
-    // Wrap the actual request in a function that can be queued
-    const executeRequest = (): Promise<T> =>
-      this.#retry.execute(
-        async () => {
-          // Check rate limits before making the request
-          this.#rateLimiter.enforceRateLimit(
-            options.path,
-            options.method,
-            requestId,
-          );
+    // Retry the request if it fails
+    return this.#retry.execute(
+      async () => {
+        // Check rate limits before making the request
+        this.#rateLimiter.enforceRateLimit(
+          options.path,
+          options.method,
+          requestId,
+        );
 
-          // Make the actual HTTP request
-          const response = await this.#makeHttpRequest<T>(options, requestId);
+        // Make the actual HTTP request
+        const response = await this.#makeHttpRequest<T>(options, requestId);
 
-          // Update rate limit information
-          this.#rateLimiter.updateRateLimit(
-            options.path,
-            options.method,
-            response.headers,
-            response.statusCode,
-            requestId,
-          );
+        // Update rate limit information
+        this.#rateLimiter.updateRateLimit(
+          options.path,
+          options.method,
+          response.headers,
+          response.statusCode,
+          requestId,
+        );
 
-          return response.data;
-        },
-        { method: options.method, path: options.path },
-        requestId,
-      );
-
-    // Add to queue (or execute immediately if queue is disabled)
-    return this.#queue.enqueue<T>(options, requestId, executeRequest);
+        return response.data;
+      },
+      { method: options.method, path: options.path, requestId },
+    );
   }
 
   /**
@@ -437,7 +418,6 @@ export class Rest extends EventEmitter<RestEvents> {
    */
   async destroy(): Promise<void> {
     await this.#pool.close();
-    this.#queue.clear();
     this.#rateLimiter.destroy();
     this.removeAllListeners();
   }

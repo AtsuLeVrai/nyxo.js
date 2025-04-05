@@ -1,4 +1,4 @@
-import { setTimeout } from "node:timers/promises";
+import { sleep } from "@nyxjs/core";
 import type { Dispatcher } from "undici";
 import type { Rest } from "../core/index.js";
 import { ApiError, RateLimitError } from "../errors/index.js";
@@ -31,6 +31,8 @@ export interface RetryContext {
   method: Dispatcher.HttpMethod;
   /** The API path being requested */
   path: string;
+  /** The request ID for tracking */
+  requestId: string;
 }
 
 /**
@@ -46,25 +48,11 @@ export interface RetryDecision {
 }
 
 /**
- * State of the current retry operation
- */
-export interface RetryState {
-  /** Number of retry attempts so far */
-  retryCount: number;
-  /** Unique identifier for the request */
-  requestId?: string;
-  /** Time to wait before retrying from the last error */
-  retryAfter?: number;
-}
-
-/**
  * Manages retry logic for failed API requests
  */
 export class RetryManager {
-  /** Current retry state */
-  #state: RetryState = {
-    retryCount: 0,
-  };
+  /** State of the retry operation */
+  #retryCount = 0;
 
   /** Reference to the Rest client */
   readonly #rest: Rest;
@@ -84,32 +72,17 @@ export class RetryManager {
   }
 
   /**
-   * Current state of the retry operation
-   */
-  get state(): RetryState {
-    return this.#state;
-  }
-
-  /**
    * Executes an operation with automatic retries
    *
    * @param operation - The async operation to execute
    * @param context - Context information about the operation
-   * @param requestId - Unique ID for the operation
    * @returns The result of the operation
    * @throws If the operation fails after all retry attempts
    */
   async execute<T>(
     operation: () => Promise<T>,
     context: RetryContext,
-    requestId: string,
   ): Promise<T> {
-    // Reset state at the beginning of a new execution
-    this.#state = {
-      retryCount: 0,
-      requestId,
-    };
-
     while (true) {
       try {
         return await operation();
@@ -120,8 +93,8 @@ export class RetryManager {
           throw error;
         }
 
-        await setTimeout(decision.timeout);
-        this.#state.retryCount++;
+        await sleep(decision.timeout);
+        this.#retryCount++;
       }
     }
   }
@@ -135,7 +108,7 @@ export class RetryManager {
    */
   evaluateError(error: unknown, context: RetryContext): RetryDecision {
     // Check if we've exceeded maximum retries
-    if (this.#state.retryCount >= this.#options.maxRetries) {
+    if (this.#retryCount >= this.#options.maxRetries) {
       return { shouldRetry: false, timeout: 0 };
     }
 
@@ -170,7 +143,7 @@ export class RetryManager {
    */
   calculateTimeout(baseTimeout?: number): number {
     const base = baseTimeout ?? this.#options.minTimeout;
-    const factor = this.#options.timeoutFactor ** this.#state.retryCount;
+    const factor = this.#options.timeoutFactor ** this.#retryCount;
     const timeout = base * factor;
 
     // Add jitter to prevent thundering herd problems
@@ -214,8 +187,6 @@ export class RetryManager {
     context: RetryContext,
   ): RetryDecision {
     const timeout = this.calculateTimeout(error.retryAfter * 1000);
-    this.#state.retryAfter = error.retryAfter;
-
     this.#emitRetryEvent(error, timeout, context, RetryReason.RateLimited);
 
     return {
@@ -297,9 +268,9 @@ export class RetryManager {
   ): void {
     const event: RetryEvent = {
       timestamp: new Date().toISOString(),
-      requestId: this.#state.requestId ?? "",
+      requestId: context.requestId ?? "",
       error,
-      attempt: this.#state.retryCount + 1,
+      attempt: this.#retryCount + 1,
       maxAttempts: this.#options.maxRetries,
       delayMs: timeout,
       path: context.path,
