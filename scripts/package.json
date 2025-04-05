@@ -15,10 +15,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@microsoft/api-extractor": "^7.52.2",
+    "@microsoft/api-extractor": "^7.52.3",
     "chalk": "^5.4.1",
     "esbuild": "^0.25.2",
     "figures": "^6.1.0",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.3"
   }
 }

@@ -2398,6 +2398,7 @@ export type AnyThreadChannel =
  */
 export type AnyChannel =
   | TextChannel
+  | DmChannel
   | VoiceChannel
   | CategoryChannel
   | AnnouncementChannel

@@ -53,14 +53,14 @@
     "zod-validation-error": "^3.4.0"
   },
   "optionalDependencies": {
-    "sharp": "^0.33.5"
+    "sharp": "^0.34.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.14.0",
     "cross-env": "^7.0.3",
-    "typescript": "^5.8.2",
+    "typescript": "^5.8.3",
     "undici-types": "^7.7.0"
   }
 }

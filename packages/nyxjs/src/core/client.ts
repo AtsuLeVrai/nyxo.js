@@ -8,7 +8,7 @@ import { Rest } from "@nyxjs/rest";
 import { Store } from "@nyxjs/store";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { type AnyChannel, User } from "../classes/index.js";
+import { type AnyChannel, type Emoji, User } from "../classes/index.js";
 import {
   GatewayKeyofEventMappings,
   RestKeyofEventMappings,
@@ -87,6 +87,12 @@ export class Client extends ClientEventHandler {
   readonly #channels: Store<Snowflake, AnyChannel>;
 
   /**
+   * Cache store for Emoji entities
+   * @private
+   */
+  readonly #emojis: Store<Snowflake, Emoji>;
+
+  /**
    * Cache store for Guild entities
    * @private
    */
@@ -150,6 +156,11 @@ export class Client extends ClientEventHandler {
       maxSize: this.#options.cache.guildLimit,
       ttl: this.#options.cache.ttl,
     });
+
+    this.#emojis = new Store<Snowflake, Emoji>(null, {
+      maxSize: this.#options.cache.emojiLimit,
+      ttl: this.#options.cache.ttl,
+    });
   }
 
   /**
@@ -192,6 +203,13 @@ export class Client extends ClientEventHandler {
    */
   get guilds(): Store<Snowflake, GuildEntity> {
     return this.#guilds;
+  }
+
+  /**
+   * Cache store for Emoji entities
+   */
+  get emojis(): Store<Snowflake, Emoji> {
+    return this.#emojis;
   }
 
   /**

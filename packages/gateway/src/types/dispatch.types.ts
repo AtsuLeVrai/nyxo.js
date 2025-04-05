@@ -1065,10 +1065,7 @@ export interface ReadyEntity {
   shard?: [number, number];
 
   /** Contains id and flags */
-  application: {
-    id: string;
-    flags: number;
-  };
+  application: Pick<ApplicationEntity, "id" | "flags">;
 }
 
 /**

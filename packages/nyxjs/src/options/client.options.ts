@@ -68,6 +68,16 @@ export const ClientCacheOptions = z
      * @default 1000
      */
     guildLimit: z.number().int().positive().default(1000),
+
+    /**
+     * Maximum number of emoji objects to store in the cache.
+     * When this limit is reached, least recently used emojis will be evicted.
+     *
+     * Higher values increase memory usage but reduce API calls.
+     *
+     * @default 1000
+     */
+    emojiLimit: z.number().int().positive().default(1000),
   })
   .readonly();
 

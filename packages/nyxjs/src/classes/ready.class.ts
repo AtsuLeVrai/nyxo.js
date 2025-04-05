@@ -62,7 +62,7 @@ export class Ready extends BaseClass<ReadyEntity> {
    */
   get applicationFlags(): BitFieldManager<ApplicationFlags> {
     return new BitFieldManager<ApplicationFlags>(
-      BigInt(this.data.application.flags),
+      BigInt(this.data.application.flags ?? 0n),
     );
   }
 
@@ -97,7 +97,7 @@ export class Ready extends BaseClass<ReadyEntity> {
    * @returns Whether the bot is sharded
    */
   isSharded(): boolean {
-    return this.data.shard !== undefined;
+    return Boolean(this.data.shard);
   }
 
   /**
@@ -139,11 +139,31 @@ export class Ready extends BaseClass<ReadyEntity> {
   }
 
   /**
-   * Returns a string representation of this ready event
+   * Checks if the bot user is verified
    *
-   * @returns A string representation of this ready event
+   * @returns Whether the bot user is verified
    */
-  override toString(): string {
-    return `Ready(User: ${this.user.username}, Guilds: ${this.guildCount})`;
+  isVerified(): boolean {
+    return Boolean(this.user.verified);
+  }
+
+  /**
+   * Gets a guild by its ID from the initially available guilds
+   *
+   * @param id - The ID of the guild to find
+   * @returns The unavailable guild entity or undefined if not found
+   */
+  getGuild(id: string): UnavailableGuildEntity | null {
+    return this.guilds.find((guild) => guild.id === id) ?? null;
+  }
+
+  /**
+   * Checks if a guild with the specified ID is in the initial guild list
+   *
+   * @param id - The ID of the guild to check for
+   * @returns Whether the guild is in the initial list
+   */
+  hasGuild(id: string): boolean {
+    return this.guilds.some((guild) => guild.id === id);
   }
 }
