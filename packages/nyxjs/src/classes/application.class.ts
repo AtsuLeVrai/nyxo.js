@@ -6,7 +6,6 @@ import {
   type ApplicationIntegrationTypeConfigurationEntity,
   BitFieldManager,
   type InstallParamsEntity,
-  type OAuth2Scope,
   type Snowflake,
   type UserEntity,
 } from "@nyxjs/core";
@@ -16,56 +15,6 @@ import { BaseClass } from "../bases/index.js";
 import { Guild } from "./guild.class.js";
 import { Team } from "./team.class.js";
 import { User } from "./user.class.js";
-
-/**
- * Represents installation parameters for an application.
- *
- * @see {@link https://discord.com/developers/docs/resources/application#install-params-structure}
- */
-export class InstallParams extends BaseClass<InstallParamsEntity> {
-  /**
-   * Scopes to add the application to the server with
-   */
-  get scopes(): OAuth2Scope[] {
-    return this.data.scopes;
-  }
-
-  /**
-   * Permissions to request for the bot role
-   */
-  get permissions(): string {
-    return this.data.permissions;
-  }
-
-  /**
-   * Whether the bot requests administrator permissions
-   */
-  get requestsAdministrator(): boolean {
-    // Administrator permission is 0x8
-    return (BigInt(this.permissions) & BigInt(0x8)) === BigInt(0x8);
-  }
-
-  /**
-   * The total number of scopes requested
-   */
-  get scopeCount(): number {
-    return this.scopes.length;
-  }
-
-  /**
-   * Whether the application requests the bot scope
-   */
-  get includesBot(): boolean {
-    return this.scopes.includes("bot" as OAuth2Scope);
-  }
-
-  /**
-   * Whether the application requests the applications.commands scope
-   */
-  get includesCommands(): boolean {
-    return this.scopes.includes("applications.commands" as OAuth2Scope);
-  }
-}
 
 /**
  * Represents a Discord Application.
@@ -302,12 +251,8 @@ export class Application extends BaseClass<ApplicationEntity> {
   /**
    * Settings for the app's default in-app authorization link, if enabled
    */
-  get installParams(): InstallParams | undefined {
-    if (!this.data.install_params) {
-      return undefined;
-    }
-
-    return new InstallParams(this.client, this.data.install_params);
+  get installParams(): InstallParamsEntity | undefined {
+    return this.data.install_params;
   }
 
   /**

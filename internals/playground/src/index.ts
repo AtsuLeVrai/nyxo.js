@@ -131,9 +131,8 @@ client.on("error", (error) => {
   console.error("[GATEWAY] Error", error);
 });
 
-client.on("dispatch", (_event, _data) => {
-  // This event is emitted when a dispatch event is received from the gateway
-  // console.log("[GATEWAY] Event dispatched", event, data);
+client.on("dispatch", (event, data) => {
+  console.log("[GATEWAY] Event dispatched", event, data);
 });
 
 client.on("ready", (ready) => {

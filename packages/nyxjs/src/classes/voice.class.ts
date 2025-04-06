@@ -8,6 +8,7 @@ import {
   type GuildMemberAddEntity,
   VoiceChannelEffectSendAnimationType,
   type VoiceChannelEffectSendEntity,
+  type VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import { BaseClass } from "../bases/index.js";
 import { GuildMember } from "./guild.class.js";
@@ -309,6 +310,35 @@ export class VoiceState extends BaseClass<VoiceStateEntity> {
     const now = Date.now();
 
     return requestTime >= now;
+  }
+}
+
+/**
+ * Represents a voice server update event.
+ * Sent when the voice server changes for a guild.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/gateway#voice-server-update}
+ */
+export class VoiceServer extends BaseClass<VoiceServerUpdateEntity> {
+  /**
+   * The ID of the guild this voice server is for
+   */
+  get token(): string {
+    return this.data.token;
+  }
+
+  /**
+   * The ID of the guild this voice server is for
+   */
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
+  /**
+   * The endpoint for the voice server
+   */
+  get endpoint(): string | null {
+    return this.data.endpoint;
   }
 }
 

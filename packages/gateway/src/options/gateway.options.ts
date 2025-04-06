@@ -62,9 +62,7 @@ export const GatewayOptions = z.object({
       z
         .nativeEnum(GatewayIntentsBits)
         .array()
-        .transform((value) => {
-          return BitFieldManager.combine(value).toNumber();
-        }),
+        .transform((value) => BitFieldManager.combine(value).toNumber()),
       z.number().int().positive(),
     ])
     .describe("Gateway intents to request"),

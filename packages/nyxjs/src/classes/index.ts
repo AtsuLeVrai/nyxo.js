@@ -1,7 +1,6 @@
 export * from "./application.class.js";
 export * from "./auto-moderation.class.js";
 export * from "./channel.class.js";
-export * from "./channel-pins.class.js";
 export * from "./emoji.class.js";
 export * from "./entitlement.class.js";
 export * from "./guild.class.js";

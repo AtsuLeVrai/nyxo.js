@@ -1,40 +1,47 @@
 import type { GuildApplicationCommandPermissionEntity } from "@nyxjs/core";
-import type { GatewayEvents, PresenceEntity } from "@nyxjs/gateway";
-import type { RestEvents } from "@nyxjs/rest";
 import type {
-  AnyChannel,
-  AnyInteraction,
-  AnyThreadChannel,
-  AutoModerationActionExecution,
-  AutoModerationRule,
-  ChannelPins,
-  Emoji,
-  Entitlement,
-  Guild,
-  GuildAuditLogEntry,
-  GuildBan,
-  GuildMember,
-  GuildMembersChunk,
-  GuildSoundboardSoundDelete,
-  Integration,
-  Invite,
-  Message,
-  MessagePollVote,
-  Ready,
-  Role,
-  SoundboardSound,
-  SoundboardSounds,
-  StageInstance,
-  Sticker,
-  Subscription,
-  ThreadListSync,
-  ThreadMember,
-  ThreadMembers,
-  Typing,
-  User,
-  VoiceChannelEffectSend,
-  VoiceState,
-  Webhook,
+  GatewayEvents,
+  GuildEmojisUpdateEntity,
+  GuildMembersChunkEntity,
+  GuildStickersUpdateEntity,
+  PresenceEntity,
+} from "@nyxjs/gateway";
+import type { RestEvents } from "@nyxjs/rest";
+import {
+  type AnyChannel,
+  type AnyInteraction,
+  type AnyThreadChannel,
+  type AutoModerationActionExecution,
+  type AutoModerationRule,
+  type Emoji,
+  type Entitlement,
+  type Guild,
+  type GuildAuditLogEntry,
+  type GuildBan,
+  type GuildMember,
+  GuildScheduledEvent,
+  GuildScheduledEventUser,
+  type Integration,
+  type Invite,
+  type Message,
+  type MessagePollVote,
+  MessageReaction,
+  type Ready,
+  type Role,
+  type SoundboardSound,
+  type StageInstance,
+  type Sticker,
+  type Subscription,
+  TextChannel,
+  type ThreadListSync,
+  type ThreadMember,
+  type ThreadMembers,
+  type Typing,
+  type User,
+  type VoiceChannelEffectSend,
+  VoiceServer,
+  type VoiceState,
+  type Webhook,
 } from "../classes/index.js";
 
 /**
@@ -114,7 +121,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is pinned or unpinned in a channel.
    * @param pinUpdate Information about the pin update
    */
-  channelPinsUpdate: [pinUpdate: ChannelPins];
+  channelPinsUpdate: [pinUpdate: TextChannel | null];
 
   /**
    * Emitted when a new thread is created or when the client is added to a private thread.
@@ -224,13 +231,9 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
 
   /**
    * Emitted when a guild's emojis are updated (added, removed, or modified).
-   * @param oldEmojis The guild's emojis before the update
-   * @param newEmojis The guild's emojis after the update
+   * @param emojis Information about the updated emojis
    */
-  // guildEmojisUpdate: [
-  //   oldEmojis: GuildEmojisUpdate | null,
-  //   newEmojis: GuildEmojisUpdate,
-  // ];
+  guildEmojisUpdate: [emojis: GuildEmojisUpdateEntity];
 
   /**
    * Emitted when a new emoji is created in a guild.
@@ -253,13 +256,9 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
 
   /**
    * Emitted when a guild's stickers are updated (added, removed, or modified).
-   * @param oldStickers The guild's stickers before the update
-   * @param newStickers The guild's stickers after the update
+   * @param stickers Information about the updated stickers
    */
-  // guildStickersUpdate: [
-  //   oldStickers: GuildStickersUpdate | null,
-  //   newStickers: GuildStickersUpdate,
-  // ];
+  guildStickersUpdate: [stickers: GuildStickersUpdateEntity];
 
   /**
    * Emitted when a sticker is created in a guild.
@@ -284,7 +283,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a guild's integrations are updated.
    * @param integrations Information about the updated integrations
    */
-  guildIntegrationsUpdate: [integrations: Integration];
+  // guildIntegrationsUpdate: [integrations: Integration];
 
   /**
    * Emitted when a new user joins a guild.
@@ -309,7 +308,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted in response to a Guild Request Members request.
    * @param members The chunk of requested guild members
    */
-  guildMembersChunk: [members: GuildMembersChunk];
+  guildMembersChunk: [members: GuildMembersChunkEntity];
 
   /**
    * Emitted when a role is created in a guild.
@@ -334,32 +333,35 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a scheduled event is created in a guild.
    * @param event The newly created scheduled event
    */
-  guildScheduledEventCreate: [event: unknown];
+  guildScheduledEventCreate: [event: GuildScheduledEvent];
 
   /**
    * Emitted when a scheduled event is updated in a guild.
    * @param oldEvent The scheduled event before the update
    * @param newEvent The scheduled event after the update
    */
-  guildScheduledEventUpdate: [oldEvent: unknown | null, newEvent: unknown];
+  guildScheduledEventUpdate: [
+    oldEvent: GuildScheduledEvent | null,
+    newEvent: GuildScheduledEvent,
+  ];
 
   /**
    * Emitted when a scheduled event is deleted from a guild.
    * @param event The deleted scheduled event
    */
-  guildScheduledEventDelete: [event: unknown];
+  guildScheduledEventDelete: [event: GuildScheduledEvent];
 
   /**
    * Emitted when a user subscribes to a guild scheduled event.
    * @param subscription Information about the subscription
    */
-  guildScheduledEventUserAdd: [subscription: unknown];
+  guildScheduledEventUserAdd: [subscription: GuildScheduledEventUser];
 
   /**
    * Emitted when a user unsubscribes from a guild scheduled event.
    * @param subscription Information about the removed subscription
    */
-  guildScheduledEventUserRemove: [subscription: unknown];
+  guildScheduledEventUserRemove: [subscription: GuildScheduledEventUser];
 
   /**
    * Emitted when a soundboard sound is created in a guild.
@@ -381,19 +383,19 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a soundboard sound is deleted from a guild.
    * @param sound The deleted soundboard sound
    */
-  guildSoundboardSoundDelete: [sound: GuildSoundboardSoundDelete];
+  guildSoundboardSoundDelete: [sound: SoundboardSound];
 
   /**
    * Emitted when a guild's soundboard sounds are updated as a whole.
    * @param sounds Information about the updated soundboard sounds
    */
-  guildSoundboardSoundsUpdate: [sounds: SoundboardSounds];
+  guildSoundboardSoundsUpdate: [sounds: SoundboardSound[]];
 
   /**
    * Emitted in response to a Request Soundboard Sounds request.
    * @param sounds The requested soundboard sounds
    */
-  soundboardSounds: [sounds: SoundboardSounds];
+  soundboardSounds: [sounds: SoundboardSound[]];
 
   /**
    * Emitted when a guild integration is created.
@@ -452,31 +454,31 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when multiple messages are deleted at once (bulk delete).
    * @param messages The deleted messages
    */
-  messageDeleteBulk: [messages: unknown];
+  messageDeleteBulk: [messages: Message[]];
 
   /**
    * Emitted when a user adds a reaction to a message.
    * @param reaction Information about the added reaction
    */
-  messageReactionAdd: [reaction: unknown];
+  messageReactionAdd: [reaction: MessageReaction];
 
   /**
    * Emitted when a user removes a reaction from a message.
    * @param reaction Information about the removed reaction
    */
-  messageReactionRemove: [reaction: unknown];
+  messageReactionRemove: [reaction: MessageReaction];
 
   /**
    * Emitted when all reactions are removed from a message.
    * @param removal Information about the removal
    */
-  messageReactionRemoveAll: [removal: unknown];
+  messageReactionRemoveAll: [removal: MessageReaction];
 
   /**
    * Emitted when all reactions of a specific emoji are removed from a message.
    * @param removal Information about the emoji reaction removal
    */
-  messageReactionRemoveEmoji: [removal: unknown];
+  messageReactionRemoveEmoji: [removal: MessageReaction];
 
   /**
    * Emitted when a user's presence (status, activity) is updated.
@@ -519,7 +521,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This usually happens when a guild becomes available for voice connections.
    * @param server Information about the voice server update
    */
-  voiceServerUpdate: [server: unknown];
+  voiceServerUpdate: [oldServer: VoiceServer | null, newServer: VoiceServer];
 
   /**
    * Emitted when a webhook is created, updated, or deleted in a guild channel.

@@ -216,6 +216,36 @@ export const ClientCacheOptions = z
      * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
     stickers: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the presences cache.
+     *
+     * This cache stores Presence objects which represent the online status and activity of users.
+     * Only relevant for bots that interact with user presence updates.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    presences: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the integrations cache.
+     *
+     * This cache stores Integration objects which represent third-party integrations in guilds.
+     * Only relevant for bots that interact with integrations.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    integrations: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the soundboards cache.
+     *
+     * This cache stores Soundboard objects which represent soundboard sounds in guilds.
+     * Only relevant for bots that interact with soundboards.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    soundboards: ClientCacheEntityOptions.default({}),
   })
   .readonly();
 
@@ -229,13 +259,13 @@ export type ClientCacheOptions = z.infer<typeof ClientCacheOptions>;
  *
  * @example
  * ```ts
- * const client = new NyxClient({
+ * const client = new Client({
  *   token: "your-bot-token",
  *   cache: {
  *     enabled: true,
  *     ttl: 1800000 // 30 minutes
  *   },
- *   intents: [Intents.GUILDS, Intents.GUILD_MESSAGES]
+ *   intents: [GatewayIntentsBits.Guilds, GatewayIntentsBits.GuildMessages]
  * });
  * ```
  */

@@ -185,7 +185,7 @@ export class Emoji extends BaseClass<EmojiEntity> {
 
     if (!options.force) {
       // Check cache for the emoji if available
-      const cachedEmoji = this.client.emojis?.get(this.id as Snowflake);
+      const cachedEmoji = this.client.cache.emojis?.get(this.id as Snowflake);
       if (cachedEmoji) {
         return cachedEmoji;
       }
@@ -219,7 +219,7 @@ export class Emoji extends BaseClass<EmojiEntity> {
 
     if (!options.force) {
       // Check cache for the emoji if available
-      const cachedEmoji = this.client.emojis?.get(this.id);
+      const cachedEmoji = this.client.cache.emojis?.get(this.id);
       if (cachedEmoji) {
         return cachedEmoji;
       }
@@ -325,7 +325,7 @@ export class Emoji extends BaseClass<EmojiEntity> {
     );
 
     // Remove from cache if applicable
-    this.client.emojis?.delete(this.id);
+    this.client.cache.emojis?.delete(this.id);
   }
 
   /**
@@ -352,7 +352,7 @@ export class Emoji extends BaseClass<EmojiEntity> {
     );
 
     // Remove from cache if applicable
-    this.client.emojis?.delete(this.id as Snowflake);
+    this.client.cache.emojis?.delete(this.id as Snowflake);
   }
 
   /**

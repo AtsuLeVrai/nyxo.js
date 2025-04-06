@@ -768,7 +768,8 @@ export interface IntegrationDeleteEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-update-integration-update-event-additional-fields}
  */
-export interface IntegrationUpdateEntity extends IntegrationEntity {
+export interface IntegrationUpdateEntity
+  extends Omit<IntegrationEntity, "user"> {
   /** ID of the guild */
   guild_id: Snowflake;
 }

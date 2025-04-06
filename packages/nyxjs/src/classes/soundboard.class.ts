@@ -1,8 +1,4 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxjs/core";
-import type {
-  GuildSoundboardSoundDeleteEntity,
-  SoundboardSoundsEntity,
-} from "@nyxjs/gateway";
 import { BaseClass } from "../bases/index.js";
 import { User } from "./user.class.js";
 
@@ -95,58 +91,5 @@ export class SoundboardSound extends BaseClass<SoundboardSoundEntity> {
    */
   get hasUser(): boolean {
     return Boolean(this.data.user);
-  }
-}
-
-/**
- * Represents a collection of soundboard sounds for a guild.
- */
-export class SoundboardSounds extends BaseClass<SoundboardSoundsEntity> {
-  /**
-   * The guild's soundboard sounds
-   */
-  get soundboardSounds(): SoundboardSoundEntity[] {
-    return this.data.soundboard_sounds;
-  }
-
-  /**
-   * ID of the guild
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * The number of sounds in the collection
-   */
-  get count(): number {
-    return this.data.soundboard_sounds.length;
-  }
-
-  /**
-   * Whether the guild has any sounds
-   */
-  get hasSounds(): boolean {
-    return this.data.soundboard_sounds.length > 0;
-  }
-}
-
-/**
- * Represents a guild soundboard sound delete event.
- * Sent when a guild soundboard sound is deleted.
- */
-export class GuildSoundboardSoundDelete extends BaseClass<GuildSoundboardSoundDeleteEntity> {
-  /**
-   * ID of the sound that was deleted
-   */
-  get soundId(): Snowflake {
-    return this.data.sound_id;
-  }
-
-  /**
-   * ID of the guild the sound was in
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
   }
 }

@@ -1,20 +1,23 @@
 import type { Snowflake } from "@nyxjs/core";
+import type { PresenceEntity } from "@nyxjs/gateway";
 import { Store } from "@nyxjs/store";
-import type {
-  AnyChannel,
-  AutoModerationRule,
-  Emoji,
-  Entitlement,
-  Guild,
-  GuildMember,
-  GuildScheduledEvent,
-  Message,
-  Role,
-  StageInstance,
-  Sticker,
-  Subscription,
-  User,
-  VoiceState,
+import {
+  type AnyChannel,
+  type AutoModerationRule,
+  type Emoji,
+  type Entitlement,
+  type Guild,
+  type GuildMember,
+  type GuildScheduledEvent,
+  type Integration,
+  type Message,
+  type Role,
+  type SoundboardSound,
+  type StageInstance,
+  type Sticker,
+  type Subscription,
+  type User,
+  type VoiceState,
 } from "../classes/index.js";
 import type {
   ClientCacheEntityOptions,
@@ -162,6 +165,24 @@ export class CacheManager {
   readonly #subscriptions: Store<Snowflake, Subscription>;
 
   /**
+   * Store for presence entities
+   * @private
+   */
+  readonly #presences: Store<Snowflake, PresenceEntity>;
+
+  /**
+   * Store for integrations
+   * @private
+   */
+  readonly #integrations: Store<Snowflake, Integration>;
+
+  /**
+   * Store for soundboard sounds
+   * @private
+   */
+  readonly #soundboards: Store<Snowflake, SoundboardSound>;
+
+  /**
    * Creates a new cache manager with the specified options.
    *
    * @param options - Cache configuration options that control caching behavior
@@ -201,6 +222,15 @@ export class CacheManager {
     this.#subscriptions = this.#createStore(
       "subscriptions",
       this.#options.subscriptions,
+    );
+    this.#presences = this.#createStore("presences", this.#options.presences);
+    this.#integrations = this.#createStore(
+      "integrations",
+      this.#options.integrations,
+    );
+    this.#soundboards = this.#createStore(
+      "soundboards",
+      this.#options.soundboards,
     );
 
     // Start sweeping if enabled
@@ -470,6 +500,63 @@ export class CacheManager {
    */
   get subscriptions(): Store<Snowflake, Subscription> {
     return this.#subscriptions;
+  }
+
+  /**
+   * Access the presences cache store.
+   * Contains PresenceEntity objects for users' online status.
+   *
+   * @example
+   * ```typescript
+   * // Get a presence by user ID
+   * const presence = cacheManager.presences.get('1234567890');
+   *
+   * // Find users who are online
+   * const onlineUsers = cacheManager.presences.filter(
+   *  presence => presence.status === PresenceStatus.Online
+   * );
+   * ```
+   */
+  get presences(): Store<Snowflake, PresenceEntity> {
+    return this.#presences;
+  }
+
+  /**
+   * Access the integrations cache store.
+   * Contains Integration objects for third-party services.
+   *
+   * @example
+   * ```typescript
+   * // Get an integration by ID
+   * const integration = cacheManager.integrations.get('1234567890');
+   *
+   * // Find integrations with specific features
+   * const specificIntegrations = cacheManager.integrations.filter(
+   *  integration => integration.type === IntegrationType.Specific
+   * );
+   * ```
+   */
+  get integrations(): Store<Snowflake, Integration> {
+    return this.#integrations;
+  }
+
+  /**
+   * Access the soundboards cache store.
+   * Contains SoundboardSound objects for Discord's soundboard feature.
+   *
+   * @example
+   * ```typescript
+   * // Get a soundboard sound by ID
+   * const sound = cacheManager.soundboards.get('1234567890');
+   *
+   * // Find sounds with specific properties
+   * const specificSounds = cacheManager.soundboards.filter(
+   *  sound => sound.volume > 0.5
+   * );
+   * ```
+   */
+  get soundboards(): Store<Snowflake, SoundboardSound> {
+    return this.#soundboards;
   }
 
   /**

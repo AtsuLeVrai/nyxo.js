@@ -5,18 +5,15 @@ import type {
   AuditLogEntryInfoEntity,
   AuditLogEvent,
   BanEntity,
-  EmojiEntity,
   GuildMemberEntity,
   GuildScheduledEventEntity,
   IntegrationAccountEntity,
   IntegrationApplicationEntity,
-  IntegrationEntity,
   IntegrationExpirationBehavior,
   OAuth2Scope,
   Snowflake,
   SoundboardSoundEntity,
   StageInstanceEntity,
-  StickerEntity,
   VoiceStateEntity,
 } from "@nyxjs/core";
 import {
@@ -28,10 +25,8 @@ import {
 import type {
   GuildAuditLogEntryCreateEntity,
   GuildCreateEntity,
-  GuildEmojisUpdateEntity,
   GuildMemberAddEntity,
-  GuildMembersChunkEntity,
-  GuildStickersUpdateEntity,
+  IntegrationCreateEntity,
   PresenceEntity,
 } from "@nyxjs/gateway";
 import { BaseClass } from "../bases/index.js";
@@ -346,9 +341,7 @@ export class GuildBan extends BaseClass<BanEntity & { guild_id: Snowflake }> {
  * Represents a guild integration.
  * An integration is a connection between a guild and an external service like Twitch, YouTube, or Discord.
  */
-export class Integration extends BaseClass<
-  IntegrationEntity & { guild_id: Snowflake }
-> {
+export class Integration extends BaseClass<IntegrationCreateEntity> {
   /**
    * Integration ID
    */
@@ -417,16 +410,6 @@ export class Integration extends BaseClass<
    */
   get expireGracePeriod(): number | undefined {
     return this.data.expire_grace_period;
-  }
-
-  /**
-   * User for this integration
-   */
-  get user(): User | undefined {
-    if (!this.data.user) {
-      return undefined;
-    }
-    return new User(this.client, this.data.user);
   }
 
   /**
@@ -587,142 +570,5 @@ export class GuildAuditLogEntry extends BaseClass<GuildAuditLogEntryCreateEntity
    */
   get hasOptions(): boolean {
     return Boolean(this.data.options);
-  }
-}
-
-/**
- * Represents a guild emojis update event.
- * Sent when a guild's emojis have been updated.
- */
-export class GuildEmojisUpdate extends BaseClass<GuildEmojisUpdateEntity> {
-  /**
-   * ID of the guild
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * Array of emojis
-   */
-  get emojis(): EmojiEntity[] {
-    return this.data.emojis;
-  }
-
-  /**
-   * Whether this guild has any emojis
-   */
-  get hasEmojis(): boolean {
-    return this.data.emojis.length > 0;
-  }
-
-  /**
-   * The number of emojis in the guild
-   */
-  get emojiCount(): number {
-    return this.data.emojis.length;
-  }
-}
-
-/**
- * Represents a guild stickers update event.
- * Sent when a guild's stickers have been updated.
- */
-export class GuildStickersUpdate extends BaseClass<GuildStickersUpdateEntity> {
-  /**
-   * ID of the guild
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * Array of stickers
-   */
-  get stickers(): StickerEntity[] {
-    return this.data.stickers;
-  }
-
-  /**
-   * Whether this guild has any stickers
-   */
-  get hasStickers(): boolean {
-    return this.data.stickers.length > 0;
-  }
-
-  /**
-   * The number of stickers in the guild
-   */
-  get stickerCount(): number {
-    return this.data.stickers.length;
-  }
-}
-
-/**
- * Represents a guild members chunk event.
- * Sent in response to Guild Request Members.
- */
-export class GuildMembersChunk extends BaseClass<GuildMembersChunkEntity> {
-  /**
-   * ID of the guild
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * Set of guild members
-   */
-  get members(): GuildMemberEntity[] {
-    return this.data.members;
-  }
-
-  /**
-   * Chunk index in the expected chunks for this response (0 <= chunk_index < chunk_count)
-   */
-  get chunkIndex(): number {
-    return this.data.chunk_index;
-  }
-
-  /**
-   * Total number of expected chunks for this response
-   */
-  get chunkCount(): number {
-    return this.data.chunk_count;
-  }
-
-  /**
-   * When passing an invalid ID to REQUEST_GUILD_MEMBERS, it will be returned here
-   */
-  get notFound(): Snowflake[] | undefined {
-    return this.data.not_found;
-  }
-
-  /**
-   * When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here
-   */
-  get presences(): PresenceEntity[] | undefined {
-    return this.data.presences;
-  }
-
-  /**
-   * Nonce used in the Guild Members Request
-   */
-  get nonce(): string | undefined {
-    return this.data.nonce;
-  }
-
-  /**
-   * Whether this is the last chunk
-   */
-  get isLastChunk(): boolean {
-    return this.data.chunk_index === this.data.chunk_count - 1;
-  }
-
-  /**
-   * Whether this chunk has a nonce
-   */
-  get hasNonce(): boolean {
-    return Boolean(this.data.nonce);
   }
 }

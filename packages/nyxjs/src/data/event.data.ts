@@ -1,7 +1,6 @@
 import type {
   AnyChannelEntity,
   BanEntity,
-  IntegrationEntity,
   InviteEntity,
   Snowflake,
 } from "@nyxjs/core";
@@ -10,15 +9,8 @@ import type {
   GatewayReceiveEvents,
   GuildCreateEntity,
   GuildMemberAddEntity,
-  GuildScheduledEventUserAddEntity,
-  GuildScheduledEventUserRemoveEntity,
   MessageCreateEntity,
   MessageDeleteBulkEntity,
-  MessageReactionAddEntity,
-  MessageReactionRemoveAllEntity,
-  MessageReactionRemoveEmojiEntity,
-  MessageReactionRemoveEntity,
-  VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import {
@@ -26,19 +18,12 @@ import {
   type AnyThreadChannel,
   AutoModerationActionExecution,
   AutoModerationRule,
-  ChannelPins,
   Entitlement,
   Guild,
   GuildAuditLogEntry,
   GuildBan,
-  GuildEmojisUpdate,
   GuildMember,
-  GuildMembersChunk,
-  GuildRoleDelete,
-  GuildRoleUpdate,
   GuildScheduledEvent,
-  GuildSoundboardSoundDelete,
-  GuildStickersUpdate,
   Integration,
   Invite,
   Message,
@@ -46,9 +31,9 @@ import {
   Ready,
   Role,
   SoundboardSound,
-  SoundboardSounds,
   StageInstance,
   Subscription,
+  TextChannel,
   ThreadListSync,
   ThreadMember,
   ThreadMembers,
@@ -288,9 +273,21 @@ export const StandardGatewayDispatchEventMappings = [
   /**
    * Channel pins update event - emitted when a message is pinned or unpinned.
    */
-  defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (client, data) => [
-    ChannelPins.from(client, data),
-  ]),
+  defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (client, data) => {
+    const channel = client.cache.channels.get(data.channel_id);
+    if (!channel) {
+      return [null];
+    }
+
+    const channelPins = TextChannel.from(client, channel.data);
+
+    // Update the cache with the new pin information
+    if (client.cache.channels?.set) {
+      client.cache.channels.set(channelPins.channelId, channelPins);
+    }
+
+    return [channelPins];
+  }),
 
   /**
    * Thread create event - emitted when a thread is created.
@@ -358,21 +355,43 @@ export const StandardGatewayDispatchEventMappings = [
   /**
    * Thread list sync event - emitted when threads are synced.
    */
-  defineEvent("THREAD_LIST_SYNC", "threadListSync", (client, data) => [
-    ThreadListSync.from(client, data),
-  ]),
+  defineEvent("THREAD_LIST_SYNC", "threadListSync", (client, data) => {
+    const threadListSync = ThreadListSync.from(client, data);
+
+    // Update cache with all threads in the sync
+    if (client.cache.channels?.set && threadListSync.threads) {
+      for (const thread of threadListSync.threads) {
+        client.cache.channels.set(thread.id, thread);
+      }
+    }
+
+    return [threadListSync];
+  }),
 
   /**
    * Thread member update event - emitted when a thread member is updated.
-   * First parameter is always null since we don't have the previous state.
    */
   defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (client, data) => {
     const threadMember = ThreadMember.from(client, data);
 
-    // Composite key for thread members could be implemented here
-    // Example: client.cache.threadMembers?.set(`${threadMember.threadId}-${threadMember.userId}`, threadMember);
+    // Create a composite key for thread members
+    const key = `${threadMember.guildId}-${threadMember.userId}-${threadMember.threadId}`;
 
-    return [null, threadMember];
+    // Store the old version before updating
+    let oldThreadMember = null;
+    if (client.cache.threadMembers?.get) {
+      const cachedThreadMember = client.cache.threadMembers.get(key);
+      if (cachedThreadMember) {
+        oldThreadMember = cachedThreadMember.clone?.() || cachedThreadMember;
+      }
+    }
+
+    // Update cache
+    if (client.cache.threadMembers?.set) {
+      client.cache.threadMembers.set(key, threadMember);
+    }
+
+    return [oldThreadMember, threadMember];
   }),
 
   /**
@@ -381,7 +400,30 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "THREAD_MEMBERS_UPDATE",
     "threadMembersUpdate",
-    (client, data) => [ThreadMembers.from(client, data)],
+    (client, data) => {
+      const threadMembers = ThreadMembers.from(client, data);
+
+      // Update cache for added members
+      if (client.cache.threadMembers?.set && threadMembers.addedMembers) {
+        for (const member of threadMembers.addedMembers) {
+          const key = `${threadMembers.guildId}-${member.userId}-${threadMembers.threadId}`;
+          client.cache.threadMembers.set(key, member);
+        }
+      }
+
+      // Remove members from cache
+      if (
+        client.cache.threadMembers?.delete &&
+        threadMembers.removedMemberIds
+      ) {
+        for (const userId of threadMembers.removedMemberIds) {
+          const key = `${threadMembers.guildId}-${userId}-${threadMembers.threadId}`;
+          client.cache.threadMembers.delete(key);
+        }
+      }
+
+      return [threadMembers];
+    },
   ),
 
   /**
@@ -456,7 +498,7 @@ export const StandardGatewayDispatchEventMappings = [
       client.cache.guilds.set(guild.id, guild);
     }
 
-    // Optional: Cache all related entities like channels, members, roles
+    // Cache all related entities like channels, members, roles
     if (guild.channels && client.cache.channels?.set) {
       for (const channel of guild.channels.values()) {
         client.cache.channels.set(channel.id, channel);
@@ -477,6 +519,20 @@ export const StandardGatewayDispatchEventMappings = [
     if (guild.roles && client.cache.roles?.set) {
       for (const role of guild.roles.values()) {
         client.cache.roles.set(role.id, role);
+      }
+    }
+
+    // Cache emojis
+    if (guild.emojis && client.cache.emojis?.set) {
+      for (const emoji of guild.emojis.values()) {
+        client.cache.emojis.set(emoji.id, emoji);
+      }
+    }
+
+    // Cache stickers
+    if (guild.stickers && client.cache.stickers?.set) {
+      for (const sticker of guild.stickers.values()) {
+        client.cache.stickers.set(sticker.id, sticker);
       }
     }
 
@@ -513,13 +569,55 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("GUILD_DELETE", "guildDelete", (client, data) => {
     const guild = Guild.from(client, data as GuildCreateEntity);
 
+    // Get the cached guild before deleting
+    const cachedGuild = client.cache.guilds?.get?.(guild.id);
+
     // Remove from cache
     if (client.cache.guilds?.delete) {
       client.cache.guilds.delete(guild.id);
     }
 
-    // Optional: Remove all related entities
-    // This would require maintaining relationships or performing cache sweeps
+    // Clean up related caches
+    if (cachedGuild) {
+      // Clean channels for this guild
+      if (client.cache.channels?.forEach && client.cache.channels?.delete) {
+        client.cache.channels.forEach((channel, channelId) => {
+          if (channel.guildId === guild.id) {
+            client.cache.channels.delete(channelId);
+          }
+        });
+      }
+
+      // Clean members for this guild
+      if (client.cache.members?.forEach && client.cache.members?.delete) {
+        client.cache.members.forEach((member, memberId) => {
+          if (memberId.startsWith(`${guild.id}-`)) {
+            client.cache.members.delete(memberId);
+          }
+        });
+      }
+
+      // Clean roles for this guild
+      if (cachedGuild.roles && client.cache.roles?.delete) {
+        for (const roleId of cachedGuild.roles.keys()) {
+          client.cache.roles.delete(roleId);
+        }
+      }
+
+      // Clean emojis for this guild
+      if (cachedGuild.emojis && client.cache.emojis?.delete) {
+        for (const emojiId of cachedGuild.emojis.keys()) {
+          client.cache.emojis.delete(emojiId);
+        }
+      }
+
+      // Clean stickers for this guild
+      if (cachedGuild.stickers && client.cache.stickers?.delete) {
+        for (const stickerId of cachedGuild.stickers.keys()) {
+          client.cache.stickers.delete(stickerId);
+        }
+      }
+    }
 
     return [guild];
   }),
@@ -542,10 +640,15 @@ export const StandardGatewayDispatchEventMappings = [
       data as BanEntity & { guild_id: Snowflake },
     );
 
-    // Optional: Cache bans
-    // if (client.cache.bans?.set) {
-    //   client.cache.bans.set(`${ban.guildId}-${ban.user.id}`, ban);
-    // }
+    // Cache the ban with a composite key
+    if (client.cache.bans?.set) {
+      client.cache.bans.set(`${ban.guildId}-${ban.user.id}`, ban);
+    }
+
+    // Also cache the user
+    if (client.cache.users?.set && ban.user) {
+      client.cache.users.set(ban.user.id, ban.user);
+    }
 
     return [ban];
   }),
@@ -559,49 +662,136 @@ export const StandardGatewayDispatchEventMappings = [
       data as BanEntity & { guild_id: Snowflake },
     );
 
-    // Optional: Remove from bans cache
-    // if (client.cache.bans?.delete) {
-    //   client.cache.bans.delete(`${ban.guildId}-${ban.user.id}`);
-    // }
+    // Remove from bans cache
+    if (client.cache.bans?.delete) {
+      client.cache.bans.delete(`${ban.guildId}-${ban.user.id}`);
+    }
 
     return [ban];
   }),
 
   /**
    * Guild emojis update event - emitted when a guild's emojis are updated.
-   * First parameter is always null since we don't have the previous state.
+   * This event is special as it needs to trigger individual emoji events.
    */
   defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", (client, data) => {
-    const emojisUpdate = GuildEmojisUpdate.from(client, data);
+    const newEmojis = new Map();
+    const guildId = data.guild_id;
 
-    // Cache all emojis
-    if (client.cache.emojis?.set && emojisUpdate.emojis) {
-      for (const emoji of emojisUpdate.emojis) {
-        client.cache.emojis.set(emoji.id, emoji);
+    // Process all emojis from the update
+    for (const emojiData of data.emojis) {
+      const emoji = Emoji.from(client, { ...emojiData, guild_id: guildId });
+      newEmojis.set(emoji.id, emoji);
+    }
+
+    // Get old emojis from cache
+    const oldEmojis = new Map();
+    if (client.cache.emojis?.forEach) {
+      client.cache.emojis.forEach((emoji) => {
+        if (emoji.guildId === guildId) {
+          oldEmojis.set(emoji.id, emoji);
+        }
+      });
+    }
+
+    // Find created, updated, and deleted emojis
+    for (const [emojiId, newEmoji] of newEmojis.entries()) {
+      const oldEmoji = oldEmojis.get(emojiId);
+
+      if (!oldEmoji) {
+        // Emoji created
+        client.emit("emojiCreate", newEmoji);
+      } else if (JSON.stringify(oldEmoji) !== JSON.stringify(newEmoji)) {
+        // Emoji updated
+        client.emit("emojiUpdate", oldEmoji, newEmoji);
+      }
+
+      // Update cache
+      if (client.cache.emojis?.set) {
+        client.cache.emojis.set(emojiId, newEmoji);
       }
     }
 
-    return [null, emojisUpdate];
+    // Find deleted emojis
+    for (const [emojiId, oldEmoji] of oldEmojis.entries()) {
+      if (!newEmojis.has(emojiId)) {
+        // Emoji deleted
+        client.emit("emojiDelete", oldEmoji);
+
+        // Remove from cache
+        if (client.cache.emojis?.delete) {
+          client.cache.emojis.delete(emojiId);
+        }
+      }
+    }
+
+    // Return the new set of emojis for the main event
+    return [{ guildId, emojis: Array.from(newEmojis.values()) }];
   }),
 
   /**
    * Guild stickers update event - emitted when a guild's stickers are updated.
-   * First parameter is always null since we don't have the previous state.
+   * Similar to emoji updates, this triggers individual sticker events.
    */
   defineEvent(
     "GUILD_STICKERS_UPDATE",
     "guildStickersUpdate",
     (client, data) => {
-      const stickersUpdate = GuildStickersUpdate.from(client, data);
+      const newStickers = new Map();
+      const guildId = data.guild_id;
 
-      // Cache all stickers
-      if (client.cache.stickers?.set && stickersUpdate.stickers) {
-        for (const sticker of stickersUpdate.stickers) {
-          client.cache.stickers.set(sticker.id, sticker);
+      // Process all stickers from the update
+      for (const stickerData of data.stickers) {
+        const sticker = Sticker.from(client, {
+          ...stickerData,
+          guild_id: guildId,
+        });
+        newStickers.set(sticker.id, sticker);
+      }
+
+      // Get old stickers from cache
+      const oldStickers = new Map();
+      if (client.cache.stickers?.forEach) {
+        client.cache.stickers.forEach((sticker) => {
+          if (sticker.guildId === guildId) {
+            oldStickers.set(sticker.id, sticker);
+          }
+        });
+      }
+
+      // Find created, updated, and deleted stickers
+      for (const [stickerId, newSticker] of newStickers.entries()) {
+        const oldSticker = oldStickers.get(stickerId);
+
+        if (!oldSticker) {
+          // Sticker created
+          client.emit("stickerCreate", newSticker);
+        } else if (JSON.stringify(oldSticker) !== JSON.stringify(newSticker)) {
+          // Sticker updated
+          client.emit("stickerUpdate", oldSticker, newSticker);
+        }
+
+        // Update cache
+        if (client.cache.stickers?.set) {
+          client.cache.stickers.set(stickerId, newSticker);
         }
       }
 
-      return [null, stickersUpdate];
+      // Find deleted stickers
+      for (const [stickerId, oldSticker] of oldStickers.entries()) {
+        if (!newStickers.has(stickerId)) {
+          // Sticker deleted
+          client.emit("stickerDelete", oldSticker);
+
+          // Remove from cache
+          if (client.cache.stickers?.delete) {
+            client.cache.stickers.delete(stickerId);
+          }
+        }
+      }
+
+      // Return the new set of stickers for the main event
+      return [{ guildId, stickers: Array.from(newStickers.values()) }];
     },
   ),
 
@@ -612,12 +802,8 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_INTEGRATIONS_UPDATE",
     "guildIntegrationsUpdate",
     (client, data) => {
-      const integration = Integration.from(
-        client,
-        data as IntegrationEntity & { guild_id: Snowflake },
-      );
-
-      return [integration];
+      // This event only contains guild_id, so we return a simple object with the guildId
+      return [{ guildId: data.guild_id }];
     },
   ),
 
@@ -648,12 +834,18 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("GUILD_MEMBER_REMOVE", "guildMemberRemove", (client, data) => {
     const member = GuildMember.from(client, data as GuildMemberAddEntity);
 
+    // Get the cached member before removing
+    const cachedMember = client.cache.members?.get?.(
+      `${member.guildId}-${member.user.id}`,
+    );
+
     // Remove the member from cache
     if (client.cache.members?.delete) {
       client.cache.members.delete(`${member.guildId}-${member.user.id}`);
     }
 
-    return [member];
+    // Return the cached member if available, otherwise the partial data
+    return [cachedMember || member];
   }),
 
   /**
@@ -693,15 +885,15 @@ export const StandardGatewayDispatchEventMappings = [
    * Guild members chunk event - emitted in response to Guild Request Members.
    */
   defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (client, data) => {
-    const membersChunk = GuildMembersChunk.from(client, data);
-
     // Cache all members in the chunk
-    if (client.cache.members?.set && membersChunk.members) {
-      for (const member of membersChunk.members) {
-        client.cache.members.set(
-          `${membersChunk.guildId}-${member.user.id}`,
-          member,
-        );
+    if (client.cache.members?.set && data.members) {
+      for (const memberData of data.members) {
+        const member = GuildMember.from(client, {
+          ...memberData,
+          guild_id: data.guild_id,
+        });
+
+        client.cache.members.set(`${data.guild_id}-${member.user.id}`, member);
 
         // Also cache the user
         if (client.cache.users?.set && member.user) {
@@ -710,7 +902,16 @@ export const StandardGatewayDispatchEventMappings = [
       }
     }
 
-    return [membersChunk];
+    // Cache presences if available
+    if (client.cache.presences?.set && data.presences) {
+      for (const presence of data.presences) {
+        if (presence.user?.id) {
+          client.cache.presences.set(presence.user.id, presence);
+        }
+      }
+    }
+
+    return [data];
   }),
 
   /**
@@ -718,17 +919,17 @@ export const StandardGatewayDispatchEventMappings = [
    * Adds the role to the cache.
    */
   defineEvent("GUILD_ROLE_CREATE", "guildRoleCreate", (client, data) => {
-    const roleCreate = Role.from(client, {
+    const role = Role.from(client, {
       guild_id: data.guild_id,
       ...data.role,
     });
 
     // Cache the role
-    if (client.cache.roles?.set && roleCreate) {
-      client.cache.roles.set(roleCreate.id, roleCreate);
+    if (client.cache.roles?.set) {
+      client.cache.roles.set(role.id, role);
     }
 
-    return [roleCreate];
+    return [role];
   }),
 
   /**
@@ -736,23 +937,26 @@ export const StandardGatewayDispatchEventMappings = [
    * Updates the role in the cache.
    */
   defineEvent("GUILD_ROLE_UPDATE", "guildRoleUpdate", (client, data) => {
-    const roleUpdate = GuildRoleUpdate.from(client, data);
+    const newRole = Role.from(client, {
+      guild_id: data.guild_id,
+      ...data.role,
+    });
 
     // Store the old version before updating
     let oldRole = null;
-    if (roleUpdate.role && client.cache.roles?.get) {
-      const cachedRole = client.cache.roles.get(roleUpdate.role.id);
+    if (client.cache.roles?.get) {
+      const cachedRole = client.cache.roles.get(newRole.id);
       if (cachedRole) {
         oldRole = cachedRole.clone?.() || cachedRole;
       }
     }
 
     // Update the cache with new version
-    if (client.cache.roles?.set && roleUpdate.role) {
-      client.cache.roles.set(roleUpdate.role.id, roleUpdate.role);
+    if (client.cache.roles?.set) {
+      client.cache.roles.set(newRole.id, newRole);
     }
 
-    return [oldRole, roleUpdate];
+    return [oldRole, newRole];
   }),
 
   /**
@@ -760,14 +964,26 @@ export const StandardGatewayDispatchEventMappings = [
    * Removes the role from the cache.
    */
   defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (client, data) => {
-    const roleDelete = GuildRoleDelete.from(client, data);
-
-    // Remove the role from cache
-    if (client.cache.roles?.delete && roleDelete.roleId) {
-      client.cache.roles.delete(roleDelete.roleId);
+    // Get the role from cache before deleting
+    let deletedRole = null;
+    if (client.cache.roles?.get) {
+      deletedRole = client.cache.roles.get(data.role_id);
     }
 
-    return [roleDelete];
+    // If role not found in cache, create a minimal object
+    if (!deletedRole) {
+      deletedRole = {
+        id: data.role_id,
+        guildId: data.guild_id,
+      };
+    }
+
+    // Remove the role from cache
+    if (client.cache.roles?.delete) {
+      client.cache.roles.delete(data.role_id);
+    }
+
+    return [deletedRole];
   }),
 
   /**
@@ -778,10 +994,7 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_SCHEDULED_EVENT_CREATE",
     "guildScheduledEventCreate",
     (client, data) => {
-      const scheduledEvent = GuildScheduledEvent.from(
-        client,
-        data as GuildScheduledEventCreateEntity,
-      );
+      const scheduledEvent = GuildScheduledEvent.from(client, data);
 
       // Cache the scheduled event
       if (client.cache.scheduledEvents?.set) {
@@ -800,10 +1013,7 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_SCHEDULED_EVENT_UPDATE",
     "guildScheduledEventUpdate",
     (client, data) => {
-      const newScheduledEvent = GuildScheduledEvent.from(
-        client,
-        data as GuildScheduledEventUpdateEntity,
-      );
+      const newScheduledEvent = GuildScheduledEvent.from(client, data);
 
       // Store the old version before updating
       let oldScheduledEvent: GuildScheduledEvent | null = null;
@@ -835,17 +1045,17 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_SCHEDULED_EVENT_DELETE",
     "guildScheduledEventDelete",
     (client, data) => {
-      const deletedEvent = GuildScheduledEvent.from(
-        client,
-        data as GuildScheduledEventDeleteEntity,
-      );
+      const deletedEvent = GuildScheduledEvent.from(client, data);
+
+      // Get the cached event before deleting
+      const cachedEvent = client.cache.scheduledEvents?.get?.(deletedEvent.id);
 
       // Remove from cache
       if (client.cache.scheduledEvents?.delete) {
         client.cache.scheduledEvents.delete(deletedEvent.id);
       }
 
-      return [deletedEvent];
+      return [cachedEvent || deletedEvent];
     },
   ),
 
@@ -856,8 +1066,13 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_SCHEDULED_EVENT_USER_ADD",
     "guildScheduledEventUserAdd",
     (client, data) => {
-      // Optional: Could track user subscriptions in a specialized cache
-      return [data as GuildScheduledEventUserAddEntity];
+      return [
+        {
+          guildId: data.guild_id,
+          scheduledEventId: data.guild_scheduled_event_id,
+          userId: data.user_id,
+        },
+      ];
     },
   ),
 
@@ -868,8 +1083,13 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_SCHEDULED_EVENT_USER_REMOVE",
     "guildScheduledEventUserRemove",
     (client, data) => {
-      // Optional: Could remove user from subscription cache
-      return [data as GuildScheduledEventUserRemoveEntity];
+      return [
+        {
+          guildId: data.guild_id,
+          scheduledEventId: data.guild_scheduled_event_id,
+          userId: data.user_id,
+        },
+      ];
     },
   ),
 
@@ -884,8 +1104,8 @@ export const StandardGatewayDispatchEventMappings = [
       const sound = SoundboardSound.from(client, data);
 
       // Cache the sound
-      if (client.cache.sounds?.set) {
-        client.cache.sounds.set(sound.id, sound);
+      if (client.cache.soundboards?.set) {
+        client.cache.soundboards.set(sound.id, sound);
       }
 
       return [sound];
@@ -904,16 +1124,16 @@ export const StandardGatewayDispatchEventMappings = [
 
       // Store the old version before updating
       let oldSound = null;
-      if (client.cache.sounds?.get) {
-        const cachedSound = client.cache.sounds.get(newSound.id);
+      if (client.cache.soundboards?.get) {
+        const cachedSound = client.cache.soundboards.get(newSound.id);
         if (cachedSound) {
           oldSound = cachedSound.clone?.() || cachedSound;
         }
       }
 
       // Update the cache with new version
-      if (client.cache.sounds?.set) {
-        client.cache.sounds.set(newSound.id, newSound);
+      if (client.cache.soundboards?.set) {
+        client.cache.soundboards.set(newSound.id, newSound);
       }
 
       return [oldSound, newSound];
@@ -928,11 +1148,23 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_SOUNDBOARD_SOUND_DELETE",
     "guildSoundboardSoundDelete",
     (client, data) => {
-      const deletedSound = GuildSoundboardSoundDelete.from(client, data);
+      // Get the sound from cache before deleting
+      let deletedSound = null;
+      if (client.cache.soundboards?.get) {
+        deletedSound = client.cache.soundboards.get(data.sound_id);
+      }
+
+      // If sound not found in cache, create a minimal object
+      if (!deletedSound) {
+        deletedSound = {
+          id: data.sound_id,
+          guildId: data.guild_id,
+        };
+      }
 
       // Remove from cache
-      if (client.cache.sounds?.delete) {
-        client.cache.sounds.delete(deletedSound.soundId);
+      if (client.cache.soundboards?.delete) {
+        client.cache.soundboards.delete(data.sound_id);
       }
 
       return [deletedSound];
@@ -945,15 +1177,39 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SOUNDBOARD_SOUNDS_UPDATE",
     "guildSoundboardSoundsUpdate",
-    (client, data) => [SoundboardSounds.from(client, data)],
+    (client, data) => {
+      const sounds = data.soundboard_sounds.map((sound) =>
+        SoundboardSound.from(client, { ...sound, guild_id: data.guild_id }),
+      );
+
+      // Update cache for all sounds
+      if (client.cache.soundboards?.set) {
+        for (const sound of sounds) {
+          client.cache.soundboards.set(sound.id, sound);
+        }
+      }
+
+      return [sounds];
+    },
   ),
 
   /**
    * Soundboard sounds event - emitted for soundboard sounds.
    */
-  defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (client, data) => [
-    SoundboardSounds.from(client, data),
-  ]),
+  defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (client, data) => {
+    const sounds = data.soundboard_sounds.map((sound) =>
+      SoundboardSound.from(client, { ...sound, guild_id: data.guild_id }),
+    );
+
+    // Update cache for all sounds
+    if (client.cache.soundboards?.set) {
+      for (const sound of sounds) {
+        client.cache.soundboards.set(sound.id, sound);
+      }
+    }
+
+    return [sounds];
+  }),
 
   /**
    * Integration create event - emitted when an integration is created.
@@ -1001,17 +1257,27 @@ export const StandardGatewayDispatchEventMappings = [
    * Removes the integration from the cache.
    */
   defineEvent("INTEGRATION_DELETE", "integrationDelete", (client, data) => {
-    const integration = Integration.from(
-      client,
-      data as IntegrationEntity & { guild_id: Snowflake },
-    );
+    // Get the integration from cache before deleting
+    let deletedIntegration = null;
+    if (client.cache.integrations?.get) {
+      deletedIntegration = client.cache.integrations.get(data.id);
+    }
+
+    // If integration not found in cache, create a minimal object
+    if (!deletedIntegration) {
+      deletedIntegration = {
+        id: data.id,
+        guildId: data.guild_id,
+        applicationId: data.application_id,
+      };
+    }
 
     // Remove from cache
     if (client.cache.integrations?.delete) {
-      client.cache.integrations.delete(integration.id);
+      client.cache.integrations.delete(data.id);
     }
 
-    return [integration];
+    return [deletedIntegration];
   }),
 
   /**
@@ -1037,17 +1303,27 @@ export const StandardGatewayDispatchEventMappings = [
    * Removes the invite from the cache.
    */
   defineEvent("INVITE_DELETE", "inviteDelete", (client, data) => {
-    const invite = Invite.from(
-      client,
-      data as unknown as InviteEntity & { guild_id?: Snowflake },
-    );
+    // Get the invite from cache before deleting
+    let deletedInvite = null;
+    if (client.cache.invites?.get) {
+      deletedInvite = client.cache.invites.get(data.code);
+    }
+
+    // If invite not found in cache, create a minimal object
+    if (!deletedInvite) {
+      deletedInvite = {
+        code: data.code,
+        channelId: data.channel_id,
+        guildId: data.guild_id,
+      };
+    }
 
     // Remove from cache
     if (client.cache.invites?.delete) {
-      client.cache.invites.delete(invite.code);
+      client.cache.invites.delete(data.code);
     }
 
-    return [invite];
+    return [deletedInvite];
   }),
 
   /**
@@ -1062,9 +1338,17 @@ export const StandardGatewayDispatchEventMappings = [
       client.cache.messages.set(message.id, message);
     }
 
-    // Optional: Also cache the author if it's a user
+    // Also cache the author if it's a user
     if (message.author && client.cache.users?.set) {
       client.cache.users.set(message.author.id, message.author);
+    }
+
+    // Cache member if present
+    if (message.member && client.cache.members?.set && message.guild?.id) {
+      client.cache.members.set(
+        `${message.guild.id}-${message.author.id}`,
+        message.member,
+      );
     }
 
     return [message];
@@ -1097,18 +1381,24 @@ export const StandardGatewayDispatchEventMappings = [
    * Removes the message from the cache.
    */
   defineEvent("MESSAGE_DELETE", "messageDelete", (client, data) => {
-    const deletedMessage = Message.from(client, data as MessageCreateEntity);
-
     // Get the cached message before deleting
-    const cachedMessage = client.cache.messages?.get?.(deletedMessage.id);
+    const cachedMessage = client.cache.messages?.get?.(data.id);
+
+    // Create a minimal message object if not in cache
+    const deletedMessage =
+      cachedMessage ||
+      Message.from(client, {
+        id: data.id,
+        channel_id: data.channel_id,
+        guild_id: data.guild_id,
+      } as MessageCreateEntity);
 
     // Delete from cache
     if (cachedMessage && client.cache.messages?.delete) {
-      client.cache.messages.delete(deletedMessage.id);
+      client.cache.messages.delete(data.id);
     }
 
-    // Return the cached message if available, otherwise the partial delete data
-    return [cachedMessage || deletedMessage];
+    return [deletedMessage];
   }),
 
   /**
@@ -1130,30 +1420,70 @@ export const StandardGatewayDispatchEventMappings = [
       }
     }
 
-    return [
-      {
-        ids,
-        messages: deletedMessages,
-        channelId: (data as MessageDeleteBulkEntity).channel_id,
-      },
-    ];
+    // If no cached messages were found, create minimal objects
+    if (deletedMessages.length === 0) {
+      for (const id of ids) {
+        deletedMessages.push(
+          Message.from(client, {
+            id,
+            channel_id: data.channel_id,
+            guild_id: data.guild_id,
+          } as MessageCreateEntity),
+        );
+      }
+    }
+
+    return [deletedMessages];
   }),
 
   /**
    * Message reaction add event - emitted when a reaction is added to a message.
    */
   defineEvent("MESSAGE_REACTION_ADD", "messageReactionAdd", (client, data) => {
-    const reactionData = data as MessageReactionAddEntity;
+    const reaction = {
+      userId: data.user_id,
+      channelId: data.channel_id,
+      messageId: data.message_id,
+      guildId: data.guild_id,
+      emoji: data.emoji,
+      member: data.member
+        ? GuildMember.from(client, {
+            ...data.member,
+            guild_id: data.guild_id,
+            user: { id: data.user_id },
+          })
+        : undefined,
+      burst: data.burst,
+      burstColors: data.burst_colors,
+      type: data.type,
+    };
 
-    // Optional: Update the cached message to include this reaction
+    // Update the cached message to include this reaction
     if (client.cache.messages?.get) {
-      const message = client.cache.messages.get(reactionData.message_id);
-      if (message?.addReaction) {
-        message.addReaction(reactionData.emoji, reactionData.user_id);
+      const message = client.cache.messages.get(data.message_id);
+      if (message?.reactions) {
+        // Find or create the reaction
+        const emojiKey = data.emoji.id || data.emoji.name;
+        if (!message.reactions.has(emojiKey)) {
+          message.reactions.set(emojiKey, {
+            count: 1,
+            emoji: data.emoji,
+            me: client.user?.id === data.user_id,
+            burst: data.burst,
+            burstColors: data.burst_colors,
+            users: new Set([data.user_id]),
+          });
+        } else {
+          const existingReaction = message.reactions.get(emojiKey);
+          existingReaction.count++;
+          existingReaction.me =
+            existingReaction.me || client.user?.id === data.user_id;
+          existingReaction.users.add(data.user_id);
+        }
       }
     }
 
-    return [reactionData];
+    return [reaction];
   }),
 
   /**
@@ -1163,17 +1493,38 @@ export const StandardGatewayDispatchEventMappings = [
     "MESSAGE_REACTION_REMOVE",
     "messageReactionRemove",
     (client, data) => {
-      const reactionData = data as MessageReactionRemoveEntity;
+      const reaction = {
+        userId: data.user_id,
+        channelId: data.channel_id,
+        messageId: data.message_id,
+        guildId: data.guild_id,
+        emoji: data.emoji,
+        burst: data.burst,
+        type: data.type,
+      };
 
-      // Optional: Update the cached message to remove this reaction
+      // Update the cached message to remove this reaction
       if (client.cache.messages?.get) {
-        const message = client.cache.messages.get(reactionData.message_id);
-        if (message?.removeReaction) {
-          message.removeReaction(reactionData.emoji, reactionData.user_id);
+        const message = client.cache.messages.get(data.message_id);
+        if (message?.reactions) {
+          const emojiKey = data.emoji.id || data.emoji.name;
+          const existingReaction = message.reactions.get(emojiKey);
+
+          if (existingReaction) {
+            existingReaction.count--;
+            existingReaction.me =
+              existingReaction.me && client.user?.id !== data.user_id;
+            existingReaction.users.delete(data.user_id);
+
+            // Remove the reaction entirely if count is 0
+            if (existingReaction.count <= 0) {
+              message.reactions.delete(emojiKey);
+            }
+          }
         }
       }
 
-      return [reactionData];
+      return [reaction];
     },
   ),
 
@@ -1184,17 +1535,21 @@ export const StandardGatewayDispatchEventMappings = [
     "MESSAGE_REACTION_REMOVE_ALL",
     "messageReactionRemoveAll",
     (client, data) => {
-      const removeAllData = data as MessageReactionRemoveAllEntity;
+      const removal = {
+        messageId: data.message_id,
+        channelId: data.channel_id,
+        guildId: data.guild_id,
+      };
 
-      // Optional: Update the cached message to remove all reactions
+      // Update the cached message to remove all reactions
       if (client.cache.messages?.get) {
-        const message = client.cache.messages.get(removeAllData.message_id);
-        if (message?.clearReactions) {
-          message.clearReactions();
+        const message = client.cache.messages.get(data.message_id);
+        if (message?.reactions) {
+          message.reactions.clear();
         }
       }
 
-      return [removeAllData];
+      return [removal];
     },
   ),
 
@@ -1205,17 +1560,23 @@ export const StandardGatewayDispatchEventMappings = [
     "MESSAGE_REACTION_REMOVE_EMOJI",
     "messageReactionRemoveEmoji",
     (client, data) => {
-      const removeEmojiData = data as MessageReactionRemoveEmojiEntity;
+      const removal = {
+        messageId: data.message_id,
+        channelId: data.channel_id,
+        guildId: data.guild_id,
+        emoji: data.emoji,
+      };
 
-      // Optional: Update the cached message to remove all reactions of this emoji
+      // Update the cached message to remove all reactions of this emoji
       if (client.cache.messages?.get) {
-        const message = client.cache.messages.get(removeEmojiData.message_id);
-        if (message?.clearReactionsForEmoji) {
-          message.clearReactionsForEmoji(removeEmojiData.emoji);
+        const message = client.cache.messages.get(data.message_id);
+        if (message?.reactions) {
+          const emojiKey = data.emoji.id || data.emoji.name;
+          message.reactions.delete(emojiKey);
         }
       }
 
-      return [removeEmojiData];
+      return [removal];
     },
   ),
 
@@ -1240,34 +1601,36 @@ export const StandardGatewayDispatchEventMappings = [
    * Updates the presence in the cache.
    */
   defineEvent("PRESENCE_UPDATE", "presenceUpdate", (client, data) => {
-    const newPresence = Presence.from(client, data as PresenceUpdateEntity);
-
     // Store the old version before updating
     let oldPresence = null;
-    if (client.cache.presences?.get && newPresence.user) {
-      const cachedPresence = client.cache.presences.get(newPresence.user.id);
+    if (client.cache.presences?.get && data.user?.id) {
+      const cachedPresence = client.cache.presences.get(data.user.id);
       if (cachedPresence) {
-        oldPresence = cachedPresence.clone?.() || cachedPresence;
+        oldPresence = { ...cachedPresence };
       }
     }
 
-    // Update the cache with new version
-    if (client.cache.presences?.set && newPresence.user) {
-      client.cache.presences.set(newPresence.user.id, newPresence);
+    // Update the cache with new presence
+    if (client.cache.presences?.set && data.user?.id) {
+      client.cache.presences.set(data.user.id, data);
 
       // Also update the user in cache if available
       if (client.cache.users?.get && client.cache.users?.set) {
-        const cachedUser = client.cache.users.get(newPresence.user.id);
-        if (cachedUser && newPresence.user) {
-          // Only update partial user data from presence
-          const updatedUser = cachedUser.clone();
-          updatedUser.update(newPresence.user);
-          client.cache.users.set(updatedUser.id, updatedUser);
+        const cachedUser = client.cache.users.get(data.user.id);
+        if (cachedUser && data.user) {
+          // Merge the partial user data from presence
+          const updatedUser = { ...cachedUser };
+          for (const [key, value] of Object.entries(data.user)) {
+            if (value !== undefined) {
+              updatedUser[key] = value;
+            }
+          }
+          client.cache.users.set(data.user.id, updatedUser);
         }
       }
     }
 
-    return [oldPresence, newPresence];
+    return [oldPresence, data];
   }),
 
   /**
@@ -1314,12 +1677,11 @@ export const StandardGatewayDispatchEventMappings = [
    */
   defineEvent("VOICE_STATE_UPDATE", "voiceStateUpdate", (client, data) => {
     const newState = VoiceState.from(client, data);
+    const voiceStateKey = `${newState.guildId}-${newState.userId}`;
 
     // Store the old version before updating
     let oldState: VoiceState | null = null;
-    const cachedState = client.cache.voiceStates?.get?.(
-      `${newState.guildId}-${newState.userId}`,
-    );
+    const cachedState = client.cache.voiceStates?.get?.(voiceStateKey);
 
     if (cachedState) {
       oldState = cachedState.clone?.() || cachedState;
@@ -1329,17 +1691,24 @@ export const StandardGatewayDispatchEventMappings = [
     if (newState.channelId) {
       // Update the cache with new version
       if (client.cache.voiceStates?.set) {
-        client.cache.voiceStates.set(
-          `${newState.guildId}-${newState.userId}`,
-          newState,
-        );
+        client.cache.voiceStates.set(voiceStateKey, newState);
       }
     } else {
       // User disconnected from voice, remove from cache
       if (client.cache.voiceStates?.delete) {
-        client.cache.voiceStates.delete(
-          `${newState.guildId}-${newState.userId}`,
-        );
+        client.cache.voiceStates.delete(voiceStateKey);
+      }
+    }
+
+    // Update the guild member's voiceState if available
+    if (client.cache.members?.get && client.cache.members?.set) {
+      const memberKey = `${newState.guildId}-${newState.userId}`;
+      const member = client.cache.members.get(memberKey);
+
+      if (member) {
+        const updatedMember = member.clone?.() || { ...member };
+        updatedMember.voiceState = newState.channelId ? newState : null;
+        client.cache.members.set(memberKey, updatedMember);
       }
     }
 
@@ -1349,9 +1718,29 @@ export const StandardGatewayDispatchEventMappings = [
   /**
    * Voice server update event - emitted when a guild's voice server is updated.
    */
-  defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (client, data) => [
-    VoiceServerUpdate.from(client, data as VoiceServerUpdateEntity),
-  ]),
+  defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (client, data) => {
+    const server = {
+      token: data.token,
+      guildId: data.guild_id,
+      endpoint: data.endpoint,
+    };
+
+    // Store the old server before updating
+    let oldServer = null;
+    if (client.cache.voiceServers?.get) {
+      const cachedServer = client.cache.voiceServers.get(data.guild_id);
+      if (cachedServer) {
+        oldServer = { ...cachedServer };
+      }
+    }
+
+    // Update cache
+    if (client.cache.voiceServers?.set) {
+      client.cache.voiceServers.set(data.guild_id, server);
+    }
+
+    return [oldServer, server];
+  }),
 
   /**
    * Webhooks update event - emitted when a guild webhook is created, updated, or deleted.
@@ -1377,13 +1766,11 @@ export const StandardGatewayDispatchEventMappings = [
     "stageInstanceCreate",
     (client, data) => {
       const stageInstance = StageInstance.from(client, data);
+      const key = `${stageInstance.guildId}-${stageInstance.channelId}`;
 
       // Cache the stage instance
       if (client.cache.stageInstances?.set) {
-        client.cache.stageInstances.set(
-          `${stageInstance.guildId}-${stageInstance.channelId}`,
-          stageInstance,
-        );
+        client.cache.stageInstances.set(key, stageInstance);
       }
 
       return [stageInstance];
@@ -1399,12 +1786,11 @@ export const StandardGatewayDispatchEventMappings = [
     "stageInstanceUpdate",
     (client, data) => {
       const newStageInstance = StageInstance.from(client, data);
+      const key = `${newStageInstance.guildId}-${newStageInstance.channelId}`;
 
       // Store the old version before updating
       let oldStageInstance: StageInstance | null = null;
-      const cachedStageInstance = client.cache.stageInstances?.get?.(
-        `${newStageInstance.guildId}-${newStageInstance.channelId}`,
-      );
+      const cachedStageInstance = client.cache.stageInstances?.get?.(key);
 
       if (cachedStageInstance) {
         oldStageInstance = cachedStageInstance.clone?.() || cachedStageInstance;
@@ -1412,10 +1798,7 @@ export const StandardGatewayDispatchEventMappings = [
 
       // Update the cache with new version
       if (client.cache.stageInstances?.set) {
-        client.cache.stageInstances.set(
-          `${newStageInstance.guildId}-${newStageInstance.channelId}`,
-          newStageInstance,
-        );
+        client.cache.stageInstances.set(key, newStageInstance);
       }
 
       return [oldStageInstance, newStageInstance];
@@ -1431,15 +1814,17 @@ export const StandardGatewayDispatchEventMappings = [
     "stageInstanceDelete",
     (client, data) => {
       const deletedStageInstance = StageInstance.from(client, data);
+      const key = `${deletedStageInstance.guildId}-${deletedStageInstance.channelId}`;
+
+      // Get the cached stage instance before deleting
+      const cachedStageInstance = client.cache.stageInstances?.get?.(key);
 
       // Remove from cache
       if (client.cache.stageInstances?.delete) {
-        client.cache.stageInstances.delete(
-          `${deletedStageInstance.guildId}-${deletedStageInstance.channelId}`,
-        );
+        client.cache.stageInstances.delete(key);
       }
 
-      return [deletedStageInstance];
+      return [cachedStageInstance || deletedStageInstance];
     },
   ),
 
@@ -1490,12 +1875,17 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("SUBSCRIPTION_DELETE", "subscriptionDelete", (client, data) => {
     const deletedSubscription = Subscription.from(client, data);
 
+    // Get the cached subscription before deleting
+    const cachedSubscription = client.cache.subscriptions?.get?.(
+      deletedSubscription.id,
+    );
+
     // Remove from cache
     if (client.cache.subscriptions?.delete) {
       client.cache.subscriptions.delete(deletedSubscription.id);
     }
 
-    return [deletedSubscription];
+    return [cachedSubscription || deletedSubscription];
   }),
 ];
 
