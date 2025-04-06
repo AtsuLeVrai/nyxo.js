@@ -86,6 +86,7 @@ export interface GatewayEventMapping<
  * A powerful and flexible event handler for Discord.js client
  * with support for priorities, middleware, and advanced event processing.
  */
+// @ts-expect-error: Complex class with generics
 export class ClientEventHandler extends EventEmitter<ClientEvents> {
   /**
    * Store for registered handlers

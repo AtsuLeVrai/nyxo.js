@@ -15,20 +15,19 @@ import {
   type PublicThreadChannelEntity,
 } from "@nyxjs/core";
 import {
-  AnnouncementChannel,
   AnnouncementThreadChannel,
   type AnyChannel,
-  CategoryChannel,
-  Channel,
   DmChannel,
-  ForumChannel,
   GroupDmChannel,
-  MediaChannel,
+  GuildAnnouncementChannel,
+  GuildCategoryChannel,
+  GuildForumChannel,
+  GuildMediaChannel,
+  GuildStageVoiceChannel,
+  GuildTextChannel,
+  GuildVoiceChannel,
   PrivateThreadChannel,
   PublicThreadChannel,
-  StageChannel,
-  TextChannel,
-  VoiceChannel,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
 
@@ -50,22 +49,25 @@ export const ChannelFactory = {
   create(client: Client, data: AnyChannelEntity): AnyChannel {
     switch (data.type) {
       case ChannelType.GuildText:
-        return new TextChannel(client, data as GuildTextChannelEntity);
+        return new GuildTextChannel(client, data as GuildTextChannelEntity);
 
       case ChannelType.Dm:
         return new DmChannel(client, data as DmChannelEntity);
 
       case ChannelType.GuildVoice:
-        return new VoiceChannel(client, data as GuildVoiceChannelEntity);
+        return new GuildVoiceChannel(client, data as GuildVoiceChannelEntity);
 
       case ChannelType.GroupDm:
         return new GroupDmChannel(client, data as GroupDmChannelEntity);
 
       case ChannelType.GuildCategory:
-        return new CategoryChannel(client, data as GuildCategoryChannelEntity);
+        return new GuildCategoryChannel(
+          client,
+          data as GuildCategoryChannelEntity,
+        );
 
       case ChannelType.GuildAnnouncement:
-        return new AnnouncementChannel(
+        return new GuildAnnouncementChannel(
           client,
           data as GuildAnnouncementChannelEntity,
         );
@@ -89,16 +91,21 @@ export const ChannelFactory = {
         );
 
       case ChannelType.GuildStageVoice:
-        return new StageChannel(client, data as GuildStageVoiceChannelEntity);
+        return new GuildStageVoiceChannel(
+          client,
+          data as GuildStageVoiceChannelEntity,
+        );
 
       case ChannelType.GuildForum:
-        return new ForumChannel(client, data as GuildForumChannelEntity);
+        return new GuildForumChannel(client, data as GuildForumChannelEntity);
 
       case ChannelType.GuildMedia:
-        return new MediaChannel(client, data as GuildMediaChannelEntity);
+        return new GuildMediaChannel(client, data as GuildMediaChannelEntity);
 
       default:
-        throw new Channel(client, data);
+        throw new Error(
+          "Unsupported channel type. Please check the channel data.",
+        );
     }
   },
 } as const;

@@ -1,14 +1,17 @@
 import type {
+  AnyChannelEntity,
+  AnyThreadChannelEntity,
   BanEntity,
   IntegrationAccountEntity,
   IntegrationApplicationEntity,
+  RoleEntity,
+  VoiceStateEntity,
 } from "@nyxjs/core";
 import {
   type AvatarDecorationDataEntity,
   BitFieldManager,
   type DefaultMessageNotificationLevel,
   type ExplicitContentFilterLevel,
-  type GuildEntity,
   type GuildFeature,
   type GuildMemberEntity,
   type GuildMemberFlags,
@@ -23,12 +26,20 @@ import {
   type SystemChannelFlags,
   type VerificationLevel,
 } from "@nyxjs/core";
+import type { GuildCreateEntity, PresenceEntity } from "@nyxjs/gateway";
 import { BaseClass, type CacheEntityInfo } from "../bases/index.js";
+import { ChannelFactory } from "../factories/index.js";
+import type { GuildBased } from "../types/index.js";
+import type { AnyChannel, AnyThreadChannel } from "./channel.class.js";
 import { Emoji } from "./emoji.class.js";
 import { Role } from "./role.class.js";
+import { GuildScheduledEvent } from "./scheduled-event.class.js";
+import { SoundboardSound } from "./soundboard.class.js";
+import { StageInstance } from "./stage-instance.class.js";
 import { User } from "./user.class.js";
+import { VoiceState } from "./voice.class.js";
 
-export class Guild extends BaseClass<GuildEntity> {
+export class Guild extends BaseClass<GuildCreateEntity> {
   get id(): Snowflake {
     return this.data.id;
   }
@@ -77,7 +88,7 @@ export class Guild extends BaseClass<GuildEntity> {
     return this.data.afk_timeout;
   }
 
-  get widgetEnabled(): boolean | undefined {
+  get widgetEnabled(): boolean {
     return Boolean(this.data.widget_enabled);
   }
 
@@ -98,7 +109,9 @@ export class Guild extends BaseClass<GuildEntity> {
   }
 
   get roles(): Role[] {
-    return this.data.roles.map((role) => Role.from(this.client, role));
+    return this.data.roles.map((role) =>
+      Role.from(this.client, role as GuildBased<RoleEntity>),
+    );
   }
 
   get emojis(): Emoji[] {
@@ -195,6 +208,68 @@ export class Guild extends BaseClass<GuildEntity> {
     return this.data.safety_alerts_channel_id;
   }
 
+  get joinedAt(): string {
+    return this.data.joined_at;
+  }
+
+  get large(): boolean {
+    return Boolean(this.data.large);
+  }
+
+  get unavailable(): boolean {
+    return Boolean(this.data.unavailable);
+  }
+
+  get memberCount(): number {
+    return this.data.member_count;
+  }
+
+  get voiceStates(): VoiceState[] {
+    return this.data.voice_states.map((voiceState) =>
+      VoiceState.from(this.client, voiceState as VoiceStateEntity),
+    );
+  }
+
+  get members(): GuildMember[] {
+    return this.data.members.map((member) =>
+      GuildMember.from(this.client, member as GuildBased<GuildMemberEntity>),
+    );
+  }
+
+  get channels(): AnyChannel[] {
+    return this.data.channels.map((channel) =>
+      ChannelFactory.create(this.client, channel as AnyChannelEntity),
+    );
+  }
+
+  get threads(): AnyThreadChannel[] {
+    return this.data.threads.map((thread) =>
+      ChannelFactory.create(this.client, thread as AnyThreadChannelEntity),
+    ) as AnyThreadChannel[];
+  }
+
+  get presences(): Partial<PresenceEntity>[] {
+    return this.data.presences;
+  }
+
+  get stageInstances(): StageInstance[] {
+    return this.data.stage_instances.map((stageInstance) =>
+      StageInstance.from(this.client, stageInstance),
+    );
+  }
+
+  get guildScheduledEvents(): GuildScheduledEvent[] {
+    return this.data.guild_scheduled_events.map((event) =>
+      GuildScheduledEvent.from(this.client, event),
+    );
+  }
+
+  get soundboardSounds(): SoundboardSound[] {
+    return this.data.soundboard_sounds.map((sound) =>
+      SoundboardSound.from(this.client, sound),
+    );
+  }
+
   protected override getCacheInfo(): CacheEntityInfo | null {
     return {
       storeKey: "guilds",
@@ -217,7 +292,7 @@ export class Ban extends BaseClass<BanEntity> {
   }
 }
 
-export class GuildMember extends BaseClass<GuildMemberEntity> {
+export class GuildMember extends BaseClass<GuildBased<GuildMemberEntity>> {
   get user(): User {
     return User.from(this.client, this.data.user);
   }
@@ -274,6 +349,10 @@ export class GuildMember extends BaseClass<GuildMemberEntity> {
     return this.data.avatar_decoration_data;
   }
 
+  get guildId(): Snowflake {
+    return this.data.guild_id;
+  }
+
   protected override getCacheInfo(): CacheEntityInfo | null {
     return {
       storeKey: "members",
@@ -312,9 +391,13 @@ export class IntegrationApplication extends BaseClass<IntegrationApplicationEnti
   }
 }
 
-export class Integration extends BaseClass<IntegrationEntity> {
+export class Integration extends BaseClass<GuildBased<IntegrationEntity>> {
   get id(): Snowflake {
     return this.data.id;
+  }
+
+  get guildId(): Snowflake {
+    return this.data.guild_id;
   }
 
   get name(): string {

@@ -6,6 +6,7 @@ import {
   type Snowflake,
 } from "@nyxjs/core";
 import { BaseClass, type CacheEntityInfo } from "../bases/index.js";
+import type { GuildBased } from "../types/index.js";
 
 export class RoleTags extends BaseClass<RoleTagsEntity> {
   get botId(): Snowflake | undefined {
@@ -38,9 +39,13 @@ export class RoleTags extends BaseClass<RoleTagsEntity> {
   }
 }
 
-export class Role extends BaseClass<RoleEntity> {
+export class Role extends BaseClass<GuildBased<RoleEntity>> {
   get id(): Snowflake {
     return this.data.id;
+  }
+
+  get guildId(): Snowflake {
+    return this.data.guild_id;
   }
 
   get name(): string {

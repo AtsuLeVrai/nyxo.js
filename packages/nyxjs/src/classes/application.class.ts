@@ -5,11 +5,11 @@ import {
   type ApplicationIntegrationType,
   type ApplicationIntegrationTypeConfigurationEntity,
   BitFieldManager,
-  type GuildEntity,
   type InstallParamsEntity,
   type Snowflake,
   type UserEntity,
 } from "@nyxjs/core";
+import type { GuildCreateEntity } from "@nyxjs/gateway";
 import { BaseClass, type CacheEntityInfo } from "../bases/index.js";
 import { Guild } from "./guild.class.js";
 import { Team } from "./team.class.js";
@@ -93,7 +93,7 @@ export class Application extends BaseClass<ApplicationEntity> {
       return undefined;
     }
 
-    return Guild.from(this.client, this.data.guild as GuildEntity);
+    return Guild.from(this.client, this.data.guild as GuildCreateEntity);
   }
 
   get primarySkuId(): Snowflake | undefined {

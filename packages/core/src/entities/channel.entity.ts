@@ -366,7 +366,7 @@ export interface GuildTextChannelEntity
     | "available_tags"
   > {
   type: ChannelType.GuildText;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
 }
 
 /**
@@ -419,7 +419,7 @@ export interface GuildVoiceChannelEntity
     | "default_forum_layout"
   > {
   type: ChannelType.GuildVoice;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
   bitrate: number;
   user_limit: number;
 }
@@ -480,7 +480,7 @@ export interface GuildCategoryChannelEntity
     | "available_tags"
   > {
   type: ChannelType.GuildCategory;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
 }
 
 /**
@@ -512,7 +512,7 @@ export interface GuildAnnouncementChannelEntity
     | "default_forum_layout"
   > {
   type: ChannelType.GuildAnnouncement;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
 }
 
 /**
@@ -536,7 +536,7 @@ export interface PublicThreadChannelEntity
     | "default_forum_layout"
   > {
   type: ChannelType.PublicThread;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
   thread_metadata: ThreadMetadataEntity;
   parent_id: Snowflake;
 }
@@ -562,7 +562,7 @@ export interface PrivateThreadChannelEntity
     | "default_forum_layout"
   > {
   type: ChannelType.PrivateThread;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
   thread_metadata: ThreadMetadataEntity;
   parent_id: Snowflake;
   /** Whether non-moderators can add other non-moderators to the thread */
@@ -590,7 +590,7 @@ export interface AnnouncementThreadChannelEntity
     | "default_forum_layout"
   > {
   type: ChannelType.AnnouncementThread;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
   thread_metadata: ThreadMetadataEntity;
   parent_id: Snowflake;
 }
@@ -630,7 +630,7 @@ export interface GuildStageVoiceChannelEntity
     | "default_forum_layout"
   > {
   type: ChannelType.GuildStageVoice;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
   bitrate: number;
   user_limit: number;
 }
@@ -658,7 +658,7 @@ export interface GuildForumChannelEntity
     | "last_message_id"
   > {
   type: ChannelType.GuildForum;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
   available_tags: ForumTagEntity[];
 }
 
@@ -686,7 +686,7 @@ export interface GuildMediaChannelEntity
     | "default_forum_layout"
   > {
   type: ChannelType.GuildMedia;
-  guild_id?: Snowflake;
+  guild_id: Snowflake;
   available_tags: ForumTagEntity[];
 }
 

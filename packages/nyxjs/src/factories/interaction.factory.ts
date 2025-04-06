@@ -1,36 +1,28 @@
 import {
   type AnyInteractionEntity,
-  type ApplicationCommandInteractionDataEntity,
   ApplicationCommandType,
-  ComponentType,
+  type BotDmInteractionEntity,
+  type GuildInteractionEntity,
+  InteractionContextType,
   InteractionType,
-  type MessageComponentInteractionDataEntity,
+  type PrivateChannelInteractionEntity,
 } from "@nyxjs/core";
 import {
   type AnyInteraction,
-  ApplicationCommandInteraction,
   AutocompleteInteraction,
-  ButtonInteraction,
-  ChannelSelectMenuInteraction,
-  MentionableSelectMenuInteraction,
-  MessageCommandInteraction,
-  MessageComponentInteraction,
+  CommandInteraction,
+  ComponentInteraction,
+  GuildInteraction,
   ModalSubmitInteraction,
-  PingInteraction,
-  RoleSelectMenuInteraction,
-  SlashCommandInteraction,
-  StringSelectMenuInteraction,
-  UserCommandInteraction,
-  UserSelectMenuInteraction,
+  PrivateInteraction,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
 
 /**
- * Factory class for creating interaction instances based on their type.
+ * Factory for creating and identifying interaction instances based on their types.
  *
  * This factory handles the creation of appropriate interaction class instances
- * by examining the interaction type in the provided data, as well as subtypes
- * like command type and component type.
+ * by examining the interaction data, including type, context, and subtypes.
  */
 export const InteractionFactory = {
   /**
@@ -42,156 +34,134 @@ export const InteractionFactory = {
    * @throws Error if the interaction type is not supported
    */
   create(client: Client, data: AnyInteractionEntity): AnyInteraction {
+    // First determine the context (guild vs private)
+    if (data.context === InteractionContextType.Guild) {
+      return new GuildInteraction(client, data as GuildInteractionEntity);
+    }
+
+    if (
+      data.context === InteractionContextType.BotDm ||
+      data.context === InteractionContextType.PrivateChannel
+    ) {
+      return new PrivateInteraction(
+        client,
+        data as BotDmInteractionEntity | PrivateChannelInteractionEntity,
+      );
+    }
+
+    // @ts-expect-error: If context isn't defined, proceed based on interaction type
     switch (data.type) {
-      case InteractionType.Ping:
-        return new PingInteraction(client, data);
+      case InteractionType.ApplicationCommand:
+        return new CommandInteraction(client, data);
 
-      case InteractionType.ApplicationCommand: {
-        const commandData =
-          data.data as ApplicationCommandInteractionDataEntity;
-        switch (commandData.type) {
-          case ApplicationCommandType.ChatInput:
-            // @ts-expect-error: problem with the type `data`
-            return new SlashCommandInteraction(client, data);
-
-          case ApplicationCommandType.User:
-            // @ts-expect-error: problem with the type `data`
-            return new UserCommandInteraction(client, data);
-
-          case ApplicationCommandType.Message:
-            // @ts-expect-error: problem with the type `data`
-            return new MessageCommandInteraction(client, data);
-
-          default:
-            // @ts-expect-error: problem with the type `data`
-            return new ApplicationCommandInteraction(client, data);
-        }
-      }
-
-      case InteractionType.MessageComponent: {
-        const componentData =
-          data.data as MessageComponentInteractionDataEntity;
-        switch (componentData.component_type) {
-          case ComponentType.Button:
-            // @ts-expect-error: problem with the type `data`
-            return new ButtonInteraction(client, data);
-
-          case ComponentType.StringSelect:
-            // @ts-expect-error: problem with the type `data`
-            return new StringSelectMenuInteraction(client, data);
-
-          case ComponentType.UserSelect:
-            // @ts-expect-error: problem with the type `data`
-            return new UserSelectMenuInteraction(client, data);
-
-          case ComponentType.RoleSelect:
-            // @ts-expect-error: problem with the type `data`
-            return new RoleSelectMenuInteraction(client, data);
-
-          case ComponentType.MentionableSelect:
-            // @ts-expect-error: problem with the type `data`
-            return new MentionableSelectMenuInteraction(client, data);
-
-          case ComponentType.ChannelSelect:
-            // @ts-expect-error: problem with the type `data`
-            return new ChannelSelectMenuInteraction(client, data);
-
-          default:
-            // @ts-expect-error: problem with the type `data`
-            return new MessageComponentInteraction(client, data);
-        }
-      }
+      case InteractionType.MessageComponent:
+        return new ComponentInteraction(client, data);
 
       case InteractionType.ApplicationCommandAutocomplete:
-        // @ts-expect-error: problem with the type `data`
         return new AutocompleteInteraction(client, data);
 
       case InteractionType.ModalSubmit:
-        // @ts-expect-error: problem with the type `data`
         return new ModalSubmitInteraction(client, data);
 
+      case InteractionType.Ping: {
+        // Handle ping interactions with a special method
+        // but we need a base interaction instance for ping
+        return new GuildInteraction(client, data as GuildInteractionEntity);
+      }
+
       default:
-        throw new Error(`Unsupported interaction type: ${data.type}`);
+        throw new Error("Unsupported interaction type");
     }
   },
 
   /**
-   * Determines if the interaction can be safely cast to a specific type
+   * Determines if the interaction is from a guild context
+   *
    * @param interaction - The interaction to check
-   * @param type - The interaction type to compare against
-   * @returns True if the interaction is of the specified type
+   * @returns True if the interaction is from a guild
    */
-  isType(interaction: AnyInteraction, type: InteractionType): boolean {
-    return interaction.type === type;
-  },
-
-  /**
-   * Checks if an interaction is a ping interaction
-   * @param interaction - The interaction to check
-   * @returns True if the interaction is a ping interaction
-   */
-  isPing(interaction: AnyInteraction): interaction is PingInteraction {
-    return interaction.type === InteractionType.Ping;
-  },
-
-  /**
-   * Checks if an interaction is an application command
-   * @param interaction - The interaction to check
-   * @returns True if the interaction is an application command
-   */
-  isApplicationCommand(
+  isGuildInteraction(
     interaction: AnyInteraction,
-  ): interaction is ApplicationCommandInteraction {
+  ): interaction is GuildInteraction {
+    return interaction.context === InteractionContextType.Guild;
+  },
+
+  /**
+   * Determines if the interaction is from a private message context
+   *
+   * @param interaction - The interaction to check
+   * @returns True if the interaction is from a private message
+   */
+  isPrivateInteraction(
+    interaction: AnyInteraction,
+  ): interaction is PrivateInteraction {
+    return (
+      interaction.context === InteractionContextType.BotDm ||
+      interaction.context === InteractionContextType.PrivateChannel
+    );
+  },
+
+  /**
+   * Determines if the interaction is a command interaction
+   *
+   * @param interaction - The interaction to check
+   * @returns True if the interaction is a command
+   */
+  isCommand(interaction: AnyInteraction): interaction is CommandInteraction {
     return interaction.type === InteractionType.ApplicationCommand;
   },
 
   /**
-   * Checks if an interaction is a slash command
+   * Determines if the interaction is a slash command
+   *
    * @param interaction - The interaction to check
    * @returns True if the interaction is a slash command
    */
   isSlashCommand(
     interaction: AnyInteraction,
-  ): interaction is SlashCommandInteraction {
-    return (
-      interaction.type === InteractionType.ApplicationCommand &&
-      (interaction.interactionData as ApplicationCommandInteractionDataEntity)
-        ?.type === ApplicationCommandType.ChatInput
-    );
+  ): interaction is CommandInteraction {
+    if (!this.isCommand(interaction)) {
+      return false;
+    }
+
+    return interaction.commandType === ApplicationCommandType.ChatInput;
   },
 
   /**
-   * Checks if an interaction is a user command
+   * Determines if the interaction is a user command
+   *
    * @param interaction - The interaction to check
    * @returns True if the interaction is a user command
    */
   isUserCommand(
     interaction: AnyInteraction,
-  ): interaction is UserCommandInteraction {
-    return (
-      interaction.type === InteractionType.ApplicationCommand &&
-      (interaction.interactionData as ApplicationCommandInteractionDataEntity)
-        ?.type === ApplicationCommandType.User
-    );
+  ): interaction is CommandInteraction {
+    if (!this.isCommand(interaction)) {
+      return false;
+    }
+
+    return interaction.commandType === ApplicationCommandType.User;
   },
 
   /**
-   * Checks if an interaction is a message command
+   * Determines if the interaction is a message command
+   *
    * @param interaction - The interaction to check
    * @returns True if the interaction is a message command
    */
   isMessageCommand(
     interaction: AnyInteraction,
-  ): interaction is MessageCommandInteraction {
-    return (
-      interaction.type === InteractionType.ApplicationCommand &&
-      (interaction.interactionData as ApplicationCommandInteractionDataEntity)
-        ?.type === ApplicationCommandType.Message
-    );
+  ): interaction is CommandInteraction {
+    if (!this.isCommand(interaction)) {
+      return false;
+    }
+
+    return interaction.commandType === ApplicationCommandType.Message;
   },
 
   /**
-   * Checks if an interaction is an autocomplete interaction
+   * Determines if the interaction is an autocomplete interaction
+   *
    * @param interaction - The interaction to check
    * @returns True if the interaction is an autocomplete interaction
    */
@@ -202,63 +172,22 @@ export const InteractionFactory = {
   },
 
   /**
-   * Checks if an interaction is a message component interaction
+   * Determines if the interaction is a component interaction
+   *
    * @param interaction - The interaction to check
-   * @returns True if the interaction is a message component interaction
+   * @returns True if the interaction is a component interaction
    */
-  isMessageComponent(
+  isComponent(
     interaction: AnyInteraction,
-  ): interaction is MessageComponentInteraction {
+  ): interaction is ComponentInteraction {
     return interaction.type === InteractionType.MessageComponent;
   },
 
   /**
-   * Checks if an interaction is a button interaction
+   * Determines if the interaction is a modal submit
+   *
    * @param interaction - The interaction to check
-   * @returns True if the interaction is a button interaction
-   */
-  isButton(interaction: AnyInteraction): interaction is ButtonInteraction {
-    return (
-      interaction.type === InteractionType.MessageComponent &&
-      (interaction.interactionData as MessageComponentInteractionDataEntity)
-        ?.component_type === ComponentType.Button
-    );
-  },
-
-  /**
-   * Checks if an interaction is a select menu interaction
-   * @param interaction - The interaction to check
-   * @returns True if the interaction is a select menu interaction
-   */
-  isSelectMenu(
-    interaction: AnyInteraction,
-  ): interaction is
-    | StringSelectMenuInteraction
-    | UserSelectMenuInteraction
-    | RoleSelectMenuInteraction
-    | ChannelSelectMenuInteraction
-    | MentionableSelectMenuInteraction {
-    if (interaction.type !== InteractionType.MessageComponent) {
-      return false;
-    }
-
-    const componentType = (
-      interaction.interactionData as MessageComponentInteractionDataEntity
-    )?.component_type;
-
-    return (
-      componentType === ComponentType.StringSelect ||
-      componentType === ComponentType.UserSelect ||
-      componentType === ComponentType.RoleSelect ||
-      componentType === ComponentType.MentionableSelect ||
-      componentType === ComponentType.ChannelSelect
-    );
-  },
-
-  /**
-   * Checks if an interaction is a modal submit interaction
-   * @param interaction - The interaction to check
-   * @returns True if the interaction is a modal submit interaction
+   * @returns True if the interaction is a modal submit
    */
   isModalSubmit(
     interaction: AnyInteraction,

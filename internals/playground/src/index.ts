@@ -136,7 +136,11 @@ client.on("dispatch", (event, data) => {
 });
 
 client.on("ready", (ready) => {
-  console.log("[CLIENT] Client is ready: ", ready.guilds.length);
+  console.log("[CLIENT] Client is ready: ", ready.user.id);
+
+  setInterval(() => {
+    console.log("[CLIENT] Client is still alive: ", client.cache.getStats());
+  }, 5000);
 });
 
 client.on("messageCreate", async (message) => {
@@ -173,7 +177,7 @@ client.on("messageCreate", async (message) => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-  if (interaction.isSlashCommand() && interaction.name === "ping") {
+  if (interaction.isCommand() && interaction.interactionData.name === "ping") {
     const embed = new EmbedBuilder()
       .setTitle("Test")
       .setDescription("Test")
@@ -188,7 +192,7 @@ client.on("interactionCreate", async (interaction) => {
 
     try {
       await interaction.reply({
-        content: `Pong ${formatUser(client.user.id)}`,
+        content: `Pong ${formatUser(interaction.user?.id ?? client.user.id)}`,
         embeds: [embed],
       });
     } catch (error) {

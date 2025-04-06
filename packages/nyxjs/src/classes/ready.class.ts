@@ -1,5 +1,5 @@
-import type { ApiVersion, ApplicationEntity, GuildEntity } from "@nyxjs/core";
-import type { ReadyEntity } from "@nyxjs/gateway";
+import type { ApiVersion, ApplicationEntity } from "@nyxjs/core";
+import type { GuildCreateEntity, ReadyEntity } from "@nyxjs/gateway";
 import { BaseClass, type CacheEntityInfo } from "../bases/index.js";
 import { Application } from "./application.class.js";
 import { Guild } from "./guild.class.js";
@@ -16,7 +16,7 @@ export class Ready extends BaseClass<ReadyEntity> {
 
   get guilds(): Guild[] {
     return this.data.guilds.map((guild) =>
-      Guild.from(this.client, guild as unknown as GuildEntity),
+      Guild.from(this.client, guild as unknown as GuildCreateEntity),
     );
   }
 

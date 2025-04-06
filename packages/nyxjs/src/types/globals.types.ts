@@ -11,38 +11,40 @@ import type {
   AnyChannel,
   AnyInteraction,
   AnyThreadChannel,
-  AutoModerationActionExecution,
   AutoModerationRule,
   Ban,
   Emoji,
   Entitlement,
   Guild,
-  GuildAuditLogEntry,
   GuildMember,
   GuildScheduledEvent,
   GuildScheduledEventUser,
+  GuildTextChannel,
   Integration,
-  Invite,
   Message,
-  MessagePollVote,
-  MessageReaction,
+  Reaction,
   Ready,
   Role,
   SoundboardSound,
   StageInstance,
   Sticker,
   Subscription,
-  TextChannel,
-  ThreadListSync,
   ThreadMember,
-  ThreadMembers,
-  Typing,
   User,
-  VoiceChannelEffectSend,
-  VoiceServer,
   VoiceState,
   Webhook,
 } from "../classes/index.js";
+
+/**
+ * Represents a guild-based entity, which includes a guild ID.
+ * This is useful for entities that are specific to a guild context.
+ */
+export type GuildBased<T extends object> = T & {
+  /**
+   * The ID of the guild this entity belongs to.
+   */
+  guild_id: string;
+};
 
 /**
  * Represents all events that can be emitted by the client.
@@ -96,7 +98,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when an Auto Moderation rule is triggered and an action is executed.
    * @param execution Information about the executed action
    */
-  autoModerationActionExecution: [execution: AutoModerationActionExecution];
+  autoModerationActionExecution: [execution: unknown];
 
   /**
    * Emitted when a new guild channel is created.
@@ -121,7 +123,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is pinned or unpinned in a channel.
    * @param pinUpdate Information about the pin update
    */
-  channelPinsUpdate: [pinUpdate: TextChannel | null];
+  channelPinsUpdate: [pinUpdate: GuildTextChannel | null];
 
   /**
    * Emitted when a new thread is created or when the client is added to a private thread.
@@ -150,7 +152,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This helps synchronize thread state when joining a guild or gaining access to a channel.
    * @param threads Collection of active threads in the channel
    */
-  threadListSync: [threads: ThreadListSync];
+  threadListSync: [threads: unknown];
 
   /**
    * Emitted when the thread member object for the current user is updated.
@@ -163,7 +165,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when users are added to or removed from a thread.
    * @param update Information about the members update
    */
-  threadMembersUpdate: [update: ThreadMembers];
+  threadMembersUpdate: [update: unknown];
 
   /**
    * Emitted when a new entitlement (subscription or one-time purchase) is created.
@@ -215,7 +217,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a new audit log entry is created in a guild.
    * @param entry The newly created audit log entry
    */
-  guildAuditLogEntryCreate: [entry: GuildAuditLogEntry];
+  guildAuditLogEntryCreate: [entry: unknown];
 
   /**
    * Emitted when a user is banned from a guild.
@@ -423,13 +425,13 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when an invite to a channel is created.
    * @param invite The newly created invite
    */
-  inviteCreate: [invite: Invite];
+  inviteCreate: [invite: unknown];
 
   /**
    * Emitted when an invite to a channel is deleted.
    * @param invite The deleted invite
    */
-  inviteDelete: [invite: Invite];
+  inviteDelete: [invite: unknown];
 
   /**
    * Emitted when a message is sent in a channel the client can see.
@@ -460,25 +462,25 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user adds a reaction to a message.
    * @param reaction Information about the added reaction
    */
-  messageReactionAdd: [reaction: MessageReaction];
+  ReactionAdd: [reaction: Reaction];
 
   /**
    * Emitted when a user removes a reaction from a message.
    * @param reaction Information about the removed reaction
    */
-  messageReactionRemove: [reaction: MessageReaction];
+  ReactionRemove: [reaction: Reaction];
 
   /**
    * Emitted when all reactions are removed from a message.
    * @param removal Information about the removal
    */
-  messageReactionRemoveAll: [removal: MessageReaction];
+  ReactionRemoveAll: [removal: Reaction];
 
   /**
    * Emitted when all reactions of a specific emoji are removed from a message.
    * @param removal Information about the emoji reaction removal
    */
-  messageReactionRemoveEmoji: [removal: MessageReaction];
+  ReactionRemoveEmoji: [removal: Reaction];
 
   /**
    * Emitted when a user's presence (status, activity) is updated.
@@ -494,7 +496,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user starts typing in a channel.
    * @param typing Information about the typing activity
    */
-  typingStart: [typing: Typing];
+  typingStart: [typing: unknown];
 
   /**
    * Emitted when properties about the user (username, avatar, etc.) change.
@@ -507,7 +509,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when someone sends an effect in a voice channel the client is connected to.
    * @param effect Information about the sent effect
    */
-  voiceChannelEffectSend: [effect: VoiceChannelEffectSend];
+  voiceChannelEffectSend: [effect: unknown];
 
   /**
    * Emitted when a user joins, leaves, or moves between voice channels.
@@ -521,7 +523,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This usually happens when a guild becomes available for voice connections.
    * @param server Information about the voice server update
    */
-  voiceServerUpdate: [oldServer: VoiceServer | null, newServer: VoiceServer];
+  voiceServerUpdate: [oldServer: unknown | null, newServer: unknown];
 
   /**
    * Emitted when a webhook is created, updated, or deleted in a guild channel.
@@ -583,11 +585,11 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user votes on a message poll.
    * @param vote Information about the poll vote
    */
-  messagePollVoteAdd: [vote: MessagePollVote];
+  messagePollVoteAdd: [vote: unknown];
 
   /**
    * Emitted when a user removes their vote from a message poll.
    * @param vote Information about the removed poll vote
    */
-  messagePollVoteRemove: [vote: MessagePollVote];
+  messagePollVoteRemove: [vote: unknown];
 }

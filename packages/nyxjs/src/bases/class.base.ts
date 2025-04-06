@@ -126,6 +126,9 @@ export abstract class BaseClass<T extends object> {
         }
       }
     }
+
+    // Initialize all getters to trigger their creation
+    this.#initAllGetters();
   }
 
   /**
@@ -295,4 +298,53 @@ export abstract class BaseClass<T extends object> {
    * @returns Cache information containing the store key and ID, or null if the entity cannot be cached
    */
   protected abstract getCacheInfo(): CacheEntityInfo | null;
+
+  /**
+   * Initializes all getter properties defined in the derived class.
+   *
+   * This private method triggers the execution of all getters to ensure they are
+   * properly initialized during object construction, which can be important for
+   * caching and other initialization side effects.
+   *
+   * It intelligently filters out base class getters and special JavaScript properties
+   * to avoid unnecessary or potentially harmful initialization.
+   *
+   * Any errors during getter initialization are safely caught and ignored,
+   * preventing constructor failures while still allowing the rest of the
+   * initialization process to continue.
+   *
+   * @private
+   */
+  #initAllGetters(): void {
+    // Get all property descriptors from the prototype chain
+    const proto = Object.getPrototypeOf(this);
+    const propertyDescriptors = Object.getOwnPropertyDescriptors(proto);
+    const baseClassDescriptors = Object.getOwnPropertyDescriptors(
+      BaseClass.prototype,
+    );
+
+    // Only process true getter properties (properties with a get function but no set function)
+    for (const [propName, descriptor] of Object.entries(propertyDescriptors)) {
+      const isGetter = typeof descriptor.get === "function";
+      const isNotFromBaseClass = !Object.prototype.hasOwnProperty.call(
+        baseClassDescriptors,
+        propName,
+      );
+      const isNotSpecialProperty = ![
+        "constructor",
+        "prototype",
+        "__proto__",
+      ].includes(propName);
+
+      if (isGetter && isNotFromBaseClass && isNotSpecialProperty) {
+        try {
+          // Access the getter to trigger initialization
+          // Using type assertion with keyof for type safety
+          const propertyKey = propName as keyof this;
+          // biome-ignore lint/complexity/noVoid: This is safe because we're accessing a getter
+          void this[propertyKey];
+        } catch {}
+      }
+    }
+  }
 }
