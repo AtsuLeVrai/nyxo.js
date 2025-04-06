@@ -1,10 +1,57 @@
 import type { Snowflake } from "@nyxjs/core";
+import type { Store } from "@nyxjs/store";
 import type { Client } from "../core/index.js";
+import type { CacheManager } from "../managers/index.js";
 
 /**
- * Base class for all data models in the Nyx framework.
+ * Represents the necessary information for caching an entity in the appropriate store.
  *
- * The BaseModal class provides a foundation for working with Discord API data entities
+ * This interface defines the structure that must be returned by any class implementing
+ * the `getCacheInfo()` method to support automatic caching in the Nyx.js framework.
+ *
+ * When an entity cannot or should not be cached (e.g., standard emojis without an ID),
+ * the implementation should return `null` instead of this structure.
+ *
+ * @example
+ * ```typescript
+ * // Implementing getCacheInfo in an entity class
+ * protected getCacheInfo(): CacheEntityInfo | null {
+ *   if (this.id) {
+ *     return {
+ *       storeKey: 'users',
+ *       id: this.id
+ *     };
+ *   }
+ *   return null; // Cannot be cached
+ * }
+ * ```
+ */
+export interface CacheEntityInfo {
+  /**
+   * The key of the cache store where this entity should be stored.
+   * This must be a valid key in the CacheManager (e.g., 'users', 'guilds', 'emojis').
+   *
+   * @example 'messages' | 'channels' | 'guilds'
+   */
+  storeKey: keyof CacheManager;
+
+  /**
+   * The unique identifier used as the cache key for this entity.
+   * This is typically the entity's Discord ID (Snowflake).
+   *
+   * If the ID is null, the entity will not be cached even if storeKey is provided.
+   * This can happen for entities that don't have stable identifiers or
+   * for special cases like standard emojis.
+   *
+   * @example '123456789012345678'
+   */
+  id: Snowflake | null;
+}
+
+/**
+ * Base class for all data models in the Nyx.js framework.
+ *
+ * The BaseClass provides a foundation for working with Discord API data entities
  * in a structured and type-safe manner. It encapsulates the raw data received from the API
  * and provides common utility methods for manipulating and accessing this data.
  *
@@ -14,7 +61,7 @@ import type { Client } from "../core/index.js";
  *
  * @example
  * ```typescript
- * class User extends BaseModal<UserEntity> {
+ * class User extends BaseClass<UserEntity> {
  *   get id(): Snowflake {
  *     return this.data.id;
  *   }
@@ -22,9 +69,13 @@ import type { Client } from "../core/index.js";
  *   get username(): string {
  *     return this.data.username;
  *   }
+ *
+ *   protected getCacheInfo() {
+ *     return { storeKey: 'users', id: this.id };
+ *   }
  * }
  *
- * const user = new User(client, userData);
+ * const user = new User(client, userData).cache();
  * console.log(user.username);
  * ```
  */
@@ -51,6 +102,30 @@ export abstract class BaseClass<T extends object> {
   constructor(client: Client, data: T) {
     this.client = client;
     this.data = data;
+
+    // Automatically cache this entity if caching is enabled
+    if (client.options.cache.enabled) {
+      const cacheInfo = this.getCacheInfo();
+      if (cacheInfo) {
+        const { storeKey, id } = cacheInfo;
+        if (id && storeKey) {
+          const cacheStore = client.cache[storeKey] as unknown as Store<
+            Snowflake,
+            this
+          >;
+
+          // Check if this entity already exists in the cache
+          const existingEntity = cacheStore.get(id);
+          if (existingEntity) {
+            // Update the existing cached entity with new data
+            existingEntity.update(data);
+          } else {
+            // Entity doesn't exist in cache yet, add it
+            cacheStore.set(id, this);
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -109,6 +184,7 @@ export abstract class BaseClass<T extends object> {
   /**
    * Updates the internal data of this modal with new data.
    * This is useful when you need to update the model with fresh data from the API.
+   * Also updates the entity in cache if it was previously cached.
    *
    * @param data - New data to merge with the existing data
    * @returns This instance for method chaining
@@ -116,6 +192,26 @@ export abstract class BaseClass<T extends object> {
    */
   update(data: Partial<T>): this {
     Object.assign(this.data, data);
+
+    // Update entity in cache if caching is enabled
+    if (this.client.options.cache.enabled) {
+      const cacheInfo = this.getCacheInfo();
+      if (cacheInfo) {
+        const { storeKey, id } = cacheInfo;
+        if (id && storeKey) {
+          const cacheStore = this.client.cache[storeKey] as unknown as Store<
+            Snowflake,
+            this
+          >;
+
+          // Only update if this entity is already in the cache
+          if (cacheStore.has(id)) {
+            cacheStore.add(id, this);
+          }
+        }
+      }
+    }
+
     return this;
   }
 
@@ -139,10 +235,7 @@ export abstract class BaseClass<T extends object> {
   equals(other: BaseClass<T>): boolean {
     // If both objects have an id property, compare by ID
     if ("id" in this.data && "id" in other.data) {
-      return (
-        (this.data as unknown as { id: Snowflake }).id ===
-        (other.data as unknown as { id: Snowflake }).id
-      );
+      return this.data.id === other.data.id;
     }
 
     // Otherwise, compare the full data objects
@@ -188,9 +281,18 @@ export abstract class BaseClass<T extends object> {
   toString(): string {
     // If the data has an id property, include it in the string
     if ("id" in this.data) {
-      return `${this.constructor.name}(${(this.data as unknown as { id: Snowflake }).id})`;
+      return `${this.constructor.name}(${this.data.id})`;
     }
 
     return this.constructor.name;
   }
+
+  /**
+   * Abstract method that derived classes must implement to define how they
+   * should be cached. If an entity should not be cached (e.g., a standard emoji
+   * with no ID), this method should return null.
+   *
+   * @returns Cache information containing the store key and ID, or null if the entity cannot be cached
+   */
+  protected abstract getCacheInfo(): CacheEntityInfo | null;
 }

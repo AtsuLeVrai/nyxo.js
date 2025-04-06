@@ -590,7 +590,7 @@ export const StandardGatewayDispatchEventMappings = [
 
       // Clean members for this guild
       if (client.cache.members?.forEach && client.cache.members?.delete) {
-        client.cache.members.forEach((member, memberId) => {
+        client.cache.members.forEach((_member, memberId) => {
           if (memberId.startsWith(`${guild.id}-`)) {
             client.cache.members.delete(memberId);
           }
@@ -686,12 +686,12 @@ export const StandardGatewayDispatchEventMappings = [
 
     // Get old emojis from cache
     const oldEmojis = new Map();
-    if (client.cache.emojis?.forEach) {
-      client.cache.emojis.forEach((emoji) => {
+    if (client.cache.emojis) {
+      for (const emoji of client.cache.emojis.values()) {
         if (emoji.guildId === guildId) {
           oldEmojis.set(emoji.id, emoji);
         }
-      });
+      }
     }
 
     // Find created, updated, and deleted emojis
@@ -751,12 +751,12 @@ export const StandardGatewayDispatchEventMappings = [
 
       // Get old stickers from cache
       const oldStickers = new Map();
-      if (client.cache.stickers?.forEach) {
-        client.cache.stickers.forEach((sticker) => {
+      if (client.cache.stickers) {
+        for (const sticker of client.cache.stickers.values()) {
           if (sticker.guildId === guildId) {
             oldStickers.set(sticker.id, sticker);
           }
-        });
+        }
       }
 
       // Find created, updated, and deleted stickers
@@ -801,7 +801,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_INTEGRATIONS_UPDATE",
     "guildIntegrationsUpdate",
-    (client, data) => {
+    (_client, data) => {
       // This event only contains guild_id, so we return a simple object with the guildId
       return [{ guildId: data.guild_id }];
     },
@@ -1065,7 +1065,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_ADD",
     "guildScheduledEventUserAdd",
-    (client, data) => {
+    (_client, data) => {
       return [
         {
           guildId: data.guild_id,
@@ -1082,7 +1082,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_REMOVE",
     "guildScheduledEventUserRemove",
-    (client, data) => {
+    (_client, data) => {
       return [
         {
           guildId: data.guild_id,
@@ -1464,7 +1464,13 @@ export const StandardGatewayDispatchEventMappings = [
       if (message?.reactions) {
         // Find or create the reaction
         const emojiKey = data.emoji.id || data.emoji.name;
-        if (!message.reactions.has(emojiKey)) {
+        if (message.reactions.has(emojiKey)) {
+          const existingReaction = message.reactions.get(emojiKey);
+          existingReaction.count++;
+          existingReaction.me =
+            existingReaction.me || client.user?.id === data.user_id;
+          existingReaction.users.add(data.user_id);
+        } else {
           message.reactions.set(emojiKey, {
             count: 1,
             emoji: data.emoji,
@@ -1473,12 +1479,6 @@ export const StandardGatewayDispatchEventMappings = [
             burstColors: data.burst_colors,
             users: new Set([data.user_id]),
           });
-        } else {
-          const existingReaction = message.reactions.get(emojiKey);
-          existingReaction.count++;
-          existingReaction.me =
-            existingReaction.me || client.user?.id === data.user_id;
-          existingReaction.users.add(data.user_id);
         }
       }
     }

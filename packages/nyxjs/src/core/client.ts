@@ -1,13 +1,9 @@
 import type { Snowflake } from "@nyxjs/core";
-import {
-  Gateway,
-  type GatewayIntentsBits,
-  type UpdatePresenceEntity,
-} from "@nyxjs/gateway";
+import { Gateway, type UpdatePresenceEntity } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { type Guild, User } from "../classes/index.js";
+import { User } from "../classes/index.js";
 import {
   GatewayKeyofEventMappings,
   RestKeyofEventMappings,
@@ -19,7 +15,7 @@ import { ClientOptions } from "../options/index.js";
 /**
  * Main client class for interacting with the Discord API.
  *
- * The Client is the primary entry point to the Nyx framework. It manages:
+ * The Client is the primary entry point to the Nyx.js framework. It manages:
  * - Discord API connections (REST and Gateway)
  * - Event handling and event middleware
  * - Caching strategies for various Discord entities
@@ -27,14 +23,14 @@ import { ClientOptions } from "../options/index.js";
  *
  * @example
  * ```typescript
- * import { Client, GatewayIntents } from "nyx.js";
+ * import { Client, GatewayIntentsBits } from "nyx.js";
  *
  * const client = new Client({
  *   token: "YOUR_BOT_TOKEN",
  *   intents: [
- *     GatewayIntents.Guilds,
- *     GatewayIntents.GuildMessages,
- *     GatewayIntents.MessageContent
+ *     GatewayIntentsBits.Guilds,
+ *     GatewayIntentsBits.GuildMessages,
+ *     GatewayIntentsBits.MessageContent
  *   ],
  *   cache: {
  *     userLimit: 10000,
@@ -287,25 +283,5 @@ export class Client extends ClientEventHandler {
     } catch (error) {
       throw new Error(`Failed to fetch client user: ${error}`);
     }
-  }
-
-  /**
-   * Gets a cached guild by ID, or returns undefined if not in cache
-   *
-   * @param guildId - The ID of the guild to get
-   * @returns The guild object or undefined
-   */
-  getGuild(guildId: Snowflake): Guild | undefined {
-    return this.#cache.guilds.get(guildId);
-  }
-
-  /**
-   * Checks if a specific gateway intent was requested in the client options
-   *
-   * @param intent - The intent to check for
-   * @returns Whether the intent was requested
-   */
-  hasIntent(intent: GatewayIntentsBits): boolean {
-    return (BigInt(this.#options.intents) & BigInt(intent)) === BigInt(intent);
   }
 }

@@ -31,7 +31,7 @@ export const ClientCacheEntityOptions = z
 export type ClientCacheEntityOptions = z.infer<typeof ClientCacheEntityOptions>;
 
 /**
- * Configuration options for the cache system of the Nyx client.
+ * Configuration options for the cache system of the Nyx.js client.
  *
  * The cache manager stores frequently accessed Discord entities to reduce API calls,
  * improve performance, and manage memory usage efficiently. Each entity type
@@ -252,7 +252,7 @@ export const ClientCacheOptions = z
 export type ClientCacheOptions = z.infer<typeof ClientCacheOptions>;
 
 /**
- * Configuration options for the Nyx Discord client.
+ * Configuration options for the Nyx.js Discord client.
  *
  * These options control the client's behavior including caching strategy,
  * REST API settings, and gateway connection parameters.

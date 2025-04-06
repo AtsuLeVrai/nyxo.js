@@ -1,23 +1,23 @@
 import type { Snowflake } from "@nyxjs/core";
 import type { PresenceEntity } from "@nyxjs/gateway";
 import { Store } from "@nyxjs/store";
-import {
-  type AnyChannel,
-  type AutoModerationRule,
-  type Emoji,
-  type Entitlement,
-  type Guild,
-  type GuildMember,
-  type GuildScheduledEvent,
-  type Integration,
-  type Message,
-  type Role,
-  type SoundboardSound,
-  type StageInstance,
-  type Sticker,
-  type Subscription,
-  type User,
-  type VoiceState,
+import type {
+  AnyChannel,
+  AutoModerationRule,
+  Emoji,
+  Entitlement,
+  Guild,
+  GuildMember,
+  GuildScheduledEvent,
+  Integration,
+  Message,
+  Role,
+  SoundboardSound,
+  StageInstance,
+  Sticker,
+  Subscription,
+  User,
+  VoiceState,
 } from "../classes/index.js";
 import type {
   ClientCacheEntityOptions,
@@ -610,7 +610,7 @@ export class CacheManager {
         for (const key of expiredKeys) {
           store.delete(key);
         }
-      } catch (error) {
+      } catch (_error) {
         // Silent fail to prevent cascade failures
       }
     }

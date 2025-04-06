@@ -1,574 +1,394 @@
 import type {
-  AnyChannelEntity,
-  AnyThreadChannelEntity,
-  AuditLogChangeEntity,
-  AuditLogEntryInfoEntity,
-  AuditLogEvent,
   BanEntity,
-  GuildMemberEntity,
-  GuildScheduledEventEntity,
   IntegrationAccountEntity,
   IntegrationApplicationEntity,
-  IntegrationExpirationBehavior,
-  OAuth2Scope,
-  Snowflake,
-  SoundboardSoundEntity,
-  StageInstanceEntity,
-  VoiceStateEntity,
 } from "@nyxjs/core";
 import {
   type AvatarDecorationDataEntity,
   BitFieldManager,
+  type DefaultMessageNotificationLevel,
+  type ExplicitContentFilterLevel,
+  type GuildEntity,
+  type GuildFeature,
+  type GuildMemberEntity,
   type GuildMemberFlags,
-  type UserEntity,
+  type IntegrationEntity,
+  type IntegrationExpirationBehavior,
+  type Locale,
+  type MfaLevel,
+  type NsfwLevel,
+  type OAuth2Scope,
+  type PremiumTier,
+  type Snowflake,
+  type SystemChannelFlags,
+  type VerificationLevel,
 } from "@nyxjs/core";
-import type {
-  GuildAuditLogEntryCreateEntity,
-  GuildCreateEntity,
-  GuildMemberAddEntity,
-  IntegrationCreateEntity,
-  PresenceEntity,
-} from "@nyxjs/gateway";
-import { BaseClass } from "../bases/index.js";
+import { BaseClass, type CacheEntityInfo } from "../bases/index.js";
+import { Emoji } from "./emoji.class.js";
+import { Role } from "./role.class.js";
 import { User } from "./user.class.js";
 
-/**
- * Represents a GUILD_CREATE event dispatched when a guild becomes available.
- *
- * This event can be sent in three different scenarios:
- * 1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds sent in the Ready event.
- * 2. When a Guild becomes available again to the client.
- * 3. When the current user joins a new Guild.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-create}
- */
-export class Guild extends BaseClass<GuildCreateEntity> {
-  /**
-   * Guild ID
-   */
+export class Guild extends BaseClass<GuildEntity> {
   get id(): Snowflake {
     return this.data.id;
   }
 
-  /**
-   * Guild name
-   */
   get name(): string {
     return this.data.name;
   }
 
-  /**
-   * Icon hash
-   */
   get icon(): string | null {
     return this.data.icon;
   }
 
-  /**
-   * Icon hash, returned when in the template object
-   */
-  get iconHash(): string | null {
-    return this.data.icon_hash || null;
+  get iconHash(): string | null | undefined {
+    return this.data.icon_hash;
   }
 
-  /**
-   * Splash hash
-   */
   get splash(): string | null {
     return this.data.splash;
   }
 
-  /**
-   * Discovery splash hash
-   */
   get discoverySplash(): string | null {
     return this.data.discovery_splash;
   }
 
-  /**
-   * True if the user is the owner of the guild
-   */
   get owner(): boolean {
     return Boolean(this.data.owner);
   }
 
-  /**
-   * ID of owner
-   */
   get ownerId(): Snowflake {
     return this.data.owner_id;
   }
 
-  /**
-   * Total permissions for the user in the guild (excludes overwrites)
-   */
-  get permissions(): string | null {
-    return this.data.permissions || null;
+  get permissions(): string | undefined {
+    return this.data.permissions;
   }
 
-  /**
-   * When this guild was joined at
-   */
-  get joinedAt(): string {
-    return this.data.joined_at;
+  get region(): string | null | undefined {
+    return this.data.region;
   }
 
-  /**
-   * true if this is considered a large guild
-   */
-  get large(): boolean {
-    return Boolean(this.data.large);
+  get afkChannelId(): Snowflake | null {
+    return this.data.afk_channel_id;
   }
 
-  /**
-   * true if this guild is unavailable due to an outage
-   */
-  get unavailable(): boolean {
-    return Boolean(this.data.unavailable);
+  get afkTimeout(): number {
+    return this.data.afk_timeout;
   }
 
-  /**
-   * Total number of members in this guild
-   */
-  get memberCount(): number {
-    return this.data.member_count;
+  get widgetEnabled(): boolean | undefined {
+    return Boolean(this.data.widget_enabled);
   }
 
-  /**
-   * States of members currently in voice channels; lacks the guild_id key
-   */
-  get voiceStates(): Partial<VoiceStateEntity>[] {
-    return this.data.voice_states || [];
+  get widgetChannelId(): Snowflake | null | undefined {
+    return this.data.widget_channel_id;
   }
 
-  /**
-   * Users in the guild
-   */
-  get members(): GuildMemberEntity[] {
-    return this.data.members || [];
+  get verificationLevel(): VerificationLevel {
+    return this.data.verification_level;
   }
 
-  /**
-   * Channels in the guild
-   */
-  get channels(): AnyChannelEntity[] {
-    return this.data.channels || [];
+  get defaultMessageNotifications(): DefaultMessageNotificationLevel {
+    return this.data.default_message_notifications;
   }
 
-  /**
-   * All active threads in the guild that current user has permission to view
-   */
-  get threads(): AnyThreadChannelEntity[] {
-    return this.data.threads || [];
+  get explicitContentFilter(): ExplicitContentFilterLevel {
+    return this.data.explicit_content_filter;
   }
 
-  /**
-   * Presences of the members in the guild
-   */
-  get presences(): Partial<PresenceEntity>[] {
-    return this.data.presences || [];
+  get roles(): Role[] {
+    return this.data.roles.map((role) => Role.from(this.client, role));
   }
 
-  /**
-   * Stage instances in the guild
-   */
-  get stageInstances(): StageInstanceEntity[] {
-    return this.data.stage_instances || [];
+  get emojis(): Emoji[] {
+    return this.data.emojis.map((emoji) => Emoji.from(this.client, emoji));
   }
 
-  /**
-   * Scheduled events in the guild
-   */
-  get guildScheduledEvents(): GuildScheduledEventEntity[] {
-    return this.data.guild_scheduled_events || [];
+  get features(): GuildFeature[] {
+    return this.data.features;
   }
 
-  /**
-   * Soundboard sounds in the guild
-   */
-  get soundboardSounds(): SoundboardSoundEntity[] {
-    return this.data.soundboard_sounds || [];
-  }
-}
-
-/**
- * Represents a GUILD_MEMBER_ADD event dispatched when a new user joins a guild.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-add}
- */
-export class GuildMember extends BaseClass<GuildMemberAddEntity> {
-  /**
-   * ID of the guild
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
+  get mfaLevel(): MfaLevel {
+    return this.data.mfa_level;
   }
 
-  /**
-   * The user this guild member represents
-   */
-  get user(): UserEntity {
-    return this.data.user;
+  get applicationId(): Snowflake | null {
+    return this.data.application_id;
   }
 
-  /**
-   * This user's guild nickname
-   */
-  get nick(): string | null {
-    return this.data.nick || null;
+  get systemChannelId(): Snowflake | null {
+    return this.data.system_channel_id;
   }
 
-  /**
-   * The member's guild avatar hash
-   */
-  get avatar(): string | null {
-    return this.data.avatar || null;
+  get systemChannelFlags(): BitFieldManager<SystemChannelFlags> {
+    return new BitFieldManager<SystemChannelFlags>(
+      this.data.system_channel_flags,
+    );
   }
 
-  /**
-   * The member's guild banner hash
-   */
+  get rulesChannelId(): Snowflake | null {
+    return this.data.rules_channel_id;
+  }
+
+  get maxPresences(): number | null | undefined {
+    return this.data.max_presences;
+  }
+
+  get maxMembers(): number {
+    return this.data.max_members;
+  }
+
+  get vanityUrlCode(): string | null {
+    return this.data.vanity_url_code;
+  }
+
+  get description(): string | null {
+    return this.data.description;
+  }
+
   get banner(): string | null {
-    return this.data.banner || null;
+    return this.data.banner;
   }
 
-  /**
-   * Array of role IDs
-   */
-  get roles(): Snowflake[] {
-    return this.data.roles || [];
+  get premiumTier(): PremiumTier {
+    return this.data.premium_tier;
   }
 
-  /**
-   * When the user joined the guild
-   */
-  get joinedAt(): string {
-    return this.data.joined_at;
+  get premiumSubscriptionCount(): number | undefined {
+    return this.data.premium_subscription_count;
   }
 
-  /**
-   * When the user started boosting the guild
-   */
-  get premiumSince(): string | null {
-    return this.data.premium_since || null;
+  get preferredLocale(): Locale {
+    return this.data.preferred_locale;
   }
 
-  /**
-   * Whether the user is deafened in voice channels
-   */
-  get deaf(): boolean {
-    return Boolean(this.data.deaf);
+  get publicUpdatesChannelId(): Snowflake | null {
+    return this.data.public_updates_channel_id;
   }
 
-  /**
-   * Whether the user is muted in voice channels
-   */
-  get mute(): boolean {
-    return Boolean(this.data.mute);
+  get maxVideoChannelUsers(): number | undefined {
+    return this.data.max_video_channel_users;
   }
 
-  /**
-   * Guild member flags
-   */
-  get flags(): BitFieldManager<GuildMemberFlags> {
-    return new BitFieldManager<GuildMemberFlags>(this.data.flags || 0n);
+  get maxStageVideoChannelUsers(): number | undefined {
+    return this.data.max_stage_video_channel_users;
   }
 
-  /**
-   * Whether the user has not yet passed the guild's Membership Screening requirements
-   */
-  get pending(): boolean {
-    return Boolean(this.data.pending);
+  get approximateMemberCount(): number | undefined {
+    return this.data.approximate_member_count;
   }
 
-  /**
-   * Total permissions of the member in the channel, including overwrites
-   */
-  get permissions(): string | null {
-    return this.data.permissions || null;
+  get approximatePresenceCount(): number | undefined {
+    return this.data.approximate_presence_count;
   }
 
-  /**
-   * When the user's timeout will expire and the user will be able to communicate in the guild again
-   */
-  get communicationDisabledUntil(): string | null {
-    return this.data.communication_disabled_until || null;
+  get nsfwLevel(): NsfwLevel {
+    return this.data.nsfw_level;
   }
 
-  /**
-   * Data for the member's guild avatar decoration
-   */
-  get avatarDecorationData(): AvatarDecorationDataEntity | null {
-    return this.data.avatar_decoration_data || null;
+  get premiumProgressBarEnabled(): boolean {
+    return Boolean(this.data.premium_progress_bar_enabled);
+  }
+
+  get safetyAlertsChannelId(): Snowflake | null {
+    return this.data.safety_alerts_channel_id;
+  }
+
+  protected override getCacheInfo(): CacheEntityInfo | null {
+    return {
+      storeKey: "guilds",
+      id: this.id,
+    };
   }
 }
 
-/**
- * Represents a guild ban event.
- * Contains information about a user who was banned from a guild.
- */
-export class GuildBan extends BaseClass<BanEntity & { guild_id: Snowflake }> {
-  /**
-   * ID of the guild where the ban occurred
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * Reason for the ban, if provided
-   */
+export class Ban extends BaseClass<BanEntity> {
   get reason(): string | null {
     return this.data.reason;
   }
 
-  /**
-   * The user who was banned
-   */
   get user(): User {
-    return new User(this.client, this.data.user);
+    return User.from(this.client, this.data.user);
   }
 
-  /**
-   * Whether a reason was provided for the ban
-   */
-  get hasReason(): boolean {
-    return Boolean(this.data.reason);
+  protected override getCacheInfo(): CacheEntityInfo | null {
+    return null;
   }
 }
 
-/**
- * Represents a guild integration.
- * An integration is a connection between a guild and an external service like Twitch, YouTube, or Discord.
- */
-export class Integration extends BaseClass<IntegrationCreateEntity> {
-  /**
-   * Integration ID
-   */
+export class GuildMember extends BaseClass<GuildMemberEntity> {
+  get user(): User {
+    return User.from(this.client, this.data.user);
+  }
+
+  get nick(): string | null | undefined {
+    return this.data.nick;
+  }
+
+  get avatar(): string | null | undefined {
+    return this.data.avatar;
+  }
+
+  get banner(): string | null | undefined {
+    return this.data.banner;
+  }
+
+  get roles(): Snowflake[] {
+    return this.data.roles;
+  }
+
+  get joinedAt(): string {
+    return this.data.joined_at;
+  }
+
+  get premiumSince(): string | null | undefined {
+    return this.data.premium_since;
+  }
+
+  get deaf(): boolean {
+    return Boolean(this.data.deaf);
+  }
+
+  get mute(): boolean {
+    return Boolean(this.data.mute);
+  }
+
+  get flags(): BitFieldManager<GuildMemberFlags> {
+    return new BitFieldManager<GuildMemberFlags>(this.data.flags);
+  }
+
+  get pending(): boolean {
+    return Boolean(this.data.pending);
+  }
+
+  get permissions(): string | undefined {
+    return this.data.permissions;
+  }
+
+  get communicationDisabledUntil(): string | null | undefined {
+    return this.data.communication_disabled_until;
+  }
+
+  get avatarDecorationData(): AvatarDecorationDataEntity | null | undefined {
+    return this.data.avatar_decoration_data;
+  }
+
+  protected override getCacheInfo(): CacheEntityInfo | null {
+    return {
+      storeKey: "members",
+      id: this.user.id,
+    };
+  }
+}
+
+export class IntegrationApplication extends BaseClass<IntegrationApplicationEntity> {
   get id(): Snowflake {
     return this.data.id;
   }
 
-  /**
-   * ID of the guild this integration belongs to
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * Integration name
-   */
   get name(): string {
     return this.data.name;
   }
 
-  /**
-   * Integration type (twitch, youtube, discord, guild_subscription)
-   */
-  get type(): "twitch" | "youtube" | "discord" | "guild_subscription" {
-    return this.data.type;
+  get icon(): string | null {
+    return this.data.icon;
   }
 
-  /**
-   * Whether this integration is enabled
-   */
-  get enabled(): boolean {
-    return Boolean(this.data.enabled);
+  get description(): string | null {
+    return this.data.description;
   }
 
-  /**
-   * Whether this integration is syncing
-   */
-  get syncing(): boolean {
-    return Boolean(this.data.syncing);
+  get bot(): User | undefined {
+    if (!this.data.bot) {
+      return undefined;
+    }
+
+    return User.from(this.client, this.data.bot);
   }
 
-  /**
-   * ID of the role that this integration uses for "subscribers"
-   */
-  get roleId(): Snowflake | undefined {
-    return this.data.role_id;
-  }
-
-  /**
-   * Whether emoticons should be synced for this integration
-   */
-  get enableEmoticons(): boolean {
-    return Boolean(this.data.enable_emoticons);
-  }
-
-  /**
-   * The behavior of expiring subscribers
-   */
-  get expireBehavior(): IntegrationExpirationBehavior | undefined {
-    return this.data.expire_behavior;
-  }
-
-  /**
-   * The grace period (in days) before expiring subscribers
-   */
-  get expireGracePeriod(): number | undefined {
-    return this.data.expire_grace_period;
-  }
-
-  /**
-   * Integration account information
-   */
-  get account(): IntegrationAccountEntity {
-    return this.data.account;
-  }
-
-  /**
-   * When this integration was last synced
-   */
-  get syncedAt(): string | undefined {
-    return this.data.synced_at;
-  }
-
-  /**
-   * How many subscribers this integration has
-   */
-  get subscriberCount(): number | undefined {
-    return this.data.subscriber_count;
-  }
-
-  /**
-   * Whether this integration has been revoked
-   */
-  get revoked(): boolean {
-    return Boolean(this.data.revoked);
-  }
-
-  /**
-   * The bot/OAuth2 application for discord integrations
-   */
-  get application(): IntegrationApplicationEntity | undefined {
-    return this.data.application;
-  }
-
-  /**
-   * The scopes the application has been authorized for
-   */
-  get scopes(): OAuth2Scope[] | undefined {
-    return this.data.scopes;
-  }
-
-  /**
-   * Whether this integration is for Twitch
-   */
-  get isTwitch(): boolean {
-    return this.data.type === "twitch";
-  }
-
-  /**
-   * Whether this integration is for YouTube
-   */
-  get isYouTube(): boolean {
-    return this.data.type === "youtube";
-  }
-
-  /**
-   * Whether this integration is for Discord
-   */
-  get isDiscord(): boolean {
-    return this.data.type === "discord";
-  }
-
-  /**
-   * Whether this integration is for guild subscriptions
-   */
-  get isGuildSubscription(): boolean {
-    return this.data.type === "guild_subscription";
-  }
-
-  /**
-   * Whether this integration has application data
-   */
-  get hasApplication(): boolean {
-    return Boolean(this.data.application);
-  }
-
-  /**
-   * Whether this integration has a connected user
-   */
-  get hasUser(): boolean {
-    return Boolean(this.data.user);
+  protected override getCacheInfo(): CacheEntityInfo | null {
+    return null;
   }
 }
 
-/**
- * Represents a guild audit log entry.
- * Audit logs keep track of administrative actions taken in a guild.
- */
-export class GuildAuditLogEntry extends BaseClass<GuildAuditLogEntryCreateEntity> {
-  /**
-   * ID of the affected entity (webhook, user, role, etc.)
-   */
-  get targetId(): string | null {
-    return this.data.target_id;
-  }
-
-  /**
-   * Changes made to the target_id
-   */
-  get changes(): AuditLogChangeEntity[] | undefined {
-    return this.data.changes;
-  }
-
-  /**
-   * User or app that made the changes
-   */
-  get userId(): Snowflake | null {
-    return this.data.user_id;
-  }
-
-  /**
-   * ID of the entry
-   */
+export class Integration extends BaseClass<IntegrationEntity> {
   get id(): Snowflake {
     return this.data.id;
   }
 
-  /**
-   * Type of action that occurred
-   */
-  get actionType(): AuditLogEvent {
-    return this.data.action_type;
+  get name(): string {
+    return this.data.name;
   }
 
-  /**
-   * Additional info for certain action types
-   */
-  get options(): AuditLogEntryInfoEntity | undefined {
-    return this.data.options;
+  get type(): string {
+    return this.data.type;
   }
 
-  /**
-   * Reason for the change (0-512 characters)
-   */
-  get reason(): string | undefined {
-    return this.data.reason;
+  get enabled(): boolean {
+    return Boolean(this.data.enabled);
   }
 
-  /**
-   * ID of the guild where this audit log entry was created
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
+  get syncing(): boolean {
+    return Boolean(this.data.syncing);
   }
 
-  /**
-   * Whether this audit log entry has a reason
-   */
-  get hasReason(): boolean {
-    return Boolean(this.data.reason);
+  get roleId(): Snowflake | undefined {
+    return this.data.role_id;
   }
 
-  /**
-   * Whether this audit log entry has additional options
-   */
-  get hasOptions(): boolean {
-    return Boolean(this.data.options);
+  get enableEmoticons(): boolean {
+    return Boolean(this.data.enable_emoticons);
+  }
+
+  get expireBehavior(): IntegrationExpirationBehavior | undefined {
+    return this.data.expire_behavior;
+  }
+
+  get expireGracePeriod(): number | undefined {
+    return this.data.expire_grace_period;
+  }
+
+  get user(): User | undefined {
+    if (!this.data.user) {
+      return undefined;
+    }
+
+    return User.from(this.client, this.data.user);
+  }
+
+  get account(): IntegrationAccountEntity {
+    return this.data.account;
+  }
+
+  get syncedAt(): string | undefined {
+    return this.data.synced_at;
+  }
+
+  get subscriberCount(): number | undefined {
+    return this.data.subscriber_count;
+  }
+
+  get revoked(): boolean {
+    return Boolean(this.data.revoked);
+  }
+
+  get application(): IntegrationApplication | undefined {
+    if (!this.data.application) {
+      return undefined;
+    }
+
+    return IntegrationApplication.from(this.client, this.data.application);
+  }
+
+  get scopes(): OAuth2Scope[] | undefined {
+    return this.data.scopes;
+  }
+
+  protected override getCacheInfo(): CacheEntityInfo | null {
+    return {
+      storeKey: "integrations",
+      id: this.id,
+    };
   }
 }

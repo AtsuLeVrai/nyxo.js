@@ -32,6 +32,10 @@
       "env": ["NODE_ENV"],
       "cache": true
     },
+    "check": {
+      "outputs": [],
+      "cache": false
+    },
     "type-check": {
       "outputs": [],
       "cache": true

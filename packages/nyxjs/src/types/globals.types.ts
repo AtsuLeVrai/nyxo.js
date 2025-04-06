@@ -7,41 +7,41 @@ import type {
   PresenceEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
-import {
-  type AnyChannel,
-  type AnyInteraction,
-  type AnyThreadChannel,
-  type AutoModerationActionExecution,
-  type AutoModerationRule,
-  type Emoji,
-  type Entitlement,
-  type Guild,
-  type GuildAuditLogEntry,
-  type GuildBan,
-  type GuildMember,
+import type {
+  AnyChannel,
+  AnyInteraction,
+  AnyThreadChannel,
+  AutoModerationActionExecution,
+  AutoModerationRule,
+  Ban,
+  Emoji,
+  Entitlement,
+  Guild,
+  GuildAuditLogEntry,
+  GuildMember,
   GuildScheduledEvent,
   GuildScheduledEventUser,
-  type Integration,
-  type Invite,
-  type Message,
-  type MessagePollVote,
+  Integration,
+  Invite,
+  Message,
+  MessagePollVote,
   MessageReaction,
-  type Ready,
-  type Role,
-  type SoundboardSound,
-  type StageInstance,
-  type Sticker,
-  type Subscription,
+  Ready,
+  Role,
+  SoundboardSound,
+  StageInstance,
+  Sticker,
+  Subscription,
   TextChannel,
-  type ThreadListSync,
-  type ThreadMember,
-  type ThreadMembers,
-  type Typing,
-  type User,
-  type VoiceChannelEffectSend,
+  ThreadListSync,
+  ThreadMember,
+  ThreadMembers,
+  Typing,
+  User,
+  VoiceChannelEffectSend,
   VoiceServer,
-  type VoiceState,
-  type Webhook,
+  VoiceState,
+  Webhook,
 } from "../classes/index.js";
 
 /**
@@ -221,13 +221,13 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user is banned from a guild.
    * @param ban Information about the ban, including the user and the guild
    */
-  guildBanAdd: [ban: GuildBan];
+  BanAdd: [ban: Ban];
 
   /**
    * Emitted when a user is unbanned from a guild.
    * @param ban Information about the removed ban
    */
-  guildBanRemove: [ban: GuildBan];
+  BanRemove: [ban: Ban];
 
   /**
    * Emitted when a guild's emojis are updated (added, removed, or modified).
