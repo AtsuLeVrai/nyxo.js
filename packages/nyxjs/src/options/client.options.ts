@@ -1,25 +1,9 @@
 import { GatewayOptions } from "@nyxjs/gateway";
 import { RestOptions } from "@nyxjs/rest";
+import { StoreOptions } from "@nyxjs/store";
 import { z } from "zod";
 
-/**
- * Options for configuring the cache behavior of the Nyx client.
- *
- * The cache stores frequently accessed Discord entities to reduce API calls
- * and improve performance.
- *
- * @example
- * ```ts
- * const client = new NyxClient({
- *   cache: {
- *     enabled: true,
- *     ttl: 3600000, // 1 hour cache lifetime
- *     userLimit: 5000
- *   }
- * });
- * ```
- */
-export const ClientCacheOptions = z
+export const ClientCacheEntityOptions = z
   .object({
     /**
      * Controls whether the client's cache mechanism is active.
@@ -30,114 +14,208 @@ export const ClientCacheOptions = z
     enabled: z.boolean().default(true),
 
     /**
-     * The time-to-live for cached entities in milliseconds.
-     * After this duration, cached entities will be invalidated and refetched.
+     * Time-to-live (TTL) for cached entities in milliseconds.
+     * This determines how long entities remain in the cache before being considered stale.
      *
-     * Set to 0 for infinite cache duration (entities remain cached until manually invalidated).
-     *
-     * @default 0
+     * @default true
      */
-    ttl: z.number().int().nonnegative().default(0),
+    sweepInterval: z.boolean().default(true),
 
     /**
-     * Maximum number of user objects to store in the cache.
-     * When this limit is reached, least recently used users will be evicted.
-     *
-     * Higher values increase memory usage but reduce API calls.
-     *
-     * @default 10000
+     * Storage options for the cache.
      */
-    userLimit: z.number().int().positive().default(10000),
+    ...StoreOptions.shape,
+  })
+  .readonly();
+
+export type ClientCacheEntityOptions = z.infer<typeof ClientCacheEntityOptions>;
+
+/**
+ * Configuration options for the cache system of the Nyx client.
+ *
+ * The cache manager stores frequently accessed Discord entities to reduce API calls,
+ * improve performance, and manage memory usage efficiently. Each entity type
+ * can be configured separately with different limits and settings.
+ *
+ * @example
+ * ```ts
+ * const client = new Client({
+ *   cache: {
+ *     enabled: true,
+ *     sweepInterval: 600000, // 10 minutes
+ *     users: { maxSize: 5000, ttl: 3600000 }, // 1 hour TTL
+ *     messages: { maxSize: 2000, ttl: 1800000 } // 30 minutes TTL
+ *   }
+ * });
+ * ```
+ */
+export const ClientCacheOptions = z
+  .object({
+    /**
+     * Controls whether the entire cache system is active.
+     * When disabled, all entities will be fetched directly from the API.
+     *
+     * Disabling the cache improves memory usage at the cost of increased API requests.
+     * This can be useful for memory-constrained environments.
+     *
+     * @default true
+     */
+    enabled: z.boolean().default(true),
 
     /**
-     * Maximum number of guild objects to store in the cache.
-     * When this limit is reached, least recently used guilds will be evicted.
+     * Interval in milliseconds for the cache manager to check for and remove expired items.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * Lower values ensure more accurate TTL enforcement but increase CPU usage.
+     * Higher values reduce performance impact but may keep expired items longer.
+     * Set to 0 to disable periodic sweeping entirely.
      *
-     * @default 10000
+     * @default 300000 (5 minutes)
      */
-    channelLimit: z.number().int().positive().default(10000),
+    sweepInterval: z.number().int().nonnegative().default(300000),
 
     /**
-     * Maximum number of guild objects to store in the cache.
-     * When this limit is reached, least recently used guilds will be evicted.
+     * Configuration for the users cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores User objects retrieved from the API.
+     * Users are referenced by many other entities and are frequently accessed.
      *
-     * @default 1000
+     * Recommended to set a higher limit for bots in many guilds.
+     *
+     * @default { enabled: true, maxSize: 10000, ttl: 0 }
      */
-    guildLimit: z.number().int().positive().default(1000),
+    users: ClientCacheEntityOptions.default({}),
 
     /**
-     * Maximum number of emoji objects to store in the cache.
-     * When this limit is reached, least recently used emojis will be evicted.
+     * Configuration for the channels cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores all types of channel objects (text, voice, category, etc.).
+     * Channels are frequently accessed for permission checks and message operations.
      *
-     * @default 1000
+     * @default { enabled: true, maxSize: 10000, ttl: 0 }
      */
-    emojiLimit: z.number().int().positive().default(1000),
+    channels: ClientCacheEntityOptions.default({}),
 
     /**
-     * Maximum number of entitlement objects to store in the cache.
-     * When this limit is reached, least recently used entitlements will be evicted.
+     * Configuration for the guilds cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores Guild objects which contain core information about Discord servers.
+     * Guilds are central entities referenced by many operations.
      *
-     * @default 1000
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
-    entitlementLimit: z.number().int().positive().default(1000),
+    guilds: ClientCacheEntityOptions.default({}),
 
     /**
-     * Maximum number of subscription objects to store in the cache.
-     * When this limit is reached, least recently used subscriptions will be evicted.
+     * Configuration for the emojis cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores custom emoji objects from guilds.
+     * Consider setting a lower limit if emoji usage is minimal in your bot.
      *
-     * @default 1000
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
-    subscriptionLimit: z.number().int().positive().default(1000),
+    emojis: ClientCacheEntityOptions.default({}),
 
     /**
-     * Maximum number of message objects to store in the cache.
-     * When this limit is reached, least recently used messages will be evicted.
+     * Configuration for the entitlements cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores entitlement objects for premium features and subscriptions.
+     * Only relevant for bots that interact with Discord's monetization features.
      *
-     * @default 1000
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
-    messageLimit: z.number().int().positive().default(1000),
+    entitlements: ClientCacheEntityOptions.default({}),
 
     /**
-     * Maximum number of voice state objects to store in the cache.
-     * When this limit is reached, least recently used voice states will be evicted.
+     * Configuration for the subscriptions cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores subscription objects for premium features.
+     * Only relevant for bots that interact with Discord's subscription systems.
      *
-     * @default 1000
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
-    voiceStateLimit: z.number().int().positive().default(1000),
+    subscriptions: ClientCacheEntityOptions.default({}),
 
     /**
-     * Maximum number of auto moderation rule objects to store in the cache.
-     * When this limit is reached, least recently used auto moderation rules will be evicted.
+     * Configuration for the messages cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores Message objects which are often needed for context
+     * in commands, reactions, and other user interactions.
      *
-     * @default 1000
+     * Consider using a shorter TTL for messages as they become less relevant over time.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
-    autoModerationRuleLimit: z.number().int().positive().default(1000),
+    messages: ClientCacheEntityOptions.default({}),
 
     /**
-     * Maximum number of stage instance objects to store in the cache.
-     * When this limit is reached, least recently used stage instances will be evicted.
+     * Configuration for the voice states cache.
      *
-     * Higher values increase memory usage but reduce API calls.
+     * This cache stores information about users' voice connection states.
+     * Only relevant for bots that interact with voice channels or monitor voice activity.
      *
-     * @default 1000
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
-    stageInstanceLimit: z.number().int().positive().default(1000),
+    voiceStates: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the auto moderation rules cache.
+     *
+     * This cache stores AutoModerationRule objects which define automated content filtering.
+     * Only relevant for bots that interact with or manage Discord's auto moderation system.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    autoModerationRules: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the stage instances cache.
+     *
+     * This cache stores StageInstance objects for Discord's Stage channels.
+     * Only relevant for bots that interact with Stage channels.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    stageInstances: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the thread members cache.
+     *
+     * This cache stores ThreadMember objects for threads in guilds.
+     * Only relevant for bots that interact with threads.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    members: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the roles cache.
+     *
+     * This cache stores Role objects which define permissions and settings for users in guilds.
+     * Only relevant for bots that interact with roles or permissions.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    roles: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the scheduled events cache.
+     *
+     * This cache stores GuildScheduledEvent objects which define events in guilds.
+     * Only relevant for bots that interact with scheduled events.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    scheduledEvents: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the stickers cache.
+     *
+     * This cache stores Sticker objects which are custom stickers used in messages.
+     * Only relevant for bots that interact with stickers.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    stickers: ClientCacheEntityOptions.default({}),
   })
   .readonly();
 

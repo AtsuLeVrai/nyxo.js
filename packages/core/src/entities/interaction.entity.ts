@@ -1,19 +1,14 @@
 import type { Locale } from "../enums/index.js";
 import type { Snowflake } from "../managers/index.js";
+import type { ApplicationIntegrationType } from "./application.entity.js";
 import type {
   ApplicationCommandOptionChoiceEntity,
   ApplicationCommandOptionType,
   ApplicationCommandType,
 } from "./application-commands.entity.js";
-import type { ApplicationIntegrationType } from "./application.entity.js";
 import type { AnyChannelEntity } from "./channel.entity.js";
 import type { EntitlementEntity } from "./entitlement.entity.js";
 import type { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
-import type {
-  ActionRowEntity,
-  ComponentType,
-  SelectMenuOptionEntity,
-} from "./message-components.entity.js";
 import type {
   AllowedMentionsEntity,
   AttachmentEntity,
@@ -21,6 +16,11 @@ import type {
   MessageEntity,
   MessageFlags,
 } from "./message.entity.js";
+import type {
+  ActionRowEntity,
+  ComponentType,
+  SelectMenuOptionEntity,
+} from "./message-components.entity.js";
 import type { PollCreateRequestEntity } from "./poll.entity.js";
 import type { RoleEntity } from "./role.entity.js";
 import type { UserEntity } from "./user.entity.js";

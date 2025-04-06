@@ -8,7 +8,6 @@ import type { AuthorizationEntity } from "../schemas/index.js";
  *
  * @see {@link https://discord.com/developers/docs/topics/oauth2}
  */
-// biome-ignore lint/style/useNamingConvention: This is a router class, not an entity class
 export class OAuth2Router extends BaseRouter {
   /**
    * Collection of route URLs for OAuth2-related endpoints

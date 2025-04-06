@@ -1,9 +1,9 @@
 import {
   type EmojiEntity,
   type FormattedCustomEmoji,
+  formatCustomEmoji,
   type GuildEntity,
   type Snowflake,
-  formatCustomEmoji,
 } from "@nyxjs/core";
 import type {
   ModifyApplicationEmojiSchema,

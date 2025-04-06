@@ -213,7 +213,7 @@ export const HeaderHandler = {
 
     if (headers && typeof headers === "object") {
       for (const key in headers) {
-        if (Object.prototype.hasOwnProperty.call(headers, key)) {
+        if (Object.hasOwn(headers, key)) {
           const value = headers[key];
           if (value !== undefined) {
             result[this.normalizeKey(key)] = value;

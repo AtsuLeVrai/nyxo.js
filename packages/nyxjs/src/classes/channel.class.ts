@@ -12,6 +12,7 @@ import {
   type FormattedChannel,
   type ForumLayoutType,
   type ForumTagEntity,
+  formatChannel,
   type GroupDmChannelEntity,
   type GuildAnnouncementChannelEntity,
   type GuildCategoryChannelEntity,
@@ -30,7 +31,6 @@ import {
   type ThreadMemberEntity,
   type ThreadMetadataEntity,
   type VideoQualityMode,
-  formatChannel,
 } from "@nyxjs/core";
 import type {
   AddGroupDmRecipientSchema,

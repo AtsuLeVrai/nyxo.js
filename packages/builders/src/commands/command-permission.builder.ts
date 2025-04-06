@@ -21,9 +21,9 @@ import {
  * ```
  */
 export class ApplicationCommandPermissionBuilder {
-  private id: Snowflake | undefined;
-  private type: ApplicationCommandPermissionType | undefined;
-  private permission: boolean | undefined;
+  #id: Snowflake | undefined;
+  #type: ApplicationCommandPermissionType | undefined;
+  #permission: boolean | undefined;
 
   /**
    * Creates a new ApplicationCommandPermissionBuilder instance.
@@ -32,13 +32,13 @@ export class ApplicationCommandPermissionBuilder {
    */
   constructor(data: Partial<ApplicationCommandPermissionEntity> = {}) {
     if (data.id) {
-      this.id = data.id;
+      this.#id = data.id;
     }
     if (data.type) {
-      this.type = data.type;
+      this.#type = data.type;
     }
     if (data.permission !== undefined) {
-      this.permission = data.permission;
+      this.#permission = data.permission;
     }
   }
 
@@ -62,7 +62,7 @@ export class ApplicationCommandPermissionBuilder {
    * @returns This builder instance, for method chaining
    */
   setId(id: Snowflake): this {
-    this.id = id;
+    this.#id = id;
     return this;
   }
 
@@ -73,7 +73,7 @@ export class ApplicationCommandPermissionBuilder {
    * @returns This builder instance, for method chaining
    */
   setType(type: ApplicationCommandPermissionType): this {
-    this.type = type;
+    this.#type = type;
     return this;
   }
 
@@ -84,7 +84,7 @@ export class ApplicationCommandPermissionBuilder {
    * @returns This builder instance, for method chaining
    */
   setPermission(permission: boolean): this {
-    this.permission = permission;
+    this.#permission = permission;
     return this;
   }
 
@@ -95,22 +95,22 @@ export class ApplicationCommandPermissionBuilder {
    * @throws Error If required fields are missing
    */
   build(): ApplicationCommandPermissionEntity {
-    if (!this.id) {
+    if (!this.#id) {
       throw new Error("Permission ID is required");
     }
 
-    if (this.type === undefined) {
+    if (this.#type === undefined) {
       throw new Error("Permission type is required");
     }
 
-    if (this.permission === undefined) {
+    if (this.#permission === undefined) {
       throw new Error("Permission value is required");
     }
 
     return {
-      id: this.id,
-      type: this.type,
-      permission: this.permission,
+      id: this.#id,
+      type: this.#type,
+      permission: this.#permission,
     };
   }
 }
@@ -145,10 +145,10 @@ export class ApplicationCommandPermissionBuilder {
  * ```
  */
 export class GuildApplicationCommandPermissionsBuilder {
-  private id: Snowflake | undefined;
-  private applicationId: Snowflake | undefined;
-  private guildId: Snowflake | undefined;
-  private permissions: ApplicationCommandPermissionEntity[] = [];
+  #id: Snowflake | undefined;
+  #applicationId: Snowflake | undefined;
+  #guildId: Snowflake | undefined;
+  #permissions: ApplicationCommandPermissionEntity[] = [];
 
   /**
    * Creates a new GuildApplicationCommandPermissionsBuilder instance.
@@ -157,16 +157,16 @@ export class GuildApplicationCommandPermissionsBuilder {
    */
   constructor(data: Partial<GuildApplicationCommandPermissionEntity> = {}) {
     if (data.id) {
-      this.id = data.id;
+      this.#id = data.id;
     }
     if (data.application_id) {
-      this.applicationId = data.application_id;
+      this.#applicationId = data.application_id;
     }
     if (data.guild_id) {
-      this.guildId = data.guild_id;
+      this.#guildId = data.guild_id;
     }
     if (data.permissions) {
-      this.permissions = [...data.permissions];
+      this.#permissions = [...data.permissions];
     }
   }
 
@@ -189,7 +189,7 @@ export class GuildApplicationCommandPermissionsBuilder {
    * @returns This builder instance, for method chaining
    */
   setCommandId(id: Snowflake): this {
-    this.id = id;
+    this.#id = id;
     return this;
   }
 
@@ -200,7 +200,7 @@ export class GuildApplicationCommandPermissionsBuilder {
    * @returns This builder instance, for method chaining
    */
   setApplicationId(applicationId: Snowflake): this {
-    this.applicationId = applicationId;
+    this.#applicationId = applicationId;
     return this;
   }
 
@@ -211,7 +211,7 @@ export class GuildApplicationCommandPermissionsBuilder {
    * @returns This builder instance, for method chaining
    */
   setGuildId(guildId: Snowflake): this {
-    this.guildId = guildId;
+    this.#guildId = guildId;
     return this;
   }
 
@@ -227,7 +227,7 @@ export class GuildApplicationCommandPermissionsBuilder {
       throw new Error("Cannot have more than 100 permission overwrites");
     }
 
-    this.permissions = [...permissions];
+    this.#permissions = [...permissions];
     return this;
   }
 
@@ -239,11 +239,11 @@ export class GuildApplicationCommandPermissionsBuilder {
    * @throws Error If adding would exceed 100 permissions
    */
   addPermission(permission: ApplicationCommandPermissionEntity): this {
-    if (this.permissions.length >= 100) {
+    if (this.#permissions.length >= 100) {
       throw new Error("Cannot have more than 100 permission overwrites");
     }
 
-    this.permissions.push(permission);
+    this.#permissions.push(permission);
     return this;
   }
 
@@ -255,11 +255,11 @@ export class GuildApplicationCommandPermissionsBuilder {
    * @throws Error If adding would exceed 100 permissions
    */
   addPermissions(...permissions: ApplicationCommandPermissionEntity[]): this {
-    if (this.permissions.length + permissions.length > 100) {
+    if (this.#permissions.length + permissions.length > 100) {
       throw new Error("Cannot have more than 100 permission overwrites");
     }
 
-    this.permissions.push(...permissions);
+    this.#permissions.push(...permissions);
     return this;
   }
 
@@ -270,27 +270,27 @@ export class GuildApplicationCommandPermissionsBuilder {
    * @throws Error If required fields are missing
    */
   build(): GuildApplicationCommandPermissionEntity {
-    if (!this.id) {
+    if (!this.#id) {
       throw new Error("Command ID is required");
     }
 
-    if (!this.applicationId) {
+    if (!this.#applicationId) {
       throw new Error("Application ID is required");
     }
 
-    if (!this.guildId) {
+    if (!this.#guildId) {
       throw new Error("Guild ID is required");
     }
 
-    if (this.permissions.length === 0) {
+    if (this.#permissions.length === 0) {
       throw new Error("At least one permission is required");
     }
 
     return {
-      id: this.id,
-      application_id: this.applicationId,
-      guild_id: this.guildId,
-      permissions: this.permissions,
+      id: this.#id,
+      application_id: this.#applicationId,
+      guild_id: this.#guildId,
+      permissions: this.#permissions,
     };
   }
 }

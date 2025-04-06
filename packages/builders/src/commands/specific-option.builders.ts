@@ -1066,7 +1066,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
     fn: (option: StringOptionBuilder) => StringOptionBuilder,
   ): this {
     const option = new StringOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1080,7 +1080,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
     fn: (option: IntegerOptionBuilder) => IntegerOptionBuilder,
   ): this {
     const option = new IntegerOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1094,7 +1094,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
     fn: (option: NumberOptionBuilder) => NumberOptionBuilder,
   ): this {
     const option = new NumberOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1108,7 +1108,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
     fn: (option: BooleanOptionBuilder) => BooleanOptionBuilder,
   ): this {
     const option = new BooleanOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1120,7 +1120,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
    */
   addUserOption(fn: (option: UserOptionBuilder) => UserOptionBuilder): this {
     const option = new UserOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1134,7 +1134,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
     fn: (option: ChannelOptionBuilder) => ChannelOptionBuilder,
   ): this {
     const option = new ChannelOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1146,7 +1146,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
    */
   addRoleOption(fn: (option: RoleOptionBuilder) => RoleOptionBuilder): this {
     const option = new RoleOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1160,7 +1160,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
     fn: (option: MentionableOptionBuilder) => MentionableOptionBuilder,
   ): this {
     const option = new MentionableOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1174,7 +1174,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
     fn: (option: AttachmentOptionBuilder) => AttachmentOptionBuilder,
   ): this {
     const option = new AttachmentOptionBuilder();
-    return this.addOption(fn(option).build());
+    return this.#addOption(fn(option).build());
   }
 
   /**
@@ -1205,7 +1205,7 @@ export class SubcommandBuilder extends ApplicationCommandOptionBuilder<
    * @returns This builder instance, for method chaining
    * @throws Error If adding would exceed 25 options
    */
-  private addOption(
+  #addOption(
     option:
       | StringOptionEntity
       | IntegerOptionEntity

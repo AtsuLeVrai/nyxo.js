@@ -8,26 +8,24 @@ import type {
   AutoModerationActionExecution,
   AutoModerationRule,
   ChannelPins,
+  Emoji,
   Entitlement,
   Guild,
   GuildAuditLogEntry,
   GuildBan,
-  GuildEmojisUpdate,
   GuildMember,
   GuildMembersChunk,
-  GuildRoleCreate,
-  GuildRoleDelete,
-  GuildRoleUpdate,
   GuildSoundboardSoundDelete,
-  GuildStickersUpdate,
   Integration,
   Invite,
   Message,
   MessagePollVote,
   Ready,
+  Role,
   SoundboardSound,
   SoundboardSounds,
   StageInstance,
+  Sticker,
   Subscription,
   ThreadListSync,
   ThreadMember,
@@ -229,20 +227,58 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param oldEmojis The guild's emojis before the update
    * @param newEmojis The guild's emojis after the update
    */
-  guildEmojisUpdate: [
-    oldEmojis: GuildEmojisUpdate | null,
-    newEmojis: GuildEmojisUpdate,
-  ];
+  // guildEmojisUpdate: [
+  //   oldEmojis: GuildEmojisUpdate | null,
+  //   newEmojis: GuildEmojisUpdate,
+  // ];
+
+  /**
+   * Emitted when a new emoji is created in a guild.
+   * @param emoji The newly created emoji
+   */
+  emojiCreate: [emoji: Emoji];
+
+  /**
+   * Emitted when an emoji is updated (name, roles, etc.).
+   * @param oldEmoji The emoji before the update
+   * @param newEmoji The emoji after the update
+   */
+  emojiUpdate: [oldEmoji: Emoji | null, newEmoji: Emoji];
+
+  /**
+   * Emitted when an emoji is deleted from a guild.
+   * @param emoji The deleted emoji
+   */
+  emojiDelete: [emoji: Emoji];
 
   /**
    * Emitted when a guild's stickers are updated (added, removed, or modified).
    * @param oldStickers The guild's stickers before the update
    * @param newStickers The guild's stickers after the update
    */
-  guildStickersUpdate: [
-    oldStickers: GuildStickersUpdate | null,
-    newStickers: GuildStickersUpdate,
-  ];
+  // guildStickersUpdate: [
+  //   oldStickers: GuildStickersUpdate | null,
+  //   newStickers: GuildStickersUpdate,
+  // ];
+
+  /**
+   * Emitted when a sticker is created in a guild.
+   * @param sticker The newly created sticker
+   */
+  stickerCreate: [sticker: Sticker];
+
+  /**
+   * Emitted when a sticker is updated (name, tags, etc.).
+   * @param oldSticker The sticker before the update
+   * @param newSticker The sticker after the update
+   */
+  stickerUpdate: [oldSticker: Sticker | null, newSticker: Sticker];
+
+  /**
+   * Emitted when a sticker is deleted from a guild.
+   * @param sticker The deleted sticker
+   */
+  stickerDelete: [sticker: Sticker];
 
   /**
    * Emitted when a guild's integrations are updated.
@@ -279,20 +315,20 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a role is created in a guild.
    * @param role The newly created role
    */
-  guildRoleCreate: [role: GuildRoleCreate];
+  guildRoleCreate: [role: Role];
 
   /**
    * Emitted when a guild role is updated.
    * @param oldRole The role before the update
    * @param newRole The role after the update
    */
-  guildRoleUpdate: [oldRole: GuildRoleUpdate | null, newRole: GuildRoleUpdate];
+  guildRoleUpdate: [oldRole: Role | null, newRole: Role];
 
   /**
    * Emitted when a guild role is deleted.
    * @param role The deleted role
    */
-  guildRoleDelete: [role: GuildRoleDelete];
+  guildRoleDelete: [role: Role];
 
   /**
    * Emitted when a scheduled event is created in a guild.

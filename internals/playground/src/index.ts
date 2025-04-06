@@ -6,8 +6,8 @@ import {
   ChannelType,
   Client,
   EmbedBuilder,
-  GatewayIntentsBits,
   formatUser,
+  GatewayIntentsBits,
 } from "nyx.js";
 
 const { parsed } = config({ debug: true });

@@ -5,6 +5,7 @@ import {
   type ConnectionEntity,
   type DmChannelEntity,
   type FormattedUser,
+  formatUser,
   type GuildEntity,
   type GuildMemberEntity,
   type Locale,
@@ -12,7 +13,6 @@ import {
   type Snowflake,
   type UserEntity,
   UserFlags,
-  formatUser,
 } from "@nyxjs/core";
 import type { TypingEntity } from "@nyxjs/gateway";
 import type {

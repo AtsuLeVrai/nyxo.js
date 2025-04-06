@@ -1,4 +1,4 @@
-import { type UnavailableGuildEntity, sleep } from "@nyxjs/core";
+import { sleep, type UnavailableGuildEntity } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
@@ -153,6 +153,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   get uptime(): number {
     return this.#readyAt ? Date.now() - this.#readyAt : 0;
+  }
+
+  /**
+   * Gets the latency of the connection in milliseconds
+   */
+  get latency(): number {
+    return this.#heartbeat.latency;
   }
 
   /**

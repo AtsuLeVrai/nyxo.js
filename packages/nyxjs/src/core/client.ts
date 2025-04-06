@@ -5,26 +5,15 @@ import {
   type UpdatePresenceEntity,
 } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
-import { Store } from "@nyxjs/store";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
-import {
-  type AnyChannel,
-  type AutoModerationRule,
-  type Emoji,
-  type Entitlement,
-  type Guild,
-  type Message,
-  type StageInstance,
-  type Subscription,
-  User,
-  type VoiceState,
-} from "../classes/index.js";
+import { type Guild, User } from "../classes/index.js";
 import {
   GatewayKeyofEventMappings,
   RestKeyofEventMappings,
 } from "../data/index.js";
 import { ClientEventHandler } from "../handlers/index.js";
+import { CacheManager } from "../managers/index.js";
 import { ClientOptions } from "../options/index.js";
 
 /**
@@ -86,64 +75,10 @@ export class Client extends ClientEventHandler {
   readonly #options: ClientOptions;
 
   /**
-   * Cache store for User entities
+   * Cache store for better performance
    * @private
    */
-  readonly #users: Store<Snowflake, User>;
-
-  /**
-   * Cache store for Channel entities
-   * @private
-   */
-  readonly #channels: Store<Snowflake, AnyChannel>;
-
-  /**
-   * Cache store for Emoji entities
-   * @private
-   */
-  readonly #emojis: Store<Snowflake, Emoji>;
-
-  /**
-   * Cache store for Guild entities
-   * @private
-   */
-  readonly #guilds: Store<Snowflake, Guild>;
-
-  /**
-   * Cache store for Entitlement entities
-   * @private
-   */
-  readonly #entitlements: Store<Snowflake, Entitlement>;
-
-  /**
-   * Cache store for Subscription entities
-   * @private
-   */
-  readonly #subscriptions: Store<Snowflake, Subscription>;
-
-  /**
-   * Cache store for Message entities
-   * @private
-   */
-  readonly #messages: Store<Snowflake, Message>;
-
-  /**
-   * Cache store for VoiceState entities
-   * @private
-   */
-  readonly #voiceStates: Store<Snowflake, VoiceState>;
-
-  /**
-   * Cache store for AutoModerationRule entities
-   * @private
-   */
-  readonly #autoModerationRules: Store<Snowflake, AutoModerationRule>;
-
-  /**
-   * Cache store for StageInstance entities
-   * @private
-   */
-  readonly #stageInstances: Store<Snowflake, StageInstance>;
+  readonly #cache: CacheManager;
 
   /**
    * The current authenticated user (bot user)
@@ -169,6 +104,7 @@ export class Client extends ClientEventHandler {
 
     this.#rest = new Rest(this.#options);
     this.#gateway = new Gateway(this.#rest, this.#options);
+    this.#cache = new CacheManager(this.#options.cache);
 
     // Listen for REST events
     for (const eventName of RestKeyofEventMappings) {
@@ -189,59 +125,9 @@ export class Client extends ClientEventHandler {
       this.handleGatewayDispatch(this, event, data);
     });
 
+    // Listen for ready event to set the user
     this.on("ready", (ready) => {
       this.#user = ready.user;
-    });
-
-    // Initialize caches
-    this.#users = new Store<Snowflake, User>(null, {
-      maxSize: this.#options.cache.userLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#channels = new Store<Snowflake, AnyChannel>(null, {
-      maxSize: this.#options.cache.channelLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#guilds = new Store<Snowflake, Guild>(null, {
-      maxSize: this.#options.cache.guildLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#emojis = new Store<Snowflake, Emoji>(null, {
-      maxSize: this.#options.cache.emojiLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#entitlements = new Store<Snowflake, Entitlement>(null, {
-      maxSize: this.#options.cache.entitlementLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#subscriptions = new Store<Snowflake, Subscription>(null, {
-      maxSize: this.#options.cache.subscriptionLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#messages = new Store<Snowflake, Message>(null, {
-      maxSize: this.#options.cache.messageLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#voiceStates = new Store<Snowflake, VoiceState>(null, {
-      maxSize: this.#options.cache.voiceStateLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#autoModerationRules = new Store<Snowflake, AutoModerationRule>(null, {
-      maxSize: this.#options.cache.autoModerationRuleLimit,
-      ttl: this.#options.cache.ttl,
-    });
-
-    this.#stageInstances = new Store<Snowflake, StageInstance>(null, {
-      maxSize: this.#options.cache.stageInstanceLimit,
-      ttl: this.#options.cache.ttl,
     });
   }
 
@@ -267,73 +153,10 @@ export class Client extends ClientEventHandler {
   }
 
   /**
-   * Cache store for User entities
+   * Cache store for better performance
    */
-  get users(): Store<Snowflake, User> {
-    return this.#users;
-  }
-
-  /**
-   * Cache store for Channel entities
-   */
-  get channels(): Store<Snowflake, AnyChannel> {
-    return this.#channels;
-  }
-
-  /**
-   * Cache store for Guild entities
-   */
-  get guilds(): Store<Snowflake, Guild> {
-    return this.#guilds;
-  }
-
-  /**
-   * Cache store for Emoji entities
-   */
-  get emojis(): Store<Snowflake, Emoji> {
-    return this.#emojis;
-  }
-
-  /**
-   * Cache store for Entitlement entities
-   */
-  get entitlements(): Store<Snowflake, Entitlement> {
-    return this.#entitlements;
-  }
-
-  /**
-   * Cache store for Subscription entities
-   */
-  get subscriptions(): Store<Snowflake, Subscription> {
-    return this.#subscriptions;
-  }
-
-  /**
-   * Cache store for Message entities
-   */
-  get messages(): Store<Snowflake, Message> {
-    return this.#messages;
-  }
-
-  /**
-   * Cache store for VoiceState entities
-   */
-  get voiceStates(): Store<Snowflake, VoiceState> {
-    return this.#voiceStates;
-  }
-
-  /**
-   * Cache store for AutoModerationRule entities
-   */
-  get autoModerationRules(): Store<Snowflake, AutoModerationRule> {
-    return this.#autoModerationRules;
-  }
-
-  /**
-   * Cache store for StageInstance entities
-   */
-  get stageInstances(): Store<Snowflake, StageInstance> {
-    return this.#stageInstances;
+  get cache(): CacheManager {
+    return this.#cache;
   }
 
   /**
@@ -341,13 +164,6 @@ export class Client extends ClientEventHandler {
    */
   get user(): User {
     return this.#user;
-  }
-
-  /**
-   * Ping to the Discord Gateway in milliseconds, or null if not connected
-   */
-  get ping(): number | null {
-    return this.#gateway.heartbeat.latency;
   }
 
   /**
@@ -380,9 +196,7 @@ export class Client extends ClientEventHandler {
     await this.#rest.destroy();
 
     // Clear caches
-    this.#users.clear();
-    this.#channels.clear();
-    this.#guilds.clear();
+    this.#cache.dispose();
 
     // Remove event listeners from the client itself
     this.removeAllListeners();
@@ -435,7 +249,7 @@ export class Client extends ClientEventHandler {
     }
 
     if (!options.force) {
-      const cachedUser = this.#users.get(userId);
+      const cachedUser = this.#cache.users.get(userId);
       if (cachedUser) {
         return cachedUser;
       }
@@ -446,7 +260,7 @@ export class Client extends ClientEventHandler {
       const user = new User(this, data);
 
       if (this.#options.cache.enabled) {
-        this.#users.set(userId, user);
+        this.#cache.users.set(userId, user);
       }
 
       return user;
@@ -482,7 +296,7 @@ export class Client extends ClientEventHandler {
    * @returns The guild object or undefined
    */
   getGuild(guildId: Snowflake): Guild | undefined {
-    return this.#guilds.get(guildId);
+    return this.#cache.guilds.get(guildId);
   }
 
   /**

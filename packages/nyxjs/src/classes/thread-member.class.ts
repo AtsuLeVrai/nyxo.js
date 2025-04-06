@@ -6,8 +6,8 @@ import type {
 } from "@nyxjs/core";
 import type {
   ThreadListSyncEntity,
-  ThreadMemberUpdateEntity,
   ThreadMembersUpdateEntity,
+  ThreadMemberUpdateEntity,
 } from "@nyxjs/gateway";
 import { BaseClass } from "../bases/index.js";
 

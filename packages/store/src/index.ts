@@ -39,8 +39,7 @@ export const StoreOptions = z
      */
     evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
   })
-  .strict()
-  .readonly();
+  .strict();
 
 export type StoreOptions = z.infer<typeof StoreOptions>;
 

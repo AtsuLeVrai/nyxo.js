@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  type ProgrammingLanguageType,
-  TimestampStyle,
   bigHeader,
   bold,
   code,
@@ -16,12 +14,14 @@ import {
   formatUser,
   italics,
   link,
+  type ProgrammingLanguageType,
   quote,
   quoteBlock,
   smallerHeader,
   spoiler,
   strikethrough,
   subText,
+  TimestampStyle,
   underline,
 } from "../src/index.js";
 

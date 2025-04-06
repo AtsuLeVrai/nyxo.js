@@ -11,7 +11,6 @@
  * @see {@link https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes}
  * @enum {string}
  */
-// biome-ignore lint/style/useNamingConvention: OAuth2 is a standard name that requires consecutive uppercase letters
 export enum OAuth2Scope {
   /**
    * Allows your app to read a user's activity status (presence).

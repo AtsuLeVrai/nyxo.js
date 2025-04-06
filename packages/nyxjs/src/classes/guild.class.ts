@@ -13,8 +13,6 @@ import type {
   IntegrationEntity,
   IntegrationExpirationBehavior,
   OAuth2Scope,
-  RoleEntity,
-  RoleTagsEntity,
   Snowflake,
   SoundboardSoundEntity,
   StageInstanceEntity,
@@ -33,9 +31,6 @@ import type {
   GuildEmojisUpdateEntity,
   GuildMemberAddEntity,
   GuildMembersChunkEntity,
-  GuildRoleCreateEntity,
-  GuildRoleDeleteEntity,
-  GuildRoleUpdateEntity,
   GuildStickersUpdateEntity,
   PresenceEntity,
 } from "@nyxjs/gateway";
@@ -588,13 +583,6 @@ export class GuildAuditLogEntry extends BaseClass<GuildAuditLogEntryCreateEntity
   }
 
   /**
-   * Whether this audit log entry has changes
-   */
-  get hasChanges(): boolean {
-    return this.data.changes?.length > 0;
-  }
-
-  /**
    * Whether this audit log entry has additional options
    */
   get hasOptions(): boolean {
@@ -732,251 +720,9 @@ export class GuildMembersChunk extends BaseClass<GuildMembersChunkEntity> {
   }
 
   /**
-   * Whether this chunk has member presences
-   */
-  get hasPresences(): boolean {
-    return this.data.presences?.length > 0;
-  }
-
-  /**
-   * Whether this chunk has invalid member IDs
-   */
-  get hasNotFound(): boolean {
-    return this.data.not_found?.length > 0;
-  }
-
-  /**
    * Whether this chunk has a nonce
    */
   get hasNonce(): boolean {
     return Boolean(this.data.nonce);
-  }
-}
-
-/**
- * Represents a guild role create event.
- * Sent when a guild role is created.
- */
-export class GuildRoleCreate extends BaseClass<GuildRoleCreateEntity> {
-  /**
-   * ID of the guild
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * Role that was created
-   */
-  get role(): RoleEntity {
-    return this.data.role;
-  }
-
-  /**
-   * ID of the role
-   */
-  get roleId(): Snowflake {
-    return this.data.role.id;
-  }
-
-  /**
-   * Name of the role
-   */
-  get name(): string {
-    return this.data.role.name;
-  }
-
-  /**
-   * Role color (integer representation of hexadecimal color code)
-   */
-  get color(): number {
-    return this.data.role.color;
-  }
-
-  /**
-   * Whether the role is hoisted (displayed separately in the sidebar)
-   */
-  get hoist(): boolean {
-    return Boolean(this.data.role.hoist);
-  }
-
-  /**
-   * Position of the role in the server's role hierarchy
-   */
-  get position(): number {
-    return this.data.role.position;
-  }
-
-  /**
-   * Permission bit set as a string
-   */
-  get permissions(): string {
-    return this.data.role.permissions;
-  }
-
-  /**
-   * Whether the role is managed by an integration
-   */
-  get managed(): boolean {
-    return Boolean(this.data.role.managed);
-  }
-
-  /**
-   * Whether the role is mentionable
-   */
-  get mentionable(): boolean {
-    return Boolean(this.data.role.mentionable);
-  }
-
-  /**
-   * Role flags
-   */
-  get flags(): number {
-    return this.data.role.flags;
-  }
-}
-
-/**
- * Represents a guild role update event.
- * Sent when a guild role is updated.
- */
-export class GuildRoleUpdate extends BaseClass<GuildRoleUpdateEntity> {
-  /**
-   * ID of the guild
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
-  }
-
-  /**
-   * Role that was updated
-   */
-  get role(): RoleEntity {
-    return this.data.role;
-  }
-
-  /**
-   * ID of the role
-   */
-  get roleId(): Snowflake {
-    return this.data.role.id;
-  }
-
-  /**
-   * Name of the role
-   */
-  get name(): string {
-    return this.data.role.name;
-  }
-
-  /**
-   * Role color (integer representation of hexadecimal color code)
-   */
-  get color(): number {
-    return this.data.role.color;
-  }
-
-  /**
-   * Whether the role is hoisted (displayed separately in the sidebar)
-   */
-  get hoist(): boolean {
-    return Boolean(this.data.role.hoist);
-  }
-
-  /**
-   * Role icon hash
-   */
-  get icon(): string | null {
-    return this.data.role.icon ?? null;
-  }
-
-  /**
-   * Role unicode emoji
-   */
-  get unicodeEmoji(): string | null {
-    return this.data.role.unicode_emoji ?? null;
-  }
-
-  /**
-   * Position of the role in the server's role hierarchy
-   */
-  get position(): number {
-    return this.data.role.position;
-  }
-
-  /**
-   * Permission bit set as a string
-   */
-  get permissions(): string {
-    return this.data.role.permissions;
-  }
-
-  /**
-   * Whether the role is managed by an integration
-   */
-  get managed(): boolean {
-    return Boolean(this.data.role.managed);
-  }
-
-  /**
-   * Whether the role is mentionable
-   */
-  get mentionable(): boolean {
-    return Boolean(this.data.role.mentionable);
-  }
-
-  /**
-   * Role tags information
-   */
-  get tags(): RoleTagsEntity | undefined {
-    return this.data.role.tags;
-  }
-
-  /**
-   * Role flags
-   */
-  get flags(): number {
-    return this.data.role.flags;
-  }
-
-  /**
-   * Whether the role has an icon
-   */
-  get hasIcon(): boolean {
-    return Boolean(this.data.role.icon);
-  }
-
-  /**
-   * Whether the role has a unicode emoji
-   */
-  get hasUnicodeEmoji(): boolean {
-    return Boolean(this.data.role.unicode_emoji);
-  }
-
-  /**
-   * Whether the role has tags
-   */
-  get hasTags(): boolean {
-    return Boolean(this.data.role.tags);
-  }
-}
-
-/**
- * Represents a guild role delete event.
- * Sent when a guild role is deleted.
- */
-export class GuildRoleDelete extends BaseClass<GuildRoleDeleteEntity> {
-  /**
-   * ID of the role that was deleted
-   */
-  get roleId(): Snowflake {
-    return this.data.role_id;
-  }
-
-  /**
-   * ID of the guild where the role was deleted
-   */
-  get guildId(): Snowflake {
-    return this.data.guild_id;
   }
 }
