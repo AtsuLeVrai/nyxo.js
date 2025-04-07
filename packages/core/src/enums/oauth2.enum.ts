@@ -9,7 +9,6 @@
  * necessary for your application's functionality.
  *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes}
- * @enum {string}
  */
 export enum OAuth2Scope {
   /**
@@ -17,7 +16,6 @@ export enum OAuth2Scope {
    *
    * This scope grants read access to a user's current activities, including
    * what games or applications they are using.
-   * @type {string}
    */
   ActivitiesRead = "activities.read",
 
@@ -26,7 +24,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to set the user's current activity
    * and status through the API.
-   * @type {string}
    */
   ActivitiesWrite = "activities.write",
 
@@ -35,7 +32,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read build information for applications
    * owned by the user.
-   * @type {string}
    */
   ApplicationsBuildsRead = "applications.builds.read",
 
@@ -44,7 +40,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to upload new builds for applications
    * owned by the user.
-   * @type {string}
    */
   ApplicationsBuildsUpload = "applications.builds.upload",
 
@@ -53,7 +48,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to create and use slash commands in guilds
    * where your application is installed.
-   * @type {string}
    */
   ApplicationsCommands = "applications.commands",
 
@@ -62,7 +56,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to update application commands using
    * a bearer token instead of a bot token.
-   * @type {string}
    */
   ApplicationsCommandsUpdate = "applications.commands.update",
 
@@ -71,7 +64,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to update the command permissions for
    * your application's commands in guilds.
-   * @type {string}
    */
   ApplicationsCommandsPermissionsUpdate = "applications.commands.permissions.update",
 
@@ -80,7 +72,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read entitlement information for
    * applications owned by the user.
-   * @type {string}
    */
   ApplicationsEntitlements = "applications.entitlements",
 
@@ -89,7 +80,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to manage store-related information for
    * applications owned by the user.
-   * @type {string}
    */
   ApplicationsStoreUpdate = "applications.store.update",
 
@@ -99,7 +89,6 @@ export enum OAuth2Scope {
    * This scope is required if your application needs to function as a bot
    * within Discord guilds. It causes the OAuth2 flow to prompt the user
    * with a guild selection screen.
-   * @type {string}
    */
   Bot = "bot",
 
@@ -108,7 +97,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to view which other services the user has
    * connected to their Discord account (Twitch, YouTube, etc.).
-   * @type {string}
    */
   Connections = "connections",
 
@@ -117,7 +105,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read the direct message channels and
    * history for the authenticated user.
-   * @type {string}
    */
   DmChannelsRead = "dm_channels.read",
 
@@ -126,7 +113,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to the email address associated with
    * the user's Discord account.
-   * @type {string}
    */
   Email = "email",
 
@@ -135,7 +121,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to join group direct message
    * conversations as the authenticated user.
-   * @type {string}
    */
   GdmJoin = "gdm.join",
 
@@ -144,7 +129,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read basic information about all
    * guilds the authenticated user is a member of.
-   * @type {string}
    */
   Guilds = "guilds",
 
@@ -153,7 +137,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to add the authenticated user
    * to guilds. Requires the `guilds` scope.
-   * @type {string}
    */
   GuildsJoin = "guilds.join",
 
@@ -162,7 +145,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read the members of guilds the
    * authenticated user is in.
-   * @type {string}
    */
   GuildsMembersRead = "guilds.members.read",
 
@@ -171,7 +153,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to the user's Discord username, discriminator,
    * avatar, and ID. This is a basic scope that most applications need.
-   * @type {string}
    */
   Identify = "identify",
 
@@ -180,7 +161,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read message content and history
    * in channels the authenticated user has access to.
-   * @type {string}
    */
   MessagesRead = "messages.read",
 
@@ -189,7 +169,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to view the authenticated user's relationships
    * with other Discord users.
-   * @type {string}
    */
   RelationshipsRead = "relationships.read",
 
@@ -198,7 +177,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to manage the connections between
    * external services and Discord roles for the authenticated user.
-   * @type {string}
    */
   RoleConnectionsWrite = "role_connections.write",
 
@@ -207,7 +185,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to use Discord's Rich Presence Protocol
    * for verified applications.
-   * @type {string}
    */
   Rpc = "rpc",
 
@@ -216,7 +193,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to set the user's activity
    * through the Rich Presence Protocol.
-   * @type {string}
    */
   RpcActivitiesWrite = "rpc.activities.write",
 
@@ -225,7 +201,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read notifications through
    * the Rich Presence Protocol.
-   * @type {string}
    */
   RpcNotificationsRead = "rpc.notifications.read",
 
@@ -234,7 +209,6 @@ export enum OAuth2Scope {
    *
    * This scope grants access to read voice-related settings through
    * the Rich Presence Protocol.
-   * @type {string}
    */
   RpcVoiceRead = "rpc.voice.read",
 
@@ -243,7 +217,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to modify voice-related settings
    * through the Rich Presence Protocol.
-   * @type {string}
    */
   RpcVoiceWrite = "rpc.voice.write",
 
@@ -252,7 +225,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission for your application to connect
    * to voice channels and transmit audio.
-   * @type {string}
    */
   Voice = "voice",
 
@@ -261,7 +233,6 @@ export enum OAuth2Scope {
    *
    * This scope grants permission to create incoming webhooks
    * in channels the authenticated user has access to.
-   * @type {string}
    */
   WebhookIncoming = "webhook.incoming",
 }

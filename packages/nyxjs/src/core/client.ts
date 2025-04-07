@@ -1,16 +1,18 @@
 import type { Snowflake } from "@nyxjs/core";
 import { Gateway, type UpdatePresenceEntity } from "@nyxjs/gateway";
 import { Rest } from "@nyxjs/rest";
+import { EventEmitter } from "eventemitter3";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { User } from "../classes/index.js";
 import {
   GatewayKeyofEventMappings,
   RestKeyofEventMappings,
+  StandardGatewayDispatchEventMappings,
 } from "../data/index.js";
-import { ClientEventHandler } from "../handlers/index.js";
 import { CacheManager } from "../managers/index.js";
 import { ClientOptions } from "../options/index.js";
+import type { ClientEvents } from "../types/index.js";
 
 /**
  * Main client class for interacting with the Discord API.
@@ -51,7 +53,7 @@ import { ClientOptions } from "../options/index.js";
  * client.connect().catch(console.error);
  * ```
  */
-export class Client extends ClientEventHandler {
+export class Client extends EventEmitter<ClientEvents> {
   /**
    * REST API client for making direct API requests
    * @private
@@ -118,7 +120,16 @@ export class Client extends ClientEventHandler {
 
     // Listen for gateway events
     this.#gateway.on("dispatch", (event, data) => {
-      this.handleGatewayDispatch(this, event, data);
+      const mapping = StandardGatewayDispatchEventMappings.find(
+        (m) => m.gatewayEvent === event,
+      );
+      if (!mapping) {
+        return;
+      }
+
+      // Transform data and emit the corresponding client event
+      const transformedData = mapping.transform(this, data as never);
+      this.emit(mapping.clientEvent, ...transformedData);
     });
 
     // Listen for ready event to set the user

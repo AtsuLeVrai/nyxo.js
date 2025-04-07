@@ -12,409 +12,709 @@ import type { StickerEntity, StickerItemEntity } from "./sticker.entity.js";
 import type { UserEntity } from "./user.entity.js";
 
 /**
- * Defines the types of mentions that can be allowed in messages.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#allowed-mentions-object-allowed-mention-types}
+ * Types of mentions that can be allowed in messages.
+ * Controls which types of mentions will actually notify users.
+ * @see {@link https://discord.com/developers/docs/resources/message#allowed-mentions-object-allowed-mention-types}
  */
 export enum AllowedMentionType {
-  /** Controls role mentions */
+  /**
+   * Controls role mentions.
+   * When specified in the `parse` array, roles mentioned in content will trigger notifications.
+   */
   RoleMentions = "roles",
 
-  /** Controls user mentions */
+  /**
+   * Controls user mentions.
+   * When specified in the `parse` array, users mentioned in content will trigger notifications.
+   */
   UserMentions = "users",
 
-  /** Controls @everyone and @here mentions */
+  /**
+   * Controls @everyone and @here mentions.
+   * When specified in the `parse` array, @everyone and @here mentioned in content will trigger notifications.
+   */
   EveryoneMentions = "everyone",
 }
 
 /**
- * Defines the flags that can be applied to message attachments.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#attachment-object-attachment-flags}
+ * Flags that can be applied to message attachments.
+ * Controls special behaviors for attachments.
+ * @see {@link https://discord.com/developers/docs/resources/message#attachment-object-attachment-flags}
  */
 export enum AttachmentFlags {
-  /** This attachment has been edited using the remix feature on mobile */
+  /**
+   * This attachment has been edited using the remix feature on mobile.
+   * Indicates the attachment was modified via Discord's mobile app remix functionality.
+   * @value 1 << 2 (4)
+   */
   IsRemix = 1 << 2,
 }
 
 /**
- * Defines the types of embeds that can be included in a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-types}
+ * Types of embeds that can be included in a message.
+ * Determines the rendering style of the embed.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-types}
  */
 export enum EmbedType {
-  /** Generic rich embed (default) */
+  /**
+   * Generic rich embed (default).
+   * Standard Discord embed with customizable content and formatting.
+   */
   Rich = "rich",
 
-  /** Image embed */
+  /**
+   * Image embed.
+   * Embed optimized for displaying images.
+   */
   Image = "image",
 
-  /** Video embed */
+  /**
+   * Video embed.
+   * Embed optimized for displaying videos.
+   */
   Video = "video",
 
-  /** Animated gif image embed rendered as a video embed */
+  /**
+   * Animated gif image embed rendered as a video embed.
+   * GIF that will play like a video in the client.
+   */
   Gifv = "gifv",
 
-  /** Article embed */
+  /**
+   * Article embed.
+   * Embed displaying article information.
+   */
   Article = "article",
 
-  /** Link embed */
+  /**
+   * Link embed.
+   * Simple embed generated from a URL.
+   */
   Link = "link",
 
-  /** Poll result embed */
+  /**
+   * Poll result embed.
+   * Embed showing poll results after a poll has ended.
+   */
   PollResult = "poll_result",
 }
 
 /**
- * Defines the types of message references.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-reference-types}
+ * Types of message references.
+ * Determines how associated data is populated and how the reference is displayed.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-reference-types}
  */
 export enum MessageReferenceType {
-  /** Standard reference used by replies */
+  /**
+   * Standard reference used by replies.
+   * Used for normal message replies with referenced_message data.
+   */
   Default = 0,
 
-  /** Reference used to point to a message at a point in time */
+  /**
+   * Reference used to point to a message at a point in time.
+   * Used for forwarded messages with message_snapshots data.
+   */
   Forward = 1,
 }
 
 /**
- * Defines the flags that can be applied to messages.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-object-message-flags}
+ * Flags that can be applied to messages.
+ * Controls message behavior, visibility, and display options.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-flags}
  */
 export enum MessageFlags {
-  /** Message has been published to subscribed channels (via Channel Following) */
+  /**
+   * Message has been published to subscribed channels (via Channel Following).
+   * Indicates a message was crossposted to other channels.
+   * @value 1 << 0 (1)
+   */
   Crossposted = 1 << 0,
 
-  /** Message originated from a message in another channel (via Channel Following) */
+  /**
+   * Message originated from a message in another channel (via Channel Following).
+   * Indicates this message is a crosspost from another channel.
+   * @value 1 << 1 (2)
+   */
   IsCrosspost = 1 << 1,
 
-  /** Do not include any embeds when serializing this message */
+  /**
+   * Do not include any embeds when serializing this message.
+   * Prevents embeds from being shown for this message.
+   * @value 1 << 2 (4)
+   */
   SuppressEmbeds = 1 << 2,
 
-  /** Source message for this crosspost has been deleted (via Channel Following) */
+  /**
+   * Source message for this crosspost has been deleted (via Channel Following).
+   * Indicates the original message for a crosspost was removed.
+   * @value 1 << 3 (8)
+   */
   SourceMessageDeleted = 1 << 3,
 
-  /** Message came from the urgent message system */
+  /**
+   * Message came from the urgent message system.
+   * Used for system messages that need attention.
+   * @value 1 << 4 (16)
+   */
   Urgent = 1 << 4,
 
-  /** Message has an associated thread, with the same id as the message */
+  /**
+   * Message has an associated thread, with the same id as the message.
+   * Indicates a thread was created from this message.
+   * @value 1 << 5 (32)
+   */
   HasThread = 1 << 5,
 
-  /** Message is only visible to the user who invoked the Interaction */
+  /**
+   * Message is only visible to the user who invoked the Interaction.
+   * Used for messages that only the interaction user can see.
+   * @value 1 << 6 (64)
+   */
   Ephemeral = 1 << 6,
 
-  /** Message is an Interaction Response and the bot is "thinking" */
+  /**
+   * Message is an Interaction Response and the bot is "thinking".
+   * Displays a loading state for the message.
+   * @value 1 << 7 (128)
+   */
   Loading = 1 << 7,
 
-  /** Message failed to mention some roles and add their members to the thread */
+  /**
+   * Message failed to mention some roles and add their members to the thread.
+   * Indicates that not all mentioned roles were successfully added to the thread.
+   * @value 1 << 8 (256)
+   */
   FailedToMentionSomeRolesInThread = 1 << 8,
 
-  /** Message will not trigger push and desktop notifications */
+  /**
+   * Message will not trigger push and desktop notifications.
+   * Prevents notification alerts from being sent for this message.
+   * @value 1 << 12 (4096)
+   */
   SuppressNotifications = 1 << 12,
 
-  /** Message is a voice message */
+  /**
+   * Message is a voice message.
+   * Indicates an audio recording sent as a message.
+   * @value 1 << 13 (8192)
+   */
   IsVoiceMessage = 1 << 13,
 
-  /** Message has a snapshot (via Message Forwarding) */
+  /**
+   * Message has a snapshot (via Message Forwarding).
+   * Indicates this message contains forwarded content.
+   * @value 1 << 14 (16384)
+   */
   HasSnapshot = 1 << 14,
 }
 
 /**
- * Defines the types of activities that can be associated with a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-object-message-activity-types}
+ * Types of activities that can be associated with a message.
+ * Used primarily with Rich Presence features.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-activity-types}
  */
 export enum MessageActivityType {
-  /** User joined */
+  /**
+   * User joined.
+   * Indicates a Rich Presence join event.
+   */
   Join = 1,
 
-  /** User is spectating */
+  /**
+   * User is spectating.
+   * Indicates a Rich Presence spectate event.
+   */
   Spectate = 2,
 
-  /** User is listening */
+  /**
+   * User is listening.
+   * Indicates a Rich Presence listen event.
+   */
   Listen = 3,
 
-  /** User requested to join */
+  /**
+   * User requested to join.
+   * Indicates a Rich Presence request to join event.
+   */
   JoinRequest = 5,
 }
 
 /**
- * Defines the different types of messages that can be sent in Discord.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-object-message-types}
+ * Different types of messages that can be sent in Discord.
+ * Determines how the message is rendered and what content it contains.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-types}
  */
 export enum MessageType {
-  /** Default message */
+  /**
+   * Default message.
+   * Standard user-generated message with content.
+   */
   Default = 0,
 
-  /** Recipient added to group DM */
+  /**
+   * Recipient added to group DM.
+   * System message when a user is added to a group DM.
+   */
   RecipientAdd = 1,
 
-  /** Recipient removed from group DM */
+  /**
+   * Recipient removed from group DM.
+   * System message when a user is removed from a group DM.
+   */
   RecipientRemove = 2,
 
-  /** Call message */
+  /**
+   * Call message.
+   * System message for voice/video calls.
+   */
   Call = 3,
 
-  /** Channel name change */
+  /**
+   * Channel name change.
+   * System message when channel name is changed.
+   */
   ChannelNameChange = 4,
 
-  /** Channel icon change */
+  /**
+   * Channel icon change.
+   * System message when channel icon is changed.
+   */
   ChannelIconChange = 5,
 
-  /** Channel pinned message */
+  /**
+   * Channel pinned message.
+   * System message when a message is pinned.
+   */
   ChannelPinnedMessage = 6,
 
-  /** User joined guild */
+  /**
+   * User joined guild.
+   * System message when a new user joins the server.
+   */
   UserJoin = 7,
 
-  /** Guild boost */
+  /**
+   * Guild boost.
+   * System message when a user boosts the server.
+   */
   GuildBoost = 8,
 
-  /** Guild reached boost tier 1 */
+  /**
+   * Guild reached boost tier 1.
+   * System message when server reaches Boost Level 1.
+   */
   GuildBoostTier1 = 9,
 
-  /** Guild reached boost tier 2 */
+  /**
+   * Guild reached boost tier 2.
+   * System message when server reaches Boost Level 2.
+   */
   GuildBoostTier2 = 10,
 
-  /** Guild reached boost tier 3 */
+  /**
+   * Guild reached boost tier 3.
+   * System message when server reaches Boost Level 3.
+   */
   GuildBoostTier3 = 11,
 
-  /** Channel follow add */
+  /**
+   * Channel follow add.
+   * System message when a channel is followed.
+   */
   ChannelFollowAdd = 12,
 
-  /** Guild discovery disqualified */
+  /**
+   * Guild discovery disqualified.
+   * System message when server is removed from Discovery.
+   */
   GuildDiscoveryDisqualified = 14,
 
-  /** Guild discovery requalified */
+  /**
+   * Guild discovery requalified.
+   * System message when server returns to Discovery.
+   */
   GuildDiscoveryRequalified = 15,
 
-  /** Guild discovery grace period initial warning */
+  /**
+   * Guild discovery grace period initial warning.
+   * System message for Discovery eligibility warning.
+   */
   GuildDiscoveryGracePeriodInitialWarning = 16,
 
-  /** Guild discovery grace period final warning */
+  /**
+   * Guild discovery grace period final warning.
+   * System message for Discovery final eligibility warning.
+   */
   GuildDiscoveryGracePeriodFinalWarning = 17,
 
-  /** Thread created */
+  /**
+   * Thread created.
+   * System message when a thread is created.
+   */
   ThreadCreated = 18,
 
-  /** Reply to a message */
+  /**
+   * Reply to a message.
+   * Message created as a reply to another message.
+   */
   Reply = 19,
 
-  /** Application command */
+  /**
+   * Application command.
+   * Message created from a chat input command (slash command).
+   */
   ChatInputCommand = 20,
 
-  /** Thread starter message */
+  /**
+   * Thread starter message.
+   * First message in a thread created from an existing message.
+   */
   ThreadStarterMessage = 21,
 
-  /** Guild invite reminder */
+  /**
+   * Guild invite reminder.
+   * System message reminding to use invites.
+   */
   GuildInviteReminder = 22,
 
-  /** Context menu command */
+  /**
+   * Context menu command.
+   * Message created from a context menu command.
+   */
   ContextMenuCommand = 23,
 
-  /** Auto-moderation action */
+  /**
+   * Auto-moderation action.
+   * System message from Auto Mod showing taken actions.
+   */
   AutoModerationAction = 24,
 
-  /** Role subscription purchase */
+  /**
+   * Role subscription purchase.
+   * System message when a user purchases a premium role.
+   */
   RoleSubscriptionPurchase = 25,
 
-  /** Interaction premium upsell */
+  /**
+   * Interaction premium upsell.
+   * System message prompting to upgrade for premium features.
+   */
   InteractionPremiumUpsell = 26,
 
-  /** Stage start */
+  /**
+   * Stage start.
+   * System message when a Stage channel starts.
+   */
   StageStart = 27,
 
-  /** Stage end */
+  /**
+   * Stage end.
+   * System message when a Stage channel ends.
+   */
   StageEnd = 28,
 
-  /** Stage speaker */
+  /**
+   * Stage speaker.
+   * System message when a user becomes a speaker in Stage.
+   */
   StageSpeaker = 29,
 
-  /** Stage topic */
+  /**
+   * Stage topic.
+   * System message when a Stage topic changes.
+   */
   StageTopic = 31,
 
-  /** Guild application premium subscription */
+  /**
+   * Guild application premium subscription.
+   * System message for premium app subscription.
+   */
   GuildApplicationPremiumSubscription = 32,
 
-  /** Guild incident alert mode enabled */
+  /**
+   * Guild incident alert mode enabled.
+   * System message when safety alerts are turned on.
+   */
   GuildIncidentAlertModeEnabled = 36,
 
-  /** Guild incident alert mode disabled */
+  /**
+   * Guild incident alert mode disabled.
+   * System message when safety alerts are turned off.
+   */
   GuildIncidentAlertModeDisabled = 37,
 
-  /** Guild incident report raid */
+  /**
+   * Guild incident report raid.
+   * System message for a raid alert.
+   */
   GuildIncidentReportRaid = 38,
 
-  /** Guild incident report false alarm */
+  /**
+   * Guild incident report false alarm.
+   * System message for a false alarm incident.
+   */
   GuildIncidentReportFalseAlarm = 39,
 
-  /** Purchase notification */
+  /**
+   * Purchase notification.
+   * System message for a purchase notification.
+   */
   PurchaseNotification = 44,
 
-  /** Poll result */
+  /**
+   * Poll result.
+   * System message showing poll results.
+   */
   PollResult = 46,
 }
 
 /**
- * Represents data for role subscription purchase events.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#role-subscription-data-object-role-subscription-data-object-structure}
+ * Data for role subscription purchase events.
+ * Contains information about premium role subscriptions.
+ * @see {@link https://discord.com/developers/docs/resources/message#role-subscription-data-object-role-subscription-data-object-structure}
  */
 export interface RoleSubscriptionDataEntity {
-  /** ID of the SKU and listing that the user subscribed to */
+  /**
+   * ID of the SKU and listing that the user subscribed to.
+   * Identifies the specific premium role product that was purchased.
+   */
   role_subscription_listing_id: Snowflake;
 
-  /** Name of the tier that the user is subscribed to */
+  /**
+   * Name of the tier that the user is subscribed to.
+   * The display name of the subscription tier.
+   */
   tier_name: string;
 
-  /** The cumulative number of months that the user has been subscribed for */
+  /**
+   * The cumulative number of months that the user has been subscribed for.
+   * Total subscription duration in months.
+   */
   total_months_subscribed: number;
 
-  /** Whether this notification is for a renewal rather than a new purchase */
+  /**
+   * Whether this notification is for a renewal rather than a new purchase.
+   * Indicates if this is a recurring payment rather than an initial subscription.
+   */
   is_renewal: boolean;
 }
 
 /**
  * Controls which mentions are allowed in a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#allowed-mentions-object-allowed-mentions-structure}
+ * Used to prevent unwanted pings to users, roles, or everyone.
+ * @see {@link https://discord.com/developers/docs/resources/message#allowed-mentions-object-allowed-mentions-structure}
  */
 export interface AllowedMentionsEntity {
-  /** An array of allowed mention types to parse from the content */
+  /**
+   * An array of allowed mention types to parse from the content.
+   * Controls which types of mentions in the message content will trigger notifications.
+   */
   parse: AllowedMentionType[];
 
   /**
-   * Array of role IDs to mention
+   * Array of role IDs to mention.
+   * Specific roles that can be pinged, even if roles aren't in the parse array.
    * @maxItems 100
    * @optional
    */
   roles?: Snowflake[];
 
   /**
-   * Array of user IDs to mention
+   * Array of user IDs to mention.
+   * Specific users that can be pinged, even if users aren't in the parse array.
    * @maxItems 100
    * @optional
    */
   users?: Snowflake[];
 
-  /** For replies, whether to mention the author of the message being replied to */
+  /**
+   * For replies, whether to mention the author of the message being replied to.
+   * Controls if the replied-to user receives a notification for the reply.
+   */
   replied_user?: boolean;
 }
 
 /**
  * Represents a channel mention in message content.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#channel-mention-object-channel-mention-structure}
+ * Created when a channel is mentioned using #channel-name syntax.
+ * @see {@link https://discord.com/developers/docs/resources/message#channel-mention-object-channel-mention-structure}
  */
 export interface ChannelMentionEntity {
-  /** ID of the channel */
+  /**
+   * ID of the channel.
+   * Unique identifier for the mentioned channel.
+   */
   id: Snowflake;
 
-  /** ID of the guild containing the channel */
+  /**
+   * ID of the guild containing the channel.
+   * Server ID where the mentioned channel is located.
+   */
   guild_id: Snowflake;
 
-  /** The type of channel */
+  /**
+   * The type of channel.
+   * Indicates whether this is a text channel, voice channel, etc.
+   */
   type: ChannelType;
 
-  /** The name of the channel */
+  /**
+   * The name of the channel.
+   * Display name of the mentioned channel.
+   */
   name: string;
 }
 
 /**
  * Represents a file attached to a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#attachment-object-attachment-structure}
+ * Contains metadata about uploaded files and media.
+ * @see {@link https://discord.com/developers/docs/resources/message#attachment-object-attachment-structure}
  */
 export interface AttachmentEntity {
-  /** Attachment ID */
+  /**
+   * Attachment ID.
+   * Unique identifier for the attachment.
+   */
   id: Snowflake;
 
-  /** Name of the attached file */
+  /**
+   * Name of the attached file.
+   * Original filename of the uploaded file.
+   */
   filename: string;
 
-  /** Title of the file */
+  /**
+   * Title of the file.
+   * Custom title assigned to the file.
+   */
   title?: string;
 
   /**
-   * Description of the file
+   * Description of the file.
+   * Custom description for the attachment.
    * @maxLength 1024
    * @optional
    */
   description?: string;
 
-  /** The attachment's media type */
+  /**
+   * The attachment's media type.
+   * MIME type of the file (e.g., "image/jpeg", "video/mp4").
+   */
   content_type?: string;
 
-  /** Size of file in bytes */
+  /**
+   * Size of file in bytes.
+   * File size information.
+   */
   size: number;
 
   /**
-   * Source URL of file
+   * Source URL of file.
+   * Direct link to the file on Discord's CDN.
    * @format url
    */
   url: string;
 
   /**
-   * A proxied URL of the file
+   * A proxied URL of the file.
+   * CDN URL that goes through Discord's proxy.
    * @format url
    */
   proxy_url: string;
 
-  /** Height of file (if image) */
+  /**
+   * Height of file (if image).
+   * Height in pixels for image attachments.
+   */
   height?: number | null;
 
-  /** Width of file (if image) */
+  /**
+   * Width of file (if image).
+   * Width in pixels for image attachments.
+   */
   width?: number | null;
 
-  /** Whether this attachment is ephemeral */
+  /**
+   * Whether this attachment is ephemeral.
+   * If true, the attachment will be removed after a set period of time.
+   */
   ephemeral?: boolean;
 
-  /** The duration of the audio file (for voice messages) */
+  /**
+   * The duration of the audio file (for voice messages).
+   * Length in seconds for voice message attachments.
+   */
   duration_secs?: number;
 
-  /** Base64 encoded bytearray representing a sampled waveform (for voice messages) */
+  /**
+   * Base64 encoded bytearray representing a sampled waveform (for voice messages).
+   * Visual representation of audio for voice message attachments.
+   */
   waveform?: string;
 
-  /** Attachment flags */
+  /**
+   * Attachment flags.
+   * Bitfield of flags for special attachment behavior.
+   */
   flags?: AttachmentFlags;
 }
 
 /**
  * Represents a field in an embed.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-field-structure}
+ * Contains a titled section with text content in an embed.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-field-structure}
  */
 export interface EmbedFieldEntity {
   /**
-   * Name of the field
+   * Name of the field.
+   * Title/header of this field section.
    * @minLength 1
    * @maxLength 256
    */
   name: string;
 
   /**
-   * Value of the field
+   * Value of the field.
+   * Content text for this field section.
    * @minLength 1
    * @maxLength 1024
    */
   value: string;
 
-  /** Whether or not this field should display inline */
+  /**
+   * Whether or not this field should display inline.
+   * If true, field will be displayed side-by-side with other inline fields.
+   */
   inline?: boolean;
 }
 
 /**
  * Represents the footer of an embed.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-footer-structure}
+ * Displays text and optional icon at the bottom of an embed.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-footer-structure}
  */
 export interface EmbedFooterEntity {
   /**
-   * Footer text
+   * Footer text.
+   * Text displayed in the footer area.
    * @minLength 1
    * @maxLength 2048
    */
   text: string;
 
   /**
-   * URL of footer icon
+   * URL of footer icon.
+   * Image displayed next to footer text.
    * @format url
    * @optional
    */
   icon_url?: string;
 
   /**
-   * A proxied URL of the footer icon
+   * A proxied URL of the footer icon.
+   * CDN URL that goes through Discord's proxy.
    * @format url
    * @optional
    */
@@ -423,32 +723,37 @@ export interface EmbedFooterEntity {
 
 /**
  * Represents the author of an embed.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-author-structure}
+ * Displays author information at the top of an embed.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-author-structure}
  */
 export interface EmbedAuthorEntity {
   /**
-   * Name of author
+   * Name of author.
+   * Display name for the author section.
    * @minLength 1
    * @maxLength 256
    */
   name: string;
 
   /**
-   * URL of author
+   * URL of author.
+   * Link for the author's name.
    * @format url
    * @optional
    */
   url?: string;
 
   /**
-   * URL of author icon
+   * URL of author icon.
+   * Avatar/icon displayed next to author name.
    * @format url
    * @optional
    */
   icon_url?: string;
 
   /**
-   * A proxied URL of author icon
+   * A proxied URL of author icon.
+   * CDN URL that goes through Discord's proxy.
    * @format url
    * @optional
    */
@@ -457,14 +762,19 @@ export interface EmbedAuthorEntity {
 
 /**
  * Represents the provider of an embed.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-provider-structure}
+ * Contains information about the source of an embed.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-provider-structure}
  */
 export interface EmbedProviderEntity {
-  /** Name of provider */
+  /**
+   * Name of provider.
+   * Name of the service that provided the embed content.
+   */
   name?: string;
 
   /**
-   * URL of provider
+   * URL of provider.
+   * Link to the provider's site.
    * @format url
    * @optional
    */
@@ -473,135 +783,194 @@ export interface EmbedProviderEntity {
 
 /**
  * Represents an image in an embed.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-image-structure}
+ * Displays an image in the embed body.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-image-structure}
  */
 export interface EmbedImageEntity {
   /**
-   * Source URL of image
+   * Source URL of image.
+   * Direct link to the image.
    * @format url
    */
   url: string;
 
   /**
-   * A proxied URL of the image
+   * A proxied URL of the image.
+   * CDN URL that goes through Discord's proxy.
    * @format url
    * @optional
    */
   proxy_url?: string;
 
-  /** Height of image */
+  /**
+   * Height of image.
+   * Image height in pixels.
+   */
   height?: number;
 
-  /** Width of image */
+  /**
+   * Width of image.
+   * Image width in pixels.
+   */
   width?: number;
 }
 
 /**
  * Represents a video in an embed.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-video-structure}
+ * Displays a video in the embed body.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-video-structure}
  */
 export interface EmbedVideoEntity {
   /**
-   * Source URL of video
+   * Source URL of video.
+   * Direct link to the video.
    * @format url
    * @optional
    */
   url?: string;
 
   /**
-   * A proxied URL of the video
+   * A proxied URL of the video.
+   * CDN URL that goes through Discord's proxy.
    * @format url
    * @optional
    */
   proxy_url?: string;
 
-  /** Height of video */
+  /**
+   * Height of video.
+   * Video height in pixels.
+   */
   height?: number;
 
-  /** Width of video */
+  /**
+   * Width of video.
+   * Video width in pixels.
+   */
   width?: number;
 }
 
 /**
  * Represents a thumbnail in an embed.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-thumbnail-structure}
+ * Displays a smaller image in the embed.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-thumbnail-structure}
  */
 export interface EmbedThumbnailEntity {
   /**
-   * Source URL of thumbnail
+   * Source URL of thumbnail.
+   * Direct link to the thumbnail image.
    * @format url
    */
   url: string;
 
   /**
-   * A proxied URL of the thumbnail
+   * A proxied URL of the thumbnail.
+   * CDN URL that goes through Discord's proxy.
    * @format url
    * @optional
    */
   proxy_url?: string;
 
-  /** Height of thumbnail */
+  /**
+   * Height of thumbnail.
+   * Thumbnail height in pixels.
+   */
   height?: number;
 
-  /** Width of thumbnail */
+  /**
+   * Width of thumbnail.
+   * Thumbnail width in pixels.
+   */
   width?: number;
 }
 
 /**
  * Represents an embed in a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#embed-object-embed-structure}
+ * Rich content that can be attached to messages with formatted text and media.
+ * @see {@link https://discord.com/developers/docs/resources/message#embed-object-embed-structure}
  */
 export interface EmbedEntity {
   /**
-   * Title of embed
+   * Title of embed.
+   * Main heading displayed at the top of the embed.
    * @maxLength 256
    * @optional
    */
   title?: string;
 
-  /** Type of embed (always "rich" for webhook embeds) */
+  /**
+   * Type of embed (always "rich" for webhook embeds).
+   * Determines how the embed is rendered.
+   */
   type: EmbedType;
 
   /**
-   * Description of embed
+   * Description of embed.
+   * Main text content of the embed.
    * @maxLength 4096
    * @optional
    */
   description?: string;
 
   /**
-   * URL of embed
+   * URL of embed.
+   * Makes the title a clickable link.
    * @format url
    * @optional
    */
   url?: string;
 
-  /** Timestamp of embed content */
+  /**
+   * Timestamp of embed content.
+   * Displays time in the footer, usually in ISO8601 format.
+   */
   timestamp?: string;
 
-  /** Color code of the embed */
+  /**
+   * Color code of the embed.
+   * Color of the left border of the embed in integer format.
+   */
   color?: number;
 
-  /** Footer information */
+  /**
+   * Footer information.
+   * Displayed at the bottom of the embed.
+   */
   footer?: EmbedFooterEntity;
 
-  /** Image information */
+  /**
+   * Image information.
+   * Large image displayed in the embed.
+   */
   image?: EmbedImageEntity;
 
-  /** Thumbnail information */
+  /**
+   * Thumbnail information.
+   * Small image displayed to the right of the embed.
+   */
   thumbnail?: EmbedThumbnailEntity;
 
-  /** Video information */
+  /**
+   * Video information.
+   * Video displayed in the embed.
+   */
   video?: EmbedVideoEntity;
 
-  /** Provider information */
+  /**
+   * Provider information.
+   * Information about the source of the embed.
+   */
   provider?: EmbedProviderEntity;
 
-  /** Author information */
+  /**
+   * Author information.
+   * Displayed at the top of the embed before the title.
+   */
   author?: EmbedAuthorEntity;
 
   /**
-   * Fields information
+   * Fields information.
+   * Sections of titled text content within the embed.
    * @maxItems 25
    * @optional
    */
@@ -610,145 +979,254 @@ export interface EmbedEntity {
 
 /**
  * Represents the breakdown of reaction counts for normal and super reactions.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#reaction-count-details-object-reaction-count-details-structure}
+ * Details how many of each reaction type were used.
+ * @see {@link https://discord.com/developers/docs/resources/message#reaction-count-details-object-reaction-count-details-structure}
  */
 export interface ReactionCountDetailsEntity {
-  /** Count of super reactions */
+  /**
+   * Count of super reactions.
+   * Number of premium/burst reactions to this emoji.
+   */
   burst: number;
 
-  /** Count of normal reactions */
+  /**
+   * Count of normal reactions.
+   * Number of standard reactions to this emoji.
+   */
   normal: number;
 }
 
 /**
  * Represents a reaction to a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#reaction-object-reaction-structure}
+ * Contains information about an emoji reaction and how many users reacted with it.
+ * @see {@link https://discord.com/developers/docs/resources/message#reaction-object-reaction-structure}
  */
 export interface ReactionEntity {
-  /** Total number of times this emoji has been used to react */
+  /**
+   * Total number of times this emoji has been used to react.
+   * Combined count of all reactions with this emoji.
+   */
   count: number;
 
-  /** Breakdown of normal and super reaction counts */
+  /**
+   * Breakdown of normal and super reaction counts.
+   * Details separating standard and premium/burst reactions.
+   */
   count_details: ReactionCountDetailsEntity;
 
-  /** Whether the current user reacted using this emoji */
+  /**
+   * Whether the current user reacted using this emoji.
+   * Indicates if the current user has added this reaction.
+   */
   me: boolean;
 
-  /** Whether the current user super-reacted using this emoji */
+  /**
+   * Whether the current user super-reacted using this emoji.
+   * Indicates if the current user has added a premium/burst reaction.
+   */
   me_burst: boolean;
 
-  /** Emoji information */
+  /**
+   * Emoji information.
+   * Details about the emoji used for this reaction.
+   */
   emoji: Partial<EmojiEntity>;
 
-  /** HEX colors used for super reaction */
+  /**
+   * HEX colors used for super reaction.
+   * Color values used when displaying premium/burst reactions.
+   */
   burst_colors?: string[];
 }
 
 /**
  * Represents a reference to another message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-reference-structure}
+ * Used for replies, forwarded messages, and similar references.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-reference-structure}
  */
 export interface MessageReferenceEntity {
-  /** Type of reference */
+  /**
+   * Type of reference.
+   * Determines how the reference is displayed and processed.
+   */
   type: MessageReferenceType;
 
-  /** ID of the originating message */
+  /**
+   * ID of the originating message.
+   * Identifies the specific message being referenced.
+   */
   message_id?: Snowflake;
 
-  /** ID of the originating message's channel */
+  /**
+   * ID of the originating message's channel.
+   * Identifies which channel contains the referenced message.
+   */
   channel_id?: Snowflake;
 
-  /** ID of the originating message's guild */
+  /**
+   * ID of the originating message's guild.
+   * Identifies which server contains the referenced message.
+   */
   guild_id?: Snowflake;
 
-  /** When sending, whether to error if the referenced message doesn't exist */
+  /**
+   * When sending, whether to error if the referenced message doesn't exist.
+   * If false, the reply will send even if the original message was deleted.
+   */
   fail_if_not_exists?: boolean;
 }
 
 /**
  * Represents call information associated with a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-call-object-message-call-object-structure}
+ * Contains details about voice calls in DMs or group DMs.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-call-object-message-call-object-structure}
  */
 export interface MessageCallEntity {
-  /** Array of user IDs that participated in the call */
+  /**
+   * Array of user IDs that participated in the call.
+   * List of users who joined the call at some point.
+   */
   participants: Snowflake[];
 
-  /** Time when the call ended */
+  /**
+   * Time when the call ended.
+   * ISO8601 timestamp for when the call was terminated, or null if ongoing.
+   */
   ended_timestamp?: string | null;
 }
 
 /**
  * Represents metadata about a message component interaction.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-interaction-metadata-object-message-component-interaction-metadata-structure}
+ * Contains information about a user's interaction with message components.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-message-component-interaction-metadata-structure}
  */
 export interface MessageComponentInteractionMetadataEntity {
-  /** ID of the interaction */
+  /**
+   * ID of the interaction.
+   * Unique identifier for this specific interaction.
+   */
   id: Snowflake;
 
-  /** Type of interaction */
+  /**
+   * Type of interaction.
+   * The category of interaction (application command, component, etc.).
+   */
   type: InteractionType;
 
-  /** User who triggered the interaction */
+  /**
+   * User who triggered the interaction.
+   * Information about the user who interacted with the component.
+   */
   user: UserEntity;
 
-  /** IDs for installation context(s) related to an interaction */
+  /**
+   * IDs for installation context(s) related to an interaction.
+   * Maps installation contexts to their owner IDs.
+   */
   authorizing_integration_owners: Record<string, Snowflake>;
 
-  /** ID of the original response message, present only on follow-up messages */
+  /**
+   * ID of the original response message, present only on follow-up messages.
+   * Identifies the first response to the interaction.
+   */
   original_response_message_id?: Snowflake;
 
-  /** ID of the message that contained the interactive component */
+  /**
+   * ID of the message that contained the interactive component.
+   * Identifies which message had the component that was interacted with.
+   */
   interacted_message_id?: Snowflake;
 }
 
 /**
  * Represents metadata about an application command interaction.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-interaction-metadata-object-application-command-interaction-metadata-structure}
+ * Contains information about a user's interaction with application commands.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-application-command-interaction-metadata-structure}
  */
 export interface ApplicationCommandInteractionMetadataEntity {
-  /** ID of the interaction */
+  /**
+   * ID of the interaction.
+   * Unique identifier for this specific interaction.
+   */
   id: Snowflake;
 
-  /** Type of interaction */
+  /**
+   * Type of interaction.
+   * The category of interaction (application command, component, etc.).
+   */
   type: InteractionType;
 
-  /** User who triggered the interaction */
+  /**
+   * User who triggered the interaction.
+   * Information about the user who used the command.
+   */
   user: UserEntity;
 
-  /** IDs for installation context(s) related to an interaction */
+  /**
+   * IDs for installation context(s) related to an interaction.
+   * Maps installation contexts to their owner IDs.
+   */
   authorizing_integration_owners: Record<string, Snowflake>;
 
-  /** ID of the original response message, present only on follow-up messages */
+  /**
+   * ID of the original response message, present only on follow-up messages.
+   * Identifies the first response to the interaction.
+   */
   original_response_message_id?: Snowflake;
 
-  /** The user the command was run on, present only on user command interactions */
+  /**
+   * The user the command was run on, present only on user command interactions.
+   * For user commands, contains information about the targeted user.
+   */
   target_user?: UserEntity;
 
-  /** The ID of the message the command was run on, present only on message command interactions */
+  /**
+   * The ID of the message the command was run on, present only on message command interactions.
+   * For message commands, identifies the targeted message.
+   */
   target_message_id?: Snowflake;
 }
 
 /**
  * Represents metadata about a modal submit interaction.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-interaction-metadata-object-modal-submit-interaction-metadata-structure}
+ * Contains information about a user's submission of a modal form.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-interaction-metadata-object-modal-submit-interaction-metadata-structure}
  */
 export interface ModalSubmitInteractionMetadataEntity {
-  /** ID of the interaction */
+  /**
+   * ID of the interaction.
+   * Unique identifier for this specific interaction.
+   */
   id: Snowflake;
 
-  /** Type of interaction */
+  /**
+   * Type of interaction.
+   * The category of interaction (application command, component, etc.).
+   */
   type: InteractionType;
 
-  /** User who triggered the interaction */
+  /**
+   * User who triggered the interaction.
+   * Information about the user who submitted the modal.
+   */
   user: UserEntity;
 
-  /** IDs for installation context(s) related to an interaction */
+  /**
+   * IDs for installation context(s) related to an interaction.
+   * Maps installation contexts to their owner IDs.
+   */
   authorizing_integration_owners: Record<string, Snowflake>;
 
-  /** ID of the original response message, present only on follow-up messages */
+  /**
+   * ID of the original response message, present only on follow-up messages.
+   * Identifies the first response to the interaction.
+   */
   original_response_message_id?: Snowflake;
 
-  /** Metadata for the interaction that was used to open the modal */
+  /**
+   * Metadata for the interaction that was used to open the modal.
+   * Details about what interaction triggered this modal.
+   */
   triggering_interaction_metadata?:
     | ApplicationCommandInteractionMetadataEntity
     | MessageComponentInteractionMetadataEntity;
@@ -756,140 +1234,254 @@ export interface ModalSubmitInteractionMetadataEntity {
 
 /**
  * Represents an activity associated with a message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-object-message-activity-structure}
+ * Used primarily with Rich Presence-related chat embeds.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-object-message-activity-structure}
  */
 export interface MessageActivityEntity {
-  /** Type of message activity */
+  /**
+   * Type of message activity.
+   * Indicates what kind of Rich Presence event this represents.
+   */
   type: MessageActivityType;
 
-  /** Party ID from a Rich Presence event */
+  /**
+   * Party ID from a Rich Presence event.
+   * Identifier for a group activity session.
+   */
   party_id?: string;
 }
 
 /**
  * Represents a Discord message.
- * @see {@link https://github.com/discord/discord-api-docs/blob/main/docs/resources/message.md#message-object}
+ * The primary communication entity in Discord, containing content, attachments, and metadata.
+ * @see {@link https://discord.com/developers/docs/resources/message#message-object}
  */
 export interface MessageEntity {
-  /** ID of the message */
+  /**
+   * ID of the message.
+   * Unique identifier for this message.
+   */
   id: Snowflake;
 
-  /** ID of the channel the message was sent in */
+  /**
+   * ID of the channel the message was sent in.
+   * Identifies which channel contains this message.
+   */
   channel_id: Snowflake;
 
-  /** The author of this message */
+  /**
+   * The author of this message.
+   * Information about the user who sent the message.
+   */
   author: UserEntity;
 
   /**
-   * Contents of the message
+   * Contents of the message.
+   * The actual text content of the message.
    * @maxLength 2000
    */
   content: string;
 
-  /** When this message was sent */
+  /**
+   * When this message was sent.
+   * ISO8601 timestamp of when the message was created.
+   */
   timestamp: string;
 
-  /** When this message was edited (null if never) */
+  /**
+   * When this message was edited (null if never).
+   * ISO8601 timestamp of the last edit, or null if unedited.
+   */
   edited_timestamp: string | null;
 
-  /** Whether this was a TTS message */
+  /**
+   * Whether this was a TTS message.
+   * If true, message was sent with text-to-speech.
+   */
   tts: boolean;
 
-  /** Whether this message mentions everyone */
+  /**
+   * Whether this message mentions everyone.
+   * If true, the message includes an @everyone or @here mention.
+   */
   mention_everyone: boolean;
 
-  /** Users specifically mentioned in the message */
+  /**
+   * Users specifically mentioned in the message.
+   * Array of user objects for users mentioned by @username.
+   */
   mentions: UserEntity[];
 
-  /** Roles specifically mentioned in this message */
+  /**
+   * Roles specifically mentioned in this message.
+   * Array of role IDs mentioned by @role.
+   */
   mention_roles: Snowflake[];
 
-  /** Any attached files */
+  /**
+   * Any attached files.
+   * Array of attachments included with this message.
+   */
   attachments: AttachmentEntity[];
 
-  /** Any embedded content */
+  /**
+   * Any embedded content.
+   * Array of rich embeds displayed with this message.
+   */
   embeds: EmbedEntity[];
 
-  /** Whether this message is pinned */
+  /**
+   * Whether this message is pinned.
+   * If true, the message is pinned to the channel.
+   */
   pinned: boolean;
 
-  /** Type of message */
+  /**
+   * Type of message.
+   * Identifies what kind of message this is (default, system, reply, etc.).
+   */
   type: MessageType;
 
-  /** Channels specifically mentioned in this message */
+  /**
+   * Channels specifically mentioned in this message.
+   * Array of channel mention objects for channels referenced by #channel-name.
+   */
   mention_channels?: ChannelMentionEntity[];
 
-  /** Reactions to the message */
+  /**
+   * Reactions to the message.
+   * Array of reaction objects showing emoji reactions to the message.
+   */
   reactions?: ReactionEntity[];
 
-  /** Used for validating a message was sent */
+  /**
+   * Used for validating a message was sent.
+   * Custom identifier that can be used to verify message delivery.
+   */
   nonce?: string | number;
 
-  /** If the message is generated by a webhook, this is the webhook's ID */
+  /**
+   * If the message is generated by a webhook, this is the webhook's ID.
+   * Identifies if the message was sent by a webhook integration.
+   */
   webhook_id?: Snowflake;
 
-  /** Sent with Rich Presence-related chat embeds */
+  /**
+   * Sent with Rich Presence-related chat embeds.
+   * Activity information for Rich Presence features.
+   */
   activity?: MessageActivityEntity;
 
-  /** Sent with Rich Presence-related chat embeds */
+  /**
+   * Sent with Rich Presence-related chat embeds.
+   * Application information for Rich Presence features.
+   */
   application?: Partial<ApplicationEntity>;
 
-  /** If the message is an Interaction or application-owned webhook, this is the ID of the application */
+  /**
+   * If the message is an Interaction or application-owned webhook, this is the ID of the application.
+   * Identifies which application sent this message.
+   */
   application_id?: Snowflake;
 
-  /** Message flags combined as a bitfield */
+  /**
+   * Message flags combined as a bitfield.
+   * Special behavior flags for this message.
+   */
   flags?: MessageFlags;
 
-  /** Components in the message (buttons, select menus, etc.) */
+  /**
+   * Components in the message (buttons, select menus, etc.).
+   * UI components attached to this message.
+   */
   components?: ActionRowEntity[];
 
-  /** Sticker items sent with the message */
+  /**
+   * Sticker items sent with the message.
+   * Array of stickers attached to this message.
+   */
   sticker_items?: StickerItemEntity[];
 
-  /** @deprecated The stickers sent with the message */
+  /**
+   * @deprecated The stickers sent with the message.
+   * Legacy sticker format, use sticker_items instead.
+   */
   stickers?: StickerEntity[];
 
-  /** Approximate position of the message in a thread */
+  /**
+   * Approximate position of the message in a thread.
+   * Index position for this message within a thread.
+   */
   position?: number;
 
-  /** Data from a role subscription purchase event */
+  /**
+   * Data from a role subscription purchase event.
+   * Details about a premium role subscription.
+   */
   role_subscription_data?: RoleSubscriptionDataEntity;
 
-  /** Poll data if this message contains a poll */
+  /**
+   * Poll data if this message contains a poll.
+   * Details for an interactive poll.
+   */
   poll?: PollEntity;
 
-  /** Call data if this message is a call */
+  /**
+   * Call data if this message is a call.
+   * Information about a voice or video call.
+   */
   call?: MessageCallEntity;
 
-  /** Data showing the source of a crosspost, channel follow add, pin, or reply message */
+  /**
+   * Data showing the source of a crosspost, channel follow add, pin, or reply message.
+   * Reference to another message this message is associated with.
+   */
   message_reference?: MessageReferenceEntity;
 
-  /** Metadata about the interaction that generated this message */
+  /**
+   * Metadata about the interaction that generated this message.
+   * Information about what interaction created this message.
+   */
   interaction_metadata?:
     | ApplicationCommandInteractionMetadataEntity
     | MessageComponentInteractionMetadataEntity
     | ModalSubmitInteractionMetadataEntity;
 
-  /** Thread associated with this message */
+  /**
+   * Thread associated with this message.
+   * For messages that created threads, contains the thread information.
+   */
   thread?: AnyThreadChannelEntity;
 
-  /** Metadata about the interaction that generated this message */
+  /**
+   * Metadata about the interaction that generated this message.
+   * Resolved objects from the interaction that created this message.
+   */
   resolved?: InteractionResolvedDataEntity;
 
-  /** For messages with type Forward, contains the message snapshots */
+  /**
+   * For messages with type Forward, contains the message snapshots.
+   * Captured content from forwarded messages.
+   */
   message_snapshots?: MessageSnapshotEntity[];
 
-  /** The message associated with the message_reference */
+  /**
+   * The message associated with the message_reference.
+   * For replies, contains the message being replied to.
+   */
   referenced_message?: MessageEntity | null;
 }
 
 /**
  * Represents a snapshot of a message.
- *
+ * Contains a copy of a message's content at a specific point in time.
  * @see {@link https://discord.com/developers/docs/resources/message#message-snapshot-object}
  */
 export interface MessageSnapshotEntity {
-  /** Minimal subset of fields in the forwarded message */
+  /**
+   * Minimal subset of fields in the forwarded message.
+   * Captured state of the forwarded message content.
+   */
   message: Pick<
     MessageEntity,
     | "type"

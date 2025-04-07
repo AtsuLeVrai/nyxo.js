@@ -54,6 +54,10 @@ export class Entitlement extends BaseClass<EntitlementEntity> {
     return this.data.subscription_id;
   }
 
+  get giftCodeFlags(): number | undefined {
+    return this.data.gift_code_flags;
+  }
+
   protected override getCacheInfo(): CacheEntityInfo | null {
     return {
       storeKey: "entitlements",

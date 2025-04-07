@@ -5,6 +5,7 @@ import type {
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import {
+  type AnyThreadChannel,
   AutoModerationRule,
   Entitlement,
   Guild,
@@ -21,8 +22,30 @@ import {
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
 import { ChannelFactory, InteractionFactory } from "../factories/index.js";
-import type { GatewayEventMapping } from "../handlers/index.js";
 import type { ClientEvents } from "../types/index.js";
+
+/**
+ * Gateway to client event mapping configuration
+ */
+export interface GatewayEventMapping<
+  T extends keyof GatewayReceiveEvents,
+  E extends keyof ClientEvents,
+> {
+  /**
+   * Gateway event name
+   */
+  gatewayEvent: T;
+
+  /**
+   * Client event name that this maps to
+   */
+  clientEvent: E;
+
+  /**
+   * Transform function to convert gateway event data to client event data
+   */
+  transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[E];
+}
 
 /**
  * Typed utility function to define an event mapping more easily.
@@ -77,15 +100,15 @@ export const StandardGatewayDispatchEventMappings = [
    */
   defineEvent("READY", "ready", (client, data) => [Ready.from(client, data)]),
   //
-  //   /**
-  //    * Application command permissions update event - emitted when application command
-  //    * permissions are updated.
-  //    */
-  //   defineEvent(
-  //     "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
-  //     "applicationCommandPermissionsUpdate",
-  //     (_client, data) => [data],
-  //   ),
+  /**
+   * Application command permissions update event - emitted when application command
+   * permissions are updated.
+   */
+  defineEvent(
+    "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
+    "applicationCommandPermissionsUpdate",
+    (_client, data) => [data],
+  ),
   //
   /**
    * Auto moderation rule create event - emitted when an auto moderation rule is created.
@@ -213,13 +236,13 @@ export const StandardGatewayDispatchEventMappings = [
   //     return [GuildTextChannel.from(client, channel.data)];
   //   }),
   //
-  //   /**
-  //    * Thread create event - emitted when a thread is created.
-  //    * Adds the new thread to the cache.
-  //    */
-  //   defineEvent("THREAD_CREATE", "threadCreate", (client, data) => [
-  //     ChannelFactory.create(client, data) as AnyThreadChannel,
-  //   ]),
+  /**
+   * Thread create event - emitted when a thread is created.
+   * Adds the new thread to the cache.
+   */
+  defineEvent("THREAD_CREATE", "threadCreate", (client, data) => [
+    ChannelFactory.create(client, data) as AnyThreadChannel,
+  ]),
   //
   //   /**
   //    * Thread update event - emitted when a thread is updated.

@@ -10,6 +10,7 @@ export * from "./guild.entity.js";
 export * from "./guild-template.entity.js";
 export * from "./interaction.entity.js";
 export * from "./invite.entity.js";
+export * from "./lobby.entity.js";
 export * from "./message.entity.js";
 export * from "./message-components.entity.js";
 export * from "./poll.entity.js";

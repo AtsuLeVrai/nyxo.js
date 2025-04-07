@@ -8,7 +8,6 @@
  * Previous versions are deprecated and may be removed in future updates.
  *
  * @see {@link https://discord.com/developers/docs/reference#api-versioning-api-versions}
- * @enum {number}
  */
 export enum ApiVersion {
   /**
@@ -16,7 +15,6 @@ export enum ApiVersion {
    *
    * @deprecated This version has been officially deprecated by Discord.
    * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
-   * @type {number}
    */
   V3 = 3,
 
@@ -25,7 +23,6 @@ export enum ApiVersion {
    *
    * @deprecated This version has been officially deprecated by Discord.
    * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
-   * @type {number}
    */
   V4 = 4,
 
@@ -34,7 +31,6 @@ export enum ApiVersion {
    *
    * @deprecated This version has been officially deprecated by Discord.
    * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
-   * @type {number}
    */
   V5 = 5,
 
@@ -43,7 +39,6 @@ export enum ApiVersion {
    *
    * @deprecated This version has been officially deprecated by Discord.
    * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
-   * @type {number}
    */
   V6 = 6,
 
@@ -52,7 +47,6 @@ export enum ApiVersion {
    *
    * @deprecated This version has been officially deprecated by Discord.
    * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
-   * @type {number}
    */
   V7 = 7,
 
@@ -61,16 +55,13 @@ export enum ApiVersion {
    *
    * @deprecated This version has been officially deprecated by Discord.
    * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
-   * @type {number}
    */
   V8 = 8,
 
   /**
    * Discord API Version 9.
    *
-   * @deprecated Nyx.js supports only version 10 of the Discord API.
    * Use {@link ApiVersion.V10} instead for all implementations.
-   * @type {number}
    */
   V9 = 9,
 
@@ -79,7 +70,6 @@ export enum ApiVersion {
    *
    * This is the current stable version of the Discord API and the only version supported by Nyx.js.
    * All API calls should use this version to ensure proper functionality.
-   * @type {number}
    */
   V10 = 10,
 }

@@ -8,6 +8,7 @@ import {
   EmbedBuilder,
   GatewayIntentsBits,
   formatUser,
+  sleep,
 } from "nyx.js";
 
 const { parsed } = config({ debug: true });
@@ -135,12 +136,22 @@ client.on("dispatch", (event, data) => {
   console.log("[GATEWAY] Event dispatched", event, data);
 });
 
-client.on("ready", (ready) => {
+client.on("ready", async (ready) => {
   console.log("[CLIENT] Client is ready: ", ready.user.id);
 
-  setInterval(() => {
-    console.log("[CLIENT] Client is still alive: ", client.cache.getStats());
-  }, 5000);
+  await sleep(1500);
+
+  console.log(
+    "[CHANNEL] Channels:",
+    client.cache.channels.map(
+      // @ts-ignore
+      (channel) => `${channel.id} [${channel.name}] (${channel.type})`,
+    ),
+  );
+
+  // setInterval(() => {
+  //   console.log("[CLIENT] Client is still alive: ", client.cache.getStats());
+  // }, 5000);
 });
 
 client.on("messageCreate", async (message) => {
