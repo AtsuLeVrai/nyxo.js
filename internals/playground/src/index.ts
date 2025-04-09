@@ -225,6 +225,10 @@ client.on("channelCreate", (channel) => {
   }
 });
 
+client.on("channelUpdate", (oldChannel, newChannel) => {
+  console.log("[CHANNEL] Channel updated:", oldChannel, newChannel);
+});
+
 async function main(): Promise<void> {
   await client.connect();
 }

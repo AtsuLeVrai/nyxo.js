@@ -17,6 +17,7 @@ import type {
   Sticker,
   Subscription,
   User,
+  VoiceServer,
   VoiceState,
 } from "../classes/index.js";
 import type {
@@ -129,6 +130,12 @@ export class CacheManager {
   readonly #voiceStates: Store<Snowflake, VoiceState>;
 
   /**
+   * Store for voice servers
+   * @private
+   */
+  readonly #voiceServers: Store<Snowflake, VoiceServer>;
+
+  /**
    * Store for stage instances
    * @private
    */
@@ -201,6 +208,10 @@ export class CacheManager {
     this.#voiceStates = this.#createStore(
       "voiceStates",
       this.#options.voiceStates,
+    );
+    this.#voiceServers = this.#createStore(
+      "voiceServers",
+      this.#options.voiceServers,
     );
     this.#stageInstances = this.#createStore(
       "stageInstances",
@@ -386,6 +397,23 @@ export class CacheManager {
    */
   get voiceStates(): Store<Snowflake, VoiceState> {
     return this.#voiceStates;
+  }
+
+  /**
+   * Access the voice servers cache store.
+   * Contains VoiceServer objects for managing voice connections.
+   *
+   * @example
+   * ```typescript
+   * // Get a voice server by ID
+   * const voiceServer = cacheManager.voiceServers.get('1234567890');
+   *
+   * // Find active voice servers
+   * const activeVoiceServers = cacheManager.voiceServers.filter(server => server.active);
+   * ```
+   */
+  get voiceServers(): Store<Snowflake, VoiceServer> {
+    return this.#voiceServers;
   }
 
   /**

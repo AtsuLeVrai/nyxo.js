@@ -33,7 +33,7 @@ import type { ReactionTypeFlag } from "@nyxjs/rest";
 import { GatewayOpcodes } from "./index.js";
 
 /**
- * Auto Moderation Action Execution Event
+ * Auto Moderation Action Execution
  * Sent when a rule is triggered and an action is executed (e.g. when a message is blocked).
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#auto-moderation-action-execution-auto-moderation-action-execution-event-fields}
@@ -74,7 +74,7 @@ export interface AutoModerationActionExecutionEntity {
 }
 
 /**
- * Channel Pins Update Event
+ * Channel Pins Update
  * Sent when a message is pinned or unpinned in a text channel.
  * This is not sent when a pinned message is deleted.
  *
@@ -82,7 +82,7 @@ export interface AutoModerationActionExecutionEntity {
  */
 export interface ChannelPinsUpdateEntity {
   /** ID of the guild */
-  guild_id?: Snowflake | null;
+  guild_id?: Snowflake;
 
   /** ID of the channel */
   channel_id: Snowflake;
@@ -92,7 +92,38 @@ export interface ChannelPinsUpdateEntity {
 }
 
 /**
- * Thread Members Update Event
+ * Thread List Sync
+ * Sent when the current user gains access to a channel.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-list-sync-thread-list-sync-event-fields}
+ */
+export interface ThreadListSyncEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** Parent channel IDs whose threads are being synced */
+  channel_ids?: Snowflake[];
+
+  /** All active threads in the given channels that the current user can access */
+  threads: AnyThreadChannelEntity[];
+
+  /** All thread member objects from the synced threads for the current user */
+  members: ThreadMemberEntity[];
+}
+
+/**
+ * Thread Member Update
+ * Sent when the thread member object for the current user is updated.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-member-update-thread-member-update-event-extra-fields}
+ */
+export interface ThreadMemberUpdateEntity extends ThreadMemberEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+}
+
+/**
+ * Thread Members Update
  * Sent when anyone is added to or removed from a thread.
  * If the current user does not have the GUILD_MEMBERS Gateway Intent, then this event
  * will only be sent if the current user was added to or removed from the thread.
@@ -113,42 +144,11 @@ export interface ThreadMembersUpdateEntity {
   added_members?: ThreadMemberEntity[];
 
   /** ID of the users who were removed from the thread */
-  removed_member_ids?: string[];
+  removed_member_ids?: Snowflake[];
 }
 
 /**
- * Thread Member Update Event
- * Sent when the thread member object for the current user is updated.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-member-update-thread-member-update-event-extra-fields}
- */
-export interface ThreadMemberUpdateEntity extends ThreadMemberEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-}
-
-/**
- * Thread List Sync Event
- * Sent when the current user gains access to a channel.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#thread-list-sync-thread-list-sync-event-fields}
- */
-export interface ThreadListSyncEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** Parent channel IDs whose threads are being synced */
-  channel_ids?: Snowflake[];
-
-  /** All active threads in the given channels that the current user can access */
-  threads: AnyThreadChannelEntity[];
-
-  /** All thread member objects from the synced threads for the current user */
-  members: ThreadMemberEntity[];
-}
-
-/**
- * Soundboard Sounds Event
+ * Soundboard Sounds
  * Includes a guild's list of soundboard sounds.
  * Sent in response to Request Soundboard Sounds.
  *
@@ -163,15 +163,7 @@ export interface SoundboardSoundsEntity {
 }
 
 /**
- * Guild Soundboard Sounds Update Event
- * Sent when multiple guild soundboard sounds are updated.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sounds-update-guild-soundboard-sounds-update-event-fields}
- */
-export type GuildSoundboardSoundsUpdateEntity = SoundboardSoundsEntity;
-
-/**
- * Guild Soundboard Sound Delete Event
+ * Guild Soundboard Sound Delete
  * Sent when a guild soundboard sound is deleted.
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-soundboard-sound-delete-guild-soundboard-sound-delete-event-fields}
@@ -185,12 +177,12 @@ export interface GuildSoundboardSoundDeleteEntity {
 }
 
 /**
- * Guild Scheduled Event User Remove Event
- * Sent when a user has unsubscribed from a guild scheduled event.
+ * Guild Scheduled Event User
+ * Base type for events when a user subscribes to or unsubscribes from a guild scheduled event.
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-user-remove-guild-scheduled-event-user-remove-event-fields}
  */
-export interface GuildScheduledEventUserRemoveEntity {
+export interface GuildScheduledEventUserAddRemoveEntity {
   /** ID of the guild scheduled event */
   guild_scheduled_event_id: Snowflake;
 
@@ -202,318 +194,140 @@ export interface GuildScheduledEventUserRemoveEntity {
 }
 
 /**
- * Guild Scheduled Event User Add Event
- * Sent when a user has subscribed to a guild scheduled event.
+ * Guild Create
+ * This event can be sent in three different scenarios:
+ * 1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds sent in the Ready event.
+ * 2. When a Guild becomes available again to the client.
+ * 3. When the current user joins a new Guild.
  *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-scheduled-event-user-add-guild-scheduled-event-user-add-event-fields}
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-create-guild-create-extra-fields}
  */
-export type GuildScheduledEventUserAddEntity =
-  GuildScheduledEventUserRemoveEntity;
+export interface GuildCreateEntity extends GuildEntity {
+  /** When this guild was joined at */
+  joined_at: string;
 
-/**
- * Activity Buttons Entity
- * Custom buttons shown in the Rich Presence
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-buttons}
- */
-export interface ActivityButtonsEntity {
-  /** Text shown on the button (1-32 characters) */
-  label: string;
+  /** true if this is considered a large guild */
+  large: boolean;
 
-  /** URL opened when clicking the button (1-512 characters) */
-  url: string;
-}
+  /** true if this guild is unavailable due to an outage */
+  unavailable?: boolean;
 
-/**
- * Activity Flags
- * Describes what the payload includes
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-flags}
- */
-export enum ActivityFlags {
-  Instance = 1 << 0,
-  Join = 1 << 1,
-  Spectate = 1 << 2,
-  JoinRequest = 1 << 3,
-  Sync = 1 << 4,
-  Play = 1 << 5,
-  PartyPrivacyFriends = 1 << 6,
-  PartyPrivacyVoiceChannel = 1 << 7,
-  Embedded = 1 << 8,
-}
+  /** Total number of members in this guild */
+  member_count: number;
 
-/**
- * Activity Secrets
- * Secrets for Rich Presence joining and spectating
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-secrets}
- */
-export interface ActivitySecretsEntity {
-  /** Secret for joining a party */
-  join?: string;
+  /** States of members currently in voice channels; lacks the guild_id key */
+  voice_states: Partial<VoiceStateEntity>[];
 
-  /** Secret for spectating a game */
-  spectate?: string;
-
-  /** Secret for a specific instanced match */
-  match?: string;
-}
-
-/**
- * Activity Asset Image
- * Images for the presence and their hover texts
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-asset-image}
- */
-export interface ActivityAssetImageEntity {
-  /** Text displayed when hovering over the large image of the activity */
-  large_text?: string;
-
-  /** Large image asset */
-  large_image?: string;
-
-  /** Text displayed when hovering over the small image of the activity */
-  small_text?: string;
-
-  /** Small image asset */
-  small_image?: string;
-}
-
-/**
- * Activity Party
- * Information for the current party of the player
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-party}
- */
-export interface ActivityPartyEntity {
-  /** ID of the party */
-  id?: string;
-
-  /** Used to show the party's current and maximum size */
-  size?: [number, number];
-}
-
-/**
- * Activity Emoji
- * Emoji used for a custom status
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-emoji}
- */
-export interface ActivityEmojiEntity {
-  /** Name of the emoji */
-  name: string;
-
-  /** ID of the emoji */
-  id?: Snowflake;
-
-  /** Whether the emoji is animated */
-  animated?: boolean;
-}
-
-/**
- * Activity Timestamps
- * Unix timestamps for start and/or end of the game
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-timestamps}
- */
-export interface ActivityTimestampsEntity {
-  /** Unix time (in milliseconds) of when the activity started */
-  start?: number;
-
-  /** Unix time (in milliseconds) of when the activity ends */
-  end?: number;
-}
-
-/**
- * Activity Types
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-types}
- */
-export enum ActivityType {
-  /** Playing {name} */
-  Game = 0,
-  /** Streaming {details} */
-  Streaming = 1,
-  /** Listening to {name} */
-  Listening = 2,
-  /** Watching {name} */
-  Watching = 3,
-  /** {emoji} {state} */
-  Custom = 4,
-  /** Competing in {name} */
-  Competing = 5,
-}
-
-/**
- * Activity Structure
- * Information about the user's current activity
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-structure}
- */
-export interface ActivityEntity {
-  /** Activity's name */
-  name: string;
-
-  /** Activity type */
-  type: ActivityType;
-
-  /** Stream URL, is validated when type is 1 */
-  url?: string | null;
-
-  /** Unix timestamp (in milliseconds) of when the activity was added to the user's session */
-  created_at: number | string;
-
-  /** Unix timestamps for start and/or end of the game */
-  timestamps?: ActivityTimestampsEntity;
-
-  /** Application ID for the game */
-  application_id?: Snowflake;
-
-  /** What the player is currently doing */
-  details?: string | null;
-
-  /** User's current party status, or text used for a custom status */
-  state?: string | null;
-
-  /** Emoji used for a custom status */
-  emoji?: ActivityEmojiEntity | null;
-
-  /** Information for the current party of the player */
-  party?: ActivityPartyEntity;
-
-  /** Images for the presence and their hover texts */
-  assets?: ActivityAssetImageEntity;
-
-  /** Secrets for Rich Presence joining and spectating */
-  secrets?: ActivitySecretsEntity;
-
-  /** Whether or not the activity is an instanced game session */
-  instance?: boolean;
-
-  /** Activity flags ORed together, describes what the payload includes */
-  flags?: ActivityFlags;
-
-  /** Custom buttons shown in the Rich Presence (max 2) */
-  buttons?: ActivityButtonsEntity[];
-}
-
-/**
- * Client Status Object
- * User's platform-dependent status
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#client-status-object}
- */
-export interface ClientStatusEntity {
-  /** User's status set for an active desktop (Windows, Linux, Mac) application session */
-  desktop?: string;
-
-  /** User's status set for an active mobile (iOS, Android) application session */
-  mobile?: string;
-
-  /** User's status set for an active web (browser, bot user) application session */
-  web?: string;
-}
-
-/**
- * Presence Update
- * A user's presence is their current state on a guild.
- * Sent when a user's presence or info, such as name or avatar, is updated.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#presence-update-presence-update-event-fields}
- */
-export interface PresenceEntity {
-  /** User whose presence is being updated */
-  user: UserEntity;
-
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** Either "idle", "dnd", "online", or "offline" */
-  status: string;
-
-  /** User's current activities */
-  activities: ActivityEntity[];
-
-  /** User's platform-dependent status */
-  client_status: ClientStatusEntity;
-}
-
-/**
- * Update Presence Status Type
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-status-types}
- */
-export type UpdatePresenceStatusType =
-  | "online"
-  | "dnd"
-  | "idle"
-  | "invisible"
-  | "offline";
-
-/**
- * Guild Role Delete
- * Sent when a guild role is deleted.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-delete-guild-role-delete-event-fields}
- */
-export interface GuildRoleDeleteEntity {
-  /** ID of the role */
-  role_id: Snowflake;
-
-  /** ID of the guild */
-  guild_id: Snowflake;
-}
-
-/**
- * Guild Role Update
- * Sent when a guild role is updated.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-update-guild-role-update-event-fields}
- */
-export interface GuildRoleUpdateEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** Role that was updated */
-  role: RoleEntity;
-}
-
-/**
- * Guild Role Create
- * Sent when a guild role is created.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-create-guild-role-create-event-fields}
- */
-export type GuildRoleCreateEntity = GuildRoleUpdateEntity;
-
-/**
- * Guild Members Chunk
- * Sent in response to Guild Request Members.
- * You can use the chunk_index and chunk_count to calculate how many chunks are left for your request.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-members-chunk-guild-members-chunk-event-fields}
- */
-export interface GuildMembersChunkEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** Set of guild members */
+  /** Users in the guild */
   members: GuildMemberEntity[];
 
-  /** Chunk index in the expected chunks for this response (0 <= chunk_index < chunk_count) */
-  chunk_index: number;
+  /** Channels in the guild */
+  channels: AnyChannelEntity[];
 
-  /** Total number of expected chunks for this response */
-  chunk_count: number;
+  /** All active threads in the guild that current user has permission to view */
+  threads: AnyThreadChannelEntity[];
 
-  /** When passing an invalid ID to REQUEST_GUILD_MEMBERS, it will be returned here */
-  not_found?: Snowflake[];
+  /** Presences of the members in the guild */
+  presences: Partial<PresenceEntity>[];
 
-  /** When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here */
-  presences?: PresenceEntity[];
+  /** Stage instances in the guild */
+  stage_instances: StageInstanceEntity[];
 
-  /** Nonce used in the Guild Members Request */
-  nonce?: string;
+  /** Scheduled events in the guild */
+  guild_scheduled_events: GuildScheduledEventEntity[];
+
+  /** Soundboard sounds in the guild */
+  soundboard_sounds: SoundboardSoundEntity[];
+}
+
+/**
+ * Guild Audit Log Entry Create
+ * Sent when a guild audit log entry is created.
+ * This event is only sent to bots with the VIEW_AUDIT_LOG permission.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-audit-log-entry-create-guild-audit-log-entry-create-event-extra-fields}
+ */
+export interface GuildAuditLogEntryCreateEntity extends AuditLogEntryEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+}
+
+/**
+ * Guild Ban
+ * Common structure for guild ban add and remove events.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-ban-add-guild-ban-add-event-fields}
+ */
+export interface GuildBanEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** User who was banned/unbanned */
+  user: UserEntity;
+}
+
+/**
+ * Guild Emojis Update
+ * Sent when a guild's emojis have been updated.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-emojis-update-guild-emojis-update-event-fields}
+ */
+export interface GuildEmojisUpdateEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** Array of emojis */
+  emojis: EmojiEntity[];
+}
+
+/**
+ * Guild Stickers Update
+ * Sent when a guild's stickers have been updated.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-stickers-update-guild-stickers-update-event-fields}
+ */
+export interface GuildStickersUpdateEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** Array of stickers */
+  stickers: StickerEntity[];
+}
+
+/**
+ * Guild Integrations Update
+ * Sent when a guild integration is updated.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-integrations-update-guild-integrations-update-event-fields}
+ */
+export interface GuildIntegrationsUpdateEntity {
+  /** ID of the guild whose integrations were updated */
+  guild_id: Snowflake;
+}
+
+/**
+ * Guild Member Add
+ * Sent when a new user joins a guild.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-add-guild-member-add-extra-fields}
+ */
+export interface GuildMemberAddEntity extends GuildMemberEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+}
+
+/**
+ * Guild Member Remove
+ * Sent when a user is removed from a guild (leave/kick/ban).
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-remove-guild-member-remove-event-fields}
+ */
+export interface GuildMemberRemoveEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** User who was removed */
+  user: UserEntity;
 }
 
 /**
@@ -567,182 +381,61 @@ export interface GuildMemberUpdateEntity {
 }
 
 /**
- * Guild Member Remove
- * Sent when a user is removed from a guild (leave/kick/ban).
+ * Guild Members Chunk
+ * Sent in response to Guild Request Members.
+ * You can use the chunk_index and chunk_count to calculate how many chunks are left for your request.
  *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-remove-guild-member-remove-event-fields}
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-members-chunk-guild-members-chunk-event-fields}
  */
-export interface GuildMemberRemoveEntity {
+export interface GuildMembersChunkEntity {
   /** ID of the guild */
   guild_id: Snowflake;
 
-  /** User who was removed */
-  user: UserEntity;
-}
-
-/**
- * Guild Member Add
- * Sent when a new user joins a guild.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-member-add-guild-member-add-extra-fields}
- */
-export interface GuildMemberAddEntity extends GuildMemberEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-}
-
-/**
- * Guild Integrations Update
- * Sent when a guild integration is updated.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-integrations-update-guild-integrations-update-event-fields}
- */
-export interface GuildIntegrationsUpdateEntity {
-  /** ID of the guild whose integrations were updated */
-  guild_id: Snowflake;
-}
-
-/**
- * Guild Stickers Update
- * Sent when a guild's stickers have been updated.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-stickers-update-guild-stickers-update-event-fields}
- */
-export interface GuildStickersUpdateEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** Array of stickers */
-  stickers: StickerEntity[];
-}
-
-/**
- * Guild Emojis Update
- * Sent when a guild's emojis have been updated.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-emojis-update-guild-emojis-update-event-fields}
- */
-export interface GuildEmojisUpdateEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** Array of emojis */
-  emojis: EmojiEntity[];
-}
-
-/**
- * Guild Ban Remove
- * Sent when a user is unbanned from a guild.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-ban-remove-guild-ban-remove-event-fields}
- */
-export interface GuildBanRemoveEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** User who was unbanned */
-  user: UserEntity;
-}
-
-/**
- * Guild Ban Add
- * Sent when a user is banned from a guild.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-ban-add-guild-ban-add-event-fields}
- */
-export interface GuildBanAddEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-
-  /** User who was banned */
-  user: UserEntity;
-}
-
-/**
- * Guild Audit Log Entry Create
- * Sent when a guild audit log entry is created.
- * This event is only sent to bots with the VIEW_AUDIT_LOG permission.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-audit-log-entry-create-guild-audit-log-entry-create-event-extra-fields}
- */
-export interface GuildAuditLogEntryCreateEntity extends AuditLogEntryEntity {
-  /** ID of the guild */
-  guild_id: Snowflake;
-}
-
-/**
- * Guild Create
- * This event can be sent in three different scenarios:
- * 1. When a user is initially connecting, to lazily load and backfill information for all unavailable guilds sent in the Ready event.
- * 2. When a Guild becomes available again to the client.
- * 3. When the current user joins a new Guild.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-create-guild-create-extra-fields}
- */
-export interface GuildCreateEntity extends GuildEntity {
-  /** When this guild was joined at */
-  joined_at: string;
-
-  /** true if this is considered a large guild */
-  large: boolean;
-
-  /** true if this guild is unavailable due to an outage */
-  unavailable?: boolean;
-
-  /** Total number of members in this guild */
-  member_count: number;
-
-  /** States of members currently in voice channels; lacks the guild_id key */
-  voice_states: Partial<VoiceStateEntity>[];
-
-  /** Users in the guild */
+  /** Set of guild members */
   members: GuildMemberEntity[];
 
-  /** Channels in the guild */
-  channels: AnyChannelEntity[];
+  /** Chunk index in the expected chunks for this response (0 <= chunk_index < chunk_count) */
+  chunk_index: number;
 
-  /** All active threads in the guild that current user has permission to view */
-  threads: AnyThreadChannelEntity[];
+  /** Total number of expected chunks for this response */
+  chunk_count: number;
 
-  /** Presences of the members in the guild */
-  presences: Partial<PresenceEntity>[];
+  /** When passing an invalid ID to REQUEST_GUILD_MEMBERS, it will be returned here */
+  not_found?: Snowflake[];
 
-  /** Stage instances in the guild */
-  stage_instances: StageInstanceEntity[];
+  /** When passing true to REQUEST_GUILD_MEMBERS, presences of the returned members will be here */
+  presences?: PresenceEntity[];
 
-  /** Scheduled events in the guild */
-  guild_scheduled_events: GuildScheduledEventEntity[];
-
-  /** Soundboard sounds in the guild */
-  soundboard_sounds: SoundboardSoundEntity[];
+  /** Nonce used in the Guild Members Request */
+  nonce?: string;
 }
 
 /**
- * Hello
- * Sent on connection to the websocket.
- * Defines the heartbeat interval that an app should heartbeat to.
+ * Guild Role Update
+ * Common structure for guild role create and update events.
  *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#hello-hello-structure}
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-update-guild-role-update-event-fields}
  */
-export interface HelloEntity {
-  /** Interval (in milliseconds) an app should heartbeat with */
-  heartbeat_interval: number;
+export interface GuildRoleUpdateEntity {
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** Role that was created/updated */
+  role: RoleEntity;
 }
 
 /**
- * Identify Connection Properties
+ * Guild Role Delete
+ * Sent when a guild role is deleted.
  *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#identify-identify-connection-properties}
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#guild-role-delete-guild-role-delete-event-fields}
  */
-export interface IdentifyConnectionPropertiesEntity {
-  /** Your operating system */
-  os: string;
+export interface GuildRoleDeleteEntity {
+  /** ID of the role */
+  role_id: Snowflake;
 
-  /** Your library name */
-  browser: string;
-
-  /** Your library name */
-  device: string;
+  /** ID of the guild */
+  guild_id: Snowflake;
 }
 
 /**
@@ -764,7 +457,7 @@ export interface IntegrationDeleteEntity {
 
 /**
  * Integration Update
- * Sent when an integration is updated.
+ * Common structure for integration create and update events.
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-update-integration-update-event-additional-fields}
  */
@@ -773,14 +466,6 @@ export interface IntegrationUpdateEntity
   /** ID of the guild */
   guild_id: Snowflake;
 }
-
-/**
- * Integration Create
- * Sent when an integration is created.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#integration-create-integration-create-event-additional-fields}
- */
-export type IntegrationCreateEntity = IntegrationUpdateEntity;
 
 /**
  * Invite Delete
@@ -999,12 +684,12 @@ export interface MessageCreateEntity extends Omit<MessageEntity, "mentions"> {
 }
 
 /**
- * Message Poll Vote Remove
- * Sent when a user removes their vote on a poll.
+ * Message Poll Vote
+ * Common structure for poll vote events.
  *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-remove-message-poll-vote-remove-fields}
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-add-message-poll-vote-add-fields}
  */
-export interface MessagePollVoteRemoveEntity {
+export interface MessagePollVoteEntity {
   /** ID of the user */
   user_id: Snowflake;
 
@@ -1020,14 +705,6 @@ export interface MessagePollVoteRemoveEntity {
   /** ID of the answer */
   answer_id: number;
 }
-
-/**
- * Message Poll Vote Add
- * Sent when a user votes on a poll.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#message-poll-vote-add-message-poll-vote-add-fields}
- */
-export type MessagePollVoteAddEntity = MessagePollVoteRemoveEntity;
 
 /**
  * Ready
@@ -1061,29 +738,6 @@ export interface ReadyEntity {
 }
 
 /**
- * Typing Start
- * Sent when a user starts typing in a channel.
- *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#typing-start-typing-start-event-fields}
- */
-export interface TypingEntity {
-  /** ID of the channel */
-  channel_id: Snowflake;
-
-  /** ID of the guild */
-  guild_id?: Snowflake;
-
-  /** ID of the user */
-  user_id: Snowflake;
-
-  /** Unix time (in seconds) of when the user started typing */
-  timestamp: number;
-
-  /** Member who started typing if this happened in a guild */
-  member?: GuildMemberEntity;
-}
-
-/**
  * Voice Server Update
  * Sent when a guild's voice server is updated.
  *
@@ -1102,6 +756,7 @@ export interface VoiceServerUpdateEntity {
 
 /**
  * Voice Channel Effect Send Animation Types
+ * Defines the different types of animations for voice channel effects.
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#voice-channel-effect-send-animation-types}
  */
@@ -1151,7 +806,7 @@ export interface VoiceChannelEffectSendEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#webhooks-update-webhooks-update-event-fields}
  */
-export interface WebhookUpdateEntity {
+export interface WebhooksUpdateEntity {
   /** ID of the guild */
   guild_id: Snowflake;
 
@@ -1160,187 +815,539 @@ export interface WebhookUpdateEntity {
 }
 
 /**
+ * Typing Start
+ * Sent when a user starts typing in a channel.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#typing-start-typing-start-event-fields}
+ */
+export interface TypingStartEntity {
+  /** ID of the channel */
+  channel_id: Snowflake;
+
+  /** ID of the guild */
+  guild_id?: Snowflake;
+
+  /** ID of the user */
+  user_id: Snowflake;
+
+  /** Unix time (in seconds) of when the user started typing */
+  timestamp: number;
+
+  /** Member who started typing if this happened in a guild */
+  member?: GuildMemberEntity;
+}
+
+/**
+ * Activities, Client Status and Presence for users
+ */
+
+/**
+ * Activity Buttons
+ * Custom buttons shown in the Rich Presence
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-buttons}
+ */
+export interface ActivityButtonEntity {
+  /** Text shown on the button (1-32 characters) */
+  label: string;
+
+  /** URL opened when clicking the button (1-512 characters) */
+  url: string;
+}
+
+/**
+ * Activity Flags
+ * Describes what the payload includes
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-flags}
+ */
+export enum ActivityFlags {
+  Instance = 1 << 0,
+  Join = 1 << 1,
+  Spectate = 1 << 2,
+  JoinRequest = 1 << 3,
+  Sync = 1 << 4,
+  Play = 1 << 5,
+  PartyPrivacyFriends = 1 << 6,
+  PartyPrivacyVoiceChannel = 1 << 7,
+  Embedded = 1 << 8,
+}
+
+/**
+ * Activity Secrets
+ * Secrets for Rich Presence joining and spectating
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-secrets}
+ */
+export interface ActivitySecretsEntity {
+  /** Secret for joining a party */
+  join?: string;
+
+  /** Secret for spectating a game */
+  spectate?: string;
+
+  /** Secret for a specific instanced match */
+  match?: string;
+}
+
+/**
+ * Activity Asset Image
+ * Images for the presence and their hover texts
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-asset-image}
+ */
+export interface ActivityAssetImageEntity {
+  /** Text displayed when hovering over the large image of the activity */
+  large_text?: string;
+
+  /** Large image asset */
+  large_image?: string;
+
+  /** Text displayed when hovering over the small image of the activity */
+  small_text?: string;
+
+  /** Small image asset */
+  small_image?: string;
+}
+
+/**
+ * Activity Party
+ * Information for the current party of the player
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-party}
+ */
+export interface ActivityPartyEntity {
+  /** ID of the party */
+  id?: string;
+
+  /** Used to show the party's current and maximum size */
+  size?: [number, number];
+}
+
+/**
+ * Activity Emoji
+ * Emoji used for a custom status
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-emoji}
+ */
+export interface ActivityEmojiEntity {
+  /** Name of the emoji */
+  name: string;
+
+  /** ID of the emoji */
+  id?: Snowflake;
+
+  /** Whether the emoji is animated */
+  animated?: boolean;
+}
+
+/**
+ * Activity Timestamps
+ * Unix timestamps for start and/or end of the game
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-timestamps}
+ */
+export interface ActivityTimestampsEntity {
+  /** Unix time (in milliseconds) of when the activity started */
+  start?: number;
+
+  /** Unix time (in milliseconds) of when the activity ends */
+  end?: number;
+}
+
+/**
+ * Activity Types
+ * Defines the different types of activities.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-types}
+ */
+export enum ActivityType {
+  /** Playing {name} */
+  Game = 0,
+  /** Streaming {details} */
+  Streaming = 1,
+  /** Listening to {name} */
+  Listening = 2,
+  /** Watching {name} */
+  Watching = 3,
+  /** {emoji} {state} */
+  Custom = 4,
+  /** Competing in {name} */
+  Competing = 5,
+}
+
+/**
+ * Activity
+ * Information about the user's current activity
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#activity-object-activity-structure}
+ */
+export interface ActivityEntity {
+  /** Activity's name */
+  name: string;
+
+  /** Activity type */
+  type: ActivityType;
+
+  /** Stream URL, is validated when type is 1 */
+  url?: string | null;
+
+  /** Unix timestamp (in milliseconds) of when the activity was added to the user's session */
+  created_at: number | string;
+
+  /** Unix timestamps for start and/or end of the game */
+  timestamps?: ActivityTimestampsEntity;
+
+  /** Application ID for the game */
+  application_id?: Snowflake;
+
+  /** What the player is currently doing */
+  details?: string | null;
+
+  /** User's current party status, or text used for a custom status */
+  state?: string | null;
+
+  /** Emoji used for a custom status */
+  emoji?: ActivityEmojiEntity | null;
+
+  /** Information for the current party of the player */
+  party?: ActivityPartyEntity;
+
+  /** Images for the presence and their hover texts */
+  assets?: ActivityAssetImageEntity;
+
+  /** Secrets for Rich Presence joining and spectating */
+  secrets?: ActivitySecretsEntity;
+
+  /** Whether or not the activity is an instanced game session */
+  instance?: boolean;
+
+  /** Activity flags ORed together, describes what the payload includes */
+  flags?: ActivityFlags;
+
+  /** Custom buttons shown in the Rich Presence (max 2) */
+  buttons?: ActivityButtonEntity[];
+}
+
+/**
+ * Client Status
+ * User's platform-dependent status
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#client-status-object}
+ */
+export interface ClientStatusEntity {
+  /** User's status set for an active desktop (Windows, Linux, Mac) application session */
+  desktop?: string;
+
+  /** User's status set for an active mobile (iOS, Android) application session */
+  mobile?: string;
+
+  /** User's status set for an active web (browser, bot user) application session */
+  web?: string;
+}
+
+/**
+ * Presence
+ * A user's presence is their current state on a guild.
+ * Sent when a user's presence or info, such as name or avatar, is updated.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#presence-update-presence-update-event-fields}
+ */
+export interface PresenceEntity {
+  /** User whose presence is being updated */
+  user: UserEntity;
+
+  /** ID of the guild */
+  guild_id: Snowflake;
+
+  /** Either "idle", "dnd", "online", or "offline" */
+  status: string;
+
+  /** User's current activities */
+  activities: ActivityEntity[];
+
+  /** User's platform-dependent status */
+  client_status: ClientStatusEntity;
+}
+
+/**
+ * Update Presence Status Type
+ * Defines the different status types for updating presence.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-status-types}
+ */
+export type UpdatePresenceStatusType =
+  | "online"
+  | "dnd"
+  | "idle"
+  | "invisible"
+  | "offline";
+
+/**
+ * Hello
+ * Sent on connection to the websocket.
+ * Defines the heartbeat interval that an app should heartbeat to.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#hello-hello-structure}
+ */
+export interface HelloEntity {
+  /** Interval (in milliseconds) an app should heartbeat with */
+  heartbeat_interval: number;
+}
+
+/**
  * Gateway Receive Events
- * Events that are sent by Discord to an app through a Gateway connection.
+ * Events received from Discord through a Gateway connection.
  *
  * @see {@link https://discord.com/developers/docs/events/gateway-events#receive-events}
  */
 export interface GatewayReceiveEvents {
-  /** Defines the initial state information */
+  /** Contains the initial state information when connecting to the gateway */
   READY: ReadyEntity;
-  /** Response to Resume */
+
+  /** Response to Resume - sent when successfully resuming a connection */
   RESUMED: boolean;
+
   /** Application command permission was updated */
   APPLICATION_COMMAND_PERMISSIONS_UPDATE: GuildApplicationCommandPermissionEntity;
+
   /** Auto Moderation rule was created */
   AUTO_MODERATION_RULE_CREATE: AutoModerationRuleEntity;
+
   /** Auto Moderation rule was updated */
   AUTO_MODERATION_RULE_UPDATE: AutoModerationRuleEntity;
+
   /** Auto Moderation rule was deleted */
   AUTO_MODERATION_RULE_DELETE: AutoModerationRuleEntity;
+
   /** Auto Moderation rule was triggered and an action was executed */
   AUTO_MODERATION_ACTION_EXECUTION: AutoModerationActionExecutionEntity;
-  /** New guild channel created */
+
+  /** New guild channel was created */
   CHANNEL_CREATE: AnyChannelEntity;
+
   /** Channel was updated */
   CHANNEL_UPDATE: AnyChannelEntity;
+
   /** Channel was deleted */
   CHANNEL_DELETE: AnyChannelEntity;
-  /** Message was pinned or unpinned */
+
+  /** Message was pinned or unpinned in a text channel */
   CHANNEL_PINS_UPDATE: ChannelPinsUpdateEntity;
-  /** Thread created, also sent when being added to a private thread */
+
+  /** Thread was created or user was added to a private thread */
   THREAD_CREATE:
     | (AnyThreadChannelEntity & { newly_created: boolean })
     | (AnyThreadChannelEntity & ThreadMemberEntity);
+
   /** Thread was updated */
   THREAD_UPDATE: Omit<AnyThreadChannelEntity, "last_message_id">;
+
   /** Thread was deleted */
   THREAD_DELETE: Pick<
     AnyThreadChannelEntity,
     "id" | "guild_id" | "parent_id" | "type"
   >;
-  /** Sent when gaining access to a channel, contains all active threads in that channel */
+
+  /** Sent when gaining access to a channel, contains all active threads */
   THREAD_LIST_SYNC: ThreadListSyncEntity;
+
   /** Thread member for the current user was updated */
   THREAD_MEMBER_UPDATE: ThreadMemberUpdateEntity;
-  /** Some user(s) were added to or removed from a thread */
+
+  /** Users were added to or removed from a thread */
   THREAD_MEMBERS_UPDATE: ThreadMembersUpdateEntity;
+
   /** Entitlement was created */
   ENTITLEMENT_CREATE: EntitlementEntity;
+
   /** Entitlement was updated */
   ENTITLEMENT_UPDATE: EntitlementEntity;
+
   /** Entitlement was deleted */
   ENTITLEMENT_DELETE: EntitlementEntity;
-  /** Lazy-load for unavailable guild, guild became available, or user joined a new guild */
+
+  /** Guild became available, or user joined a new guild */
   GUILD_CREATE: GuildCreateEntity | UnavailableGuildEntity;
+
   /** Guild was updated */
   GUILD_UPDATE: GuildEntity;
+
   /** Guild became unavailable, or user left/was removed from a guild */
   GUILD_DELETE: UnavailableGuildEntity;
-  /** A guild audit log entry was created */
+
+  /** Guild audit log entry was created */
   GUILD_AUDIT_LOG_ENTRY_CREATE: GuildAuditLogEntryCreateEntity;
+
   /** User was banned from a guild */
-  GUILD_BAN_ADD: GuildBanAddEntity;
+  GUILD_BAN_ADD: GuildBanEntity;
+
   /** User was unbanned from a guild */
-  GUILD_BAN_REMOVE: GuildBanRemoveEntity;
+  GUILD_BAN_REMOVE: GuildBanEntity;
+
   /** Guild emojis were updated */
   GUILD_EMOJIS_UPDATE: GuildEmojisUpdateEntity;
+
   /** Guild stickers were updated */
   GUILD_STICKERS_UPDATE: GuildStickersUpdateEntity;
+
   /** Guild integration was updated */
   GUILD_INTEGRATIONS_UPDATE: GuildIntegrationsUpdateEntity;
+
   /** New user joined a guild */
   GUILD_MEMBER_ADD: GuildMemberAddEntity;
+
   /** User was removed from a guild */
   GUILD_MEMBER_REMOVE: GuildMemberRemoveEntity;
+
   /** Guild member was updated */
   GUILD_MEMBER_UPDATE: GuildMemberUpdateEntity;
+
   /** Response to Request Guild Members */
   GUILD_MEMBERS_CHUNK: GuildMembersChunkEntity;
+
   /** Guild role was created */
-  GUILD_ROLE_CREATE: GuildRoleCreateEntity;
+  GUILD_ROLE_CREATE: GuildRoleUpdateEntity;
+
   /** Guild role was updated */
   GUILD_ROLE_UPDATE: GuildRoleUpdateEntity;
+
   /** Guild role was deleted */
   GUILD_ROLE_DELETE: GuildRoleDeleteEntity;
+
   /** Guild scheduled event was created */
   GUILD_SCHEDULED_EVENT_CREATE: GuildScheduledEventEntity;
+
   /** Guild scheduled event was updated */
   GUILD_SCHEDULED_EVENT_UPDATE: GuildScheduledEventEntity;
+
   /** Guild scheduled event was deleted */
   GUILD_SCHEDULED_EVENT_DELETE: GuildScheduledEventEntity;
+
   /** User subscribed to a guild scheduled event */
-  GUILD_SCHEDULED_EVENT_USER_ADD: GuildScheduledEventUserAddEntity;
+  GUILD_SCHEDULED_EVENT_USER_ADD: GuildScheduledEventUserAddRemoveEntity;
+
   /** User unsubscribed from a guild scheduled event */
-  GUILD_SCHEDULED_EVENT_USER_REMOVE: GuildScheduledEventUserRemoveEntity;
+  GUILD_SCHEDULED_EVENT_USER_REMOVE: GuildScheduledEventUserAddRemoveEntity;
+
   /** Guild soundboard sound was created */
   GUILD_SOUNDBOARD_SOUND_CREATE: SoundboardSoundEntity;
+
   /** Guild soundboard sound was updated */
   GUILD_SOUNDBOARD_SOUND_UPDATE: SoundboardSoundEntity;
+
   /** Guild soundboard sound was deleted */
   GUILD_SOUNDBOARD_SOUND_DELETE: GuildSoundboardSoundDeleteEntity;
+
   /** Guild soundboard sounds were updated */
-  GUILD_SOUNDBOARD_SOUNDS_UPDATE: GuildSoundboardSoundsUpdateEntity;
+  GUILD_SOUNDBOARD_SOUNDS_UPDATE: SoundboardSoundsEntity;
+
   /** Response to Request Soundboard Sounds */
   SOUNDBOARD_SOUNDS: SoundboardSoundsEntity;
+
   /** Guild integration was created */
-  INTEGRATION_CREATE: IntegrationCreateEntity;
+  INTEGRATION_CREATE: IntegrationUpdateEntity;
+
   /** Guild integration was updated */
   INTEGRATION_UPDATE: IntegrationUpdateEntity;
+
   /** Guild integration was deleted */
   INTEGRATION_DELETE: IntegrationDeleteEntity;
+
   /** Invite to a channel was created */
   INVITE_CREATE: InviteCreateEntity;
+
   /** Invite to a channel was deleted */
   INVITE_DELETE: InviteDeleteEntity;
+
   /** Message was created */
   MESSAGE_CREATE: MessageCreateEntity;
+
   /** Message was edited */
   MESSAGE_UPDATE: MessageCreateEntity;
+
   /** Message was deleted */
   MESSAGE_DELETE: MessageDeleteEntity;
+
   /** Multiple messages were deleted at once */
   MESSAGE_DELETE_BULK: MessageDeleteBulkEntity;
+
   /** User reacted to a message */
   MESSAGE_REACTION_ADD: MessageReactionAddEntity;
+
   /** User removed a reaction from a message */
   MESSAGE_REACTION_REMOVE: MessageReactionRemoveEntity;
+
   /** All reactions were explicitly removed from a message */
   MESSAGE_REACTION_REMOVE_ALL: MessageReactionRemoveAllEntity;
+
   /** All reactions for a given emoji were explicitly removed from a message */
   MESSAGE_REACTION_REMOVE_EMOJI: MessageReactionRemoveEmojiEntity;
+
   /** User's presence or info was updated */
   PRESENCE_UPDATE: PresenceEntity;
+
   /** User started typing in a channel */
-  TYPING_START: TypingEntity;
+  TYPING_START: TypingStartEntity;
+
   /** Properties about the user changed */
   USER_UPDATE: UserEntity;
+
   /** Someone sent an effect in a voice channel the current user is connected to */
   VOICE_CHANNEL_EFFECT_SEND: VoiceChannelEffectSendEntity;
+
   /** Someone joined, left, or moved a voice channel */
   VOICE_STATE_UPDATE: VoiceStateEntity;
+
   /** Guild's voice server was updated */
   VOICE_SERVER_UPDATE: VoiceServerUpdateEntity;
+
   /** Guild channel webhook was created, updated, or deleted */
-  WEBHOOKS_UPDATE: WebhookUpdateEntity;
+  WEBHOOKS_UPDATE: WebhooksUpdateEntity;
+
   /** User used an interaction, such as an Application Command */
   INTERACTION_CREATE: AnyInteractionEntity;
+
   /** Stage instance was created */
   STAGE_INSTANCE_CREATE: StageInstanceEntity;
+
   /** Stage instance was updated */
   STAGE_INSTANCE_UPDATE: StageInstanceEntity;
+
   /** Stage instance was deleted or closed */
   STAGE_INSTANCE_DELETE: StageInstanceEntity;
+
   /** Premium App Subscription was created */
   SUBSCRIPTION_CREATE: SubscriptionEntity;
+
   /** Premium App Subscription was updated */
   SUBSCRIPTION_UPDATE: SubscriptionEntity;
+
   /** Premium App Subscription was deleted */
   SUBSCRIPTION_DELETE: SubscriptionEntity;
+
   /** User voted on a poll */
-  MESSAGE_POLL_VOTE_ADD: MessagePollVoteAddEntity;
+  MESSAGE_POLL_VOTE_ADD: MessagePollVoteEntity;
+
   /** User removed a vote on a poll */
-  MESSAGE_POLL_VOTE_REMOVE: MessagePollVoteRemoveEntity;
+  MESSAGE_POLL_VOTE_REMOVE: MessagePollVoteEntity;
 }
 
 /**
- * Update Presence
- * Sent by the client to indicate a presence or status update.
+ * Identify Connection Properties
+ * Properties for establishing a connection with the gateway.
  *
- * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-gateway-presence-update-structure}
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#identify-identify-connection-properties}
  */
-export interface UpdatePresenceEntity {
-  /** Unix time (in milliseconds) of when the client went idle, or null if the client is not idle */
-  since: number | null;
+export interface IdentifyConnectionProperties {
+  /** Your operating system */
+  os: string;
 
-  /** User's activities */
-  activities: ActivityEntity[];
+  /** Your library name */
+  browser: string;
 
-  /** User's new status */
-  status: UpdatePresenceStatusType;
-
-  /** Whether or not the client is afk */
-  afk: boolean;
+  /** Your library name */
+  device: string;
 }
 
 /**
@@ -1354,7 +1361,7 @@ export interface IdentifyEntity {
   token: string;
 
   /** Connection properties */
-  properties: IdentifyConnectionPropertiesEntity;
+  properties: IdentifyConnectionProperties;
 
   /** Whether this connection supports compression of packets */
   compress?: boolean;
@@ -1444,6 +1451,26 @@ export interface UpdateVoiceStateEntity {
 
   /** Whether the client deafened */
   self_deaf: boolean;
+}
+
+/**
+ * Update Presence
+ * Sent by the client to indicate a presence or status update.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#update-presence-gateway-presence-update-structure}
+ */
+export interface UpdatePresenceEntity {
+  /** Unix time (in milliseconds) of when the client went idle, or null if the client is not idle */
+  since: number | null;
+
+  /** User's activities */
+  activities: ActivityEntity[];
+
+  /** User's new status */
+  status: UpdatePresenceStatusType;
+
+  /** Whether or not the client is afk */
+  afk: boolean;
 }
 
 /**

@@ -158,6 +158,16 @@ export const ClientCacheOptions = z
     voiceStates: ClientCacheEntityOptions.default({}),
 
     /**
+     * Configuration for the voice servers cache.
+     *
+     * This cache stores information about voice servers used for voice channels.
+     * Only relevant for bots that interact with voice channels or manage voice connections.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    voiceServers: ClientCacheEntityOptions.default({}),
+
+    /**
      * Configuration for the auto moderation rules cache.
      *
      * This cache stores AutoModerationRule objects which define automated content filtering.

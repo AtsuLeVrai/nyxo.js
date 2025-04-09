@@ -356,7 +356,7 @@ export class GuildMember extends BaseClass<GuildBased<GuildMemberEntity>> {
   protected override getCacheInfo(): CacheEntityInfo | null {
     return {
       storeKey: "members",
-      id: this.user.id,
+      id: `${this.guildId}:${this.user.id}`,
     };
   }
 }

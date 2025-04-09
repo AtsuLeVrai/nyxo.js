@@ -220,7 +220,7 @@ export class Client extends EventEmitter<ClientEvents> {
    * client.updatePresence({
    *   status: 'online',
    *   activities: [{
-   *     name: 'with Discord.js',
+   *     name: 'with Nyx.js',
    *     type: ActivityType.Playing
    *   }]
    * });

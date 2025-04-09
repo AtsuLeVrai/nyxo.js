@@ -11,6 +11,7 @@ import type {
   AnyChannel,
   AnyInteraction,
   AnyThreadChannel,
+  AutoModerationActionExecution,
   AutoModerationRule,
   Ban,
   Emoji,
@@ -22,6 +23,7 @@ import type {
   GuildTextChannel,
   Integration,
   Message,
+  MessagePollVote,
   Reaction,
   Ready,
   Role,
@@ -30,7 +32,10 @@ import type {
   Sticker,
   Subscription,
   ThreadMember,
+  TypingStart,
   User,
+  VoiceChannelEffectSend,
+  VoiceServer,
   VoiceState,
   Webhook,
 } from "../classes/index.js";
@@ -92,13 +97,13 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when an Auto Moderation rule is deleted from a guild.
    * @param rule The deleted Auto Moderation rule
    */
-  autoModerationRuleDelete: [rule: AutoModerationRule];
+  autoModerationRuleDelete: [rule: AutoModerationRule | null];
 
   /**
    * Emitted when an Auto Moderation rule is triggered and an action is executed.
    * @param execution Information about the executed action
    */
-  autoModerationActionExecution: [execution: unknown];
+  autoModerationActionExecution: [execution: AutoModerationActionExecution];
 
   /**
    * Emitted when a new guild channel is created.
@@ -117,7 +122,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a channel is deleted.
    * @param channel The deleted channel
    */
-  channelDelete: [channel: AnyChannel];
+  channelDelete: [channel: AnyChannel | null];
 
   /**
    * Emitted when a message is pinned or unpinned in a channel.
@@ -145,7 +150,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a thread is deleted.
    * @param thread The deleted thread
    */
-  threadDelete: [thread: AnyThreadChannel];
+  threadDelete: [thread: AnyThreadChannel | null];
 
   /**
    * Emitted when gaining access to a channel, containing all active threads in that channel.
@@ -187,7 +192,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when an entitlement is deleted.
    * @param entitlement The deleted entitlement
    */
-  entitlementDelete: [entitlement: Entitlement];
+  entitlementDelete: [entitlement: Entitlement | null];
 
   /**
    * Emitted in three scenarios:
@@ -211,7 +216,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * 2. The client user leaves or is removed from a guild
    * @param guild The guild that became unavailable or was left
    */
-  guildDelete: [guild: Guild];
+  guildDelete: [guild: Guild | null];
 
   /**
    * Emitted when a new audit log entry is created in a guild.
@@ -223,13 +228,13 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user is banned from a guild.
    * @param ban Information about the ban, including the user and the guild
    */
-  BanAdd: [ban: Ban];
+  guildBanAdd: [ban: Ban];
 
   /**
    * Emitted when a user is unbanned from a guild.
    * @param ban Information about the removed ban
    */
-  BanRemove: [ban: Ban];
+  guildBanRemove: [ban: Ban];
 
   /**
    * Emitted when a guild's emojis are updated (added, removed, or modified).
@@ -254,7 +259,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when an emoji is deleted from a guild.
    * @param emoji The deleted emoji
    */
-  emojiDelete: [emoji: Emoji];
+  emojiDelete: [emoji: Emoji | null];
 
   /**
    * Emitted when a guild's stickers are updated (added, removed, or modified).
@@ -279,7 +284,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a sticker is deleted from a guild.
    * @param sticker The deleted sticker
    */
-  stickerDelete: [sticker: Sticker];
+  stickerDelete: [sticker: Sticker | null];
 
   /**
    * Emitted when a guild's integrations are updated.
@@ -297,7 +302,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user leaves or is removed from a guild.
    * @param member The member who was removed from the guild
    */
-  guildMemberRemove: [member: GuildMember];
+  guildMemberRemove: [member: GuildMember | null];
 
   /**
    * Emitted when a guild member is updated (roles, nickname, etc.).
@@ -329,7 +334,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a guild role is deleted.
    * @param role The deleted role
    */
-  guildRoleDelete: [role: Role];
+  guildRoleDelete: [role: Role | null];
 
   /**
    * Emitted when a scheduled event is created in a guild.
@@ -351,7 +356,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a scheduled event is deleted from a guild.
    * @param event The deleted scheduled event
    */
-  guildScheduledEventDelete: [event: GuildScheduledEvent];
+  guildScheduledEventDelete: [event: GuildScheduledEvent | null];
 
   /**
    * Emitted when a user subscribes to a guild scheduled event.
@@ -385,7 +390,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a soundboard sound is deleted from a guild.
    * @param sound The deleted soundboard sound
    */
-  guildSoundboardSoundDelete: [sound: SoundboardSound];
+  guildSoundboardSoundDelete: [sound: SoundboardSound | null];
 
   /**
    * Emitted when a guild's soundboard sounds are updated as a whole.
@@ -419,7 +424,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a guild integration is deleted.
    * @param integration The deleted integration
    */
-  integrationDelete: [integration: Integration];
+  integrationDelete: [integration: Integration | null];
 
   /**
    * Emitted when an invite to a channel is created.
@@ -431,7 +436,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when an invite to a channel is deleted.
    * @param invite The deleted invite
    */
-  inviteDelete: [invite: unknown];
+  inviteDelete: [invite: unknown | null];
 
   /**
    * Emitted when a message is sent in a channel the client can see.
@@ -450,37 +455,37 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is deleted.
    * @param message The deleted message
    */
-  messageDelete: [message: Message];
+  messageDelete: [message: Message | null];
 
   /**
    * Emitted when multiple messages are deleted at once (bulk delete).
    * @param messages The deleted messages
    */
-  messageDeleteBulk: [messages: Message[]];
+  messageDeleteBulk: [messages: Message[] | null];
 
   /**
    * Emitted when a user adds a reaction to a message.
    * @param reaction Information about the added reaction
    */
-  ReactionAdd: [reaction: Reaction];
+  messageReactionAdd: [reaction: Reaction];
 
   /**
    * Emitted when a user removes a reaction from a message.
    * @param reaction Information about the removed reaction
    */
-  ReactionRemove: [reaction: Reaction];
+  messageReactionRemove: [reaction: Reaction];
 
   /**
    * Emitted when all reactions are removed from a message.
    * @param removal Information about the removal
    */
-  ReactionRemoveAll: [removal: Reaction];
+  messageReactionRemoveAll: [removal: Reaction];
 
   /**
    * Emitted when all reactions of a specific emoji are removed from a message.
    * @param removal Information about the emoji reaction removal
    */
-  ReactionRemoveEmoji: [removal: Reaction];
+  messageReactionRemoveEmoji: [removal: Reaction];
 
   /**
    * Emitted when a user's presence (status, activity) is updated.
@@ -496,7 +501,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user starts typing in a channel.
    * @param typing Information about the typing activity
    */
-  typingStart: [typing: unknown];
+  typingStart: [typing: TypingStart];
 
   /**
    * Emitted when properties about the user (username, avatar, etc.) change.
@@ -509,7 +514,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when someone sends an effect in a voice channel the client is connected to.
    * @param effect Information about the sent effect
    */
-  voiceChannelEffectSend: [effect: unknown];
+  voiceChannelEffectSend: [effect: VoiceChannelEffectSend];
 
   /**
    * Emitted when a user joins, leaves, or moves between voice channels.
@@ -523,13 +528,13 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This usually happens when a guild becomes available for voice connections.
    * @param server Information about the voice server update
    */
-  voiceServerUpdate: [oldServer: unknown | null, newServer: unknown];
+  voiceServerUpdate: [oldServer: VoiceServer | null, newServer: VoiceServer];
 
   /**
    * Emitted when a webhook is created, updated, or deleted in a guild channel.
    * @param webhook Information about the webhook update
    */
-  webhooksUpdate: [webhook: Webhook];
+  webhooksUpdate: [oldWebhook: Webhook | null, newWebhook: Webhook];
 
   /**
    * Emitted when a user uses an interaction with the client, such as an Application Command.
@@ -557,7 +562,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a stage instance is deleted or closed.
    * @param instance The deleted stage instance
    */
-  stageInstanceDelete: [instance: StageInstance];
+  stageInstanceDelete: [instance: StageInstance | null];
 
   /**
    * Emitted when a premium app subscription is created.
@@ -579,17 +584,17 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a premium app subscription is deleted.
    * @param subscription The deleted subscription
    */
-  subscriptionDelete: [subscription: Subscription];
+  subscriptionDelete: [subscription: Subscription | null];
 
   /**
    * Emitted when a user votes on a message poll.
    * @param vote Information about the poll vote
    */
-  messagePollVoteAdd: [vote: unknown];
+  messagePollVoteAdd: [vote: MessagePollVote];
 
   /**
    * Emitted when a user removes their vote from a message poll.
    * @param vote Information about the removed poll vote
    */
-  messagePollVoteRemove: [vote: unknown];
+  messagePollVoteRemove: [vote: MessagePollVote];
 }

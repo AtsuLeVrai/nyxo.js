@@ -50,6 +50,12 @@ export const RestOptions = z.object({
   baseUrl: z.string().url().default("https://discord.com"),
 
   /**
+   * Timeout for API requests in milliseconds
+   * @default 30000
+   */
+  timeout: z.number().int().min(0).default(30000),
+
+  /**
    * Request retry configuration
    * @default {}
    */

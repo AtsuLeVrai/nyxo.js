@@ -76,10 +76,10 @@ export interface RateLimitResult {
  */
 const RATE_LIMIT_CONFIG = {
   // Routes that are exempt from standard rate limiting
-  EXEMPT_ROUTES: new Set(["/interactions", "/webhooks"]),
+  EXEMPT_ROUTES: ["/interactions", "/webhooks"],
 
   // Status codes that indicate invalid requests
-  INVALID_STATUSES: new Set([401, 403, 429]),
+  INVALID_STATUSES: [401, 403, 429],
 
   // Regular expressions for route pattern detection
   PATTERNS: {
@@ -98,7 +98,7 @@ const RATE_LIMIT_CONFIG = {
     GLOBAL: "x-ratelimit-global",
     RETRY_AFTER: "retry-after",
   },
-} as const;
+};
 
 /**
  * Manages rate limits for Discord API requests to ensure
@@ -189,7 +189,7 @@ export class RateLimitManager {
     }
 
     // Skip checking for exempt routes
-    if (RATE_LIMIT_CONFIG.EXEMPT_ROUTES.has(path)) {
+    if (RATE_LIMIT_CONFIG.EXEMPT_ROUTES.includes(path)) {
       return { canProceed: true };
     }
 
@@ -281,12 +281,12 @@ export class RateLimitManager {
     this.#trackGlobalRequest();
 
     // Track invalid responses
-    if (RATE_LIMIT_CONFIG.INVALID_STATUSES.has(statusCode)) {
+    if (RATE_LIMIT_CONFIG.INVALID_STATUSES.includes(statusCode)) {
       this.#trackInvalidRequest();
     }
 
     // Skip processing for exempt routes
-    if (RATE_LIMIT_CONFIG.EXEMPT_ROUTES.has(path)) {
+    if (RATE_LIMIT_CONFIG.EXEMPT_ROUTES.includes(path)) {
       return;
     }
 

@@ -44,32 +44,30 @@ export const RetryOptions = z
      * @default ["GET", "PUT", "HEAD", "OPTIONS", "DELETE"]
      */
     methods: z
-      .set(z.string())
-      .default(new Set(["GET", "PUT", "HEAD", "OPTIONS", "DELETE"])),
+      .array(z.string())
+      .default(["GET", "PUT", "HEAD", "OPTIONS", "DELETE"]),
 
     /**
      * HTTP status codes that trigger a retry
      * @default [429, 500, 502, 503, 504]
      */
-    statusCodes: z.set(z.number()).default(new Set([429, 500, 502, 503, 504])),
+    statusCodes: z.array(z.number()).default([429, 500, 502, 503, 504]),
 
     /**
      * Network error codes that trigger a retry
      * @default ["ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "ENETDOWN", "ENETUNREACH", "EHOSTDOWN", "UND_ERR_SOCKET"]
      */
     errorCodes: z
-      .set(z.string())
-      .default(
-        new Set([
-          "ECONNRESET",
-          "ECONNREFUSED",
-          "ENOTFOUND",
-          "ENETDOWN",
-          "ENETUNREACH",
-          "EHOSTDOWN",
-          "UND_ERR_SOCKET",
-        ]),
-      ),
+      .array(z.string())
+      .default([
+        "ECONNRESET",
+        "ECONNREFUSED",
+        "ENOTFOUND",
+        "ENETDOWN",
+        "ENETUNREACH",
+        "EHOSTDOWN",
+        "UND_ERR_SOCKET",
+      ]),
   })
   .strict()
   .readonly();

@@ -1,10 +1,15 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
 import { BaseClass, type CacheEntityInfo } from "../bases/index.js";
+import type { GuildBased } from "../types/index.js";
 import { User } from "./user.class.js";
 
-export class Emoji extends BaseClass<EmojiEntity> {
+export class Emoji extends BaseClass<GuildBased<EmojiEntity>> {
   get id(): Snowflake | null {
     return this.data.id;
+  }
+
+  get guildId(): Snowflake {
+    return this.data.guild_id;
   }
 
   get name(): string | null {

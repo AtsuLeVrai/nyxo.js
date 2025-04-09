@@ -113,7 +113,7 @@ export class RetryManager {
     }
 
     // Check if this method is eligible for retries
-    if (!this.#options.methods.has(context.method)) {
+    if (!this.#options.methods.includes(context.method)) {
       return { shouldRetry: false, timeout: 0 };
     }
 
@@ -206,7 +206,7 @@ export class RetryManager {
    */
   #handleApiError(error: ApiError, context: RetryContext): RetryDecision {
     // Check if status code is eligible for retry
-    if (!this.#options.statusCodes.has(error.statusCode)) {
+    if (!this.#options.statusCodes.includes(error.statusCode)) {
       return { shouldRetry: false, timeout: 0 };
     }
 
@@ -233,7 +233,7 @@ export class RetryManager {
   #handleNetworkError(error: Error, context: RetryContext): RetryDecision {
     const errorCode = this.getErrorCode(error);
 
-    if (!this.#options.errorCodes.has(errorCode)) {
+    if (!this.#options.errorCodes.includes(errorCode)) {
       return { shouldRetry: false, timeout: 0 };
     }
 

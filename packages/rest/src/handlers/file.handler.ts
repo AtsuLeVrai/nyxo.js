@@ -15,16 +15,16 @@ const FILE_CONSTANTS = {
   DEFAULT_CONTENT_TYPE: "application/octet-stream",
   DATA_URI_PATTERN: /^data:(.+);base64,(.+)$/,
   FILE_PATH_PATTERN: /^[/.]|^[a-zA-Z]:\\/,
-  SUPPORTED_IMAGE_TYPES: new Set([
+  SUPPORTED_IMAGE_TYPES: [
     "image/jpeg",
     "image/png",
     "image/webp",
     "image/gif",
     "image/avif",
-  ]),
+  ],
   ATTACHMENT_MAX_SIZE: 10 * 1024 * 1024, // 10MB
   ASSET_MAX_SIZE: 256 * 1024, // 256KB
-} as const;
+};
 
 // Types
 export type DataUri = `data:${string};base64,${string}`;
@@ -342,7 +342,7 @@ export const FileHandler = {
   ): Promise<{ processedBuffer: Buffer; finalContentType: string }> {
     // Skip processing if not an image or already small enough
     if (
-      !FILE_CONSTANTS.SUPPORTED_IMAGE_TYPES.has(contentType) ||
+      !FILE_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(contentType) ||
       buffer.length <= options.maxSize
     ) {
       return { processedBuffer: buffer, finalContentType: contentType };

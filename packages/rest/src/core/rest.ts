@@ -1,9 +1,10 @@
+import { clearTimeout } from "node:timers";
 import { EventEmitter } from "eventemitter3";
 import { type Dispatcher, Pool } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { ApiError, type JsonErrorResponse } from "../errors/index.js";
-import { FileHandler, HeaderHandler } from "../handlers/index.js";
+import { FileHandler } from "../handlers/index.js";
 import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
 import {
@@ -49,8 +50,8 @@ const REST_CONSTANTS = {
 
   /** Default HTTP pool configuration */
   POOL_CONFIG: {
-    connections: 32,
-    pipelining: 1,
+    connections: 128,
+    pipelining: 10,
     connectTimeout: 30000,
     keepAliveTimeout: 60000,
     keepAliveMaxTimeout: 300000,
@@ -332,7 +333,7 @@ export class Rest extends EventEmitter<RestEvents> {
         this.#rateLimiter.updateRateLimit(
           options.path,
           options.method,
-          response.headers,
+          response.headers as Record<string, string>,
           response.statusCode,
           requestId,
         );
@@ -448,40 +449,53 @@ export class Rest extends EventEmitter<RestEvents> {
     try {
       // Prepare and execute the request
       const preparedRequest = await this.#prepareRequest(options);
-      const response = await this.#pool.request(preparedRequest.options);
-      const responseBody = await this.#readResponseBody(response);
-      const result = this.#processResponse<T>(
-        response,
-        responseBody,
-        requestId,
+      const controller = new AbortController();
+      const timeout = setTimeout(
+        () => controller.abort(),
+        this.#options.timeout,
       );
 
-      // Check for API errors
-      if (result.statusCode >= 400 && this.#isJsonErrorEntity(result.data)) {
-        throw new ApiError(requestId, result.data, {
-          statusCode: result.statusCode,
-          headers: result.headers,
-          method: options.method,
-          path: options.path,
+      try {
+        const response = await this.#pool.request({
+          ...preparedRequest.options,
+          signal: controller.signal,
         });
+        const responseBody = await this.#readResponseBody(response);
+        const result = this.#processResponse<T>(
+          response,
+          responseBody,
+          requestId,
+        );
+
+        // Check for API errors
+        if (result.statusCode >= 400 && this.#isJsonErrorEntity(result.data)) {
+          throw new ApiError(requestId, result.data, {
+            statusCode: result.statusCode,
+            headers: result.headers,
+            method: options.method,
+            path: options.path,
+          });
+        }
+
+        // Calculate request duration
+        const duration = Date.now() - requestStart;
+
+        // Emit request success event
+        this.emit("requestSuccess", {
+          timestamp: new Date().toISOString(),
+          requestId,
+          path: options.path,
+          method: options.method,
+          headers: result.headers,
+          statusCode: result.statusCode,
+          duration,
+          responseSize: responseBody.length,
+        });
+
+        return result;
+      } finally {
+        clearTimeout(timeout);
       }
-
-      // Calculate request duration
-      const duration = Date.now() - requestStart;
-
-      // Emit request success event
-      this.emit("requestSuccess", {
-        timestamp: new Date().toISOString(),
-        requestId,
-        path: options.path,
-        method: options.method,
-        headers: result.headers,
-        statusCode: result.statusCode,
-        duration,
-        responseSize: responseBody.length,
-      });
-
-      return result;
     } catch (error) {
       // Calculate request duration
       const duration = Date.now() - requestStart;
@@ -586,7 +600,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Merge in custom headers
     if (options.headers) {
-      Object.assign(headers, HeaderHandler.parse(options.headers).headers);
+      Object.assign(headers, options.headers);
     }
 
     // Add audit log reason if provided
@@ -669,14 +683,12 @@ export class Rest extends EventEmitter<RestEvents> {
     bodyContent: Buffer,
     requestId: string,
   ): HttpResponse<T> {
-    const headers = HeaderHandler.parse(response.headers).headers;
-
     // Handle empty responses
     if (response.statusCode === 204 || bodyContent.length === 0) {
       return {
         data: {} as T,
         statusCode: response.statusCode,
-        headers,
+        headers: response.headers,
       };
     }
 
@@ -687,7 +699,7 @@ export class Rest extends EventEmitter<RestEvents> {
       return {
         data,
         statusCode: response.statusCode,
-        headers,
+        headers: response.headers,
       };
     } catch {
       throw new ApiError(

@@ -1,4 +1,5 @@
 import type { Dispatcher } from "undici";
+import type { IncomingHttpHeaders } from "undici/types/header.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -12,7 +13,7 @@ export interface HttpResponse<T = unknown> {
   statusCode: number;
 
   /** Normalized response headers */
-  headers: Record<string, string>;
+  headers: IncomingHttpHeaders;
 }
 
 /**
@@ -64,7 +65,7 @@ export interface HttpEventBase extends EventBase {
  */
 export interface RequestStartEvent extends HttpEventBase {
   /** Request headers */
-  headers: Record<string, string>;
+  headers: IncomingHttpHeaders;
 }
 
 /**
@@ -75,7 +76,7 @@ export interface RequestSuccessEvent extends HttpEventBase {
   statusCode: number;
 
   /** Response headers */
-  headers: Record<string, string>;
+  headers: IncomingHttpHeaders;
 
   /** Total request duration in milliseconds */
   duration: number;
@@ -95,7 +96,7 @@ export interface RequestFailureEvent extends HttpEventBase {
   statusCode?: number;
 
   /** Response headers if received */
-  headers?: Record<string, string>;
+  headers?: IncomingHttpHeaders;
 
   /** Request duration in milliseconds */
   duration: number;
