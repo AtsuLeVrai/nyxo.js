@@ -5,8 +5,10 @@ import type {
   GuildMembersChunkEntity,
   GuildStickersUpdateEntity,
   PresenceEntity,
+  ThreadMembersUpdateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
+import type { CamelCase, Merge } from "type-fest";
 import type {
   AnyChannel,
   AnyInteraction,
@@ -14,14 +16,16 @@ import type {
   AutoModerationActionExecution,
   AutoModerationRule,
   Ban,
+  ChannelPins,
   Emoji,
   Entitlement,
   Guild,
+  GuildAuditLogEntry,
   GuildMember,
   GuildScheduledEvent,
   GuildScheduledEventUser,
-  GuildTextChannel,
   Integration,
+  Invite,
   Message,
   MessagePollVote,
   Reaction,
@@ -31,6 +35,7 @@ import type {
   StageInstance,
   Sticker,
   Subscription,
+  ThreadListSync,
   ThreadMember,
   TypingStart,
   User,
@@ -41,15 +46,70 @@ import type {
 } from "../classes/index.js";
 
 /**
+ * Enforces camelCase property naming conventions with configurable type handling.
+ *
+ * @typeParam T - Source type whose properties will be transformed to camelCase
+ * @typeParam PreserveValueTypes - Whether to preserve original value types (default: false)
+ *
+ * @remarks
+ * Transforms all property keys from the source type to camelCase equivalents.
+ * By default, sets all property values to `any` to simplify type constraints.
+ * Set second type parameter to `true` to preserve original value types.
+ *
+ * Useful for:
+ * - Ensuring consistent property naming in class implementations
+ * - Converting snake_case API responses to camelCase
+ * - Creating type-safe mappings between casing conventions
+ * - Enforcing coding standards
+ *
+ * Uses the `CamelCase` utility from 'type-fest' for string transformation.
+ *
+ * @example
+ * ```typescript
+ * // Basic usage - all properties will be camelCase with `any` type
+ * interface ApiResponse {
+ *   user_id: number;
+ *   first_name: string;
+ *   is_active: boolean;
+ * }
+ *
+ * class UserModel implements EnforceCamelCase<ApiResponse> {
+ *   userId: any;
+ *   firstName: any;
+ *   isActive: any;
+ * }
+ *
+ * // Preserving original value types
+ * class TypedUserModel implements EnforceCamelCase<ApiResponse, true> {
+ *   userId: number;
+ *   firstName: string;
+ *   isActive: boolean;
+ * }
+ * ```
+ */
+export type EnforceCamelCase<
+  T extends object,
+  PreserveValueTypes extends boolean = false,
+> = {
+  [K in keyof T as CamelCase<string & K>]: PreserveValueTypes extends true
+    ? T[K]
+    : // biome-ignore lint/suspicious/noExplicitAny: Explicit any is required to simplify type constraints
+      any;
+};
+
+/**
  * Represents a guild-based entity, which includes a guild ID.
  * This is useful for entities that are specific to a guild context.
  */
-export type GuildBased<T extends object> = T & {
-  /**
-   * The ID of the guild this entity belongs to.
-   */
-  guild_id: string;
-};
+export type GuildBased<T extends object> = Merge<
+  T,
+  {
+    /**
+     * The ID of the guild this entity belongs to.
+     */
+    guild_id: string;
+  }
+>;
 
 /**
  * Represents all events that can be emitted by the client.
@@ -128,7 +188,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is pinned or unpinned in a channel.
    * @param pinUpdate Information about the pin update
    */
-  channelPinsUpdate: [pinUpdate: GuildTextChannel | null];
+  channelPinsUpdate: [pinUpdate: ChannelPins | null];
 
   /**
    * Emitted when a new thread is created or when the client is added to a private thread.
@@ -157,7 +217,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This helps synchronize thread state when joining a guild or gaining access to a channel.
    * @param threads Collection of active threads in the channel
    */
-  threadListSync: [threads: unknown];
+  threadListSync: [threads: ThreadListSync];
 
   /**
    * Emitted when the thread member object for the current user is updated.
@@ -170,7 +230,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when users are added to or removed from a thread.
    * @param update Information about the members update
    */
-  threadMembersUpdate: [update: unknown];
+  threadMembersUpdate: [update: ThreadMembersUpdateEntity];
 
   /**
    * Emitted when a new entitlement (subscription or one-time purchase) is created.
@@ -222,7 +282,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a new audit log entry is created in a guild.
    * @param entry The newly created audit log entry
    */
-  guildAuditLogEntryCreate: [entry: unknown];
+  guildAuditLogEntryCreate: [entry: GuildAuditLogEntry];
 
   /**
    * Emitted when a user is banned from a guild.
@@ -430,13 +490,13 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when an invite to a channel is created.
    * @param invite The newly created invite
    */
-  inviteCreate: [invite: unknown];
+  inviteCreate: [invite: Invite];
 
   /**
    * Emitted when an invite to a channel is deleted.
    * @param invite The deleted invite
    */
-  inviteDelete: [invite: unknown | null];
+  inviteDelete: [invite: Invite | null];
 
   /**
    * Emitted when a message is sent in a channel the client can see.
@@ -461,7 +521,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when multiple messages are deleted at once (bulk delete).
    * @param messages The deleted messages
    */
-  messageDeleteBulk: [messages: Message[] | null];
+  messageDeleteBulk: [messages: (Message | null)[]];
 
   /**
    * Emitted when a user adds a reaction to a message.

@@ -162,14 +162,15 @@ export abstract class BaseClass<T extends object> {
    * const users = userDataArray.map(data => User.from(client, data));
    * ```
    */
-  static from<S extends object, Q extends BaseClass<S>>(
+  static from<S extends object>(
     this: new (
       client: Client,
       data: S,
-    ) => Q,
+      // @ts-expect-error: This is safe because we're creating the same class type
+    ) => InstanceType<typeof this>,
     client: Client,
     data: S,
-  ): Q {
+  ): InstanceType<typeof this> {
     // biome-ignore lint/complexity/noThisInStatic: This is safe because we're creating the same class type
     return new this(client, data);
   }
@@ -343,7 +344,9 @@ export abstract class BaseClass<T extends object> {
           const propertyKey = propName as keyof this;
           // biome-ignore lint/complexity/noVoid: This is safe because we're accessing a getter
           void this[propertyKey];
-        } catch {}
+        } catch {
+          // Ignore errors during getter initialization
+        }
       }
     }
   }

@@ -34,7 +34,7 @@
     },
     "check": {
       "outputs": [],
-      "cache": false
+      "cache": true
     },
     "type-check": {
       "outputs": [],

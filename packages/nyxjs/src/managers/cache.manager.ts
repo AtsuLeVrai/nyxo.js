@@ -10,15 +10,18 @@ import type {
   GuildMember,
   GuildScheduledEvent,
   Integration,
+  Invite,
   Message,
   Role,
   SoundboardSound,
   StageInstance,
   Sticker,
   Subscription,
+  ThreadMember,
   User,
   VoiceServer,
   VoiceState,
+  Webhook,
 } from "../classes/index.js";
 import type {
   ClientCacheEntityOptions,
@@ -190,6 +193,24 @@ export class CacheManager {
   readonly #soundboards: Store<Snowflake, SoundboardSound>;
 
   /**
+   * Store for thread members
+   * @private
+   */
+  readonly #threadMembers: Store<Snowflake, ThreadMember>;
+
+  /**
+   * Store for invites
+   * @private
+   */
+  readonly #invites: Store<Snowflake, Invite>;
+
+  /**
+   * Store for webhooks
+   * @private
+   */
+  readonly #webhooks: Store<Snowflake, Webhook>;
+
+  /**
    * Creates a new cache manager with the specified options.
    *
    * @param options - Cache configuration options that control caching behavior
@@ -243,6 +264,12 @@ export class CacheManager {
       "soundboards",
       this.#options.soundboards,
     );
+    this.#threadMembers = this.#createStore(
+      "threadMembers",
+      this.#options.threadMembers,
+    );
+    this.#invites = this.#createStore("invites", this.#options.invites);
+    this.#webhooks = this.#createStore("webhooks", this.#options.webhooks);
 
     // Start sweeping if enabled
     if (this.#options.enabled && this.#options.sweepInterval > 0) {
@@ -585,6 +612,63 @@ export class CacheManager {
    */
   get soundboards(): Store<Snowflake, SoundboardSound> {
     return this.#soundboards;
+  }
+
+  /**
+   * Access the thread members cache store.
+   * Contains ThreadMember objects for users in threads.
+   *
+   * @example
+   * ```typescript
+   * // Get a thread member by ID
+   * const member = cacheManager.threadMembers.get('1234567890');
+   *
+   * // Find members with specific roles
+   * const roleMembers = cacheManager.threadMembers.filter(
+   *  member => member.roles.includes('roleId')
+   * );
+   * ```
+   */
+  get threadMembers(): Store<Snowflake, ThreadMember> {
+    return this.#threadMembers;
+  }
+
+  /**
+   * Access the invites cache store.
+   * Contains Invite objects for server invites.
+   *
+   * @example
+   * ```typescript
+   * // Get an invite by code
+   * const invite = cacheManager.invites.get('inviteCode');
+   *
+   * // Find invites with specific properties
+   * const specificInvites = cacheManager.invites.filter(
+   *  invite => invite.uses > 0
+   * );
+   * ```
+   */
+  get invites(): Store<Snowflake, Invite> {
+    return this.#invites;
+  }
+
+  /**
+   * Access the webhooks cache store.
+   * Contains Webhook objects for server webhooks.
+   *
+   * @example
+   * ```typescript
+   * // Get a webhook by ID
+   * const webhook = cacheManager.webhooks.get('1234567890');
+   *
+   * // Find webhooks with specific properties
+   * const specificWebhooks = cacheManager.webhooks.filter(
+   *  webhook => webhook.channelId === 'channelId'
+   * );
+   * ```
+   */
+  get webhooks(): Store<Snowflake, Webhook> {
+    return this.#webhooks;
   }
 
   /**

@@ -74,22 +74,6 @@ const Logger = {
       `${this.getTimestamp()} ${colors.info(figures.info)} ${colors.info(message)}`,
     );
   },
-
-  // Special method for analyze results
-  analyzeResult(data) {
-    console.log(`\n${chalk.bold.underline("Bundle Analysis")}`);
-
-    for (const [name, size] of Object.entries(data)) {
-      const formattedSize = prettyBytes(size);
-      const barWidth = Math.min(Math.floor(size / 1024), 50);
-      const bar = chalk.rgb(134, 239, 172)("█").repeat(barWidth);
-
-      console.log(
-        `${chalk.bold(name.padEnd(20))} ${formattedSize.padStart(10)} ${bar}`,
-      );
-    }
-    console.log("");
-  },
 };
 
 // Read package.json
@@ -147,7 +131,7 @@ async function buildWithEsbuild(paths, pkg, options = {}) {
     };
 
     // Build ESM and CJS bundles
-    const [esmResult, cjsResult] = await Promise.all([
+    const [_esmResult, _cjsResult] = await Promise.all([
       esbuild.build({
         ...commonOptions,
         outfile: resolve(paths.dist, "index.js"),
@@ -166,32 +150,6 @@ async function buildWithEsbuild(paths, pkg, options = {}) {
 
     Logger.success(`ESM bundle generated (${prettyBytes(esmStats.size)})`);
     Logger.success(`CJS bundle generated (${prettyBytes(cjsStats.size)})`);
-
-    // If analyze is enabled, generate bundle analysis
-    if (esmResult.metafile && cjsResult.metafile) {
-      const analysis = {
-        "ESM Bundle": esmStats.size,
-        "CJS Bundle": cjsStats.size,
-      };
-
-      // Analyze bundle contents
-      for (const [key, metafile] of [
-        ["ESM", esmResult.metafile],
-        ["CJS", cjsResult.metafile],
-      ]) {
-        const outputs = Object.entries(metafile.outputs)[0][1];
-
-        if (outputs.imports) {
-          for (const imp of outputs.imports) {
-            if (imp.kind === "import-statement") {
-              analysis[`${key} - ${imp.path}`] = imp.approximateBytes || 0;
-            }
-          }
-        }
-      }
-
-      Logger.analyzeResult(analysis);
-    }
 
     return true;
   } catch (error) {

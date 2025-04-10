@@ -1,8 +1,13 @@
 import { deepmerge } from "deepmerge-ts";
-import { get, unset } from "lodash-es";
+import { cloneDeep, get, unset } from "lodash-es";
 import { LRUCache } from "lru-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+
+/**
+ * Valid key types for the store
+ */
+export type StoreKey = string | number | symbol;
 
 /**
  * A predicate used for finding or filtering items in the store.
@@ -11,7 +16,7 @@ import { fromError } from "zod-validation-error";
  * @template K - The type of keys in the store
  * @template V - The type of values in the store
  */
-export type StorePredicate<K extends string | number | symbol, V> =
+export type StorePredicate<K extends StoreKey, V> =
   | ((value: V, key: K, map: Store<K, V>) => boolean)
   | Partial<V>;
 
@@ -21,23 +26,37 @@ export type StorePredicate<K extends string | number | symbol, V> =
 export const StoreOptions = z
   .object({
     /**
-     * Maximum number of items to store before eviction (default: 10000)
+     * Maximum number of items to store before eviction
      * @minimum 0
+     * @default 10000
      */
     maxSize: z.number().int().nonnegative().default(10000),
 
     /**
-     * Time to live in milliseconds for items (default: 0, meaning no expiration)
+     * Time to live in milliseconds for items
      * @minimum 0
+     * @default 0 (no expiration)
      */
     ttl: z.number().int().nonnegative().default(0),
 
     /**
-     * Strategy for evicting items when maxSize is reached (default: "lru")
-     * - "fifo": First-in-first-out - oldest entries are evicted first
-     * - "lru": Least recently used - least accessed entries are evicted first
+     * Strategy for evicting items when maxSize is reached
+     * @default "lru"
      */
     evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
+
+    /**
+     * Whether to clone values on get to prevent unintentional modifications
+     * @default false
+     */
+    cloneValues: z.boolean().default(false),
+
+    /**
+     * Minimum cleanup interval in milliseconds
+     * @minimum 1000
+     * @default 30000 (30 seconds)
+     */
+    minCleanupInterval: z.number().int().min(1000).default(30000),
   })
   .strict();
 
@@ -63,7 +82,7 @@ export type StoreOptions = z.infer<typeof StoreOptions>;
  *   evictionStrategy: "lru"
  * });
  */
-export class Store<K extends string | number | symbol, V> extends Map<K, V> {
+export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Map to track expiration times for items with TTL
    * @private
@@ -86,7 +105,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * Cleanup interval ID
    * @private
    */
-  #cleanupInterval: ReturnType<typeof setInterval> | null = null;
+  #cleanupInterval: NodeJS.Timeout | null = null;
 
   /**
    * Creates a new Store instance.
@@ -108,21 +127,20 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
       throw new Error(fromError(error).message);
     }
 
-    if (
-      this.#options.evictionStrategy === "lru" &&
-      this.#options.maxSize &&
-      this.#options.maxSize > 0
-    ) {
+    // Set up LRU cache if using LRU eviction strategy
+    if (this.#options.evictionStrategy === "lru" && this.#options.maxSize > 0) {
       this.#lruCache = new LRUCache<K, number>({
-        max: this.#options.maxSize,
+        max: this.#options.maxSize * 2, // Double the size to track access patterns effectively
       });
     }
 
+    // Add initial entries if provided
     if (entries) {
       this.#bulkSet(entries);
     }
 
-    if (this.#options.ttl && this.#options.ttl > 0) {
+    // Set up cleanup interval if TTL is enabled
+    if (this.#options.ttl > 0) {
       this.#startCleanupInterval();
     }
   }
@@ -148,8 +166,14 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
   add(key: K, value: V | Partial<V>): this {
     if (this.has(key)) {
       const existingValue = this.get(key) as V;
-      if (typeof existingValue === "object" && typeof value === "object") {
-        this.set(key, deepmerge(existingValue, value) as V);
+      if (
+        typeof existingValue === "object" &&
+        existingValue !== null &&
+        typeof value === "object" &&
+        value !== null
+      ) {
+        const mergedValue = deepmerge(existingValue, value) as V;
+        this.set(key, mergedValue);
       } else {
         this.set(key, value as V);
       }
@@ -165,6 +189,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @param {K} key - The key of the item to modify
    * @param {(keyof V | string)[] | string | keyof V} paths - The property path(s) to remove
    * @returns {this} The Store instance for chaining
+   * @throws {Error} If the key doesn't exist or the value is not an object
    *
    * @example
    * // Remove a single property
@@ -173,26 +198,24 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @example
    * // Remove multiple properties
    * store.remove('user1', ['age', 'address.street']);
-   *
-   * @remarks
-   * - Does nothing if the key doesn't exist or the value is not an object
-   * - Uses lodash's unset internally to support nested paths
    */
   remove(key: K, paths: (keyof V | string)[] | string | keyof V): this {
     if (!this.has(key)) {
-      return this;
+      throw new Error(`Key not found: ${String(key)}`);
     }
 
-    const value = this.get(key) as V;
+    const value = this.get(key);
     if (typeof value !== "object" || value === null) {
-      return this;
+      throw new Error(
+        `Cannot remove properties from non-object value at key: ${String(key)}`,
+      );
     }
 
+    const newValue = { ...(value as object) };
     const pathsArray = Array.isArray(paths) ? paths : [paths];
-    const newValue = { ...value };
 
     for (const path of pathsArray) {
-      unset(newValue, path);
+      unset(newValue, path as string);
     }
 
     this.set(key, newValue as V);
@@ -212,16 +235,13 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @example
    * // Find using a pattern object
    * const user = store.find({ role: 'admin' });
-   *
-   * @remarks
-   * Updates the access time for the matching key when using LRU eviction strategy
    */
   find(predicate: StorePredicate<K, V>): V | undefined {
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
         if (predicate(value, key, this)) {
           this.#updateAccessTime(key);
-          return value;
+          return this.#maybeCloneValue(value);
         }
       }
       return undefined;
@@ -231,10 +251,44 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
     for (const [key, value] of this) {
       if (this.#matchesPattern(value, entries)) {
         this.#updateAccessTime(key);
-        return value;
+        return this.#maybeCloneValue(value);
       }
     }
     return undefined;
+  }
+
+  /**
+   * Returns all values in the store that match the provided predicate.
+   *
+   * @param {StorePredicate<K, V>} predicate - A function or pattern object to match against
+   * @returns {V[]} Array of matching values
+   *
+   * @example
+   * // Find all users over 30
+   * const olderUsers = store.findAll(user => user.age > 30);
+   */
+  findAll(predicate: StorePredicate<K, V>): V[] {
+    const results: V[] = [];
+
+    // Collect all matching values
+    if (typeof predicate === "function") {
+      for (const [key, value] of this) {
+        if (predicate(value, key, this)) {
+          this.#updateAccessTime(key);
+          results.push(this.#maybeCloneValue(value));
+        }
+      }
+    } else {
+      const entries = Object.entries(predicate);
+      for (const [key, value] of this) {
+        if (this.#matchesPattern(value, entries)) {
+          this.#updateAccessTime(key);
+          results.push(this.#maybeCloneValue(value));
+        }
+      }
+    }
+
+    return results;
   }
 
   /**
@@ -257,7 +311,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
         if (predicate(value, key, this)) {
-          newStore.set(key, value);
+          newStore.set(key, this.#cloneIfObject(value));
         }
       }
       return newStore;
@@ -266,7 +320,7 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
     const entries = Object.entries(predicate);
     for (const [key, value] of this) {
       if (this.#matchesPattern(value, entries)) {
-        newStore.set(key, value);
+        newStore.set(key, this.#cloneIfObject(value));
       }
     }
     return newStore;
@@ -293,8 +347,9 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
     const value = super.get(key);
     if (value !== undefined) {
       this.#updateAccessTime(key);
+      return this.#maybeCloneValue(value);
     }
-    return value;
+    return undefined;
   }
 
   /**
@@ -304,12 +359,17 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @param {V} value - The value to store
    * @param {number} ttl - Time to live in milliseconds
    * @returns {this} The Store instance for chaining
+   * @throws {Error} If TTL is negative
    *
    * @example
    * // Set a value that expires after 5 minutes
    * store.setWithTtl('session', { token: 'abc123' }, 5 * 60 * 1000);
    */
   setWithTtl(key: K, value: V, ttl: number): this {
+    if (ttl < 0) {
+      throw new Error(`TTL cannot be negative: ${ttl}`);
+    }
+
     const expiryTime = Date.now() + ttl;
     this.#ttlMap.set(key, expiryTime);
     return this.set(key, value);
@@ -326,15 +386,9 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
     if (expiry === undefined) {
       // If no TTL is set and the global TTL is greater than 0,
       // use the global TTL as the default
-      // Check if we need to add a TTL for this key
-      if (
-        this.#options.ttl &&
-        this.#options.ttl > 0 &&
-        super.has(key) &&
-        !this.#ttlMap.has(key)
-      ) {
+      if (this.#options.ttl > 0 && super.has(key) && !this.#ttlMap.has(key)) {
         // For existing keys without explicit TTL, set TTL based on defaults
-        this.#ttlMap.set(key, Date.now() + (this.#options.ttl || 0));
+        this.#ttlMap.set(key, Date.now() + this.#options.ttl);
         return false;
       }
       return false;
@@ -356,11 +410,18 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @override Overrides Map.set
    */
   override set(key: K, value: V): this {
-    this.#evict();
+    // Ensure there's room for the new item
+    if (
+      this.#options.maxSize > 0 &&
+      this.size >= this.#options.maxSize &&
+      !this.has(key)
+    ) {
+      this.#evict();
+    }
 
     // Set default TTL if global TTL is enabled and no custom TTL exists for this key
-    if (this.#options.ttl && this.#options.ttl > 0 && !this.#ttlMap.has(key)) {
-      this.#ttlMap.set(key, Date.now() + (this.#options.ttl || 0));
+    if (this.#options.ttl > 0 && !this.#ttlMap.has(key)) {
+      this.#ttlMap.set(key, Date.now() + this.#options.ttl);
     }
 
     super.set(key, value);
@@ -406,14 +467,16 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @param {V} callback.value - The current value being processed
    * @param {K} callback.key - The key of the current value being processed
    * @param {Store<K, V>} callback.store - The store instance
-   * @returns {R[]} Array containing the results of the callback function
+   * @returns Array containing the results of the callback function
    *
    * @example
    * // Get an array of all user names
    * const userNames = store.map(user => user.name);
    */
   map<R>(callback: (value: V, key: K, store: this) => R): R[] {
-    return Array.from(this, ([key, value]) => callback(value, key, this));
+    return Array.from(this, ([key, value]) =>
+      callback(this.#maybeCloneValue(value), key, this),
+    );
   }
 
   /**
@@ -425,9 +488,6 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @example
    * // Sort users by age
    * const sortedUsers = store.sort((a, b) => a.age - b.age);
-   *
-   * @remarks
-   * If no compare function is provided, values are converted to strings and sorted lexicographically
    */
   sort(compareFn?: (a: V, b: V) => number): Store<K, V> {
     const sorted = [...this.entries()].sort(
@@ -439,8 +499,8 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
   /**
    * Returns a subset of values for pagination.
    *
-   * @param {number} [page=0] - The page number (0-based)
-   * @param {number} [pageSize=10] - The number of items per page
+   * @param [page=0] - The page number (0-based)
+   * @param [pageSize=10] - The number of items per page
    * @returns {V[]} Array of values for the requested page
    *
    * @example
@@ -451,7 +511,46 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * const secondPage = store.slice(1, 10);
    */
   slice(page = 0, pageSize = 10): V[] {
-    return [...this.values()].slice(page * pageSize, (page + 1) * pageSize);
+    if (page < 0) {
+      throw new Error(`Page number cannot be negative: ${page}`);
+    }
+    if (pageSize <= 0) {
+      throw new Error(`Page size must be positive: ${pageSize}`);
+    }
+
+    return [...this.values()]
+      .slice(page * pageSize, (page + 1) * pageSize)
+      .map((value) => this.#maybeCloneValue(value));
+  }
+
+  /**
+   * Returns all values in the store as an array.
+   *
+   * @returns {V[]} Array of all values in the store
+   */
+  toArray(): V[] {
+    return [...this.values()].map((value) => this.#maybeCloneValue(value));
+  }
+
+  /**
+   * Returns all keys in the store as an array.
+   *
+   * @returns {K[]} Array of all keys in the store
+   */
+  keysArray(): K[] {
+    return [...this.keys()];
+  }
+
+  /**
+   * Returns all entries in the store as an array of [key, value] pairs.
+   *
+   * @returns {[K, V][]} Array of all entries in the store
+   */
+  entriesArray(): [K, V][] {
+    return [...this.entries()].map(([key, value]) => [
+      key,
+      this.#maybeCloneValue(value),
+    ]);
   }
 
   /**
@@ -482,7 +581,11 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @private
    */
   #startCleanupInterval(): void {
-    const cleanupInterval = Math.min((this.#options.ttl || 0) / 2, 60000);
+    const cleanupInterval = Math.max(
+      Math.min(this.#options.ttl / 2, 60000),
+      this.#options.minCleanupInterval,
+    );
+
     this.#cleanupInterval = setInterval(() => this.#cleanup(), cleanupInterval);
     // Force an immediate cleanup run
     this.#cleanup();
@@ -495,10 +598,18 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    */
   #cleanup(): void {
     const now = Date.now();
+    const expiredKeys: K[] = [];
+
+    // First, identify all expired keys
     for (const [key, expiry] of this.#ttlMap.entries()) {
       if (now >= expiry) {
-        this.delete(key);
+        expiredKeys.push(key);
       }
+    }
+
+    // Then, remove them
+    for (const key of expiredKeys) {
+      this.delete(key);
     }
   }
 
@@ -521,31 +632,57 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @private
    */
   #evict(): void {
-    if (!this.#options.maxSize || this.size < (this.#options.maxSize || 0)) {
+    if (this.#options.maxSize <= 0 || this.size < this.#options.maxSize) {
       return;
     }
 
-    if (this.#options.evictionStrategy === "lru" && this.#lruCache) {
-      // Find the least recently used key
-      let oldestTime = Number.POSITIVE_INFINITY;
-      let leastUsedKey: K | null = null;
-
-      for (const [key, accessTime] of this.#lruCache.entries()) {
-        if (accessTime < oldestTime) {
-          oldestTime = accessTime;
-          leastUsedKey = key;
-        }
-      }
-
-      if (leastUsedKey) {
-        this.delete(leastUsedKey);
-      }
+    if (this.#options.evictionStrategy === "lru") {
+      this.#evictLru();
     } else {
-      // FIFO - remove the first key added
-      const firstKey = this.keys().next().value;
-      if (firstKey) {
-        this.delete(firstKey);
+      this.#evictFifo();
+    }
+  }
+
+  /**
+   * Evicts the least recently used item.
+   *
+   * @private
+   */
+  #evictLru(): void {
+    if (!this.#lruCache || this.#lruCache.size === 0) {
+      // Fall back to FIFO if LRU cache is not available or empty
+      this.#evictFifo();
+      return;
+    }
+
+    // Find the least recently used key
+    let oldestTime = Number.POSITIVE_INFINITY;
+    let leastUsedKey: K | null = null;
+
+    for (const [key, accessTime] of this.#lruCache.entries()) {
+      if (accessTime < oldestTime) {
+        oldestTime = accessTime;
+        leastUsedKey = key;
       }
+    }
+
+    if (leastUsedKey) {
+      this.delete(leastUsedKey);
+    } else {
+      // Fall back to FIFO if no least used key is found
+      this.#evictFifo();
+    }
+  }
+
+  /**
+   * Evicts the first item added to the store (First-In-First-Out).
+   *
+   * @private
+   */
+  #evictFifo(): void {
+    const firstKey = this.keys().next().value;
+    if (firstKey) {
+      this.delete(firstKey);
     }
   }
 
@@ -558,11 +695,53 @@ export class Store<K extends string | number | symbol, V> extends Map<K, V> {
    * @private
    */
   #matchesPattern(value: V, pattern: [string, unknown][]): boolean {
+    if (typeof value !== "object" || value === null) {
+      return false;
+    }
+
     return pattern.every(([path, expectedValue]) => {
       const actualValue = get(value, path);
-      return Array.isArray(actualValue)
-        ? actualValue.includes(expectedValue)
-        : actualValue === expectedValue;
+
+      // Handle array contains checks
+      if (Array.isArray(actualValue)) {
+        if (Array.isArray(expectedValue)) {
+          // Check if arrays are equal (all elements match)
+          return (
+            expectedValue.length === actualValue.length &&
+            expectedValue.every((v) => actualValue.includes(v))
+          );
+        }
+        // Check if array contains value
+        return actualValue.includes(expectedValue);
+      }
+
+      // Default equality check
+      return actualValue === expectedValue;
     });
+  }
+
+  /**
+   * Clones an object if cloneValues option is enabled
+   *
+   * @param {V} value - The value to potentially clone
+   * @returns {V} The cloned value or the original value
+   * @private
+   */
+  #maybeCloneValue(value: V): V {
+    return this.#options.cloneValues ? this.#cloneIfObject(value) : value;
+  }
+
+  /**
+   * Clones a value if it's an object, otherwise returns the value as is
+   *
+   * @param {V} value - The value to potentially clone
+   * @returns {V} The cloned value or the original value
+   * @private
+   */
+  #cloneIfObject(value: V): V {
+    if (typeof value === "object" && value !== null) {
+      return cloneDeep(value);
+    }
+    return value;
   }
 }

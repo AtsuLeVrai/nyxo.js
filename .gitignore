@@ -88,7 +88,6 @@ lib-cov/
 
 ### TypeScript specific ###
 *.tsbuildinfo
-typings/
 
 ### Runtime data ###
 pids/

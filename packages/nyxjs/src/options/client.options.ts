@@ -256,6 +256,36 @@ export const ClientCacheOptions = z
      * @default { enabled: true, maxSize: 1000, ttl: 0 }
      */
     soundboards: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the thread members cache.
+     *
+     * This cache stores ThreadMember objects which represent members of threads in guilds.
+     * Only relevant for bots that interact with threads.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    threadMembers: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the invites cache.
+     *
+     * This cache stores Invite objects which represent server invites.
+     * Only relevant for bots that interact with invites.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    invites: ClientCacheEntityOptions.default({}),
+
+    /**
+     * Configuration for the webhooks cache.
+     *
+     * This cache stores Webhook objects which represent webhooks in guilds.
+     * Only relevant for bots that interact with webhooks.
+     *
+     * @default { enabled: true, maxSize: 1000, ttl: 0 }
+     */
+    webhooks: ClientCacheEntityOptions.default({}),
   })
   .readonly();
 

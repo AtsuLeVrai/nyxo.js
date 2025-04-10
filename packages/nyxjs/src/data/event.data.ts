@@ -1,37 +1,53 @@
-import type { Snowflake } from "@nyxjs/core";
+import type {
+  BanEntity,
+  EmojiEntity,
+  InviteEntity,
+  Snowflake,
+} from "@nyxjs/core";
 import type {
   GatewayEvents,
   GatewayReceiveEvents,
   GuildCreateEntity,
+  InviteCreateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import type { Store } from "@nyxjs/store";
+import type { RequiredKeysOf } from "type-fest";
 import {
   type AnyThreadChannel,
   AutoModerationActionExecution,
   AutoModerationRule,
+  Ban,
+  ChannelPins,
+  Emoji,
   Entitlement,
   Guild,
+  GuildAuditLogEntry,
   GuildMember,
   GuildScheduledEvent,
   Integration,
+  Invite,
   Message,
   MessagePollVote,
   Ready,
   Role,
   SoundboardSound,
   StageInstance,
+  Sticker,
   Subscription,
+  ThreadListSync,
+  ThreadMember,
   TypingStart,
   User,
   VoiceChannelEffectSend,
   VoiceServer,
   VoiceState,
+  Webhook,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
 import { ChannelFactory, InteractionFactory } from "../factories/index.js";
 import type { CacheManager } from "../managers/index.js";
-import type { ClientEvents } from "../types/index.js";
+import type { ClientEvents, GuildBased } from "../types/index.js";
 
 /**
  * Gateway to client event mapping configuration
@@ -166,36 +182,17 @@ function handleUpdateEvent<
  * - Returning an array of arguments to be passed to event handlers
  */
 export const StandardGatewayDispatchEventMappings = [
-  /**
-   * Ready event - emitted when the client has successfully connected to the gateway
-   * and is ready to receive events.
-   */
   defineEvent("READY", "ready", (client, data) => [Ready.from(client, data)]),
-
-  /**
-   * Application command permissions update event - emitted when application command
-   * permissions are updated.
-   */
   defineEvent(
     "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
     "applicationCommandPermissionsUpdate",
     (_client, data) => [data],
   ),
-
-  /**
-   * Auto moderation rule create event - emitted when an auto moderation rule is created.
-   * Adds the new rule to the cache.
-   */
   defineEvent(
     "AUTO_MODERATION_RULE_CREATE",
     "autoModerationRuleCreate",
     (client, data) => [AutoModerationRule.from(client, data)],
   ),
-
-  /**
-   * Auto moderation rule update event - emitted when an auto moderation rule is updated.
-   * Updates the cached rule and provides both old and new versions.
-   */
   defineEvent(
     "AUTO_MODERATION_RULE_UPDATE",
     "autoModerationRuleUpdate",
@@ -207,250 +204,242 @@ export const StandardGatewayDispatchEventMappings = [
         AutoModerationRule.from,
       ),
   ),
-
-  /**
-   * Auto moderation rule delete event - emitted when an auto moderation rule is deleted.
-   * Removes the rule from the cache.
-   */
   defineEvent(
     "AUTO_MODERATION_RULE_DELETE",
     "autoModerationRuleDelete",
     (client, data) => handleDeleteEvent(client, data.id, "autoModerationRules"),
   ),
-
-  /**
-   * Auto moderation action execution event - emitted when auto moderation takes action.
-   */
   defineEvent(
     "AUTO_MODERATION_ACTION_EXECUTION",
     "autoModerationActionExecution",
     (client, data) => [AutoModerationActionExecution.from(client, data)],
   ),
-
-  /**
-   * Channel create event - emitted when a channel is created.
-   * Adds the new channel to the cache.
-   */
   defineEvent("CHANNEL_CREATE", "channelCreate", (client, data) => [
     ChannelFactory.create(client, data),
   ]),
-
-  /**
-   * Channel update event - emitted when a channel is updated.
-   * Updates the channel in the cache and provides both old and new versions.
-   */
   defineEvent("CHANNEL_UPDATE", "channelUpdate", (client, data) =>
     handleUpdateEvent(client, data, "channels", ChannelFactory.create),
   ),
-
-  /**
-   * Channel delete event - emitted when a channel is deleted.
-   * Removes the channel from the cache.
-   */
   defineEvent("CHANNEL_DELETE", "channelDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "channels"),
   ),
-
-  /**
-   * Channel pins update event - emitted when a message is pinned or unpinned.
-   */
-  defineEvent(
-    "CHANNEL_PINS_UPDATE",
-    "channelPinsUpdate",
-    (_client, _data) => {},
-  ),
-
-  /**
-   * Thread create event - emitted when a thread is created.
-   * Adds the new thread to the cache.
-   */
+  defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (client, data) => [
+    ChannelPins.from(client, data),
+  ]),
   defineEvent("THREAD_CREATE", "threadCreate", (client, data) => [
     ChannelFactory.create(client, data) as AnyThreadChannel,
   ]),
-
-  /**
-   * Thread update event - emitted when a thread is updated.
-   * Updates the thread in the cache and provides both old and new versions.
-   */
   defineEvent("THREAD_UPDATE", "threadUpdate", (client, data) =>
     handleUpdateEvent(client, data, "channels", ChannelFactory.create),
   ),
-
-  /**
-   * Thread delete event - emitted when a thread is deleted.
-   * Removes the thread from the cache.
-   */
   defineEvent("THREAD_DELETE", "threadDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "channels"),
   ),
-
-  /**
-   * Thread list sync event - emitted when threads are synced.
-   */
-  defineEvent("THREAD_LIST_SYNC", "threadListSync", (_client, _data) => {}),
-
-  /**
-   * Thread member update event - emitted when a thread member is updated.
-   */
-  defineEvent(
-    "THREAD_MEMBER_UPDATE",
-    "threadMemberUpdate",
-    (_client, _data) => {},
+  defineEvent("THREAD_LIST_SYNC", "threadListSync", (client, data) => [
+    ThreadListSync.from(client, data),
+  ]),
+  defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (client, data) =>
+    handleUpdateEvent(client, data, "threadMembers", ThreadMember.from),
   ),
-
-  /**
-   * Thread members update event - emitted when multiple thread members are updated.
-   */
   defineEvent(
     "THREAD_MEMBERS_UPDATE",
     "threadMembersUpdate",
-    (_client, _data) => {},
+    (_client, data) => [data],
   ),
-
-  /**
-   * Entitlement create event - emitted when an entitlement is created.
-   * Adds the new entitlement to the cache.
-   */
   defineEvent("ENTITLEMENT_CREATE", "entitlementCreate", (client, data) => [
     Entitlement.from(client, data),
   ]),
-
-  /**
-   * Entitlement update event - emitted when an entitlement is updated.
-   * Updates the entitlement in the cache and provides both old and new versions.
-   */
   defineEvent("ENTITLEMENT_UPDATE", "entitlementUpdate", (client, data) =>
     handleUpdateEvent(client, data, "entitlements", Entitlement.from),
   ),
-
-  /**
-   * Entitlement delete event - emitted when an entitlement is deleted.
-   * Removes the entitlement from the cache.
-   */
   defineEvent("ENTITLEMENT_DELETE", "entitlementDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "entitlements"),
   ),
-
-  /**
-   * Guild create event - emitted when a guild becomes available.
-   * Adds the guild and its related entities to the cache.
-   */
   defineEvent("GUILD_CREATE", "guildCreate", (client, data) => [
     Guild.from(client, data as GuildCreateEntity),
   ]),
-
-  /**
-   * Guild update event - emitted when a guild is updated.
-   * Updates the guild in the cache and provides both old and new versions.
-   */
   defineEvent("GUILD_UPDATE", "guildUpdate", (client, data) =>
     handleUpdateEvent(client, data, "guilds", Guild.from),
   ),
-
-  /**
-   * Guild delete event - emitted when a guild becomes unavailable or the bot is removed.
-   * Removes the guild and optionally its related entities from the cache.
-   */
   defineEvent("GUILD_DELETE", "guildDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "guilds"),
   ),
-
-  /**
-   * Guild audit log entry create event - emitted when an audit log entry is created.
-   */
   defineEvent(
     "GUILD_AUDIT_LOG_ENTRY_CREATE",
     "guildAuditLogEntryCreate",
-    (_client, data) => [data],
+    (client, data) => [GuildAuditLogEntry.from(client, data)],
   ),
+  defineEvent("GUILD_BAN_ADD", "guildBanAdd", (client, data) => [
+    Ban.from(client, {
+      guild_id: data.guild_id,
+      user: data.user,
+      reason: null,
+    } as GuildBased<BanEntity>),
+  ]),
+  defineEvent("GUILD_BAN_REMOVE", "guildBanRemove", (client, data) => [
+    Ban.from(client, {
+      guild_id: data.guild_id,
+      user: data.user,
+      reason: null,
+    } as GuildBased<BanEntity>),
+  ]),
+  defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", (client, data) => {
+    const guildId = data.guild_id;
+    const newEmojis = data.emojis;
 
-  /**
-   * Guild ban add event - emitted when a user is banned from a guild.
-   */
-  defineEvent("GUILD_BAN_ADD", "guildBanAdd", (_client, _data) => {}),
+    // Retrieve cached emojis for this guild
+    const cachedEmojis = Array.from(client.cache.emojis.values()).filter(
+      (emoji) => emoji.guildId === guildId,
+    );
 
-  /**
-   * Guild ban remove event - emitted when a user is unbanned from a guild.
-   */
-  defineEvent("GUILD_BAN_REMOVE", "guildBanRemove", (_client, _data) => {}),
+    // Create maps for efficient lookup
+    const newEmojiMap = new Map<Snowflake, GuildBased<EmojiEntity>>();
+    for (const emoji of newEmojis) {
+      const formattedEmoji = { ...emoji, guild_id: guildId };
+      if (emoji.id) {
+        newEmojiMap.set(emoji.id, formattedEmoji);
+      }
+    }
 
-  /**
-   * Guild emojis update event - emitted when a guild's emojis are updated.
-   * This event is special as it needs to trigger individual emoji events.
-   */
-  defineEvent(
-    "GUILD_EMOJIS_UPDATE",
-    "guildEmojisUpdate",
-    (_client, _data) => {},
-  ),
+    const cachedEmojiMap = new Map<Snowflake, Emoji>();
+    for (const emoji of cachedEmojis) {
+      if (emoji.id) {
+        cachedEmojiMap.set(emoji.id, emoji);
+      }
+    }
 
-  /**
-   * Guild stickers update event - emitted when a guild's stickers are updated.
-   * Similar to emoji updates, this triggers individual sticker events.
-   */
+    // Handle created emojis
+    for (const [id, emojiData] of newEmojiMap.entries()) {
+      if (!cachedEmojiMap.has(id)) {
+        // Emoji created - use the factory directly
+        const newEmoji = Emoji.from(client, emojiData);
+        client.emit("emojiCreate", newEmoji);
+
+        // Update cache (handled by the Emoji.from factory)
+      }
+    }
+
+    // Handle updated emojis
+    for (const [id, emojiData] of newEmojiMap.entries()) {
+      if (cachedEmojiMap.has(id)) {
+        // Use handleUpdateEvent to get both old and new versions
+        const [oldEmoji, newEmoji] = handleUpdateEvent(
+          client,
+          emojiData,
+          "emojis",
+          Emoji.from,
+        );
+
+        // Emit the update event
+        client.emit("emojiUpdate", oldEmoji, newEmoji);
+      }
+    }
+
+    // Handle deleted emojis
+    for (const [id, _] of cachedEmojiMap.entries()) {
+      if (!newEmojiMap.has(id)) {
+        // Use handleDeleteEvent to remove from cache and get old entity
+        const [deletedEmoji] = handleDeleteEvent(client, id, "emojis");
+
+        // Emit the delete event
+        client.emit("emojiDelete", deletedEmoji);
+      }
+    }
+
+    // Return the original event data
+    return [data];
+  }),
   defineEvent(
     "GUILD_STICKERS_UPDATE",
     "guildStickersUpdate",
-    (_client, _data) => {},
-  ),
+    (client, data) => {
+      const guildId = data.guild_id;
+      const newStickers = data.stickers;
 
-  /**
-   * Guild integrations update event - emitted when a guild's integrations are updated.
-   */
-  defineEvent(
-    "GUILD_INTEGRATIONS_UPDATE",
-    "guildIntegrationsUpdate",
-    (_client, _data) => {},
-  ),
+      // Retrieve cached stickers for this guild
+      const cachedStickers = Array.from(client.cache.stickers.values()).filter(
+        (sticker) => sticker.guildId === guildId,
+      );
 
-  /**
-   * Guild member add event - emitted when a user joins a guild.
-   * Adds the member to the cache.
-   */
+      // Create maps for efficient lookup
+      const newStickerMap = new Map();
+      for (const sticker of newStickers) {
+        const formattedSticker = { ...sticker, guild_id: guildId };
+        if (sticker.id) {
+          newStickerMap.set(sticker.id, formattedSticker);
+        }
+      }
+
+      const cachedStickerMap = new Map();
+      for (const sticker of cachedStickers) {
+        if (sticker.id) {
+          cachedStickerMap.set(sticker.id, sticker);
+        }
+      }
+
+      // Handle created stickers
+      for (const [id, stickerData] of newStickerMap.entries()) {
+        if (!cachedStickerMap.has(id)) {
+          // Sticker created - use the factory directly
+          const newSticker = Sticker.from(client, stickerData);
+          client.emit("stickerCreate", newSticker);
+        }
+      }
+
+      // Handle updated stickers
+      for (const [id, stickerData] of newStickerMap.entries()) {
+        if (cachedStickerMap.has(id)) {
+          // Use handleUpdateEvent to get both old and new versions
+          const [oldSticker, newSticker] = handleUpdateEvent(
+            client,
+            stickerData,
+            "stickers",
+            Sticker.from,
+          );
+
+          // Emit the update event
+          client.emit("stickerUpdate", oldSticker, newSticker);
+        }
+      }
+
+      // Handle deleted stickers
+      for (const [id, _] of cachedStickerMap.entries()) {
+        if (!newStickerMap.has(id)) {
+          // Use handleDeleteEvent to remove from cache and get old entity
+          const [deletedSticker] = handleDeleteEvent(client, id, "stickers");
+
+          // Emit the delete event
+          client.emit("stickerDelete", deletedSticker);
+        }
+      }
+
+      // Return the original event data
+      return [data];
+    },
+  ),
+  // defineEvent(
+  //   "GUILD_INTEGRATIONS_UPDATE",
+  //   "guildIntegrationsUpdate",
+  //   (_client, _data) => {},
+  // ),
   defineEvent("GUILD_MEMBER_ADD", "guildMemberAdd", (client, data) => [
     GuildMember.from(client, data),
   ]),
-
-  /**
-   * Guild member update event - emitted when a guild member is updated.
-   * Updates the member in the cache.
-   */
   defineEvent("GUILD_MEMBER_UPDATE", "guildMemberUpdate", (client, data) =>
     handleUpdateEvent(client, data, "members", GuildMember.from),
   ),
-
-  /**
-   * Guild member remove event - emitted when a user leaves a guild.
-   * Removes the member from the cache.
-   */
   defineEvent("GUILD_MEMBER_REMOVE", "guildMemberRemove", (client, data) =>
     handleDeleteEvent(client, `${data.guild_id}:${data.user.id}`, "members"),
   ),
-
-  /**
-   * Guild members chunk event - emitted in response to Guild Request Members.
-   */
-  defineEvent(
-    "GUILD_MEMBERS_CHUNK",
-    "guildMembersChunk",
-    (_client, _data) => {},
-  ),
-
-  /**
-   * Guild role create event - emitted when a guild role is created.
-   * Adds the role to the cache.
-   */
+  defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (_client, data) => [
+    data,
+  ]),
   defineEvent("GUILD_ROLE_CREATE", "guildRoleCreate", (client, data) => [
     Role.from(client, {
       guild_id: data.guild_id,
       ...data.role,
     }),
   ]),
-
-  /**
-   * Guild role update event - emitted when a guild role is updated.
-   * Updates the role in the cache.
-   */
   defineEvent("GUILD_ROLE_UPDATE", "guildRoleUpdate", (client, data) =>
     handleUpdateEvent(
       client,
@@ -462,29 +451,14 @@ export const StandardGatewayDispatchEventMappings = [
       Role.from,
     ),
   ),
-
-  /**
-   * Guild role delete event - emitted when a guild role is deleted.
-   * Removes the role from the cache.
-   */
   defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (client, data) =>
     handleDeleteEvent(client, data.role_id, "roles"),
   ),
-
-  /**
-   * Guild scheduled event create event - emitted when a scheduled event is created.
-   * Adds the event to the cache.
-   */
   defineEvent(
     "GUILD_SCHEDULED_EVENT_CREATE",
     "guildScheduledEventCreate",
     (client, data) => [GuildScheduledEvent.from(client, data)],
   ),
-
-  /**
-   * Guild scheduled event update event - emitted when a scheduled event is updated.
-   * Updates the event in the cache and provides both old and new versions.
-   */
   defineEvent(
     "GUILD_SCHEDULED_EVENT_UPDATE",
     "guildScheduledEventUpdate",
@@ -496,306 +470,156 @@ export const StandardGatewayDispatchEventMappings = [
         GuildScheduledEvent.from,
       ),
   ),
-
-  /**
-   * Guild scheduled event delete event - emitted when a scheduled event is deleted.
-   * Removes the event from the cache.
-   */
   defineEvent(
     "GUILD_SCHEDULED_EVENT_DELETE",
     "guildScheduledEventDelete",
     (client, data) => handleDeleteEvent(client, data.id, "scheduledEvents"),
   ),
-
-  /**
-   * Guild scheduled event user add event - emitted when a user subscribes to an event.
-   */
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_ADD",
     "guildScheduledEventUserAdd",
     (_client, _data) => {},
   ),
-
-  /**
-   * Guild scheduled event user remove event - emitted when a user unsubscribes from an event.
-   */
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_REMOVE",
     "guildScheduledEventUserRemove",
     (_client, _data) => {},
   ),
-
-  /**
-   * Guild soundboard sound create event - emitted when a soundboard sound is created.
-   * Adds the sound to the cache.
-   */
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_CREATE",
     "guildSoundboardSoundCreate",
     (client, data) => [SoundboardSound.from(client, data)],
   ),
-
-  /**
-   * Guild soundboard sound update event - emitted when a soundboard sound is updated.
-   * Updates the sound in the cache.
-   */
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_UPDATE",
     "guildSoundboardSoundUpdate",
     (client, data) =>
       handleUpdateEvent(client, data, "soundboards", SoundboardSound.from),
   ),
-
-  /**
-   * Guild soundboard sound delete event - emitted when a soundboard sound is deleted.
-   * Removes the sound from the cache.
-   */
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_DELETE",
     "guildSoundboardSoundDelete",
     (client, data) => handleDeleteEvent(client, data.sound_id, "soundboards"),
   ),
-
-  /**
-   * Guild soundboard sounds update event - emitted when multiple sounds are updated.
-   */
   defineEvent(
     "GUILD_SOUNDBOARD_SOUNDS_UPDATE",
     "guildSoundboardSoundsUpdate",
-    (_client, _data) => {},
+    (client, data) => {
+      const sounds = data.soundboard_sounds.map((soundData) =>
+        SoundboardSound.from(client, {
+          ...soundData,
+          guild_id: data.guild_id,
+        }),
+      );
+
+      return [sounds];
+    },
   ),
-
-  /**
-   * Soundboard sounds event - emitted for soundboard sounds.
-   */
-  defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (_client, _data) => {}),
-
-  /**
-   * Integration create event - emitted when an integration is created.
-   * Adds the integration to the cache.
-   */
+  defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (client, data) => {
+    const soundboardSounds = data.soundboard_sounds.map((sound) =>
+      SoundboardSound.from(client, sound),
+    );
+    return [soundboardSounds];
+  }),
   defineEvent("INTEGRATION_CREATE", "integrationCreate", (client, data) => [
     Integration.from(client, data),
   ]),
-
-  /**
-   * Integration update event - emitted when an integration is updated.
-   * Updates the integration in the cache.
-   */
   defineEvent("INTEGRATION_UPDATE", "integrationUpdate", (client, data) =>
     handleUpdateEvent(client, data, "integrations", Integration.from),
   ),
-
-  /**
-   * Integration delete event - emitted when an integration is deleted.
-   * Removes the integration from the cache.
-   */
   defineEvent("INTEGRATION_DELETE", "integrationDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "integrations"),
   ),
-
-  /**
-   * Invite create event - emitted when an invite is created.
-   * Adds the invite to the cache.
-   */
-  defineEvent("INVITE_CREATE", "inviteCreate", (_client, _data) => {}),
-
-  /**
-   * Invite delete event - emitted when an invite is deleted.
-   * Removes the invite from the cache.
-   */
-  defineEvent("INVITE_DELETE", "inviteDelete", (_client, _data) => {}),
-
-  /**
-   * Message create event - emitted when a message is sent.
-   * Adds the message to the cache.
-   */
+  defineEvent("INVITE_CREATE", "inviteCreate", (client, data) => [
+    Invite.from(client, data as InviteEntity & InviteCreateEntity),
+  ]),
+  defineEvent("INVITE_DELETE", "inviteDelete", (client, data) => [
+    Invite.from(client, data as InviteEntity & InviteCreateEntity),
+  ]),
   defineEvent("MESSAGE_CREATE", "messageCreate", (client, data) => [
     Message.from(client, data),
   ]),
-
-  /**
-   * Message update event - emitted when a message is edited.
-   * Updates the message in the cache and provides both old and new versions.
-   */
   defineEvent("MESSAGE_UPDATE", "messageUpdate", (client, data) =>
     handleUpdateEvent(client, data, "messages", Message.from),
   ),
-
-  /**
-   * Message delete event - emitted when a message is deleted.
-   * Removes the message from the cache.
-   */
   defineEvent("MESSAGE_DELETE", "messageDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "messages"),
   ),
-
-  /**
-   * Message delete bulk event - emitted when multiple messages are deleted at once.
-   * Removes the messages from the cache.
-   */
-  defineEvent(
-    "MESSAGE_DELETE_BULK",
-    "messageDeleteBulk",
-    (_client, _data) => {},
-  ),
-
-  /**
-   * Message reaction add event - emitted when a reaction is added to a message.
-   */
+  defineEvent("MESSAGE_DELETE_BULK", "messageDeleteBulk", (client, data) => [
+    data.ids.map((id) => {
+      const [message] = handleDeleteEvent(client, id, "messages");
+      return message;
+    }),
+  ]),
   defineEvent(
     "MESSAGE_REACTION_ADD",
     "messageReactionAdd",
     (_client, _data) => {},
   ),
-
-  /**
-   * Message reaction remove event - emitted when a reaction is removed from a message.
-   */
   defineEvent(
     "MESSAGE_REACTION_REMOVE",
     "messageReactionRemove",
     (_client, _data) => {},
   ),
-
-  /**
-   * Message reaction remove all event - emitted when all reactions are removed from a message.
-   */
   defineEvent(
     "MESSAGE_REACTION_REMOVE_ALL",
     "messageReactionRemoveAll",
     (_client, _data) => {},
   ),
-
-  /**
-   * Message reaction remove emoji event - emitted when all reactions of a specific emoji are removed.
-   */
   defineEvent(
     "MESSAGE_REACTION_REMOVE_EMOJI",
     "messageReactionRemoveEmoji",
     (_client, _data) => {},
   ),
-
-  /**
-   * Message poll vote add event - emitted when a user votes on a poll.
-   */
   defineEvent("MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd", (client, data) => [
     MessagePollVote.from(client, data),
   ]),
-
-  /**
-   * Message poll vote remove event - emitted when a user removes their vote from a poll.
-   */
   defineEvent(
     "MESSAGE_POLL_VOTE_REMOVE",
     "messagePollVoteRemove",
     (client, data) => [MessagePollVote.from(client, data)],
   ),
-
-  /**
-   * Presence update event - emitted when a user's presence is updated.
-   * Updates the presence in the cache.
-   */
   defineEvent("PRESENCE_UPDATE", "presenceUpdate", (_client, _data) => {}),
-
-  /**
-   * Typing start event - emitted when a user starts typing.
-   */
   defineEvent("TYPING_START", "typingStart", (client, data) => [
     TypingStart.from(client, data),
   ]),
-
-  /**
-   * User update event - emitted when properties about the current user change.
-   * Updates the user in the cache and provides both old and new versions.
-   */
   defineEvent("USER_UPDATE", "userUpdate", (client, data) =>
     handleUpdateEvent(client, data, "users", User.from),
   ),
-
-  /**
-   * Voice channel effect send event - emitted when a voice channel effect is sent.
-   */
   defineEvent(
     "VOICE_CHANNEL_EFFECT_SEND",
     "voiceChannelEffectSend",
     (client, data) => [VoiceChannelEffectSend.from(client, data)],
   ),
-
-  /**
-   * Voice state update event - emitted when a user's voice state changes.
-   * Updates the voice state in the cache and provides both old and new versions.
-   */
   defineEvent("VOICE_STATE_UPDATE", "voiceStateUpdate", (client, data) =>
     handleUpdateEvent(client, data, "voiceStates", VoiceState.from),
   ),
-
-  /**
-   * Voice server update event - emitted when a guild's voice server is updated.
-   */
   defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (client, data) =>
     handleUpdateEvent(client, data, "voiceServers", VoiceServer.from),
   ),
-
-  /**
-   * Webhooks update event - emitted when a guild webhook is created, updated, or deleted.
-   */
-  defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (_client, _data) => {}),
-
-  /**
-   * Interaction create event - emitted when an interaction is created.
-   * Uses the InteractionFactory to create the appropriate interaction type.
-   */
+  defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (client, data) =>
+    handleUpdateEvent(client, data, "webhooks", Webhook.from),
+  ),
   defineEvent("INTERACTION_CREATE", "interactionCreate", (client, data) => [
     InteractionFactory.create(client, data),
   ]),
-
-  /**
-   * Stage instance create event - emitted when a stage instance is created.
-   * Adds the stage instance to the cache.
-   */
   defineEvent(
     "STAGE_INSTANCE_CREATE",
     "stageInstanceCreate",
     (client, data) => [StageInstance.from(client, data)],
   ),
-
-  /**
-   * Stage instance update event - emitted when a stage instance is updated.
-   * Updates the stage instance in the cache and provides both old and new versions.
-   */
   defineEvent("STAGE_INSTANCE_UPDATE", "stageInstanceUpdate", (client, data) =>
     handleUpdateEvent(client, data, "stageInstances", StageInstance.from),
   ),
-
-  /**
-   * Stage instance delete event - emitted when a stage instance is deleted.
-   * Removes the stage instance from the cache.
-   */
   defineEvent("STAGE_INSTANCE_DELETE", "stageInstanceDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "stageInstances"),
   ),
-
-  /**
-   * Subscription create event - emitted when a subscription is created.
-   * Adds the subscription to the cache.
-   */
   defineEvent("SUBSCRIPTION_CREATE", "subscriptionCreate", (client, data) => [
     Subscription.from(client, data),
   ]),
-
-  /**
-   * Subscription update event - emitted when a subscription is updated.
-   * Updates the subscription in the cache and provides both old and new versions.
-   */
   defineEvent("SUBSCRIPTION_UPDATE", "subscriptionUpdate", (client, data) =>
     handleUpdateEvent(client, data, "subscriptions", Subscription.from),
   ),
-
-  /**
-   * Subscription delete event - emitted when a subscription is deleted.
-   * Removes the subscription from the cache.
-   */
   defineEvent("SUBSCRIPTION_DELETE", "subscriptionDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "subscriptions"),
   ),
@@ -805,7 +629,7 @@ export const StandardGatewayDispatchEventMappings = [
  * Standard mappings of Discord REST events to client events.
  * These events are forwarded directly from the REST client to the main client.cache.
  */
-export const RestKeyofEventMappings: (keyof RestEvents)[] = [
+export const RestKeyofEventMappings: RequiredKeysOf<RestEvents>[] = [
   "requestStart",
   "requestSuccess",
   "requestFailure",
@@ -819,7 +643,7 @@ export const RestKeyofEventMappings: (keyof RestEvents)[] = [
  * Standard mappings of Discord Gateway events to client events.
  * These events are forwarded directly from the Gateway client to the main client.cache.
  */
-export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
+export const GatewayKeyofEventMappings: RequiredKeysOf<GatewayEvents>[] = [
   "connectionAttempt",
   "connectionSuccess",
   "connectionFailure",
