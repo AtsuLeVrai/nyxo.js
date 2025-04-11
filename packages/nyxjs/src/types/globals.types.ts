@@ -1,4 +1,7 @@
-import type { GuildApplicationCommandPermissionEntity } from "@nyxjs/core";
+import type {
+  GuildApplicationCommandPermissionEntity,
+  VoiceStateEntity,
+} from "@nyxjs/core";
 import type {
   GatewayEvents,
   GuildEmojisUpdateEntity,
@@ -8,6 +11,7 @@ import type {
   MessageReactionRemoveEmojiEntity,
   PresenceEntity,
   ThreadMembersUpdateEntity,
+  VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import type {
@@ -41,8 +45,6 @@ import type {
   TypingStart,
   User,
   VoiceChannelEffectSend,
-  VoiceServer,
-  VoiceState,
   Webhook,
 } from "../classes/index.js";
 
@@ -649,17 +651,16 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
 
   /**
    * Emitted when a user joins, leaves, or moves between voice channels.
-   * @param oldState The voice state before the update
-   * @param newState The voice state after the update
+   * @param server Information about the voice server
    */
-  voiceStateUpdate: [oldState: VoiceState | null, newState: VoiceState];
+  voiceStateUpdate: [state: VoiceStateEntity];
 
   /**
    * Emitted when a guild's voice server is updated.
    * This usually happens when a guild becomes available for voice connections.
    * @param server Information about the voice server update
    */
-  voiceServerUpdate: [oldServer: VoiceServer | null, newServer: VoiceServer];
+  voiceServerUpdate: [server: VoiceServerUpdateEntity];
 
   /**
    * Emitted when a webhook is created, updated, or deleted in a guild channel.

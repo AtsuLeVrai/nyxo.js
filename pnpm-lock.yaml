@@ -266,40 +266,6 @@ importers:
         specifier: ^5.8.3
         version: 5.8.3
 
-  packages/voice:
-    dependencies:
-      eventemitter3:
-        specifier: ^5.0.1
-        version: 5.0.1
-      opusscript:
-        specifier: ^0.1.1
-        version: 0.1.1
-      sodium-native:
-        specifier: ^5.0.1
-        version: 5.0.1
-      zod:
-        specifier: ^3.24.2
-        version: 3.24.2
-      zod-validation-error:
-        specifier: ^3.4.0
-        version: 3.4.0(zod@3.24.2)
-    devDependencies:
-      '@biomejs/biome':
-        specifier: 2.0.0-beta.1
-        version: 2.0.0-beta.1
-      '@types/node':
-        specifier: ^22.14.0
-        version: 22.14.0
-      '@types/sodium-native':
-        specifier: ^2.3.9
-        version: 2.3.9
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
-
   scripts:
     devDependencies:
       '@biomejs/biome':
@@ -866,9 +832,6 @@ packages:
   '@types/node@22.14.0':
     resolution: {integrity: sha512-Kmpl+z84ILoG+3T/zQFyAJsU6EPTmOCj8/2+83fSN6djd6I4o7uOuGIH6vq3PrjY5BGitSbFuMN18j3iknubbA==}
 
-  '@types/sodium-native@2.3.9':
-    resolution: {integrity: sha512-jZIg5ltGH1okmnH3FrLQsgwjcjOVozMSHwSiEm1/LpMekhOMHbQqp21P4H24mizh1BjwI6Q8qmphmD/HJuAqWg==}
-
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
@@ -965,35 +928,6 @@ packages:
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
-
-  bare-addon-resolve@1.9.4:
-    resolution: {integrity: sha512-unn6Vy/Yke6F99vg/7tcrvM2KUvIhTNniaSqDbam4AWkd4NhvDVSrQiRYVlNzUV2P7SPobkCK7JFVxrJk9btCg==}
-    peerDependencies:
-      bare-url: '*'
-    peerDependenciesMeta:
-      bare-url:
-        optional: true
-
-  bare-module-resolve@1.10.2:
-    resolution: {integrity: sha512-C9COe/GhWfVXKytW3DElTkiBU+Gb2OXeaVkdGdRB/lp26TVLESHkTGS876iceAGdvtPgohfp9nX8vXHGvN3++Q==}
-    peerDependencies:
-      bare-url: '*'
-    peerDependenciesMeta:
-      bare-url:
-        optional: true
-
-  bare-os@3.6.1:
-    resolution: {integrity: sha512-uaIjxokhFidJP+bmmvKSgiMzj2sV5GPHaZVAIktcxcpCyBFFWO+YlikVAdhmUo2vYFvFhOXIAlldqV29L8126g==}
-    engines: {bare: '>=1.14.0'}
-
-  bare-path@3.0.0:
-    resolution: {integrity: sha512-tyfW2cQcB5NN8Saijrhqn0Zh7AnFNsnczRcuWODH0eYAXBsJ5gVxAUuNr7tsHSC6IZ77cA0SitzT+s47kot8Mw==}
-
-  bare-semver@1.0.1:
-    resolution: {integrity: sha512-UtggzHLiTrmFOC/ogQ+Hy7VfoKoIwrP1UFcYtTxoCUdLtsIErT8+SWtOC2DH/snT9h+xDrcBEPcwKei1mzemgg==}
-
-  bare-url@2.1.5:
-    resolution: {integrity: sha512-lNImB5KLN+ggw+SYDYvqf/yCizXIyq8U/nWBlx7m4pc4TKS24SB/1WWskzGacon5cVVAC6qUzCYzI/aMYCf4Ng==}
 
   bindings@1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
@@ -1435,9 +1369,6 @@ packages:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
 
-  opusscript@0.1.1:
-    resolution: {integrity: sha512-mL0fZZOUnXdZ78woRXp18lApwpp0lF5tozJOD1Wut0dgrA9WuQTgSels/CSmFleaAZrJi/nci5KOVtbuxeWoQA==}
-
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
 
@@ -1481,10 +1412,6 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
-
-  require-addon@1.1.0:
-    resolution: {integrity: sha512-KbXAD5q2+v1GJnkzd8zzbOxchTkStSyJZ9QwoCq3QwEXAaIlG3wDYRZGzVD357jmwaGY7hr5VaoEAL0BkF0Kvg==}
-    engines: {bare: '>=1.10.0'}
 
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
@@ -1538,10 +1465,6 @@ packages:
   sirv@3.0.1:
     resolution: {integrity: sha512-FoqMu0NCGBLCcAkS1qA+XJIQTR6/JHfQXl+uGteNCQ76T91DMUjPa9xfmeqMY3z80nLSg9yQmNjK0Px6RWsH/A==}
     engines: {node: '>=18'}
-
-  sodium-native@5.0.1:
-    resolution: {integrity: sha512-Q305aUXc0OzK7VVRvWkeEQJQIHs6slhFwWpyqLB5iJqhpyt2lYIVu96Y6PQ7TABIlWXVF3YiWDU3xS2Snkus+g==}
-    engines: {bare: '>=1.16.0'}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -1779,9 +1702,6 @@ packages:
         optional: true
       jsdom:
         optional: true
-
-  which-runtime@1.2.1:
-    resolution: {integrity: sha512-8feIHccQFH/whiA1fD1b4c5+Q7T4ry1g1oHYc2mHnFh81tTQFsCvy3zhS2geUapkFAVBddUT/AM1a3rbqJweFg==}
 
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
@@ -2239,10 +2159,6 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/sodium-native@2.3.9':
-    dependencies:
-      '@types/node': 22.14.0
-
   '@types/ws@8.18.1':
     dependencies:
       '@types/node': 22.14.0
@@ -2357,31 +2273,6 @@ snapshots:
   asynckit@0.4.0: {}
 
   balanced-match@1.0.2: {}
-
-  bare-addon-resolve@1.9.4(bare-url@2.1.5):
-    dependencies:
-      bare-module-resolve: 1.10.2(bare-url@2.1.5)
-      bare-semver: 1.0.1
-    optionalDependencies:
-      bare-url: 2.1.5
-
-  bare-module-resolve@1.10.2(bare-url@2.1.5):
-    dependencies:
-      bare-semver: 1.0.1
-    optionalDependencies:
-      bare-url: 2.1.5
-
-  bare-os@3.6.1: {}
-
-  bare-path@3.0.0:
-    dependencies:
-      bare-os: 3.6.1
-
-  bare-semver@1.0.1: {}
-
-  bare-url@2.1.5:
-    dependencies:
-      bare-path: 3.0.0
 
   bindings@1.5.0:
     dependencies:
@@ -2804,8 +2695,6 @@ snapshots:
 
   node-gyp-build@4.8.4: {}
 
-  opusscript@0.1.1: {}
-
   package-json-from-dist@1.0.1: {}
 
   path-key@3.1.1: {}
@@ -2836,11 +2725,6 @@ snapshots:
   pretty-bytes@6.1.1: {}
 
   punycode@2.3.1: {}
-
-  require-addon@1.1.0:
-    dependencies:
-      bare-addon-resolve: 1.9.4(bare-url@2.1.5)
-      bare-url: 2.1.5
 
   require-from-string@2.0.2: {}
 
@@ -2932,11 +2816,6 @@ snapshots:
       '@polka/url': 1.0.0-next.29
       mrmime: 2.0.1
       totalist: 3.0.1
-
-  sodium-native@5.0.1:
-    dependencies:
-      require-addon: 1.1.0
-      which-runtime: 1.2.1
 
   source-map-js@1.2.1: {}
 
@@ -3142,8 +3021,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-
-  which-runtime@1.2.1: {}
 
   which@2.0.2:
     dependencies:

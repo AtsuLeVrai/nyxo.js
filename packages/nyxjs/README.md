@@ -1,11 +1,38 @@
-<div align="center" style="padding: 30px;">
-<h1 style="font-size: 3em; font-weight: bold;">Nyx.js 🌌</h1>
-<p style="font-size: 1.2em; margin-top: 10px;">A Next-Generation Discord Bot Framework</p>
-<img src="../../public/nyxjs_banner.png" alt="Nyx.js Banner" width="6912" style="margin-top: 20px; border-radius: 8px;">
+<div align="center">
+  <h1>🌌 Nyx.js</h1>
+  <h3>A Next-Generation Discord Bot Framework</h3>
+
+  <p align="center">
+    <a href="https://github.com/AtsuLeVrai/nyx.js/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyx.js?style=for-the-badge&logo=gnu&color=A42E2B" alt="License">
+    </a>
+    <a href="https://www.typescriptlang.org/">
+      <img src="https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
+    </a>
+    <a href="https://nodejs.org/">
+      <img src="https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?style=for-the-badge&logo=node.js" alt="Node.js">
+    </a>
+  </p>
+
+  <br />
+  <img src="../../public/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="border-radius: 8px;">
 </div>
 
-## 📄 License
+## 🚀 About
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
-License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later
-version.
+Nyx.js is a cutting-edge Discord bot framework designed to provide developers with a powerful, type-safe, and modular
+approach to building Discord applications. Built entirely in TypeScript, Nyx.js offers comprehensive utilities and
+seamless integration with the Discord API.
+
+> [!NOTE]
+> This framework is part of an evolving ecosystem of Discord development tools.
+
+## ⚠️ Project Status
+
+> [!IMPORTANT]
+> **Current Status: Alpha Development**  
+> The project is in early stages of development. Features and APIs are subject to change.
+
+## 📜 License
+
+This package is [AGPL-3.0 licensed](LICENSE).

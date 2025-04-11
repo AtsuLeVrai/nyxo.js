@@ -19,8 +19,6 @@ import type {
   Subscription,
   ThreadMember,
   User,
-  VoiceServer,
-  VoiceState,
   Webhook,
 } from "../classes/index.js";
 import type {
@@ -127,18 +125,6 @@ export class CacheManager {
   readonly #emojis: Store<Snowflake, Emoji>;
 
   /**
-   * Store for voice states
-   * @private
-   */
-  readonly #voiceStates: Store<Snowflake, VoiceState>;
-
-  /**
-   * Store for voice servers
-   * @private
-   */
-  readonly #voiceServers: Store<Snowflake, VoiceServer>;
-
-  /**
    * Store for stage instances
    * @private
    */
@@ -226,14 +212,6 @@ export class CacheManager {
     this.#roles = this.#createStore("roles", this.#options.roles);
     this.#messages = this.#createStore("messages", this.#options.messages);
     this.#emojis = this.#createStore("emojis", this.#options.emojis);
-    this.#voiceStates = this.#createStore(
-      "voiceStates",
-      this.#options.voiceStates,
-    );
-    this.#voiceServers = this.#createStore(
-      "voiceServers",
-      this.#options.voiceServers,
-    );
     this.#stageInstances = this.#createStore(
       "stageInstances",
       this.#options.stageInstances,
@@ -407,40 +385,6 @@ export class CacheManager {
    */
   get emojis(): Store<Snowflake, Emoji> {
     return this.#emojis;
-  }
-
-  /**
-   * Access the voice states cache store.
-   * Contains VoiceState objects tracking users in voice channels.
-   *
-   * @example
-   * ```typescript
-   * // Get a voice state by user ID
-   * const voiceState = cacheManager.voiceStates.get('1234567890');
-   *
-   * // Find users who are streaming
-   * const streamingUsers = cacheManager.voiceStates.filter(state => state.streaming);
-   * ```
-   */
-  get voiceStates(): Store<Snowflake, VoiceState> {
-    return this.#voiceStates;
-  }
-
-  /**
-   * Access the voice servers cache store.
-   * Contains VoiceServer objects for managing voice connections.
-   *
-   * @example
-   * ```typescript
-   * // Get a voice server by ID
-   * const voiceServer = cacheManager.voiceServers.get('1234567890');
-   *
-   * // Find active voice servers
-   * const activeVoiceServers = cacheManager.voiceServers.filter(server => server.active);
-   * ```
-   */
-  get voiceServers(): Store<Snowflake, VoiceServer> {
-    return this.#voiceServers;
   }
 
   /**

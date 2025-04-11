@@ -41,8 +41,6 @@ import {
   TypingStart,
   User,
   VoiceChannelEffectSend,
-  VoiceServer,
-  VoiceState,
   Webhook,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
@@ -619,12 +617,12 @@ export const StandardGatewayDispatchEventMappings = [
     "voiceChannelEffectSend",
     (client, data) => [VoiceChannelEffectSend.from(client, data)],
   ),
-  defineEvent("VOICE_STATE_UPDATE", "voiceStateUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "voiceStates", VoiceState.from),
-  ),
-  defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "voiceServers", VoiceServer.from),
-  ),
+  defineEvent("VOICE_STATE_UPDATE", "voiceStateUpdate", (_client, data) => [
+    data,
+  ]),
+  defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (_client, data) => [
+    data,
+  ]),
   defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (client, data) =>
     handleUpdateEvent(client, data, "webhooks", Webhook.from),
   ),

@@ -29,7 +29,6 @@ import { Role } from "../roles/index.js";
 import { GuildScheduledEvent } from "../scheduled-events/index.js";
 import { SoundboardSound } from "../soundboards/index.js";
 import { StageInstance } from "../stage-instances/index.js";
-import { VoiceState } from "../voices/index.js";
 import { GuildMember } from "./guild-member.class.js";
 
 export class Guild
@@ -222,10 +221,8 @@ export class Guild
     return this.data.member_count;
   }
 
-  get voiceStates(): VoiceState[] {
-    return this.data.voice_states.map((voiceState) =>
-      VoiceState.from(this.client, voiceState as VoiceStateEntity),
-    );
+  get voiceStates(): Partial<VoiceStateEntity>[] {
+    return this.data.voice_states;
   }
 
   get members(): GuildMember[] {
