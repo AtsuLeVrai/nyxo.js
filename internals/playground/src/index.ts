@@ -6,8 +6,8 @@ import {
   ChannelType,
   Client,
   EmbedBuilder,
-  GatewayIntentsBits,
   formatUser,
+  GatewayIntentsBits,
   sleep,
 } from "nyx.js";
 
@@ -144,7 +144,7 @@ client.on("ready", async (ready) => {
   console.log(
     "[CHANNEL] Channels:",
     client.cache.channels.map(
-      // @ts-ignore
+      // @ts-expect-error
       (channel) => `${channel.id} [${channel.name}] (${channel.type})`,
     ),
   );

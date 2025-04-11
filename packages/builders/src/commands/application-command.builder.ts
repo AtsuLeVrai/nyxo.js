@@ -1,6 +1,6 @@
 import {
-  APPLICATION_COMMAND_NAME_REGEX,
   type AnyApplicationCommandEntity,
+  APPLICATION_COMMAND_NAME_REGEX,
   type ApplicationCommandType,
   type ApplicationIntegrationType,
   type InteractionContextType,

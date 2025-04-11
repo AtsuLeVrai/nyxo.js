@@ -334,10 +334,7 @@ export abstract class BaseClass<T extends object> {
     // Only process true getter properties (properties with a get function but no set function)
     for (const [propName, descriptor] of Object.entries(propertyDescriptors)) {
       const isGetter = typeof descriptor.get === "function";
-      const isNotFromBaseClass = !Object.prototype.hasOwnProperty.call(
-        baseClassDescriptors,
-        propName,
-      );
+      const isNotFromBaseClass = !Object.hasOwn(baseClassDescriptors, propName);
       const isNotSpecialProperty = ![
         "constructor",
         "prototype",

@@ -3,8 +3,8 @@ import {
   type SelectMenuOptionEntity,
   type StringSelectMenuEntity,
 } from "@nyxjs/core";
-import { SelectMenuOptionBuilder } from "./select-menu-option.builder.js";
 import { SelectMenuBuilder } from "./select-menu.builder.js";
+import { SelectMenuOptionBuilder } from "./select-menu-option.builder.js";
 
 /**
  * Builder for creating string select menu components.

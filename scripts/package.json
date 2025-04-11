@@ -14,7 +14,7 @@
     "check": "biome check --write --unsafe ."
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "2.0.0-beta.1",
     "@microsoft/api-extractor": "^7.52.3",
     "chalk": "^5.4.1",
     "esbuild": "^0.25.2",

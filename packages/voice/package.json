@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "nyx.js",
+  "name": "@nyxjs/voice",
   "version": "1.0.0",
-  "description": "A Next-Generation Discord Bot Framework",
+  "description": "Efficient Voice Gateway and Audio Management for Nyx.js",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -29,7 +29,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/AtsuLeVrai/nyx.js",
-    "directory": "packages/nyx.js"
+    "directory": "packages/voice"
   },
   "bugs": {
     "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
@@ -45,18 +45,16 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nyxjs/builders": "workspace:^",
-    "@nyxjs/core": "workspace:^",
-    "@nyxjs/gateway": "workspace:^",
-    "@nyxjs/rest": "workspace:^",
-    "@nyxjs/store": "workspace:^",
     "eventemitter3": "^5.0.1",
+    "opusscript": "^0.1.1",
+    "sodium-native": "^5.0.1",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.0-beta.1",
     "@types/node": "^22.14.0",
+    "@types/sodium-native": "^2.3.9",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.3"
   }

@@ -1,4 +1,4 @@
-import { type UnavailableGuildEntity, sleep } from "@nyxjs/core";
+import { sleep, type UnavailableGuildEntity } from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
