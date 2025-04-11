@@ -11,26 +11,18 @@ import {
   type UserEntity,
 } from "@nyxjs/core";
 import type { MessageCreateEntity } from "@nyxjs/gateway";
-import type { EnforceCamelCase } from "../../types/index.js";
 import { Message } from "../messages/index.js";
 import { User } from "../users/index.js";
 import { Interaction } from "./interaction.class.js";
 
+// TODO: Add EnforceCamelCase implementation
 export class ComponentInteraction<
-    T extends AnyInteractionEntity & {
-      data: MessageComponentInteractionDataEntity;
-    } = AnyInteractionEntity & {
-      data: MessageComponentInteractionDataEntity;
-    },
-  >
-  extends Interaction<T>
-  implements
-    EnforceCamelCase<
-      AnyInteractionEntity & {
-        data: MessageComponentInteractionDataEntity;
-      }
-    >
-{
+  T extends AnyInteractionEntity & {
+    data: MessageComponentInteractionDataEntity;
+  } = AnyInteractionEntity & {
+    data: MessageComponentInteractionDataEntity;
+  },
+> extends Interaction<T> {
   get componentData(): MessageComponentInteractionDataEntity {
     return this.interactionData as MessageComponentInteractionDataEntity;
   }

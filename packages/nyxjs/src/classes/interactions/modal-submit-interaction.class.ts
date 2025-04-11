@@ -3,24 +3,15 @@ import type {
   AnyInteractionEntity,
   ModalSubmitInteractionDataEntity,
 } from "@nyxjs/core";
-import type { EnforceCamelCase } from "../../types/index.js";
 import { Interaction } from "./interaction.class.js";
 
 export class ModalSubmitInteraction<
-    T extends AnyInteractionEntity & {
-      data: ModalSubmitInteractionDataEntity;
-    } = AnyInteractionEntity & {
-      data: ModalSubmitInteractionDataEntity;
-    },
-  >
-  extends Interaction<T>
-  implements
-    EnforceCamelCase<
-      AnyInteractionEntity & {
-        data: ModalSubmitInteractionDataEntity;
-      }
-    >
-{
+  T extends AnyInteractionEntity & {
+    data: ModalSubmitInteractionDataEntity;
+  } = AnyInteractionEntity & {
+    data: ModalSubmitInteractionDataEntity;
+  },
+> extends Interaction<T> {
   get modalData(): ModalSubmitInteractionDataEntity {
     return this.interactionData as ModalSubmitInteractionDataEntity;
   }

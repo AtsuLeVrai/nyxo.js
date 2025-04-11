@@ -142,35 +142,42 @@ export abstract class BaseClass<T extends object> {
   }
 
   /**
-   * Creates a new instance from raw data.
-   * This static method provides a more elegant way to create instances.
+   * Creates a new instance of a model from raw Discord API data.
    *
+   * This static method enables type-safe instantiation of any class that extends BaseClass.
+   * It ensures proper type inference for both the class type and the data type.
+   *
+   * @template TypeClass - The specific class type extending BaseClass
+   * @template TypeData - The data type the class accepts
    * @param client - The client instance that will be used for API requests
    * @param data - The raw data object from the Discord API
-   * @returns A new instance of the class
-   * @static
+   * @returns A new instance of the specific class
    *
    * @example
    * ```typescript
-   * // Instead of:
-   * const user = new User(client, userData);
-   *
-   * // You can use:
+   * // Create a new User instance from raw Discord API data
    * const user = User.from(client, userData);
    *
-   * // This is especially useful when working with arrays:
-   * const users = userDataArray.map(data => User.from(client, data));
+   * // Static from with additional processing
+   * const channel = Channel.from(client, channelData);
    * ```
    */
-  static from<S extends object>(
-    this: new (
+  static from<
+    TypeClass extends new (
       client: Client,
-      data: S,
-      // @ts-expect-error: This is safe because we're creating the same class type
-    ) => InstanceType<typeof this>,
-    client: Client,
-    data: S,
-  ): InstanceType<typeof this> {
+      data: TypeData,
+    ) => InstanceType<TypeClass>,
+    // biome-ignore lint/suspicious/noExplicitAny: Complex type
+    TypeData extends object = any,
+  >(this: TypeClass, client: Client, data: TypeData): InstanceType<TypeClass> {
+    if (!client) {
+      throw new Error("Client must be provided when creating a model instance");
+    }
+
+    if (!data || typeof data !== "object") {
+      throw new Error("Data must be a valid object");
+    }
+
     // biome-ignore lint/complexity/noThisInStatic: This is safe because we're creating the same class type
     return new this(client, data);
   }

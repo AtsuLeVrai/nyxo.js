@@ -12,7 +12,6 @@ import type {
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
 import type { Store } from "@nyxjs/store";
-import type { RequiredKeysOf } from "type-fest";
 import {
   type AnyThreadChannel,
   AutoModerationActionExecution,
@@ -25,10 +24,12 @@ import {
   GuildAuditLogEntry,
   GuildMember,
   GuildScheduledEvent,
+  GuildScheduledEventUser,
   Integration,
   Invite,
   Message,
   MessagePollVote,
+  MessageReaction,
   Ready,
   Role,
   SoundboardSound,
@@ -114,13 +115,19 @@ function handleDeleteEvent<
   K extends keyof CacheManager,
   T = CacheManager[K] extends Store<Snowflake, infer U> ? U : never,
 >(client: Client, entityId: Snowflake, cacheKey: K): [T | null] {
-  // Get the cached version before deleting
-  const store = client.cache[cacheKey] as Store<Snowflake, T>;
-  const cachedEntity = store?.get?.(entityId) ?? null;
+  if (!entityId) {
+    return [null]; // Cannot find in cache without ID
+  }
 
-  // Remove from cache
-  if (cachedEntity) {
-    store?.delete?.(entityId);
+  // Get the store with the correct type
+  const store = client.cache[cacheKey] as unknown as Store<Snowflake, T>;
+
+  // Get cached entity before deletion
+  const cachedEntity = store.get?.(entityId) || null;
+
+  // Remove from cache if entity exists
+  if (cachedEntity && store.delete) {
+    store.delete(entityId);
   }
 
   return [cachedEntity];
@@ -128,39 +135,54 @@ function handleDeleteEvent<
 
 /**
  * Utility function to handle UPDATE events for any entity type
+ *
+ * This function processes entity updates by utilizing a factory function to create
+ * entity instances, retrieving corresponding cache entries, and preparing both
+ * old and new instances for event emission.
+ *
+ * @template K - Type of cache store key
+ * @template E - Entity type with optional id and clone method
+ * @template D - Raw data type provided by the API
  * @param client - Client instance
  * @param data - Raw entity data from the API
  * @param cacheKey - Key to access the appropriate cache store
- * @param factory - Factory function to create entity instances
- * @returns - Array with old entity (or null) and new entity
+ * @param factory - Factory function that creates entity instances
+ * @returns - Tuple containing the old entity (or null) and the new entity
  */
 function handleUpdateEvent<
-  // biome-ignore lint/suspicious/noExplicitAny: Complex generic type
-  F extends (client: Client, data: any) => any,
-  T = ReturnType<F>,
-  D = Parameters<F>[1],
+  K extends keyof CacheManager,
+  D extends object,
+  E extends { id: Snowflake | null; clone?(): E },
 >(
   client: Client,
   data: D,
-  cacheKey: keyof CacheManager,
-  factory: F,
-): [T | null, T] {
-  // Create new instance from updated data
+  cacheKey: K,
+  factory: (client: Client, data: D) => E,
+): [E | null, E] {
+  // Create new entity instance using the factory function
   const newEntity = factory(client, data);
 
-  // Get ID from the entity (assuming entities have an 'id' property)
-  const entityId = (newEntity as unknown as { id: Snowflake }).id;
+  // Get ID from the entity
+  const entityId = newEntity.id;
 
-  // Get the cached version before updating
-  const store = client.cache[cacheKey] as Store<Snowflake, T>;
-  const cachedEntity = store?.get?.(entityId);
+  if (!entityId) {
+    return [null, newEntity]; // Cannot find in cache without ID
+  }
+
+  // Get the store with the correct type
+  const store = client.cache[cacheKey] as unknown as Store<Snowflake, E>;
+
+  // Get cached entity
+  const cachedEntity = store.get?.(entityId);
 
   // Clone the cached entity if it exists
-  let oldEntity: T | null = null;
+  let oldEntity: E | null = null;
   if (cachedEntity) {
-    // Assuming entities have a clone method
-    oldEntity =
-      (cachedEntity as unknown as { clone(): T }).clone?.() || cachedEntity;
+    if (typeof cachedEntity.clone === "function") {
+      oldEntity = cachedEntity.clone();
+    } else {
+      oldEntity = cachedEntity;
+    }
   }
 
   return [oldEntity, newEntity];
@@ -212,7 +234,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "AUTO_MODERATION_ACTION_EXECUTION",
     "autoModerationActionExecution",
-    (client, data) => [AutoModerationActionExecution.from(client, data)],
+    (client, data) => [new AutoModerationActionExecution(client, data)],
   ),
   defineEvent("CHANNEL_CREATE", "channelCreate", (client, data) => [
     ChannelFactory.create(client, data),
@@ -230,7 +252,7 @@ export const StandardGatewayDispatchEventMappings = [
     ChannelFactory.create(client, data) as AnyThreadChannel,
   ]),
   defineEvent("THREAD_UPDATE", "threadUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "channels", ChannelFactory.create),
+    handleUpdateEvent(client, data, "channels", ChannelFactory.createThread),
   ),
   defineEvent("THREAD_DELETE", "threadDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "channels"),
@@ -478,12 +500,12 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_ADD",
     "guildScheduledEventUserAdd",
-    (_client, _data) => {},
+    (client, data) => [GuildScheduledEventUser.from(client, data)],
   ),
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_REMOVE",
     "guildScheduledEventUserRemove",
-    (_client, _data) => {},
+    (client, data) => [GuildScheduledEventUser.from(client, data)],
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_CREATE",
@@ -517,7 +539,7 @@ export const StandardGatewayDispatchEventMappings = [
   ),
   defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (client, data) => {
     const soundboardSounds = data.soundboard_sounds.map((sound) =>
-      SoundboardSound.from(client, sound),
+      SoundboardSound.from(client, { ...sound, guild_id: data.guild_id }),
     );
     return [soundboardSounds];
   }),
@@ -551,25 +573,23 @@ export const StandardGatewayDispatchEventMappings = [
       return message;
     }),
   ]),
-  defineEvent(
-    "MESSAGE_REACTION_ADD",
-    "messageReactionAdd",
-    (_client, _data) => {},
-  ),
+  defineEvent("MESSAGE_REACTION_ADD", "messageReactionAdd", (client, data) => [
+    MessageReaction.from(client, data),
+  ]),
   defineEvent(
     "MESSAGE_REACTION_REMOVE",
     "messageReactionRemove",
-    (_client, _data) => {},
+    (client, data) => [MessageReaction.from(client, data)],
   ),
   defineEvent(
     "MESSAGE_REACTION_REMOVE_ALL",
     "messageReactionRemoveAll",
-    (_client, _data) => {},
+    (_client, data) => [data],
   ),
   defineEvent(
     "MESSAGE_REACTION_REMOVE_EMOJI",
     "messageReactionRemoveEmoji",
-    (_client, _data) => {},
+    (_client, data) => [data],
   ),
   defineEvent("MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd", (client, data) => [
     MessagePollVote.from(client, data),
@@ -579,7 +599,15 @@ export const StandardGatewayDispatchEventMappings = [
     "messagePollVoteRemove",
     (client, data) => [MessagePollVote.from(client, data)],
   ),
-  defineEvent("PRESENCE_UPDATE", "presenceUpdate", (_client, _data) => {}),
+  defineEvent("PRESENCE_UPDATE", "presenceUpdate", (client, data) =>
+    handleUpdateEvent(
+      client,
+      data,
+      "presences",
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      (_client, data) => data as any,
+    ),
+  ),
   defineEvent("TYPING_START", "typingStart", (client, data) => [
     TypingStart.from(client, data),
   ]),
@@ -629,7 +657,7 @@ export const StandardGatewayDispatchEventMappings = [
  * Standard mappings of Discord REST events to client events.
  * These events are forwarded directly from the REST client to the main client.cache.
  */
-export const RestKeyofEventMappings: RequiredKeysOf<RestEvents>[] = [
+export const RestKeyofEventMappings: (keyof RestEvents)[] = [
   "requestStart",
   "requestSuccess",
   "requestFailure",
@@ -643,7 +671,7 @@ export const RestKeyofEventMappings: RequiredKeysOf<RestEvents>[] = [
  * Standard mappings of Discord Gateway events to client events.
  * These events are forwarded directly from the Gateway client to the main client.cache.
  */
-export const GatewayKeyofEventMappings: RequiredKeysOf<GatewayEvents>[] = [
+export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
   "connectionAttempt",
   "connectionSuccess",
   "connectionFailure",

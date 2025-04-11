@@ -4,11 +4,12 @@ import type {
   GuildEmojisUpdateEntity,
   GuildMembersChunkEntity,
   GuildStickersUpdateEntity,
+  MessageReactionRemoveAllEntity,
+  MessageReactionRemoveEmojiEntity,
   PresenceEntity,
   ThreadMembersUpdateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
-import type { CamelCase, Merge } from "type-fest";
 import type {
   AnyChannel,
   AnyInteraction,
@@ -28,7 +29,7 @@ import type {
   Invite,
   Message,
   MessagePollVote,
-  Reaction,
+  MessageReaction,
   Ready,
   Role,
   SoundboardSound,
@@ -44,6 +45,79 @@ import type {
   VoiceState,
   Webhook,
 } from "../classes/index.js";
+
+/**
+ * Helper type that handles the rest of the string after the first character during camelCase conversion.
+ *
+ * @template S - The remaining part of the string being processed
+ * @internal
+ */
+type CamelCaseRest<S extends string> = S extends `${infer F}${infer R}`
+  ? F extends "_" | "-" | " "
+    ? R extends `${infer C}${infer Rest}`
+      ? C extends "_" | "-" | " "
+        ? CamelCaseRest<Rest>
+        : `${Uppercase<C>}${CamelCaseRest<Rest>}`
+      : ""
+    : `${F}${CamelCaseRest<R>}`
+  : S;
+
+/**
+ * Converts a string literal type to camelCase.
+ *
+ * This utility type transforms any string literal into camelCase format by applying
+ * the following rules:
+ * - The first character of the string is converted to lowercase
+ * - All delimiters (hyphens, underscores, spaces) are removed
+ * - The first character after each delimiter is converted to uppercase
+ * - All other characters remain unchanged
+ * - Multiple consecutive delimiters are treated as a single delimiter
+ *
+ * The transformation preserves numbers and other special characters,
+ * only changing the case of letters.
+ *
+ * @example
+ * ```typescript
+ * // Basic transformations
+ * type Example1 = CamelCase<'hello-world'>;          // 'helloWorld'
+ * type Example2 = CamelCase<'foo_bar'>;              // 'fooBar'
+ * type Example3 = CamelCase<'lorem ipsum'>;          // 'loremIpsum'
+ *
+ * // Mixed delimiter handling
+ * type Example4 = CamelCase<'mixed_case-example'>;   // 'mixedCaseExample'
+ *
+ * // Case conversion
+ * type Example5 = CamelCase<'SCREAMING_SNAKE_CASE'>; // 'screamingSnakeCase'
+ * type Example6 = CamelCase<'kebab-case-example'>;   // 'kebabCaseExample'
+ *
+ * // Leading/trailing delimiters
+ * type Example7 = CamelCase<'-leading-dash'>;        // 'leadingDash'
+ * type Example8 = CamelCase<'trailing_underscore_'>; // 'trailingUnderscore'
+ *
+ * // Numbers and special characters
+ * type Example9 = CamelCase<'user-123-info'>;        // 'user123Info'
+ * type Example10 = CamelCase<'special$_characters'>; // 'special$Characters'
+ *
+ * // Multiple consecutive delimiters
+ * type Example11 = CamelCase<'double__underscore'>;  // 'doubleUnderscore'
+ * type Example12 = CamelCase<'multiple---dashes'>;   // 'multipleDashes'
+ *
+ * // Already camelCase input
+ * type Example13 = CamelCase<'alreadyCamelCase'>;    // 'alreadyCamelCase'
+ *
+ * // Empty string case
+ * type Example14 = CamelCase<''>;                    // ''
+ * ```
+ *
+ * @template S - The string literal type to convert to camelCase
+ */
+type CamelCase<S extends string> = S extends ""
+  ? S
+  : S extends `${infer F}${infer R}`
+    ? F extends "_" | "-" | " "
+      ? CamelCase<R>
+      : `${Lowercase<F>}${CamelCaseRest<R>}`
+    : Lowercase<S>;
 
 /**
  * Enforces camelCase property naming conventions with configurable type handling.
@@ -101,15 +175,12 @@ export type EnforceCamelCase<
  * Represents a guild-based entity, which includes a guild ID.
  * This is useful for entities that are specific to a guild context.
  */
-export type GuildBased<T extends object> = Merge<
-  T,
-  {
-    /**
-     * The ID of the guild this entity belongs to.
-     */
-    guild_id: string;
-  }
->;
+export type GuildBased<T extends object> = T & {
+  /**
+   * The ID of the guild this entity belongs to.
+   */
+  guild_id: string;
+};
 
 /**
  * Represents all events that can be emitted by the client.
@@ -527,25 +598,25 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user adds a reaction to a message.
    * @param reaction Information about the added reaction
    */
-  messageReactionAdd: [reaction: Reaction];
+  messageReactionAdd: [reaction: MessageReaction];
 
   /**
    * Emitted when a user removes a reaction from a message.
    * @param reaction Information about the removed reaction
    */
-  messageReactionRemove: [reaction: Reaction];
+  messageReactionRemove: [reaction: MessageReaction];
 
   /**
    * Emitted when all reactions are removed from a message.
    * @param removal Information about the removal
    */
-  messageReactionRemoveAll: [removal: Reaction];
+  messageReactionRemoveAll: [removal: MessageReactionRemoveAllEntity];
 
   /**
    * Emitted when all reactions of a specific emoji are removed from a message.
    * @param removal Information about the emoji reaction removal
    */
-  messageReactionRemoveEmoji: [removal: Reaction];
+  messageReactionRemoveEmoji: [removal: MessageReactionRemoveEmojiEntity];
 
   /**
    * Emitted when a user's presence (status, activity) is updated.

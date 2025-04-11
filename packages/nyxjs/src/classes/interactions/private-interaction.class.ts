@@ -2,19 +2,15 @@ import type {
   BotDmInteractionEntity,
   PrivateChannelInteractionEntity,
 } from "@nyxjs/core";
-import type { EnforceCamelCase } from "../../types/index.js";
 import { User } from "../users/index.js";
 import { Interaction } from "./interaction.class.js";
 
+// TODO: Add EnforceCamelCase implementation
 export class PrivateInteraction<
-    T extends BotDmInteractionEntity | PrivateChannelInteractionEntity =
-      | BotDmInteractionEntity
-      | PrivateChannelInteractionEntity,
-  >
-  extends Interaction<T>
-  implements
-    EnforceCamelCase<BotDmInteractionEntity | PrivateChannelInteractionEntity>
-{
+  T extends BotDmInteractionEntity | PrivateChannelInteractionEntity =
+    | BotDmInteractionEntity
+    | PrivateChannelInteractionEntity,
+> extends Interaction<T> {
   override get user(): User {
     return User.from(this.client, this.data.user);
   }

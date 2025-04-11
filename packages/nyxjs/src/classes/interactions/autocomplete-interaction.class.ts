@@ -8,24 +8,16 @@ import {
   InteractionCallbackType,
   type Snowflake,
 } from "@nyxjs/core";
-import type { EnforceCamelCase } from "../../types/index.js";
 import { Interaction } from "./interaction.class.js";
 
+// TODO: Add EnforceCamelCase implementation
 export class AutocompleteInteraction<
-    T extends AnyInteractionEntity & {
-      data: ApplicationCommandInteractionDataEntity;
-    } = AnyInteractionEntity & {
-      data: ApplicationCommandInteractionDataEntity;
-    },
-  >
-  extends Interaction<T>
-  implements
-    EnforceCamelCase<
-      AnyInteractionEntity & {
-        data: ApplicationCommandInteractionDataEntity;
-      }
-    >
-{
+  T extends AnyInteractionEntity & {
+    data: ApplicationCommandInteractionDataEntity;
+  } = AnyInteractionEntity & {
+    data: ApplicationCommandInteractionDataEntity;
+  },
+> extends Interaction<T> {
   get commandData(): ApplicationCommandInteractionDataEntity {
     return this.interactionData as ApplicationCommandInteractionDataEntity;
   }

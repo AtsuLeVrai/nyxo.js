@@ -1,6 +1,7 @@
 import {
   type AnnouncementThreadChannelEntity,
   type AnyChannelEntity,
+  type AnyThreadChannelEntity,
   ChannelType,
   type DmChannelEntity,
   type GroupDmChannelEntity,
@@ -17,6 +18,7 @@ import {
 import {
   AnnouncementThreadChannel,
   type AnyChannel,
+  type AnyThreadChannel,
   DmChannel,
   GroupDmChannel,
   GuildAnnouncementChannel,
@@ -105,6 +107,24 @@ export const ChannelFactory = {
       default:
         throw new Error(
           "Unsupported channel type. Please check the channel data.",
+        );
+    }
+  },
+
+  createThread(client: Client, data: AnyThreadChannelEntity): AnyThreadChannel {
+    switch (data.type) {
+      case ChannelType.PublicThread:
+        return new PublicThreadChannel(client, data);
+
+      case ChannelType.PrivateThread:
+        return new PrivateThreadChannel(client, data);
+
+      case ChannelType.AnnouncementThread:
+        return new AnnouncementThreadChannel(client, data);
+
+      default:
+        throw new Error(
+          "Unsupported thread channel type. Please check the channel data.",
         );
     }
   },

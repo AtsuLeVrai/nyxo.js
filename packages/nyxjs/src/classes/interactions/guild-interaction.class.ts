@@ -4,16 +4,14 @@ import type {
   Locale,
   Snowflake,
 } from "@nyxjs/core";
-import type { EnforceCamelCase, GuildBased } from "../../types/index.js";
+import type { GuildBased } from "../../types/index.js";
 import { GuildMember } from "../guilds/index.js";
 import { Interaction } from "./interaction.class.js";
 
+// TODO: Add EnforceCamelCase implementation
 export class GuildInteraction<
-    T extends GuildInteractionEntity = GuildInteractionEntity,
-  >
-  extends Interaction<T>
-  implements EnforceCamelCase<GuildInteractionEntity>
-{
+  T extends GuildInteractionEntity = GuildInteractionEntity,
+> extends Interaction<T> {
   override get guildId(): Snowflake {
     return this.data.guild_id;
   }

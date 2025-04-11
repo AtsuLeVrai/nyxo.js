@@ -84,52 +84,45 @@ export class BitFieldManager<T> {
    * @throws {Error} If the value is invalid
    */
   static safeBigInt(value: unknown): bigint {
-    try {
-      if (typeof value === "bigint") {
-        // Validate bigint range
-        if (value < 0n || value > MAX_BIT_VALUE) {
-          throw new Error(
-            "BitField value must be a non-negative bigint within 64-bit range",
-          );
-        }
-        return value;
+    if (typeof value === "bigint") {
+      // Validate bigint range
+      if (value < 0n || value > MAX_BIT_VALUE) {
+        throw new Error(
+          "BitField value must be a non-negative bigint within 64-bit range",
+        );
       }
-
-      if (typeof value === "number") {
-        // Validate number range and type
-        if (
-          !Number.isInteger(value) ||
-          value < 0 ||
-          value > Number.MAX_SAFE_INTEGER
-        ) {
-          throw new Error(
-            "BitField value must be a non-negative integer within safe integer range",
-          );
-        }
-        return BigInt(value);
-      }
-
-      if (typeof value === "string") {
-        try {
-          const bigintValue = BigInt(value);
-          if (bigintValue < 0n || bigintValue > MAX_BIT_VALUE) {
-            throw new Error("BitField value must be within 64-bit range");
-          }
-          return bigintValue;
-        } catch {
-          throw new Error(
-            "BitField string must be convertible to a valid bigint",
-          );
-        }
-      }
-
-      throw new Error("Value must be a bigint, number, or string");
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Invalid BitField: ${error.message}`);
-      }
-      throw error;
+      return value;
     }
+
+    if (typeof value === "number") {
+      // Validate number range and type
+      if (
+        !Number.isInteger(value) ||
+        value < 0 ||
+        value > Number.MAX_SAFE_INTEGER
+      ) {
+        throw new Error(
+          "BitField value must be a non-negative integer within safe integer range",
+        );
+      }
+      return BigInt(value);
+    }
+
+    if (typeof value === "string") {
+      try {
+        const bigintValue = BigInt(value);
+        if (bigintValue < 0n || bigintValue > MAX_BIT_VALUE) {
+          throw new Error("BitField value must be within 64-bit range");
+        }
+        return bigintValue;
+      } catch {
+        throw new Error(
+          "BitField string must be convertible to a valid bigint",
+        );
+      }
+    }
+
+    throw new Error("Value must be a bigint, number, or string");
   }
 
   /**
