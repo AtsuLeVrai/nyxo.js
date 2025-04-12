@@ -63,6 +63,12 @@ importers:
       '@nyxjs/core':
         specifier: workspace:^
         version: link:../core
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+      zod-validation-error:
+        specifier: ^3.4.0
+        version: 3.4.0(zod@3.24.2)
     devDependencies:
       '@types/node':
         specifier: ^22.14.1

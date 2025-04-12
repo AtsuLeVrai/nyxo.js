@@ -44,7 +44,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nyxjs/core": "workspace:^"
+    "@nyxjs/core": "workspace:^",
+    "zod": "^3.24.2",
+    "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

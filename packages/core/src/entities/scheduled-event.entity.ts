@@ -98,16 +98,16 @@ export enum GuildScheduledEventRecurrenceRuleFrequency {
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status}
  */
 export enum GuildScheduledEventStatus {
-  /** Event is scheduled for the future (1) */
+  /** Event is scheduled (1) */
   Scheduled = 1,
 
-  /** Event is currently ongoing (2) */
+  /** Event is active (2) */
   Active = 2,
 
-  /** Event has ended (3) - Once set to Completed, the status can no longer be updated */
+  /** Event has been completed (3) */
   Completed = 3,
 
-  /** Event was canceled (4) - Once set to Canceled, the status can no longer be updated */
+  /** Event has been canceled (4) */
   Canceled = 4,
 }
 
@@ -142,17 +142,19 @@ export enum GuildScheduledEventPrivacyLevel {
  * Used for rules like "the third Wednesday of the month".
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-recurrence-rule-object-guild-scheduled-event-recurrence-rule-nweekday-structure}
  */
-export interface GuildScheduledEventRecurrenceRuleNWeekdayEntity {
+export interface NWeekday {
   /**
-   * The week to reoccur on (1-5)
+   * The week day.
+   * 0-6 representing day of week (Sunday = 0, Monday = 1, ..., Saturday = 6)
    */
-  n: number;
+  day: number;
 
   /**
-   * The day within the week to reoccur on
-   * Represents which day of the week the event should occur on
+   * The position of the week day in the month.
+   * 1-5, where 1 represents the first occurrence, and 5 represents the last occurrence.
+   * -1 represents the last occurrence regardless of month length.
    */
-  day: GuildScheduledEventRecurrenceRuleWeekday;
+  week: number;
 }
 
 /**
@@ -162,64 +164,54 @@ export interface GuildScheduledEventRecurrenceRuleNWeekdayEntity {
  */
 export interface GuildScheduledEventRecurrenceRuleEntity {
   /**
-   * Starting time of the recurrence interval
+   * The frequency with which the scheduled event repeats.
+   * Current only "WEEKLY" or "MONTHLY" are supported.
    */
-  start: string;
+  frequency: "WEEKLY" | "MONTHLY";
 
   /**
-   * Ending time of the recurrence interval
+   * Number of times the scheduled event repeats.
+   * If null, the scheduled event will repeat indefinitely.
+   * Maximum of 100.
    */
-  end: string | null;
+  count?: number | null;
 
   /**
-   * How often the event occurs
-   * Determines the base unit of time between occurrences (daily, weekly, monthly, or yearly)
+   * Unix timestamp after which the scheduled event will no longer repeat.
+   * Mutually exclusive with count.
    */
-  frequency: GuildScheduledEventRecurrenceRuleFrequency;
+  until?: number | null;
 
   /**
-   * The spacing between events, defined by frequency
-   * For example, frequency of WEEKLY and interval of 2 would be "every-other week"
+   * Specifies the number of units of time between each recurrence.
+   * For example, if frequency is "WEEKLY", an interval of 2 means "every 2 weeks".
+   * Must be at least 1 and at most 26.
    */
   interval: number;
 
   /**
-   * Set of specific days within a week for the event to recur on
-   * Only valid for daily and weekly events with specific restrictions
-   * For daily events: Must be a "known set" like Monday-Friday, Tuesday-Saturday, etc.
-   * For weekly events: Can only contain a single day
+   * Array of days of the week the scheduled event occurs on.
+   * Only applicable when frequency is "WEEKLY".
+   * Days of the week are represented as integers: 0 = Sunday, 1 = Monday, ..., 6 = Saturday.
+   * The array cannot be empty, and must not contain duplicate values.
+   * Maximum of 7 values.
    */
-  by_weekday: GuildScheduledEventRecurrenceRuleWeekday[] | null;
+  week_days?: number[];
 
   /**
-   * List of specific days within a specific week (1-5) to recur on
-   * For example, "the third Wednesday of each month"
+   * Array of days of the month the scheduled event occurs on.
+   * Only applicable when frequency is "MONTHLY" and month_week_days is empty.
+   * Days of the month are represented as integers, with 1 being the first day of the month,
+   * and up to 31 being the last day of the month.
+   * -1 represents the last day of the month.
    */
-  by_n_weekday: GuildScheduledEventRecurrenceRuleNWeekdayEntity[] | null;
+  month_days?: number[];
 
   /**
-   * Set of specific months to recur on
-   * Only valid for yearly events and must be used with by_month_day
+   * Array of NWeekday objects representing specific week days in specific weeks of the month.
+   * Only applicable when frequency is "MONTHLY" and month_days is empty.
    */
-  by_month: GuildScheduledEventRecurrenceRuleMonth[] | null;
-
-  /**
-   * Set of specific dates within a month to recur on
-   * Only valid for yearly events and must be used with by_month
-   */
-  by_month_day: number[] | null;
-
-  /**
-   * Set of days within a year to recur on (1-364)
-   * Cannot currently be set externally
-   */
-  by_year_day: number[] | null;
-
-  /**
-   * The total number of times the event is allowed to recur before stopping
-   * Cannot currently be set externally
-   */
-  count: number | null;
+  month_week_days?: NWeekday[];
 }
 
 /**
@@ -252,10 +244,10 @@ export interface GuildScheduledEventUserEntity {
  * Currently only contains location information for external events.
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-metadata}
  */
-export interface GuildScheduledEventEntityMetadataEntity {
+export interface GuildScheduledEventEntityMetadata {
   /**
-   * Location of the event (1-100 characters)
-   * Required for events with entity_type EXTERNAL
+   * Location of the event (1-100 characters).
+   * Required for events of type EXTERNAL.
    */
   location?: string;
 }
@@ -267,102 +259,104 @@ export interface GuildScheduledEventEntityMetadataEntity {
  */
 export interface GuildScheduledEventEntity {
   /**
-   * The id of the scheduled event
-   * Unique identifier for this scheduled event
+   * The ID of the scheduled event.
+   * Unique identifier for this event.
    */
   id: Snowflake;
 
   /**
-   * The guild id which the scheduled event belongs to
-   * Identifies which guild this event is associated with
+   * The guild ID which the scheduled event belongs to.
+   * The server where the event will take place.
    */
   guild_id: Snowflake;
 
   /**
-   * The channel id in which the scheduled event will be hosted,
-   * or null if entity_type is EXTERNAL
-   * Required and must be non-null for STAGE_INSTANCE and VOICE events
-   * Required to be null for EXTERNAL events
+   * The channel ID in which the scheduled event will be hosted.
+   * null if entity_type is EXTERNAL.
    */
-  channel_id?: Snowflake | null;
+  channel_id: Snowflake | null;
 
   /**
-   * The id of the user that created the scheduled event
-   * May be null for events created before October 25th, 2021
+   * The ID of the user that created the scheduled event.
+   * User who scheduled this event.
    */
   creator_id?: Snowflake | null;
 
   /**
-   * The name of the scheduled event (1-100 characters)
+   * The name of the scheduled event (1-100 characters).
+   * Title or name of the event.
    */
   name: string;
 
   /**
-   * The description of the scheduled event (1-1000 characters)
+   * The description of the scheduled event (1-1000 characters).
+   * Details about the event.
    */
   description?: string | null;
 
   /**
-   * The time the scheduled event will start
+   * The time the scheduled event will start.
+   * ISO8601 timestamp for when the event begins.
    */
   scheduled_start_time: string;
 
   /**
-   * The time the scheduled event will end, required if entity_type is EXTERNAL
+   * The time the scheduled event will end, required if entity_type is EXTERNAL.
+   * ISO8601 timestamp for when the event ends.
    */
-  scheduled_end_time?: string | null;
+  scheduled_end_time: string | null;
 
   /**
-   * The privacy level of the scheduled event
-   * Currently only supports GuildOnly (2)
+   * The privacy level of the scheduled event.
+   * Determines who can see and access the event.
    */
   privacy_level: GuildScheduledEventPrivacyLevel;
 
   /**
-   * The status of the scheduled event
-   * Indicates whether the event is scheduled, active, completed, or canceled
+   * The status of the scheduled event.
+   * Current state in the event lifecycle.
    */
   status: GuildScheduledEventStatus;
 
   /**
-   * The type of the scheduled event
-   * Determines whether the event is in a stage channel, voice channel, or external location
+   * The type of the scheduled event.
+   * Determines the location and requirements for the event.
    */
   entity_type: GuildScheduledEventType;
 
   /**
-   * The id of an entity associated with a guild scheduled event
-   * Use depends on the entity_type
+   * The ID of an entity associated with the event.
+   * Currently unused, reserved for future use.
    */
   entity_id: Snowflake | null;
 
   /**
-   * Additional metadata for the guild scheduled event
-   * Required for EXTERNAL events, must be null for other event types
+   * Additional metadata for the scheduled event.
+   * Extra information for external events.
    */
-  entity_metadata: GuildScheduledEventEntityMetadataEntity | null;
+  entity_metadata: GuildScheduledEventEntityMetadata | null;
 
   /**
-   * The user that created the scheduled event
-   * Full user object containing creator information
+   * The user that created the scheduled event.
+   * Full user object of the event creator.
    */
   creator?: UserEntity;
 
   /**
-   * The number of users subscribed to the scheduled event
-   * Count of users who have registered interest in the event
+   * The number of users subscribed to the scheduled event.
+   * Count of users who have registered interest in attending.
    */
   user_count?: number;
 
   /**
-   * The cover image hash of the scheduled event
-   * Used to display a cover image for the event
+   * The cover image hash of the scheduled event.
+   * Image displayed for this event.
    */
   image?: string | null;
 
   /**
-   * The definition for how often this event should recur
-   * Contains rules for recurring events (null for one-time events)
+   * The recurrence rule for the scheduled event.
+   * If present, defines the pattern for event recurrence.
    */
-  recurrence_rule: GuildScheduledEventRecurrenceRuleEntity | null;
+  recurrence_rule?: GuildScheduledEventRecurrenceRuleEntity | null;
 }

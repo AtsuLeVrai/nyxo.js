@@ -66,73 +66,75 @@ export enum StickerType {
  */
 export interface StickerEntity {
   /**
-   * ID of the sticker
-   * Unique identifier for the sticker
+   * ID of the sticker.
+   * Unique identifier for this sticker.
    */
   id: Snowflake;
 
   /**
-   * For standard stickers, ID of the pack the sticker is from
-   * Only present for stickers from official Discord packs
+   * For standard stickers, ID of the pack the sticker is from.
+   * If this sticker is part of a sticker pack, identifies which pack it belongs to.
    */
   pack_id?: Snowflake;
 
   /**
-   * Name of the sticker (2-30 characters)
-   * The display name shown in the Discord client
+   * Name of the sticker.
+   * Display name shown in the Discord client, 2-30 characters.
    */
   name: string;
 
   /**
-   * Description of the sticker (null or 2-100 characters)
-   * A brief explanation of what the sticker depicts
+   * Description of the sticker.
+   * Short description of what the sticker depicts, 0-100 characters.
    */
   description: string | null;
 
   /**
-   * Autocomplete/suggestion tags for the sticker (max 200 characters)
-   * Used to improve search and suggestions
-   * For standard stickers, this is typically a comma-separated list of keywords
-   * For guild stickers, this is typically an emoji-derived name (convention, not required)
+   * Autocomplete/suggestion tags for the sticker (max 200 characters).
+   * Comma-separated keywords used for search and suggestions.
    */
   tags: string;
 
   /**
-   * Type of sticker
-   * Indicates whether this is an official Discord sticker or a guild-specific sticker
+   * Previously a sticker asset hash, now an empty string.
+   * Deprecated field, only included for backward compatibility.
+   * @deprecated
+   */
+  asset?: string;
+
+  /**
+   * Type of sticker.
+   * Indicates whether this is a standard sticker or a guild-specific sticker.
    */
   type: StickerType;
 
   /**
-   * Type of sticker format
-   * Determines the file type of the sticker (PNG, APNG, Lottie, or GIF)
+   * Format type of sticker.
+   * The file format of the sticker (PNG, APNG, Lottie, or GIF).
    */
   format_type: StickerFormatType;
 
   /**
-   * Whether this guild sticker can be used
-   * May be false due to loss of Server Boosts
-   * Only present for guild stickers
+   * Whether this guild sticker can be used by nitro users in other guilds.
+   * Only applicable to guild stickers.
    */
   available?: boolean;
 
   /**
-   * ID of the guild that owns this sticker
-   * Only present for guild stickers
+   * ID of the guild that owns this sticker.
+   * Only present for guild stickers.
    */
   guild_id?: Snowflake;
 
   /**
-   * The user that uploaded the guild sticker
-   * Only included in API responses if the bot has the CREATE_GUILD_EXPRESSIONS
-   * or MANAGE_GUILD_EXPRESSIONS permission
+   * The user that uploaded the guild sticker.
+   * Only present for guild stickers and when the current user has the MANAGE_GUILD_EXPRESSIONS permission.
    */
   user?: UserEntity;
 
   /**
-   * The standard sticker's sort order within its pack
-   * Determines the position of the sticker when displayed in its pack
-   * Only present for standard stickers
+   * The standard sticker's sort order within its pack.
+   * Only applicable to standard stickers in packs.
    */
   sort_value?: number;
 }

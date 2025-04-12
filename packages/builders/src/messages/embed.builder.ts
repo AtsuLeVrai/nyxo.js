@@ -4,9 +4,128 @@ import {
   type EmbedFieldEntity,
   type EmbedFooterEntity,
   type EmbedImageEntity,
+  type EmbedProviderEntity,
   type EmbedThumbnailEntity,
   EmbedType,
+  type EmbedVideoEntity,
 } from "@nyxjs/core";
+import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
+
+/**
+ * Zod schema for embed footer validation
+ */
+const EmbedFooterSchema = z.object({
+  text: z.string().max(2048),
+  icon_url: z.string().url().optional(),
+  proxy_icon_url: z.string().optional(),
+});
+
+/**
+ * Zod schema for embed author validation
+ */
+const EmbedAuthorSchema = z.object({
+  name: z.string().max(256),
+  url: z.string().url().optional(),
+  icon_url: z.string().url().optional(),
+  proxy_icon_url: z.string().optional(),
+});
+
+/**
+ * Zod schema for embed field validation
+ */
+const EmbedFieldSchema = z.object({
+  name: z.string().max(256),
+  value: z.string().max(1024),
+  inline: z.boolean().optional(),
+});
+
+/**
+ * Zod schema for embed image validation
+ */
+const EmbedImageSchema = z.object({
+  url: z.string().url(),
+  proxy_url: z.string().optional(),
+  height: z.number().optional(),
+  width: z.number().optional(),
+});
+
+/**
+ * Zod schema for embed thumbnail validation
+ */
+const EmbedThumbnailSchema = z.object({
+  url: z.string().url(),
+  proxy_url: z.string().optional(),
+  height: z.number().optional(),
+  width: z.number().optional(),
+});
+
+/**
+ * Zod schema for embed video validation
+ */
+const EmbedVideoSchema = z.object({
+  url: z.string().url().optional(),
+  proxy_url: z.string().optional(),
+  height: z.number().optional(),
+  width: z.number().optional(),
+});
+
+/**
+ * Zod schema for embed provider validation
+ */
+const EmbedProviderSchema = z.object({
+  name: z.string().optional(),
+  url: z.string().url().optional(),
+});
+
+/**
+ * Complete Zod schema for Discord embed validation
+ * Enforces all Discord's limits including character counts and field restrictions
+ */
+const EmbedSchema = z
+  .object({
+    title: z.string().max(256).optional(),
+    type: z.nativeEnum(EmbedType).default(EmbedType.Rich),
+    description: z.string().max(4096).optional(),
+    url: z.string().url().optional(),
+    timestamp: z.string().optional(),
+    color: z.number().optional(),
+    footer: EmbedFooterSchema.optional(),
+    image: EmbedImageSchema.optional(),
+    thumbnail: EmbedThumbnailSchema.optional(),
+    author: EmbedAuthorSchema.optional(),
+    fields: z.array(EmbedFieldSchema).max(25).optional(),
+    video: EmbedVideoSchema.optional(),
+    provider: EmbedProviderSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      // Validation of total character count (max 6000)
+      let totalCharCount = 0;
+      if (data.title) {
+        totalCharCount += data.title.length;
+      }
+      if (data.description) {
+        totalCharCount += data.description.length;
+      }
+      if (data.footer?.text) {
+        totalCharCount += data.footer.text.length;
+      }
+      if (data.author?.name) {
+        totalCharCount += data.author.name.length;
+      }
+      if (data.fields) {
+        for (const field of data.fields) {
+          totalCharCount += field.name.length + field.value.length;
+        }
+      }
+      return totalCharCount <= 6000;
+    },
+    {
+      message: "Total embed character count cannot exceed 6000 characters",
+      path: ["_totalCharCount"],
+    },
+  );
 
 /**
  * A builder class for creating Discord embed objects.
@@ -57,14 +176,19 @@ export class EmbedBuilder {
    *
    * @param title The title to set (max 256 characters)
    * @returns This builder instance, for method chaining
-   * @throws Error If title exceeds 256 characters
+   * @throws Error If title validation fails
    */
   setTitle(title: string): this {
-    if (title.length > 256) {
-      throw new Error("Embed title cannot exceed 256 characters");
+    try {
+      EmbedSchema.sourceType().shape.title.parse(title);
+      this.#data.title = title;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
     }
-    this.#data.title = title;
-    return this;
   }
 
   /**
@@ -72,14 +196,19 @@ export class EmbedBuilder {
    *
    * @param description The description to set (max 4096 characters)
    * @returns This builder instance, for method chaining
-   * @throws Error If description exceeds 4096 characters
+   * @throws Error If description validation fails
    */
   setDescription(description: string): this {
-    if (description.length > 4096) {
-      throw new Error("Embed description cannot exceed 4096 characters");
+    try {
+      EmbedSchema.sourceType().shape.description.parse(description);
+      this.#data.description = description;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
     }
-    this.#data.description = description;
-    return this;
   }
 
   /**
@@ -87,10 +216,19 @@ export class EmbedBuilder {
    *
    * @param url The URL to set
    * @returns This builder instance, for method chaining
+   * @throws Error If URL validation fails
    */
   setUrl(url: string): this {
-    this.#data.url = url;
-    return this;
+    try {
+      EmbedSchema.sourceType().shape.url.parse(url);
+      this.#data.url = url;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -120,15 +258,19 @@ export class EmbedBuilder {
    *
    * @param author The author data to set
    * @returns This builder instance, for method chaining
-   * @throws Error If author name exceeds 256 characters
+   * @throws Error If author validation fails
    */
   setAuthor(author: EmbedAuthorEntity): this {
-    if (author.name.length > 256) {
-      throw new Error("Embed author name cannot exceed 256 characters");
+    try {
+      EmbedAuthorSchema.parse(author);
+      this.#data.author = author;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
     }
-
-    this.#data.author = author;
-    return this;
   }
 
   /**
@@ -136,15 +278,19 @@ export class EmbedBuilder {
    *
    * @param footer The footer data to set
    * @returns This builder instance, for method chaining
-   * @throws Error If footer text exceeds 2048 characters
+   * @throws Error If footer validation fails
    */
   setFooter(footer: EmbedFooterEntity): this {
-    if (footer.text.length > 2048) {
-      throw new Error("Embed footer text cannot exceed 2048 characters");
+    try {
+      EmbedFooterSchema.parse(footer);
+      this.#data.footer = footer;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
     }
-
-    this.#data.footer = footer;
-    return this;
   }
 
   /**
@@ -152,10 +298,19 @@ export class EmbedBuilder {
    *
    * @param thumbnail The thumbnail data to set
    * @returns This builder instance, for method chaining
+   * @throws Error If thumbnail validation fails
    */
   setThumbnail(thumbnail: EmbedThumbnailEntity): this {
-    this.#data.thumbnail = thumbnail;
-    return this;
+    try {
+      EmbedThumbnailSchema.parse(thumbnail);
+      this.#data.thumbnail = thumbnail;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -163,10 +318,60 @@ export class EmbedBuilder {
    *
    * @param image The image data to set
    * @returns This builder instance, for method chaining
+   * @throws Error If image validation fails
    */
   setImage(image: EmbedImageEntity): this {
-    this.#data.image = image;
-    return this;
+    try {
+      EmbedImageSchema.parse(image);
+      this.#data.image = image;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Sets the provider of the embed.
+   *
+   * @param provider The provider data to set
+   * @returns This builder instance, for method chaining
+   * @throws Error If provider validation fails
+   */
+  setProvider(provider: EmbedProviderEntity): this {
+    try {
+      EmbedProviderSchema.parse(provider);
+      this.#data.provider = provider;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Sets the video of the embed.
+   * Note: Videos are usually auto-embedded by Discord and not manually set.
+   *
+   * @param video The video data to set
+   * @returns This builder instance, for method chaining
+   * @throws Error If video validation fails
+   */
+  setVideo(video: EmbedVideoEntity): this {
+    try {
+      EmbedVideoSchema.parse(video);
+      this.#data.video = video;
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -174,27 +379,28 @@ export class EmbedBuilder {
    *
    * @param field The field object to add
    * @returns This builder instance, for method chaining
-   * @throws Error If field name exceeds 256 characters or value exceeds 1024 characters
+   * @throws Error If field validation fails or limit exceeded
    */
   addField(field: EmbedFieldEntity): this {
-    if (field.name.length > 256) {
-      throw new Error("Embed field name cannot exceed 256 characters");
-    }
+    try {
+      EmbedFieldSchema.parse(field);
 
-    if (field.value.length > 1024) {
-      throw new Error("Embed field value cannot exceed 1024 characters");
-    }
+      if (!this.#data.fields) {
+        this.#data.fields = [];
+      }
 
-    if (!this.#data.fields) {
-      this.#data.fields = [];
-    }
+      if (this.#data.fields.length >= 25) {
+        throw new Error("Embed cannot have more than 25 fields");
+      }
 
-    if (this.#data.fields.length >= 25) {
-      throw new Error("Embed cannot have more than 25 fields");
+      this.#data.fields.push(field);
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
     }
-
-    this.#data.fields.push(field);
-    return this;
   }
 
   /**
@@ -202,29 +408,30 @@ export class EmbedBuilder {
    *
    * @param fields An array of field objects to add
    * @returns This builder instance, for method chaining
-   * @throws Error If any field name exceeds 256 characters or value exceeds 1024 characters
+   * @throws Error If field validation fails or limit exceeded
    */
   addFields(...fields: EmbedFieldEntity[]): this {
-    for (const field of fields) {
-      if (field.name.length > 256) {
-        throw new Error("Embed field name cannot exceed 256 characters");
+    try {
+      for (const field of fields) {
+        EmbedFieldSchema.parse(field);
       }
 
-      if (field.value.length > 1024) {
-        throw new Error("Embed field value cannot exceed 1024 characters");
+      if (!this.#data.fields) {
+        this.#data.fields = [];
       }
-    }
 
-    if (!this.#data.fields) {
-      this.#data.fields = [];
-    }
+      if (this.#data.fields.length + fields.length > 25) {
+        throw new Error("Embed cannot have more than 25 fields");
+      }
 
-    if (this.#data.fields.length + fields.length > 25) {
-      throw new Error("Embed cannot have more than 25 fields");
+      this.#data.fields.push(...fields);
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
+      }
+      throw error;
     }
-
-    this.#data.fields.push(...fields);
-    return this;
   }
 
   /**
@@ -232,25 +439,21 @@ export class EmbedBuilder {
    *
    * @param fields An array of field objects to set
    * @returns This builder instance, for method chaining
-   * @throws Error If there are more than 25 fields, or if any field exceeds character limits
+   * @throws Error If validation fails or limit exceeded
    */
   setFields(fields: EmbedFieldEntity[]): this {
-    if (fields.length > 25) {
-      throw new Error("Embed cannot have more than 25 fields");
-    }
+    try {
+      const fieldsArray = z.array(EmbedFieldSchema).max(25);
+      fieldsArray.parse(fields);
 
-    for (const field of fields) {
-      if (field.name.length > 256) {
-        throw new Error("Embed field name cannot exceed 256 characters");
+      this.#data.fields = [...fields];
+      return this;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
       }
-
-      if (field.value.length > 1024) {
-        throw new Error("Embed field value cannot exceed 1024 characters");
-      }
+      throw error;
     }
-
-    this.#data.fields = [...fields];
-    return this;
   }
 
   /**
@@ -266,45 +469,23 @@ export class EmbedBuilder {
 
   /**
    * Builds and returns the final embed object.
+   * Performs comprehensive validation to ensure all Discord limits are respected.
    *
    * @returns The constructed embed entity
-   * @throws Error If the total embed length exceeds Discord's limit
+   * @throws Error If validation fails
    */
   build(): EmbedEntity {
-    // Validate total character count
-    let totalCharCount = 0;
+    try {
+      // Validate the complete embed with Zod
+      const result = EmbedSchema.parse(this.#data);
 
-    if (this.#data.title) {
-      totalCharCount += this.#data.title.length;
-    }
-    if (this.#data.description) {
-      totalCharCount += this.#data.description.length;
-    }
-    if (this.#data.footer?.text) {
-      totalCharCount += this.#data.footer.text.length;
-    }
-    if (this.#data.author?.name) {
-      totalCharCount += this.#data.author.name.length;
-    }
-
-    if (this.#data.fields) {
-      for (const field of this.#data.fields) {
-        totalCharCount += field.name.length + field.value.length;
+      return result;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(fromZodError(error).message);
       }
+      throw error;
     }
-
-    if (totalCharCount > 6000) {
-      throw new Error(
-        "Total embed character count cannot exceed 6000 characters",
-      );
-    }
-
-    // Ensure we have the required type property
-    if (!this.#data.type) {
-      this.#data.type = EmbedType.Rich;
-    }
-
-    return this.#data as EmbedEntity;
   }
 
   /**

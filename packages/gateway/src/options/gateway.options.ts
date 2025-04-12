@@ -1,4 +1,4 @@
-import { ApiVersion, BitFieldManager } from "@nyxjs/core";
+import { ApiVersion, BitField } from "@nyxjs/core";
 import { z } from "zod";
 import {
   GatewayIntentsBits,
@@ -62,7 +62,7 @@ export const GatewayOptions = z.object({
       z
         .nativeEnum(GatewayIntentsBits)
         .array()
-        .transform((value) => BitFieldManager.combine(value).toNumber()),
+        .transform((value) => Number(BitField.combine(value).valueOf())),
       z.number().int().positive(),
     ])
     .describe("Gateway intents to request"),

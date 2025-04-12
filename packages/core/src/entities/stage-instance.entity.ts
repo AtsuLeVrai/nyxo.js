@@ -36,48 +36,45 @@ export enum StageInstancePrivacyLevel {
  */
 export interface StageInstanceEntity {
   /**
-   * The ID of this Stage instance
-   * Unique identifier for the Stage instance
+   * The ID of the Stage instance.
+   * Unique identifier for this live stage.
    */
   id: Snowflake;
 
   /**
-   * The guild ID of the associated Stage channel
-   * Identifies which guild this Stage instance belongs to
+   * The guild ID of the associated Stage channel.
+   * The server where this stage is taking place.
    */
   guild_id: Snowflake;
 
   /**
-   * The ID of the associated Stage channel
-   * Points to the Stage channel where this instance is active
+   * The ID of the associated Stage channel.
+   * The channel that has been converted to a stage.
    */
   channel_id: Snowflake;
 
   /**
-   * The topic of the Stage instance (1-120 characters)
-   * This is the blurb shown below the channel's name and in other places
-   * where the Stage is displayed
+   * The topic of the Stage instance (1-120 characters).
+   * Describes what the stage is about.
    */
   topic: string;
 
   /**
-   * The privacy level of the Stage instance
-   * Determines who can access the Stage
-   * Currently, only GuildOnly (2) is fully supported
+   * The privacy level of the Stage instance.
+   * Controls who can see and access this Stage.
+   * Currently, GuildOnly is the only supported privacy level.
    */
   privacy_level: StageInstancePrivacyLevel;
 
   /**
-   * Whether or not Stage Discovery is disabled
-   * Related to the deprecated PUBLIC privacy level
-   * @deprecated This field is deprecated by Discord along with the PUBLIC privacy level
+   * Whether or not Stage Discovery is disabled.
+   * If true, the Stage is not discoverable through Stage Discovery.
    */
   discoverable_disabled: boolean;
 
   /**
-   * The ID of the scheduled event for this Stage instance, if any
-   * If this Stage is associated with a guild scheduled event, this contains its ID
-   * This allows linking a scheduled event to a Stage instance
+   * The ID of the scheduled event for this Stage instance.
+   * Links a scheduled event to this Stage instance, if applicable.
    */
   guild_scheduled_event_id: Snowflake | null;
 }
