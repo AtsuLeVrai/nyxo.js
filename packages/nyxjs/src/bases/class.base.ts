@@ -142,47 +142,6 @@ export abstract class BaseClass<T extends object> {
   }
 
   /**
-   * Creates a new instance of a model from raw Discord API data.
-   *
-   * This static method enables type-safe instantiation of any class that extends BaseClass.
-   * It ensures proper type inference for both the class type and the data type.
-   *
-   * @template TypeClass - The specific class type extending BaseClass
-   * @template TypeData - The data type the class accepts
-   * @param client - The client instance that will be used for API requests
-   * @param data - The raw data object from the Discord API
-   * @returns A new instance of the specific class
-   *
-   * @example
-   * ```typescript
-   * // Create a new User instance from raw Discord API data
-   * const user = User.from(client, userData);
-   *
-   * // Static from with additional processing
-   * const channel = Channel.from(client, channelData);
-   * ```
-   */
-  static from<
-    TypeClass extends new (
-      client: Client,
-      data: TypeData,
-    ) => InstanceType<TypeClass>,
-    // biome-ignore lint/suspicious/noExplicitAny: Complex type
-    TypeData extends object = any,
-  >(this: TypeClass, client: Client, data: TypeData): InstanceType<TypeClass> {
-    if (!client) {
-      throw new Error("Client must be provided when creating a model instance");
-    }
-
-    if (!data || typeof data !== "object") {
-      throw new Error("Data must be a valid object");
-    }
-
-    // biome-ignore lint/complexity/noThisInStatic: This is safe because we're creating the same class type
-    return new this(client, data);
-  }
-
-  /**
    * Converts this modal to a plain object with all properties.
    * The returned object is frozen to prevent accidental modification.
    *

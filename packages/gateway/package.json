@@ -41,7 +41,6 @@
   "scripts": {
     "build": "cross-env NODE_ENV=development node ../../scripts/build.js",
     "build:prod": "cross-env NODE_ENV=production node ../../scripts/build.js",
-    "check": "biome check --write --unsafe --verbose src",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -59,8 +58,7 @@
     "zlib-sync": "^0.1.9"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.0-beta.1",
-    "@types/node": "^22.14.0",
+    "@types/node": "^22.14.1",
     "@types/ws": "^8.18.1",
     "cross-env": "^7.0.3",
     "typescript": "^5.8.3"

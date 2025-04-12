@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { UserEntity } from "./user.entity.js";
 
 /**
@@ -20,8 +20,6 @@ export interface SoundboardSoundEntity {
   /**
    * The name of this sound (2-32 characters)
    * This is the display name that appears in the Discord client
-   * @minLength 2
-   * @maxLength 32
    */
   name: string;
 
@@ -37,8 +35,6 @@ export interface SoundboardSoundEntity {
    * The volume of this sound, from 0 to 1
    * Controls how loud the sound plays when triggered
    * Default value is 1 (full volume)
-   * @minimum 0
-   * @maximum 1
    */
   volume: number;
 

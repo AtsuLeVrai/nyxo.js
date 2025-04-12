@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0-beta.1/schema.json",
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "vcs": {
     "clientKind": "git",
     "defaultBranch": "main",
@@ -8,12 +8,15 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": [
-      "**/*",
-      "!**/dist/**",
-      "!**/node_modules/**",
-      "!*.d.ts"
-    ]
+    "include": [
+      "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.js",
+      "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.js",
+      "scripts/**/*.js",
+      "scripts/**/*.ts"
+    ],
+    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
   },
   "formatter": {
     "enabled": true,
@@ -22,12 +25,15 @@
     "indentWidth": 2,
     "lineEnding": "lf",
     "lineWidth": 80,
-    "includes": [
-      "**/*",
-      "!**/dist/**",
-      "!**/node_modules/**",
-      "!*.d.ts"
-    ]
+    "include": [
+      "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.js",
+      "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.js",
+      "scripts/**/*.js",
+      "scripts/**/*.ts"
+    ],
+    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
   },
   "javascript": {
     "formatter": {
@@ -41,32 +47,24 @@
       "trailingCommas": "all"
     }
   },
-  "assist": {
+  "organizeImports": {
     "enabled": true,
-    "includes": [
-      "**/*",
-      "!**/dist/**",
-      "!**/node_modules/**",
-      "!*.d.ts"
+    "include": [
+      "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.js",
+      "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.js",
+      "scripts/**/*.js",
+      "scripts/**/*.ts"
     ],
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
+    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
   },
   "linter": {
     "enabled": true,
-    "includes": [
-      "**/*",
-      "!**/dist/**",
-      "!**/node_modules/**",
-      "!*.d.ts"
-    ],
     "rules": {
-      "recommended": true,
+      "all": true,
       "nursery": {
-        "recommended": true,
+        "all": true,
         "noEnum": "off",
         "noSecrets": "off"
       },
@@ -78,6 +76,33 @@
         "noReExportAll": "off",
         "noBarrelFile": "off"
       }
+    },
+    "include": [
+      "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.js",
+      "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.js",
+      "scripts/**/*.js",
+      "scripts/**/*.ts"
+    ],
+    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
+  },
+  "overrides": [
+    {
+      "include": [
+        "internals/*/src/**/*.ts",
+        "internals/*/src/**/*.js",
+        "scripts/**/*.js",
+        "scripts/**/*.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off",
+            "noConsoleLog": "off"
+          }
+        }
+      }
     }
-  }
+  ]
 }

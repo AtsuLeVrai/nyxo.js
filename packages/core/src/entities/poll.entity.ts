@@ -9,7 +9,6 @@ export enum LayoutType {
   /**
    * The default layout type for polls.
    * Currently the only available layout option.
-   * @value 1
    */
   Default = 1,
 }
@@ -23,14 +22,12 @@ export interface PollAnswerCountEntity {
   /**
    * The answer_id.
    * Unique identifier for this answer option.
-   * @minimum 1
    */
   id: number;
 
   /**
    * The number of votes for this answer.
    * Count of users who selected this option.
-   * @minimum 0
    */
   count: number;
 
@@ -64,7 +61,6 @@ export interface PollResultsEntity {
  * Represents the content of a poll question or answer.
  * Can contain text and/or emoji elements.
  * @see {@link https://discord.com/developers/docs/resources/poll#poll-media-object-poll-media-object-structure}
- * @validate Either text or emoji (or both) must be provided
  */
 export interface PollMediaEntity {
   /**
@@ -89,7 +85,6 @@ export interface PollAnswerEntity {
   /**
    * The ID of the answer.
    * Unique identifier for this answer option.
-   * @minimum 1
    */
   answer_id: number;
 
@@ -101,8 +96,6 @@ export interface PollAnswerEntity {
     /**
      * The text of the answer.
      * Displayed text for this option.
-     * @maxLength 55
-     * @optional
      */
     text?: string;
   };
@@ -122,8 +115,6 @@ export interface PollCreateRequestEntity {
     /**
      * The text of the question.
      * Main text displayed at the top of the poll.
-     * @maxLength 300
-     * @optional
      */
     text?: string;
   };
@@ -131,30 +122,24 @@ export interface PollCreateRequestEntity {
   /**
    * Each of the answers available in the poll.
    * The options users can select from when voting.
-   * @minItems 2
-   * @maxItems 10
    */
-  answers: Omit<PollAnswerEntity, "answer_id">[];
+  answers: { poll_media: PollAnswerEntity["poll_media"] }[];
 
   /**
    * Number of hours the poll should be open for.
    * Duration in hours, up to 32 days (768 hours).
-   * @minimum 1
-   * @maximum 768
    */
   duration: number;
 
   /**
    * Whether a user can select multiple answers.
    * If true, users can vote for more than one option.
-   * @default false
    */
   allow_multiselect: boolean;
 
   /**
    * The layout type of the poll.
    * Controls the visual presentation of the poll.
-   * @default 1
    */
   layout_type: LayoutType;
 }
@@ -173,8 +158,6 @@ export interface PollEntity {
     /**
      * The text of the question.
      * Main text of the poll prompt.
-     * @maxLength 300
-     * @optional
      */
     text?: string;
   };
@@ -182,16 +165,12 @@ export interface PollEntity {
   /**
    * Each of the answers available in the poll.
    * The options users can vote on.
-   * @minItems 2
-   * @maxItems 10
    */
   answers: PollAnswerEntity[];
 
   /**
    * The time when the poll ends.
    * ISO8601 timestamp for poll expiration.
-   * @nullable
-   * @validate Expiry must be a valid ISO8601 timestamp or null
    */
   expiry: string | null;
 

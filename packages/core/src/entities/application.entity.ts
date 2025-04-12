@@ -1,5 +1,5 @@
 import type { OAuth2Scope } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { GuildEntity } from "./guild.entity.js";
 import type { TeamEntity } from "./team.entity.js";
 import type { UserEntity } from "./user.entity.js";
@@ -12,65 +12,55 @@ import type { UserEntity } from "./user.entity.js";
 export enum ApplicationFlags {
   /**
    * Indicates if an app uses the Auto Moderation API.
-   * @value 1 << 6 (64)
    */
   ApplicationAutoModerationRuleCreateBadge = 1 << 6,
 
   /**
    * Intent required for bots in 100 or more servers to receive presence_update events.
-   * @value 1 << 12 (4096)
    */
   GatewayPresence = 1 << 12,
 
   /**
    * Intent required for bots in under 100 servers to receive presence_update events,
    * found on the Bot page in your app's settings.
-   * @value 1 << 13 (8192)
    */
   GatewayPresenceLimited = 1 << 13,
 
   /**
    * Intent required for bots in 100 or more servers to receive member-related events like guild_member_add.
    * See the list of member-related events under GUILD_MEMBERS.
-   * @value 1 << 14 (16384)
    */
   GatewayGuildMembers = 1 << 14,
 
   /**
    * Intent required for bots in under 100 servers to receive member-related events like guild_member_add,
    * found on the Bot page in your app's settings.
-   * @value 1 << 15 (32768)
    */
   GatewayGuildMembersLimited = 1 << 15,
 
   /**
    * Indicates unusual growth of an app that prevents verification.
-   * @value 1 << 16 (65536)
    */
   VerificationPendingGuildLimit = 1 << 16,
 
   /**
    * Indicates if an app is embedded within the Discord client (currently unavailable publicly).
-   * @value 1 << 17 (131072)
    */
   Embedded = 1 << 17,
 
   /**
    * Intent required for bots in 100 or more servers to receive message content.
-   * @value 1 << 18 (262144)
    */
   GatewayMessageContent = 1 << 18,
 
   /**
    * Intent required for bots in under 100 servers to receive message content,
    * found on the Bot page in your app's settings.
-   * @value 1 << 19 (524288)
    */
   GatewayMessageContentLimited = 1 << 19,
 
   /**
    * Indicates if an app has registered global application commands.
-   * @value 1 << 23 (8388608)
    */
   ApplicationCommandBadge = 1 << 23,
 }
@@ -83,19 +73,16 @@ export enum ApplicationFlags {
 export enum ApplicationEventWebhookStatus {
   /**
    * Webhook events are disabled by the developer.
-   * @value 1
    */
   Disabled = 1,
 
   /**
    * Webhook events are enabled by the developer.
-   * @value 2
    */
   Enabled = 2,
 
   /**
    * Webhook events are disabled by Discord, usually due to inactivity.
-   * @value 3
    */
   DisabledByDiscord = 3,
 }
@@ -108,13 +95,11 @@ export enum ApplicationEventWebhookStatus {
 export enum ApplicationIntegrationType {
   /**
    * App is installable to servers. Requires authorization by a server member with the MANAGE_GUILD permission.
-   * @value 0
    */
   GuildInstall = 0,
 
   /**
    * App is installable to users. Visible only to the authorizing user.
-   * @value 1
    */
   UserInstall = 1,
 }
@@ -173,13 +158,11 @@ export interface ApplicationEntity {
   /**
    * Icon hash of the application.
    * Used to display the application's icon.
-   * @nullable
    */
   icon: string | null;
 
   /**
    * Icon hash returned when in the template object.
-   * @nullable
    */
   icon_hash?: string | null;
 
@@ -192,7 +175,6 @@ export interface ApplicationEntity {
   /**
    * List of RPC origin URLs, if RPC is enabled.
    * Allows the application to use Discord's RPC protocol.
-   * @format url
    */
   rpc_origins?: string[];
 
@@ -216,13 +198,11 @@ export interface ApplicationEntity {
 
   /**
    * URL of the app's Terms of Service.
-   * @format url
    */
   terms_of_service_url?: string;
 
   /**
    * URL of the app's Privacy Policy.
-   * @format url
    */
   privacy_policy_url?: string;
 
@@ -241,7 +221,6 @@ export interface ApplicationEntity {
   /**
    * If the app belongs to a team, this will be a list of the members of that team.
    * Contains team member information if the application is owned by a team.
-   * @nullable
    */
   team: TeamEntity | null;
 
@@ -284,45 +263,36 @@ export interface ApplicationEntity {
   /**
    * Approximate count of guilds the app has been added to.
    * Gives an estimate of how many servers are using this application.
-   * @minimum 0
    */
   approximate_guild_count?: number;
 
   /**
    * Approximate count of users that have installed the app.
    * Gives an estimate of how many users are using this application.
-   * @minimum 0
    */
   approximate_user_install_count?: number;
 
   /**
    * Array of redirect URIs for the app.
    * Used for OAuth2 authorization flows.
-   * @format url
    */
   redirect_uris?: string[];
 
   /**
    * Interactions endpoint URL for the app.
    * Where Discord will send interaction payloads if using the HTTP interactions mode.
-   * @format url
-   * @nullable
    */
   interactions_endpoint_url?: string | null;
 
   /**
    * Role connection verification URL for the app.
    * Used for linked roles feature.
-   * @format url
-   * @nullable
    */
   role_connections_verification_url?: string | null;
 
   /**
    * Event webhooks URL for the app to receive webhook events.
    * Where Discord will send webhook event payloads.
-   * @format url
-   * @nullable
    */
   event_webhooks_url?: string | null;
 
@@ -341,8 +311,6 @@ export interface ApplicationEntity {
   /**
    * List of tags describing the content and functionality of the app.
    * Used for discovery and categorization.
-   * @maxLength 20
-   * @maxItems 5
    */
   tags?: string[];
 
@@ -364,7 +332,6 @@ export interface ApplicationEntity {
   /**
    * Default custom authorization URL for the app, if enabled.
    * Alternative to the Discord-provided authorization flow.
-   * @format url
    */
   custom_install_url?: string;
 }

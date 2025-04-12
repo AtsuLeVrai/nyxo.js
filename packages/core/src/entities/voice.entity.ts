@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { GuildMemberEntity } from "./guild.entity.js";
 
 /**
@@ -140,8 +140,6 @@ export interface VoiceStateEntity {
    * Used in stage channels when audience members want to become speakers
    * Set to the current time when a user requests to speak, and null when cleared
    * Requires the REQUEST_TO_SPEAK permission to set for yourself
-   * @format datetime
-   * @nullable
    */
   request_to_speak_timestamp: string | null;
 }

@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { AnyChannelEntity } from "./channel.entity.js";
 import type { GuildEntity } from "./guild.entity.js";
 import type { UserEntity } from "./user.entity.js";
@@ -123,11 +123,6 @@ export interface WebhookEntity {
    * The default name of the webhook (1-80 characters)
    * The name that will be used when sending messages if no override is provided
    * Must not contain 'clyde' or 'discord' (case insensitive)
-   * @minLength 1
-   * @maxLength 80
-   * @nullable
-   * @optional
-   * @validate Webhook name must not contain 'clyde' or 'discord' and must be 1-80 characters
    */
   name?: string | null;
 
@@ -170,8 +165,6 @@ export interface WebhookEntity {
    * The URL used for executing the webhook (returned by the webhooks OAuth2 flow)
    * A complete URL that can be used to execute the webhook directly
    * Only returned in certain contexts, such as the OAuth2 flow
-   * @format url
-   * @optional
    */
   url?: string;
 }

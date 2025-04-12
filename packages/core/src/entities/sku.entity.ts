@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 
 /**
  * Represents the flags that can be applied to a SKU.
@@ -77,7 +77,6 @@ export interface SkuEntity {
   /**
    * Type of SKU
    * Determines whether this is a one-time purchase or subscription
-   * @validate For integration and testing entitlements, use the SKU with type 5 (SUBSCRIPTION) instead of type 6 (SUBSCRIPTION_GROUP)
    */
   type: SkuType;
 
@@ -105,46 +104,4 @@ export interface SkuEntity {
    * For example: (flags & SkuFlags.GuildSubscription) to check if it's a guild subscription
    */
   flags: SkuFlags;
-
-  /**
-   * Optional ID of a dependent SKU
-   * If this SKU depends on another SKU, this will contain its ID
-   */
-  dependent_sku_id: Snowflake | null;
-
-  /**
-   * Optional manifest labels
-   * Additional metadata labels that can be used for organization or filtering
-   */
-  manifest_labels: string[] | null;
-
-  /**
-   * Access type for the SKU
-   * Defines how access to this premium offering is granted
-   */
-  access_type: number;
-
-  /**
-   * Features for the SKU
-   * Array of feature identifiers that this SKU provides
-   */
-  features: string[];
-
-  /**
-   * Optional release date for the SKU
-   * When this premium offering becomes available
-   */
-  release_date: string | null;
-
-  /**
-   * Whether the SKU is premium
-   * Indicates if this is considered a premium offering
-   */
-  premium: boolean;
-
-  /**
-   * Whether to show age gate
-   * Controls if an age verification prompt is shown before purchase
-   */
-  show_age_gate: boolean;
 }

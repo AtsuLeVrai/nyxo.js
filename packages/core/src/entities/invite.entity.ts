@@ -64,22 +64,18 @@ export interface InviteStageInstanceEntity {
   /**
    * The number of users in the Stage.
    * Total count of participants in the Stage.
-   * @minimum 0
    */
   participant_count: number;
 
   /**
    * The number of users speaking in the Stage.
    * Count of users who have speaker status in the Stage.
-   * @minimum 0
    */
   speaker_count: number;
 
   /**
    * The topic of the Stage instance.
    * Title or subject of the ongoing Stage.
-   * @minLength 1
-   * @maxLength 120
    */
   topic: string;
 }
@@ -93,21 +89,18 @@ export interface InviteMetadataEntity {
   /**
    * Number of times this invite has been used.
    * Count of how many users have joined using this invite.
-   * @minimum 0
    */
   uses: number;
 
   /**
    * Max number of times this invite can be used (0 = unlimited).
    * Maximum usage limit before the invite becomes invalid.
-   * @minimum 0
    */
   max_uses: number;
 
   /**
    * Duration (in seconds) after which the invite expires (0 = never).
    * Time in seconds until this invite becomes invalid.
-   * @minimum 0
    */
   max_age: number;
 
@@ -120,7 +113,6 @@ export interface InviteMetadataEntity {
   /**
    * When this invite was created.
    * ISO8601 timestamp when the invite was initially generated.
-   * @format datetime
    */
   created_at: string;
 }
@@ -183,22 +175,18 @@ export interface InviteEntity {
   /**
    * Approximate count of online members.
    * Returned from the GET /invites/{code} endpoint when with_counts is true.
-   * @minimum 0
    */
   approximate_presence_count?: number;
 
   /**
    * Approximate count of total members.
    * Returned from the GET /invites/{code} endpoint when with_counts is true.
-   * @minimum 0
    */
   approximate_member_count?: number;
 
   /**
    * The expiration date of this invite.
    * Returned from the GET /invites/{code} endpoint when with_expiration is true.
-   * @format datetime
-   * @nullable
    */
   expires_at?: string | null;
 

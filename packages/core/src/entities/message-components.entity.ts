@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { ChannelType } from "./channel.entity.js";
 import type { EmojiEntity } from "./emoji.entity.js";
 
@@ -11,56 +11,48 @@ export enum ComponentType {
   /**
    * Container for other components.
    * Serves as a layout container that can hold buttons or select menus.
-   * @value 1
    */
   ActionRow = 1,
 
   /**
    * Button component.
    * Interactive button that users can click to trigger an interaction.
-   * @value 2
    */
   Button = 2,
 
   /**
    * Select menu for string values.
    * Dropdown menu where users select from predefined text options.
-   * @value 3
    */
   StringSelect = 3,
 
   /**
    * Text input component.
    * Field that allows users to enter text in a modal.
-   * @value 4
    */
   TextInput = 4,
 
   /**
    * Select menu for users.
    * Dropdown that allows selection of users from the server.
-   * @value 5
    */
   UserSelect = 5,
 
   /**
    * Select menu for roles.
    * Dropdown that allows selection of roles from the server.
-   * @value 6
    */
   RoleSelect = 6,
 
   /**
    * Select menu for mentionables (users and roles).
    * Dropdown that allows selection of either users or roles.
-   * @value 7
    */
   MentionableSelect = 7,
 
   /**
    * Select menu for channels.
    * Dropdown that allows selection of channels from the server.
-   * @value 8
    */
   ChannelSelect = 8,
 }
@@ -74,14 +66,12 @@ export enum TextInputStyle {
   /**
    * Single-line input.
    * A compact input field for shorter text entries.
-   * @value 1
    */
   Short = 1,
 
   /**
    * Multi-line input.
    * A larger input field for paragraphs or longer text entries.
-   * @value 2
    */
   Paragraph = 2,
 }
@@ -95,42 +85,36 @@ export enum ButtonStyle {
   /**
    * Blurple button.
    * Discord's primary color button, should be used for primary actions.
-   * @value 1
    */
   Primary = 1,
 
   /**
    * Grey button.
    * Neutral color button, suitable for secondary actions.
-   * @value 2
    */
   Secondary = 2,
 
   /**
    * Green button.
    * Positive color button, suitable for confirming or positive actions.
-   * @value 3
    */
   Success = 3,
 
   /**
    * Red button.
    * Negative color button, suitable for destructive or negative actions.
-   * @value 4
    */
   Danger = 4,
 
   /**
    * URL button.
    * Grey button that navigates to a URL instead of sending an interaction.
-   * @value 5
    */
   Link = 5,
 
   /**
    * Premium subscription button.
    * Special button used for premium purchases.
-   * @value 6
    */
   Premium = 6,
 }
@@ -150,7 +134,6 @@ export interface TextInputEntity {
   /**
    * A developer-defined identifier for the input.
    * Used to identify this component in interaction payloads.
-   * @maxLength 100
    */
   custom_id: string;
 
@@ -163,48 +146,36 @@ export interface TextInputEntity {
   /**
    * Label for this component.
    * Text displayed above the input field.
-   * @maxLength 45
    */
   label: string;
 
   /**
    * Minimum input length for a text input.
    * The smallest number of characters a user must enter.
-   * @minimum 0
-   * @maximum 4000
-   * @optional
    */
   min_length?: number;
 
   /**
    * Maximum input length for a text input.
    * The largest number of characters a user can enter.
-   * @minimum 1
-   * @maximum 4000
-   * @optional
    */
   max_length?: number;
 
   /**
    * Whether this component is required to be filled.
    * If true, users must enter a value before submitting.
-   * @default true
    */
-  required: boolean;
+  required?: boolean;
 
   /**
    * Pre-filled value for this component.
    * Text that appears in the input field by default.
-   * @maxLength 4000
-   * @optional
    */
   value?: string;
 
   /**
    * Custom placeholder text if the input is empty.
    * Shown when the input field is empty.
-   * @maxLength 100
-   * @optional
    */
   placeholder?: string;
 }
@@ -237,22 +208,18 @@ export interface SelectMenuOptionEntity {
   /**
    * User-facing name of the option.
    * The text displayed to users in the dropdown.
-   * @maxLength 100
    */
   label: string;
 
   /**
    * Developer-defined value of the option.
    * The value your application receives when this option is selected.
-   * @maxLength 100
    */
   value: string;
 
   /**
    * Additional description of the option.
    * Supplementary text shown below the label.
-   * @maxLength 100
-   * @optional
    */
   description?: string;
 
@@ -270,14 +237,15 @@ export interface SelectMenuOptionEntity {
 }
 
 /**
- * Base interface for all select menu components.
- * Defines common properties shared by all types of select menus.
+ * Base select menu schema with all possible properties for any select menu type.
+ * Contains all fields that may appear in any kind of select menu.
+ * Many fields are optional as they only apply to specific select menu types.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object}
  */
 export interface SelectMenuEntity {
   /**
-   * Type of select menu component.
-   * Determines what kind of select menu this is and what can be selected.
+   * The type of component.
+   * Determines which kind of select menu this is.
    */
   type:
     | ComponentType.StringSelect
@@ -289,48 +257,38 @@ export interface SelectMenuEntity {
   /**
    * A developer-defined identifier for the select menu.
    * Used to identify this component in interaction payloads.
-   * @maxLength 100
    */
   custom_id: string;
 
   /**
    * Array of select options.
-   * The choices that will appear in a string select menu.
-   * @minItems 1
-   * @maxItems 25
-   * @optional
+   * The choices that will appear in the dropdown menu.
+   * Only applicable to string select menus.
    */
   options?: SelectMenuOptionEntity[];
 
   /**
    * Types of channels that can be selected.
    * Filters which channel types are available in a channel select menu.
+   * Only applicable to channel select menus.
    */
   channel_types?: ChannelType[];
 
   /**
    * Custom placeholder text if nothing is selected.
    * Text shown when no option is selected.
-   * @maxLength 150
-   * @optional
    */
   placeholder?: string;
 
   /**
    * Minimum number of items that must be chosen.
    * The smallest number of options a user must select.
-   * @minimum 0
-   * @maximum 25
-   * @default 1
    */
   min_values?: number;
 
   /**
    * Maximum number of items that can be chosen.
    * The largest number of options a user can select.
-   * @minimum 1
-   * @maximum 25
-   * @default 1
    */
   max_values?: number;
 
@@ -349,13 +307,13 @@ export interface SelectMenuEntity {
 
 /**
  * String select menu component.
- * Dropdown that allows users to select from custom text options.
+ * Dropdown that allows users to select from predefined options.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
  */
 export interface StringSelectMenuEntity
-  extends Omit<SelectMenuEntity, "type" | "channel_types" | "options"> {
+  extends Omit<SelectMenuEntity, "channel_types"> {
   /**
-   * The type of component - always 3 for a string select menu.
+   * The type of component - always 3 for a string select.
    * Identifies this component as a string select menu.
    */
   type: ComponentType.StringSelect;
@@ -363,35 +321,19 @@ export interface StringSelectMenuEntity
   /**
    * Array of select options.
    * The choices that will appear in the dropdown menu.
-   * @minItems 1
-   * @maxItems 25
    */
   options: SelectMenuOptionEntity[];
 }
 
 /**
- * Channel select menu component.
- * Dropdown that allows users to select channels from the server.
- * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
- */
-export interface ChannelSelectMenuEntity
-  extends Omit<SelectMenuEntity, "type" | "options"> {
-  /**
-   * The type of component - always 8 for a channel select menu.
-   * Identifies this component as a channel select menu.
-   */
-  type: ComponentType.ChannelSelect;
-}
-
-/**
  * User select menu component.
- * Dropdown that allows users to select members of the server.
+ * Dropdown that allows users to select users from the server.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
  */
 export interface UserSelectMenuEntity
-  extends Omit<SelectMenuEntity, "type" | "options" | "channel_types"> {
+  extends Omit<SelectMenuEntity, "options" | "channel_types"> {
   /**
-   * The type of component - always 5 for a user select menu.
+   * The type of component - always 5 for a user select.
    * Identifies this component as a user select menu.
    */
   type: ComponentType.UserSelect;
@@ -403,9 +345,9 @@ export interface UserSelectMenuEntity
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
  */
 export interface RoleSelectMenuEntity
-  extends Omit<SelectMenuEntity, "type" | "options" | "channel_types"> {
+  extends Omit<SelectMenuEntity, "options" | "channel_types"> {
   /**
-   * The type of component - always 6 for a role select menu.
+   * The type of component - always 6 for a role select.
    * Identifies this component as a role select menu.
    */
   type: ComponentType.RoleSelect;
@@ -417,12 +359,32 @@ export interface RoleSelectMenuEntity
  * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
  */
 export interface MentionableSelectMenuEntity
-  extends Omit<SelectMenuEntity, "type" | "options" | "channel_types"> {
+  extends Omit<SelectMenuEntity, "options" | "channel_types"> {
   /**
-   * The type of component - always 7 for a mentionable select menu.
+   * The type of component - always 7 for a mentionable select.
    * Identifies this component as a mentionable select menu.
    */
   type: ComponentType.MentionableSelect;
+}
+
+/**
+ * Channel select menu component.
+ * Dropdown that allows users to select channels from the server.
+ * @see {@link https://discord.com/developers/docs/interactions/message-components#select-menu-object-select-menu-structure}
+ */
+export interface ChannelSelectMenuEntity
+  extends Omit<SelectMenuEntity, "options"> {
+  /**
+   * The type of component - always 8 for a channel select.
+   * Identifies this component as a channel select menu.
+   */
+  type: ComponentType.ChannelSelect;
+
+  /**
+   * Types of channels that can be selected.
+   * Filters which channel types are available in the dropdown.
+   */
+  channel_types?: ChannelType[];
 }
 
 /**
@@ -431,16 +393,15 @@ export interface MentionableSelectMenuEntity
  */
 export type AnySelectMenuEntity =
   | StringSelectMenuEntity
-  | ChannelSelectMenuEntity
   | UserSelectMenuEntity
   | RoleSelectMenuEntity
-  | MentionableSelectMenuEntity;
+  | MentionableSelectMenuEntity
+  | ChannelSelectMenuEntity;
 
 /**
  * Button component.
  * Interactive element that users can click to trigger an action.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#button-object}
- * @validate Button configuration is invalid. Link buttons must have URL, Premium buttons must have sku_id, others must have custom_id
  */
 export interface ButtonEntity {
   /**
@@ -458,8 +419,6 @@ export interface ButtonEntity {
   /**
    * Text that appears on the button.
    * The label displayed inside the button.
-   * @maxLength 80
-   * @optional
    */
   label?: string;
 
@@ -472,8 +431,6 @@ export interface ButtonEntity {
   /**
    * A developer-defined identifier for the button.
    * Used to identify this component in interaction payloads.
-   * @maxLength 100
-   * @optional
    */
   custom_id?: string;
 
@@ -486,8 +443,6 @@ export interface ButtonEntity {
   /**
    * URL for link buttons.
    * The destination that users will be sent to when clicking a Link-style button.
-   * @format url
-   * @optional
    */
   url?: string;
 
@@ -511,7 +466,6 @@ export type AnyComponentEntity =
  * Action row component.
  * Container for organizing other interactive components in a message.
  * @see {@link https://discord.com/developers/docs/interactions/message-components#action-rows}
- * @validate An Action Row cannot contain both a select menu and buttons, and can only contain one select menu
  */
 export interface ActionRowEntity {
   /**
@@ -523,7 +477,6 @@ export interface ActionRowEntity {
   /**
    * Components in this action row.
    * The interactive elements displayed within this container.
-   * @maxItems 5
    */
   components: AnyComponentEntity[];
 }

@@ -6,8 +6,8 @@ import {
   ChannelType,
   Client,
   EmbedBuilder,
-  formatUser,
   GatewayIntentsBits,
+  formatUser,
   sleep,
 } from "nyx.js";
 

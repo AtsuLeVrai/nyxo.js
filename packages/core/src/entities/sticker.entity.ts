@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { UserEntity } from "./user.entity.js";
 
 /**
@@ -80,17 +80,12 @@ export interface StickerEntity {
   /**
    * Name of the sticker (2-30 characters)
    * The display name shown in the Discord client
-   * @minLength 2
-   * @maxLength 30
    */
   name: string;
 
   /**
    * Description of the sticker (null or 2-100 characters)
    * A brief explanation of what the sticker depicts
-   * @minLength 2
-   * @maxLength 100
-   * @nullable
    */
   description: string | null;
 
@@ -99,7 +94,6 @@ export interface StickerEntity {
    * Used to improve search and suggestions
    * For standard stickers, this is typically a comma-separated list of keywords
    * For guild stickers, this is typically an emoji-derived name (convention, not required)
-   * @maxLength 200
    */
   tags: string;
 
@@ -141,6 +135,32 @@ export interface StickerEntity {
    * Only present for standard stickers
    */
   sort_value?: number;
+}
+
+/**
+ * Represents the smallest amount of data required to render a sticker.
+ * This is a partial sticker object containing only essential display information.
+ * Used in contexts where the full sticker data isn't needed, such as in messages.
+ * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-item-object}
+ */
+export interface StickerItemEntity {
+  /**
+   * ID of the sticker
+   * Unique identifier for the sticker
+   */
+  id: Snowflake;
+
+  /**
+   * Name of the sticker
+   * Display name shown in the Discord client
+   */
+  name: string;
+
+  /**
+   * Type of sticker format
+   * Determines the file type of the sticker (PNG, APNG, Lottie, or GIF)
+   */
+  format_type: StickerFormatType;
 }
 
 /**
@@ -191,30 +211,4 @@ export interface StickerPackEntity {
    * Used as the background when viewing the pack in the Discord client
    */
   banner_asset_id?: Snowflake;
-}
-
-/**
- * Represents the smallest amount of data required to render a sticker.
- * This is a partial sticker object containing only essential display information.
- * Used in contexts where the full sticker data isn't needed, such as in messages.
- * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-item-object}
- */
-export interface StickerItemEntity {
-  /**
-   * ID of the sticker
-   * Unique identifier for the sticker
-   */
-  id: Snowflake;
-
-  /**
-   * Name of the sticker
-   * Display name shown in the Discord client
-   */
-  name: string;
-
-  /**
-   * Type of sticker format
-   * Determines the file type of the sticker (PNG, APNG, Lottie, or GIF)
-   */
-  format_type: StickerFormatType;
 }

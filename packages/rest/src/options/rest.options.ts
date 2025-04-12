@@ -53,7 +53,7 @@ export const RestOptions = z.object({
    * Timeout for API requests in milliseconds
    * @default 30000
    */
-  timeout: z.number().int().min(0).default(30000),
+  timeout: z.number().nonnegative().int().min(0).default(30000),
 
   /**
    * Request retry configuration

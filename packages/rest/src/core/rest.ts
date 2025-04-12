@@ -37,7 +37,6 @@ import {
 import type {
   ApiRequestOptions,
   HttpResponse,
-  ParsedRequest,
   RestEvents,
 } from "../types/index.js";
 
@@ -58,7 +57,7 @@ const REST_CONSTANTS = {
     headersTimeout: 30000,
     bodyTimeout: 300000,
     maxHeaderSize: 16384,
-    allowH2: false,
+    allowH2: true,
     strictContentLength: true,
   },
 } as const;
@@ -457,7 +456,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
       try {
         const response = await this.#pool.request({
-          ...preparedRequest.options,
+          ...preparedRequest,
           signal: controller.signal,
         });
         const responseBody = await this.#readResponseBody(response);
@@ -546,7 +545,7 @@ export class Rest extends EventEmitter<RestEvents> {
    */
   #prepareRequest(
     options: ApiRequestOptions,
-  ): Promise<ParsedRequest> | ParsedRequest {
+  ): Promise<Dispatcher.RequestOptions> | Dispatcher.RequestOptions {
     const url = this.#buildUrl(options.path);
     const baseOptions = {
       ...options,
@@ -561,7 +560,7 @@ export class Rest extends EventEmitter<RestEvents> {
       return this.#handleFileUpload(options, baseOptions);
     }
 
-    return { url, options: baseOptions };
+    return baseOptions;
   }
 
   /**
@@ -624,7 +623,7 @@ export class Rest extends EventEmitter<RestEvents> {
   async #handleFileUpload(
     options: ApiRequestOptions,
     baseOptions: Dispatcher.RequestOptions,
-  ): Promise<ParsedRequest> {
+  ): Promise<Dispatcher.RequestOptions> {
     if (!options.files) {
       throw new Error("Files are required for file upload");
     }
@@ -638,14 +637,12 @@ export class Rest extends EventEmitter<RestEvents> {
     // Prepare URL and options
     const formUrl = new URL(baseOptions.path || "", baseOptions.origin);
     return {
-      url: formUrl,
-      options: {
-        ...baseOptions,
-        body: formData.getBuffer(),
-        headers: {
-          ...baseOptions.headers,
-          ...formData.getHeaders(),
-        },
+      ...baseOptions,
+      path: formUrl.pathname + formUrl.search,
+      body: formData.getBuffer(),
+      headers: {
+        ...baseOptions.headers,
+        ...formData.getHeaders(),
       },
     };
   }

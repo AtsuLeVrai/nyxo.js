@@ -99,8 +99,6 @@ export const ShardOptions = z
      */
     healthCheck: ShardHealthCheckOptions.default({}),
   })
-  .strict()
-  .readonly()
   .refine(
     (data) => {
       if (typeof data.totalShards === "number" && data.shardList) {

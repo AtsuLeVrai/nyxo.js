@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { GuildEntity } from "./guild.entity.js";
 import type { UserEntity } from "./user.entity.js";
 
@@ -18,23 +18,18 @@ export interface GuildTemplateEntity {
   /**
    * Template name.
    * The name displayed for this template in the Discord client.
-   * @minLength 1
-   * @maxLength 100
    */
   name: string;
 
   /**
    * The description for the template.
    * A brief explanation of what this template includes or is for.
-   * @nullable
-   * @maxLength 120
    */
   description: string | null;
 
   /**
    * Number of times this template has been used.
    * Counter tracking how many guilds have been created using this template.
-   * @minimum 0
    */
   usage_count: number;
 
@@ -53,14 +48,12 @@ export interface GuildTemplateEntity {
   /**
    * When this template was created.
    * ISO8601 timestamp of when the template was initially created.
-   * @format date-time
    */
   created_at: string;
 
   /**
    * When this template was last synced to the source guild.
    * ISO8601 timestamp of the most recent sync with the source guild.
-   * @format date-time
    */
   updated_at: string;
 
@@ -80,7 +73,6 @@ export interface GuildTemplateEntity {
   /**
    * Whether the template has unsynced changes.
    * Indicates if the source guild has been modified since the template was last synchronized.
-   * @nullable
    */
   is_dirty: boolean | null;
 }

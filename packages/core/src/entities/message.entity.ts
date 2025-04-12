@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { ApplicationEntity } from "./application.entity.js";
 import type { AnyThreadChannelEntity, ChannelType } from "./channel.entity.js";
 import type { EmojiEntity } from "./emoji.entity.js";
@@ -45,7 +45,6 @@ export enum AttachmentFlags {
   /**
    * This attachment has been edited using the remix feature on mobile.
    * Indicates the attachment was modified via Discord's mobile app remix functionality.
-   * @value 1 << 2 (4)
    */
   IsRemix = 1 << 2,
 }
@@ -127,84 +126,72 @@ export enum MessageFlags {
   /**
    * Message has been published to subscribed channels (via Channel Following).
    * Indicates a message was crossposted to other channels.
-   * @value 1 << 0 (1)
    */
   Crossposted = 1 << 0,
 
   /**
    * Message originated from a message in another channel (via Channel Following).
    * Indicates this message is a crosspost from another channel.
-   * @value 1 << 1 (2)
    */
   IsCrosspost = 1 << 1,
 
   /**
    * Do not include any embeds when serializing this message.
    * Prevents embeds from being shown for this message.
-   * @value 1 << 2 (4)
    */
   SuppressEmbeds = 1 << 2,
 
   /**
    * Source message for this crosspost has been deleted (via Channel Following).
    * Indicates the original message for a crosspost was removed.
-   * @value 1 << 3 (8)
    */
   SourceMessageDeleted = 1 << 3,
 
   /**
    * Message came from the urgent message system.
    * Used for system messages that need attention.
-   * @value 1 << 4 (16)
    */
   Urgent = 1 << 4,
 
   /**
    * Message has an associated thread, with the same id as the message.
    * Indicates a thread was created from this message.
-   * @value 1 << 5 (32)
    */
   HasThread = 1 << 5,
 
   /**
    * Message is only visible to the user who invoked the Interaction.
    * Used for messages that only the interaction user can see.
-   * @value 1 << 6 (64)
    */
   Ephemeral = 1 << 6,
 
   /**
    * Message is an Interaction Response and the bot is "thinking".
    * Displays a loading state for the message.
-   * @value 1 << 7 (128)
    */
   Loading = 1 << 7,
 
   /**
    * Message failed to mention some roles and add their members to the thread.
    * Indicates that not all mentioned roles were successfully added to the thread.
-   * @value 1 << 8 (256)
    */
   FailedToMentionSomeRolesInThread = 1 << 8,
 
   /**
    * Message will not trigger push and desktop notifications.
    * Prevents notification alerts from being sent for this message.
-   * @value 1 << 12 (4096)
    */
   SuppressNotifications = 1 << 12,
 
   /**
    * Message is a voice message.
    * Indicates an audio recording sent as a message.
-   * @value 1 << 13 (8192)
    */
   IsVoiceMessage = 1 << 13,
 
   /**
    * Message has a snapshot (via Message Forwarding).
    * Indicates this message contains forwarded content.
-   * @value 1 << 14 (16384)
    */
   HasSnapshot = 1 << 14,
 }
@@ -515,16 +502,12 @@ export interface AllowedMentionsEntity {
   /**
    * Array of role IDs to mention.
    * Specific roles that can be pinged, even if roles aren't in the parse array.
-   * @maxItems 100
-   * @optional
    */
   roles?: Snowflake[];
 
   /**
    * Array of user IDs to mention.
    * Specific users that can be pinged, even if users aren't in the parse array.
-   * @maxItems 100
-   * @optional
    */
   users?: Snowflake[];
 
@@ -593,8 +576,6 @@ export interface AttachmentEntity {
   /**
    * Description of the file.
    * Custom description for the attachment.
-   * @maxLength 1024
-   * @optional
    */
   description?: string;
 
@@ -613,14 +594,12 @@ export interface AttachmentEntity {
   /**
    * Source URL of file.
    * Direct link to the file on Discord's CDN.
-   * @format url
    */
   url: string;
 
   /**
    * A proxied URL of the file.
    * CDN URL that goes through Discord's proxy.
-   * @format url
    */
   proxy_url: string;
 
@@ -670,16 +649,12 @@ export interface EmbedFieldEntity {
   /**
    * Name of the field.
    * Title/header of this field section.
-   * @minLength 1
-   * @maxLength 256
    */
   name: string;
 
   /**
    * Value of the field.
    * Content text for this field section.
-   * @minLength 1
-   * @maxLength 1024
    */
   value: string;
 
@@ -699,24 +674,18 @@ export interface EmbedFooterEntity {
   /**
    * Footer text.
    * Text displayed in the footer area.
-   * @minLength 1
-   * @maxLength 2048
    */
   text: string;
 
   /**
    * URL of footer icon.
    * Image displayed next to footer text.
-   * @format url
-   * @optional
    */
   icon_url?: string;
 
   /**
    * A proxied URL of the footer icon.
    * CDN URL that goes through Discord's proxy.
-   * @format url
-   * @optional
    */
   proxy_icon_url?: string;
 }
@@ -730,32 +699,24 @@ export interface EmbedAuthorEntity {
   /**
    * Name of author.
    * Display name for the author section.
-   * @minLength 1
-   * @maxLength 256
    */
   name: string;
 
   /**
    * URL of author.
    * Link for the author's name.
-   * @format url
-   * @optional
    */
   url?: string;
 
   /**
    * URL of author icon.
    * Avatar/icon displayed next to author name.
-   * @format url
-   * @optional
    */
   icon_url?: string;
 
   /**
    * A proxied URL of author icon.
    * CDN URL that goes through Discord's proxy.
-   * @format url
-   * @optional
    */
   proxy_icon_url?: string;
 }
@@ -775,8 +736,6 @@ export interface EmbedProviderEntity {
   /**
    * URL of provider.
    * Link to the provider's site.
-   * @format url
-   * @optional
    */
   url?: string;
 }
@@ -790,15 +749,12 @@ export interface EmbedImageEntity {
   /**
    * Source URL of image.
    * Direct link to the image.
-   * @format url
    */
   url: string;
 
   /**
    * A proxied URL of the image.
    * CDN URL that goes through Discord's proxy.
-   * @format url
-   * @optional
    */
   proxy_url?: string;
 
@@ -824,16 +780,12 @@ export interface EmbedVideoEntity {
   /**
    * Source URL of video.
    * Direct link to the video.
-   * @format url
-   * @optional
    */
   url?: string;
 
   /**
    * A proxied URL of the video.
    * CDN URL that goes through Discord's proxy.
-   * @format url
-   * @optional
    */
   proxy_url?: string;
 
@@ -859,15 +811,12 @@ export interface EmbedThumbnailEntity {
   /**
    * Source URL of thumbnail.
    * Direct link to the thumbnail image.
-   * @format url
    */
   url: string;
 
   /**
    * A proxied URL of the thumbnail.
    * CDN URL that goes through Discord's proxy.
-   * @format url
-   * @optional
    */
   proxy_url?: string;
 
@@ -893,8 +842,6 @@ export interface EmbedEntity {
   /**
    * Title of embed.
    * Main heading displayed at the top of the embed.
-   * @maxLength 256
-   * @optional
    */
   title?: string;
 
@@ -907,16 +854,12 @@ export interface EmbedEntity {
   /**
    * Description of embed.
    * Main text content of the embed.
-   * @maxLength 4096
-   * @optional
    */
   description?: string;
 
   /**
    * URL of embed.
    * Makes the title a clickable link.
-   * @format url
-   * @optional
    */
   url?: string;
 
@@ -971,8 +914,6 @@ export interface EmbedEntity {
   /**
    * Fields information.
    * Sections of titled text content within the embed.
-   * @maxItems 25
-   * @optional
    */
   fields?: EmbedFieldEntity[];
 }
@@ -1278,7 +1219,6 @@ export interface MessageEntity {
   /**
    * Contents of the message.
    * The actual text content of the message.
-   * @maxLength 2000
    */
   content: string;
 
@@ -1458,18 +1398,6 @@ export interface MessageEntity {
    * Resolved objects from the interaction that created this message.
    */
   resolved?: InteractionResolvedDataEntity;
-
-  /**
-   * For messages with type Forward, contains the message snapshots.
-   * Captured content from forwarded messages.
-   */
-  message_snapshots?: MessageSnapshotEntity[];
-
-  /**
-   * The message associated with the message_reference.
-   * For replies, contains the message being replied to.
-   */
-  referenced_message?: MessageEntity | null;
 }
 
 /**

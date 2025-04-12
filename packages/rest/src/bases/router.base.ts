@@ -15,23 +15,4 @@ export abstract class BaseRouter {
   constructor(rest: Rest) {
     this.rest = rest;
   }
-
-  /**
-   * Format a route with parameters
-   * @param route - Route template with placeholders
-   * @param params - Object containing parameter values
-   * @returns Formatted route string
-   * @example
-   * // Returns "/applications/123456789/entitlements"
-   * formatRoute("/applications/:applicationId/entitlements", { applicationId: "123456789" })
-   */
-  formatRoute(route: string, params: Record<string, string>): string {
-    let formattedRoute = route;
-
-    for (const [key, value] of Object.entries(params)) {
-      formattedRoute = formattedRoute.replace(`:${key}`, value);
-    }
-
-    return formattedRoute;
-  }
 }

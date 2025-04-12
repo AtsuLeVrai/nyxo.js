@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { GuildMemberEntity } from "./guild.entity.js";
 import type { UserEntity } from "./user.entity.js";
 
@@ -11,14 +11,12 @@ export enum OverwriteType {
   /**
    * Role permission overwrite.
    * Applies permissions to all members with a specific role.
-   * @value 0
    */
   Role = 0,
 
   /**
    * Member permission overwrite.
    * Applies permissions to a specific guild member.
-   * @value 1
    */
   Member = 1,
 }
@@ -31,21 +29,18 @@ export enum OverwriteType {
 export enum ForumLayoutType {
   /**
    * No default has been set for forum channel.
-   * @value 0
    */
   NotSet = 0,
 
   /**
    * Display posts as a list.
    * Shows forum posts in a traditional list view.
-   * @value 1
    */
   ListView = 1,
 
   /**
    * Display posts as a collection of tiles.
    * Shows forum posts as visual tiles similar to a gallery view.
-   * @value 2
    */
   GalleryView = 2,
 }
@@ -59,14 +54,12 @@ export enum SortOrderType {
   /**
    * Sort forum posts by activity.
    * Most recently active posts appear first.
-   * @value 0
    */
   LatestActivity = 0,
 
   /**
    * Sort forum posts by creation time (from most recent to oldest).
    * Most recently created posts appear first.
-   * @value 1
    */
   CreationDate = 1,
 }
@@ -80,21 +73,18 @@ export enum ChannelFlags {
   /**
    * Thread is pinned to the top of its parent forum/media channel.
    * Pinned threads appear above other threads regardless of sort order.
-   * @value 1 << 1 (2)
    */
   Pinned = 1 << 1,
 
   /**
    * Thread requires a tag to be specified when creating.
    * Forces users to select at least one tag when creating a thread in the channel.
-   * @value 1 << 4 (16)
    */
   RequireTag = 1 << 4,
 
   /**
    * When set hides the embedded media download options (media channels only).
    * Prevents users from downloading media directly from embeds.
-   * @value 1 << 15 (32768)
    */
   HideMediaDownloadOptions = 1 << 15,
 }
@@ -108,14 +98,12 @@ export enum VideoQualityMode {
   /**
    * Discord chooses the quality for optimal performance.
    * Quality is adjusted dynamically based on network conditions.
-   * @value 1
    */
   Auto = 1,
 
   /**
    * 720p video quality.
    * Higher quality video but requires more bandwidth.
-   * @value 2
    */
   Full = 2,
 }
@@ -129,91 +117,78 @@ export enum ChannelType {
   /**
    * A text channel within a server.
    * Standard text-based communication channel in a guild.
-   * @value 0
    */
   GuildText = 0,
 
   /**
    * A direct message between users.
    * Private one-to-one conversation between two users.
-   * @value 1
    */
   Dm = 1,
 
   /**
    * A voice channel within a server.
    * Channel for voice communication in a guild.
-   * @value 2
    */
   GuildVoice = 2,
 
   /**
    * A direct message between multiple users.
    * Private conversation between more than two users.
-   * @value 3
    */
   GroupDm = 3,
 
   /**
    * An organizational category that contains channels.
    * Container for organizing other channels, can hold up to 50 channels.
-   * @value 4
    */
   GuildCategory = 4,
 
   /**
    * A channel that users can follow and crosspost into their own server.
    * Formerly known as news channels, used for announcements that can be published to other servers.
-   * @value 5
    */
   GuildAnnouncement = 5,
 
   /**
    * A temporary sub-channel within a GUILD_ANNOUNCEMENT channel.
    * Thread attached to a message in an announcement channel.
-   * @value 10
    */
   AnnouncementThread = 10,
 
   /**
    * A temporary sub-channel within a GUILD_TEXT or GUILD_FORUM channel.
    * Public thread that anyone can see and join.
-   * @value 11
    */
   PublicThread = 11,
 
   /**
    * A temporary sub-channel within a GUILD_TEXT channel with limited access.
    * Private thread with restricted visibility and access.
-   * @value 12
    */
   PrivateThread = 12,
 
   /**
    * A voice channel for hosting events with an audience.
    * Special voice channel type for hosting presentations or events.
-   * @value 13
    */
   GuildStageVoice = 13,
 
   /**
    * The channel in a hub containing the listed servers.
    * Used for Discord Student Hubs to list associated servers.
-   * @value 14
    */
   GuildDirectory = 14,
 
   /**
    * Channel that can only contain threads.
    * Forum-style channel where each post is a thread.
-   * @value 15
    */
   GuildForum = 15,
 
   /**
    * Channel that can only contain threads, similar to GUILD_FORUM.
    * Media-focused version of the forum channel type.
-   * @value 16
    */
   GuildMedia = 16,
 }
@@ -233,8 +208,6 @@ export interface ForumTagEntity {
   /**
    * Name of the tag (0-20 characters).
    * The display name shown to users.
-   * @minLength 0
-   * @maxLength 20
    */
   name: string;
 
@@ -452,8 +425,6 @@ export interface ChannelEntity {
   /**
    * The name of the channel (1-100 characters).
    * Display name of the channel.
-   * @minLength 1
-   * @maxLength 100
    */
   name?: string | null;
 
@@ -587,7 +558,7 @@ export interface ChannelEntity {
    * Channel flags combined as a bitfield.
    * Features and settings configured for this channel.
    */
-  flags: number | ChannelFlags;
+  flags: ChannelFlags;
 
   /**
    * Total number of messages ever sent in a thread.
@@ -683,7 +654,6 @@ export interface DmChannelEntity
     | "video_quality_mode"
     | "thread_metadata"
     | "default_auto_archive_duration"
-    | "flags"
     | "available_tags"
   > {
   /**
@@ -764,7 +734,6 @@ export interface GroupDmChannelEntity
     | "video_quality_mode"
     | "thread_metadata"
     | "default_auto_archive_duration"
-    | "flags"
     | "available_tags"
   > {
   /**
@@ -998,16 +967,6 @@ export interface AnnouncementThreadChannelEntity
 }
 
 /**
- * Union of all thread channel types.
- * Can be any of the three thread channel types.
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
- */
-export type AnyThreadChannelEntity =
-  | PublicThreadChannelEntity
-  | PrivateThreadChannelEntity
-  | AnnouncementThreadChannelEntity;
-
-/**
  * Guild Stage Voice Channel - A voice channel for hosting events with an audience.
  * Special voice channel for presentations, talks, or performances.
  * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
@@ -1136,6 +1095,14 @@ export interface GuildMediaChannelEntity
    */
   available_tags: ForumTagEntity[];
 }
+
+/**
+ * Union type to represent any thread channel entity.
+ */
+export type AnyThreadChannelEntity =
+  | PublicThreadChannelEntity
+  | PrivateThreadChannelEntity
+  | AnnouncementThreadChannelEntity;
 
 /**
  * Union type of all channel types with discriminated union pattern.

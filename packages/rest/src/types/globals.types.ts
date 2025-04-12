@@ -17,17 +17,6 @@ export interface HttpResponse<T = unknown> {
 }
 
 /**
- * Prepared request data ready to be sent
- */
-export interface ParsedRequest {
-  /** Fully constructed URL */
-  url: URL;
-
-  /** Request options for undici */
-  options: Dispatcher.RequestOptions;
-}
-
-/**
  * Extended request options for Discord API
  */
 export interface ApiRequestOptions extends Dispatcher.RequestOptions {
@@ -196,4 +185,9 @@ export interface RestEvents {
 
   /** Retry events */
   retry: [event: RetryEvent];
+
+  /** Common event properties */
+  debug: [message: string];
+  warn: [message: string];
+  error: [error: Error];
 }

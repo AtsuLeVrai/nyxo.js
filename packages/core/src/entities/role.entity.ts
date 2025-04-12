@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 
 /**
  * Represents the flags that can be applied to a role.
@@ -76,8 +76,6 @@ export interface RoleEntity {
   /**
    * Role name (1-100 characters).
    * The display name visible to users.
-   * @minLength 1
-   * @maxLength 100
    */
   name: string;
 
@@ -96,14 +94,12 @@ export interface RoleEntity {
   /**
    * Role icon hash.
    * Used to display the role's custom icon.
-   * @nullable
    */
   icon?: string | null;
 
   /**
    * Role unicode emoji.
    * Used as the role's icon.
-   * @nullable
    */
   unicode_emoji?: string | null;
 
@@ -140,7 +136,6 @@ export interface RoleEntity {
   /**
    * Role flags combined as a bitfield.
    * Contains additional role configuration options.
-   * @see {@link RoleFlags}
    */
   flags: RoleFlags;
 }

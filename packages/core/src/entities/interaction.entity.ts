@@ -1,14 +1,19 @@
 import type { Locale } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
-import type { ApplicationIntegrationType } from "./application.entity.js";
+import type { Snowflake } from "../markdown/index.js";
 import type {
   ApplicationCommandOptionChoiceEntity,
   ApplicationCommandOptionType,
   ApplicationCommandType,
 } from "./application-commands.entity.js";
+import type { ApplicationIntegrationType } from "./application.entity.js";
 import type { AnyChannelEntity } from "./channel.entity.js";
 import type { EntitlementEntity } from "./entitlement.entity.js";
 import type { GuildEntity, GuildMemberEntity } from "./guild.entity.js";
+import type {
+  ActionRowEntity,
+  ComponentType,
+  SelectMenuOptionEntity,
+} from "./message-components.entity.js";
 import type {
   AllowedMentionsEntity,
   AttachmentEntity,
@@ -16,11 +21,6 @@ import type {
   MessageEntity,
   MessageFlags,
 } from "./message.entity.js";
-import type {
-  ActionRowEntity,
-  ComponentType,
-  SelectMenuOptionEntity,
-} from "./message-components.entity.js";
 import type { PollCreateRequestEntity } from "./poll.entity.js";
 import type { RoleEntity } from "./role.entity.js";
 import type { UserEntity } from "./user.entity.js";
@@ -163,11 +163,12 @@ export interface InteractionCallbackActivityInstanceEntity {
 }
 
 /**
- * Comprehensive command option entity with all possible properties.
- * Represents a parameter or subcommand in an application command interaction.
+ * Base structure for command options in interactions.
+ * Contains all fields that may appear in any kind of command option.
+ * Many fields are optional as they only apply to specific option types.
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
-export interface CommandOptionEntity {
+export interface InteractionCommandOptionEntity {
   /**
    * Name of the parameter.
    * The identifier for this option as defined in the command.
@@ -183,18 +184,21 @@ export interface CommandOptionEntity {
   /**
    * Value of the option resulting from user input.
    * The value provided by the user for this option.
+   * Present for simple types but not for subcommands or groups.
    */
   value?: string | number | boolean;
 
   /**
    * Options for this option (for subcommands and groups).
    * For subcommand and subcommand group types, contains nested options.
+   * Not present for simple option types.
    */
-  options?: CommandOptionEntity[];
+  options?: InteractionCommandOptionEntity[];
 
   /**
    * True if this option is the currently focused option for autocomplete.
    * Indicates which option the user is currently typing in for autocomplete interactions.
+   * Only present in APPLICATION_COMMAND_AUTOCOMPLETE interactions.
    */
   focused?: boolean;
 }
@@ -202,9 +206,10 @@ export interface CommandOptionEntity {
 /**
  * Simple option for basic command parameters.
  * Represents basic parameter types like strings, numbers, and mentions.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
-export interface AnySimpleCommandOptionEntity
-  extends Omit<CommandOptionEntity, "options" | "type" | "value"> {
+export interface SimpleInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options"> {
   /**
    * Type of the simple command option.
    * Basic types that accept direct values like strings, numbers, etc.
@@ -230,9 +235,10 @@ export interface AnySimpleCommandOptionEntity
 /**
  * SubCommand option structure.
  * Represents a subcommand within an application command.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
-export interface SubCommandOptionEntity
-  extends Omit<CommandOptionEntity, "value" | "focused" | "type"> {
+export interface SubCommandInteractionOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "value" | "focused"> {
   /**
    * SubCommand option type.
    * Identifies this option as a subcommand.
@@ -243,15 +249,16 @@ export interface SubCommandOptionEntity
    * Options for this subcommand.
    * Parameters within this subcommand.
    */
-  options?: AnySimpleCommandOptionEntity[];
+  options?: SimpleInteractionCommandOptionEntity[];
 }
 
 /**
  * SubCommandGroup option structure.
  * Represents a group of related subcommands.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
-export interface SubCommandGroupOptionEntity
-  extends Omit<CommandOptionEntity, "value" | "focused" | "type"> {
+export interface SubCommandGroupInteractionOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "value" | "focused"> {
   /**
    * SubCommandGroup option type.
    * Identifies this option as a subcommand group.
@@ -262,17 +269,17 @@ export interface SubCommandGroupOptionEntity
    * SubCommand options for this group.
    * Subcommands contained within this group.
    */
-  options: SubCommandOptionEntity[];
+  options: SubCommandInteractionOptionEntity[];
 }
 
 /**
- * Union of all command options.
+ * Union of all interaction command options.
  * A type that can be any of the possible command option types.
  */
-export type AnyCommandOptionEntity =
-  | SubCommandOptionEntity
-  | SubCommandGroupOptionEntity
-  | AnySimpleCommandOptionEntity;
+export type AnyInteractionCommandOptionEntity =
+  | SimpleInteractionCommandOptionEntity
+  | SubCommandInteractionOptionEntity
+  | SubCommandGroupInteractionOptionEntity;
 
 /**
  * Resolved data structure containing detailed Discord objects from an interaction.
@@ -306,12 +313,6 @@ export interface InteractionResolvedDataEntity {
    * Contains channel data for channels referenced in the interaction.
    */
   channels?: Record<Snowflake, Partial<AnyChannelEntity>>;
-
-  /**
-   * Map of message IDs to partial message objects.
-   * Contains message data for messages referenced in the interaction.
-   */
-  messages?: Record<Snowflake, Partial<MessageEntity>>;
 
   /**
    * Map of attachment IDs to attachment objects.
@@ -354,7 +355,7 @@ export interface ApplicationCommandInteractionDataEntity {
    * Parameters and values from the user.
    * Options and values that the user provided when using the command.
    */
-  options?: AnyCommandOptionEntity[];
+  options?: InteractionCommandOptionEntity[];
 
   /**
    * ID of the guild the command is registered to.
@@ -574,7 +575,6 @@ export interface InteractionCallbackMessagesEntity {
   /**
    * Supports up to 10 embeds.
    * Rich embeds to include with the message.
-   * @maxItems 10
    */
   embeds?: EmbedEntity[];
 
@@ -589,10 +589,7 @@ export interface InteractionCallbackMessagesEntity {
    * Only SUPPRESS_EMBEDS, EPHEMERAL, and SUPPRESS_NOTIFICATIONS can be set.
    * EPHEMERAL makes the message visible only to the interaction user.
    */
-  flags?:
-    | MessageFlags.SuppressEmbeds
-    | MessageFlags.Ephemeral
-    | MessageFlags.SuppressNotifications;
+  flags?: MessageFlags;
 
   /**
    * Message components.
@@ -622,22 +619,18 @@ export interface InteractionCallbackModalEntity {
   /**
    * Developer-defined identifier for the modal.
    * A unique ID that will be provided when the modal is submitted.
-   * @maxLength 100
    */
   custom_id: string;
 
   /**
    * Title of the popup modal.
    * Text displayed at the top of the modal.
-   * @maxLength 45
    */
   title: string;
 
   /**
    * Between 1 and 5 (inclusive) components that make up the modal.
    * UI components like text inputs that make up the form.
-   * @minItems 1
-   * @maxItems 5
    */
   components: ActionRowEntity[];
 }
@@ -651,7 +644,6 @@ export interface InteractionCallbackAutocompleteEntity {
   /**
    * Autocomplete choices.
    * Suggestions to display to the user.
-   * @maxItems 25
    */
   choices: ApplicationCommandOptionChoiceEntity[];
 }
@@ -754,7 +746,7 @@ export interface InteractionEntity {
    * Read-only property, always 1.
    * Version identifier for the interaction structure.
    */
-  version: number;
+  version: 1;
 
   /**
    * For components, the message they were attached to.

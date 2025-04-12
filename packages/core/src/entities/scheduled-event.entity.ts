@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { GuildMemberEntity } from "./guild.entity.js";
 import type { UserEntity } from "./user.entity.js";
 
@@ -145,8 +145,6 @@ export enum GuildScheduledEventPrivacyLevel {
 export interface GuildScheduledEventRecurrenceRuleNWeekdayEntity {
   /**
    * The week to reoccur on (1-5)
-   * @minimum 1
-   * @maximum 5
    */
   n: number;
 
@@ -165,14 +163,11 @@ export interface GuildScheduledEventRecurrenceRuleNWeekdayEntity {
 export interface GuildScheduledEventRecurrenceRuleEntity {
   /**
    * Starting time of the recurrence interval
-   * @format datetime
    */
   start: string;
 
   /**
    * Ending time of the recurrence interval
-   * @format datetime
-   * @nullable
    */
   end: string | null;
 
@@ -185,8 +180,6 @@ export interface GuildScheduledEventRecurrenceRuleEntity {
   /**
    * The spacing between events, defined by frequency
    * For example, frequency of WEEKLY and interval of 2 would be "every-other week"
-   * @minimum 1
-   * @validate Interval can only be set to 2 when frequency is WEEKLY, otherwise it must be 1
    */
   interval: number;
 
@@ -201,39 +194,30 @@ export interface GuildScheduledEventRecurrenceRuleEntity {
   /**
    * List of specific days within a specific week (1-5) to recur on
    * For example, "the third Wednesday of each month"
-   * @validate by_n_weekday must be an array of length 1 and only valid for MONTHLY frequency
    */
   by_n_weekday: GuildScheduledEventRecurrenceRuleNWeekdayEntity[] | null;
 
   /**
    * Set of specific months to recur on
    * Only valid for yearly events and must be used with by_month_day
-   * @validate by_month must be an array of length 1, only valid for YEARLY frequency, and used with by_month_day
    */
   by_month: GuildScheduledEventRecurrenceRuleMonth[] | null;
 
   /**
    * Set of specific dates within a month to recur on
    * Only valid for yearly events and must be used with by_month
-   * @elementMinimum 1
-   * @elementMaximum 31
-   * @validate by_month_day must be an array of length 1, only valid for YEARLY frequency, and used with by_month
    */
   by_month_day: number[] | null;
 
   /**
    * Set of days within a year to recur on (1-364)
    * Cannot currently be set externally
-   * @elementMinimum 1
-   * @elementMaximum 364
    */
   by_year_day: number[] | null;
 
   /**
    * The total number of times the event is allowed to recur before stopping
    * Cannot currently be set externally
-   * @minimum 1
-   * @nullable
    */
   count: number | null;
 }
@@ -272,9 +256,6 @@ export interface GuildScheduledEventEntityMetadataEntity {
   /**
    * Location of the event (1-100 characters)
    * Required for events with entity_type EXTERNAL
-   * @minLength 1
-   * @maxLength 100
-   * @optional
    */
   location?: string;
 }
@@ -283,7 +264,6 @@ export interface GuildScheduledEventEntityMetadataEntity {
  * Represents a scheduled event in a guild.
  * Contains all information about an event including its name, time, location, and status.
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object}
- * @validate Entity type has specific field requirements that must be met
  */
 export interface GuildScheduledEventEntity {
   /**
@@ -314,27 +294,21 @@ export interface GuildScheduledEventEntity {
 
   /**
    * The name of the scheduled event (1-100 characters)
-   * @minLength 1
-   * @maxLength 100
    */
   name: string;
 
   /**
    * The description of the scheduled event (1-1000 characters)
-   * @minLength 1
-   * @maxLength 1000
    */
   description?: string | null;
 
   /**
    * The time the scheduled event will start
-   * @format datetime
    */
   scheduled_start_time: string;
 
   /**
    * The time the scheduled event will end, required if entity_type is EXTERNAL
-   * @format datetime
    */
   scheduled_end_time?: string | null;
 
@@ -377,7 +351,6 @@ export interface GuildScheduledEventEntity {
   /**
    * The number of users subscribed to the scheduled event
    * Count of users who have registered interest in the event
-   * @minimum 0
    */
   user_count?: number;
 

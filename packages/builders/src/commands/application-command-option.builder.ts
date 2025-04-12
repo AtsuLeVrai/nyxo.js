@@ -1,6 +1,6 @@
 import {
-  type AnyApplicationCommandOptionEntity,
   APPLICATION_COMMAND_NAME_REGEX,
+  type AnyApplicationCommandOptionEntity,
   type ApplicationCommandOptionType,
   type Locale,
 } from "@nyxjs/core";

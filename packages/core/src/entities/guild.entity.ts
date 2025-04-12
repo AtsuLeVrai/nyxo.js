@@ -1,5 +1,5 @@
 import type { Locale, OAuth2Scope } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type {
   GuildStageVoiceChannelEntity,
   GuildVoiceChannelEntity,
@@ -74,63 +74,54 @@ export enum IntegrationExpirationBehavior {
 export enum GuildMemberFlags {
   /**
    * Member has left and rejoined the guild.
-   * @value 1 << 0 (1)
    */
   DidRejoin = 1 << 0,
 
   /**
    * Member has completed onboarding.
    * Member has finished the server's onboarding process.
-   * @value 1 << 1 (2)
    */
   CompletedOnboarding = 1 << 1,
 
   /**
    * Member is exempt from guild verification requirements.
    * Allows a member who does not meet verification requirements to participate in a server.
-   * @value 1 << 2 (4)
    */
   BypassesVerification = 1 << 2,
 
   /**
    * Member has started onboarding.
    * Member has begun but not completed the server's onboarding process.
-   * @value 1 << 3 (8)
    */
   StartedOnboarding = 1 << 3,
 
   /**
    * Member is a guest and can only access the voice channel they were invited to.
    * Restricts member access to a specific voice channel only.
-   * @value 1 << 4 (16)
    */
   IsGuest = 1 << 4,
 
   /**
    * Member has started Server Guide new member actions.
    * Has begun interacting with the server's welcome/guide features.
-   * @value 1 << 5 (32)
    */
   StartedHomeActions = 1 << 5,
 
   /**
    * Member has completed Server Guide new member actions.
    * Has finished all welcome/guide activities for new members.
-   * @value 1 << 6 (64)
    */
   CompletedHomeActions = 1 << 6,
 
   /**
    * Member's username, display name, or nickname is blocked by AutoMod.
    * The member's name violates server AutoMod rules.
-   * @value 1 << 7 (128)
    */
   AutoModQuarantinedUsername = 1 << 7,
 
   /**
    * Member has dismissed the DM settings upsell.
    * User has acknowledged the prompt for DM notification settings.
-   * @value 1 << 9 (512)
    */
   DmSettingsUpsellAcknowledged = 1 << 9,
 }
@@ -326,42 +317,36 @@ export enum SystemChannelFlags {
   /**
    * Suppress member join notifications.
    * Prevents "X joined the server" messages.
-   * @value 1 << 0 (1)
    */
   SuppressJoinNotifications = 1 << 0,
 
   /**
    * Suppress server boost notifications.
    * Prevents server boost messages from appearing.
-   * @value 1 << 1 (2)
    */
   SuppressPremiumSubscriptions = 1 << 1,
 
   /**
    * Suppress server setup tips.
    * Prevents Discord's server setup tip messages.
-   * @value 1 << 2 (4)
    */
   SuppressGuildReminderNotifications = 1 << 2,
 
   /**
    * Hide member join sticker reply buttons.
    * Removes the option to reply with stickers to join messages.
-   * @value 1 << 3 (8)
    */
   SuppressJoinNotificationReplies = 1 << 3,
 
   /**
    * Suppress role subscription purchase and renewal notifications.
    * Prevents messages about premium role subscriptions.
-   * @value 1 << 4 (16)
    */
   SuppressRoleSubscriptionPurchaseNotifications = 1 << 4,
 
   /**
    * Hide role subscription sticker reply buttons.
    * Removes the option to reply with stickers to role subscription messages.
-   * @value 1 << 5 (32)
    */
   SuppressRoleSubscriptionPurchaseNotificationReplies = 1 << 5,
 }
@@ -721,7 +706,6 @@ export interface WelcomeScreenEntity {
   /**
    * Channels shown in the welcome screen, up to 5.
    * Featured channels that new members are encouraged to check out.
-   * @maxItems 5
    */
   welcome_channels: WelcomeScreenChannelEntity[];
 }
@@ -1047,7 +1031,6 @@ export interface GuildWidgetEntity {
   /**
    * Special widget user objects that includes users presence (Limit 100).
    * Online members that will be displayed in the widget.
-   * @maxItems 100
    */
   members: UserEntity[];
 
@@ -1073,8 +1056,6 @@ export interface GuildPreviewEntity {
   /**
    * Guild name (2-100 characters).
    * The display name of the server.
-   * @minLength 2
-   * @maxLength 100
    */
   name: string;
 
@@ -1198,9 +1179,6 @@ export interface GuildEntity {
   /**
    * Guild name (2-100 characters, excluding trailing and leading whitespace).
    * The display name of the server shown in the UI.
-   * @minLength 2
-   * @maxLength 100
-   * @validate Guild name must not consist only of whitespace
    */
   name: string;
 

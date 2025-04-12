@@ -1,8 +1,8 @@
 import { deepmerge } from "deepmerge-ts";
 import { cloneDeep, get, unset } from "lodash-es";
-import { LRUCache } from "lru-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { LRUTracker } from "./lru-tracker.js";
 
 /**
  * Valid key types for the store
@@ -23,42 +23,40 @@ export type StorePredicate<K extends StoreKey, V> =
 /**
  * Configuration options for the Store.
  */
-export const StoreOptions = z
-  .object({
-    /**
-     * Maximum number of items to store before eviction
-     * @minimum 0
-     * @default 10000
-     */
-    maxSize: z.number().int().nonnegative().default(10000),
+export const StoreOptions = z.object({
+  /**
+   * Maximum number of items to store before eviction
+   * @minimum 0
+   * @default 10000
+   */
+  maxSize: z.number().nonnegative().default(10000),
 
-    /**
-     * Time to live in milliseconds for items
-     * @minimum 0
-     * @default 0 (no expiration)
-     */
-    ttl: z.number().int().nonnegative().default(0),
+  /**
+   * Time to live in milliseconds for items
+   * @minimum 0
+   * @default 0 (no expiration)
+   */
+  ttl: z.number().nonnegative().default(0),
 
-    /**
-     * Strategy for evicting items when maxSize is reached
-     * @default "lru"
-     */
-    evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
+  /**
+   * Strategy for evicting items when maxSize is reached
+   * @default "lru"
+   */
+  evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
 
-    /**
-     * Whether to clone values on get to prevent unintentional modifications
-     * @default false
-     */
-    cloneValues: z.boolean().default(false),
+  /**
+   * Whether to clone values on get to prevent unintentional modifications
+   * @default false
+   */
+  cloneValues: z.boolean().default(false),
 
-    /**
-     * Minimum cleanup interval in milliseconds
-     * @minimum 1000
-     * @default 30000 (30 seconds)
-     */
-    minCleanupInterval: z.number().int().min(1000).default(30000),
-  })
-  .strict();
+  /**
+   * Minimum cleanup interval in milliseconds
+   * @minimum 1000
+   * @default 30000 (30 seconds)
+   */
+  minCleanupInterval: z.number().nonnegative().min(1000).default(30000),
+});
 
 export type StoreOptions = z.infer<typeof StoreOptions>;
 
@@ -90,10 +88,10 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   readonly #ttlMap = new Map<K, number>();
 
   /**
-   * LRU cache to track access times for the LRU eviction strategy
+   * LRU tracker to manage access times for the LRU eviction strategy
    * @private
    */
-  readonly #lruCache: LRUCache<K, number> | null = null;
+  readonly #lruTracker: LRUTracker<K> | null = null;
 
   /**
    * Parsed and validated options for this Store instance
@@ -127,11 +125,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       throw new Error(fromError(error).message);
     }
 
-    // Set up LRU cache if using LRU eviction strategy
+    // Set up LRU tracker if using LRU eviction strategy
     if (this.#options.evictionStrategy === "lru" && this.#options.maxSize > 0) {
-      this.#lruCache = new LRUCache<K, number>({
-        max: this.#options.maxSize * 2, // Double the size to track access patterns effectively
-      });
+      this.#lruTracker = new LRUTracker<K>(this.#options.maxSize);
     }
 
     // Add initial entries if provided
@@ -442,7 +438,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    */
   override delete(key: K): boolean {
     this.#ttlMap.delete(key);
-    this.#lruCache?.delete(key);
+    this.#lruTracker?.delete(key);
     return super.delete(key);
   }
 
@@ -457,7 +453,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   override clear(): void {
     super.clear();
     this.#ttlMap.clear();
-    this.#lruCache?.clear();
+    this.#lruTracker?.clear();
   }
 
   /**
@@ -620,8 +616,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @private
    */
   #updateAccessTime(key: K): void {
-    if (this.#options.evictionStrategy === "lru" && this.#lruCache) {
-      this.#lruCache.set(key, Date.now());
+    if (this.#options.evictionStrategy === "lru" && this.#lruTracker) {
+      this.#lruTracker.touch(key);
     }
   }
 
@@ -649,23 +645,13 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @private
    */
   #evictLru(): void {
-    if (!this.#lruCache || this.#lruCache.size === 0) {
-      // Fall back to FIFO if LRU cache is not available or empty
+    if (!this.#lruTracker || this.#lruTracker.size === 0) {
+      // Fall back to FIFO if LRU tracker is not available or empty
       this.#evictFifo();
       return;
     }
 
-    // Find the least recently used key
-    let oldestTime = Number.POSITIVE_INFINITY;
-    let leastUsedKey: K | null = null;
-
-    for (const [key, accessTime] of this.#lruCache.entries()) {
-      if (accessTime < oldestTime) {
-        oldestTime = accessTime;
-        leastUsedKey = key;
-      }
-    }
-
+    const leastUsedKey = this.#lruTracker.getLRU();
     if (leastUsedKey) {
       this.delete(leastUsedKey);
     } else {
@@ -745,3 +731,5 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     return value;
   }
 }
+
+export * from "./lru-tracker.js";

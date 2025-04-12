@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 
 /**
  * Represents the privacy level options for a Stage instance.
@@ -57,8 +57,6 @@ export interface StageInstanceEntity {
    * The topic of the Stage instance (1-120 characters)
    * This is the blurb shown below the channel's name and in other places
    * where the Stage is displayed
-   * @minLength 1
-   * @maxLength 120
    */
   topic: string;
 

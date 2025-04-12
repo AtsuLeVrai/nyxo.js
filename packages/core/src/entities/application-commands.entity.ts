@@ -1,5 +1,5 @@
 import type { Locale } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { ApplicationIntegrationType } from "./application.entity.js";
 import type { ChannelType } from "./channel.entity.js";
 import type { InteractionContextType } from "./interaction.entity.js";
@@ -13,42 +13,36 @@ export enum ApplicationCommandOptionType {
   /**
    * Denotes a subcommand within a command.
    * Cannot have required flag, as subcommands don't take direct input.
-   * @value 1
    */
   SubCommand = 1,
 
   /**
    * Denotes a subcommand group containing subcommands.
    * Cannot have required flag, as subcommand groups don't take direct input.
-   * @value 2
    */
   SubCommandGroup = 2,
 
   /**
    * String option type.
    * Accepts text input from users, can have min_length and max_length constraints.
-   * @value 3
    */
   String = 3,
 
   /**
    * Integer option type.
    * Accepts any integer between -2^53 and 2^53.
-   * @value 4
    */
   Integer = 4,
 
   /**
    * Boolean option type.
    * Simple true/false toggle.
-   * @value 5
    */
   Boolean = 5,
 
   /**
    * User option type.
    * Allows selecting a user from the server.
-   * @value 6
    */
   User = 6,
 
@@ -56,35 +50,30 @@ export enum ApplicationCommandOptionType {
    * Channel option type.
    * Includes all channel types + categories.
    * Can be filtered by channel_types.
-   * @value 7
    */
   Channel = 7,
 
   /**
    * Role option type.
    * Allows selecting a role from the server.
-   * @value 8
    */
   Role = 8,
 
   /**
    * Mentionable option type.
    * Allows selecting users and roles.
-   * @value 9
    */
   Mentionable = 9,
 
   /**
    * Number option type.
    * Accepts any double between -2^53 and 2^53.
-   * @value 10
    */
   Number = 10,
 
   /**
    * Attachment option type.
    * Allows for file uploads.
-   * @value 11
    */
   Attachment = 11,
 }
@@ -98,21 +87,18 @@ export enum ApplicationCommandPermissionType {
   /**
    * Role permission.
    * Applies to a specific role.
-   * @value 1
    */
   Role = 1,
 
   /**
    * User permission.
    * Applies to a specific user.
-   * @value 2
    */
   User = 2,
 
   /**
    * Channel permission.
    * Applies to a specific channel.
-   * @value 3
    */
   Channel = 3,
 }
@@ -126,28 +112,24 @@ export enum ApplicationCommandType {
   /**
    * Slash commands (CHAT_INPUT).
    * Text-based commands that show up when a user types /.
-   * @value 1
    */
   ChatInput = 1,
 
   /**
    * User commands.
    * UI-based commands that show up when you right click or tap on a user.
-   * @value 2
    */
   User = 2,
 
   /**
    * Message commands.
    * UI-based commands that show up when you right click or tap on a message.
-   * @value 3
    */
   Message = 3,
 
   /**
    * Primary entry point commands.
    * UI-based commands that represent the primary way to invoke an app's Activity.
-   * @value 4
    */
   PrimaryEntryPoint = 4,
 }
@@ -160,13 +142,11 @@ export enum ApplicationCommandType {
 export enum ApplicationCommandEntryPointType {
   /**
    * The app handles the interaction using an interaction token.
-   * @value 1
    */
   AppHandler = 1,
 
   /**
    * Discord handles the interaction by launching an Activity and sending a follow-up message without coordinating with the app.
-   * @value 2
    */
   DiscordLaunchActivity = 2,
 }
@@ -188,15 +168,12 @@ export interface ApplicationCommandOptionChoiceEntity {
   /**
    * 1-100 character choice name.
    * This is what users will see in the Discord client.
-   * @minLength 1
-   * @maxLength 100
    */
   name: string;
 
   /**
    * Localization dictionary for the name field.
    * Values follow the same restrictions as name.
-   * @optional
    */
   name_localizations?: Record<Locale, string> | null;
 
@@ -209,8 +186,9 @@ export interface ApplicationCommandOptionChoiceEntity {
 }
 
 /**
- * Base interface for all command options with all possible properties.
- * Not all properties apply to all option types.
+ * Base schema for all command options with all possible properties.
+ * Contains all fields that may appear in any kind of command option.
+ * Many fields are optional as they only apply to specific option types.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
 export interface ApplicationCommandOptionEntity {
@@ -223,53 +201,73 @@ export interface ApplicationCommandOptionEntity {
   /**
    * 1-32 character name matching the regex pattern.
    * Must be in lowercase for CHAT_INPUT commands.
-   * @minLength 1
-   * @maxLength 32
-   * @pattern ^[-_'\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$
    */
   name: string;
 
   /**
    * Localization dictionary for the name field.
    * Values follow the same restrictions as name.
-   * @optional
    */
   name_localizations?: Record<Locale, string> | null;
 
   /**
    * 1-100 character description.
    * Explains what the option does.
-   * @minLength 1
-   * @maxLength 100
    */
   description: string;
 
   /**
    * Localization dictionary for the description field.
    * Values follow the same restrictions as description.
-   * @optional
    */
   description_localizations?: Record<Locale, string> | null;
 
   /**
    * Whether this option is required.
-   * Required options must be listed before optional options.
-   * @default false
+   * True if the parameter must be provided when using the command.
+   * Cannot be true for SubCommand and SubCommandGroup types.
    */
   required?: boolean;
 
   /**
    * Choices for the user to pick from.
    * If specified, users can only select from these choices.
-   * @maxItems 25
+   * Only applicable to String, Integer, and Number types.
    */
   choices?: ApplicationCommandOptionChoiceEntity[];
 
   /**
-   * Options for this option (for subcommands and groups).
-   * @maxItems 25
+   * Minimum allowed length.
+   * Applicable only to options of type STRING.
    */
-  options?: ApplicationCommandOptionEntity[];
+  min_length?: number;
+
+  /**
+   * Maximum allowed length.
+   * Applicable only to options of type STRING.
+   */
+  max_length?: number;
+
+  /**
+   * Minimum value.
+   * Any number/integer between -2^53 and 2^53.
+   * Only applicable to Integer and Number types.
+   */
+  min_value?: number;
+
+  /**
+   * Maximum value.
+   * Any number/integer between -2^53 and 2^53.
+   * Only applicable to Integer and Number types.
+   */
+  max_value?: number;
+
+  /**
+   * Whether autocomplete interactions are enabled for this option.
+   * Cannot be true if choices are present.
+   * Only applicable to String, Integer, and Number types.
+   */
+  autocomplete?: boolean;
 
   /**
    * Channel types that will be shown when this option is used.
@@ -278,39 +276,10 @@ export interface ApplicationCommandOptionEntity {
   channel_types?: ChannelType[];
 
   /**
-   * Minimum value permitted.
-   * Applicable only to options of type INTEGER or NUMBER.
+   * Parameters for this subcommand or options for this subcommand group.
+   * Only applicable to SubCommand and SubCommandGroup types.
    */
-  min_value?: number;
-
-  /**
-   * Maximum value permitted.
-   * Applicable only to options of type INTEGER or NUMBER.
-   */
-  max_value?: number;
-
-  /**
-   * Minimum allowed length.
-   * Applicable only to options of type STRING.
-   * @minimum 0
-   * @maximum 6000
-   */
-  min_length?: number;
-
-  /**
-   * Maximum allowed length.
-   * Applicable only to options of type STRING.
-   * @minimum 1
-   * @maximum 6000
-   */
-  max_length?: number;
-
-  /**
-   * Whether autocomplete interactions are enabled for this option.
-   * Cannot be true if choices are present.
-   * Applicable only to options of type STRING, INTEGER, or NUMBER.
-   */
-  autocomplete?: boolean;
+  options?: AnyApplicationCommandOptionEntity[];
 }
 
 /**
@@ -318,19 +287,13 @@ export interface ApplicationCommandOptionEntity {
  * Can have choices or autocomplete, and length constraints.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface StringOptionEntity
+export interface StringCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
-    "options" | "channel_types" | "min_value" | "max_value"
+    "min_value" | "max_value" | "channel_types"
   > {
   /** String option type */
   type: ApplicationCommandOptionType.String;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
 
 /**
@@ -338,31 +301,13 @@ export interface StringOptionEntity
  * Can have choices or autocomplete, and min/max constraints.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface IntegerOptionEntity
+export interface IntegerCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
-    "options" | "channel_types" | "min_length" | "max_length"
+    "min_length" | "max_length" | "channel_types"
   > {
   /** Integer option type */
   type: ApplicationCommandOptionType.Integer;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
-
-  /**
-   * Minimum value must be an integer.
-   * Any integer between -2^53 and 2^53.
-   */
-  min_value?: number;
-
-  /**
-   * Maximum value must be an integer.
-   * Any integer between -2^53 and 2^53.
-   */
-  max_value?: number;
 }
 
 /**
@@ -370,19 +315,13 @@ export interface IntegerOptionEntity
  * Can have choices or autocomplete, and min/max constraints.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface NumberOptionEntity
+export interface NumberCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
-    "options" | "channel_types" | "min_length" | "max_length"
+    "min_length" | "max_length" | "channel_types"
   > {
   /** Number option type */
   type: ApplicationCommandOptionType.Number;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
 
 /**
@@ -390,25 +329,18 @@ export interface NumberOptionEntity
  * Can be filtered to specific channel types.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface ChannelOptionEntity
+export interface ChannelCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
     | "choices"
-    | "options"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
   > {
   /** Channel option type */
   type: ApplicationCommandOptionType.Channel;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
 
 /**
@@ -416,26 +348,19 @@ export interface ChannelOptionEntity
  * Simple toggle without additional configuration.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface BooleanOptionEntity
+export interface BooleanCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
     | "choices"
-    | "options"
-    | "channel_types"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
+    | "channel_types"
   > {
   /** Boolean option type */
   type: ApplicationCommandOptionType.Boolean;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
 
 /**
@@ -443,26 +368,19 @@ export interface BooleanOptionEntity
  * Allows selecting a user from the guild.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface UserOptionEntity
+export interface UserCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
     | "choices"
-    | "options"
-    | "channel_types"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
+    | "channel_types"
   > {
   /** User option type */
   type: ApplicationCommandOptionType.User;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
 
 /**
@@ -470,26 +388,19 @@ export interface UserOptionEntity
  * Allows selecting a role from the guild.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface RoleOptionEntity
+export interface RoleCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
     | "choices"
-    | "options"
-    | "channel_types"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
+    | "channel_types"
   > {
   /** Role option type */
   type: ApplicationCommandOptionType.Role;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
 
 /**
@@ -497,26 +408,19 @@ export interface RoleOptionEntity
  * Allows selecting either a user or a role.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface MentionableOptionEntity
+export interface MentionableCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
     | "choices"
-    | "options"
-    | "channel_types"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
+    | "channel_types"
   > {
   /** Mentionable option type */
   type: ApplicationCommandOptionType.Mentionable;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
 
 /**
@@ -524,59 +428,37 @@ export interface MentionableOptionEntity
  * Allows attaching files to a command.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface AttachmentOptionEntity
+export interface AttachmentCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
     | "choices"
-    | "options"
-    | "channel_types"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
+    | "channel_types"
   > {
   /** Attachment option type */
   type: ApplicationCommandOptionType.Attachment;
-
-  /**
-   * Whether this option is required.
-   * @default false
-   */
-  required?: boolean;
 }
-
-/**
- * Simple command options (excluding subcommands and groups).
- * Union type for all direct input options.
- */
-export type AnySimpleApplicationCommandOptionEntity =
-  | StringOptionEntity
-  | IntegerOptionEntity
-  | NumberOptionEntity
-  | ChannelOptionEntity
-  | BooleanOptionEntity
-  | UserOptionEntity
-  | RoleOptionEntity
-  | MentionableOptionEntity
-  | AttachmentOptionEntity;
 
 /**
  * SubCommand Option - A subcommand within a command.
  * Allows organizing commands into actions.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface SubOptionEntity
+export interface SubCommandOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
+    | "required"
     | "choices"
-    | "channel_types"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
-    | "required"
+    | "channel_types"
   > {
   /** Subcommand type */
   type: ApplicationCommandOptionType.SubCommand;
@@ -584,7 +466,6 @@ export interface SubOptionEntity
   /**
    * Parameters for this subcommand (up to 25).
    * Cannot include SubCommand or SubCommandGroup options.
-   * @maxItems 25
    */
   options?: AnySimpleApplicationCommandOptionEntity[];
 }
@@ -594,17 +475,17 @@ export interface SubOptionEntity
  * Allows organizing subcommands by similar action or resource.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
-export interface SubGroupOptionEntity
+export interface SubCommandGroupOptionEntity
   extends Omit<
     ApplicationCommandOptionEntity,
+    | "required"
     | "choices"
-    | "channel_types"
-    | "min_value"
-    | "max_value"
     | "min_length"
     | "max_length"
+    | "min_value"
+    | "max_value"
     | "autocomplete"
-    | "required"
+    | "channel_types"
   > {
   /** Subcommand group type */
   type: ApplicationCommandOptionType.SubCommandGroup;
@@ -612,10 +493,24 @@ export interface SubGroupOptionEntity
   /**
    * Subcommands in this group (up to 25).
    * Only SubCommand options are allowed.
-   * @maxItems 25
    */
-  options?: SubOptionEntity[];
+  options: SubCommandOptionEntity[];
 }
+
+/**
+ * Simple command options (excluding subcommands and groups).
+ * Union type for all direct input options.
+ */
+export type AnySimpleApplicationCommandOptionEntity =
+  | StringCommandOptionEntity
+  | IntegerCommandOptionEntity
+  | NumberCommandOptionEntity
+  | ChannelCommandOptionEntity
+  | BooleanCommandOptionEntity
+  | UserCommandOptionEntity
+  | RoleCommandOptionEntity
+  | MentionableCommandOptionEntity
+  | AttachmentCommandOptionEntity;
 
 /**
  * Union of all possible command options with discriminated union pattern.
@@ -623,8 +518,8 @@ export interface SubGroupOptionEntity
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
 export type AnyApplicationCommandOptionEntity =
-  | SubOptionEntity
-  | SubGroupOptionEntity
+  | SubCommandOptionEntity
+  | SubCommandGroupOptionEntity
   | AnySimpleApplicationCommandOptionEntity;
 
 /**
@@ -679,14 +574,12 @@ export interface GuildApplicationCommandPermissionEntity {
   /**
    * Permissions for the command in the guild.
    * List of permission overwrites.
-   * @maxItems 100
    */
   permissions: ApplicationCommandPermissionEntity[];
 }
 
 /**
- * Complete Application Command structure with all possible properties.
- * Base interface for all application commands.
+ * Application Command schema with all possible properties.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
  */
 export interface ApplicationCommandEntity {
@@ -717,9 +610,6 @@ export interface ApplicationCommandEntity {
   /**
    * Name of command, 1-32 characters.
    * Must be lowercase for CHAT_INPUT commands, can be mixed case for others.
-   * @minLength 1
-   * @maxLength 32
-   * @pattern ^[-_'\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$
    */
   name: string;
 
@@ -732,8 +622,6 @@ export interface ApplicationCommandEntity {
   /**
    * Description for CHAT_INPUT commands, 1-100 characters.
    * Empty string for USER and MESSAGE commands.
-   * @minLength 1
-   * @maxLength 100
    */
   description: string;
 
@@ -742,13 +630,6 @@ export interface ApplicationCommandEntity {
    * Values follow the same restrictions as description.
    */
   description_localizations?: Record<Locale, string> | null;
-
-  /**
-   * Parameters for the command.
-   * Only available for CHAT_INPUT commands.
-   * @maxItems 25
-   */
-  options?: AnyApplicationCommandOptionEntity[];
 
   /**
    * Set of permissions represented as a bit set.
@@ -774,7 +655,6 @@ export interface ApplicationCommandEntity {
   /**
    * Whether command is age-restricted.
    * If true, limits who can see and access the command.
-   * @default false
    */
   nsfw?: boolean;
 
@@ -797,10 +677,16 @@ export interface ApplicationCommandEntity {
   version: Snowflake;
 
   /**
-   * How the interaction should be handled.
-   * Only applicable for entry point commands.
+   * Parameters for the command.
+   * Only available for CHAT_INPUT commands.
    */
-  handler?: ApplicationCommandEntryPointType;
+  options?: AnyApplicationCommandOptionEntity[];
+
+  /**
+   * How the interaction should be handled.
+   * Determines whether the app or Discord handles the interaction.
+   */
+  handler: ApplicationCommandEntryPointType;
 }
 
 /**
@@ -809,7 +695,7 @@ export interface ApplicationCommandEntity {
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
  */
 export interface ChatInputApplicationCommandEntity
-  extends Omit<ApplicationCommandEntity, "type" | "handler"> {
+  extends Omit<ApplicationCommandEntity, "handler"> {
   /**
    * Chat input command type.
    * Always CHAT_INPUT (1).
@@ -823,10 +709,7 @@ export interface ChatInputApplicationCommandEntity
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
  */
 export interface UserApplicationCommandEntity
-  extends Omit<
-    ApplicationCommandEntity,
-    "type" | "description" | "description_localizations" | "options" | "handler"
-  > {
+  extends Omit<ApplicationCommandEntity, "options" | "handler"> {
   /**
    * User command type.
    * Always USER (2).
@@ -840,10 +723,7 @@ export interface UserApplicationCommandEntity
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
  */
 export interface MessageApplicationCommandEntity
-  extends Omit<
-    ApplicationCommandEntity,
-    "type" | "description" | "description_localizations" | "options" | "handler"
-  > {
+  extends Omit<ApplicationCommandEntity, "options" | "handler"> {
   /**
    * Message command type.
    * Always MESSAGE (3).
@@ -857,18 +737,12 @@ export interface MessageApplicationCommandEntity
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure}
  */
 export interface EntryPointApplicationCommandEntity
-  extends Omit<ApplicationCommandEntity, "type" | "options"> {
+  extends Omit<ApplicationCommandEntity, "options"> {
   /**
    * Entry point command type.
    * Always PRIMARY_ENTRY_POINT (4).
    */
   type: ApplicationCommandType.PrimaryEntryPoint;
-
-  /**
-   * How the interaction should be handled.
-   * Determines whether the app or Discord handles the interaction.
-   */
-  handler: ApplicationCommandEntryPointType;
 }
 
 /**

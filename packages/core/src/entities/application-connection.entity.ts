@@ -12,64 +12,48 @@ export enum ApplicationRoleConnectionMetadataType {
   /**
    * Metadata value (integer) is less than or equal to the guild's configured value.
    * Used for comparing numeric values where the requirement is to be at or below a threshold.
-   * @value 1
-   * @example User level (5) <= Required level (10)
    */
   IntegerLessThanOrEqual = 1,
 
   /**
    * Metadata value (integer) is greater than or equal to the guild's configured value.
    * Used for comparing numeric values where the requirement is to be at or above a threshold.
-   * @value 2
-   * @example User level (15) >= Required level (10)
    */
   IntegerGreaterThanOrEqual = 2,
 
   /**
    * Metadata value (integer) is equal to the guild's configured value.
    * Used for exact numeric matching requirements.
-   * @value 3
-   * @example User rank (3) == Required rank (3)
    */
   IntegerEqual = 3,
 
   /**
    * Metadata value (integer) is not equal to the guild's configured value.
    * Used for exclusionary numeric matching requirements.
-   * @value 4
-   * @example User rank (3) != Excluded rank (4)
    */
   IntegerNotEqual = 4,
 
   /**
    * Metadata value (ISO8601 string) is less than or equal to the guild's configured value (days before current date).
    * Used for comparing dates where the requirement is to be before or at a specific timeframe.
-   * @value 5
-   * @example User join date (2022-01-01) <= 30 days before current date
    */
   DatetimeLessThanOrEqual = 5,
 
   /**
    * Metadata value (ISO8601 string) is greater than or equal to the guild's configured value (days before current date).
    * Used for comparing dates where the requirement is to be after or at a specific timeframe.
-   * @value 6
-   * @example User join date (2022-01-01) >= 90 days before current date
    */
   DatetimeGreaterThanOrEqual = 6,
 
   /**
    * Metadata value (integer) is equal to the guild's configured boolean value (1).
    * Used for checking if a flag or boolean condition is true.
-   * @value 7
-   * @example User subscription status (1) == Required status (1) [true]
    */
   BooleanEqual = 7,
 
   /**
    * Metadata value (integer) is not equal to the guild's configured boolean value (1).
    * Used for checking if a flag or boolean condition is false.
-   * @value 8
-   * @example User subscription status (0) != Required status (1) [false]
    */
   BooleanNotEqual = 8,
 }
@@ -96,17 +80,12 @@ export interface ApplicationRoleConnectionMetadataEntity {
    * Dictionary key for the metadata field.
    * Must be lowercase a-z, 0-9, or underscore, between 1-50 characters.
    * This is used as a unique identifier for the metadata field.
-   * @pattern ^[a-z0-9_]{1,50}$
-   * @minLength 1
-   * @maxLength 50
    */
   key: string;
 
   /**
    * Name of the metadata field.
    * This is displayed in the Discord client UI when configuring role requirements.
-   * @minLength 1
-   * @maxLength 100
    */
   name: string;
 
@@ -120,8 +99,6 @@ export interface ApplicationRoleConnectionMetadataEntity {
   /**
    * Description of the metadata field.
    * Explains what this metadata represents and how it's used for verification.
-   * @minLength 1
-   * @maxLength 200
    */
   description: string;
 

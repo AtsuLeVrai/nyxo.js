@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 
 /**
  * Represents the possible statuses of a subscription in Discord.
@@ -48,7 +48,6 @@ export const ISO3166_ALPHA2_REGEX = /^[A-Z]{2}$/;
  * - For access control, use entitlements rather than subscription status
  *
  * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-object}
- * @validate When subscription status is ENDING, canceled_at should not be null
  */
 export interface SubscriptionEntity {
   /**
@@ -86,14 +85,12 @@ export interface SubscriptionEntity {
   /**
    * Start date of the current subscription period
    * The beginning of the current billing cycle
-   * @format datetime
    */
   current_period_start: string;
 
   /**
    * End date of the current subscription period
    * The end of the current billing cycle, when renewal would occur for ACTIVE subscriptions
-   * @format datetime
    */
   current_period_end: string;
 
@@ -108,8 +105,6 @@ export interface SubscriptionEntity {
    * When the subscription was canceled (null if not canceled)
    * Contains the timestamp when the user requested cancellation
    * Will be non-null when status is ENDING
-   * @format datetime
-   * @nullable
    */
   canceled_at: string | null;
 
@@ -117,8 +112,6 @@ export interface SubscriptionEntity {
    * ISO3166-1 alpha-2 country code of the payment source used to purchase the subscription.
    * Examples: "US", "CA", "GB", "AU", "DE", etc.
    * This field is missing unless queried with a private OAuth scope.
-   * @pattern ^[A-Z]{2}$ Country must be a valid ISO3166-1 alpha-2 country code (e.g., US, CA, GB)
-   * @optional
    */
   country?: string;
 }

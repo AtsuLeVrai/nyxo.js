@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 
 /**
  * Entitlement types representing how a user or guild acquired access to a premium offering.
@@ -10,56 +10,48 @@ export enum EntitlementType {
   /**
    * Entitlement was purchased by user.
    * A direct, one-time purchase made by a user for a non-subscription SKU.
-   * @value 1
    */
   Purchase = 1,
 
   /**
    * Entitlement for Discord Nitro subscription.
    * Access granted through the user's Discord Nitro subscription status.
-   * @value 2
    */
   PremiumSubscription = 2,
 
   /**
    * Entitlement was gifted by developer.
    * Access was granted directly by the application developer as a gift.
-   * @value 3
    */
   DeveloperGift = 3,
 
   /**
    * Entitlement was purchased by a dev in application test mode.
    * A test purchase for development and testing purposes.
-   * @value 4
    */
   TestModePurchase = 4,
 
   /**
    * Entitlement was granted when the SKU was free.
    * User claimed the SKU during a period when it was being offered for free.
-   * @value 5
    */
   FreePurchase = 5,
 
   /**
    * Entitlement was gifted by another user.
    * Another user purchased this entitlement as a gift.
-   * @value 6
    */
   UserGift = 6,
 
   /**
    * Entitlement was claimed by user for free as a Nitro Subscriber.
    * Special case where Nitro subscribers get free access to certain premium offerings.
-   * @value 7
    */
   PremiumPurchase = 7,
 
   /**
    * Entitlement was purchased as an app subscription.
    * A recurring subscription to the application's premium offering.
-   * @value 8
    */
   ApplicationSubscription = 8,
 }
@@ -121,7 +113,6 @@ export interface EntitlementEntity {
    * Start date at which the entitlement is valid.
    * For time-limited entitlements, indicates when the entitlement becomes active.
    * Will be null for perpetual entitlements.
-   * @format date-time
    */
   starts_at: string | null;
 
@@ -129,7 +120,6 @@ export interface EntitlementEntity {
    * Date at which the entitlement is no longer valid.
    * For time-limited entitlements, indicates when the entitlement expires.
    * Will be null for perpetual entitlements.
-   * @format date-time
    */
   ends_at: string | null;
 
@@ -146,24 +136,4 @@ export interface EntitlementEntity {
    * This field is only relevant for one-time use entitlements.
    */
   consumed?: boolean;
-
-  /**
-   * ID of the promotion that granted the entitlement.
-   * If the entitlement was granted through a promotional campaign, this identifies which one.
-   * Will be null for non-promotional entitlements.
-   */
-  promotion_id?: Snowflake | null;
-
-  /**
-   * ID of the subscription that granted the entitlement.
-   * For subscription-based entitlements, identifies the specific subscription.
-   * Will be null for non-subscription entitlements.
-   */
-  subscription_id?: Snowflake | null;
-
-  /**
-   * Gift code flags for the entitlement.
-   * A bitfield of flags for gift code related entitlements.
-   */
-  gift_code_flags?: number;
 }

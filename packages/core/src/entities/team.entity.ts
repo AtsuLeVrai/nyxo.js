@@ -1,4 +1,4 @@
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { UserEntity } from "./user.entity.js";
 
 /**
@@ -105,7 +105,6 @@ export interface TeamMemberEntity {
  * - Once an app has been transferred to a team, it cannot be transferred back to individual ownership
  *
  * @see {@link https://discord.com/developers/docs/topics/teams#data-models-team-object}
- * @validate The owner_user_id must match one of the accepted team member's user id
  */
 export interface TeamEntity {
   /**

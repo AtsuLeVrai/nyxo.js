@@ -1,5 +1,5 @@
 import type { Locale } from "../enums/index.js";
-import type { Snowflake } from "../managers/index.js";
+import type { Snowflake } from "../markdown/index.js";
 import type { IntegrationEntity } from "./guild.entity.js";
 
 /**
@@ -241,7 +241,37 @@ export enum UserFlags {
 }
 
 /**
- * Represents the role connection object that an application has attached to a user.
+ * Validates a username name according to Discord's requirements.
+ * Discord enforces specific restrictions for usernames to prevent abuse.
+ *
+ * Rules:
+ * - Names can contain most valid unicode characters
+ * - Usernames must be between 2 and 32 characters long
+ * - Cannot contain certain substrings: @, #, :, ```, discord
+ * - Cannot be: everyone, here
+ * - Names are sanitized and trimmed of whitespace
+ *
+ * @param username The username to validate
+ * @returns Whether the name is valid
+ */
+export function isValidUsername(username: string): boolean {
+  // Username cannot contain certain substrings
+  const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];
+  const forbiddenNames = ["everyone", "here"];
+
+  // Check for forbidden substrings
+  for (const substring of forbiddenSubstrings) {
+    if (username.includes(substring)) {
+      return false;
+    }
+  }
+
+  // Check if username is a forbidden name
+  return !forbiddenNames.includes(username);
+}
+
+/**
+ * Represents a role connection object that an application has attached to a user.
  * Used for linking third-party accounts with Discord's role connections feature.
  * @see {@link https://discord.com/developers/docs/resources/user#application-role-connection-object}
  */
@@ -249,23 +279,18 @@ export interface ApplicationRoleConnectionEntity {
   /**
    * The vanity name of the platform a bot has connected
    * Custom display name for the linked platform
-   * @maxLength 50
-   * @nullable
    */
   platform_name: string | null;
 
   /**
    * The username on the platform a bot has connected
    * The user's name/identifier on the linked platform
-   * @maxLength 100
-   * @nullable
    */
   platform_username: string | null;
 
   /**
    * Object mapping application role connection metadata keys to their string value
    * Contains the metadata used for role requirements checking
-   * @elementMaxLength 100
    */
   metadata: Record<string, string>;
 }
@@ -357,36 +382,6 @@ export interface AvatarDecorationDataEntity {
 }
 
 /**
- * Validates a username name according to Discord's requirements.
- * Discord enforces specific restrictions for usernames to prevent abuse.
- *
- * Rules:
- * - Names can contain most valid unicode characters
- * - Usernames must be between 2 and 32 characters long
- * - Cannot contain certain substrings: @, #, :, ```, discord
- * - Cannot be: everyone, here
- * - Names are sanitized and trimmed of whitespace
- *
- * @param username The username to validate
- * @returns Whether the name is valid
- */
-export function isValidUsername(username: string): boolean {
-  // Username cannot contain certain substrings
-  const forbiddenSubstrings = ["@", "#", ":", "```", "discord"];
-  const forbiddenNames = ["everyone", "here"];
-
-  // Check for forbidden substrings
-  for (const substring of forbiddenSubstrings) {
-    if (username.includes(substring)) {
-      return false;
-    }
-  }
-
-  // Check if username is a forbidden name
-  return !forbiddenNames.includes(username);
-}
-
-/**
  * Represents a Discord user account.
  * Users are the base entity in Discord and can exist in multiple guilds,
  * participate in text and voice chat, and more.
@@ -410,9 +405,6 @@ export interface UserEntity {
   /**
    * The user's username, not unique across the platform
    * The name used to identify the user, excluding discriminator
-   * @minLength 2
-   * @maxLength 32
-   * @validate Username contains forbidden characters or is a reserved name
    */
   username: string;
 
@@ -484,7 +476,6 @@ export interface UserEntity {
    * The user's email
    * The email address associated with the user's account
    * Requires the 'email' OAuth2 scope
-   * @format email
    */
   email?: string | null;
 
