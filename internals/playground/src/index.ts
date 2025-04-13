@@ -19,29 +19,7 @@ if (!parsed?.DISCORD_TOKEN) {
 
 const client = new Client({
   token: parsed.DISCORD_TOKEN,
-  intents: [
-    GatewayIntentsBits.Guilds,
-    GatewayIntentsBits.GuildMembers,
-    GatewayIntentsBits.GuildModeration,
-    GatewayIntentsBits.GuildExpressions,
-    GatewayIntentsBits.GuildIntegrations,
-    GatewayIntentsBits.GuildWebhooks,
-    GatewayIntentsBits.GuildInvites,
-    GatewayIntentsBits.GuildVoiceStates,
-    GatewayIntentsBits.GuildPresences,
-    GatewayIntentsBits.GuildMessages,
-    GatewayIntentsBits.GuildMessageReactions,
-    GatewayIntentsBits.GuildMessageTyping,
-    GatewayIntentsBits.DirectMessages,
-    GatewayIntentsBits.DirectMessageReactions,
-    GatewayIntentsBits.DirectMessageTyping,
-    GatewayIntentsBits.MessageContent,
-    GatewayIntentsBits.GuildScheduledEvents,
-    GatewayIntentsBits.AutoModerationConfiguration,
-    GatewayIntentsBits.AutoModerationExecution,
-    GatewayIntentsBits.GuildMessagePolls,
-    GatewayIntentsBits.DirectMessagePolls,
-  ],
+  intents: GatewayIntentsBits.All,
 });
 
 client.on("requestStart", (event) => {

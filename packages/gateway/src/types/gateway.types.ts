@@ -282,6 +282,27 @@ export enum GatewayIntentsBits {
   AutoModerationExecution = 1 << 21,
   GuildMessagePolls = 1 << 24,
   DirectMessagePolls = 1 << 25,
+  All = Guilds |
+    GuildMembers |
+    GuildModeration |
+    GuildExpressions |
+    GuildIntegrations |
+    GuildWebhooks |
+    GuildInvites |
+    GuildVoiceStates |
+    GuildPresences |
+    GuildMessages |
+    GuildMessageReactions |
+    GuildMessageTyping |
+    DirectMessages |
+    DirectMessageReactions |
+    DirectMessageTyping |
+    MessageContent |
+    GuildScheduledEvents |
+    AutoModerationConfiguration |
+    AutoModerationExecution |
+    GuildMessagePolls |
+    DirectMessagePolls,
 }
 
 /**
