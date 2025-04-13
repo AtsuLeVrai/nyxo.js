@@ -40,7 +40,7 @@ export class SoundboardSound
       return undefined;
     }
 
-    return User.from(this.client, this.data.user as UserEntity);
+    return new User(this.client, this.data.user as UserEntity);
   }
 
   protected override getCacheInfo(): CacheEntityInfo | null {

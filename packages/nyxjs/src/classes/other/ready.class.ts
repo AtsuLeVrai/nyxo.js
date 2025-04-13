@@ -15,12 +15,12 @@ export class Ready
   }
 
   get user(): User {
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 
   get guilds(): Guild[] {
-    return this.data.guilds.map((guild) =>
-      Guild.from(this.client, guild as unknown as GuildCreateEntity),
+    return this.data.guilds.map(
+      (guild) => new Guild(this.client, guild as unknown as GuildCreateEntity),
     );
   }
 
@@ -37,7 +37,7 @@ export class Ready
   }
 
   get application(): Application {
-    return Application.from(
+    return new Application(
       this.client,
       this.data.application as ApplicationEntity,
     );

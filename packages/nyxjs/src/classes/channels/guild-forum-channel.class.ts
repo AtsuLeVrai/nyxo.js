@@ -33,8 +33,8 @@ export class GuildForumChannel
       return undefined;
     }
 
-    return this.data.permission_overwrites.map((overwrite) =>
-      Overwrite.from(this.client, overwrite),
+    return this.data.permission_overwrites.map(
+      (overwrite) => new Overwrite(this.client, overwrite),
     );
   }
 
@@ -71,8 +71,8 @@ export class GuildForumChannel
   }
 
   get availableTags(): ForumTag[] {
-    return this.data.available_tags.map((tag) =>
-      ForumTag.from(this.client, tag),
+    return this.data.available_tags.map(
+      (tag) => new ForumTag(this.client, tag),
     );
   }
 
@@ -85,7 +85,7 @@ export class GuildForumChannel
       return null;
     }
 
-    return DefaultReaction.from(this.client, this.data.default_reaction_emoji);
+    return new DefaultReaction(this.client, this.data.default_reaction_emoji);
   }
 
   get defaultThreadRateLimitPerUser(): number | undefined {

@@ -37,7 +37,7 @@ export class Webhook
       return null;
     }
 
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 
   get name(): string | null | undefined {
@@ -61,7 +61,7 @@ export class Webhook
       return null;
     }
 
-    return Guild.from(this.client, this.data.source_guild as GuildCreateEntity);
+    return new Guild(this.client, this.data.source_guild as GuildCreateEntity);
   }
 
   get sourceChannel(): AnyChannel | null | undefined {

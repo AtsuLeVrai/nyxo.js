@@ -29,7 +29,7 @@ export class TypingStart
       return null;
     }
 
-    return GuildMember.from(
+    return new GuildMember(
       this.client,
       this.data.member as GuildBased<GuildMemberEntity>,
     );

@@ -204,7 +204,7 @@ export class Embed
       return undefined;
     }
 
-    return EmbedFooter.from(this.client, this.data.footer);
+    return new EmbedFooter(this.client, this.data.footer);
   }
 
   get image(): EmbedImage | undefined {
@@ -212,7 +212,7 @@ export class Embed
       return undefined;
     }
 
-    return EmbedImage.from(this.client, this.data.image);
+    return new EmbedImage(this.client, this.data.image);
   }
 
   get thumbnail(): EmbedThumbnail | undefined {
@@ -220,7 +220,7 @@ export class Embed
       return undefined;
     }
 
-    return EmbedThumbnail.from(this.client, this.data.thumbnail);
+    return new EmbedThumbnail(this.client, this.data.thumbnail);
   }
 
   get video(): EmbedVideo | undefined {
@@ -228,7 +228,7 @@ export class Embed
       return undefined;
     }
 
-    return EmbedVideo.from(this.client, this.data.video);
+    return new EmbedVideo(this.client, this.data.video);
   }
 
   get provider(): EmbedProvider | undefined {
@@ -236,7 +236,7 @@ export class Embed
       return undefined;
     }
 
-    return EmbedProvider.from(this.client, this.data.provider);
+    return new EmbedProvider(this.client, this.data.provider);
   }
 
   get author(): EmbedAuthor | undefined {
@@ -244,7 +244,7 @@ export class Embed
       return undefined;
     }
 
-    return EmbedAuthor.from(this.client, this.data.author);
+    return new EmbedAuthor(this.client, this.data.author);
   }
 
   get fields(): EmbedField[] | undefined {
@@ -252,7 +252,7 @@ export class Embed
       return undefined;
     }
 
-    return this.data.fields.map((field) => EmbedField.from(this.client, field));
+    return this.data.fields.map((field) => new EmbedField(this.client, field));
   }
 
   protected override getCacheInfo(): CacheEntityInfo | null {

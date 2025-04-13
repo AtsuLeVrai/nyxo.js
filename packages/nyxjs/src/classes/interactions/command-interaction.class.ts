@@ -1,5 +1,5 @@
 import {
-  type AnyCommandOptionEntity,
+  type AnyInteractionCommandOptionEntity,
   type AnyInteractionEntity,
   type ApplicationCommandInteractionDataEntity,
   ApplicationCommandOptionType,
@@ -38,7 +38,7 @@ export class CommandInteraction<
     return this.commandData.type;
   }
 
-  get options(): AnyCommandOptionEntity[] | undefined {
+  get options(): AnyInteractionCommandOptionEntity[] | undefined {
     return this.commandData.options;
   }
 
@@ -139,7 +139,7 @@ export class CommandInteraction<
 
     const targetId = this.commandData.target_id;
     if (this.commandData.resolved?.users?.[targetId]) {
-      return User.from(
+      return new User(
         this.client,
         this.commandData.resolved.users[targetId] as UserEntity,
       );
@@ -155,7 +155,7 @@ export class CommandInteraction<
 
     const targetId = this.commandData.target_id;
     if (this.commandData.resolved?.messages?.[targetId]) {
-      return Message.from(
+      return new Message(
         this.client,
         this.commandData.resolved.messages[targetId] as MessageCreateEntity,
       );

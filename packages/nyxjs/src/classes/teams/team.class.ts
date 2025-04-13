@@ -16,8 +16,8 @@ export class Team
   }
 
   get members(): TeamMember[] {
-    return this.data.members.map((member) =>
-      TeamMember.from(this.client, member),
+    return this.data.members.map(
+      (member) => new TeamMember(this.client, member),
     );
   }
 

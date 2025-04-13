@@ -1,4 +1,10 @@
-import { ChannelType, type DmChannelEntity, type Snowflake } from "@nyxjs/core";
+import {
+  BitField,
+  type ChannelFlags,
+  ChannelType,
+  type DmChannelEntity,
+  type Snowflake,
+} from "@nyxjs/core";
 import type { EnforceCamelCase } from "../../types/index.js";
 import { User } from "../users/index.js";
 import { Channel } from "./channel.class.js";
@@ -16,7 +22,7 @@ export class DmChannel
   }
 
   get recipients(): User[] {
-    return this.data.recipients.map((user) => User.from(this.client, user));
+    return this.data.recipients.map((user) => new User(this.client, user));
   }
 
   get icon(): string | null | undefined {
@@ -25,5 +31,9 @@ export class DmChannel
 
   get lastPinTimestamp(): string | null | undefined {
     return this.data.last_pin_timestamp;
+  }
+
+  get flags(): BitField<ChannelFlags> {
+    return new BitField(this.data.flags ?? 0n);
   }
 }

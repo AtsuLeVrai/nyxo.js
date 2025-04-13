@@ -22,7 +22,7 @@ export class TeamMember
   }
 
   get user(): User {
-    return User.from(this.client, this.data.user as UserEntity);
+    return new User(this.client, this.data.user as UserEntity);
   }
 
   get role(): TeamMemberRole {

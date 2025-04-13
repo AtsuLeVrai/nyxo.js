@@ -1,6 +1,6 @@
 import {
   type AvatarDecorationDataEntity,
-  BitFieldManager,
+  BitField,
   type GuildMemberEntity,
   type GuildMemberFlags,
   type Snowflake,
@@ -14,7 +14,7 @@ export class GuildMember
   implements EnforceCamelCase<GuildBased<GuildMemberEntity>>
 {
   get user(): User {
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 
   get nick(): string | null | undefined {
@@ -49,8 +49,8 @@ export class GuildMember
     return Boolean(this.data.mute);
   }
 
-  get flags(): BitFieldManager<GuildMemberFlags> {
-    return new BitFieldManager<GuildMemberFlags>(this.data.flags);
+  get flags(): BitField<GuildMemberFlags> {
+    return new BitField<GuildMemberFlags>(this.data.flags);
   }
 
   get pending(): boolean {

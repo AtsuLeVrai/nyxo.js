@@ -59,7 +59,7 @@ export class Integration
       return undefined;
     }
 
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 
   get account(): IntegrationAccountEntity {
@@ -83,7 +83,7 @@ export class Integration
       return undefined;
     }
 
-    return IntegrationApplication.from(this.client, this.data.application);
+    return new IntegrationApplication(this.client, this.data.application);
   }
 
   get scopes(): OAuth2Scope[] | undefined {

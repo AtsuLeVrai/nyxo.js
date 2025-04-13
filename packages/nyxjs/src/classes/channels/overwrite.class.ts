@@ -1,5 +1,5 @@
 import {
-  BitFieldManager,
+  BitField,
   type BitwisePermissionFlags,
   type OverwriteEntity,
   type OverwriteType,
@@ -20,12 +20,12 @@ export class Overwrite
     return this.data.type;
   }
 
-  get allow(): BitFieldManager<BitwisePermissionFlags> {
-    return new BitFieldManager<BitwisePermissionFlags>(this.data.allow);
+  get allow(): BitField<BitwisePermissionFlags> {
+    return new BitField<BitwisePermissionFlags>(this.data.allow);
   }
 
-  get deny(): BitFieldManager<BitwisePermissionFlags> {
-    return new BitFieldManager<BitwisePermissionFlags>(this.data.allow);
+  get deny(): BitField<BitwisePermissionFlags> {
+    return new BitField<BitwisePermissionFlags>(this.data.allow);
   }
 
   protected override getCacheInfo(): CacheEntityInfo | null {

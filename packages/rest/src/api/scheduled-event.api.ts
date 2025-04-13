@@ -1,6 +1,6 @@
 import type {
   GuildScheduledEventEntity,
-  GuildScheduledEventEntityMetadataEntity,
+  GuildScheduledEventEntityMetadata,
   GuildScheduledEventPrivacyLevel,
   GuildScheduledEventRecurrenceRuleEntity,
   GuildScheduledEventStatus,
@@ -34,7 +34,7 @@ export interface CreateGuildScheduledEventSchema {
    * Required for events with entity_type EXTERNAL, must include location.
    * Must be null for events with entity_type STAGE_INSTANCE or VOICE.
    */
-  entity_metadata?: GuildScheduledEventEntityMetadataEntity;
+  entity_metadata?: GuildScheduledEventEntityMetadata;
 
   /**
    * The name of the scheduled event (1-100 characters)

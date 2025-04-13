@@ -4,7 +4,7 @@ import {
   type ApplicationFlags,
   type ApplicationIntegrationType,
   type ApplicationIntegrationTypeConfigurationEntity,
-  BitFieldManager,
+  BitField,
   type InstallParamsEntity,
   type Snowflake,
   type UserEntity,
@@ -57,7 +57,7 @@ export class Application
       return undefined;
     }
 
-    return User.from(this.client, this.data.bot as UserEntity);
+    return new User(this.client, this.data.bot as UserEntity);
   }
 
   get termsOfServiceUrl(): string | undefined {
@@ -73,7 +73,7 @@ export class Application
       return undefined;
     }
 
-    return User.from(this.client, this.data.owner as UserEntity);
+    return new User(this.client, this.data.owner as UserEntity);
   }
 
   get verifyKey(): string {
@@ -85,7 +85,7 @@ export class Application
       return null;
     }
 
-    return Team.from(this.client, this.data.team);
+    return new Team(this.client, this.data.team);
   }
 
   get guildId(): Snowflake | undefined {
@@ -97,7 +97,7 @@ export class Application
       return undefined;
     }
 
-    return Guild.from(this.client, this.data.guild as GuildCreateEntity);
+    return new Guild(this.client, this.data.guild as GuildCreateEntity);
   }
 
   get primarySkuId(): Snowflake | undefined {
@@ -112,8 +112,8 @@ export class Application
     return this.data.cover_image;
   }
 
-  get flags(): BitFieldManager<ApplicationFlags> {
-    return new BitFieldManager<ApplicationFlags>(this.data.flags ?? 0n);
+  get flags(): BitField<ApplicationFlags> {
+    return new BitField<ApplicationFlags>(this.data.flags ?? 0n);
   }
 
   get approximateGuildCount(): number | undefined {

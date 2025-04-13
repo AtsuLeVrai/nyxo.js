@@ -28,7 +28,7 @@ export class IntegrationApplication
       return undefined;
     }
 
-    return User.from(this.client, this.data.bot);
+    return new User(this.client, this.data.bot);
   }
 
   protected override getCacheInfo(): CacheEntityInfo | null {

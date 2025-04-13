@@ -17,7 +17,7 @@ export class GuildInteraction<
   }
 
   override get member(): GuildMember {
-    return GuildMember.from(
+    return new GuildMember(
       this.client,
       this.data.member as GuildBased<GuildMemberEntity>,
     );

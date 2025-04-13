@@ -12,7 +12,7 @@ export class Ban
   }
 
   get user(): User {
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 
   get guildId(): Snowflake {

@@ -56,7 +56,7 @@ export abstract class ThreadChannel<
       return undefined;
     }
 
-    return ThreadMember.from(
+    return new ThreadMember(
       this.client,
       this.data.member as GuildBased<ThreadMemberEntity>,
     );

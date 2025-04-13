@@ -28,7 +28,7 @@ export class Emoji
       return undefined;
     }
 
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 
   get requireColons(): boolean {

@@ -1,7 +1,7 @@
 import {
-  type AnyCommandOptionEntity,
+  type AnyInteractionCommandOptionEntity,
   type AnyInteractionEntity,
-  type AnySimpleCommandOptionEntity,
+  type AnySimpleApplicationCommandOptionEntity,
   type ApplicationCommandInteractionDataEntity,
   ApplicationCommandOptionType,
   type InteractionCallbackAutocompleteEntity,
@@ -30,18 +30,18 @@ export class AutocompleteInteraction<
     return this.commandData.id;
   }
 
-  get options(): AnyCommandOptionEntity[] | undefined {
+  get options(): AnyInteractionCommandOptionEntity[] | undefined {
     return this.commandData.options;
   }
 
-  getFocusedOption(): AnySimpleCommandOptionEntity | undefined {
+  getFocusedOption(): AnySimpleApplicationCommandOptionEntity | undefined {
     if (!this.options) {
       return undefined;
     }
 
     const focusedOption = this.options.find(
       (option) => "focused" in option && option.focused,
-    ) as AnySimpleCommandOptionEntity | undefined;
+    ) as AnySimpleApplicationCommandOptionEntity | undefined;
 
     if (focusedOption) {
       return focusedOption;
@@ -54,7 +54,7 @@ export class AutocompleteInteraction<
       ) {
         const subFocused = option.options.find(
           (subOpt) => "focused" in subOpt && subOpt.focused,
-        ) as AnySimpleCommandOptionEntity | undefined;
+        ) as AnySimpleApplicationCommandOptionEntity | undefined;
         if (subFocused) {
           return subFocused;
         }
@@ -68,7 +68,7 @@ export class AutocompleteInteraction<
           if (subCmd.options) {
             const subGroupFocused = subCmd.options.find(
               (subOpt) => "focused" in subOpt && subOpt.focused,
-            ) as AnySimpleCommandOptionEntity | undefined;
+            ) as AnySimpleApplicationCommandOptionEntity | undefined;
             if (subGroupFocused) {
               return subGroupFocused;
             }

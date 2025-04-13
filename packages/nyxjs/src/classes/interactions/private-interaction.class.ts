@@ -12,6 +12,6 @@ export class PrivateInteraction<
     | PrivateChannelInteractionEntity,
 > extends Interaction<T> {
   override get user(): User {
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 }

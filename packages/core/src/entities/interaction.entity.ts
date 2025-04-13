@@ -319,6 +319,12 @@ export interface InteractionResolvedDataEntity {
    * Contains attachment data for attachments referenced in the interaction.
    */
   attachments?: Record<Snowflake, AttachmentEntity>;
+
+  /**
+   * Map of message IDs to message objects.
+   * Contains message data for messages referenced in the interaction.
+   */
+  messages?: Record<Snowflake, Partial<MessageEntity>>;
 }
 
 /**
@@ -355,7 +361,7 @@ export interface ApplicationCommandInteractionDataEntity {
    * Parameters and values from the user.
    * Options and values that the user provided when using the command.
    */
-  options?: InteractionCommandOptionEntity[];
+  options?: AnyInteractionCommandOptionEntity[];
 
   /**
    * ID of the guild the command is registered to.

@@ -6,7 +6,7 @@ import type {
   VoiceStateEntity,
 } from "@nyxjs/core";
 import {
-  BitFieldManager,
+  BitField,
   type DefaultMessageNotificationLevel,
   type ExplicitContentFilterLevel,
   type GuildFeature,
@@ -104,14 +104,14 @@ export class Guild
   }
 
   get roles(): Role[] {
-    return this.data.roles.map((role) =>
-      Role.from(this.client, role as GuildBased<RoleEntity>),
+    return this.data.roles.map(
+      (role) => new Role(this.client, role as GuildBased<RoleEntity>),
     );
   }
 
   get emojis(): Emoji[] {
-    return this.data.emojis.map((emoji) =>
-      Emoji.from(this.client, emoji as GuildBased<EmojiEntity>),
+    return this.data.emojis.map(
+      (emoji) => new Emoji(this.client, emoji as GuildBased<EmojiEntity>),
     );
   }
 
@@ -131,10 +131,8 @@ export class Guild
     return this.data.system_channel_id;
   }
 
-  get systemChannelFlags(): BitFieldManager<SystemChannelFlags> {
-    return new BitFieldManager<SystemChannelFlags>(
-      this.data.system_channel_flags,
-    );
+  get systemChannelFlags(): BitField<SystemChannelFlags> {
+    return new BitField<SystemChannelFlags>(this.data.system_channel_flags);
   }
 
   get rulesChannelId(): Snowflake | null {
@@ -226,8 +224,9 @@ export class Guild
   }
 
   get members(): GuildMember[] {
-    return this.data.members.map((member) =>
-      GuildMember.from(this.client, member as GuildBased<GuildMemberEntity>),
+    return this.data.members.map(
+      (member) =>
+        new GuildMember(this.client, member as GuildBased<GuildMemberEntity>),
     );
   }
 
@@ -248,20 +247,20 @@ export class Guild
   }
 
   get stageInstances(): StageInstance[] {
-    return this.data.stage_instances.map((stageInstance) =>
-      StageInstance.from(this.client, stageInstance),
+    return this.data.stage_instances.map(
+      (stageInstance) => new StageInstance(this.client, stageInstance),
     );
   }
 
   get guildScheduledEvents(): GuildScheduledEvent[] {
-    return this.data.guild_scheduled_events.map((event) =>
-      GuildScheduledEvent.from(this.client, event),
+    return this.data.guild_scheduled_events.map(
+      (event) => new GuildScheduledEvent(this.client, event),
     );
   }
 
   get soundboardSounds(): SoundboardSound[] {
-    return this.data.soundboard_sounds.map((sound) =>
-      SoundboardSound.from(this.client, sound),
+    return this.data.soundboard_sounds.map(
+      (sound) => new SoundboardSound(this.client, sound),
     );
   }
 

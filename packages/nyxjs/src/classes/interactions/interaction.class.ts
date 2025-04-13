@@ -85,19 +85,19 @@ export abstract class Interaction<
 
   get user(): User | undefined {
     if (this.isGuildInteraction()) {
-      return User.from(this.client, this.data.member.user);
+      return new User(this.client, this.data.member.user);
     }
 
     if (!this.data.user) {
       return undefined;
     }
 
-    return User.from(this.client, this.data.user);
+    return new User(this.client, this.data.user);
   }
 
   get member(): GuildMember | undefined {
     if (this.isGuildInteraction()) {
-      return GuildMember.from(
+      return new GuildMember(
         this.client,
         this.data.member as GuildBased<GuildMemberEntity>,
       );

@@ -31,14 +31,14 @@ export class MessageReaction
       return undefined;
     }
 
-    return GuildMember.from(
+    return new GuildMember(
       this.client,
       this.data.member as GuildBased<GuildMemberEntity>,
     );
   }
 
   get emoji(): Emoji {
-    return Emoji.from(this.client, this.data.emoji as GuildBased<EmojiEntity>);
+    return new Emoji(this.client, this.data.emoji as GuildBased<EmojiEntity>);
   }
 
   get messageAuthorId(): Snowflake | undefined {

@@ -1,4 +1,6 @@
 import {
+  BitField,
+  type ChannelFlags,
   ChannelType,
   type GroupDmChannelEntity,
   type Snowflake,
@@ -28,7 +30,7 @@ export class GroupDmChannel
   }
 
   get recipients(): User[] {
-    return this.data.recipients.map((user) => User.from(this.client, user));
+    return this.data.recipients.map((user) => new User(this.client, user));
   }
 
   get lastMessageId(): Snowflake | null | undefined {
@@ -37,5 +39,9 @@ export class GroupDmChannel
 
   get lastPinTimestamp(): string | null | undefined {
     return this.data.last_pin_timestamp;
+  }
+
+  get flags(): BitField<ChannelFlags> {
+    return new BitField(this.data.flags ?? 0n);
   }
 }

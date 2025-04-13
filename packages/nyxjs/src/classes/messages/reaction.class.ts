@@ -28,7 +28,7 @@ export class Reaction
   }
 
   get emoji(): Emoji {
-    return Emoji.from(this.client, this.data.emoji as GuildBased<EmojiEntity>);
+    return new Emoji(this.client, this.data.emoji as GuildBased<EmojiEntity>);
   }
 
   get burstColors(): string[] | undefined {

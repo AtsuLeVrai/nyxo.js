@@ -1,6 +1,6 @@
 import type {
   GuildScheduledEventEntity,
-  GuildScheduledEventEntityMetadataEntity,
+  GuildScheduledEventEntityMetadata,
   GuildScheduledEventPrivacyLevel,
   GuildScheduledEventRecurrenceRuleEntity,
   GuildScheduledEventStatus,
@@ -63,7 +63,7 @@ export class GuildScheduledEvent
     return this.data.entity_id;
   }
 
-  get entityMetadata(): GuildScheduledEventEntityMetadataEntity | null {
+  get entityMetadata(): GuildScheduledEventEntityMetadata | null {
     return this.data.entity_metadata;
   }
 
@@ -72,7 +72,7 @@ export class GuildScheduledEvent
       return undefined;
     }
 
-    return User.from(this.client, this.data.creator);
+    return new User(this.client, this.data.creator);
   }
 
   get userCount(): number | undefined {
@@ -83,7 +83,10 @@ export class GuildScheduledEvent
     return this.data.image;
   }
 
-  get recurrenceRule(): GuildScheduledEventRecurrenceRuleEntity | null {
+  get recurrenceRule():
+    | GuildScheduledEventRecurrenceRuleEntity
+    | null
+    | undefined {
     return this.data.recurrence_rule;
   }
 

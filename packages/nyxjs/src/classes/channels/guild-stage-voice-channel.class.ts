@@ -29,8 +29,8 @@ export class GuildStageVoiceChannel
       return undefined;
     }
 
-    return this.data.permission_overwrites.map((overwrite) =>
-      Overwrite.from(this.client, overwrite),
+    return this.data.permission_overwrites.map(
+      (overwrite) => new Overwrite(this.client, overwrite),
     );
   }
 

@@ -36,7 +36,7 @@ export class ComponentInteraction<
   }
 
   get message(): Message {
-    return Message.from(this.client, this.data.message as MessageCreateEntity);
+    return new Message(this.client, this.data.message as MessageCreateEntity);
   }
 
   get values(): SelectMenuOptionEntity[] {
@@ -67,7 +67,7 @@ export class ComponentInteraction<
     for (const [id, userData] of Object.entries(
       this.componentData.resolved.users,
     )) {
-      users[id] = User.from(this.client, userData as UserEntity);
+      users[id] = new User(this.client, userData as UserEntity);
     }
     return users;
   }

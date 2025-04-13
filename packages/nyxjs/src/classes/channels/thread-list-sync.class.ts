@@ -25,8 +25,9 @@ export class ThreadListSync
   }
 
   get members(): ThreadMember[] {
-    return this.data.members.map((member) =>
-      ThreadMember.from(this.client, member as GuildBased<ThreadMemberEntity>),
+    return this.data.members.map(
+      (member) =>
+        new ThreadMember(this.client, member as GuildBased<ThreadMemberEntity>),
     );
   }
 

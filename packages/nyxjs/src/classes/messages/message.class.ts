@@ -2,7 +2,7 @@ import {
   type ActionRowEntity,
   type AnyThreadChannelEntity,
   type ApplicationEntity,
-  BitFieldManager,
+  BitField,
   type GuildMemberEntity,
   type MessageActivityEntity,
   type MessageCallEntity,
@@ -46,7 +46,7 @@ export class Message
       return undefined;
     }
 
-    return GuildMember.from(
+    return new GuildMember(
       this.client,
       this.data.member as GuildBased<GuildMemberEntity>,
     );
@@ -57,7 +57,7 @@ export class Message
   }
 
   get author(): User {
-    return User.from(this.client, this.data.author);
+    return new User(this.client, this.data.author);
   }
 
   get content(): string {
@@ -87,10 +87,10 @@ export class Message
 
     return this.data.mentions.map((mention) => {
       if ("id" in mention) {
-        return User.from(this.client, mention);
+        return new User(this.client, mention);
       }
 
-      return GuildMember.from(
+      return new GuildMember(
         this.client,
         mention as GuildBased<GuildMemberEntity>,
       );
@@ -102,13 +102,13 @@ export class Message
   }
 
   get attachments(): Attachment[] {
-    return this.data.attachments.map((attachment) =>
-      Attachment.from(this.client, attachment),
+    return this.data.attachments.map(
+      (attachment) => new Attachment(this.client, attachment),
     );
   }
 
   get embeds(): Embed[] {
-    return this.data.embeds.map((embed) => Embed.from(this.client, embed));
+    return this.data.embeds.map((embed) => new Embed(this.client, embed));
   }
 
   get pinned(): boolean {
@@ -124,8 +124,8 @@ export class Message
       return undefined;
     }
 
-    return this.data.mention_channels.map((mention) =>
-      ChannelMention.from(this.client, mention),
+    return this.data.mention_channels.map(
+      (mention) => new ChannelMention(this.client, mention),
     );
   }
 
@@ -134,8 +134,8 @@ export class Message
       return undefined;
     }
 
-    return this.data.reactions.map((reaction) =>
-      Reaction.from(this.client, reaction),
+    return this.data.reactions.map(
+      (reaction) => new Reaction(this.client, reaction),
     );
   }
 
@@ -156,7 +156,7 @@ export class Message
       return undefined;
     }
 
-    return Application.from(
+    return new Application(
       this.client,
       this.data.application as ApplicationEntity,
     );
@@ -166,8 +166,8 @@ export class Message
     return this.data.application_id;
   }
 
-  get flags(): BitFieldManager<MessageFlags> {
-    return new BitFieldManager<MessageFlags>(this.data.flags ?? 0n);
+  get flags(): BitField<MessageFlags> {
+    return new BitField<MessageFlags>(this.data.flags ?? 0n);
   }
 
   get components(): ActionRowEntity[] | undefined {
@@ -179,8 +179,8 @@ export class Message
       return undefined;
     }
 
-    return this.data.sticker_items.map((stickerItem) =>
-      StickerItem.from(this.client, stickerItem),
+    return this.data.sticker_items.map(
+      (stickerItem) => new StickerItem(this.client, stickerItem),
     );
   }
 
@@ -189,8 +189,8 @@ export class Message
       return undefined;
     }
 
-    return this.data.stickers.map((sticker) =>
-      Sticker.from(this.client, sticker),
+    return this.data.stickers.map(
+      (sticker) => new Sticker(this.client, sticker),
     );
   }
 
@@ -230,7 +230,7 @@ export class Message
       return null;
     }
 
-    return Message.from(
+    return new Message(
       this.client,
       this.data.referenced_message as MessageCreateEntity,
     );
@@ -257,7 +257,7 @@ export class Message
       },
     );
 
-    return Message.from(this.client, reply as MessageCreateEntity);
+    return new Message(this.client, reply as MessageCreateEntity);
   }
 
   protected override getCacheInfo(): CacheEntityInfo | null {

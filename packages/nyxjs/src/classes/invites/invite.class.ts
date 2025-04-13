@@ -46,14 +46,14 @@ export class Invite
     if (!this.data.guild) {
       return undefined;
     }
-    return Guild.from(this.client, this.data.guild as GuildCreateEntity);
+    return new Guild(this.client, this.data.guild as GuildCreateEntity);
   }
 
   get inviter(): User | undefined {
     if (!this.data.inviter) {
       return undefined;
     }
-    return User.from(this.client, this.data.inviter);
+    return new User(this.client, this.data.inviter);
   }
 
   get targetType(): InviteTargetType | undefined {
@@ -64,7 +64,7 @@ export class Invite
     if (!this.data.target_user) {
       return undefined;
     }
-    return User.from(this.client, this.data.target_user);
+    return new User(this.client, this.data.target_user);
   }
 
   get targetApplication(): Application | undefined {
@@ -72,7 +72,7 @@ export class Invite
       return undefined;
     }
 
-    return Application.from(this.client, this.data.target_application);
+    return new Application(this.client, this.data.target_application);
   }
 
   get temporary(): boolean {
@@ -115,7 +115,7 @@ export class Invite
     if (!this.data.guild_scheduled_event) {
       return undefined;
     }
-    return GuildScheduledEvent.from(
+    return new GuildScheduledEvent(
       this.client,
       this.data.guild_scheduled_event,
     );

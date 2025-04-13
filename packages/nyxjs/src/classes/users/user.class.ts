@@ -1,6 +1,6 @@
 import {
   type AvatarDecorationDataEntity,
-  BitFieldManager,
+  BitField,
   type Locale,
   type PremiumType,
   type Snowflake,
@@ -66,16 +66,16 @@ export class User
     return this.data.email;
   }
 
-  get flags(): BitFieldManager<UserFlags> {
-    return new BitFieldManager<UserFlags>(this.data.flags ?? 0n);
+  get flags(): BitField<UserFlags> {
+    return new BitField<UserFlags>(this.data.flags ?? 0n);
   }
 
   get premiumType(): PremiumType | undefined {
     return this.data.premium_type;
   }
 
-  get publicFlags(): BitFieldManager<UserFlags> {
-    return new BitFieldManager<UserFlags>(this.data.public_flags ?? 0n);
+  get publicFlags(): BitField<UserFlags> {
+    return new BitField<UserFlags>(this.data.public_flags ?? 0n);
   }
 
   get avatarDecorationData(): AvatarDecorationDataEntity | null | undefined {

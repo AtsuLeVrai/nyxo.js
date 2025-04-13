@@ -1,8 +1,10 @@
 import type {
   BanEntity,
   EmojiEntity,
+  GuildMemberEntity,
   InviteEntity,
   Snowflake,
+  WebhookEntity,
 } from "@nyxjs/core";
 import type {
   GatewayEvents,
@@ -134,7 +136,7 @@ function handleDeleteEvent<
 /**
  * Utility function to handle UPDATE events for any entity type
  *
- * This function processes entity updates by utilizing a factory function to create
+ * This function processes entity updates by utilizing a constructor or factory function to create
  * entity instances, retrieving corresponding cache entries, and preparing both
  * old and new instances for event emission.
  *
@@ -144,21 +146,37 @@ function handleDeleteEvent<
  * @param client - Client instance
  * @param data - Raw entity data from the API
  * @param cacheKey - Key to access the appropriate cache store
- * @param factory - Factory function that creates entity instances
+ * @param EntityConstructorOrFactory - Constructor or factory function that creates entity instances
  * @returns - Tuple containing the old entity (or null) and the new entity
  */
 function handleUpdateEvent<
   K extends keyof CacheManager,
   D extends object,
-  E extends { id: Snowflake | null; clone?(): E },
+  E extends { id?: Snowflake; clone?: () => E },
 >(
   client: Client,
   data: D,
   cacheKey: K,
-  factory: (client: Client, data: D) => E,
+  EntityConstructorOrFactory:
+    | (new (
+        client: Client,
+        data: D,
+      ) => E)
+    | ((client: Client, data: D) => E),
 ): [E | null, E] {
-  // Create new entity instance using the factory function
-  const newEntity = factory(client, data);
+  // Create new entity instance using the constructor or factory
+  const newEntity =
+    typeof EntityConstructorOrFactory === "function" &&
+    EntityConstructorOrFactory.prototype?.constructor ===
+      EntityConstructorOrFactory
+      ? new (EntityConstructorOrFactory as new (client: Client, data: D) => E)(
+          client,
+          data,
+        )
+      : (EntityConstructorOrFactory as (client: Client, data: D) => E)(
+          client,
+          data,
+        );
 
   // Get ID from the entity
   const entityId = newEntity.id;
@@ -194,15 +212,11 @@ function handleUpdateEvent<
  * 1. The original Gateway event name
  * 2. The client event name
  * 3. A transform function that processes the data and updates the cache
- *
- * The transform functions handle:
- * - Creating the appropriate class instances from raw data
- * - Updating the client's cache with new/updated/deleted entities
- * - Preserving old entities for events that need "before" and "after" states
- * - Returning an array of arguments to be passed to event handlers
+ * 4. Preserving old entities for events that need "before" and "after" states
+ * 5. Returning an array of arguments to be passed to event handlers
  */
 export const StandardGatewayDispatchEventMappings = [
-  defineEvent("READY", "ready", (client, data) => [Ready.from(client, data)]),
+  defineEvent("READY", "ready", (client, data) => [new Ready(client, data)]),
   defineEvent(
     "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
     "applicationCommandPermissionsUpdate",
@@ -211,7 +225,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "AUTO_MODERATION_RULE_CREATE",
     "autoModerationRuleCreate",
-    (client, data) => [AutoModerationRule.from(client, data)],
+    (client, data) => [new AutoModerationRule(client, data)],
   ),
   defineEvent(
     "AUTO_MODERATION_RULE_UPDATE",
@@ -221,7 +235,7 @@ export const StandardGatewayDispatchEventMappings = [
         client,
         data,
         "autoModerationRules",
-        AutoModerationRule.from,
+        AutoModerationRule,
       ),
   ),
   defineEvent(
@@ -244,7 +258,7 @@ export const StandardGatewayDispatchEventMappings = [
     handleDeleteEvent(client, data.id, "channels"),
   ),
   defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (client, data) => [
-    ChannelPins.from(client, data),
+    new ChannelPins(client, data),
   ]),
   defineEvent("THREAD_CREATE", "threadCreate", (client, data) => [
     ChannelFactory.create(client, data) as AnyThreadChannel,
@@ -256,10 +270,10 @@ export const StandardGatewayDispatchEventMappings = [
     handleDeleteEvent(client, data.id, "channels"),
   ),
   defineEvent("THREAD_LIST_SYNC", "threadListSync", (client, data) => [
-    ThreadListSync.from(client, data),
+    new ThreadListSync(client, data),
   ]),
   defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "threadMembers", ThreadMember.from),
+    handleUpdateEvent(client, data, "threadMembers", ThreadMember),
   ),
   defineEvent(
     "THREAD_MEMBERS_UPDATE",
@@ -267,19 +281,19 @@ export const StandardGatewayDispatchEventMappings = [
     (_client, data) => [data],
   ),
   defineEvent("ENTITLEMENT_CREATE", "entitlementCreate", (client, data) => [
-    Entitlement.from(client, data),
+    new Entitlement(client, data),
   ]),
   defineEvent("ENTITLEMENT_UPDATE", "entitlementUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "entitlements", Entitlement.from),
+    handleUpdateEvent(client, data, "entitlements", Entitlement),
   ),
   defineEvent("ENTITLEMENT_DELETE", "entitlementDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "entitlements"),
   ),
   defineEvent("GUILD_CREATE", "guildCreate", (client, data) => [
-    Guild.from(client, data as GuildCreateEntity),
+    new Guild(client, data as GuildCreateEntity),
   ]),
   defineEvent("GUILD_UPDATE", "guildUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "guilds", Guild.from),
+    handleUpdateEvent(client, data as GuildCreateEntity, "guilds", Guild),
   ),
   defineEvent("GUILD_DELETE", "guildDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "guilds"),
@@ -287,17 +301,17 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_AUDIT_LOG_ENTRY_CREATE",
     "guildAuditLogEntryCreate",
-    (client, data) => [GuildAuditLogEntry.from(client, data)],
+    (client, data) => [new GuildAuditLogEntry(client, data)],
   ),
   defineEvent("GUILD_BAN_ADD", "guildBanAdd", (client, data) => [
-    Ban.from(client, {
+    new Ban(client, {
       guild_id: data.guild_id,
       user: data.user,
       reason: null,
     } as GuildBased<BanEntity>),
   ]),
   defineEvent("GUILD_BAN_REMOVE", "guildBanRemove", (client, data) => [
-    Ban.from(client, {
+    new Ban(client, {
       guild_id: data.guild_id,
       user: data.user,
       reason: null,
@@ -332,7 +346,7 @@ export const StandardGatewayDispatchEventMappings = [
     for (const [id, emojiData] of newEmojiMap.entries()) {
       if (!cachedEmojiMap.has(id)) {
         // Emoji created - use the factory directly
-        const newEmoji = Emoji.from(client, emojiData);
+        const newEmoji = new Emoji(client, emojiData);
         client.emit("emojiCreate", newEmoji);
 
         // Update cache (handled by the Emoji.from factory)
@@ -347,11 +361,12 @@ export const StandardGatewayDispatchEventMappings = [
           client,
           emojiData,
           "emojis",
-          Emoji.from,
+          // @ts-expect-error
+          Emoji,
         );
 
         // Emit the update event
-        client.emit("emojiUpdate", oldEmoji, newEmoji);
+        client.emit("emojiUpdate", oldEmoji as Emoji, newEmoji as Emoji);
       }
     }
 
@@ -384,7 +399,7 @@ export const StandardGatewayDispatchEventMappings = [
       // Create maps for efficient lookup
       const newStickerMap = new Map();
       for (const sticker of newStickers) {
-        const formattedSticker = { ...sticker, guild_id: guildId };
+        const formattedSticker = { ...sticker, guildId: guildId };
         if (sticker.id) {
           newStickerMap.set(sticker.id, formattedSticker);
         }
@@ -401,7 +416,7 @@ export const StandardGatewayDispatchEventMappings = [
       for (const [id, stickerData] of newStickerMap.entries()) {
         if (!cachedStickerMap.has(id)) {
           // Sticker created - use the factory directly
-          const newSticker = Sticker.from(client, stickerData);
+          const newSticker = new Sticker(client, stickerData);
           client.emit("stickerCreate", newSticker);
         }
       }
@@ -414,7 +429,7 @@ export const StandardGatewayDispatchEventMappings = [
             client,
             stickerData,
             "stickers",
-            Sticker.from,
+            Sticker,
           );
 
           // Emit the update event
@@ -443,10 +458,15 @@ export const StandardGatewayDispatchEventMappings = [
   //   (_client, _data) => {},
   // ),
   defineEvent("GUILD_MEMBER_ADD", "guildMemberAdd", (client, data) => [
-    GuildMember.from(client, data),
+    new GuildMember(client, data),
   ]),
   defineEvent("GUILD_MEMBER_UPDATE", "guildMemberUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "members", GuildMember.from),
+    handleUpdateEvent(
+      client,
+      data as GuildBased<GuildMemberEntity>,
+      "members",
+      GuildMember,
+    ),
   ),
   defineEvent("GUILD_MEMBER_REMOVE", "guildMemberRemove", (client, data) =>
     handleDeleteEvent(client, `${data.guild_id}:${data.user.id}`, "members"),
@@ -455,7 +475,7 @@ export const StandardGatewayDispatchEventMappings = [
     data,
   ]),
   defineEvent("GUILD_ROLE_CREATE", "guildRoleCreate", (client, data) => [
-    Role.from(client, {
+    new Role(client, {
       guild_id: data.guild_id,
       ...data.role,
     }),
@@ -468,7 +488,7 @@ export const StandardGatewayDispatchEventMappings = [
         ...data.role,
       },
       "roles",
-      Role.from,
+      Role,
     ),
   ),
   defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (client, data) =>
@@ -477,18 +497,13 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SCHEDULED_EVENT_CREATE",
     "guildScheduledEventCreate",
-    (client, data) => [GuildScheduledEvent.from(client, data)],
+    (client, data) => [new GuildScheduledEvent(client, data)],
   ),
   defineEvent(
     "GUILD_SCHEDULED_EVENT_UPDATE",
     "guildScheduledEventUpdate",
     (client, data) =>
-      handleUpdateEvent(
-        client,
-        data,
-        "scheduledEvents",
-        GuildScheduledEvent.from,
-      ),
+      handleUpdateEvent(client, data, "scheduledEvents", GuildScheduledEvent),
   ),
   defineEvent(
     "GUILD_SCHEDULED_EVENT_DELETE",
@@ -498,23 +513,23 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_ADD",
     "guildScheduledEventUserAdd",
-    (client, data) => [GuildScheduledEventUser.from(client, data)],
+    (client, data) => [new GuildScheduledEventUser(client, data)],
   ),
   defineEvent(
     "GUILD_SCHEDULED_EVENT_USER_REMOVE",
     "guildScheduledEventUserRemove",
-    (client, data) => [GuildScheduledEventUser.from(client, data)],
+    (client, data) => [new GuildScheduledEventUser(client, data)],
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_CREATE",
     "guildSoundboardSoundCreate",
-    (client, data) => [SoundboardSound.from(client, data)],
+    (client, data) => [new SoundboardSound(client, data)],
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_UPDATE",
     "guildSoundboardSoundUpdate",
     (client, data) =>
-      handleUpdateEvent(client, data, "soundboards", SoundboardSound.from),
+      handleUpdateEvent(client, data, "soundboards", SoundboardSound),
   ),
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_DELETE",
@@ -525,42 +540,44 @@ export const StandardGatewayDispatchEventMappings = [
     "GUILD_SOUNDBOARD_SOUNDS_UPDATE",
     "guildSoundboardSoundsUpdate",
     (client, data) => {
-      const sounds = data.soundboard_sounds.map((soundData) =>
-        SoundboardSound.from(client, {
-          ...soundData,
-          guild_id: data.guild_id,
-        }),
+      const sounds = data.soundboard_sounds.map(
+        (soundData) =>
+          new SoundboardSound(client, {
+            ...soundData,
+            guild_id: data.guild_id,
+          }),
       );
 
       return [sounds];
     },
   ),
   defineEvent("SOUNDBOARD_SOUNDS", "soundboardSounds", (client, data) => {
-    const soundboardSounds = data.soundboard_sounds.map((sound) =>
-      SoundboardSound.from(client, { ...sound, guild_id: data.guild_id }),
+    const soundboardSounds = data.soundboard_sounds.map(
+      (sound) =>
+        new SoundboardSound(client, { ...sound, guild_id: data.guild_id }),
     );
     return [soundboardSounds];
   }),
   defineEvent("INTEGRATION_CREATE", "integrationCreate", (client, data) => [
-    Integration.from(client, data),
+    new Integration(client, data),
   ]),
   defineEvent("INTEGRATION_UPDATE", "integrationUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "integrations", Integration.from),
+    handleUpdateEvent(client, data, "integrations", Integration),
   ),
   defineEvent("INTEGRATION_DELETE", "integrationDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "integrations"),
   ),
   defineEvent("INVITE_CREATE", "inviteCreate", (client, data) => [
-    Invite.from(client, data as InviteEntity & InviteCreateEntity),
+    new Invite(client, data as InviteEntity & InviteCreateEntity),
   ]),
   defineEvent("INVITE_DELETE", "inviteDelete", (client, data) => [
-    Invite.from(client, data as InviteEntity & InviteCreateEntity),
+    new Invite(client, data as InviteEntity & InviteCreateEntity),
   ]),
   defineEvent("MESSAGE_CREATE", "messageCreate", (client, data) => [
-    Message.from(client, data),
+    new Message(client, data),
   ]),
   defineEvent("MESSAGE_UPDATE", "messageUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "messages", Message.from),
+    handleUpdateEvent(client, data, "messages", Message),
   ),
   defineEvent("MESSAGE_DELETE", "messageDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "messages"),
@@ -572,12 +589,12 @@ export const StandardGatewayDispatchEventMappings = [
     }),
   ]),
   defineEvent("MESSAGE_REACTION_ADD", "messageReactionAdd", (client, data) => [
-    MessageReaction.from(client, data),
+    new MessageReaction(client, data),
   ]),
   defineEvent(
     "MESSAGE_REACTION_REMOVE",
     "messageReactionRemove",
-    (client, data) => [MessageReaction.from(client, data)],
+    (client, data) => [new MessageReaction(client, data)],
   ),
   defineEvent(
     "MESSAGE_REACTION_REMOVE_ALL",
@@ -590,32 +607,32 @@ export const StandardGatewayDispatchEventMappings = [
     (_client, data) => [data],
   ),
   defineEvent("MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd", (client, data) => [
-    MessagePollVote.from(client, data),
+    new MessagePollVote(client, data),
   ]),
   defineEvent(
     "MESSAGE_POLL_VOTE_REMOVE",
     "messagePollVoteRemove",
-    (client, data) => [MessagePollVote.from(client, data)],
+    (client, data) => [new MessagePollVote(client, data)],
   ),
-  defineEvent("PRESENCE_UPDATE", "presenceUpdate", (client, data) =>
-    handleUpdateEvent(
-      client,
-      data,
-      "presences",
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      (_client, data) => data as any,
-    ),
-  ),
+  // defineEvent("PRESENCE_UPDATE", "presenceUpdate", (client, data) =>
+  //   handleUpdateEvent(
+  //     client,
+  //     data,
+  //     "presences",
+  //     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  //     (_client, data) => data as any,
+  //   ),
+  // ),
   defineEvent("TYPING_START", "typingStart", (client, data) => [
-    TypingStart.from(client, data),
+    new TypingStart(client, data),
   ]),
   defineEvent("USER_UPDATE", "userUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "users", User.from),
+    handleUpdateEvent(client, data, "users", User),
   ),
   defineEvent(
     "VOICE_CHANNEL_EFFECT_SEND",
     "voiceChannelEffectSend",
-    (client, data) => [VoiceChannelEffectSend.from(client, data)],
+    (client, data) => [new VoiceChannelEffectSend(client, data)],
   ),
   defineEvent("VOICE_STATE_UPDATE", "voiceStateUpdate", (_client, data) => [
     data,
@@ -624,7 +641,7 @@ export const StandardGatewayDispatchEventMappings = [
     data,
   ]),
   defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "webhooks", Webhook.from),
+    handleUpdateEvent(client, data as WebhookEntity, "webhooks", Webhook),
   ),
   defineEvent("INTERACTION_CREATE", "interactionCreate", (client, data) => [
     InteractionFactory.create(client, data),
@@ -632,19 +649,19 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent(
     "STAGE_INSTANCE_CREATE",
     "stageInstanceCreate",
-    (client, data) => [StageInstance.from(client, data)],
+    (client, data) => [new StageInstance(client, data)],
   ),
   defineEvent("STAGE_INSTANCE_UPDATE", "stageInstanceUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "stageInstances", StageInstance.from),
+    handleUpdateEvent(client, data, "stageInstances", StageInstance),
   ),
   defineEvent("STAGE_INSTANCE_DELETE", "stageInstanceDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "stageInstances"),
   ),
   defineEvent("SUBSCRIPTION_CREATE", "subscriptionCreate", (client, data) => [
-    Subscription.from(client, data),
+    new Subscription(client, data),
   ]),
   defineEvent("SUBSCRIPTION_UPDATE", "subscriptionUpdate", (client, data) =>
-    handleUpdateEvent(client, data, "subscriptions", Subscription.from),
+    handleUpdateEvent(client, data, "subscriptions", Subscription),
   ),
   defineEvent("SUBSCRIPTION_DELETE", "subscriptionDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "subscriptions"),

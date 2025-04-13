@@ -1398,6 +1398,18 @@ export interface MessageEntity {
    * Resolved objects from the interaction that created this message.
    */
   resolved?: InteractionResolvedDataEntity;
+
+  /**
+   * The message that this message is a reply to.
+   * Contains information about the original message being replied to.
+   */
+  referenced_message?: MessageEntity | null;
+
+  /**
+   * Whether this message is a voice message.
+   * If true, the message contains an audio recording.
+   */
+  message_snapshots?: MessageSnapshotEntity[];
 }
 
 /**

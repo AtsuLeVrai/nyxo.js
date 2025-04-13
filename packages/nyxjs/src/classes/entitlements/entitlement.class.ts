@@ -50,18 +50,6 @@ export class Entitlement
     return Boolean(this.data.consumed);
   }
 
-  get promotionId(): Snowflake | null | undefined {
-    return this.data.promotion_id;
-  }
-
-  get subscriptionId(): Snowflake | null | undefined {
-    return this.data.subscription_id;
-  }
-
-  get giftCodeFlags(): number | undefined {
-    return this.data.gift_code_flags;
-  }
-
   protected override getCacheInfo(): CacheEntityInfo | null {
     return {
       storeKey: "entitlements",

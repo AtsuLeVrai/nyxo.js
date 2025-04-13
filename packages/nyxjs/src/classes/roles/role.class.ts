@@ -1,5 +1,5 @@
 import {
-  BitFieldManager,
+  BitField,
   type RoleEntity,
   type RoleFlags,
   type Snowflake,
@@ -61,11 +61,11 @@ export class Role
       return undefined;
     }
 
-    return RoleTags.from(this.client, this.data.tags);
+    return new RoleTags(this.client, this.data.tags);
   }
 
-  get flags(): BitFieldManager<RoleFlags> {
-    return new BitFieldManager<RoleFlags>(this.data.flags);
+  get flags(): BitField<RoleFlags> {
+    return new BitField<RoleFlags>(this.data.flags);
   }
 
   protected override getCacheInfo(): CacheEntityInfo | null {
