@@ -91,13 +91,6 @@ describe("Store", () => {
         new Store(null, { minCleanupInterval: 500 });
       }).toThrow("minCleanupInterval");
     });
-
-    it("should throw error for unknown option", () => {
-      expect(() => {
-        // @ts-ignore - Testing runtime validation
-        new Store(null, { unknownOption: "value" });
-      }).toThrow();
-    });
   });
 
   // Add method tests

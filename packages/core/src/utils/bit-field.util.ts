@@ -207,6 +207,11 @@ export class BitField<T> {
         return acc;
       }
 
+      // Handle BitField instances
+      if (bit instanceof BitField) {
+        return acc | bit.valueOf();
+      }
+
       // Handle array values recursively
       if (Array.isArray(bit)) {
         return acc | BitField.resolve<F>(...bit);

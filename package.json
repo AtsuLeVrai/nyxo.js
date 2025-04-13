@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "start": "turbo run start",
-    "build": "turbo run build",
+    "build:dev": "turbo run build:dev",
     "build:prod": "turbo run build:prod",
     "type-check": "turbo run type-check",
     "check": "biome check --write --unsafe --verbose",

@@ -3,37 +3,37 @@ import { EventEmitter } from "eventemitter3";
 import { type Dispatcher, Pool } from "undici";
 import type { z } from "zod";
 import { fromError } from "zod-validation-error";
+import {
+  ApplicationApi,
+  ApplicationCommandApi,
+  ApplicationConnectionApi,
+  AuditLogApi,
+  AutoModerationApi,
+  ChannelApi,
+  EmojiApi,
+  EntitlementApi,
+  GatewayApi,
+  GuildApi,
+  GuildTemplateApi,
+  InteractionApi,
+  InviteApi,
+  MessageApi,
+  OAuth2Api,
+  PollApi,
+  ScheduledEventApi,
+  SkuApi,
+  SoundboardApi,
+  StageInstanceApi,
+  StickerApi,
+  SubscriptionApi,
+  UserApi,
+  VoiceApi,
+  WebhookApi,
+} from "../api/index.js";
 import { ApiError, type JsonErrorResponse } from "../errors/index.js";
 import { FileHandler } from "../handlers/index.js";
 import { RateLimitManager, RetryManager } from "../managers/index.js";
 import { RestOptions } from "../options/index.js";
-import {
-  ApplicationCommandRouter,
-  ApplicationConnectionRouter,
-  ApplicationRouter,
-  AuditLogRouter,
-  AutoModerationRouter,
-  ChannelRouter,
-  EmojiRouter,
-  EntitlementRouter,
-  GatewayRouter,
-  GuildRouter,
-  GuildTemplateRouter,
-  InteractionRouter,
-  InviteRouter,
-  MessageRouter,
-  OAuth2Router,
-  PollRouter,
-  ScheduledEventRouter,
-  SkuRouter,
-  SoundboardRouter,
-  StageInstanceRouter,
-  StickerRouter,
-  SubscriptionRouter,
-  UserRouter,
-  VoiceRouter,
-  WebhookRouter,
-} from "../routes/index.js";
 import type {
   ApiRequestOptions,
   HttpResponse,
@@ -132,176 +132,176 @@ export class Rest extends EventEmitter<RestEvents> {
   /**
    * Access to the REST client configuration options
    */
-  get applications(): ApplicationRouter {
-    return new ApplicationRouter(this);
+  get applications(): ApplicationApi {
+    return new ApplicationApi(this);
   }
 
   /**
    * Access to application command endpoints
    */
-  get commands(): ApplicationCommandRouter {
-    return new ApplicationCommandRouter(this);
+  get commands(): ApplicationCommandApi {
+    return new ApplicationCommandApi(this);
   }
 
   /**
    * Access to application connection endpoints
    */
-  get connections(): ApplicationConnectionRouter {
-    return new ApplicationConnectionRouter(this);
+  get connections(): ApplicationConnectionApi {
+    return new ApplicationConnectionApi(this);
   }
 
   /**
    * Access to guild-related endpoints
    */
-  get guilds(): GuildRouter {
-    return new GuildRouter(this);
+  get guilds(): GuildApi {
+    return new GuildApi(this);
   }
 
   /**
    * Access to channel-related endpoints
    */
-  get channels(): ChannelRouter {
-    return new ChannelRouter(this);
+  get channels(): ChannelApi {
+    return new ChannelApi(this);
   }
 
   /**
    * Access to invite-related endpoints
    */
-  get invites(): InviteRouter {
-    return new InviteRouter(this);
+  get invites(): InviteApi {
+    return new InviteApi(this);
   }
 
   /**
    * Access to guild template endpoints
    */
-  get templates(): GuildTemplateRouter {
-    return new GuildTemplateRouter(this);
+  get templates(): GuildTemplateApi {
+    return new GuildTemplateApi(this);
   }
 
   /**
    * Access to user-related endpoints
    */
-  get users(): UserRouter {
-    return new UserRouter(this);
+  get users(): UserApi {
+    return new UserApi(this);
   }
 
   /**
    * Access to audit log endpoints
    */
-  get auditLogs(): AuditLogRouter {
-    return new AuditLogRouter(this);
+  get auditLogs(): AuditLogApi {
+    return new AuditLogApi(this);
   }
 
   /**
    * Access to message-related endpoints
    */
-  get messages(): MessageRouter {
-    return new MessageRouter(this);
+  get messages(): MessageApi {
+    return new MessageApi(this);
   }
 
   /**
    * Access to interaction-related endpoints
    */
-  get interactions(): InteractionRouter {
-    return new InteractionRouter(this);
+  get interactions(): InteractionApi {
+    return new InteractionApi(this);
   }
 
   /**
    * Access to emoji-related endpoints
    */
-  get emojis(): EmojiRouter {
-    return new EmojiRouter(this);
+  get emojis(): EmojiApi {
+    return new EmojiApi(this);
   }
 
   /**
    * Access to sticker-related endpoints
    */
-  get stickers(): StickerRouter {
-    return new StickerRouter(this);
+  get stickers(): StickerApi {
+    return new StickerApi(this);
   }
 
   /**
    * Access to voice-related endpoints
    */
-  get voice(): VoiceRouter {
-    return new VoiceRouter(this);
+  get voice(): VoiceApi {
+    return new VoiceApi(this);
   }
 
   /**
    * Access to soundboard-related endpoints
    */
-  get soundboards(): SoundboardRouter {
-    return new SoundboardRouter(this);
+  get soundboards(): SoundboardApi {
+    return new SoundboardApi(this);
   }
 
   /**
    * Access to stage instance endpoints
    */
-  get stages(): StageInstanceRouter {
-    return new StageInstanceRouter(this);
+  get stages(): StageInstanceApi {
+    return new StageInstanceApi(this);
   }
 
   /**
    * Access to scheduled event endpoints
    */
-  get scheduledEvents(): ScheduledEventRouter {
-    return new ScheduledEventRouter(this);
+  get scheduledEvents(): ScheduledEventApi {
+    return new ScheduledEventApi(this);
   }
 
   /**
    * Access to poll-related endpoints
    */
-  get polls(): PollRouter {
-    return new PollRouter(this);
+  get polls(): PollApi {
+    return new PollApi(this);
   }
 
   /**
    * Access to auto-moderation endpoints
    */
-  get autoModeration(): AutoModerationRouter {
-    return new AutoModerationRouter(this);
+  get autoModeration(): AutoModerationApi {
+    return new AutoModerationApi(this);
   }
 
   /**
    * Access to webhook-related endpoints
    */
-  get webhooks(): WebhookRouter {
-    return new WebhookRouter(this);
+  get webhooks(): WebhookApi {
+    return new WebhookApi(this);
   }
 
   /**
    * Access to OAuth2-related endpoints
    */
-  get oauth2(): OAuth2Router {
-    return new OAuth2Router(this);
+  get oauth2(): OAuth2Api {
+    return new OAuth2Api(this);
   }
 
   /**
    * Access to gateway-related endpoints
    */
-  get gateway(): GatewayRouter {
-    return new GatewayRouter(this);
+  get gateway(): GatewayApi {
+    return new GatewayApi(this);
   }
 
   /**
    * Access to SKU-related endpoints
    */
-  get skus(): SkuRouter {
-    return new SkuRouter(this);
+  get skus(): SkuApi {
+    return new SkuApi(this);
   }
 
   /**
    * Access to entitlement-related endpoints
    */
-  get entitlements(): EntitlementRouter {
-    return new EntitlementRouter(this);
+  get entitlements(): EntitlementApi {
+    return new EntitlementApi(this);
   }
 
   /**
    * Access to subscription-related endpoints
    */
-  get subscriptions(): SubscriptionRouter {
-    return new SubscriptionRouter(this);
+  get subscriptions(): SubscriptionApi {
+    return new SubscriptionApi(this);
   }
 
   /**

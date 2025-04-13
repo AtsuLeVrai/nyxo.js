@@ -39,13 +39,12 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "build": "cross-env NODE_ENV=development node ../../scripts/build.js",
-    "build:prod": "cross-env NODE_ENV=production node ../../scripts/build.js",
+    "build:dev": "tsc -p tsconfig.json",
+    "build:prod": "node ../../scripts/build.js",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
-    "cross-env": "^7.0.3",
     "typescript": "^5.8.3"
   }
 }

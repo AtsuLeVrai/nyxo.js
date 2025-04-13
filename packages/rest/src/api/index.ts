@@ -12,7 +12,7 @@ export * from "./guild.api.js";
 export * from "./interaction.api.js";
 export * from "./invite.api.js";
 export * from "./message.api.js";
-export * from "./oauth2.router.js";
+export * from "./oauth2.api.js";
 export * from "./poll.api.js";
 export * from "./scheduled-event.api.js";
 export * from "./sku.api.js";

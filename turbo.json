@@ -20,8 +20,8 @@
       "env": ["NODE_ENV"],
       "cache": false
     },
-    "build": {
-      "dependsOn": ["^build"],
+    "build:dev": {
+      "dependsOn": ["^build:dev"],
       "outputs": ["dist/**", ".next/**"],
       "env": ["NODE_ENV"],
       "cache": true

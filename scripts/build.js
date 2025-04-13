@@ -8,9 +8,6 @@ import figures from "figures";
 import prettyBytes from "pretty-bytes";
 import ts from "typescript";
 
-// Determine build mode from environment variables
-const isProduction = process.env.NODE_ENV === "production";
-
 // Main paths
 const paths = {
   root: process.cwd(),
@@ -106,7 +103,7 @@ async function cleanDirectories(paths) {
 }
 
 // Build JavaScript bundles with esbuild
-async function buildWithEsbuild(paths, pkg, options = {}) {
+async function buildWithEsbuild(paths, pkg) {
   try {
     Logger.debug("Building bundles with esbuild");
 
@@ -121,10 +118,9 @@ async function buildWithEsbuild(paths, pkg, options = {}) {
       entryPoints: [resolve(paths.src, "index.ts")],
       bundle: true,
       platform: "node",
-      target: options.target || "esnext",
-      sourcemap:
-        options.sourcemap !== undefined ? options.sourcemap : !isProduction,
-      minify: false,
+      target: "esnext",
+      sourcemap: false,
+      minify: true,
       external,
       logLevel: "silent",
       metafile: true,
@@ -154,94 +150,6 @@ async function buildWithEsbuild(paths, pkg, options = {}) {
     return true;
   } catch (error) {
     throw Logger.error(`Bundle creation failed: ${error.message}`, error);
-  }
-}
-
-// Build with TypeScript compiler (for development mode)
-async function buildWithTypeScript(paths) {
-  try {
-    Logger.debug("Building with TypeScript compiler");
-
-    // Find tsconfig.json file
-    const configPath = ts.findConfigFile(
-      paths.root,
-      ts.sys.fileExists,
-      "tsconfig.json",
-    );
-
-    if (!configPath) {
-      throw new Error("tsconfig.json not found");
-    }
-
-    // Read and parse configuration file
-    const { config, error } = ts.readConfigFile(configPath, ts.sys.readFile);
-    if (error) {
-      throw new Error(`Error reading tsconfig.json: ${error.messageText}`);
-    }
-
-    const parsedConfig = ts.parseJsonConfigFileContent(
-      config,
-      ts.sys,
-      paths.root,
-    );
-
-    // Create TypeScript program with specific options
-    const compilerOptions = {
-      ...parsedConfig.options,
-      outDir: paths.dist,
-      declaration: true,
-      declarationMap: true,
-      sourceMap: true,
-      module: ts.ModuleKind.NodeNext,
-      moduleResolution: ts.ModuleResolutionKind.NodeNext,
-    };
-
-    const program = ts.createProgram(parsedConfig.fileNames, compilerOptions);
-
-    // Emit compiled files
-    const emitResult = program.emit();
-    const diagnostics = ts
-      .getPreEmitDiagnostics(program)
-      .concat(emitResult.diagnostics);
-
-    // Report errors
-    const errors = diagnostics.filter(
-      (d) => d.category === ts.DiagnosticCategory.Error,
-    );
-
-    if (errors.length > 0) {
-      for (const diagnostic of errors) {
-        if (diagnostic.file && diagnostic.start !== undefined) {
-          const { line, character } =
-            diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-          const message = ts.flattenDiagnosticMessageText(
-            diagnostic.messageText,
-            "\n",
-          );
-          Logger.error(
-            `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`,
-          );
-        } else {
-          Logger.error(
-            ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
-          );
-        }
-      }
-      return false;
-    }
-
-    if (emitResult.emitSkipped) {
-      Logger.error("TypeScript compilation failed");
-      return false;
-    }
-
-    Logger.success("TypeScript compilation completed successfully");
-    return true;
-  } catch (error) {
-    throw Logger.error(
-      `TypeScript compilation failed: ${error.message}`,
-      error,
-    );
   }
 }
 
@@ -412,39 +320,24 @@ async function build() {
   const pkg = readPackageJson(paths.package);
 
   try {
-    Logger.debug(
-      `Starting build (${isProduction ? "production" : "development"} mode)`,
-      {
-        mode: isProduction ? "production" : "development",
-      },
-    );
+    Logger.debug("Starting build process");
 
     // Define the build process
     const performBuild = async () => {
       // Step 1: Clean directories
       await cleanDirectories(paths);
 
-      // Step 2: Build bundles based on mode
-      let bundlesSuccess = false;
-
-      if (isProduction) {
-        // In production, use esbuild
-        bundlesSuccess = await buildWithEsbuild(paths, pkg);
-
-        // Step 3: In production mode, separately generate types
-        if (bundlesSuccess) {
-          const typesSuccess = await generateTypeDeclarations(paths);
-          if (!typesSuccess) {
-            throw new Error("Type generation failed");
-          }
-        }
-      } else {
-        // In development, use TypeScript compiler which also generates declarations
-        bundlesSuccess = await buildWithTypeScript(paths);
-      }
+      // Step 2: Build bundles with esbuild
+      const bundlesSuccess = await buildWithEsbuild(paths, pkg);
 
       if (!bundlesSuccess) {
         throw new Error("Bundle creation failed");
+      }
+
+      // Step 3: Generate type declarations
+      const typesSuccess = await generateTypeDeclarations(paths);
+      if (!typesSuccess) {
+        throw new Error("Type generation failed");
       }
 
       // Clean up temporary files
