@@ -50,7 +50,7 @@ export interface GetGuildAuditLogQuerySchema {
  * Viewing audit logs requires the VIEW_AUDIT_LOG permission.
  * All audit log entries are stored by Discord for 45 days.
  */
-export class AuditLogApi {
+export class AuditLogRouter {
   /**
    * API route constants for audit log-related endpoints.
    */
@@ -84,7 +84,7 @@ export class AuditLogApi {
     guildId: Snowflake,
     query: GetGuildAuditLogQuerySchema = {},
   ): Promise<AuditLogEntity> {
-    return this.#rest.get(AuditLogApi.ROUTES.guildAuditLogs(guildId), {
+    return this.#rest.get(AuditLogRouter.ROUTES.guildAuditLogs(guildId), {
       query,
     });
   }

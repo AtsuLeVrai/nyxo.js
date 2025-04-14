@@ -134,7 +134,7 @@ export interface EditCurrentApplicationSchema {
  * Provides methods to interact with application resources such as fetching
  * application information, editing applications, and managing activity instances.
  */
-export class ApplicationApi {
+export class ApplicationRouter {
   /**
    * API route constants for application-related endpoints.
    */
@@ -168,7 +168,7 @@ export class ApplicationApi {
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
    */
   getCurrentApplication(): Promise<ApplicationEntity> {
-    return this.#rest.get(ApplicationApi.ROUTES.applicationsMe);
+    return this.#rest.get(ApplicationRouter.ROUTES.applicationsMe);
   }
 
   /**
@@ -190,7 +190,7 @@ export class ApplicationApi {
       options.cover_image = await FileHandler.toDataUri(options.cover_image);
     }
 
-    return this.#rest.patch(ApplicationApi.ROUTES.applicationsMe, {
+    return this.#rest.patch(ApplicationRouter.ROUTES.applicationsMe, {
       body: JSON.stringify(options),
     });
   }
@@ -208,7 +208,7 @@ export class ApplicationApi {
     instanceId: string,
   ): Promise<ActivityInstanceEntity> {
     return this.#rest.get(
-      ApplicationApi.ROUTES.applicationsActivityInstance(
+      ApplicationRouter.ROUTES.applicationsActivityInstance(
         applicationId,
         instanceId,
       ),

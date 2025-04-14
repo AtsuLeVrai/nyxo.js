@@ -67,7 +67,7 @@ export type ModifyAutoModerationRuleSchema = Partial<
  * Auto Moderation enables automatic message moderation through server-defined rules
  * based on keywords, spam detection, and other trigger types.
  */
-export class AutoModerationApi {
+export class AutoModerationRouter {
   /**
    * API route constants for auto moderation-related endpoints.
    */
@@ -109,7 +109,7 @@ export class AutoModerationApi {
     guildId: Snowflake,
   ): Promise<AutoModerationRuleEntity[]> {
     return this.#rest.get(
-      AutoModerationApi.ROUTES.guildAutoModerationRules(guildId),
+      AutoModerationRouter.ROUTES.guildAutoModerationRules(guildId),
     );
   }
 
@@ -128,7 +128,7 @@ export class AutoModerationApi {
     ruleId: Snowflake,
   ): Promise<AutoModerationRuleEntity> {
     return this.#rest.get(
-      AutoModerationApi.ROUTES.guildAutoModerationRule(guildId, ruleId),
+      AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
     );
   }
 
@@ -150,7 +150,7 @@ export class AutoModerationApi {
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
     return this.#rest.post(
-      AutoModerationApi.ROUTES.guildAutoModerationRules(guildId),
+      AutoModerationRouter.ROUTES.guildAutoModerationRules(guildId),
       {
         body: JSON.stringify(options),
         reason,
@@ -179,7 +179,7 @@ export class AutoModerationApi {
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
     return this.#rest.patch(
-      AutoModerationApi.ROUTES.guildAutoModerationRule(guildId, ruleId),
+      AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
       {
         body: JSON.stringify(options),
         reason,
@@ -204,7 +204,7 @@ export class AutoModerationApi {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      AutoModerationApi.ROUTES.guildAutoModerationRule(guildId, ruleId),
+      AutoModerationRouter.ROUTES.guildAutoModerationRule(guildId, ruleId),
       {
         reason,
       },

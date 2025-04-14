@@ -5,6 +5,7 @@ import type { EmojiEntity } from "./emoji.entity.js";
 import type {
   InteractionResolvedDataEntity,
   InteractionType,
+  MessageInteractionEntity,
 } from "./interaction.entity.js";
 import type { ActionRowEntity } from "./message-components.entity.js";
 import type { PollEntity } from "./poll.entity.js";
@@ -1377,6 +1378,12 @@ export interface MessageEntity {
    * Reference to another message this message is associated with.
    */
   message_reference?: MessageReferenceEntity;
+
+  /**
+   * @deprecated Use interaction_metadata instead.
+   * Sent if the message is a response to an interaction.
+   */
+  interaction?: MessageInteractionEntity;
 
   /**
    * Metadata about the interaction that generated this message.

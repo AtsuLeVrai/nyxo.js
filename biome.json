@@ -11,8 +11,12 @@
     "include": [
       "packages/*/src/**/*.ts",
       "packages/*/src/**/*.js",
+      "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.js",
       "internals/*/src/**/*.ts",
       "internals/*/src/**/*.js",
+      "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.js",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -28,8 +32,12 @@
     "include": [
       "packages/*/src/**/*.ts",
       "packages/*/src/**/*.js",
+      "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.js",
       "internals/*/src/**/*.ts",
       "internals/*/src/**/*.js",
+      "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.js",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -52,8 +60,12 @@
     "include": [
       "packages/*/src/**/*.ts",
       "packages/*/src/**/*.js",
+      "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.js",
       "internals/*/src/**/*.ts",
       "internals/*/src/**/*.js",
+      "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.js",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -80,8 +92,12 @@
     "include": [
       "packages/*/src/**/*.ts",
       "packages/*/src/**/*.js",
+      "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.js",
       "internals/*/src/**/*.ts",
       "internals/*/src/**/*.js",
+      "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.js",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -92,8 +108,26 @@
       "include": [
         "internals/*/src/**/*.ts",
         "internals/*/src/**/*.js",
+        "internals/*/tests/**/*.ts",
+        "internals/*/tests/**/*.js",
         "scripts/**/*.js",
         "scripts/**/*.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off",
+            "noConsoleLog": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": [
+        "packages/*/tests/**/*.ts",
+        "packages/*/tests/**/*.js",
+        "internals/*/tests/**/*.ts",
+        "internals/*/tests/**/*.js"
       ],
       "linter": {
         "rules": {

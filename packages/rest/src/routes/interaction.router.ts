@@ -8,7 +8,7 @@ import type { Rest } from "../core/index.js";
 import type {
   EditWebhookMessageSchema,
   ExecuteWebhookSchema,
-} from "./webhook.api.js";
+} from "./webhook.router.js";
 
 /**
  * Router class for Discord Interaction-related endpoints
@@ -19,7 +19,7 @@ import type {
  *
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding}
  */
-export class InteractionApi {
+export class InteractionRouter {
   /**
    * Collection of route URLs for interaction-related endpoints
    */
@@ -159,7 +159,7 @@ export class InteractionApi {
     withResponse = true,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
     return this.#rest.post(
-      InteractionApi.ROUTES.interactionCreateResponse(
+      InteractionRouter.ROUTES.interactionCreateResponse(
         interactionId,
         interactionToken,
       ),
@@ -183,7 +183,7 @@ export class InteractionApi {
     interactionToken: string,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      InteractionApi.ROUTES.webhookOriginalResponseGet(
+      InteractionRouter.ROUTES.webhookOriginalResponseGet(
         applicationId,
         interactionToken,
       ),
@@ -206,7 +206,7 @@ export class InteractionApi {
     options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
     return this.#rest.patch(
-      InteractionApi.ROUTES.webhookOriginalResponseEdit(
+      InteractionRouter.ROUTES.webhookOriginalResponseEdit(
         applicationId,
         interactionToken,
       ),
@@ -229,7 +229,7 @@ export class InteractionApi {
     interactionToken: string,
   ): Promise<void> {
     return this.#rest.delete(
-      InteractionApi.ROUTES.webhookOriginalResponseDelete(
+      InteractionRouter.ROUTES.webhookOriginalResponseDelete(
         applicationId,
         interactionToken,
       ),
@@ -254,7 +254,7 @@ export class InteractionApi {
     options: ExecuteWebhookSchema,
   ): Promise<MessageEntity> {
     return this.#rest.post(
-      InteractionApi.ROUTES.webhookFollowupMessageCreate(
+      InteractionRouter.ROUTES.webhookFollowupMessageCreate(
         applicationId,
         interactionToken,
       ),
@@ -279,7 +279,7 @@ export class InteractionApi {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      InteractionApi.ROUTES.webhookFollowupMessageGet(
+      InteractionRouter.ROUTES.webhookFollowupMessageGet(
         applicationId,
         interactionToken,
         messageId,
@@ -305,7 +305,7 @@ export class InteractionApi {
     options: EditWebhookMessageSchema,
   ): Promise<MessageEntity> {
     return this.#rest.patch(
-      InteractionApi.ROUTES.webhookFollowupMessageEdit(
+      InteractionRouter.ROUTES.webhookFollowupMessageEdit(
         applicationId,
         interactionToken,
         messageId,
@@ -331,7 +331,7 @@ export class InteractionApi {
     messageId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      InteractionApi.ROUTES.webhookFollowupMessageDelete(
+      InteractionRouter.ROUTES.webhookFollowupMessageDelete(
         applicationId,
         interactionToken,
         messageId,

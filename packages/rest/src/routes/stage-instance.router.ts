@@ -80,7 +80,7 @@ export interface ModifyStageInstanceSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance}
  */
-export class StageInstanceApi {
+export class StageInstanceRouter {
   /**
    * Collection of route patterns for Stage Instance endpoints.
    */
@@ -127,7 +127,7 @@ export class StageInstanceApi {
     options: CreateStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    return this.#rest.post(StageInstanceApi.ROUTES.stageInstancesBase, {
+    return this.#rest.post(StageInstanceRouter.ROUTES.stageInstancesBase, {
       body: JSON.stringify(options),
       reason,
     });
@@ -141,7 +141,7 @@ export class StageInstanceApi {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
    */
   getStageInstance(channelId: Snowflake): Promise<StageInstanceEntity> {
-    return this.#rest.get(StageInstanceApi.ROUTES.stageInstance(channelId));
+    return this.#rest.get(StageInstanceRouter.ROUTES.stageInstance(channelId));
   }
 
   /**
@@ -164,10 +164,13 @@ export class StageInstanceApi {
     options: ModifyStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    return this.#rest.patch(StageInstanceApi.ROUTES.stageInstance(channelId), {
-      body: JSON.stringify(options),
-      reason,
-    });
+    return this.#rest.patch(
+      StageInstanceRouter.ROUTES.stageInstance(channelId),
+      {
+        body: JSON.stringify(options),
+        reason,
+      },
+    );
   }
 
   /**
@@ -184,8 +187,11 @@ export class StageInstanceApi {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
    */
   deleteStageInstance(channelId: Snowflake, reason?: string): Promise<void> {
-    return this.#rest.delete(StageInstanceApi.ROUTES.stageInstance(channelId), {
-      reason,
-    });
+    return this.#rest.delete(
+      StageInstanceRouter.ROUTES.stageInstance(channelId),
+      {
+        reason,
+      },
+    );
   }
 }

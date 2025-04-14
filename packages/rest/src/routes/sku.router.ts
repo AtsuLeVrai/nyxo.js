@@ -12,7 +12,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/sku}
  */
-export class SkuApi {
+export class SkuRouter {
   /**
    * Collection of route patterns for SKU-related endpoints.
    */
@@ -48,6 +48,6 @@ export class SkuApi {
    * @see {@link https://discord.com/developers/docs/resources/sku#list-skus}
    */
   listSkus(applicationId: Snowflake): Promise<SkuEntity[]> {
-    return this.#rest.get(SkuApi.ROUTES.applicationSkus(applicationId));
+    return this.#rest.get(SkuRouter.ROUTES.applicationSkus(applicationId));
   }
 }

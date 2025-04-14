@@ -51,7 +51,7 @@ export interface SubscriptionQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/subscription}
  */
-export class SubscriptionApi {
+export class SubscriptionRouter {
   /**
    * Collection of route patterns for subscription-related endpoints.
    */
@@ -99,9 +99,12 @@ export class SubscriptionApi {
     skuId: Snowflake,
     query: SubscriptionQuerySchema = {},
   ): Promise<SubscriptionEntity[]> {
-    return this.#rest.get(SubscriptionApi.ROUTES.skuSubscriptionsBase(skuId), {
-      query,
-    });
+    return this.#rest.get(
+      SubscriptionRouter.ROUTES.skuSubscriptionsBase(skuId),
+      {
+        query,
+      },
+    );
   }
 
   /**
@@ -117,7 +120,7 @@ export class SubscriptionApi {
     subscriptionId: Snowflake,
   ): Promise<SubscriptionEntity> {
     return this.#rest.get(
-      SubscriptionApi.ROUTES.skuSubscription(skuId, subscriptionId),
+      SubscriptionRouter.ROUTES.skuSubscription(skuId, subscriptionId),
     );
   }
 }

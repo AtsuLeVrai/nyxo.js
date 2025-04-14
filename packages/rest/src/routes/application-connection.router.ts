@@ -9,7 +9,7 @@ import type { Rest } from "../core/index.js";
  * Provides methods to interact with application role connection metadata,
  * which is used for integration with Discord's role connection verification feature.
  */
-export class ApplicationConnectionApi {
+export class ApplicationConnectionRouter {
   /**
    * API route constants for application connection-related endpoints.
    */
@@ -41,7 +41,7 @@ export class ApplicationConnectionApi {
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
     return this.#rest.get(
-      ApplicationConnectionApi.ROUTES.applicationsRoleConnectionsMetadata(
+      ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
         applicationId,
       ),
     );
@@ -62,7 +62,7 @@ export class ApplicationConnectionApi {
     metadata: ApplicationRoleConnectionMetadataEntity[],
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
     return this.#rest.put(
-      ApplicationConnectionApi.ROUTES.applicationsRoleConnectionsMetadata(
+      ApplicationConnectionRouter.ROUTES.applicationsRoleConnectionsMetadata(
         applicationId,
       ),
       {

@@ -95,7 +95,7 @@ export interface ModifyGuildStickerSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker}
  */
-export class StickerApi {
+export class StickerRouter {
   /**
    * Collection of route patterns for sticker-related endpoints.
    */
@@ -151,7 +151,7 @@ export class StickerApi {
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
    */
   getSticker(stickerId: Snowflake): Promise<StickerEntity> {
-    return this.#rest.get(StickerApi.ROUTES.sticker(stickerId));
+    return this.#rest.get(StickerRouter.ROUTES.sticker(stickerId));
   }
 
   /**
@@ -163,7 +163,7 @@ export class StickerApi {
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
    */
   listStickerPacks(): Promise<ListStickerPacksResponseEntity> {
-    return this.#rest.get(StickerApi.ROUTES.stickerPacksBase);
+    return this.#rest.get(StickerRouter.ROUTES.stickerPacksBase);
   }
 
   /**
@@ -174,7 +174,7 @@ export class StickerApi {
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
    */
   getStickerPack(packId: Snowflake): Promise<StickerPackEntity> {
-    return this.#rest.get(StickerApi.ROUTES.stickerPack(packId));
+    return this.#rest.get(StickerRouter.ROUTES.stickerPack(packId));
   }
 
   /**
@@ -188,7 +188,7 @@ export class StickerApi {
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
    */
   listGuildStickers(guildId: Snowflake): Promise<StickerEntity[]> {
-    return this.#rest.get(StickerApi.ROUTES.guildStickers(guildId));
+    return this.#rest.get(StickerRouter.ROUTES.guildStickers(guildId));
   }
 
   /**
@@ -206,7 +206,9 @@ export class StickerApi {
     guildId: Snowflake,
     stickerId: Snowflake,
   ): Promise<StickerEntity> {
-    return this.#rest.get(StickerApi.ROUTES.guildSticker(guildId, stickerId));
+    return this.#rest.get(
+      StickerRouter.ROUTES.guildSticker(guildId, stickerId),
+    );
   }
 
   /**
@@ -236,7 +238,7 @@ export class StickerApi {
     reason?: string,
   ): Promise<StickerEntity> {
     const { file, ...rest } = options;
-    return this.#rest.post(StickerApi.ROUTES.guildStickers(guildId), {
+    return this.#rest.post(StickerRouter.ROUTES.guildStickers(guildId), {
       body: JSON.stringify(rest),
       files: file,
       reason,
@@ -268,7 +270,7 @@ export class StickerApi {
     reason?: string,
   ): Promise<StickerEntity> {
     return this.#rest.patch(
-      StickerApi.ROUTES.guildSticker(guildId, stickerId),
+      StickerRouter.ROUTES.guildSticker(guildId, stickerId),
       {
         body: JSON.stringify(options),
         reason,
@@ -296,7 +298,7 @@ export class StickerApi {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      StickerApi.ROUTES.guildSticker(guildId, stickerId),
+      StickerRouter.ROUTES.guildSticker(guildId, stickerId),
       {
         reason,
       },

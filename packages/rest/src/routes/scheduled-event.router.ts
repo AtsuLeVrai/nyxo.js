@@ -140,7 +140,7 @@ export interface GetGuildScheduledEventUsersQuerySchema {
  * allowing applications to create, read, update, and delete scheduled events
  * in guilds, as well as retrieve users subscribed to events.
  */
-export class ScheduledEventApi {
+export class ScheduledEventRouter {
   /**
    * Collection of route patterns for scheduled event endpoints.
    */
@@ -194,7 +194,7 @@ export class ScheduledEventApi {
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
     return this.#rest.get(
-      ScheduledEventApi.ROUTES.guildScheduledEvents(guildId),
+      ScheduledEventRouter.ROUTES.guildScheduledEvents(guildId),
       {
         query: { with_user_count: withUserCount },
       },
@@ -227,7 +227,7 @@ export class ScheduledEventApi {
     }
 
     return this.#rest.post(
-      ScheduledEventApi.ROUTES.guildScheduledEvents(guildId),
+      ScheduledEventRouter.ROUTES.guildScheduledEvents(guildId),
       {
         body: JSON.stringify(options),
         reason,
@@ -250,7 +250,7 @@ export class ScheduledEventApi {
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity> {
     return this.#rest.get(
-      ScheduledEventApi.ROUTES.guildScheduledEvent(guildId, eventId),
+      ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
       {
         query: { with_user_count: withUserCount },
       },
@@ -286,7 +286,7 @@ export class ScheduledEventApi {
     }
 
     return this.#rest.patch(
-      ScheduledEventApi.ROUTES.guildScheduledEvent(guildId, eventId),
+      ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
       {
         body: JSON.stringify(options),
         reason,
@@ -307,7 +307,7 @@ export class ScheduledEventApi {
     eventId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      ScheduledEventApi.ROUTES.guildScheduledEvent(guildId, eventId),
+      ScheduledEventRouter.ROUTES.guildScheduledEvent(guildId, eventId),
     );
   }
 
@@ -331,7 +331,7 @@ export class ScheduledEventApi {
     query: GetGuildScheduledEventUsersQuerySchema = {},
   ): Promise<GuildScheduledEventUserEntity[]> {
     return this.#rest.get(
-      ScheduledEventApi.ROUTES.guildScheduledEventUsers(guildId, eventId),
+      ScheduledEventRouter.ROUTES.guildScheduledEventUsers(guildId, eventId),
       {
         query,
       },

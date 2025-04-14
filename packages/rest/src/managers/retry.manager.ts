@@ -1,70 +1,64 @@
 import { sleep } from "@nyxjs/core";
-import type { Dispatcher } from "undici";
+import { z } from "zod";
 import type { Rest } from "../core/index.js";
-import { ApiError, RateLimitError } from "../errors/index.js";
-import type { RetryOptions } from "../options/index.js";
-import type { RetryEvent } from "../types/index.js";
+import type { HttpMethod, HttpResponse, RetryEvent } from "../types/index.js";
+import type { RateLimitResult } from "./rate-limit.manager.js";
 
 /**
- * Retry-related constants
+ * Configuration options for the retry mechanism.
+ * Defines how request retries are handled when temporary failures occur.
  */
-const RETRY_CONSTANTS = {
-  JITTER_FACTOR: 0.1, // ±10% jitter to prevent thundering herd
-} as const;
+export const RetryOptions = z.object({
+  /**
+   * Maximum number of retry attempts before giving up.
+   * Determines how persistent the client should be when facing transient errors.
+   * @default 3
+   */
+  maxRetries: z.number().nonnegative().int().min(0).default(3),
+
+  /**
+   * Base delay between retries in milliseconds.
+   * Used as the starting point for exponential backoff calculations.
+   * @default 1000
+   */
+  baseDelay: z.number().nonnegative().int().min(0).default(1000),
+
+  /**
+   * HTTP status codes that should trigger a retry attempt.
+   * Typically includes rate limits (429) and server errors (5xx).
+   * @default [429, 500, 502, 503, 504]
+   */
+  retryStatusCodes: z.array(z.number()).default([429, 500, 502, 503, 504]),
+});
+
+export type RetryOptions = z.infer<typeof RetryOptions>;
 
 /**
- * Possible reasons for retrying a request
- */
-export enum RetryReason {
-  RateLimited = "RATE_LIMITED",
-  ServerError = "SERVER_ERROR",
-  NetworkError = "NETWORK_ERROR",
-  Timeout = "TIMEOUT",
-  Unknown = "UNKNOWN",
-}
-
-/**
- * Context information for a retry operation
- */
-export interface RetryContext {
-  /** The HTTP method of the request */
-  method: Dispatcher.HttpMethod;
-  /** The API path being requested */
-  path: string;
-  /** The request ID for tracking */
-  requestId: string;
-}
-
-/**
- * Result of an error evaluation for retry
- */
-export interface RetryDecision {
-  /** Whether the operation should be retried */
-  shouldRetry: boolean;
-  /** Time in milliseconds to wait before retrying */
-  timeout: number;
-  /** The reason for retrying */
-  reason?: RetryReason;
-}
-
-/**
- * Manages retry logic for failed API requests
+ * Manages retry logic for HTTP requests to the Discord API.
+ *
+ * Handles automatic retries for failed requests using configurable strategies:
+ * - Respects rate limits by honoring retry-after headers
+ * - Implements exponential backoff for server errors
+ * - Tracks and emits events for retry attempts
  */
 export class RetryManager {
-  /** State of the retry operation */
-  #retryCount = 0;
-
-  /** Reference to the Rest client */
+  /**
+   * Reference to the REST client.
+   * Used to emit events and access shared resources.
+   */
   readonly #rest: Rest;
 
-  /** Configuration options for retries */
+  /**
+   * Configuration options for retry behavior.
+   * Controls max attempts, delays, and which status codes trigger retries.
+   */
   readonly #options: RetryOptions;
 
   /**
-   * Creates a new retry manager
+   * Creates a new retry manager.
    *
-   * @param rest - The Rest client instance
-   * @param options - Configuration options for retries
+   * @param rest - REST client instance that will use this manager
+   * @param options - Retry configuration options to customize behavior
    */
   constructor(rest: Rest, options: RetryOptions) {
     this.#rest = rest;
@@ -72,210 +66,203 @@ export class RetryManager {
   }
 
   /**
-   * Executes an operation with automatic retries
+   * Handles a rate limit result by waiting if necessary.
+   * If the rate limit indicates the request can't proceed, waits for the specified time.
    *
-   * @param operation - The async operation to execute
-   * @param context - Context information about the operation
-   * @returns The result of the operation
-   * @throws If the operation fails after all retry attempts
+   * @param rateLimitResult - Result from rate limit check containing retry information
+   * @param requestId - Unique request ID for tracking and correlation
+   * @param method - HTTP method of the rate-limited request
+   * @param path - API path of the rate-limited request
+   * @returns Promise that resolves when it's safe to retry the request
    */
-  async execute<T>(
-    operation: () => Promise<T>,
-    context: RetryContext,
-  ): Promise<T> {
-    while (true) {
-      try {
-        return await operation();
-      } catch (error) {
-        const decision = this.evaluateError(error, context);
+  async handleRateLimit(
+    rateLimitResult: RateLimitResult,
+    requestId: string,
+    method: HttpMethod,
+    path: string,
+  ): Promise<void> {
+    if (rateLimitResult.canProceed) {
+      return; // Nothing to do if we can proceed
+    }
 
-        if (!decision.shouldRetry) {
-          throw error;
+    // Calculate delay in milliseconds (retryAfter is already in ms now)
+    const delayMs = rateLimitResult.retryAfter || 1000;
+
+    // Create error message with context about the rate limit
+    const error = new Error(
+      rateLimitResult.reason ||
+        `Rate limit exceeded for ${rateLimitResult.bucketHash || "unknown"} (${rateLimitResult.scope || "unknown"})`,
+    );
+
+    // Emit retry event for tracking and monitoring
+    this.#emitRetryEvent({
+      requestId,
+      method,
+      path,
+      error,
+      attempt: 1,
+      delayMs,
+      reason: "rate_limit",
+    });
+
+    // Wait for the specified time before allowing the request to proceed
+    await sleep(delayMs);
+  }
+
+  /**
+   * Processes an HTTP response and retries if necessary.
+   * Implements the retry strategy based on configuration and response status.
+   *
+   * @param makeRequest - Function that makes the HTTP request and returns a promise
+   * @param requestId - Unique request ID for tracking and correlation
+   * @param method - HTTP method used for the request
+   * @param path - API path being requested
+   * @returns Promise resolving to the final HTTP response after all retry attempts
+   * @throws Error if all retry attempts fail with network errors
+   */
+  async processResponse<T>(
+    makeRequest: () => Promise<HttpResponse<T>>,
+    requestId: string,
+    method: HttpMethod,
+    path: string,
+  ): Promise<HttpResponse<T>> {
+    let attempts = 0;
+    let lastResponse: HttpResponse<T> | null = null;
+
+    while (attempts <= this.#options.maxRetries) {
+      try {
+        // Make the request
+        const response = await makeRequest();
+        lastResponse = response;
+
+        // If success, return immediately
+        if (response.statusCode < 400) {
+          return response;
         }
 
-        await sleep(decision.timeout);
-        this.#retryCount++;
-      }
-    }
-  }
+        // Check if we should retry based on status code
+        if (!this.#options.retryStatusCodes.includes(response.statusCode)) {
+          return response; // Don't retry this status code
+        }
 
-  /**
-   * Determines whether to retry after an error
-   *
-   * @param error - The error that occurred
-   * @param context - Context information about the operation
-   * @returns Decision about retrying
-   */
-  evaluateError(error: unknown, context: RetryContext): RetryDecision {
-    // Check if we've exceeded maximum retries
-    if (this.#retryCount >= this.#options.maxRetries) {
-      return { shouldRetry: false, timeout: 0 };
-    }
+        // Increment attempts
+        attempts++;
 
-    // Check if this method is eligible for retries
-    if (!this.#options.methods.includes(context.method)) {
-      return { shouldRetry: false, timeout: 0 };
-    }
+        // If max retries reached, return the last response
+        if (attempts > this.#options.maxRetries) {
+          return response;
+        }
 
-    // Handle rate limit errors
-    if (error instanceof RateLimitError) {
-      return this.#handleRateLimitError(error, context);
-    }
+        // Calculate delay with exponential backoff or based on retry-after headers
+        const delayMs = this.#calculateDelay(attempts, response);
 
-    // Handle API errors
-    if (error instanceof ApiError) {
-      return this.#handleApiError(error, context);
-    }
+        // Emit retry event for tracking and monitoring
+        this.#emitRetryEvent({
+          requestId,
+          method,
+          path,
+          error: new Error(
+            response.reason || `HTTP error ${response.statusCode}`,
+          ),
+          attempt: attempts,
+          delayMs,
+          reason: this.#getRetryReason(response.statusCode),
+        });
 
-    // Handle network errors
-    if (error instanceof Error) {
-      return this.#handleNetworkError(error, context);
-    }
+        // Wait before retry
+        await sleep(delayMs);
+      } catch (error) {
+        // Handle unexpected errors (network issues, etc.)
+        attempts++;
 
-    return { shouldRetry: false, timeout: 0 };
-  }
+        if (attempts > this.#options.maxRetries) {
+          throw error; // Re-throw if max retries reached
+        }
 
-  /**
-   * Calculates the timeout before the next retry attempt
-   *
-   * @param baseTimeout - Base timeout in milliseconds (optional)
-   * @returns Calculated timeout with exponential backoff and jitter
-   */
-  calculateTimeout(baseTimeout?: number): number {
-    const base = baseTimeout ?? this.#options.minTimeout;
-    const factor = this.#options.timeoutFactor ** this.#retryCount;
-    const timeout = base * factor;
+        // Calculate exponential backoff delay for network errors
+        const delayMs = this.#options.baseDelay * 2 ** (attempts - 1);
 
-    // Add jitter to prevent thundering herd problems
-    const jitter =
-      timeout * RETRY_CONSTANTS.JITTER_FACTOR * (Math.random() * 2 - 1);
+        // Emit retry event for tracking and monitoring
+        this.#emitRetryEvent({
+          requestId,
+          method,
+          path,
+          error: error instanceof Error ? error : new Error(String(error)),
+          attempt: attempts,
+          delayMs,
+          reason: "network_error",
+        });
 
-    return Math.min(
-      Math.max(timeout + jitter, this.#options.minTimeout),
-      this.#options.maxTimeout,
-    );
-  }
-
-  /**
-   * Extracts an error code from an Error object
-   *
-   * @param error - The error to extract a code from
-   * @returns A normalized error code string
-   */
-  getErrorCode(error: Error): string {
-    const message = error.message.toUpperCase();
-
-    for (const code of this.#options.errorCodes) {
-      if (message.includes(code)) {
-        return code;
+        // Wait before retry
+        await sleep(delayMs);
       }
     }
 
-    return RetryReason.Unknown;
+    // This should never happen due to the returns above
+    return lastResponse as HttpResponse<T>;
   }
 
   /**
-   * Handles a rate limit error
+   * Calculates the appropriate delay for a retry attempt.
+   * Respects retry-after headers if present, otherwise uses exponential backoff.
    *
-   * @param error - The rate limit error
-   * @param context - The retry context
-   * @returns Retry decision
+   * @param attempt - Current attempt number (1-based)
+   * @param response - HTTP response if available, containing headers
+   * @returns Delay in milliseconds to wait before the next retry
    * @private
    */
-  #handleRateLimitError(
-    error: RateLimitError,
-    context: RetryContext,
-  ): RetryDecision {
-    const timeout = this.calculateTimeout(error.retryAfter * 1000);
-    this.#emitRetryEvent(error, timeout, context, RetryReason.RateLimited);
-
-    return {
-      shouldRetry: true,
-      timeout,
-      reason: RetryReason.RateLimited,
-    };
-  }
-
-  /**
-   * Handles an API error
-   *
-   * @param error - The API error
-   * @param context - The retry context
-   * @returns Retry decision
-   * @private
-   */
-  #handleApiError(error: ApiError, context: RetryContext): RetryDecision {
-    // Check if status code is eligible for retry
-    if (!this.#options.statusCodes.includes(error.statusCode)) {
-      return { shouldRetry: false, timeout: 0 };
+  #calculateDelay<T>(attempt: number, response?: HttpResponse<T>): number {
+    // Check for retry-after header for rate limits
+    if (response?.headers?.["retry-after"]) {
+      const retryAfterSec = Number(response.headers["retry-after"]);
+      if (!Number.isNaN(retryAfterSec)) {
+        return retryAfterSec * 1000; // Convert to milliseconds
+      }
     }
 
-    const timeout = this.calculateTimeout();
-    const reason = RetryReason.ServerError;
-
-    this.#emitRetryEvent(error, timeout, context, reason);
-
-    return {
-      shouldRetry: true,
-      timeout,
-      reason,
-    };
+    // Otherwise use exponential backoff: baseDelay * 2^(attempt-1)
+    // This gives increasingly longer delays for subsequent retries
+    return this.#options.baseDelay * 2 ** (attempt - 1);
   }
 
   /**
-   * Handles a network error
+   * Gets a descriptive categorized reason for a retry based on status code.
+   * Used for event tracking and metrics.
    *
-   * @param error - The network error
-   * @param context - The retry context
-   * @returns Retry decision
+   * @param statusCode - HTTP status code from the response
+   * @returns A string describing the reason category for the retry
    * @private
    */
-  #handleNetworkError(error: Error, context: RetryContext): RetryDecision {
-    const errorCode = this.getErrorCode(error);
-
-    if (!this.#options.errorCodes.includes(errorCode)) {
-      return { shouldRetry: false, timeout: 0 };
+  #getRetryReason(statusCode: number): string {
+    if (statusCode === 429) {
+      return "rate_limit";
     }
 
-    const timeout = this.calculateTimeout();
-    const reason = errorCode.includes("TIMEOUT")
-      ? RetryReason.Timeout
-      : RetryReason.NetworkError;
+    if (statusCode >= 500 && statusCode < 600) {
+      return "server_error";
+    }
 
-    this.#emitRetryEvent(error, timeout, context, reason);
-
-    return {
-      shouldRetry: true,
-      timeout,
-      reason,
-    };
+    return "unknown_error";
   }
 
   /**
-   * Emits a retry event
+   * Emits a retry event with detailed information.
+   * Used for tracking, monitoring, and debugging retry patterns.
    *
-   * @param error - The error that triggered the retry
-   * @param timeout - The timeout before the next attempt
-   * @param context - Context information about the operation
-   * @param reason - The categorized reason for the retry
+   * @param params - Event parameters containing retry details
    * @private
    */
-  #emitRetryEvent(
-    error: Error,
-    timeout: number,
-    context: RetryContext,
-    reason: RetryReason,
-  ): void {
+  #emitRetryEvent(params: Omit<RetryEvent, "timestamp" | "maxAttempts">): void {
     const event: RetryEvent = {
       timestamp: new Date().toISOString(),
-      requestId: context.requestId ?? "",
-      error,
-      attempt: this.#retryCount + 1,
+      requestId: params.requestId,
+      method: params.method,
+      path: params.path,
+      error: params.error,
+      attempt: params.attempt,
       maxAttempts: this.#options.maxRetries,
-      delayMs: timeout,
-      path: context.path,
-      method: context.method,
-      reason: reason.toString(),
+      delayMs: params.delayMs,
+      reason: params.reason,
     };
 
     this.#rest.emit("retry", event);

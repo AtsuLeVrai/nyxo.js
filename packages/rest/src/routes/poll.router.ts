@@ -39,7 +39,7 @@ export interface GetAnswerVotersQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/poll}
  */
-export class PollApi {
+export class PollRouter {
   /**
    * Collection of route URLs for poll-related endpoints
    */
@@ -97,7 +97,7 @@ export class PollApi {
     query: GetAnswerVotersQuerySchema = {},
   ): Promise<PollVotersResponseEntity> {
     return this.#rest.get(
-      PollApi.ROUTES.channelPollAnswer(channelId, messageId, answerId),
+      PollRouter.ROUTES.channelPollAnswer(channelId, messageId, answerId),
       {
         query,
       },
@@ -115,7 +115,7 @@ export class PollApi {
    */
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
     return this.#rest.post(
-      PollApi.ROUTES.channelPollExpire(channelId, messageId),
+      PollRouter.ROUTES.channelPollExpire(channelId, messageId),
     );
   }
 }

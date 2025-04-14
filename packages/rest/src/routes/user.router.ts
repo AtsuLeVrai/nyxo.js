@@ -137,7 +137,7 @@ export interface UpdateCurrentUserApplicationRoleConnectionSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/user}
  */
-export class UserApi {
+export class UserRouter {
   /**
    * Collection of route patterns for user-related endpoints.
    */
@@ -206,7 +206,7 @@ export class UserApi {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   getCurrentUser(): Promise<UserEntity> {
-    return this.#rest.get(UserApi.ROUTES.userCurrent);
+    return this.#rest.get(UserRouter.ROUTES.userCurrent);
   }
 
   /**
@@ -217,7 +217,7 @@ export class UserApi {
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
   getUser(userId: Snowflake): Promise<UserEntity> {
-    return this.#rest.get(UserApi.ROUTES.user(userId));
+    return this.#rest.get(UserRouter.ROUTES.user(userId));
   }
 
   /**
@@ -242,7 +242,7 @@ export class UserApi {
       options.banner = await FileHandler.toDataUri(options.banner);
     }
 
-    return this.#rest.patch(UserApi.ROUTES.userCurrent, {
+    return this.#rest.patch(UserRouter.ROUTES.userCurrent, {
       body: JSON.stringify(options),
     });
   }
@@ -263,7 +263,7 @@ export class UserApi {
   getCurrentUserGuilds(
     query: GetCurrentUserGuildsQuerySchema = {},
   ): Promise<GuildEntity[]> {
-    return this.#rest.get(UserApi.ROUTES.userCurrentGuilds, {
+    return this.#rest.get(UserRouter.ROUTES.userCurrentGuilds, {
       query,
     });
   }
@@ -278,7 +278,7 @@ export class UserApi {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   getCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.#rest.get(UserApi.ROUTES.userCurrentGuildMember(guildId));
+    return this.#rest.get(UserRouter.ROUTES.userCurrentGuildMember(guildId));
   }
 
   /**
@@ -291,7 +291,7 @@ export class UserApi {
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(UserApi.ROUTES.userCurrentLeaveGuild(guildId));
+    return this.#rest.delete(UserRouter.ROUTES.userCurrentLeaveGuild(guildId));
   }
 
   /**
@@ -308,7 +308,7 @@ export class UserApi {
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDm(recipientId: Snowflake): Promise<DmChannelEntity> {
-    return this.#rest.post(UserApi.ROUTES.userCurrentChannels, {
+    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify({ recipient_id: recipientId }),
     });
   }
@@ -329,7 +329,7 @@ export class UserApi {
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
   createGroupDm(options: CreateGroupDmSchema): Promise<DmChannelEntity> {
-    return this.#rest.post(UserApi.ROUTES.userCurrentChannels, {
+    return this.#rest.post(UserRouter.ROUTES.userCurrentChannels, {
       body: JSON.stringify(options),
     });
   }
@@ -343,7 +343,7 @@ export class UserApi {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   getCurrentUserConnections(): Promise<ConnectionEntity[]> {
-    return this.#rest.get(UserApi.ROUTES.userCurrentConnections);
+    return this.#rest.get(UserRouter.ROUTES.userCurrentConnections);
   }
 
   /**
@@ -360,7 +360,7 @@ export class UserApi {
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
     return this.#rest.get(
-      UserApi.ROUTES.userCurrentApplicationRoleConnection(applicationId),
+      UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
     );
   }
 
@@ -381,7 +381,7 @@ export class UserApi {
     connection: UpdateCurrentUserApplicationRoleConnectionSchema,
   ): Promise<ApplicationRoleConnectionEntity> {
     return this.#rest.put(
-      UserApi.ROUTES.userCurrentApplicationRoleConnection(applicationId),
+      UserRouter.ROUTES.userCurrentApplicationRoleConnection(applicationId),
       {
         body: JSON.stringify(connection),
       },

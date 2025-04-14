@@ -80,7 +80,7 @@ export interface ModifyUserVoiceStateSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/voice}
  */
-export class VoiceApi {
+export class VoiceRouter {
   /**
    * Collection of route patterns for voice-related endpoints.
    */
@@ -124,7 +124,7 @@ export class VoiceApi {
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
    */
   listVoiceRegions(): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(VoiceApi.ROUTES.voiceRegionsBase);
+    return this.#rest.get(VoiceRouter.ROUTES.voiceRegionsBase);
   }
 
   /**
@@ -135,7 +135,9 @@ export class VoiceApi {
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
   getCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceApi.ROUTES.guildCurrentUserVoiceState(guildId));
+    return this.#rest.get(
+      VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
+    );
   }
 
   /**
@@ -150,7 +152,9 @@ export class VoiceApi {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<VoiceStateEntity> {
-    return this.#rest.get(VoiceApi.ROUTES.guildUserVoiceState(guildId, userId));
+    return this.#rest.get(
+      VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
+    );
   }
 
   /**
@@ -178,7 +182,7 @@ export class VoiceApi {
     options: ModifyCurrentUserVoiceStateSchema,
   ): Promise<void> {
     return this.#rest.patch(
-      VoiceApi.ROUTES.guildCurrentUserVoiceState(guildId),
+      VoiceRouter.ROUTES.guildCurrentUserVoiceState(guildId),
       {
         body: JSON.stringify(options),
       },
@@ -211,7 +215,7 @@ export class VoiceApi {
     options: ModifyUserVoiceStateSchema,
   ): Promise<void> {
     return this.#rest.patch(
-      VoiceApi.ROUTES.guildUserVoiceState(guildId, userId),
+      VoiceRouter.ROUTES.guildUserVoiceState(guildId, userId),
       {
         body: JSON.stringify(options),
       },

@@ -201,7 +201,7 @@ export interface BulkDeleteMessagesSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/message}
  */
-export class MessageApi {
+export class MessageRouter {
   /**
    * Collection of route URLs for message-related endpoints
    */
@@ -298,7 +298,7 @@ export class MessageApi {
     channelId: Snowflake,
     query: GetChannelMessagesQuerySchema = {},
   ): Promise<MessageEntity[]> {
-    return this.#rest.get(MessageApi.ROUTES.channelMessages(channelId), {
+    return this.#rest.get(MessageRouter.ROUTES.channelMessages(channelId), {
       query,
     });
   }
@@ -318,7 +318,7 @@ export class MessageApi {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      MessageApi.ROUTES.channelMessage(channelId, messageId),
+      MessageRouter.ROUTES.channelMessage(channelId, messageId),
     );
   }
 
@@ -339,7 +339,7 @@ export class MessageApi {
     options: CreateMessageSchema,
   ): Promise<MessageEntity> {
     const { files, ...rest } = options;
-    return this.#rest.post(MessageApi.ROUTES.channelMessages(channelId), {
+    return this.#rest.post(MessageRouter.ROUTES.channelMessages(channelId), {
       body: JSON.stringify(rest),
       files: files,
     });
@@ -360,7 +360,7 @@ export class MessageApi {
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.post(
-      MessageApi.ROUTES.channelMessageCrosspost(channelId, messageId),
+      MessageRouter.ROUTES.channelMessageCrosspost(channelId, messageId),
     );
   }
 
@@ -381,7 +381,11 @@ export class MessageApi {
     emoji: string,
   ): Promise<void> {
     return this.#rest.put(
-      MessageApi.ROUTES.channelMessageUserReaction(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageUserReaction(
+        channelId,
+        messageId,
+        emoji,
+      ),
     );
   }
 
@@ -400,7 +404,11 @@ export class MessageApi {
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageApi.ROUTES.channelMessageUserReaction(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageUserReaction(
+        channelId,
+        messageId,
+        emoji,
+      ),
     );
   }
 
@@ -422,7 +430,7 @@ export class MessageApi {
     userId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageApi.ROUTES.channelMessageUserReaction(
+      MessageRouter.ROUTES.channelMessageUserReaction(
         channelId,
         messageId,
         emoji,
@@ -449,7 +457,7 @@ export class MessageApi {
     query: GetReactionsQuerySchema = {},
   ): Promise<UserEntity[]> {
     return this.#rest.get(
-      MessageApi.ROUTES.channelMessageReactions(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
       { query },
     );
   }
@@ -468,7 +476,7 @@ export class MessageApi {
     messageId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageApi.ROUTES.channelMessageReactions(channelId, messageId, ""),
+      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, ""),
     );
   }
 
@@ -488,7 +496,7 @@ export class MessageApi {
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageApi.ROUTES.channelMessageReactions(channelId, messageId, emoji),
+      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
     );
   }
 
@@ -512,7 +520,7 @@ export class MessageApi {
   ): Promise<MessageEntity> {
     const { files, ...rest } = options;
     return this.#rest.patch(
-      MessageApi.ROUTES.channelMessage(channelId, messageId),
+      MessageRouter.ROUTES.channelMessage(channelId, messageId),
       {
         body: JSON.stringify(rest),
         files: files,
@@ -536,7 +544,7 @@ export class MessageApi {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageApi.ROUTES.channelMessage(channelId, messageId),
+      MessageRouter.ROUTES.channelMessage(channelId, messageId),
       { reason },
     );
   }
@@ -559,7 +567,7 @@ export class MessageApi {
     reason?: string,
   ): Promise<void> {
     return this.#rest.post(
-      MessageApi.ROUTES.channelMessagesBulkDelete(channelId),
+      MessageRouter.ROUTES.channelMessagesBulkDelete(channelId),
       {
         body: JSON.stringify(options),
         reason,

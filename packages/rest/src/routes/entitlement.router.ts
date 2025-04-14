@@ -95,7 +95,7 @@ export interface CreateTestEntitlementSchema {
  * Entitlements are used for managing premium access in monetized apps.
  * They can be associated with either users or guilds, depending on the subscription type.
  */
-export class EntitlementApi {
+export class EntitlementRouter {
   /**
    * API route constants for entitlement-related endpoints.
    */
@@ -141,7 +141,7 @@ export class EntitlementApi {
     query: ListEntitlementQuerySchema = {},
   ): Promise<EntitlementEntity[]> {
     return this.#rest.get(
-      EntitlementApi.ROUTES.applicationEntitlements(applicationId),
+      EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
         query,
       },
@@ -161,7 +161,7 @@ export class EntitlementApi {
     entitlementId: Snowflake,
   ): Promise<EntitlementEntity> {
     return this.#rest.get(
-      EntitlementApi.ROUTES.applicationEntitlement(
+      EntitlementRouter.ROUTES.applicationEntitlement(
         applicationId,
         entitlementId,
       ),
@@ -184,7 +184,7 @@ export class EntitlementApi {
     entitlementId: Snowflake,
   ): Promise<void> {
     return this.#rest.post(
-      EntitlementApi.ROUTES.applicationEntitlementConsume(
+      EntitlementRouter.ROUTES.applicationEntitlementConsume(
         applicationId,
         entitlementId,
       ),
@@ -208,7 +208,7 @@ export class EntitlementApi {
     test: CreateTestEntitlementSchema,
   ): Promise<EntitlementEntity> {
     return this.#rest.post(
-      EntitlementApi.ROUTES.applicationEntitlements(applicationId),
+      EntitlementRouter.ROUTES.applicationEntitlements(applicationId),
       {
         body: JSON.stringify(test),
       },
@@ -231,7 +231,7 @@ export class EntitlementApi {
     entitlementId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      EntitlementApi.ROUTES.applicationEntitlement(
+      EntitlementRouter.ROUTES.applicationEntitlement(
         applicationId,
         entitlementId,
       ),

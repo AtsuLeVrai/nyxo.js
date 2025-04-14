@@ -163,9 +163,8 @@ export interface InteractionCallbackActivityInstanceEntity {
 }
 
 /**
- * Base structure for command options in interactions.
- * Contains all fields that may appear in any kind of command option.
- * Many fields are optional as they only apply to specific option types.
+ * Base structure for all interaction command options.
+ * Contains common fields shared across all option types.
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
 export interface InteractionCommandOptionEntity {
@@ -204,33 +203,200 @@ export interface InteractionCommandOptionEntity {
 }
 
 /**
- * Simple option for basic command parameters.
- * Represents basic parameter types like strings, numbers, and mentions.
+ * String option for interaction commands.
+ * Used for text input parameters.
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
-export interface SimpleInteractionCommandOptionEntity
-  extends Omit<InteractionCommandOptionEntity, "options"> {
+export interface StringInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
   /**
-   * Type of the simple command option.
-   * Basic types that accept direct values like strings, numbers, etc.
+   * String option type.
+   * Identifies this as a string parameter.
    */
-  type:
-    | ApplicationCommandOptionType.String
-    | ApplicationCommandOptionType.Number
-    | ApplicationCommandOptionType.Integer
-    | ApplicationCommandOptionType.Boolean
-    | ApplicationCommandOptionType.User
-    | ApplicationCommandOptionType.Channel
-    | ApplicationCommandOptionType.Role
-    | ApplicationCommandOptionType.Mentionable
-    | ApplicationCommandOptionType.Attachment;
+  type: ApplicationCommandOptionType.String;
 
   /**
-   * Value of the option resulting from user input.
-   * The value provided by the user for this option.
+   * Value of the string option provided by the user.
+   * The text input from the user.
    */
-  value: string | number | boolean;
+  value: string;
 }
+
+/**
+ * Integer option for interaction commands.
+ * Used for whole number input parameters.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface IntegerInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * Integer option type.
+   * Identifies this as an integer parameter.
+   */
+  type: ApplicationCommandOptionType.Integer;
+
+  /**
+   * Value of the integer option provided by the user.
+   * The whole number input from the user.
+   */
+  value: number;
+}
+
+/**
+ * Number option for interaction commands.
+ * Used for decimal number input parameters.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface NumberInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * Number option type.
+   * Identifies this as a decimal number parameter.
+   */
+  type: ApplicationCommandOptionType.Number;
+
+  /**
+   * Value of the number option provided by the user.
+   * The decimal number input from the user.
+   */
+  value: number;
+}
+
+/**
+ * Boolean option for interaction commands.
+ * Used for true/false input parameters.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface BooleanInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * Boolean option type.
+   * Identifies this as a boolean parameter.
+   */
+  type: ApplicationCommandOptionType.Boolean;
+
+  /**
+   * Value of the boolean option provided by the user.
+   * The true/false input from the user.
+   */
+  value: boolean;
+}
+
+/**
+ * User option for interaction commands.
+ * Used for user mention parameters.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface UserInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * User option type.
+   * Identifies this as a user parameter.
+   */
+  type: ApplicationCommandOptionType.User;
+
+  /**
+   * Value of the user option provided by the user.
+   * The user ID selected by the user.
+   */
+  value: string;
+}
+
+/**
+ * Channel option for interaction commands.
+ * Used for channel mention parameters.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface ChannelInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * Channel option type.
+   * Identifies this as a channel parameter.
+   */
+  type: ApplicationCommandOptionType.Channel;
+
+  /**
+   * Value of the channel option provided by the user.
+   * The channel ID selected by the user.
+   */
+  value: string;
+}
+
+/**
+ * Role option for interaction commands.
+ * Used for role mention parameters.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface RoleInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * Role option type.
+   * Identifies this as a role parameter.
+   */
+  type: ApplicationCommandOptionType.Role;
+
+  /**
+   * Value of the role option provided by the user.
+   * The role ID selected by the user.
+   */
+  value: string;
+}
+
+/**
+ * Mentionable option for interaction commands.
+ * Used for parameters that can be either users or roles.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface MentionableInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * Mentionable option type.
+   * Identifies this as a mentionable parameter.
+   */
+  type: ApplicationCommandOptionType.Mentionable;
+
+  /**
+   * Value of the mentionable option provided by the user.
+   * The user or role ID selected by the user.
+   */
+  value: string;
+}
+
+/**
+ * Attachment option for interaction commands.
+ * Used for file upload parameters.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export interface AttachmentInteractionCommandOptionEntity
+  extends Omit<InteractionCommandOptionEntity, "options" | "value"> {
+  /**
+   * Attachment option type.
+   * Identifies this as an attachment parameter.
+   */
+  type: ApplicationCommandOptionType.Attachment;
+
+  /**
+   * Value of the attachment option provided by the user.
+   * The attachment ID provided by the user.
+   */
+  value: string;
+}
+
+/**
+ * Union of all simple interaction command options.
+ * A type that can be any of the non-container option types.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export type AnySimpleInteractionCommandOptionEntity =
+  | StringInteractionCommandOptionEntity
+  | IntegerInteractionCommandOptionEntity
+  | NumberInteractionCommandOptionEntity
+  | BooleanInteractionCommandOptionEntity
+  | UserInteractionCommandOptionEntity
+  | ChannelInteractionCommandOptionEntity
+  | RoleInteractionCommandOptionEntity
+  | MentionableInteractionCommandOptionEntity
+  | AttachmentInteractionCommandOptionEntity;
 
 /**
  * SubCommand option structure.
@@ -249,7 +415,7 @@ export interface SubCommandInteractionOptionEntity
    * Options for this subcommand.
    * Parameters within this subcommand.
    */
-  options?: SimpleInteractionCommandOptionEntity[];
+  options?: AnySimpleInteractionCommandOptionEntity[];
 }
 
 /**
@@ -275,9 +441,10 @@ export interface SubCommandGroupInteractionOptionEntity
 /**
  * Union of all interaction command options.
  * A type that can be any of the possible command option types.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
 export type AnyInteractionCommandOptionEntity =
-  | SimpleInteractionCommandOptionEntity
+  | AnySimpleInteractionCommandOptionEntity
   | SubCommandInteractionOptionEntity
   | SubCommandGroupInteractionOptionEntity;
 

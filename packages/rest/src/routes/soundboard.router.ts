@@ -114,7 +114,7 @@ export interface ModifyGuildSoundboardSoundSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard}
  */
-export class SoundboardApi {
+export class SoundboardRouter {
   /**
    * Collection of route patterns for soundboard-related endpoints.
    */
@@ -177,7 +177,7 @@ export class SoundboardApi {
     options: SendSoundboardSoundSchema,
   ): Promise<void> {
     return this.#rest.post(
-      SoundboardApi.ROUTES.channelSendSoundboardSound(channelId),
+      SoundboardRouter.ROUTES.channelSendSoundboardSound(channelId),
       {
         body: JSON.stringify(options),
       },
@@ -191,7 +191,7 @@ export class SoundboardApi {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   listDefaultSoundboardSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.#rest.get(SoundboardApi.ROUTES.soundboardDefaultSounds);
+    return this.#rest.get(SoundboardRouter.ROUTES.soundboardDefaultSounds);
   }
 
   /**
@@ -207,7 +207,9 @@ export class SoundboardApi {
   listGuildSoundboardSounds(
     guildId: Snowflake,
   ): Promise<ListGuildSoundboardSoundsResponseEntity> {
-    return this.#rest.get(SoundboardApi.ROUTES.guildSoundboardSounds(guildId));
+    return this.#rest.get(
+      SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
+    );
   }
 
   /**
@@ -226,7 +228,7 @@ export class SoundboardApi {
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
     return this.#rest.get(
-      SoundboardApi.ROUTES.guildSoundboardSound(guildId, soundId),
+      SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
     );
   }
 
@@ -255,7 +257,7 @@ export class SoundboardApi {
     }
 
     return this.#rest.post(
-      SoundboardApi.ROUTES.guildSoundboardSounds(guildId),
+      SoundboardRouter.ROUTES.guildSoundboardSounds(guildId),
       {
         body: JSON.stringify(options),
         reason,
@@ -289,7 +291,7 @@ export class SoundboardApi {
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
     return this.#rest.patch(
-      SoundboardApi.ROUTES.guildSoundboardSound(guildId, soundId),
+      SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
       {
         body: JSON.stringify(options),
         reason,
@@ -318,7 +320,7 @@ export class SoundboardApi {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      SoundboardApi.ROUTES.guildSoundboardSound(guildId, soundId),
+      SoundboardRouter.ROUTES.guildSoundboardSound(guildId, soundId),
       {
         reason,
       },

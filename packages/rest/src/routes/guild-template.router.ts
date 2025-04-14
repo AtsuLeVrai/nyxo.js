@@ -58,7 +58,7 @@ export type ModifyGuildTemplateSchema = Partial<CreateGuildTemplateSchema>;
  * Provides methods to interact with guild templates, which are snapshots of guilds
  * that can be used to create new guilds based on existing ones
  */
-export class GuildTemplateApi {
+export class GuildTemplateRouter {
   /**
    * Collection of route URLs for Guild Template-related endpoints
    */
@@ -112,7 +112,9 @@ export class GuildTemplateApi {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
    */
   getGuildTemplate(code: string): Promise<GuildTemplateEntity> {
-    return this.#rest.get(GuildTemplateApi.ROUTES.guildTemplateDefault(code));
+    return this.#rest.get(
+      GuildTemplateRouter.ROUTES.guildTemplateDefault(code),
+    );
   }
 
   /**
@@ -133,9 +135,12 @@ export class GuildTemplateApi {
       options.icon = await FileHandler.toDataUri(options.icon);
     }
 
-    return this.#rest.post(GuildTemplateApi.ROUTES.guildTemplateDefault(code), {
-      body: JSON.stringify(options),
-    });
+    return this.#rest.post(
+      GuildTemplateRouter.ROUTES.guildTemplateDefault(code),
+      {
+        body: JSON.stringify(options),
+      },
+    );
   }
 
   /**
@@ -147,7 +152,7 @@ export class GuildTemplateApi {
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
    */
   getGuildTemplates(guildId: Snowflake): Promise<GuildTemplateEntity[]> {
-    return this.#rest.get(GuildTemplateApi.ROUTES.guildTemplates(guildId));
+    return this.#rest.get(GuildTemplateRouter.ROUTES.guildTemplates(guildId));
   }
 
   /**
@@ -164,7 +169,7 @@ export class GuildTemplateApi {
     guildId: Snowflake,
     options: CreateGuildTemplateSchema,
   ): Promise<GuildTemplateEntity> {
-    return this.#rest.post(GuildTemplateApi.ROUTES.guildTemplates(guildId), {
+    return this.#rest.post(GuildTemplateRouter.ROUTES.guildTemplates(guildId), {
       body: JSON.stringify(options),
     });
   }
@@ -182,7 +187,9 @@ export class GuildTemplateApi {
     guildId: Snowflake,
     code: string,
   ): Promise<GuildTemplateEntity> {
-    return this.#rest.put(GuildTemplateApi.ROUTES.guildTemplate(guildId, code));
+    return this.#rest.put(
+      GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
+    );
   }
 
   /**
@@ -202,7 +209,7 @@ export class GuildTemplateApi {
     options: ModifyGuildTemplateSchema,
   ): Promise<GuildTemplateEntity> {
     return this.#rest.patch(
-      GuildTemplateApi.ROUTES.guildTemplate(guildId, code),
+      GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
       {
         body: JSON.stringify(options),
       },
@@ -223,7 +230,7 @@ export class GuildTemplateApi {
     code: string,
   ): Promise<GuildTemplateEntity> {
     return this.#rest.delete(
-      GuildTemplateApi.ROUTES.guildTemplate(guildId, code),
+      GuildTemplateRouter.ROUTES.guildTemplate(guildId, code),
     );
   }
 }

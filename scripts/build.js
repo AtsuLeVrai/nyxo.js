@@ -120,7 +120,7 @@ async function buildWithEsbuild(paths, pkg) {
       platform: "node",
       target: "esnext",
       sourcemap: false,
-      minify: true,
+      minify: false,
       external,
       logLevel: "silent",
       metafile: true,

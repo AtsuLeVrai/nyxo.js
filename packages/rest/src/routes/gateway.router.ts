@@ -83,7 +83,7 @@ export interface GatewayBotResponseEntity extends GatewayResponseEntity {
  * to receive events about various actions and state changes.
  * These methods provide the necessary information to establish and maintain gateway connections.
  */
-export class GatewayApi {
+export class GatewayRouter {
   /**
    * API route constants for gateway-related endpoints.
    */
@@ -111,7 +111,7 @@ export class GatewayApi {
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
    */
   getGateway(): Promise<GatewayResponseEntity> {
-    return this.#rest.get(GatewayApi.ROUTES.gatewayDefault);
+    return this.#rest.get(GatewayRouter.ROUTES.gatewayDefault);
   }
 
   /**
@@ -133,6 +133,6 @@ export class GatewayApi {
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot}
    */
   getGatewayBot(): Promise<GatewayBotResponseEntity> {
-    return this.#rest.get(GatewayApi.ROUTES.gatewayBot);
+    return this.#rest.get(GatewayRouter.ROUTES.gatewayBot);
   }
 }

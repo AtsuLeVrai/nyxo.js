@@ -4,10 +4,10 @@ import type { StoreKey } from "./index.js";
  * Node class representing an element in the doubly linked list used for LRU cache implementation.
  * Each node contains a key and maintains references to its previous and next nodes.
  */
-export class LRUNode<K> {
+export class LruNode<K> {
   key: K;
-  prev: LRUNode<K> | null = null;
-  next: LRUNode<K> | null = null;
+  prev: LruNode<K> | null = null;
+  next: LruNode<K> | null = null;
 
   constructor(key: K) {
     this.key = key;
@@ -22,12 +22,12 @@ export class LRUNode<K> {
  *
  * @template K - The type of keys to be stored in the cache, must extend StoreKey
  */
-export class LRUTracker<K extends StoreKey> {
+export class LruTracker<K extends StoreKey> {
   readonly #capacity: number;
 
-  #cache: Map<K, LRUNode<K>>;
-  #head: LRUNode<K> | null = null;
-  #tail: LRUNode<K> | null = null;
+  #cache = new Map<K, LruNode<K>>();
+  #head: LruNode<K> | null = null;
+  #tail: LruNode<K> | null = null;
 
   /**
    * Creates a new LRU tracker with the specified capacity.
@@ -35,7 +35,6 @@ export class LRUTracker<K extends StoreKey> {
    */
   constructor(capacity: number) {
     this.#capacity = Math.max(1, capacity);
-    this.#cache = new Map<K, LRUNode<K>>();
   }
 
   /**
@@ -62,13 +61,13 @@ export class LRUTracker<K extends StoreKey> {
       this.#addToFront(node);
     } else {
       // Create new node and add to front
-      const newNode = new LRUNode<K>(key);
+      const newNode = new LruNode<K>(key);
       this.#addToFront(newNode);
       this.#cache.set(key, newNode);
 
       // Evict if over capacity
       if (this.#cache.size > this.#capacity) {
-        this.#evictLRU();
+        this.#evictLru();
       }
     }
   }
@@ -77,7 +76,7 @@ export class LRUTracker<K extends StoreKey> {
    * Retrieves the least recently used key from the cache.
    * @returns The least recently used key, or null if the cache is empty
    */
-  getLRU(): K | null {
+  getLru(): K | null {
     return this.#tail ? this.#tail.key : null;
   }
 
@@ -125,7 +124,7 @@ export class LRUTracker<K extends StoreKey> {
    * Returns all entries in the cache as key-node pairs.
    * @returns An array of [key, LRUNode] pairs
    */
-  entries(): [K, LRUNode<K>][] {
+  entries(): [K, LruNode<K>][] {
     return [...this.#cache.entries()];
   }
 
@@ -133,7 +132,7 @@ export class LRUTracker<K extends StoreKey> {
    * Removes the least recently used item from the cache.
    * @returns The key of the evicted item, or null if the cache was empty
    */
-  #evictLRU(): K | null {
+  #evictLru(): K | null {
     if (this.#tail) {
       const key = this.#tail.key;
       this.#removeNode(this.#tail);
@@ -147,7 +146,7 @@ export class LRUTracker<K extends StoreKey> {
    * Adds a node to the front of the doubly linked list, making it the most recently used item.
    * @param node - The node to add to the front of the list
    */
-  #addToFront(node: LRUNode<K>): void {
+  #addToFront(node: LruNode<K>): void {
     // Reset node connections
     node.prev = null;
     node.next = this.#head;
@@ -168,7 +167,7 @@ export class LRUTracker<K extends StoreKey> {
    * Removes a node from the doubly linked list, maintaining the list's integrity.
    * @param node - The node to remove from the list
    */
-  #removeNode(node: LRUNode<K>): void {
+  #removeNode(node: LruNode<K>): void {
     // Update previous node
     if (node.prev) {
       node.prev.next = node.next;

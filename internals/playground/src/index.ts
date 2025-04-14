@@ -135,7 +135,7 @@ client.on("ready", async (ready) => {
 client.on("messageCreate", async (message) => {
   if (message.content === "!ping") {
     const embed = new EmbedBuilder()
-      .setTitle("Test")
+      .setTitle("Test".repeat(1500))
       .setDescription("Test")
       .setColor(0x57f287)
       .setFooter({ text: "Test" })

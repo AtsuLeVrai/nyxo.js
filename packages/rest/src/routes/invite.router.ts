@@ -38,7 +38,7 @@ export interface GetInviteQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/invite}
  */
-export class InviteApi {
+export class InviteRouter {
   /**
    * Collection of route URLs for invite-related endpoints
    */
@@ -72,7 +72,7 @@ export class InviteApi {
     code: string,
     query: GetInviteQuerySchema = {},
   ): Promise<InviteEntity & InviteMetadataEntity> {
-    return this.#rest.get(InviteApi.ROUTES.inviteBase(code), {
+    return this.#rest.get(InviteRouter.ROUTES.inviteBase(code), {
       query,
     });
   }
@@ -88,7 +88,7 @@ export class InviteApi {
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.#rest.delete(InviteApi.ROUTES.inviteBase(code), {
+    return this.#rest.delete(InviteRouter.ROUTES.inviteBase(code), {
       reason,
     });
   }

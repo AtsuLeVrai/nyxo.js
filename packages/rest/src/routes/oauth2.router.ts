@@ -39,7 +39,7 @@ export interface AuthorizationEntity {
  *
  * @see {@link https://discord.com/developers/docs/topics/oauth2}
  */
-export class OAuth2Api {
+export class Oauth2Router {
   /**
    * Collection of route URLs for OAuth2-related endpoints
    */
@@ -76,7 +76,7 @@ export class OAuth2Api {
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
    */
   getCurrentBotApplicationInformation(): Promise<ApplicationEntity> {
-    return this.#rest.get(OAuth2Api.ROUTES.oauth2CurrentApplication);
+    return this.#rest.get(Oauth2Router.ROUTES.oauth2CurrentApplication);
   }
 
   /**
@@ -88,6 +88,6 @@ export class OAuth2Api {
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
    */
   getCurrentAuthorizationInformation(): Promise<AuthorizationEntity> {
-    return this.#rest.get(OAuth2Api.ROUTES.oauth2CurrentAuthorization);
+    return this.#rest.get(Oauth2Router.ROUTES.oauth2CurrentAuthorization);
   }
 }

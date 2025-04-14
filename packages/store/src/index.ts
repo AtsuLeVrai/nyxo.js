@@ -2,7 +2,7 @@ import { deepmerge } from "deepmerge-ts";
 import { cloneDeep, get, unset } from "lodash-es";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { LRUTracker } from "./lru-tracker.js";
+import { LruTracker } from "./lru-tracker.js";
 
 /**
  * Valid key types for the store
@@ -91,7 +91,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * LRU tracker to manage access times for the LRU eviction strategy
    * @private
    */
-  readonly #lruTracker: LRUTracker<K> | null = null;
+  readonly #lruTracker: LruTracker<K> | null = null;
 
   /**
    * Parsed and validated options for this Store instance
@@ -108,8 +108,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Creates a new Store instance.
    *
-   * @param {readonly (readonly [K, V])[] | null} entries - Initial entries to populate the store with
-   * @param {StoreOptions} options - Configuration options for the store
+   * @param entries - Initial entries to populate the store with
+   * @param options - Configuration options for the store
    * @throws {Error} If the provided options fail validation
    */
   constructor(
@@ -127,7 +127,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
     // Set up LRU tracker if using LRU eviction strategy
     if (this.#options.evictionStrategy === "lru" && this.#options.maxSize > 0) {
-      this.#lruTracker = new LRUTracker<K>(this.#options.maxSize);
+      this.#lruTracker = new LruTracker<K>(this.#options.maxSize);
     }
 
     // Add initial entries if provided
@@ -146,9 +146,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * If the key already exists and both the existing and new values are objects,
    * performs a deep merge. Otherwise, replaces the existing value.
    *
-   * @param {K} key - The key to add or update
-   * @param {V | Partial<V>} value - The value to add or merge with existing value
-   * @returns {this} The Store instance for chaining
+   * @param key - The key to add or update
+   * @param value - The value to add or merge with existing value
+   * @returns The Store instance for chaining
    *
    * @example
    * // Add a new item
@@ -182,9 +182,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Removes specific properties from an object stored at the given key.
    *
-   * @param {K} key - The key of the item to modify
-   * @param {(keyof V | string)[] | string | keyof V} paths - The property path(s) to remove
-   * @returns {this} The Store instance for chaining
+   * @param key - The key of the item to modify
+   * @param paths - The property path(s) to remove
+   * @returns The Store instance for chaining
    * @throws {Error} If the key doesn't exist or the value is not an object
    *
    * @example
@@ -221,8 +221,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Finds the first value in the store that matches the provided predicate.
    *
-   * @param {StorePredicate<K, V>} predicate - A function or pattern object to match against
-   * @returns {V | undefined} The first matching value, or undefined if no match is found
+   * @param predicate - A function or pattern object to match against
+   * @returns The first matching value, or undefined if no match is found
    *
    * @example
    * // Find using a function predicate
@@ -256,8 +256,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Returns all values in the store that match the provided predicate.
    *
-   * @param {StorePredicate<K, V>} predicate - A function or pattern object to match against
-   * @returns {V[]} Array of matching values
+   * @param predicate - A function or pattern object to match against
+   * @returns Array of matching values
    *
    * @example
    * // Find all users over 30
@@ -290,8 +290,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Returns a new Store containing all entries that match the provided predicate.
    *
-   * @param {StorePredicate<K, V>} predicate - A function or pattern object to match against
-   * @returns {Store<K, V>} A new Store instance containing the matching entries
+   * @param predicate - A function or pattern object to match against
+   * @returns A new Store instance containing the matching entries
    *
    * @example
    * // Filter using a function predicate
@@ -325,8 +325,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Retrieves a value from the store.
    *
-   * @param {K} key - The key to look up
-   * @returns {V | undefined} The value associated with the key, or undefined if not found or expired
+   * @param key - The key to look up
+   * @returns The value associated with the key, or undefined if not found or expired
    *
    * @remarks
    * - Automatically removes the item if it has expired
@@ -351,10 +351,10 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Sets a value in the store with a specific TTL (Time-To-Live).
    *
-   * @param {K} key - The key to set
-   * @param {V} value - The value to store
-   * @param {number} ttl - Time to live in milliseconds
-   * @returns {this} The Store instance for chaining
+   * @param key - The key to set
+   * @param value - The value to store
+   * @param ttl - Time to live in milliseconds
+   * @returns The Store instance for chaining
    * @throws {Error} If TTL is negative
    *
    * @example
@@ -374,8 +374,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Checks if an item has expired.
    *
-   * @param {K} key - The key to check
-   * @returns {boolean} true if the item has expired, false otherwise
+   * @param key - The key to check
+   * @returns true if the item has expired, false otherwise
    */
   isExpired(key: K): boolean {
     const expiry = this.#ttlMap.get(key);
@@ -395,9 +395,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Sets a value in the store.
    *
-   * @param {K} key - The key to set
-   * @param {V} value - The value to store
-   * @returns {this} The Store instance for chaining
+   * @param key - The key to set
+   * @param value - The value to store
+   * @returns The Store instance for chaining
    *
    * @remarks
    * - May trigger item eviction if the store size exceeds maxSize
@@ -428,8 +428,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Removes an item from the store.
    *
-   * @param {K} key - The key to delete
-   * @returns {boolean} true if an element was removed, false otherwise
+   * @param key - The key to delete
+   * @returns true if an element was removed, false otherwise
    *
    * @remarks
    * Also removes the key from internal TTL and LRU trackers
@@ -459,10 +459,10 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Maps each value in the store to a new value using the provided callback function.
    *
-   * @param {function} callback - Function to execute on each entry
-   * @param {V} callback.value - The current value being processed
-   * @param {K} callback.key - The key of the current value being processed
-   * @param {Store<K, V>} callback.store - The store instance
+   * @param callback - Function to execute on each entry
+   * @param callback.value - The current value being processed
+   * @param callback.key - The key of the current value being processed
+   * @param callback.store - The store instance
    * @returns Array containing the results of the callback function
    *
    * @example
@@ -478,8 +478,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Returns a new Store with entries sorted according to the provided compare function.
    *
-   * @param {function} [compareFn] - Function to determine the sort order
-   * @returns {Store<K, V>} A new Store instance with sorted entries
+   * @param compareFn - Function to determine the sort order
+   * @returns A new Store instance with sorted entries
    *
    * @example
    * // Sort users by age
@@ -495,9 +495,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Returns a subset of values for pagination.
    *
-   * @param [page=0] - The page number (0-based)
-   * @param [pageSize=10] - The number of items per page
-   * @returns {V[]} Array of values for the requested page
+   * @param page - The page number (0-based)
+   * @param pageSize - The number of items per page
+   * @returns Array of values for the requested page
    *
    * @example
    * // Get the first page with 10 items per page
@@ -522,7 +522,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Returns all values in the store as an array.
    *
-   * @returns {V[]} Array of all values in the store
+   * @returns Array of all values in the store
    */
   toArray(): V[] {
     return [...this.values()].map((value) => this.#maybeCloneValue(value));
@@ -531,7 +531,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Returns all keys in the store as an array.
    *
-   * @returns {K[]} Array of all keys in the store
+   * @returns Array of all keys in the store
    */
   keysArray(): K[] {
     return [...this.keys()];
@@ -540,7 +540,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Returns all entries in the store as an array of [key, value] pairs.
    *
-   * @returns {[K, V][]} Array of all entries in the store
+   * @returns Array of all entries in the store
    */
   entriesArray(): [K, V][] {
     return [...this.entries()].map(([key, value]) => [
@@ -562,7 +562,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Sets multiple entries in the store at once.
    *
-   * @param {readonly (readonly [K, V])[]} entries - The entries to set
+   * @param entries - The entries to set
    * @private
    */
   #bulkSet(entries: readonly (readonly [K, V])[]): void {
@@ -612,7 +612,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Updates the last access time for a key when using the LRU eviction strategy.
    *
-   * @param {K} key - The key that was accessed
+   * @param key - The key that was accessed
    * @private
    */
   #updateAccessTime(key: K): void {
@@ -651,7 +651,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       return;
     }
 
-    const leastUsedKey = this.#lruTracker.getLRU();
+    const leastUsedKey = this.#lruTracker.getLru();
     if (leastUsedKey) {
       this.delete(leastUsedKey);
     } else {
@@ -675,9 +675,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Checks if a value matches a pattern of key-value pairs.
    *
-   * @param {V} value - The value to check
-   * @param {[string, unknown][]} pattern - The pattern to match against
-   * @returns {boolean} true if the value matches the pattern, false otherwise
+   * @param value - The value to check
+   * @param pattern - The pattern to match against
+   * @returns true if the value matches the pattern, false otherwise
    * @private
    */
   #matchesPattern(value: V, pattern: [string, unknown][]): boolean {
@@ -709,8 +709,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Clones an object if cloneValues option is enabled
    *
-   * @param {V} value - The value to potentially clone
-   * @returns {V} The cloned value or the original value
+   * @param value - The value to potentially clone
+   * @returns The cloned value or the original value
    * @private
    */
   #maybeCloneValue(value: V): V {
@@ -720,8 +720,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Clones a value if it's an object, otherwise returns the value as is
    *
-   * @param {V} value - The value to potentially clone
-   * @returns {V} The cloned value or the original value
+   * @param value - The value to potentially clone
+   * @returns The cloned value or the original value
    * @private
    */
   #cloneIfObject(value: V): V {
