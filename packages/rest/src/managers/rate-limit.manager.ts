@@ -137,36 +137,25 @@ export const RateLimitOptions = z.object({
    * Cleanup interval in milliseconds (default: 30000).
    * Controls how often expired buckets are removed from memory.
    */
-  cleanupInterval: z.number().nonnegative().int().min(0).default(30000),
+  cleanupInterval: z.number().int().min(0).default(30000),
 
   /**
    * Safety margin in milliseconds to apply when approaching reset (default: 500).
    * Adds a buffer to avoid hitting limits exactly at reset boundaries.
    */
-  safetyMarginMs: z.number().nonnegative().int().min(0).default(500),
+  safetyMarginMs: z.number().int().min(0).default(500),
 
   /**
    * Maximum invalid requests allowed in a 10-minute window (default: 10000).
    * Prevents excessive invalid requests which could trigger Cloudflare bans.
    */
-  maxInvalidRequests: z
-    .number()
-    .nonnegative()
-    .int()
-    .min(0)
-    .max(10000)
-    .default(10000),
+  maxInvalidRequests: z.number().int().min(0).max(10000).default(10000),
 
   /**
    * Maximum global requests per second (default: 1000).
    * Limits total API calls to prevent hitting global rate limits.
    */
-  maxGlobalRequestsPerSecond: z
-    .number()
-    .nonnegative()
-    .int()
-    .min(0)
-    .default(1000),
+  maxGlobalRequestsPerSecond: z.number().int().min(0).default(1000),
 });
 
 export type RateLimitOptions = z.infer<typeof RateLimitOptions>;

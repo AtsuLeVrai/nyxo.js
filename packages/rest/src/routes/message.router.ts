@@ -14,88 +14,130 @@ import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
- * Interface for query parameters when retrieving channel messages
- * Defines pagination parameters for fetching messages from a channel
+ * Interface for query parameters when retrieving channel messages.
+ *
+ * These parameters control pagination and fetching strategy when retrieving
+ * messages from a channel. They offer three different methods of pagination
+ * that are mutually exclusive.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params}
  */
 export interface GetChannelMessagesQuerySchema {
   /**
-   * Get messages around this message ID
-   * This parameter is mutually exclusive with before and after
+   * Get messages around this message ID.
+   *
+   * Returns messages before and after the specified message ID.
+   * This is useful for showing context around a specific message.
+   * This parameter is mutually exclusive with before and after.
    */
   around?: Snowflake;
 
   /**
-   * Get messages before this message ID
-   * This parameter is mutually exclusive with around and after
+   * Get messages before this message ID.
+   *
+   * Returns newer messages that came before the specified message ID.
+   * Used for scrolling back to older messages (upward pagination).
+   * This parameter is mutually exclusive with around and after.
    */
   before?: Snowflake;
 
   /**
-   * Get messages after this message ID
-   * This parameter is mutually exclusive with around and before
+   * Get messages after this message ID.
+   *
+   * Returns older messages that came after the specified message ID.
+   * Used for scrolling forward to newer messages (downward pagination).
+   * This parameter is mutually exclusive with around and before.
    */
   after?: Snowflake;
 
   /**
-   * Maximum number of messages to return (1-100)
-   * Defaults to 50 if not specified
+   * Maximum number of messages to return (1-100).
+   *
+   * Controls the page size for pagination.
+   * Defaults to 50 if not specified.
    */
   limit?: number;
 }
 
 /**
- * Interface for creating a new message in a channel
- * Defines the parameters for sending messages via Discord's API
- * At least one of content, embeds, sticker_ids, components, files, or poll is required
+ * Interface for creating a new message in a channel.
+ *
+ * This interface defines all possible parameters when sending a message through
+ * Discord's API. At least one of content, embeds, sticker_ids, components,
+ * files, or poll is required.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params}
  */
 export interface CreateMessageSchema {
   /**
-   * Message content (up to 2000 characters)
+   * Message content (up to 2000 characters).
+   *
+   * The text content of the message. Can include Markdown formatting,
+   * emoji, mentions, and other formatting.
    */
   content?: string;
 
   /**
-   * Used to verify a message was sent (up to 25 characters)
-   * Can be an integer or string that will appear in the Message Create event
+   * Used to verify a message was sent (up to 25 characters).
+   *
+   * Can be an integer or string that will appear in the Message Create event.
+   * Useful for ensuring idempotent operations when sending messages.
    */
   nonce?: string | number;
 
   /**
-   * Whether this is a text-to-speech message
+   * Whether this is a text-to-speech message.
+   *
+   * When true, the message will be read aloud to users in the channel
+   * who have text-to-speech enabled.
    */
   tts?: boolean;
 
   /**
-   * Rich embedded content for the message (up to 10 embeds)
+   * Rich embedded content for the message (up to 10 embeds).
+   *
+   * Embeds are special rich content blocks that can contain
+   * formatted text, images, fields, and other structured data.
    */
   embeds?: EmbedEntity[];
 
   /**
-   * Controls mentions in the message
+   * Controls mentions in the message.
+   *
+   * Allows customizing which mentions will trigger notifications,
+   * useful for preventing unwanted pings to roles or everyone.
    */
   allowed_mentions?: AllowedMentionsEntity;
 
   /**
-   * Include to make the message a reply to another message
+   * Include to make the message a reply to another message.
+   *
+   * Contains the ID of the message being replied to and other options
+   * like whether to mention the user being replied to.
    */
   message_reference?: MessageReferenceEntity;
 
   /**
-   * Interactive components to include with the message
+   * Interactive components to include with the message.
+   *
+   * Can include buttons, select menus, and other interactive elements
+   * that users can interact with.
    */
   components?: ActionRowEntity[];
 
   /**
-   * IDs of up to 3 stickers to send in the message
+   * IDs of up to 3 stickers to send in the message.
+   *
+   * Stickers are small, expressive images that can be
+   * included in messages.
    */
   sticker_ids?: Snowflake[];
 
   /**
-   * File contents to be attached to the message
+   * File contents to be attached to the message.
+   *
+   * Can be a single file or array of files to upload with the message.
+   * Maximum of 10 attachments.
    */
   files?: FileInput | FileInput[];
 
@@ -105,68 +147,102 @@ export interface CreateMessageSchema {
   payload_json?: string;
 
   /**
-   * Information about attachments (up to 10)
+   * Information about attachments (up to 10).
+   *
+   * Used to reference existing attachments when editing messages
+   * or to define metadata about uploaded files.
    */
   attachments?: AttachmentEntity[];
 
   /**
-   * Message flags combined as a bitfield
-   * Only SUPPRESS_EMBEDS and SUPPRESS_NOTIFICATIONS can be set
+   * Message flags combined as a bitfield.
+   *
+   * Controls special behaviors for the message.
+   * Only SUPPRESS_EMBEDS and SUPPRESS_NOTIFICATIONS can be set when creating a message.
    */
   flags?: MessageFlags;
 
   /**
-   * If true and nonce is present, it will be checked for uniqueness
-   * If another message was created with the same nonce, that message will be returned
+   * If true and nonce is present, it will be checked for uniqueness.
+   *
+   * When true, if another message was created with the same nonce,
+   * that message will be returned instead of creating a new one.
+   * Useful for ensuring idempotent operations.
    */
   enforce_nonce?: boolean;
 
   /**
-   * Poll to include with the message
+   * Poll to include with the message.
+   *
+   * Allows creating an interactive poll that users can vote on.
+   * Includes the question, options, and configuration settings.
    */
   poll?: PollCreateRequestEntity;
 }
 
 /**
- * Types of reactions that can be retrieved
+ * Types of reactions that can be retrieved.
+ *
+ * Defines the different types of reactions that can exist on a message.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-reaction-types}
  */
 export enum ReactionTypeFlag {
-  /** Normal reaction */
+  /**
+   * Normal reaction.
+   *
+   * Standard emoji reactions available to all users.
+   */
   Normal = 0,
 
-  /** Burst/Super reaction */
+  /**
+   * Burst/Super reaction.
+   *
+   * Premium reactions that have special effects and are
+   * available to Nitro subscribers.
+   */
   Burst = 1,
 }
 
 /**
- * Interface for query parameters when retrieving reactions on a message
+ * Interface for query parameters when retrieving reactions on a message.
+ *
+ * These parameters control pagination and filtering when fetching
+ * the users who have reacted to a message with a specific emoji.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-query-string-params}
  */
 export interface GetReactionsQuerySchema {
   /**
-   * Type of reaction to get (normal or burst)
-   * Defaults to ReactionTypeFlag.Normal if not specified
+   * Type of reaction to get (normal or burst).
+   *
+   * Controls which type of reactions to retrieve.
+   * Defaults to ReactionTypeFlag.Normal if not specified.
    */
   type?: ReactionTypeFlag;
 
   /**
-   * Get users after this user ID for pagination
+   * Get users after this user ID for pagination.
+   *
+   * Used for pagination when retrieving more users
+   * than can be returned in a single request.
    */
   after?: Snowflake;
 
   /**
-   * Maximum number of users to return (1-100)
-   * Defaults to 25 if not specified
+   * Maximum number of users to return (1-100).
+   *
+   * Controls the maximum users returned in a single request.
+   * Defaults to 25 if not specified.
    */
   limit?: number;
 }
 
 /**
- * Interface for editing an existing message
- * Reuses fields from CreateMessageSchema but only includes those that can be edited
+ * Interface for editing an existing message.
+ *
+ * This interface includes only the fields from CreateMessageSchema
+ * that can be modified after a message has been sent.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#edit-message-jsonform-params}
  */
@@ -183,67 +259,90 @@ export type EditMessageSchema = Pick<
 >;
 
 /**
- * Interface for bulk deleting messages
+ * Interface for bulk deleting messages.
+ *
+ * This interface defines the parameters needed to delete
+ * multiple messages in a single API call.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages-json-params}
  */
 export interface BulkDeleteMessagesSchema {
   /**
-   * Array of message IDs to delete (2-100)
-   * Messages cannot be older than 2 weeks
+   * Array of message IDs to delete (2-100).
+   *
+   * The list of message IDs to delete in a single operation.
+   * Messages cannot be older than 2 weeks.
+   * Must contain at least 2 and no more than 100 message IDs.
    */
   messages: Snowflake[];
 }
 
 /**
- * Router class for Discord Message-related endpoints
- * Provides methods to create, retrieve, modify, and delete messages in channels
+ * Router for Discord Message-related endpoints.
+ *
+ * This class provides methods to interact with Discord's message system,
+ * allowing creation, retrieval, modification, and deletion of messages,
+ * as well as management of reactions.
+ *
+ * @remarks
+ * Messages are the basic building blocks of communication in Discord.
+ * This router provides comprehensive access to message-related functionality,
+ * including sending messages, retrieving message history, managing reactions,
+ * and more complex operations like crossposting and bulk deletion.
  *
  * @see {@link https://discord.com/developers/docs/resources/message}
  */
 export class MessageRouter {
   /**
-   * Collection of route URLs for message-related endpoints
+   * API route constants for message-related endpoints.
    */
-  static readonly ROUTES = {
+  static readonly MESSAGE_ROUTES = {
     /**
-     * Route for channel messages operations
+     * Route for channel messages operations.
+     *
+     * Used for getting message history or sending new messages.
+     *
      * @param channelId - The ID of the channel
-     * @returns `/channels/{channel.id}/messages` route
-     * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages}
+     * @returns The formatted API route string
      */
-    channelMessages: (channelId: Snowflake) =>
+    channelMessagesEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/messages` as const,
 
     /**
-     * Route for operations on a specific message
+     * Route for operations on a specific message.
+     *
+     * Used for getting, editing, or deleting a specific message.
+     *
      * @param channelId - The ID of the channel
      * @param messageId - The ID of the message
-     * @returns `/channels/{channel.id}/messages/{message.id}` route
-     * @see {@link https://discord.com/developers/docs/resources/message#get-channel-message}
+     * @returns The formatted API route string
      */
-    channelMessage: (channelId: Snowflake, messageId: Snowflake) =>
+    channelMessageByIdEndpoint: (channelId: Snowflake, messageId: Snowflake) =>
       `/channels/${channelId}/messages/${messageId}` as const,
 
     /**
-     * Route for crossposting a message
+     * Route for crossposting a message.
+     *
+     * Used to publish a message to following channels.
+     *
      * @param channelId - The ID of the channel
      * @param messageId - The ID of the message
-     * @returns `/channels/{channel.id}/messages/{message.id}/crosspost` route
-     * @see {@link https://discord.com/developers/docs/resources/message#crosspost-message}
+     * @returns The formatted API route string
      */
-    channelMessageCrosspost: (channelId: Snowflake, messageId: Snowflake) =>
+    messagePublishEndpoint: (channelId: Snowflake, messageId: Snowflake) =>
       `/channels/${channelId}/messages/${messageId}/crosspost` as const,
 
     /**
-     * Route for reactions on a message
+     * Route for reactions on a message.
+     *
+     * Used for getting or removing reactions with a specific emoji.
+     *
      * @param channelId - The ID of the channel
      * @param messageId - The ID of the message
      * @param emoji - The emoji to react with (URL encoded)
-     * @returns `/channels/{channel.id}/messages/{message.id}/reactions/{emoji}` route
-     * @see {@link https://discord.com/developers/docs/resources/message#get-reactions}
+     * @returns The formatted API route string
      */
-    channelMessageReactions: (
+    messageReactionsEndpoint: (
       channelId: Snowflake,
       messageId: Snowflake,
       emoji: string,
@@ -251,15 +350,17 @@ export class MessageRouter {
       `/channels/${channelId}/messages/${messageId}/reactions/${emoji}` as const,
 
     /**
-     * Route for user-specific reactions on a message
+     * Route for user-specific reactions on a message.
+     *
+     * Used for adding or removing a specific user's reaction.
+     *
      * @param channelId - The ID of the channel
      * @param messageId - The ID of the message
      * @param emoji - The emoji to react with (URL encoded)
      * @param userId - The ID of the user (defaults to @me for current user)
-     * @returns `/channels/{channel.id}/messages/{message.id}/reactions/{emoji}/{user.id}` route
-     * @see {@link https://discord.com/developers/docs/resources/message#delete-user-reaction}
+     * @returns The formatted API route string
      */
-    channelMessageUserReaction: (
+    userReactionEndpoint: (
       channelId: Snowflake,
       messageId: Snowflake,
       emoji: string,
@@ -268,120 +369,343 @@ export class MessageRouter {
       `/channels/${channelId}/messages/${messageId}/reactions/${emoji}/${userId}` as const,
 
     /**
-     * Route for bulk deleting messages
+     * Route for bulk deleting messages.
+     *
+     * Used to delete multiple messages in a single operation.
+     *
      * @param channelId - The ID of the channel
-     * @returns `/channels/{channel.id}/messages/bulk-delete` route
-     * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages}
+     * @returns The formatted API route string
      */
-    channelMessagesBulkDelete: (channelId: Snowflake) =>
+    bulkDeleteEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/messages/bulk-delete` as const,
   } as const;
 
+  /** The REST client used to make API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new Message Router instance.
+   *
+   * @param rest - The REST client to use for making Discord API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
 
   /**
-   * Retrieves a list of messages from a channel
-   * Requires VIEW_CHANNEL permission. If the channel is a voice channel, also requires CONNECT.
-   * Requires READ_MESSAGE_HISTORY permission or no messages will be returned.
+   * Fetches a list of messages from a channel.
+   *
+   * This method retrieves messages from a channel, with support for
+   * different pagination strategies through the query parameters.
    *
    * @param channelId - The ID of the channel to get messages from
    * @param query - Query parameters for pagination
-   * @returns An array of message objects
-   * @throws Error if validation of query parameters fails
+   * @returns A promise resolving to an array of message objects
+   * @throws Error if validation of query parameters fails or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-messages}
+   *
+   * @example
+   * ```typescript
+   * // Fetch the 50 most recent messages
+   * const messages = await messageRouter.fetchMessages("123456789012345678");
+   * console.log(`Retrieved ${messages.length} messages`);
+   *
+   * // Fetch messages around a specific message
+   * const contextMessages = await messageRouter.fetchMessages(
+   *   "123456789012345678",
+   *   { around: "987654321987654321", limit: 100 }
+   * );
+   * console.log(`Retrieved ${contextMessages.length} messages around the target`);
+   *
+   * // Paginate through older messages
+   * const olderMessages = await messageRouter.fetchMessages(
+   *   "123456789012345678",
+   *   { before: "987654321987654321", limit: 50 }
+   * );
+   *
+   * // Paginate through newer messages
+   * const newerMessages = await messageRouter.fetchMessages(
+   *   "123456789012345678",
+   *   { after: "987654321987654321", limit: 50 }
+   * );
+   * ```
+   *
+   * @remarks
+   * Requires VIEW_CHANNEL permission. If the channel is a voice channel, also requires CONNECT.
+   * Requires READ_MESSAGE_HISTORY permission or no messages will be returned.
    */
-  getMessages(
+  fetchMessages(
     channelId: Snowflake,
     query: GetChannelMessagesQuerySchema = {},
   ): Promise<MessageEntity[]> {
-    return this.#rest.get(MessageRouter.ROUTES.channelMessages(channelId), {
-      query,
-    });
+    return this.#rest.get(
+      MessageRouter.MESSAGE_ROUTES.channelMessagesEndpoint(channelId),
+      {
+        query,
+      },
+    );
   }
 
   /**
-   * Retrieves a specific message from a channel
-   * Requires VIEW_CHANNEL and READ_MESSAGE_HISTORY permissions.
-   * If the channel is a voice channel, also requires CONNECT.
+   * Fetches a specific message from a channel.
+   *
+   * This method retrieves a single message by its ID within a specific channel.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to retrieve
-   * @returns The message object
+   * @returns A promise resolving to the message object
+   * @throws Will throw an error if the message doesn't exist or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-message}
+   *
+   * @example
+   * ```typescript
+   * // Fetch a specific message
+   * try {
+   *   const message = await messageRouter.fetchMessage(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321"  // Message ID
+   *   );
+   *
+   *   console.log(`Message content: ${message.content}`);
+   *   console.log(`Sent by: ${message.author.username}`);
+   *   console.log(`Sent at: ${new Date(message.timestamp).toLocaleString()}`);
+   *
+   *   // Check for attachments
+   *   if (message.attachments && message.attachments.length > 0) {
+   *     console.log(`Contains ${message.attachments.length} attachments`);
+   *   }
+   *
+   *   // Check for embeds
+   *   if (message.embeds && message.embeds.length > 0) {
+   *     console.log(`Contains ${message.embeds.length} embeds`);
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch message:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires VIEW_CHANNEL and READ_MESSAGE_HISTORY permissions.
+   * If the channel is a voice channel, also requires CONNECT.
    */
-  getMessage(
+  fetchMessage(
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
     return this.#rest.get(
-      MessageRouter.ROUTES.channelMessage(channelId, messageId),
+      MessageRouter.MESSAGE_ROUTES.channelMessageByIdEndpoint(
+        channelId,
+        messageId,
+      ),
     );
   }
 
   /**
-   * Creates a new message in a channel
-   * Requires SEND_MESSAGES permission. If sending TTS, requires SEND_TTS_MESSAGES.
-   * If replying to a message, requires READ_MESSAGE_HISTORY.
-   * At least one of content, embeds, sticker_ids, components, files, or poll is required.
+   * Creates a new message in a channel.
+   *
+   * This method sends a message to a Discord channel with various optional
+   * components such as text content, embeds, files, components, and more.
    *
    * @param channelId - The ID of the channel to send the message in
    * @param options - The message content and properties
-   * @returns The created message object
-   * @throws Error if validation of options fails
+   * @returns A promise resolving to the created message object
+   * @throws Error if validation of options fails or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#create-message}
+   *
+   * @example
+   * ```typescript
+   * // Send a simple text message
+   * const simpleMessage = await messageRouter.sendMessage(
+   *   "123456789012345678", // Channel ID
+   *   { content: "Hello, world!" }
+   * );
+   *
+   * // Send a message with an embed
+   * const embedMessage = await messageRouter.sendMessage(
+   *   "123456789012345678",
+   *   {
+   *     content: "Check out this embed:",
+   *     embeds: [{
+   *       title: "Important Information",
+   *       description: "This is a detailed description",
+   *       color: 0x3498db, // Blue color
+   *       fields: [
+   *         { name: "Field 1", value: "Value 1", inline: true },
+   *         { name: "Field 2", value: "Value 2", inline: true }
+   *       ],
+   *       footer: { text: "Footer text" }
+   *     }]
+   *   }
+   * );
+   *
+   * // Send a message with components (buttons)
+   * const buttonMessage = await messageRouter.sendMessage(
+   *   "123456789012345678",
+   *   {
+   *     content: "Please select an option:",
+   *     components: [
+   *       {
+   *         type: 1, // Action Row
+   *         components: [
+   *           {
+   *             type: 2, // Button
+   *             style: 1, // Primary
+   *             label: "Option 1",
+   *             custom_id: "option_1"
+   *           },
+   *           {
+   *             type: 2, // Button
+   *             style: 2, // Secondary
+   *             label: "Option 2",
+   *             custom_id: "option_2"
+   *           }
+   *         ]
+   *       }
+   *     ]
+   *   }
+   * );
+   *
+   * // Reply to another message
+   * const replyMessage = await messageRouter.sendMessage(
+   *   "123456789012345678",
+   *   {
+   *     content: "This is a reply!",
+   *     message_reference: {
+   *       message_id: "987654321987654321",
+   *       channel_id: "123456789012345678"
+   *     }
+   *   }
+   * );
+   * ```
+   *
+   * @remarks
+   * Requires SEND_MESSAGES permission. If sending TTS, requires SEND_TTS_MESSAGES.
+   * If replying to a message, requires READ_MESSAGE_HISTORY.
+   * At least one of content, embeds, sticker_ids, components, files, or poll is required.
    */
-  createMessage(
+  sendMessage(
     channelId: Snowflake,
     options: CreateMessageSchema,
   ): Promise<MessageEntity> {
     const { files, ...rest } = options;
-    return this.#rest.post(MessageRouter.ROUTES.channelMessages(channelId), {
-      body: JSON.stringify(rest),
-      files: files,
-    });
-  }
-
-  /**
-   * Crossposts a message from an announcement channel to following channels
-   * Requires SEND_MESSAGES permission. If not the message author, also requires MANAGE_MESSAGES.
-   * The channel must be an announcement channel.
-   *
-   * @param channelId - The ID of the announcement channel
-   * @param messageId - The ID of the message to crosspost
-   * @returns The crossposted message object
-   * @see {@link https://discord.com/developers/docs/resources/channel#crosspost-message}
-   */
-  crosspostMessage(
-    channelId: Snowflake,
-    messageId: Snowflake,
-  ): Promise<MessageEntity> {
     return this.#rest.post(
-      MessageRouter.ROUTES.channelMessageCrosspost(channelId, messageId),
+      MessageRouter.MESSAGE_ROUTES.channelMessagesEndpoint(channelId),
+      {
+        body: JSON.stringify(rest),
+        files: files,
+      },
     );
   }
 
   /**
-   * Creates a reaction on a message
-   * Requires READ_MESSAGE_HISTORY permission.
-   * If nobody has reacted with this emoji yet, also requires ADD_REACTIONS permission.
+   * Publishes a message from an announcement channel to following channels.
+   *
+   * This method "crossposts" a message, which makes it visible to users
+   * in all channels that follow the announcement channel.
+   *
+   * @param channelId - The ID of the announcement channel
+   * @param messageId - The ID of the message to crosspost
+   * @returns A promise resolving to the crossposted message object
+   * @throws Will throw an error if the channel isn't an announcement channel
+   *
+   * @see {@link https://discord.com/developers/docs/resources/channel#crosspost-message}
+   *
+   * @example
+   * ```typescript
+   * // Publish a message to all following channels
+   * try {
+   *   const publishedMessage = await messageRouter.publishMessage(
+   *     "123456789012345678", // Announcement channel ID
+   *     "987654321987654321"  // Message ID
+   *   );
+   *
+   *   console.log("Message successfully published to all following channels");
+   *   console.log(`Message flags: ${publishedMessage.flags}`);
+   *   // The message will have the CROSSPOSTED flag set (1 << 0)
+   * } catch (error) {
+   *   console.error("Failed to publish message:", error);
+   *
+   *   // Check for common errors
+   *   if (error.code === 10003) {
+   *     console.error("The channel is not an announcement channel");
+   *   } else if (error.code === 50013) {
+   *     console.error("Missing permissions to publish messages");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires SEND_MESSAGES permission. If not the message author, also requires MANAGE_MESSAGES.
+   * The channel must be an announcement channel (type 5).
+   * Each message can only be crossposted once.
+   */
+  publishMessage(
+    channelId: Snowflake,
+    messageId: Snowflake,
+  ): Promise<MessageEntity> {
+    return this.#rest.post(
+      MessageRouter.MESSAGE_ROUTES.messagePublishEndpoint(channelId, messageId),
+    );
+  }
+
+  /**
+   * Adds a reaction to a message.
+   *
+   * This method adds the bot's reaction to a message using the specified emoji.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to react to
    * @param emoji - The emoji to react with (URL encoded)
-   * @returns A Promise that resolves when the reaction is added
+   * @returns A promise that resolves when the reaction is added
+   * @throws Will throw an error if you lack permissions or the emoji is invalid
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#create-reaction}
+   *
+   * @example
+   * ```typescript
+   * // React with standard emoji
+   * await messageRouter.addReaction(
+   *   "123456789012345678", // Channel ID
+   *   "987654321987654321", // Message ID
+   *   "👍" // Thumbs up emoji (URL-encoded automatically)
+   * );
+   *
+   * // React with custom emoji
+   * await messageRouter.addReaction(
+   *   "123456789012345678",
+   *   "987654321987654321",
+   *   "custom_emoji:456789012345678901" // Format: name:id
+   * );
+   *
+   * // Handle potential errors
+   * try {
+   *   await messageRouter.addReaction(
+   *     "123456789012345678",
+   *     "987654321987654321",
+   *     "🎉"
+   *   );
+   *   console.log("Reaction added successfully");
+   * } catch (error) {
+   *   console.error("Failed to add reaction:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires READ_MESSAGE_HISTORY permission.
+   * If nobody has reacted with this emoji yet, also requires ADD_REACTIONS permission.
+   * For custom emojis, the format is `name:id` (e.g., `custom_emoji:123456789012345678`).
+   * The emoji parameter should be URL-encoded if it contains special characters.
    */
-  createReaction(
+  addReaction(
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
     return this.#rest.put(
-      MessageRouter.ROUTES.channelMessageUserReaction(
+      MessageRouter.MESSAGE_ROUTES.userReactionEndpoint(
         channelId,
         messageId,
         emoji,
@@ -390,21 +714,48 @@ export class MessageRouter {
   }
 
   /**
-   * Deletes the current user's reaction from a message
+   * Removes the current user's reaction from a message.
+   *
+   * This method removes the bot's own reaction with the specified emoji
+   * from a message.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to remove reaction from
    * @param emoji - The emoji to remove (URL encoded)
-   * @returns A Promise that resolves when the reaction is removed
+   * @returns A promise that resolves when the reaction is removed
+   * @throws Will throw an error if the reaction doesn't exist
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-own-reaction}
+   *
+   * @example
+   * ```typescript
+   * // Remove the bot's reaction
+   * try {
+   *   await messageRouter.removeOwnReaction(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321", // Message ID
+   *     "👍" // Thumbs up emoji (URL-encoded automatically)
+   *   );
+   *   console.log("Removed own reaction successfully");
+   * } catch (error) {
+   *   console.error("Failed to remove reaction:", error);
+   * }
+   *
+   * // Remove a custom emoji reaction
+   * await messageRouter.removeOwnReaction(
+   *   "123456789012345678",
+   *   "987654321987654321",
+   *   "custom_emoji:456789012345678901" // Format: name:id
+   * );
+   * ```
    */
-  deleteOwnReaction(
+  removeOwnReaction(
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.channelMessageUserReaction(
+      MessageRouter.MESSAGE_ROUTES.userReactionEndpoint(
         channelId,
         messageId,
         emoji,
@@ -413,24 +764,52 @@ export class MessageRouter {
   }
 
   /**
-   * Deletes another user's reaction from a message
-   * Requires MANAGE_MESSAGES permission.
+   * Removes another user's reaction from a message.
+   *
+   * This method removes a specific user's reaction with the specified emoji
+   * from a message.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to remove reaction from
    * @param emoji - The emoji to remove (URL encoded)
    * @param userId - The ID of the user whose reaction to remove
-   * @returns A Promise that resolves when the reaction is removed
+   * @returns A promise that resolves when the reaction is removed
+   * @throws Will throw an error if you lack permissions or the reaction doesn't exist
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-user-reaction}
+   *
+   * @example
+   * ```typescript
+   * // Remove a specific user's reaction
+   * try {
+   *   await messageRouter.removeUserReaction(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321", // Message ID
+   *     "👍", // Thumbs up emoji
+   *     "234567890123456789" // User ID
+   *   );
+   *   console.log("Removed user's reaction successfully");
+   * } catch (error) {
+   *   console.error("Failed to remove user reaction:", error);
+   *
+   *   // Check for permission error
+   *   if (error.code === 50013) {
+   *     console.error("Missing MANAGE_MESSAGES permission");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires MANAGE_MESSAGES permission.
    */
-  deleteUserReaction(
+  removeUserReaction(
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
     userId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.channelMessageUserReaction(
+      MessageRouter.MESSAGE_ROUTES.userReactionEndpoint(
         channelId,
         messageId,
         emoji,
@@ -440,87 +819,263 @@ export class MessageRouter {
   }
 
   /**
-   * Gets a list of users who reacted to a message with a specific emoji
+   * Fetches a list of users who reacted to a message with a specific emoji.
+   *
+   * This method retrieves the users who have added the specified emoji
+   * reaction to a message, with support for pagination.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to get reactions for
    * @param emoji - The emoji to get reactions for (URL encoded)
    * @param query - Query parameters for pagination and reaction type
-   * @returns An array of user objects who reacted with the emoji
+   * @returns A promise resolving to an array of user objects who reacted with the emoji
    * @throws Error if validation of query parameters fails
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#get-reactions}
+   *
+   * @example
+   * ```typescript
+   * // Get users who reacted with a thumbs up
+   * const reactors = await messageRouter.fetchReactionUsers(
+   *   "123456789012345678", // Channel ID
+   *   "987654321987654321", // Message ID
+   *   "👍", // Thumbs up emoji
+   *   { limit: 50 } // Get up to 50 users
+   * );
+   *
+   * console.log(`${reactors.length} users reacted with 👍`);
+   *
+   * // Get users who used burst reactions
+   * const burstReactors = await messageRouter.fetchReactionUsers(
+   *   "123456789012345678",
+   *   "987654321987654321",
+   *   "🎉", // Party popper emoji
+   *   {
+   *     type: ReactionTypeFlag.Burst, // Get super reactions only
+   *     limit: 50
+   *   }
+   * );
+   *
+   * console.log(`${burstReactors.length} users used super reactions with 🎉`);
+   *
+   * // Paginate through all reactors
+   * async function getAllReactors(channelId, messageId, emoji) {
+   *   let allReactors = [];
+   *   let lastUserId = null;
+   *   let batch;
+   *
+   *   do {
+   *     const query = lastUserId ? { after: lastUserId, limit: 100 } : { limit: 100 };
+   *     batch = await messageRouter.fetchReactionUsers(channelId, messageId, emoji, query);
+   *
+   *     allReactors = allReactors.concat(batch);
+   *
+   *     if (batch.length > 0) {
+   *       lastUserId = batch[batch.length - 1].id;
+   *     }
+   *   } while (batch.length === 100);
+   *
+   *   return allReactors;
+   * }
+   * ```
    */
-  getReactions(
+  fetchReactionUsers(
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
     query: GetReactionsQuerySchema = {},
   ): Promise<UserEntity[]> {
     return this.#rest.get(
-      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
+      MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(
+        channelId,
+        messageId,
+        emoji,
+      ),
       { query },
     );
   }
 
   /**
-   * Deletes all reactions from a message
-   * Requires MANAGE_MESSAGES permission.
+   * Removes all reactions from a message.
+   *
+   * This method clears all reactions of all types from a message.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to remove all reactions from
-   * @returns A Promise that resolves when all reactions are removed
+   * @returns A promise that resolves when all reactions are removed
+   * @throws Will throw an error if you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-all-reactions}
+   *
+   * @example
+   * ```typescript
+   * // Remove all reactions from a message
+   * try {
+   *   await messageRouter.removeAllReactions(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321"  // Message ID
+   *   );
+   *   console.log("All reactions removed successfully");
+   * } catch (error) {
+   *   console.error("Failed to remove all reactions:", error);
+   *
+   *   // Check for permission error
+   *   if (error.code === 50013) {
+   *     console.error("Missing MANAGE_MESSAGES permission");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires MANAGE_MESSAGES permission.
    */
-  deleteAllReactions(
+  removeAllReactions(
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, ""),
+      MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(
+        channelId,
+        messageId,
+        "",
+      ),
     );
   }
 
   /**
-   * Deletes all reactions for a specific emoji from a message
-   * Requires MANAGE_MESSAGES permission.
+   * Removes all reactions for a specific emoji from a message.
+   *
+   * This method clears all reactions of a specific emoji type from a message.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to remove emoji reactions from
    * @param emoji - The emoji to remove all reactions for (URL encoded)
-   * @returns A Promise that resolves when the reactions are removed
+   * @returns A promise that resolves when the reactions are removed
+   * @throws Will throw an error if you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-all-reactions-for-emoji}
+   *
+   * @example
+   * ```typescript
+   * // Remove all thumbs up reactions from a message
+   * try {
+   *   await messageRouter.removeAllReactionsForEmoji(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321", // Message ID
+   *     "👍" // Thumbs up emoji
+   *   );
+   *   console.log("All thumbs up reactions removed");
+   * } catch (error) {
+   *   console.error("Failed to remove emoji reactions:", error);
+   * }
+   *
+   * // Remove all reactions for a custom emoji
+   * await messageRouter.removeAllReactionsForEmoji(
+   *   "123456789012345678",
+   *   "987654321987654321",
+   *   "custom_emoji:456789012345678901" // Format: name:id
+   * );
+   * ```
+   *
+   * @remarks
+   * Requires MANAGE_MESSAGES permission.
    */
-  deleteAllReactionsForEmoji(
+  removeAllReactionsForEmoji(
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.channelMessageReactions(channelId, messageId, emoji),
+      MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(
+        channelId,
+        messageId,
+        emoji,
+      ),
     );
   }
 
   /**
-   * Edits a previously sent message
-   * The original message author can edit content, embeds, and flags.
-   * Other users with MANAGE_MESSAGES can only edit flags.
-   * All files specified in the attachments array will be kept, and new files can be added.
+   * Updates a previously sent message.
+   *
+   * This method edits the content of an existing message, allowing changes
+   * to text, embeds, components, and more.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to edit
    * @param options - The new message content and properties
-   * @returns The edited message object
-   * @throws Error if validation of options fails
+   * @returns A promise resolving to the edited message object
+   * @throws Error if validation of options fails or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#edit-message}
+   *
+   * @example
+   * ```typescript
+   * // Update a message's text content
+   * const updatedMessage = await messageRouter.updateMessage(
+   *   "123456789012345678", // Channel ID
+   *   "987654321987654321", // Message ID
+   *   { content: "Updated message content" }
+   * );
+   *
+   * // Update a message's embed
+   * const embedUpdatedMessage = await messageRouter.updateMessage(
+   *   "123456789012345678",
+   *   "987654321987654321",
+   *   {
+   *     embeds: [{
+   *       title: "Updated Embed",
+   *       description: "This embed has been updated",
+   *       color: 0xff0000 // Red color
+   *     }]
+   *   }
+   * );
+   *
+   * // Update a message's components
+   * const componentsUpdatedMessage = await messageRouter.updateMessage(
+   *   "123456789012345678",
+   *   "987654321987654321",
+   *   {
+   *     components: [
+   *       {
+   *         type: 1, // Action Row
+   *         components: [
+   *           {
+   *             type: 2, // Button
+   *             style: 3, // Success (green)
+   *             label: "Updated Button",
+   *             custom_id: "updated_button"
+   *           }
+   *         ]
+   *       }
+   *     ]
+   *   }
+   * );
+   *
+   * // Remove all components from a message
+   * const noComponentsMessage = await messageRouter.updateMessage(
+   *   "123456789012345678",
+   *   "987654321987654321",
+   *   { components: [] }
+   * );
+   * ```
+   *
+   * @remarks
+   * The original message author can edit content, embeds, and flags.
+   * Other users with MANAGE_MESSAGES can only edit flags.
+   * All files specified in the attachments array will be kept, and new files can be added.
+   * If only removing attachments, specify an empty attachments array.
    */
-  editMessage(
+  updateMessage(
     channelId: Snowflake,
     messageId: Snowflake,
     options: EditMessageSchema,
   ): Promise<MessageEntity> {
     const { files, ...rest } = options;
     return this.#rest.patch(
-      MessageRouter.ROUTES.channelMessage(channelId, messageId),
+      MessageRouter.MESSAGE_ROUTES.channelMessageByIdEndpoint(
+        channelId,
+        messageId,
+      ),
       {
         body: JSON.stringify(rest),
         files: files,
@@ -529,14 +1084,43 @@ export class MessageRouter {
   }
 
   /**
-   * Deletes a message
-   * If the message was not sent by the current user, requires MANAGE_MESSAGES permission.
+   * Deletes a message.
+   *
+   * This method permanently removes a message from a channel.
    *
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to delete
    * @param reason - Reason for deleting the message (for audit logs)
-   * @returns A Promise that resolves when the message is deleted
+   * @returns A promise that resolves when the message is deleted
+   * @throws Will throw an error if you lack permissions or the message doesn't exist
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-message}
+   *
+   * @example
+   * ```typescript
+   * // Delete a message
+   * try {
+   *   await messageRouter.deleteMessage(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321", // Message ID
+   *     "Content violation" // Reason for audit log
+   *   );
+   *   console.log("Message deleted successfully");
+   * } catch (error) {
+   *   console.error("Failed to delete message:", error);
+   *
+   *   // Check for common errors
+   *   if (error.code === 50013) {
+   *     console.error("Missing MANAGE_MESSAGES permission");
+   *   } else if (error.code === 10008) {
+   *     console.error("Message not found");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * If the message was not sent by the current user, requires MANAGE_MESSAGES permission.
+   * Messages cannot be deleted if they are older than 2 weeks and were not sent by the current user.
    */
   deleteMessage(
     channelId: Snowflake,
@@ -544,22 +1128,64 @@ export class MessageRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      MessageRouter.ROUTES.channelMessage(channelId, messageId),
+      MessageRouter.MESSAGE_ROUTES.channelMessageByIdEndpoint(
+        channelId,
+        messageId,
+      ),
       { reason },
     );
   }
 
   /**
-   * Bulk deletes multiple messages in a single request
-   * Requires MANAGE_MESSAGES permission.
-   * Messages must not be older than 2 weeks.
+   * Bulk deletes multiple messages in a single request.
+   *
+   * This method efficiently removes multiple messages from a channel
+   * in a single operation.
    *
    * @param channelId - The ID of the channel to delete messages from
    * @param options - Object containing array of message IDs to delete
    * @param reason - Reason for deleting the messages (for audit logs)
-   * @returns A Promise that resolves when the messages are deleted
-   * @throws Error if validation of options fails
+   * @returns A promise that resolves when the messages are deleted
+   * @throws Error if validation of options fails or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/channel#bulk-delete-messages}
+   *
+   * @example
+   * ```typescript
+   * // Delete multiple messages at once
+   * try {
+   *   await messageRouter.bulkDeleteMessages(
+   *     "123456789012345678", // Channel ID
+   *     {
+   *       messages: [
+   *         "123456789012345678",
+   *         "234567890123456789",
+   *         "345678901234567890"
+   *       ]
+   *     },
+   *     "Cleanup of spam messages" // Reason for audit log
+   *   );
+   *   console.log("Messages deleted successfully");
+   * } catch (error) {
+   *   console.error("Failed to bulk delete messages:", error);
+   *
+   *   // Check for common errors
+   *   if (error.code === 50013) {
+   *     console.error("Missing MANAGE_MESSAGES permission");
+   *   } else if (error.code === 50034) {
+   *     console.error("One or more messages are older than 2 weeks");
+   *   } else if (error.code === 50016) {
+   *     console.error("Message array length not between 2 and 100");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires MANAGE_MESSAGES permission.
+   * Messages must not be older than 2 weeks.
+   * Must contain at least 2 and no more than 100 message IDs.
+   * If any message fails validation, no messages will be deleted.
+   * This operation is much more efficient than deleting messages individually.
    */
   bulkDeleteMessages(
     channelId: Snowflake,
@@ -567,7 +1193,7 @@ export class MessageRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.post(
-      MessageRouter.ROUTES.channelMessagesBulkDelete(channelId),
+      MessageRouter.MESSAGE_ROUTES.bulkDeleteEndpoint(channelId),
       {
         body: JSON.stringify(options),
         reason,

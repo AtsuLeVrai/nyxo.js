@@ -26,7 +26,7 @@ import {
   InteractionRouter,
   InviteRouter,
   MessageRouter,
-  Oauth2Router,
+  OAuth2Router,
   PollRouter,
   ScheduledEventRouter,
   SkuRouter,
@@ -155,7 +155,7 @@ export const RestOptions = z.object({
    * Requests that take longer than this will be aborted.
    * @default 30000
    */
-  timeout: z.number().nonnegative().int().min(0).default(30000),
+  timeout: z.number().int().min(0).default(30000),
 
   /**
    * Request retry configuration.
@@ -481,8 +481,8 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @returns Router for OAuth2-related endpoints
    */
-  get oauth2(): Oauth2Router {
-    return new Oauth2Router(this);
+  get oauth2(): OAuth2Router {
+    return new OAuth2Router(this);
   }
 
   /**

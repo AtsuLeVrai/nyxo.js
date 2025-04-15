@@ -22,243 +22,456 @@ import type { CreateMessageSchema } from "./message.router.js";
 import type { CreateGroupDmSchema } from "./user.router.js";
 
 /**
- * Interface for modifying a Group DM channel.
- * Reuses field definitions from GroupDmChannelEntity for consistency.
+ * Interface for updating a Group DM channel.
+ * Used to modify the name or icon of a group direct message.
+ *
+ * @remarks
+ * Only the creator of the group DM can modify these properties.
+ * The icon must be provided as a base64 encoded string of the image data.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-group-dm}
  */
-export interface ModifyChannelGroupDmSchema {
+export interface UpdateChannelGroupDmSchema {
   /**
    * 1-100 character channel name
+   *
+   * Name of the group DM visible to all participants.
    */
   name: string;
 
-  /** Base64 encoded icon */
+  /**
+   * Base64 encoded icon
+   *
+   * The icon image for the group DM, provided as a base64 encoded string.
+   * The string should include the data URI scheme prefix (e.g., "data:image/jpeg;base64,").
+   */
   icon: string;
 }
 
 /**
- * Interface for modifying a guild channel.
- * Reuses field definitions from ChannelEntity where possible.
+ * Interface for updating a guild channel.
+ * Used to modify various properties of text, voice, category, announcement, forum, and media channels.
+ *
+ * @remarks
+ * Different properties apply to different channel types:
+ * - Text: name, position, topic, nsfw, rate_limit_per_user, permission_overwrites, parent_id, default_auto_archive_duration
+ * - Voice: name, position, bitrate, user_limit, permission_overwrites, parent_id, rtc_region, video_quality_mode
+ * - Category: name, position, permission_overwrites
+ * - Announcement: name, position, topic, nsfw, permission_overwrites, parent_id, default_auto_archive_duration
+ * - Forum: name, position, topic, nsfw, rate_limit_per_user, permission_overwrites, parent_id, default_auto_archive_duration, available_tags, default_reaction_emoji, default_thread_rate_limit_per_user, default_sort_order, default_forum_layout
+ * - Media: Same as forum
+ *
+ * Requires the MANAGE_CHANNELS permission in the guild.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel}
  */
-export interface ModifyChannelGuildChannelSchema {
+export interface UpdateChannelGuildChannelSchema {
   /**
    * 1-100 character channel name
+   *
+   * The new name for the channel. Must be between 1 and 100 characters long.
+   * Names are case-insensitive for text and voice channels but case-sensitive for categories.
    */
   name?: string;
 
   /**
    * Type of channel (only conversion between text and announcement is supported)
+   *
+   * Allows converting between regular text channels and announcement channels.
+   * Other channel type conversions are not supported.
    */
   type?:
     | ChannelType.GuildText
     | ChannelType.AnnouncementThread
     | ChannelType.GuildAnnouncement;
 
-  /** Position in the channel list */
+  /**
+   * Position in the channel list
+   *
+   * The position of the channel in the left-hand listing.
+   * Positions are ordered in ascending order starting from 0.
+   * Channels are sorted by position within their category.
+   */
   position?: number;
 
   /**
    * 0-1024 character channel topic (0-4096 for forum channels)
+   *
+   * The description of the channel shown at the top.
+   * Can contain up to 1024 characters for standard channels, or 4096 for forum channels.
+   * Set to null to remove the topic.
    */
   topic?: string | null;
 
   /**
    * Whether the channel is NSFW
+   *
+   * If true, users must confirm they want to view the channel content,
+   * and the channel will be marked with an NSFW tag.
    */
   nsfw?: boolean;
 
   /**
    * Slowmode rate limit in seconds (0-21600)
+   *
+   * The time users must wait between sending messages in seconds.
+   * Can be set from 0 (no slowmode) to 21600 (6 hours).
+   * Only applies to text, forum, and media channels.
    */
   rate_limit_per_user?: number;
 
   /**
    * Bitrate for voice channels (min 8000)
+   *
+   * The audio quality bitrate for voice channels, in bits per second.
+   * Minimum is 8000, max depends on guild's boost level:
+   * - Default: 96000
+   * - Level 1: 128000
+   * - Level 2: 256000
+   * - Level 3: 384000
    */
   bitrate?: number;
 
   /**
    * User limit for voice channels (0-99)
+   *
+   * The maximum number of users that can join the voice channel.
+   * Set to 0 for unlimited users. Maximum value is 99.
+   * Only applies to voice channels.
    */
   user_limit?: number;
 
   /**
    * Permission overwrites for the channel
+   *
+   * Array of permission overwrite objects that define custom permissions
+   * for users and roles in the channel.
+   * Overwrites define specific allow/deny permissions that override guild-level permissions.
    */
   permission_overwrites?: Partial<OverwriteEntity>[];
 
   /**
    * ID of the parent category
+   *
+   * The ID of the category that will contain this channel.
+   * Set to null to remove the channel from its current category.
+   * Cannot be set for category channels.
    */
   parent_id?: Snowflake | null;
 
   /**
    * Voice region ID for the channel
+   *
+   * The voice region for the voice channel.
+   * Set to null to use the guild's default region.
+   * Only applies to voice channels.
    */
   rtc_region?: string | null;
 
   /**
    * Video quality mode of the voice channel
+   *
+   * The video quality mode for the voice channel:
+   * - 1: AUTO (Discord chooses quality based on conditions)
+   * - 2: FULL (720p 60fps)
+   * Only applies to voice channels.
    */
   video_quality_mode?: number;
 
   /**
    * Default auto-archive duration for threads
+   *
+   * The default duration in minutes before a thread is automatically archived.
+   * Values: 60, 1440 (24 hours), 4320 (3 days), 10080 (7 days)
+   * Some durations require guild boost levels.
    */
   default_auto_archive_duration?: AutoArchiveDuration;
 
   /**
    * Channel flags combined as a bitfield
+   *
+   * Bitwise integer representing channel-specific flags:
+   * - PINNED (1 << 1): Thread is pinned in a forum channel
+   * - REQUIRE_TAG (1 << 4): Thread creation requires a tag in a forum channel
    */
   flags?: ChannelFlags;
 
   /**
    * Set of tags that can be used in a forum channel
+   *
+   * Array of forum tags available for threads in this forum channel.
+   * Maximum of 20 tags per forum channel.
+   * Only applies to forum and media channels.
    */
   available_tags?: ForumTagEntity[];
 
   /**
    * Default emoji for forum thread reactions
+   *
+   * The default emoji shown as a reaction button on threads in the forum.
+   * Set to null to remove the default reaction.
+   * Only applies to forum and media channels.
    */
   default_reaction_emoji?: DefaultReactionEntity | null;
 
   /**
    * Default slowmode for new threads
+   *
+   * The default rate limit (in seconds) applied to newly created threads.
+   * Can be set from 0 (no slowmode) to 21600 (6 hours).
+   * Only applies to forum and media channels.
    */
   default_thread_rate_limit_per_user?: number;
 
   /**
    * Default sort order for forum posts
+   *
+   * The default sort order for posts in the forum channel:
+   * - 0: LATEST_ACTIVITY (default)
+   * - 1: CREATION_DATE
+   * Set to null to use client app default.
+   * Only applies to forum and media channels.
    */
   default_sort_order?: number | null;
 
   /**
    * Default forum layout view
+   *
+   * The default layout used to display posts in the forum channel:
+   * - 0: NOT_SET
+   * - 1: LIST_VIEW
+   * - 2: GALLERY_VIEW
+   * Only applies to forum and media channels.
    */
   default_forum_layout?: number;
 }
 
 /**
- * Interface for modifying a thread.
- * Reuses fields from ThreadMetadataEntity for consistency.
+ * Interface for updating a thread.
+ * Used to modify properties of an existing thread channel, such as archive status, name, or rate limits.
+ *
+ * @remarks
+ * Different permissions are required depending on the field being modified:
+ * - Modifying name: MANAGE_THREADS or thread ownership
+ * - Archived status: MANAGE_THREADS or thread ownership (unarchiving requires SEND_MESSAGES)
+ * - Auto-archive duration: MANAGE_THREADS
+ * - Locked status: MANAGE_THREADS
+ * - Invitable flag: MANAGE_THREADS
+ * - Rate limit: MANAGE_THREADS or MANAGE_CHANNELS
+ * - Applied tags: MANAGE_THREADS
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-thread}
  */
-export interface ModifyChannelThreadSchema {
+export interface UpdateChannelThreadSchema {
   /**
    * 1-100 character thread name
+   *
+   * The new name for the thread. Must be between 1 and 100 characters long.
+   * Requires MANAGE_THREADS permission or thread ownership.
    */
   name?: string;
 
   /**
    * Whether the thread is archived
+   *
+   * Set to true to archive the thread, false to unarchive it.
+   * Archiving a thread prevents new messages and hides it from the active thread list.
+   * Requires thread ownership or MANAGE_THREADS to archive.
+   * Requires thread ownership or MANAGE_THREADS and SEND_MESSAGES to unarchive.
    */
   archived?: boolean;
 
   /**
    * Auto-archive duration in minutes
+   *
+   * The duration in minutes after which the thread automatically archives due to inactivity.
+   * Values: 60, 1440 (24 hours), 4320 (3 days), 10080 (7 days)
+   * Some durations require guild boost levels.
+   * Requires MANAGE_THREADS permission.
    */
   auto_archive_duration?: AutoArchiveDuration;
 
   /**
    * Whether the thread is locked
+   *
+   * If true, only users with MANAGE_THREADS can unarchive the thread.
+   * Must be combined with archived: true if being set to true.
+   * Requires MANAGE_THREADS permission.
    */
   locked?: boolean;
 
   /**
    * Whether non-moderators can add other non-moderators
+   *
+   * For private threads only. If true, members can add other non-moderator members.
+   * If false, only moderators can add members.
+   * Requires MANAGE_THREADS permission.
    */
   invitable?: boolean;
 
   /**
    * Slowmode rate limit in seconds (0-21600)
+   *
+   * The time users must wait between sending messages in seconds.
+   * Can be set from 0 (no slowmode) to 21600 (6 hours).
+   * Requires MANAGE_THREADS or MANAGE_CHANNELS permission.
    */
   rate_limit_per_user?: number;
 
   /**
    * Thread flags combined as a bitfield
+   *
+   * Bitwise integer representing thread-specific flags.
+   * Currently supported flags:
+   * - PINNED (1 << 1): Thread is pinned in a forum channel
    */
   flags?: ChannelFlags;
 
   /**
    * IDs of tags applied to a forum thread
+   *
+   * Array of tag IDs to apply to a thread in a forum or media channel.
+   * Limited to the tags available in the parent channel.
+   * Maximum of 5 tags per thread.
+   * Requires MANAGE_THREADS permission.
    */
   applied_tags?: Snowflake[];
 }
 
 /**
- * Interface for editing channel permissions.
- * Reuses fields from OverwriteEntity for consistency.
+ * Interface for editing channel permission overwrites.
+ * Used to define or modify custom permissions for roles or users within a specific channel.
+ *
+ * @remarks
+ * Permission overwrites allow for granular control of permissions on a per-channel basis,
+ * overriding the guild-level permissions for specific roles or users.
+ *
+ * Requires the MANAGE_ROLES permission in the guild.
+ * The bot's highest role must be higher than the role being edited (for role overwrites).
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params}
  */
 export interface EditChannelPermissionsSchema {
   /**
    * Bitwise value of all allowed permissions
+   *
+   * String representing a bitwise value of all permissions to explicitly allow.
+   * Permissions not included in either allow or deny will use guild-level defaults.
+   * Set to null to remove any existing allows.
    */
   allow?: BitwisePermissionFlags | null;
 
   /**
    * Bitwise value of all disallowed permissions
+   *
+   * String representing a bitwise value of all permissions to explicitly deny.
+   * Deny overwrites take precedence over allow overwrites.
+   * Set to null to remove any existing denies.
    */
   deny?: BitwisePermissionFlags | null;
 
-  /** Type of overwrite: role (0) or member (1) */
+  /**
+   * Type of overwrite: role (0) or member (1)
+   *
+   * Specifies whether the overwrite applies to a role or a specific user:
+   * - 0: Applies to a role
+   * - 1: Applies to a user/member
+   *
+   * The overwriteId used with this schema will be interpreted as either
+   * a role ID or user ID depending on this value.
+   */
   type: number;
 }
 
 /**
  * Interface for creating a channel invite.
+ * Used to generate invite links to join a guild channel.
+ *
+ * @remarks
+ * Requires the CREATE_INSTANT_INVITE permission in the channel.
+ * Guild channels can have multiple active invites simultaneously.
+ * Discord keeps track of which invite was used when a user joins.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#create-channel-invite-json-params}
  */
 export interface CreateChannelInviteSchema {
   /**
    * Duration of invite in seconds before expiry (0-604800)
-   * Defaults to 86400 (24 hours) if not specified
+   *
+   * How long the invite is valid for, in seconds.
+   * Set to 0 for an invite that never expires.
+   * Maximum value is 604800 (7 days).
+   * Defaults to 86400 (24 hours) if not specified.
    */
   max_age: number;
 
   /**
    * Maximum number of uses (0-100)
-   * Defaults to 0 (unlimited uses) if not specified
+   *
+   * How many times the invite can be used before it is no longer valid.
+   * Set to 0 for unlimited uses.
+   * Maximum value is 100.
+   * Defaults to 0 (unlimited uses) if not specified.
    */
   max_uses: number;
 
   /**
    * Whether this invite only grants temporary membership
-   * Defaults to false if not specified
+   *
+   * If true, users who join via this invite will be kicked from the guild
+   * when they disconnect from voice channels.
+   * Useful for events or temporary access.
+   * Defaults to false if not specified.
    */
   temporary: boolean;
 
   /**
    * Whether to create a unique one-time use invite
-   * Defaults to false if not specified
+   *
+   * If true, this invite will be different than any other invites created
+   * for the same channel, even if they have the same settings.
+   * If false, it may reuse an existing invite with matching settings.
+   * Defaults to false if not specified.
    */
   unique: boolean;
 
   /**
    * The type of target for this voice channel invite
+   *
+   * For voice channel invites, specifies what the invite targets:
+   * - 1: STREAM (a specific stream in the voice channel)
+   * - 2: EMBEDDED_APPLICATION (an embedded application in the voice channel)
+   *
+   * Only applies to voice channel invites.
    */
   target_type?: InviteTargetType;
 
   /**
    * The ID of the user whose stream to display
+   *
+   * Required when target_type is 1 (STREAM).
+   * The user must be streaming in the channel.
    */
   target_user_id?: Snowflake;
 
   /**
    * The ID of the embedded application to open
+   *
+   * Required when target_type is 2 (EMBEDDED_APPLICATION).
+   * The application must be available for use in the channel.
+   * Common application IDs include those for games and activities like YouTube Together.
    */
   target_application_id?: Snowflake;
 }
 
 /**
  * Interface for adding a recipient to a Group DM.
- * Reuses CreateGroupDmSchema for consistency.
+ * Used to add a new user to an existing group direct message.
+ *
+ * @remarks
+ * Requires an OAuth2 access token with the gdm.join scope.
+ * The token must be from the user being added.
+ * Group DMs have a maximum membership limit (typically 10 users).
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#group-dm-add-recipient-json-params}
  */
@@ -266,29 +479,53 @@ export type AddGroupDmRecipientSchema = CreateGroupDmSchema;
 
 /**
  * Interface for starting a thread from a message.
+ * Used to create a new thread attached to an existing message in a text or announcement channel.
+ *
+ * @remarks
+ * The thread will be of type PUBLIC_THREAD for text channels or ANNOUNCEMENT_THREAD for announcement channels.
+ * The created thread ID will be the same as the message ID it was created from.
+ * A message can only have one thread created from it.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message-json-params}
  */
 export interface StartThreadFromMessageSchema {
   /**
    * 1-100 character thread name
+   *
+   * Name of the thread. Must be between 1 and 100 characters long.
+   * This will be displayed as the thread's title in the Discord client.
    */
   name: string;
 
   /**
    * Auto-archive duration in minutes
+   *
+   * The duration in minutes after which the thread will automatically archive due to inactivity.
+   * Values: 60, 1440 (24 hours), 4320 (3 days), 10080 (7 days)
+   * Some durations require guild boost levels.
+   * Defaults to the channel's default_auto_archive_duration if not specified.
    */
   auto_archive_duration?: AutoArchiveDuration;
 
   /**
    * Slowmode rate limit in seconds (0-21600)
+   *
+   * The time users must wait between sending messages in the thread, in seconds.
+   * Can be set from 0 (no slowmode) to 21600 (6 hours).
+   * Set to null to inherit from the parent channel (for forum/media threads).
    */
   rate_limit_per_user?: number | null;
 }
 
 /**
  * Interface for starting a thread without a message.
- * Extends StartThreadFromMessageSchema for consistency.
+ * Used to create a standalone thread in a text or announcement channel that isn't attached to an existing message.
+ *
+ * @remarks
+ * Extends StartThreadFromMessageSchema with additional fields specific to standalone threads.
+ * For PUBLIC_THREAD and ANNOUNCEMENT_THREAD, everyone with READ_MESSAGES permission can see the thread.
+ * For PRIVATE_THREAD, only those invited and those with MANAGE_THREADS can see the thread.
+ * Creating PRIVATE_THREAD requires the guild to have the PRIVATE_THREADS feature.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params}
  */
@@ -296,7 +533,13 @@ export interface StartThreadWithoutMessageSchema
   extends StartThreadFromMessageSchema {
   /**
    * Type of thread to create
-   * Defaults to ChannelType.PrivateThread if not specified
+   *
+   * Specifies the type of thread to create:
+   * - 10: ANNOUNCEMENT_THREAD (only in announcement channels)
+   * - 11: PUBLIC_THREAD (standard public thread)
+   * - 12: PRIVATE_THREAD (private thread, requires PRIVATE_THREADS feature)
+   *
+   * Defaults to PRIVATE_THREAD (12) if not specified.
    */
   type?:
     | ChannelType.AnnouncementThread
@@ -305,13 +548,21 @@ export interface StartThreadWithoutMessageSchema
 
   /**
    * Whether non-moderators can add other non-moderators
+   *
+   * For PRIVATE_THREAD only. If true, thread members can add other non-moderator members.
+   * If false, only moderators can add members.
+   * Has no effect on PUBLIC_THREAD or ANNOUNCEMENT_THREAD.
    */
   invitable?: boolean;
 }
 
 /**
  * Interface for the message portion of starting a thread in a forum or media channel.
- * Reuses fields from CreateMessageSchema for consistency.
+ * Defines the content of the first message created along with the forum thread.
+ *
+ * @remarks
+ * This type is a subset of the CreateMessageSchema, containing only the fields
+ * that are relevant for creating the initial message in a forum thread.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-forum-and-media-thread-message-params-object}
  */
@@ -329,7 +580,12 @@ export type StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema =
 
 /**
  * Interface for starting a thread in a forum or media channel.
- * Reuses fields from CreateMessageSchema and extends with thread-specific fields.
+ * Used to create a new thread post in a forum or media channel along with its initial message.
+ *
+ * @remarks
+ * Forum and media channels organize conversations into thread posts displayed in a grid or list.
+ * Each thread must include an initial message.
+ * Up to 5 tags can be applied to organize and categorize threads.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-jsonform-params}
  */
@@ -337,166 +593,448 @@ export interface StartThreadInForumOrMediaChannelSchema
   extends Pick<CreateMessageSchema, "files" | "payload_json"> {
   /**
    * 1-100 character thread name
+   *
+   * Name of the thread post. Must be between 1 and 100 characters long.
+   * This will be displayed as the thread title in the forum view.
    */
   name: string;
 
   /**
    * Auto-archive duration in minutes
+   *
+   * The duration in minutes after which the thread will automatically archive due to inactivity.
+   * Values: 60, 1440 (24 hours), 4320 (3 days), 10080 (7 days)
+   * Some durations require guild boost levels.
+   * Defaults to the forum's default_auto_archive_duration if not specified.
    */
   auto_archive_duration?: AutoArchiveDuration;
 
   /**
    * Slowmode rate limit in seconds (0-21600)
+   *
+   * The time users must wait between sending messages in the thread, in seconds.
+   * Can be set from 0 (no slowmode) to 21600 (6 hours).
+   * Set to null to inherit from the parent forum's default_thread_rate_limit_per_user.
    */
   rate_limit_per_user?: number | null;
 
-  /** Contents of the first message in the thread */
+  /**
+   * Contents of the first message in the thread
+   *
+   * The message that will be posted as the first message in the thread.
+   * Required for forum and media threads.
+   * Can include text content, embeds, components, and other message features.
+   */
   message: StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema;
 
   /**
    * IDs of tags applied to the thread
+   *
+   * Array of tag IDs to apply to the thread for categorization.
+   * Tags must be from the set of available_tags in the parent forum channel.
+   * Maximum of 5 tags per thread.
+   * Required if the forum has the REQUIRE_TAG flag enabled.
    */
   applied_tags?: Snowflake[];
 }
 
 /**
  * Interface for query parameters when listing thread members.
+ * Used to retrieve members of a thread with optional pagination and member details.
+ *
+ * @remarks
+ * When with_member is true, the GUILD_MEMBERS privileged intent is required.
+ * Results are paginated when with_member is true.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members-query-string-params}
  */
 export interface ListThreadMembersQuerySchema {
   /**
    * Whether to include a guild member object for each thread member
+   *
+   * If true, each thread member returned will include a nested member object
+   * with additional guild member information for that user.
+   * Requires the GUILD_MEMBERS privileged intent.
    */
   with_member?: boolean;
 
   /**
    * Get thread members after this user ID
+   *
+   * Used for pagination. Retrieve thread members after this user ID.
+   * Should be the user ID of the last thread member from a previous request.
    */
   after?: Snowflake;
 
   /**
    * Maximum number of members to return (1-100)
-   * Defaults to 100 if not specified
+   *
+   * Controls how many thread members to return per request.
+   * Minimum value is 1, maximum value is 100.
+   * Defaults to 100 if not specified.
    */
   limit?: number;
 }
 
 /**
  * Interface for query parameters when listing public archived threads.
+ * Used to retrieve archived threads with optional filtering and pagination.
+ *
+ * @remarks
+ * Used for both public and private archived thread endpoints.
+ * Threads are returned in descending order by archive timestamp (newest first).
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params}
  */
 export interface ListPublicArchivedThreadsQuerySchema {
   /**
    * Returns threads archived before this timestamp
+   *
+   * ISO8601 timestamp. Only threads archived before this timestamp will be returned.
+   * Useful for pagination and filtering by archive date.
    */
   before?: string;
 
   /**
    * Maximum number of threads to return
+   *
+   * Controls how many archived threads to return per request.
+   * No standard minimum or maximum values are documented.
    */
   limit?: number;
 }
 
 /**
  * Response interface for listing public archived threads.
+ * The returned data structure for public, private, and joined private archived thread endpoints.
+ *
+ * @remarks
+ * Contains both the thread channel objects and thread member objects for threads the current user has joined.
+ * The has_more flag indicates if pagination is needed to get more results.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads-response-body}
  */
 export interface ListPublicArchivedThreadsResponseEntity {
-  /** Array of thread channel objects */
+  /**
+   * Array of thread channel objects
+   *
+   * Contains all the archived thread channels that match the query.
+   * Each object is a complete thread channel entity.
+   */
   threads: AnyThreadChannelEntity[];
 
-  /** Array of thread member objects for threads the current user has joined */
+  /**
+   * Array of thread member objects for threads the current user has joined
+   *
+   * Contains thread member objects only for the threads in the response
+   * that the current user has joined.
+   * May be a subset of the threads array or empty if the user hasn't joined any.
+   */
   members: ThreadMemberEntity[];
 
-  /** Whether there are potentially more threads that could be returned */
+  /**
+   * Whether there are potentially more threads that could be returned
+   *
+   * Indicates if there are more archived threads available beyond what was returned.
+   * If true, you can paginate to get more results using the before parameter.
+   */
   has_more: boolean;
 }
 
 /**
  * Router for Discord Channel-related API endpoints.
- * Provides methods to interact with channels, including text channels,
- * voice channels, DMs, group DMs, threads, and more.
+ *
+ * This class provides a collection of static methods for constructing API routes
+ * related to channels, including text channels, voice channels, threads,
+ * direct messages, and group direct messages.
  *
  * @remarks
  * Channel operations often require specific permissions that vary based on
  * the channel type and the operation being performed.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/channel}
  */
 export class ChannelRouter {
   /**
-   * API route constants for channel-related endpoints.
+   * Collection of API route constants for Discord Channel-related endpoints.
+   *
+   * These routes provide access to Discord's channel management functionality,
+   * including text channels, voice channels, threads, DMs, group DMs, and related resources.
+   *
+   * Each endpoint function takes the necessary parameters (such as channel IDs, user IDs, etc.)
+   * and returns the properly formatted API route string to use with REST methods.
+   *
+   * @remarks
+   * All route constants follow the pattern described in Discord's official API documentation.
+   * Routes with parameters use functions that accept those parameters and return the formatted route.
+   *
+   * @see {@link https://discord.com/developers/docs/resources/channel}
    */
-  static readonly ROUTES = {
-    /** Base endpoint for a channel */
-    channelBase: (channelId: Snowflake) => `/channels/${channelId}` as const,
+  static readonly CHANNEL_ROUTES = {
+    /**
+     * Route for accessing a specific channel.
+     *
+     * Used for:
+     * - GET: Fetch a channel by ID
+     * - PATCH: Update a channel's settings
+     * - DELETE: Delete a channel or close a DM
+     *
+     * @param channelId - The ID of the channel to access
+     * @returns `/channels/{channel.id}` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#get-channel}
+     */
+    channelBaseEndpoint: (channelId: Snowflake) =>
+      `/channels/${channelId}` as const,
 
-    /** Endpoint for managing a specific permission overwrite in a channel */
-    channelPermission: (channelId: Snowflake, overwriteId: Snowflake) =>
+    /**
+     * Route for managing permission overwrites in a channel.
+     *
+     * Used for:
+     * - PUT: Create or update a permission overwrite
+     * - DELETE: Delete a permission overwrite
+     *
+     * @param channelId - The ID of the channel
+     * @param overwriteId - The ID of the user or role for the permission overwrite
+     * @returns `/channels/{channel.id}/permissions/{overwrite.id}` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions}
+     */
+    channelPermissionEndpoint: (channelId: Snowflake, overwriteId: Snowflake) =>
       `/channels/${channelId}/permissions/${overwriteId}` as const,
 
-    /** Endpoint for managing invites in a channel */
-    channelInvites: (channelId: Snowflake) =>
+    /**
+     * Route for managing invites in a channel.
+     *
+     * Used for:
+     * - GET: List all invites for a channel
+     * - POST: Create a new invite for a channel
+     *
+     * @param channelId - The ID of the channel
+     * @returns `/channels/{channel.id}/invites` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-invites}
+     */
+    channelInvitesEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/invites` as const,
 
-    /** Endpoint for managing pinned messages in a channel */
-    channelPins: (channelId: Snowflake) =>
+    /**
+     * Route for accessing all pinned messages in a channel.
+     *
+     * Used for:
+     * - GET: List all pinned messages in a channel
+     *
+     * @param channelId - The ID of the channel
+     * @returns `/channels/{channel.id}/pins` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
+     */
+    channelPinsEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/pins` as const,
 
-    /** Endpoint for a specific pinned message in a channel */
-    channelPinnedMessage: (channelId: Snowflake, messageId: Snowflake) =>
-      `/channels/${channelId}/pins/${messageId}` as const,
+    /**
+     * Route for managing a specific pinned message in a channel.
+     *
+     * Used for:
+     * - PUT: Pin a message in a channel
+     * - DELETE: Unpin a message from a channel
+     *
+     * @param channelId - The ID of the channel
+     * @param messageId - The ID of the message to pin/unpin
+     * @returns `/channels/{channel.id}/pins/{message.id}` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#pin-message}
+     */
+    channelPinnedMessageEndpoint: (
+      channelId: Snowflake,
+      messageId: Snowflake,
+    ) => `/channels/${channelId}/pins/${messageId}` as const,
 
-    /** Endpoint for managing thread members in a thread channel */
-    channelThreadMembers: (channelId: Snowflake) =>
+    /**
+     * Route for accessing all members of a thread.
+     *
+     * Used for:
+     * - GET: List all members of a thread
+     *
+     * @param channelId - The ID of the thread
+     * @returns `/channels/{channel.id}/thread-members` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members}
+     */
+    channelThreadMembersEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/thread-members` as const,
 
-    /** Endpoint for managing a specific thread member in a thread channel */
-    channelThreadMember: (channelId: Snowflake, userId: Snowflake) =>
+    /**
+     * Route for managing a specific member of a thread.
+     *
+     * Used for:
+     * - GET: Get a thread member
+     * - PUT: Add a member to a thread (or join a thread when userId is "@me")
+     * - DELETE: Remove a member from a thread (or leave a thread when userId is "@me")
+     *
+     * @param channelId - The ID of the thread
+     * @param userId - The ID of the user, or "@me" for the current user
+     * @returns `/channels/{channel.id}/thread-members/{user.id}` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#get-thread-member}
+     */
+    channelThreadMemberEndpoint: (channelId: Snowflake, userId: Snowflake) =>
       `/channels/${channelId}/thread-members/${userId}` as const,
 
-    /** Endpoint for starting a thread without a message */
-    channelStartThreadWithoutMessage: (channelId: Snowflake) =>
+    /**
+     * Route for starting a thread without an associated message.
+     *
+     * Used for:
+     * - POST: Create a new thread that is not connected to an existing message
+     *
+     * This endpoint is also used for creating threads in forum and media channels,
+     * but with different request body parameters.
+     *
+     * @param channelId - The ID of the parent channel
+     * @returns `/channels/{channel.id}/threads` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message}
+     */
+    channelStartThreadWithoutMessageEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/threads` as const,
 
-    /** Endpoint for accessing public archived threads in a channel */
-    channelPublicArchivedThreads: (channelId: Snowflake) =>
+    /**
+     * Route for accessing public archived threads in a channel.
+     *
+     * Used for:
+     * - GET: List all public archived threads in a channel
+     *
+     * Returns PUBLIC_THREAD for text channels and ANNOUNCEMENT_THREAD for announcement channels.
+     * Threads are ordered by archive_timestamp in descending order.
+     *
+     * @param channelId - The ID of the parent channel
+     * @returns `/channels/{channel.id}/threads/archived/public` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads}
+     */
+    channelPublicArchivedThreadsEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/threads/archived/public` as const,
 
-    /** Endpoint for accessing private archived threads in a channel */
-    channelPrivateArchivedThreads: (channelId: Snowflake) =>
+    /**
+     * Route for accessing private archived threads in a channel.
+     *
+     * Used for:
+     * - GET: List all private archived threads in a channel
+     *
+     * Returns only PRIVATE_THREAD. Requires both MANAGE_THREADS and READ_MESSAGE_HISTORY permissions.
+     * Threads are ordered by archive_timestamp in descending order.
+     *
+     * @param channelId - The ID of the parent channel
+     * @returns `/channels/{channel.id}/threads/archived/private` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#list-private-archived-threads}
+     */
+    channelPrivateArchivedThreadsEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/threads/archived/private` as const,
 
-    /** Endpoint for accessing private archived threads the current user has joined */
-    channelJoinedPrivateArchivedThreads: (channelId: Snowflake) =>
+    /**
+     * Route for accessing private archived threads that the current user has joined.
+     *
+     * Used for:
+     * - GET: List private archived threads that the current user has joined
+     *
+     * Only returns PRIVATE_THREAD that the current user has joined.
+     * Threads are ordered by their ID in descending order.
+     *
+     * @param channelId - The ID of the parent channel
+     * @returns `/channels/{channel.id}/users/@me/threads/archived/private` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#list-joined-private-archived-threads}
+     */
+    channelJoinedPrivateArchivedThreadsEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/users/@me/threads/archived/private` as const,
 
-    /** Endpoint for starting a thread from a message */
-    channelStartThreadFromMessage: (
+    /**
+     * Route for starting a thread from an existing message.
+     *
+     * Used for:
+     * - POST: Create a new thread attached to an existing message
+     *
+     * Creates a PUBLIC_THREAD for text channels and an ANNOUNCEMENT_THREAD for announcement channels.
+     * The thread ID will be the same as the message ID.
+     *
+     * @param channelId - The ID of the parent channel
+     * @param messageId - The ID of the message to create a thread from
+     * @returns `/channels/{channel.id}/messages/{message.id}/threads` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message}
+     */
+    channelStartThreadFromMessageEndpoint: (
       channelId: Snowflake,
       messageId: Snowflake,
     ) => `/channels/${channelId}/messages/${messageId}/threads` as const,
 
-    /** Endpoint for starting a thread in a forum or media channel */
-    channelStartThreadInForumOrMediaChannel: (channelId: Snowflake) =>
+    /**
+     * Route for starting a thread in a forum or media channel.
+     *
+     * Used for:
+     * - POST: Create a new thread in a forum or media channel
+     *
+     * Creates a thread with an initial message in a forum or media channel.
+     * This endpoint has the same path as channelStartThreadWithoutMessageEndpoint,
+     * but with different request body parameters.
+     *
+     * @param channelId - The ID of the forum or media channel
+     * @returns `/channels/{channel.id}/threads` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel}
+     */
+    channelStartThreadInForumOrMediaChannelEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/threads` as const,
 
-    /** Endpoint for managing recipients in a group DM */
-    channelRecipients: (channelId: Snowflake, userId: Snowflake) =>
+    /**
+     * Route for managing recipients in a group DM.
+     *
+     * Used for:
+     * - PUT: Add a recipient to a group DM
+     * - DELETE: Remove a recipient from a group DM
+     *
+     * @param channelId - The ID of the group DM channel
+     * @param userId - The ID of the user to add or remove
+     * @returns `/channels/{channel.id}/recipients/{user.id}` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#group-dm-add-recipient}
+     */
+    channelRecipientsEndpoint: (channelId: Snowflake, userId: Snowflake) =>
       `/channels/${channelId}/recipients/${userId}` as const,
 
-    /** Endpoint for following an announcement channel */
-    channelFollowers: (channelId: Snowflake) =>
+    /**
+     * Route for following an announcement channel.
+     *
+     * Used for:
+     * - POST: Follow an announcement channel to send messages to a target channel
+     *
+     * Creates a webhook-based connection between an announcement channel and a target channel.
+     * Messages published in the announcement channel will be forwarded to the target channel.
+     *
+     * @param channelId - The ID of the announcement channel to follow
+     * @returns `/channels/{channel.id}/followers` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#follow-announcement-channel}
+     */
+    channelFollowersEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/followers` as const,
 
-    /** Endpoint for triggering typing indicators */
-    channelTyping: (channelId: Snowflake) =>
+    /**
+     * Route for triggering a typing indicator in a channel.
+     *
+     * Used for:
+     * - POST: Trigger a typing indicator for the current user in a channel
+     *
+     * Shows the typing indicator for about 10 seconds unless a message is sent.
+     * This endpoint can be used when a response will take some time to generate.
+     *
+     * @param channelId - The ID of the channel to show typing in
+     * @returns `/channels/{channel.id}/typing` route
+     * @see {@link https://discord.com/developers/docs/resources/channel#trigger-typing-indicator}
+     */
+    channelTypingEndpoint: (channelId: Snowflake) =>
       `/channels/${channelId}/typing` as const,
   } as const;
 
+  /**
+   * The REST client used for making API requests to Discord.
+   *
+   * This private property stores the Rest instance passed to the constructor.
+   * It's used by all methods to send HTTP requests to Discord's API endpoints.
+   */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new ChannelRouter instance.
+   *
+   * @param rest - The REST client to use for making Discord API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
@@ -508,9 +1046,68 @@ export class ChannelRouter {
    * @returns A promise that resolves to the channel object
    * @remarks If the channel is a thread, the response includes a thread member object for the current user
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel}
+   *
+   * @example
+   * ```typescript
+   * // Fetch a text channel
+   * try {
+   *   const channel = await channelRouter.fetchChannel("123456789012345678");
+   *
+   *   console.log(`Channel: ${channel.name}`);
+   *   console.log(`Type: ${
+   *     channel.type === 0 ? "Text Channel" :
+   *     channel.type === 2 ? "Voice Channel" :
+   *     channel.type === 4 ? "Category" :
+   *     channel.type === 5 ? "Announcement Channel" :
+   *     channel.type === 15 ? "Forum Channel" : "Other"
+   *   }`);
+   *
+   *   if (channel.parent_id) {
+   *     console.log(`Parent category ID: ${channel.parent_id}`);
+   *   }
+   *
+   *   if (channel.topic) {
+   *     console.log(`Topic: ${channel.topic}`);
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch channel:", error);
+   * }
+   *
+   * // Fetch a thread
+   * try {
+   *   const thread = await channelRouter.fetchChannel("987654321987654321");
+   *
+   *   if (thread.type === 11 || thread.type === 12 || thread.type === 10) { // Thread types
+   *     console.log(`Thread: ${thread.name}`);
+   *     console.log(`Parent channel ID: ${thread.parent_id}`);
+   *     console.log(`Owner ID: ${thread.owner_id}`);
+   *
+   *     if (thread.thread_metadata) {
+   *       console.log(`Archived: ${thread.thread_metadata.archived}`);
+   *       console.log(`Auto-archive duration: ${thread.thread_metadata.auto_archive_duration} minutes`);
+   *       console.log(`Locked: ${thread.thread_metadata.locked}`);
+   *     }
+   *
+   *     // The member object is present if the bot is a member of the thread
+   *     if (thread.member) {
+   *       console.log("Bot is a member of this thread");
+   *       console.log(`Joined at: ${new Date(thread.member.join_timestamp).toLocaleString()}`);
+   *     }
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch thread:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * The bot needs access to the channel to fetch it.
+   * Returns a 404 error if the channel doesn't exist or the bot doesn't have access.
+   * For threads, includes a `member` object if the bot is a member of the thread.
    */
-  getChannel(channelId: Snowflake): Promise<AnyChannelEntity> {
-    return this.#rest.get(ChannelRouter.ROUTES.channelBase(channelId));
+  fetchChannel(channelId: Snowflake): Promise<AnyChannelEntity> {
+    return this.#rest.get(
+      ChannelRouter.CHANNEL_ROUTES.channelBaseEndpoint(channelId),
+    );
   }
 
   /**
@@ -525,19 +1122,98 @@ export class ChannelRouter {
    * - For threads, requires various permissions depending on the fields being modified
    * - Fires a Channel Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel}
+   *
+   * @example
+   * ```typescript
+   * // Update a text channel
+   * try {
+   *   const updatedChannel = await channelRouter.updateChannel(
+   *     "123456789012345678",
+   *     {
+   *       name: "general-discussion",
+   *       topic: "A place for general community discussions",
+   *       rate_limit_per_user: 5, // 5 seconds slowmode
+   *       nsfw: false
+   *     },
+   *     "Updating channel settings for better organization"
+   *   );
+   *
+   *   console.log(`Channel updated: ${updatedChannel.name}`);
+   *   console.log(`Topic: ${updatedChannel.topic}`);
+   *   console.log(`Slowmode: ${updatedChannel.rate_limit_per_user} seconds`);
+   * } catch (error) {
+   *   console.error("Failed to update channel:", error);
+   * }
+   *
+   * // Update a voice channel
+   * try {
+   *   const updatedChannel = await channelRouter.updateChannel(
+   *     "123456789012345678",
+   *     {
+   *       name: "Gaming Lounge",
+   *       bitrate: 96000, // 96 kbps
+   *       user_limit: 15, // Limit to 15 users
+   *       parent_id: "987654321987654321" // Move to a different category
+   *     },
+   *     "Improving voice quality and organization"
+   *   );
+   *
+   *   console.log(`Voice channel updated: ${updatedChannel.name}`);
+   *   console.log(`Bitrate: ${updatedChannel.bitrate / 1000} kbps`);
+   *   console.log(`User limit: ${updatedChannel.user_limit || "No limit"}`);
+   * } catch (error) {
+   *   console.error("Failed to update voice channel:", error);
+   * }
+   *
+   * // Update a thread
+   * try {
+   *   const updatedThread = await channelRouter.updateChannel(
+   *     "123456789012345678",
+   *     {
+   *       name: "Important Discussion",
+   *       archived: false, // Unarchive the thread
+   *       auto_archive_duration: 1440, // Auto-archive after 24 hours
+   *       locked: false, // Unlock the thread
+   *       rate_limit_per_user: 10 // 10 seconds slowmode
+   *     },
+   *     "Reopening thread for continued discussion"
+   *   );
+   *
+   *   console.log(`Thread updated: ${updatedThread.name}`);
+   *   console.log(`Archived: ${updatedThread.thread_metadata?.archived}`);
+   *   console.log(`Auto-archive: ${updatedThread.thread_metadata?.auto_archive_duration} minutes`);
+   * } catch (error) {
+   *   console.error("Failed to update thread:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Different permissions are required depending on the channel type and the fields being updated:
+   * - Guild channels: MANAGE_CHANNELS permission
+   * - Threads: Varies based on the operation (e.g., MANAGE_THREADS to change archived or locked status)
+   *
+   * Not all fields can be updated for all channel types. The options parameter should match the channel type:
+   * - Use UpdateChannelGuildChannelSchema for regular guild channels
+   * - Use UpdateChannelThreadSchema for threads
+   * - Use UpdateChannelGroupDmSchema for group DMs
+   *
+   * For forum channels, special fields like available_tags and default_reaction_emoji can be updated.
    */
-  modifyChannel(
+  updateChannel(
     channelId: Snowflake,
     options:
-      | ModifyChannelGuildChannelSchema
-      | ModifyChannelThreadSchema
-      | ModifyChannelGroupDmSchema,
+      | UpdateChannelGuildChannelSchema
+      | UpdateChannelThreadSchema
+      | UpdateChannelGroupDmSchema,
     reason?: string,
   ): Promise<AnyChannelEntity> {
-    return this.#rest.patch(ChannelRouter.ROUTES.channelBase(channelId), {
-      body: JSON.stringify(options),
-      reason,
-    });
+    return this.#rest.patch(
+      ChannelRouter.CHANNEL_ROUTES.channelBaseEndpoint(channelId),
+      {
+        body: JSON.stringify(options),
+        reason,
+      },
+    );
   }
 
   /**
@@ -552,14 +1228,69 @@ export class ChannelRouter {
    * - Fires a Channel Delete Gateway event
    * - Deleting a guild channel cannot be undone
    * @see {@link https://discord.com/developers/docs/resources/channel#deleteclose-channel}
+   *
+   * @example
+   * ```typescript
+   * // Delete a guild channel
+   * try {
+   *   const deletedChannel = await channelRouter.deleteChannel(
+   *     "123456789012345678",
+   *     "Channel no longer needed after server reorganization"
+   *   );
+   *
+   *   console.log(`Channel "${deletedChannel.name}" deleted successfully`);
+   * } catch (error) {
+   *   console.error("Failed to delete channel:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Missing required permissions to delete this channel");
+   *   }
+   * }
+   *
+   * // Close a DM channel
+   * try {
+   *   await channelRouter.deleteChannel("123456789012345678");
+   *
+   *   console.log("DM channel closed successfully");
+   * } catch (error) {
+   *   console.error("Failed to close DM channel:", error);
+   * }
+   *
+   * // Delete a thread
+   * try {
+   *   const deletedThread = await channelRouter.deleteChannel(
+   *     "123456789012345678",
+   *     "Thread topic resolved and no longer needed"
+   *   );
+   *
+   *   console.log(`Thread "${deletedThread.name}" deleted successfully`);
+   * } catch (error) {
+   *   console.error("Failed to delete thread:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Different permissions are required depending on the channel type:
+   * - Guild channels: MANAGE_CHANNELS permission
+   * - Threads: MANAGE_THREADS permission
+   * - DM channels: No special permissions required
+   *
+   * For guild channels and threads, this action is permanent and cannot be undone.
+   * For DM channels, this just closes the DM from the bot's perspective.
+   *
+   * Deleting a category does not automatically delete the channels within it.
+   * For forum channels, deleting the channel will delete all threads within it.
    */
   deleteChannel(
     channelId: Snowflake,
     reason?: string,
   ): Promise<AnyChannelEntity> {
-    return this.#rest.delete(ChannelRouter.ROUTES.channelBase(channelId), {
-      reason,
-    });
+    return this.#rest.delete(
+      ChannelRouter.CHANNEL_ROUTES.channelBaseEndpoint(channelId),
+      {
+        reason,
+      },
+    );
   }
 
   /**
@@ -575,6 +1306,53 @@ export class ChannelRouter {
    * - Requires the MANAGE_ROLES permission
    * - Fires a Channel Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions}
+   *
+   * @example
+   * ```typescript
+   * // Set permissions for a role in a channel
+   * try {
+   *   await channelRouter.editChannelPermissions(
+   *     "123456789012345678", // Channel ID
+   *     "111111111111111111", // Role ID
+   *     {
+   *       allow: "1024", // Add CONNECT permission (1 << 10)
+   *       deny: "2048",  // Deny SPEAK permission (1 << 11)
+   *       type: 0        // 0 for role, 1 for member
+   *     },
+   *     "Configuring role permissions for voice channel"
+   *   );
+   *
+   *   console.log("Channel permissions updated for role");
+   * } catch (error) {
+   *   console.error("Failed to edit channel permissions:", error);
+   * }
+   *
+   * // Set permissions for a user in a channel
+   * try {
+   *   await channelRouter.editChannelPermissions(
+   *     "123456789012345678", // Channel ID
+   *     "222222222222222222", // User ID
+   *     {
+   *       allow: "6144",  // ADD_REACTIONS and EMBED_LINKS (1 << 11 | 1 << 12)
+   *       deny: "0",      // No denied permissions
+   *       type: 1         // 0 for role, 1 for member
+   *     },
+   *     "Granting special permissions to moderator"
+   *   );
+   *
+   *   console.log("Channel permissions updated for user");
+   * } catch (error) {
+   *   console.error("Failed to edit channel permissions for user:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the MANAGE_ROLES permission in the guild.
+   * The bot's highest role must be higher than the role being edited (for role overwrites).
+   * Permission overwrites allow you to grant or deny specific permissions to roles or users in a channel.
+   * The `type` field must be 0 for role or 1 for member.
+   * Permissions values should be provided as string-encoded bitfields.
+   * Fires a Channel Update Gateway event.
    */
   editChannelPermissions(
     channelId: Snowflake,
@@ -583,7 +1361,10 @@ export class ChannelRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.put(
-      ChannelRouter.ROUTES.channelPermission(channelId, overwriteId),
+      ChannelRouter.CHANNEL_ROUTES.channelPermissionEndpoint(
+        channelId,
+        overwriteId,
+      ),
       {
         body: JSON.stringify(permissions),
         reason,
@@ -600,9 +1381,56 @@ export class ChannelRouter {
    * - Only usable for guild channels
    * - Requires the MANAGE_CHANNELS permission
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-invites}
+   *
+   * @example
+   * ```typescript
+   * // Fetch all invites for a channel
+   * try {
+   *   const invites = await channelRouter.fetchChannelInvites("123456789012345678");
+   *
+   *   console.log(`Channel has ${invites.length} active invites`);
+   *
+   *   // Display information about each invite
+   *   invites.forEach(invite => {
+   *     console.log(`- Code: ${invite.code}`);
+   *
+   *     if (invite.inviter) {
+   *       console.log(`  Created by: ${invite.inviter.username}`);
+   *     }
+   *
+   *     // Check expiration
+   *     if (invite.max_age === 0) {
+   *       console.log("  Never expires");
+   *     } else {
+   *       const expiresIn = invite.max_age / 3600; // Convert to hours
+   *       console.log(`  Expires after: ${expiresIn} hours`);
+   *     }
+   *
+   *     // Check uses
+   *     if (invite.max_uses === 0) {
+   *       console.log("  Unlimited uses");
+   *     } else {
+   *       console.log(`  Max uses: ${invite.max_uses}`);
+   *     }
+   *
+   *     if (invite.temporary) {
+   *       console.log("  Grants temporary membership");
+   *     }
+   *   });
+   * } catch (error) {
+   *   console.error("Failed to fetch channel invites:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the MANAGE_CHANNELS permission.
+   * Only works for guild channels, not DMs or group DMs.
+   * Returns all active invites for the channel with detailed information about each.
    */
-  getChannelInvites(channelId: Snowflake): Promise<InviteEntity[]> {
-    return this.#rest.get(ChannelRouter.ROUTES.channelInvites(channelId));
+  fetchChannelInvites(channelId: Snowflake): Promise<InviteEntity[]> {
+    return this.#rest.get(
+      ChannelRouter.CHANNEL_ROUTES.channelInvitesEndpoint(channelId),
+    );
   }
 
   /**
@@ -617,16 +1445,74 @@ export class ChannelRouter {
    * - Requires the CREATE_INSTANT_INVITE permission
    * - Fires an Invite Create Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#create-channel-invite}
+   *
+   * @example
+   * ```typescript
+   * // Create a standard invite
+   * try {
+   *   const invite = await channelRouter.createChannelInvite(
+   *     "123456789012345678",
+   *     {
+   *       max_age: 86400,    // Expires after 24 hours
+   *       max_uses: 0,       // Unlimited uses
+   *       temporary: false,  // Regular membership
+   *       unique: true       // Create a unique link even if similar ones exist
+   *     },
+   *     "Creating invite for new member recruitment"
+   *   );
+   *
+   *   console.log(`Invite created: https://discord.gg/${invite.code}`);
+   *   console.log(`Expires after: ${invite.max_age / 3600} hours`);
+   * } catch (error) {
+   *   console.error("Failed to create invite:", error);
+   * }
+   *
+   * // Create a special invite for a voice channel activity
+   * try {
+   *   const invite = await channelRouter.createChannelInvite(
+   *     "123456789012345678", // Voice channel ID
+   *     {
+   *       max_age: 3600,     // Expires after 1 hour
+   *       max_uses: 10,      // Limited to 10 uses
+   *       temporary: true,   // Temporary membership
+   *       unique: true,
+   *       target_type: 2,    // Target type 2 = voice channel activity
+   *       target_application_id: "755827207812677713" // YouTube Together application
+   *     },
+   *     "Creating activity invite for game night"
+   *   );
+   *
+   *   console.log(`Activity invite created: https://discord.gg/${invite.code}`);
+   * } catch (error) {
+   *   console.error("Failed to create activity invite:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the CREATE_INSTANT_INVITE permission.
+   * Only works for guild channels, not DMs or group DMs.
+   *
+   * Parameters:
+   * - max_age: Duration in seconds before the invite expires (0 = never expires, max 604800 = 7 days)
+   * - max_uses: Maximum number of times the invite can be used (0 = unlimited, max 100)
+   * - temporary: Whether the invite grants temporary membership (removed when they disconnect)
+   * - unique: Whether to create a unique link even if a similar one exists
+   *
+   * For voice channels, you can create activity invites with target_type and target_application_id.
+   * Fires an Invite Create Gateway event.
    */
   createChannelInvite(
     channelId: Snowflake,
     options: CreateChannelInviteSchema,
     reason?: string,
   ): Promise<InviteEntity> {
-    return this.#rest.post(ChannelRouter.ROUTES.channelInvites(channelId), {
-      body: JSON.stringify(options),
-      reason,
-    });
+    return this.#rest.post(
+      ChannelRouter.CHANNEL_ROUTES.channelInvitesEndpoint(channelId),
+      {
+        body: JSON.stringify(options),
+        reason,
+      },
+    );
   }
 
   /**
@@ -641,6 +1527,42 @@ export class ChannelRouter {
    * - Requires the MANAGE_ROLES permission
    * - Fires a Channel Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-channel-permission}
+   *
+   * @example
+   * ```typescript
+   * // Delete a role permission overwrite
+   * try {
+   *   await channelRouter.deleteChannelPermission(
+   *     "123456789012345678", // Channel ID
+   *     "111111111111111111", // Role ID
+   *     "Removing custom permissions as part of permission cleanup"
+   *   );
+   *
+   *   console.log("Role permission overwrite deleted successfully");
+   * } catch (error) {
+   *   console.error("Failed to delete permission overwrite:", error);
+   * }
+   *
+   * // Delete a user permission overwrite
+   * try {
+   *   await channelRouter.deleteChannelPermission(
+   *     "123456789012345678", // Channel ID
+   *     "222222222222222222", // User ID
+   *     "Removing user-specific permissions"
+   *   );
+   *
+   *   console.log("User permission overwrite deleted successfully");
+   * } catch (error) {
+   *   console.error("Failed to delete user permission overwrite:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the MANAGE_ROLES permission in the guild.
+   * The bot's highest role must be higher than the role being edited (for role overwrites).
+   * Deleting a permission overwrite resets that role or user to using the default permissions for the channel.
+   * This action cannot be undone automatically.
+   * Fires a Channel Update Gateway event.
    */
   deleteChannelPermission(
     channelId: Snowflake,
@@ -648,7 +1570,10 @@ export class ChannelRouter {
     reason?: string,
   ): Promise<AnyChannelEntity> {
     return this.#rest.delete(
-      ChannelRouter.ROUTES.channelPermission(channelId, overwriteId),
+      ChannelRouter.CHANNEL_ROUTES.channelPermissionEndpoint(
+        channelId,
+        overwriteId,
+      ),
       {
         reason,
       },
@@ -666,16 +1591,50 @@ export class ChannelRouter {
    * - Requires the MANAGE_WEBHOOKS permission in the target channel
    * - Fires a Webhooks Update Gateway event for the target channel
    * @see {@link https://discord.com/developers/docs/resources/channel#follow-announcement-channel}
+   *
+   * @example
+   * ```typescript
+   * // Follow an announcement channel
+   * try {
+   *   const follow = await channelRouter.followAnnouncementChannel(
+   *     "123456789012345678", // Announcement channel ID
+   *     "987654321987654321", // Target channel ID where announcements will be reposted
+   *     "Setting up announcement feed for community updates"
+   *   );
+   *
+   *   console.log("Announcement channel followed successfully");
+   *   console.log(`Source channel ID: ${follow.channel_id}`);
+   *   console.log(`Webhook ID: ${follow.webhook_id}`);
+   * } catch (error) {
+   *   console.error("Failed to follow announcement channel:", error);
+   *
+   *   if (error.status === 400) {
+   *     console.error("Source channel must be an announcement channel type");
+   *   } else if (error.status === 403) {
+   *     console.error("Missing MANAGE_WEBHOOKS permission in the target channel");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the MANAGE_WEBHOOKS permission in the target channel.
+   * The source channel must be an announcement channel (type 5).
+   * This creates a webhook in the target channel that will repost messages that are published in the source channel.
+   * There is a limit of 10 followed channels per channel.
+   * Fires a Webhooks Update Gateway event.
    */
   followAnnouncementChannel(
     channelId: Snowflake,
     webhookChannelId: Snowflake,
     reason?: string,
   ): Promise<FollowedChannelEntity> {
-    return this.#rest.post(ChannelRouter.ROUTES.channelFollowers(channelId), {
-      body: JSON.stringify({ webhook_channel_id: webhookChannelId }),
-      reason,
-    });
+    return this.#rest.post(
+      ChannelRouter.CHANNEL_ROUTES.channelFollowersEndpoint(channelId),
+      {
+        body: JSON.stringify({ webhook_channel_id: webhookChannelId }),
+        reason,
+      },
+    );
   }
 
   /**
@@ -688,9 +1647,35 @@ export class ChannelRouter {
    * - Generally bots should not use this route, but it can be useful when responding
    *   to a command that will take a few seconds of processing
    * @see {@link https://discord.com/developers/docs/resources/channel#trigger-typing-indicator}
+   *
+   * @example
+   * ```typescript
+   * // Trigger typing indicator before a long operation
+   * try {
+   *   await channelRouter.triggerTypingIndicator("123456789012345678");
+   *   console.log("Typing indicator triggered");
+   *
+   *   // Perform a long operation
+   *   console.log("Starting long operation...");
+   *   await someTimeConsumingOperation();
+   *
+   *   // Send the message after completing the operation
+   *   // message.send("Operation completed!");
+   * } catch (error) {
+   *   console.error("Failed to trigger typing indicator:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * The typing indicator lasts for approximately 10 seconds or until a message is sent.
+   * For operations that take longer than 10 seconds, you may need to trigger it multiple times.
+   * Generally, bots should use this sparingly and only when there will be a noticeable delay before responding.
+   * Fires a Typing Start Gateway event.
    */
   triggerTypingIndicator(channelId: Snowflake): Promise<void> {
-    return this.#rest.post(ChannelRouter.ROUTES.channelTyping(channelId));
+    return this.#rest.post(
+      ChannelRouter.CHANNEL_ROUTES.channelTypingEndpoint(channelId),
+    );
   }
 
   /**
@@ -699,9 +1684,44 @@ export class ChannelRouter {
    * @param channelId - ID of the channel
    * @returns A promise that resolves to an array of message objects
    * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
+   *
+   * @example
+   * ```typescript
+   * // Fetch pinned messages in a channel
+   * try {
+   *   const pinnedMessages = await channelRouter.fetchPinnedMessages("123456789012345678");
+   *
+   *   console.log(`Channel has ${pinnedMessages.length} pinned messages`);
+   *
+   *   // Display information about each pinned message
+   *   pinnedMessages.forEach(message => {
+   *     console.log(`- Message ID: ${message.id}`);
+   *     console.log(`  Author: ${message.author.username}`);
+   *     console.log(`  Created: ${new Date(message.timestamp).toLocaleString()}`);
+   *     console.log(`  Content: ${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''}`);
+   *
+   *     if (message.attachments.length > 0) {
+   *       console.log(`  Attachments: ${message.attachments.length}`);
+   *     }
+   *
+   *     if (message.embeds.length > 0) {
+   *       console.log(`  Embeds: ${message.embeds.length}`);
+   *     }
+   *   });
+   * } catch (error) {
+   *   console.error("Failed to fetch pinned messages:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Returns all pinned messages in the channel in chronological order (oldest first).
+   * A channel can have up to 50 pinned messages.
+   * The bot must have access to view the channel and its message history.
    */
-  getPinnedMessages(channelId: Snowflake): Promise<MessageEntity[]> {
-    return this.#rest.get(ChannelRouter.ROUTES.channelPins(channelId));
+  fetchPinnedMessages(channelId: Snowflake): Promise<MessageEntity[]> {
+    return this.#rest.get(
+      ChannelRouter.CHANNEL_ROUTES.channelPinsEndpoint(channelId),
+    );
   }
 
   /**
@@ -716,6 +1736,34 @@ export class ChannelRouter {
    * - Fires a Channel Pins Update Gateway event
    * - Maximum of 50 pinned messages per channel
    * @see {@link https://discord.com/developers/docs/resources/channel#pin-message}
+   *
+   * @example
+   * ```typescript
+   * // Pin a message
+   * try {
+   *   await channelRouter.pinMessage(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321", // Message ID
+   *     "Pinning important server announcement"
+   *   );
+   *
+   *   console.log("Message pinned successfully");
+   * } catch (error) {
+   *   console.error("Failed to pin message:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Missing MANAGE_MESSAGES permission");
+   *   } else if (error.status === 429) {
+   *     console.error("You have reached the maximum number of pins (50) for this channel");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the MANAGE_MESSAGES permission.
+   * There is a maximum of 50 pinned messages per channel.
+   * The message must be in the same channel as the channelId parameter.
+   * Fires a Channel Pins Update Gateway event.
    */
   pinMessage(
     channelId: Snowflake,
@@ -723,7 +1771,10 @@ export class ChannelRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.put(
-      ChannelRouter.ROUTES.channelPinnedMessage(channelId, messageId),
+      ChannelRouter.CHANNEL_ROUTES.channelPinnedMessageEndpoint(
+        channelId,
+        messageId,
+      ),
       {
         reason,
       },
@@ -741,6 +1792,33 @@ export class ChannelRouter {
    * - Requires the MANAGE_MESSAGES permission
    * - Fires a Channel Pins Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#unpin-message}
+   *
+   * @example
+   * ```typescript
+   * // Unpin a message
+   * try {
+   *   await channelRouter.unpinMessage(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321", // Message ID
+   *     "Removing outdated pinned announcement"
+   *   );
+   *
+   *   console.log("Message unpinned successfully");
+   * } catch (error) {
+   * console.error("Failed to unpin message:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Missing MANAGE_MESSAGES permission");
+   *   } else if (error.status === 404) {
+   *     console.error("Message not pinned or does not exist");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the MANAGE_MESSAGES permission.
+   * The message must already be pinned in the channel.
+   * Fires a Channel Pins Update Gateway event.
    */
   unpinMessage(
     channelId: Snowflake,
@@ -748,7 +1826,10 @@ export class ChannelRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      ChannelRouter.ROUTES.channelPinnedMessage(channelId, messageId),
+      ChannelRouter.CHANNEL_ROUTES.channelPinnedMessageEndpoint(
+        channelId,
+        messageId,
+      ),
       {
         reason,
       },
@@ -764,14 +1845,43 @@ export class ChannelRouter {
    * @returns A promise that resolves to void on success
    * @remarks The access token must have the gdm.join scope
    * @see {@link https://discord.com/developers/docs/resources/channel#group-dm-add-recipient}
+   *
+   * @example
+   * ```typescript
+   * // Add a user to a group DM
+   * try {
+   *   await channelRouter.addGroupDmRecipient(
+   *     "123456789012345678", // Group DM channel ID
+   *     "987654321987654321", // User ID
+   *     {
+   *       access_token: "user_oauth2_access_token_with_gdm_join_scope",
+   *       nick: "New Member" // Optional nickname for the user
+   *     }
+   *   );
+   *
+   *   console.log("User added to group DM successfully");
+   * } catch (error) {
+   *   console.error("Failed to add user to group DM:", error);
+   *
+   *   if (error.status === 400) {
+   *     console.error("Invalid access token or missing required scope");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * The access token must have the `gdm.join` scope.
+   * The token must be from the user being added to the group DM.
+   * This operation is typically used in OAuth2 flows where a user has authorized your application.
+   * Group DMs have a maximum size limit (typically 10 users).
    */
-  groupDmAddRecipient(
+  addGroupDmRecipient(
     channelId: Snowflake,
     userId: Snowflake,
     options: AddGroupDmRecipientSchema,
   ): Promise<void> {
     return this.#rest.put(
-      ChannelRouter.ROUTES.channelRecipients(channelId, userId),
+      ChannelRouter.CHANNEL_ROUTES.channelRecipientsEndpoint(channelId, userId),
       {
         body: JSON.stringify(options),
       },
@@ -785,13 +1895,37 @@ export class ChannelRouter {
    * @param userId - ID of the user to remove
    * @returns A promise that resolves to void on success
    * @see {@link https://discord.com/developers/docs/resources/channel#group-dm-remove-recipient}
+   *
+   * @example
+   * ```typescript
+   * // Remove a user from a group DM
+   * try {
+   *   await channelRouter.removeGroupDmRecipient(
+   *     "123456789012345678", // Group DM channel ID
+   *     "987654321987654321"  // User ID
+   *   );
+   *
+   *   console.log("User removed from group DM successfully");
+   * } catch (error) {
+   *   console.error("Failed to remove user from group DM:", error);
+   *
+   *   if (error.status === 404) {
+   *     console.error("User is not a member of this group DM");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * The bot must own the group DM or be removing itself from the group.
+   * If removing the bot account from the group DM, the channel will be closed for the bot.
+   * If all users leave a group DM, it becomes inaccessible.
    */
-  groupDmRemoveRecipient(
+  removeGroupDmRecipient(
     channelId: Snowflake,
     userId: Snowflake,
   ): Promise<void> {
     return this.#rest.delete(
-      ChannelRouter.ROUTES.channelRecipients(channelId, userId),
+      ChannelRouter.CHANNEL_ROUTES.channelRecipientsEndpoint(channelId, userId),
     );
   }
 
@@ -809,6 +1943,49 @@ export class ChannelRouter {
    * - When called on a GUILD_ANNOUNCEMENT channel, creates an ANNOUNCEMENT_THREAD
    * - The thread ID will be the same as the source message ID
    * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message}
+   *
+   * @example
+   * ```typescript
+   * // Create a thread from a message in a text channel
+   * try {
+   *   const thread = await channelRouter.startThreadFromMessage(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321", // Message ID
+   *     {
+   *       name: "Discussion Thread",
+   *       auto_archive_duration: 1440, // Archive after 24 hours of inactivity
+   *       rate_limit_per_user: 5      // 5 seconds slowmode
+   *     },
+   *     "Creating discussion thread for community feedback"
+   *   );
+   *
+   *   console.log(`Thread created: ${thread.name} (ID: ${thread.id})`);
+   *   console.log(`Parent channel: ${thread.parent_id}`);
+   *   console.log(`Auto-archive: ${thread.thread_metadata.auto_archive_duration} minutes`);
+   * } catch (error) {
+   *   console.error("Failed to create thread from message:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Missing permissions or thread creation limit reached");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * The type of thread created depends on the parent channel:
+   * - GUILD_TEXT channel → PUBLIC_THREAD (type 11)
+   * - GUILD_ANNOUNCEMENT channel → ANNOUNCEMENT_THREAD (type 10)
+   *
+   * The thread ID will be the same as the message ID it was created from.
+   * A message can only have a single thread created from it.
+   *
+   * Auto-archive durations:
+   * - 60 minutes (requires COMMUNITY feature or PREMIUM_TIER level 2)
+   * - 1440 minutes (24 hours)
+   * - 4320 minutes (3 days, requires PREMIUM_TIER level 1)
+   * - 10080 minutes (7 days, requires PREMIUM_TIER level 2)
+   *
+   * Fires both a Thread Create and a Message Update Gateway event.
    */
   startThreadFromMessage(
     channelId: Snowflake,
@@ -817,7 +1994,10 @@ export class ChannelRouter {
     reason?: string,
   ): Promise<AnyThreadChannelEntity> {
     return this.#rest.post(
-      ChannelRouter.ROUTES.channelStartThreadFromMessage(channelId, messageId),
+      ChannelRouter.CHANNEL_ROUTES.channelStartThreadFromMessageEndpoint(
+        channelId,
+        messageId,
+      ),
       {
         body: JSON.stringify(options),
         reason,
@@ -836,6 +2016,58 @@ export class ChannelRouter {
    * - Fires a Thread Create Gateway event
    * - By default creates a PRIVATE_THREAD if type is not specified
    * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message}
+   *
+   * @example
+   * ```typescript
+   * // Create a public thread without a message
+   * try {
+   *   const thread = await channelRouter.startThreadWithoutMessage(
+   *     "123456789012345678", // Channel ID
+   *     {
+   *       name: "General Discussion",
+   *       type: 11, // PUBLIC_THREAD
+   *       auto_archive_duration: 4320, // Archive after 3 days (requires premium tier)
+   *       rate_limit_per_user: 0       // No slowmode
+   *     },
+   *     "Creating general discussion thread"
+   *   );
+   *
+   *   console.log(`Public thread created: ${thread.name} (ID: ${thread.id})`);
+   * } catch (error) {
+   *   console.error("Failed to create public thread:", error);
+   * }
+   *
+   * // Create a private thread
+   * try {
+   *   const thread = await channelRouter.startThreadWithoutMessage(
+   *     "123456789012345678", // Channel ID
+   *     {
+   *       name: "Moderator Discussion",
+   *       type: 12, // PRIVATE_THREAD
+   *       auto_archive_duration: 1440, // Archive after 24 hours
+   *       invitable: false            // Only moderators can add members
+   *     },
+   *     "Creating private moderator discussion thread"
+   *   );
+   *
+   *   console.log(`Private thread created: ${thread.name} (ID: ${thread.id})`);
+   * } catch (error) {
+   *   console.error("Failed to create private thread:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * The channel must be a text or announcement channel to create threads.
+   *
+   * Thread types:
+   * - PUBLIC_THREAD (type 11): Visible to everyone, anyone can join
+   * - PRIVATE_THREAD (type 12): Only visible to those invited (requires COMMUNITY feature)
+   * - ANNOUNCEMENT_THREAD (type 10): Can only be created in announcement channels
+   *
+   * Creating PRIVATE_THREAD requires the COMMUNITY feature to be enabled for the guild.
+   * The `invitable` parameter only applies to PRIVATE_THREAD and determines if non-moderators can add others.
+   *
+   * Fires a Thread Create Gateway event.
    */
   startThreadWithoutMessage(
     channelId: Snowflake,
@@ -843,7 +2075,9 @@ export class ChannelRouter {
     reason?: string,
   ): Promise<AnyThreadChannelEntity> {
     return this.#rest.post(
-      ChannelRouter.ROUTES.channelStartThreadWithoutMessage(channelId),
+      ChannelRouter.CHANNEL_ROUTES.channelStartThreadWithoutMessageEndpoint(
+        channelId,
+      ),
       {
         body: JSON.stringify(options),
         reason,
@@ -863,6 +2097,53 @@ export class ChannelRouter {
    * - Requires the SEND_MESSAGES permission
    * - The type of the created thread is PUBLIC_THREAD
    * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel}
+   *
+   * @example
+   * ```typescript
+   * // Create a thread in a forum channel
+   * try {
+   *   const thread = await channelRouter.startThreadInForumOrMediaChannel(
+   *     "123456789012345678", // Forum channel ID
+   *     {
+   *       name: "Important Announcement",
+   *       auto_archive_duration: 10080, // 7 days
+   *       rate_limit_per_user: 10,      // 10 seconds slowmode
+   *       message: {
+   *         content: "Hey everyone! This is an important announcement about upcoming events.",
+   *         embeds: [
+   *           {
+   *             title: "Upcoming Events",
+   *             description: "We have several events planned for next month.",
+   *             color: 0x00FFFF
+   *           }
+   *         ]
+   *       },
+   *       applied_tags: ["111111111111111111", "222222222222222222"] // Tag IDs
+   *     },
+   *     "Creating announcement thread in forum"
+   *   );
+   *
+   *   console.log(`Forum thread created: ${thread.name} (ID: ${thread.id})`);
+   *
+   *   if (thread.applied_tags?.length > 0) {
+   *     console.log(`Applied tags: ${thread.applied_tags.join(', ')}`);
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to create forum thread:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * This method creates a new thread in a forum or media channel along with its first message.
+   * Forum threads are designed for topic-based discussions and are organized with tags.
+   *
+   * The `message` parameter is required and contains the content for the first message in the thread.
+   * The `applied_tags` parameter allows you to add tags to the thread for organization (up to 5 tags).
+   *
+   * Forum threads have the same auto-archive duration options as regular threads.
+   * The created thread will be of type PUBLIC_THREAD (type 11).
+   *
+   * Fires both Thread Create and Message Create Gateway events.
    */
   startThreadInForumOrMediaChannel(
     channelId: Snowflake,
@@ -872,7 +2153,9 @@ export class ChannelRouter {
     reason?: string,
   ): Promise<GuildForumChannelEntity | GuildMediaChannelEntity> {
     return this.#rest.post(
-      ChannelRouter.ROUTES.channelStartThreadInForumOrMediaChannel(channelId),
+      ChannelRouter.CHANNEL_ROUTES.channelStartThreadInForumOrMediaChannelEndpoint(
+        channelId,
+      ),
       {
         body: JSON.stringify(options),
         reason,
@@ -889,10 +2172,34 @@ export class ChannelRouter {
    * - Requires the thread to not be archived
    * - Fires a Thread Members Update and Thread Create Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#join-thread}
+   *
+   * @example
+   * ```typescript
+   * // Join a thread
+   * try {
+   *   await channelRouter.joinThread("123456789012345678");
+   *   console.log("Successfully joined the thread");
+   * } catch (error) {
+   *   console.error("Failed to join thread:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Cannot join thread (may be archived or locked)");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * The thread must not be archived.
+   * For private threads, the bot must have been added by a member with MANAGE_THREADS permission or be mentioned in the thread.
+   * Fires a Thread Members Update Gateway event.
+   * Also fires a Thread Create Gateway event with the newly joined thread for the current user.
    */
   joinThread(channelId: Snowflake): Promise<void> {
     return this.#rest.put(
-      ChannelRouter.ROUTES.channelThreadMember(channelId, "@me"),
+      ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
+        channelId,
+        "@me",
+      ),
     );
   }
 
@@ -907,10 +2214,42 @@ export class ChannelRouter {
    * - Requires the thread to not be archived
    * - Fires a Thread Members Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#add-thread-member}
+   *
+   * @example
+   * ```typescript
+   * // Add a user to a thread
+   * try {
+   *   await channelRouter.addThreadMember(
+   *     "123456789012345678", // Thread ID
+   *     "987654321987654321"  // User ID
+   *   );
+   *
+   *   console.log("User added to thread successfully");
+   * } catch (error) {
+   *   console.error("Failed to add user to thread:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Cannot add user (thread may be private or archived)");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * The thread must not be archived.
+   * For public threads, any user can be added.
+   * For private threads:
+   * - Adding a user requires MANAGE_THREADS permission
+   * - If `invitable` is true, then thread members can add other users
+   * - The user to be added must be able to see the parent channel
+   *
+   * Fires a Thread Members Update Gateway event.
    */
   addThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
     return this.#rest.put(
-      ChannelRouter.ROUTES.channelThreadMember(channelId, userId),
+      ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
+        channelId,
+        userId,
+      ),
     );
   }
 
@@ -923,10 +2262,33 @@ export class ChannelRouter {
    * - Requires the thread to not be archived
    * - Fires a Thread Members Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#leave-thread}
+   *
+   * @example
+   * ```typescript
+   * // Leave a thread
+   * try {
+   *   await channelRouter.leaveThread("123456789012345678");
+   *   console.log("Successfully left the thread");
+   * } catch (error) {
+   *   console.error("Failed to leave thread:", error);
+   *
+   *   if (error.status === 404) {
+   *     console.error("Bot is not a member of this thread");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * The thread must not be archived.
+   * A user can always leave a thread they're a member of.
+   * Fires a Thread Members Update Gateway event.
    */
   leaveThread(channelId: Snowflake): Promise<void> {
     return this.#rest.delete(
-      ChannelRouter.ROUTES.channelThreadMember(channelId, "@me"),
+      ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
+        channelId,
+        "@me",
+      ),
     );
   }
 
@@ -941,10 +2303,42 @@ export class ChannelRouter {
    * - Requires the thread to not be archived
    * - Fires a Thread Members Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#remove-thread-member}
+   *
+   * @example
+   * ```typescript
+   * // Remove a user from a thread
+   * try {
+   *   await channelRouter.removeThreadMember(
+   *     "123456789012345678", // Thread ID
+   *     "987654321987654321"  // User ID
+   *   );
+   *
+   *   console.log("User removed from thread successfully");
+   * } catch (error) {
+   *   console.error("Failed to remove user from thread:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Missing permissions to remove this user");
+   *   } else if (error.status === 404) {
+   *     console.error("User is not a member of this thread");
+   *   }
+   * }
+   * ```
+   *
+   * @remarks
+   * Removing members requires one of the following:
+   * - The MANAGE_THREADS permission
+   * - Being the thread creator (only for private threads)
+   *
+   * The thread must not be archived.
+   * Fires a Thread Members Update Gateway event.
    */
   removeThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
     return this.#rest.delete(
-      ChannelRouter.ROUTES.channelThreadMember(channelId, userId),
+      ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
+        channelId,
+        userId,
+      ),
     );
   }
 
@@ -957,14 +2351,66 @@ export class ChannelRouter {
    * @returns A promise that resolves to the thread member
    * @remarks Returns a 404 response if the user is not a member of the thread
    * @see {@link https://discord.com/developers/docs/resources/channel#get-thread-member}
+   *
+   * @example
+   * ```typescript
+   * // Fetch a thread member without guild info
+   * try {
+   *   const threadMember = await channelRouter.fetchThreadMember(
+   *     "123456789012345678", // Thread ID
+   *     "987654321987654321"  // User ID
+   *   );
+   *
+   *   console.log(`User is a member of the thread`);
+   *   console.log(`Joined at: ${new Date(threadMember.join_timestamp).toLocaleString()}`);
+   *
+   *   if (threadMember.flags !== 0) {
+   *     console.log(`Has special thread member flags: ${threadMember.flags}`);
+   *   }
+   * } catch (error) {
+   *   if (error.status === 404) {
+   *     console.log("User is not a member of this thread");
+   *   } else {
+   *     console.error("Failed to fetch thread member:", error);
+   *   }
+   * }
+   *
+   * // Fetch a thread member with guild info
+   * try {
+   *   const threadMember = await channelRouter.fetchThreadMember(
+   *     "123456789012345678", // Thread ID
+   *     "987654321987654321", // User ID
+   *     true                 // Include guild member info
+   *   );
+   *
+   *   console.log(`Thread member found`);
+   *
+   *   // Guild member info is available when withMember is true
+   *   if (threadMember.member) {
+   *     console.log(`Username: ${threadMember.member.user.username}`);
+   *     console.log(`Roles: ${threadMember.member.roles.length} roles`);
+   *     console.log(`Joined server: ${new Date(threadMember.member.joined_at).toLocaleString()}`);
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch thread member with guild info:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Returns a 404 response if the user is not a member of the thread.
+   * When `withMember` is true, the response includes guild member information.
+   * Including guild member information requires the GUILD_MEMBERS privileged intent to be enabled.
    */
-  getThreadMember(
+  fetchThreadMember(
     channelId: Snowflake,
     userId: Snowflake,
     withMember = false,
   ): Promise<ThreadMemberEntity> {
     return this.#rest.get(
-      ChannelRouter.ROUTES.channelThreadMember(channelId, userId),
+      ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
+        channelId,
+        userId,
+      ),
       {
         query: { with_member: withMember },
       },
@@ -981,13 +2427,80 @@ export class ChannelRouter {
    * - When with_member is true, results will be paginated and include guild member information
    * - Requires the GUILD_MEMBERS Privileged Intent to be enabled
    * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members}
+   *
+   * @example
+   * ```typescript
+   * // List thread members (basic)
+   * try {
+   *   const members = await channelRouter.fetchThreadMembers("123456789012345678");
+   *
+   *   console.log(`Thread has ${members.length} members`);
+   *
+   *   members.forEach(member => {
+   *     console.log(`- Member joined at: ${new Date(member.join_timestamp).toLocaleString()}`);
+   *   });
+   * } catch (error) {
+   *   console.error("Failed to fetch thread members:", error);
+   * }
+   *
+   * // List thread members with guild member information and pagination
+   * try {
+   *   // First batch with member info
+   *   const firstBatch = await channelRouter.fetchThreadMembers(
+   *     "123456789012345678",
+   *     {
+   *       with_member: true,
+   *       limit: 10
+   *     }
+   *   );
+   *
+   *   console.log(`Fetched ${firstBatch.length} thread members with guild info`);
+   *
+   *   firstBatch.forEach(member => {
+   *     if (member.member) {
+   *       console.log(`- ${member.member.user.username} joined thread at: ${new Date(member.join_timestamp).toLocaleString()}`);
+   *     }
+   *   });
+   *
+   *   // If there are potentially more members, paginate
+   *   if (firstBatch.length === 10) {
+   *     const lastUserId = firstBatch[firstBatch.length - 1].user_id;
+   *
+   *     // Get next batch starting after the last user from previous batch
+   *     const nextBatch = await channelRouter.fetchThreadMembers(
+   *       "123456789012345678",
+   *       {
+   *         with_member: true,
+   *         limit: 10,
+   *         after: lastUserId
+   *       }
+   *     );
+   *
+   *     console.log(`Fetched next ${nextBatch.length} thread members`);
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch thread members with guild info:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * When `with_member` is true:
+   * - Results include detailed guild member information for each thread member
+   * - The GUILD_MEMBERS Privileged Intent must be enabled in your application
+   * - Results are paginated and can be navigated using the `after` and `limit` parameters
+   *
+   * When `with_member` is false:
+   * - Only basic thread member information is returned
+   * - All thread members are returned in a single request (no pagination)
+   *
+   * The maximum `limit` value is 100 thread members per request.
    */
-  listThreadMembers(
+  fetchThreadMembers(
     channelId: Snowflake,
     query: ListThreadMembersQuerySchema = {},
   ): Promise<ThreadMemberEntity[]> {
     return this.#rest.get(
-      ChannelRouter.ROUTES.channelThreadMembers(channelId),
+      ChannelRouter.CHANNEL_ROUTES.channelThreadMembersEndpoint(channelId),
       {
         query,
       },
@@ -1006,13 +2519,78 @@ export class ChannelRouter {
    * - Threads are ordered by archive_timestamp in descending order
    * - Requires the READ_MESSAGE_HISTORY permission
    * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads}
+   *
+   * @example
+   * ```typescript
+   * // Fetch public archived threads
+   * try {
+   *   const response = await channelRouter.fetchPublicArchivedThreads("123456789012345678");
+   *
+   *   console.log(`Channel has ${response.threads.length} public archived threads`);
+   *   console.log(`Has more threads: ${response.has_more}`);
+   *
+   *   // Display thread information
+   *   response.threads.forEach(thread => {
+   *     console.log(`- ${thread.name} (ID: ${thread.id})`);
+   *     console.log(`  Archived at: ${new Date(thread.thread_metadata.archive_timestamp).toLocaleString()}`);
+   *     console.log(`  Message count: ${thread.message_count}`);
+   *     console.log(`  Member count: ${thread.member_count}`);
+   *   });
+   *
+   *   // Show thread memberships for the current user
+   *   if (response.members.length > 0) {
+   *     console.log("Bot is a member of these archived threads:");
+   *     response.members.forEach(member => {
+   *       const threadId = member.id;
+   *       const thread = response.threads.find(t => t.id === threadId);
+   *       if (thread) {
+   *         console.log(`- ${thread.name}`);
+   *       }
+   *     });
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch public archived threads:", error);
+   * }
+   *
+   * // Fetch with pagination parameters
+   * try {
+   *   // Set a timestamp to get threads archived before it
+   *   const beforeTimestamp = new Date("2023-01-01").toISOString();
+   *
+   *   const response = await channelRouter.fetchPublicArchivedThreads(
+   *     "123456789012345678",
+   *     {
+   *       before: beforeTimestamp,
+   *       limit: 10
+   *     }
+   *   );
+   *
+   *   console.log(`Fetched ${response.threads.length} public threads archived before 2023`);
+   * } catch (error) {
+   *   console.error("Failed to fetch paginated archived threads:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * The type of threads returned depends on the parent channel:
+   * - GUILD_TEXT channels → PUBLIC_THREAD (type 11)
+   * - GUILD_ANNOUNCEMENT channels → ANNOUNCEMENT_THREAD (type 10)
+   *
+   * Threads are returned in order of archive timestamp, with newest first.
+   * The `before` parameter filters for threads archived before the provided timestamp.
+   * The response includes a `has_more` flag indicating if there are more archived threads that match the query.
+   * The response also includes thread members for threads the current user has joined.
+   *
+   * Requires the READ_MESSAGE_HISTORY permission for the channel.
    */
-  listPublicArchivedThreads(
+  fetchPublicArchivedThreads(
     channelId: Snowflake,
     query: ListPublicArchivedThreadsQuerySchema = {},
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
     return this.#rest.get(
-      ChannelRouter.ROUTES.channelPublicArchivedThreads(channelId),
+      ChannelRouter.CHANNEL_ROUTES.channelPublicArchivedThreadsEndpoint(
+        channelId,
+      ),
       {
         query,
       },
@@ -1030,13 +2608,66 @@ export class ChannelRouter {
    * - Threads are ordered by archive_timestamp in descending order
    * - Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions
    * @see {@link https://discord.com/developers/docs/resources/channel#list-private-archived-threads}
+   *
+   * @example
+   * ```typescript
+   * // Fetch private archived threads
+   * try {
+   *   const response = await channelRouter.fetchPrivateArchivedThreads("123456789012345678");
+   *
+   *   console.log(`Channel has ${response.threads.length} private archived threads`);
+   *   console.log(`Has more threads: ${response.has_more}`);
+   *
+   *   // Display thread information
+   *   response.threads.forEach(thread => {
+   *     console.log(`- ${thread.name} (ID: ${thread.id})`);
+   *     console.log(`  Archived at: ${new Date(thread.thread_metadata.archive_timestamp).toLocaleString()}`);
+   *     console.log(`  Message count: ${thread.message_count}`);
+   *     console.log(`  Member count: ${thread.member_count}`);
+   *   });
+   * } catch (error) {
+   *   console.error("Failed to fetch private archived threads:", error);
+   *
+   *   if (error.status === 403) {
+   *     console.error("Missing required permissions (need both READ_MESSAGE_HISTORY and MANAGE_THREADS)");
+   *   }
+   * }
+   *
+   * // Fetch with pagination parameters
+   * try {
+   *   const response = await channelRouter.fetchPrivateArchivedThreads(
+   *     "123456789012345678",
+   *     {
+   *       limit: 25
+   *     }
+   *   );
+   *
+   *   console.log(`Fetched ${response.threads.length} private archived threads`);
+   * } catch (error) {
+   *   console.error("Failed to fetch paginated private archived threads:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Only returns threads of type PRIVATE_THREAD (type 12).
+   * Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
+   *
+   * Threads are returned in order of archive timestamp, with newest first.
+   * The `before` parameter filters for threads archived before the provided timestamp.
+   * The response includes a `has_more` flag indicating if there are more archived threads that match the query.
+   * The response also includes thread members for threads the current user has joined.
+   *
+   * Unlike public threads, which are accessible to anyone with access to the channel, private archived
+   * threads are only visible to users with the MANAGE_THREADS permission or those who were invited.
    */
-  listPrivateArchivedThreads(
+  fetchPrivateArchivedThreads(
     channelId: Snowflake,
     query: ListPublicArchivedThreadsQuerySchema = {},
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
     return this.#rest.get(
-      ChannelRouter.ROUTES.channelPrivateArchivedThreads(channelId),
+      ChannelRouter.CHANNEL_ROUTES.channelPrivateArchivedThreadsEndpoint(
+        channelId,
+      ),
       {
         query,
       },
@@ -1054,13 +2685,67 @@ export class ChannelRouter {
    * - Threads are ordered by their ID in descending order
    * - Requires the READ_MESSAGE_HISTORY permission
    * @see {@link https://discord.com/developers/docs/resources/channel#list-joined-private-archived-threads}
+   *
+   * @example
+   * ```typescript
+   * // Fetch joined private archived threads
+   * try {
+   *   const response = await channelRouter.fetchJoinedPrivateArchivedThreads("123456789012345678");
+   *
+   *   console.log(`Bot has joined ${response.threads.length} private archived threads in this channel`);
+   *   console.log(`Has more threads: ${response.has_more}`);
+   *
+   *   // Display thread information
+   *   response.threads.forEach(thread => {
+   *     console.log(`- ${thread.name} (ID: ${thread.id})`);
+   *     console.log(`  Archived at: ${new Date(thread.thread_metadata.archive_timestamp).toLocaleString()}`);
+   *     console.log(`  Message count: ${thread.message_count}`);
+   *     console.log(`  Member count: ${thread.member_count}`);
+   *   });
+   *
+   *   // Thread members information is also included
+   *   console.log(`Thread member info for ${response.members.length} threads`);
+   * } catch (error) {
+   *   console.error("Failed to fetch joined private archived threads:", error);
+   * }
+   *
+   * // Fetch with pagination parameters
+   * try {
+   *   const response = await channelRouter.fetchJoinedPrivateArchivedThreads(
+   *     "123456789012345678",
+   *     {
+   *       before: "987654321987654321", // Thread ID to get threads before
+   *       limit: 10
+   *     }
+   *   );
+   *
+   *   console.log(`Fetched ${response.threads.length} joined private archived threads`);
+   * } catch (error) {
+   *   console.error("Failed to fetch paginated joined threads:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Only returns threads of type PRIVATE_THREAD (type 12) that the current user has joined.
+   * Requires the READ_MESSAGE_HISTORY permission.
+   *
+   * Unlike fetchPrivateArchivedThreads, this method:
+   * - Only returns threads that the current user has actually joined
+   * - Does not require the MANAGE_THREADS permission
+   * - Returns threads ordered by ID rather than archive timestamp
+   *
+   * The `before` parameter for this endpoint is a thread ID, not a timestamp.
+   * The response includes a `has_more` flag indicating if there are more threads that match the query.
+   * The response also includes thread members for all returned threads (since the user has joined all of them).
    */
-  listJoinedPrivateArchivedThreads(
+  fetchJoinedPrivateArchivedThreads(
     channelId: Snowflake,
     query: ListPublicArchivedThreadsQuerySchema = {},
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
     return this.#rest.get(
-      ChannelRouter.ROUTES.channelJoinedPrivateArchivedThreads(channelId),
+      ChannelRouter.CHANNEL_ROUTES.channelJoinedPrivateArchivedThreadsEndpoint(
+        channelId,
+      ),
       {
         query,
       },

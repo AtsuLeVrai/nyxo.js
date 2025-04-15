@@ -44,7 +44,6 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nyxjs/builders": "workspace:^",
     "@nyxjs/core": "workspace:^",
     "@nyxjs/gateway": "workspace:^",
     "@nyxjs/rest": "workspace:^",

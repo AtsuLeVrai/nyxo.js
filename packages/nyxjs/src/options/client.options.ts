@@ -70,7 +70,7 @@ export const ClientCacheOptions = z.object({
    *
    * @default 300000 (5 minutes)
    */
-  sweepInterval: z.number().int().nonnegative().default(300000),
+  sweepInterval: z.number().int().positive().default(300000),
 
   /**
    * Configuration for the users cache.

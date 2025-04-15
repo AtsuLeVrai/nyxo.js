@@ -7,89 +7,179 @@ import type { Rest } from "../core/index.js";
 
 /**
  * Interface for the query parameters when retrieving an invite.
- * Defines the optional parameters that can be provided when getting
- * invite details from Discord's API.
+ *
+ * These parameters allow you to request additional information about the invite
+ * when fetching it, such as member counts, expiration time, and associated events.
  *
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}
  */
 export interface GetInviteQuerySchema {
   /**
    * Whether the invite should contain approximate member counts.
-   * When true, the response will include approximate_presence_count and approximate_member_count fields.
+   *
+   * When true, the response will include:
+   * - approximate_presence_count: Number of online members
+   * - approximate_member_count: Total number of members
+   *
+   * This is useful for displaying information about guild activity
+   * to potential new members.
    */
   with_counts?: boolean;
 
   /**
    * Whether the invite should contain the expiration date.
-   * When true, the response will include the expires_at field.
+   *
+   * When true, the response will include the expires_at field,
+   * which contains an ISO8601 timestamp for when the invite expires.
+   * Useful for displaying time-limited invites.
    */
   with_expiration?: boolean;
 
   /**
    * The guild scheduled event to include with the invite.
-   * When provided and valid, the response will include guild_scheduled_event data.
+   *
+   * When provided and valid, the response will include guild_scheduled_event data
+   * for the specified event. This allows linking directly to a scheduled event
+   * when someone joins through this invite.
    */
   guild_scheduled_event_id?: Snowflake;
 }
 
 /**
- * Router class for Discord Invite-related endpoints
- * Provides methods to get and delete invites for guilds and channels
+ * Router for Discord Invite-related endpoints.
+ *
+ * This class provides methods to interact with Discord's invite system,
+ * allowing you to retrieve information about invites and delete them.
+ * Invites are a key mechanism for users to join guilds, channels, and events.
  *
  * @see {@link https://discord.com/developers/docs/resources/invite}
  */
 export class InviteRouter {
   /**
-   * Collection of route URLs for invite-related endpoints
+   * API route constants for invite-related endpoints.
    */
-  static readonly ROUTES = {
+  static readonly INVITE_ROUTES = {
     /**
-     * Route for invite operations
-     * @param code - The unique invite code
-     * @returns `/invites/{invite.code}` route
+     * Route for invite operations.
+     *
+     * @param code - The unique invite code (typically 8 characters)
+     * @returns The formatted API route string
      * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
      */
-    inviteBase: (code: string) => `/invites/${code}` as const,
+    inviteByCodeEndpoint: (code: string) => `/invites/${code}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new Invite Router instance.
+   *
+   * @param rest - The REST client to use for making Discord API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
 
   /**
-   * Retrieves an invite by its code.
-   * Returns information about the invite including guild and channel data.
+   * Fetches detailed information about an invite by its code.
    *
-   * @param code - The unique invite code.
-   * @param query - Optional query parameters to include additional data.
-   * @returns A Promise resolving to the invite object with metadata.
-   * @throws Error if validation of query parameters fails.
+   * This method retrieves comprehensive information about a Discord invite,
+   * including its target (guild, channel, and optionally an event),
+   * the user who created it, and optionally member counts and expiration time.
+   *
+   * @param code - The unique invite code (typically 8 characters)
+   * @param query - Optional query parameters to include additional data
+   * @returns A Promise resolving to the invite object with metadata
+   * @throws Error if the invite doesn't exist or query parameters are invalid
+   *
    * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
+   *
+   * @example
+   * ```typescript
+   * // Fetch basic invite information
+   * const invite = await inviteRouter.fetchInvite("abcdefg");
+   * console.log(`Invite to #${invite.channel.name} in ${invite.guild.name}`);
+   * console.log(`Created by: ${invite.inviter.username}`);
+   *
+   * // Fetch with member counts and expiration information
+   * const detailedInvite = await inviteRouter.fetchInvite("abcdefg", {
+   *   with_counts: true,
+   *   with_expiration: true
+   * });
+   *
+   * console.log(`Total members: ${detailedInvite.approximate_member_count}`);
+   * console.log(`Online members: ${detailedInvite.approximate_presence_count}`);
+   *
+   * if (detailedInvite.expires_at) {
+   *   const expirationDate = new Date(detailedInvite.expires_at);
+   *   console.log(`Expires at: ${expirationDate.toLocaleString()}`);
+   * }
+   *
+   * // Fetch with information about a scheduled event
+   * const eventInvite = await inviteRouter.fetchInvite("abcdefg", {
+   *   guild_scheduled_event_id: "123456789012345678"
+   * });
+   *
+   * if (eventInvite.guild_scheduled_event) {
+   *   console.log(`Event: ${eventInvite.guild_scheduled_event.name}`);
+   *   console.log(`Starts: ${new Date(eventInvite.guild_scheduled_event.scheduled_start_time).toLocaleString()}`);
+   * }
+   * ```
    */
-  getInvite(
+  fetchInvite(
     code: string,
     query: GetInviteQuerySchema = {},
   ): Promise<InviteEntity & InviteMetadataEntity> {
-    return this.#rest.get(InviteRouter.ROUTES.inviteBase(code), {
-      query,
-    });
+    return this.#rest.get(
+      InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code),
+      {
+        query,
+      },
+    );
   }
 
   /**
    * Deletes an invite by its code.
+   *
+   * This method permanently removes an invite link, preventing it from being used
+   * for future guild or channel access. Useful for managing access or removing
+   * outdated invites.
+   *
+   * @param code - The unique invite code to delete
+   * @param reason - The reason for deleting the invite (for audit logs)
+   * @returns A Promise resolving to the deleted invite object
+   * @throws Will throw an error if the invite doesn't exist or you lack permissions
+   *
+   * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
+   *
+   * @remarks
    * Requires the MANAGE_CHANNELS permission in the channel or MANAGE_GUILD
    * permission in the guild the invite belongs to.
    *
-   * @param code - The unique invite code to delete.
-   * @param reason - The reason for deleting the invite (for audit logs).
-   * @returns A Promise resolving to the deleted invite object.
-   * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
+   * @example
+   * ```typescript
+   * // Delete an invite with an audit log reason
+   * try {
+   *   const deletedInvite = await inviteRouter.deleteInvite(
+   *     "abcdefg",
+   *     "Invite expired for security reasons"
+   *   );
+   *
+   *   console.log(`Deleted invite to #${deletedInvite.channel.name}`);
+   *   console.log(`Created by: ${deletedInvite.inviter.username}`);
+   *   console.log(`Uses: ${deletedInvite.uses} (max: ${deletedInvite.max_uses || "unlimited"})`);
+   * } catch (error) {
+   *   console.error("Failed to delete invite:", error);
+   * }
+   * ```
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
-    return this.#rest.delete(InviteRouter.ROUTES.inviteBase(code), {
-      reason,
-    });
+    return this.#rest.delete(
+      InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code),
+      {
+        reason,
+      },
+    );
   }
 }

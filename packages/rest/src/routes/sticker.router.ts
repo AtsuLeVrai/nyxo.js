@@ -4,13 +4,18 @@ import type { FileInput } from "../handlers/index.js";
 
 /**
  * Response structure for listing sticker packs.
- * Returns an array of available sticker packs.
+ *
+ * This interface represents the response from the API when fetching
+ * available sticker packs provided by Discord.
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs-response-structure}
  */
 export interface ListStickerPacksResponseEntity {
   /**
-   * Array of sticker pack objects
+   * Array of sticker pack objects.
+   *
+   * Each sticker pack contains a collection of related stickers,
+   * along with metadata like the pack name, description, and cover sticker.
    */
   sticker_packs: StickerPackEntity[];
 }
@@ -18,6 +23,10 @@ export interface ListStickerPacksResponseEntity {
 /**
  * Interface for creating a new sticker in a guild.
  *
+ * This interface defines the required parameters for uploading
+ * a custom sticker to a Discord guild.
+ *
+ * @remarks
  * Every guild has five free sticker slots by default, and each Boost level will grant access to more slots.
  * Requires the `CREATE_GUILD_EXPRESSIONS` permission.
  *
@@ -32,23 +41,33 @@ export interface ListStickerPacksResponseEntity {
 export interface CreateGuildStickerSchema {
   /**
    * Name of the sticker (2-30 characters).
+   *
+   * This name will be displayed in the sticker picker and search results.
    */
   name: string;
 
   /**
    * Description of the sticker (2-100 characters).
+   *
+   * Provides context about the sticker and when it might be used.
    */
   description: string;
 
   /**
    * Autocomplete/suggestion tags for the sticker (max 200 characters).
-   * A comma separated list of keywords is the format used by standard stickers, but this is just a convention.
-   * The client will always use a name generated from an emoji as the value of this field when creating or modifying a guild sticker.
+   *
+   * A comma separated list of keywords that help users find the sticker
+   * when searching. For example: "cat, pet, feline, cute"
+   *
+   * Note: The client will always use a name generated from an emoji as
+   * the value of this field when creating or modifying a guild sticker.
    */
   tags: string;
 
   /**
-   * The sticker file to upload. Must be a PNG, APNG, GIF, or Lottie JSON file.
+   * The sticker file to upload.
+   *
+   * Must be a PNG, APNG, GIF, or Lottie JSON file.
    * Will be transformed into a data URI for the API request.
    */
   file: FileInput;
@@ -57,6 +76,10 @@ export interface CreateGuildStickerSchema {
 /**
  * Interface for modifying an existing sticker in a guild.
  *
+ * This interface defines the parameters that can be updated
+ * for an existing custom sticker in a guild.
+ *
+ * @remarks
  * For stickers created by the current user, requires either the `CREATE_GUILD_EXPRESSIONS`
  * or `MANAGE_GUILD_EXPRESSIONS` permission. For other stickers, requires the
  * `MANAGE_GUILD_EXPRESSIONS` permission.
@@ -68,152 +91,397 @@ export interface CreateGuildStickerSchema {
 export interface ModifyGuildStickerSchema {
   /**
    * Name of the sticker (2-30 characters).
+   *
+   * Updates the sticker name shown in the sticker picker.
    */
   name?: string;
 
   /**
    * Description of the sticker.
+   *
+   * Updates the sticker description.
    * Can be null or a string between 2-100 characters.
    */
   description?: string | null;
 
   /**
    * Autocomplete/suggestion tags for the sticker (max 200 characters).
+   *
+   * Updates the search keywords for the sticker.
    */
   tags?: string;
 }
 
 /**
- * Router class for handling Discord Sticker endpoints.
+ * Router for Discord Sticker-related endpoints.
  *
+ * This class provides methods to interact with Discord's sticker system,
+ * allowing for fetching standard sticker packs and managing custom guild stickers.
+ *
+ * @remarks
  * Stickers are small, expressive images that can be sent in messages.
  * There are two types of stickers:
  * - Standard stickers: Official stickers provided in packs by Discord
  * - Guild stickers: Custom stickers uploaded by guild members with appropriate permissions
  *
  * Stickers can be in PNG, APNG (animated PNG), GIF, or Lottie (vector-based animation) formats.
+ * Nitro subscribers can use stickers from any server they are a member of, while
+ * non-Nitro users can only use stickers from the server they're currently in.
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker}
  */
 export class StickerRouter {
   /**
-   * Collection of route patterns for sticker-related endpoints.
+   * API route constants for sticker-related endpoints.
    */
-  static readonly ROUTES = {
+  static readonly STICKER_ROUTES = {
     /**
      * Route for sticker packs collection.
+     *
+     * Used to list the official sticker packs available on Discord.
      */
-    stickerPacksBase: "/sticker-packs" as const,
+    stickerPacksEndpoint: "/sticker-packs",
 
     /**
      * Route for a specific sticker.
+     *
+     * Used to get information about any sticker by its ID.
+     *
      * @param stickerId - The ID of the sticker
-     * @returns The endpoint path
+     * @returns The formatted API route string
      */
-    sticker: (stickerId: Snowflake) => `/stickers/${stickerId}` as const,
+    stickerByIdEndpoint: (stickerId: Snowflake) =>
+      `/stickers/${stickerId}` as const,
 
     /**
      * Route for a specific sticker pack.
+     *
+     * Used to get detailed information about a specific sticker pack.
+     *
      * @param packId - The ID of the sticker pack
-     * @returns The endpoint path
+     * @returns The formatted API route string
      */
-    stickerPack: (packId: Snowflake) => `/sticker-packs/${packId}` as const,
+    stickerPackByIdEndpoint: (packId: Snowflake) =>
+      `/sticker-packs/${packId}` as const,
 
     /**
      * Route for guild stickers collection.
+     *
+     * Used to list or create stickers in a specific guild.
+     *
      * @param guildId - The ID of the guild
-     * @returns The endpoint path
+     * @returns The formatted API route string
      */
-    guildStickers: (guildId: Snowflake) =>
+    guildStickersEndpoint: (guildId: Snowflake) =>
       `/guilds/${guildId}/stickers` as const,
 
     /**
      * Route for a specific guild sticker.
+     *
+     * Used to get, modify, or delete a specific sticker in a guild.
+     *
      * @param guildId - The ID of the guild
      * @param stickerId - The ID of the sticker
-     * @returns The endpoint path
+     * @returns The formatted API route string
      */
-    guildSticker: (guildId: Snowflake, stickerId: Snowflake) =>
+    guildStickerByIdEndpoint: (guildId: Snowflake, stickerId: Snowflake) =>
       `/guilds/${guildId}/stickers/${stickerId}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new Sticker Router instance.
+   *
+   * @param rest - The REST client to use for making Discord API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
 
   /**
-   * Gets a sticker by its ID.
+   * Fetches a sticker by its ID.
+   *
+   * This method retrieves detailed information about any sticker,
+   * whether it's a standard sticker or a guild sticker.
    *
    * @param stickerId - The ID of the sticker to retrieve
    * @returns A promise resolving to the sticker entity
+   * @throws Will throw an error if the sticker doesn't exist
+   *
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
+   *
+   * @example
+   * ```typescript
+   * // Fetch information about a specific sticker
+   * try {
+   *   const sticker = await stickerRouter.fetchSticker("123456789012345678");
+   *
+   *   console.log(`Sticker: ${sticker.name}`);
+   *   console.log(`Type: ${sticker.type === 1 ? "Standard" : "Guild"}`);
+   *   console.log(`Format: ${
+   *     sticker.format_type === 1 ? "PNG" :
+   *     sticker.format_type === 2 ? "APNG" :
+   *     sticker.format_type === 3 ? "Lottie" : "GIF"
+   *   }`);
+   *
+   *   if (sticker.guild_id) {
+   *     console.log(`From guild: ${sticker.guild_id}`);
+   *   } else {
+   *     console.log("Standard Discord sticker");
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch sticker:", error);
+   * }
+   * ```
    */
-  getSticker(stickerId: Snowflake): Promise<StickerEntity> {
-    return this.#rest.get(StickerRouter.ROUTES.sticker(stickerId));
+  fetchSticker(stickerId: Snowflake): Promise<StickerEntity> {
+    return this.#rest.get(
+      StickerRouter.STICKER_ROUTES.stickerByIdEndpoint(stickerId),
+    );
   }
 
   /**
-   * Lists all available sticker packs.
+   * Fetches all available sticker packs.
    *
-   * These are the official sticker packs provided by Discord.
+   * This method retrieves the official sticker packs provided by Discord,
+   * which contain the standard stickers available to all users or Nitro subscribers.
    *
    * @returns A promise resolving to the list of sticker packs
+   *
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
+   *
+   * @example
+   * ```typescript
+   * // Fetch all available sticker packs
+   * const packsResponse = await stickerRouter.fetchStickerPacks();
+   * const packs = packsResponse.sticker_packs;
+   *
+   * console.log(`Found ${packs.length} sticker packs`);
+   *
+   * // Display information about each pack
+   * packs.forEach(pack => {
+   *   console.log(`Pack: ${pack.name}`);
+   *   console.log(`Description: ${pack.description}`);
+   *   console.log(`Price: ${pack.sku_id ? "Premium" : "Free"}`);
+   *   console.log(`Contains ${pack.stickers.length} stickers`);
+   *   console.log("---");
+   * });
+   *
+   * // Find specific packs
+   * const wumpusPack = packs.find(pack =>
+   *   pack.name.toLowerCase().includes("wumpus")
+   * );
+   *
+   * if (wumpusPack) {
+   *   console.log(`Wumpus pack ID: ${wumpusPack.id}`);
+   *   console.log(`Stickers in pack: ${wumpusPack.stickers.length}`);
+   * }
+   * ```
    */
-  listStickerPacks(): Promise<ListStickerPacksResponseEntity> {
-    return this.#rest.get(StickerRouter.ROUTES.stickerPacksBase);
+  fetchStickerPacks(): Promise<ListStickerPacksResponseEntity> {
+    return this.#rest.get(StickerRouter.STICKER_ROUTES.stickerPacksEndpoint);
   }
 
   /**
-   * Gets a specific sticker pack by its ID.
+   * Fetches a specific sticker pack by its ID.
+   *
+   * This method retrieves detailed information about a single official
+   * sticker pack, including all the stickers it contains.
    *
    * @param packId - The ID of the sticker pack to retrieve
    * @returns A promise resolving to the sticker pack entity
+   * @throws Will throw an error if the pack doesn't exist
+   *
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
+   *
+   * @example
+   * ```typescript
+   * // Fetch a specific sticker pack
+   * try {
+   *   const pack = await stickerRouter.fetchStickerPack("123456789012345678");
+   *
+   *   console.log(`Pack: ${pack.name}`);
+   *   console.log(`Banner asset: ${pack.banner_asset_id || "None"}`);
+   *
+   *   // List all stickers in the pack
+   *   console.log(`Stickers in this pack:`);
+   *   pack.stickers.forEach(sticker => {
+   *     console.log(`- ${sticker.name}: ${sticker.description}`);
+   *   });
+   *
+   *   // Get a random sticker from the pack
+   *   const randomSticker = pack.stickers[
+   *     Math.floor(Math.random() * pack.stickers.length)
+   *   ];
+   *   console.log(`Random pick: ${randomSticker.name}`);
+   * } catch (error) {
+   *   console.error("Failed to fetch sticker pack:", error);
+   * }
+   * ```
    */
-  getStickerPack(packId: Snowflake): Promise<StickerPackEntity> {
-    return this.#rest.get(StickerRouter.ROUTES.stickerPack(packId));
+  fetchStickerPack(packId: Snowflake): Promise<StickerPackEntity> {
+    return this.#rest.get(
+      StickerRouter.STICKER_ROUTES.stickerPackByIdEndpoint(packId),
+    );
   }
 
   /**
-   * Lists all stickers for a specific guild.
+   * Fetches all stickers for a specific guild.
    *
-   * Includes the `user` field if the bot has the `CREATE_GUILD_EXPRESSIONS` or
-   * `MANAGE_GUILD_EXPRESSIONS` permission.
+   * This method retrieves all custom stickers that have been uploaded to a guild,
+   * including information about who created them.
    *
    * @param guildId - The ID of the guild to list stickers for
    * @returns A promise resolving to an array of sticker entities
+   *
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
+   *
+   * @example
+   * ```typescript
+   * // Fetch all stickers in a guild
+   * try {
+   *   const stickers = await stickerRouter.fetchGuildStickers("123456789012345678");
+   *
+   *   console.log(`Guild has ${stickers.length} custom stickers`);
+   *
+   *   // Group stickers by format type
+   *   const pngStickers = stickers.filter(s => s.format_type === 1);
+   *   const apngStickers = stickers.filter(s => s.format_type === 2);
+   *   const lottieStickers = stickers.filter(s => s.format_type === 3);
+   *   const gifStickers = stickers.filter(s => s.format_type === 4);
+   *
+   *   console.log(`PNG stickers: ${pngStickers.length}`);
+   *   console.log(`Animated PNG stickers: ${apngStickers.length}`);
+   *   console.log(`Lottie stickers: ${lottieStickers.length}`);
+   *   console.log(`GIF stickers: ${gifStickers.length}`);
+   *
+   *   // Display info about creators if available
+   *   const stickersWithCreator = stickers.filter(s => s.user);
+   *   if (stickersWithCreator.length > 0) {
+   *     console.log("Stickers with creator info:");
+   *     stickersWithCreator.forEach(s => {
+   *       console.log(`- ${s.name} created by ${s.user.username}`);
+   *     });
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch guild stickers:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Includes the `user` field if the bot has the `CREATE_GUILD_EXPRESSIONS` or
+   * `MANAGE_GUILD_EXPRESSIONS` permission.
    */
-  listGuildStickers(guildId: Snowflake): Promise<StickerEntity[]> {
-    return this.#rest.get(StickerRouter.ROUTES.guildStickers(guildId));
+  fetchGuildStickers(guildId: Snowflake): Promise<StickerEntity[]> {
+    return this.#rest.get(
+      StickerRouter.STICKER_ROUTES.guildStickersEndpoint(guildId),
+    );
   }
 
   /**
-   * Gets a specific guild sticker.
+   * Fetches a specific guild sticker.
    *
-   * Includes the `user` field if the bot has the `CREATE_GUILD_EXPRESSIONS` or
-   * `MANAGE_GUILD_EXPRESSIONS` permission.
+   * This method retrieves detailed information about a single custom sticker
+   * that has been uploaded to a guild.
    *
    * @param guildId - The ID of the guild the sticker belongs to
    * @param stickerId - The ID of the sticker to retrieve
    * @returns A promise resolving to the sticker entity
+   * @throws Will throw an error if the sticker doesn't exist
+   *
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker}
+   *
+   * @example
+   * ```typescript
+   * // Fetch a specific guild sticker
+   * try {
+   *   const sticker = await stickerRouter.fetchGuildSticker(
+   *     "123456789012345678", // Guild ID
+   *     "987654321987654321"  // Sticker ID
+   *   );
+   *
+   *   console.log(`Sticker: ${sticker.name}`);
+   *   console.log(`Description: ${sticker.description}`);
+   *   console.log(`Tags: ${sticker.tags}`);
+   *
+   *   // Get the sticker's URL
+   *   const stickerUrl = `https://cdn.discordapp.com/stickers/${sticker.id}.png`;
+   *   console.log(`URL: ${stickerUrl}`);
+   *
+   *   // Check creator information if available
+   *   if (sticker.user) {
+   *     console.log(`Created by: ${sticker.user.username}`);
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to fetch guild sticker:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Includes the `user` field if the bot has the `CREATE_GUILD_EXPRESSIONS` or
+   * `MANAGE_GUILD_EXPRESSIONS` permission.
    */
-  getGuildSticker(
+  fetchGuildSticker(
     guildId: Snowflake,
     stickerId: Snowflake,
   ): Promise<StickerEntity> {
     return this.#rest.get(
-      StickerRouter.ROUTES.guildSticker(guildId, stickerId),
+      StickerRouter.STICKER_ROUTES.guildStickerByIdEndpoint(guildId, stickerId),
     );
   }
 
   /**
    * Creates a new sticker for the guild.
    *
+   * This method uploads a new custom sticker to a guild, making it available
+   * for members to use in messages.
+   *
+   * @param guildId - The ID of the guild to create the sticker in
+   * @param options - Options for creating the sticker
+   * @param reason - Optional audit log reason for the creation
+   * @returns A promise resolving to the created sticker entity
+   * @throws Error if the options are invalid or the guild's sticker limit is reached
+   *
+   * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
+   *
+   * @example
+   * ```typescript
+   * // Create a new sticker in a guild
+   * try {
+   *   // Import necessary modules if not already available
+   *   const fs = require('fs');
+   *   const path = require('path');
+   *
+   *   // Prepare the sticker file
+   *   const filePath = path.join(__dirname, 'path/to/sticker.png');
+   *   const file = {
+   *     name: 'sticker.png',
+   *     data: fs.readFileSync(filePath),
+   *     contentType: 'image/png'
+   *   };
+   *
+   *   // Create the sticker
+   *   const newSticker = await stickerRouter.createGuildSticker(
+   *     "123456789012345678", // Guild ID
+   *     {
+   *       name: "Happy Cat",
+   *       description: "A very happy cat for happy occasions",
+   *       tags: "cat,happy,smile,cute",
+   *       file: file
+   *     },
+   *     "Adding new cat sticker to the collection"
+   *   );
+   *
+   *   console.log(`Sticker created with ID: ${newSticker.id}`);
+   *   console.log(`Available to use in messages`);
+   * } catch (error) {
+   *   console.error("Failed to create sticker:", error);
+   * }
+   * ```
+   *
+   * @remarks
    * Requires the `CREATE_GUILD_EXPRESSIONS` permission.
    * Every guild has five free sticker slots by default, and each Boost level will grant access to more slots.
    *
@@ -224,13 +492,6 @@ export class StickerRouter {
    * - Lottie stickers can only be uploaded in guilds with the `VERIFIED` and/or the `PARTNERED` guild feature
    *
    * Fires a Guild Stickers Update Gateway event.
-   *
-   * @param guildId - The ID of the guild to create the sticker in
-   * @param options - Options for creating the sticker
-   * @param reason - Optional audit log reason for the creation
-   * @returns A promise resolving to the created sticker entity
-   * @throws Error if the options are invalid
-   * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
    */
   createGuildSticker(
     guildId: Snowflake,
@@ -238,39 +499,70 @@ export class StickerRouter {
     reason?: string,
   ): Promise<StickerEntity> {
     const { file, ...rest } = options;
-    return this.#rest.post(StickerRouter.ROUTES.guildStickers(guildId), {
-      body: JSON.stringify(rest),
-      files: file,
-      reason,
-    });
+    return this.#rest.post(
+      StickerRouter.STICKER_ROUTES.guildStickersEndpoint(guildId),
+      {
+        body: JSON.stringify(rest),
+        files: file,
+        reason,
+      },
+    );
   }
 
   /**
-   * Modifies an existing sticker in a guild.
+   * Updates an existing sticker in a guild.
    *
-   * For stickers created by the current user, requires either the `CREATE_GUILD_EXPRESSIONS` or
-   * `MANAGE_GUILD_EXPRESSIONS` permission. For other stickers, requires the `MANAGE_GUILD_EXPRESSIONS` permission.
-   *
-   * All parameters to this endpoint are optional.
-   *
-   * Fires a Guild Stickers Update Gateway event.
+   * This method modifies properties of an existing custom sticker in a guild,
+   * such as its name, description, or tags.
    *
    * @param guildId - The ID of the guild the sticker belongs to
    * @param stickerId - The ID of the sticker to modify
    * @param options - Options for modifying the sticker
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the modified sticker entity
-   * @throws Error if the options are invalid
+   * @throws Error if the options are invalid or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker}
+   *
+   * @example
+   * ```typescript
+   * // Update a sticker's properties
+   * try {
+   *   const updatedSticker = await stickerRouter.updateGuildSticker(
+   *     "123456789012345678", // Guild ID
+   *     "987654321987654321", // Sticker ID
+   *     {
+   *       name: "Super Happy Cat",
+   *       description: "The happiest cat you've ever seen!",
+   *       tags: "cat,happy,smile,cute,excited,joy"
+   *     },
+   *     "Improving sticker name and description"
+   *   );
+   *
+   *   console.log(`Sticker updated: ${updatedSticker.name}`);
+   *   console.log(`New description: ${updatedSticker.description}`);
+   *   console.log(`Updated tags: ${updatedSticker.tags}`);
+   * } catch (error) {
+   *   console.error("Failed to update sticker:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * For stickers created by the current user, requires either the `CREATE_GUILD_EXPRESSIONS` or
+   * `MANAGE_GUILD_EXPRESSIONS` permission. For other stickers, requires the `MANAGE_GUILD_EXPRESSIONS` permission.
+   *
+   * All parameters to this endpoint are optional.
+   *
+   * Fires a Guild Stickers Update Gateway event.
    */
-  modifyGuildSticker(
+  updateGuildSticker(
     guildId: Snowflake,
     stickerId: Snowflake,
     options: ModifyGuildStickerSchema,
     reason?: string,
   ): Promise<StickerEntity> {
     return this.#rest.patch(
-      StickerRouter.ROUTES.guildSticker(guildId, stickerId),
+      StickerRouter.STICKER_ROUTES.guildStickerByIdEndpoint(guildId, stickerId),
       {
         body: JSON.stringify(options),
         reason,
@@ -281,16 +573,37 @@ export class StickerRouter {
   /**
    * Deletes a sticker from a guild.
    *
-   * For stickers created by the current user, requires either the `CREATE_GUILD_EXPRESSIONS` or
-   * `MANAGE_GUILD_EXPRESSIONS` permission. For other stickers, requires the `MANAGE_GUILD_EXPRESSIONS` permission.
-   *
-   * Fires a Guild Stickers Update Gateway event.
+   * This method permanently removes a custom sticker from a guild.
    *
    * @param guildId - The ID of the guild the sticker belongs to
    * @param stickerId - The ID of the sticker to delete
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the sticker is deleted
+   * @throws Will throw an error if the sticker doesn't exist or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker}
+   *
+   * @example
+   * ```typescript
+   * // Delete a sticker from a guild
+   * try {
+   *   await stickerRouter.deleteGuildSticker(
+   *     "123456789012345678", // Guild ID
+   *     "987654321987654321", // Sticker ID
+   *     "Removing outdated sticker"
+   *   );
+   *
+   *   console.log("Sticker deleted successfully");
+   * } catch (error) {
+   *   console.error("Failed to delete sticker:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * For stickers created by the current user, requires either the `CREATE_GUILD_EXPRESSIONS` or
+   * `MANAGE_GUILD_EXPRESSIONS` permission. For other stickers, requires the `MANAGE_GUILD_EXPRESSIONS` permission.
+   *
+   * Fires a Guild Stickers Update Gateway event.
    */
   deleteGuildSticker(
     guildId: Snowflake,
@@ -298,7 +611,7 @@ export class StickerRouter {
     reason?: string,
   ): Promise<void> {
     return this.#rest.delete(
-      StickerRouter.ROUTES.guildSticker(guildId, stickerId),
+      StickerRouter.STICKER_ROUTES.guildStickerByIdEndpoint(guildId, stickerId),
       {
         reason,
       },

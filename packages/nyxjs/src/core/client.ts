@@ -263,7 +263,7 @@ export class Client extends EventEmitter<ClientEvents> {
     }
 
     try {
-      const data = await this.rest.users.getUser(userId);
+      const data = await this.rest.users.fetchUser(userId);
       const user = new User(this, data);
 
       if (this.#options.cache.enabled) {
@@ -288,7 +288,7 @@ export class Client extends EventEmitter<ClientEvents> {
         return this.#user;
       }
 
-      const data = await this.rest.users.getCurrentUser();
+      const data = await this.rest.users.fetchCurrentUser();
       this.#user = new User(this, data);
       return this.#user;
     } catch (error) {

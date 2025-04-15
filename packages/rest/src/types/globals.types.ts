@@ -122,7 +122,7 @@ export interface HttpRequestOptions {
  *
  * @template T - Type of the parsed response data
  */
-export interface HttpResponse<T = unknown> {
+export interface HttpResponse<T> {
   /**
    * HTTP status code returned by the server.
    * Standard codes as defined in the HTTP specification.

@@ -1,0 +1,46 @@
+{
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "@nyxjs/web",
+	"description": "Documentation for Nyx.js",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/AtsuLeVrai/nyx.js",
+		"directory": "apps/docs"
+	},
+	"bugs": {
+		"url": "https://github.com/AtsuLeVrai/nyx.js/issues"
+	},
+	"author": {
+		"name": "AtsuLeVrai",
+		"url": "https://github.com/AtsuLeVrai"
+	},
+	"scripts": {
+		"build": "next build",
+		"check": "biome check --write --unsafe .",
+		"dev": "next dev --turbopack",
+		"preview": "next build && next start",
+		"start": "next start",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"next": "^15.3.0",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@tailwindcss/postcss": "^4.1.4",
+		"@types/node": "^20.17.30",
+		"@types/react": "^19.1.2",
+		"@types/react-dom": "^19.1.2",
+		"postcss": "^8.5.3",
+		"tailwindcss": "^4.1.4",
+		"typescript": "^5.8.3"
+	},
+	"ct3aMetadata": {
+		"initVersion": "7.39.3"
+	}
+}

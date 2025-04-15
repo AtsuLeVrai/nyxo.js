@@ -14,14 +14,14 @@ export const RetryOptions = z.object({
    * Determines how persistent the client should be when facing transient errors.
    * @default 3
    */
-  maxRetries: z.number().nonnegative().int().min(0).default(3),
+  maxRetries: z.number().int().min(0).default(3),
 
   /**
    * Base delay between retries in milliseconds.
    * Used as the starting point for exponential backoff calculations.
    * @default 1000
    */
-  baseDelay: z.number().nonnegative().int().min(0).default(1000),
+  baseDelay: z.number().int().min(0).default(1000),
 
   /**
    * HTTP status codes that should trigger a retry attempt.

@@ -29,14 +29,14 @@ export const StoreOptions = z.object({
    * @minimum 0
    * @default 10000
    */
-  maxSize: z.number().nonnegative().default(10000),
+  maxSize: z.number().int().min(0).default(10000),
 
   /**
    * Time to live in milliseconds for items
    * @minimum 0
    * @default 0 (no expiration)
    */
-  ttl: z.number().nonnegative().default(0),
+  ttl: z.number().int().min(0).default(0),
 
   /**
    * Strategy for evicting items when maxSize is reached
@@ -55,7 +55,7 @@ export const StoreOptions = z.object({
    * @minimum 1000
    * @default 30000 (30 seconds)
    */
-  minCleanupInterval: z.number().nonnegative().min(1000).default(30000),
+  minCleanupInterval: z.number().int().min(1000).default(30000),
 });
 
 export type StoreOptions = z.infer<typeof StoreOptions>;

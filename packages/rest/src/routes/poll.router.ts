@@ -2,58 +2,73 @@ import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
 /**
- * Interface for representing the response body when retrieving poll answer voters.
- * Contains a list of users who voted for a specific poll answer.
+ * Interface representing the response body when retrieving poll answer voters.
+ *
+ * Contains a list of users who voted for a specific poll answer, allowing
+ * visibility into who selected each option in a poll.
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body}
  */
 export interface PollVotersResponseEntity {
   /**
-   * Array of users who voted for the answer
+   * Array of users who voted for the answer.
+   *
+   * Each user object contains standard user information such as
+   * id, username, avatar, and other user profile details.
    */
   users: UserEntity[];
 }
 
 /**
  * Interface for query parameters when retrieving voters for a poll answer.
- * Used for pagination when listing users who voted for a specific answer.
+ *
+ * These parameters allow for efficient pagination when listing the users
+ * who voted for a specific answer, especially useful for polls with many votes.
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-query-string-params}
  */
 export interface GetAnswerVotersQuerySchema {
   /**
-   * Get users after this user ID (for pagination)
+   * Get users after this user ID (for pagination).
+   *
+   * When specified, returns users with IDs that come after this value,
+   * ordered by user ID in ascending order. Used for forward pagination.
    */
   after?: Snowflake;
 
   /**
-   * Maximum number of users to return (1-100)
-   * Defaults to 25 if not specified
+   * Maximum number of users to return (1-100).
+   *
+   * Controls how many user objects are returned in a single request.
+   * Defaults to 25 if not specified.
    */
   limit?: number;
 }
 
 /**
- * Router class for Discord Poll-related endpoints
- * Provides methods to interact with polls, retrieve voters, and end polls
+ * Router for Discord Poll-related endpoints.
+ *
+ * This class provides methods to interact with Discord's poll system,
+ * allowing you to retrieve information about poll voters and end polls.
+ * Polls are an interactive way for users to vote on options in Discord messages.
  *
  * @see {@link https://discord.com/developers/docs/resources/poll}
  */
 export class PollRouter {
   /**
-   * Collection of route URLs for poll-related endpoints
+   * API route constants for poll-related endpoints.
    */
-  static readonly ROUTES = {
+  static readonly POLL_ROUTES = {
     /**
-     * Route for retrieving voters for a specific poll answer
+     * Route for retrieving voters for a specific poll answer.
      *
      * @param channelId - The ID of the channel containing the poll
      * @param messageId - The ID of the message containing the poll
      * @param answerId - The ID of the answer to get voters for
-     * @returns `/channels/{channel.id}/polls/{message.id}/answers/{answer_id}` route
+     * @returns The formatted API route string
      * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
      */
-    channelPollAnswer: (
+    pollAnswerVotersEndpoint: (
       channelId: Snowflake,
       messageId: Snowflake,
       answerId: number,
@@ -61,43 +76,85 @@ export class PollRouter {
       `/channels/${channelId}/polls/${messageId}/answers/${answerId}` as const,
 
     /**
-     * Route for ending a poll immediately
+     * Route for ending a poll immediately.
      *
      * @param channelId - The ID of the channel containing the poll
      * @param messageId - The ID of the message containing the poll
-     * @returns `/channels/{channel.id}/polls/{message.id}/expire` route
+     * @returns The formatted API route string
      * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
      */
-    channelPollExpire: (channelId: Snowflake, messageId: Snowflake) =>
+    endPollEndpoint: (channelId: Snowflake, messageId: Snowflake) =>
       `/channels/${channelId}/polls/${messageId}/expire` as const,
   } as const;
 
+  /** The REST client used to make API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new Poll Router instance.
+   *
+   * @param rest - The REST client to use for making Discord API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
 
   /**
-   * Retrieves a list of users that voted for a specific poll answer
-   * Supports pagination through the query parameters
+   * Fetches a list of users that voted for a specific poll answer.
+   *
+   * This method retrieves the users who selected a particular answer option
+   * in a poll, with support for pagination to handle polls with many voters.
    *
    * @param channelId - The ID of the channel containing the poll
    * @param messageId - The ID of the message containing the poll
    * @param answerId - The ID of the answer to get voters for
    * @param query - Query parameters for pagination
-   * @returns A list of users who voted for the specified answer
-   * @throws Error if validation of query parameters fails
+   * @returns A Promise resolving to a list of users who voted for the specified answer
+   * @throws Error if the poll doesn't exist, the answer is invalid, or you lack permissions
+   *
    * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
+   *
+   * @example
+   * ```typescript
+   * // Fetch the first 25 voters for answer #1 in a poll
+   * const firstPage = await pollRouter.fetchAnswerVoters(
+   *   "123456789012345678", // Channel ID
+   *   "987654321987654321", // Message ID with poll
+   *   1                     // Answer ID
+   * );
+   *
+   * console.log(`First page: ${firstPage.users.length} voters`);
+   * firstPage.users.forEach(user => {
+   *   console.log(`- ${user.username}#${user.discriminator}`);
+   * });
+   *
+   * // Paginate to get more voters if needed
+   * if (firstPage.users.length === 25) { // Default limit
+   *   const lastUserId = firstPage.users[firstPage.users.length - 1].id;
+   *
+   *   const nextPage = await pollRouter.fetchAnswerVoters(
+   *     "123456789012345678",
+   *     "987654321987654321",
+   *     1,
+   *     { after: lastUserId, limit: 50 }
+   *   );
+   *
+   *   console.log(`Next page: ${nextPage.users.length} more voters`);
+   * }
+   * ```
    */
-  getAnswerVoters(
+  fetchAnswerVoters(
     channelId: Snowflake,
     messageId: Snowflake,
     answerId: number,
     query: GetAnswerVotersQuerySchema = {},
   ): Promise<PollVotersResponseEntity> {
     return this.#rest.get(
-      PollRouter.ROUTES.channelPollAnswer(channelId, messageId, answerId),
+      PollRouter.POLL_ROUTES.pollAnswerVotersEndpoint(
+        channelId,
+        messageId,
+        answerId,
+      ),
       {
         query,
       },
@@ -105,17 +162,52 @@ export class PollRouter {
   }
 
   /**
-   * Immediately ends a poll
-   * Note: You cannot end polls created by other users
+   * Immediately ends a poll.
+   *
+   * This method forcibly closes a poll before its scheduled end time,
+   * preventing further votes and finalizing the results.
    *
    * @param channelId - The ID of the channel containing the poll
    * @param messageId - The ID of the message containing the poll
-   * @returns The updated message object with the ended poll
+   * @returns A Promise resolving to the updated message object with the ended poll
+   * @throws Will throw an error if the poll doesn't exist or you didn't create it
+   *
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const updatedMessage = await pollRouter.endPoll(
+   *     "123456789012345678", // Channel ID
+   *     "987654321987654321"  // Message ID with poll
+   *   );
+   *
+   *   console.log("Poll ended successfully");
+   *
+   *   // Access the poll results from the updated message
+   *   if (updatedMessage.poll) {
+   *     const totalVotes = updatedMessage.poll.answers.reduce(
+   *       (sum, answer) => sum + answer.vote_count, 0
+   *     );
+   *
+   *     console.log(`Total votes: ${totalVotes}`);
+   *
+   *     // Display results for each answer
+   *     updatedMessage.poll.answers.forEach(answer => {
+   *       const percentage = (answer.vote_count / totalVotes * 100).toFixed(1);
+   *       console.log(`${answer.text}: ${answer.vote_count} votes (${percentage}%)`);
+   *     });
+   *   }
+   * } catch (error) {
+   *   console.error("Failed to end poll:", error);
+   * }
+   * ```
+   *
+   * @note You cannot end polls created by other users.
    */
   endPoll(channelId: Snowflake, messageId: Snowflake): Promise<MessageEntity> {
     return this.#rest.post(
-      PollRouter.ROUTES.channelPollExpire(channelId, messageId),
+      PollRouter.POLL_ROUTES.endPollEndpoint(channelId, messageId),
     );
   }
 }

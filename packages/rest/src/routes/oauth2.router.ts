@@ -2,92 +2,174 @@ import type { ApplicationEntity, OAuth2Scope, UserEntity } from "@nyxjs/core";
 import type { Rest } from "../core/index.js";
 
 /**
- * Represents OAuth2 authorization information returned by the API
- * Contains details about the application, granted scopes, expiration time, and optionally user information
+ * Represents OAuth2 authorization information returned by the API.
+ *
+ * Contains comprehensive details about a current OAuth2 authorization,
+ * including the application data, granted scopes, token expiration time,
+ * and optionally information about the authorized user.
  *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information-response-structure}
  */
 export interface AuthorizationEntity {
   /**
-   * The application associated with this authorization
-   * Partial application object with basic information
+   * The application associated with this authorization.
+   *
+   * Contains a partial application object with basic information about
+   * the application that the token was issued for. This includes fields
+   * like id, name, icon, and description.
    */
   application: Partial<ApplicationEntity>;
 
   /**
-   * The scopes that the user has authorized the application for
-   * Array of OAuth2 scope strings
+   * The scopes that the user has authorized the application for.
+   *
+   * Array of OAuth2 scope strings (e.g., "identify", "guilds", "email").
+   * These scopes define what actions and data the application is permitted
+   * to access on behalf of the user.
    */
   scopes: OAuth2Scope[];
 
   /**
-   * When the access token expires
-   * ISO8601 timestamp
+   * When the access token expires.
+   *
+   * ISO8601 timestamp indicating when the current access token will expire.
+   * After this time, the token must be refreshed using a refresh token.
    */
   expires: string;
 
   /**
-   * The user who has authorized, if the user has authorized with the 'identify' scope
-   * Optional user object
+   * The user who has authorized the application.
+   *
+   * Only included if the authorization includes the 'identify' scope.
+   * Contains information about the user who granted the authorization.
    */
   user?: UserEntity;
 }
 
 /**
- * Router class for Discord OAuth2-related endpoints
- * Provides methods to retrieve information about the current application and authorization
+ * Router for Discord OAuth2-related endpoints.
+ *
+ * This class provides methods to interact with Discord's OAuth2 system,
+ * which powers third-party application authorization and token-based authentication.
+ * It allows retrieving information about the current application and user authorizations.
  *
  * @see {@link https://discord.com/developers/docs/topics/oauth2}
  */
-export class Oauth2Router {
+export class OAuth2Router {
   /**
-   * Collection of route URLs for OAuth2-related endpoints
+   * API route constants for OAuth2-related endpoints.
    */
-  static readonly ROUTES = {
+  static readonly OAUTH2_ROUTES = {
     /**
-     * Route for getting information about the current application
-     * Returns the bot's application object
-     * @returns `/oauth2/applications/@me` route
+     * Route for getting information about the current application.
+     *
+     * This endpoint returns the bot's application object, including
+     * details about the application's identity, settings, and team.
+     *
+     * @returns The formatted API route string
      * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
      */
-    oauth2CurrentApplication: "/oauth2/applications/@me" as const,
+    currentApplicationEndpoint: "/oauth2/applications/@me",
 
     /**
-     * Route for getting information about the current authorization
-     * Returns details about the authorized scopes, application, and possibly user
-     * @returns `/oauth2/@me` route
+     * Route for getting information about the current authorization.
+     *
+     * This endpoint returns details about the authorized scopes,
+     * application data, and possibly user information for the current token.
+     *
+     * @returns The formatted API route string
      * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
      */
-    oauth2CurrentAuthorization: "/oauth2/@me" as const,
+    currentAuthorizationEndpoint: "/oauth2/@me",
   } as const;
 
+  /** The REST client used to make API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new OAuth2 Router instance.
+   *
+   * @param rest - The REST client to use for making Discord API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
 
   /**
-   * Retrieves information about the current bot application
-   * This endpoint requires authentication with a bot token
-   * Returns details about the application such as id, name, icon, description, and other app-specific information
+   * Fetches information about the current bot application.
    *
-   * @returns The application object for the bot
+   * This method retrieves detailed information about the application associated
+   * with the current bot token, including its name, description, icon, team
+   * ownership, and other application-specific settings.
+   *
+   * @returns A Promise resolving to the application object for the bot
+   * @throws Will throw an error if not authenticated with a bot token
+   *
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
+   *
+   * @example
+   * ```typescript
+   * // Fetch information about the bot's application
+   * const appInfo = await oauth2Router.fetchCurrentApplication();
+   *
+   * console.log(`Application Name: ${appInfo.name}`);
+   * console.log(`Application ID: ${appInfo.id}`);
+   * console.log(`Description: ${appInfo.description}`);
+   *
+   * if (appInfo.team) {
+   *   console.log(`Owned by Team: ${appInfo.team.name}`);
+   *   console.log(`Team Members: ${appInfo.team.members.length}`);
+   * } else {
+   *   console.log(`Owned by User: ${appInfo.owner.username}`);
+   * }
+   *
+   * console.log(`Bot Public: ${appInfo.bot_public}`);
+   * console.log(`Requires Code Grant: ${appInfo.bot_require_code_grant}`);
+   * ```
+   *
+   * @note This endpoint requires authentication with a bot token.
    */
-  getCurrentBotApplicationInformation(): Promise<ApplicationEntity> {
-    return this.#rest.get(Oauth2Router.ROUTES.oauth2CurrentApplication);
+  fetchCurrentApplication(): Promise<ApplicationEntity> {
+    return this.#rest.get(
+      OAuth2Router.OAUTH2_ROUTES.currentApplicationEndpoint,
+    );
   }
 
   /**
-   * Retrieves information about the current authorization
-   * This endpoint requires authentication with a bearer token
-   * Returns details about the authorized scopes, application, and user (if the identify scope was authorized)
+   * Fetches information about the current OAuth2 authorization.
    *
-   * @returns Information about the current authorization
+   * This method retrieves detailed information about the current authorization,
+   * including which application it's for, what scopes have been granted,
+   * when the token expires, and optionally information about the user who
+   * granted the authorization.
+   *
+   * @returns A Promise resolving to information about the current authorization
+   * @throws Will throw an error if not authenticated with a bearer token
+   *
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
+   *
+   * @example
+   * ```typescript
+   * // Fetch information about the current authorization using a bearer token
+   * const authInfo = await oauth2Router.fetchCurrentAuthorization();
+   *
+   * console.log(`Authorized App: ${authInfo.application.name}`);
+   * console.log(`Granted Scopes: ${authInfo.scopes.join(', ')}`);
+   *
+   * const expiresDate = new Date(authInfo.expires);
+   * console.log(`Token Expires: ${expiresDate.toLocaleString()}`);
+   *
+   * if (authInfo.user) {
+   *   console.log(`Authorized User: ${authInfo.user.username}`);
+   *   console.log(`User ID: ${authInfo.user.id}`);
+   * }
+   * ```
+   *
+   * @note This endpoint requires authentication with a bearer token.
    */
-  getCurrentAuthorizationInformation(): Promise<AuthorizationEntity> {
-    return this.#rest.get(Oauth2Router.ROUTES.oauth2CurrentAuthorization);
+  fetchCurrentAuthorization(): Promise<AuthorizationEntity> {
+    return this.#rest.get(
+      OAuth2Router.OAUTH2_ROUTES.currentAuthorizationEndpoint,
+    );
   }
 }

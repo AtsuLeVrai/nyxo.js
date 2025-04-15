@@ -8,7 +8,10 @@ import type { Rest } from "../core/index.js";
 /**
  * Interface for creating a new Stage instance.
  *
- * A Stage instance holds information about a live stage in a Stage channel.
+ * A Stage instance represents the "live" state of a Stage channel,
+ * containing metadata like topic and visibility settings.
+ *
+ * @remarks
  * Creating a Stage instance requires the user to be a moderator of the Stage channel,
  * which means having the MANAGE_CHANNELS, MUTE_MEMBERS, and MOVE_MEMBERS permissions.
  *
@@ -17,29 +20,42 @@ import type { Rest } from "../core/index.js";
 export interface CreateStageInstanceSchema {
   /**
    * The ID of the Stage channel.
+   *
+   * Must be a valid Stage channel ID within the guild.
+   * The channel must be of type GUILD_STAGE_VOICE (13).
    */
   channel_id: Snowflake;
 
   /**
    * The topic of the Stage instance (1-120 characters).
-   * This is the blurb that gets shown below the channel's name, among other places.
+   *
+   * This is displayed prominently in the Stage UI, showing up below
+   * the channel's name and in various Stage discovery interfaces.
    */
   topic: string;
 
   /**
    * The privacy level of the Stage instance.
+   *
+   * Controls who can see the Stage in discovery surfaces.
    * Defaults to GUILD_ONLY (2) if not specified.
    */
   privacy_level?: StageInstancePrivacyLevel;
 
   /**
    * Whether to notify @everyone that a Stage instance has started.
-   * The stage moderator must have the MENTION_EVERYONE permission for this notification to be sent.
+   *
+   * When true, sends a notification to the guild that the Stage has begun.
+   * The stage moderator must have the MENTION_EVERYONE permission for this
+   * notification to be sent.
    */
   send_start_notification?: boolean;
 
   /**
    * The ID of the scheduled event associated with this Stage instance, if any.
+   *
+   * When specified, connects this Stage instance to a scheduled event, allowing
+   * interested users to easily join and see the Stage in the event details.
    */
   guild_scheduled_event_id?: Snowflake | null;
 }
@@ -47,60 +63,85 @@ export interface CreateStageInstanceSchema {
 /**
  * Interface for modifying an existing Stage instance.
  *
+ * This interface allows updating the metadata for a Stage that is already live.
+ * All fields are optional, allowing partial updates.
+ *
+ * @remarks
  * Updating a Stage instance requires the user to be a moderator of the Stage channel,
  * which means having the MANAGE_CHANNELS, MUTE_MEMBERS, and MOVE_MEMBERS permissions.
- *
- * All fields are optional, allowing partial updates to the Stage instance.
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}
  */
 export interface ModifyStageInstanceSchema {
   /**
    * The topic of the Stage instance (1-120 characters).
+   *
+   * Updates the displayed topic for the Stage.
    */
   topic?: string;
 
   /**
    * The privacy level of the Stage instance.
+   *
+   * Updates the visibility settings for the Stage.
    */
   privacy_level?: StageInstancePrivacyLevel;
 }
 
 /**
- * Router class for handling Discord Stage Instance endpoints.
+ * Router for Discord Stage Instance-related endpoints.
  *
+ * This class provides methods to interact with Discord's Stage Instance system,
+ * allowing creation, management, and deletion of Stage sessions within Stage channels.
+ *
+ * @remarks
  * A Stage instance holds information about a live stage in a Stage channel.
  * Stage channels are specialized voice channels that allow better control for
- * audio conversations with many users, like panel discussions or AMAs.
+ * audio conversations with many users, like panel discussions, AMAs, or performances.
  *
  * Key concepts:
  * - Liveness: A Stage channel is considered "live" when it has an associated Stage instance
  * - Speakers: Participants whose voice state is not suppressed and have no request_to_speak_timestamp
+ * - Audience: Participants whose voice state is suppressed (can only listen)
  * - Moderators: Members with MANAGE_CHANNELS, MUTE_MEMBERS, and MOVE_MEMBERS permissions
+ *
+ * When no speakers remain in a Stage for a period of time (typically a few minutes),
+ * the Stage instance is automatically deleted.
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance}
  */
 export class StageInstanceRouter {
   /**
-   * Collection of route patterns for Stage Instance endpoints.
+   * API route constants for Stage Instance endpoints.
    */
-  static readonly ROUTES = {
+  static readonly STAGE_ROUTES = {
     /**
      * Base route for Stage Instances.
+     *
+     * Used for creating new Stage instances.
      */
-    stageInstancesBase: "/stage-instances" as const,
+    stageInstancesEndpoint: "/stage-instances",
 
     /**
      * Route for a specific Stage Instance.
+     *
+     * Used for getting, updating, or deleting an existing Stage instance.
+     *
      * @param channelId - The ID of the Stage channel
-     * @returns The endpoint path
+     * @returns The formatted API route string
      */
-    stageInstance: (channelId: Snowflake) =>
+    stageInstanceByIdEndpoint: (channelId: Snowflake) =>
       `/stage-instances/${channelId}` as const,
   } as const;
 
+  /** The REST client used to make API requests */
   readonly #rest: Rest;
 
+  /**
+   * Creates a new Stage Instance Router instance.
+   *
+   * @param rest - The REST client to use for making Discord API requests
+   */
   constructor(rest: Rest) {
     this.#rest = rest;
   }
@@ -108,6 +149,50 @@ export class StageInstanceRouter {
   /**
    * Creates a new Stage Instance associated with a Stage channel.
    *
+   * This method makes a Stage channel "go live," creating a Stage instance
+   * with the specified topic and settings. This is equivalent to clicking
+   * the "Start Stage" button in Discord's UI.
+   *
+   * @param options - Options for creating the Stage Instance
+   * @param reason - Optional audit log reason for the creation
+   * @returns A promise resolving to the created Stage Instance entity
+   * @throws Error if the Stage channel doesn't exist or permissions are missing
+   *
+   * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
+   *
+   * @example
+   * ```typescript
+   * // Start a Stage with basic settings
+   * try {
+   *   const stageInstance = await stageRouter.createStage({
+   *     channel_id: "123456789012345678", // Stage channel ID
+   *     topic: "Community Q&A Session",
+   *     privacy_level: 2, // GUILD_ONLY
+   *     send_start_notification: true
+   *   }, "Starting weekly community Q&A");
+   *
+   *   console.log(`Stage started successfully`);
+   *   console.log(`Topic: ${stageInstance.topic}`);
+   * } catch (error) {
+   *   console.error("Failed to start Stage:", error);
+   * }
+   *
+   * // Start a Stage connected to a scheduled event
+   * try {
+   *   const stageInstance = await stageRouter.createStage({
+   *     channel_id: "123456789012345678", // Stage channel ID
+   *     topic: "Developer Roundtable Discussion",
+   *     privacy_level: 2, // GUILD_ONLY
+   *     guild_scheduled_event_id: "987654321987654321" // Link to scheduled event
+   *   });
+   *
+   *   console.log(`Stage started and linked to event`);
+   * } catch (error) {
+   *   console.error("Failed to start Stage:", error);
+   * }
+   * ```
+   *
+   * @remarks
    * This effectively makes the Stage channel "live".
    * Requires the user to be a moderator of the Stage channel (having MANAGE_CHANNELS,
    * MUTE_MEMBERS, and MOVE_MEMBERS permissions).
@@ -116,56 +201,120 @@ export class StageInstanceRouter {
    * (on the order of minutes), the Stage instance will be automatically deleted.
    *
    * Fires a Stage Instance Create Gateway event.
-   *
-   * @param options - Options for creating the Stage Instance
-   * @param reason - Optional audit log reason for the creation
-   * @returns A promise resolving to the created Stage Instance entity
-   * @throws Error if the options are invalid
-   * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
    */
-  createStageInstance(
+  createStage(
     options: CreateStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    return this.#rest.post(StageInstanceRouter.ROUTES.stageInstancesBase, {
-      body: JSON.stringify(options),
-      reason,
-    });
+    return this.#rest.post(
+      StageInstanceRouter.STAGE_ROUTES.stageInstancesEndpoint,
+      {
+        body: JSON.stringify(options),
+        reason,
+      },
+    );
   }
 
   /**
-   * Gets the Stage Instance associated with a Stage channel, if it exists.
+   * Fetches the Stage Instance associated with a Stage channel, if it exists.
+   *
+   * This method retrieves information about an ongoing Stage, including
+   * its topic, privacy level, and discovery settings.
    *
    * @param channelId - The ID of the Stage channel to get the instance for
    * @returns A promise resolving to the Stage Instance entity
+   * @throws Will throw an error if the Stage channel doesn't exist or isn't live
+   *
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
+   *
+   * @example
+   * ```typescript
+   * // Check if a Stage is currently live and get its details
+   * try {
+   *   const stageInstance = await stageRouter.fetchStage("123456789012345678");
+   *
+   *   console.log(`Stage is live`);
+   *   console.log(`Topic: ${stageInstance.topic}`);
+   *   console.log(`Privacy: ${
+   *     stageInstance.privacy_level === 1 ? "Public" : "Guild Only"
+   *   }`);
+   *
+   *   // Check if linked to a scheduled event
+   *   if (stageInstance.guild_scheduled_event_id) {
+   *     console.log(`Linked to event: ${stageInstance.guild_scheduled_event_id}`);
+   *   }
+   * } catch (error) {
+   *   console.log("Stage is not currently live");
+   * }
+   * ```
    */
-  getStageInstance(channelId: Snowflake): Promise<StageInstanceEntity> {
-    return this.#rest.get(StageInstanceRouter.ROUTES.stageInstance(channelId));
+  fetchStage(channelId: Snowflake): Promise<StageInstanceEntity> {
+    return this.#rest.get(
+      StageInstanceRouter.STAGE_ROUTES.stageInstanceByIdEndpoint(channelId),
+    );
   }
 
   /**
    * Updates fields of an existing Stage Instance.
    *
-   * Requires the user to be a moderator of the Stage channel (having MANAGE_CHANNELS,
-   * MUTE_MEMBERS, and MOVE_MEMBERS permissions).
-   *
-   * Fires a Stage Instance Update Gateway event.
+   * This method allows modifying the topic or privacy level of an ongoing Stage.
    *
    * @param channelId - The ID of the Stage channel with the instance to modify
    * @param options - Options for modifying the Stage Instance
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the updated Stage Instance entity
-   * @throws Error if the options are invalid
+   * @throws Error if the Stage isn't live or permissions are missing
+   *
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance}
+   *
+   * @example
+   * ```typescript
+   * // Update a Stage's topic
+   * try {
+   *   const updatedStage = await stageRouter.updateStage(
+   *     "123456789012345678", // Stage channel ID
+   *     {
+   *       topic: "Q&A Session - Now taking questions from Discord"
+   *     },
+   *     "Updating topic to reflect current status"
+   *   );
+   *
+   *   console.log(`Stage topic updated to: ${updatedStage.topic}`);
+   * } catch (error) {
+   *   console.error("Failed to update Stage:", error);
+   * }
+   *
+   * // Change a Stage's privacy level
+   * try {
+   *   const updatedStage = await stageRouter.updateStage(
+   *     "123456789012345678", // Stage channel ID
+   *     {
+   *       privacy_level: 1 // PUBLIC
+   *     },
+   *     "Opening Stage to public discovery"
+   *   );
+   *
+   *   console.log(`Stage is now ${
+   *     updatedStage.privacy_level === 1 ? "public" : "guild-only"
+   *   }`);
+   * } catch (error) {
+   *   console.error("Failed to update Stage privacy:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the user to be a moderator of the Stage channel (having MANAGE_CHANNELS,
+   * MUTE_MEMBERS, and MOVE_MEMBERS permissions).
+   *
+   * Fires a Stage Instance Update Gateway event.
    */
-  modifyStageInstance(
+  updateStage(
     channelId: Snowflake,
     options: ModifyStageInstanceSchema,
     reason?: string,
   ): Promise<StageInstanceEntity> {
     return this.#rest.patch(
-      StageInstanceRouter.ROUTES.stageInstance(channelId),
+      StageInstanceRouter.STAGE_ROUTES.stageInstanceByIdEndpoint(channelId),
       {
         body: JSON.stringify(options),
         reason,
@@ -176,19 +325,39 @@ export class StageInstanceRouter {
   /**
    * Deletes a Stage Instance, effectively ending the "live" status of the Stage channel.
    *
-   * Requires the user to be a moderator of the Stage channel (having MANAGE_CHANNELS,
-   * MUTE_MEMBERS, and MOVE_MEMBERS permissions).
-   *
-   * Fires a Stage Instance Delete Gateway event.
+   * This method ends an ongoing Stage, equivalent to clicking the "End Stage" button in Discord's UI.
    *
    * @param channelId - The ID of the Stage channel with the instance to delete
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the deletion is complete
+   * @throws Will throw an error if the Stage isn't live or permissions are missing
+   *
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
+   *
+   * @example
+   * ```typescript
+   * // End a Stage
+   * try {
+   *   await stageRouter.endStage(
+   *     "123456789012345678", // Stage channel ID
+   *     "Session completed successfully"
+   *   );
+   *
+   *   console.log("Stage ended successfully");
+   * } catch (error) {
+   *   console.error("Failed to end Stage:", error);
+   * }
+   * ```
+   *
+   * @remarks
+   * Requires the user to be a moderator of the Stage channel (having MANAGE_CHANNELS,
+   * MUTE_MEMBERS, and MOVE_MEMBERS permissions).
+   *
+   * Fires a Stage Instance Delete Gateway event.
    */
-  deleteStageInstance(channelId: Snowflake, reason?: string): Promise<void> {
+  endStage(channelId: Snowflake, reason?: string): Promise<void> {
     return this.#rest.delete(
-      StageInstanceRouter.ROUTES.stageInstance(channelId),
+      StageInstanceRouter.STAGE_ROUTES.stageInstanceByIdEndpoint(channelId),
       {
         reason,
       },

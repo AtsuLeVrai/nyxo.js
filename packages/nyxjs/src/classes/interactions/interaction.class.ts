@@ -149,7 +149,7 @@ export abstract class Interaction<
     options: InteractionResponseEntity,
     withResponse = false,
   ): Promise<InteractionCallbackResponseEntity | undefined> {
-    return this.client.rest.interactions.createInteractionResponse(
+    return this.client.rest.interactions.createResponse(
       this.id,
       this.token,
       options,

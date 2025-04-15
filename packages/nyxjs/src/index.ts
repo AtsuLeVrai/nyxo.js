@@ -1,5 +1,4 @@
 // Re-export all the packages
-export * from "@nyxjs/builders";
 export * from "@nyxjs/core";
 export * from "@nyxjs/gateway";
 export * from "@nyxjs/rest";

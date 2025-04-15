@@ -687,20 +687,16 @@ export const RestKeyofEventMappings: (keyof RestEvents)[] = [
  * These events are forwarded directly from the Gateway client to the main client.cache.
  */
 export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
-  "connectionAttempt",
-  "connectionSuccess",
-  "connectionFailure",
-  "reconnectionScheduled",
   "heartbeatSent",
   "heartbeatAcknowledge",
   "heartbeatTimeout",
   "sessionStart",
   "sessionResume",
   "sessionInvalidate",
-  "shardCreate",
+  "shardResume",
+  "shardReconnect",
   "shardReady",
   "shardDisconnect",
-  "rateLimitDetected",
   "error",
   "dispatch",
 ] as const;

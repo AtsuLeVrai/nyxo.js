@@ -191,25 +191,20 @@ describe("Discord Markdown Formatters", () => {
 
     it("should format slash commands with subcommands", () => {
       expect(
-        formatSlashCommand(
-          "settings",
-          "123456789012345678",
-          undefined,
-          "privacy",
-        ),
+        formatSlashCommand("settings", "123456789012345678", "privacy"),
       ).toBe("</settings privacy:123456789012345678>");
-      expect(
-        formatSlashCommand("config", "987654321098765432", undefined, "view"),
-      ).toBe("</config view:987654321098765432>");
+      expect(formatSlashCommand("config", "987654321098765432", "view")).toBe(
+        "</config view:987654321098765432>",
+      );
     });
 
     it("should format slash commands with subcommand groups and subcommands", () => {
       expect(
         formatSlashCommand("permissions", "123456789012345678", "role", "view"),
-      ).toBe("</permissions role view:123456789012345678>");
+      ).toBe("</permissions view role:123456789012345678>");
       expect(
         formatSlashCommand("admin", "987654321098765432", "user", "ban"),
-      ).toBe("</admin user ban:987654321098765432>");
+      ).toBe("</admin ban user:987654321098765432>");
     });
   });
 

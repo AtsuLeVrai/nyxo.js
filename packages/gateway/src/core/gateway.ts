@@ -1,14 +1,29 @@
-import { type UnavailableGuildEntity, sleep } from "@nyxjs/core";
+import {
+  ApiVersion,
+  BitField,
+  type UnavailableGuildEntity,
+  sleep,
+} from "@nyxjs/core";
 import type { Rest } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
-import type { z } from "zod";
+import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { HeartbeatManager, ShardManager } from "../managers/index.js";
-import { GatewayOptions } from "../options/index.js";
-import { CompressionService, EncodingService } from "../services/index.js";
+import {
+  HeartbeatManager,
+  HeartbeatOptions,
+  ShardManager,
+  ShardOptions,
+} from "../managers/index.js";
+import {
+  CompressionService,
+  CompressionType,
+  EncodingService,
+  EncodingType,
+} from "../services/index.js";
 import {
   type GatewayEvents,
+  GatewayIntentsBits,
   GatewayOpcodes,
   type GatewayReceiveEvents,
   type GatewaySendEvents,
@@ -25,68 +40,246 @@ import {
 } from "../types/index.js";
 
 /**
- * WebSocket close codes that cannot be resumed
+ * Main configuration options for the Discord Gateway client
+ *
+ * These options control the behavior of the WebSocket connection to Discord's
+ * Gateway API, including authentication, sharding, compression, and more.
+ *
+ * @example
+ * ```ts
+ * const options = {
+ *   token: "your-bot-token",
+ *   intents: [GatewayIntentsBits.Guilds, GatewayIntentsBits.GuildMessages],
+ *   presence: {
+ *     status: "online",
+ *     activities: [{
+ *       name: "with Discord",
+ *       type: 0
+ *     }]
+ *   }
+ * };
+ *
+ * const gateway = new Gateway(rest, options);
+ * ```
  */
-const NON_RESUMABLE_CODES: readonly number[] = [
-  4004, // Authentication failed
-  4010, // Invalid shard sent
-  4011, // Sharding required
-  4012, // Invalid API version
-  4013, // Invalid intents
-  4014, // Disallowed intents
-] as const;
+export const GatewayOptions = z.object({
+  /**
+   * Discord bot token for authentication
+   *
+   * This token is required for connecting to the Gateway.
+   *
+   * @see {@link https://discord.com/developers/docs/reference#authentication}
+   */
+  token: z.string(),
+
+  /**
+   * Gateway intents to request
+   *
+   * Intents determine which events the bot will receive from Discord.
+   * Can be specified as an array of intent flags or a precalculated bit field.
+   *
+   * @example
+   * ```ts
+   * // Using intent flags
+   * const intents = [
+   *   GatewayIntentsBits.Guilds,
+   *   GatewayIntentsBits.GuildMessages,
+   *   GatewayIntentsBits.MessageContent
+   * ];
+   *
+   * // Or using a precalculated bit field
+   * const intents = 513; // Guilds + GuildMessages + MessageContent
+   * ```
+   *
+   * @see {@link https://discord.com/developers/docs/topics/gateway#gateway-intents}
+   */
+  intents: z.union([
+    z
+      .array(z.nativeEnum(GatewayIntentsBits))
+      .transform((value) => Number(BitField.combine(value).valueOf())),
+    z.number().int().positive(),
+  ]),
+
+  /**
+   * Discord API version to use
+   *
+   * @default ApiVersion.V10
+   */
+  version: z.literal(ApiVersion.V10).default(ApiVersion.V10),
+
+  /**
+   * Number of members in a guild before the members are no longer returned in the guild create event
+   *
+   * Used to limit the initial payload size for large guilds.
+   *
+   * @default 50
+   * @see {@link https://discord.com/developers/docs/resources/guild#guild-object}
+   */
+  largeThreshold: z.number().int().min(50).max(250).default(50),
+
+  /**
+   * Payload encoding format to use
+   *
+   * @default "json"
+   */
+  encodingType: EncodingType.default("json"),
+
+  /**
+   * Payload compression format to use
+   *
+   * @default undefined
+   */
+  compressionType: CompressionType.optional(),
+
+  /**
+   * Backoff schedule for reconnection attempts in milliseconds
+   *
+   * These values determine the wait time between reconnection attempts
+   * in case of connection failures.
+   *
+   * @default [1000, 5000, 10000]
+   */
+  backoffSchedule: z
+    .array(z.number().int().positive())
+    .default([1000, 5000, 10000]),
+
+  /**
+   * WebSocket close codes that cannot be resumed
+   *
+   * These close codes indicate conditions where a session cannot be resumed.
+   * This includes authentication failures, invalid sharding configuration,
+   * or invalid API parameters.
+   *
+   * @see {@link https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes}
+   */
+  nonResumableCodes: z
+    .array(z.number().int().positive())
+    .default([4004, 4010, 4011, 4012, 4013, 4014]),
+
+  /**
+   * Initial presence data to set upon connecting
+   *
+   * @default undefined
+   * @see {@link https://discord.com/developers/docs/topics/gateway-events#update-presence}
+   */
+  presence: z.custom<UpdatePresenceEntity>().optional(),
+
+  /**
+   * Heartbeat configuration options
+   *
+   * @default {}
+   */
+  heartbeat: HeartbeatOptions.default({}),
+
+  /**
+   * Sharding configuration options
+   *
+   * @default {}
+   */
+  shard: ShardOptions.default({}),
+});
+
+export type GatewayOptions = z.infer<typeof GatewayOptions>;
+
+/**
+ * Connection state for the Gateway
+ *
+ * These states represent the different phases of the connection lifecycle.
+ */
+type ConnectionState =
+  | "disconnected" // Not connected to Gateway
+  | "connecting" // Establishing initial connection
+  | "identifying" // Sending identify payload
+  | "resuming" // Attempting to resume a session
+  | "ready"; // Fully connected and authenticated
+
+/**
+ * Session information for Gateway connections
+ *
+ * Contains the data needed to maintain and potentially resume a session.
+ */
+interface SessionInfo {
+  /** Session ID assigned by Discord */
+  id: string | null;
+
+  /** URL for resuming the session */
+  resumeUrl: string | null;
+
+  /** Last received sequence number */
+  sequence: number;
+
+  /** Timestamp when the session became ready */
+  readyAt: number | null;
+}
 
 /**
  * Main Gateway client for Discord WebSocket communication
  *
  * This class handles:
- * - Establishing and maintaining the WebSocket connection
+ * - Establishing and maintaining the WebSocket connection to Discord
  * - Processing Gateway events and opcodes
- * - Coordinating heartbeats
- * - Managing session lifecycle
- * - Handling sharding
+ * - Managing session lifecycle (identify, resume, reconnect)
+ * - Coordinating heartbeats and sharding
+ *
+ * @example
+ * ```ts
+ * const rest = new Rest({ token: "your-bot-token" });
+ * const gateway = new Gateway(rest, {
+ *   token: "your-bot-token",
+ *   intents: [GatewayIntentsBits.Guilds, GatewayIntentsBits.GuildMessages]
+ * });
+ *
+ * // Connect to Discord
+ * gateway.connect()
+ *   .then(() => console.log("Connected to Discord!"))
+ *   .catch(error => console.error("Connection failed:", error));
+ *
+ * // Listen for events
+ * gateway.on("dispatch", (eventName, eventData) => {
+ *   console.log(`Received ${eventName} event:`, eventData);
+ * });
+ *
+ * // Handle graceful shutdown
+ * process.on("SIGINT", () => {
+ *   gateway.destroy();
+ *   process.exit(0);
+ * });
+ * ```
  */
 export class Gateway extends EventEmitter<GatewayEvents> {
-  /** Current session ID */
-  #sessionId: string | null = null;
-
-  /** URL for resuming the current session */
-  #resumeUrl: string | null = null;
-
-  /** Last received sequence number */
-  #sequence = 0;
-
-  /** WebSocket connection */
+  /** Current WebSocket connection */
   #ws: WebSocket | null = null;
 
-  /** Timestamp when connection started */
-  #connectStartTime = 0;
+  /** Current connection state */
+  #state: ConnectionState = "disconnected";
 
-  /** Timestamp when the connection was last ready */
-  #readyAt: number | null = null;
+  /** Session information */
+  #session: SessionInfo = {
+    id: null,
+    resumeUrl: null,
+    sequence: 0,
+    readyAt: null,
+  };
 
-  /** Number of reconnection attempts made */
-  #reconnectionAttempts = 0;
-
-  /** Whether a reconnection is in progress */
-  #isReconnecting = false;
+  /** Number of reconnection attempts */
+  #reconnectCount = 0;
 
   /** Discord REST API client */
   readonly #rest: Rest;
 
-  /** Heartbeat manager */
+  /** Gateway heartbeat manager */
   readonly #heartbeat: HeartbeatManager;
 
-  /** Shard manager */
+  /** Shard manager for multi-shard bots */
   readonly #shard: ShardManager;
 
-  /** Compression service */
+  /** Service for payload compression */
   readonly #compression: CompressionService;
 
-  /** Encoding service */
+  /** Service for payload encoding */
   readonly #encoding: EncodingService;
 
-  /** Gateway configuration options */
+  /** Gateway configuration */
   readonly #options: GatewayOptions;
 
   /**
@@ -95,6 +288,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param rest - Discord REST API client
    * @param options - Gateway configuration options
    * @throws {Error} If options validation fails
+   *
+   * @example
+   * ```ts
+   * const gateway = new Gateway(rest, {
+   *   token: "your-bot-token",
+   *   intents: [GatewayIntentsBits.Guilds, GatewayIntentsBits.GuildMessages]
+   * });
+   * ```
    */
   constructor(rest: Rest, options: z.input<typeof GatewayOptions>) {
     super();
@@ -106,7 +307,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     this.#rest = rest;
-
     this.#heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
     this.#shard = new ShardManager(this, this.#options.shard);
     this.#compression = new CompressionService(this.#options.compressionType);
@@ -129,65 +329,65 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
   /**
    * Gets the current WebSocket ready state
+   *
+   * @returns WebSocket ready state (CONNECTING, OPEN, CLOSING, CLOSED)
    */
   get readyState(): number {
     return this.#ws?.readyState ?? WebSocket.CLOSED;
   }
 
   /**
-   * Gets the timestamp when the connection was started
-   */
-  get connectStartTime(): number {
-    return this.#connectStartTime;
-  }
-
-  /**
    * Gets the timestamp when the connection was last ready
+   *
+   * @returns Timestamp in milliseconds or 0 if never connected
    */
   get readyAt(): number {
-    return this.#readyAt ?? 0;
+    return this.#session.readyAt ?? 0;
   }
 
   /**
    * Gets the uptime of the connection in milliseconds
+   *
+   * @returns Uptime in milliseconds or 0 if not connected
    */
   get uptime(): number {
-    return this.#readyAt ? Date.now() - this.#readyAt : 0;
+    return this.#session.readyAt ? Date.now() - this.#session.readyAt : 0;
   }
 
   /**
    * Gets the latency of the connection in milliseconds
+   *
+   * @returns Latency in milliseconds
    */
   get latency(): number {
     return this.#heartbeat.latency;
   }
 
   /**
-   * Gets the underlying WebSocket instance
-   */
-  get webSocket(): WebSocket | null {
-    return this.#ws;
-  }
-
-  /**
    * Gets the last received sequence number
+   *
+   * @returns Sequence number
    */
   get sequence(): number {
-    return this.#sequence;
+    return this.#session.sequence;
   }
 
   /**
    * Gets the current session ID
+   *
+   * @returns Session ID or null if not connected
    */
   get sessionId(): string | null {
-    return this.#sessionId;
+    return this.#session.id;
   }
 
   /**
    * Gets the URL for resuming the current session
+   *
+   * @returns Resume URL or null if not available
    */
   get resumeUrl(): string | null {
-    return this.#resumeUrl;
+    return this.#session.resumeUrl;
   }
 
   /**
@@ -205,48 +405,98 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   /**
-   * Gets the CompressionService instance
-   */
-  get compression(): CompressionService {
-    return this.#compression;
-  }
-
-  /**
-   * Gets the EncodingService instance
-   */
-  get encoding(): EncodingService {
-    return this.#encoding;
-  }
-
-  /**
-   * Updates session information
+   * Checks if the connection is ready
    *
-   * @param sessionId - New session ID
-   * @param resumeUrl - New resume URL
+   * @returns True if the connection is in the ready state
    */
-  setSession(sessionId: string, resumeUrl: string): void {
-    this.#sessionId = sessionId;
-    this.#resumeUrl = resumeUrl;
+  get isReady(): boolean {
+    return this.#state === "ready";
   }
 
   /**
-   * Updates the sequence number
+   * Connects to the Discord Gateway
    *
-   * @param sequence - New sequence number
+   * Establishes a new WebSocket connection to Discord's Gateway API
+   * and completes the identify/resume process.
+   *
+   * @returns A promise that resolves when the connection is ready
+   * @throws {Error} If connection fails
+   *
+   * @example
+   * ```ts
+   * try {
+   *   await gateway.connect();
+   *   console.log("Connected to Discord Gateway!");
+   * } catch (error) {
+   *   console.error("Failed to connect:", error);
+   * }
+   * ```
    */
-  updateSequence(sequence: number): void {
-    this.#sequence = sequence;
+  async connect(): Promise<void> {
+    // Already connecting or connected
+    if (this.#state !== "disconnected") {
+      return;
+    }
+
+    this.#state = "connecting";
+
+    // Close any existing connection
+    if (this.#ws) {
+      this.#closeWebSocket();
+    }
+
+    try {
+      // Initialize services & Get gateway info and guild list
+      const [gatewayInfo, guilds] = await Promise.all([
+        this.#rest.gateway.fetchBotGatewayInfo(),
+        this.#rest.users.fetchCurrentUserGuilds(),
+        this.#encoding.initialize(),
+        this.#compression.initialize(),
+      ]);
+
+      // Initialize sharding if enabled
+      if (this.#shard.isEnabled) {
+        await this.#shard.spawn(
+          guilds.length,
+          gatewayInfo.session_start_limit.max_concurrency,
+          gatewayInfo.shards,
+        );
+      }
+
+      // Connect to Gateway
+      await this.#connectToGateway(gatewayInfo.url);
+
+      // Wait for ready event
+      await this.#waitForReady();
+
+      // Connection successful
+      this.#reconnectCount = 0;
+    } catch (error) {
+      this.#state = "disconnected";
+      throw error;
+    }
   }
 
   /**
    * Updates the bot's presence information
    *
    * @param presence - New presence data
-   * @throws {Error} If the connection is not valid
+   * @throws {Error} If the connection is not ready
+   *
+   * @example
+   * ```ts
+   * gateway.updatePresence({
+   *   status: "online",
+   *   activities: [{
+   *     name: "with Discord API",
+   *     type: 0
+   *   }]
+   * });
+   * ```
    */
   updatePresence(presence: UpdatePresenceEntity): void {
-    if (!this.isConnectionValid()) {
-      throw new Error("Cannot update presence, WebSocket is not open");
+    if (this.#state !== "ready") {
+      throw new Error("Cannot update presence, connection not ready");
     }
 
     this.send(GatewayOpcodes.PresenceUpdate, presence);
@@ -256,11 +506,28 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Updates the bot's voice state
    *
    * @param options - Voice state update options
-   * @throws {Error} If the connection is not valid
+   * @throws {Error} If the connection is not ready
+   *
+   * @example
+   * ```ts
+   * // Join a voice channel
+   * gateway.updateVoiceState({
+   *   guild_id: "123456789012345678",
+   *   channel_id: "123456789012345679",
+   *   self_mute: false,
+   *   self_deaf: false
+   * });
+   *
+   * // Leave a voice channel
+   * gateway.updateVoiceState({
+   *   guild_id: "123456789012345678",
+   *   channel_id: null
+   * });
+   * ```
    */
   updateVoiceState(options: UpdateVoiceStateEntity): void {
-    if (!this.isConnectionValid()) {
-      throw new Error("Cannot update voice state, WebSocket is not open");
+    if (this.#state !== "ready") {
+      throw new Error("Cannot update voice state, connection not ready");
     }
 
     this.send(GatewayOpcodes.VoiceStateUpdate, options);
@@ -270,11 +537,27 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Requests guild member information
    *
    * @param options - Request options
-   * @throws {Error} If the connection is not valid
+   * @throws {Error} If the connection is not ready
+   *
+   * @example
+   * ```ts
+   * // Request all members for a guild
+   * gateway.requestGuildMembers({
+   *   guild_id: "123456789012345678",
+   *   query: "",
+   *   limit: 0
+   * });
+   *
+   * // Request specific members
+   * gateway.requestGuildMembers({
+   *   guild_id: "123456789012345678",
+   *   user_ids: ["123456789012345679", "123456789012345680"]
+   * });
+   * ```
    */
   requestGuildMembers(options: RequestGuildMembersEntity): void {
-    if (!this.isConnectionValid()) {
-      throw new Error("Cannot request guild members, WebSocket is not open");
+    if (this.#state !== "ready") {
+      throw new Error("Cannot request guild members, connection not ready");
     }
 
     this.send(GatewayOpcodes.RequestGuildMembers, options);
@@ -284,78 +567,14 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Requests soundboard sounds
    *
    * @param options - Request options
-   * @throws {Error} If the connection is not valid
+   * @throws {Error} If the connection is not ready
    */
   requestSoundboardSounds(options: RequestSoundboardSoundsEntity): void {
-    if (!this.isConnectionValid()) {
-      throw new Error(
-        "Cannot request soundboard sounds, WebSocket is not open",
-      );
+    if (this.#state !== "ready") {
+      throw new Error("Cannot request soundboard sounds, connection not ready");
     }
 
     this.send(GatewayOpcodes.RequestSoundboardSounds, options);
-  }
-
-  /**
-   * Connects to the Discord Gateway
-   *
-   * @returns A promise that resolves when the connection is ready
-   * @throws {Error} If connection fails
-   */
-  async connect(): Promise<void> {
-    // Reset connection state if reconnecting
-    if (this.#ws !== null) {
-      // Close the WebSocket but don't destroy everything
-      this.#closeWebSocket();
-    }
-
-    this.#connectStartTime = Date.now();
-
-    try {
-      // Initialize services
-      const [gatewayInfo, guilds] = await Promise.all([
-        this.#rest.gateway.getGatewayBot(),
-        this.#rest.users.getCurrentUserGuilds(),
-        this.#encoding.initialize(),
-        this.#compression.initialize(),
-      ]);
-
-      // Initialize sharding if enabled
-      if (this.#shard.isEnabled()) {
-        await this.#shard.spawn(
-          guilds.length,
-          gatewayInfo.session_start_limit.max_concurrency,
-          gatewayInfo.shards,
-        );
-      }
-
-      // Emit connection attempt event
-      this.emit("connectionAttempt", {
-        timestamp: new Date().toISOString(),
-        gatewayUrl: gatewayInfo.url,
-        encoding: this.#encoding.type,
-        compression: this.#compression.type,
-      });
-
-      // Set up WebSocket connection
-      await this.#initializeWebSocket(gatewayInfo.url);
-
-      // Wait for READY event
-      await this.#waitForReady();
-
-      // Reset reconnection attempts on successful connection
-      this.#reconnectionAttempts = 0;
-    } catch (error) {
-      this.emit("connectionFailure", {
-        timestamp: new Date().toISOString(),
-        gatewayUrl: null,
-        error: error instanceof Error ? error : new Error(String(error)),
-        attemptNumber: this.#reconnectionAttempts + 1,
-      });
-
-      // Throw enhanced error with more context
-      throw new Error("Failed to connect to gateway", { cause: error });
-    }
   }
 
   /**
@@ -363,44 +582,56 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param opcode - Gateway opcode
    * @param data - Payload data
-   * @throws {Error} If the connection is not valid
+   * @throws {Error} If the connection is not open
    */
   send<T extends keyof GatewaySendEvents>(
     opcode: T,
     data: GatewaySendEvents[T],
   ): void {
-    if (!this.isConnectionValid()) {
+    if (!this.#ws || this.#ws.readyState !== WebSocket.OPEN) {
       throw new Error("Cannot send data, WebSocket is not open");
     }
 
     const payload: PayloadEntity = {
       op: opcode,
       d: data,
-      s: this.#sequence,
+      s: null,
       t: null,
     };
 
     const encoded = this.#encoding.encode(payload);
-    this.#ws?.send(encoded);
+    this.#ws.send(encoded);
   }
 
   /**
    * Gracefully disconnects from the Gateway
    *
-   * Use this method to cleanly disconnect without triggering reconnection
+   * Use this method to cleanly disconnect without triggering reconnection.
    *
    * @param code - WebSocket close code (defaults to 1000 - Normal Closure)
    * @param reason - Reason for disconnection
+   *
+   * @example
+   * ```ts
+   * // Normal disconnect
+   * gateway.disconnect();
+   *
+   * // Disconnect with specific code and reason
+   * gateway.disconnect(1000, "Bot shutting down");
+   * ```
    */
   disconnect(code = 1000, reason = "Normal closure"): void {
+    if (this.#state === "disconnected") {
+      return;
+    }
+
     // Send a clean close to Discord
     this.#closeWebSocket(code, reason);
+    this.#state = "disconnected";
 
     // If the code is a clean close, clear session info
     if (code === 1000 || code === 1001) {
-      this.#sessionId = null;
-      this.#resumeUrl = null;
-      this.#sequence = 0;
+      this.#clearSession();
     }
   }
 
@@ -409,23 +640,31 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param code - WebSocket close code
    * @throws {Error} If destruction fails
+   *
+   * @example
+   * ```ts
+   * // Clean shutdown
+   * process.on("SIGINT", () => {
+   *   gateway.destroy();
+   *   process.exit(0);
+   * });
+   * ```
    */
   destroy(code = 1000): void {
     try {
       // Close the WebSocket connection
       this.#closeWebSocket(code);
+      this.#state = "disconnected";
 
       // Clear session information
-      this.#sessionId = null;
-      this.#resumeUrl = null;
-      this.#sequence = 0;
+      this.#clearSession();
 
       // Destroy services
       this.#encoding.destroy();
       this.#compression.destroy();
       this.#heartbeat.destroy();
 
-      if (this.#shard.isEnabled()) {
+      if (this.#shard.isEnabled) {
         this.#shard.destroy();
       }
 
@@ -439,30 +678,59 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   /**
-   * Checks if the connection is valid for sending
+   * Establishes a WebSocket connection to the Discord Gateway
+   *
+   * @param url - Base Gateway URL
+   * @private
    */
-  isConnectionValid(): boolean {
-    return this.#ws?.readyState === WebSocket.OPEN;
+  async #connectToGateway(url: string): Promise<void> {
+    try {
+      // Build the complete Gateway URL with parameters
+      const wsUrl = this.#buildGatewayUrl(url);
+
+      // Create new WebSocket connection
+      const ws = new WebSocket(wsUrl);
+      this.#ws = ws;
+
+      // Set up event handlers
+      ws.on("message", this.#handleMessage.bind(this));
+      ws.on("close", this.#handleClose.bind(this));
+      ws.on("error", this.#handleError.bind(this));
+
+      // Wait for connection to open
+      await new Promise<void>((resolve, reject) => {
+        const connectionTimeout = setTimeout(() => {
+          reject(new Error("WebSocket connection timed out"));
+        }, 15000); // 15 second timeout
+
+        ws.once("open", () => {
+          clearTimeout(connectionTimeout);
+          resolve();
+        });
+
+        ws.once("error", (err) => {
+          clearTimeout(connectionTimeout);
+          reject(err);
+        });
+      });
+    } catch (error) {
+      this.#closeWebSocket();
+      throw new Error("Failed to connect to Gateway", { cause: error });
+    }
   }
 
   /**
-   * Checks if the connection is ready
-   */
-  isReady(): boolean {
-    return this.#ws?.readyState === WebSocket.OPEN && this.#sessionId !== null;
-  }
-
-  /**
-   * Waits for the READY event after connection
+   * Waits for the READY or RESUMED event after connection
    *
    * @private
    */
   async #waitForReady(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      // Set timeout for the connection
       const connectionTimeout = setTimeout(() => {
         cleanup();
-        reject(new Error("Connection timed out waiting for READY event"));
+        reject(
+          new Error("Connection timed out waiting for READY/RESUMED event"),
+        );
       }, 30000); // 30 second timeout
 
       const cleanup = (): void => {
@@ -472,13 +740,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       };
 
       const readyHandler = (event: keyof GatewayReceiveEvents): void => {
-        if (event === "READY") {
+        if (event === "READY" || event === "RESUMED") {
           cleanup();
           resolve();
         }
       };
 
-      const errorHandler = (error: Error | string): void => {
+      const errorHandler = (error: Error): void => {
         cleanup();
         reject(error);
       };
@@ -489,68 +757,273 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   /**
-   * Closes only the WebSocket without destroying services
+   * Processes an incoming WebSocket message
    *
-   * @param code - Close code to send
-   * @param reason - Optional close reason
+   * @param data - Raw message data from WebSocket
    * @private
    */
-  #closeWebSocket(code = 1000, reason?: string): void {
-    const ws = this.#ws;
-    if (ws) {
-      ws.removeAllListeners();
-      try {
-        ws.close(code, reason);
-      } catch (_error) {
-        // Ignore errors during close
+  async #handleMessage(data: Buffer): Promise<void> {
+    try {
+      // Decompress if configured
+      let processedData = data;
+      if (this.#compression.isInitialized()) {
+        processedData = this.#compression.decompress(data);
       }
-      this.#ws = null;
+
+      // Decode payload
+      const payload = this.#encoding.decode(processedData);
+
+      // Update sequence number if provided
+      if (payload.s !== null) {
+        this.#session.sequence = payload.s;
+      }
+
+      // Process payload by opcode
+      await this.#processPayload(payload);
+    } catch (error) {
+      this.emit(
+        "error",
+        new Error("Error processing gateway message", {
+          cause: error,
+        }),
+      );
     }
   }
 
   /**
-   * Initializes and opens the WebSocket connection
+   * Processes a decoded Gateway payload
    *
-   * @param url - Gateway URL
-   * @throws {Error} If initialization fails
+   * @param payload - Decoded Gateway payload
+   * @private
    */
-  async #initializeWebSocket(url: string): Promise<void> {
+  async #processPayload(payload: PayloadEntity): Promise<void> {
     try {
-      const wsUrl = this.#buildGatewayUrl(url);
-      const ws = new WebSocket(wsUrl);
-      this.#ws = ws;
+      switch (payload.op) {
+        case GatewayOpcodes.Dispatch:
+          this.#handleDispatchEvent(payload);
+          break;
 
-      // Set up event handlers
-      ws.on("message", this.#handleMessage.bind(this));
-      ws.on("close", this.#handleClose.bind(this));
-      ws.on("error", this.#handleWebSocketError.bind(this));
+        case GatewayOpcodes.Hello:
+          await this.#handleHello(payload.d as HelloEntity);
+          break;
 
-      // Wait for connection to open
-      await new Promise<void>((resolve, reject) => {
-        // Set a timeout for connection establishment
-        const connectionTimeout = setTimeout(() => {
-          reject(new Error("WebSocket connection timed out"));
-        }, 15000); // 15 second timeout
+        case GatewayOpcodes.Heartbeat:
+          this.#heartbeat.sendHeartbeat();
+          break;
 
-        ws.once("open", () => {
-          clearTimeout(connectionTimeout);
+        case GatewayOpcodes.HeartbeatAck:
+          this.#heartbeat.ackHeartbeat();
+          break;
 
-          this.emit("connectionSuccess", {
-            timestamp: new Date().toISOString(),
-            gatewayUrl: wsUrl,
-            resumed: Boolean(this.#sessionId && this.#sequence > 0),
-          });
+        case GatewayOpcodes.InvalidSession:
+          await this.#handleInvalidSession(Boolean(payload.d));
+          break;
 
-          resolve();
-        });
+        case GatewayOpcodes.Reconnect:
+          await this.#handleReconnect();
+          break;
 
-        ws.once("error", (err) => {
-          clearTimeout(connectionTimeout);
-          reject(err);
-        });
-      });
+        default:
+          break;
+      }
     } catch (error) {
-      throw new Error("Failed to initialize WebSocket", { cause: error });
+      this.emit(
+        "error",
+        new Error("Error handling gateway payload", {
+          cause: error,
+        }),
+      );
+    }
+  }
+
+  /**
+   * Handles the Hello opcode
+   *
+   * @param hello - Hello payload data
+   * @private
+   */
+  async #handleHello(hello: HelloEntity): Promise<void> {
+    // Start heartbeats
+    this.#heartbeat.start(hello.heartbeat_interval);
+
+    // Either resume or identify
+    if (this.#canResume()) {
+      this.#state = "resuming";
+      this.#sendResume();
+    } else {
+      this.#state = "identifying";
+      await this.#sendIdentify();
+    }
+  }
+
+  /**
+   * Sends an identify payload to the Gateway
+   *
+   * @private
+   */
+  async #sendIdentify(): Promise<void> {
+    const payload: IdentifyEntity = {
+      token: this.#options.token,
+      properties: {
+        os: process.platform,
+        browser: "nyx.js",
+        device: "nyx.js",
+      },
+      compress: this.#compression.isInitialized(),
+      large_threshold: this.#options.largeThreshold,
+      intents: this.#options.intents,
+    };
+
+    // Add shard info if sharding is enabled
+    if (this.#shard.isEnabled && this.#shard.totalShards > 0) {
+      payload.shard = await this.#shard.getAvailableShard();
+    }
+
+    // Add presence if provided
+    if (this.#options.presence) {
+      payload.presence = this.#options.presence;
+    }
+
+    this.send(GatewayOpcodes.Identify, payload);
+  }
+
+  /**
+   * Sends a resume payload to the Gateway
+   *
+   * @private
+   */
+  #sendResume(): void {
+    if (!this.#session.id) {
+      throw new Error("Cannot resume: no session ID available");
+    }
+
+    const payload: ResumeEntity = {
+      token: this.#options.token,
+      session_id: this.#session.id,
+      seq: this.#session.sequence,
+    };
+
+    this.send(GatewayOpcodes.Resume, payload);
+  }
+
+  /**
+   * Handles the InvalidSession opcode
+   *
+   * @param resumable - Whether the session is resumable
+   * @private
+   */
+  async #handleInvalidSession(resumable: boolean): Promise<void> {
+    this.emit("sessionInvalidate", {
+      timestamp: new Date().toISOString(),
+      sessionId: this.#session.id ?? "",
+      resumable,
+      reason: resumable ? "server_request" : "authentication_failed",
+    });
+
+    // Clear session if not resumable
+    if (!resumable) {
+      this.#clearSession();
+    }
+
+    // Reconnect after a delay
+    await sleep(1000 + Math.random() * 4000);
+
+    // Either try to resume or identify
+    if (resumable && this.#canResume()) {
+      this.#state = "resuming";
+      this.#sendResume();
+    } else {
+      // Need to re-establish connection
+      this.#closeWebSocket();
+      await this.connect();
+    }
+  }
+
+  /**
+   * Handles the Reconnect opcode
+   *
+   * @private
+   */
+  async #handleReconnect(): Promise<void> {
+    // Discord requested reconnection
+    const canResume = this.#canResume();
+
+    // Close current connection
+    this.#closeWebSocket(4000);
+
+    // Wait a moment before reconnecting
+    await sleep(500);
+
+    if (canResume) {
+      // Try to resume
+      await this.#attemptResume();
+    } else {
+      // Full reconnect
+      await this.connect();
+    }
+  }
+
+  /**
+   * Handles WebSocket close events
+   *
+   * @param code - WebSocket close code
+   * @param reason - Close reason
+   * @private
+   */
+  async #handleClose(code: number, reason?: string): Promise<void> {
+    // Destroy heartbeat to stop sending
+    this.#heartbeat.destroy();
+
+    // For clean closures or non-resumable codes, clear session
+    if (
+      code === 1000 ||
+      code === 1001 ||
+      this.#options.nonResumableCodes.includes(code)
+    ) {
+      this.#clearSession();
+    }
+
+    // Emit disconnect events for any active shards
+    if (this.#shard.isEnabled) {
+      for (const shard of this.#shard.shards) {
+        if (shard.status !== "disconnected") {
+          this.#shard.setShardStatus(shard.shardId, "disconnected");
+
+          this.emit("shardDisconnect", {
+            timestamp: new Date().toISOString(),
+            shardId: shard.shardId,
+            totalShards: shard.totalShards,
+            closeCode: code,
+            reason: reason || "Connection closed",
+            willReconnect: this.#options.heartbeat.autoReconnect,
+          });
+        }
+      }
+    }
+
+    // If not a normal closure and auto-reconnect is enabled
+    if (
+      code !== 1000 &&
+      code !== 1001 &&
+      this.#options.heartbeat.autoReconnect
+    ) {
+      this.#reconnectCount++;
+
+      // Calculate reconnection delay
+      const delay = this.#getReconnectionDelay();
+
+      // Wait before reconnecting
+      await sleep(delay);
+
+      // Try to resume if possible, otherwise reconnect
+      if (this.#shouldResume(code) && this.#canResume()) {
+        await this.#attemptResume();
+      } else {
+        await this.connect();
+      }
+    } else {
+      // Set state to disconnected if no reconnect is happening
+      this.#state = "disconnected";
     }
   }
 
@@ -560,150 +1033,38 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param error - WebSocket error
    * @private
    */
-  #handleWebSocketError(error: Error): void {
-    // Emit the error
+  #handleError(error: Error): void {
     this.emit("error", new Error("WebSocket error", { cause: error }));
-
-    // Don't attempt to handle the error here - let the close handler do it
-    // as an error is typically followed by a close event
   }
 
   /**
-   * Handles an incoming WebSocket message
-   *
-   * @param data - Raw message data
-   */
-  async #handleMessage(data: Buffer): Promise<void> {
-    let processedData = data;
-
-    // Decompress if needed
-    if (this.#compression.isInitialized()) {
-      try {
-        processedData = this.#compression.decompress(data);
-      } catch (error) {
-        this.emit(
-          "error",
-          new Error("Failed to decompress message", { cause: error }),
-        );
-        return;
-      }
-    }
-
-    // Decode the payload
-    let payload: PayloadEntity;
-    try {
-      payload = this.#encoding.decode(processedData);
-    } catch (error) {
-      this.emit(
-        "error",
-        new Error("Failed to decode message", { cause: error }),
-      );
-      return;
-    }
-
-    // Process the payload
-    try {
-      await this.#handlePayload(payload);
-    } catch (error) {
-      this.emit(
-        "error",
-        new Error("Error handling gateway payload", { cause: error }),
-      );
-    }
-  }
-
-  /**
-   * Processes a decoded Gateway payload
-   *
-   * @param payload - Decoded payload
-   */
-  async #handlePayload(payload: PayloadEntity): Promise<void> {
-    // Update sequence number if provided
-    if (payload.s !== null) {
-      this.updateSequence(payload.s);
-    }
-
-    switch (payload.op) {
-      case GatewayOpcodes.Dispatch:
-        this.#handleDispatch(payload);
-        break;
-
-      case GatewayOpcodes.Hello:
-        await this.#handleHello(payload.d as HelloEntity);
-        break;
-
-      case GatewayOpcodes.Heartbeat:
-        this.#heartbeat.sendHeartbeat();
-        break;
-
-      case GatewayOpcodes.HeartbeatAck:
-        this.#heartbeat.ackHeartbeat();
-        break;
-
-      case GatewayOpcodes.InvalidSession:
-        await this.#handleInvalidSession(Boolean(payload.d));
-        break;
-
-      case GatewayOpcodes.Reconnect:
-        await this.#handleReconnect();
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  /**
-   * Handles the Hello opcode
-   *
-   * @param hello - Hello payload data
-   */
-  async #handleHello(hello: HelloEntity): Promise<void> {
-    this.#heartbeat.start(hello.heartbeat_interval);
-
-    if (this.#canResume()) {
-      this.#sendResume();
-    } else {
-      await this.#identify();
-    }
-  }
-
-  /**
-   * Handles dispatch events
+   * Handles Gateway dispatch events
    *
    * @param payload - Dispatch payload
+   * @private
    */
-  #handleDispatch(payload: PayloadEntity): void {
+  #handleDispatchEvent(payload: PayloadEntity): void {
     if (!payload.t) {
       return;
     }
 
+    // Handle specific events
     switch (payload.t) {
-      case "READY": {
-        const data = payload.d as ReadyEntity;
-        this.#handleReady(data);
+      case "READY":
+        this.#handleReadyEvent(payload.d as ReadyEntity);
         break;
-      }
 
-      case "GUILD_CREATE": {
-        if (this.#shard.isEnabled()) {
-          const data = payload.d as GuildCreateEntity;
-          if ("id" in data && !("unavailable" in data)) {
-            this.#shard.addGuildToShard(data.id);
-          }
-        }
+      case "RESUMED":
+        this.#handleResumedEvent();
         break;
-      }
 
-      case "GUILD_DELETE": {
-        if (this.#shard.isEnabled()) {
-          const data = payload.d as UnavailableGuildEntity;
-          if ("id" in data) {
-            this.#shard.removeGuildFromShard(data.id);
-          }
-        }
+      case "GUILD_CREATE":
+        this.#handleGuildCreate(payload.d as GuildCreateEntity);
         break;
-      }
+
+      case "GUILD_DELETE":
+        this.#handleGuildDelete(payload.d as UnavailableGuildEntity);
+        break;
 
       default:
         break;
@@ -721,256 +1082,132 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * Handles the READY dispatch event
    *
    * @param data - Ready payload data
+   * @private
    */
-  #handleReady(data: ReadyEntity): void {
+  #handleReadyEvent(data: ReadyEntity): void {
     // Update session information
-    this.setSession(data.session_id, data.resume_gateway_url);
+    this.#session.id = data.session_id;
+    this.#session.resumeUrl = data.resume_gateway_url;
+    this.#session.readyAt = Date.now();
+    this.#state = "ready";
 
     // Handle sharding if enabled
-    if (this.#shard.isEnabled()) {
-      const shard = this.#shard.getShardInfo(data.shard?.[0] ?? 0);
-      if (shard) {
-        this.#shard.setShardStatus(shard.shardId, "ready");
-        const guildIds = data.guilds.map((guild) => guild.id);
-        this.#shard.addGuildsToShard(shard.shardId, guildIds);
-      }
+    if (this.#shard.isEnabled) {
+      const shardId = data.shard?.[0] ?? 0;
+      this.#shard.setShardStatus(shardId, "ready");
+
+      // Add guilds to shard
+      const guildIds = data.guilds.map((guild) => guild.id);
+      this.#shard.addGuildsToShard(shardId, guildIds);
     }
 
-    // Emit the ready event
-    this.#readyAt = Date.now();
-
+    // Emit session start event
     this.emit("sessionStart", {
       timestamp: new Date().toISOString(),
       sessionId: data.session_id,
       resumeUrl: data.resume_gateway_url,
       userId: data.user.id,
       guildCount: data.guilds.length,
-      duration: Date.now() - this.#connectStartTime,
+      encoding: this.#encoding.type,
+      compression: this.#compression.type,
+      shardCount: this.#shard.totalShards,
     });
   }
 
   /**
-   * Handles WebSocket close events
+   * Handles the RESUMED dispatch event
    *
-   * @param code - Close code
-   * @param reason - Close reason if provided
+   * @private
    */
-  async #handleClose(code: number, reason?: string): Promise<void> {
-    // Destroy heartbeat to stop sending
-    this.#heartbeat.destroy();
+  #handleResumedEvent(): void {
+    this.#state = "ready";
 
-    // For clean closures, clear session information
-    if (code === 1000 || code === 1001) {
-      this.#sessionId = null;
-      this.#resumeUrl = null;
-      this.#sequence = 0;
+    if (!this.#session.readyAt) {
+      this.#session.readyAt = Date.now();
     }
 
-    // Emit disconnect event for any active shards
-    if (this.#shard.isEnabled()) {
-      for (const shard of this.#shard.shards) {
-        if (shard.status !== "disconnected") {
-          this.emit("shardDisconnect", {
-            timestamp: new Date().toISOString(),
-            shardId: shard.shardId,
-            totalShards: shard.totalShards,
-            closeCode: code,
-            reason: reason || "Connection closed",
-            willReconnect: this.#options.heartbeat.autoReconnect,
-          });
-        }
-      }
-    }
-
-    await this.#handleDisconnect(code, reason);
-  }
-
-  /**
-   * Handles invalid session events
-   *
-   * @param resumable - Whether the session is resumable
-   */
-  async #handleInvalidSession(resumable: boolean): Promise<void> {
-    this.emit("sessionInvalidate", {
+    this.emit("sessionResume", {
       timestamp: new Date().toISOString(),
-      sessionId: this.#sessionId ?? "",
-      resumable,
-      reason: resumable ? "server_request" : "authentication_failed",
+      sessionId: this.#session.id ?? "",
+      sequence: this.#session.sequence,
+      replayedEvents: 0, // This is not tracked
+      latencyMs: this.#heartbeat.latency,
     });
-
-    // Clear session info if not resumable
-    if (!resumable) {
-      this.#sessionId = null;
-      this.#resumeUrl = null;
-      this.#sequence = 0;
-    }
-
-    if (resumable && this.#canResume()) {
-      await this.#handleResume();
-    } else {
-      await this.#handleReconnect();
-    }
   }
 
   /**
-   * Determines if a session should be resumed based on close code
+   * Handles GUILD_CREATE events for shard management
    *
-   * @param code - WebSocket close code
+   * @param data - Guild create data
+   * @private
    */
-  #shouldResume(code: number): boolean {
-    const isClean = code === 1000 || code === 1001;
-    return !(isClean || NON_RESUMABLE_CODES.includes(code));
-  }
-
-  /**
-   * Handles reconnect events
-   */
-  async #handleReconnect(): Promise<void> {
-    if (this.#isReconnecting) {
-      return;
-    }
-
-    this.#isReconnecting = true;
-
-    try {
-      this.#closeWebSocket(4000);
-      await this.#handleDisconnect(4000);
-    } finally {
-      this.#isReconnecting = false;
+  #handleGuildCreate(data: GuildCreateEntity): void {
+    if (this.#shard.isEnabled && "id" in data && !("unavailable" in data)) {
+      this.#shard.addGuildToShard(data.id);
     }
   }
 
   /**
-   * Handles disconnection and reconnection logic
+   * Handles GUILD_DELETE events for shard management
    *
-   * @param code - WebSocket close code
-   * @param reason - Close reason if available
+   * @param data - Guild delete data
+   * @private
    */
-  async #handleDisconnect(code: number, reason?: string): Promise<void> {
-    if (!this.#options.heartbeat.autoReconnect) {
-      return;
-    }
-
-    // Wait for any existing reconnection to finish
-    if (this.#isReconnecting) {
-      // Wait a bit for the current reconnection to complete
-      await sleep(1000);
-      return;
-    }
-
-    this.#isReconnecting = true;
-    this.#reconnectionAttempts++;
-
-    try {
-      const delay = this.#getReconnectionDelay();
-
-      // Emit reconnection scheduled event
-      this.emit("reconnectionScheduled", {
-        timestamp: new Date().toISOString(),
-        delayMs: delay,
-        reason: this.#shouldResume(code)
-          ? "connection_closed"
-          : "invalid_session",
-        previousAttempts: this.#reconnectionAttempts - 1,
-      });
-
-      await sleep(delay);
-
-      if (this.#shouldResume(code) && this.#canResume()) {
-        await this.#handleResume();
-      } else {
-        // Close any existing connection
-        this.#closeWebSocket();
-        await this.connect();
-      }
-    } catch (error) {
-      this.emit("error", new Error("Reconnection failed", { cause: error }));
-
-      // Try again after a delay
-      await sleep(5000);
-      await this.#handleDisconnect(code, reason);
-    } finally {
-      this.#isReconnecting = false;
+  #handleGuildDelete(data: UnavailableGuildEntity): void {
+    if (this.#shard.isEnabled && "id" in data) {
+      this.#shard.removeGuildFromShard(data.id);
     }
   }
 
   /**
-   * Handles session resumption
+   * Attempts to resume a session with the stored resume URL
+   *
+   * @private
    */
-  async #handleResume(): Promise<void> {
-    if (!this.#resumeUrl) {
-      throw new Error("No resume URL available for session resumption");
+  async #attemptResume(): Promise<void> {
+    if (!this.#canResume()) {
+      throw new Error("Cannot resume: missing session ID or sequence number");
+    }
+
+    const resumeUrl = this.#session.resumeUrl;
+    if (!resumeUrl) {
+      throw new Error("Cannot resume: missing resume URL");
     }
 
     try {
-      // Initialize WebSocket with resume URL
-      await this.#initializeWebSocket(this.#resumeUrl);
-      this.#sendResume();
-
-      this.emit("sessionResume", {
-        timestamp: new Date().toISOString(),
-        sessionId: this.#sessionId ?? "",
-        sequence: this.#sequence,
-        replayedEvents: 0,
-        latencyMs: this.#heartbeat.latency,
-      });
+      this.#state = "resuming";
+      await this.#connectToGateway(resumeUrl);
+      // Hello handler will send resume payload
     } catch (_error) {
-      // If resume fails, try clean reconnect
-      await this.#handleDisconnect(4000);
+      // If resume fails, fall back to a clean reconnect
+      this.#clearSession();
+      await this.connect();
     }
   }
 
   /**
-   * Checks if session can be resumed
+   * Closes the WebSocket connection
+   *
+   * @param code - Close code to send
+   * @param reason - Optional close reason
+   * @private
    */
-  #canResume(): boolean {
-    return Boolean(this.#sessionId && this.#sequence > 0);
-  }
-
-  /**
-   * Sends a resume payload
-   */
-  #sendResume(): void {
-    if (!this.#sessionId) {
-      throw new Error("No session ID available to resume");
+  #closeWebSocket(code?: number, reason?: string): void {
+    const ws = this.#ws;
+    if (!ws) {
+      return;
     }
 
-    const payload: ResumeEntity = {
-      token: this.#options.token,
-      session_id: this.#sessionId,
-      seq: this.#sequence,
-    };
+    // Remove all listeners to prevent handling after close
+    ws.removeAllListeners();
 
-    this.send(GatewayOpcodes.Resume, payload);
-  }
-
-  /**
-   * Sends an identify payload
-   */
-  async #identify(): Promise<void> {
-    const payload: IdentifyEntity = {
-      token: this.#options.token,
-      properties: {
-        os: process.platform,
-        browser: "nyx.js",
-        device: "nyx.js",
-      },
-      compress: this.#compression.isInitialized(),
-      large_threshold: this.#options.largeThreshold,
-      intents: this.#options.intents,
-    };
-
-    // Add shard info if sharding is enabled
-    if (this.#shard.isEnabled() && this.#shard.totalShards > 0) {
-      payload.shard = await this.#shard.getAvailableShard();
+    try {
+      ws.close(code, reason);
+    } catch (_error) {
+      // Ignore errors during close
     }
 
-    // Add presence if provided
-    if (this.#options.presence) {
-      payload.presence = this.#options.presence;
-    }
-
-    this.send(GatewayOpcodes.Identify, payload);
+    this.#ws = null;
   }
 
   /**
@@ -978,6 +1215,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    *
    * @param baseUrl - Base Gateway URL
    * @returns Complete Gateway URL with parameters
+   * @private
    */
   #buildGatewayUrl(baseUrl: string): string {
     const params = new URLSearchParams({
@@ -989,19 +1227,56 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       params.append("compress", this.#compression.type);
     }
 
-    return `${baseUrl}?${params.toString()}`;
+    return `${baseUrl}?${params}`;
+  }
+
+  /**
+   * Checks if the current session can be resumed
+   *
+   * @returns True if the session can be resumed
+   * @private
+   */
+  #canResume(): boolean {
+    return Boolean(this.#session.id && this.#session.sequence > 0);
+  }
+
+  /**
+   * Determines if a session should be resumed based on close code
+   *
+   * @param code - WebSocket close code
+   * @returns True if session should be resumed
+   * @private
+   */
+  #shouldResume(code: number): boolean {
+    const isClean = code === 1000 || code === 1001;
+    return !(isClean || this.#options.nonResumableCodes.includes(code));
+  }
+
+  /**
+   * Clears the current session information
+   *
+   * @private
+   */
+  #clearSession(): void {
+    this.#session = {
+      id: null,
+      resumeUrl: null,
+      sequence: 0,
+      readyAt: null,
+    };
   }
 
   /**
    * Gets the reconnection delay based on attempt count
    *
    * @returns Delay in milliseconds
+   * @private
    */
   #getReconnectionDelay(): number {
-    return (
-      this.#options.backoffSchedule[this.#reconnectionAttempts - 1] ??
-      this.#options.backoffSchedule.at(-1) ??
-      0
-    );
+    const schedule = this.#options.backoffSchedule;
+    const index = Math.min(this.#reconnectCount - 1, schedule.length - 1);
+
+    // Use the last value in the schedule if we've exceeded the schedule length
+    return schedule[index] ?? schedule.at(-1) ?? 1000;
   }
 }

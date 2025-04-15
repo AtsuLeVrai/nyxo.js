@@ -1,102 +1,308 @@
 import { type Snowflake, sleep } from "@nyxjs/core";
+import { z } from "zod";
 import type { Gateway } from "../core/index.js";
-import type { ShardOptions } from "../options/index.js";
 
 /**
- * Possible states for a shard connection
+ * Possible states for a Discord Gateway shard connection
+ *
+ * Represents the lifecycle of a shard from disconnected to ready state.
+ * Each state determines how the shard is handled by the manager.
  */
 export type ShardStatus =
-  | "disconnected" // Shard is not connected
-  | "connecting" // Shard is in the process of connecting
-  | "ready" // Shard is connected and ready
-  | "resuming" // Shard is resuming a previous session
-  | "reconnecting" // Shard is attempting to reconnect
-  | "unhealthy"; // Shard is connected but experiencing issues
+  | "disconnected" // Shard is not connected to Discord
+  | "connecting" // Shard is establishing a new connection
+  | "ready" // Shard is connected and operational
+  | "resuming"; // Shard is resuming a previous session
 
 /**
- * Data structure representing a shard
+ * Core data structure representing a Discord Gateway shard
+ *
+ * Contains all status information, guild assignments, and operational
+ * metrics for a single shard connection to Discord's Gateway. Each shard
+ * manages a subset of guilds according to Discord's sharding formula:
+ * `shard_id = (guild_id >> 22) % num_shards`
+ *
+ * @see {@link https://discord.com/developers/docs/topics/gateway#sharding}
+ *
+ * @example
+ * ```ts
+ * const shard: ShardData = {
+ *   shardId: 0,
+ *   totalShards: 2,
+ *   guildCount: 120,
+ *   guilds: new Set(["123456789", "987654321"]),
+ *   status: "ready",
+ *   bucket: 0,
+ *   lastUpdated: Date.now(),
+ *   health: {
+ *     latency: 42,
+ *     lastHeartbeat: Date.now(),
+ *     failedHeartbeats: 0
+ *   },
+ *   rateLimit: {
+ *     remaining: 115,
+ *     reset: Date.now() + 60_000
+ *   }
+ * };
+ * ```
  */
 export interface ShardData {
-  /** Unique identifier for this shard */
+  /**
+   * Unique identifier for this shard (0-based index)
+   * For a system with N shards, valid IDs range from 0 to N-1
+   */
   shardId: number;
 
-  /** Total number of shards being used */
+  /**
+   * Total number of shards in the current configuration
+   * All shards in the same application should have the same totalShards value
+   */
   totalShards: number;
 
-  /** Number of guilds in this shard */
+  /**
+   * Number of guilds assigned to this shard
+   * Should equal guilds.size for consistency
+   */
   guildCount: number;
 
-  /** Set of guild IDs in this shard */
-  guilds: Set<string>;
+  /**
+   * Set of guild IDs managed by this shard
+   * Guild assignment follows Discord's sharding formula
+   */
+  guilds: Set<Snowflake>;
 
-  /** Current connection status */
+  /**
+   * Current connection status
+   * Determines what operations can be performed on this shard
+   */
   status: ShardStatus;
 
-  /** Rate limit bucket ID (based on max_concurrency from Discord) */
+  /**
+   * Rate limit bucket ID (based on Discord's max_concurrency parameter)
+   * Calculated as: shardId % maxConcurrency
+   */
   bucket: number;
 
-  /** Time when this shard was last updated */
+  /**
+   * Timestamp when this shard was last updated (in milliseconds since epoch)
+   * Used to track shard age and activity
+   */
   lastUpdated: number;
 
-  /** Whether this shard is currently in a scaling operation */
-  isScaling: boolean;
-
-  /** Health metrics for this shard */
+  /**
+   * Heartbeat and connection health metrics
+   * Used to monitor shard stability and performance
+   */
   health: {
-    /** Latency in milliseconds */
+    /**
+     * WebSocket round-trip latency in milliseconds
+     * Measured between heartbeat send and acknowledgement receipt
+     */
     latency: number;
 
-    /** Time when the last successful heartbeat was received */
+    /**
+     * Timestamp of the last successful heartbeat acknowledgement (in milliseconds since epoch)
+     * Used to detect stalled connections
+     */
     lastHeartbeat: number;
 
-    /** Number of failed heartbeats */
+    /**
+     * Number of consecutive failed heartbeats
+     * Reset to 0 when a successful heartbeat is received
+     */
     failedHeartbeats: number;
   };
 
-  /** Rate limit information */
+  /**
+   * Rate limit tracking for identify operations
+   * Each shard tracks its own rate limit usage
+   */
   rateLimit: {
-    /** Number of identify requests remaining in this window */
+    /**
+     * Number of identify requests remaining in the current window
+     * When this reaches 0, no more identifies can be performed until reset
+     */
     remaining: number;
 
-    /** Timestamp when the rate limit resets */
+    /**
+     * Timestamp when the rate limit window resets (in milliseconds since epoch)
+     * After this time, the remaining count will be restored to the maximum
+     */
     reset: number;
   };
 }
 
 /**
- * Default rate limit values for shard buckets
- * Based on Discord documentation at https://discord.com/developers/docs/events/gateway#rate-limiting
+ * Default rate limit values for Discord Gateway connections
+ *
+ * These values are used as fallbacks when specific rate limit
+ * information is not provided by Discord's Gateway. For production
+ * applications, always use the actual values from the Gateway Bot endpoint.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/gateway#rate-limiting}
  */
-const DEFAULT_RATE_LIMIT = {
+export const DEFAULT_RATE_LIMIT = {
   /**
-   * Default number of identify requests allowed per minute
+   * Maximum identify operations allowed per minute across all buckets
+   * The actual per-bucket limit depends on the max_concurrency value
    */
   MAX_IDENTIFIES_PER_MINUTE: 120,
 
   /**
-   * Duration in milliseconds for rate limit window
+   * Duration of the rate limit window in milliseconds
+   * Rate limits reset after this duration has passed
    */
   WINDOW_DURATION_MS: 60_000,
 } as const;
 
 /**
- * ShardManager is responsible for managing sharded Gateway connections
+ * Configuration options for Discord Gateway sharding
  *
- * This class handles shard creation, tracking, and management, including:
- * - Coordinating shard spawning according to Discord's max_concurrency parameter
- * - Assigning guilds to appropriate shards using Discord's sharding formula
- * - Managing rate limits for identify requests
- * - Tracking shard connection status and health
- * - Dynamic scaling of shards
+ * Controls how shards are created, distributed, and managed.
+ * Proper sharding configuration is essential for bots in many guilds.
+ *
+ * @see {@link https://discord.com/developers/docs/topics/gateway#sharding}
+ *
+ * @example
+ * ```ts
+ * // Auto-sharding based on Discord recommendations
+ * const autoShardOptions: ShardOptions = {
+ *   totalShards: "auto",
+ *   spawnDelay: 5000
+ * };
+ *
+ * // Fixed number of shards
+ * const fixedShardOptions: ShardOptions = {
+ *   totalShards: 10,
+ *   spawnDelay: 5000
+ * };
+ *
+ * // Distributed sharding across multiple processes
+ * const processOneOptions: ShardOptions = {
+ *   totalShards: 10,
+ *   shardList: [0, 1, 2, 3, 4],
+ *   spawnDelay: 5000
+ * };
+ *
+ * const processTwoOptions: ShardOptions = {
+ *   totalShards: 10,
+ *   shardList: [5, 6, 7, 8, 9],
+ *   spawnDelay: 5000
+ * };
+ * ```
+ */
+export const ShardOptions = z
+  .object({
+    /**
+     * Total number of shards to use
+     *
+     * - Number: Uses exactly that many shards
+     * - "auto": Uses Discord's recommended shard count from Gateway Bot endpoint
+     * - undefined: Auto-determines based on guild count and largeThreshold
+     *
+     * For larger bots (>2500 guilds), Discord requires sharding.
+     */
+    totalShards: z
+      .union([z.number().int().positive(), z.literal("auto")])
+      .optional(),
+
+    /**
+     * List of specific shard IDs to spawn
+     *
+     * When provided, only spawns the specified shards.
+     * All shards must be within the range [0, totalShards-1].
+     *
+     * Used for distributing shards across multiple processes or servers.
+     */
+    shardList: z.array(z.number().int().positive()).optional(),
+
+    /**
+     * Delay between spawning each shard in milliseconds
+     *
+     * Prevents rate limiting during startup by spacing out identify operations.
+     * Should be tuned based on Discord's max_concurrency value.
+     */
+    spawnDelay: z.number().int().positive().default(5000),
+
+    /**
+     * Threshold for enabling sharding based on guild count
+     *
+     * If guild count exceeds this value and totalShards isn't specified,
+     * sharding will be automatically enabled.
+     */
+    largeThreshold: z.number().int().positive().default(2500),
+
+    /**
+     * Whether to force sharding even if not recommended
+     *
+     * When true, enables sharding even if guild count is below threshold.
+     * Useful for testing sharding configurations.
+     */
+    force: z.boolean().default(false),
+
+    /**
+     * Interval between health checks in milliseconds (default: 30000)
+     * Lower values provide more responsive recovery but increase CPU usage
+     */
+    interval: z.number().int().positive().default(30000),
+
+    /**
+     * Maximum time without heartbeat before reconnection (default: 45000)
+     * Should be at least 2-3 times the expected heartbeat interval (typically 41.25s)
+     */
+    heartbeatTimeout: z.number().int().positive().default(45000),
+
+    /**
+     * Whether to automatically reconnect failed shards (default: true)
+     * If false, shards will remain disconnected until manually reconnected
+     */
+    autoReconnect: z.boolean().default(true),
+  })
+  .refine(
+    (data) => {
+      if (typeof data.totalShards === "number" && data.shardList) {
+        return data.shardList.every(
+          (shard) => shard < Number(data.totalShards),
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        "Shard list must contain only valid shard IDs for the total shards provided",
+      path: ["shardList"],
+    },
+  );
+
+export type ShardOptions = z.infer<typeof ShardOptions>;
+
+/**
+ * ShardManager coordinates Discord Gateway connections across multiple shards
+ *
+ * Responsible for:
+ * - Creating and managing multiple Gateway connections (shards)
+ * - Distributing guilds across shards according to Discord's sharding formula
+ * - Handling rate limits for identify operations
+ * - Monitoring shard health and handling reconnections
+ *
+ * @example
+ * ```ts
+ * const manager = new ShardManager(gateway, {
+ *   totalShards: "auto",
+ *   spawnDelay: 5000
+ * });
+ *
+ * await manager.spawn(100, 16, 2); // guildCount, concurrency, recommendedShards
+ * ```
  */
 export class ShardManager {
   /** Map of shards by shard ID */
   #shards = new Map<number, ShardData>();
 
-  /** Maximum number of concurrent identifies allowed (from Discord's Gateway Bot endpoint) */
+  /** Maximum concurrent identifies allowed by Discord */
   #maxConcurrency = 1;
 
-  /** Interval for running health checks */
+  /** Interval for health checks */
   #healthCheckInterval: NodeJS.Timeout | null = null;
 
   /** Map of shard IDs to session IDs for resumption */
@@ -109,10 +315,10 @@ export class ShardManager {
   readonly #options: ShardOptions;
 
   /**
-   * Creates a new ShardManager
+   * Creates a new ShardManager instance
    *
-   * @param gateway - The parent Gateway instance
-   * @param options - Sharding configuration options
+   * @param gateway - Parent Gateway instance that will handle the WebSocket connections
+   * @param options - Configuration options for sharding behavior
    */
   constructor(gateway: Gateway, options: ShardOptions) {
     this.#gateway = gateway;
@@ -120,39 +326,42 @@ export class ShardManager {
   }
 
   /**
-   * Gets the total number of shards
+   * Gets the total number of shards currently managed
    */
   get totalShards(): number {
     return this.#shards.size;
   }
 
   /**
-   * Gets the maximum concurrency for identify requests
+   * Gets Discord's max_concurrency value for identify operations
    *
-   * This value is provided by Discord during the Gateway bot info request.
-   * It determines how many shards can be started concurrently within a rate limit window.
+   * This determines how many shards can be started concurrently
+   * within a rate limit window.
    */
   get maxConcurrency(): number {
     return this.#maxConcurrency;
   }
 
   /**
-   * Gets all active shards as an array
+   * Gets all active shards as a read-only array
    */
   get shards(): readonly ShardData[] {
     return Array.from(this.#shards.values());
   }
 
   /**
-   * Checks if sharding is enabled
+   * Checks if sharding is enabled and required
    *
-   * Sharding is enabled if either:
-   * - totalShards is explicitly configured in the options
-   * - The guild count exceeds the largeThreshold
+   * Sharding is considered enabled if any of these conditions are met:
+   * - totalShards is explicitly configured
+   * - Guild count exceeds the largeThreshold
    * - Force option is enabled
+   *
+   * @returns True if sharding is enabled
    */
-  isEnabled(): boolean {
+  get isEnabled(): boolean {
     const totalGuildCount = this.#calculateTotalGuildCount();
+
     return (
       Boolean(this.#options.totalShards) ||
       totalGuildCount >= this.#options.largeThreshold ||
@@ -161,13 +370,13 @@ export class ShardManager {
   }
 
   /**
-   * Spawns the required number of shards based on guild count and Discord recommendations
+   * Spawns the required number of shards based on Discord recommendations
    *
-   * This method respects Discord's max_concurrency parameter, grouping shards into buckets
-   * and spawning them according to rate limits.
+   * Respects Discord's max_concurrency parameter by grouping shards into buckets
+   * and spawning them with appropriate delays to prevent rate limiting.
    *
    * @param guildCount - Current number of guilds the bot is in
-   * @param maxConcurrency - Maximum concurrency value from Discord
+   * @param maxConcurrency - Discord's maximum concurrency parameter
    * @param recommendedShards - Discord's recommended number of shards
    * @throws {Error} If the shard configuration is invalid
    */
@@ -186,7 +395,21 @@ export class ShardManager {
     );
     this.#maxConcurrency = maxConcurrency;
 
-    await this.#spawnShards(totalShards);
+    // Validate shard list if provided
+    if (this.#options.shardList) {
+      const maxShardId = Math.max(...this.#options.shardList);
+      if (maxShardId >= totalShards) {
+        throw new Error(
+          `Shard list contains invalid shard IDs (max: ${maxShardId}, total: ${totalShards})`,
+        );
+      }
+    }
+
+    // Create buckets for sharding
+    const buckets = this.#createShardBuckets(totalShards);
+
+    // Spawn shards by bucket
+    await this.#spawnShardBuckets(buckets, totalShards);
 
     // Start health checks after initial spawn
     this.startHealthChecks();
@@ -195,10 +418,10 @@ export class ShardManager {
   /**
    * Gets the next available shard for connection
    *
-   * This method handles rate limits and returns the first available shard,
+   * Handles rate limiting and returns the first available shard,
    * waiting for rate limits to reset if necessary.
    *
-   * @returns A tuple of [shardId, totalShards]
+   * @returns A tuple containing [shardId, totalShards]
    */
   async getAvailableShard(): Promise<[number, number]> {
     // Try to find a shard that isn't rate limited
@@ -213,7 +436,7 @@ export class ShardManager {
   }
 
   /**
-   * Destroys the shard manager and cleans up resources
+   * Properly closes all shards and cleans up resources
    */
   destroy(): void {
     // Stop health check interval
@@ -222,11 +445,12 @@ export class ShardManager {
       this.#healthCheckInterval = null;
     }
 
-    // Set all shards to disconnected
+    // Mark all shards as disconnected
     for (const [shardId] of this.#shards.entries()) {
       this.setShardStatus(shardId, "disconnected");
     }
 
+    // Clear all internal maps
     this.#shards.clear();
     this.#sessionMap.clear();
   }
@@ -236,7 +460,7 @@ export class ShardManager {
    *
    * Uses Discord's sharding formula: (guild_id >> 22) % num_shards
    *
-   * @param guildId - Discord guild ID
+   * @param guildId - Discord guild (server) ID
    * @returns The shard ID this guild belongs to
    */
   calculateShardId(guildId: string): number {
@@ -249,7 +473,7 @@ export class ShardManager {
   }
 
   /**
-   * Adds a guild to the appropriate shard
+   * Adds a guild to its appropriate shard
    *
    * @param guildId - Discord guild ID to add
    * @throws {Error} If the shard doesn't exist
@@ -311,7 +535,7 @@ export class ShardManager {
   }
 
   /**
-   * Checks if a shard handles DM messages
+   * Checks if a shard handles direct messages
    *
    * Discord places all DMs in shard 0
    *
@@ -346,6 +570,9 @@ export class ShardManager {
   /**
    * Updates a shard's connection status
    *
+   * Handles status transitions and emits appropriate events based
+   * on the new status.
+   *
    * @param shardId - The shard ID to update
    * @param status - The new status to set
    * @throws {Error} If the shard doesn't exist
@@ -370,7 +597,9 @@ export class ShardManager {
   }
 
   /**
-   * Configures and starts the health check system
+   * Starts periodic health checks for shard connections
+   *
+   * Monitors heartbeat responses and reconnects failed shards if configured.
    */
   startHealthChecks(): void {
     // Stop existing interval if running
@@ -381,22 +610,25 @@ export class ShardManager {
     // Start new health check interval
     this.#healthCheckInterval = setInterval(
       () => this.#runHealthChecks(),
-      this.#options.healthCheck.interval,
+      this.#options.interval,
     );
   }
 
   /**
-   * Attempts to revive an unhealthy or disconnected shard
+   * Attempts to reconnect a disconnected shard
    *
-   * @param shardId - The shard ID to revive
+   * Prefers session resumption if available, otherwise performs a new identify.
+   *
+   * @param shardId - The shard ID to reconnect
+   * @throws {Error} If the shard doesn't exist
    */
-  reviveShard(shardId: number): void {
+  reconnectShard(shardId: number): void {
     const shard = this.#shards.get(shardId);
     if (!shard) {
       throw new Error(`Shard ${shardId} not found`);
     }
 
-    // Don't try to revive a shard that's already recovering
+    // Don't try to reconnect a shard that's already connecting
     if (shard.status === "connecting" || shard.status === "resuming") {
       return;
     }
@@ -406,12 +638,12 @@ export class ShardManager {
     if (sessionId) {
       this.setShardStatus(shardId, "resuming");
     } else {
-      this.setShardStatus(shardId, "reconnecting");
+      this.setShardStatus(shardId, "connecting");
     }
   }
 
   /**
-   * Calculates the rate limit bucket for a shard
+   * Calculates which rate limit bucket a shard belongs to
    *
    * Based on Discord documentation: rate_limit_key = shard_id % max_concurrency
    *
@@ -420,411 +652,6 @@ export class ShardManager {
    */
   getRateLimitKey(shardId: number): number {
     return shardId % this.#maxConcurrency;
-  }
-
-  /**
-   * Checks if a specific rate limit bucket has available capacity
-   *
-   * @param bucket - The rate limit bucket ID
-   * @returns True if identifies are available in this bucket
-   */
-  isShardBucketAvailable(bucket: number): boolean {
-    const shardsInBucket = Array.from(this.#shards.values()).filter(
-      (shard) => shard.bucket === bucket,
-    );
-
-    return shardsInBucket.some((shard) => shard.rateLimit.remaining > 0);
-  }
-
-  /**
-   * Dynamically scales the number of shards up or down
-   *
-   * @param newTotalShards - New total number of shards to scale to
-   * @throws {Error} If scaling fails or times out
-   */
-  scaleShards(newTotalShards: number): void {
-    const currentShardCount = this.#shards.size;
-
-    if (newTotalShards === currentShardCount) {
-      return;
-    }
-
-    if (newTotalShards > currentShardCount) {
-      // Scaling up - spawn new shards
-      this.#scaleUp(currentShardCount, newTotalShards);
-    } else {
-      // Scaling down - remove excess shards
-      this.#scaleDown(currentShardCount, newTotalShards);
-    }
-  }
-
-  /**
-   * Attempts to find a shard that isn't rate limited
-   *
-   * @returns A tuple of [shardId, totalShards] or null if none available
-   * @private
-   */
-  #findAvailableShard(): [number, number] | null {
-    for (const [shardId, shard] of this.#shards.entries()) {
-      // Skip shards that are currently in scaling operation
-      if (shard.isScaling) {
-        continue;
-      }
-
-      if (this.isShardBucketAvailable(shard.bucket)) {
-        // Emit reconnect event if needed
-        if (shard.status === "reconnecting" || shard.status === "unhealthy") {
-          this.#gateway.emit("reconnectionScheduled", {
-            timestamp: new Date().toISOString(),
-            delayMs: this.#options.spawnDelay,
-            reason:
-              shard.status === "unhealthy"
-                ? "heartbeat_timeout"
-                : "connection_closed",
-            previousAttempts: 0, // Could track this in shard data
-          });
-        }
-
-        shard.rateLimit.remaining--;
-        this.setShardStatus(shardId, "connecting");
-
-        // Remember the time we last updated this shard
-        shard.lastUpdated = Date.now();
-
-        return [shardId, shard.totalShards];
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Handles events and actions when a shard's status changes
-   *
-   * @param shardId - The shard ID
-   * @param shard - The shard data
-   * @param oldStatus - Previous status
-   * @param newStatus - New status
-   * @private
-   */
-  #handleShardStatusChange(
-    shardId: number,
-    shard: ShardData,
-    oldStatus: ShardStatus,
-    newStatus: ShardStatus,
-  ): void {
-    // Handle status-specific events
-    switch (newStatus) {
-      case "disconnected": {
-        if (oldStatus !== "disconnected") {
-          this.#gateway.emit("shardDisconnect", {
-            timestamp: new Date().toISOString(),
-            shardId,
-            totalShards: shard.totalShards,
-            closeCode: 1006, // Default WebSocket close code for abnormal closure
-            reason: "Connection closed",
-            willReconnect: this.#options.healthCheck.autoRevive,
-          });
-        }
-        break;
-      }
-
-      case "ready": {
-        if (oldStatus !== "ready") {
-          // Update health information
-          shard.health.lastHeartbeat = Date.now();
-          shard.health.failedHeartbeats = 0;
-
-          const sessionId = this.#gateway.sessionId;
-          if (sessionId) {
-            // Store session ID for this shard for potential resumption later
-            this.#sessionMap.set(shardId, sessionId);
-          }
-
-          this.#gateway.emit("shardReady", {
-            timestamp: new Date().toISOString(),
-            shardId,
-            totalShards: shard.totalShards,
-            guildCount: shard.guildCount,
-          });
-        }
-        break;
-      }
-
-      case "resuming": {
-        const sessionId =
-          this.#sessionMap.get(shardId) || this.#gateway.sessionId;
-        if (!sessionId) {
-          throw new Error(`Cannot resume shard ${shardId} without session ID`);
-        }
-
-        this.#gateway.emit("reconnectionScheduled", {
-          timestamp: new Date().toISOString(),
-          delayMs: this.#options.spawnDelay,
-          reason: "invalid_session",
-          previousAttempts: 0, // Could track this in shard data
-        });
-        break;
-      }
-
-      case "unhealthy":
-        if (this.#options.healthCheck.autoRevive) {
-          this.reviveShard(shardId);
-        }
-        break;
-
-      default:
-        // Handle other statuses if needed
-        break;
-    }
-  }
-
-  /**
-   * Runs health checks on all shards
-   *
-   * @private
-   */
-  #runHealthChecks(): void {
-    const now = Date.now();
-
-    for (const [shardId, shard] of this.#shards.entries()) {
-      // Skip health checks for disconnected shards
-      if (shard.status === "disconnected") {
-        continue;
-      }
-
-      // Check for stalled shards (no heartbeat for too long)
-      const timeSinceLastHeartbeat = now - shard.health.lastHeartbeat;
-      if (
-        timeSinceLastHeartbeat > this.#options.healthCheck.stalledThreshold &&
-        shard.status !== "unhealthy"
-      ) {
-        this.#handleStalledShard(shardId, shard);
-      }
-
-      // Update latency if shard is ready
-      if (shard.status === "ready") {
-        shard.health.latency = this.#gateway.heartbeat.latency;
-      }
-    }
-  }
-
-  /**
-   * Handles a stalled shard
-   *
-   * @param shardId - The shard ID
-   * @param shard - The shard data
-   * @private
-   */
-  #handleStalledShard(shardId: number, shard: ShardData): void {
-    // Mark as unhealthy and increment failed heartbeats
-    shard.health.failedHeartbeats++;
-
-    // If too many failed heartbeats, mark as unhealthy
-    if (shard.health.failedHeartbeats >= 3) {
-      this.setShardStatus(shardId, "unhealthy");
-    }
-  }
-
-  /**
-   * Waits for any rate limit bucket to become available
-   *
-   * @private
-   */
-  async #waitForAvailableBucket(): Promise<void> {
-    // Find the next rate limit reset time
-    const nextReset = Math.min(
-      ...Array.from(this.#shards.values()).map(
-        (shard) => shard.rateLimit.reset,
-      ),
-    );
-
-    // Calculate delay until next reset
-    const delay = Math.max(0, nextReset - Date.now());
-
-    // Wait for the rate limit to reset
-    if (delay > 0) {
-      await sleep(delay);
-    }
-
-    this.#resetExpiredRateLimits();
-  }
-
-  /**
-   * Resets rate limits for buckets that have reached their reset time
-   *
-   * @private
-   */
-  #resetExpiredRateLimits(): void {
-    const now = Date.now();
-    const newResetTime = now + DEFAULT_RATE_LIMIT.WINDOW_DURATION_MS;
-
-    for (const shard of this.#shards.values()) {
-      if (shard.rateLimit.reset <= now) {
-        shard.rateLimit.remaining =
-          DEFAULT_RATE_LIMIT.MAX_IDENTIFIES_PER_MINUTE;
-        shard.rateLimit.reset = newResetTime;
-      }
-    }
-  }
-
-  /**
-   * Scales up by adding more shards
-   *
-   * @param currentCount - Current shard count
-   * @param newCount - New target shard count
-   * @private
-   */
-  #scaleUp(currentCount: number, newCount: number): void {
-    // First, mark all existing shards as being in a scaling operation
-    for (const shard of this.#shards.values()) {
-      shard.isScaling = true;
-    }
-
-    try {
-      // Create new shards
-      const newShardIds = Array.from(
-        { length: newCount - currentCount },
-        (_, i) => currentCount + i,
-      );
-
-      // Initialize all shards
-      for (const shardId of newShardIds) {
-        const bucketId = this.getRateLimitKey(shardId);
-        this.#initializeShard(shardId, newCount, bucketId);
-      }
-
-      // Redistribute guilds to maintain balance
-      this.#redistributeGuilds();
-    } finally {
-      // Mark scaling operation as complete
-      for (const shard of this.#shards.values()) {
-        shard.isScaling = false;
-      }
-    }
-  }
-
-  /**
-   * Scales down by removing excess shards
-   *
-   * @param currentCount - Current shard count
-   * @param newCount - New target shard count
-   * @private
-   */
-  #scaleDown(currentCount: number, newCount: number): void {
-    // Identify shards to remove
-    const shardsToRemove = Array.from(
-      { length: currentCount - newCount },
-      (_, i) => currentCount - 1 - i,
-    );
-
-    // Redistribute guilds from shards being removed
-    this.#redistributeGuildsFromShards(shardsToRemove, newCount);
-
-    // Disconnect and remove the shards
-    for (const shardId of shardsToRemove) {
-      const shard = this.#shards.get(shardId);
-      if (shard) {
-        this.setShardStatus(shardId, "disconnected");
-        this.#sessionMap.delete(shardId);
-        this.#shards.delete(shardId);
-      }
-    }
-
-    // Update remaining shards with new total count
-    for (const shard of this.#shards.values()) {
-      shard.totalShards = newCount;
-    }
-  }
-
-  /**
-   * Redistributes all guilds across all shards for better balance
-   * Uses Discord's sharding formula to ensure consistent routing
-   *
-   * @private
-   */
-  #redistributeGuilds(): void {
-    // Collect all guilds across all shards
-    const allGuilds = new Set<string>();
-    for (const shard of this.#shards.values()) {
-      for (const guildId of shard.guilds) {
-        allGuilds.add(guildId);
-      }
-    }
-
-    // Clear all guild assignments
-    for (const shard of this.#shards.values()) {
-      shard.guilds.clear();
-      shard.guildCount = 0;
-    }
-
-    // Reassign guilds to appropriate shards
-    for (const guildId of allGuilds) {
-      const shardId = this.calculateShardId(guildId);
-      const shard = this.#shards.get(shardId);
-
-      if (shard) {
-        shard.guilds.add(guildId);
-        shard.guildCount = shard.guilds.size;
-      }
-    }
-  }
-
-  /**
-   * Redistributes guilds from specific shards being removed
-   *
-   * @param shardIds - Array of shard IDs being removed
-   * @param newTotalShards - New total number of shards
-   * @private
-   */
-  #redistributeGuildsFromShards(
-    shardIds: number[],
-    newTotalShards: number,
-  ): void {
-    // Process each shard being removed
-    for (const shardId of shardIds) {
-      const shard = this.#shards.get(shardId);
-      if (!shard) {
-        continue;
-      }
-
-      // Collect guilds from this shard
-      const guildsToRedistribute = Array.from(shard.guilds);
-
-      // Assign each guild to its new shard
-      for (const guildId of guildsToRedistribute) {
-        // Use calculateShardId with newTotalShards to determine the new shard
-        const newShardId =
-          Number(BigInt(guildId) >> BigInt(22)) % newTotalShards;
-
-        // Skip if the new shard is also being removed
-        if (shardIds.includes(newShardId)) {
-          continue;
-        }
-
-        const targetShard = this.#shards.get(newShardId);
-        if (targetShard) {
-          targetShard.guilds.add(guildId);
-          targetShard.guildCount = targetShard.guilds.size;
-        }
-      }
-
-      // Clear the source shard's guilds
-      shard.guilds.clear();
-      shard.guildCount = 0;
-    }
-  }
-
-  /**
-   * Calculates the total number of guilds across all shards
-   *
-   * @private
-   */
-  #calculateTotalGuildCount(): number {
-    return Array.from(this.#shards.values()).reduce(
-      (acc, shard) => acc + shard.guildCount,
-      0,
-    );
   }
 
   /**
@@ -840,7 +667,7 @@ export class ShardManager {
     const isForced = this.#options.force;
 
     // Skip sharding if not required, not configured, and not forced
-    return (isShardingRequired || isForced) && hasConfiguredShards;
+    return isShardingRequired || hasConfiguredShards || isForced;
   }
 
   /**
@@ -870,41 +697,6 @@ export class ShardManager {
     // Calculate minimum required shards based on guild count
     const minimumShards = Math.ceil(guildCount / this.#options.largeThreshold);
     return Math.max(1, minimumShards);
-  }
-
-  /**
-   * Spawns all required shards
-   *
-   * @param totalShards - Total number of shards to spawn
-   * @private
-   */
-  async #spawnShards(totalShards: number): Promise<void> {
-    if (this.#options.shardList) {
-      this.#validateShardList(totalShards);
-    }
-
-    const buckets = this.#createShardBuckets(totalShards);
-    await this.#spawnShardBuckets(buckets, totalShards);
-  }
-
-  /**
-   * Validates that the shard list is valid
-   *
-   * @param totalShards - Total number of shards
-   * @throws {Error} If the shard list contains invalid shard IDs
-   * @private
-   */
-  #validateShardList(totalShards: number): void {
-    if (!this.#options.shardList) {
-      return;
-    }
-
-    const maxShardId = Math.max(...this.#options.shardList);
-    if (maxShardId >= totalShards) {
-      throw new Error(
-        `Shard list contains invalid shard IDs (max: ${maxShardId}, total: ${totalShards})`,
-      );
-    }
   }
 
   /**
@@ -951,7 +743,7 @@ export class ShardManager {
       ([a], [b]) => a - b,
     );
 
-    // Spawn buckets one by one using for...of loop
+    // Spawn buckets one by one
     for (const [bucketId, bucketShardIds] of orderedBuckets) {
       // Initialize all shards in this bucket
       for (const shardId of bucketShardIds) {
@@ -959,9 +751,11 @@ export class ShardManager {
       }
 
       // Wait after each bucket except the last one
-      const currentIndex = orderedBuckets.findIndex(([id]) => id === bucketId);
+      const isLastBucket =
+        orderedBuckets.findIndex(([id]) => id === bucketId) ===
+        orderedBuckets.length - 1;
 
-      if (currentIndex < orderedBuckets.length - 1) {
+      if (!isLastBucket) {
         await sleep(this.#options.spawnDelay);
       }
     }
@@ -989,7 +783,6 @@ export class ShardManager {
       status: "disconnected",
       bucket: bucketId,
       lastUpdated: Date.now(),
-      isScaling: false,
       health: {
         latency: 0,
         lastHeartbeat: Date.now(),
@@ -1000,12 +793,197 @@ export class ShardManager {
         reset: Date.now() + DEFAULT_RATE_LIMIT.WINDOW_DURATION_MS,
       },
     });
+  }
 
-    // Emit creation event using the new event system
-    this.#gateway.emit("shardCreate", {
-      timestamp: new Date().toISOString(),
-      shardId,
-      totalShards,
-    });
+  /**
+   * Handles events and actions when a shard's status changes
+   *
+   * @param shardId - The shard ID
+   * @param shard - The shard data
+   * @param oldStatus - Previous status
+   * @param newStatus - New status
+   * @private
+   */
+  #handleShardStatusChange(
+    shardId: number,
+    shard: ShardData,
+    oldStatus: ShardStatus,
+    newStatus: ShardStatus,
+  ): void {
+    // Handle status-specific events
+    switch (newStatus) {
+      case "disconnected": {
+        if (oldStatus !== "disconnected") {
+          this.#gateway.emit("shardDisconnect", {
+            timestamp: new Date().toISOString(),
+            shardId,
+            totalShards: shard.totalShards,
+            closeCode: 1006, // Default WebSocket close code for abnormal closure
+            reason: "Connection closed",
+            willReconnect: this.#options.autoReconnect,
+          });
+        }
+        break;
+      }
+
+      case "ready": {
+        if (oldStatus !== "ready") {
+          // Update health information
+          shard.health.lastHeartbeat = Date.now();
+          shard.health.failedHeartbeats = 0;
+
+          const sessionId = this.#gateway.sessionId;
+          if (sessionId) {
+            // Store session ID for potential resumption
+            this.#sessionMap.set(shardId, sessionId);
+          }
+
+          this.#gateway.emit("shardReady", {
+            timestamp: new Date().toISOString(),
+            shardId,
+            totalShards: shard.totalShards,
+            guildCount: shard.guildCount,
+          });
+        }
+        break;
+      }
+
+      case "resuming": {
+        const sessionId =
+          this.#sessionMap.get(shardId) || this.#gateway.sessionId;
+        if (!sessionId) {
+          throw new Error(`Cannot resume shard ${shardId} without session ID`);
+        }
+
+        this.#gateway.emit("shardResume", {
+          timestamp: new Date().toISOString(),
+          shardId,
+          totalShards: shard.totalShards,
+          sessionId,
+        });
+        break;
+      }
+
+      default:
+        // Handle other statuses if needed
+        break;
+    }
+  }
+
+  /**
+   * Runs health checks on all shards
+   *
+   * @private
+   */
+  #runHealthChecks(): void {
+    const now = Date.now();
+
+    for (const [shardId, shard] of this.#shards.entries()) {
+      // Skip health checks for disconnected shards
+      if (shard.status === "disconnected") {
+        continue;
+      }
+
+      // Check for heartbeat timeouts
+      const timeSinceHeartbeat = now - shard.health.lastHeartbeat;
+      if (timeSinceHeartbeat > this.#options.heartbeatTimeout) {
+        shard.health.failedHeartbeats++;
+
+        // If too many failed heartbeats and auto-reconnect enabled, reconnect
+        if (shard.health.failedHeartbeats >= 3 && this.#options.autoReconnect) {
+          this.reconnectShard(shardId);
+        }
+      }
+
+      // Update latency for ready shards
+      if (shard.status === "ready") {
+        shard.health.latency = this.#gateway.heartbeat.latency;
+      }
+    }
+  }
+
+  /**
+   * Attempts to find a shard that isn't rate limited
+   *
+   * @returns A tuple of [shardId, totalShards] or null if none available
+   * @private
+   */
+  #findAvailableShard(): [number, number] | null {
+    for (const [shardId, shard] of this.#shards.entries()) {
+      // Check if this shard has available identifies
+      if (shard.rateLimit.remaining > 0) {
+        // Emit reconnect event if needed
+        if (shard.status === "disconnected") {
+          this.#gateway.emit("shardReconnect", {
+            timestamp: new Date().toISOString(),
+            shardId,
+            totalShards: shard.totalShards,
+          });
+        }
+
+        // Update rate limit and status
+        shard.rateLimit.remaining--;
+        this.setShardStatus(shardId, "connecting");
+        shard.lastUpdated = Date.now();
+
+        return [shardId, shard.totalShards];
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Waits for any rate limit bucket to become available
+   *
+   * @private
+   */
+  async #waitForAvailableBucket(): Promise<void> {
+    // Find the next rate limit reset time
+    const nextReset = Math.min(
+      ...Array.from(this.#shards.values()).map(
+        (shard) => shard.rateLimit.reset,
+      ),
+    );
+
+    // Calculate delay until next reset
+    const delay = Math.max(0, nextReset - Date.now());
+
+    // Wait for the rate limit to reset
+    if (delay > 0) {
+      await sleep(delay);
+    }
+
+    this.#resetExpiredRateLimits();
+  }
+
+  /**
+   * Resets rate limits for buckets that have reached their reset time
+   *
+   * @private
+   */
+  #resetExpiredRateLimits(): void {
+    const now = Date.now();
+    const newResetTime = now + DEFAULT_RATE_LIMIT.WINDOW_DURATION_MS;
+
+    for (const shard of this.#shards.values()) {
+      if (shard.rateLimit.reset <= now) {
+        shard.rateLimit.remaining =
+          DEFAULT_RATE_LIMIT.MAX_IDENTIFIES_PER_MINUTE;
+        shard.rateLimit.reset = newResetTime;
+      }
+    }
+  }
+
+  /**
+   * Calculates the total number of guilds across all shards
+   *
+   * @private
+   */
+  #calculateTotalGuildCount(): number {
+    return Array.from(this.#shards.values()).reduce(
+      (acc, shard) => acc + shard.guildCount,
+      0,
+    );
   }
 }

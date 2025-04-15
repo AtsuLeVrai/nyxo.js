@@ -1,11 +1,7 @@
 import { config } from "dotenv";
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   Client,
-  EmbedBuilder,
   GatewayIntentsBits,
   formatUser,
   sleep,
@@ -19,7 +15,31 @@ if (!parsed?.DISCORD_TOKEN) {
 
 const client = new Client({
   token: parsed.DISCORD_TOKEN,
-  intents: GatewayIntentsBits.All,
+  intents: [
+    GatewayIntentsBits.Guilds,
+    GatewayIntentsBits.GuildMembers,
+    GatewayIntentsBits.GuildModeration,
+    GatewayIntentsBits.GuildExpressions,
+    GatewayIntentsBits.GuildIntegrations,
+    GatewayIntentsBits.GuildWebhooks,
+    GatewayIntentsBits.GuildInvites,
+    GatewayIntentsBits.GuildVoiceStates,
+    GatewayIntentsBits.GuildPresences,
+    GatewayIntentsBits.GuildMessages,
+    GatewayIntentsBits.GuildMessageReactions,
+    GatewayIntentsBits.GuildMessageTyping,
+    GatewayIntentsBits.DirectMessages,
+    GatewayIntentsBits.DirectMessageReactions,
+    GatewayIntentsBits.DirectMessageTyping,
+    GatewayIntentsBits.MessageContent,
+    GatewayIntentsBits.GuildScheduledEvents,
+    GatewayIntentsBits.AutoModerationConfiguration,
+    GatewayIntentsBits.AutoModerationExecution,
+    GatewayIntentsBits.GuildMessagePolls,
+    GatewayIntentsBits.DirectMessagePolls,
+  ],
+  encodingType: "etf",
+  compressionType: "zstd-stream",
 });
 
 client.on("requestStart", (event) => {
@@ -50,22 +70,6 @@ client.on("retry", (event) => {
   console.log("[REST] Retry:", event);
 });
 
-client.on("connectionAttempt", (event) => {
-  console.log("[GATEWAY] Connection attempt:", event);
-});
-
-client.on("connectionSuccess", (event) => {
-  console.log("[GATEWAY] Connection success:", event);
-});
-
-client.on("connectionFailure", (event) => {
-  console.log("[GATEWAY] Connection failure:", event);
-});
-
-client.on("reconnectionScheduled", (event) => {
-  console.log("[GATEWAY] Reconnection scheduled:", event);
-});
-
 client.on("heartbeatSent", (event) => {
   console.log("[GATEWAY] Heartbeat sent:", event);
 });
@@ -90,8 +94,12 @@ client.on("sessionInvalidate", (event) => {
   console.log("[GATEWAY] Session invalidate:", event);
 });
 
-client.on("shardCreate", (event) => {
-  console.log("[GATEWAY] Shard create:", event);
+client.on("shardReconnect", (event) => {
+  console.log("[GATEWAY] Shard reconnect:", event);
+});
+
+client.on("shardResume", (event) => {
+  console.log("[GATEWAY] Shard resume:", event);
 });
 
 client.on("shardReady", (event) => {
@@ -100,10 +108,6 @@ client.on("shardReady", (event) => {
 
 client.on("shardDisconnect", (event) => {
   console.log("[GATEWAY] Shard disconnect:", event);
-});
-
-client.on("rateLimitDetected", (event) => {
-  console.log("[GATEWAY] Rate limit detected:", event);
 });
 
 client.on("error", (error) => {
@@ -134,30 +138,9 @@ client.on("ready", async (ready) => {
 
 client.on("messageCreate", async (message) => {
   if (message.content === "!ping") {
-    const embed = new EmbedBuilder()
-      .setTitle("Test".repeat(1500))
-      .setDescription("Test")
-      .setColor(0x57f287)
-      .setFooter({ text: "Test" })
-      .setTimestamp()
-      .addFields(
-        { name: "Field 1", value: "Value 1" },
-        { name: "Field 2", value: "Value 2" },
-      )
-      .build();
-
-    const components = ActionRowBuilder.createButtonRow(
-      new ButtonBuilder()
-        .setLabel("Pong")
-        .setStyle(ButtonStyle.Success)
-        .setCustomId("ping"),
-    ).build();
-
     try {
       await message.reply({
         content: "Pong",
-        embeds: [embed],
-        components: [components],
       });
     } catch (error) {
       console.error("Failed to send message", error);
@@ -167,22 +150,9 @@ client.on("messageCreate", async (message) => {
 
 client.on("interactionCreate", async (interaction) => {
   if (interaction.isCommand() && interaction.interactionData.name === "ping") {
-    const embed = new EmbedBuilder()
-      .setTitle("Test")
-      .setDescription("Test")
-      .setColor(0x57f287)
-      .setFooter({ text: "Test" })
-      .setTimestamp()
-      .addFields(
-        { name: "Field 1", value: "Value 1" },
-        { name: "Field 2", value: "Value 2" },
-      )
-      .build();
-
     try {
       await interaction.reply({
         content: `Pong ${formatUser(interaction.user?.id ?? client.user.id)}`,
-        embeds: [embed],
       });
     } catch (error) {
       console.error("Failed to respond to interaction", error);

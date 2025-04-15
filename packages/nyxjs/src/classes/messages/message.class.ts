@@ -244,18 +244,15 @@ export class Message
       message = { content: options };
     }
 
-    const reply = await this.client.rest.messages.createMessage(
-      this.channelId,
-      {
-        ...message,
-        message_reference: {
-          message_id: this.id,
-          channel_id: this.channelId,
-          guild_id: this.guildId ?? undefined,
-          type: MessageReferenceType.Default,
-        },
+    const reply = await this.client.rest.messages.sendMessage(this.channelId, {
+      ...message,
+      message_reference: {
+        message_id: this.id,
+        channel_id: this.channelId,
+        guild_id: this.guildId ?? undefined,
+        type: MessageReferenceType.Default,
       },
-    );
+    });
 
     return new Message(this.client, reply as MessageCreateEntity);
   }

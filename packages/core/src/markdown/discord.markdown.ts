@@ -485,8 +485,8 @@ export type FormattedSlashCommand =
  *
  * @param commandName - The name of the slash command
  * @param commandId - The ID of the slash command
- * @param subCommandGroupName - Optional name of the sub-command group
  * @param subCommandName - Optional name of the sub-command
+ * @param subCommandGroupName - Optional name of the sub-command group
  * @returns The formatted slash command mention
  *
  * @example
@@ -495,7 +495,7 @@ export type FormattedSlashCommand =
  * // Returns "</help:123456789012345678>"
  *
  * // Command with subcommand
- * formatSlashCommand("settings", "123456789012345678", null, "privacy")
+ * formatSlashCommand("settings", "123456789012345678", "privacy")
  * // Returns "</settings privacy:123456789012345678>"
  *
  * // Command with subcommand group and subcommand
@@ -505,8 +505,8 @@ export type FormattedSlashCommand =
 export function formatSlashCommand(
   commandName: string,
   commandId: Snowflake,
-  subCommandGroupName?: string,
   subCommandName?: string,
+  subCommandGroupName?: string,
 ): FormattedSlashCommand {
   if (subCommandGroupName && subCommandName) {
     return `</${commandName} ${subCommandGroupName} ${subCommandName}:${commandId}>`;

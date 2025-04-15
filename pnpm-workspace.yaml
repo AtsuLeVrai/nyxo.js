@@ -10,3 +10,9 @@ onlyBuiltDependencies:
   - esbuild
   - sharp
   - zlib-sync
+publicHoistPattern:
+  - "*bufferutil*"
+  - "*erlpack*"
+  - "*fzstd*"
+  - "*sharp*"
+  - "*zlib-sync*"
