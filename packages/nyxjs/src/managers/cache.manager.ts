@@ -36,32 +36,6 @@ import type {
  *
  * Each entity type (users, guilds, messages, etc.) has its own dedicated cache
  * store with independently configurable settings.
- *
- * @example
- * ```typescript
- * // Create with default options
- * const cacheManager = new CacheManager({
- *   enabled: true,
- *   sweepInterval: 300000
- * });
- *
- * // Create with custom options
- * const cacheManager = new CacheManager({
- *   enabled: true,
- *   sweepInterval: 300000,
- *   guilds: { maxSize: 500, ttl: 3600000 },
- *   messages: { maxSize: 10000, ttl: 1800000 }
- * });
- *
- * // Store a guild
- * cacheManager.guilds.set(guild.id, guild);
- *
- * // Retrieve a guild
- * const guild = cacheManager.guilds.get(guildId);
- *
- * // Find guilds by a predicate
- * const smallGuilds = cacheManager.guilds.filter(guild => guild.memberCount < 100);
- * ```
  */
 export class CacheManager {
   /**
@@ -258,18 +232,6 @@ export class CacheManager {
   /**
    * Access the users cache store.
    * Contains User objects which represent Discord users.
-   *
-   * @example
-   * ```typescript
-   * // Get a user by ID
-   * const user = cacheManager.users.get('1234567890');
-   *
-   * // Find users by predicate
-   * const adminUsers = cacheManager.users.filter(user => user.isAdmin);
-   *
-   * // Add or update user data
-   * cacheManager.users.add('1234567890', { username: 'NewUsername' });
-   * ```
    */
   get users(): Store<Snowflake, User> {
     return this.#users;
@@ -278,17 +240,6 @@ export class CacheManager {
   /**
    * Access the guilds cache store.
    * Contains Guild objects which represent Discord servers.
-   *
-   * @example
-   * ```typescript
-   * // Get a guild by ID
-   * const guild = cacheManager.guilds.get('1234567890');
-   *
-   * // Find guilds with specific features
-   * const communityGuilds = cacheManager.guilds.filter(guild =>
-   *   guild.features.includes('COMMUNITY')
-   * );
-   * ```
    */
   get guilds(): Store<Snowflake, Guild> {
     return this.#guilds;
@@ -297,17 +248,6 @@ export class CacheManager {
   /**
    * Access the channels cache store.
    * Contains Channel objects of various types (text, voice, category, etc.).
-   *
-   * @example
-   * ```typescript
-   * // Get a channel by ID
-   * const channel = cacheManager.channels.get('1234567890');
-   *
-   * // Find text channels
-   * const textChannels = cacheManager.channels.filter(channel =>
-   *   channel.type === ChannelType.GuildText
-   * );
-   * ```
    */
   get channels(): Store<Snowflake, AnyChannel> {
     return this.#channels;
@@ -316,17 +256,6 @@ export class CacheManager {
   /**
    * Access the members cache store.
    * Contains GuildMember objects which represent users in specific guilds.
-   *
-   * @example
-   * ```typescript
-   * // Get a member by ID
-   * const member = cacheManager.members.get('1234567890');
-   *
-   * // Find members with a specific role
-   * const moderators = cacheManager.members.filter(member =>
-   *   member.roles.cache.has('moderatorRoleId')
-   * );
-   * ```
    */
   get members(): Store<Snowflake, GuildMember> {
     return this.#members;
@@ -335,17 +264,6 @@ export class CacheManager {
   /**
    * Access the roles cache store.
    * Contains Role objects which define permissions in guilds.
-   *
-   * @example
-   * ```typescript
-   * // Get a role by ID
-   * const role = cacheManager.roles.get('1234567890');
-   *
-   * // Find administrative roles
-   * const adminRoles = cacheManager.roles.filter(role =>
-   *   role.permissions.has(PermissionFlagsBits.Administrator)
-   * );
-   * ```
    */
   get roles(): Store<Snowflake, Role> {
     return this.#roles;
@@ -354,17 +272,6 @@ export class CacheManager {
   /**
    * Access the messages cache store.
    * Contains Message objects sent in channels.
-   *
-   * @example
-   * ```typescript
-   * // Get a message by ID
-   * const message = cacheManager.messages.get('1234567890');
-   *
-   * // Find messages with embeds
-   * const messagesWithEmbeds = cacheManager.messages.filter(message =>
-   *   message.embeds.length > 0
-   * );
-   * ```
    */
   get messages(): Store<Snowflake, Message> {
     return this.#messages;
@@ -373,15 +280,6 @@ export class CacheManager {
   /**
    * Access the emojis cache store.
    * Contains Emoji objects from guilds.
-   *
-   * @example
-   * ```typescript
-   * // Get an emoji by ID
-   * const emoji = cacheManager.emojis.get('1234567890');
-   *
-   * // Find animated emojis
-   * const animatedEmojis = cacheManager.emojis.filter(emoji => emoji.animated);
-   * ```
    */
   get emojis(): Store<Snowflake, Emoji> {
     return this.#emojis;
@@ -390,17 +288,6 @@ export class CacheManager {
   /**
    * Access the stage instances cache store.
    * Contains StageInstance objects for Discord's Stage channels.
-   *
-   * @example
-   * ```typescript
-   * // Get a stage instance by ID
-   * const stageInstance = cacheManager.stageInstances.get('1234567890');
-   *
-   * // Find public stage instances
-   * const publicStages = cacheManager.stageInstances.filter(
-   *   stage => stage.privacyLevel === StagePrivacyLevel.Public
-   * );
-   * ```
    */
   get stageInstances(): Store<Snowflake, StageInstance> {
     return this.#stageInstances;
@@ -409,17 +296,6 @@ export class CacheManager {
   /**
    * Access the scheduled events cache store.
    * Contains GuildScheduledEvent objects for Discord server events.
-   *
-   * @example
-   * ```typescript
-   * // Get a scheduled event by ID
-   * const event = cacheManager.scheduledEvents.get('1234567890');
-   *
-   * // Find upcoming events
-   * const upcomingEvents = cacheManager.scheduledEvents.filter(
-   *   event => event.status === GuildScheduledEventStatus.Scheduled
-   * );
-   * ```
    */
   get scheduledEvents(): Store<Snowflake, GuildScheduledEvent> {
     return this.#scheduledEvents;
@@ -428,17 +304,6 @@ export class CacheManager {
   /**
    * Access the auto moderation rules cache store.
    * Contains AutoModerationRule objects for Discord's content filtering.
-   *
-   * @example
-   * ```typescript
-   * // Get a rule by ID
-   * const rule = cacheManager.autoModerationRules.get('1234567890');
-   *
-   * // Find keyword filter rules
-   * const keywordRules = cacheManager.autoModerationRules.filter(
-   *   rule => rule.triggerType === AutoModerationRuleTriggerType.Keyword
-   * );
-   * ```
    */
   get autoModerationRules(): Store<Snowflake, AutoModerationRule> {
     return this.#autoModerationRules;
@@ -447,17 +312,6 @@ export class CacheManager {
   /**
    * Access the stickers cache store.
    * Contains Sticker objects from guilds.
-   *
-   * @example
-   * ```typescript
-   * // Get a sticker by ID
-   * const sticker = cacheManager.stickers.get('1234567890');
-   *
-   * // Find animated stickers
-   * const animatedStickers = cacheManager.stickers.filter(
-   *   sticker => sticker.format === StickerFormatType.Animated
-   * );
-   * ```
    */
   get stickers(): Store<Snowflake, Sticker> {
     return this.#stickers;
@@ -466,17 +320,6 @@ export class CacheManager {
   /**
    * Access the entitlements cache store.
    * Contains Entitlement objects for premium features.
-   *
-   * @example
-   * ```typescript
-   * // Get an entitlement by ID
-   * const entitlement = cacheManager.entitlements.get('1234567890');
-   *
-   * // Find active entitlements
-   * const activeEntitlements = cacheManager.entitlements.filter(
-   *   entitlement => !entitlement.ended_at
-   * );
-   * ```
    */
   get entitlements(): Store<Snowflake, Entitlement> {
     return this.#entitlements;
@@ -485,17 +328,6 @@ export class CacheManager {
   /**
    * Access the subscriptions cache store.
    * Contains Subscription objects for premium features.
-   *
-   * @example
-   * ```typescript
-   * // Get a subscription by ID
-   * const subscription = cacheManager.subscriptions.get('1234567890');
-   *
-   * // Find active subscriptions
-   * const activeSubscriptions = cacheManager.subscriptions.filter(
-   *   subscription => subscription.status === SubscriptionStatus.Active
-   * );
-   * ```
    */
   get subscriptions(): Store<Snowflake, Subscription> {
     return this.#subscriptions;
@@ -504,17 +336,6 @@ export class CacheManager {
   /**
    * Access the presences cache store.
    * Contains PresenceEntity objects for users' online status.
-   *
-   * @example
-   * ```typescript
-   * // Get a presence by user ID
-   * const presence = cacheManager.presences.get('1234567890');
-   *
-   * // Find users who are online
-   * const onlineUsers = cacheManager.presences.filter(
-   *  presence => presence.status === PresenceStatus.Online
-   * );
-   * ```
    */
   get presences(): Store<Snowflake, PresenceEntity> {
     return this.#presences;
@@ -523,17 +344,6 @@ export class CacheManager {
   /**
    * Access the integrations cache store.
    * Contains Integration objects for third-party services.
-   *
-   * @example
-   * ```typescript
-   * // Get an integration by ID
-   * const integration = cacheManager.integrations.get('1234567890');
-   *
-   * // Find integrations with specific features
-   * const specificIntegrations = cacheManager.integrations.filter(
-   *  integration => integration.type === IntegrationType.Specific
-   * );
-   * ```
    */
   get integrations(): Store<Snowflake, Integration> {
     return this.#integrations;
@@ -542,17 +352,6 @@ export class CacheManager {
   /**
    * Access the soundboards cache store.
    * Contains SoundboardSound objects for Discord's soundboard feature.
-   *
-   * @example
-   * ```typescript
-   * // Get a soundboard sound by ID
-   * const sound = cacheManager.soundboards.get('1234567890');
-   *
-   * // Find sounds with specific properties
-   * const specificSounds = cacheManager.soundboards.filter(
-   *  sound => sound.volume > 0.5
-   * );
-   * ```
    */
   get soundboards(): Store<Snowflake, SoundboardSound> {
     return this.#soundboards;
@@ -561,17 +360,6 @@ export class CacheManager {
   /**
    * Access the thread members cache store.
    * Contains ThreadMember objects for users in threads.
-   *
-   * @example
-   * ```typescript
-   * // Get a thread member by ID
-   * const member = cacheManager.threadMembers.get('1234567890');
-   *
-   * // Find members with specific roles
-   * const roleMembers = cacheManager.threadMembers.filter(
-   *  member => member.roles.includes('roleId')
-   * );
-   * ```
    */
   get threadMembers(): Store<Snowflake, ThreadMember> {
     return this.#threadMembers;
@@ -580,17 +368,6 @@ export class CacheManager {
   /**
    * Access the invites cache store.
    * Contains Invite objects for server invites.
-   *
-   * @example
-   * ```typescript
-   * // Get an invite by code
-   * const invite = cacheManager.invites.get('inviteCode');
-   *
-   * // Find invites with specific properties
-   * const specificInvites = cacheManager.invites.filter(
-   *  invite => invite.uses > 0
-   * );
-   * ```
    */
   get invites(): Store<Snowflake, Invite> {
     return this.#invites;
@@ -599,17 +376,6 @@ export class CacheManager {
   /**
    * Access the webhooks cache store.
    * Contains Webhook objects for server webhooks.
-   *
-   * @example
-   * ```typescript
-   * // Get a webhook by ID
-   * const webhook = cacheManager.webhooks.get('1234567890');
-   *
-   * // Find webhooks with specific properties
-   * const specificWebhooks = cacheManager.webhooks.filter(
-   *  webhook => webhook.channelId === 'channelId'
-   * );
-   * ```
    */
   get webhooks(): Store<Snowflake, Webhook> {
     return this.#webhooks;
@@ -625,12 +391,6 @@ export class CacheManager {
    * @remarks
    * The sweep operation is automatically called on the interval specified
    * in the configuration options. It can also be manually triggered.
-   *
-   * @example
-   * ```typescript
-   * // Manually trigger a cache sweep
-   * cacheManager.sweep();
-   * ```
    */
   sweep(): void {
     if (!this.#options.enabled) {
@@ -679,20 +439,6 @@ export class CacheManager {
    * @param predicate - Function to test each entity
    * @param storeNames - Optional array of store names to search in (defaults to all stores)
    * @returns Object grouping results by store name
-   *
-   * @example
-   * ```typescript
-   * // Find all entities containing "discord" in their name
-   * const results = cacheManager.findAcrossStores(
-   *   entity => entity.name?.toLowerCase().includes('discord')
-   * );
-   *
-   * // Find users and messages matching a criterion
-   * const results = cacheManager.findAcrossStores(
-   *   entity => entity.timestamp > yesterday,
-   *   ['users', 'messages']
-   * );
-   * ```
    */
   findAcrossStores<T = unknown>(
     predicate: (value: unknown, key: Snowflake) => boolean,
@@ -726,15 +472,6 @@ export class CacheManager {
    *
    * @param cacheName - Optional name of the specific cache to clear
    * @returns The cache manager instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Clear all caches
-   * cacheManager.clear();
-   *
-   * // Clear only the messages cache
-   * cacheManager.clear('messages');
-   * ```
    */
   clear(cacheName?: string): this {
     if (cacheName) {
@@ -755,12 +492,6 @@ export class CacheManager {
   /**
    * Disposes the cache manager, clearing all caches and stopping the sweep interval.
    * Call this when the cache manager is no longer needed to free resources.
-   *
-   * @example
-   * ```typescript
-   * // Clean up resources when shutting down
-   * cacheManager.dispose();
-   * ```
    */
   dispose(): void {
     // Stop the sweep interval
@@ -787,12 +518,6 @@ export class CacheManager {
    * This provides an overview of how many entities are currently stored.
    *
    * @returns The total number of cached entities across all stores
-   *
-   * @example
-   * ```typescript
-   * // Log the total number of cached entities
-   * console.log(`Total cached entities: ${cacheManager.getTotalSize()}`);
-   * ```
    */
   getTotalSize(): number {
     let total = 0;
@@ -806,14 +531,6 @@ export class CacheManager {
    * Returns the current memory usage statistics for all stores.
    *
    * @returns Object containing counts for each store type
-   *
-   * @example
-   * ```typescript
-   * // Get and log cache usage statistics
-   * const stats = cacheManager.getStats();
-   * console.log(`Users cached: ${stats.users}`);
-   * console.log(`Guilds cached: ${stats.guilds}`);
-   * ```
    */
   getStats(): Record<string, number> {
     const stats: Record<string, number> = {};

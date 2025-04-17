@@ -174,16 +174,6 @@ export class GatewayRouter {
    * sharding information or session limits.
    *
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
-   *
-   * @example
-   * ```typescript
-   * const gatewayInfo = await gatewayRouter.fetchGatewayUrl();
-   * console.log(`Gateway URL: ${gatewayInfo.url}`);
-   *
-   * // The URL should be used with version and encoding parameters
-   * const fullGatewayUrl = `${gatewayInfo.url}/?v=10&encoding=json`;
-   * // Then establish a WebSocket connection to this URL
-   * ```
    */
   fetchGatewayUrl(): Promise<GatewayResponseEntity> {
     return this.#rest.get(GatewayRouter.GATEWAY_ROUTES.standardGatewayEndpoint);
@@ -212,23 +202,6 @@ export class GatewayRouter {
    * This method requires authentication with a bot token.
    *
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot}
-   *
-   * @example
-   * ```typescript
-   * const botGatewayInfo = await gatewayRouter.fetchBotGatewayInfo();
-   *
-   * console.log(`Gateway URL: ${botGatewayInfo.url}`);
-   * console.log(`Recommended shards: ${botGatewayInfo.shards}`);
-   * console.log(`Session starts remaining: ${botGatewayInfo.session_start_limit.remaining}/${botGatewayInfo.session_start_limit.total}`);
-   * console.log(`Reset after: ${botGatewayInfo.session_start_limit.reset_after}ms`);
-   * console.log(`Max concurrency: ${botGatewayInfo.session_start_limit.max_concurrency}`);
-   *
-   * // Use this information to set up sharded connections
-   * for (let i = 0; i < botGatewayInfo.shards; i++) {
-   *   // Connect shard i using the URL
-   *   connectShard(i, botGatewayInfo.shards, botGatewayInfo.url);
-   * }
-   * ```
    */
   fetchBotGatewayInfo(): Promise<GatewayBotResponseEntity> {
     return this.#rest.get(GatewayRouter.GATEWAY_ROUTES.botGatewayEndpoint);

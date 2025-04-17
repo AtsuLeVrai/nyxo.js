@@ -119,7 +119,7 @@ client.on("dispatch", (event, data) => {
 });
 
 client.on("ready", async (ready) => {
-  console.log("[CLIENT] Client is ready: ", ready.user.id);
+  console.log(`[CLIENT] Client is ready: ${ready.user.id}`);
 
   await sleep(1500);
 
@@ -190,4 +190,8 @@ process.on("SIGINT", async () => {
 
 process.on("unhandledRejection", (error) => {
   console.error("Unhandled rejection", error);
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception", error);
 });

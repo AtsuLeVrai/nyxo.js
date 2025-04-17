@@ -91,41 +91,9 @@ export class InviteRouter {
    * @param code - The unique invite code (typically 8 characters)
    * @param query - Optional query parameters to include additional data
    * @returns A Promise resolving to the invite object with metadata
-   * @throws Error if the invite doesn't exist or query parameters are invalid
+   * @throws {Error} Error if the invite doesn't exist or query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/invite#get-invite}
-   *
-   * @example
-   * ```typescript
-   * // Fetch basic invite information
-   * const invite = await inviteRouter.fetchInvite("abcdefg");
-   * console.log(`Invite to #${invite.channel.name} in ${invite.guild.name}`);
-   * console.log(`Created by: ${invite.inviter.username}`);
-   *
-   * // Fetch with member counts and expiration information
-   * const detailedInvite = await inviteRouter.fetchInvite("abcdefg", {
-   *   with_counts: true,
-   *   with_expiration: true
-   * });
-   *
-   * console.log(`Total members: ${detailedInvite.approximate_member_count}`);
-   * console.log(`Online members: ${detailedInvite.approximate_presence_count}`);
-   *
-   * if (detailedInvite.expires_at) {
-   *   const expirationDate = new Date(detailedInvite.expires_at);
-   *   console.log(`Expires at: ${expirationDate.toLocaleString()}`);
-   * }
-   *
-   * // Fetch with information about a scheduled event
-   * const eventInvite = await inviteRouter.fetchInvite("abcdefg", {
-   *   guild_scheduled_event_id: "123456789012345678"
-   * });
-   *
-   * if (eventInvite.guild_scheduled_event) {
-   *   console.log(`Event: ${eventInvite.guild_scheduled_event.name}`);
-   *   console.log(`Starts: ${new Date(eventInvite.guild_scheduled_event.scheduled_start_time).toLocaleString()}`);
-   * }
-   * ```
    */
   fetchInvite(
     code: string,
@@ -149,30 +117,13 @@ export class InviteRouter {
    * @param code - The unique invite code to delete
    * @param reason - The reason for deleting the invite (for audit logs)
    * @returns A Promise resolving to the deleted invite object
-   * @throws Will throw an error if the invite doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the invite doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/invite#delete-invite}
    *
    * @remarks
    * Requires the MANAGE_CHANNELS permission in the channel or MANAGE_GUILD
    * permission in the guild the invite belongs to.
-   *
-   * @example
-   * ```typescript
-   * // Delete an invite with an audit log reason
-   * try {
-   *   const deletedInvite = await inviteRouter.deleteInvite(
-   *     "abcdefg",
-   *     "Invite expired for security reasons"
-   *   );
-   *
-   *   console.log(`Deleted invite to #${deletedInvite.channel.name}`);
-   *   console.log(`Created by: ${deletedInvite.inviter.username}`);
-   *   console.log(`Uses: ${deletedInvite.uses} (max: ${deletedInvite.max_uses || "unlimited"})`);
-   * } catch (error) {
-   *   console.error("Failed to delete invite:", error);
-   * }
-   * ```
    */
   deleteInvite(code: string, reason?: string): Promise<InviteEntity> {
     return this.#rest.delete(

@@ -269,15 +269,6 @@ export class ApplicationCommandRouter {
    * @param withLocalizations - Whether to include full localization dictionaries in the response
    * @returns A promise that resolves to an array of application commands
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-commands}
-   *
-   * @example
-   * ```typescript
-   * const globalCommands = await commandRouter.fetchGlobalCommands(
-   *   "123456789012345678",
-   *   true // Include localizations
-   * );
-   * console.log(`Found ${globalCommands.length} global commands`);
-   * ```
    */
   fetchGlobalCommands(
     applicationId: Snowflake,
@@ -302,20 +293,8 @@ export class ApplicationCommandRouter {
    * @param applicationId - ID of the application
    * @param options - Options for creating the command
    * @returns A promise that resolves to the created or updated command
-   * @throws Error if the provided options fail validation
+   * @throws {Error} Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command}
-   *
-   * @example
-   * ```typescript
-   * const newCommand = await commandRouter.createGlobalCommand(
-   *   "123456789012345678",
-   *   {
-   *     name: "ping",
-   *     description: "Check if the bot is responsive",
-   *     type: 1 // CHAT_INPUT
-   *   }
-   * );
-   * ```
    */
   createGlobalCommand(
     applicationId: Snowflake,
@@ -337,17 +316,8 @@ export class ApplicationCommandRouter {
    * @param applicationId - ID of the application
    * @param commandId - ID of the command to fetch
    * @returns A promise that resolves to the command object
-   * @throws Will throw an error if the command doesn't exist
+   * @throws {Error} Will throw an error if the command doesn't exist
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-global-application-command}
-   *
-   * @example
-   * ```typescript
-   * const command = await commandRouter.fetchGlobalCommand(
-   *   "123456789012345678",
-   *   "987654321987654321"
-   * );
-   * console.log(`Command name: ${command.name}`);
-   * ```
    */
   fetchGlobalCommand(
     applicationId: Snowflake,
@@ -371,19 +341,8 @@ export class ApplicationCommandRouter {
    * @param commandId - ID of the command to edit
    * @param options - New properties for the command
    * @returns A promise that resolves to the updated command
-   * @throws Error if the provided options fail validation
+   * @throws {Error} Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command}
-   *
-   * @example
-   * ```typescript
-   * const updatedCommand = await commandRouter.updateGlobalCommand(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   {
-   *     description: "Updated command description"
-   *   }
-   * );
-   * ```
    */
   updateGlobalCommand(
     applicationId: Snowflake,
@@ -407,17 +366,8 @@ export class ApplicationCommandRouter {
    * @param applicationId - ID of the application
    * @param commandId - ID of the command to delete
    * @returns A promise that resolves when the command is deleted
-   * @throws Will throw an error if the command doesn't exist
+   * @throws {Error} Will throw an error if the command doesn't exist
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-global-application-command}
-   *
-   * @example
-   * ```typescript
-   * await commandRouter.deleteGlobalCommand(
-   *   "123456789012345678",
-   *   "987654321987654321"
-   * );
-   * console.log("Command deleted successfully");
-   * ```
    */
   deleteGlobalCommand(
     applicationId: Snowflake,
@@ -440,27 +390,8 @@ export class ApplicationCommandRouter {
    * @param applicationId - ID of the application
    * @param commands - Array of command objects to register
    * @returns A promise that resolves to an array of the newly registered commands
-   * @throws Error if the provided commands fail validation
+   * @throws {Error} Error if the provided commands fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands}
-   *
-   * @example
-   * ```typescript
-   * const newCommands = await commandRouter.bulkOverwriteGlobalCommands(
-   *   "123456789012345678",
-   *   [
-   *     {
-   *       name: "ping",
-   *       description: "Check if the bot is responsive",
-   *       type: 1
-   *     },
-   *     {
-   *       name: "help",
-   *       description: "Display help information",
-   *       type: 1
-   *     }
-   *   ]
-   * );
-   * ```
    */
   bulkOverwriteGlobalCommands(
     applicationId: Snowflake,
@@ -487,15 +418,6 @@ export class ApplicationCommandRouter {
    * @param withLocalizations - Whether to include full localization dictionaries in the response
    * @returns A promise that resolves to an array of application commands
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-commands}
-   *
-   * @example
-   * ```typescript
-   * const guildCommands = await commandRouter.fetchGuildCommands(
-   *   "123456789012345678",
-   *   "876543210987654321"
-   * );
-   * console.log(`Found ${guildCommands.length} guild commands`);
-   * ```
    */
   fetchGuildCommands(
     applicationId: Snowflake,
@@ -523,21 +445,8 @@ export class ApplicationCommandRouter {
    * @param guildId - ID of the guild
    * @param options - Options for creating the command
    * @returns A promise that resolves to the created or updated command
-   * @throws Error if the provided options fail validation
+   * @throws {Error} Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command}
-   *
-   * @example
-   * ```typescript
-   * const newGuildCommand = await commandRouter.createGuildCommand(
-   *   "123456789012345678",
-   *   "876543210987654321",
-   *   {
-   *     name: "server-info",
-   *     description: "Get information about this server",
-   *     type: 1
-   *   }
-   * );
-   * ```
    */
   createGuildCommand(
     applicationId: Snowflake,
@@ -562,17 +471,8 @@ export class ApplicationCommandRouter {
    * @param guildId - ID of the guild
    * @param commandId - ID of the command to fetch
    * @returns A promise that resolves to the command object
-   * @throws Will throw an error if the command doesn't exist
+   * @throws {Error} Will throw an error if the command doesn't exist
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command}
-   *
-   * @example
-   * ```typescript
-   * const guildCommand = await commandRouter.fetchGuildCommand(
-   *   "123456789012345678",
-   *   "876543210987654321",
-   *   "987654321987654321"
-   * );
-   * ```
    */
   fetchGuildCommand(
     applicationId: Snowflake,
@@ -599,20 +499,8 @@ export class ApplicationCommandRouter {
    * @param commandId - ID of the command to edit
    * @param options - New properties for the command
    * @returns A promise that resolves to the updated command
-   * @throws Error if the provided options fail validation
+   * @throws {Error} Error if the provided options fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command}
-   *
-   * @example
-   * ```typescript
-   * const updatedGuildCommand = await commandRouter.updateGuildCommand(
-   *   "123456789012345678",
-   *   "876543210987654321",
-   *   "987654321987654321",
-   *   {
-   *     description: "Updated guild command description"
-   *   }
-   * );
-   * ```
    */
   updateGuildCommand(
     applicationId: Snowflake,
@@ -641,18 +529,8 @@ export class ApplicationCommandRouter {
    * @param guildId - ID of the guild
    * @param commandId - ID of the command to delete
    * @returns A promise that resolves when the command is deleted
-   * @throws Will throw an error if the command doesn't exist
+   * @throws {Error} Will throw an error if the command doesn't exist
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#delete-guild-application-command}
-   *
-   * @example
-   * ```typescript
-   * await commandRouter.deleteGuildCommand(
-   *   "123456789012345678",
-   *   "876543210987654321",
-   *   "987654321987654321"
-   * );
-   * console.log("Guild command deleted successfully");
-   * ```
    */
   deleteGuildCommand(
     applicationId: Snowflake,
@@ -678,28 +556,8 @@ export class ApplicationCommandRouter {
    * @param guildId - ID of the guild
    * @param commands - Array of command objects to register
    * @returns A promise that resolves to an array of the newly registered commands
-   * @throws Error if the provided commands fail validation
+   * @throws {Error} Error if the provided commands fail validation
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-guild-application-commands}
-   *
-   * @example
-   * ```typescript
-   * const newGuildCommands = await commandRouter.bulkOverwriteGuildCommands(
-   *   "123456789012345678",
-   *   "876543210987654321",
-   *   [
-   *     {
-   *       name: "server-info",
-   *       description: "Get information about this server",
-   *       type: 1
-   *     },
-   *     {
-   *       name: "members",
-   *       description: "List server members",
-   *       type: 1
-   *     }
-   *   ]
-   * );
-   * ```
    */
   bulkOverwriteGuildCommands(
     applicationId: Snowflake,
@@ -727,14 +585,6 @@ export class ApplicationCommandRouter {
    * @param guildId - ID of the guild
    * @returns A promise that resolves to an array of command permission objects
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-guild-application-command-permissions}
-   *
-   * @example
-   * ```typescript
-   * const allPermissions = await commandRouter.fetchGuildCommandPermissions(
-   *   "123456789012345678",
-   *   "876543210987654321"
-   * );
-   * ```
    */
   fetchGuildCommandPermissions(
     applicationId: Snowflake,
@@ -758,17 +608,8 @@ export class ApplicationCommandRouter {
    * @param guildId - ID of the guild
    * @param commandId - ID of the command
    * @returns A promise that resolves to the command permission object
-   * @throws Will throw an error if the command doesn't exist
+   * @throws {Error} Will throw an error if the command doesn't exist
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#get-application-command-permissions}
-   *
-   * @example
-   * ```typescript
-   * const commandPermissions = await commandRouter.fetchCommandPermissions(
-   *   "123456789012345678",
-   *   "876543210987654321",
-   *   "987654321987654321"
-   * );
-   * ```
    */
   fetchCommandPermissions(
     applicationId: Snowflake,
@@ -797,26 +638,8 @@ export class ApplicationCommandRouter {
    * @param commandId - ID of the command
    * @param options - New permission settings for the command
    * @returns A promise that resolves to the updated command permission object
-   * @throws Error if the provided options fail validation or the token lacks required permissions
+   * @throws {Error} Error if the provided options fail validation or the token lacks required permissions
    * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions}
-   *
-   * @example
-   * ```typescript
-   * const updatedPermissions = await commandRouter.updateCommandPermissions(
-   *   "123456789012345678",
-   *   "876543210987654321",
-   *   "987654321987654321",
-   *   {
-   *     permissions: [
-   *       {
-   *         id: "234567890123456789", // Role or user ID
-   *         type: 1, // 1 for role, 2 for user
-   *         permission: true // Allow or deny
-   *       }
-   *     ]
-   *   }
-   * );
-   * ```
    */
   updateCommandPermissions(
     applicationId: Snowflake,

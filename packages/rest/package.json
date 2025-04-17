@@ -39,7 +39,7 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "build:dev": "tsc -p tsconfig.json",
+    "build:dev": "rimraf dist && tsc -p tsconfig.json",
     "build:prod": "node ../../scripts/build.js",
     "type-check": "tsc --noEmit"
   },
@@ -50,7 +50,7 @@
     "form-data": "^4.0.2",
     "mime-types": "^3.0.1",
     "undici": "^7.8.0",
-    "zod": "^3.24.2",
+    "zod": "^3.24.3",
     "zod-validation-error": "^3.4.0"
   },
   "optionalDependencies": {
@@ -59,6 +59,7 @@
   "devDependencies": {
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.14.1",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
     "undici-types": "^7.8.0"
   }

@@ -5,79 +5,84 @@ import type { CacheManager } from "../managers/index.js";
 
 /**
  * Represents the necessary information for caching an entity in the appropriate store.
- *
- * This interface defines the structure that must be returned by any class implementing
- * the `getCacheInfo()` method to support automatic caching in the Nyx.js framework.
- *
- * When an entity cannot or should not be cached (e.g., standard emojis without an ID),
- * the implementation should return `null` instead of this structure.
- *
- * @example
- * ```typescript
- * // Implementing getCacheInfo in an entity class
- * protected getCacheInfo(): CacheEntityInfo | null {
- *   if (this.id) {
- *     return {
- *       storeKey: 'users',
- *       id: this.id
- *     };
- *   }
- *   return null; // Cannot be cached
- * }
- * ```
  */
 export interface CacheEntityInfo {
   /**
    * The key of the cache store where this entity should be stored.
-   * This must be a valid key in the CacheManager (e.g., 'users', 'guilds', 'emojis').
-   *
-   * @example 'messages' | 'channels' | 'guilds'
    */
   storeKey: keyof CacheManager;
 
   /**
    * The unique identifier used as the cache key for this entity.
-   * This is typically the entity's Discord ID (Snowflake).
-   *
-   * If the ID is null, the entity will not be cached even if storeKey is provided.
-   * This can happen for entities that don't have stable identifiers or
-   * for special cases like standard emojis.
-   *
-   * @example '123456789012345678'
    */
   id: Snowflake | null;
+}
+
+/**
+ * Metadata keys used by the caching system
+ */
+const METADATA_KEYS = {
+  CACHE_STORE_KEY: "nyxjs:cache:storeKey",
+  CACHE_KEY_EXTRACTOR: "nyxjs:cache:keyExtractor",
+} as const;
+
+/**
+ * Type definition for the key extraction function
+ */
+type KeyExtractor<T extends object> = (data: T) => Snowflake | null;
+
+/**
+ * Decorator that marks a class as cacheable and configures its caching behavior.
+ *
+ * This decorator enables automatic caching of entity instances in the specified store.
+ * It optionally accepts a custom key extractor function for complex identifiers.
+ *
+ * @param storeKey - The name of the cache store where instances should be stored
+ * @param keyExtractor - Optional function to extract the cache key from entity data
+ *
+ * @example
+ * // Basic usage with default ID extraction
+ * @Cacheable('guilds')
+ * class Guild extends BaseClass<GuildEntity> {
+ *   // Class implementation
+ * }
+ *
+ * @example
+ * // With custom key extraction for composite keys
+ * @Cacheable('members', data =>
+ *   data.guild_id && data.user.id ? `${data.guild_id}:${data.user.id}` : null
+ * )
+ * class GuildMember extends BaseClass<GuildMemberEntity> {
+ *   // Class implementation
+ * }
+ */
+export function Cacheable<T extends object>(
+  storeKey: keyof CacheManager,
+  keyExtractor?: KeyExtractor<T>,
+) {
+  return (target: object): void => {
+    // Store cache store key in metadata
+    Reflect.defineMetadata(METADATA_KEYS.CACHE_STORE_KEY, storeKey, target);
+
+    // Store key extractor function if provided
+    if (keyExtractor) {
+      Reflect.defineMetadata(
+        METADATA_KEYS.CACHE_KEY_EXTRACTOR,
+        keyExtractor,
+        target,
+      );
+    }
+  };
 }
 
 /**
  * Base class for all data models in the Nyx.js framework.
  *
  * The BaseClass provides a foundation for working with Discord API data entities
- * in a structured and type-safe manner. It encapsulates the raw data received from the API
- * and provides common utility methods for manipulating and accessing this data.
- *
- * All entity classes in the framework (such as User, Channel, Guild, etc.) inherit from this base class.
+ * in a structured and type-safe manner. It handles automatic caching through the
+ * @Cacheable decorator.
  *
  * @template T The type of data this model contains (e.g., UserEntity, ChannelEntity)
- *
- * @example
- * ```typescript
- * class User extends BaseClass<UserEntity> {
- *   get id(): Snowflake {
- *     return this.data.id;
- *   }
- *
- *   get username(): string {
- *     return this.data.username;
- *   }
- *
- *   protected getCacheInfo() {
- *     return { storeKey: 'users', id: this.id };
- *   }
- * }
- *
- * const user = new User(client, userData).cache();
- * console.log(user.username);
- * ```
  */
 export abstract class BaseClass<T extends object> {
   /**
@@ -97,7 +102,7 @@ export abstract class BaseClass<T extends object> {
    *
    * @param client - The client instance that will be used for API requests
    * @param data - The raw data object from the Discord API
-   * @throws Error if client or data is not provided
+   * @throws {Error} Error if client or data is not provided
    */
   constructor(client: Client, data: T) {
     this.client = client;
@@ -105,7 +110,7 @@ export abstract class BaseClass<T extends object> {
 
     // Automatically cache this entity if caching is enabled
     if (client.options.cache.enabled) {
-      const cacheInfo = this.getCacheInfo();
+      const cacheInfo = this.#getCacheInfo();
       if (cacheInfo) {
         const { storeKey, id } = cacheInfo;
         if (id && storeKey) {
@@ -165,7 +170,7 @@ export abstract class BaseClass<T extends object> {
 
     // Update entity in cache if caching is enabled
     if (this.client.options.cache.enabled) {
-      const cacheInfo = this.getCacheInfo();
+      const cacheInfo = this.#getCacheInfo();
       if (cacheInfo) {
         const { storeKey, id } = cacheInfo;
         if (id && storeKey) {
@@ -258,13 +263,45 @@ export abstract class BaseClass<T extends object> {
   }
 
   /**
-   * Abstract method that derived classes must implement to define how they
-   * should be cached. If an entity should not be cached (e.g., a standard emoji
-   * with no ID), this method should return null.
+   * Gets caching information for this entity by reading metadata from the class.
+   * This information is set by the @Cacheable decorator.
    *
    * @returns Cache information containing the store key and ID, or null if the entity cannot be cached
+   * @private
    */
-  protected abstract getCacheInfo(): CacheEntityInfo | null;
+  #getCacheInfo(): CacheEntityInfo | null {
+    const entityConstructor = this.constructor as typeof BaseClass;
+
+    // Get the store key from metadata
+    const storeKey = Reflect.getMetadata(
+      METADATA_KEYS.CACHE_STORE_KEY,
+      entityConstructor,
+    ) as keyof CacheManager | undefined;
+
+    // If no store key found, this class is not cacheable
+    if (!storeKey) {
+      return null;
+    }
+
+    // Get the key extractor function from metadata if available
+    const keyExtractor = Reflect.getMetadata(
+      METADATA_KEYS.CACHE_KEY_EXTRACTOR,
+      entityConstructor,
+    ) as KeyExtractor<T> | undefined;
+
+    // Extract the ID using the custom extractor or fallback to default behavior
+    let id: Snowflake | null = null;
+
+    if (keyExtractor) {
+      // Use the custom key extractor
+      id = keyExtractor(this.data);
+    } else if ("id" in this.data && typeof this.data.id === "string") {
+      // Default behavior: use the id property if available
+      id = this.data.id;
+    }
+
+    return id ? { storeKey, id } : null;
+  }
 
   /**
    * Initializes all getter properties defined in the derived class.
@@ -272,13 +309,6 @@ export abstract class BaseClass<T extends object> {
    * This private method triggers the execution of all getters to ensure they are
    * properly initialized during object construction, which can be important for
    * caching and other initialization side effects.
-   *
-   * It intelligently filters out base class getters and special JavaScript properties
-   * to avoid unnecessary or potentially harmful initialization.
-   *
-   * Any errors during getter initialization are safely caught and ignored,
-   * preventing constructor failures while still allowing the rest of the
-   * initialization process to continue.
    *
    * @private
    */

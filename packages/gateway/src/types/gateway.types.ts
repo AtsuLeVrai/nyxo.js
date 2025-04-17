@@ -40,7 +40,7 @@ export interface HeartbeatEvent extends BaseGatewayEvent {
    * Round-trip latency between sending heartbeat and receiving acknowledgement in milliseconds
    * Only present in heartbeat acknowledgement events
    */
-  latencyMs?: number;
+  latency?: number;
 }
 
 /**
@@ -152,7 +152,7 @@ export interface SessionResumeEvent extends BaseGatewayEvent {
    * Time taken to process the resume operation in milliseconds
    * Measured from resume request to completion of event replay
    */
-  latencyMs: number;
+  latency: number;
 }
 
 /**

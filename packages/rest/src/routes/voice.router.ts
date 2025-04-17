@@ -161,31 +161,6 @@ export class VoiceRouter {
    * @returns A promise resolving to an array of voice region entities
    *
    * @see {@link https://discord.com/developers/docs/resources/voice#list-voice-regions}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all available voice regions
-   * const regions = await voiceRouter.fetchVoiceRegions();
-   *
-   * console.log(`Available regions: ${regions.length}`);
-   *
-   * // Filter for optimal regions
-   * const optimalRegions = regions.filter(region => region.optimal);
-   * console.log("Optimal regions:");
-   * optimalRegions.forEach(region => {
-   *   console.log(`- ${region.name} (${region.id})`);
-   * });
-   *
-   * // Find regions that aren't VIP (which require special permissions)
-   * const standardRegions = regions.filter(region => !region.vip);
-   * console.log(`Standard regions: ${standardRegions.length}`);
-   *
-   * // Find a specific region by ID
-   * const usEast = regions.find(region => region.id === "us-east");
-   * if (usEast) {
-   *   console.log(`US East available: ${!usEast.deprecated}`);
-   * }
-   * ```
    */
   fetchVoiceRegions(): Promise<VoiceRegionEntity[]> {
     return this.#rest.get(VoiceRouter.VOICE_ROUTES.voiceRegionsEndpoint);
@@ -202,31 +177,6 @@ export class VoiceRouter {
    * @returns A promise resolving to the current user's voice state entity
    *
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
-   *
-   * @example
-   * ```typescript
-   * // Fetch the bot's voice state in a guild
-   * const myVoiceState = await voiceRouter.fetchCurrentUserVoiceState("123456789012345678");
-   *
-   * if (myVoiceState.channel_id) {
-   *   console.log(`Connected to channel ID: ${myVoiceState.channel_id}`);
-   *   console.log(`Muted: ${myVoiceState.mute}`);
-   *   console.log(`Deafened: ${myVoiceState.deaf}`);
-   *   console.log(`Self Muted: ${myVoiceState.self_mute}`);
-   *   console.log(`Self Deafened: ${myVoiceState.self_deaf}`);
-   *
-   *   // For stage channels
-   *   if (myVoiceState.suppress !== undefined) {
-   *     console.log(`Suppressed: ${myVoiceState.suppress}`);
-   *   }
-   *
-   *   if (myVoiceState.request_to_speak_timestamp) {
-   *     console.log(`Requested to speak at: ${new Date(myVoiceState.request_to_speak_timestamp).toLocaleString()}`);
-   *   }
-   * } else {
-   *   console.log("Not connected to any voice channel in this guild");
-   * }
-   * ```
    */
   fetchCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
     return this.#rest.get(
@@ -246,29 +196,6 @@ export class VoiceRouter {
    * @returns A promise resolving to the user's voice state entity
    *
    * @see {@link https://discord.com/developers/docs/resources/voice#get-user-voice-state}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific user's voice state
-   * const userVoiceState = await voiceRouter.fetchUserVoiceState(
-   *   "123456789012345678", // Guild ID
-   *   "234567890123456789"  // User ID
-   * );
-   *
-   * if (userVoiceState.channel_id) {
-   *   console.log(`User is in channel ID: ${userVoiceState.channel_id}`);
-   *   console.log(`User is muted: ${userVoiceState.mute}`);
-   *   console.log(`User is deafened: ${userVoiceState.deaf}`);
-   *   console.log(`User is self-muted: ${userVoiceState.self_mute}`);
-   *   console.log(`User is self-deafened: ${userVoiceState.self_deaf}`);
-   *
-   *   // Check if user is streaming or on video
-   *   console.log(`User is streaming: ${userVoiceState.self_stream || false}`);
-   *   console.log(`User has video on: ${userVoiceState.self_video || false}`);
-   * } else {
-   *   console.log("User is not connected to any voice channel in this guild");
-   * }
-   * ```
    */
   fetchUserVoiceState(
     guildId: Snowflake,
@@ -288,42 +215,9 @@ export class VoiceRouter {
    * @param guildId - The ID of the guild containing the voice state to modify
    * @param options - Options for modifying the voice state
    * @returns A promise that resolves when the voice state is modified
-   * @throws Error if the options are invalid or prerequisites aren't met
+   * @throws {Error} Error if the options are invalid or prerequisites aren't met
    *
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state}
-   *
-   * @example
-   * ```typescript
-   * // Request to speak in a stage channel
-   * await voiceRouter.updateCurrentUserVoiceState(
-   *   "123456789012345678", // Guild ID
-   *   {
-   *     channel_id: "234567890123456789", // Stage channel ID
-   *     suppress: false, // Unsuppress (become a speaker)
-   *     request_to_speak_timestamp: new Date().toISOString() // Request to speak now
-   *   }
-   * );
-   * console.log("Requested to speak in stage channel");
-   *
-   * // Suppress yourself (stop being a speaker)
-   * await voiceRouter.updateCurrentUserVoiceState(
-   *   "123456789012345678", // Guild ID
-   *   {
-   *     channel_id: "234567890123456789", // Stage channel ID
-   *     suppress: true // Suppress (become a listener)
-   *   }
-   * );
-   * console.log("Changed to listener mode");
-   *
-   * // Clear your request to speak
-   * await voiceRouter.updateCurrentUserVoiceState(
-   *   "123456789012345678", // Guild ID
-   *   {
-   *     request_to_speak_timestamp: null // Clear request
-   *   }
-   * );
-   * console.log("Cleared speak request");
-   * ```
    *
    * @remarks
    * - channel_id must currently point to a stage channel
@@ -354,34 +248,9 @@ export class VoiceRouter {
    * @param userId - The ID of the user whose voice state to modify
    * @param options - Options for modifying the voice state
    * @returns A promise that resolves when the voice state is modified
-   * @throws Error if the options are invalid or you lack permissions
+   * @throws {Error} Error if the options are invalid or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state}
-   *
-   * @example
-   * ```typescript
-   * // Invite a user to speak (unsuppress them)
-   * await voiceRouter.updateUserVoiceState(
-   *   "123456789012345678", // Guild ID
-   *   "234567890123456789", // User ID
-   *   {
-   *     channel_id: "345678901234567890", // Stage channel ID
-   *     suppress: false // Unsuppress (make them a speaker)
-   *   }
-   * );
-   * console.log("User invited to speak");
-   *
-   * // Move a user back to listener (suppress them)
-   * await voiceRouter.updateUserVoiceState(
-   *   "123456789012345678", // Guild ID
-   *   "234567890123456789", // User ID
-   *   {
-   *     channel_id: "345678901234567890", // Stage channel ID
-   *     suppress: true // Suppress (make them a listener)
-   *   }
-   * );
-   * console.log("User moved back to audience");
-   * ```
    *
    * @remarks
    * - channel_id must currently point to a stage channel

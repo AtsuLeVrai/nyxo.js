@@ -156,41 +156,9 @@ export class StageInstanceRouter {
    * @param options - Options for creating the Stage Instance
    * @param reason - Optional audit log reason for the creation
    * @returns A promise resolving to the created Stage Instance entity
-   * @throws Error if the Stage channel doesn't exist or permissions are missing
+   * @throws {Error} Error if the Stage channel doesn't exist or permissions are missing
    *
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance}
-   *
-   * @example
-   * ```typescript
-   * // Start a Stage with basic settings
-   * try {
-   *   const stageInstance = await stageRouter.createStage({
-   *     channel_id: "123456789012345678", // Stage channel ID
-   *     topic: "Community Q&A Session",
-   *     privacy_level: 2, // GUILD_ONLY
-   *     send_start_notification: true
-   *   }, "Starting weekly community Q&A");
-   *
-   *   console.log(`Stage started successfully`);
-   *   console.log(`Topic: ${stageInstance.topic}`);
-   * } catch (error) {
-   *   console.error("Failed to start Stage:", error);
-   * }
-   *
-   * // Start a Stage connected to a scheduled event
-   * try {
-   *   const stageInstance = await stageRouter.createStage({
-   *     channel_id: "123456789012345678", // Stage channel ID
-   *     topic: "Developer Roundtable Discussion",
-   *     privacy_level: 2, // GUILD_ONLY
-   *     guild_scheduled_event_id: "987654321987654321" // Link to scheduled event
-   *   });
-   *
-   *   console.log(`Stage started and linked to event`);
-   * } catch (error) {
-   *   console.error("Failed to start Stage:", error);
-   * }
-   * ```
    *
    * @remarks
    * This effectively makes the Stage channel "live".
@@ -223,30 +191,9 @@ export class StageInstanceRouter {
    *
    * @param channelId - The ID of the Stage channel to get the instance for
    * @returns A promise resolving to the Stage Instance entity
-   * @throws Will throw an error if the Stage channel doesn't exist or isn't live
+   * @throws {Error} Will throw an error if the Stage channel doesn't exist or isn't live
    *
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
-   *
-   * @example
-   * ```typescript
-   * // Check if a Stage is currently live and get its details
-   * try {
-   *   const stageInstance = await stageRouter.fetchStage("123456789012345678");
-   *
-   *   console.log(`Stage is live`);
-   *   console.log(`Topic: ${stageInstance.topic}`);
-   *   console.log(`Privacy: ${
-   *     stageInstance.privacy_level === 1 ? "Public" : "Guild Only"
-   *   }`);
-   *
-   *   // Check if linked to a scheduled event
-   *   if (stageInstance.guild_scheduled_event_id) {
-   *     console.log(`Linked to event: ${stageInstance.guild_scheduled_event_id}`);
-   *   }
-   * } catch (error) {
-   *   console.log("Stage is not currently live");
-   * }
-   * ```
    */
   fetchStage(channelId: Snowflake): Promise<StageInstanceEntity> {
     return this.#rest.get(
@@ -263,44 +210,9 @@ export class StageInstanceRouter {
    * @param options - Options for modifying the Stage Instance
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the updated Stage Instance entity
-   * @throws Error if the Stage isn't live or permissions are missing
+   * @throws {Error} Error if the Stage isn't live or permissions are missing
    *
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance}
-   *
-   * @example
-   * ```typescript
-   * // Update a Stage's topic
-   * try {
-   *   const updatedStage = await stageRouter.updateStage(
-   *     "123456789012345678", // Stage channel ID
-   *     {
-   *       topic: "Q&A Session - Now taking questions from Discord"
-   *     },
-   *     "Updating topic to reflect current status"
-   *   );
-   *
-   *   console.log(`Stage topic updated to: ${updatedStage.topic}`);
-   * } catch (error) {
-   *   console.error("Failed to update Stage:", error);
-   * }
-   *
-   * // Change a Stage's privacy level
-   * try {
-   *   const updatedStage = await stageRouter.updateStage(
-   *     "123456789012345678", // Stage channel ID
-   *     {
-   *       privacy_level: 1 // PUBLIC
-   *     },
-   *     "Opening Stage to public discovery"
-   *   );
-   *
-   *   console.log(`Stage is now ${
-   *     updatedStage.privacy_level === 1 ? "public" : "guild-only"
-   *   }`);
-   * } catch (error) {
-   *   console.error("Failed to update Stage privacy:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the user to be a moderator of the Stage channel (having MANAGE_CHANNELS,
@@ -330,24 +242,9 @@ export class StageInstanceRouter {
    * @param channelId - The ID of the Stage channel with the instance to delete
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the deletion is complete
-   * @throws Will throw an error if the Stage isn't live or permissions are missing
+   * @throws {Error} Will throw an error if the Stage isn't live or permissions are missing
    *
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
-   *
-   * @example
-   * ```typescript
-   * // End a Stage
-   * try {
-   *   await stageRouter.endStage(
-   *     "123456789012345678", // Stage channel ID
-   *     "Session completed successfully"
-   *   );
-   *
-   *   console.log("Stage ended successfully");
-   * } catch (error) {
-   *   console.error("Failed to end Stage:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the user to be a moderator of the Stage channel (having MANAGE_CHANNELS,

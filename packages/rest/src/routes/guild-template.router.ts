@@ -157,35 +157,9 @@ export class GuildTemplateRouter {
    *
    * @param code - The template code (unique ID)
    * @returns A promise resolving to a guild template object
-   * @throws Will throw an error if the template doesn't exist
+   * @throws {Error} Will throw an error if the template doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-template}
-   *
-   * @example
-   * ```typescript
-   * // Fetch information about a template
-   * try {
-   *   const template = await templateRouter.fetchGuildTemplate("gg-xyz-123");
-   *
-   *   console.log(`Template: ${template.name}`);
-   *   console.log(`Description: ${template.description || "No description"}`);
-   *   console.log(`Created by: ${template.creator.username}`);
-   *   console.log(`Created at: ${new Date(template.created_at).toLocaleString()}`);
-   *   console.log(`From guild: ${template.source_guild_id}`);
-   *
-   *   // Check template usage count
-   *   console.log(`Used ${template.usage_count} times`);
-   *
-   *   // Check if it's a verified template
-   *   if (template.is_dirty === false) {
-   *     console.log("This is a verified template that exactly matches the source guild");
-   *   } else {
-   *     console.log("This template may be out of sync with the source guild");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch template:", error);
-   * }
-   * ```
    */
   fetchGuildTemplate(code: string): Promise<GuildTemplateEntity> {
     return this.#rest.get(
@@ -202,46 +176,9 @@ export class GuildTemplateRouter {
    * @param code - The template code (unique ID)
    * @param options - Configuration for the new guild including name and optional icon
    * @returns A promise resolving to the newly created guild object
-   * @throws Error if validation of options fails or you've reached the guild limit
+   * @throws {Error} Error if validation of options fails or you've reached the guild limit
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template}
-   *
-   * @example
-   * ```typescript
-   * // Create a guild with just a name
-   * try {
-   *   const newGuild = await templateRouter.createGuildFromTemplate(
-   *     "gg-xyz-123", // Template code
-   *     {
-   *       name: "My New Community"
-   *     }
-   *   );
-   *
-   *   console.log(`Guild created with ID: ${newGuild.id}`);
-   *   console.log(`Guild has ${newGuild.channels.length} channels`);
-   *   console.log(`Guild has ${newGuild.roles.length} roles`);
-   * } catch (error) {
-   *   console.error("Failed to create guild:", error);
-   * }
-   *
-   * // Create a guild with a custom icon
-   * try {
-   *   // Load an image file
-   *   const iconFile = await FileHandler.fromLocalFile("./guild-icon.png");
-   *
-   *   const newGuild = await templateRouter.createGuildFromTemplate(
-   *     "gg-xyz-123", // Template code
-   *     {
-   *       name: "My New Community",
-   *       icon: iconFile
-   *     }
-   *   );
-   *
-   *   console.log(`Guild created with custom icon`);
-   * } catch (error) {
-   *   console.error("Failed to create guild with icon:", error);
-   * }
-   * ```
    *
    * @remarks
    * Note: This endpoint can only be used by bots in less than 10 guilds.
@@ -270,31 +207,9 @@ export class GuildTemplateRouter {
    *
    * @param guildId - The ID of the guild to get templates for
    * @returns A promise resolving to an array of guild template objects
-   * @throws Will throw an error if you lack permissions or the guild doesn't exist
+   * @throws {Error} Will throw an error if you lack permissions or the guild doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-template#get-guild-templates}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all templates for a guild
-   * try {
-   *   const templates = await templateRouter.fetchGuildTemplates("123456789012345678");
-   *
-   *   console.log(`Found ${templates.length} templates for this guild`);
-   *
-   *   // Display information about each template
-   *   templates.forEach(template => {
-   *     console.log(`- ${template.name} (Code: ${template.code})`);
-   *     console.log(`  Description: ${template.description || "None"}`);
-   *     console.log(`  Created by: ${template.creator.username}`);
-   *     console.log(`  Used ${template.usage_count} times`);
-   *     console.log(`  Last synced: ${new Date(template.updated_at).toLocaleString()}`);
-   *     console.log('  -----');
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch guild templates:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -314,42 +229,9 @@ export class GuildTemplateRouter {
    * @param guildId - The ID of the guild to create a template from
    * @param options - Template configuration including name and optional description
    * @returns A promise resolving to the created guild template object
-   * @throws Error if validation of options fails or you lack permissions
+   * @throws {Error} Error if validation of options fails or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-template}
-   *
-   * @example
-   * ```typescript
-   * // Create a new template with name only
-   * try {
-   *   const template = await templateRouter.createGuildTemplate(
-   *     "123456789012345678", // Guild ID
-   *     {
-   *       name: "Community Server Template"
-   *     }
-   *   );
-   *
-   *   console.log(`Template created with code: ${template.code}`);
-   *   console.log(`Use this link to share the template: https://discord.new/${template.code}`);
-   * } catch (error) {
-   *   console.error("Failed to create template:", error);
-   * }
-   *
-   * // Create a template with name and description
-   * try {
-   *   const template = await templateRouter.createGuildTemplate(
-   *     "123456789012345678", // Guild ID
-   *     {
-   *       name: "Gaming Community Template",
-   *       description: "A template for gaming communities with channels for different games"
-   *     }
-   *   );
-   *
-   *   console.log(`Template created with description`);
-   * } catch (error) {
-   *   console.error("Failed to create template with description:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -377,30 +259,9 @@ export class GuildTemplateRouter {
    * @param guildId - The ID of the guild containing the template
    * @param code - The code of the template to sync
    * @returns A promise resolving to the updated guild template object
-   * @throws Will throw an error if the template doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the template doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-template#sync-guild-template}
-   *
-   * @example
-   * ```typescript
-   * // Sync a template with the current guild configuration
-   * try {
-   *   const updatedTemplate = await templateRouter.syncGuildTemplate(
-   *     "123456789012345678", // Guild ID
-   *     "gg-xyz-123"         // Template code
-   *   );
-   *
-   *   console.log(`Template synced successfully`);
-   *   console.log(`Last synced at: ${new Date(updatedTemplate.updated_at).toLocaleString()}`);
-   *
-   *   // The is_dirty flag should now be false
-   *   if (updatedTemplate.is_dirty === false) {
-   *     console.log("Template is now in sync with the guild");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to sync template:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -429,57 +290,9 @@ export class GuildTemplateRouter {
    * @param code - The code of the template to modify
    * @param options - New properties for the template (name and/or description)
    * @returns A promise resolving to the updated guild template object
-   * @throws Error if validation of options fails or you lack permissions
+   * @throws {Error} Error if validation of options fails or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-template#modify-guild-template}
-   *
-   * @example
-   * ```typescript
-   * // Update a template's name
-   * try {
-   *   const updatedTemplate = await templateRouter.updateGuildTemplate(
-   *     "123456789012345678", // Guild ID
-   *     "gg-xyz-123",        // Template code
-   *     {
-   *       name: "Updated Template Name"
-   *     }
-   *   );
-   *
-   *   console.log(`Template name updated to: ${updatedTemplate.name}`);
-   * } catch (error) {
-   *   console.error("Failed to update template name:", error);
-   * }
-   *
-   * // Update a template's description
-   * try {
-   *   const updatedTemplate = await templateRouter.updateGuildTemplate(
-   *     "123456789012345678", // Guild ID
-   *     "gg-xyz-123",        // Template code
-   *     {
-   *       description: "This template has been updated with a better description"
-   *     }
-   *   );
-   *
-   *   console.log(`Template description updated`);
-   * } catch (error) {
-   *   console.error("Failed to update template description:", error);
-   * }
-   *
-   * // Remove a template's description
-   * try {
-   *   const updatedTemplate = await templateRouter.updateGuildTemplate(
-   *     "123456789012345678", // Guild ID
-   *     "gg-xyz-123",        // Template code
-   *     {
-   *       description: null
-   *     }
-   *   );
-   *
-   *   console.log(`Template description removed`);
-   * } catch (error) {
-   *   console.error("Failed to remove template description:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -510,25 +323,9 @@ export class GuildTemplateRouter {
    * @param guildId - The ID of the guild containing the template
    * @param code - The code of the template to delete
    * @returns A promise resolving to the deleted guild template object
-   * @throws Will throw an error if the template doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the template doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-template#delete-guild-template}
-   *
-   * @example
-   * ```typescript
-   * // Delete a template
-   * try {
-   *   const deletedTemplate = await templateRouter.deleteGuildTemplate(
-   *     "123456789012345678", // Guild ID
-   *     "gg-xyz-123"         // Template code
-   *   );
-   *
-   *   console.log(`Deleted template: ${deletedTemplate.name}`);
-   *   console.log(`It was used ${deletedTemplate.usage_count} times before deletion`);
-   * } catch (error) {
-   *   console.error("Failed to delete template:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.

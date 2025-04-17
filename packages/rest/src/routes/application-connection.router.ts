@@ -54,14 +54,8 @@ export class ApplicationConnectionRouter {
    *
    * @param applicationId - ID of the application to fetch metadata for
    * @returns A promise that resolves to an array of application role connection metadata records
-   * @throws Will throw an error if the request fails or the application doesn't exist
+   * @throws {Error} Will throw an error if the request fails or the application doesn't exist
    * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#get-application-role-connection-metadata-records}
-   *
-   * @example
-   * ```typescript
-   * const metadata = await connectionRouter.fetchRoleConnectionMetadata("123456789012345678");
-   * console.log(`Number of metadata fields: ${metadata.length}`);
-   * ```
    */
   fetchRoleConnectionMetadata(
     applicationId: Snowflake,
@@ -84,25 +78,8 @@ export class ApplicationConnectionRouter {
    * @param applicationId - ID of the application to update metadata for
    * @param metadata - Array of metadata records to update (maximum of 5 records)
    * @returns A promise that resolves to the updated array of application role connection metadata records
-   * @throws Will throw an error if the provided metadata fails validation or exceeds the limit of 5 records
+   * @throws {Error} Will throw an error if the provided metadata fails validation or exceeds the limit of 5 records
    * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata#update-application-role-connection-metadata-records}
-   *
-   * @example
-   * ```typescript
-   * const updatedMetadata = await connectionRouter.updateRoleConnectionMetadata(
-   *   "123456789012345678",
-   *   [
-   *     {
-   *       type: 1, // INTEGER_LESS_THAN_OR_EQUAL
-   *       key: "playtime",
-   *       name: "Play Time",
-   *       description: "Total time played in hours",
-   *       name_localizations: { "fr": "Temps de jeu" },
-   *       description_localizations: { "fr": "Temps total joué en heures" }
-   *     }
-   *   ]
-   * );
-   * ```
    */
   updateRoleConnectionMetadata(
     applicationId: Snowflake,

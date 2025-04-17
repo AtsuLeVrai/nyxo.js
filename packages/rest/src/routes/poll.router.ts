@@ -110,38 +110,9 @@ export class PollRouter {
    * @param answerId - The ID of the answer to get voters for
    * @param query - Query parameters for pagination
    * @returns A Promise resolving to a list of users who voted for the specified answer
-   * @throws Error if the poll doesn't exist, the answer is invalid, or you lack permissions
+   * @throws {Error} Error if the poll doesn't exist, the answer is invalid, or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters}
-   *
-   * @example
-   * ```typescript
-   * // Fetch the first 25 voters for answer #1 in a poll
-   * const firstPage = await pollRouter.fetchAnswerVoters(
-   *   "123456789012345678", // Channel ID
-   *   "987654321987654321", // Message ID with poll
-   *   1                     // Answer ID
-   * );
-   *
-   * console.log(`First page: ${firstPage.users.length} voters`);
-   * firstPage.users.forEach(user => {
-   *   console.log(`- ${user.username}#${user.discriminator}`);
-   * });
-   *
-   * // Paginate to get more voters if needed
-   * if (firstPage.users.length === 25) { // Default limit
-   *   const lastUserId = firstPage.users[firstPage.users.length - 1].id;
-   *
-   *   const nextPage = await pollRouter.fetchAnswerVoters(
-   *     "123456789012345678",
-   *     "987654321987654321",
-   *     1,
-   *     { after: lastUserId, limit: 50 }
-   *   );
-   *
-   *   console.log(`Next page: ${nextPage.users.length} more voters`);
-   * }
-   * ```
    */
   fetchAnswerVoters(
     channelId: Snowflake,
@@ -170,38 +141,9 @@ export class PollRouter {
    * @param channelId - The ID of the channel containing the poll
    * @param messageId - The ID of the message containing the poll
    * @returns A Promise resolving to the updated message object with the ended poll
-   * @throws Will throw an error if the poll doesn't exist or you didn't create it
+   * @throws {Error} Will throw an error if the poll doesn't exist or you didn't create it
    *
    * @see {@link https://discord.com/developers/docs/resources/poll#end-poll}
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   const updatedMessage = await pollRouter.endPoll(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321"  // Message ID with poll
-   *   );
-   *
-   *   console.log("Poll ended successfully");
-   *
-   *   // Access the poll results from the updated message
-   *   if (updatedMessage.poll) {
-   *     const totalVotes = updatedMessage.poll.answers.reduce(
-   *       (sum, answer) => sum + answer.vote_count, 0
-   *     );
-   *
-   *     console.log(`Total votes: ${totalVotes}`);
-   *
-   *     // Display results for each answer
-   *     updatedMessage.poll.answers.forEach(answer => {
-   *       const percentage = (answer.vote_count / totalVotes * 100).toFixed(1);
-   *       console.log(`${answer.text}: ${answer.vote_count} votes (${percentage}%)`);
-   *     });
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to end poll:", error);
-   * }
-   * ```
    *
    * @note You cannot end polls created by other users.
    */

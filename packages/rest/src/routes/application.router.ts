@@ -236,14 +236,8 @@ export class ApplicationRouter {
    * of the application, including name, description, flags, and settings.
    *
    * @returns A promise that resolves to the complete application information object
-   * @throws Will throw an error if the authentication fails or the request cannot be completed
+   * @throws {Error} Will throw an error if the authentication fails or the request cannot be completed
    * @see {@link https://discord.com/developers/docs/resources/application#get-current-application}
-   *
-   * @example
-   * ```typescript
-   * const applicationInfo = await applicationRouter.fetchCurrentApplication();
-   * console.log(`Application name: ${applicationInfo.name}`);
-   * ```
    */
   fetchCurrentApplication(): Promise<ApplicationEntity> {
     return this.#rest.get(
@@ -262,16 +256,8 @@ export class ApplicationRouter {
    *
    * @param options - The application properties to update
    * @returns A promise that resolves to the updated application information
-   * @throws Will throw an error if the provided options fail validation or the request cannot be completed
+   * @throws {Error} Will throw an error if the provided options fail validation or the request cannot be completed
    * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
-   *
-   * @example
-   * ```typescript
-   * const updatedApp = await applicationRouter.updateCurrentApplication({
-   *   description: "My awesome Discord bot",
-   *   tags: ["utility", "fun", "moderation"]
-   * });
-   * ```
    */
   async updateCurrentApplication(
     options: EditCurrentApplicationSchema,
@@ -303,17 +289,8 @@ export class ApplicationRouter {
    * @param applicationId - ID of the application that owns the activity instance
    * @param instanceId - Unique identifier for the specific activity instance to fetch
    * @returns A promise that resolves to the activity instance information
-   * @throws Will throw an error if the instance doesn't exist or the request cannot be completed
+   * @throws {Error} Will throw an error if the instance doesn't exist or the request cannot be completed
    * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance}
-   *
-   * @example
-   * ```typescript
-   * const activityInfo = await applicationRouter.fetchActivityInstance(
-   *   "123456789012345678",
-   *   "activity-instance-id-123"
-   * );
-   * console.log(`Users in activity: ${activityInfo.users.length}`);
-   * ```
    */
   fetchActivityInstance(
     applicationId: Snowflake,

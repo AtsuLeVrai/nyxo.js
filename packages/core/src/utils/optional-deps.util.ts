@@ -71,10 +71,7 @@ export const OptionalDeps = {
    */
   async safeImport<T>(
     moduleName: string,
-  ): Promise<
-    | { success: true; data: T; error?: undefined }
-    | { success: false; data?: undefined; error: Error }
-  > {
+  ): Promise<{ success: true; data: T } | { success: false; error: Error }> {
     try {
       const module = await import(moduleName);
       return {

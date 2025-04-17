@@ -123,39 +123,13 @@ export class AuditLogRouter {
    * @param guildId - ID of the guild to fetch audit logs from
    * @param query - Query parameters to filter audit log entries
    * @returns A promise that resolves to the guild's audit log
-   * @throws Error if the user lacks permission or the guild doesn't exist
+   * @throws {Error} Error if the user lacks permission or the guild doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log}
    *
-   * @example
-   * ```typescript
-   * // Fetch the 25 most recent audit log entries
-   * const recentLogs = await auditLogRouter.fetchGuildAuditLog(
-   *   "123456789012345678",
-   *   { limit: 25 }
-   * );
-   *
-   * // Fetch ban actions performed by a specific moderator
-   * const moderatorBans = await auditLogRouter.fetchGuildAuditLog(
-   *   "123456789012345678",
-   *   {
-   *     user_id: "234567890123456789", // Moderator's user ID
-   *     action_type: 22 // BAN_ADD action type
-   *   }
-   * );
-   *
-   * // Paginate through older entries using the 'after' parameter
-   * const olderEntries = await auditLogRouter.fetchGuildAuditLog(
-   *   "123456789012345678",
-   *   {
-   *     after: "987654321987654321", // ID of the oldest entry from previous request
-   *     limit: 50
-   *   }
-   * );
-   * ```
-   *
-   * @note Requires the VIEW_AUDIT_LOG permission.
-   * @note Discord stores audit logs for 45 days.
+   * @remarks
+   * Requires the VIEW_AUDIT_LOG permission.
+   * Discord stores audit logs for 45 days.
    */
   fetchGuildAuditLog(
     guildId: Snowflake,

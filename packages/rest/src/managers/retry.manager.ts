@@ -118,7 +118,7 @@ export class RetryManager {
    * @param method - HTTP method used for the request
    * @param path - API path being requested
    * @returns Promise resolving to the final HTTP response after all retry attempts
-   * @throws Error if all retry attempts fail with network errors
+   * @throws {Error} Error if all retry attempts fail with network errors
    */
   async processResponse<T>(
     makeRequest: () => Promise<HttpResponse<T>>,

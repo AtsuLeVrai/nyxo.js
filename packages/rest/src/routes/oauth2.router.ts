@@ -103,29 +103,9 @@ export class OAuth2Router {
    * ownership, and other application-specific settings.
    *
    * @returns A Promise resolving to the application object for the bot
-   * @throws Will throw an error if not authenticated with a bot token
+   * @throws {Error} Will throw an error if not authenticated with a bot token
    *
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-bot-application-information}
-   *
-   * @example
-   * ```typescript
-   * // Fetch information about the bot's application
-   * const appInfo = await oauth2Router.fetchCurrentApplication();
-   *
-   * console.log(`Application Name: ${appInfo.name}`);
-   * console.log(`Application ID: ${appInfo.id}`);
-   * console.log(`Description: ${appInfo.description}`);
-   *
-   * if (appInfo.team) {
-   *   console.log(`Owned by Team: ${appInfo.team.name}`);
-   *   console.log(`Team Members: ${appInfo.team.members.length}`);
-   * } else {
-   *   console.log(`Owned by User: ${appInfo.owner.username}`);
-   * }
-   *
-   * console.log(`Bot Public: ${appInfo.bot_public}`);
-   * console.log(`Requires Code Grant: ${appInfo.bot_require_code_grant}`);
-   * ```
    *
    * @note This endpoint requires authentication with a bot token.
    */
@@ -144,26 +124,9 @@ export class OAuth2Router {
    * granted the authorization.
    *
    * @returns A Promise resolving to information about the current authorization
-   * @throws Will throw an error if not authenticated with a bearer token
+   * @throws {Error} Will throw an error if not authenticated with a bearer token
    *
    * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information}
-   *
-   * @example
-   * ```typescript
-   * // Fetch information about the current authorization using a bearer token
-   * const authInfo = await oauth2Router.fetchCurrentAuthorization();
-   *
-   * console.log(`Authorized App: ${authInfo.application.name}`);
-   * console.log(`Granted Scopes: ${authInfo.scopes.join(', ')}`);
-   *
-   * const expiresDate = new Date(authInfo.expires);
-   * console.log(`Token Expires: ${expiresDate.toLocaleString()}`);
-   *
-   * if (authInfo.user) {
-   *   console.log(`Authorized User: ${authInfo.user.username}`);
-   *   console.log(`User ID: ${authInfo.user.id}`);
-   * }
-   * ```
    *
    * @note This endpoint requires authentication with a bearer token.
    */

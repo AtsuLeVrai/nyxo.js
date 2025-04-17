@@ -155,7 +155,7 @@ function isFileOrBlob(input: unknown): input is File | Blob {
  * Throws an error if the input is not a supported file type.
  *
  * @param input - The value to validate
- * @throws Error if the input is not a valid file input
+ * @throws {Error} Error if the input is not a valid file input
  * @private
  */
 function validateInput(input: unknown): asserts input is FileInput {
@@ -271,7 +271,7 @@ export const FileHandler = {
    *
    * @param input - The file input to convert (path, URI, buffer, stream, etc.)
    * @returns Promise resolving to a buffer containing the file content
-   * @throws Error if the input cannot be converted to a buffer
+   * @throws {Error} Error if the input cannot be converted to a buffer
    */
   async toBuffer(input: FileInput): Promise<Buffer> {
     if (Buffer.isBuffer(input)) {
@@ -304,7 +304,7 @@ export const FileHandler = {
    *
    * @param input - The file input to convert
    * @returns Promise resolving to a data URI containing the encoded file
-   * @throws Error if the input cannot be converted to a data URI
+   * @throws {Error} Error if the input cannot be converted to a data URI
    */
   async toDataUri(input: FileInput): Promise<DataUri> {
     // If it's already a data URI, return it
@@ -602,7 +602,7 @@ export const FileHandler = {
    * @param context - The usage context ("attachment" or "asset") which determines size limits
    * @param options - Optional configuration for image processing
    * @returns Promise resolving to a fully processed file ready for upload
-   * @throws Error if file processing fails
+   * @throws {Error} Error if file processing fails
    */
   async processFile(
     input: FileInput,
@@ -688,7 +688,7 @@ export const FileHandler = {
    * @param body - Optional JSON payload to include
    * @param processingOptions - Optional configuration for image processing
    * @returns Promise resolving to a FormData object ready for API submission
-   * @throws Error if too many files are provided or processing fails
+   * @throws {Error} Error if too many files are provided or processing fails
    */
   async createFormData(
     files: FileInput | FileInput[],

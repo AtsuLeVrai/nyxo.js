@@ -219,7 +219,7 @@ export class Rest extends EventEmitter<RestEvents> {
    * Initializes the HTTP pool, rate limiter, and retry manager.
    *
    * @param options - Configuration options for the REST client
-   * @throws Error if options validation fails
+   * @throws {Error} Error if options validation fails
    */
   constructor(options: z.input<typeof RestOptions>) {
     super();
@@ -537,7 +537,7 @@ export class Rest extends EventEmitter<RestEvents> {
    *
    * @param options - Complete request options including path, method, and optional body
    * @returns Promise resolving to the parsed response data
-   * @throws Error for failed requests or rate limit issues that can't be resolved
+   * @throws {Error} Error for failed requests or rate limit issues that can't be resolved
    */
   async request<T>(options: HttpRequestOptions): Promise<T> {
     // Generate a unique request ID for tracking

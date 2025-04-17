@@ -206,18 +206,6 @@ export class EmojiRouter {
    * CREATE_GUILD_EXPRESSIONS or MANAGE_GUILD_EXPRESSIONS permission.
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#list-guild-emojis}
-   *
-   * @example
-   * ```typescript
-   * const emojis = await emojiRouter.fetchGuildEmojis("123456789012345678");
-   * console.log(`Guild has ${emojis.length} custom emojis`);
-   *
-   * // Log all animated emojis
-   * const animatedEmojis = emojis.filter(emoji => emoji.animated);
-   * animatedEmojis.forEach(emoji => {
-   *   console.log(`${emoji.name}: <a:${emoji.name}:${emoji.id}>`);
-   * });
-   * ```
    */
   fetchGuildEmojis(guildId: Snowflake): Promise<EmojiEntity[]> {
     return this.#rest.get(
@@ -240,17 +228,6 @@ export class EmojiRouter {
    * CREATE_GUILD_EXPRESSIONS or MANAGE_GUILD_EXPRESSIONS permission.
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#get-guild-emoji}
-   *
-   * @example
-   * ```typescript
-   * const emoji = await emojiRouter.fetchGuildEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321"
-   * );
-   *
-   * console.log(`Emoji name: ${emoji.name}`);
-   * console.log(`Emoji URL: https://cdn.discordapp.com/emojis/${emoji.id}${emoji.animated ? '.gif' : '.png'}`);
-   * ```
    */
   fetchGuildEmoji(
     guildId: Snowflake,
@@ -279,29 +256,6 @@ export class EmojiRouter {
    * - Fires a Guild Emojis Update Gateway event
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji}
-   *
-   * @example
-   * ```typescript
-   * // Create emoji from a local file
-   * const newEmoji = await emojiRouter.createGuildEmoji(
-   *   "123456789012345678",
-   *   {
-   *     name: "awesome_emoji",
-   *     image: await FileHandler.fromLocalFile("./path/to/emoji.png"),
-   *     roles: ["234567890123456789"] // Optional: restrict to specific roles
-   *   },
-   *   "Adding custom emoji for events"
-   * );
-   *
-   * // Create emoji from a URL
-   * const urlEmoji = await emojiRouter.createGuildEmoji(
-   *   "123456789012345678",
-   *   {
-   *     name: "logo_emoji",
-   *     image: "https://example.com/image.png" // Will be downloaded and converted
-   *   }
-   * );
-   * ```
    */
   async createGuildEmoji(
     guildId: Snowflake,
@@ -340,28 +294,6 @@ export class EmojiRouter {
    * - Fires a Guild Emojis Update Gateway event
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji}
-   *
-   * @example
-   * ```typescript
-   * // Rename an emoji
-   * const renamedEmoji = await emojiRouter.updateGuildEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   {
-   *     name: "better_name"
-   *   },
-   *   "Improving emoji naming"
-   * );
-   *
-   * // Make an emoji available to everyone
-   * const publicEmoji = await emojiRouter.updateGuildEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   {
-   *     roles: null // Remove all role restrictions
-   *   }
-   * );
-   * ```
    */
   updateGuildEmoji(
     guildId: Snowflake,
@@ -396,16 +328,6 @@ export class EmojiRouter {
    * - Once deleted, an emoji cannot be recovered
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#delete-guild-emoji}
-   *
-   * @example
-   * ```typescript
-   * await emojiRouter.deleteGuildEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   "Removing outdated emoji"
-   * );
-   * console.log("Emoji deleted successfully");
-   * ```
    */
   deleteGuildEmoji(
     guildId: Snowflake,
@@ -436,17 +358,6 @@ export class EmojiRouter {
    * - Response format differs from guild emojis (contains an "items" array)
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#list-application-emojis}
-   *
-   * @example
-   * ```typescript
-   * const appEmojis = await emojiRouter.fetchApplicationEmojis("123456789012345678");
-   * console.log(`Application has ${appEmojis.items.length} custom emojis`);
-   *
-   * // Get emojis sorted by name
-   * const sortedEmojis = [...appEmojis.items].sort((a, b) =>
-   *   a.name.localeCompare(b.name)
-   * );
-   * ```
    */
   fetchApplicationEmojis(
     applicationId: Snowflake,
@@ -470,20 +381,6 @@ export class EmojiRouter {
    * Always includes the user field showing which team member or bot created the emoji.
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#get-application-emoji}
-   *
-   * @example
-   * ```typescript
-   * const appEmoji = await emojiRouter.fetchApplicationEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321"
-   * );
-   *
-   * console.log(`Emoji name: ${appEmoji.name}`);
-   * console.log(`Created by: ${appEmoji.user?.username}`);
-   *
-   * // Format for use in messages
-   * const emojiFormat = `<${appEmoji.animated ? 'a' : ''}:${appEmoji.name}:${appEmoji.id}>`;
-   * ```
    */
   fetchApplicationEmoji(
     applicationId: Snowflake,
@@ -515,21 +412,6 @@ export class EmojiRouter {
    * - Application emojis don't count against any guild's emoji limit
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji}
-   *
-   * @example
-   * ```typescript
-   * // Create app emoji from a local file
-   * const newAppEmoji = await emojiRouter.createApplicationEmoji(
-   *   "123456789012345678",
-   *   {
-   *     name: "app_logo",
-   *     image: await FileHandler.fromLocalFile("./path/to/logo.png")
-   *   },
-   *   "Adding application branding emoji"
-   * );
-   *
-   * console.log(`Created application emoji with ID: ${newAppEmoji.id}`);
-   * ```
    */
   async createApplicationEmoji(
     applicationId: Snowflake,
@@ -562,21 +444,6 @@ export class EmojiRouter {
    * @returns A promise that resolves to the updated emoji
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji}
-   *
-   * @example
-   * ```typescript
-   * // Rename an application emoji
-   * const renamedAppEmoji = await emojiRouter.updateApplicationEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   {
-   *     name: "better_app_logo"
-   *   },
-   *   "Improving emoji naming consistency"
-   * );
-   *
-   * console.log(`Emoji renamed to: ${renamedAppEmoji.name}`);
-   * ```
    */
   updateApplicationEmoji(
     applicationId: Snowflake,
@@ -611,16 +478,6 @@ export class EmojiRouter {
    * - After deletion, the emoji will no longer be usable in any guild
    *
    * @see {@link https://discord.com/developers/docs/resources/emoji#delete-application-emoji}
-   *
-   * @example
-   * ```typescript
-   * await emojiRouter.deleteApplicationEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   "Removing outdated branding emoji"
-   * );
-   * console.log("Application emoji deleted successfully");
-   * ```
    */
   deleteApplicationEmoji(
     applicationId: Snowflake,

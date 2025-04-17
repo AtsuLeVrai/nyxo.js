@@ -344,34 +344,9 @@ export class WebhookRouter {
    * @param options - Options for creating the webhook
    * @param reason - Optional audit log reason for the creation
    * @returns A promise resolving to the created webhook entity
-   * @throws Error if the options are invalid or the webhook name is not valid
+   * @throws {Error} Error if the options are invalid or the webhook name is not valid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook}
-   *
-   * @example
-   * ```typescript
-   * // Create a simple webhook
-   * const webhook = await webhookRouter.createWebhook(
-   *   "123456789012345678", // Channel ID
-   *   {
-   *     name: "Announcements Webhook"
-   *   },
-   *   "Creating webhook for automated announcements"
-   * );
-   *
-   * console.log(`Created webhook with ID: ${webhook.id}`);
-   * console.log(`Webhook URL: https://discord.com/api/webhooks/${webhook.id}/${webhook.token}`);
-   *
-   * // Create a webhook with custom avatar
-   * const avatarFile = await FileHandler.fromLocalFile("./logo.png");
-   * const webhookWithAvatar = await webhookRouter.createWebhook(
-   *   "123456789012345678", // Channel ID
-   *   {
-   *     name: "Notifications Bot",
-   *     avatar: avatarFile
-   *   }
-   * );
-   * ```
    *
    * @remarks
    * Requires the MANAGE_WEBHOOKS permission.
@@ -409,22 +384,6 @@ export class WebhookRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-channel-webhooks}
    *
-   * @example
-   * ```typescript
-   * // Fetch all webhooks in a channel
-   * const webhooks = await webhookRouter.fetchChannelWebhooks("123456789012345678");
-   *
-   * console.log(`Found ${webhooks.length} webhooks in this channel`);
-   *
-   * // List webhook names and creators
-   * webhooks.forEach(webhook => {
-   *   console.log(`- ${webhook.name} (ID: ${webhook.id})`);
-   *   if (webhook.user) {
-   *     console.log(`  Created by: ${webhook.user.username}`);
-   *   }
-   * });
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_WEBHOOKS permission.
    */
@@ -444,28 +403,6 @@ export class WebhookRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-guild-webhooks}
    *
-   * @example
-   * ```typescript
-   * // Fetch all webhooks in a guild
-   * const webhooks = await webhookRouter.fetchGuildWebhooks("123456789012345678");
-   *
-   * console.log(`Found ${webhooks.length} webhooks in this guild`);
-   *
-   * // Group webhooks by channel
-   * const webhooksByChannel = {};
-   * webhooks.forEach(webhook => {
-   *   if (!webhooksByChannel[webhook.channel_id]) {
-   *     webhooksByChannel[webhook.channel_id] = [];
-   *   }
-   *   webhooksByChannel[webhook.channel_id].push(webhook);
-   * });
-   *
-   * // Display webhook count per channel
-   * Object.entries(webhooksByChannel).forEach(([channelId, channelWebhooks]) => {
-   *   console.log(`Channel ${channelId}: ${channelWebhooks.length} webhooks`);
-   * });
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_WEBHOOKS permission.
    */
@@ -482,27 +419,9 @@ export class WebhookRouter {
    *
    * @param webhookId - The ID of the webhook to retrieve
    * @returns A promise resolving to the webhook entity
-   * @throws Will throw an error if the webhook doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the webhook doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a webhook by ID
-   * try {
-   *   const webhook = await webhookRouter.fetchWebhook("123456789012345678");
-   *
-   *   console.log(`Webhook: ${webhook.name}`);
-   *   console.log(`Channel: ${webhook.channel_id}`);
-   *   console.log(`Created by: ${webhook.user?.username || "Unknown"}`);
-   *
-   *   if (webhook.application_id) {
-   *     console.log(`This is an application webhook for app: ${webhook.application_id}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch webhook:", error);
-   * }
-   * ```
    *
    * @remarks
    * This request requires the MANAGE_WEBHOOKS permission unless the
@@ -525,24 +444,6 @@ export class WebhookRouter {
    * @returns A promise resolving to the webhook entity (without user information)
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-with-token}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a webhook using its ID and token
-   * try {
-   *   const webhook = await webhookRouter.fetchWebhookWithToken(
-   *     "123456789012345678",
-   *     "webhook_token_here"
-   *   );
-   *
-   *   console.log(`Webhook: ${webhook.name}`);
-   *   console.log(`Channel: ${webhook.channel_id}`);
-   *
-   *   // Note: The user field will not be included when fetching with token
-   * } catch (error) {
-   *   console.error("Failed to fetch webhook:", error);
-   * }
-   * ```
    *
    * @remarks
    * Same as fetchWebhook, except this call does not require authentication
@@ -567,34 +468,9 @@ export class WebhookRouter {
    * @param options - Options for modifying the webhook
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the updated webhook entity
-   * @throws Error if the options are invalid
+   * @throws {Error} Error if the options are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook}
-   *
-   * @example
-   * ```typescript
-   * // Update a webhook's name
-   * const updatedWebhook = await webhookRouter.updateWebhook(
-   *   "123456789012345678",
-   *   {
-   *     name: "New Webhook Name"
-   *   },
-   *   "Updating webhook name for clarity"
-   * );
-   *
-   * console.log(`Webhook renamed to: ${updatedWebhook.name}`);
-   *
-   * // Move a webhook to a different channel
-   * const movedWebhook = await webhookRouter.updateWebhook(
-   *   "123456789012345678",
-   *   {
-   *     channel_id: "987654321987654321"
-   *   },
-   *   "Moving webhook to announcements channel"
-   * );
-   *
-   * console.log(`Webhook moved to channel: ${movedWebhook.channel_id}`);
-   * ```
    *
    * @remarks
    * Requires the MANAGE_WEBHOOKS permission.
@@ -632,34 +508,9 @@ export class WebhookRouter {
    * @param options - Options for modifying the webhook (cannot include channel_id)
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the updated webhook entity (without user information)
-   * @throws Error if the options are invalid
+   * @throws {Error} Error if the options are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-with-token}
-   *
-   * @example
-   * ```typescript
-   * // Update a webhook's name using its token
-   * const updatedWebhook = await webhookRouter.updateWebhookWithToken(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   {
-   *     name: "Updated Webhook Name"
-   *   }
-   * );
-   *
-   * console.log(`Webhook renamed to: ${updatedWebhook.name}`);
-   *
-   * // Remove a webhook's custom avatar
-   * const webhookWithDefaultAvatar = await webhookRouter.updateWebhookWithToken(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   {
-   *     avatar: null
-   *   }
-   * );
-   *
-   * console.log("Webhook avatar reset to default");
-   * ```
    *
    * @remarks
    * Same as updateWebhook, except this call does not require authentication,
@@ -694,24 +545,9 @@ export class WebhookRouter {
    * @param webhookId - The ID of the webhook to delete
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the webhook is deleted
-   * @throws Will throw an error if the webhook doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the webhook doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook}
-   *
-   * @example
-   * ```typescript
-   * // Delete a webhook
-   * try {
-   *   await webhookRouter.deleteWebhook(
-   *     "123456789012345678",
-   *     "Removing unused webhook"
-   *   );
-   *
-   *   console.log("Webhook deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete webhook:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_WEBHOOKS permission.
@@ -737,24 +573,9 @@ export class WebhookRouter {
    * @param token - The token of the webhook
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the webhook is deleted
-   * @throws Will throw an error if the webhook doesn't exist
+   * @throws {Error} Will throw an error if the webhook doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-with-token}
-   *
-   * @example
-   * ```typescript
-   * // Delete a webhook using its token
-   * try {
-   *   await webhookRouter.deleteWebhookWithToken(
-   *     "123456789012345678",
-   *     "webhook_token_here"
-   *   );
-   *
-   *   console.log("Webhook deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete webhook:", error);
-   * }
-   * ```
    *
    * @remarks
    * Same as deleteWebhook, except this call does not require authentication.
@@ -783,69 +604,9 @@ export class WebhookRouter {
    * @param options - Options for executing the webhook
    * @param query - Query parameters for the execution
    * @returns A promise resolving to the created message entity if wait is true, otherwise undefined
-   * @throws Error if the options or query parameters are invalid
+   * @throws {Error} Error if the options or query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook}
-   *
-   * @example
-   * ```typescript
-   * // Send a simple text message
-   * await webhookRouter.executeWebhook(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   {
-   *     content: "Hello from the webhook!"
-   *   }
-   * );
-   *
-   * // Send a rich message with embeds and wait for the response
-   * const message = await webhookRouter.executeWebhook(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   {
-   *     username: "Custom Name",
-   *     avatar_url: "https://example.com/avatar.png",
-   *     content: "Check out this announcement:",
-   *     embeds: [
-   *       {
-   *         title: "Important Update",
-   *         description: "This is an important announcement from the team.",
-   *         color: 0x00AAFF,
-   *         fields: [
-   *           {
-   *             name: "New Feature",
-   *             value: "We've added something cool!"
-   *           }
-   *         ]
-   *       }
-   *     ]
-   *   },
-   *   { wait: true }
-   * );
-   *
-   * console.log(`Message sent with ID: ${message.id}`);
-   *
-   * // Send a message to a specific thread
-   * await webhookRouter.executeWebhook(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   {
-   *     content: "This is a thread message"
-   *   },
-   *   { thread_id: "987654321987654321" }
-   * );
-   *
-   * // Create a new thread in a forum channel
-   * await webhookRouter.executeWebhook(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   {
-   *     content: "First post in this thread!",
-   *     thread_name: "Discussion Topic",
-   *     applied_tags: ["234567890123456789", "345678901234567890"]
-   *   }
-   * );
-   * ```
    *
    * @remarks
    * Important notes:
@@ -882,25 +643,9 @@ export class WebhookRouter {
    * @param token - The token of the webhook
    * @param query - Query parameters for the execution
    * @returns A promise that resolves when the webhook is executed
-   * @throws Error if the query parameters are invalid
+   * @throws {Error} Error if the query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#execute-slackcompatible-webhook}
-   *
-   * @example
-   * ```typescript
-   * // Execute a Slack-compatible webhook
-   * try {
-   *   await webhookRouter.executeSlackCompatibleWebhook(
-   *     "123456789012345678",
-   *     "webhook_token_here",
-   *     { wait: true }
-   *   );
-   *
-   *   console.log("Slack message sent successfully");
-   * } catch (error) {
-   *   console.error("Failed to send Slack message:", error);
-   * }
-   * ```
    *
    * @remarks
    * Refer to Slack's documentation for more information about the payload format.
@@ -928,25 +673,9 @@ export class WebhookRouter {
    * @param token - The token of the webhook
    * @param query - Query parameters for the execution
    * @returns A promise that resolves when the webhook is executed
-   * @throws Error if the query parameters are invalid
+   * @throws {Error} Error if the query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#execute-githubcompatible-webhook}
-   *
-   * @example
-   * ```typescript
-   * // Execute a GitHub-compatible webhook
-   * try {
-   *   await webhookRouter.executeGithubCompatibleWebhook(
-   *     "123456789012345678",
-   *     "webhook_token_here",
-   *     { thread_id: "987654321987654321" }
-   *   );
-   *
-   *   console.log("GitHub event processed successfully");
-   * } catch (error) {
-   *   console.error("Failed to process GitHub event:", error);
-   * }
-   * ```
    *
    * @remarks
    * Add a new webhook to your GitHub repo, and use this endpoint as the "Payload URL."
@@ -979,44 +708,9 @@ export class WebhookRouter {
    * @param messageId - The ID of the message to retrieve
    * @param query - Query parameters (e.g., thread_id)
    * @returns A promise resolving to the message entity
-   * @throws Error if the message doesn't exist or the query parameters are invalid
+   * @throws {Error} Error if the message doesn't exist or the query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-message}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a webhook message
-   * try {
-   *   const message = await webhookRouter.fetchWebhookMessage(
-   *     "123456789012345678",
-   *     "webhook_token_here",
-   *     "987654321987654321" // Message ID
-   *   );
-   *
-   *   console.log(`Message content: ${message.content}`);
-   *   console.log(`Sent at: ${new Date(message.timestamp).toLocaleString()}`);
-   *
-   *   if (message.embeds && message.embeds.length > 0) {
-   *     console.log(`Contains ${message.embeds.length} embeds`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch webhook message:", error);
-   * }
-   *
-   * // Fetch a webhook message from a thread
-   * try {
-   *   const threadMessage = await webhookRouter.fetchWebhookMessage(
-   *     "123456789012345678",
-   *     "webhook_token_here",
-   *     "987654321987654321", // Message ID
-   *     { thread_id: "876543210987654321" }
-   *   );
-   *
-   *   console.log(`Thread message content: ${threadMessage.content}`);
-   * } catch (error) {
-   *   console.error("Failed to fetch thread message:", error);
-   * }
-   * ```
    */
   fetchWebhookMessage(
     webhookId: Snowflake,
@@ -1047,51 +741,9 @@ export class WebhookRouter {
    * @param options - Options for editing the message
    * @param query - Query parameters (e.g., thread_id)
    * @returns A promise resolving to the edited message entity
-   * @throws Error if the options or query parameters are invalid
+   * @throws {Error} Error if the options or query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message}
-   *
-   * @example
-   * ```typescript
-   * // Update a webhook message's content
-   * const updatedMessage = await webhookRouter.updateWebhookMessage(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   "987654321987654321", // Message ID
-   *   {
-   *     content: "Updated announcement content"
-   *   }
-   * );
-   *
-   * console.log(`Message updated successfully`);
-   *
-   * // Update a webhook message's embeds
-   * const messageWithNewEmbeds = await webhookRouter.updateWebhookMessage(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   "987654321987654321", // Message ID
-   *   {
-   *     embeds: [
-   *       {
-   *         title: "Updated Information",
-   *         description: "This embed contains new information",
-   *         color: 0xFF0000
-   *       }
-   *     ]
-   *   }
-   * );
-   *
-   * // Update a message in a thread
-   * const threadMessage = await webhookRouter.updateWebhookMessage(
-   *   "123456789012345678",
-   *   "webhook_token_here",
-   *   "987654321987654321", // Message ID
-   *   {
-   *     content: "Updated thread message"
-   *   },
-   *   { thread_id: "876543210987654321" }
-   * );
-   * ```
    *
    * @remarks
    * Important notes:
@@ -1133,39 +785,9 @@ export class WebhookRouter {
    * @param messageId - The ID of the message to delete
    * @param query - Query parameters (e.g., thread_id)
    * @returns A promise that resolves when the message is deleted
-   * @throws Error if the message doesn't exist or the query parameters are invalid
+   * @throws {Error} Error if the message doesn't exist or the query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/webhook#delete-webhook-message}
-   *
-   * @example
-   * ```typescript
-   * // Delete a webhook message
-   * try {
-   *   await webhookRouter.deleteWebhookMessage(
-   *     "123456789012345678",
-   *     "webhook_token_here",
-   *     "987654321987654321" // Message ID
-   *   );
-   *
-   *   console.log("Message deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete message:", error);
-   * }
-   *
-   * // Delete a webhook message from a thread
-   * try {
-   *   await webhookRouter.deleteWebhookMessage(
-   *     "123456789012345678",
-   *     "webhook_token_here",
-   *     "987654321987654321", // Message ID
-   *     { thread_id: "876543210987654321" }
-   *   );
-   *
-   *   console.log("Thread message deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete thread message:", error);
-   * }
-   * ```
    *
    * @remarks
    * Returns a 204 No Content response on success.

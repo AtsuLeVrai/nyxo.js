@@ -19,7 +19,6 @@ import {
   AutoModerationActionExecution,
   AutoModerationRule,
   Ban,
-  ChannelPins,
   Emoji,
   Entitlement,
   Guild,
@@ -30,15 +29,12 @@ import {
   Integration,
   Invite,
   Message,
-  MessagePollVote,
-  MessageReaction,
   Ready,
   Role,
   SoundboardSound,
   StageInstance,
   Sticker,
   Subscription,
-  ThreadListSync,
   ThreadMember,
   TypingStart,
   User,
@@ -82,12 +78,6 @@ interface GatewayEventMapping<
  * @param clientEvent - The name of the corresponding client event
  * @param transform - Data transformation function that converts raw gateway data to client event data
  * @returns A typed event configuration object
- *
- * @example
- * ```typescript
- * // Define a simple event mapping
- * defineEvent("GUILD_CREATE", "guildCreate", (client, data) => [Guild.from(client, data)]);
- * ```
  */
 function defineEvent<
   T extends keyof GatewayReceiveEvents,
@@ -257,8 +247,8 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("CHANNEL_DELETE", "channelDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "channels"),
   ),
-  defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (client, data) => [
-    new ChannelPins(client, data),
+  defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (_client, data) => [
+    data,
   ]),
   defineEvent("THREAD_CREATE", "threadCreate", (client, data) => [
     ChannelFactory.create(client, data) as AnyThreadChannel,
@@ -269,9 +259,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("THREAD_DELETE", "threadDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "channels"),
   ),
-  defineEvent("THREAD_LIST_SYNC", "threadListSync", (client, data) => [
-    new ThreadListSync(client, data),
-  ]),
+  defineEvent("THREAD_LIST_SYNC", "threadListSync", (_client, data) => [data]),
   defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (client, data) =>
     handleUpdateEvent(client, data, "threadMembers", ThreadMember),
   ),
@@ -588,13 +576,13 @@ export const StandardGatewayDispatchEventMappings = [
       return message;
     }),
   ]),
-  defineEvent("MESSAGE_REACTION_ADD", "messageReactionAdd", (client, data) => [
-    new MessageReaction(client, data),
+  defineEvent("MESSAGE_REACTION_ADD", "messageReactionAdd", (_client, data) => [
+    data,
   ]),
   defineEvent(
     "MESSAGE_REACTION_REMOVE",
     "messageReactionRemove",
-    (client, data) => [new MessageReaction(client, data)],
+    (_client, data) => [data],
   ),
   defineEvent(
     "MESSAGE_REACTION_REMOVE_ALL",
@@ -606,13 +594,15 @@ export const StandardGatewayDispatchEventMappings = [
     "messageReactionRemoveEmoji",
     (_client, data) => [data],
   ),
-  defineEvent("MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd", (client, data) => [
-    new MessagePollVote(client, data),
-  ]),
+  defineEvent(
+    "MESSAGE_POLL_VOTE_ADD",
+    "messagePollVoteAdd",
+    (_client, data) => [data],
+  ),
   defineEvent(
     "MESSAGE_POLL_VOTE_REMOVE",
     "messagePollVoteRemove",
-    (client, data) => [new MessagePollVote(client, data)],
+    (_client, data) => [data],
   ),
   // defineEvent("PRESENCE_UPDATE", "presenceUpdate", (client, data) =>
   //   handleUpdateEvent(

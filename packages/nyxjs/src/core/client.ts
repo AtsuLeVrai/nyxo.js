@@ -22,36 +22,6 @@ import type { ClientEvents } from "../types/index.js";
  * - Event handling and event middleware
  * - Caching strategies for various Discord entities
  * - High-level methods for common operations
- *
- * @example
- * ```typescript
- * import { Client, GatewayIntentsBits } from "nyx.js";
- *
- * const client = new Client({
- *   token: "YOUR_BOT_TOKEN",
- *   intents: [
- *     GatewayIntentsBits.Guilds,
- *     GatewayIntentsBits.GuildMessages,
- *     GatewayIntentsBits.MessageContent
- *   ],
- *   cache: {
- *     userLimit: 10000,
- *     ttl: 3600000 // 1 hour
- *   }
- * });
- *
- * client.on("ready", () => {
- *   console.log(`Logged in as ${client.user?.username}!`);
- * });
- *
- * client.on("messageCreate", async (message) => {
- *   if (message.content === "!ping") {
- *    await message.reply("Pong!");
- *   }
- * });
- *
- * client.connect().catch(console.error);
- * ```
  */
 export class Client extends EventEmitter<ClientEvents> {
   /**
@@ -177,14 +147,7 @@ export class Client extends EventEmitter<ClientEvents> {
    * Connects to the Discord Gateway
    *
    * @returns Promise that resolves when connected successfully
-   * @throws If the connection fails
-   *
-   * @example
-   * ```typescript
-   * client.connect()
-   *   .then(() => console.log('Connected to Discord!'))
-   *   .catch(err => console.error('Failed to connect:', err));
-   * ```
+   * @throws {Error} If the connection fails
    */
   async connect(): Promise<void> {
     await this.#gateway.connect();
@@ -213,18 +176,7 @@ export class Client extends EventEmitter<ClientEvents> {
    * Updates the client's presence status on Discord
    *
    * @param presence - The presence data to set
-   * @throws If the client is not connected
-   *
-   * @example
-   * ```typescript
-   * client.updatePresence({
-   *   status: 'online',
-   *   activities: [{
-   *     name: 'with Nyx.js',
-   *     type: ActivityType.Playing
-   *   }]
-   * });
-   * ```
+   * @throws {Error} If the client is not connected
    */
   updatePresence(presence: UpdatePresenceEntity): void {
     this.#gateway.updatePresence(presence);
@@ -236,16 +188,7 @@ export class Client extends EventEmitter<ClientEvents> {
    * @param userId - The ID of the user to fetch
    * @param options - Fetch options
    * @returns Promise resolving to the user object
-   * @throws If the user could not be fetched
-   *
-   * @example
-   * ```typescript
-   * // Fetch from cache if available, otherwise from API
-   * const user = await client.fetchUser('123456789012345678');
-   *
-   * // Force fetch from API, ignore cache
-   * const freshUser = await client.fetchUser('123456789012345678', { force: true });
-   * ```
+   * @throws {Error} If the user could not be fetched
    */
   async fetchUser(
     userId: Snowflake,

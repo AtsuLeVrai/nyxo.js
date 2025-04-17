@@ -150,20 +150,8 @@ export class AutoModerationRouter {
    *
    * @param guildId - ID of the guild to fetch rules from
    * @returns A promise that resolves to an array of auto moderation rules
-   * @throws Will throw an error if the user lacks the MANAGE_GUILD permission
+   * @throws {Error} Will throw an error if the user lacks the MANAGE_GUILD permission
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#list-auto-moderation-rules-for-guild}
-   *
-   * @example
-   * ```typescript
-   * const rules = await autoModRouter.fetchAllRules("123456789012345678");
-   * console.log(`Found ${rules.length} auto moderation rules`);
-   *
-   * // Print the names of all enabled keyword filter rules
-   * const enabledKeywordRules = rules.filter(rule =>
-   *   rule.enabled === true && rule.trigger_type === 1
-   * );
-   * console.log("Enabled keyword rules:", enabledKeywordRules.map(r => r.name));
-   * ```
    *
    * @note Requires the MANAGE_GUILD permission.
    */
@@ -182,17 +170,8 @@ export class AutoModerationRouter {
    * @param guildId - ID of the guild
    * @param ruleId - ID of the auto moderation rule to fetch
    * @returns A promise that resolves to the auto moderation rule
-   * @throws Will throw an error if the rule doesn't exist or the user lacks permissions
+   * @throws {Error} Will throw an error if the rule doesn't exist or the user lacks permissions
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#get-auto-moderation-rule}
-   *
-   * @example
-   * ```typescript
-   * const rule = await autoModRouter.fetchRule(
-   *   "123456789012345678",
-   *   "987654321987654321"
-   * );
-   * console.log(`Rule name: ${rule.name}, enabled: ${rule.enabled}`);
-   * ```
    *
    * @note Requires the MANAGE_GUILD permission.
    */
@@ -219,34 +198,8 @@ export class AutoModerationRouter {
    * @param options - Configuration options for the new rule
    * @param reason - Optional audit log reason for the creation
    * @returns A promise that resolves to the created auto moderation rule
-   * @throws Error if the provided options fail validation or the user lacks permissions
+   * @throws {Error} Error if the provided options fail validation or the user lacks permissions
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule}
-   *
-   * @example
-   * ```typescript
-   * const newRule = await autoModRouter.createRule(
-   *   "123456789012345678",
-   *   {
-   *     name: "Block Inappropriate Language",
-   *     event_type: 1, // MESSAGE_SEND
-   *     trigger_type: 1, // KEYWORD
-   *     trigger_metadata: {
-   *       keyword_filter: ["badword1", "badword2"]
-   *     },
-   *     actions: [
-   *       {
-   *         type: 1, // BLOCK_MESSAGE
-   *         metadata: { custom_message: "That language isn't allowed here" }
-   *       }
-   *     ],
-   *     enabled: true,
-   *     exempt_roles: ["234567890123456789"], // Moderator role exempt
-   *     exempt_channels: ["345678901234567890"] // NSFW channel exempt
-   *   },
-   *   "Adding inappropriate language filter"
-   * );
-   * console.log(`Created rule with ID: ${newRule.id}`);
-   * ```
    *
    * @note Requires the MANAGE_GUILD permission.
    */
@@ -276,22 +229,8 @@ export class AutoModerationRouter {
    * @param options - New configuration options for the rule
    * @param reason - Optional audit log reason for the modification
    * @returns A promise that resolves to the updated auto moderation rule
-   * @throws Error if the provided options fail validation or the user lacks permissions
+   * @throws {Error} Error if the provided options fail validation or the user lacks permissions
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule}
-   *
-   * @example
-   * ```typescript
-   * const updatedRule = await autoModRouter.updateRule(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   {
-   *     name: "Updated Filter Name",
-   *     enabled: false, // Temporarily disable the rule
-   *     exempt_channels: ["345678901234567890", "456789012345678901"]
-   *   },
-   *   "Temporarily disabling filter for event"
-   * );
-   * ```
    *
    * @note Requires the MANAGE_GUILD permission.
    * @note The trigger_type field cannot be modified after rule creation.
@@ -324,18 +263,8 @@ export class AutoModerationRouter {
    * @param ruleId - ID of the rule to delete
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the rule is deleted
-   * @throws Will throw an error if the rule doesn't exist or the user lacks permissions
+   * @throws {Error} Will throw an error if the rule doesn't exist or the user lacks permissions
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#delete-auto-moderation-rule}
-   *
-   * @example
-   * ```typescript
-   * await autoModRouter.deleteRule(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   "Rule no longer needed"
-   * );
-   * console.log("Auto moderation rule deleted successfully");
-   * ```
    *
    * @note Requires the MANAGE_GUILD permission.
    */

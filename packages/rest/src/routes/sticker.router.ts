@@ -208,33 +208,9 @@ export class StickerRouter {
    *
    * @param stickerId - The ID of the sticker to retrieve
    * @returns A promise resolving to the sticker entity
-   * @throws Will throw an error if the sticker doesn't exist
+   * @throws {Error} Will throw an error if the sticker doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker}
-   *
-   * @example
-   * ```typescript
-   * // Fetch information about a specific sticker
-   * try {
-   *   const sticker = await stickerRouter.fetchSticker("123456789012345678");
-   *
-   *   console.log(`Sticker: ${sticker.name}`);
-   *   console.log(`Type: ${sticker.type === 1 ? "Standard" : "Guild"}`);
-   *   console.log(`Format: ${
-   *     sticker.format_type === 1 ? "PNG" :
-   *     sticker.format_type === 2 ? "APNG" :
-   *     sticker.format_type === 3 ? "Lottie" : "GIF"
-   *   }`);
-   *
-   *   if (sticker.guild_id) {
-   *     console.log(`From guild: ${sticker.guild_id}`);
-   *   } else {
-   *     console.log("Standard Discord sticker");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch sticker:", error);
-   * }
-   * ```
    */
   fetchSticker(stickerId: Snowflake): Promise<StickerEntity> {
     return this.#rest.get(
@@ -251,34 +227,6 @@ export class StickerRouter {
    * @returns A promise resolving to the list of sticker packs
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all available sticker packs
-   * const packsResponse = await stickerRouter.fetchStickerPacks();
-   * const packs = packsResponse.sticker_packs;
-   *
-   * console.log(`Found ${packs.length} sticker packs`);
-   *
-   * // Display information about each pack
-   * packs.forEach(pack => {
-   *   console.log(`Pack: ${pack.name}`);
-   *   console.log(`Description: ${pack.description}`);
-   *   console.log(`Price: ${pack.sku_id ? "Premium" : "Free"}`);
-   *   console.log(`Contains ${pack.stickers.length} stickers`);
-   *   console.log("---");
-   * });
-   *
-   * // Find specific packs
-   * const wumpusPack = packs.find(pack =>
-   *   pack.name.toLowerCase().includes("wumpus")
-   * );
-   *
-   * if (wumpusPack) {
-   *   console.log(`Wumpus pack ID: ${wumpusPack.id}`);
-   *   console.log(`Stickers in pack: ${wumpusPack.stickers.length}`);
-   * }
-   * ```
    */
   fetchStickerPacks(): Promise<ListStickerPacksResponseEntity> {
     return this.#rest.get(StickerRouter.STICKER_ROUTES.stickerPacksEndpoint);
@@ -292,34 +240,9 @@ export class StickerRouter {
    *
    * @param packId - The ID of the sticker pack to retrieve
    * @returns A promise resolving to the sticker pack entity
-   * @throws Will throw an error if the pack doesn't exist
+   * @throws {Error} Will throw an error if the pack doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-sticker-pack}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific sticker pack
-   * try {
-   *   const pack = await stickerRouter.fetchStickerPack("123456789012345678");
-   *
-   *   console.log(`Pack: ${pack.name}`);
-   *   console.log(`Banner asset: ${pack.banner_asset_id || "None"}`);
-   *
-   *   // List all stickers in the pack
-   *   console.log(`Stickers in this pack:`);
-   *   pack.stickers.forEach(sticker => {
-   *     console.log(`- ${sticker.name}: ${sticker.description}`);
-   *   });
-   *
-   *   // Get a random sticker from the pack
-   *   const randomSticker = pack.stickers[
-   *     Math.floor(Math.random() * pack.stickers.length)
-   *   ];
-   *   console.log(`Random pick: ${randomSticker.name}`);
-   * } catch (error) {
-   *   console.error("Failed to fetch sticker pack:", error);
-   * }
-   * ```
    */
   fetchStickerPack(packId: Snowflake): Promise<StickerPackEntity> {
     return this.#rest.get(
@@ -337,38 +260,6 @@ export class StickerRouter {
    * @returns A promise resolving to an array of sticker entities
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-guild-stickers}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all stickers in a guild
-   * try {
-   *   const stickers = await stickerRouter.fetchGuildStickers("123456789012345678");
-   *
-   *   console.log(`Guild has ${stickers.length} custom stickers`);
-   *
-   *   // Group stickers by format type
-   *   const pngStickers = stickers.filter(s => s.format_type === 1);
-   *   const apngStickers = stickers.filter(s => s.format_type === 2);
-   *   const lottieStickers = stickers.filter(s => s.format_type === 3);
-   *   const gifStickers = stickers.filter(s => s.format_type === 4);
-   *
-   *   console.log(`PNG stickers: ${pngStickers.length}`);
-   *   console.log(`Animated PNG stickers: ${apngStickers.length}`);
-   *   console.log(`Lottie stickers: ${lottieStickers.length}`);
-   *   console.log(`GIF stickers: ${gifStickers.length}`);
-   *
-   *   // Display info about creators if available
-   *   const stickersWithCreator = stickers.filter(s => s.user);
-   *   if (stickersWithCreator.length > 0) {
-   *     console.log("Stickers with creator info:");
-   *     stickersWithCreator.forEach(s => {
-   *       console.log(`- ${s.name} created by ${s.user.username}`);
-   *     });
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch guild stickers:", error);
-   * }
-   * ```
    *
    * @remarks
    * Includes the `user` field if the bot has the `CREATE_GUILD_EXPRESSIONS` or
@@ -389,35 +280,9 @@ export class StickerRouter {
    * @param guildId - The ID of the guild the sticker belongs to
    * @param stickerId - The ID of the sticker to retrieve
    * @returns A promise resolving to the sticker entity
-   * @throws Will throw an error if the sticker doesn't exist
+   * @throws {Error} Will throw an error if the sticker doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#get-guild-sticker}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific guild sticker
-   * try {
-   *   const sticker = await stickerRouter.fetchGuildSticker(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321"  // Sticker ID
-   *   );
-   *
-   *   console.log(`Sticker: ${sticker.name}`);
-   *   console.log(`Description: ${sticker.description}`);
-   *   console.log(`Tags: ${sticker.tags}`);
-   *
-   *   // Get the sticker's URL
-   *   const stickerUrl = `https://cdn.discordapp.com/stickers/${sticker.id}.png`;
-   *   console.log(`URL: ${stickerUrl}`);
-   *
-   *   // Check creator information if available
-   *   if (sticker.user) {
-   *     console.log(`Created by: ${sticker.user.username}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch guild sticker:", error);
-   * }
-   * ```
    *
    * @remarks
    * Includes the `user` field if the bot has the `CREATE_GUILD_EXPRESSIONS` or
@@ -442,44 +307,9 @@ export class StickerRouter {
    * @param options - Options for creating the sticker
    * @param reason - Optional audit log reason for the creation
    * @returns A promise resolving to the created sticker entity
-   * @throws Error if the options are invalid or the guild's sticker limit is reached
+   * @throws {Error} Error if the options are invalid or the guild's sticker limit is reached
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker}
-   *
-   * @example
-   * ```typescript
-   * // Create a new sticker in a guild
-   * try {
-   *   // Import necessary modules if not already available
-   *   const fs = require('fs');
-   *   const path = require('path');
-   *
-   *   // Prepare the sticker file
-   *   const filePath = path.join(__dirname, 'path/to/sticker.png');
-   *   const file = {
-   *     name: 'sticker.png',
-   *     data: fs.readFileSync(filePath),
-   *     contentType: 'image/png'
-   *   };
-   *
-   *   // Create the sticker
-   *   const newSticker = await stickerRouter.createGuildSticker(
-   *     "123456789012345678", // Guild ID
-   *     {
-   *       name: "Happy Cat",
-   *       description: "A very happy cat for happy occasions",
-   *       tags: "cat,happy,smile,cute",
-   *       file: file
-   *     },
-   *     "Adding new cat sticker to the collection"
-   *   );
-   *
-   *   console.log(`Sticker created with ID: ${newSticker.id}`);
-   *   console.log(`Available to use in messages`);
-   * } catch (error) {
-   *   console.error("Failed to create sticker:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the `CREATE_GUILD_EXPRESSIONS` permission.
@@ -520,32 +350,9 @@ export class StickerRouter {
    * @param options - Options for modifying the sticker
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the modified sticker entity
-   * @throws Error if the options are invalid or you lack permissions
+   * @throws {Error} Error if the options are invalid or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker}
-   *
-   * @example
-   * ```typescript
-   * // Update a sticker's properties
-   * try {
-   *   const updatedSticker = await stickerRouter.updateGuildSticker(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Sticker ID
-   *     {
-   *       name: "Super Happy Cat",
-   *       description: "The happiest cat you've ever seen!",
-   *       tags: "cat,happy,smile,cute,excited,joy"
-   *     },
-   *     "Improving sticker name and description"
-   *   );
-   *
-   *   console.log(`Sticker updated: ${updatedSticker.name}`);
-   *   console.log(`New description: ${updatedSticker.description}`);
-   *   console.log(`Updated tags: ${updatedSticker.tags}`);
-   * } catch (error) {
-   *   console.error("Failed to update sticker:", error);
-   * }
-   * ```
    *
    * @remarks
    * For stickers created by the current user, requires either the `CREATE_GUILD_EXPRESSIONS` or
@@ -579,25 +386,9 @@ export class StickerRouter {
    * @param stickerId - The ID of the sticker to delete
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the sticker is deleted
-   * @throws Will throw an error if the sticker doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the sticker doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#delete-guild-sticker}
-   *
-   * @example
-   * ```typescript
-   * // Delete a sticker from a guild
-   * try {
-   *   await stickerRouter.deleteGuildSticker(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Sticker ID
-   *     "Removing outdated sticker"
-   *   );
-   *
-   *   console.log("Sticker deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete sticker:", error);
-   * }
-   * ```
    *
    * @remarks
    * For stickers created by the current user, requires either the `CREATE_GUILD_EXPRESSIONS` or

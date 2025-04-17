@@ -36,18 +36,6 @@ export type ClientCacheEntityOptions = z.infer<typeof ClientCacheEntityOptions>;
  * The cache manager stores frequently accessed Discord entities to reduce API calls,
  * improve performance, and manage memory usage efficiently. Each entity type
  * can be configured separately with different limits and settings.
- *
- * @example
- * ```ts
- * const client = new Client({
- *   cache: {
- *     enabled: true,
- *     sweepInterval: 600000, // 10 minutes
- *     users: { maxSize: 5000, ttl: 3600000 }, // 1 hour TTL
- *     messages: { maxSize: 2000, ttl: 1800000 } // 30 minutes TTL
- *   }
- * });
- * ```
  */
 export const ClientCacheOptions = z.object({
   /**
@@ -274,18 +262,6 @@ export type ClientCacheOptions = z.infer<typeof ClientCacheOptions>;
  *
  * These options control the client's behavior including caching strategy,
  * REST API settings, and gateway connection parameters.
- *
- * @example
- * ```ts
- * const client = new Client({
- *   token: "your-bot-token",
- *   cache: {
- *     enabled: true,
- *     ttl: 1800000 // 30 minutes
- *   },
- *   intents: [GatewayIntentsBits.Guilds, GatewayIntentsBits.GuildMessages]
- * });
- * ```
  */
 export const ClientOptions = z.object({
   /**

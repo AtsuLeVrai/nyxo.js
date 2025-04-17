@@ -267,44 +267,6 @@ export class ScheduledEventRouter {
    * @returns A promise resolving to an array of guild scheduled event entities
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all scheduled events in a guild with user counts
-   * const events = await eventRouter.fetchGuildEvents(
-   *   "123456789012345678", // Guild ID
-   *   true // Include user count
-   * );
-   *
-   * console.log(`Found ${events.length} scheduled events`);
-   *
-   * // Group events by status
-   * const scheduled = events.filter(e => e.status === 1);
-   * const active = events.filter(e => e.status === 2);
-   * const completed = events.filter(e => e.status === 3);
-   * const canceled = events.filter(e => e.status === 4);
-   *
-   * console.log(`Upcoming events: ${scheduled.length}`);
-   * console.log(`Active events: ${active.length}`);
-   * console.log(`Completed events: ${completed.length}`);
-   * console.log(`Canceled events: ${canceled.length}`);
-   *
-   * // Sort upcoming events by start time
-   * const sortedUpcoming = [...scheduled].sort((a, b) =>
-   *   new Date(a.scheduled_start_time).getTime() -
-   *   new Date(b.scheduled_start_time).getTime()
-   * );
-   *
-   * // Display the next three events
-   * console.log("Next upcoming events:");
-   * sortedUpcoming.slice(0, 3).forEach(event => {
-   *   const startTime = new Date(event.scheduled_start_time).toLocaleString();
-   *   console.log(`- ${event.name} (${startTime})`);
-   *   if (event.user_count) {
-   *     console.log(`  ${event.user_count} interested users`);
-   *   }
-   * });
-   * ```
    */
   fetchGuildEvents(
     guildId: Snowflake,
@@ -328,65 +290,9 @@ export class ScheduledEventRouter {
    * @param options - The event data to use for creation
    * @param reason - Optional audit log reason for the creation
    * @returns A promise resolving to the created guild scheduled event entity
-   * @throws Error if the event data is invalid
+   * @throws {Error} Error if the event data is invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event}
-   *
-   * @example
-   * ```typescript
-   * // Create a voice channel event
-   * const voiceEvent = await eventRouter.createGuildEvent(
-   *   "123456789012345678", // Guild ID
-   *   {
-   *     channel_id: "234567890123456789", // Voice channel ID
-   *     name: "Game Night",
-   *     privacy_level: 2, // GUILD_ONLY
-   *     scheduled_start_time: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-   *     description: "Join us for our weekly game night!",
-   *     entity_type: 2 // VOICE
-   *   },
-   *   "Creating weekly game night event"
-   * );
-   * console.log(`Created voice event: ${voiceEvent.id}`);
-   *
-   * // Create an external event with cover image
-   * const imageFile = await FileHandler.fromLocalFile("./path/to/image.png");
-   * const externalEvent = await eventRouter.createGuildEvent(
-   *   "123456789012345678", // Guild ID
-   *   {
-   *     name: "Community Meetup",
-   *     privacy_level: 2, // GUILD_ONLY
-   *     scheduled_start_time: new Date(Date.now() + 604800000).toISOString(), // Next week
-   *     scheduled_end_time: new Date(Date.now() + 608400000).toISOString(), // Next week + 1 hour
-   *     description: "Meet fellow community members in person!",
-   *     entity_type: 3, // EXTERNAL
-   *     entity_metadata: {
-   *       location: "Central Park, New York City"
-   *     },
-   *     image: imageFile
-   *   },
-   *   "Creating community meetup event"
-   * );
-   * console.log(`Created external event: ${externalEvent.id}`);
-   *
-   * // Create a recurring stage event
-   * const recurringEvent = await eventRouter.createGuildEvent(
-   *   "123456789012345678", // Guild ID
-   *   {
-   *     channel_id: "345678901234567890", // Stage channel ID
-   *     name: "Weekly Dev Updates",
-   *     privacy_level: 2, // GUILD_ONLY
-   *     scheduled_start_time: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-   *     description: "Weekly updates on our project development",
-   *     entity_type: 1, // STAGE_INSTANCE
-   *     recurrence_rule: {
-   *       frequency: 1, // WEEKLY
-   *       interval: 1
-   *     }
-   *   }
-   * );
-   * console.log(`Created recurring stage event: ${recurringEvent.id}`);
-   * ```
    *
    * @remarks
    * Requirements vary based on entity type:
@@ -423,59 +329,9 @@ export class ScheduledEventRouter {
    * @param eventId - The ID of the scheduled event to retrieve
    * @param withUserCount - Whether to include the count of users subscribed to the event (default: false)
    * @returns A promise resolving to the guild scheduled event entity
-   * @throws Will throw an error if the event doesn't exist
+   * @throws {Error} Will throw an error if the event doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific event with user count
-   * try {
-   *   const event = await eventRouter.fetchGuildEvent(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Event ID
-   *     true // Include user count
-   *   );
-   *
-   *   console.log(`Event: ${event.name}`);
-   *   console.log(`Status: ${
-   *     event.status === 1 ? "Scheduled" :
-   *     event.status === 2 ? "Active" :
-   *     event.status === 3 ? "Completed" :
-   *     "Canceled"
-   *   }`);
-   *
-   *   // Format start and end times
-   *   const startTime = new Date(event.scheduled_start_time).toLocaleString();
-   *   console.log(`Starts at: ${startTime}`);
-   *
-   *   if (event.scheduled_end_time) {
-   *     const endTime = new Date(event.scheduled_end_time).toLocaleString();
-   *     console.log(`Ends at: ${endTime}`);
-   *   }
-   *
-   *   // Show event location
-   *   if (event.entity_type === 3) { // EXTERNAL
-   *     console.log(`Location: ${event.entity_metadata.location}`);
-   *   } else if (event.channel_id) {
-   *     console.log(`Channel ID: ${event.channel_id}`);
-   *   }
-   *
-   *   // Show interested user count if available
-   *   if (event.user_count !== undefined) {
-   *     console.log(`Interested users: ${event.user_count}`);
-   *   }
-   *
-   *   // Check if it's a recurring event
-   *   if (event.recurrence_rule) {
-   *     const frequency = event.recurrence_rule.frequency === 1 ? "Weekly" :
-   *                       event.recurrence_rule.frequency === 2 ? "Monthly" : "Daily";
-   *     console.log(`Recurring: ${frequency} (every ${event.recurrence_rule.interval || 1})`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch event:", error);
-   * }
-   * ```
    */
   fetchGuildEvent(
     guildId: Snowflake,
@@ -504,61 +360,9 @@ export class ScheduledEventRouter {
    * @param options - The modifications to apply to the event
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the modified guild scheduled event entity
-   * @throws Error if the modification data is invalid
+   * @throws {Error} Error if the modification data is invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event}
-   *
-   * @example
-   * ```typescript
-   * // Update an event's description and time
-   * const updatedEvent = await eventRouter.updateGuildEvent(
-   *   "123456789012345678", // Guild ID
-   *   "987654321987654321", // Event ID
-   *   {
-   *     description: "Updated description with more details about the event",
-   *     scheduled_start_time: new Date(Date.now() + 172800000).toISOString() // Two days from now
-   *   },
-   *   "Rescheduling and updating event details"
-   * );
-   * console.log(`Event updated: ${updatedEvent.name}`);
-   *
-   * // Start an event that was previously in scheduled status
-   * const startedEvent = await eventRouter.updateGuildEvent(
-   *   "123456789012345678", // Guild ID
-   *   "987654321987654321", // Event ID
-   *   {
-   *     status: 2 // ACTIVE
-   *   },
-   *   "Starting the event"
-   * );
-   * console.log(`Event is now ${startedEvent.status === 2 ? "active" : "not active"}`);
-   *
-   * // Cancel an event
-   * const canceledEvent = await eventRouter.updateGuildEvent(
-   *   "123456789012345678", // Guild ID
-   *   "987654321987654321", // Event ID
-   *   {
-   *     status: 4 // CANCELED
-   *   },
-   *   "Event canceled due to low interest"
-   * );
-   * console.log(`Event has been canceled`);
-   *
-   * // Change an event from voice to external
-   * const changedLocationEvent = await eventRouter.updateGuildEvent(
-   *   "123456789012345678", // Guild ID
-   *   "987654321987654321", // Event ID
-   *   {
-   *     entity_type: 3, // EXTERNAL
-   *     channel_id: null,
-   *     entity_metadata: {
-   *       location: "Discord HQ, San Francisco"
-   *     },
-   *     scheduled_end_time: new Date(Date.now() + 90000000).toISOString() // 25 hours from now
-   *   },
-   *   "Changing event to physical location"
-   * );
-   * ```
    *
    * @remarks
    * All fields are optional. Special considerations:
@@ -598,23 +402,9 @@ export class ScheduledEventRouter {
    * @param guildId - The ID of the guild the event belongs to
    * @param eventId - The ID of the scheduled event to delete
    * @returns A promise resolving when the deletion is complete
-   * @throws Will throw an error if the event doesn't exist
+   * @throws {Error} Will throw an error if the event doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event}
-   *
-   * @example
-   * ```typescript
-   * // Delete an event
-   * try {
-   *   await eventRouter.deleteGuildEvent(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321"  // Event ID
-   *   );
-   *   console.log("Event deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete event:", error);
-   * }
-   * ```
    */
   deleteGuildEvent(guildId: Snowflake, eventId: Snowflake): Promise<void> {
     return this.#rest.delete(
@@ -635,63 +425,9 @@ export class ScheduledEventRouter {
    * @param eventId - The ID of the scheduled event to get users for
    * @param query - Query parameters for pagination and inclusion of member data
    * @returns A promise resolving to an array of guild scheduled event user entities
-   * @throws Error if the query parameters are invalid
+   * @throws {Error} Error if the query parameters are invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users}
-   *
-   * @example
-   * ```typescript
-   * // Fetch the first 50 users interested in an event, including their member data
-   * const interestedUsers = await eventRouter.fetchEventUsers(
-   *   "123456789012345678", // Guild ID
-   *   "987654321987654321", // Event ID
-   *   {
-   *     limit: 50,
-   *     with_member: true
-   *   }
-   * );
-   *
-   * console.log(`Found ${interestedUsers.length} interested users`);
-   *
-   * // Display information about the users
-   * interestedUsers.forEach(user => {
-   *   console.log(`- ${user.user.username}#${user.user.discriminator}`);
-   *
-   *   // Access member data if requested with with_member: true
-   *   if (user.member) {
-   *     const joinedAt = new Date(user.member.joined_at).toLocaleDateString();
-   *     console.log(`  Joined server: ${joinedAt}`);
-   *
-   *     if (user.member.nick) {
-   *       console.log(`  Nickname: ${user.member.nick}`);
-   *     }
-   *
-   *     if (user.member.roles && user.member.roles.length > 0) {
-   *       console.log(`  Roles: ${user.member.roles.length}`);
-   *     }
-   *   }
-   * });
-   *
-   * // Implement pagination to fetch more users if needed
-   * async function fetchAllEventUsers(guildId, eventId) {
-   *   let allUsers = [];
-   *   let lastUserId = null;
-   *   let batch;
-   *
-   *   do {
-   *     const query = lastUserId ? { after: lastUserId, limit: 100 } : { limit: 100 };
-   *     batch = await eventRouter.fetchEventUsers(guildId, eventId, query);
-   *
-   *     allUsers = allUsers.concat(batch);
-   *
-   *     if (batch.length > 0) {
-   *       lastUserId = batch[batch.length - 1].user.id;
-   *     }
-   *   } while (batch.length === 100);
-   *
-   *   return allUsers;
-   * }
-   * ```
    *
    * @remarks
    * Supports pagination via before/after parameters. Users are returned in

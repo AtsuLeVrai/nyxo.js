@@ -127,7 +127,7 @@ export const Cdn = {
    *
    * @param size - Size value to validate
    * @returns Validated size or undefined if not provided
-   * @throws Error if size is invalid
+   * @throws {Error} Error if size is invalid
    */
   validateSize(size?: number): number | undefined {
     if (size === undefined) {

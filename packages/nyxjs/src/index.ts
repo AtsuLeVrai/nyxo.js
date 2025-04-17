@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 // Re-export all the packages
 export * from "@nyxjs/core";
 export * from "@nyxjs/gateway";

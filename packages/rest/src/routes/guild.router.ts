@@ -36,27 +36,6 @@ import { FileHandler } from "../handlers/index.js";
  * This is a simplified version of the channel entity used when creating a new guild.
  * The structure follows the standard channel entity format.
  *
- * @example
- * ```typescript
- * // Example text channel
- * const textChannel: CreateGuildChannelSchema = {
- *   id: "0", // Placeholder ID, will be assigned by Discord
- *   name: "general",
- *   type: 0, // GUILD_TEXT
- *   position: 0
- * };
- *
- * // Example voice channel
- * const voiceChannel: CreateGuildChannelSchema = {
- *   id: "1", // Placeholder ID, will be assigned by Discord
- *   name: "Voice Chat",
- *   type: 2, // GUILD_VOICE
- *   position: 1,
- *   bitrate: 64000,
- *   user_limit: 10
- * };
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
  */
 export type CreateGuildChannelSchema = AnyChannelEntity;
@@ -71,68 +50,6 @@ export type CreateGuildChannelSchema = AnyChannelEntity;
  *
  * The created guild will have the bot as the owner.
  * Default channels and roles will be created unless specified in the channels and roles arrays.
- *
- * @example
- * ```typescript
- * // Create a simple guild with basic settings
- * const simpleGuild: CreateGuildSchema = {
- *   name: "My New Server",
- *   icon: imageFileObject, // A FileInput object with image data
- *   verification_level: 1, // LOW
- *   default_message_notifications: 1 // ONLY_MENTIONS
- * };
- *
- * // Create a guild with custom roles and channels
- * const advancedGuild: CreateGuildSchema = {
- *   name: "Gaming Community",
- *   icon: imageFileObject,
- *   verification_level: 2, // MEDIUM
- *   explicit_content_filter: 2, // ALL_MEMBERS
- *   roles: [
- *     {
- *       id: "0", // Placeholder ID for the @everyone role
- *       name: "@everyone",
- *       permissions: "104324673", // Basic permissions for everyone
- *       position: 0,
- *       color: 0,
- *       hoist: false,
- *       mentionable: false
- *     },
- *     {
- *       id: "1", // Placeholder ID for a custom role
- *       name: "Moderators",
- *       permissions: "1071698660929", // Admin-like permissions
- *       position: 1,
- *       color: 0x00AAFF, // Blue color
- *       hoist: true,
- *       mentionable: true
- *     }
- *   ],
- *   channels: [
- *     {
- *       id: "0", // Placeholder ID
- *       name: "welcome",
- *       type: 0, // GUILD_TEXT
- *       position: 0
- *     },
- *     {
- *       id: "1", // Placeholder ID
- *       name: "general",
- *       type: 0, // GUILD_TEXT
- *       position: 1
- *     },
- *     {
- *       id: "2", // Placeholder ID
- *       name: "Voice Chat",
- *       type: 2, // GUILD_VOICE
- *       position: 2,
- *       bitrate: 64000
- *     }
- *   ],
- *   system_channel_id: "0", // References the "welcome" channel
- *   afk_timeout: 300 // 5 minutes
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
  */
@@ -258,39 +175,6 @@ export interface CreateGuildSchema {
  * Requires the MANAGE_GUILD permission.
  * Some fields require additional permissions or specific guild features to be enabled.
  * All fields are optional, allowing partial updates.
- *
- * @example
- * ```typescript
- * // Update basic guild settings
- * const basicUpdate: UpdateGuildSchema = {
- *   name: "Updated Server Name",
- *   verification_level: 2, // MEDIUM
- *   default_message_notifications: 1 // ONLY_MENTIONS
- * };
- *
- * // Update guild appearance
- * const appearanceUpdate: UpdateGuildSchema = {
- *   icon: imageFileObject,
- *   banner: bannerFileObject,
- *   splash: splashFileObject,
- *   description: "A welcoming community for everyone"
- * };
- *
- * // Update guild channels
- * const channelUpdate: UpdateGuildSchema = {
- *   afk_channel_id: "123456789012345678",
- *   afk_timeout: 900, // 15 minutes
- *   system_channel_id: "876543210987654321",
- *   system_channel_flags: 6, // Suppress join notifications and boost notifications
- *   rules_channel_id: "111111111111111111",
- *   public_updates_channel_id: "222222222222222222"
- * };
- *
- * // Transfer ownership (must be guild owner)
- * const ownershipTransfer: UpdateGuildSchema = {
- *   owner_id: "333333333333333333" // New owner's user ID
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-json-params}
  */
@@ -502,38 +386,6 @@ export interface UpdateGuildSchema {
  * Requires the MANAGE_CHANNELS permission.
  * Only the specified fields will be updated; other fields remain unchanged.
  *
- * @example
- * ```typescript
- * // Simple reordering of channels
- * const channelPositionUpdates: UpdateGuildChannelPositionsItem[] = [
- *   {
- *     id: "111111111111111111", // First channel ID
- *     position: 0 // Move to position 0 (top of the list)
- *   },
- *   {
- *     id: "222222222222222222", // Second channel ID
- *     position: 1 // Move to position 1
- *   }
- * ];
- *
- * // Move a channel to a category and sync permissions
- * const categoryMoveUpdate: UpdateGuildChannelPositionsItem[] = [
- *   {
- *     id: "333333333333333333", // Channel ID to move
- *     parent_id: "444444444444444444", // Category ID to move to
- *     lock_permissions: true // Sync permissions with the category
- *   }
- * ];
- *
- * // Move a channel out of a category
- * const removeCategoryUpdate: UpdateGuildChannelPositionsItem[] = [
- *   {
- *     id: "555555555555555555", // Channel ID to move
- *     parent_id: null // Remove from any category
- *   }
- * ];
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions}
  */
 export interface UpdateGuildChannelPositionsItem {
@@ -575,26 +427,6 @@ export interface UpdateGuildChannelPositionsItem {
 /**
  * Type for a list of channel position updates to apply in a single operation.
  *
- * @example
- * ```typescript
- * // Update multiple channel positions at once
- * const channelUpdates: UpdateGuildChannelPositionsSchema = [
- *   {
- *     id: "111111111111111111",
- *     position: 0
- *   },
- *   {
- *     id: "222222222222222222",
- *     position: 1
- *   },
- *   {
- *     id: "333333333333333333",
- *     position: 2,
- *     parent_id: "444444444444444444",
- *     lock_permissions: true
- *   }
- * ];
- * ```
  */
 export type UpdateGuildChannelPositionsSchema =
   UpdateGuildChannelPositionsItem[];
@@ -606,32 +438,6 @@ export type UpdateGuildChannelPositionsSchema =
  * @remarks
  * This is the response structure from fetchActiveGuildThreads().
  * Active threads are those that have not been archived.
- *
- * @example
- * ```typescript
- * // Example response structure
- * const activeThreadsResponse: ListActiveGuildThreadsEntity = {
- *   threads: [
- *     {
- *       id: "111111111111111111",
- *       name: "Discussion Thread",
- *       type: 11, // PUBLIC_THREAD
- *       parent_id: "222222222222222222",
- *       // Other thread properties...
- *     },
- *     // More thread objects...
- *   ],
- *   members: [
- *     {
- *       id: "111111111111111111", // Thread ID
- *       user_id: "333333333333333333", // Current user's ID
- *       join_timestamp: "2023-01-15T12:00:00.000Z",
- *       flags: 0
- *     },
- *     // More thread member objects for threads the user has joined...
- *   ]
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#list-active-guild-threads-response-body}
  */
@@ -660,20 +466,6 @@ export interface ListActiveGuildThreadsEntity {
  * @remarks
  * Requires the GUILD_MEMBERS privileged intent.
  * Results are paginated and sorted by user ID.
- *
- * @example
- * ```typescript
- * // Get the first 10 members
- * const firstPageQuery: ListGuildMembersQuerySchema = {
- *   limit: 10
- * };
- *
- * // Get the next page after a specific user ID
- * const nextPageQuery: ListGuildMembersQuerySchema = {
- *   limit: 10,
- *   after: "123456789012345678" // User ID from previous page
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params}
  */
@@ -705,15 +497,6 @@ export interface ListGuildMembersQuerySchema {
  * Unlike ListGuildMembers, this endpoint doesn't require the GUILD_MEMBERS intent.
  * The search is prefix-based and case-insensitive.
  *
- * @example
- * ```typescript
- * // Search for members with names starting with "Alex"
- * const searchQuery: SearchGuildMembersQuerySchema = {
- *   query: "Alex",
- *   limit: 10
- * };
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#search-guild-members-query-string-params}
  */
 export interface SearchGuildMembersQuerySchema {
@@ -742,23 +525,6 @@ export interface SearchGuildMembersQuerySchema {
  * @remarks
  * Requires the bot to have the CREATE_INSTANT_INVITE permission.
  * The access token must have the guilds.join scope.
- *
- * @example
- * ```typescript
- * // Add a user to a guild with default settings
- * const addMemberOptions: AddGuildMemberSchema = {
- *   access_token: "user_oauth2_access_token_with_guilds_join_scope"
- * };
- *
- * // Add a user with specific roles and settings
- * const addMemberWithRoles: AddGuildMemberSchema = {
- *   access_token: "user_oauth2_access_token_with_guilds_join_scope",
- *   nick: "New Member",
- *   roles: ["111111111111111111", "222222222222222222"],
- *   mute: false,
- *   deaf: false
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member-json-params}
  */
@@ -815,31 +581,6 @@ export interface AddGuildMemberSchema {
  * - mute, deaf: MUTE_MEMBERS, DEAFEN_MEMBERS
  * - channel_id: MOVE_MEMBERS
  * - communication_disabled_until: MODERATE_MEMBERS
- *
- * @example
- * ```typescript
- * // Update a member's nickname and roles
- * const memberUpdate: UpdateGuildMemberSchema = {
- *   nick: "New Nickname",
- *   roles: ["111111111111111111", "222222222222222222"]
- * };
- *
- * // Move a member to a voice channel
- * const moveToVoiceChannel: UpdateGuildMemberSchema = {
- *   channel_id: "333333333333333333" // Voice channel ID
- * };
- *
- * // Timeout a member for 1 hour
- * const timeoutMember: UpdateGuildMemberSchema = {
- *   // ISO8601 timestamp 1 hour in the future
- *   communication_disabled_until: new Date(Date.now() + 3600000).toISOString()
- * };
- *
- * // Remove a timeout
- * const removeTimeout: UpdateGuildMemberSchema = {
- *   communication_disabled_until: null
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params}
  */
@@ -918,26 +659,6 @@ export interface UpdateGuildMemberSchema {
  * Requires the BAN_MEMBERS permission.
  * Results are sorted by user ID.
  *
- * @example
- * ```typescript
- * // Get first 100 bans
- * const firstPageQuery: GetGuildBansQuerySchema = {
- *   limit: 100
- * };
- *
- * // Get bans before a specific user ID
- * const previousPageQuery: GetGuildBansQuerySchema = {
- *   limit: 100,
- *   before: "123456789012345678"
- * };
- *
- * // Get bans after a specific user ID
- * const nextPageQuery: GetGuildBansQuerySchema = {
- *   limit: 100,
- *   after: "987654321987654321"
- * };
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-bans-query-string-params}
  */
 export interface GetGuildBansQuerySchema {
@@ -975,22 +696,6 @@ export interface GetGuildBansQuerySchema {
  * Requires the BAN_MEMBERS permission.
  * The bot's highest role must be higher than the target user's highest role.
  *
- * @example
- * ```typescript
- * // Ban a user without deleting messages
- * const simpleBan: CreateGuildBanSchema = {};
- *
- * // Ban a user and delete 7 days of messages
- * const banWithMessageDeletion: CreateGuildBanSchema = {
- *   delete_message_seconds: 7 * 24 * 60 * 60 // 7 days in seconds
- * };
- *
- * // Ban a user and delete 1 day of messages (using deprecated parameter)
- * const deprecatedBan: CreateGuildBanSchema = {
- *   delete_message_days: 1
- * };
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-ban-json-params}
  */
 export interface CreateGuildBanSchema {
@@ -1021,28 +726,6 @@ export interface CreateGuildBanSchema {
  * Requires both the BAN_MEMBERS and MANAGE_GUILD permissions.
  * Limited to 200 users per request.
  *
- * @example
- * ```typescript
- * // Ban multiple users without deleting messages
- * const bulkBan: BulkGuildBanSchema = {
- *   user_ids: [
- *     "111111111111111111",
- *     "222222222222222222",
- *     "333333333333333333"
- *   ],
- *   delete_message_seconds: 0
- * };
- *
- * // Ban multiple users and delete 1 day of messages
- * const bulkBanWithMessageDeletion: BulkGuildBanSchema = {
- *   user_ids: [
- *     "444444444444444444",
- *     "555555555555555555"
- *   ],
- *   delete_message_seconds: 86400 // 1 day in seconds
- * };
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-json-params}
  */
 export interface BulkGuildBanSchema {
@@ -1072,18 +755,6 @@ export interface BulkGuildBanSchema {
  * This is the response structure from the bulkGuildBan() method.
  * Users might fail to be banned if they have higher roles than the bot.
  *
- * @example
- * ```typescript
- * // Example response structure
- * const bulkBanResponse: BulkGuildBanResponseEntity = {
- *   banned_users: ["111111111111111111", "222222222222222222"],
- *   failed_users: ["333333333333333333"]
- * };
- *
- * console.log(`Successfully banned ${bulkBanResponse.banned_users.length} users`);
- * console.log(`Failed to ban ${bulkBanResponse.failed_users.length} users`);
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-bulk-ban-response}
  */
 export interface BulkGuildBanResponseEntity {
@@ -1110,38 +781,6 @@ export interface BulkGuildBanResponseEntity {
  * @remarks
  * Requires the MANAGE_ROLES permission.
  * The maximum number of roles per guild is 250 (excluding the @everyone role).
- *
- * @example
- * ```typescript
- * // Create a basic role
- * const basicRole: CreateGuildRoleSchema = {
- *   name: "Member",
- *   permissions: "104324673", // Basic permissions
- *   color: 0x00FF00, // Green color
- *   hoist: false,
- *   mentionable: true
- * };
- *
- * // Create a moderator role with an emoji
- * const moderatorRole: CreateGuildRoleSchema = {
- *   name: "Moderator",
- *   permissions: "1099511627775", // All permissions
- *   color: 0xFF0000, // Red color
- *   hoist: true, // Displayed separately in member list
- *   unicode_emoji: "🛡️", // Shield emoji
- *   mentionable: true
- * };
- *
- * // Create a role with a custom icon
- * const iconRole: CreateGuildRoleSchema = {
- *   name: "VIP",
- *   permissions: "104324673",
- *   color: 0xFFD700, // Gold color
- *   hoist: true,
- *   icon: imageFileObject, // A FileInput object with the icon image
- *   mentionable: true
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role-json-params}
  */
@@ -1216,27 +855,6 @@ export interface CreateGuildRoleSchema {
  * Requires the MANAGE_ROLES permission.
  * The position affects the role's display order and permission hierarchy.
  *
- * @example
- * ```typescript
- * // Move a role to the top of the list
- * const moveToTop: UpdateGuildRolePositionsItem = {
- *   id: "111111111111111111", // Role ID
- *   position: 1 // Position 1 is just below the @everyone role
- * };
- *
- * // Move multiple roles
- * const rolePositionUpdates: UpdateGuildRolePositionsItem[] = [
- *   {
- *     id: "222222222222222222",
- *     position: 3
- *   },
- *   {
- *     id: "333333333333333333",
- *     position: 2
- *   }
- * ];
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params}
  */
 export interface UpdateGuildRolePositionsItem {
@@ -1261,24 +879,6 @@ export interface UpdateGuildRolePositionsItem {
 /**
  * Type for a list of role position updates to apply in a single operation.
  *
- * @example
- * ```typescript
- * // Update multiple role positions at once
- * const roleUpdates: UpdateGuildRolePositionsSchema = [
- *   {
- *     id: "111111111111111111",
- *     position: 3
- *   },
- *   {
- *     id: "222222222222222222",
- *     position: 2
- *   },
- *   {
- *     id: "333333333333333333",
- *     position: 1
- *   }
- * ];
- * ```
  */
 export type UpdateGuildRolePositionsSchema = UpdateGuildRolePositionsItem[];
 
@@ -1291,30 +891,6 @@ export type UpdateGuildRolePositionsSchema = UpdateGuildRolePositionsItem[];
  * All properties are optional, allowing partial updates.
  * Can be null to reset all properties to default values.
  *
- * @example
- * ```typescript
- * // Update a role's name and color
- * const nameColorUpdate: UpdateGuildRoleSchema = {
- *   name: "Super Moderator",
- *   color: 0x9B59B6 // Purple color
- * };
- *
- * // Update a role's permissions
- * const permissionUpdate: UpdateGuildRoleSchema = {
- *   permissions: "1071698660929" // Custom permission set
- * };
- *
- * // Update a role's display properties
- * const displayUpdate: UpdateGuildRoleSchema = {
- *   hoist: true,
- *   mentionable: true,
- *   unicode_emoji: "🔰" // Beginner symbol emoji
- * };
- *
- * // Reset a role to default values
- * const resetRole: UpdateGuildRoleSchema = null;
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-json-params}
  */
 export type UpdateGuildRoleSchema = Partial<CreateGuildRoleSchema> | null;
@@ -1326,23 +902,6 @@ export type UpdateGuildRoleSchema = Partial<CreateGuildRoleSchema> | null;
  * @remarks
  * Requires the MANAGE_GUILD permission.
  * This is a preview endpoint that doesn't actually remove any members.
- *
- * @example
- * ```typescript
- * // Get count of inactive members for the default period (7 days)
- * const defaultPruneQuery: GetGuildPruneCountQuerySchema = {};
- *
- * // Get count of members inactive for 30 days
- * const longerPruneQuery: GetGuildPruneCountQuerySchema = {
- *   days: 30
- * };
- *
- * // Get count of members with specific roles
- * const roleSpecificQuery: GetGuildPruneCountQuerySchema = {
- *   days: 14,
- *   include_roles: "111111111111111111,222222222222222222"
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-prune-count-query-string-params}
  */
@@ -1373,30 +932,6 @@ export interface GetGuildPruneCountQuerySchema {
  * @remarks
  * Requires the MANAGE_GUILD and KICK_MEMBERS permissions.
  * This operation will actually remove members, unlike the prune count endpoint.
- *
- * @example
- * ```typescript
- * // Prune members inactive for 7 days
- * const defaultPrune: BeginGuildPruneSchema = {
- *   days: 7,
- *   compute_prune_count: true,
- *   include_roles: []
- * };
- *
- * // Prune members inactive for 30 days without counting
- * const fastPrune: BeginGuildPruneSchema = {
- *   days: 30,
- *   compute_prune_count: false, // Don't compute count (faster for large guilds)
- *   include_roles: []
- * };
- *
- * // Prune members with specific roles
- * const rolePrune: BeginGuildPruneSchema = {
- *   days: 14,
- *   compute_prune_count: true,
- *   include_roles: ["111111111111111111", "222222222222222222"]
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#begin-guild-prune-json-params}
  */
@@ -1444,21 +979,6 @@ export interface BeginGuildPruneSchema {
  * @remarks
  * Used with the fetchGuildWidgetImage method to specify the widget appearance.
  *
- * @example
- * ```typescript
- * // Get a shield-style widget image
- * const shieldWidget = await guildRouter.fetchGuildWidgetImage(
- *   "123456789012345678",
- *   "shield"
- * );
- *
- * // Get a banner-style widget image
- * const bannerWidget = await guildRouter.fetchGuildWidgetImage(
- *   "123456789012345678",
- *   "banner1"
- * );
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget-image-widget-style-options}
  */
 export type WidgetStyleOptions =
@@ -1475,27 +995,6 @@ export type WidgetStyleOptions =
  * @remarks
  * Requires the MANAGE_GUILD permission.
  * The widget provides a way for non-members to see information about the guild.
- *
- * @example
- * ```typescript
- * // Enable the widget with a specific channel
- * const enableWidget: UpdateGuildWidgetSettingsSchema = {
- *   enabled: true,
- *   channel_id: "123456789012345678" // Channel ID for invites
- * };
- *
- * // Enable the widget without a specific channel
- * const enableWidgetNoChannel: UpdateGuildWidgetSettingsSchema = {
- *   enabled: true,
- *   channel_id: null
- * };
- *
- * // Disable the widget
- * const disableWidget: UpdateGuildWidgetSettingsSchema = {
- *   enabled: false,
- *   channel_id: null
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-widget-json-params}
  */
@@ -1524,39 +1023,6 @@ export interface UpdateGuildWidgetSettingsSchema {
  * @remarks
  * Requires the MANAGE_GUILD permission.
  * Only available for Community guilds.
- *
- * @example
- * ```typescript
- * // Enable welcome screen with description and channels
- * const welcomeScreen: UpdateGuildWelcomeScreenSchema = {
- *   enabled: true,
- *   description: "Welcome to our community! Check out these channels to get started:",
- *   welcome_channels: [
- *     {
- *       channel_id: "111111111111111111",
- *       description: "Read our rules and guidelines",
- *       emoji_id: null,
- *       emoji_name: "📜"
- *     },
- *     {
- *       channel_id: "222222222222222222",
- *       description: "Introduce yourself to the community",
- *       emoji_id: null,
- *       emoji_name: "👋"
- *     }
- *   ]
- * };
- *
- * // Disable welcome screen
- * const disableWelcome: UpdateGuildWelcomeScreenSchema = {
- *   enabled: false
- * };
- *
- * // Update just the description
- * const updateDescription: UpdateGuildWelcomeScreenSchema = {
- *   description: "Welcome to our new and improved community!"
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-welcome-screen-json-params}
  */
@@ -1596,45 +1062,6 @@ export interface UpdateGuildWelcomeScreenSchema {
  * @remarks
  * Requires both the MANAGE_GUILD and MANAGE_ROLES permissions.
  * Only available for Community guilds.
- *
- * @example
- * ```typescript
- * // Configure onboarding with prompts
- * const onboardingConfig: UpdateGuildOnboardingSchema = {
- *   enabled: true,
- *   mode: 1, // ADVANCED mode
- *   prompts: [
- *     {
- *       id: "0", // Placeholder ID for new prompt
- *       type: 0, // MULTIPLE_CHOICE
- *       title: "What brings you to our server?",
- *       options: [
- *         {
- *           id: "0", // Placeholder ID for new option
- *           title: "Just browsing",
- *           channel_ids: ["111111111111111111"],
- *           role_ids: []
- *         },
- *         {
- *           id: "1", // Placeholder ID for new option
- *           title: "Looking to participate",
- *           channel_ids: ["111111111111111111", "222222222222222222"],
- *           role_ids: ["333333333333333333"]
- *         }
- *       ]
- *     }
- *   ],
- *   default_channel_ids: ["111111111111111111"]
- * };
- *
- * // Disable onboarding
- * const disableOnboarding: UpdateGuildOnboardingSchema = {
- *   enabled: false,
- *   mode: 0, // DEFAULT mode
- *   prompts: [],
- *   default_channel_ids: []
- * };
- * ```
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-onboarding}
  */
@@ -2106,19 +1533,6 @@ export class GuildRouter {
    *
    * @param rest - The REST client to use for making Discord API requests
    *
-   * @example
-   * ```typescript
-   * import { Rest } from "../core/index.js";
-   *
-   * // Create a REST client
-   * const rest = new Rest({ token: "your-bot-token" });
-   *
-   * // Initialize the guild router
-   * const guildRouter = new GuildRouter(rest);
-   *
-   * // Now you can use the router to interact with guild endpoints
-   * const guild = await guildRouter.fetchGuild("123456789012345678");
-   * ```
    */
   constructor(rest: Rest) {
     this.#rest = rest;
@@ -2129,62 +1543,8 @@ export class GuildRouter {
    *
    * @param options - Configuration for the new guild
    * @returns The newly created guild object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
-   *
-   * @example
-   * ```typescript
-   * // Create a simple guild with default settings
-   * try {
-   *   const newGuild = await guildRouter.createGuild({
-   *     name: "My Awesome Server",
-   *   });
-   *
-   *   console.log(`Created guild with ID: ${newGuild.id}`);
-   * } catch (error) {
-   *   console.error("Failed to create guild:", error);
-   * }
-   *
-   * // Create a guild with custom settings
-   * try {
-   *   // First, prepare an icon (could be from a local file)
-   *   const iconFile = await FileHandler.fromLocalFile("./path/to/icon.png");
-   *
-   *   const newGuild = await guildRouter.createGuild({
-   *     name: "Gaming Community",
-   *     icon: iconFile,
-   *     verification_level: 1, // LOW
-   *     default_message_notifications: 1, // ONLY_MENTIONS
-   *     explicit_content_filter: 2, // ALL_MEMBERS
-   *     roles: [
-   *       {
-   *         id: "0",
-   *         name: "Admin",
-   *         permissions: "8", // Administrator
-   *         color: 0xFF0000, // Red
-   *         hoist: true,
-   *         mentionable: true
-   *       }
-   *     ],
-   *     channels: [
-   *       {
-   *         id: "0",
-   *         name: "welcome",
-   *         type: 0 // GUILD_TEXT
-   *       },
-   *       {
-   *         id: "1",
-   *         name: "General",
-   *         type: 2 // GUILD_VOICE
-   *       }
-   *     ]
-   *   });
-   *
-   *   console.log(`Created custom guild with ID: ${newGuild.id}`);
-   * } catch (error) {
-   *   console.error("Failed to create custom guild:", error);
-   * }
-   * ```
    *
    * @remarks
    * This endpoint can be used only by bots in fewer than 10 guilds.
@@ -2208,38 +1568,6 @@ export class GuildRouter {
    * @returns The guild object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild}
    *
-   * @example
-   * ```typescript
-   * // Fetch a guild without member counts
-   * try {
-   *   const guild = await guildRouter.fetchGuild("123456789012345678");
-   *
-   *   console.log(`Guild name: ${guild.name}`);
-   *   console.log(`Guild owner: ${guild.owner_id}`);
-   *   console.log(`Region: ${guild.region}`);
-   * } catch (error) {
-   *   console.error("Failed to fetch guild:", error);
-   * }
-   *
-   * // Fetch a guild with approximate member counts
-   * try {
-   *   const guild = await guildRouter.fetchGuild("123456789012345678", true);
-   *
-   *   console.log(`Guild name: ${guild.name}`);
-   *   console.log(`Total members: ${guild.approximate_member_count}`);
-   *   console.log(`Online members: ${guild.approximate_presence_count}`);
-   *   console.log(`Verification level: ${
-   *     guild.verification_level === 0 ? "None" :
-   *     guild.verification_level === 1 ? "Low" :
-   *     guild.verification_level === 2 ? "Medium" :
-   *     guild.verification_level === 3 ? "High" :
-   *     "Very High"
-   *   }`);
-   * } catch (error) {
-   *   console.error("Failed to fetch guild with counts:", error);
-   * }
-   * ```
-   *
    * @remarks
    * The bot must be a member of the guild to retrieve it.
    * Setting withCounts to true includes approximate_member_count and approximate_presence_count fields.
@@ -2258,23 +1586,6 @@ export class GuildRouter {
    * @returns The guild preview object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-preview}
    *
-   * @example
-   * ```typescript
-   * // Fetch a preview of a discoverable guild
-   * try {
-   *   const preview = await guildRouter.fetchPreview("123456789012345678");
-   *
-   *   console.log(`Guild name: ${preview.name}`);
-   *   console.log(`Description: ${preview.description}`);
-   *   console.log(`Emojis: ${preview.emojis.length}`);
-   *   console.log(`Features: ${preview.features.join(", ")}`);
-   *   console.log(`Approximate member count: ${preview.approximate_member_count}`);
-   *   console.log(`Approximate online members: ${preview.approximate_presence_count}`);
-   * } catch (error) {
-   *   console.error("Failed to fetch guild preview:", error);
-   * }
-   * ```
-   *
    * @remarks
    * This endpoint does not require the bot to be a member of the guild.
    * The guild must have the DISCOVERABLE feature enabled to be previewed by non-members.
@@ -2292,48 +1603,8 @@ export class GuildRouter {
    * @param options - New properties for the guild
    * @param reason - Reason for the modification (for audit logs)
    * @returns The updated guild object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild}
-   *
-   * @example
-   * ```typescript
-   * // Update basic guild settings
-   * try {
-   *   const updatedGuild = await guildRouter.updateGuild(
-   *     "123456789012345678",
-   *     {
-   *       name: "Updated Server Name",
-   *       verification_level: 2, // MEDIUM
-   *       default_message_notifications: 1, // ONLY_MENTIONS
-   *     },
-   *     "Updating server settings for improved security"
-   *   );
-   *
-   *   console.log(`Guild updated: ${updatedGuild.name}`);
-   * } catch (error) {
-   *   console.error("Failed to update guild:", error);
-   * }
-   *
-   * // Update guild icon
-   * try {
-   *   // Prepare a new icon
-   *   const newIcon = await FileHandler.fromLocalFile("./path/to/new_icon.png");
-   *
-   *   const updatedGuild = await guildRouter.updateGuild(
-   *     "123456789012345678",
-   *     {
-   *       icon: newIcon,
-   *       description: "An awesome community for gaming enthusiasts!",
-   *       premium_progress_bar_enabled: true
-   *     },
-   *     "Refreshing server branding"
-   *   );
-   *
-   *   console.log(`Guild updated with new icon and description`);
-   * } catch (error) {
-   *   console.error("Failed to update guild icon:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -2367,21 +1638,6 @@ export class GuildRouter {
    * @returns A Promise that resolves when the guild is deleted
    * @see {@link https://discord.com/developers/docs/resources/guild#delete-guild}
    *
-   * @example
-   * ```typescript
-   * // Delete a guild
-   * try {
-   *   await guildRouter.deleteGuild("123456789012345678");
-   *   console.log("Guild has been deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete guild:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("The bot is not the owner of this guild");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * This action can only be performed by the guild owner.
    * Bots cannot own guilds, so this endpoint is primarily useful in user-authorized apps.
@@ -2402,37 +1658,6 @@ export class GuildRouter {
    * @returns An array of channel objects
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-channels}
    *
-   * @example
-   * ```typescript
-   * // Fetch all channels in a guild
-   * try {
-   *   const channels = await guildRouter.fetchChannels("123456789012345678");
-   *
-   *   console.log(`Guild has ${channels.length} channels`);
-   *
-   *   // Group channels by type
-   *   const textChannels = channels.filter(c => c.type === 0);
-   *   const voiceChannels = channels.filter(c => c.type === 2);
-   *   const categories = channels.filter(c => c.type === 4);
-   *   const announcements = channels.filter(c => c.type === 5);
-   *   const forums = channels.filter(c => c.type === 15);
-   *
-   *   console.log(`Text channels: ${textChannels.length}`);
-   *   console.log(`Voice channels: ${voiceChannels.length}`);
-   *   console.log(`Categories: ${categories.length}`);
-   *   console.log(`Announcement channels: ${announcements.length}`);
-   *   console.log(`Forum channels: ${forums.length}`);
-   *
-   *   // Display text channels
-   *   console.log("Text Channels:");
-   *   textChannels.forEach(channel => {
-   *     console.log(`- #${channel.name} (ID: ${channel.id})`);
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch guild channels:", error);
-   * }
-   * ```
-   *
    * @remarks
    * This endpoint returns all channels in the guild, but does not include threads.
    * Channels are returned in the same order as they appear in the Discord client.
@@ -2452,54 +1677,8 @@ export class GuildRouter {
    * @param options - Configuration for the new channel
    * @param reason - Reason for creating the channel (for audit logs)
    * @returns The newly created channel object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel}
-   *
-   * @example
-   * ```typescript
-   * // Create a basic text channel
-   * try {
-   *   const newChannel = await guildRouter.createGuildChannel(
-   *     "123456789012345678",
-   *     {
-   *       name: "general-chat",
-   *       type: 0, // GUILD_TEXT
-   *     },
-   *     "Creating main discussion channel"
-   *   );
-   *
-   *   console.log(`Created channel #${newChannel.name} with ID: ${newChannel.id}`);
-   * } catch (error) {
-   *   console.error("Failed to create channel:", error);
-   * }
-   *
-   * // Create a voice channel with options
-   * try {
-   *   const newChannel = await guildRouter.createGuildChannel(
-   *     "123456789012345678",
-   *     {
-   *       name: "Gaming Voice",
-   *       type: 2, // GUILD_VOICE
-   *       bitrate: 64000, // 64kbps
-   *       user_limit: 10, // Max 10 users
-   *       parent_id: "987654321987654321", // Category ID
-   *       permission_overwrites: [
-   *         {
-   *           id: "123456789012345678", // Role or user ID
-   *           type: 0, // 0 for role, 1 for member
-   *           allow: "66560", // Connect and Speak permissions
-   *           deny: "0"
-   *         }
-   *       ]
-   *     },
-   *     "Creating gaming voice channel"
-   *   );
-   *
-   *   console.log(`Created voice channel ${newChannel.name} with ID: ${newChannel.id}`);
-   * } catch (error) {
-   *   console.error("Failed to create voice channel:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_CHANNELS permission.
@@ -2529,50 +1708,8 @@ export class GuildRouter {
    * @param guildId - The ID of the guild to modify channel positions in
    * @param options - Array of position modifications
    * @returns A Promise that resolves when the positions are updated
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions}
-   *
-   * @example
-   * ```typescript
-   * // Reorder channels in a guild
-   * try {
-   *   await guildRouter.updateGuildChannelPositions(
-   *     "123456789012345678",
-   *     [
-   *       {
-   *         id: "111111111111111111", // Channel to move
-   *         position: 1 // New position (0-based index)
-   *       },
-   *       {
-   *         id: "222222222222222222", // Another channel to move
-   *         position: 2
-   *       }
-   *     ]
-   *   );
-   *
-   *   console.log("Channel positions updated successfully");
-   * } catch (error) {
-   *   console.error("Failed to update channel positions:", error);
-   * }
-   *
-   * // Move a channel to a different category
-   * try {
-   *   await guildRouter.updateGuildChannelPositions(
-   *     "123456789012345678",
-   *     [
-   *       {
-   *         id: "111111111111111111", // Channel to move
-   *         parent_id: "333333333333333333", // Target category ID
-   *         lock_permissions: true // Sync permissions with the new parent
-   *       }
-   *     ]
-   *   );
-   *
-   *   console.log("Channel moved to new category successfully");
-   * } catch (error) {
-   *   console.error("Failed to move channel to category:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_CHANNELS permission.
@@ -2601,36 +1738,6 @@ export class GuildRouter {
    * @returns Object containing arrays of threads and thread members
    * @see {@link https://discord.com/developers/docs/resources/guild#list-active-guild-threads}
    *
-   * @example
-   * ```typescript
-   * // Fetch all active threads in a guild
-   * try {
-   *   const response = await guildRouter.fetchActiveGuildThreads("123456789012345678");
-   *
-   *   console.log(`Guild has ${response.threads.length} active threads`);
-   *
-   *   // Group threads by type
-   *   const publicThreads = response.threads.filter(t => t.type === 11); // PUBLIC_THREAD
-   *   const privateThreads = response.threads.filter(t => t.type === 12); // PRIVATE_THREAD
-   *   const announcementThreads = response.threads.filter(t => t.type === 10); // ANNOUNCEMENT_THREAD
-   *
-   *   console.log(`Public threads: ${publicThreads.length}`);
-   *   console.log(`Private threads: ${privateThreads.length}`);
-   *   console.log(`Announcement threads: ${announcementThreads.length}`);
-   *
-   *   // List the threads the current user has joined
-   *   console.log(`The bot has joined ${response.members.length} threads`);
-   *
-   *   // Display information about threads
-   *   response.threads.forEach(thread => {
-   *     const lastActivity = new Date(thread.last_message_id).toLocaleString();
-   *     console.log(`- #${thread.name} (${thread.message_count} messages, last activity: ${lastActivity})`);
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch active guild threads:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Returns all active threads in the guild that the current user can access, including public and private threads.
    * The response includes thread members for threads that the current user has joined.
@@ -2652,41 +1759,6 @@ export class GuildRouter {
    * @returns The guild member object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-member}
    *
-   * @example
-   * ```typescript
-   * // Fetch a member from a guild
-   * try {
-   *   const member = await guildRouter.fetchGuildMember(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321"  // User ID
-   *   );
-   *
-   *   console.log(`Member: ${member.user.username}`);
-   *   console.log(`Joined at: ${new Date(member.joined_at).toLocaleString()}`);
-   *   console.log(`Nickname: ${member.nick || "None"}`);
-   *
-   *   // Check roles
-   *   console.log(`Has ${member.roles.length} roles`);
-   *
-   *   // Check if the member is pending (membership screening)
-   *   if (member.pending) {
-   *     console.log("User has not completed membership screening yet");
-   *   }
-   *
-   *   // Check timeout status
-   *   if (member.communication_disabled_until) {
-   *     const timeoutEnd = new Date(member.communication_disabled_until);
-   *     console.log(`User is timed out until: ${timeoutEnd.toLocaleString()}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch guild member:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.log("User is not a member of this guild");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Returns a 404 response if the user is not a member of the guild.
    * The bot must have access to the guild and member to retrieve this information.
@@ -2707,53 +1779,8 @@ export class GuildRouter {
    * @param guildId - The ID of the guild to list members for
    * @param query - Query parameters for pagination
    * @returns Array of guild member objects
-   * @throws Error if validation of query parameters fails
+   * @throws {Error} Error if validation of query parameters fails
    * @see {@link https://discord.com/developers/docs/resources/guild#list-guild-members}
-   *
-   * @example
-   * ```typescript
-   * // Fetch first 10 members from a guild
-   * try {
-   *   const members = await guildRouter.fetchGuildMembers(
-   *     "123456789012345678",
-   *     { limit: 10 }
-   *   );
-   *
-   *   console.log(`Fetched ${members.length} members`);
-   *
-   *   members.forEach(member => {
-   *     console.log(`- ${member.user.username}${member.nick ? ` (${member.nick})` : ""}`);
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch guild members:", error);
-   * }
-   *
-   * // Paginate through members
-   * try {
-   *   // Get first batch
-   *   const firstBatch = await guildRouter.fetchGuildMembers(
-   *     "123456789012345678",
-   *     { limit: 100 }
-   *   );
-   *
-   *   console.log(`Fetched first ${firstBatch.length} members`);
-   *
-   *   // Get next batch if there are more
-   *   if (firstBatch.length === 100) {
-   *     const lastUserId = firstBatch[firstBatch.length - 1].user.id;
-   *
-   *     // Fetch next batch starting after the last user from previous batch
-   *     const nextBatch = await guildRouter.fetchGuildMembers(
-   *       "123456789012345678",
-   *       { limit: 100, after: lastUserId }
-   *     );
-   *
-   *     console.log(`Fetched next ${nextBatch.length} members`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to paginate guild members:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the GUILD_MEMBERS privileged intent to be enabled in your bot settings.
@@ -2779,33 +1806,8 @@ export class GuildRouter {
    * @param guildId - The ID of the guild to search in
    * @param query - Search parameters including the query string
    * @returns Array of matching guild member objects
-   * @throws Error if validation of query parameters fails
+   * @throws {Error} Error if validation of query parameters fails
    * @see {@link https://discord.com/developers/docs/resources/guild#search-guild-members}
-   *
-   * @example
-   * ```typescript
-   * // Search for members by query
-   * try {
-   *   const members = await guildRouter.searchGuildMembers(
-   *     "123456789012345678",
-   *     {
-   *       query: "alex", // Will match names starting with "alex"
-   *       limit: 10
-   *     }
-   *   );
-   *
-   *   console.log(`Found ${members.length} members matching "alex"`);
-   *
-   *   members.forEach(member => {
-   *     console.log(`- ${member.user.username}#${member.user.discriminator}`);
-   *     if (member.nick) {
-   *       console.log(`  Nickname: ${member.nick}`);
-   *     }
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to search guild members:", error);
-   * }
-   * ```
    *
    * @remarks
    * The search is prefix-based, matching usernames and nicknames that start with the query string.
@@ -2832,38 +1834,8 @@ export class GuildRouter {
    * @param userId - The ID of the user to add
    * @param options - Configuration including OAuth2 access token and initial member settings
    * @returns The guild member object or null if already a member
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member}
-   *
-   * @example
-   * ```typescript
-   * // Add a user to a guild using OAuth2 access token
-   * try {
-   *   const member = await guildRouter.addGuildMember(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     {
-   *       access_token: "user_oauth2_access_token_with_guilds_join_scope",
-   *       nick: "New Member",
-   *       roles: ["111111111111111111", "222222222222222222"],
-   *       mute: false,
-   *       deaf: false
-   *     }
-   *   );
-   *
-   *   if (member) {
-   *     console.log(`User ${member.user.username} added to the guild successfully`);
-   *   } else {
-   *     console.log("User was already a member of the guild");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to add guild member:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing permissions or invalid access token");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires an OAuth2 access token with the `guilds.join` scope.
@@ -2893,50 +1865,8 @@ export class GuildRouter {
    * @param options - New attributes for the guild member
    * @param reason - Reason for the modification (for audit logs)
    * @returns The updated guild member object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-member}
-   *
-   * @example
-   * ```typescript
-   * // Update a member's nickname and roles
-   * try {
-   *   const updatedMember = await guildRouter.updateGuildMember(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     {
-   *       nick: "New Nickname",
-   *       roles: ["111111111111111111", "222222222222222222"],
-   *     },
-   *     "Updating member status"
-   *   );
-   *
-   *   console.log(`Updated ${updatedMember.user.username}'s guild settings`);
-   *   console.log(`New nickname: ${updatedMember.nick}`);
-   *   console.log(`Roles: ${updatedMember.roles.join(", ")}`);
-   * } catch (error) {
-   *   console.error("Failed to update guild member:", error);
-   * }
-   *
-   * // Apply a timeout to a member
-   * try {
-   *   // Create a date 1 hour in the future
-   *   const timeoutUntil = new Date();
-   *   timeoutUntil.setHours(timeoutUntil.getHours() + 1);
-   *
-   *   const updatedMember = await guildRouter.updateGuildMember(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     {
-   *       communication_disabled_until: timeoutUntil.toISOString(),
-   *     },
-   *     "Timeout for rule violation"
-   *   );
-   *
-   *   console.log(`Applied timeout to ${updatedMember.user.username} until ${timeoutUntil.toLocaleString()}`);
-   * } catch (error) {
-   *   console.error("Failed to timeout guild member:", error);
-   * }
-   * ```
    *
    * @remarks
    * Different operations require different permissions:
@@ -2975,35 +1905,6 @@ export class GuildRouter {
    * @returns The updated guild member object
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-current-member}
    *
-   * @example
-   * ```typescript
-   * // Update the bot's nickname
-   * try {
-   *   const updatedMember = await guildRouter.updateCurrentMember(
-   *     "123456789012345678",
-   *     "Awesome Bot",
-   *     "Setting a more appropriate nickname"
-   *   );
-   *
-   *   console.log(`Bot nickname updated to: ${updatedMember.nick}`);
-   * } catch (error) {
-   *   console.error("Failed to update bot nickname:", error);
-   * }
-   *
-   * // Remove the bot's nickname
-   * try {
-   *   const updatedMember = await guildRouter.updateCurrentMember(
-   *     "123456789012345678",
-   *     null,
-   *     "Removing nickname to use default name"
-   *   );
-   *
-   *   console.log("Bot nickname removed");
-   * } catch (error) {
-   *   console.error("Failed to remove bot nickname:", error);
-   * }
-   * ```
-   *
    * @remarks
    * The bot needs the CHANGE_NICKNAME permission to update its own nickname.
    * Fires a Guild Member Update Gateway event.
@@ -3031,25 +1932,6 @@ export class GuildRouter {
    * @returns The updated guild member object
    * @deprecated Use updateCurrentMember instead
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-current-user-nick}
-   *
-   * @example
-   * ```typescript
-   * // Update the bot's nickname (deprecated method)
-   * try {
-   *   const updatedMember = await guildRouter.updateCurrentUserNick(
-   *     "123456789012345678",
-   *     "Helper Bot",
-   *     "Changing nickname for clarity"
-   *   );
-   *
-   *   console.log(`Bot nickname updated to: ${updatedMember.nick}`);
-   *
-   *   // Better to use the non-deprecated method
-   *   console.log("Note: This method is deprecated. Consider using updateCurrentMember instead");
-   * } catch (error) {
-   *   console.error("Failed to update bot nickname:", error);
-   * }
-   * ```
    *
    * @remarks
    * This method is deprecated. Use updateCurrentMember instead.
@@ -3081,27 +1963,6 @@ export class GuildRouter {
    * @returns A Promise that resolves when the role is added
    * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member-role}
    *
-   * @example
-   * ```typescript
-   * // Add a role to a guild member
-   * try {
-   *   await guildRouter.addGuildMemberRole(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     "111111111111111111", // Role ID
-   *     "Granting Moderator role for helping with server events"
-   *   );
-   *
-   *   console.log("Role added successfully");
-   * } catch (error) {
-   *   console.error("Failed to add role to member:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing permissions or role hierarchy prevents this action");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_ROLES permission.
    * The bot's highest role must be higher than the role being assigned.
@@ -3130,27 +1991,6 @@ export class GuildRouter {
    * @returns A Promise that resolves when the role is removed
    * @see {@link https://discord.com/developers/docs/resources/guild#remove-guild-member-role}
    *
-   * @example
-   * ```typescript
-   * // Remove a role from a guild member
-   * try {
-   *   await guildRouter.removeGuildMemberRole(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     "111111111111111111", // Role ID
-   *     "Removing temporary event role after event conclusion"
-   *   );
-   *
-   *   console.log("Role removed successfully");
-   * } catch (error) {
-   *   console.error("Failed to remove role from member:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.error("Member does not have this role");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_ROLES permission.
    * The bot's highest role must be higher than the role being removed.
@@ -3178,26 +2018,6 @@ export class GuildRouter {
    * @returns A Promise that resolves when the member is removed
    * @see {@link https://discord.com/developers/docs/resources/guild#remove-guild-member}
    *
-   * @example
-   * ```typescript
-   * // Kick a member from a guild
-   * try {
-   *   await guildRouter.removeGuildMember(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     "Violated server rules after multiple warnings"
-   *   );
-   *
-   *   console.log("Member kicked successfully");
-   * } catch (error) {
-   *   console.error("Failed to kick member:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing permissions or member has higher role hierarchy");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the KICK_MEMBERS permission.
    * The bot must have a higher role than the target user.
@@ -3224,50 +2044,8 @@ export class GuildRouter {
    * @param guildId - The ID of the guild
    * @param query - Query parameters for filtering and pagination
    * @returns Array of ban objects
-   * @throws Error if validation of query parameters fails
+   * @throws {Error} Error if validation of query parameters fails
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-bans}
-   *
-   * @example
-   * ```typescript
-   * // Fetch bans with default settings (up to 1000 bans)
-   * try {
-   *   const bans = await guildRouter.fetchGuildBans("123456789012345678");
-   *
-   *   console.log(`Guild has ${bans.length} banned users`);
-   *
-   *   bans.forEach(ban => {
-   *     console.log(`- ${ban.user.username} (ID: ${ban.user.id})`);
-   *     console.log(`  Reason: ${ban.reason || "No reason provided"}`);
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch guild bans:", error);
-   * }
-   *
-   * // Fetch a smaller batch of bans with pagination
-   * try {
-   *   const firstBatch = await guildRouter.fetchGuildBans(
-   *     "123456789012345678",
-   *     { limit: 50 }
-   *   );
-   *
-   *   console.log(`Fetched first ${firstBatch.length} bans`);
-   *
-   *   // If there are more bans, fetch the next batch
-   *   if (firstBatch.length === 50) {
-   *     const lastBanId = firstBatch[firstBatch.length - 1].user.id;
-   *
-   *     // Get bans after the last ban from previous batch
-   *     const nextBatch = await guildRouter.fetchGuildBans(
-   *       "123456789012345678",
-   *       { limit: 50, after: lastBanId }
-   *     );
-   *
-   *     console.log(`Fetched next ${nextBatch.length} bans`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to paginate guild bans:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the BAN_MEMBERS permission.
@@ -3293,26 +2071,6 @@ export class GuildRouter {
    * @returns The ban object or 404 if not found
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-ban}
    *
-   * @example
-   * ```typescript
-   * // Check if a user is banned
-   * try {
-   *   const ban = await guildRouter.fetchGuildBan(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321"  // User ID
-   *   );
-   *
-   *   console.log(`User ${ban.user.username} is banned`);
-   *   console.log(`Ban reason: ${ban.reason || "No reason provided"}`);
-   * } catch (error) {
-   *   if (error.status === 404) {
-   *     console.log("User is not banned from this guild");
-   *   } else {
-   *     console.error("Failed to fetch ban information:", error);
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the BAN_MEMBERS permission.
    * Returns a 404 if the user is not banned from the guild.
@@ -3332,41 +2090,8 @@ export class GuildRouter {
    * @param options - Ban options including message deletion duration
    * @param reason - Reason for the ban (for audit logs)
    * @returns A Promise that resolves when the ban is created
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-ban}
-   *
-   * @example
-   * ```typescript
-   * // Ban a user without deleting messages
-   * try {
-   *   await guildRouter.createGuildBan(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     {},
-   *     "Repeated violations of server rules"
-   *   );
-   *
-   *   console.log("User banned successfully");
-   * } catch (error) {
-   *   console.error("Failed to ban user:", error);
-   * }
-   *
-   * // Ban a user and delete 7 days of messages
-   * try {
-   *   await guildRouter.createGuildBan(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     {
-   *       delete_message_seconds: 7 * 24 * 60 * 60 // 7 days in seconds
-   *     },
-   *     "Spamming in multiple channels"
-   *   );
-   *
-   *   console.log("User banned and messages deleted");
-   * } catch (error) {
-   *   console.error("Failed to ban user:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the BAN_MEMBERS permission.
@@ -3400,26 +2125,6 @@ export class GuildRouter {
    * @returns A Promise that resolves when the ban is removed
    * @see {@link https://discord.com/developers/docs/resources/guild#remove-guild-ban}
    *
-   * @example
-   * ```typescript
-   * // Unban a user
-   * try {
-   *   await guildRouter.removeGuildBan(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // User ID
-   *     "Ban appeal approved after review"
-   *   );
-   *
-   *   console.log("User unbanned successfully");
-   * } catch (error) {
-   *   console.error("Failed to unban user:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.log("User is not banned from this guild");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the BAN_MEMBERS permission.
    * Fires a Guild Ban Remove Gateway event.
@@ -3446,36 +2151,8 @@ export class GuildRouter {
    * @param options - Bulk ban options including user IDs and message deletion duration
    * @param reason - Reason for the bans (for audit logs)
    * @returns Object with lists of successfully banned and failed user IDs
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban}
-   *
-   * @example
-   * ```typescript
-   * // Ban multiple users at once
-   * try {
-   *   const result = await guildRouter.bulkGuildBan(
-   *     "123456789012345678", // Guild ID
-   *     {
-   *       user_ids: [
-   *         "111111111111111111",
-   *         "222222222222222222",
-   *         "333333333333333333"
-   *       ],
-   *       delete_message_seconds: 24 * 60 * 60 // Delete 1 day of messages
-   *     },
-   *     "Participating in raid attempt"
-   *   );
-   *
-   *   console.log(`Successfully banned ${result.banned_users.length} users`);
-   *
-   *   if (result.failed_users.length > 0) {
-   *     console.log(`Failed to ban ${result.failed_users.length} users`);
-   *     console.log("Failed IDs:", result.failed_users.join(", "));
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to perform bulk ban:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires both the BAN_MEMBERS and MANAGE_GUILD permissions.
@@ -3504,43 +2181,6 @@ export class GuildRouter {
    * @returns Array of role objects
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-roles}
    *
-   * @example
-   * ```typescript
-   * // Fetch all roles in a guild
-   * try {
-   *   const roles = await guildRouter.fetchGuildRoles("123456789012345678");
-   *
-   *   console.log(`Guild has ${roles.length} roles`);
-   *
-   *   // Sort roles by position (highest first)
-   *   const sortedRoles = [...roles].sort((a, b) => b.position - a.position);
-   *
-   *   console.log("Roles by hierarchy:");
-   *   sortedRoles.forEach(role => {
-   *     // Convert decimal color to hex
-   *     const colorHex = role.color ? `#${role.color.toString(16).padStart(6, '0')}` : "No color";
-   *
-   *     console.log(`- ${role.name} (Position: ${role.position}, Color: ${colorHex})`);
-   *
-   *     if (role.hoist) {
-   *       console.log("  Displayed separately in member list");
-   *     }
-   *
-   *     if (role.mentionable) {
-   *       console.log("  Can be mentioned by anyone");
-   *     }
-   *   });
-   *
-   *   // Find specific roles
-   *   const adminRole = roles.find(r => r.permissions.includes('ADMINISTRATOR'));
-   *   if (adminRole) {
-   *     console.log(`Admin role: ${adminRole.name} (ID: ${adminRole.id})`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch guild roles:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Roles are returned in ascending order by ID, not by position in the hierarchy.
    * The @everyone role is always included and has the same ID as the guild.
@@ -3556,38 +2196,6 @@ export class GuildRouter {
    * @param roleId - The ID of the role
    * @returns The role object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-role}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific role
-   * try {
-   *   const role = await guildRouter.fetchGuildRole(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321"  // Role ID
-   *   );
-   *
-   *   console.log(`Role: ${role.name}`);
-   *
-   *   // Convert decimal color to hex
-   *   const colorHex = role.color ? `#${role.color.toString(16).padStart(6, '0')}` : "No color";
-   *   console.log(`Color: ${colorHex}`);
-   *   console.log(`Position: ${role.position}`);
-   *
-   *   // Check permissions
-   *   console.log(`Permissions: ${role.permissions}`);
-   *
-   *   const hasAdmin = BigInt(role.permissions) & BigInt(0x8) // ADMINISTRATOR = 0x8
-   *   if (hasAdmin) {
-   *     console.log("Role has Administrator permission");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch role:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.log("Role not found in this guild");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Returns a 404 if the role doesn't exist in the guild.
@@ -3606,50 +2214,8 @@ export class GuildRouter {
    * @param options - Configuration for the new role
    * @param reason - Reason for creating the role (for audit logs)
    * @returns The newly created role object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role}
-   *
-   * @example
-   * ```typescript
-   * // Create a basic role
-   * try {
-   *   const newRole = await guildRouter.createGuildRole(
-   *     "123456789012345678",
-   *     {
-   *       name: "VIP Member",
-   *       permissions: "0", // No special permissions
-   *       color: 0xFFC0CB, // Pink color
-   *       hoist: true, // Display separately in member list
-   *       mentionable: true
-   *     },
-   *     "Creating VIP role for special members"
-   *   );
-   *
-   *   console.log(`Created role ${newRole.name} with ID: ${newRole.id}`);
-   * } catch (error) {
-   *   console.error("Failed to create role:", error);
-   * }
-   *
-   * // Create a role with custom emoji and permissions
-   * try {
-   *   const newRole = await guildRouter.createGuildRole(
-   *     "123456789012345678",
-   *     {
-   *       name: "Moderator",
-   *       permissions: "2099200", // Kick, Ban, Manage Messages permissions
-   *       color: 0x00FFFF, // Cyan color
-   *       hoist: true,
-   *       unicode_emoji: "🛡️", // Shield emoji
-   *       mentionable: false
-   *     },
-   *     "Creating moderator role with required permissions"
-   *   );
-   *
-   *   console.log(`Created moderator role with ID: ${newRole.id}`);
-   * } catch (error) {
-   *   console.error("Failed to create moderator role:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_ROLES permission.
@@ -3682,38 +2248,8 @@ export class GuildRouter {
    * @param guildId - The ID of the guild
    * @param options - Array of position modifications
    * @returns Array of all guild role objects with updated positions
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions}
-   *
-   * @example
-   * ```typescript
-   * // Reorder roles in a guild
-   * try {
-   *   const updatedRoles = await guildRouter.updateGuildRolePositions(
-   *     "123456789012345678",
-   *     [
-   *       {
-   *         id: "111111111111111111", // Role to move
-   *         position: 3 // New position (1 is directly above @everyone)
-   *       },
-   *       {
-   *         id: "222222222222222222", // Another role to move
-   *         position: 2
-   *       }
-   *     ]
-   *   );
-   *
-   *   console.log("Roles reordered successfully");
-   *   console.log("Updated role positions:");
-   *
-   *   // Display updated role hierarchy
-   *   updatedRoles.sort((a, b) => b.position - a.position).forEach(role => {
-   *     console.log(`- ${role.name}: position ${role.position}`);
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to update role positions:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_ROLES permission.
@@ -3743,47 +2279,8 @@ export class GuildRouter {
    * @param options - New properties for the role
    * @param reason - Reason for modifying the role (for audit logs)
    * @returns The updated role object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role}
-   *
-   * @example
-   * ```typescript
-   * // Update a role's appearance
-   * try {
-   *   const updatedRole = await guildRouter.updateGuildRole(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Role ID
-   *     {
-   *       name: "Elite Member",
-   *       color: 0xFFD700, // Gold color
-   *       hoist: true,
-   *       mentionable: true
-   *     },
-   *     "Updating role appearance for better visibility"
-   *   );
-   *
-   *   console.log(`Updated role: ${updatedRole.name}`);
-   *   console.log(`New color: #${updatedRole.color.toString(16).padStart(6, '0')}`);
-   * } catch (error) {
-   *   console.error("Failed to update role:", error);
-   * }
-   *
-   * // Update a role's permissions
-   * try {
-   *   const updatedRole = await guildRouter.updateGuildRole(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Role ID
-   *     {
-   *       permissions: "16796753" // Updated permission set
-   *     },
-   *     "Adjusting role permissions for new server policy"
-   *   );
-   *
-   *   console.log(`Updated permissions for role: ${updatedRole.name}`);
-   * } catch (error) {
-   *   console.error("Failed to update role permissions:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_ROLES permission.
@@ -3816,42 +2313,6 @@ export class GuildRouter {
    * @returns The updated MFA level
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-mfa-level}
    *
-   * @example
-   * ```typescript
-   * // Enable MFA requirement for moderation
-   * try {
-   *   const newLevel = await guildRouter.updateGuildMfaLevel(
-   *     "123456789012345678",
-   *     1, // ELEVATED (require MFA)
-   *     "Increasing security for moderation actions"
-   *   );
-   *
-   *   console.log(`MFA level updated to: ${newLevel === 1 ? "ELEVATED" : "NONE"}`);
-   *   if (newLevel === 1) {
-   *     console.log("Server moderators now require 2FA to perform moderation actions");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to update MFA level:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Bot must be the guild owner to modify MFA level");
-   *   }
-   * }
-   *
-   * // Disable MFA requirement
-   * try {
-   *   const newLevel = await guildRouter.updateGuildMfaLevel(
-   *     "123456789012345678",
-   *     0, // NONE (no MFA required)
-   *     "Removing MFA requirement for ease of moderation"
-   *   );
-   *
-   *   console.log(`MFA level updated to: ${newLevel === 1 ? "ELEVATED" : "NONE"}`);
-   * } catch (error) {
-   *   console.error("Failed to update MFA level:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Requires the bot to be the guild owner.
    * MFA levels:
@@ -3880,26 +2341,6 @@ export class GuildRouter {
    * @returns A Promise that resolves when the role is deleted
    * @see {@link https://discord.com/developers/docs/resources/guild#delete-guild-role}
    *
-   * @example
-   * ```typescript
-   * // Delete a role from a guild
-   * try {
-   *   await guildRouter.deleteGuildRole(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Role ID
-   *     "Removing outdated role after server restructuring"
-   *   );
-   *
-   *   console.log("Role deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete role:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing permissions or role hierarchy prevents this action");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_ROLES permission.
    * The bot's highest role must be higher than the role being deleted.
@@ -3927,38 +2368,8 @@ export class GuildRouter {
    * @param guildId - The ID of the guild
    * @param query - Query parameters including days of inactivity and roles to include
    * @returns Object with the pruned count
-   * @throws Error if validation of query parameters fails
+   * @throws {Error} Error if validation of query parameters fails
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-prune-count}
-   *
-   * @example
-   * ```typescript
-   * // Get count of members who would be pruned
-   * try {
-   *   const pruneCount = await guildRouter.fetchGuildPruneCount(
-   *     "123456789012345678",
-   *     { days: 30 } // Members inactive for 30 days
-   *   );
-   *
-   *   console.log(`${pruneCount.pruned} members would be pruned`);
-   * } catch (error) {
-   *   console.error("Failed to get prune count:", error);
-   * }
-   *
-   * // Get count with specific roles included
-   * try {
-   *   const pruneCount = await guildRouter.fetchGuildPruneCount(
-   *     "123456789012345678",
-   *     {
-   *       days: 14, // Members inactive for 14 days
-   *       include_roles: "111111111111111111,222222222222222222" // Only consider these roles
-   *     }
-   *   );
-   *
-   *   console.log(`${pruneCount.pruned} members with specified roles would be pruned`);
-   * } catch (error) {
-   *   console.error("Failed to get prune count with roles:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires both the MANAGE_GUILD and KICK_MEMBERS permissions.
@@ -3987,45 +2398,8 @@ export class GuildRouter {
    * @param options - Prune options including days of inactivity and roles to include
    * @param reason - Reason for the prune (for audit logs)
    * @returns Object with the number of members pruned (null if compute_prune_count is false)
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#begin-guild-prune}
-   *
-   * @example
-   * ```typescript
-   * // Prune inactive members with default settings
-   * try {
-   *   const result = await guildRouter.beginGuildPrune(
-   *     "123456789012345678",
-   *     {
-   *       days: 7, // Prune members inactive for 7 days
-   *       compute_prune_count: true, // Return the count of pruned members
-   *       include_roles: []
-   *     },
-   *     "Routine cleanup of inactive members"
-   *   );
-   *
-   *   console.log(`Pruned ${result.pruned} inactive members`);
-   * } catch (error) {
-   *   console.error("Failed to prune members:", error);
-   * }
-   *
-   * // Prune without computing the count (faster for large guilds)
-   * try {
-   *   const result = await guildRouter.beginGuildPrune(
-   *     "123456789012345678",
-   *     {
-   *       days: 30, // Prune members inactive for 30 days
-   *       compute_prune_count: false, // Don't compute count for faster operation
-   *       include_roles: []
-   *     },
-   *     "Major cleanup of long-term inactive members"
-   *   );
-   *
-   *   console.log("Prune operation completed successfully");
-   * } catch (error) {
-   *   console.error("Failed to prune members:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires both the MANAGE_GUILD and KICK_MEMBERS permissions.
@@ -4055,41 +2429,6 @@ export class GuildRouter {
    * @returns Array of voice region objects
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-voice-regions}
    *
-   * @example
-   * ```typescript
-   * // Fetch voice regions available for a guild
-   * try {
-   *   const regions = await guildRouter.fetchGuildVoiceRegions("123456789012345678");
-   *
-   *   console.log(`Guild has ${regions.length} available voice regions`);
-   *
-   *   // Display available regions
-   *   regions.forEach(region => {
-   *     console.log(`- ${region.name} (${region.id})`);
-   *
-   *     if (region.optimal) {
-   *       console.log("  ✓ Optimal region for this guild");
-   *     }
-   *
-   *     if (region.deprecated) {
-   *       console.log("  ⚠️ Deprecated region");
-   *     }
-   *
-   *     if (region.custom) {
-   *       console.log("  ✨ Custom region for this guild");
-   *     }
-   *   });
-   *
-   *   // Find optimal region
-   *   const optimalRegion = regions.find(r => r.optimal);
-   *   if (optimalRegion) {
-   *     console.log(`Optimal region: ${optimalRegion.name} (${optimalRegion.id})`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch voice regions:", error);
-   * }
-   * ```
-   *
    * @remarks
    * The regions returned are based on the guild's geographic location (for automatic server selection).
    * Some regions may be marked as deprecated, which means they may be removed in the future.
@@ -4110,47 +2449,6 @@ export class GuildRouter {
    * @returns Array of invite objects with metadata
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-invites}
    *
-   * @example
-   * ```typescript
-   * // Fetch all invites for a guild
-   * try {
-   *   const invites = await guildRouter.fetchGuildInvites("123456789012345678");
-   *
-   *   console.log(`Guild has ${invites.length} active invites`);
-   *
-   *   // Display information about each invite
-   *   invites.forEach(invite => {
-   *     console.log(`- Code: ${invite.code}`);
-   *     console.log(`  Channel: #${invite.channel.name} (${invite.channel.id})`);
-   *     console.log(`  Created by: ${invite.inviter?.username || "Unknown"}`);
-   *
-   *     // Check expiration
-   *     if (invite.max_age === 0) {
-   *       console.log("  Permanent invite");
-   *     } else {
-   *       const expiresAt = new Date(invite.created_at);
-   *       expiresAt.setSeconds(expiresAt.getSeconds() + invite.max_age);
-   *       console.log(`  Expires: ${expiresAt.toLocaleString()}`);
-   *     }
-   *
-   *     // Usage information
-   *     console.log(`  Uses: ${invite.uses}/${invite.max_uses === 0 ? "∞" : invite.max_uses}`);
-   *
-   *     if (invite.temporary) {
-   *       console.log("  ⚠️ Grants temporary membership");
-   *     }
-   *   });
-   *
-   *   // Find invite with the most uses
-   *   const mostUsed = invites.reduce((prev, current) =>
-   *     (prev.uses > current.uses) ? prev : current
-   *   );
-   *   console.log(`Most used invite: ${mostUsed.code} (${mostUsed.uses} uses)`);
-   * } catch (error) {
-   *   console.error("Failed to fetch guild invites:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_GUILD permission.
    * Returns all active invites for the guild, including details about who created them.
@@ -4169,44 +2467,6 @@ export class GuildRouter {
    * @param guildId - The ID of the guild
    * @returns Array of integration objects
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-integrations}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all integrations for a guild
-   * try {
-   *   const integrations = await guildRouter.fetchGuildIntegrations("123456789012345678");
-   *
-   *   console.log(`Guild has ${integrations.length} integrations`);
-   *
-   *   // Group integrations by type
-   *   const integrationsByType = integrations.reduce((groups, integration) => {
-   *     const type = integration.type;
-   *     if (!groups[type]) {
-   *       groups[type] = [];
-   *     }
-   *     groups[type].push(integration);
-   *     return groups;
-   *   }, {});
-   *
-   *   // Display integration types
-   *   Object.entries(integrationsByType).forEach(([type, typeIntegrations]) => {
-   *     console.log(`${type} integrations: ${typeIntegrations.length}`);
-   *
-   *     typeIntegrations.forEach(integration => {
-   *       console.log(`- ${integration.name} (ID: ${integration.id})`);
-   *       console.log(`  Account: ${integration.account.name}`);
-   *
-   *       if (integration.enabled) {
-   *         console.log("  Status: Enabled");
-   *       } else {
-   *         console.log("  Status: Disabled");
-   *       }
-   *     });
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch guild integrations:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -4229,26 +2489,6 @@ export class GuildRouter {
    * @param reason - Reason for deleting the integration (for audit logs)
    * @returns A Promise that resolves when the integration is deleted
    * @see {@link https://discord.com/developers/docs/resources/guild#delete-guild-integration}
-   *
-   * @example
-   * ```typescript
-   * // Delete an integration from a guild
-   * try {
-   *   await guildRouter.deleteGuildIntegration(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Integration ID
-   *     "Removing unused integration"
-   *   );
-   *
-   *   console.log("Integration deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete integration:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.log("Integration not found");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -4274,28 +2514,6 @@ export class GuildRouter {
    * @returns The guild widget settings object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget-settings}
    *
-   * @example
-   * ```typescript
-   * // Fetch widget settings for a guild
-   * try {
-   *   const widgetSettings = await guildRouter.fetchGuildWidgetSettings("123456789012345678");
-   *
-   *   if (widgetSettings.enabled) {
-   *     console.log("Guild widget is enabled");
-   *
-   *     if (widgetSettings.channel_id) {
-   *       console.log(`Widget channel ID: ${widgetSettings.channel_id}`);
-   *     } else {
-   *       console.log("No specific channel set for the widget");
-   *     }
-   *   } else {
-   *     console.log("Guild widget is disabled");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch widget settings:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_GUILD permission.
    * The widget settings determine whether the guild is publicly visible in the guild embed.
@@ -4317,44 +2535,8 @@ export class GuildRouter {
    * @param options - New widget settings
    * @param reason - Reason for modifying the widget (for audit logs)
    * @returns The updated guild widget settings object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-widget}
-   *
-   * @example
-   * ```typescript
-   * // Enable the guild widget
-   * try {
-   *   const updatedSettings = await guildRouter.updateGuildWidget(
-   *     "123456789012345678",
-   *     {
-   *       enabled: true,
-   *       channel_id: "111111111111111111" // Channel for invite link
-   *     },
-   *     "Enabling widget for community promotion"
-   *   );
-   *
-   *   console.log("Guild widget enabled successfully");
-   *   console.log(`Invite channel set to ID: ${updatedSettings.channel_id}`);
-   * } catch (error) {
-   *   console.error("Failed to update widget settings:", error);
-   * }
-   *
-   * // Disable the guild widget
-   * try {
-   *   const updatedSettings = await guildRouter.updateGuildWidget(
-   *     "123456789012345678",
-   *     {
-   *       enabled: false,
-   *       channel_id: null
-   *     },
-   *     "Disabling widget for privacy"
-   *   );
-   *
-   *   console.log("Guild widget disabled successfully");
-   * } catch (error) {
-   *   console.error("Failed to disable widget:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -4383,42 +2565,6 @@ export class GuildRouter {
    * @returns The guild widget object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget}
    *
-   * @example
-   * ```typescript
-   * // Fetch the guild widget
-   * try {
-   *   const widget = await guildRouter.fetchGuildWidget("123456789012345678");
-   *
-   *   console.log(`Guild name: ${widget.name}`);
-   *   console.log(`Invite URL: ${widget.instant_invite || "No instant invite set"}`);
-   *   console.log(`Online members: ${widget.presence_count}`);
-   *
-   *   // List channels visible in the widget
-   *   console.log("Channels visible in widget:");
-   *   widget.channels.forEach(channel => {
-   *     console.log(`- ${channel.name} (ID: ${channel.id})`);
-   *   });
-   *
-   *   // List some online members visible in the widget
-   *   if (widget.members.length > 0) {
-   *     console.log("Some online members visible in widget:");
-   *     widget.members.slice(0, 5).forEach(member => {
-   *       console.log(`- ${member.username} (Status: ${member.status})`);
-   *     });
-   *
-   *     if (widget.members.length > 5) {
-   *       console.log(`And ${widget.members.length - 5} more members...`);
-   *     }
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch guild widget:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.log("Widget is disabled for this guild");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Returns a 404 if the widget is disabled.
    * The widget contains information that is publicly available to anyone who can access the guild's widget URL.
@@ -4438,27 +2584,6 @@ export class GuildRouter {
    * @param guildId - The ID of the guild
    * @returns Partial invite object with code and usage count
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-vanity-url}
-   *
-   * @example
-   * ```typescript
-   * // Fetch the guild's vanity URL
-   * try {
-   *   const vanityUrl = await guildRouter.fetchGuildVanityUrl("123456789012345678");
-   *
-   *   if (vanityUrl.code) {
-   *     console.log(`Vanity URL: discord.gg/${vanityUrl.code}`);
-   *     console.log(`Times used: ${vanityUrl.uses}`);
-   *   } else {
-   *     console.log("Guild does not have a vanity URL set");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch vanity URL:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.log("Guild does not have the VANITY_URL feature");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -4481,35 +2606,6 @@ export class GuildRouter {
    * @param style - Style of the widget image
    * @returns Buffer containing the PNG image data
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget-image}
-   *
-   * @example
-   * ```typescript
-   * // Get a guild widget image with default style
-   * try {
-   *   const imageBuffer = await guildRouter.fetchGuildWidgetImage("123456789012345678");
-   *
-   *   console.log(`Received widget image (${imageBuffer.length} bytes)`);
-   *
-   *   // Example: Save the image to a file (requires fs module)
-   *   const fs = require('fs');
-   *   fs.writeFileSync('guild-widget.png', imageBuffer);
-   *   console.log("Widget image saved to guild-widget.png");
-   * } catch (error) {
-   *   console.error("Failed to fetch widget image:", error);
-   * }
-   *
-   * // Get a guild widget image with banner style
-   * try {
-   *   const imageBuffer = await guildRouter.fetchGuildWidgetImage(
-   *     "123456789012345678",
-   *     "banner3" // Use banner3 style
-   *   );
-   *
-   *   console.log(`Received banner widget image (${imageBuffer.length} bytes)`);
-   * } catch (error) {
-   *   console.error("Failed to fetch banner widget image:", error);
-   * }
-   * ```
    *
    * @remarks
    * Returns a PNG image of the guild's widget.
@@ -4542,30 +2638,6 @@ export class GuildRouter {
    * @returns The welcome screen object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-welcome-screen}
    *
-   * @example
-   * ```typescript
-   * // Fetch the guild's welcome screen
-   * try {
-   *   const welcomeScreen = await guildRouter.fetchGuildWelcomeScreen("123456789012345678");
-   *
-   *   if (welcomeScreen.enabled) {
-   *     console.log("Welcome screen is enabled");
-   *     console.log(`Description: ${welcomeScreen.description || "No description set"}`);
-   *
-   *     // Display welcome screen channels
-   *     console.log("Welcome channels:");
-   *     welcomeScreen.welcome_channels.forEach(channel => {
-   *       console.log(`- ${channel.emoji_name || channel.emoji_id || "📌"} ${channel.channel.name}`);
-   *       console.log(`  Description: ${channel.description}`);
-   *     });
-   *   } else {
-   *     console.log("Welcome screen is disabled for this guild");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch welcome screen:", error);
-   * }
-   * ```
-   *
    * @remarks
    * If the welcome screen is disabled, requires the MANAGE_GUILD permission.
    * The welcome screen is shown to new members in Community servers.
@@ -4585,60 +2657,8 @@ export class GuildRouter {
    * @param options - New properties for the welcome screen
    * @param reason - Reason for modifying the welcome screen (for audit logs)
    * @returns The updated welcome screen object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-welcome-screen}
-   *
-   * @example
-   * ```typescript
-   * // Enable and update the welcome screen
-   * try {
-   *   const updatedScreen = await guildRouter.updateGuildWelcomeScreen(
-   *     "123456789012345678",
-   *     {
-   *       enabled: true,
-   *       description: "Welcome to our community! Check out these channels to get started:",
-   *       welcome_channels: [
-   *         {
-   *           channel_id: "111111111111111111",
-   *           description: "Server rules and guidelines",
-   *           emoji_name: "📜"
-   *         },
-   *         {
-   *           channel_id: "222222222222222222",
-   *           description: "Introduce yourself to the community",
-   *           emoji_name: "👋"
-   *         },
-   *         {
-   *           channel_id: "333333333333333333",
-   *           description: "Get help and support",
-   *           emoji_name: "❓"
-   *         }
-   *       ]
-   *     },
-   *     "Improving new member onboarding experience"
-   *   );
-   *
-   *   console.log("Welcome screen updated successfully");
-   *   console.log(`Configured ${updatedScreen.welcome_channels.length} welcome channels`);
-   * } catch (error) {
-   *   console.error("Failed to update welcome screen:", error);
-   * }
-   *
-   * // Disable the welcome screen
-   * try {
-   *   await guildRouter.updateGuildWelcomeScreen(
-   *     "123456789012345678",
-   *     {
-   *       enabled: false
-   *     },
-   *     "Temporarily disabling welcome screen"
-   *   );
-   *
-   *   console.log("Welcome screen disabled successfully");
-   * } catch (error) {
-   *   console.error("Failed to disable welcome screen:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_GUILD permission.
@@ -4667,50 +2687,6 @@ export class GuildRouter {
    * @returns The guild onboarding object
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-onboarding}
    *
-   * @example
-   * ```typescript
-   * // Fetch the guild's onboarding configuration
-   * try {
-   *   const onboarding = await guildRouter.fetchGuildOnboarding("123456789012345678");
-   *
-   *   if (onboarding.enabled) {
-   *     console.log("Guild onboarding is enabled");
-   *     console.log(`Mode: ${onboarding.mode === 0 ? "DEFAULT" : "ADVANCED"}`);
-   *
-   *     // Display default channels
-   *     console.log("Default channels users are opted into:");
-   *     onboarding.default_channel_ids.forEach(channelId => {
-   *       console.log(`- Channel ID: ${channelId}`);
-   *     });
-   *
-   *     // Display onboarding prompts
-   *     console.log("Onboarding prompts:");
-   *     onboarding.prompts.forEach(prompt => {
-   *       console.log(`- ${prompt.title} (ID: ${prompt.id})`);
-   *       console.log(`  Type: ${prompt.type === 0 ? "MULTIPLE_CHOICE" : "DROPDOWN"}`);
-   *       console.log(`  Options: ${prompt.options.length}`);
-   *
-   *       // Display some options for each prompt
-   *       prompt.options.forEach(option => {
-   *         console.log(`  • ${option.title} (ID: ${option.id})`);
-   *
-   *         if (option.channel_ids.length > 0) {
-   *           console.log(`    Channels: ${option.channel_ids.join(", ")}`);
-   *         }
-   *
-   *         if (option.role_ids.length > 0) {
-   *           console.log(`    Roles: ${option.role_ids.join(", ")}`);
-   *         }
-   *       });
-   *     });
-   *   } else {
-   *     console.log("Guild onboarding is disabled");
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch onboarding configuration:", error);
-   * }
-   * ```
-   *
    * @remarks
    * The onboarding configuration defines the new member onboarding flow for Community servers.
    * It can include prompts for selecting interests, rules acknowledgment, and channel opt-ins.
@@ -4730,50 +2706,8 @@ export class GuildRouter {
    * @param options - New onboarding configuration
    * @param reason - Reason for modifying the onboarding (for audit logs)
    * @returns The updated guild onboarding object
-   * @throws Error if validation of options fails
+   * @throws {Error} Error if validation of options fails
    * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-onboarding}
-   *
-   * @example
-   * ```typescript
-   * // Update guild onboarding with a basic configuration
-   * try {
-   *   const updatedOnboarding = await guildRouter.updateGuildOnboarding(
-   *     "123456789012345678",
-   *     {
-   *       enabled: true,
-   *       mode: 0, // DEFAULT mode
-   *       default_channel_ids: ["111111111111111111", "222222222222222222"],
-   *       prompts: [
-   *         {
-   *           id: "0", // Using placeholder ID for new prompt
-   *           type: 0, // MULTIPLE_CHOICE
-   *           title: "What brings you to our server?",
-   *           options: [
-   *             {
-   *               id: "0", // Using placeholder ID for new option
-   *               title: "Just browsing",
-   *               channel_ids: ["111111111111111111"],
-   *               role_ids: []
-   *             },
-   *             {
-   *               id: "1", // Using placeholder ID for new option
-   *               title: "Looking to participate actively",
-   *               channel_ids: ["111111111111111111", "222222222222222222"],
-   *               role_ids: ["333333333333333333"]
-   *             }
-   *           ]
-   *         }
-   *       ]
-   *     },
-   *     "Setting up new member onboarding flow"
-   *   );
-   *
-   *   console.log("Guild onboarding updated successfully");
-   *   console.log(`Configured ${updatedOnboarding.prompts.length} onboarding prompts`);
-   * } catch (error) {
-   *   console.error("Failed to update onboarding:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires both the MANAGE_GUILD and MANAGE_ROLES permissions.

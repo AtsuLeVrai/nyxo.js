@@ -1047,58 +1047,6 @@ export class ChannelRouter {
    * @remarks If the channel is a thread, the response includes a thread member object for the current user
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel}
    *
-   * @example
-   * ```typescript
-   * // Fetch a text channel
-   * try {
-   *   const channel = await channelRouter.fetchChannel("123456789012345678");
-   *
-   *   console.log(`Channel: ${channel.name}`);
-   *   console.log(`Type: ${
-   *     channel.type === 0 ? "Text Channel" :
-   *     channel.type === 2 ? "Voice Channel" :
-   *     channel.type === 4 ? "Category" :
-   *     channel.type === 5 ? "Announcement Channel" :
-   *     channel.type === 15 ? "Forum Channel" : "Other"
-   *   }`);
-   *
-   *   if (channel.parent_id) {
-   *     console.log(`Parent category ID: ${channel.parent_id}`);
-   *   }
-   *
-   *   if (channel.topic) {
-   *     console.log(`Topic: ${channel.topic}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch channel:", error);
-   * }
-   *
-   * // Fetch a thread
-   * try {
-   *   const thread = await channelRouter.fetchChannel("987654321987654321");
-   *
-   *   if (thread.type === 11 || thread.type === 12 || thread.type === 10) { // Thread types
-   *     console.log(`Thread: ${thread.name}`);
-   *     console.log(`Parent channel ID: ${thread.parent_id}`);
-   *     console.log(`Owner ID: ${thread.owner_id}`);
-   *
-   *     if (thread.thread_metadata) {
-   *       console.log(`Archived: ${thread.thread_metadata.archived}`);
-   *       console.log(`Auto-archive duration: ${thread.thread_metadata.auto_archive_duration} minutes`);
-   *       console.log(`Locked: ${thread.thread_metadata.locked}`);
-   *     }
-   *
-   *     // The member object is present if the bot is a member of the thread
-   *     if (thread.member) {
-   *       console.log("Bot is a member of this thread");
-   *       console.log(`Joined at: ${new Date(thread.member.join_timestamp).toLocaleString()}`);
-   *     }
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch thread:", error);
-   * }
-   * ```
-   *
    * @remarks
    * The bot needs access to the channel to fetch it.
    * Returns a 404 error if the channel doesn't exist or the bot doesn't have access.
@@ -1122,70 +1070,6 @@ export class ChannelRouter {
    * - For threads, requires various permissions depending on the fields being modified
    * - Fires a Channel Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel}
-   *
-   * @example
-   * ```typescript
-   * // Update a text channel
-   * try {
-   *   const updatedChannel = await channelRouter.updateChannel(
-   *     "123456789012345678",
-   *     {
-   *       name: "general-discussion",
-   *       topic: "A place for general community discussions",
-   *       rate_limit_per_user: 5, // 5 seconds slowmode
-   *       nsfw: false
-   *     },
-   *     "Updating channel settings for better organization"
-   *   );
-   *
-   *   console.log(`Channel updated: ${updatedChannel.name}`);
-   *   console.log(`Topic: ${updatedChannel.topic}`);
-   *   console.log(`Slowmode: ${updatedChannel.rate_limit_per_user} seconds`);
-   * } catch (error) {
-   *   console.error("Failed to update channel:", error);
-   * }
-   *
-   * // Update a voice channel
-   * try {
-   *   const updatedChannel = await channelRouter.updateChannel(
-   *     "123456789012345678",
-   *     {
-   *       name: "Gaming Lounge",
-   *       bitrate: 96000, // 96 kbps
-   *       user_limit: 15, // Limit to 15 users
-   *       parent_id: "987654321987654321" // Move to a different category
-   *     },
-   *     "Improving voice quality and organization"
-   *   );
-   *
-   *   console.log(`Voice channel updated: ${updatedChannel.name}`);
-   *   console.log(`Bitrate: ${updatedChannel.bitrate / 1000} kbps`);
-   *   console.log(`User limit: ${updatedChannel.user_limit || "No limit"}`);
-   * } catch (error) {
-   *   console.error("Failed to update voice channel:", error);
-   * }
-   *
-   * // Update a thread
-   * try {
-   *   const updatedThread = await channelRouter.updateChannel(
-   *     "123456789012345678",
-   *     {
-   *       name: "Important Discussion",
-   *       archived: false, // Unarchive the thread
-   *       auto_archive_duration: 1440, // Auto-archive after 24 hours
-   *       locked: false, // Unlock the thread
-   *       rate_limit_per_user: 10 // 10 seconds slowmode
-   *     },
-   *     "Reopening thread for continued discussion"
-   *   );
-   *
-   *   console.log(`Thread updated: ${updatedThread.name}`);
-   *   console.log(`Archived: ${updatedThread.thread_metadata?.archived}`);
-   *   console.log(`Auto-archive: ${updatedThread.thread_metadata?.auto_archive_duration} minutes`);
-   * } catch (error) {
-   *   console.error("Failed to update thread:", error);
-   * }
-   * ```
    *
    * @remarks
    * Different permissions are required depending on the channel type and the fields being updated:
@@ -1229,46 +1113,6 @@ export class ChannelRouter {
    * - Deleting a guild channel cannot be undone
    * @see {@link https://discord.com/developers/docs/resources/channel#deleteclose-channel}
    *
-   * @example
-   * ```typescript
-   * // Delete a guild channel
-   * try {
-   *   const deletedChannel = await channelRouter.deleteChannel(
-   *     "123456789012345678",
-   *     "Channel no longer needed after server reorganization"
-   *   );
-   *
-   *   console.log(`Channel "${deletedChannel.name}" deleted successfully`);
-   * } catch (error) {
-   *   console.error("Failed to delete channel:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing required permissions to delete this channel");
-   *   }
-   * }
-   *
-   * // Close a DM channel
-   * try {
-   *   await channelRouter.deleteChannel("123456789012345678");
-   *
-   *   console.log("DM channel closed successfully");
-   * } catch (error) {
-   *   console.error("Failed to close DM channel:", error);
-   * }
-   *
-   * // Delete a thread
-   * try {
-   *   const deletedThread = await channelRouter.deleteChannel(
-   *     "123456789012345678",
-   *     "Thread topic resolved and no longer needed"
-   *   );
-   *
-   *   console.log(`Thread "${deletedThread.name}" deleted successfully`);
-   * } catch (error) {
-   *   console.error("Failed to delete thread:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Different permissions are required depending on the channel type:
    * - Guild channels: MANAGE_CHANNELS permission
@@ -1307,45 +1151,6 @@ export class ChannelRouter {
    * - Fires a Channel Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions}
    *
-   * @example
-   * ```typescript
-   * // Set permissions for a role in a channel
-   * try {
-   *   await channelRouter.editChannelPermissions(
-   *     "123456789012345678", // Channel ID
-   *     "111111111111111111", // Role ID
-   *     {
-   *       allow: "1024", // Add CONNECT permission (1 << 10)
-   *       deny: "2048",  // Deny SPEAK permission (1 << 11)
-   *       type: 0        // 0 for role, 1 for member
-   *     },
-   *     "Configuring role permissions for voice channel"
-   *   );
-   *
-   *   console.log("Channel permissions updated for role");
-   * } catch (error) {
-   *   console.error("Failed to edit channel permissions:", error);
-   * }
-   *
-   * // Set permissions for a user in a channel
-   * try {
-   *   await channelRouter.editChannelPermissions(
-   *     "123456789012345678", // Channel ID
-   *     "222222222222222222", // User ID
-   *     {
-   *       allow: "6144",  // ADD_REACTIONS and EMBED_LINKS (1 << 11 | 1 << 12)
-   *       deny: "0",      // No denied permissions
-   *       type: 1         // 0 for role, 1 for member
-   *     },
-   *     "Granting special permissions to moderator"
-   *   );
-   *
-   *   console.log("Channel permissions updated for user");
-   * } catch (error) {
-   *   console.error("Failed to edit channel permissions for user:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_ROLES permission in the guild.
    * The bot's highest role must be higher than the role being edited (for role overwrites).
@@ -1382,46 +1187,6 @@ export class ChannelRouter {
    * - Requires the MANAGE_CHANNELS permission
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-invites}
    *
-   * @example
-   * ```typescript
-   * // Fetch all invites for a channel
-   * try {
-   *   const invites = await channelRouter.fetchChannelInvites("123456789012345678");
-   *
-   *   console.log(`Channel has ${invites.length} active invites`);
-   *
-   *   // Display information about each invite
-   *   invites.forEach(invite => {
-   *     console.log(`- Code: ${invite.code}`);
-   *
-   *     if (invite.inviter) {
-   *       console.log(`  Created by: ${invite.inviter.username}`);
-   *     }
-   *
-   *     // Check expiration
-   *     if (invite.max_age === 0) {
-   *       console.log("  Never expires");
-   *     } else {
-   *       const expiresIn = invite.max_age / 3600; // Convert to hours
-   *       console.log(`  Expires after: ${expiresIn} hours`);
-   *     }
-   *
-   *     // Check uses
-   *     if (invite.max_uses === 0) {
-   *       console.log("  Unlimited uses");
-   *     } else {
-   *       console.log(`  Max uses: ${invite.max_uses}`);
-   *     }
-   *
-   *     if (invite.temporary) {
-   *       console.log("  Grants temporary membership");
-   *     }
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch channel invites:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_CHANNELS permission.
    * Only works for guild channels, not DMs or group DMs.
@@ -1445,48 +1210,6 @@ export class ChannelRouter {
    * - Requires the CREATE_INSTANT_INVITE permission
    * - Fires an Invite Create Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#create-channel-invite}
-   *
-   * @example
-   * ```typescript
-   * // Create a standard invite
-   * try {
-   *   const invite = await channelRouter.createChannelInvite(
-   *     "123456789012345678",
-   *     {
-   *       max_age: 86400,    // Expires after 24 hours
-   *       max_uses: 0,       // Unlimited uses
-   *       temporary: false,  // Regular membership
-   *       unique: true       // Create a unique link even if similar ones exist
-   *     },
-   *     "Creating invite for new member recruitment"
-   *   );
-   *
-   *   console.log(`Invite created: https://discord.gg/${invite.code}`);
-   *   console.log(`Expires after: ${invite.max_age / 3600} hours`);
-   * } catch (error) {
-   *   console.error("Failed to create invite:", error);
-   * }
-   *
-   * // Create a special invite for a voice channel activity
-   * try {
-   *   const invite = await channelRouter.createChannelInvite(
-   *     "123456789012345678", // Voice channel ID
-   *     {
-   *       max_age: 3600,     // Expires after 1 hour
-   *       max_uses: 10,      // Limited to 10 uses
-   *       temporary: true,   // Temporary membership
-   *       unique: true,
-   *       target_type: 2,    // Target type 2 = voice channel activity
-   *       target_application_id: "755827207812677713" // YouTube Together application
-   *     },
-   *     "Creating activity invite for game night"
-   *   );
-   *
-   *   console.log(`Activity invite created: https://discord.gg/${invite.code}`);
-   * } catch (error) {
-   *   console.error("Failed to create activity invite:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the CREATE_INSTANT_INVITE permission.
@@ -1528,35 +1251,6 @@ export class ChannelRouter {
    * - Fires a Channel Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-channel-permission}
    *
-   * @example
-   * ```typescript
-   * // Delete a role permission overwrite
-   * try {
-   *   await channelRouter.deleteChannelPermission(
-   *     "123456789012345678", // Channel ID
-   *     "111111111111111111", // Role ID
-   *     "Removing custom permissions as part of permission cleanup"
-   *   );
-   *
-   *   console.log("Role permission overwrite deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete permission overwrite:", error);
-   * }
-   *
-   * // Delete a user permission overwrite
-   * try {
-   *   await channelRouter.deleteChannelPermission(
-   *     "123456789012345678", // Channel ID
-   *     "222222222222222222", // User ID
-   *     "Removing user-specific permissions"
-   *   );
-   *
-   *   console.log("User permission overwrite deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete user permission overwrite:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_ROLES permission in the guild.
    * The bot's highest role must be higher than the role being edited (for role overwrites).
@@ -1592,30 +1286,6 @@ export class ChannelRouter {
    * - Fires a Webhooks Update Gateway event for the target channel
    * @see {@link https://discord.com/developers/docs/resources/channel#follow-announcement-channel}
    *
-   * @example
-   * ```typescript
-   * // Follow an announcement channel
-   * try {
-   *   const follow = await channelRouter.followAnnouncementChannel(
-   *     "123456789012345678", // Announcement channel ID
-   *     "987654321987654321", // Target channel ID where announcements will be reposted
-   *     "Setting up announcement feed for community updates"
-   *   );
-   *
-   *   console.log("Announcement channel followed successfully");
-   *   console.log(`Source channel ID: ${follow.channel_id}`);
-   *   console.log(`Webhook ID: ${follow.webhook_id}`);
-   * } catch (error) {
-   *   console.error("Failed to follow announcement channel:", error);
-   *
-   *   if (error.status === 400) {
-   *     console.error("Source channel must be an announcement channel type");
-   *   } else if (error.status === 403) {
-   *     console.error("Missing MANAGE_WEBHOOKS permission in the target channel");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_WEBHOOKS permission in the target channel.
    * The source channel must be an announcement channel (type 5).
@@ -1648,24 +1318,6 @@ export class ChannelRouter {
    *   to a command that will take a few seconds of processing
    * @see {@link https://discord.com/developers/docs/resources/channel#trigger-typing-indicator}
    *
-   * @example
-   * ```typescript
-   * // Trigger typing indicator before a long operation
-   * try {
-   *   await channelRouter.triggerTypingIndicator("123456789012345678");
-   *   console.log("Typing indicator triggered");
-   *
-   *   // Perform a long operation
-   *   console.log("Starting long operation...");
-   *   await someTimeConsumingOperation();
-   *
-   *   // Send the message after completing the operation
-   *   // message.send("Operation completed!");
-   * } catch (error) {
-   *   console.error("Failed to trigger typing indicator:", error);
-   * }
-   * ```
-   *
    * @remarks
    * The typing indicator lasts for approximately 10 seconds or until a message is sent.
    * For operations that take longer than 10 seconds, you may need to trigger it multiple times.
@@ -1684,34 +1336,6 @@ export class ChannelRouter {
    * @param channelId - ID of the channel
    * @returns A promise that resolves to an array of message objects
    * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
-   *
-   * @example
-   * ```typescript
-   * // Fetch pinned messages in a channel
-   * try {
-   *   const pinnedMessages = await channelRouter.fetchPinnedMessages("123456789012345678");
-   *
-   *   console.log(`Channel has ${pinnedMessages.length} pinned messages`);
-   *
-   *   // Display information about each pinned message
-   *   pinnedMessages.forEach(message => {
-   *     console.log(`- Message ID: ${message.id}`);
-   *     console.log(`  Author: ${message.author.username}`);
-   *     console.log(`  Created: ${new Date(message.timestamp).toLocaleString()}`);
-   *     console.log(`  Content: ${message.content.substring(0, 50)}${message.content.length > 50 ? '...' : ''}`);
-   *
-   *     if (message.attachments.length > 0) {
-   *       console.log(`  Attachments: ${message.attachments.length}`);
-   *     }
-   *
-   *     if (message.embeds.length > 0) {
-   *       console.log(`  Embeds: ${message.embeds.length}`);
-   *     }
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch pinned messages:", error);
-   * }
-   * ```
    *
    * @remarks
    * Returns all pinned messages in the channel in chronological order (oldest first).
@@ -1736,28 +1360,6 @@ export class ChannelRouter {
    * - Fires a Channel Pins Update Gateway event
    * - Maximum of 50 pinned messages per channel
    * @see {@link https://discord.com/developers/docs/resources/channel#pin-message}
-   *
-   * @example
-   * ```typescript
-   * // Pin a message
-   * try {
-   *   await channelRouter.pinMessage(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321", // Message ID
-   *     "Pinning important server announcement"
-   *   );
-   *
-   *   console.log("Message pinned successfully");
-   * } catch (error) {
-   *   console.error("Failed to pin message:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing MANAGE_MESSAGES permission");
-   *   } else if (error.status === 429) {
-   *     console.error("You have reached the maximum number of pins (50) for this channel");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires the MANAGE_MESSAGES permission.
@@ -1793,28 +1395,6 @@ export class ChannelRouter {
    * - Fires a Channel Pins Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#unpin-message}
    *
-   * @example
-   * ```typescript
-   * // Unpin a message
-   * try {
-   *   await channelRouter.unpinMessage(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321", // Message ID
-   *     "Removing outdated pinned announcement"
-   *   );
-   *
-   *   console.log("Message unpinned successfully");
-   * } catch (error) {
-   * console.error("Failed to unpin message:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing MANAGE_MESSAGES permission");
-   *   } else if (error.status === 404) {
-   *     console.error("Message not pinned or does not exist");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * Requires the MANAGE_MESSAGES permission.
    * The message must already be pinned in the channel.
@@ -1846,29 +1426,6 @@ export class ChannelRouter {
    * @remarks The access token must have the gdm.join scope
    * @see {@link https://discord.com/developers/docs/resources/channel#group-dm-add-recipient}
    *
-   * @example
-   * ```typescript
-   * // Add a user to a group DM
-   * try {
-   *   await channelRouter.addGroupDmRecipient(
-   *     "123456789012345678", // Group DM channel ID
-   *     "987654321987654321", // User ID
-   *     {
-   *       access_token: "user_oauth2_access_token_with_gdm_join_scope",
-   *       nick: "New Member" // Optional nickname for the user
-   *     }
-   *   );
-   *
-   *   console.log("User added to group DM successfully");
-   * } catch (error) {
-   *   console.error("Failed to add user to group DM:", error);
-   *
-   *   if (error.status === 400) {
-   *     console.error("Invalid access token or missing required scope");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * The access token must have the `gdm.join` scope.
    * The token must be from the user being added to the group DM.
@@ -1895,25 +1452,6 @@ export class ChannelRouter {
    * @param userId - ID of the user to remove
    * @returns A promise that resolves to void on success
    * @see {@link https://discord.com/developers/docs/resources/channel#group-dm-remove-recipient}
-   *
-   * @example
-   * ```typescript
-   * // Remove a user from a group DM
-   * try {
-   *   await channelRouter.removeGroupDmRecipient(
-   *     "123456789012345678", // Group DM channel ID
-   *     "987654321987654321"  // User ID
-   *   );
-   *
-   *   console.log("User removed from group DM successfully");
-   * } catch (error) {
-   *   console.error("Failed to remove user from group DM:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.error("User is not a member of this group DM");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * The bot must own the group DM or be removing itself from the group.
@@ -1943,33 +1481,6 @@ export class ChannelRouter {
    * - When called on a GUILD_ANNOUNCEMENT channel, creates an ANNOUNCEMENT_THREAD
    * - The thread ID will be the same as the source message ID
    * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message}
-   *
-   * @example
-   * ```typescript
-   * // Create a thread from a message in a text channel
-   * try {
-   *   const thread = await channelRouter.startThreadFromMessage(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321", // Message ID
-   *     {
-   *       name: "Discussion Thread",
-   *       auto_archive_duration: 1440, // Archive after 24 hours of inactivity
-   *       rate_limit_per_user: 5      // 5 seconds slowmode
-   *     },
-   *     "Creating discussion thread for community feedback"
-   *   );
-   *
-   *   console.log(`Thread created: ${thread.name} (ID: ${thread.id})`);
-   *   console.log(`Parent channel: ${thread.parent_id}`);
-   *   console.log(`Auto-archive: ${thread.thread_metadata.auto_archive_duration} minutes`);
-   * } catch (error) {
-   *   console.error("Failed to create thread from message:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing permissions or thread creation limit reached");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * The type of thread created depends on the parent channel:
@@ -2017,45 +1528,6 @@ export class ChannelRouter {
    * - By default creates a PRIVATE_THREAD if type is not specified
    * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message}
    *
-   * @example
-   * ```typescript
-   * // Create a public thread without a message
-   * try {
-   *   const thread = await channelRouter.startThreadWithoutMessage(
-   *     "123456789012345678", // Channel ID
-   *     {
-   *       name: "General Discussion",
-   *       type: 11, // PUBLIC_THREAD
-   *       auto_archive_duration: 4320, // Archive after 3 days (requires premium tier)
-   *       rate_limit_per_user: 0       // No slowmode
-   *     },
-   *     "Creating general discussion thread"
-   *   );
-   *
-   *   console.log(`Public thread created: ${thread.name} (ID: ${thread.id})`);
-   * } catch (error) {
-   *   console.error("Failed to create public thread:", error);
-   * }
-   *
-   * // Create a private thread
-   * try {
-   *   const thread = await channelRouter.startThreadWithoutMessage(
-   *     "123456789012345678", // Channel ID
-   *     {
-   *       name: "Moderator Discussion",
-   *       type: 12, // PRIVATE_THREAD
-   *       auto_archive_duration: 1440, // Archive after 24 hours
-   *       invitable: false            // Only moderators can add members
-   *     },
-   *     "Creating private moderator discussion thread"
-   *   );
-   *
-   *   console.log(`Private thread created: ${thread.name} (ID: ${thread.id})`);
-   * } catch (error) {
-   *   console.error("Failed to create private thread:", error);
-   * }
-   * ```
-   *
    * @remarks
    * The channel must be a text or announcement channel to create threads.
    *
@@ -2098,41 +1570,6 @@ export class ChannelRouter {
    * - The type of the created thread is PUBLIC_THREAD
    * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel}
    *
-   * @example
-   * ```typescript
-   * // Create a thread in a forum channel
-   * try {
-   *   const thread = await channelRouter.startThreadInForumOrMediaChannel(
-   *     "123456789012345678", // Forum channel ID
-   *     {
-   *       name: "Important Announcement",
-   *       auto_archive_duration: 10080, // 7 days
-   *       rate_limit_per_user: 10,      // 10 seconds slowmode
-   *       message: {
-   *         content: "Hey everyone! This is an important announcement about upcoming events.",
-   *         embeds: [
-   *           {
-   *             title: "Upcoming Events",
-   *             description: "We have several events planned for next month.",
-   *             color: 0x00FFFF
-   *           }
-   *         ]
-   *       },
-   *       applied_tags: ["111111111111111111", "222222222222222222"] // Tag IDs
-   *     },
-   *     "Creating announcement thread in forum"
-   *   );
-   *
-   *   console.log(`Forum thread created: ${thread.name} (ID: ${thread.id})`);
-   *
-   *   if (thread.applied_tags?.length > 0) {
-   *     console.log(`Applied tags: ${thread.applied_tags.join(', ')}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to create forum thread:", error);
-   * }
-   * ```
-   *
    * @remarks
    * This method creates a new thread in a forum or media channel along with its first message.
    * Forum threads are designed for topic-based discussions and are organized with tags.
@@ -2173,21 +1610,6 @@ export class ChannelRouter {
    * - Fires a Thread Members Update and Thread Create Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#join-thread}
    *
-   * @example
-   * ```typescript
-   * // Join a thread
-   * try {
-   *   await channelRouter.joinThread("123456789012345678");
-   *   console.log("Successfully joined the thread");
-   * } catch (error) {
-   *   console.error("Failed to join thread:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Cannot join thread (may be archived or locked)");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * The thread must not be archived.
    * For private threads, the bot must have been added by a member with MANAGE_THREADS permission or be mentioned in the thread.
@@ -2214,25 +1636,6 @@ export class ChannelRouter {
    * - Requires the thread to not be archived
    * - Fires a Thread Members Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#add-thread-member}
-   *
-   * @example
-   * ```typescript
-   * // Add a user to a thread
-   * try {
-   *   await channelRouter.addThreadMember(
-   *     "123456789012345678", // Thread ID
-   *     "987654321987654321"  // User ID
-   *   );
-   *
-   *   console.log("User added to thread successfully");
-   * } catch (error) {
-   *   console.error("Failed to add user to thread:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Cannot add user (thread may be private or archived)");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * The thread must not be archived.
@@ -2263,21 +1666,6 @@ export class ChannelRouter {
    * - Fires a Thread Members Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#leave-thread}
    *
-   * @example
-   * ```typescript
-   * // Leave a thread
-   * try {
-   *   await channelRouter.leaveThread("123456789012345678");
-   *   console.log("Successfully left the thread");
-   * } catch (error) {
-   *   console.error("Failed to leave thread:", error);
-   *
-   *   if (error.status === 404) {
-   *     console.error("Bot is not a member of this thread");
-   *   }
-   * }
-   * ```
-   *
    * @remarks
    * The thread must not be archived.
    * A user can always leave a thread they're a member of.
@@ -2303,27 +1691,6 @@ export class ChannelRouter {
    * - Requires the thread to not be archived
    * - Fires a Thread Members Update Gateway event
    * @see {@link https://discord.com/developers/docs/resources/channel#remove-thread-member}
-   *
-   * @example
-   * ```typescript
-   * // Remove a user from a thread
-   * try {
-   *   await channelRouter.removeThreadMember(
-   *     "123456789012345678", // Thread ID
-   *     "987654321987654321"  // User ID
-   *   );
-   *
-   *   console.log("User removed from thread successfully");
-   * } catch (error) {
-   *   console.error("Failed to remove user from thread:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing permissions to remove this user");
-   *   } else if (error.status === 404) {
-   *     console.error("User is not a member of this thread");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Removing members requires one of the following:
@@ -2351,50 +1718,6 @@ export class ChannelRouter {
    * @returns A promise that resolves to the thread member
    * @remarks Returns a 404 response if the user is not a member of the thread
    * @see {@link https://discord.com/developers/docs/resources/channel#get-thread-member}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a thread member without guild info
-   * try {
-   *   const threadMember = await channelRouter.fetchThreadMember(
-   *     "123456789012345678", // Thread ID
-   *     "987654321987654321"  // User ID
-   *   );
-   *
-   *   console.log(`User is a member of the thread`);
-   *   console.log(`Joined at: ${new Date(threadMember.join_timestamp).toLocaleString()}`);
-   *
-   *   if (threadMember.flags !== 0) {
-   *     console.log(`Has special thread member flags: ${threadMember.flags}`);
-   *   }
-   * } catch (error) {
-   *   if (error.status === 404) {
-   *     console.log("User is not a member of this thread");
-   *   } else {
-   *     console.error("Failed to fetch thread member:", error);
-   *   }
-   * }
-   *
-   * // Fetch a thread member with guild info
-   * try {
-   *   const threadMember = await channelRouter.fetchThreadMember(
-   *     "123456789012345678", // Thread ID
-   *     "987654321987654321", // User ID
-   *     true                 // Include guild member info
-   *   );
-   *
-   *   console.log(`Thread member found`);
-   *
-   *   // Guild member info is available when withMember is true
-   *   if (threadMember.member) {
-   *     console.log(`Username: ${threadMember.member.user.username}`);
-   *     console.log(`Roles: ${threadMember.member.roles.length} roles`);
-   *     console.log(`Joined server: ${new Date(threadMember.member.joined_at).toLocaleString()}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch thread member with guild info:", error);
-   * }
-   * ```
    *
    * @remarks
    * Returns a 404 response if the user is not a member of the thread.
@@ -2427,61 +1750,6 @@ export class ChannelRouter {
    * - When with_member is true, results will be paginated and include guild member information
    * - Requires the GUILD_MEMBERS Privileged Intent to be enabled
    * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members}
-   *
-   * @example
-   * ```typescript
-   * // List thread members (basic)
-   * try {
-   *   const members = await channelRouter.fetchThreadMembers("123456789012345678");
-   *
-   *   console.log(`Thread has ${members.length} members`);
-   *
-   *   members.forEach(member => {
-   *     console.log(`- Member joined at: ${new Date(member.join_timestamp).toLocaleString()}`);
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch thread members:", error);
-   * }
-   *
-   * // List thread members with guild member information and pagination
-   * try {
-   *   // First batch with member info
-   *   const firstBatch = await channelRouter.fetchThreadMembers(
-   *     "123456789012345678",
-   *     {
-   *       with_member: true,
-   *       limit: 10
-   *     }
-   *   );
-   *
-   *   console.log(`Fetched ${firstBatch.length} thread members with guild info`);
-   *
-   *   firstBatch.forEach(member => {
-   *     if (member.member) {
-   *       console.log(`- ${member.member.user.username} joined thread at: ${new Date(member.join_timestamp).toLocaleString()}`);
-   *     }
-   *   });
-   *
-   *   // If there are potentially more members, paginate
-   *   if (firstBatch.length === 10) {
-   *     const lastUserId = firstBatch[firstBatch.length - 1].user_id;
-   *
-   *     // Get next batch starting after the last user from previous batch
-   *     const nextBatch = await channelRouter.fetchThreadMembers(
-   *       "123456789012345678",
-   *       {
-   *         with_member: true,
-   *         limit: 10,
-   *         after: lastUserId
-   *       }
-   *     );
-   *
-   *     console.log(`Fetched next ${nextBatch.length} thread members`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch thread members with guild info:", error);
-   * }
-   * ```
    *
    * @remarks
    * When `with_member` is true:
@@ -2519,57 +1787,6 @@ export class ChannelRouter {
    * - Threads are ordered by archive_timestamp in descending order
    * - Requires the READ_MESSAGE_HISTORY permission
    * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads}
-   *
-   * @example
-   * ```typescript
-   * // Fetch public archived threads
-   * try {
-   *   const response = await channelRouter.fetchPublicArchivedThreads("123456789012345678");
-   *
-   *   console.log(`Channel has ${response.threads.length} public archived threads`);
-   *   console.log(`Has more threads: ${response.has_more}`);
-   *
-   *   // Display thread information
-   *   response.threads.forEach(thread => {
-   *     console.log(`- ${thread.name} (ID: ${thread.id})`);
-   *     console.log(`  Archived at: ${new Date(thread.thread_metadata.archive_timestamp).toLocaleString()}`);
-   *     console.log(`  Message count: ${thread.message_count}`);
-   *     console.log(`  Member count: ${thread.member_count}`);
-   *   });
-   *
-   *   // Show thread memberships for the current user
-   *   if (response.members.length > 0) {
-   *     console.log("Bot is a member of these archived threads:");
-   *     response.members.forEach(member => {
-   *       const threadId = member.id;
-   *       const thread = response.threads.find(t => t.id === threadId);
-   *       if (thread) {
-   *         console.log(`- ${thread.name}`);
-   *       }
-   *     });
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch public archived threads:", error);
-   * }
-   *
-   * // Fetch with pagination parameters
-   * try {
-   *   // Set a timestamp to get threads archived before it
-   *   const beforeTimestamp = new Date("2023-01-01").toISOString();
-   *
-   *   const response = await channelRouter.fetchPublicArchivedThreads(
-   *     "123456789012345678",
-   *     {
-   *       before: beforeTimestamp,
-   *       limit: 10
-   *     }
-   *   );
-   *
-   *   console.log(`Fetched ${response.threads.length} public threads archived before 2023`);
-   * } catch (error) {
-   *   console.error("Failed to fetch paginated archived threads:", error);
-   * }
-   * ```
    *
    * @remarks
    * The type of threads returned depends on the parent channel:
@@ -2609,45 +1826,6 @@ export class ChannelRouter {
    * - Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions
    * @see {@link https://discord.com/developers/docs/resources/channel#list-private-archived-threads}
    *
-   * @example
-   * ```typescript
-   * // Fetch private archived threads
-   * try {
-   *   const response = await channelRouter.fetchPrivateArchivedThreads("123456789012345678");
-   *
-   *   console.log(`Channel has ${response.threads.length} private archived threads`);
-   *   console.log(`Has more threads: ${response.has_more}`);
-   *
-   *   // Display thread information
-   *   response.threads.forEach(thread => {
-   *     console.log(`- ${thread.name} (ID: ${thread.id})`);
-   *     console.log(`  Archived at: ${new Date(thread.thread_metadata.archive_timestamp).toLocaleString()}`);
-   *     console.log(`  Message count: ${thread.message_count}`);
-   *     console.log(`  Member count: ${thread.member_count}`);
-   *   });
-   * } catch (error) {
-   *   console.error("Failed to fetch private archived threads:", error);
-   *
-   *   if (error.status === 403) {
-   *     console.error("Missing required permissions (need both READ_MESSAGE_HISTORY and MANAGE_THREADS)");
-   *   }
-   * }
-   *
-   * // Fetch with pagination parameters
-   * try {
-   *   const response = await channelRouter.fetchPrivateArchivedThreads(
-   *     "123456789012345678",
-   *     {
-   *       limit: 25
-   *     }
-   *   );
-   *
-   *   console.log(`Fetched ${response.threads.length} private archived threads`);
-   * } catch (error) {
-   *   console.error("Failed to fetch paginated private archived threads:", error);
-   * }
-   * ```
-   *
    * @remarks
    * Only returns threads of type PRIVATE_THREAD (type 12).
    * Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
@@ -2685,45 +1863,6 @@ export class ChannelRouter {
    * - Threads are ordered by their ID in descending order
    * - Requires the READ_MESSAGE_HISTORY permission
    * @see {@link https://discord.com/developers/docs/resources/channel#list-joined-private-archived-threads}
-   *
-   * @example
-   * ```typescript
-   * // Fetch joined private archived threads
-   * try {
-   *   const response = await channelRouter.fetchJoinedPrivateArchivedThreads("123456789012345678");
-   *
-   *   console.log(`Bot has joined ${response.threads.length} private archived threads in this channel`);
-   *   console.log(`Has more threads: ${response.has_more}`);
-   *
-   *   // Display thread information
-   *   response.threads.forEach(thread => {
-   *     console.log(`- ${thread.name} (ID: ${thread.id})`);
-   *     console.log(`  Archived at: ${new Date(thread.thread_metadata.archive_timestamp).toLocaleString()}`);
-   *     console.log(`  Message count: ${thread.message_count}`);
-   *     console.log(`  Member count: ${thread.member_count}`);
-   *   });
-   *
-   *   // Thread members information is also included
-   *   console.log(`Thread member info for ${response.members.length} threads`);
-   * } catch (error) {
-   *   console.error("Failed to fetch joined private archived threads:", error);
-   * }
-   *
-   * // Fetch with pagination parameters
-   * try {
-   *   const response = await channelRouter.fetchJoinedPrivateArchivedThreads(
-   *     "123456789012345678",
-   *     {
-   *       before: "987654321987654321", // Thread ID to get threads before
-   *       limit: 10
-   *     }
-   *   );
-   *
-   *   console.log(`Fetched ${response.threads.length} joined private archived threads`);
-   * } catch (error) {
-   *   console.error("Failed to fetch paginated joined threads:", error);
-   * }
-   * ```
    *
    * @remarks
    * Only returns threads of type PRIVATE_THREAD (type 12) that the current user has joined.

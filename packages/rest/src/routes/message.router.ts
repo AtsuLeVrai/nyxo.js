@@ -401,35 +401,9 @@ export class MessageRouter {
    * @param channelId - The ID of the channel to get messages from
    * @param query - Query parameters for pagination
    * @returns A promise resolving to an array of message objects
-   * @throws Error if validation of query parameters fails or you lack permissions
+   * @throws {Error} Error if validation of query parameters fails or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-messages}
-   *
-   * @example
-   * ```typescript
-   * // Fetch the 50 most recent messages
-   * const messages = await messageRouter.fetchMessages("123456789012345678");
-   * console.log(`Retrieved ${messages.length} messages`);
-   *
-   * // Fetch messages around a specific message
-   * const contextMessages = await messageRouter.fetchMessages(
-   *   "123456789012345678",
-   *   { around: "987654321987654321", limit: 100 }
-   * );
-   * console.log(`Retrieved ${contextMessages.length} messages around the target`);
-   *
-   * // Paginate through older messages
-   * const olderMessages = await messageRouter.fetchMessages(
-   *   "123456789012345678",
-   *   { before: "987654321987654321", limit: 50 }
-   * );
-   *
-   * // Paginate through newer messages
-   * const newerMessages = await messageRouter.fetchMessages(
-   *   "123456789012345678",
-   *   { after: "987654321987654321", limit: 50 }
-   * );
-   * ```
    *
    * @remarks
    * Requires VIEW_CHANNEL permission. If the channel is a voice channel, also requires CONNECT.
@@ -455,36 +429,9 @@ export class MessageRouter {
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to retrieve
    * @returns A promise resolving to the message object
-   * @throws Will throw an error if the message doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the message doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-message}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific message
-   * try {
-   *   const message = await messageRouter.fetchMessage(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321"  // Message ID
-   *   );
-   *
-   *   console.log(`Message content: ${message.content}`);
-   *   console.log(`Sent by: ${message.author.username}`);
-   *   console.log(`Sent at: ${new Date(message.timestamp).toLocaleString()}`);
-   *
-   *   // Check for attachments
-   *   if (message.attachments && message.attachments.length > 0) {
-   *     console.log(`Contains ${message.attachments.length} attachments`);
-   *   }
-   *
-   *   // Check for embeds
-   *   if (message.embeds && message.embeds.length > 0) {
-   *     console.log(`Contains ${message.embeds.length} embeds`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch message:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires VIEW_CHANNEL and READ_MESSAGE_HISTORY permissions.
@@ -511,75 +458,9 @@ export class MessageRouter {
    * @param channelId - The ID of the channel to send the message in
    * @param options - The message content and properties
    * @returns A promise resolving to the created message object
-   * @throws Error if validation of options fails or you lack permissions
+   * @throws {Error} Error if validation of options fails or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#create-message}
-   *
-   * @example
-   * ```typescript
-   * // Send a simple text message
-   * const simpleMessage = await messageRouter.sendMessage(
-   *   "123456789012345678", // Channel ID
-   *   { content: "Hello, world!" }
-   * );
-   *
-   * // Send a message with an embed
-   * const embedMessage = await messageRouter.sendMessage(
-   *   "123456789012345678",
-   *   {
-   *     content: "Check out this embed:",
-   *     embeds: [{
-   *       title: "Important Information",
-   *       description: "This is a detailed description",
-   *       color: 0x3498db, // Blue color
-   *       fields: [
-   *         { name: "Field 1", value: "Value 1", inline: true },
-   *         { name: "Field 2", value: "Value 2", inline: true }
-   *       ],
-   *       footer: { text: "Footer text" }
-   *     }]
-   *   }
-   * );
-   *
-   * // Send a message with components (buttons)
-   * const buttonMessage = await messageRouter.sendMessage(
-   *   "123456789012345678",
-   *   {
-   *     content: "Please select an option:",
-   *     components: [
-   *       {
-   *         type: 1, // Action Row
-   *         components: [
-   *           {
-   *             type: 2, // Button
-   *             style: 1, // Primary
-   *             label: "Option 1",
-   *             custom_id: "option_1"
-   *           },
-   *           {
-   *             type: 2, // Button
-   *             style: 2, // Secondary
-   *             label: "Option 2",
-   *             custom_id: "option_2"
-   *           }
-   *         ]
-   *       }
-   *     ]
-   *   }
-   * );
-   *
-   * // Reply to another message
-   * const replyMessage = await messageRouter.sendMessage(
-   *   "123456789012345678",
-   *   {
-   *     content: "This is a reply!",
-   *     message_reference: {
-   *       message_id: "987654321987654321",
-   *       channel_id: "123456789012345678"
-   *     }
-   *   }
-   * );
-   * ```
    *
    * @remarks
    * Requires SEND_MESSAGES permission. If sending TTS, requires SEND_TTS_MESSAGES.
@@ -609,33 +490,9 @@ export class MessageRouter {
    * @param channelId - The ID of the announcement channel
    * @param messageId - The ID of the message to crosspost
    * @returns A promise resolving to the crossposted message object
-   * @throws Will throw an error if the channel isn't an announcement channel
+   * @throws {Error} Will throw an error if the channel isn't an announcement channel
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#crosspost-message}
-   *
-   * @example
-   * ```typescript
-   * // Publish a message to all following channels
-   * try {
-   *   const publishedMessage = await messageRouter.publishMessage(
-   *     "123456789012345678", // Announcement channel ID
-   *     "987654321987654321"  // Message ID
-   *   );
-   *
-   *   console.log("Message successfully published to all following channels");
-   *   console.log(`Message flags: ${publishedMessage.flags}`);
-   *   // The message will have the CROSSPOSTED flag set (1 << 0)
-   * } catch (error) {
-   *   console.error("Failed to publish message:", error);
-   *
-   *   // Check for common errors
-   *   if (error.code === 10003) {
-   *     console.error("The channel is not an announcement channel");
-   *   } else if (error.code === 50013) {
-   *     console.error("Missing permissions to publish messages");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires SEND_MESSAGES permission. If not the message author, also requires MANAGE_MESSAGES.
@@ -660,38 +517,9 @@ export class MessageRouter {
    * @param messageId - The ID of the message to react to
    * @param emoji - The emoji to react with (URL encoded)
    * @returns A promise that resolves when the reaction is added
-   * @throws Will throw an error if you lack permissions or the emoji is invalid
+   * @throws {Error} Will throw an error if you lack permissions or the emoji is invalid
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#create-reaction}
-   *
-   * @example
-   * ```typescript
-   * // React with standard emoji
-   * await messageRouter.addReaction(
-   *   "123456789012345678", // Channel ID
-   *   "987654321987654321", // Message ID
-   *   "👍" // Thumbs up emoji (URL-encoded automatically)
-   * );
-   *
-   * // React with custom emoji
-   * await messageRouter.addReaction(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   "custom_emoji:456789012345678901" // Format: name:id
-   * );
-   *
-   * // Handle potential errors
-   * try {
-   *   await messageRouter.addReaction(
-   *     "123456789012345678",
-   *     "987654321987654321",
-   *     "🎉"
-   *   );
-   *   console.log("Reaction added successfully");
-   * } catch (error) {
-   *   console.error("Failed to add reaction:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires READ_MESSAGE_HISTORY permission.
@@ -723,31 +551,10 @@ export class MessageRouter {
    * @param messageId - The ID of the message to remove reaction from
    * @param emoji - The emoji to remove (URL encoded)
    * @returns A promise that resolves when the reaction is removed
-   * @throws Will throw an error if the reaction doesn't exist
+   * @throws {Error} Will throw an error if the reaction doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-own-reaction}
    *
-   * @example
-   * ```typescript
-   * // Remove the bot's reaction
-   * try {
-   *   await messageRouter.removeOwnReaction(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321", // Message ID
-   *     "👍" // Thumbs up emoji (URL-encoded automatically)
-   *   );
-   *   console.log("Removed own reaction successfully");
-   * } catch (error) {
-   *   console.error("Failed to remove reaction:", error);
-   * }
-   *
-   * // Remove a custom emoji reaction
-   * await messageRouter.removeOwnReaction(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   "custom_emoji:456789012345678901" // Format: name:id
-   * );
-   * ```
    */
   removeOwnReaction(
     channelId: Snowflake,
@@ -774,30 +581,9 @@ export class MessageRouter {
    * @param emoji - The emoji to remove (URL encoded)
    * @param userId - The ID of the user whose reaction to remove
    * @returns A promise that resolves when the reaction is removed
-   * @throws Will throw an error if you lack permissions or the reaction doesn't exist
+   * @throws {Error} Will throw an error if you lack permissions or the reaction doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-user-reaction}
-   *
-   * @example
-   * ```typescript
-   * // Remove a specific user's reaction
-   * try {
-   *   await messageRouter.removeUserReaction(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321", // Message ID
-   *     "👍", // Thumbs up emoji
-   *     "234567890123456789" // User ID
-   *   );
-   *   console.log("Removed user's reaction successfully");
-   * } catch (error) {
-   *   console.error("Failed to remove user reaction:", error);
-   *
-   *   // Check for permission error
-   *   if (error.code === 50013) {
-   *     console.error("Missing MANAGE_MESSAGES permission");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires MANAGE_MESSAGES permission.
@@ -829,55 +615,9 @@ export class MessageRouter {
    * @param emoji - The emoji to get reactions for (URL encoded)
    * @param query - Query parameters for pagination and reaction type
    * @returns A promise resolving to an array of user objects who reacted with the emoji
-   * @throws Error if validation of query parameters fails
+   * @throws {Error} Error if validation of query parameters fails
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#get-reactions}
-   *
-   * @example
-   * ```typescript
-   * // Get users who reacted with a thumbs up
-   * const reactors = await messageRouter.fetchReactionUsers(
-   *   "123456789012345678", // Channel ID
-   *   "987654321987654321", // Message ID
-   *   "👍", // Thumbs up emoji
-   *   { limit: 50 } // Get up to 50 users
-   * );
-   *
-   * console.log(`${reactors.length} users reacted with 👍`);
-   *
-   * // Get users who used burst reactions
-   * const burstReactors = await messageRouter.fetchReactionUsers(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   "🎉", // Party popper emoji
-   *   {
-   *     type: ReactionTypeFlag.Burst, // Get super reactions only
-   *     limit: 50
-   *   }
-   * );
-   *
-   * console.log(`${burstReactors.length} users used super reactions with 🎉`);
-   *
-   * // Paginate through all reactors
-   * async function getAllReactors(channelId, messageId, emoji) {
-   *   let allReactors = [];
-   *   let lastUserId = null;
-   *   let batch;
-   *
-   *   do {
-   *     const query = lastUserId ? { after: lastUserId, limit: 100 } : { limit: 100 };
-   *     batch = await messageRouter.fetchReactionUsers(channelId, messageId, emoji, query);
-   *
-   *     allReactors = allReactors.concat(batch);
-   *
-   *     if (batch.length > 0) {
-   *       lastUserId = batch[batch.length - 1].id;
-   *     }
-   *   } while (batch.length === 100);
-   *
-   *   return allReactors;
-   * }
-   * ```
    */
   fetchReactionUsers(
     channelId: Snowflake,
@@ -903,28 +643,9 @@ export class MessageRouter {
    * @param channelId - The ID of the channel containing the message
    * @param messageId - The ID of the message to remove all reactions from
    * @returns A promise that resolves when all reactions are removed
-   * @throws Will throw an error if you lack permissions
+   * @throws {Error} Will throw an error if you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-all-reactions}
-   *
-   * @example
-   * ```typescript
-   * // Remove all reactions from a message
-   * try {
-   *   await messageRouter.removeAllReactions(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321"  // Message ID
-   *   );
-   *   console.log("All reactions removed successfully");
-   * } catch (error) {
-   *   console.error("Failed to remove all reactions:", error);
-   *
-   *   // Check for permission error
-   *   if (error.code === 50013) {
-   *     console.error("Missing MANAGE_MESSAGES permission");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires MANAGE_MESSAGES permission.
@@ -951,31 +672,9 @@ export class MessageRouter {
    * @param messageId - The ID of the message to remove emoji reactions from
    * @param emoji - The emoji to remove all reactions for (URL encoded)
    * @returns A promise that resolves when the reactions are removed
-   * @throws Will throw an error if you lack permissions
+   * @throws {Error} Will throw an error if you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-all-reactions-for-emoji}
-   *
-   * @example
-   * ```typescript
-   * // Remove all thumbs up reactions from a message
-   * try {
-   *   await messageRouter.removeAllReactionsForEmoji(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321", // Message ID
-   *     "👍" // Thumbs up emoji
-   *   );
-   *   console.log("All thumbs up reactions removed");
-   * } catch (error) {
-   *   console.error("Failed to remove emoji reactions:", error);
-   * }
-   *
-   * // Remove all reactions for a custom emoji
-   * await messageRouter.removeAllReactionsForEmoji(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   "custom_emoji:456789012345678901" // Format: name:id
-   * );
-   * ```
    *
    * @remarks
    * Requires MANAGE_MESSAGES permission.
@@ -1004,60 +703,9 @@ export class MessageRouter {
    * @param messageId - The ID of the message to edit
    * @param options - The new message content and properties
    * @returns A promise resolving to the edited message object
-   * @throws Error if validation of options fails or you lack permissions
+   * @throws {Error} Error if validation of options fails or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#edit-message}
-   *
-   * @example
-   * ```typescript
-   * // Update a message's text content
-   * const updatedMessage = await messageRouter.updateMessage(
-   *   "123456789012345678", // Channel ID
-   *   "987654321987654321", // Message ID
-   *   { content: "Updated message content" }
-   * );
-   *
-   * // Update a message's embed
-   * const embedUpdatedMessage = await messageRouter.updateMessage(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   {
-   *     embeds: [{
-   *       title: "Updated Embed",
-   *       description: "This embed has been updated",
-   *       color: 0xff0000 // Red color
-   *     }]
-   *   }
-   * );
-   *
-   * // Update a message's components
-   * const componentsUpdatedMessage = await messageRouter.updateMessage(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   {
-   *     components: [
-   *       {
-   *         type: 1, // Action Row
-   *         components: [
-   *           {
-   *             type: 2, // Button
-   *             style: 3, // Success (green)
-   *             label: "Updated Button",
-   *             custom_id: "updated_button"
-   *           }
-   *         ]
-   *       }
-   *     ]
-   *   }
-   * );
-   *
-   * // Remove all components from a message
-   * const noComponentsMessage = await messageRouter.updateMessage(
-   *   "123456789012345678",
-   *   "987654321987654321",
-   *   { components: [] }
-   * );
-   * ```
    *
    * @remarks
    * The original message author can edit content, embeds, and flags.
@@ -1092,31 +740,9 @@ export class MessageRouter {
    * @param messageId - The ID of the message to delete
    * @param reason - Reason for deleting the message (for audit logs)
    * @returns A promise that resolves when the message is deleted
-   * @throws Will throw an error if you lack permissions or the message doesn't exist
+   * @throws {Error} Will throw an error if you lack permissions or the message doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#delete-message}
-   *
-   * @example
-   * ```typescript
-   * // Delete a message
-   * try {
-   *   await messageRouter.deleteMessage(
-   *     "123456789012345678", // Channel ID
-   *     "987654321987654321", // Message ID
-   *     "Content violation" // Reason for audit log
-   *   );
-   *   console.log("Message deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete message:", error);
-   *
-   *   // Check for common errors
-   *   if (error.code === 50013) {
-   *     console.error("Missing MANAGE_MESSAGES permission");
-   *   } else if (error.code === 10008) {
-   *     console.error("Message not found");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * If the message was not sent by the current user, requires MANAGE_MESSAGES permission.
@@ -1146,39 +772,9 @@ export class MessageRouter {
    * @param options - Object containing array of message IDs to delete
    * @param reason - Reason for deleting the messages (for audit logs)
    * @returns A promise that resolves when the messages are deleted
-   * @throws Error if validation of options fails or you lack permissions
+   * @throws {Error} Error if validation of options fails or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/channel#bulk-delete-messages}
-   *
-   * @example
-   * ```typescript
-   * // Delete multiple messages at once
-   * try {
-   *   await messageRouter.bulkDeleteMessages(
-   *     "123456789012345678", // Channel ID
-   *     {
-   *       messages: [
-   *         "123456789012345678",
-   *         "234567890123456789",
-   *         "345678901234567890"
-   *       ]
-   *     },
-   *     "Cleanup of spam messages" // Reason for audit log
-   *   );
-   *   console.log("Messages deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to bulk delete messages:", error);
-   *
-   *   // Check for common errors
-   *   if (error.code === 50013) {
-   *     console.error("Missing MANAGE_MESSAGES permission");
-   *   } else if (error.code === 50034) {
-   *     console.error("One or more messages are older than 2 weeks");
-   *   } else if (error.code === 50016) {
-   *     console.error("Message array length not between 2 and 100");
-   *   }
-   * }
-   * ```
    *
    * @remarks
    * Requires MANAGE_MESSAGES permission.

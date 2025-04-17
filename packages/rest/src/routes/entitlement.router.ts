@@ -228,29 +228,6 @@ export class EntitlementRouter {
    * through the before/after/limit parameters.
    *
    * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all active entitlements for a specific user
-   * const userEntitlements = await entitlementRouter.fetchEntitlements(
-   *   "123456789012345678", // Application ID
-   *   {
-   *     user_id: "234567890123456789",
-   *     exclude_ended: true
-   *   }
-   * );
-   * console.log(`User has ${userEntitlements.length} active entitlements`);
-   *
-   * // Fetch entitlements for specific premium offerings (SKUs)
-   * const premiumEntitlements = await entitlementRouter.fetchEntitlements(
-   *   "123456789012345678", // Application ID
-   *   {
-   *     sku_ids: "345678901234567890,456789012345678901",
-   *     exclude_ended: true,
-   *     limit: 50
-   *   }
-   * );
-   * ```
    */
   fetchEntitlements(
     applicationId: Snowflake,
@@ -277,22 +254,6 @@ export class EntitlementRouter {
    * @returns A promise that resolves to the entitlement object
    *
    * @see {@link https://discord.com/developers/docs/resources/entitlement#get-entitlement}
-   *
-   * @example
-   * ```typescript
-   * const entitlement = await entitlementRouter.fetchEntitlement(
-   *   "123456789012345678", // Application ID
-   *   "987654321987654321"  // Entitlement ID
-   * );
-   *
-   * console.log(`Entitlement type: ${entitlement.type}`);
-   * console.log(`SKU ID: ${entitlement.sku_id}`);
-   *
-   * if (entitlement.ends_at) {
-   *   const endDate = new Date(entitlement.ends_at);
-   *   console.log(`Subscription ends: ${endDate.toLocaleDateString()}`);
-   * }
-   * ```
    */
   fetchEntitlement(
     applicationId: Snowflake,
@@ -323,23 +284,6 @@ export class EntitlementRouter {
    * to the premium offering.
    *
    * @see {@link https://discord.com/developers/docs/resources/entitlement#consume-an-entitlement}
-   *
-   * @example
-   * ```typescript
-   * // Example of consuming a virtual item purchase
-   * try {
-   *   await entitlementRouter.consumeEntitlement(
-   *     "123456789012345678", // Application ID
-   *     "987654321987654321"  // Entitlement ID for a consumable
-   *   );
-   *   console.log("Entitlement successfully consumed");
-   *
-   *   // Grant the user their purchase in your application
-   *   await giveUserTheirVirtualItem(userId, itemType);
-   * } catch (error) {
-   *   console.error("Failed to consume entitlement:", error);
-   * }
-   * ```
    */
   consumeEntitlement(
     applicationId: Snowflake,
@@ -371,30 +315,6 @@ export class EntitlementRouter {
    * - Limited to 250 test entitlements per application
    *
    * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement}
-   *
-   * @example
-   * ```typescript
-   * // Create a test entitlement for a user
-   * const userTestEntitlement = await entitlementRouter.createTestEntitlement(
-   *   "123456789012345678", // Application ID
-   *   {
-   *     sku_id: "345678901234567890", // Your premium feature SKU
-   *     owner_id: "234567890123456789", // User ID
-   *     owner_type: EntitlementOwnerType.User // 2
-   *   }
-   * );
-   * console.log(`Test entitlement created with ID: ${userTestEntitlement.id}`);
-   *
-   * // Create a test entitlement for a guild
-   * const guildTestEntitlement = await entitlementRouter.createTestEntitlement(
-   *   "123456789012345678", // Application ID
-   *   {
-   *     sku_id: "456789012345678901", // Guild premium feature SKU
-   *     owner_id: "345678901234567890", // Guild ID
-   *     owner_type: EntitlementOwnerType.Guild // 1
-   *   }
-   * );
-   * ```
    */
   createTestEntitlement(
     applicationId: Snowflake,
@@ -426,16 +346,6 @@ export class EntitlementRouter {
    * client to see the effects of this change.
    *
    * @see {@link https://discord.com/developers/docs/resources/entitlement#delete-test-entitlement}
-   *
-   * @example
-   * ```typescript
-   * // Delete a test entitlement when done testing
-   * await entitlementRouter.deleteTestEntitlement(
-   *   "123456789012345678", // Application ID
-   *   "987654321987654321"  // Test entitlement ID
-   * );
-   * console.log("Test entitlement successfully deleted");
-   * ```
    */
   deleteTestEntitlement(
     applicationId: Snowflake,

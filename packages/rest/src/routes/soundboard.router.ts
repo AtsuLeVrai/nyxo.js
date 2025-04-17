@@ -237,39 +237,9 @@ export class SoundboardRouter {
    * @param channelId - The ID of the voice channel to send the sound to
    * @param options - Options for sending the soundboard sound
    * @returns A promise that resolves when the sound is sent
-   * @throws Error if the sound can't be played or permissions are missing
+   * @throws {Error} Error if the sound can't be played or permissions are missing
    *
    * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound}
-   *
-   * @example
-   * ```typescript
-   * // Play a sound from the current guild
-   * try {
-   *   await soundboardRouter.playSound(
-   *     "123456789012345678", // Voice channel ID
-   *     {
-   *       sound_id: "987654321987654321" // Sound ID
-   *     }
-   *   );
-   *   console.log("Sound played successfully");
-   * } catch (error) {
-   *   console.error("Failed to play sound:", error);
-   * }
-   *
-   * // Play a sound from another guild (requires USE_EXTERNAL_SOUNDS permission)
-   * try {
-   *   await soundboardRouter.playSound(
-   *     "123456789012345678", // Voice channel ID
-   *     {
-   *       sound_id: "876543210987654321", // Sound ID
-   *       source_guild_id: "765432109876543210" // Guild ID where the sound is from
-   *     }
-   *   );
-   *   console.log("External sound played successfully");
-   * } catch (error) {
-   *   console.error("Failed to play external sound:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the `SPEAK` and `USE_SOUNDBOARD` permissions, and also the
@@ -301,29 +271,6 @@ export class SoundboardRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    *
-   * @example
-   * ```typescript
-   * // Fetch all default sounds
-   * const defaultSounds = await soundboardRouter.fetchDefaultSounds();
-   *
-   * console.log(`Found ${defaultSounds.length} default sounds`);
-   *
-   * // List the names of all default sounds
-   * defaultSounds.forEach(sound => {
-   *   console.log(`- ${sound.name} (ID: ${sound.id})`);
-   *   console.log(`  Emoji: ${sound.emoji_name || "Custom emoji"}`);
-   *   console.log(`  Volume: ${sound.volume}`);
-   * });
-   *
-   * // Find a specific sound by name
-   * const airhorn = defaultSounds.find(sound =>
-   *   sound.name.toLowerCase().includes("airhorn")
-   * );
-   *
-   * if (airhorn) {
-   *   console.log(`Found airhorn sound with ID: ${airhorn.id}`);
-   * }
-   * ```
    */
   fetchDefaultSounds(): Promise<SoundboardSoundEntity[]> {
     return this.#rest.get(
@@ -341,33 +288,6 @@ export class SoundboardRouter {
    * @returns A promise resolving to the list guild soundboard sounds response entity
    *
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all custom sounds in a guild
-   * const soundsResponse = await soundboardRouter.fetchGuildSounds("123456789012345678");
-   * const sounds = soundsResponse.items;
-   *
-   * console.log(`Guild has ${sounds.length} custom sounds`);
-   *
-   * // Group sounds by user who added them
-   * const soundsByUser = {};
-   * sounds.forEach(sound => {
-   *   const userId = sound.user_id;
-   *   if (!soundsByUser[userId]) {
-   *     soundsByUser[userId] = [];
-   *   }
-   *   soundsByUser[userId].push(sound);
-   * });
-   *
-   * // Display sounds grouped by user
-   * Object.entries(soundsByUser).forEach(([userId, userSounds]) => {
-   *   console.log(`User ${userId} added ${userSounds.length} sounds:`);
-   *   userSounds.forEach(sound => {
-   *     console.log(`- ${sound.name}`);
-   *   });
-   * });
-   * ```
    *
    * @remarks
    * Includes `user` fields if the bot has the `CREATE_GUILD_EXPRESSIONS` or
@@ -390,34 +310,9 @@ export class SoundboardRouter {
    * @param guildId - The ID of the guild the sound belongs to
    * @param soundId - The ID of the soundboard sound to retrieve
    * @returns A promise resolving to the soundboard sound entity
-   * @throws Will throw an error if the sound doesn't exist
+   * @throws {Error} Will throw an error if the sound doesn't exist
    *
    * @see {@link https://discord.com/developers/docs/resources/soundboard#get-guild-soundboard-sound}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific sound
-   * try {
-   *   const sound = await soundboardRouter.fetchGuildSound(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321"  // Sound ID
-   *   );
-   *
-   *   console.log(`Sound: ${sound.name}`);
-   *   console.log(`Added by: ${sound.user ? sound.user.username : "Unknown"}`);
-   *   console.log(`Created at: ${new Date(sound.created_at).toLocaleString()}`);
-   *   console.log(`Volume: ${sound.volume}`);
-   *
-   *   // Emoji information
-   *   if (sound.emoji_id) {
-   *     console.log(`Custom emoji ID: ${sound.emoji_id}`);
-   *   } else if (sound.emoji_name) {
-   *     console.log(`Emoji: ${sound.emoji_name}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch sound:", error);
-   * }
-   * ```
    *
    * @remarks
    * Includes the `user` field if the bot has the `CREATE_GUILD_EXPRESSIONS` or
@@ -445,34 +340,9 @@ export class SoundboardRouter {
    * @param options - Options for creating the soundboard sound
    * @param reason - Optional audit log reason for the creation
    * @returns A promise resolving to the created soundboard sound entity
-   * @throws Error if the sound file doesn't meet requirements or permissions are missing
+   * @throws {Error} Error if the sound file doesn't meet requirements or permissions are missing
    *
    * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound}
-   *
-   * @example
-   * ```typescript
-   * // Create a new soundboard sound
-   * try {
-   *   // Load sound file as FileInput (could be from local file or URL)
-   *   const soundFile = await FileHandler.fromLocalFile("./path/to/sound.mp3");
-   *
-   *   const newSound = await soundboardRouter.createGuildSound(
-   *     "123456789012345678", // Guild ID
-   *     {
-   *       name: "Victory Fanfare",
-   *       sound: soundFile,
-   *       volume: 0.8,
-   *       emoji_name: "🎵" // Using a standard emoji
-   *     },
-   *     "Adding victory sound effect for events"
-   *   );
-   *
-   *   console.log(`Sound created with ID: ${newSound.id}`);
-   *   console.log(`Available for use in voice channels`);
-   * } catch (error) {
-   *   console.error("Failed to create sound:", error);
-   * }
-   * ```
    *
    * @remarks
    * Requires the `CREATE_GUILD_EXPRESSIONS` permission.
@@ -509,31 +379,9 @@ export class SoundboardRouter {
    * @param options - Options for modifying the soundboard sound
    * @param reason - Optional audit log reason for the modification
    * @returns A promise resolving to the modified soundboard sound entity
-   * @throws Error if the updates are invalid or permissions are missing
+   * @throws {Error} Error if the updates are invalid or permissions are missing
    *
    * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound}
-   *
-   * @example
-   * ```typescript
-   * // Update a soundboard sound
-   * try {
-   *   const updatedSound = await soundboardRouter.updateGuildSound(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Sound ID
-   *     {
-   *       name: "Victory Fanfare (Louder)",
-   *       volume: 1.0, // Increase volume to maximum
-   *       emoji_id: "876543210987654321" // Switch to custom emoji
-   *     },
-   *     "Increasing sound volume for better audibility"
-   *   );
-   *
-   *   console.log(`Sound updated: ${updatedSound.name}`);
-   *   console.log(`New volume: ${updatedSound.volume}`);
-   * } catch (error) {
-   *   console.error("Failed to update sound:", error);
-   * }
-   * ```
    *
    * @remarks
    * For sounds created by the current user, requires either the
@@ -569,24 +417,9 @@ export class SoundboardRouter {
    * @param soundId - The ID of the soundboard sound to delete
    * @param reason - Optional audit log reason for the deletion
    * @returns A promise that resolves when the sound is deleted
-   * @throws Will throw an error if the sound doesn't exist or permissions are missing
+   * @throws {Error} Will throw an error if the sound doesn't exist or permissions are missing
    *
    * @see {@link https://discord.com/developers/docs/resources/soundboard#delete-guild-soundboard-sound}
-   *
-   * @example
-   * ```typescript
-   * // Delete a soundboard sound
-   * try {
-   *   await soundboardRouter.deleteGuildSound(
-   *     "123456789012345678", // Guild ID
-   *     "987654321987654321", // Sound ID
-   *     "Removing outdated sound effect"
-   *   );
-   *   console.log("Sound deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete sound:", error);
-   * }
-   * ```
    *
    * @remarks
    * For sounds created by the current user, requires either the

@@ -31,7 +31,7 @@ export const InteractionFactory = {
    * @param client - The client instance to pass to the interaction
    * @param data - The interaction data containing the type and other properties
    * @returns An instance of the appropriate interaction class
-   * @throws Error if the interaction type is not supported
+   * @throws {Error} Error if the interaction type is not supported
    */
   create(client: Client, data: AnyInteractionEntity): AnyInteraction {
     // First determine the context (guild vs private)

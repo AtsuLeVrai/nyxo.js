@@ -60,30 +60,6 @@ export class SkuRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/sku#list-skus}
    *
-   * @example
-   * ```typescript
-   * // Fetch all SKUs for your application
-   * const skus = await skuRouter.fetchApplicationSkus("123456789012345678");
-   *
-   * console.log(`Found ${skus.length} SKUs for this application`);
-   *
-   * // Group SKUs by type
-   * const subscriptions = skus.filter(sku => sku.type === 5); // SUBSCRIPTION
-   * const subscriptionGroups = skus.filter(sku => sku.type === 6); // SUBSCRIPTION_GROUP
-   * const consumables = skus.filter(sku => sku.type === 1); // CONSUMABLE
-   * const durables = skus.filter(sku => sku.type === 2); // DURABLE
-   *
-   * console.log(`Subscription SKUs: ${subscriptions.length}`);
-   * console.log(`Subscription Groups: ${subscriptionGroups.length}`);
-   * console.log(`Consumable SKUs: ${consumables.length}`);
-   * console.log(`Durable SKUs: ${durables.length}`);
-   *
-   * // For testing with entitlements for Subscriptions, use the SKU with type 5
-   * if (subscriptions.length > 0) {
-   *   console.log("Use this SKU ID for subscription testing:", subscriptions[0].id);
-   * }
-   * ```
-   *
    * @remarks
    * For subscriptions, you will see two SKUs:
    * - One with type 5 (SUBSCRIPTION)

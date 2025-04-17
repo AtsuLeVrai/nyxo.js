@@ -39,19 +39,20 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
-    "build:dev": "tsc -p tsconfig.json",
+    "build:dev": "rimraf dist && tsc -p tsconfig.json",
     "build:prod": "node ../../scripts/build.js",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "deepmerge-ts": "^7.1.5",
     "lodash-es": "^4.17.21",
-    "zod": "^3.24.2",
+    "zod": "^3.24.3",
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.14.1",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.3"
   }
 }

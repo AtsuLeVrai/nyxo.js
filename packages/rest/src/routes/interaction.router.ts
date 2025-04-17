@@ -191,73 +191,9 @@ export class InteractionRouter {
    * @param options - The response options (type and data)
    * @param withResponse - Whether to return the interaction callback response
    * @returns The interaction callback response (if withResponse is true), otherwise undefined
-   * @throws Error if validation of options fails or the token is expired
+   * @throws {Error} Error if validation of options fails or the token is expired
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#create-interaction-response}
-   *
-   * @example
-   * ```typescript
-   * // Respond with a simple message
-   * await interactionRouter.createResponse(
-   *   "123456789012345678", // Interaction ID
-   *   "aaBBccDDeeFFggHHiijjKK", // Interaction token
-   *   {
-   *     type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-   *     data: {
-   *       content: "Hello! I received your interaction."
-   *     }
-   *   }
-   * );
-   *
-   * // Respond with deferred message (thinking state)
-   * await interactionRouter.createResponse(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   {
-   *     type: 5, // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
-   *   }
-   * );
-   *
-   * // Respond with deferred update for component interactions
-   * await interactionRouter.createResponse(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   {
-   *     type: 6, // DEFERRED_UPDATE_MESSAGE
-   *   }
-   * );
-   *
-   * // Respond with message components
-   * await interactionRouter.createResponse(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   {
-   *     type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
-   *     data: {
-   *       content: "Please select an option:",
-   *       components: [
-   *         {
-   *           type: 1, // ACTION_ROW
-   *           components: [
-   *             {
-   *               type: 2, // BUTTON
-   *               style: 1, // PRIMARY
-   *               label: "Option 1",
-   *               custom_id: "option_1"
-   *             },
-   *             {
-   *               type: 2, // BUTTON
-   *               style: 2, // SECONDARY
-   *               label: "Option 2",
-   *               custom_id: "option_2"
-   *             }
-   *           ]
-   *         }
-   *       ]
-   *     }
-   *   }
-   * );
-   * ```
    *
    * @remarks
    * Interaction tokens are valid for 15 minutes, but you must respond
@@ -298,30 +234,9 @@ export class InteractionRouter {
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
    * @returns A promise resolving to the original message response to the interaction
-   * @throws Will throw an error if the interaction token is invalid or expired
+   * @throws {Error} Will throw an error if the interaction token is invalid or expired
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#get-original-interaction-response}
-   *
-   * @example
-   * ```typescript
-   * // Fetch the original response message
-   * try {
-   *   const originalMessage = await interactionRouter.fetchOriginalResponse(
-   *     "123456789012345678", // Application ID
-   *     "aaBBccDDeeFFggHHiijjKK" // Interaction token
-   *   );
-   *
-   *   console.log(`Original response content: ${originalMessage.content}`);
-   *   console.log(`Response sent at: ${new Date(originalMessage.timestamp).toLocaleString()}`);
-   *
-   *   // Check for components
-   *   if (originalMessage.components && originalMessage.components.length > 0) {
-   *     console.log(`Response contains ${originalMessage.components.length} component rows`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch original response:", error);
-   * }
-   * ```
    */
   fetchOriginalResponse(
     applicationId: Snowflake,
@@ -345,63 +260,9 @@ export class InteractionRouter {
    * @param interactionToken - The token for the interaction
    * @param options - The new message content/components/embeds
    * @returns A promise resolving to the updated message
-   * @throws Error if validation of options fails or the token is expired
+   * @throws {Error} Error if validation of options fails or the token is expired
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#edit-original-interaction-response}
-   *
-   * @example
-   * ```typescript
-   * // Update the content of the original response
-   * const updatedMessage = await interactionRouter.updateOriginalResponse(
-   *   "123456789012345678", // Application ID
-   *   "aaBBccDDeeFFggHHiijjKK", // Interaction token
-   *   {
-   *     content: "This content has been updated!"
-   *   }
-   * );
-   *
-   * // Update with components
-   * await interactionRouter.updateOriginalResponse(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   {
-   *     content: "Updated options:",
-   *     components: [
-   *       {
-   *         type: 1, // ACTION_ROW
-   *         components: [
-   *           {
-   *             type: 3, // SELECT_MENU
-   *             custom_id: "select_option",
-   *             options: [
-   *               {
-   *                 label: "Option A",
-   *                 value: "a",
-   *                 description: "First option"
-   *               },
-   *               {
-   *                 label: "Option B",
-   *                 value: "b",
-   *                 description: "Second option"
-   *               }
-   *             ]
-   *           }
-   *         ]
-   *       }
-   *     ]
-   *   }
-   * );
-   *
-   * // Remove all components
-   * await interactionRouter.updateOriginalResponse(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   {
-   *     content: "This message no longer has components.",
-   *     components: []
-   *   }
-   * );
-   * ```
    */
   updateOriginalResponse(
     applicationId: Snowflake,
@@ -428,23 +289,9 @@ export class InteractionRouter {
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
    * @returns A promise that resolves when the deletion is complete
-   * @throws Will throw an error if the token is expired or invalid
+   * @throws {Error} Will throw an error if the token is expired or invalid
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#delete-original-interaction-response}
-   *
-   * @example
-   * ```typescript
-   * // Delete the original response
-   * try {
-   *   await interactionRouter.deleteOriginalResponse(
-   *     "123456789012345678", // Application ID
-   *     "aaBBccDDeeFFggHHiijjKK" // Interaction token
-   *   );
-   *   console.log("Original response deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete original response:", error);
-   * }
-   * ```
    */
   deleteOriginalResponse(
     applicationId: Snowflake,
@@ -469,53 +316,9 @@ export class InteractionRouter {
    * @param interactionToken - The token for the interaction
    * @param options - The message content/components/embeds/flags for the followup
    * @returns A promise resolving to the created message
-   * @throws Error if validation of options fails or the token is expired
+   * @throws {Error} Error if validation of options fails or the token is expired
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#create-followup-message}
-   *
-   * @example
-   * ```typescript
-   * // Send a simple followup message
-   * const followupMessage = await interactionRouter.createFollowupMessage(
-   *   "123456789012345678", // Application ID
-   *   "aaBBccDDeeFFggHHiijjKK", // Interaction token
-   *   {
-   *     content: "Here's a followup message with more information."
-   *   }
-   * );
-   *
-   * console.log(`Followup message ID: ${followupMessage.id}`);
-   *
-   * // Send an ephemeral followup (only visible to the user who triggered the interaction)
-   * await interactionRouter.createFollowupMessage(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   {
-   *     content: "This followup is ephemeral and only visible to you.",
-   *     flags: 64 // EPHEMERAL flag
-   *   }
-   * );
-   *
-   * // Send a followup with embeds
-   * await interactionRouter.createFollowupMessage(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   {
-   *     content: "Here's the detailed information you requested:",
-   *     embeds: [
-   *       {
-   *         title: "Detailed Results",
-   *         description: "The analysis has been completed.",
-   *         color: 0x00ff00, // Green color
-   *         fields: [
-   *           { name: "Metric 1", value: "Value 1", inline: true },
-   *           { name: "Metric 2", value: "Value 2", inline: true }
-   *         ]
-   *       }
-   *     ]
-   *   }
-   * );
-   * ```
    *
    * @remarks
    * User-installed apps that aren't installed in the server are limited
@@ -551,30 +354,9 @@ export class InteractionRouter {
    * @param interactionToken - The token for the interaction
    * @param messageId - The ID of the followup message
    * @returns A promise resolving to the followup message
-   * @throws Will throw an error if the message doesn't exist or the token is expired
+   * @throws {Error} Will throw an error if the message doesn't exist or the token is expired
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#get-followup-message}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific followup message
-   * try {
-   *   const followupMessage = await interactionRouter.fetchFollowupMessage(
-   *     "123456789012345678", // Application ID
-   *     "aaBBccDDeeFFggHHiijjKK", // Interaction token
-   *     "987654321987654321" // Message ID
-   *   );
-   *
-   *   console.log(`Followup content: ${followupMessage.content}`);
-   *   console.log(`Sent at: ${new Date(followupMessage.timestamp).toLocaleString()}`);
-   *
-   *   // Check if message is ephemeral
-   *   const isEphemeral = followupMessage.flags && (followupMessage.flags & 64) !== 0;
-   *   console.log(`Ephemeral: ${isEphemeral ? "Yes" : "No"}`);
-   * } catch (error) {
-   *   console.error("Failed to fetch followup message:", error);
-   * }
-   * ```
    */
   fetchFollowupMessage(
     applicationId: Snowflake,
@@ -601,49 +383,9 @@ export class InteractionRouter {
    * @param messageId - The ID of the followup message
    * @param options - The new message content/components/embeds
    * @returns A promise resolving to the updated message
-   * @throws Error if validation of options fails or the token is expired
+   * @throws {Error} Error if validation of options fails or the token is expired
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#edit-followup-message}
-   *
-   * @example
-   * ```typescript
-   * // Update a followup message's content
-   * const updatedFollowup = await interactionRouter.updateFollowupMessage(
-   *   "123456789012345678", // Application ID
-   *   "aaBBccDDeeFFggHHiijjKK", // Interaction token
-   *   "987654321987654321", // Message ID
-   *   {
-   *     content: "This followup message has been updated."
-   *   }
-   * );
-   *
-   * // Update a followup with new embeds
-   * await interactionRouter.updateFollowupMessage(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   "987654321987654321",
-   *   {
-   *     embeds: [
-   *       {
-   *         title: "Updated Information",
-   *         description: "The data has been refreshed.",
-   *         color: 0xff9900 // Orange color
-   *       }
-   *     ]
-   *   }
-   * );
-   *
-   * // Remove embeds from a followup
-   * await interactionRouter.updateFollowupMessage(
-   *   "123456789012345678",
-   *   "aaBBccDDeeFFggHHiijjKK",
-   *   "987654321987654321",
-   *   {
-   *     content: "This message no longer has embeds.",
-   *     embeds: []
-   *   }
-   * );
-   * ```
    */
   updateFollowupMessage(
     applicationId: Snowflake,
@@ -673,24 +415,9 @@ export class InteractionRouter {
    * @param interactionToken - The token for the interaction
    * @param messageId - The ID of the followup message
    * @returns A promise that resolves when the deletion is complete
-   * @throws Will throw an error if the message doesn't exist or the token is expired
+   * @throws {Error} Will throw an error if the message doesn't exist or the token is expired
    *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#delete-followup-message}
-   *
-   * @example
-   * ```typescript
-   * // Delete a followup message
-   * try {
-   *   await interactionRouter.deleteFollowupMessage(
-   *     "123456789012345678", // Application ID
-   *     "aaBBccDDeeFFggHHiijjKK", // Interaction token
-   *     "987654321987654321" // Message ID
-   *   );
-   *   console.log("Followup message deleted successfully");
-   * } catch (error) {
-   *   console.error("Failed to delete followup message:", error);
-   * }
-   * ```
    */
   deleteFollowupMessage(
     applicationId: Snowflake,

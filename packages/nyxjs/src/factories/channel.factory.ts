@@ -46,7 +46,7 @@ export const ChannelFactory = {
    * @param client - The client instance to pass to the channel
    * @param data - The channel data containing the type and other properties
    * @returns An instance of the appropriate channel class
-   * @throws Error if the channel type is not supported
+   * @throws {Error} Error if the channel type is not supported
    */
   create(client: Client, data: AnyChannelEntity): AnyChannel {
     switch (data.type) {

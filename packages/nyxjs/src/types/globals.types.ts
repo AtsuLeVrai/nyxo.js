@@ -3,17 +3,23 @@ import type {
   VoiceStateEntity,
 } from "@nyxjs/core";
 import type {
+  ChannelPinsUpdateEntity,
   GatewayEvents,
   GuildEmojisUpdateEntity,
   GuildMembersChunkEntity,
   GuildStickersUpdateEntity,
+  MessagePollVoteEntity,
+  MessageReactionAddEntity,
   MessageReactionRemoveAllEntity,
   MessageReactionRemoveEmojiEntity,
+  MessageReactionRemoveEntity,
   PresenceEntity,
+  ThreadListSyncEntity,
   ThreadMembersUpdateEntity,
   VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
+import type { CamelCase } from "type-fest";
 import type {
   AnyChannel,
   AnyInteraction,
@@ -21,7 +27,6 @@ import type {
   AutoModerationActionExecution,
   AutoModerationRule,
   Ban,
-  ChannelPins,
   Emoji,
   Entitlement,
   Guild,
@@ -32,94 +37,18 @@ import type {
   Integration,
   Invite,
   Message,
-  MessagePollVote,
-  MessageReaction,
   Ready,
   Role,
   SoundboardSound,
   StageInstance,
   Sticker,
   Subscription,
-  ThreadListSync,
   ThreadMember,
   TypingStart,
   User,
   VoiceChannelEffectSend,
   Webhook,
 } from "../classes/index.js";
-
-/**
- * Helper type that handles the rest of the string after the first character during camelCase conversion.
- *
- * @template S - The remaining part of the string being processed
- * @internal
- */
-type CamelCaseRest<S extends string> = S extends `${infer F}${infer R}`
-  ? F extends "_" | "-" | " "
-    ? R extends `${infer C}${infer Rest}`
-      ? C extends "_" | "-" | " "
-        ? CamelCaseRest<Rest>
-        : `${Uppercase<C>}${CamelCaseRest<Rest>}`
-      : ""
-    : `${F}${CamelCaseRest<R>}`
-  : S;
-
-/**
- * Converts a string literal type to camelCase.
- *
- * This utility type transforms any string literal into camelCase format by applying
- * the following rules:
- * - The first character of the string is converted to lowercase
- * - All delimiters (hyphens, underscores, spaces) are removed
- * - The first character after each delimiter is converted to uppercase
- * - All other characters remain unchanged
- * - Multiple consecutive delimiters are treated as a single delimiter
- *
- * The transformation preserves numbers and other special characters,
- * only changing the case of letters.
- *
- * @example
- * ```typescript
- * // Basic transformations
- * type Example1 = CamelCase<'hello-world'>;          // 'helloWorld'
- * type Example2 = CamelCase<'foo_bar'>;              // 'fooBar'
- * type Example3 = CamelCase<'lorem ipsum'>;          // 'loremIpsum'
- *
- * // Mixed delimiter handling
- * type Example4 = CamelCase<'mixed_case-example'>;   // 'mixedCaseExample'
- *
- * // Case conversion
- * type Example5 = CamelCase<'SCREAMING_SNAKE_CASE'>; // 'screamingSnakeCase'
- * type Example6 = CamelCase<'kebab-case-example'>;   // 'kebabCaseExample'
- *
- * // Leading/trailing delimiters
- * type Example7 = CamelCase<'-leading-dash'>;        // 'leadingDash'
- * type Example8 = CamelCase<'trailing_underscore_'>; // 'trailingUnderscore'
- *
- * // Numbers and special characters
- * type Example9 = CamelCase<'user-123-info'>;        // 'user123Info'
- * type Example10 = CamelCase<'special$_characters'>; // 'special$Characters'
- *
- * // Multiple consecutive delimiters
- * type Example11 = CamelCase<'double__underscore'>;  // 'doubleUnderscore'
- * type Example12 = CamelCase<'multiple---dashes'>;   // 'multipleDashes'
- *
- * // Already camelCase input
- * type Example13 = CamelCase<'alreadyCamelCase'>;    // 'alreadyCamelCase'
- *
- * // Empty string case
- * type Example14 = CamelCase<''>;                    // ''
- * ```
- *
- * @template S - The string literal type to convert to camelCase
- */
-type CamelCase<S extends string> = S extends ""
-  ? S
-  : S extends `${infer F}${infer R}`
-    ? F extends "_" | "-" | " "
-      ? CamelCase<R>
-      : `${Lowercase<F>}${CamelCaseRest<R>}`
-    : Lowercase<S>;
 
 /**
  * Enforces camelCase property naming conventions with configurable type handling.
@@ -139,29 +68,6 @@ type CamelCase<S extends string> = S extends ""
  * - Enforcing coding standards
  *
  * Uses the `CamelCase` utility from 'type-fest' for string transformation.
- *
- * @example
- * ```typescript
- * // Basic usage - all properties will be camelCase with `any` type
- * interface ApiResponse {
- *   user_id: number;
- *   first_name: string;
- *   is_active: boolean;
- * }
- *
- * class UserModel implements EnforceCamelCase<ApiResponse> {
- *   userId: any;
- *   firstName: any;
- *   isActive: any;
- * }
- *
- * // Preserving original value types
- * class TypedUserModel implements EnforceCamelCase<ApiResponse, true> {
- *   userId: number;
- *   firstName: string;
- *   isActive: boolean;
- * }
- * ```
  */
 export type EnforceCamelCase<
   T extends object,
@@ -189,12 +95,6 @@ export type GuildBased<T extends object> = T & {
  * This interface combines events from both REST and Gateway APIs, along with client-specific events.
  */
 export interface ClientEvents extends RestEvents, GatewayEvents {
-  /**
-   * Emitted when an error occurs during client operation.
-   * @param error The error object containing details about what went wrong
-   */
-  error: [error: Error];
-
   /**
    * Emitted when the client has successfully connected to Discord and is ready to process events.
    * This event indicates that all initial data (guilds, channels, etc.) has been received.
@@ -261,7 +161,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is pinned or unpinned in a channel.
    * @param pinUpdate Information about the pin update
    */
-  channelPinsUpdate: [pinUpdate: ChannelPins | null];
+  channelPinsUpdate: [pinUpdate: ChannelPinsUpdateEntity | null];
 
   /**
    * Emitted when a new thread is created or when the client is added to a private thread.
@@ -290,7 +190,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This helps synchronize thread state when joining a guild or gaining access to a channel.
    * @param threads Collection of active threads in the channel
    */
-  threadListSync: [threads: ThreadListSync];
+  threadListSync: [threads: ThreadListSyncEntity];
 
   /**
    * Emitted when the thread member object for the current user is updated.
@@ -600,13 +500,13 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user adds a reaction to a message.
    * @param reaction Information about the added reaction
    */
-  messageReactionAdd: [reaction: MessageReaction];
+  messageReactionAdd: [reaction: MessageReactionAddEntity];
 
   /**
    * Emitted when a user removes a reaction from a message.
    * @param reaction Information about the removed reaction
    */
-  messageReactionRemove: [reaction: MessageReaction];
+  messageReactionRemove: [reaction: MessageReactionRemoveEntity];
 
   /**
    * Emitted when all reactions are removed from a message.
@@ -722,11 +622,11 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user votes on a message poll.
    * @param vote Information about the poll vote
    */
-  messagePollVoteAdd: [vote: MessagePollVote];
+  messagePollVoteAdd: [vote: MessagePollVoteEntity];
 
   /**
    * Emitted when a user removes their vote from a message poll.
    * @param vote Information about the removed poll vote
    */
-  messagePollVoteRemove: [vote: MessagePollVote];
+  messagePollVoteRemove: [vote: MessagePollVoteEntity];
 }

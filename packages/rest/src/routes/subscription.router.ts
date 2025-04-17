@@ -114,59 +114,9 @@ export class SubscriptionRouter {
    * @param skuId - The ID of the SKU to list subscriptions for
    * @param query - Query parameters for filtering and pagination
    * @returns A promise resolving to an array of subscription entities
-   * @throws Error if the query parameters are invalid or you lack permissions
+   * @throws {Error} Error if the query parameters are invalid or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/subscription#list-sku-subscriptions}
-   *
-   * @example
-   * ```typescript
-   * // Fetch all subscriptions for a specific SKU and user
-   * const userSubscriptions = await subscriptionRouter.fetchSkuSubscriptions(
-   *   "123456789012345678", // SKU ID
-   *   {
-   *     user_id: "234567890123456789", // User ID
-   *     limit: 25
-   *   }
-   * );
-   *
-   * console.log(`Found ${userSubscriptions.length} subscriptions`);
-   *
-   * // Check for active subscriptions
-   * const activeSubscriptions = userSubscriptions.filter(
-   *   sub => sub.status === 1 // ACTIVE status
-   * );
-   *
-   * if (activeSubscriptions.length > 0) {
-   *   console.log("User has active subscriptions:");
-   *   activeSubscriptions.forEach(sub => {
-   *     const renewalDate = new Date(sub.current_period_end);
-   *     console.log(`- Subscription ID: ${sub.id}`);
-   *     console.log(`  Next renewal: ${renewalDate.toLocaleDateString()}`);
-   *     console.log(`  Payment source: ${sub.payment_source_id}`);
-   *   });
-   * }
-   *
-   * // Paginate through all subscriptions for a SKU
-   * let allSubscriptions = [];
-   * let lastId = null;
-   *
-   * // Basic pagination example
-   * async function fetchAllSubscriptions() {
-   *   let batch;
-   *   do {
-   *     const query = lastId ? { after: lastId, limit: 100 } : { limit: 100 };
-   *     batch = await subscriptionRouter.fetchSkuSubscriptions("123456789012345678", query);
-   *
-   *     allSubscriptions = allSubscriptions.concat(batch);
-   *
-   *     if (batch.length > 0) {
-   *       lastId = batch[batch.length - 1].id;
-   *     }
-   *   } while (batch.length === 100);
-   *
-   *   console.log(`Retrieved a total of ${allSubscriptions.length} subscriptions`);
-   * }
-   * ```
    *
    * @note The user_id parameter is required except when making OAuth queries.
    */
@@ -191,48 +141,9 @@ export class SubscriptionRouter {
    * @param skuId - The ID of the SKU associated with the subscription
    * @param subscriptionId - The ID of the subscription to retrieve
    * @returns A promise resolving to the subscription entity
-   * @throws Will throw an error if the subscription doesn't exist or you lack permissions
+   * @throws {Error} Will throw an error if the subscription doesn't exist or you lack permissions
    *
    * @see {@link https://discord.com/developers/docs/resources/subscription#get-sku-subscription}
-   *
-   * @example
-   * ```typescript
-   * // Fetch a specific subscription
-   * try {
-   *   const subscription = await subscriptionRouter.fetchSkuSubscription(
-   *     "123456789012345678", // SKU ID
-   *     "987654321987654321"  // Subscription ID
-   *   );
-   *
-   *   // Convert subscription status to human-readable form
-   *   const statusNames = {
-   *     1: "ACTIVE",
-   *     2: "CANCELLED",
-   *     3: "ENDED",
-   *     4: "IDLE",
-   *     5: "PAUSED"
-   *   };
-   *
-   *   console.log(`Subscription Status: ${statusNames[subscription.status]}`);
-   *
-   *   // Calculate remaining time in current period
-   *   if (subscription.current_period_end) {
-   *     const endDate = new Date(subscription.current_period_end);
-   *     const now = new Date();
-   *     const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-   *
-   *     console.log(`Current period ends: ${endDate.toLocaleDateString()}`);
-   *     console.log(`Days remaining: ${daysRemaining}`);
-   *   }
-   *
-   *   // Check if subscription was cancelled
-   *   if (subscription.canceled_at) {
-   *     console.log(`Cancelled on: ${new Date(subscription.canceled_at).toLocaleDateString()}`);
-   *   }
-   * } catch (error) {
-   *   console.error("Failed to fetch subscription:", error);
-   * }
-   * ```
    */
   fetchSkuSubscription(
     skuId: Snowflake,
