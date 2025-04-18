@@ -1,8 +1,12 @@
 import type { Snowflake } from "@nyxjs/core";
-import { Gateway, type UpdatePresenceEntity } from "@nyxjs/gateway";
-import { Rest } from "@nyxjs/rest";
+import {
+  Gateway,
+  GatewayOptions,
+  type UpdatePresenceEntity,
+} from "@nyxjs/gateway";
+import { Rest, RestOptions } from "@nyxjs/rest";
 import { EventEmitter } from "eventemitter3";
-import type { z } from "zod";
+import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { User } from "../classes/index.js";
 import {
@@ -10,9 +14,30 @@ import {
   RestKeyofEventMappings,
   StandardGatewayDispatchEventMappings,
 } from "../data/index.js";
-import { CacheManager } from "../managers/index.js";
-import { ClientOptions } from "../options/index.js";
+import { CacheManager, ClientCacheOptions } from "../managers/index.js";
 import type { ClientEvents } from "../types/index.js";
+
+/**
+ * Configuration options for the Nyx.js Discord client.
+ *
+ * These options control the client's behavior including caching strategy,
+ * REST API settings, and gateway connection parameters.
+ */
+export const ClientOptions = z.object({
+  /**
+   * Settings to control the client's caching behavior.
+   * Caching reduces API calls by storing frequently accessed entities.
+   *
+   * @see {@link ClientCacheOptions} for detailed cache configuration.
+   */
+  cache: ClientCacheOptions.default({}),
+
+  // REST and Gateway options are included from their respective definitions
+  ...RestOptions.shape,
+  ...GatewayOptions.shape,
+});
+
+export type ClientOptions = z.infer<typeof ClientOptions>;
 
 /**
  * Main client class for interacting with the Discord API.
@@ -103,7 +128,7 @@ export class Client extends EventEmitter<ClientEvents> {
     });
 
     // Listen for ready event to set the user
-    this.on("ready", (ready) => {
+    this.once("ready", (ready) => {
       this.#user = ready.user;
     });
   }

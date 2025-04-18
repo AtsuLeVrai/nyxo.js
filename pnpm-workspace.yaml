@@ -3,16 +3,25 @@ packages:
   - internals/*
   - packages/*
   - scripts
+
 onlyBuiltDependencies:
   - '@biomejs/biome'
+  - '@discordjs/opus'
+  - '@swc/core'
   - bufferutil
   - erlpack
   - esbuild
   - sharp
   - zlib-sync
+
 publicHoistPattern:
-  - "*bufferutil*"
-  - "*erlpack*"
-  - "*fzstd*"
-  - "*sharp*"
-  - "*zlib-sync*"
+  - '*bufferutil*'
+  - '*erlpack*'
+  - '*fzstd*'
+  - '*sharp*'
+  - '*zlib-sync*'
+  - '*@discordjs/opus*'
+  - '*opusscript*'
+  - '*libsodium-wrappers*'
+  - '*sodium-native*'
+  - '*tweetnacl*'

@@ -850,7 +850,7 @@ export interface EmbedEntity {
    * Type of embed (always "rich" for webhook embeds).
    * Determines how the embed is rendered.
    */
-  type: EmbedType;
+  type?: EmbedType;
 
   /**
    * Description of embed.

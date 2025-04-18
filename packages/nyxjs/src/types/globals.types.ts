@@ -73,7 +73,36 @@ export type EnforceCamelCase<
   T extends object,
   PreserveValueTypes extends boolean = false,
 > = {
-  [K in keyof T as CamelCase<string & K>]: PreserveValueTypes extends true
+  [K in keyof T as CamelCase<string & K>]-?: PreserveValueTypes extends true
+    ? T[K] extends null | undefined
+      ? NonNullable<T[K]>
+      : T[K]
+    : // biome-ignore lint/suspicious/noExplicitAny: Explicit any is required to simplify type constraints
+      any;
+};
+
+/**
+ * Enforces property naming with configurable type handling.
+ *
+ * @typeParam T - Source type whose properties will be preserved
+ * @typeParam PreserveValueTypes - Whether to preserve original value types (default: false)
+ *
+ * @remarks
+ * Preserves all property keys from the source type without transformation.
+ * By default, sets all property values to `any` to simplify type constraints.
+ * Set second type parameter to `true` to preserve original value types.
+ *
+ * Useful for:
+ * - Creating type-safe mappings between objects
+ * - Enforcing type consistency in implementations
+ * - Reducing type verbosity while maintaining structure
+ * - Creating partial implementations with flexible property types
+ */
+export type Enforce<
+  T extends object,
+  PreserveValueTypes extends boolean = false,
+> = {
+  [K in keyof T]: PreserveValueTypes extends true
     ? T[K]
     : // biome-ignore lint/suspicious/noExplicitAny: Explicit any is required to simplify type constraints
       any;

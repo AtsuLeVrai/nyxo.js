@@ -10,6 +10,18 @@
   "engines": {
     "node": ">=22"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AtsuLeVrai/nyx.js",
+    "directory": "scripts"
+  },
+  "bugs": {
+    "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
+  },
+  "author": {
+    "name": "AtsuLeVrai",
+    "url": "https://github.com/AtsuLeVrai"
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.52.4",
     "@rollup/plugin-commonjs": "^28.0.3",

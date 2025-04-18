@@ -37,6 +37,10 @@ import { SoundboardSound } from "./soundboard-sound.class.js";
 import { StageInstance } from "./stage-instance.class.js";
 import { User } from "./user.class.js";
 
+@Cacheable<GuildBased<BanEntity>>(
+  "bans",
+  (data) => `${data.guild_id}:${data.user.id}`,
+)
 export class Ban
   extends BaseClass<GuildBased<BanEntity>>
   implements EnforceCamelCase<GuildBased<BanEntity>>

@@ -39,22 +39,6 @@ type KeyExtractor<T extends object> = (data: T) => Snowflake | null;
  *
  * @param storeKey - The name of the cache store where instances should be stored
  * @param keyExtractor - Optional function to extract the cache key from entity data
- *
- * @example
- * // Basic usage with default ID extraction
- * @Cacheable('guilds')
- * class Guild extends BaseClass<GuildEntity> {
- *   // Class implementation
- * }
- *
- * @example
- * // With custom key extraction for composite keys
- * @Cacheable('members', data =>
- *   data.guild_id && data.user.id ? `${data.guild_id}:${data.user.id}` : null
- * )
- * class GuildMember extends BaseClass<GuildMemberEntity> {
- *   // Class implementation
- * }
  */
 export function Cacheable<T extends object>(
   storeKey: keyof CacheManager,
@@ -245,21 +229,6 @@ export abstract class BaseClass<T extends object> {
    */
   get<K extends keyof T>(key: K, defaultValue?: T[K]): T[K] {
     return this.has(key) ? this.data[key] : (defaultValue as T[K]);
-  }
-
-  /**
-   * Returns a string representation of this modal.
-   * Override this method in derived classes to provide a more specific representation.
-   *
-   * @returns A string representation of this modal
-   */
-  toString(): string {
-    // If the data has an id property, include it in the string
-    if ("id" in this.data) {
-      return `${this.constructor.name}(${this.data.id})`;
-    }
-
-    return this.constructor.name;
   }
 
   /**
