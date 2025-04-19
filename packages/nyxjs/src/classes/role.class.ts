@@ -5,15 +5,15 @@ import {
   type RoleTagsEntity,
   type Snowflake,
 } from "@nyxjs/core";
-import type { CamelCasedPropertiesDeep } from "type-fest";
+import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
 import { toCamelCasedDeep } from "../utils/index.js";
 
 @Cacheable("roles")
 export class Role
   extends BaseClass<GuildBased<RoleEntity>>
-  implements EnforceCamelCase<GuildBased<RoleEntity>>
+  implements Enforce<CamelCasedProperties<GuildBased<RoleEntity>>>
 {
   get id(): Snowflake {
     return this.data.id;

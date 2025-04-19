@@ -6,7 +6,6 @@ packages:
 
 onlyBuiltDependencies:
   - '@biomejs/biome'
-  - '@discordjs/opus'
   - '@swc/core'
   - bufferutil
   - erlpack
@@ -20,8 +19,3 @@ publicHoistPattern:
   - '*fzstd*'
   - '*sharp*'
   - '*zlib-sync*'
-  - '*@discordjs/opus*'
-  - '*opusscript*'
-  - '*libsodium-wrappers*'
-  - '*sodium-native*'
-  - '*tweetnacl*'

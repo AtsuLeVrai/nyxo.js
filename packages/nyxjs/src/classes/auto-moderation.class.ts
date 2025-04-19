@@ -7,12 +7,13 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import type { AutoModerationActionExecutionEntity } from "@nyxjs/gateway";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 
 export class AutoModerationActionExecution
   extends BaseClass<AutoModerationActionExecutionEntity>
-  implements EnforceCamelCase<AutoModerationActionExecutionEntity>
+  implements Enforce<CamelCasedProperties<AutoModerationActionExecutionEntity>>
 {
   get guildId(): Snowflake {
     return this.data.guild_id;
@@ -62,7 +63,7 @@ export class AutoModerationActionExecution
 @Cacheable("autoModerationRules")
 export class AutoModerationRule
   extends BaseClass<AutoModerationRuleEntity>
-  implements EnforceCamelCase<AutoModerationRuleEntity>
+  implements Enforce<CamelCasedProperties<AutoModerationRuleEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

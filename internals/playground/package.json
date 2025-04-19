@@ -26,16 +26,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@discordjs/opus": "^0.10.0",
-    "@nyxjs/voice": "workspace:^",
     "bufferutil": "^4.0.9",
     "erlpack": "^0.1.4",
     "fzstd": "^0.1.1",
-    "libsodium-wrappers": "^0.7.15",
     "nyx.js": "workspace:^",
-    "opusscript": "^0.1.1",
-    "sodium-native": "^5.0.1",
-    "tweetnacl": "^1.0.3",
     "zlib-sync": "^0.1.9",
     "zod": "^3.24.3"
   },

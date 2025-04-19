@@ -143,12 +143,6 @@ export interface SessionResumeEvent extends BaseGatewayEvent {
   sequence: number;
 
   /**
-   * Count of events that Discord replayed during the resume process
-   * These are events that occurred during the disconnection period
-   */
-  replayedEvents: number;
-
-  /**
    * Time taken to process the resume operation in milliseconds
    * Measured from resume request to completion of event replay
    */
@@ -373,10 +367,17 @@ export interface GatewayEvents {
   shardReconnect: [event: ShardReconnectEvent];
 
   /**
+   * Emitted when the WebSocket closes the connection
+   * @param code The close code received from Discord
+   * @param reason Human-readable reason for the closure
+   */
+  wsClose: [code: number, reason: string];
+
+  /**
    * Emitted when an error occurs in the Gateway connection
    * @param error The error that occurred
    */
-  error: [error: Error];
+  wsError: [error: Error];
 
   /**
    * Emitted for all Discord Gateway dispatch events

@@ -687,6 +687,7 @@ export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
   "shardReconnect",
   "shardReady",
   "shardDisconnect",
-  "error",
+  "wsClose",
+  "wsError",
   "dispatch",
 ] as const;

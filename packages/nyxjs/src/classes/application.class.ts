@@ -11,16 +11,16 @@ import {
   type UserEntity,
 } from "@nyxjs/core";
 import type { GuildCreateEntity } from "@nyxjs/gateway";
-import type { CamelCasedPropertiesDeep } from "type-fest";
+import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import { BaseClass } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 import { toCamelCasedDeep } from "../utils/index.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
 
 export class Application
   extends BaseClass<ApplicationEntity>
-  implements EnforceCamelCase<ApplicationEntity>
+  implements Enforce<CamelCasedProperties<ApplicationEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

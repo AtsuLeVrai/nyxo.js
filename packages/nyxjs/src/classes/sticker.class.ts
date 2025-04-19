@@ -7,14 +7,15 @@ import type {
   StickerType,
   UserEntity,
 } from "@nyxjs/core";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 import { User } from "./user.class.js";
 
 @Cacheable("stickers")
 export class Sticker
   extends BaseClass<StickerEntity>
-  implements EnforceCamelCase<StickerEntity>
+  implements Enforce<CamelCasedProperties<StickerEntity>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -63,11 +64,15 @@ export class Sticker
   get sortValue(): number | undefined {
     return this.data.sort_value;
   }
+
+  get asset(): string | undefined {
+    return this.data.asset;
+  }
 }
 
 export class StickerItem
   extends BaseClass<StickerItemEntity>
-  implements EnforceCamelCase<StickerItemEntity>
+  implements Enforce<CamelCasedProperties<StickerItemEntity>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -84,7 +89,7 @@ export class StickerItem
 
 export class StickerPack
   extends BaseClass<StickerPackEntity>
-  implements EnforceCamelCase<StickerPackEntity>
+  implements Enforce<CamelCasedProperties<StickerPackEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

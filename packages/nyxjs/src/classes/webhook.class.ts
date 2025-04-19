@@ -5,9 +5,10 @@ import type {
   WebhookType,
 } from "@nyxjs/core";
 import type { GuildCreateEntity } from "@nyxjs/gateway";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import { ChannelFactory } from "../factories/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 import type { AnyChannel } from "./channel.class.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
@@ -15,7 +16,7 @@ import { User } from "./user.class.js";
 @Cacheable("webhooks")
 export class Webhook
   extends BaseClass<WebhookEntity>
-  implements EnforceCamelCase<WebhookEntity>
+  implements Enforce<CamelCasedProperties<WebhookEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

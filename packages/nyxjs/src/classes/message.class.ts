@@ -20,9 +20,10 @@ import {
 } from "@nyxjs/core";
 import type { MessageCreateEntity } from "@nyxjs/gateway";
 import type { CreateMessageSchema } from "@nyxjs/rest";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import { ChannelFactory } from "../factories/index.js";
-import type { EnforceCamelCase, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
 import { Application } from "./application.class.js";
 import type { AnyThreadChannel } from "./channel.class.js";
 import { GuildMember } from "./guild.class.js";
@@ -32,7 +33,7 @@ import { User } from "./user.class.js";
 @Cacheable("messages")
 export class Message
   extends BaseClass<MessageCreateEntity>
-  implements EnforceCamelCase<MessageCreateEntity>
+  implements Enforce<CamelCasedProperties<MessageCreateEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

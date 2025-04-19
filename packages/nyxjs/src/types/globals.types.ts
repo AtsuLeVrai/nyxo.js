@@ -19,7 +19,6 @@ import type {
   VoiceServerUpdateEntity,
 } from "@nyxjs/gateway";
 import type { RestEvents } from "@nyxjs/rest";
-import type { CamelCase } from "type-fest";
 import type {
   AnyChannel,
   AnyInteraction,
@@ -51,37 +50,6 @@ import type {
 } from "../classes/index.js";
 
 /**
- * Enforces camelCase property naming conventions with configurable type handling.
- *
- * @typeParam T - Source type whose properties will be transformed to camelCase
- * @typeParam PreserveValueTypes - Whether to preserve original value types (default: false)
- *
- * @remarks
- * Transforms all property keys from the source type to camelCase equivalents.
- * By default, sets all property values to `any` to simplify type constraints.
- * Set second type parameter to `true` to preserve original value types.
- *
- * Useful for:
- * - Ensuring consistent property naming in class implementations
- * - Converting snake_case API responses to camelCase
- * - Creating type-safe mappings between casing conventions
- * - Enforcing coding standards
- *
- * Uses the `CamelCase` utility from 'type-fest' for string transformation.
- */
-export type EnforceCamelCase<
-  T extends object,
-  PreserveValueTypes extends boolean = false,
-> = {
-  [K in keyof T as CamelCase<string & K>]-?: PreserveValueTypes extends true
-    ? T[K] extends null | undefined
-      ? NonNullable<T[K]>
-      : T[K]
-    : // biome-ignore lint/suspicious/noExplicitAny: Explicit any is required to simplify type constraints
-      any;
-};
-
-/**
  * Enforces property naming with configurable type handling.
  *
  * @typeParam T - Source type whose properties will be preserved
@@ -102,8 +70,10 @@ export type Enforce<
   T extends object,
   PreserveValueTypes extends boolean = false,
 > = {
-  [K in keyof T]: PreserveValueTypes extends true
-    ? T[K]
+  [K in keyof T]-?: PreserveValueTypes extends true
+    ? T[K] extends null | undefined
+      ? NonNullable<T[K]>
+      : T[K]
     : // biome-ignore lint/suspicious/noExplicitAny: Explicit any is required to simplify type constraints
       any;
 };

@@ -3,12 +3,14 @@ import type {
   InviteStageInstanceEntity,
   InviteTargetType,
   InviteType,
+  InviteWithMetadataEntity,
   Snowflake,
 } from "@nyxjs/core";
 import type { GuildCreateEntity, InviteCreateEntity } from "@nyxjs/gateway";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import { ChannelFactory } from "../factories/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 import { Application } from "./application.class.js";
 import type { AnyChannel } from "./channel.class.js";
 import { Guild } from "./guild.class.js";
@@ -18,7 +20,8 @@ import { User } from "./user.class.js";
 @Cacheable("invites")
 export class Invite
   extends BaseClass<InviteEntity & InviteCreateEntity>
-  implements EnforceCamelCase<InviteEntity & InviteCreateEntity>
+  implements
+    Enforce<CamelCasedProperties<InviteWithMetadataEntity & InviteCreateEntity>>
 {
   get code(): string {
     return this.data.code;

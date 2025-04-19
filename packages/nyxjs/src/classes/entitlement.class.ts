@@ -3,13 +3,14 @@ import type {
   EntitlementType,
   Snowflake,
 } from "@nyxjs/core";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 
 @Cacheable("entitlements")
 export class Entitlement
   extends BaseClass<EntitlementEntity>
-  implements EnforceCamelCase<EntitlementEntity>
+  implements Enforce<CamelCasedProperties<EntitlementEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

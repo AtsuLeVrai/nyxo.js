@@ -26,6 +26,12 @@
       "env": ["NODE_ENV"],
       "cache": true
     },
+    "build:watch": {
+      "outputs": ["dist/**"],
+      "env": ["NODE_ENV"],
+      "cache": false,
+      "persistent": true
+    },
     "build:prod": {
       "dependsOn": ["^build:prod"],
       "outputs": ["dist/**"],

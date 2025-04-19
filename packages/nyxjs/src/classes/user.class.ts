@@ -20,9 +20,9 @@ import {
   type GetCurrentUserGuildsQuerySchema,
   type UpdateCurrentUserApplicationRoleConnectionSchema,
 } from "@nyxjs/rest";
-import type { CamelCasedPropertiesDeep } from "type-fest";
+import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
 import { toCamelCasedDeep } from "../utils/index.js";
 import { DmChannel } from "./channel.class.js";
 import { Guild, GuildMember } from "./guild.class.js";
@@ -30,7 +30,7 @@ import { Guild, GuildMember } from "./guild.class.js";
 @Cacheable("users")
 export class User
   extends BaseClass<UserEntity>
-  implements EnforceCamelCase<UserEntity>
+  implements Enforce<CamelCasedProperties<UserEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

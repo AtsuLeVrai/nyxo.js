@@ -742,7 +742,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       // Set up event handlers for WebSocket events
       ws.on("message", this.#handleMessage.bind(this));
       ws.on("close", this.#handleClose.bind(this));
-      ws.on("error", this.#handleError.bind(this));
+      ws.on("error", (error) => this.emit("wsError", error));
 
       // Wait for connection to open with timeout handling
       await new Promise<void>((resolve, reject) => {
@@ -793,7 +793,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       const cleanup = (): void => {
         clearTimeout(connectionTimeout);
         this.removeListener("dispatch", readyHandler);
-        this.removeListener("error", errorHandler);
+        this.removeListener("wsError", errorHandler);
       };
 
       // Event handler for dispatch events
@@ -813,7 +813,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
       // Register event handlers
       this.once("dispatch", readyHandler);
-      this.once("error", errorHandler);
+      this.once("wsError", errorHandler);
     });
   }
 
@@ -827,32 +827,22 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @private
    */
   async #handleMessage(data: Buffer): Promise<void> {
-    try {
-      // Decompress the data if compression is enabled
-      let processedData = data;
-      if (this.#compression.isInitialized) {
-        processedData = this.#compression.decompress(data);
-      }
-
-      // Decode the payload using the configured encoding format
-      const payload = this.#encoding.decode(processedData);
-
-      // Update sequence number if provided for resumability
-      if (payload.s !== null) {
-        this.#session.sequence = payload.s;
-      }
-
-      // Process the payload according to its opcode
-      await this.#processPayload(payload);
-    } catch (error) {
-      // Emit error event if processing fails
-      this.emit(
-        "error",
-        new Error("Error processing gateway message", {
-          cause: error,
-        }),
-      );
+    // Decompress the data if compression is enabled
+    let processedData = data;
+    if (this.#compression.isInitialized) {
+      processedData = this.#compression.decompress(data);
     }
+
+    // Decode the payload using the configured encoding format
+    const payload = this.#encoding.decode(processedData);
+
+    // Update sequence number if provided for resumability
+    if (payload.s !== null) {
+      this.#session.sequence = payload.s;
+    }
+
+    // Process the payload according to its opcode
+    await this.#processPayload(payload);
   }
 
   /**
@@ -865,51 +855,41 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @private
    */
   async #processPayload(payload: PayloadEntity): Promise<void> {
-    try {
-      // Process the payload based on its opcode
-      switch (payload.op) {
-        case GatewayOpcodes.Dispatch:
-          // Regular event dispatch
-          this.#handleDispatchEvent(payload);
-          break;
+    // Process the payload based on its opcode
+    switch (payload.op) {
+      case GatewayOpcodes.Dispatch:
+        // Regular event dispatch
+        this.#handleDispatchEvent(payload);
+        break;
 
-        case GatewayOpcodes.Hello:
-          // Initial hello message with heartbeat interval
-          await this.#handleHello(payload.d as HelloEntity);
-          break;
+      case GatewayOpcodes.Hello:
+        // Initial hello message with heartbeat interval
+        await this.#handleHello(payload.d as HelloEntity);
+        break;
 
-        case GatewayOpcodes.Heartbeat:
-          // Discord requested an immediate heartbeat
-          this.#heartbeat.sendHeartbeat();
-          break;
+      case GatewayOpcodes.Heartbeat:
+        // Discord requested an immediate heartbeat
+        this.#heartbeat.sendHeartbeat();
+        break;
 
-        case GatewayOpcodes.HeartbeatAck:
-          // Discord acknowledged our heartbeat
-          this.#heartbeat.ackHeartbeat();
-          break;
+      case GatewayOpcodes.HeartbeatAck:
+        // Discord acknowledged our heartbeat
+        this.#heartbeat.ackHeartbeat();
+        break;
 
-        case GatewayOpcodes.InvalidSession:
-          // Session is invalid, need to reconnect
-          await this.#handleInvalidSession(Boolean(payload.d));
-          break;
+      case GatewayOpcodes.InvalidSession:
+        // Session is invalid, need to reconnect
+        await this.#handleInvalidSession(Boolean(payload.d));
+        break;
 
-        case GatewayOpcodes.Reconnect:
-          // Discord requested a reconnection
-          await this.#handleReconnect();
-          break;
+      case GatewayOpcodes.Reconnect:
+        // Discord requested a reconnection
+        await this.#handleReconnect();
+        break;
 
-        default:
-          // Unknown or unhandled opcode
-          break;
-      }
-    } catch (error) {
-      // Emit error event if handling fails
-      this.emit(
-        "error",
-        new Error("Error handling gateway payload", {
-          cause: error,
-        }),
-      );
+      default:
+        // Unknown or unhandled opcode
+        break;
     }
   }
 
@@ -1076,7 +1056,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @param reason - Close reason provided by the server
    * @private
    */
-  async #handleClose(code: number, reason?: string): Promise<void> {
+  async #handleClose(code: number, reason: string): Promise<void> {
+    this.emit("wsClose", code, reason);
+
     // Stop heartbeats immediately to prevent zombied connection
     this.#heartbeat.destroy();
 
@@ -1136,19 +1118,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       // No reconnection - set state to disconnected
       this.#state = "disconnected";
     }
-  }
-
-  /**
-   * Handles WebSocket errors
-   *
-   * Processes and forwards WebSocket error events for proper error handling.
-   *
-   * @param error - WebSocket error
-   * @private
-   */
-  #handleError(error: Error): void {
-    // Emit the error with additional context
-    this.emit("error", new Error("WebSocket error", { cause: error }));
   }
 
   /**
@@ -1265,7 +1234,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       timestamp: new Date().toISOString(),
       sessionId: this.#session.id ?? "",
       sequence: this.#session.sequence,
-      replayedEvents: 0, // This is not tracked in the current implementation
       latency: this.#heartbeat.latency,
     });
   }

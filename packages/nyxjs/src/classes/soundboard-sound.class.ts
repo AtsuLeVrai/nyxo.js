@@ -1,12 +1,13 @@
 import type { Snowflake, SoundboardSoundEntity, UserEntity } from "@nyxjs/core";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 import { User } from "./user.class.js";
 
 @Cacheable("soundboards")
 export class SoundboardSound
   extends BaseClass<SoundboardSoundEntity>
-  implements EnforceCamelCase<SoundboardSoundEntity>
+  implements Enforce<CamelCasedProperties<SoundboardSoundEntity>>
 {
   get name(): string {
     return this.data.name;

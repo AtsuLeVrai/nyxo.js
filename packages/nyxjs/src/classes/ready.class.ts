@@ -1,14 +1,15 @@
 import type { ApiVersion, ApplicationEntity } from "@nyxjs/core";
 import type { GuildCreateEntity, ReadyEntity } from "@nyxjs/gateway";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 import { Application } from "./application.class.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
 
 export class Ready
   extends BaseClass<ReadyEntity>
-  implements EnforceCamelCase<ReadyEntity>
+  implements Enforce<CamelCasedProperties<ReadyEntity>>
 {
   get v(): ApiVersion {
     return this.data.v;

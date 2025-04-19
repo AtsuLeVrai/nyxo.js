@@ -7,12 +7,13 @@ import type {
   Snowflake,
 } from "@nyxjs/core";
 import type { GuildAuditLogEntryCreateEntity } from "@nyxjs/gateway";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 
 export class GuildAuditLogEntry
   extends BaseClass<GuildAuditLogEntryCreateEntity>
-  implements EnforceCamelCase<GuildAuditLogEntryCreateEntity>
+  implements Enforce<CamelCasedProperties<GuildAuditLogEntryCreateEntity>>
 {
   get guildId(): Snowflake {
     return this.data.guild_id;

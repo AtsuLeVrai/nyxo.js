@@ -3,13 +3,14 @@ import type {
   SubscriptionEntity,
   SubscriptionStatus,
 } from "@nyxjs/core";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase } from "../types/index.js";
+import type { Enforce } from "../types/index.js";
 
 @Cacheable("subscriptions")
 export class Subscription
   extends BaseClass<SubscriptionEntity>
-  implements EnforceCamelCase<SubscriptionEntity>
+  implements Enforce<CamelCasedProperties<SubscriptionEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

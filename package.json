@@ -11,6 +11,7 @@
     "dev": "turbo run dev",
     "start": "turbo run start",
     "build:dev": "turbo run build:dev",
+    "build:watch": "turbo run build:watch",
     "build:prod": "turbo run build:prod",
     "type-check": "turbo run type-check",
     "check": "biome check --write --unsafe --verbose",

@@ -1,12 +1,13 @@
 import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { EnforceCamelCase, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
 import { User } from "./user.class.js";
 
 @Cacheable("emojis")
 export class Emoji
   extends BaseClass<GuildBased<EmojiEntity>>
-  implements EnforceCamelCase<GuildBased<EmojiEntity>>
+  implements Enforce<CamelCasedProperties<GuildBased<EmojiEntity>>>
 {
   get id(): Snowflake | null {
     return this.data.id;

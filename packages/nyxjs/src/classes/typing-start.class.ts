@@ -1,12 +1,13 @@
 import type { GuildMemberEntity, Snowflake } from "@nyxjs/core";
 import type { TypingStartEntity } from "@nyxjs/gateway";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
-import type { EnforceCamelCase, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
 import { GuildMember } from "./guild.class.js";
 
 export class TypingStart
   extends BaseClass<TypingStartEntity>
-  implements EnforceCamelCase<TypingStartEntity>
+  implements Enforce<CamelCasedProperties<TypingStartEntity>>
 {
   get channelId(): Snowflake {
     return this.data.channel_id;

@@ -3,12 +3,13 @@ import type {
   VoiceChannelEffectSendAnimationType,
   VoiceChannelEffectSendEntity,
 } from "@nyxjs/gateway";
+import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
-import type { EnforceCamelCase, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
 import { Emoji } from "./emoji.class.js";
 export class VoiceChannelEffectSend
   extends BaseClass<VoiceChannelEffectSendEntity>
-  implements EnforceCamelCase<VoiceChannelEffectSendEntity>
+  implements Enforce<CamelCasedProperties<VoiceChannelEffectSendEntity>>
 {
   get channelId(): Snowflake {
     return this.data.channel_id;
