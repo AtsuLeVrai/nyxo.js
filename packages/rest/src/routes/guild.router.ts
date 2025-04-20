@@ -2055,7 +2055,7 @@ export class GuildRouter {
    */
   fetchGuildBans(
     guildId: Snowflake,
-    query: GetGuildBansQuerySchema = {},
+    query?: GetGuildBansQuerySchema,
   ): Promise<BanEntity[]> {
     return this.#rest.get(GuildRouter.GUILD_ROUTES.guildBansEndpoint(guildId), {
       query,
@@ -2380,7 +2380,7 @@ export class GuildRouter {
    */
   fetchGuildPruneCount(
     guildId: Snowflake,
-    query: GetGuildPruneCountQuerySchema = {},
+    query?: GetGuildPruneCountQuerySchema,
   ): Promise<{ pruned: number }> {
     return this.#rest.get(
       GuildRouter.GUILD_ROUTES.guildPruneEndpoint(guildId),

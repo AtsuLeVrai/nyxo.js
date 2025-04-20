@@ -371,7 +371,7 @@ export class UserRouter {
    * For bots in more than 200 guilds, pagination is necessary.
    */
   fetchCurrentUserGuilds(
-    query: GetCurrentUserGuildsQuerySchema = {},
+    query?: GetCurrentUserGuildsQuerySchema,
   ): Promise<GuildEntity[]> {
     return this.#rest.get(UserRouter.USER_ROUTES.currentUserGuildsEndpoint, {
       query,

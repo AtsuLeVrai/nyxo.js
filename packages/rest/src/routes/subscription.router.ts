@@ -122,7 +122,7 @@ export class SubscriptionRouter {
    */
   fetchSkuSubscriptions(
     skuId: Snowflake,
-    query: SubscriptionQuerySchema = {},
+    query?: SubscriptionQuerySchema,
   ): Promise<SubscriptionEntity[]> {
     return this.#rest.get(
       SubscriptionRouter.SUBSCRIPTION_ROUTES.skuSubscriptionsEndpoint(skuId),

@@ -97,7 +97,7 @@ export class InviteRouter {
    */
   fetchInvite(
     code: string,
-    query: GetInviteQuerySchema = {},
+    query?: GetInviteQuerySchema,
   ): Promise<InviteEntity & InviteMetadataEntity> {
     return this.#rest.get(
       InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code),

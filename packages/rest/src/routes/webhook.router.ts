@@ -621,7 +621,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     options: ExecuteWebhookSchema,
-    query: ExecuteWebhookQuerySchema = {},
+    query?: ExecuteWebhookQuerySchema,
   ): Promise<WebhookEntity | undefined> {
     const { files, ...rest } = options;
     return this.#rest.post(
@@ -654,7 +654,7 @@ export class WebhookRouter {
   executeSlackCompatibleWebhook(
     webhookId: Snowflake,
     token: string,
-    query: ExecuteWebhookQuerySchema = {},
+    query?: ExecuteWebhookQuerySchema,
   ): Promise<void> {
     return this.#rest.post(
       WebhookRouter.WEBHOOK_ROUTES.slackWebhookEndpoint(webhookId, token),
@@ -688,7 +688,7 @@ export class WebhookRouter {
   executeGithubCompatibleWebhook(
     webhookId: Snowflake,
     token: string,
-    query: ExecuteWebhookQuerySchema = {},
+    query?: ExecuteWebhookQuerySchema,
   ): Promise<void> {
     return this.#rest.post(
       WebhookRouter.WEBHOOK_ROUTES.githubWebhookEndpoint(webhookId, token),
@@ -716,7 +716,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    query: GetWebhookMessageQuerySchema = {},
+    query?: GetWebhookMessageQuerySchema,
   ): Promise<WebhookEntity> {
     return this.#rest.get(
       WebhookRouter.WEBHOOK_ROUTES.webhookMessageEndpoint(
@@ -758,7 +758,7 @@ export class WebhookRouter {
     token: string,
     messageId: Snowflake,
     options: EditWebhookMessageSchema,
-    query: GetWebhookMessageQuerySchema = {},
+    query?: GetWebhookMessageQuerySchema,
   ): Promise<WebhookEntity> {
     const { files, ...rest } = options;
     return this.#rest.patch(
@@ -796,7 +796,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    query: GetWebhookMessageQuerySchema = {},
+    query?: GetWebhookMessageQuerySchema,
   ): Promise<void> {
     return this.#rest.delete(
       WebhookRouter.WEBHOOK_ROUTES.webhookMessageEndpoint(

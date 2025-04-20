@@ -34,8 +34,6 @@ const client = new Client({
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
-  encodingType: "etf",
-  compressionType: "zstd-stream",
 });
 
 const onKeyofEvents: (keyof ClientEvents)[] = [
@@ -44,6 +42,7 @@ const onKeyofEvents: (keyof ClientEvents)[] = [
   "shardReady",
   "wsError",
   "wsClose",
+  "sessionStart",
 ];
 
 for (const event of onKeyofEvents) {
@@ -51,6 +50,26 @@ for (const event of onKeyofEvents) {
     console.log(`[CLIENT] Event ${event} triggered`, ...args);
   });
 }
+
+client.on("messageCreate", async (message) => {
+  if (message.author.id === client.user.id) {
+    return;
+  }
+
+  console.log("[CLIENT] Message created:", message.content);
+
+  if (message.content === "!ping") {
+    await message.reply({
+      content: "Pong",
+      embeds: [
+        {
+          title: "Test",
+          description: "test",
+        },
+      ],
+    });
+  }
+});
 
 // Error handling
 process.on("unhandledRejection", (error) => {

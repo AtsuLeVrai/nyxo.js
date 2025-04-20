@@ -133,7 +133,7 @@ export class AuditLogRouter {
    */
   fetchGuildAuditLog(
     guildId: Snowflake,
-    query: GetGuildAuditLogQuerySchema = {},
+    query?: GetGuildAuditLogQuerySchema,
   ): Promise<AuditLogEntity> {
     return this.#rest.get(
       AuditLogRouter.AUDIT_ROUTES.guildAuditLogsEndpoint(guildId),

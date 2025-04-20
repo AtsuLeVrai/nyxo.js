@@ -118,7 +118,7 @@ export class PollRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     answerId: number,
-    query: GetAnswerVotersQuerySchema = {},
+    query?: GetAnswerVotersQuerySchema,
   ): Promise<PollVotersResponseEntity> {
     return this.#rest.get(
       PollRouter.POLL_ROUTES.pollAnswerVotersEndpoint(

@@ -7,54 +7,6 @@ describe("Cdn", () => {
   const validHash = "abc123def456";
   const animatedHash = "a_abc123def456";
 
-  describe("validateSize", () => {
-    it("should return undefined when size is undefined", () => {
-      expect(Cdn.validateSize(undefined)).toBeUndefined();
-    });
-
-    it("should return the size when it is valid", () => {
-      expect(Cdn.validateSize(128)).toBe(128);
-    });
-
-    it("should throw error for invalid size", () => {
-      expect(() => Cdn.validateSize(100)).toThrow("Invalid image size");
-    });
-  });
-
-  describe("validateHash", () => {
-    it("should not throw for valid hash", () => {
-      expect(() => Cdn.validateHash(validHash)).not.toThrow();
-    });
-
-    it("should not throw for valid animated hash", () => {
-      expect(() => Cdn.validateHash(animatedHash)).not.toThrow();
-    });
-
-    it("should throw for invalid hash", () => {
-      expect(() => Cdn.validateHash("invalid-hash!")).toThrow(
-        "Invalid Discord asset hash format",
-      );
-    });
-  });
-
-  describe("getFormatFromHash", () => {
-    it("should return format from options if provided", () => {
-      expect(Cdn.getFormatFromHash(validHash, { format: "jpeg" })).toBe("jpeg");
-    });
-
-    it("should return gif for animated hash", () => {
-      expect(Cdn.getFormatFromHash(animatedHash)).toBe("gif");
-    });
-
-    it("should return gif if animated option is true", () => {
-      expect(Cdn.getFormatFromHash(validHash, { animated: true })).toBe("gif");
-    });
-
-    it("should return png for non-animated hash", () => {
-      expect(Cdn.getFormatFromHash(validHash)).toBe("png");
-    });
-  });
-
   describe("buildUrl", () => {
     it("should build URL with correct path", () => {
       const url = Cdn.buildUrl(["test", "path"]);
@@ -62,12 +14,16 @@ describe("Cdn", () => {
     });
 
     it("should include size parameter when provided", () => {
-      const url = Cdn.buildUrl(["test"], { size: 256 });
+      const url = Cdn.buildUrl(["test"], 256);
       expect(url).toBe("https://cdn.discordapp.com/test?size=256");
     });
 
     it("should use the media proxy URL when specified", () => {
-      const url = Cdn.buildUrl(["test"], {}, "https://media.discordapp.net");
+      const url = Cdn.buildUrl(
+        ["test"],
+        undefined,
+        "https://media.discordapp.net",
+      );
       expect(url).toBe("https://media.discordapp.net/test");
     });
   });

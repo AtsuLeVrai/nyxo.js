@@ -231,7 +231,7 @@ export class EntitlementRouter {
    */
   fetchEntitlements(
     applicationId: Snowflake,
-    query: ListEntitlementQuerySchema = {},
+    query?: ListEntitlementQuerySchema,
   ): Promise<EntitlementEntity[]> {
     return this.#rest.get(
       EntitlementRouter.ENTITLEMENT_ROUTES.applicationEntitlementsEndpoint(

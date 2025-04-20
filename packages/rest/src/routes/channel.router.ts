@@ -1765,7 +1765,7 @@ export class ChannelRouter {
    */
   fetchThreadMembers(
     channelId: Snowflake,
-    query: ListThreadMembersQuerySchema = {},
+    query?: ListThreadMembersQuerySchema,
   ): Promise<ThreadMemberEntity[]> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMembersEndpoint(channelId),
@@ -1802,7 +1802,7 @@ export class ChannelRouter {
    */
   fetchPublicArchivedThreads(
     channelId: Snowflake,
-    query: ListPublicArchivedThreadsQuerySchema = {},
+    query?: ListPublicArchivedThreadsQuerySchema,
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelPublicArchivedThreadsEndpoint(
@@ -1840,7 +1840,7 @@ export class ChannelRouter {
    */
   fetchPrivateArchivedThreads(
     channelId: Snowflake,
-    query: ListPublicArchivedThreadsQuerySchema = {},
+    query?: ListPublicArchivedThreadsQuerySchema,
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelPrivateArchivedThreadsEndpoint(
@@ -1879,7 +1879,7 @@ export class ChannelRouter {
    */
   fetchJoinedPrivateArchivedThreads(
     channelId: Snowflake,
-    query: ListPublicArchivedThreadsQuerySchema = {},
+    query?: ListPublicArchivedThreadsQuerySchema,
   ): Promise<ListPublicArchivedThreadsResponseEntity> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelJoinedPrivateArchivedThreadsEndpoint(

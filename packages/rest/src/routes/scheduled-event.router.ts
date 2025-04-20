@@ -437,7 +437,7 @@ export class ScheduledEventRouter {
   fetchEventUsers(
     guildId: Snowflake,
     eventId: Snowflake,
-    query: GetGuildScheduledEventUsersQuerySchema = {},
+    query?: GetGuildScheduledEventUsersQuerySchema,
   ): Promise<GuildScheduledEventUserEntity[]> {
     return this.#rest.get(
       ScheduledEventRouter.EVENT_ROUTES.eventUsersEndpoint(guildId, eventId),

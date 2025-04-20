@@ -411,7 +411,7 @@ export class MessageRouter {
    */
   fetchMessages(
     channelId: Snowflake,
-    query: GetChannelMessagesQuerySchema = {},
+    query?: GetChannelMessagesQuerySchema,
   ): Promise<MessageEntity[]> {
     return this.#rest.get(
       MessageRouter.MESSAGE_ROUTES.channelMessagesEndpoint(channelId),
@@ -623,7 +623,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-    query: GetReactionsQuerySchema = {},
+    query?: GetReactionsQuerySchema,
   ): Promise<UserEntity[]> {
     return this.#rest.get(
       MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(

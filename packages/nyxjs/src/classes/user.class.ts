@@ -23,7 +23,10 @@ import {
 import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
-import { toCamelCasedDeep } from "../utils/index.js";
+import {
+  toCamelCasedProperties,
+  toCamelCasedPropertiesDeep,
+} from "../utils/index.js";
 import { DmChannel } from "./channel.class.js";
 import { Guild, GuildMember } from "./guild.class.js";
 
@@ -96,8 +99,12 @@ export class User
     return new BitField<UserFlags>(this.data.public_flags ?? 0n);
   }
 
-  get avatarDecorationData(): AvatarDecorationDataEntity | null {
-    return this.data.avatar_decoration_data ?? null;
+  get avatarDecorationData(): CamelCasedProperties<AvatarDecorationDataEntity> | null {
+    if (!this.data.avatar_decoration_data) {
+      return null;
+    }
+
+    return toCamelCasedProperties(this.data.avatar_decoration_data);
   }
 
   get tag(): string {
@@ -183,7 +190,7 @@ export class User
     const connections =
       await this.client.rest.users.fetchCurrentUserConnections();
     return connections.map((connection) => {
-      return toCamelCasedDeep(connection);
+      return toCamelCasedPropertiesDeep(connection);
     });
   }
 
