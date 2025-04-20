@@ -12,6 +12,9 @@
     <a href="https://biomejs.com/">
       <img src="https://img.shields.io/badge/biome-Check-60a5fa?style=for-the-badge&logo=biome&color=60a5fa" alt="Biome Check">
     </a>
+    <a href="https://discord.gg/hfMzQMbaMg">
+        <img src="https://img.shields.io/discord/1301585513651634236?color=5865F2&label=Discord&logo=discord&style=for-the-badge" alt="Discord">
+    </a>
   </p>
 
   <br />
