@@ -1,4 +1,4 @@
-import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import type { EmojiEntity, Snowflake } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import { FileHandler, type FileInput } from "../handlers/index.js";
 

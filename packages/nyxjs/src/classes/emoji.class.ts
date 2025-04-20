@@ -1,4 +1,4 @@
-import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import type { EmojiEntity, Snowflake } from "@nyxojs/core";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";

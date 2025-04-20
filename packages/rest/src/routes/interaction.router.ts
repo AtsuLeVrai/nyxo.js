@@ -3,7 +3,7 @@ import type {
   InteractionResponseEntity,
   MessageEntity,
   Snowflake,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import type {
   EditWebhookMessageSchema,

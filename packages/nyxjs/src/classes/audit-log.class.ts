@@ -5,8 +5,8 @@ import type {
   AuditLogEvent,
   AuditLogRoleChangeEntity,
   Snowflake,
-} from "@nyxjs/core";
-import type { GuildAuditLogEntryCreateEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { GuildAuditLogEntryCreateEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";

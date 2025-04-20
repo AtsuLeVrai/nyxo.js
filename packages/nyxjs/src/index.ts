@@ -1,10 +1,10 @@
 import "reflect-metadata";
 
 // Re-export all the packages
-export * from "@nyxjs/core";
-export * from "@nyxjs/gateway";
-export * from "@nyxjs/rest";
-export * from "@nyxjs/store";
+export * from "@nyxojs/core";
+export * from "@nyxojs/gateway";
+export * from "@nyxojs/rest";
+export * from "@nyxojs/store";
 
 export * from "./bases/index.js";
 export * from "./classes/index.js";

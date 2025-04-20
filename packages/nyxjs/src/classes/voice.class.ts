@@ -1,8 +1,8 @@
-import type { EmojiEntity, Snowflake } from "@nyxjs/core";
+import type { EmojiEntity, Snowflake } from "@nyxojs/core";
 import type {
   VoiceChannelEffectSendAnimationType,
   VoiceChannelEffectSendEntity,
-} from "@nyxjs/gateway";
+} from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";

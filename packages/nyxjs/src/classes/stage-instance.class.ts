@@ -2,7 +2,7 @@ import type {
   Snowflake,
   StageInstanceEntity,
   StageInstancePrivacyLevel,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";

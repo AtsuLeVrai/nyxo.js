@@ -3,8 +3,8 @@ import type {
   Snowflake,
   WebhookEntity,
   WebhookType,
-} from "@nyxjs/core";
-import type { GuildCreateEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { GuildCreateEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import { ChannelFactory } from "../factories/index.js";

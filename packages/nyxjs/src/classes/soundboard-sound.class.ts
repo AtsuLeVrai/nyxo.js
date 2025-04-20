@@ -1,4 +1,8 @@
-import type { Snowflake, SoundboardSoundEntity, UserEntity } from "@nyxjs/core";
+import type {
+  Snowflake,
+  SoundboardSoundEntity,
+  UserEntity,
+} from "@nyxojs/core";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";

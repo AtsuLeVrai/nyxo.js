@@ -4,8 +4,8 @@ import type {
   ApplicationIntegrationType,
   ApplicationIntegrationTypeConfigurationEntity,
   InstallParamsEntity,
-} from "@nyxjs/core";
-import type { ApplicationEntity, Snowflake } from "@nyxjs/core";
+} from "@nyxojs/core";
+import type { ApplicationEntity, Snowflake } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 import { FileHandler } from "../handlers/index.js";

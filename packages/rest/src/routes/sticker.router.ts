@@ -1,4 +1,4 @@
-import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxjs/core";
+import type { Snowflake, StickerEntity, StickerPackEntity } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 

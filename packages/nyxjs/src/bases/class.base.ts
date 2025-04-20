@@ -1,5 +1,5 @@
-import type { Snowflake } from "@nyxjs/core";
-import type { Store } from "@nyxjs/store";
+import type { Snowflake } from "@nyxojs/core";
+import type { Store } from "@nyxojs/store";
 import type { Client } from "../core/index.js";
 import type { CacheManager } from "../managers/index.js";
 
@@ -22,8 +22,8 @@ export interface CacheEntityInfo {
  * Metadata keys used by the caching system
  */
 const METADATA_KEYS = {
-  CACHE_STORE_KEY: "nyxjs:cache:storeKey",
-  CACHE_KEY_EXTRACTOR: "nyxjs:cache:keyExtractor",
+  CACHE_STORE_KEY: "nyxojs:cache:storeKey",
+  CACHE_KEY_EXTRACTOR: "nyxojs:cache:keyExtractor",
 } as const;
 
 /**
@@ -60,7 +60,7 @@ export function Cacheable<T extends object>(
 }
 
 /**
- * Base class for all data models in the Nyx.js framework.
+ * Base class for all data models in the Nyxo.js framework.
  *
  * The BaseClass provides a foundation for working with Discord API data entities
  * in a structured and type-safe manner. It handles automatic caching through the

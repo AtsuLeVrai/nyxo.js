@@ -1,4 +1,4 @@
-import type { MessageEntity, Snowflake, UserEntity } from "@nyxjs/core";
+import type { MessageEntity, Snowflake, UserEntity } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

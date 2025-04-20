@@ -6,7 +6,7 @@ import {
   InteractionContextType,
   InteractionType,
   type PrivateChannelInteractionEntity,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import {
   type AnyInteraction,
   AutocompleteInteraction,

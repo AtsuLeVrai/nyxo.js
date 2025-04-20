@@ -6,8 +6,8 @@ import type {
   GuildScheduledEventStatus,
   GuildScheduledEventType,
   Snowflake,
-} from "@nyxjs/core";
-import type { GuildScheduledEventUserAddRemoveEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { GuildScheduledEventUserAddRemoveEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";

@@ -11,15 +11,15 @@ import {
   type UserEntity,
   type UserFlags,
   formatUser,
-} from "@nyxjs/core";
-import type { GuildCreateEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { GuildCreateEntity } from "@nyxojs/gateway";
 import {
   type AnimatedImageOptions,
   Cdn,
   type CreateGroupDmSchema,
   type GetCurrentUserGuildsQuerySchema,
   type UpdateCurrentUserApplicationRoleConnectionSchema,
-} from "@nyxjs/rest";
+} from "@nyxojs/rest";
 import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";

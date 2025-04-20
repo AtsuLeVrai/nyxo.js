@@ -24,12 +24,12 @@ import {
   type SystemChannelFlags,
   type VerificationLevel,
   type VoiceStateEntity,
-} from "@nyxjs/core";
-import type { GuildCreateEntity, PresenceEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { GuildCreateEntity, PresenceEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import { ChannelFactory } from "../factories/index.js";
-import type { Enforce, EnforceCamelCase, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
 import type { AnyChannel, AnyThreadChannel } from "./channel.class.js";
 import { Emoji } from "./emoji.class.js";
 import { Role } from "./role.class.js";
@@ -65,7 +65,7 @@ export class Ban
 )
 export class GuildMember
   extends BaseClass<GuildBased<GuildMemberEntity>>
-  implements EnforceCamelCase<GuildBased<GuildMemberEntity>>
+  implements Enforce<CamelCasedProperties<GuildBased<GuildMemberEntity>>>
 {
   get user(): User {
     return new User(this.client, this.data.user);
@@ -207,10 +207,8 @@ export class Integration
 }
 
 @Cacheable("guilds")
-export class Guild
-  extends BaseClass<GuildCreateEntity>
-  implements Enforce<CamelCasedProperties<GuildCreateEntity>>
-{
+export class Guild extends BaseClass<GuildCreateEntity> {
+  // implements Enforce<CamelCasedProperties<GuildCreateEntity>>
   get id(): Snowflake {
     return this.data.id;
   }

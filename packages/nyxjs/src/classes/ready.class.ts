@@ -1,5 +1,5 @@
-import type { ApiVersion, ApplicationEntity } from "@nyxjs/core";
-import type { GuildCreateEntity, ReadyEntity } from "@nyxjs/gateway";
+import type { ApiVersion, ApplicationEntity } from "@nyxojs/core";
+import type { GuildCreateEntity, ReadyEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";

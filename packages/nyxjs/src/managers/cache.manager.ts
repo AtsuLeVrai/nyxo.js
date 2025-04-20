@@ -1,6 +1,6 @@
-import type { Snowflake } from "@nyxjs/core";
-import type { PresenceEntity } from "@nyxjs/gateway";
-import { Store, StoreOptions } from "@nyxjs/store";
+import type { Snowflake } from "@nyxojs/core";
+import type { PresenceEntity } from "@nyxojs/gateway";
+import { Store, StoreOptions } from "@nyxojs/store";
 import { z } from "zod";
 import type {
   AnyChannel,
@@ -52,7 +52,7 @@ export const ClientCacheEntityOptions = z
 export type ClientCacheEntityOptions = z.infer<typeof ClientCacheEntityOptions>;
 
 /**
- * Configuration options for the cache system of the Nyx.js client.
+ * Configuration options for the cache system of the Nyxo.js client.
  *
  * The cache manager stores frequently accessed Discord entities to reduce API calls,
  * improve performance, and manage memory usage efficiently. Each entity type

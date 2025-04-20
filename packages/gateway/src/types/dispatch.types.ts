@@ -28,8 +28,8 @@ import type {
   UnavailableGuildEntity,
   UserEntity,
   VoiceStateEntity,
-} from "@nyxjs/core";
-import type { ReactionTypeFlag } from "@nyxjs/rest";
+} from "@nyxojs/core";
+import type { ReactionTypeFlag } from "@nyxojs/rest";
 import { GatewayOpcodes } from "./gateway.types.js";
 
 /**

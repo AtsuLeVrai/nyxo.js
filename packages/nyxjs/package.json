@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "nyx.js",
-  "version": "1.0.0",
+  "name": "nyxo.js",
+  "version": "0.0.1",
   "description": "A Next-Generation Discord Bot Framework",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
@@ -28,11 +28,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AtsuLeVrai/nyx.js",
-    "directory": "packages/nyx.js"
+    "url": "https://github.com/AtsuLeVrai/nyxo.js",
+    "directory": "packages/nyxo.js"
   },
   "bugs": {
-    "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
+    "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
   },
   "author": {
     "name": "AtsuLeVrai",
@@ -45,10 +45,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nyxjs/core": "workspace:^",
-    "@nyxjs/gateway": "workspace:^",
-    "@nyxjs/rest": "workspace:^",
-    "@nyxjs/store": "workspace:^",
+    "@nyxojs/core": "workspace:^",
+    "@nyxojs/gateway": "workspace:^",
+    "@nyxojs/rest": "workspace:^",
+    "@nyxojs/store": "workspace:^",
     "change-case": "^5.4.4",
     "eventemitter3": "^5.0.1",
     "reflect-metadata": "^0.2.2",

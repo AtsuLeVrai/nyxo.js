@@ -1,4 +1,4 @@
-import type { AuditLogEntity, AuditLogEvent, Snowflake } from "@nyxjs/core";
+import type { AuditLogEntity, AuditLogEvent, Snowflake } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

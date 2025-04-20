@@ -5,15 +5,15 @@ import type {
   InviteEntity,
   Snowflake,
   WebhookEntity,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type {
   GatewayEvents,
   GatewayReceiveEvents,
   GuildCreateEntity,
   InviteCreateEntity,
-} from "@nyxjs/gateway";
-import type { RestEvents } from "@nyxjs/rest";
-import type { Store } from "@nyxjs/store";
+} from "@nyxojs/gateway";
+import type { RestEvents } from "@nyxojs/rest";
+import type { Store } from "@nyxojs/store";
 import {
   type AnyThreadChannel,
   AutoModerationActionExecution,

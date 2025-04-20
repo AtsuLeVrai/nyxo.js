@@ -1,4 +1,4 @@
-# Contributor Covenant Code of Conduct - nyx.js
+# Contributor Covenant Code of Conduct - nyxo.js
 
 ## Our Pledge
 

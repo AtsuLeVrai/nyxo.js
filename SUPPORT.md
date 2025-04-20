@@ -1,10 +1,10 @@
 # Support
 
-Thank you for using nyx.js! If you need help or have questions, there are several ways you can get support:
+Thank you for using nyxo.js! If you need help or have questions, there are several ways you can get support:
 
 ## Documentation
 
-First, check out our [official documentation](https://nyxjs.dev). It contains detailed
+First, check out our [official documentation](https://nyxojs.dev). It contains detailed
 information on how to use the
 project, including installation instructions, usage examples, and API references.
 
@@ -13,9 +13,9 @@ project, including installation instructions, usage examples, and API references
 If you can't find the answer in the documentation, you can ask the community for help:
 
 - **GitHub Issues**: Browse or create new issues on
-  our [GitHub Issues page](https://github.com/AtsuLeVrai/nyx.js/issues) for any bugs or feature requests.
+  our [GitHub Issues page](https://github.com/AtsuLeVrai/nyxo.js/issues) for any bugs or feature requests.
 - **Discussions**: Join the conversation on
-  our [GitHub Discussions](https://github.com/AtsuLeVrai/nyx.js/discussions) page for general questions, ideas,
+  our [GitHub Discussions](https://github.com/AtsuLeVrai/nyxo.js/discussions) page for general questions, ideas,
   and support from other users.
 
 ## Contact Maintainer

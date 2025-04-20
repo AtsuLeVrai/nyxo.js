@@ -1,10 +1,10 @@
 <div align="center">
-  <h1>🌌 Nyx.js</h1>
+  <h1>🌌 Nyxo.js</h1>
   <h3>A Next-Gen TypeScript Framework for Scalable Discord Bots</h3>
 
   <p align="center">
-    <a href="https://github.com/AtsuLeVrai/nyx.js/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyx.js?style=for-the-badge&logo=gnu&color=A42E2B" alt="License">
+    <a href="https://github.com/AtsuLeVrai/nyxo.js/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/AtsuLeVrai/nyxo.js?style=for-the-badge&logo=gnu&color=A42E2B" alt="License">
     </a>
     <a href="https://www.typescriptlang.org/">
       <img src="https://img.shields.io/badge/TypeScript-100%25-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript">
@@ -15,13 +15,22 @@
   </p>
 
   <br />
-  <img src="./public/nyxjs_banner.png" alt="Nyx.js Banner" width="70%" style="border-radius: 8px;">
+  <img src="./public/nyxojs_banner.png" alt="nyxo.js Banner" width="70%" style="border-radius: 8px;">
 </div>
 
 ## 🚀 About
 
-Nyx.js is a fresh take on Discord bot development, offering a 100% type-safe framework for creating scalable
+Nyxo.js is a fresh take on Discord bot development, offering a 100% type-safe framework for creating scalable
 applications.
+
+## 🌙 Why "Nyxo.js"?
+
+The name **Nyxo** is inspired by **Nyx**, the Greek goddess of the night, symbolizing mystery, power, and elegance.  
+The suffix **-o** adds a modern and dynamic touch, reflecting the framework’s ambition: to provide a powerful, smooth,
+and innovative solution for building Discord bots with TypeScript.
+
+Thus, **Nyxo.js** embodies both the depth and sophistication of the night and the modernity of a tool designed for
+today’s developers.
 
 ## ⚠️ Project Status
 
@@ -37,4 +46,4 @@ applications.
 
 ## 📜 License
 
-Nyx.js is [AGPL-3.0 licensed](LICENSE). Commercial licensing available upon request.
+Nyxo.js is [AGPL-3.0 licensed](LICENSE). Commercial licensing available upon request.

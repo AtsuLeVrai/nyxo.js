@@ -1,7 +1,7 @@
 import type {
   ApplicationRoleConnectionMetadataEntity,
   Snowflake,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

@@ -24,7 +24,7 @@ import type {
   VoiceRegionEntity,
   WelcomeScreenChannelEntity,
   WelcomeScreenEntity,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 import { FileHandler } from "../handlers/index.js";

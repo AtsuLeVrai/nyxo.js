@@ -7,7 +7,7 @@ import type {
   GuildScheduledEventType,
   GuildScheduledEventUserEntity,
   Snowflake,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import { FileHandler, type FileInput } from "../handlers/index.js";
 

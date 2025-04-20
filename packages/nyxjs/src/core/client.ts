@@ -1,10 +1,10 @@
-import type { Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "@nyxojs/core";
 import {
   Gateway,
   GatewayOptions,
   type UpdatePresenceEntity,
-} from "@nyxjs/gateway";
-import { Rest, RestOptions } from "@nyxjs/rest";
+} from "@nyxojs/gateway";
+import { Rest, RestOptions } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
@@ -18,7 +18,7 @@ import { CacheManager, ClientCacheOptions } from "../managers/index.js";
 import type { ClientEvents } from "../types/index.js";
 
 /**
- * Configuration options for the Nyx.js Discord client.
+ * Configuration options for the Nyxo.js Discord client.
  *
  * These options control the client's behavior including caching strategy,
  * REST API settings, and gateway connection parameters.
@@ -42,7 +42,7 @@ export type ClientOptions = z.infer<typeof ClientOptions>;
 /**
  * Main client class for interacting with the Discord API.
  *
- * The Client is the primary entry point to the Nyx.js framework. It manages:
+ * The Client is the primary entry point to the Nyxo.js framework. It manages:
  * - Discord API connections (REST and Gateway)
  * - Event handling and event middleware
  * - Caching strategies for various Discord entities

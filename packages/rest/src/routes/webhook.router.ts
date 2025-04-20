@@ -1,4 +1,4 @@
-import type { Snowflake, WebhookEntity } from "@nyxjs/core";
+import type { Snowflake, WebhookEntity } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import { FileHandler, type FileInput } from "../handlers/index.js";
 import type { CreateMessageSchema } from "./message.router.js";

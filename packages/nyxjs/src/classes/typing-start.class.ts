@@ -1,5 +1,5 @@
-import type { GuildMemberEntity, Snowflake } from "@nyxjs/core";
-import type { TypingStartEntity } from "@nyxjs/gateway";
+import type { GuildMemberEntity, Snowflake } from "@nyxojs/core";
+import type { TypingStartEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";

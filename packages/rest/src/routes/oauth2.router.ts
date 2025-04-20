@@ -1,4 +1,4 @@
-import type { ApplicationEntity, OAuth2Scope, UserEntity } from "@nyxjs/core";
+import type { ApplicationEntity, OAuth2Scope, UserEntity } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

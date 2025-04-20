@@ -1,4 +1,4 @@
-# Security Policy - nyx.js
+# Security Policy - nyxo.js
 
 ## Supported Versions
 

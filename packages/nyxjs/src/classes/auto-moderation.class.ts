@@ -5,8 +5,8 @@ import type {
   AutoModerationRuleTriggerMetadataEntity,
   AutoModerationRuleTriggerType,
   Snowflake,
-} from "@nyxjs/core";
-import type { AutoModerationActionExecutionEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { AutoModerationActionExecutionEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";

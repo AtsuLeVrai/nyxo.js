@@ -30,8 +30,8 @@ import {
   type SubCommandGroupOptionEntity,
   type SubCommandOptionEntity,
   type UserEntity,
-} from "@nyxjs/core";
-import type { MessageCreateEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { MessageCreateEntity } from "@nyxojs/gateway";
 import { BaseClass } from "../bases/index.js";
 import { ChannelFactory } from "../factories/index.js";
 import type { GuildBased } from "../types/index.js";

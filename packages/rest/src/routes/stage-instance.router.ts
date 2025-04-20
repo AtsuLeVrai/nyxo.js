@@ -2,7 +2,7 @@ import type {
   Snowflake,
   StageInstanceEntity,
   StageInstancePrivacyLevel,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

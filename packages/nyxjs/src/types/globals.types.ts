@@ -1,7 +1,7 @@
 import type {
   GuildApplicationCommandPermissionEntity,
   VoiceStateEntity,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type {
   ChannelPinsUpdateEntity,
   GatewayEvents,
@@ -17,8 +17,8 @@ import type {
   ThreadListSyncEntity,
   ThreadMembersUpdateEntity,
   VoiceServerUpdateEntity,
-} from "@nyxjs/gateway";
-import type { RestEvents } from "@nyxjs/rest";
+} from "@nyxojs/gateway";
+import type { RestEvents } from "@nyxojs/rest";
 import type {
   AnyChannel,
   AnyInteraction,

@@ -14,7 +14,7 @@ export enum ApiVersion {
    * Discord API Version 3.
    *
    * @deprecated This version has been officially deprecated by Discord.
-   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
+   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyxo.js.
    */
   V3 = 3,
 
@@ -22,7 +22,7 @@ export enum ApiVersion {
    * Discord API Version 4.
    *
    * @deprecated This version has been officially deprecated by Discord.
-   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
+   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyxo.js.
    */
   V4 = 4,
 
@@ -30,7 +30,7 @@ export enum ApiVersion {
    * Discord API Version 5.
    *
    * @deprecated This version has been officially deprecated by Discord.
-   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
+   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyxo.js.
    */
   V5 = 5,
 
@@ -38,7 +38,7 @@ export enum ApiVersion {
    * Discord API Version 6.
    *
    * @deprecated This version has been officially deprecated by Discord.
-   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
+   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyxo.js.
    */
   V6 = 6,
 
@@ -46,7 +46,7 @@ export enum ApiVersion {
    * Discord API Version 7.
    *
    * @deprecated This version has been officially deprecated by Discord.
-   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
+   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyxo.js.
    */
   V7 = 7,
 
@@ -54,7 +54,7 @@ export enum ApiVersion {
    * Discord API Version 8.
    *
    * @deprecated This version has been officially deprecated by Discord.
-   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyx.js.
+   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyxo.js.
    */
   V8 = 8,
 
@@ -68,7 +68,7 @@ export enum ApiVersion {
   /**
    * Discord API Version 10.
    *
-   * This is the current stable version of the Discord API and the only version supported by Nyx.js.
+   * This is the current stable version of the Discord API and the only version supported by Nyxo.js.
    * All API calls should use this version to ensure proper functionality.
    */
   V10 = 10,

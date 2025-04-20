@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/store",
-  "version": "1.0.0",
+  "name": "@nyxojs/store",
+  "version": "0.0.1",
   "description": "High-performance in-memory data store for Discord bots using enhanced Map functionality.",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
@@ -28,11 +28,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AtsuLeVrai/nyx.js",
+    "url": "https://github.com/AtsuLeVrai/nyxo.js",
     "directory": "packages/store"
   },
   "bugs": {
-    "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
+    "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
   },
   "author": {
     "name": "AtsuLeVrai",

@@ -1,4 +1,4 @@
-import type { AutoModerationRuleEntity, Snowflake } from "@nyxjs/core";
+import type { AutoModerationRuleEntity, Snowflake } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

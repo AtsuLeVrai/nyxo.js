@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/playground",
-  "version": "1.0.0-PRIVATE",
-  "description": "Playground for Nyx.js",
+  "name": "@nyxojs/playground",
+  "private": true,
+  "description": "Playground for Nyxo.js",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -11,11 +11,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AtsuLeVrai/nyx.js",
+    "url": "https://github.com/AtsuLeVrai/nyxo.js",
     "directory": "packages/gateway"
   },
   "bugs": {
-    "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
+    "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
   },
   "author": {
     "name": "AtsuLeVrai",
@@ -29,7 +29,7 @@
     "bufferutil": "^4.0.9",
     "erlpack": "^0.1.4",
     "fzstd": "^0.1.1",
-    "nyx.js": "workspace:^",
+    "nyxo.js": "workspace:^",
     "zlib-sync": "^0.1.9",
     "zod": "^3.24.3"
   },

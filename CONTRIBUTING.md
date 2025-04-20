@@ -1,6 +1,6 @@
-# Contributing to nyx.js
+# Contributing to nyxo.js
 
-Thank you for your interest in contributing to nyx.js!
+Thank you for your interest in contributing to nyxo.js!
 
 ## Important Notice
 
@@ -11,9 +11,9 @@ this time. Once the rebuild is complete, we will update this guide with new cont
 
 You can still:
 
-- Report bugs through [issues](https://github.com/AtsuLeVrai/nyx.js/issues)
+- Report bugs through [issues](https://github.com/AtsuLeVrai/nyxo.js/issues)
 - Suggest features for the upcoming rebuild
-- Ask questions in [discussions](https://github.com/AtsuLeVrai/nyx.js/discussions)
+- Ask questions in [discussions](https://github.com/AtsuLeVrai/nyxo.js/discussions)
 
 ## Code of Conduct
 

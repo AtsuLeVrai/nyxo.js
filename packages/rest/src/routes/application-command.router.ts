@@ -1,14 +1,14 @@
 import type {
   AnyApplicationCommandEntity,
   GuildApplicationCommandPermissionEntity,
-} from "@nyxjs/core";
-import type { Snowflake } from "@nyxjs/core";
+} from "@nyxojs/core";
+import type { Snowflake } from "@nyxojs/core";
 import type {
   AnyApplicationCommandOptionEntity,
   ApplicationCommandPermissionEntity,
   ApplicationCommandType,
   ApplicationIntegrationType,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

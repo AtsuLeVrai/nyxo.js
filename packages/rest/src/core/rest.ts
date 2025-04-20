@@ -1,5 +1,5 @@
 import { clearTimeout } from "node:timers";
-import { ApiVersion } from "@nyxjs/core";
+import { ApiVersion } from "@nyxojs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool } from "undici";
 import { z } from "zod";
@@ -136,12 +136,12 @@ export const RestOptions = z.object({
   /**
    * User agent string to send with requests.
    * Must follow Discord's user agent format requirements.
-   * @default "DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"
+   * @default "DiscordBot (https://github.com/AtsuLeVrai/nyxo.js, 1.0.0)"
    */
   userAgent: z
     .string()
     .regex(DISCORD_USER_AGENT_REGEX)
-    .default("DiscordBot (https://github.com/AtsuLeVrai/nyx.js, 1.0.0)"),
+    .default("DiscordBot (https://github.com/AtsuLeVrai/nyxo.js, 1.0.0)"),
 
   /**
    * Base URL for Discord API requests.

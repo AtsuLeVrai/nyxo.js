@@ -1,4 +1,4 @@
-import { sleep } from "@nyxjs/core";
+import { sleep } from "@nyxojs/core";
 import { z } from "zod";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, HttpResponse, RetryEvent } from "../types/index.js";

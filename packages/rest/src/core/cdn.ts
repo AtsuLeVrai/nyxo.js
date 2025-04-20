@@ -1,4 +1,4 @@
-import type { Snowflake } from "@nyxjs/core";
+import type { Snowflake } from "@nyxojs/core";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 

@@ -1,4 +1,4 @@
-import type { Snowflake, SubscriptionEntity } from "@nyxjs/core";
+import type { Snowflake, SubscriptionEntity } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

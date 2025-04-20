@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { Client, type ClientEvents, GatewayIntentsBits } from "nyx.js";
+import { Client, type ClientEvents, GatewayIntentsBits } from "nyxo.js";
 
 // Load environment variables
 const { parsed } = config({ debug: true });

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/nyx.js.iml" filepath="$PROJECT_DIR$/.idea/nyx.js.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/nyxo.js.iml" filepath="$PROJECT_DIR$/.idea/nyxo.js.iml" />
     </modules>
   </component>
 </project>

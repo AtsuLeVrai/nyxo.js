@@ -1,9 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxjs/scripts",
-  "version": "1.0.0-private",
+  "name": "@nyxojs/scripts",
   "private": true,
-  "description": "Scripts for Nyx.js",
+  "description": "Scripts for Nyxo.js",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",
@@ -12,11 +11,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/AtsuLeVrai/nyx.js",
+    "url": "https://github.com/AtsuLeVrai/nyxo.js",
     "directory": "scripts"
   },
   "bugs": {
-    "url": "https://github.com/AtsuLeVrai/nyx.js/issues"
+    "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
   },
   "author": {
     "name": "AtsuLeVrai",

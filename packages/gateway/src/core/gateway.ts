@@ -3,8 +3,8 @@ import {
   BitField,
   type UnavailableGuildEntity,
   sleep,
-} from "@nyxjs/core";
-import type { Rest } from "@nyxjs/rest";
+} from "@nyxojs/core";
+import type { Rest } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
 import { z } from "zod";
@@ -932,8 +932,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       token: this.#options.token,
       properties: {
         os: process.platform,
-        browser: "nyx.js",
-        device: "nyx.js",
+        browser: "nyxo.js",
+        device: "nyxo.js",
       },
       compress: this.#compression.isInitialized,
       large_threshold: this.#options.largeThreshold,

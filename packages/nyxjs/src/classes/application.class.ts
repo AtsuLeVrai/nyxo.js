@@ -9,12 +9,12 @@ import {
   type Snowflake,
   type TeamEntity,
   type UserEntity,
-} from "@nyxjs/core";
-import type { GuildCreateEntity } from "@nyxjs/gateway";
+} from "@nyxojs/core";
+import type { GuildCreateEntity } from "@nyxojs/gateway";
 import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
-import { toCamelCasedDeep } from "../utils/index.js";
+import { toCamelCasedPropertiesDeep } from "../utils/index.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
 
@@ -87,7 +87,7 @@ export class Application
       return null;
     }
 
-    return toCamelCasedDeep(this.data.team);
+    return toCamelCasedPropertiesDeep(this.data.team);
   }
 
   get guildId(): Snowflake | undefined {
@@ -161,7 +161,7 @@ export class Application
       return undefined;
     }
 
-    return toCamelCasedDeep(this.data.install_params);
+    return toCamelCasedPropertiesDeep(this.data.install_params);
   }
 
   get integrationTypesConfig(): Record<

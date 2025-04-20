@@ -16,7 +16,7 @@ import type {
   OverwriteEntity,
   Snowflake,
   ThreadMemberEntity,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import type { CreateMessageSchema } from "./message.router.js";
 import type { CreateGroupDmSchema } from "./user.router.js";

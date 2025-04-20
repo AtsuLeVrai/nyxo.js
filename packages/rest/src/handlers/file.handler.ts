@@ -1,7 +1,7 @@
 import { createReadStream } from "node:fs";
 import { basename } from "node:path";
 import { Readable } from "node:stream";
-import { OptionalDeps } from "@nyxjs/core";
+import { OptionalDeps } from "@nyxojs/core";
 import { fileTypeFromBuffer } from "file-type";
 import FormData from "form-data";
 import { lookup } from "mime-types";

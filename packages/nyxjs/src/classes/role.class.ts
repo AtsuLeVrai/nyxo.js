@@ -4,11 +4,11 @@ import {
   type RoleFlags,
   type RoleTagsEntity,
   type Snowflake,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
-import { toCamelCasedDeep } from "../utils/index.js";
+import { toCamelCasedPropertiesDeep } from "../utils/index.js";
 
 @Cacheable("roles")
 export class Role
@@ -64,7 +64,7 @@ export class Role
       return undefined;
     }
 
-    return toCamelCasedDeep(this.data.tags);
+    return toCamelCasedPropertiesDeep(this.data.tags);
   }
 
   get flags(): BitField<RoleFlags> {

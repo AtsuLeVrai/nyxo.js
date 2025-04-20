@@ -2,7 +2,7 @@ import type {
   Snowflake,
   VoiceRegionEntity,
   VoiceStateEntity,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 
 /**

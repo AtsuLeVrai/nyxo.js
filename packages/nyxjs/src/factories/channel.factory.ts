@@ -14,7 +14,7 @@ import {
   type GuildVoiceChannelEntity,
   type PrivateThreadChannelEntity,
   type PublicThreadChannelEntity,
-} from "@nyxjs/core";
+} from "@nyxojs/core";
 import {
   AnnouncementThreadChannel,
   type AnyChannel,
