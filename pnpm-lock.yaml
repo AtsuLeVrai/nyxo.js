@@ -43,7 +43,7 @@ importers:
         version: 0.1.1
       nyxo.js:
         specifier: workspace:^
-        version: link:../../packages/nyxjs
+        version: link:../../packages/nyxojs
       zlib-sync:
         specifier: ^0.1.9
         version: 0.1.9
@@ -123,7 +123,7 @@ importers:
         specifier: ^0.1.9
         version: 0.1.9
 
-  packages/nyxjs:
+  packages/nyxojs:
     dependencies:
       '@nyxojs/core':
         specifier: workspace:^

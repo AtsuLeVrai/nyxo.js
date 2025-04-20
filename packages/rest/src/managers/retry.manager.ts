@@ -86,7 +86,7 @@ export class RetryManager {
     }
 
     // Calculate delay in milliseconds (retryAfter is already in ms now)
-    const delayMs = rateLimitResult.retryAfter || 1000;
+    const delay = rateLimitResult.retryAfter || 1000;
 
     // Create error message with context about the rate limit
     const error = new Error(
@@ -101,12 +101,12 @@ export class RetryManager {
       path,
       error,
       attempt: 1,
-      delayMs,
+      delay,
       reason: "rate_limit",
     });
 
     // Wait for the specified time before allowing the request to proceed
-    await sleep(delayMs);
+    await sleep(delay);
   }
 
   /**
@@ -154,7 +154,7 @@ export class RetryManager {
         }
 
         // Calculate delay with exponential backoff or based on retry-after headers
-        const delayMs = this.#calculateDelay(attempts, response);
+        const delay = this.#calculateDelay(attempts, response);
 
         // Emit retry event for tracking and monitoring
         this.#emitRetryEvent({
@@ -165,12 +165,12 @@ export class RetryManager {
             response.reason || `HTTP error ${response.statusCode}`,
           ),
           attempt: attempts,
-          delayMs,
+          delay,
           reason: this.#getRetryReason(response.statusCode),
         });
 
         // Wait before retry
-        await sleep(delayMs);
+        await sleep(delay);
       } catch (error) {
         // Handle unexpected errors (network issues, etc.)
         attempts++;
@@ -180,7 +180,7 @@ export class RetryManager {
         }
 
         // Calculate exponential backoff delay for network errors
-        const delayMs = this.#options.baseDelay * 2 ** (attempts - 1);
+        const delay = this.#options.baseDelay * 2 ** (attempts - 1);
 
         // Emit retry event for tracking and monitoring
         this.#emitRetryEvent({
@@ -189,12 +189,12 @@ export class RetryManager {
           path,
           error: error instanceof Error ? error : new Error(String(error)),
           attempt: attempts,
-          delayMs,
+          delay,
           reason: "network_error",
         });
 
         // Wait before retry
-        await sleep(delayMs);
+        await sleep(delay);
       }
     }
 
@@ -261,7 +261,7 @@ export class RetryManager {
       error: params.error,
       attempt: params.attempt,
       maxAttempts: this.#options.maxRetries,
-      delayMs: params.delayMs,
+      delay: params.delay,
       reason: params.reason,
     };
 

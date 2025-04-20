@@ -37,7 +37,6 @@ const client = new Client({
 });
 
 const onKeyofEvents: (keyof ClientEvents)[] = [
-  "ready",
   "dispatch",
   "shardReady",
   "wsError",
@@ -50,6 +49,10 @@ for (const event of onKeyofEvents) {
     console.log(`[CLIENT] Event ${event} triggered`, ...args);
   });
 }
+
+client.on("ready", (ready) => {
+  console.log("[CLIENT] Ready", ready.user.id);
+});
 
 client.on("messageCreate", async (message) => {
   if (message.author.id === client.user.id) {
@@ -68,6 +71,10 @@ client.on("messageCreate", async (message) => {
         },
       ],
     });
+  }
+
+  if (message.content === "!send") {
+    await message.author.send("Hello, world!");
   }
 });
 

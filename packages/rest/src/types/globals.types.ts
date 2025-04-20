@@ -233,48 +233,6 @@ export interface RequestSuccessEvent extends BaseHttpEvent {
 }
 
 /**
- * Emitted when an HTTP request fails.
- * Contains error information and metrics for failed requests.
- */
-export interface RequestFailureEvent extends BaseHttpEvent {
-  /**
-   * API path for this request.
-   * Path component of the URL without the origin.
-   */
-  path: string;
-
-  /**
-   * HTTP method used for the request.
-   * One of the supported HTTP methods.
-   */
-  method: HttpMethod;
-
-  /**
-   * The error that occurred during the request.
-   * Contains details about what went wrong.
-   */
-  error: Error;
-
-  /**
-   * HTTP status code if received from the server.
-   * May be undefined if the request failed before receiving a response.
-   */
-  statusCode?: number;
-
-  /**
-   * Response headers if received from the server.
-   * May be undefined if the request failed before receiving a response.
-   */
-  headers?: Record<string, string>;
-
-  /**
-   * Request duration in milliseconds until failure.
-   * Measured from request start to error occurrence.
-   */
-  duration: number;
-}
-
-/**
  * Emitted when a rate limit is encountered during a request.
  * Contains information about the rate limit and when it will reset.
  */
@@ -410,7 +368,7 @@ export interface RetryEvent extends BaseHttpEvent {
    * Delay in milliseconds before this retry.
    * Often uses exponential backoff between attempts.
    */
-  delayMs: number;
+  delay: number;
 
   /**
    * Categorized reason for the retry.
@@ -435,12 +393,6 @@ export interface RestEvents {
    * Contains response data, status code, and timing information.
    */
   requestSuccess: [event: RequestSuccessEvent];
-
-  /**
-   * Emitted when an HTTP request fails.
-   * Contains error information and any partial response data.
-   */
-  requestFailure: [event: RequestFailureEvent];
 
   /**
    * Emitted when a rate limit is encountered.

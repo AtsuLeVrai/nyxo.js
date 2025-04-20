@@ -1,5 +1,4 @@
 import type {
-  InviteEntity,
   InviteStageInstanceEntity,
   InviteTargetType,
   InviteType,
@@ -19,7 +18,7 @@ import { User } from "./user.class.js";
 
 @Cacheable("invites")
 export class Invite
-  extends BaseClass<InviteEntity & InviteCreateEntity>
+  extends BaseClass<InviteWithMetadataEntity & InviteCreateEntity>
   implements
     Enforce<CamelCasedProperties<InviteWithMetadataEntity & InviteCreateEntity>>
 {
