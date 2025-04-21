@@ -10,13 +10,25 @@
     "ignoreUnknown": false,
     "include": [
       "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.tsx",
       "packages/*/src/**/*.js",
+      "packages/*/src/**/*.jsx",
       "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.tsx",
       "packages/*/tests/**/*.js",
+      "packages/*/tests/**/*.jsx",
       "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.tsx",
       "internals/*/src/**/*.js",
+      "internals/*/src/**/*.jsx",
       "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.tsx",
       "internals/*/tests/**/*.js",
+      "internals/*/tests/**/*.jsx",
+      "apps/*/src/**/*.ts",
+      "apps/*/src/**/*.tsx",
+      "apps/*/src/**/*.js",
+      "apps/*/src/**/*.jsx",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -31,13 +43,25 @@
     "lineWidth": 80,
     "include": [
       "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.tsx",
       "packages/*/src/**/*.js",
+      "packages/*/src/**/*.jsx",
       "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.tsx",
       "packages/*/tests/**/*.js",
+      "packages/*/tests/**/*.jsx",
       "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.tsx",
       "internals/*/src/**/*.js",
+      "internals/*/src/**/*.jsx",
       "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.tsx",
       "internals/*/tests/**/*.js",
+      "internals/*/tests/**/*.jsx",
+      "apps/*/src/**/*.ts",
+      "apps/*/src/**/*.tsx",
+      "apps/*/src/**/*.js",
+      "apps/*/src/**/*.jsx",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -59,13 +83,25 @@
     "enabled": true,
     "include": [
       "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.tsx",
       "packages/*/src/**/*.js",
+      "packages/*/src/**/*.jsx",
       "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.tsx",
       "packages/*/tests/**/*.js",
+      "packages/*/tests/**/*.jsx",
       "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.tsx",
       "internals/*/src/**/*.js",
+      "internals/*/src/**/*.jsx",
       "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.tsx",
       "internals/*/tests/**/*.js",
+      "internals/*/tests/**/*.jsx",
+      "apps/*/src/**/*.ts",
+      "apps/*/src/**/*.tsx",
+      "apps/*/src/**/*.js",
+      "apps/*/src/**/*.jsx",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -91,13 +127,25 @@
     },
     "include": [
       "packages/*/src/**/*.ts",
+      "packages/*/src/**/*.tsx",
       "packages/*/src/**/*.js",
+      "packages/*/src/**/*.jsx",
       "packages/*/tests/**/*.ts",
+      "packages/*/tests/**/*.tsx",
       "packages/*/tests/**/*.js",
+      "packages/*/tests/**/*.jsx",
       "internals/*/src/**/*.ts",
+      "internals/*/src/**/*.tsx",
       "internals/*/src/**/*.js",
+      "internals/*/src/**/*.jsx",
       "internals/*/tests/**/*.ts",
+      "internals/*/tests/**/*.tsx",
       "internals/*/tests/**/*.js",
+      "internals/*/tests/**/*.jsx",
+      "apps/*/src/**/*.ts",
+      "apps/*/src/**/*.tsx",
+      "apps/*/src/**/*.js",
+      "apps/*/src/**/*.jsx",
       "scripts/**/*.js",
       "scripts/**/*.ts"
     ],
@@ -107,9 +155,17 @@
     {
       "include": [
         "internals/*/src/**/*.ts",
+        "internals/*/src/**/*.tsx",
         "internals/*/src/**/*.js",
+        "internals/*/src/**/*.jsx",
         "internals/*/tests/**/*.ts",
+        "internals/*/tests/**/*.tsx",
         "internals/*/tests/**/*.js",
+        "internals/*/tests/**/*.jsx",
+        "packages/*/tests/**/*.ts",
+        "packages/*/tests/**/*.tsx",
+        "packages/*/tests/**/*.js",
+        "packages/*/tests/**/*.jsx",
         "scripts/**/*.js",
         "scripts/**/*.ts"
       ],
@@ -117,23 +173,39 @@
         "rules": {
           "suspicious": {
             "noConsole": "off",
-            "noConsoleLog": "off"
+            "noConsoleLog": "off",
+            "noExplicitAny": "off"
           }
         }
       }
     },
     {
       "include": [
-        "packages/*/tests/**/*.ts",
-        "packages/*/tests/**/*.js",
-        "internals/*/tests/**/*.ts",
-        "internals/*/tests/**/*.js"
+        "apps/*/src/**/*.ts",
+        "apps/*/src/**/*.tsx",
+        "apps/*/src/**/*.js",
+        "apps/*/src/**/*.jsx",
+        "apps/*/tests/**/*.ts",
+        "apps/*/tests/**/*.tsx",
+        "apps/*/tests/**/*.js",
+        "apps/*/tests/**/*.jsx"
       ],
       "linter": {
         "rules": {
+          "all": false,
+          "recommended": true,
+          "nursery": {
+            "all": false,
+            "useSortedClasses": {
+              "level": "warn",
+              "fix": "safe",
+              "options": {
+                "functions": ["clsx", "cva", "cn"]
+              }
+            }
+          },
           "suspicious": {
-            "noConsole": "off",
-            "noConsoleLog": "off"
+            "noArrayIndexKey": "info"
           }
         }
       }

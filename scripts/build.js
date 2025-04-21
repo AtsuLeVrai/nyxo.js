@@ -7,7 +7,7 @@ import chalk from "chalk";
 import figures from "figures";
 import prettyBytes from "pretty-bytes";
 import { rollup } from "rollup";
-import swc from "rollup-plugin-swc3";
+import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
 // Main paths
@@ -87,7 +87,7 @@ async function buildWithRollup(paths, pkg) {
   ];
 
   // SWC configuration for TypeScript and advanced features
-  const swcOptions = {
+  const swcOptions = defineRollupSwcOption({
     // JavaScript Compiler options
     jsc: {
       // Parser configuration
@@ -161,7 +161,7 @@ async function buildWithRollup(paths, pkg) {
 
     // Automatic module/script detection
     isModule: true, // Treat input as a module
-  };
+  });
 
   // Common Rollup plugins
   const plugins = [
