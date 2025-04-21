@@ -1,5 +1,11 @@
 import { config } from "dotenv";
-import { Client, type ClientEvents, GatewayIntentsBits } from "nyxo.js";
+import {
+  Client,
+  type ClientEvents,
+  Colors,
+  EmbedBuilder,
+  GatewayIntentsBits,
+} from "nyxo.js";
 
 // Load environment variables
 const { parsed } = config({ debug: true });
@@ -62,14 +68,30 @@ client.on("messageCreate", async (message) => {
   console.log("[CLIENT] Message created:", message.content);
 
   if (message.content === "!ping") {
+    const firstEmbed = new EmbedBuilder()
+      .setTitle("Test")
+      .setDescription("test")
+      .setColor(Colors.Green)
+      .setTimestamp()
+      .build();
+
+    const secondEmbed = new EmbedBuilder()
+      .setTitle("Test 2 ")
+      .setDescription("test 2 ")
+      .setColor(Colors.Blue)
+      .setTimestamp()
+      .build();
+
+    const thirdEmbed = new EmbedBuilder()
+      .setTitle("Test 3 ")
+      .setDescription("test 3 ")
+      .setColor(Colors.Red)
+      .setTimestamp()
+      .build();
+
     await message.reply({
       content: "Pong",
-      embeds: [
-        {
-          title: "Test",
-          description: "test",
-        },
-      ],
+      embeds: [firstEmbed, secondEmbed, thirdEmbed],
     });
   }
 

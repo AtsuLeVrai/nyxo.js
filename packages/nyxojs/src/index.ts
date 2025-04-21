@@ -1,6 +1,7 @@
 import "reflect-metadata";
 
 // Re-export all the packages
+export * from "@nyxojs/builders";
 export * from "@nyxojs/core";
 export * from "@nyxojs/gateway";
 export * from "@nyxojs/rest";
