@@ -7,6 +7,7 @@ import type { CamelCasedProperties } from "type-fest";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
 import { Emoji } from "./emoji.class.js";
+
 export class VoiceChannelEffectSend
   extends BaseClass<VoiceChannelEffectSendEntity>
   implements Enforce<CamelCasedProperties<VoiceChannelEffectSendEntity>>

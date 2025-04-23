@@ -17,7 +17,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#create-stage-instance-json-params}
  */
-export interface CreateStageInstanceSchema {
+export interface StageCreateOptions {
   /**
    * The ID of the Stage channel.
    *
@@ -72,7 +72,7 @@ export interface CreateStageInstanceSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance#modify-stage-instance-json-params}
  */
-export interface ModifyStageInstanceSchema {
+export interface StageUpdateOptions {
   /**
    * The topic of the Stage instance (1-120 characters).
    *
@@ -171,7 +171,7 @@ export class StageInstanceRouter {
    * Fires a Stage Instance Create Gateway event.
    */
   createStage(
-    options: CreateStageInstanceSchema,
+    options: StageCreateOptions,
     reason?: string,
   ): Promise<StageInstanceEntity> {
     return this.#rest.post(
@@ -222,7 +222,7 @@ export class StageInstanceRouter {
    */
   updateStage(
     channelId: Snowflake,
-    options: ModifyStageInstanceSchema,
+    options: StageUpdateOptions,
     reason?: string,
   ): Promise<StageInstanceEntity> {
     return this.#rest.patch(

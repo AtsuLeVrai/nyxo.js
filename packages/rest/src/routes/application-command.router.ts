@@ -20,7 +20,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-application-command-permissions}
  */
-export interface EditApplicationCommandPermissionsSchema {
+export interface CommandPermissionsUpdateOptions {
   /**
    * Array of permission objects for the command (maximum 100).
    * Each permission object specifies a user or role and whether
@@ -38,7 +38,7 @@ export interface EditApplicationCommandPermissionsSchema {
  *
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command}
  */
-export interface CreateGlobalApplicationCommandSchema {
+export interface GlobalCommandCreateOptions {
   /**
    * Command name (1-32 characters).
    * Must match the regex pattern `^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$`.
@@ -127,8 +127,8 @@ export interface CreateGlobalApplicationCommandSchema {
  *
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command-json-params}
  */
-export type EditGlobalApplicationCommandSchema = Partial<
-  Omit<CreateGlobalApplicationCommandSchema, "type">
+export type GlobalCommandUpdateOptions = Partial<
+  Omit<GlobalCommandCreateOptions, "type">
 >;
 
 /**
@@ -140,8 +140,8 @@ export type EditGlobalApplicationCommandSchema = Partial<
  *
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-guild-application-command-json-params}
  */
-export type CreateGuildApplicationCommandSchema = Omit<
-  CreateGlobalApplicationCommandSchema,
+export type GuildCommandCreateOptions = Omit<
+  GlobalCommandCreateOptions,
   "integration_types" | "contexts"
 >;
 
@@ -153,8 +153,8 @@ export type CreateGuildApplicationCommandSchema = Omit<
  *
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#edit-guild-application-command-json-params}
  */
-export type EditGuildApplicationCommandSchema = Partial<
-  Omit<CreateGuildApplicationCommandSchema, "type">
+export type GuildCommandUpdateOptions = Partial<
+  Omit<GuildCommandCreateOptions, "type">
 >;
 
 /**
@@ -298,7 +298,7 @@ export class ApplicationCommandRouter {
    */
   createGlobalCommand(
     applicationId: Snowflake,
-    options: CreateGlobalApplicationCommandSchema,
+    options: GlobalCommandCreateOptions,
   ): Promise<AnyApplicationCommandEntity> {
     return this.#rest.post(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandsEndpoint(
@@ -347,7 +347,7 @@ export class ApplicationCommandRouter {
   updateGlobalCommand(
     applicationId: Snowflake,
     commandId: Snowflake,
-    options: EditGlobalApplicationCommandSchema,
+    options: GlobalCommandUpdateOptions,
   ): Promise<AnyApplicationCommandEntity> {
     return this.#rest.patch(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandByIdEndpoint(
@@ -395,7 +395,7 @@ export class ApplicationCommandRouter {
    */
   bulkOverwriteGlobalCommands(
     applicationId: Snowflake,
-    commands: CreateGlobalApplicationCommandSchema[],
+    commands: GlobalCommandCreateOptions[],
   ): Promise<AnyApplicationCommandEntity[]> {
     return this.#rest.put(
       ApplicationCommandRouter.COMMAND_ROUTES.globalCommandsEndpoint(
@@ -451,7 +451,7 @@ export class ApplicationCommandRouter {
   createGuildCommand(
     applicationId: Snowflake,
     guildId: Snowflake,
-    options: CreateGuildApplicationCommandSchema,
+    options: GuildCommandCreateOptions,
   ): Promise<AnyApplicationCommandEntity> {
     return this.#rest.post(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandsEndpoint(
@@ -506,7 +506,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: EditGuildApplicationCommandSchema,
+    options: GuildCommandUpdateOptions,
   ): Promise<AnyApplicationCommandEntity> {
     return this.#rest.patch(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandByIdEndpoint(
@@ -562,7 +562,7 @@ export class ApplicationCommandRouter {
   bulkOverwriteGuildCommands(
     applicationId: Snowflake,
     guildId: Snowflake,
-    commands: CreateGuildApplicationCommandSchema[],
+    commands: GuildCommandCreateOptions[],
   ): Promise<AnyApplicationCommandEntity[]> {
     return this.#rest.put(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandsEndpoint(
@@ -645,7 +645,7 @@ export class ApplicationCommandRouter {
     applicationId: Snowflake,
     guildId: Snowflake,
     commandId: Snowflake,
-    options: EditApplicationCommandPermissionsSchema,
+    options: CommandPermissionsUpdateOptions,
   ): Promise<GuildApplicationCommandPermissionEntity> {
     return this.#rest.put(
       ApplicationCommandRouter.COMMAND_ROUTES.guildCommandPermissionsByIdEndpoint(

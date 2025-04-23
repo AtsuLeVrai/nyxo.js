@@ -6,8 +6,8 @@ import type {
 } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import type {
-  EditWebhookMessageSchema,
-  ExecuteWebhookSchema,
+  WebhookExecuteOptions,
+  WebhookMessageEditOptions,
 } from "./webhook.router.js";
 
 /**
@@ -267,7 +267,7 @@ export class InteractionRouter {
   updateOriginalResponse(
     applicationId: Snowflake,
     interactionToken: string,
-    options: EditWebhookMessageSchema,
+    options: WebhookMessageEditOptions,
   ): Promise<MessageEntity> {
     return this.#rest.patch(
       InteractionRouter.INTERACTION_ROUTES.editOriginalResponseEndpoint(
@@ -331,7 +331,7 @@ export class InteractionRouter {
   createFollowupMessage(
     applicationId: Snowflake,
     interactionToken: string,
-    options: ExecuteWebhookSchema,
+    options: WebhookExecuteOptions,
   ): Promise<MessageEntity> {
     return this.#rest.post(
       InteractionRouter.INTERACTION_ROUTES.createFollowupMessageEndpoint(
@@ -391,7 +391,7 @@ export class InteractionRouter {
     applicationId: Snowflake,
     interactionToken: string,
     messageId: Snowflake,
-    options: EditWebhookMessageSchema,
+    options: WebhookMessageEditOptions,
   ): Promise<MessageEntity> {
     return this.#rest.patch(
       InteractionRouter.INTERACTION_ROUTES.editFollowupMessageEndpoint(

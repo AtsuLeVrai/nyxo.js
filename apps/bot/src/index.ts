@@ -92,6 +92,7 @@ client.on("messageCreate", async (message) => {
     await message.reply({
       content: "Pong",
       embeds: [firstEmbed, secondEmbed, thirdEmbed],
+      // files: ["../../public/nyxjs_icon.png", "./src/index.ts"],
     });
   }
 

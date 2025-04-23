@@ -10,7 +10,7 @@ import type { FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs-response-structure}
  */
-export interface ListStickerPacksResponseEntity {
+export interface StickerPacksResponse {
   /**
    * Array of sticker pack objects.
    *
@@ -38,7 +38,7 @@ export interface ListStickerPacksResponseEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker#create-guild-sticker-form-params}
  */
-export interface CreateGuildStickerSchema {
+export interface GuildStickerCreateOptions {
   /**
    * Name of the sticker (2-30 characters).
    *
@@ -88,7 +88,7 @@ export interface CreateGuildStickerSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/sticker#modify-guild-sticker-json-params}
  */
-export interface ModifyGuildStickerSchema {
+export interface GuildStickerUpdateOptions {
   /**
    * Name of the sticker (2-30 characters).
    *
@@ -228,7 +228,7 @@ export class StickerRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/sticker#list-sticker-packs}
    */
-  fetchStickerPacks(): Promise<ListStickerPacksResponseEntity> {
+  fetchStickerPacks(): Promise<StickerPacksResponse> {
     return this.#rest.get(StickerRouter.STICKER_ROUTES.stickerPacksEndpoint);
   }
 
@@ -325,7 +325,7 @@ export class StickerRouter {
    */
   createGuildSticker(
     guildId: Snowflake,
-    options: CreateGuildStickerSchema,
+    options: GuildStickerCreateOptions,
     reason?: string,
   ): Promise<StickerEntity> {
     const { file, ...rest } = options;
@@ -365,7 +365,7 @@ export class StickerRouter {
   updateGuildSticker(
     guildId: Snowflake,
     stickerId: Snowflake,
-    options: ModifyGuildStickerSchema,
+    options: GuildStickerUpdateOptions,
     reason?: string,
   ): Promise<StickerEntity> {
     return this.#rest.patch(

@@ -1,82 +1,76 @@
-import type {
-  ActionRowEntity,
-  AllowedMentionsEntity,
-  AttachmentEntity,
-  EmbedEntity,
-  MessageEntity,
+import {
+  type ActionRowEntity,
+  type AllowedMentionsEntity,
+  type AttachmentEntity,
+  type ContainerEntity,
+  type EmbedEntity,
+  type FileEntity,
+  type MediaGalleryEntity,
+  type MessageEntity,
   MessageFlags,
-  MessageReferenceEntity,
-  PollCreateRequestEntity,
-  Snowflake,
-  UserEntity,
+  type MessageReferenceEntity,
+  type PollCreateRequestEntity,
+  type SectionEntity,
+  type SeparatorEntity,
+  type Snowflake,
+  type TextDisplayEntity,
+  type UserEntity,
 } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
  * Interface for query parameters when retrieving channel messages.
+ * Used to control pagination and filtering when fetching messages.
  *
- * These parameters control pagination and fetching strategy when retrieving
- * messages from a channel. They offer three different methods of pagination
- * that are mutually exclusive.
+ * @remarks
+ * Only one of around, before, or after can be specified at a time.
+ * Each provides a different method of pagination or positioning within the message history.
  *
- * @see {@link https://discord.com/developers/docs/resources/message#get-channel-messages-query-string-params}
+ * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-messages-query-string-params}
  */
-export interface GetChannelMessagesQuerySchema {
+export interface MessagesFetchParams {
   /**
-   * Get messages around this message ID.
+   * Maximum number of messages to return (1-100)
    *
-   * Returns messages before and after the specified message ID.
-   * This is useful for showing context around a specific message.
-   * This parameter is mutually exclusive with before and after.
+   * Controls how many messages to return in a single request.
+   * Default is 50 if not specified.
+   */
+  limit?: number;
+
+  /**
+   * Get messages around this message ID
+   *
+   * Returns messages around the specified ID, including the message with that ID.
+   * Example: When requesting with around=12345, you'll get messages with IDs 12343, 12344, 12345, 12346, 12347.
+   * Cannot be used with before or after.
    */
   around?: Snowflake;
 
   /**
-   * Get messages before this message ID.
+   * Get messages before this message ID
    *
-   * Returns newer messages that came before the specified message ID.
-   * Used for scrolling back to older messages (upward pagination).
-   * This parameter is mutually exclusive with around and after.
+   * Returns messages older than the specified ID, excluding the message with that ID.
+   * Results are ordered by ID in descending order (newer messages first).
+   * Cannot be used with around or after.
    */
   before?: Snowflake;
 
   /**
-   * Get messages after this message ID.
+   * Get messages after this message ID
    *
-   * Returns older messages that came after the specified message ID.
-   * Used for scrolling forward to newer messages (downward pagination).
-   * This parameter is mutually exclusive with around and before.
+   * Returns messages newer than the specified ID, excluding the message with that ID.
+   * Results are ordered by ID in ascending order (older messages first).
+   * Cannot be used with around or before.
    */
   after?: Snowflake;
-
-  /**
-   * Maximum number of messages to return (1-100).
-   *
-   * Controls the page size for pagination.
-   * Defaults to 50 if not specified.
-   */
-  limit?: number;
 }
 
 /**
- * Interface for creating a new message in a channel.
- *
- * This interface defines all possible parameters when sending a message through
- * Discord's API. At least one of content, embeds, sticker_ids, components,
- * files, or poll is required.
- *
- * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params}
+ * Base interface for creating a message in a channel.
+ * Holds the common parameters between V1 and V2 messages.
  */
-export interface CreateMessageSchema {
-  /**
-   * Message content (up to 2000 characters).
-   *
-   * The text content of the message. Can include Markdown formatting,
-   * emoji, mentions, and other formatting.
-   */
-  content?: string;
-
+export interface MessageCreateBaseOptions {
   /**
    * Used to verify a message was sent (up to 25 characters).
    *
@@ -92,14 +86,6 @@ export interface CreateMessageSchema {
    * who have text-to-speech enabled.
    */
   tts?: boolean;
-
-  /**
-   * Rich embedded content for the message (up to 10 embeds).
-   *
-   * Embeds are special rich content blocks that can contain
-   * formatted text, images, fields, and other structured data.
-   */
-  embeds?: EmbedEntity[];
 
   /**
    * Controls mentions in the message.
@@ -118,22 +104,6 @@ export interface CreateMessageSchema {
   message_reference?: MessageReferenceEntity;
 
   /**
-   * Interactive components to include with the message.
-   *
-   * Can include buttons, select menus, and other interactive elements
-   * that users can interact with.
-   */
-  components?: ActionRowEntity[];
-
-  /**
-   * IDs of up to 3 stickers to send in the message.
-   *
-   * Stickers are small, expressive images that can be
-   * included in messages.
-   */
-  sticker_ids?: Snowflake[];
-
-  /**
    * File contents to be attached to the message.
    *
    * Can be a single file or array of files to upload with the message.
@@ -145,14 +115,6 @@ export interface CreateMessageSchema {
    * @deprecated Do not use `payload_json`. This is done automatically!
    */
   payload_json?: string;
-
-  /**
-   * Information about attachments (up to 10).
-   *
-   * Used to reference existing attachments when editing messages
-   * or to define metadata about uploaded files.
-   */
-  attachments?: AttachmentEntity[];
 
   /**
    * Message flags combined as a bitfield.
@@ -170,6 +132,56 @@ export interface CreateMessageSchema {
    * Useful for ensuring idempotent operations.
    */
   enforce_nonce?: boolean;
+}
+
+/**
+ * Interface for creating a new message in a channel using Components V1.
+ *
+ * This interface defines all possible parameters when sending a traditional message through
+ * Discord's API. At least one of content, embeds, sticker_ids, components, or files is required.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/message#create-message-jsonform-params}
+ */
+export interface MessageCreateV1Options extends MessageCreateBaseOptions {
+  /**
+   * Message content (up to 2000 characters).
+   *
+   * The text content of the message. Can include Markdown formatting,
+   * emoji, mentions, and other formatting.
+   */
+  content?: string;
+
+  /**
+   * Rich embedded content for the message (up to 10 embeds).
+   *
+   * Embeds are special rich content blocks that can contain
+   * formatted text, images, fields, and other structured data.
+   */
+  embeds?: EmbedEntity[];
+
+  /**
+   * Interactive components to include with the message.
+   *
+   * Can include buttons, select menus, and other interactive elements
+   * that users can interact with.
+   */
+  components?: ActionRowEntity[];
+
+  /**
+   * IDs of up to 3 stickers to send in the message.
+   *
+   * Stickers are small, expressive images that can be
+   * included in messages.
+   */
+  sticker_ids?: Snowflake[];
+
+  /**
+   * Information about attachments (up to 10).
+   *
+   * Used to reference existing attachments when editing messages
+   * or to define metadata about uploaded files.
+   */
+  attachments?: AttachmentEntity[];
 
   /**
    * Poll to include with the message.
@@ -181,13 +193,82 @@ export interface CreateMessageSchema {
 }
 
 /**
+ * Allowed top-level components for Components V2 messages
+ */
+export type TopLevelComponentV2 =
+  | TextDisplayEntity
+  | ContainerEntity
+  | MediaGalleryEntity
+  | FileEntity
+  | SectionEntity
+  | SeparatorEntity
+  | ActionRowEntity;
+
+/**
+ * Interface for creating a new message in a channel using Components V2.
+ *
+ * This interface defines all possible parameters when sending a message with Components V2.
+ * Content, embeds, stickers, and polls are not supported when using Components V2.
+ *
+ * @see {@link https://discord.com/developers/docs/components/overview}
+ */
+export interface MessageCreateV2Options extends MessageCreateBaseOptions {
+  /**
+   * Components to include with the message.
+   *
+   * With Components V2, all content must be sent as components instead of using
+   * the standard message format.
+   */
+  components: TopLevelComponentV2[];
+
+  /**
+   * Information about attachments (up to 10).
+   *
+   * Used to reference existing attachments when editing messages
+   * or to define metadata about uploaded files.
+   *
+   * Note: Attachments must be exposed through components to be visible.
+   */
+  attachments?: AttachmentEntity[];
+
+  /**
+   * Message flags combined as a bitfield.
+   *
+   * For Components V2, this must include the IS_COMPONENTS_V2 flag (1 << 15).
+   */
+  flags: MessageFlags;
+}
+
+/**
+ * Type guard to check if a message schema is for Components V2
+ *
+ * @param schema - The message schema to check
+ * @returns True if the schema is for Components V2
+ */
+export function isComponentsV2Schema(
+  schema: MessageCreateV1Options | MessageCreateV2Options,
+): schema is MessageCreateV2Options {
+  return (
+    schema.flags !== undefined &&
+    (schema.flags & MessageFlags.IsComponentsV2) !== 0
+  );
+}
+
+/**
+ * Union type for message creation, supports both V1 and V2 message formats
+ */
+export type CreateMessageSchema =
+  | MessageCreateV1Options
+  | MessageCreateV2Options;
+
+/**
  * Types of reactions that can be retrieved.
  *
  * Defines the different types of reactions that can exist on a message.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-reaction-types}
  */
-export enum ReactionTypeFlag {
+export enum ReactionType {
   /**
    * Normal reaction.
    *
@@ -212,14 +293,14 @@ export enum ReactionTypeFlag {
  *
  * @see {@link https://discord.com/developers/docs/resources/message#get-reactions-query-string-params}
  */
-export interface GetReactionsQuerySchema {
+export interface ReactionsFetchParams {
   /**
    * Type of reaction to get (normal or burst).
    *
    * Controls which type of reactions to retrieve.
-   * Defaults to ReactionTypeFlag.Normal if not specified.
+   * Defaults to ReactionType.Normal if not specified.
    */
-  type?: ReactionTypeFlag;
+  type?: ReactionType;
 
   /**
    * Get users after this user ID for pagination.
@@ -239,24 +320,134 @@ export interface GetReactionsQuerySchema {
 }
 
 /**
- * Interface for editing an existing message.
+ * Base interface for editing a message.
+ * Holds the common parameters for both V1 and V2 message edits.
+ */
+export interface MessageUpdateBaseOptions {
+  /**
+   * Controls mentions in the message.
+   *
+   * Allows customizing which mentions will trigger notifications,
+   * useful for preventing unwanted pings to roles or everyone.
+   */
+  allowed_mentions?: AllowedMentionsEntity;
+
+  /**
+   * File contents to be attached to the message.
+   *
+   * Can be a single file or array of files to upload with the message.
+   * Maximum of 10 attachments.
+   */
+  files?: FileInput | FileInput[];
+
+  /**
+   * @deprecated Do not use `payload_json`. This is done automatically!
+   */
+  payload_json?: string;
+
+  /**
+   * Message flags combined as a bitfield.
+   *
+   * Controls special behaviors for the message.
+   * Only SUPPRESS_EMBEDS and SUPPRESS_NOTIFICATIONS can be set when creating a message.
+   */
+  flags?: MessageFlags;
+}
+
+/**
+ * Interface for editing an existing message with Components V1.
  *
- * This interface includes only the fields from CreateMessageSchema
+ * This interface includes only the fields from CreateMessageSchemaV1
  * that can be modified after a message has been sent.
  *
  * @see {@link https://discord.com/developers/docs/resources/message#edit-message-jsonform-params}
  */
-export type EditMessageSchema = Pick<
-  CreateMessageSchema,
-  | "content"
-  | "embeds"
-  | "flags"
-  | "allowed_mentions"
-  | "components"
-  | "files"
-  | "payload_json"
-  | "attachments"
->;
+export interface MessageUpdateV1Options extends MessageUpdateBaseOptions {
+  /**
+   * Message content (up to 2000 characters).
+   *
+   * The text content of the message. Can include Markdown formatting,
+   * emoji, mentions, and other formatting.
+   */
+  content?: string;
+
+  /**
+   * Rich embedded content for the message (up to 10 embeds).
+   *
+   * Embeds are special rich content blocks that can contain
+   * formatted text, images, fields, and other structured data.
+   */
+  embeds?: EmbedEntity[];
+
+  /**
+   * Interactive components to include with the message.
+   *
+   * Can include buttons, select menus, and other interactive elements
+   * that users can interact with.
+   */
+  components?: ActionRowEntity[];
+
+  /**
+   * Information about attachments (up to 10).
+   *
+   * Used to reference existing attachments when editing messages
+   * or to define metadata about uploaded files.
+   */
+  attachments?: AttachmentEntity[];
+}
+
+/**
+ * Interface for editing an existing message with Components V2.
+ *
+ * This interface includes only the fields that can be modified
+ * when using Components V2 format.
+ *
+ * @see {@link https://discord.com/developers/docs/components/overview}
+ */
+export interface MessageUpdateV2Options extends MessageUpdateBaseOptions {
+  /**
+   * Components to include with the message.
+   *
+   * With Components V2, all content must be sent as components instead of using
+   * the standard message format.
+   */
+  components: TopLevelComponentV2[];
+
+  /**
+   * Information about attachments (up to 10).
+   *
+   * Used to reference existing attachments when editing messages
+   * or to define metadata about uploaded files.
+   */
+  attachments?: AttachmentEntity[];
+
+  /**
+   * Message flags combined as a bitfield.
+   *
+   * For Components V2, this must include the IS_COMPONENTS_V2 flag (1 << 15).
+   */
+  flags: MessageFlags;
+}
+
+/**
+ * Type guard to check if an edit message schema is for Components V2
+ *
+ * @param schema - The message schema to check
+ * @returns True if the schema is for Components V2
+ */
+export function isEditComponentsV2Schema(
+  schema: MessageUpdateV1Options | MessageUpdateV2Options,
+): schema is MessageUpdateV2Options {
+  return (
+    schema.flags !== undefined &&
+    (schema.flags & MessageFlags.IsComponentsV2) !== 0
+  );
+}
+
+/**
+ * Union type for message editing, supports both V1 and V2 message formats
+ */
+export type EditMessageSchema = MessageUpdateV1Options | MessageUpdateV2Options;
 
 /**
  * Interface for bulk deleting messages.
@@ -266,7 +457,7 @@ export type EditMessageSchema = Pick<
  *
  * @see {@link https://discord.com/developers/docs/resources/message#bulk-delete-messages-json-params}
  */
-export interface BulkDeleteMessagesSchema {
+export interface MessagesBulkDeleteOptions {
   /**
    * Array of message IDs to delete (2-100).
    *
@@ -411,7 +602,7 @@ export class MessageRouter {
    */
   fetchMessages(
     channelId: Snowflake,
-    query?: GetChannelMessagesQuerySchema,
+    query?: MessagesFetchParams,
   ): Promise<MessageEntity[]> {
     return this.#rest.get(
       MessageRouter.MESSAGE_ROUTES.channelMessagesEndpoint(channelId),
@@ -465,12 +656,78 @@ export class MessageRouter {
    * @remarks
    * Requires SEND_MESSAGES permission. If sending TTS, requires SEND_TTS_MESSAGES.
    * If replying to a message, requires READ_MESSAGE_HISTORY.
-   * At least one of content, embeds, sticker_ids, components, files, or poll is required.
+   *
+   * For V1 messages, at least one of content, embeds, sticker_ids, components, files, or poll is required.
+   * For V2 messages, the components array is required and must contain at least one component.
    */
   sendMessage(
     channelId: Snowflake,
     options: CreateMessageSchema,
   ): Promise<MessageEntity> {
+    // Validate message schema according to its version
+    if (isComponentsV2Schema(options)) {
+      // V2 validation
+      if (!options.components || options.components.length === 0) {
+        throw new Error(
+          "Components V2 messages must have at least one component",
+        );
+      }
+
+      if (options.components.length > 10) {
+        throw new Error(
+          "Components V2 messages cannot have more than 10 top-level components",
+        );
+      }
+
+      // Check for unsupported fields in V2
+      const unsupportedOptions = options as MessageCreateV1Options;
+      if (unsupportedOptions.content) {
+        // biome-ignore lint/suspicious/noConsole: <explanation>
+        console.warn("The 'content' field is ignored when using Components V2");
+      }
+      if (unsupportedOptions.embeds) {
+        // biome-ignore lint/suspicious/noConsole: <explanation>
+        console.warn("The 'embeds' field is ignored when using Components V2");
+      }
+      if (unsupportedOptions.sticker_ids) {
+        // biome-ignore lint/suspicious/noConsole: <explanation>
+        console.warn(
+          "The 'sticker_ids' field is ignored when using Components V2",
+        );
+      }
+      if (unsupportedOptions.poll) {
+        // biome-ignore lint/suspicious/noConsole: <explanation>
+        console.warn("The 'poll' field is ignored when using Components V2");
+      }
+    } else {
+      // V1 validation
+      const hasContent = !!options.content;
+      const hasEmbeds = !!(options.embeds && options.embeds.length > 0);
+      const hasStickerIds = !!(
+        options.sticker_ids && options.sticker_ids.length > 0
+      );
+      const hasComponents = !!(
+        options.components && options.components.length > 0
+      );
+      const hasFiles = !!options.files;
+      const hasPoll = !!options.poll;
+
+      if (
+        !(
+          hasContent ||
+          hasEmbeds ||
+          hasStickerIds ||
+          hasComponents ||
+          hasFiles ||
+          hasPoll
+        )
+      ) {
+        throw new Error(
+          "At least one of content, embeds, sticker_ids, components, files, or poll is required",
+        );
+      }
+    }
+
     const { files, ...rest } = options;
     return this.#rest.post(
       MessageRouter.MESSAGE_ROUTES.channelMessagesEndpoint(channelId),
@@ -499,7 +756,7 @@ export class MessageRouter {
    * The channel must be an announcement channel (type 5).
    * Each message can only be crossposted once.
    */
-  publishMessage(
+  crosspostMessage(
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
@@ -623,7 +880,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
-    query?: GetReactionsQuerySchema,
+    query?: ReactionsFetchParams,
   ): Promise<UserEntity[]> {
     return this.#rest.get(
       MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(
@@ -679,7 +936,7 @@ export class MessageRouter {
    * @remarks
    * Requires MANAGE_MESSAGES permission.
    */
-  removeAllReactionsForEmoji(
+  removeEmojiReactions(
     channelId: Snowflake,
     messageId: Snowflake,
     emoji: string,
@@ -712,12 +969,38 @@ export class MessageRouter {
    * Other users with MANAGE_MESSAGES can only edit flags.
    * All files specified in the attachments array will be kept, and new files can be added.
    * If only removing attachments, specify an empty attachments array.
+   *
+   * For V1 messages, at least one of content, embeds, or components should be specified.
+   * For V2 messages, the components array is required and must contain at least one component.
    */
   updateMessage(
     channelId: Snowflake,
     messageId: Snowflake,
     options: EditMessageSchema,
   ): Promise<MessageEntity> {
+    // Validate message schema according to its version
+    if (isEditComponentsV2Schema(options)) {
+      // V2 validation
+      if (!options.components || options.components.length === 0) {
+        throw new Error(
+          "Components V2 messages must have at least one component",
+        );
+      }
+
+      if (options.components.length > 10) {
+        throw new Error(
+          "Components V2 messages cannot have more than 10 top-level components",
+        );
+      }
+
+      // Check for unsupported fields in V2
+      const unsupportedOptions = options as MessageCreateV1Options;
+      if (unsupportedOptions.content) {
+      }
+      if (unsupportedOptions.embeds) {
+      }
+    }
+
     const { files, ...rest } = options;
     return this.#rest.patch(
       MessageRouter.MESSAGE_ROUTES.channelMessageByIdEndpoint(
@@ -785,7 +1068,7 @@ export class MessageRouter {
    */
   bulkDeleteMessages(
     channelId: Snowflake,
-    options: BulkDeleteMessagesSchema,
+    options: MessagesBulkDeleteOptions,
     reason?: string,
   ): Promise<void> {
     return this.#rest.post(

@@ -15,7 +15,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/entitlement#list-entitlements-query-string-params}
  */
-export interface ListEntitlementQuerySchema {
+export interface EntitlementFetchParams {
   /**
    * User ID to look up entitlements for.
    *
@@ -112,7 +112,7 @@ export enum EntitlementOwnerType {
  *
  * @see {@link https://discord.com/developers/docs/resources/entitlement#create-test-entitlement-json-params}
  */
-export interface CreateTestEntitlementSchema {
+export interface EntitlementTestCreateOptions {
   /**
    * ID of the SKU to grant the entitlement to.
    *
@@ -231,7 +231,7 @@ export class EntitlementRouter {
    */
   fetchEntitlements(
     applicationId: Snowflake,
-    query?: ListEntitlementQuerySchema,
+    query?: EntitlementFetchParams,
   ): Promise<EntitlementEntity[]> {
     return this.#rest.get(
       EntitlementRouter.ENTITLEMENT_ROUTES.applicationEntitlementsEndpoint(
@@ -318,7 +318,7 @@ export class EntitlementRouter {
    */
   createTestEntitlement(
     applicationId: Snowflake,
-    test: CreateTestEntitlementSchema,
+    test: EntitlementTestCreateOptions,
   ): Promise<EntitlementEntity> {
     return this.#rest.post(
       EntitlementRouter.ENTITLEMENT_ROUTES.applicationEntitlementsEndpoint(

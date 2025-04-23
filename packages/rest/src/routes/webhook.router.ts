@@ -20,7 +20,7 @@ import type { CreateMessageSchema } from "./message.router.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#create-webhook-json-params}
  */
-export interface CreateWebhookSchema {
+export interface WebhookCreateOptions {
   /**
    * Name of the webhook (1-80 characters).
    *
@@ -54,7 +54,7 @@ export interface CreateWebhookSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#modify-webhook-json-params}
  */
-export interface ModifyWebhookSchema {
+export interface WebhookUpdateOptions {
   /**
    * The default name of the webhook (1-80 characters).
    *
@@ -90,7 +90,7 @@ export interface ModifyWebhookSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-query-string-params}
  */
-export interface ExecuteWebhookQuerySchema {
+export interface WebhookExecuteParams {
   /**
    * Waits for server confirmation of message send before response,
    * and returns the created message body.
@@ -126,7 +126,7 @@ export interface ExecuteWebhookQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params}
  */
-export interface ExecuteWebhookSchema
+export interface WebhookExecuteOptions
   extends Pick<
     CreateMessageSchema,
     | "content"
@@ -180,10 +180,7 @@ export interface ExecuteWebhookSchema
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#get-webhook-message-query-string-params}
  */
-export type GetWebhookMessageQuerySchema = Pick<
-  ExecuteWebhookQuerySchema,
-  "thread_id"
->;
+export type WebhookMessageFetchParams = Pick<WebhookExecuteParams, "thread_id">;
 
 /**
  * Interface for editing a webhook message.
@@ -201,8 +198,8 @@ export type GetWebhookMessageQuerySchema = Pick<
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message-jsonform-params}
  */
-export type EditWebhookMessageSchema = Pick<
-  ExecuteWebhookSchema,
+export type WebhookMessageEditOptions = Pick<
+  WebhookExecuteOptions,
   | "content"
   | "embeds"
   | "allowed_mentions"
@@ -358,7 +355,7 @@ export class WebhookRouter {
    */
   async createWebhook(
     channelId: Snowflake,
-    options: CreateWebhookSchema,
+    options: WebhookCreateOptions,
     reason?: string,
   ): Promise<WebhookEntity> {
     if (options.avatar) {
@@ -481,7 +478,7 @@ export class WebhookRouter {
    */
   async updateWebhook(
     webhookId: Snowflake,
-    options: ModifyWebhookSchema,
+    options: WebhookUpdateOptions,
     reason?: string,
   ): Promise<WebhookEntity> {
     if (options.avatar) {
@@ -520,7 +517,7 @@ export class WebhookRouter {
   async updateWebhookWithToken(
     webhookId: Snowflake,
     token: string,
-    options: Omit<ModifyWebhookSchema, "channel_id">,
+    options: Omit<WebhookUpdateOptions, "channel_id">,
     reason?: string,
   ): Promise<WebhookEntity> {
     if (options.avatar) {
@@ -617,11 +614,11 @@ export class WebhookRouter {
    * - Discord may strip certain characters from message content
    * - Returns a message or 204 No Content depending on the wait query parameter
    */
-  executeWebhook(
+  sendWebhook(
     webhookId: Snowflake,
     token: string,
-    options: ExecuteWebhookSchema,
-    query?: ExecuteWebhookQuerySchema,
+    options: WebhookExecuteOptions,
+    query?: WebhookExecuteParams,
   ): Promise<WebhookEntity | undefined> {
     const { files, ...rest } = options;
     return this.#rest.post(
@@ -651,10 +648,10 @@ export class WebhookRouter {
    * Refer to Slack's documentation for more information about the payload format.
    * Discord does not support Slack's channel, icon_emoji, mrkdwn, or mrkdwn_in properties.
    */
-  executeSlackCompatibleWebhook(
+  sendSlackWebhook(
     webhookId: Snowflake,
     token: string,
-    query?: ExecuteWebhookQuerySchema,
+    query?: WebhookExecuteParams,
   ): Promise<void> {
     return this.#rest.post(
       WebhookRouter.WEBHOOK_ROUTES.slackWebhookEndpoint(webhookId, token),
@@ -685,10 +682,10 @@ export class WebhookRouter {
    * member, public, pull_request, pull_request_review, pull_request_review_comment, push,
    * release, watch, check_run, check_suite, discussion, and discussion_comment.
    */
-  executeGithubCompatibleWebhook(
+  sendGithubWebhook(
     webhookId: Snowflake,
     token: string,
-    query?: ExecuteWebhookQuerySchema,
+    query?: WebhookExecuteParams,
   ): Promise<void> {
     return this.#rest.post(
       WebhookRouter.WEBHOOK_ROUTES.githubWebhookEndpoint(webhookId, token),
@@ -716,7 +713,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    query?: GetWebhookMessageQuerySchema,
+    query?: WebhookMessageFetchParams,
   ): Promise<WebhookEntity> {
     return this.#rest.get(
       WebhookRouter.WEBHOOK_ROUTES.webhookMessageEndpoint(
@@ -757,8 +754,8 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    options: EditWebhookMessageSchema,
-    query?: GetWebhookMessageQuerySchema,
+    options: WebhookMessageEditOptions,
+    query?: WebhookMessageFetchParams,
   ): Promise<WebhookEntity> {
     const { files, ...rest } = options;
     return this.#rest.patch(
@@ -796,7 +793,7 @@ export class WebhookRouter {
     webhookId: Snowflake,
     token: string,
     messageId: Snowflake,
-    query?: GetWebhookMessageQuerySchema,
+    query?: WebhookMessageFetchParams,
   ): Promise<void> {
     return this.#rest.delete(
       WebhookRouter.WEBHOOK_ROUTES.webhookMessageEndpoint(

@@ -10,7 +10,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/topics/oauth2#get-current-authorization-information-response-structure}
  */
-export interface AuthorizationEntity {
+export interface Authorization {
   /**
    * The application associated with this authorization.
    *
@@ -130,7 +130,7 @@ export class OAuth2Router {
    *
    * @note This endpoint requires authentication with a bearer token.
    */
-  fetchCurrentAuthorization(): Promise<AuthorizationEntity> {
+  fetchCurrentAuthorization(): Promise<Authorization> {
     return this.#rest.get(
       OAuth2Router.OAUTH2_ROUTES.currentAuthorizationEndpoint,
     );

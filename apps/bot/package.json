@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nyxojs/playground",
+  "name": "@nyxojs/bot",
   "private": true,
-  "description": "Playground for Nyxo.js",
+  "description": "Bot made with Nyxo.js",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
   "type": "module",

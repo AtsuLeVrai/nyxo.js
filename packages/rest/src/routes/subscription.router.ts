@@ -10,7 +10,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/subscription#query-string-params}
  */
-export interface SubscriptionQuerySchema {
+export interface SubscriptionFetchParams {
   /**
    * List subscriptions before this ID.
    *
@@ -120,9 +120,9 @@ export class SubscriptionRouter {
    *
    * @note The user_id parameter is required except when making OAuth queries.
    */
-  fetchSkuSubscriptions(
+  fetchSubscriptions(
     skuId: Snowflake,
-    query?: SubscriptionQuerySchema,
+    query?: SubscriptionFetchParams,
   ): Promise<SubscriptionEntity[]> {
     return this.#rest.get(
       SubscriptionRouter.SUBSCRIPTION_ROUTES.skuSubscriptionsEndpoint(skuId),
@@ -145,7 +145,7 @@ export class SubscriptionRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/subscription#get-sku-subscription}
    */
-  fetchSkuSubscription(
+  fetchSubscription(
     skuId: Snowflake,
     subscriptionId: Snowflake,
   ): Promise<SubscriptionEntity> {

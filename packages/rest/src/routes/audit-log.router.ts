@@ -17,7 +17,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/audit-log#get-guild-audit-log-query-string-params}
  */
-export interface GetGuildAuditLogQuerySchema {
+export interface AuditLogFetchParams {
   /**
    * Filter entries by the user who performed the action.
    *
@@ -133,7 +133,7 @@ export class AuditLogRouter {
    */
   fetchGuildAuditLog(
     guildId: Snowflake,
-    query?: GetGuildAuditLogQuerySchema,
+    query?: AuditLogFetchParams,
   ): Promise<AuditLogEntity> {
     return this.#rest.get(
       AuditLogRouter.AUDIT_ROUTES.guildAuditLogsEndpoint(guildId),

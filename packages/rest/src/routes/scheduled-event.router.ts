@@ -24,7 +24,7 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#create-guild-scheduled-event-json-params}
  */
-export interface CreateGuildScheduledEventSchema {
+export interface EventCreateOptions {
   /**
    * The channel ID in which the scheduled event will be hosted.
    *
@@ -113,7 +113,7 @@ export interface CreateGuildScheduledEventSchema {
 /**
  * Interface for modifying a guild scheduled event.
  *
- * This interface extends the CreateGuildScheduledEventSchema and makes all fields optional.
+ * This interface extends the EventCreateOptions and makes all fields optional.
  * It also adds the status field to allow changing the event status.
  *
  * @remarks
@@ -125,8 +125,7 @@ export interface CreateGuildScheduledEventSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#modify-guild-scheduled-event-json-params}
  */
-export interface ModifyGuildScheduledEventSchema
-  extends Partial<CreateGuildScheduledEventSchema> {
+export interface EventUpdateOptions extends Partial<EventCreateOptions> {
   /**
    * The status of the scheduled event.
    *
@@ -149,7 +148,7 @@ export interface ModifyGuildScheduledEventSchema
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#get-guild-scheduled-event-users-query-string-params}
  */
-export interface GetGuildScheduledEventUsersQuerySchema {
+export interface EventUsersFetchParams {
   /**
    * Number of users to return (up to maximum 100).
    *
@@ -268,7 +267,7 @@ export class ScheduledEventRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#list-scheduled-events-for-guild}
    */
-  fetchGuildEvents(
+  fetchEvents(
     guildId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
@@ -301,9 +300,9 @@ export class ScheduledEventRouter {
    *
    * A guild can have a maximum of 100 events with SCHEDULED or ACTIVE status at any time.
    */
-  async createGuildEvent(
+  async createEvent(
     guildId: Snowflake,
-    options: CreateGuildScheduledEventSchema,
+    options: EventCreateOptions,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
     if (options.image) {
@@ -372,10 +371,10 @@ export class ScheduledEventRouter {
    *   - entity_metadata with location field must be provided
    *   - scheduled_end_time must be provided
    */
-  async updateGuildEvent(
+  async updateEvent(
     guildId: Snowflake,
     eventId: Snowflake,
-    options: ModifyGuildScheduledEventSchema,
+    options: EventUpdateOptions,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
     if (options.image) {
@@ -406,7 +405,7 @@ export class ScheduledEventRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event}
    */
-  deleteGuildEvent(guildId: Snowflake, eventId: Snowflake): Promise<void> {
+  deleteEvent(guildId: Snowflake, eventId: Snowflake): Promise<void> {
     return this.#rest.delete(
       ScheduledEventRouter.EVENT_ROUTES.guildEventByIdEndpoint(
         guildId,
@@ -437,7 +436,7 @@ export class ScheduledEventRouter {
   fetchEventUsers(
     guildId: Snowflake,
     eventId: Snowflake,
-    query?: GetGuildScheduledEventUsersQuerySchema,
+    query?: EventUsersFetchParams,
   ): Promise<GuildScheduledEventUserEntity[]> {
     return this.#rest.get(
       ScheduledEventRouter.EVENT_ROUTES.eventUsersEndpoint(guildId, eventId),

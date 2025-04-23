@@ -9,7 +9,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-response-body}
  */
-export interface PollVotersResponseEntity {
+export interface PollVotersResponse {
   /**
    * Array of users who voted for the answer.
    *
@@ -27,7 +27,7 @@ export interface PollVotersResponseEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/poll#get-answer-voters-query-string-params}
  */
-export interface GetAnswerVotersQuerySchema {
+export interface PollVotersFetchParams {
   /**
    * Get users after this user ID (for pagination).
    *
@@ -118,8 +118,8 @@ export class PollRouter {
     channelId: Snowflake,
     messageId: Snowflake,
     answerId: number,
-    query?: GetAnswerVotersQuerySchema,
-  ): Promise<PollVotersResponseEntity> {
+    query?: PollVotersFetchParams,
+  ): Promise<PollVotersResponse> {
     return this.#rest.get(
       PollRouter.POLL_ROUTES.pollAnswerVotersEndpoint(
         channelId,

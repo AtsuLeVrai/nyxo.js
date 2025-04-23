@@ -15,7 +15,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/events/gateway#session-start-limit-object-session-start-limit-structure}
  */
-export interface SessionStartLimitEntity {
+export interface SessionStartLimit {
   /**
    * Total number of session starts allowed per reset period.
    *
@@ -65,7 +65,7 @@ export interface SessionStartLimitEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-example-response}
  */
-export interface GatewayResponseEntity {
+export interface GatewayResponse {
   /**
    * The WebSocket URL that clients can connect to.
    *
@@ -91,7 +91,7 @@ export interface GatewayResponseEntity {
  *
  * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot-json-response}
  */
-export interface GatewayBotResponseEntity extends GatewayResponseEntity {
+export interface GatewayBotResponse extends GatewayResponse {
   /**
    * Recommended number of shards to use when connecting.
    *
@@ -107,7 +107,7 @@ export interface GatewayBotResponseEntity extends GatewayResponseEntity {
    * Contains details about how many new gateway sessions your bot can
    * start within the current rate limit period.
    */
-  session_start_limit: SessionStartLimitEntity;
+  session_start_limit: SessionStartLimit;
 }
 
 /**
@@ -175,7 +175,7 @@ export class GatewayRouter {
    *
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway}
    */
-  fetchGatewayUrl(): Promise<GatewayResponseEntity> {
+  fetchGatewayUrl(): Promise<GatewayResponse> {
     return this.#rest.get(GatewayRouter.GATEWAY_ROUTES.standardGatewayEndpoint);
   }
 
@@ -203,7 +203,7 @@ export class GatewayRouter {
    *
    * @see {@link https://discord.com/developers/docs/events/gateway#get-gateway-bot}
    */
-  fetchBotGatewayInfo(): Promise<GatewayBotResponseEntity> {
+  fetchBotGatewayInfo(): Promise<GatewayBotResponse> {
     return this.#rest.get(GatewayRouter.GATEWAY_ROUTES.botGatewayEndpoint);
   }
 }

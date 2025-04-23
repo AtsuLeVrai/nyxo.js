@@ -10,7 +10,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#create-auto-moderation-rule-json-params}
  */
-export interface CreateAutoModerationRuleSchema {
+export interface AutoModerationRuleCreateOptions {
   /**
    * The name of the rule (1-100 characters).
    * Used to identify the rule in the Discord UI and API responses.
@@ -88,8 +88,8 @@ export interface CreateAutoModerationRuleSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/auto-moderation#modify-auto-moderation-rule-json-params}
  */
-export type ModifyAutoModerationRuleSchema = Partial<
-  Omit<CreateAutoModerationRuleSchema, "trigger_type">
+export type AutoModerationRuleUpdateOptions = Partial<
+  Omit<AutoModerationRuleCreateOptions, "trigger_type">
 >;
 
 /**
@@ -205,7 +205,7 @@ export class AutoModerationRouter {
    */
   createRule(
     guildId: Snowflake,
-    options: CreateAutoModerationRuleSchema,
+    options: AutoModerationRuleCreateOptions,
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
     return this.#rest.post(
@@ -238,7 +238,7 @@ export class AutoModerationRouter {
   updateRule(
     guildId: Snowflake,
     ruleId: Snowflake,
-    options: ModifyAutoModerationRuleSchema,
+    options: AutoModerationRuleUpdateOptions,
     reason?: string,
   ): Promise<AutoModerationRuleEntity> {
     return this.#rest.patch(

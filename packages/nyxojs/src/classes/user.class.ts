@@ -251,8 +251,8 @@ export class User
    * }
    * ```
    */
-  get banner(): string | null {
-    return this.data.banner ?? null;
+  get banner(): string | null | undefined {
+    return this.data.banner;
   }
 
   /**
@@ -272,8 +272,8 @@ export class User
    * }
    * ```
    */
-  get accentColor(): number | null {
-    return this.data.accent_color ?? null;
+  get accentColor(): number | null | undefined {
+    return this.data.accent_color;
   }
 
   /**
@@ -290,8 +290,8 @@ export class User
    * }
    * ```
    */
-  get locale(): Locale | null {
-    return this.data.locale ?? null;
+  get locale(): Locale | null | undefined {
+    return this.data.locale;
   }
 
   /**
@@ -327,8 +327,8 @@ export class User
    * }
    * ```
    */
-  get email(): string | null {
-    return this.data.email ?? null;
+  get email(): string | null | undefined {
+    return this.data.email;
   }
 
   /**
@@ -383,8 +383,8 @@ export class User
    *
    * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types}
    */
-  get premiumType(): PremiumType | null {
-    return this.data.premium_type ?? null;
+  get premiumType(): PremiumType | undefined {
+    return this.data.premium_type;
   }
 
   /**

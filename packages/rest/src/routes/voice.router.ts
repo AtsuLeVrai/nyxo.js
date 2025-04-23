@@ -19,7 +19,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state-json-params}
  */
-export interface ModifyCurrentUserVoiceStateSchema {
+export interface VoiceStateUpdateOptions {
   /**
    * The ID of the channel the user is currently in.
    *
@@ -66,7 +66,7 @@ export interface ModifyCurrentUserVoiceStateSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/voice#modify-user-voice-state-json-params}
  */
-export interface ModifyUserVoiceStateSchema {
+export interface OtherVoiceStateUpdateOptions {
   /**
    * The ID of the channel the user is currently in.
    *
@@ -178,7 +178,7 @@ export class VoiceRouter {
    *
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
-  fetchCurrentUserVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
+  fetchOwnVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
     return this.#rest.get(
       VoiceRouter.VOICE_ROUTES.currentUserVoiceStateEndpoint(guildId),
     );
@@ -226,9 +226,9 @@ export class VoiceRouter {
    * - You must have the REQUEST_TO_SPEAK permission to request to speak. You can always clear your own request to speak
    * - You are able to set request_to_speak_timestamp to any present or future time
    */
-  updateCurrentUserVoiceState(
+  updateOwnVoiceState(
     guildId: Snowflake,
-    options: ModifyCurrentUserVoiceStateSchema,
+    options: VoiceStateUpdateOptions,
   ): Promise<void> {
     return this.#rest.patch(
       VoiceRouter.VOICE_ROUTES.currentUserVoiceStateEndpoint(guildId),
@@ -262,7 +262,7 @@ export class VoiceRouter {
   updateUserVoiceState(
     guildId: Snowflake,
     userId: Snowflake,
-    options: ModifyUserVoiceStateSchema,
+    options: OtherVoiceStateUpdateOptions,
   ): Promise<void> {
     return this.#rest.patch(
       VoiceRouter.VOICE_ROUTES.userVoiceStateEndpoint(guildId, userId),

@@ -17,7 +17,7 @@ import { FileHandler } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-kind-enum}
  */
-export type ActivityLocationKind = "gc" | "pc";
+export type ActivityLocationType = "gc" | "pc";
 
 /**
  * Represents a location within Discord where an application activity is taking place.
@@ -35,7 +35,7 @@ export interface ActivityLocationEntity {
    * - "gc" for group call
    * - "pc" for private call
    */
-  kind: ActivityLocationKind;
+  kind: ActivityLocationType;
 
   /** ID of the channel where the activity is happening */
   channel_id: Snowflake;
@@ -85,7 +85,7 @@ export interface ActivityInstanceEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
  */
-export interface EditCurrentApplicationSchema {
+export interface ApplicationUpdateOptions {
   /**
    * Custom URL for the application's authorization link.
    * Users will be redirected to this URL when installing the application.
@@ -260,7 +260,7 @@ export class ApplicationRouter {
    * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application}
    */
   async updateCurrentApplication(
-    options: EditCurrentApplicationSchema,
+    options: ApplicationUpdateOptions,
   ): Promise<ApplicationEntity> {
     if (options.icon) {
       options.icon = await FileHandler.toDataUri(options.icon);

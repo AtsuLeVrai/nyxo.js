@@ -10,7 +10,7 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-from-guild-template-json-params}
  */
-export interface CreateGuildFromGuildTemplateSchema {
+export interface GuildFromTemplateCreateOptions {
   /**
    * Name of the guild (2-100 characters).
    *
@@ -40,7 +40,7 @@ export interface CreateGuildFromGuildTemplateSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-template#create-guild-template-json-params}
  */
-export interface CreateGuildTemplateSchema {
+export interface GuildTemplateCreateOptions {
   /**
    * Name of the template (1-100 characters).
    *
@@ -70,7 +70,7 @@ export interface CreateGuildTemplateSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-template#modify-guild-template-json-params}
  */
-export type ModifyGuildTemplateSchema = Partial<CreateGuildTemplateSchema>;
+export type GuildTemplateUpdateOptions = Partial<GuildTemplateCreateOptions>;
 
 /**
  * Router for Discord Guild Template-related endpoints.
@@ -186,7 +186,7 @@ export class GuildTemplateRouter {
    */
   async createGuildFromTemplate(
     code: string,
-    options: CreateGuildFromGuildTemplateSchema,
+    options: GuildFromTemplateCreateOptions,
   ): Promise<GuildEntity> {
     if (options.icon) {
       options.icon = await FileHandler.toDataUri(options.icon);
@@ -239,7 +239,7 @@ export class GuildTemplateRouter {
    */
   createGuildTemplate(
     guildId: Snowflake,
-    options: CreateGuildTemplateSchema,
+    options: GuildTemplateCreateOptions,
   ): Promise<GuildTemplateEntity> {
     return this.#rest.post(
       GuildTemplateRouter.TEMPLATE_ROUTES.guildTemplatesEndpoint(guildId),
@@ -302,7 +302,7 @@ export class GuildTemplateRouter {
   updateGuildTemplate(
     guildId: Snowflake,
     code: string,
-    options: ModifyGuildTemplateSchema,
+    options: GuildTemplateUpdateOptions,
   ): Promise<GuildTemplateEntity> {
     return this.#rest.patch(
       GuildTemplateRouter.TEMPLATE_ROUTES.guildTemplateByCodeEndpoint(

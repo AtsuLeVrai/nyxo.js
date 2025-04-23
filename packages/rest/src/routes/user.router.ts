@@ -25,7 +25,7 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user-json-params}
  */
-export interface ModifyCurrentUserSchema {
+export interface UserUpdateOptions {
   /**
    * User's username.
    *
@@ -69,7 +69,7 @@ export interface ModifyCurrentUserSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds-query-string-params}
  */
-export interface GetCurrentUserGuildsQuerySchema {
+export interface UserGuildsFetchParams {
   /**
    * Get guilds before this guild ID.
    *
@@ -121,7 +121,7 @@ export interface GetCurrentUserGuildsQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm-json-params}
  */
-export interface CreateGroupDmSchema {
+export interface GroupDmCreateOptions {
   /**
    * Access tokens of users that have granted your app the `gdm.join` scope.
    *
@@ -152,7 +152,7 @@ export interface CreateGroupDmSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection-json-params}
  */
-export interface UpdateCurrentUserApplicationRoleConnectionSchema {
+export interface UserRoleConnectionUpdateOptions {
   /**
    * The vanity name of the platform a bot has connected (max 50 characters).
    *
@@ -334,9 +334,7 @@ export class UserRouter {
    * All parameters to this endpoint are optional.
    * Fires a User Update Gateway event when successful.
    */
-  async updateCurrentUser(
-    options: ModifyCurrentUserSchema,
-  ): Promise<UserEntity> {
+  async updateCurrentUser(options: UserUpdateOptions): Promise<UserEntity> {
     if (options.avatar) {
       options.avatar = await FileHandler.toDataUri(options.avatar);
     }
@@ -370,9 +368,7 @@ export class UserRouter {
    *
    * For bots in more than 200 guilds, pagination is necessary.
    */
-  fetchCurrentUserGuilds(
-    query?: GetCurrentUserGuildsQuerySchema,
-  ): Promise<GuildEntity[]> {
+  fetchOwnGuilds(query?: UserGuildsFetchParams): Promise<GuildEntity[]> {
     return this.#rest.get(UserRouter.USER_ROUTES.currentUserGuildsEndpoint, {
       query,
     });
@@ -460,7 +456,9 @@ export class UserRouter {
    * It is limited to 10 active group DMs.
    * Fires a Channel Create Gateway event.
    */
-  createGroupDmChannel(options: CreateGroupDmSchema): Promise<DmChannelEntity> {
+  createGroupDmChannel(
+    options: GroupDmCreateOptions,
+  ): Promise<DmChannelEntity> {
     return this.#rest.post(UserRouter.USER_ROUTES.currentUserChannelsEndpoint, {
       body: JSON.stringify(options),
     });
@@ -480,7 +478,7 @@ export class UserRouter {
    * @remarks
    * Requires the `connections` OAuth2 scope.
    */
-  fetchCurrentUserConnections(): Promise<ConnectionEntity[]> {
+  fetchOwnConnections(): Promise<ConnectionEntity[]> {
     return this.#rest.get(
       UserRouter.USER_ROUTES.currentUserConnectionsEndpoint,
     );
@@ -530,7 +528,7 @@ export class UserRouter {
    */
   updateApplicationRoleConnection(
     applicationId: Snowflake,
-    connection: UpdateCurrentUserApplicationRoleConnectionSchema,
+    connection: UserRoleConnectionUpdateOptions,
   ): Promise<ApplicationRoleConnectionEntity> {
     return this.#rest.put(
       UserRouter.USER_ROUTES.applicationRoleConnectionEndpoint(applicationId),

@@ -10,6 +10,8 @@ import type {
   GatewayEvents,
   GatewayReceiveEvents,
   GuildCreateEntity,
+  GuildEmojisUpdateEntity,
+  GuildStickersUpdateEntity,
   InviteCreateEntity,
 } from "@nyxojs/gateway";
 import type { RestEvents } from "@nyxojs/rest";
@@ -47,11 +49,11 @@ import type { CacheManager } from "../managers/index.js";
 import type { ClientEvents, GuildBased } from "../types/index.js";
 
 /**
- * Gateway to client event mapping configuration
+ * Represents a mapping between a Gateway event and a Client event
  */
-interface GatewayEventMapping<
+interface EventMapping<
   T extends keyof GatewayReceiveEvents,
-  E extends keyof ClientEvents,
+  U extends keyof ClientEvents,
 > {
   /**
    * Gateway event name
@@ -61,61 +63,44 @@ interface GatewayEventMapping<
   /**
    * Client event name that this maps to
    */
-  clientEvent: E;
+  clientEvent: U;
 
   /**
    * Transform function to convert gateway event data to client event data
    */
-  transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[E];
+  transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[U];
 }
 
 /**
- * Typed utility function to define an event mapping more easily.
- * This function creates a strongly-typed connection between Discord Gateway events
- * and the client's event system, ensuring type safety throughout the event pipeline.
- *
- * @param gatewayEvent - The name of the Discord Gateway event
- * @param clientEvent - The name of the corresponding client event
- * @param transform - Data transformation function that converts raw gateway data to client event data
- * @returns A typed event configuration object
+ * Creates a strongly-typed mapping between Gateway and Client events
  */
 function defineEvent<
   T extends keyof GatewayReceiveEvents,
-  E extends keyof ClientEvents,
+  U extends keyof ClientEvents,
 >(
   gatewayEvent: T,
-  clientEvent: E,
-  transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[E],
-): GatewayEventMapping<T, E> {
-  return {
-    gatewayEvent,
-    clientEvent,
-    transform,
-  };
+  clientEvent: U,
+  transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[U],
+): EventMapping<T, U> {
+  return { gatewayEvent, clientEvent, transform };
 }
 
 /**
- * Utility function to handle DELETE events for any entity type
- * @param client - Client instance
- * @param entityId - ID of the entity being deleted
- * @param cacheKey - Key to access the appropriate cache store (e.g., 'channels', 'guilds')
- * @returns - The cached entity before deletion, or null if not in cache
+ * Generic handler for DELETE operations
+ * Gets entity from cache and removes it
  */
-function handleDeleteEvent<
-  K extends keyof CacheManager,
-  T = CacheManager[K] extends Store<Snowflake, infer U> ? U : never,
->(client: Client, entityId: Snowflake, cacheKey: K): [T | null] {
+function handleDeleteEvent<T>(
+  client: Client,
+  entityId: Snowflake,
+  cacheKey: keyof CacheManager,
+): [T | null] {
   if (!entityId) {
-    return [null]; // Cannot find in cache without ID
+    return [null];
   }
 
-  // Get the store with the correct type
   const store = client.cache[cacheKey] as unknown as Store<Snowflake, T>;
+  const cachedEntity = store.get?.(entityId) ?? null;
 
-  // Get cached entity before deletion
-  const cachedEntity = store.get?.(entityId) || null;
-
-  // Remove from cache if entity exists
   if (cachedEntity && store.delete) {
     store.delete(entityId);
   }
@@ -124,94 +109,212 @@ function handleDeleteEvent<
 }
 
 /**
- * Utility function to handle UPDATE events for any entity type
- *
- * This function processes entity updates by utilizing a constructor or factory function to create
- * entity instances, retrieving corresponding cache entries, and preparing both
- * old and new instances for event emission.
- *
- * @template K - Type of cache store key
- * @template E - Entity type with optional id and clone method
- * @template D - Raw data type provided by the API
- * @param client - Client instance
- * @param data - Raw entity data from the API
- * @param cacheKey - Key to access the appropriate cache store
- * @param EntityConstructorOrFactory - Constructor or factory function that creates entity instances
- * @returns - Tuple containing the old entity (or null) and the new entity
+ * Generic handler for UPDATE operations
+ * Creates new entity, retrieves old entity from cache, and updates cache
  */
-function handleUpdateEvent<
-  K extends keyof CacheManager,
-  D extends object,
-  E extends { id?: Snowflake; clone?: () => E },
->(
+function handleUpdateEvent<T extends { id?: Snowflake; clone?: () => T }>(
   client: Client,
-  data: D,
-  cacheKey: K,
-  EntityConstructorOrFactory:
+  data: object,
+  cacheKey: keyof CacheManager,
+  EntityFactory: // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    | ((client: Client, data: any) => T)
     | (new (
         client: Client,
-        data: D,
-      ) => E)
-    | ((client: Client, data: D) => E),
-): [E | null, E] {
-  // Create new entity instance using the constructor or factory
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        data: any,
+      ) => T),
+): [T | null, T] {
+  // Create new entity using constructor or factory
   const newEntity =
-    typeof EntityConstructorOrFactory === "function" &&
-    EntityConstructorOrFactory.prototype?.constructor ===
-      EntityConstructorOrFactory
-      ? new (EntityConstructorOrFactory as new (client: Client, data: D) => E)(
+    typeof EntityFactory === "function" &&
+    EntityFactory.prototype?.constructor === EntityFactory
+      ? // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        new (EntityFactory as new (client: Client, data: any) => T)(
           client,
           data,
         )
-      : (EntityConstructorOrFactory as (client: Client, data: D) => E)(
-          client,
-          data,
-        );
+      : // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        (EntityFactory as (client: Client, data: any) => T)(client, data);
 
-  // Get ID from the entity
   const entityId = newEntity.id;
-
   if (!entityId) {
-    return [null, newEntity]; // Cannot find in cache without ID
+    return [null, newEntity];
   }
 
-  // Get the store with the correct type
-  const store = client.cache[cacheKey] as unknown as Store<Snowflake, E>;
-
-  // Get cached entity
+  // Get entity from cache
+  const store = client.cache[cacheKey] as unknown as Store<Snowflake, T>;
   const cachedEntity = store.get?.(entityId);
 
-  // Clone the cached entity if it exists
-  let oldEntity: E | null = null;
-  if (cachedEntity) {
-    if (typeof cachedEntity.clone === "function") {
-      oldEntity = cachedEntity.clone();
-    } else {
-      oldEntity = cachedEntity;
-    }
-  }
+  // Clone cachedEntity if it exists
+  const oldEntity = cachedEntity?.clone
+    ? cachedEntity.clone()
+    : (cachedEntity ?? null);
 
   return [oldEntity, newEntity];
 }
 
 /**
+ * Handles emoji update events with efficient change detection
+ */
+function handleEmojiUpdate(
+  client: Client,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  data: any,
+): [GuildEmojisUpdateEntity] {
+  const { guild_id: guildId, emojis: newEmojis } = data;
+
+  // Get cached emojis for this guild
+  const cachedEmojis = Array.from(client.cache.emojis.values()).filter(
+    (emoji) => emoji.guildId === guildId,
+  );
+
+  // Create maps for efficient lookup
+  const newEmojiMap = new Map<Snowflake, GuildBased<EmojiEntity>>();
+  const cachedEmojiMap = new Map<Snowflake, Emoji>();
+
+  // Populate maps
+  for (const emoji of newEmojis) {
+    if (emoji.id) {
+      newEmojiMap.set(emoji.id, { ...emoji, guild_id: guildId });
+    }
+  }
+
+  for (const emoji of cachedEmojis) {
+    if (emoji.id) {
+      cachedEmojiMap.set(emoji.id, emoji);
+    }
+  }
+
+  // Process changes: created, updated, and deleted emojis
+  processEntityChanges<Emoji>(
+    client,
+    newEmojiMap,
+    cachedEmojiMap,
+    (data) => new Emoji(client, data),
+    "emojis",
+    "emojiCreate",
+    "emojiUpdate",
+    "emojiDelete",
+  );
+
+  return [data];
+}
+
+/**
+ * Handles sticker update events with efficient change detection
+ */
+function handleStickerUpdate(
+  client: Client,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  data: any,
+): [GuildStickersUpdateEntity] {
+  const { guild_id: guildId, stickers: newStickers } = data;
+
+  // Get cached stickers for this guild
+  const cachedStickers = Array.from(client.cache.stickers.values()).filter(
+    (sticker) => sticker.guildId === guildId,
+  );
+
+  // Create maps for efficient lookup
+  const newStickerMap = new Map();
+  const cachedStickerMap = new Map();
+
+  // Populate maps
+  for (const sticker of newStickers) {
+    if (sticker.id) {
+      newStickerMap.set(sticker.id, { ...sticker, guildId });
+    }
+  }
+
+  for (const sticker of cachedStickers) {
+    if (sticker.id) {
+      cachedStickerMap.set(sticker.id, sticker);
+    }
+  }
+
+  // Process changes: created, updated, and deleted stickers
+  processEntityChanges(
+    client,
+    newStickerMap,
+    cachedStickerMap,
+    (data) => new Sticker(client, data),
+    "stickers",
+    "stickerCreate",
+    "stickerUpdate",
+    "stickerDelete",
+  );
+
+  return [data];
+}
+
+/**
+ * Generic function to process entity changes (create, update, delete)
+ * Reduces code duplication between emoji and sticker handlers
+ */
+function processEntityChanges<T>(
+  client: Client,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  newEntitiesMap: Map<any, any>,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  cachedEntitiesMap: Map<any, any>,
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  createEntity: (data: any) => T,
+  cacheKey: keyof CacheManager,
+  createEventName: keyof ClientEvents,
+  updateEventName: keyof ClientEvents,
+  deleteEventName: keyof ClientEvents,
+): void {
+  // Handle created entities
+  for (const [id, entityData] of newEntitiesMap.entries()) {
+    if (!cachedEntitiesMap.has(id)) {
+      const newEntity = createEntity(entityData);
+      // @ts-expect-error
+      client.emit(createEventName, newEntity);
+    }
+  }
+
+  // Handle updated entities
+  for (const [id, entityData] of newEntitiesMap.entries()) {
+    if (cachedEntitiesMap.has(id)) {
+      const [oldEntity, newEntity] = handleUpdateEvent(
+        client,
+        entityData,
+        cacheKey,
+        // @ts-expect-error
+        createEntity,
+      );
+
+      // @ts-expect-error
+      client.emit(updateEventName, oldEntity, newEntity);
+    }
+  }
+
+  // Handle deleted entities
+  for (const [id] of cachedEntitiesMap.entries()) {
+    if (!newEntitiesMap.has(id)) {
+      const [deletedEntity] = handleDeleteEvent(client, id, cacheKey);
+      // @ts-expect-error
+      client.emit(deleteEventName, deletedEntity);
+    }
+  }
+}
+
+/**
  * Standard mappings of Discord Gateway events to client events.
- *
- * These mappings define how raw Gateway events are transformed into client events.
- * Each mapping includes:
- * 1. The original Gateway event name
- * 2. The client event name
- * 3. A transform function that processes the data and updates the cache
- * 4. Preserving old entities for events that need "before" and "after" states
- * 5. Returning an array of arguments to be passed to event handlers
+ * Each mapping defines how raw Gateway events are transformed into client events.
  */
 export const StandardGatewayDispatchEventMappings = [
+  // Ready events
   defineEvent("READY", "ready", (client, data) => [new Ready(client, data)]),
+
+  // Application events
   defineEvent(
     "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
     "applicationCommandPermissionsUpdate",
     (_client, data) => [data],
   ),
+
+  // Auto Moderation events
   defineEvent(
     "AUTO_MODERATION_RULE_CREATE",
     "autoModerationRuleCreate",
@@ -238,6 +341,8 @@ export const StandardGatewayDispatchEventMappings = [
     "autoModerationActionExecution",
     (client, data) => [new AutoModerationActionExecution(client, data)],
   ),
+
+  // Channel events
   defineEvent("CHANNEL_CREATE", "channelCreate", (client, data) => [
     ChannelFactory.create(client, data),
   ]),
@@ -250,6 +355,8 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (_client, data) => [
     data,
   ]),
+
+  // Thread events
   defineEvent("THREAD_CREATE", "threadCreate", (client, data) => [
     ChannelFactory.create(client, data) as AnyThreadChannel,
   ]),
@@ -268,6 +375,8 @@ export const StandardGatewayDispatchEventMappings = [
     "threadMembersUpdate",
     (_client, data) => [data],
   ),
+
+  // Entitlement events
   defineEvent("ENTITLEMENT_CREATE", "entitlementCreate", (client, data) => [
     new Entitlement(client, data),
   ]),
@@ -277,6 +386,8 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("ENTITLEMENT_DELETE", "entitlementDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "entitlements"),
   ),
+
+  // Guild events
   defineEvent("GUILD_CREATE", "guildCreate", (client, data) => [
     new Guild(client, data as GuildCreateEntity),
   ]),
@@ -291,6 +402,8 @@ export const StandardGatewayDispatchEventMappings = [
     "guildAuditLogEntryCreate",
     (client, data) => [new GuildAuditLogEntry(client, data)],
   ),
+
+  // Ban events
   defineEvent("GUILD_BAN_ADD", "guildBanAdd", (client, data) => [
     new Ban(client, {
       guild_id: data.guild_id,
@@ -305,146 +418,16 @@ export const StandardGatewayDispatchEventMappings = [
       reason: null,
     } as GuildBased<BanEntity>),
   ]),
-  defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", (client, data) => {
-    const guildId = data.guild_id;
-    const newEmojis = data.emojis;
 
-    // Retrieve cached emojis for this guild
-    const cachedEmojis = Array.from(client.cache.emojis.values()).filter(
-      (emoji) => emoji.guildId === guildId,
-    );
-
-    // Create maps for efficient lookup
-    const newEmojiMap = new Map<Snowflake, GuildBased<EmojiEntity>>();
-    for (const emoji of newEmojis) {
-      const formattedEmoji = { ...emoji, guild_id: guildId };
-      if (emoji.id) {
-        newEmojiMap.set(emoji.id, formattedEmoji);
-      }
-    }
-
-    const cachedEmojiMap = new Map<Snowflake, Emoji>();
-    for (const emoji of cachedEmojis) {
-      if (emoji.id) {
-        cachedEmojiMap.set(emoji.id, emoji);
-      }
-    }
-
-    // Handle created emojis
-    for (const [id, emojiData] of newEmojiMap.entries()) {
-      if (!cachedEmojiMap.has(id)) {
-        // Emoji created - use the factory directly
-        const newEmoji = new Emoji(client, emojiData);
-        client.emit("emojiCreate", newEmoji);
-
-        // Update cache (handled by the Emoji.from factory)
-      }
-    }
-
-    // Handle updated emojis
-    for (const [id, emojiData] of newEmojiMap.entries()) {
-      if (cachedEmojiMap.has(id)) {
-        // Use handleUpdateEvent to get both old and new versions
-        const [oldEmoji, newEmoji] = handleUpdateEvent(
-          client,
-          emojiData,
-          "emojis",
-          // @ts-expect-error
-          Emoji,
-        );
-
-        // Emit the update event
-        client.emit("emojiUpdate", oldEmoji as Emoji, newEmoji as Emoji);
-      }
-    }
-
-    // Handle deleted emojis
-    for (const [id, _] of cachedEmojiMap.entries()) {
-      if (!newEmojiMap.has(id)) {
-        // Use handleDeleteEvent to remove from cache and get old entity
-        const [deletedEmoji] = handleDeleteEvent(client, id, "emojis");
-
-        // Emit the delete event
-        client.emit("emojiDelete", deletedEmoji);
-      }
-    }
-
-    // Return the original event data
-    return [data];
-  }),
+  // Emoji and Sticker events (using custom handlers)
+  defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", handleEmojiUpdate),
   defineEvent(
     "GUILD_STICKERS_UPDATE",
     "guildStickersUpdate",
-    (client, data) => {
-      const guildId = data.guild_id;
-      const newStickers = data.stickers;
-
-      // Retrieve cached stickers for this guild
-      const cachedStickers = Array.from(client.cache.stickers.values()).filter(
-        (sticker) => sticker.guildId === guildId,
-      );
-
-      // Create maps for efficient lookup
-      const newStickerMap = new Map();
-      for (const sticker of newStickers) {
-        const formattedSticker = { ...sticker, guildId: guildId };
-        if (sticker.id) {
-          newStickerMap.set(sticker.id, formattedSticker);
-        }
-      }
-
-      const cachedStickerMap = new Map();
-      for (const sticker of cachedStickers) {
-        if (sticker.id) {
-          cachedStickerMap.set(sticker.id, sticker);
-        }
-      }
-
-      // Handle created stickers
-      for (const [id, stickerData] of newStickerMap.entries()) {
-        if (!cachedStickerMap.has(id)) {
-          // Sticker created - use the factory directly
-          const newSticker = new Sticker(client, stickerData);
-          client.emit("stickerCreate", newSticker);
-        }
-      }
-
-      // Handle updated stickers
-      for (const [id, stickerData] of newStickerMap.entries()) {
-        if (cachedStickerMap.has(id)) {
-          // Use handleUpdateEvent to get both old and new versions
-          const [oldSticker, newSticker] = handleUpdateEvent(
-            client,
-            stickerData,
-            "stickers",
-            Sticker,
-          );
-
-          // Emit the update event
-          client.emit("stickerUpdate", oldSticker, newSticker);
-        }
-      }
-
-      // Handle deleted stickers
-      for (const [id, _] of cachedStickerMap.entries()) {
-        if (!newStickerMap.has(id)) {
-          // Use handleDeleteEvent to remove from cache and get old entity
-          const [deletedSticker] = handleDeleteEvent(client, id, "stickers");
-
-          // Emit the delete event
-          client.emit("stickerDelete", deletedSticker);
-        }
-      }
-
-      // Return the original event data
-      return [data];
-    },
+    handleStickerUpdate,
   ),
-  // defineEvent(
-  //   "GUILD_INTEGRATIONS_UPDATE",
-  //   "guildIntegrationsUpdate",
-  //   (_client, _data) => {},
-  // ),
+
+  // Guild Member events
   defineEvent("GUILD_MEMBER_ADD", "guildMemberAdd", (client, data) => [
     new GuildMember(client, data),
   ]),
@@ -462,6 +445,8 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (_client, data) => [
     data,
   ]),
+
+  // Role events
   defineEvent("GUILD_ROLE_CREATE", "guildRoleCreate", (client, data) => [
     new Role(client, {
       guild_id: data.guild_id,
@@ -482,6 +467,8 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (client, data) =>
     handleDeleteEvent(client, data.role_id, "roles"),
   ),
+
+  // Scheduled Event events
   defineEvent(
     "GUILD_SCHEDULED_EVENT_CREATE",
     "guildScheduledEventCreate",
@@ -508,6 +495,8 @@ export const StandardGatewayDispatchEventMappings = [
     "guildScheduledEventUserRemove",
     (client, data) => [new GuildScheduledEventUser(client, data)],
   ),
+
+  // Soundboard events
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_CREATE",
     "guildSoundboardSoundCreate",
@@ -535,7 +524,6 @@ export const StandardGatewayDispatchEventMappings = [
             guild_id: data.guild_id,
           }),
       );
-
       return [sounds];
     },
   ),
@@ -546,6 +534,8 @@ export const StandardGatewayDispatchEventMappings = [
     );
     return [soundboardSounds];
   }),
+
+  // Integration events
   defineEvent("INTEGRATION_CREATE", "integrationCreate", (client, data) => [
     new Integration(client, data),
   ]),
@@ -555,12 +545,16 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("INTEGRATION_DELETE", "integrationDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "integrations"),
   ),
+
+  // Invite events
   defineEvent("INVITE_CREATE", "inviteCreate", (client, data) => [
     new Invite(client, data as InviteEntity & InviteCreateEntity),
   ]),
   defineEvent("INVITE_DELETE", "inviteDelete", (client, data) => [
     new Invite(client, data as InviteEntity & InviteCreateEntity),
   ]),
+
+  // Message events
   defineEvent("MESSAGE_CREATE", "messageCreate", (client, data) => [
     new Message(client, data),
   ]),
@@ -574,8 +568,10 @@ export const StandardGatewayDispatchEventMappings = [
     data.ids.map((id) => {
       const [message] = handleDeleteEvent(client, id, "messages");
       return message;
-    }),
+    }) as Message[],
   ]),
+
+  // Reaction events
   defineEvent("MESSAGE_REACTION_ADD", "messageReactionAdd", (_client, data) => [
     data,
   ]),
@@ -594,6 +590,8 @@ export const StandardGatewayDispatchEventMappings = [
     "messageReactionRemoveEmoji",
     (_client, data) => [data],
   ),
+
+  // Poll events
   defineEvent(
     "MESSAGE_POLL_VOTE_ADD",
     "messagePollVoteAdd",
@@ -604,21 +602,16 @@ export const StandardGatewayDispatchEventMappings = [
     "messagePollVoteRemove",
     (_client, data) => [data],
   ),
-  // defineEvent("PRESENCE_UPDATE", "presenceUpdate", (client, data) =>
-  //   handleUpdateEvent(
-  //     client,
-  //     data,
-  //     "presences",
-  //     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  //     (_client, data) => data as any,
-  //   ),
-  // ),
+
+  // User events
   defineEvent("TYPING_START", "typingStart", (client, data) => [
     new TypingStart(client, data),
   ]),
   defineEvent("USER_UPDATE", "userUpdate", (client, data) =>
     handleUpdateEvent(client, data, "users", User),
   ),
+
+  // Voice events
   defineEvent(
     "VOICE_CHANNEL_EFFECT_SEND",
     "voiceChannelEffectSend",
@@ -630,12 +623,18 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (_client, data) => [
     data,
   ]),
+
+  // Webhook events
   defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (client, data) =>
     handleUpdateEvent(client, data as WebhookEntity, "webhooks", Webhook),
   ),
+
+  // Interaction events
   defineEvent("INTERACTION_CREATE", "interactionCreate", (client, data) => [
     InteractionFactory.create(client, data),
   ]),
+
+  // Stage events
   defineEvent(
     "STAGE_INSTANCE_CREATE",
     "stageInstanceCreate",
@@ -647,6 +646,8 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("STAGE_INSTANCE_DELETE", "stageInstanceDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "stageInstances"),
   ),
+
+  // Subscription events
   defineEvent("SUBSCRIPTION_CREATE", "subscriptionCreate", (client, data) => [
     new Subscription(client, data),
   ]),
@@ -659,13 +660,11 @@ export const StandardGatewayDispatchEventMappings = [
 ] as const;
 
 /**
- * Standard mappings of Discord REST events to client events.
- * These events are forwarded directly from the REST client to the main client.cache.
+ * Events to forward directly from REST client to main client
  */
 export const RestKeyofEventMappings: (keyof RestEvents)[] = [
   "requestStart",
   "requestSuccess",
-  "requestFailure",
   "rateLimitHit",
   "rateLimitUpdate",
   "rateLimitExpire",
@@ -673,8 +672,7 @@ export const RestKeyofEventMappings: (keyof RestEvents)[] = [
 ] as const;
 
 /**
- * Standard mappings of Discord Gateway events to client events.
- * These events are forwarded directly from the Gateway client to the main client.cache.
+ * Events to forward directly from Gateway client to main client
  */
 export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
   "heartbeatSent",

@@ -195,6 +195,12 @@ export enum MessageFlags {
    * Indicates this message contains forwarded content.
    */
   HasSnapshot = 1 << 14,
+
+  /**
+   * Message is a component message.
+   * This message allows you to create fully component driven messages
+   */
+  IsComponentsV2 = 1 << 15,
 }
 
 /**

@@ -30,17 +30,6 @@ import type { FileInput } from "../handlers/index.js";
 import { FileHandler } from "../handlers/index.js";
 
 /**
- * Interface for creating a new guild channel within a guild creation request.
- *
- * @remarks
- * This is a simplified version of the channel entity used when creating a new guild.
- * The structure follows the standard channel entity format.
- *
- * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-channel-json-params}
- */
-export type CreateGuildChannelSchema = AnyChannelEntity;
-
-/**
  * Interface for creating a new guild.
  * Used to define the initial configuration when creating a guild from scratch.
  *
@@ -53,7 +42,7 @@ export type CreateGuildChannelSchema = AnyChannelEntity;
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-json-params}
  */
-export interface CreateGuildSchema {
+export interface GuildCreateOptions {
   /**
    * Guild name (2-100 characters)
    *
@@ -129,7 +118,7 @@ export interface CreateGuildSchema {
    * Discord will assign actual IDs during creation.
    * These IDs can be referenced in other fields like system_channel_id.
    */
-  channels?: CreateGuildChannelSchema[];
+  channels?: AnyChannelEntity[];
 
   /**
    * ID for afk channel
@@ -178,7 +167,7 @@ export interface CreateGuildSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-json-params}
  */
-export interface UpdateGuildSchema {
+export interface GuildUpdateOptions {
   /**
    * Guild name (2-100 characters)
    *
@@ -388,7 +377,7 @@ export interface UpdateGuildSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-channel-positions}
  */
-export interface UpdateGuildChannelPositionsItem {
+export interface ChannelPositionUpdateOptions {
   /**
    * Channel ID
    *
@@ -428,8 +417,7 @@ export interface UpdateGuildChannelPositionsItem {
  * Type for a list of channel position updates to apply in a single operation.
  *
  */
-export type UpdateGuildChannelPositionsSchema =
-  UpdateGuildChannelPositionsItem[];
+export type ChannelPositionsUpdateOptions = ChannelPositionUpdateOptions[];
 
 /**
  * Interface for the response when listing active guild threads.
@@ -441,7 +429,7 @@ export type UpdateGuildChannelPositionsSchema =
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#list-active-guild-threads-response-body}
  */
-export interface ListActiveGuildThreadsEntity {
+export interface ActiveThreadsResponse {
   /**
    * The active threads
    *
@@ -469,7 +457,7 @@ export interface ListActiveGuildThreadsEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#list-guild-members-query-string-params}
  */
-export interface ListGuildMembersQuerySchema {
+export interface GuildMembersFetchParams {
   /**
    * Max number of members to return (1-1000)
    *
@@ -499,7 +487,7 @@ export interface ListGuildMembersQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#search-guild-members-query-string-params}
  */
-export interface SearchGuildMembersQuerySchema {
+export interface GuildMembersSearchParams {
   /**
    * Query string to match username(s) and nickname(s) against
    *
@@ -528,7 +516,7 @@ export interface SearchGuildMembersQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#add-guild-member-json-params}
  */
-export interface AddGuildMemberSchema {
+export interface GuildMemberAddOptions {
   /**
    * OAuth2 access token granted with the guilds.join scope
    *
@@ -584,7 +572,7 @@ export interface AddGuildMemberSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-member-json-params}
  */
-export interface UpdateGuildMemberSchema {
+export interface GuildMemberUpdateOptions {
   /**
    * Value to set user's nickname to
    *
@@ -661,7 +649,7 @@ export interface UpdateGuildMemberSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-bans-query-string-params}
  */
-export interface GetGuildBansQuerySchema {
+export interface GuildBansFetchParams {
   /**
    * Number of users to return (up to maximum 1000)
    *
@@ -698,7 +686,7 @@ export interface GetGuildBansQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-ban-json-params}
  */
-export interface CreateGuildBanSchema {
+export interface GuildBanCreateOptions {
   /**
    * Number of days to delete messages for (0-7) (deprecated)
    *
@@ -728,7 +716,7 @@ export interface CreateGuildBanSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-json-params}
  */
-export interface BulkGuildBanSchema {
+export interface GuildBansBulkOptions {
   /**
    * List of user IDs to ban (max 200)
    *
@@ -757,7 +745,7 @@ export interface BulkGuildBanSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#bulk-guild-ban-bulk-ban-response}
  */
-export interface BulkGuildBanResponseEntity {
+export interface GuildBansBulkResponse {
   /**
    * List of user IDs that were successfully banned
    *
@@ -784,7 +772,7 @@ export interface BulkGuildBanResponseEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#create-guild-role-json-params}
  */
-export interface CreateGuildRoleSchema {
+export interface GuildRoleCreateOptions {
   /**
    * Name of the role (max 100 characters)
    *
@@ -857,7 +845,7 @@ export interface CreateGuildRoleSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-positions-json-params}
  */
-export interface UpdateGuildRolePositionsItem {
+export interface RolePositionUpdateOptions {
   /**
    * Role ID
    *
@@ -880,7 +868,7 @@ export interface UpdateGuildRolePositionsItem {
  * Type for a list of role position updates to apply in a single operation.
  *
  */
-export type UpdateGuildRolePositionsSchema = UpdateGuildRolePositionsItem[];
+export type RolePositionsUpdateOptions = RolePositionUpdateOptions[];
 
 /**
  * Interface for updating a guild role.
@@ -893,7 +881,7 @@ export type UpdateGuildRolePositionsSchema = UpdateGuildRolePositionsItem[];
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-role-json-params}
  */
-export type UpdateGuildRoleSchema = Partial<CreateGuildRoleSchema> | null;
+export type GuildRoleUpdateOptions = Partial<GuildRoleCreateOptions> | null;
 
 /**
  * Interface for query parameters when getting guild prune count.
@@ -935,7 +923,7 @@ export interface GetGuildPruneCountQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#begin-guild-prune-json-params}
  */
-export interface BeginGuildPruneSchema {
+export interface GuildPruneOptions {
   /**
    * Number of days to prune (1-30)
    *
@@ -981,7 +969,7 @@ export interface BeginGuildPruneSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget-image-widget-style-options}
  */
-export type WidgetStyleOptions =
+export type WidgetStyle =
   | "shield"
   | "banner1"
   | "banner2"
@@ -998,7 +986,7 @@ export type WidgetStyleOptions =
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-widget-json-params}
  */
-export interface UpdateGuildWidgetSettingsSchema {
+export interface GuildWidgetUpdateOptions {
   /**
    * Whether the widget is enabled
    *
@@ -1026,7 +1014,7 @@ export interface UpdateGuildWidgetSettingsSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-welcome-screen-json-params}
  */
-export interface UpdateGuildWelcomeScreenSchema {
+export interface GuildWelcomeScreenUpdateOptions {
   /**
    * Whether the welcome screen is enabled
    *
@@ -1065,7 +1053,7 @@ export interface UpdateGuildWelcomeScreenSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild#modify-guild-onboarding}
  */
-export interface UpdateGuildOnboardingSchema {
+export interface GuildOnboardingUpdateOptions {
   /**
    * Prompts shown during onboarding and in customize community
    *
@@ -1550,7 +1538,7 @@ export class GuildRouter {
    * This endpoint can be used only by bots in fewer than 10 guilds.
    * There are rate limits on guild creation.
    */
-  async createGuild(options: CreateGuildSchema): Promise<GuildEntity> {
+  async createGuild(options: GuildCreateOptions): Promise<GuildEntity> {
     if (options.icon) {
       options.icon = await FileHandler.toDataUri(options.icon);
     }
@@ -1614,7 +1602,7 @@ export class GuildRouter {
    */
   async updateGuild(
     guildId: Snowflake,
-    options: UpdateGuildSchema,
+    options: GuildUpdateOptions,
     reason?: string,
   ): Promise<GuildEntity> {
     if (options.icon) {
@@ -1689,7 +1677,7 @@ export class GuildRouter {
    */
   createGuildChannel(
     guildId: Snowflake,
-    options: CreateGuildChannelSchema,
+    options: AnyChannelEntity,
     reason?: string,
   ): Promise<AnyChannelEntity> {
     return this.#rest.post(
@@ -1720,7 +1708,7 @@ export class GuildRouter {
    */
   updateGuildChannelPositions(
     guildId: Snowflake,
-    options: UpdateGuildChannelPositionsSchema,
+    options: ChannelPositionsUpdateOptions,
   ): Promise<void> {
     return this.#rest.patch(
       GuildRouter.GUILD_ROUTES.guildChannelsEndpoint(guildId),
@@ -1745,7 +1733,7 @@ export class GuildRouter {
    */
   fetchActiveGuildThreads(
     guildId: Snowflake,
-  ): Promise<ListActiveGuildThreadsEntity[]> {
+  ): Promise<ActiveThreadsResponse[]> {
     return this.#rest.get(
       GuildRouter.GUILD_ROUTES.guildActiveThreadsEndpoint(guildId),
     );
@@ -1790,7 +1778,7 @@ export class GuildRouter {
    */
   fetchGuildMembers(
     guildId: Snowflake,
-    query: ListGuildMembersQuerySchema = {},
+    query: GuildMembersFetchParams,
   ): Promise<GuildMemberEntity[]> {
     return this.#rest.get(
       GuildRouter.GUILD_ROUTES.guildMembersEndpoint(guildId),
@@ -1816,7 +1804,7 @@ export class GuildRouter {
    */
   searchGuildMembers(
     guildId: Snowflake,
-    query: SearchGuildMembersQuerySchema,
+    query: GuildMembersSearchParams,
   ): Promise<GuildMemberEntity[]> {
     return this.#rest.get(
       GuildRouter.GUILD_ROUTES.guildMembersSearchEndpoint(guildId),
@@ -1847,7 +1835,7 @@ export class GuildRouter {
   addGuildMember(
     guildId: Snowflake,
     userId: Snowflake,
-    options: AddGuildMemberSchema,
+    options: GuildMemberAddOptions,
   ): Promise<GuildMemberEntity> {
     return this.#rest.put(
       GuildRouter.GUILD_ROUTES.guildMemberEndpoint(guildId, userId),
@@ -1883,7 +1871,7 @@ export class GuildRouter {
   updateGuildMember(
     guildId: Snowflake,
     userId: Snowflake,
-    options: UpdateGuildMemberSchema,
+    options: GuildMemberUpdateOptions,
     reason?: string,
   ): Promise<GuildMemberEntity> {
     return this.#rest.patch(
@@ -1938,7 +1926,7 @@ export class GuildRouter {
    * Requires the CHANGE_NICKNAME permission.
    * Fires a Guild Member Update Gateway event.
    */
-  updateCurrentUserNick(
+  updateNickname(
     guildId: Snowflake,
     nickname?: string | null,
     reason?: string,
@@ -1968,7 +1956,7 @@ export class GuildRouter {
    * The bot's highest role must be higher than the role being assigned.
    * Fires a Guild Member Update Gateway event.
    */
-  addGuildMemberRole(
+  addRoleToMember(
     guildId: Snowflake,
     userId: Snowflake,
     roleId: Snowflake,
@@ -1996,7 +1984,7 @@ export class GuildRouter {
    * The bot's highest role must be higher than the role being removed.
    * Fires a Guild Member Update Gateway event.
    */
-  removeGuildMemberRole(
+  removeRoleFromMember(
     guildId: Snowflake,
     userId: Snowflake,
     roleId: Snowflake,
@@ -2055,7 +2043,7 @@ export class GuildRouter {
    */
   fetchGuildBans(
     guildId: Snowflake,
-    query?: GetGuildBansQuerySchema,
+    query?: GuildBansFetchParams,
   ): Promise<BanEntity[]> {
     return this.#rest.get(GuildRouter.GUILD_ROUTES.guildBansEndpoint(guildId), {
       query,
@@ -2103,7 +2091,7 @@ export class GuildRouter {
   createGuildBan(
     guildId: Snowflake,
     userId: Snowflake,
-    options: CreateGuildBanSchema,
+    options: GuildBanCreateOptions,
     reason?: string,
   ): Promise<void> {
     return this.#rest.put(
@@ -2160,11 +2148,11 @@ export class GuildRouter {
    * The `failed_users` array contains IDs that couldn't be banned (e.g., due to role hierarchy).
    * Fires multiple Guild Ban Add Gateway events.
    */
-  bulkGuildBan(
+  banUsers(
     guildId: Snowflake,
-    options: BulkGuildBanSchema,
+    options: GuildBansBulkOptions,
     reason?: string,
-  ): Promise<BulkGuildBanResponseEntity> {
+  ): Promise<GuildBansBulkResponse> {
     return this.#rest.put(
       GuildRouter.GUILD_ROUTES.guildBulkBanEndpoint(guildId),
       {
@@ -2225,7 +2213,7 @@ export class GuildRouter {
    */
   async createGuildRole(
     guildId: Snowflake,
-    options: CreateGuildRoleSchema,
+    options: GuildRoleCreateOptions,
     reason?: string,
   ): Promise<RoleEntity> {
     if (options.icon) {
@@ -2260,7 +2248,7 @@ export class GuildRouter {
    */
   updateGuildRolePositions(
     guildId: Snowflake,
-    options: UpdateGuildRolePositionsSchema,
+    options: RolePositionsUpdateOptions,
   ): Promise<RoleEntity[]> {
     return this.#rest.patch(
       GuildRouter.GUILD_ROUTES.guildRolesEndpoint(guildId),
@@ -2291,7 +2279,7 @@ export class GuildRouter {
   updateGuildRole(
     guildId: Snowflake,
     roleId: Snowflake,
-    options: UpdateGuildRoleSchema,
+    options: GuildRoleUpdateOptions,
     reason?: string,
   ): Promise<RoleEntity> {
     return this.#rest.patch(
@@ -2408,9 +2396,9 @@ export class GuildRouter {
    * The maximum inactive period that can be specified is 30 days.
    * Fires multiple Guild Member Remove Gateway events.
    */
-  beginGuildPrune(
+  pruneGuildMembers(
     guildId: Snowflake,
-    options: BeginGuildPruneSchema,
+    options: GuildPruneOptions,
     reason?: string,
   ): Promise<{ pruned: number | null }> {
     return this.#rest.post(
@@ -2546,7 +2534,7 @@ export class GuildRouter {
    */
   updateGuildWidget(
     guildId: Snowflake,
-    options: UpdateGuildWidgetSettingsSchema,
+    options: GuildWidgetUpdateOptions,
     reason?: string,
   ): Promise<GuildWidgetSettingsEntity> {
     return this.#rest.patch(
@@ -2620,7 +2608,7 @@ export class GuildRouter {
    */
   fetchGuildWidgetImage(
     guildId: Snowflake,
-    style: WidgetStyleOptions = "shield",
+    style: WidgetStyle = "shield",
   ): Promise<Buffer> {
     return this.#rest.get(
       GuildRouter.GUILD_ROUTES.guildWidgetImageEndpoint(guildId),
@@ -2668,7 +2656,7 @@ export class GuildRouter {
    */
   updateGuildWelcomeScreen(
     guildId: Snowflake,
-    options: UpdateGuildWelcomeScreenSchema,
+    options: GuildWelcomeScreenUpdateOptions,
     reason?: string,
   ): Promise<WelcomeScreenEntity> {
     return this.#rest.patch(
@@ -2719,7 +2707,7 @@ export class GuildRouter {
    */
   updateGuildOnboarding(
     guildId: Snowflake,
-    options: UpdateGuildOnboardingSchema,
+    options: GuildOnboardingUpdateOptions,
     reason?: string,
   ): Promise<GuildOnboardingEntity> {
     return this.#rest.put(

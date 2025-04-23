@@ -26,33 +26,35 @@ export type StorePredicate<K extends StoreKey, V> =
 export const StoreOptions = z.object({
   /**
    * Maximum number of items to store before eviction
-   * @minimum 0
+   *
    * @default 10000
    */
   maxSize: z.number().int().min(0).default(10000),
 
   /**
    * Time to live in milliseconds for items
-   * @minimum 0
+   *
    * @default 0 (no expiration)
    */
   ttl: z.number().int().min(0).default(0),
 
   /**
    * Strategy for evicting items when maxSize is reached
+   *
    * @default "lru"
    */
   evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
 
   /**
    * Whether to clone values on get to prevent unintentional modifications
+   *
    * @default false
    */
   cloneValues: z.boolean().default(false),
 
   /**
    * Minimum cleanup interval in milliseconds
-   * @minimum 1000
+   *
    * @default 30000 (30 seconds)
    */
   minCleanupInterval: z.number().int().min(1000).default(30000),

@@ -15,7 +15,7 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-guild-emoji-json-params}
  */
-export interface CreateGuildEmojiSchema {
+export interface GuildEmojiCreateOptions {
   /**
    * Name of the emoji (1-32 characters).
    *
@@ -55,7 +55,7 @@ export interface CreateGuildEmojiSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-guild-emoji-json-params}
  */
-export interface ModifyGuildEmojiSchema {
+export interface GuildEmojiUpdateOptions {
   /**
    * New name of the emoji (1-32 characters).
    *
@@ -86,7 +86,7 @@ export interface ModifyGuildEmojiSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#list-application-emojis}
  */
-export interface ListApplicationEmojisEntity {
+export interface ApplicationEmojisResponse {
   /**
    * Array of emoji objects owned by the application.
    * Each emoji has properties like id, name, and animated.
@@ -97,7 +97,7 @@ export interface ListApplicationEmojisEntity {
 /**
  * Interface for creating an application emoji.
  *
- * Based on CreateGuildEmojiSchema but without the roles field,
+ * Based on GuildEmojiCreateOptions but without the roles field,
  * as application emojis don't support role restrictions.
  * Application emojis belong to the application rather than a guild.
  *
@@ -107,8 +107,8 @@ export interface ListApplicationEmojisEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#create-application-emoji-json-params}
  */
-export type CreateApplicationEmojiSchema = Omit<
-  CreateGuildEmojiSchema,
+export type ApplicationEmojiCreateOptions = Omit<
+  GuildEmojiCreateOptions,
   "roles"
 >;
 
@@ -120,7 +120,10 @@ export type CreateApplicationEmojiSchema = Omit<
  *
  * @see {@link https://discord.com/developers/docs/resources/emoji#modify-application-emoji-json-params}
  */
-export type ModifyApplicationEmojiSchema = Pick<ModifyGuildEmojiSchema, "name">;
+export type ApplicationEmojiUpdateOptions = Pick<
+  GuildEmojiUpdateOptions,
+  "name"
+>;
 
 /**
  * Router for Discord Emoji-related API endpoints.
@@ -259,7 +262,7 @@ export class EmojiRouter {
    */
   async createGuildEmoji(
     guildId: Snowflake,
-    options: CreateGuildEmojiSchema,
+    options: GuildEmojiCreateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
     if (options.image) {
@@ -298,7 +301,7 @@ export class EmojiRouter {
   updateGuildEmoji(
     guildId: Snowflake,
     emojiId: Snowflake,
-    options: ModifyGuildEmojiSchema,
+    options: GuildEmojiUpdateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
     return this.#rest.patch(
@@ -349,7 +352,7 @@ export class EmojiRouter {
    * rather than by a specific guild.
    *
    * @param applicationId - ID of the application
-   * @returns A promise that resolves to a ListApplicationEmojisEntity containing emoji objects
+   * @returns A promise that resolves to a ApplicationEmojisResponse containing emoji objects
    *
    * @remarks
    * - Applications can own up to 2000 emojis
@@ -361,7 +364,7 @@ export class EmojiRouter {
    */
   fetchApplicationEmojis(
     applicationId: Snowflake,
-  ): Promise<ListApplicationEmojisEntity> {
+  ): Promise<ApplicationEmojisResponse> {
     return this.#rest.get(
       EmojiRouter.EMOJI_ROUTES.applicationEmojisEndpoint(applicationId),
     );
@@ -415,7 +418,7 @@ export class EmojiRouter {
    */
   async createApplicationEmoji(
     applicationId: Snowflake,
-    options: CreateApplicationEmojiSchema,
+    options: ApplicationEmojiCreateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
     if (options.image) {
@@ -448,7 +451,7 @@ export class EmojiRouter {
   updateApplicationEmoji(
     applicationId: Snowflake,
     emojiId: Snowflake,
-    options: ModifyApplicationEmojiSchema,
+    options: ApplicationEmojiUpdateOptions,
     reason?: string,
   ): Promise<EmojiEntity> {
     return this.#rest.patch(

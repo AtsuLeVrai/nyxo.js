@@ -31,7 +31,7 @@ import type { CreateGroupDmSchema } from "./user.router.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-group-dm}
  */
-export interface UpdateChannelGroupDmSchema {
+export interface GroupDmUpdateOptions {
   /**
    * 1-100 character channel name
    *
@@ -65,7 +65,7 @@ export interface UpdateChannelGroupDmSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-guild-channel}
  */
-export interface UpdateChannelGuildChannelSchema {
+export interface GuildChannelUpdateOptions {
   /**
    * 1-100 character channel name
    *
@@ -262,7 +262,7 @@ export interface UpdateChannelGuildChannelSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#modify-channel-json-params-thread}
  */
-export interface UpdateChannelThreadSchema {
+export interface ThreadUpdateOptions {
   /**
    * 1-100 character thread name
    *
@@ -351,7 +351,7 @@ export interface UpdateChannelThreadSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#edit-channel-permissions-json-params}
  */
-export interface EditChannelPermissionsSchema {
+export interface ChannelPermissionUpdateOptions {
   /**
    * Bitwise value of all allowed permissions
    *
@@ -394,7 +394,7 @@ export interface EditChannelPermissionsSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#create-channel-invite-json-params}
  */
-export interface CreateChannelInviteSchema {
+export interface ChannelInviteCreateOptions {
   /**
    * Duration of invite in seconds before expiry (0-604800)
    *
@@ -478,7 +478,7 @@ export interface CreateChannelInviteSchema {
 export type AddGroupDmRecipientSchema = CreateGroupDmSchema;
 
 /**
- * Interface for starting a thread from a message.
+ * Interface for creating a thread from an existing message.
  * Used to create a new thread attached to an existing message in a text or announcement channel.
  *
  * @remarks
@@ -488,7 +488,7 @@ export type AddGroupDmRecipientSchema = CreateGroupDmSchema;
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-from-message-json-params}
  */
-export interface StartThreadFromMessageSchema {
+export interface ThreadFromMessageCreateOptions {
   /**
    * 1-100 character thread name
    *
@@ -518,19 +518,18 @@ export interface StartThreadFromMessageSchema {
 }
 
 /**
- * Interface for starting a thread without a message.
+ * Interface for creating a thread without an existing message.
  * Used to create a standalone thread in a text or announcement channel that isn't attached to an existing message.
  *
  * @remarks
- * Extends StartThreadFromMessageSchema with additional fields specific to standalone threads.
+ * Extends ThreadFromMessageCreateOptions with additional fields specific to standalone threads.
  * For PUBLIC_THREAD and ANNOUNCEMENT_THREAD, everyone with READ_MESSAGES permission can see the thread.
  * For PRIVATE_THREAD, only those invited and those with MANAGE_THREADS can see the thread.
  * Creating PRIVATE_THREAD requires the guild to have the PRIVATE_THREADS feature.
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-without-message-json-params}
  */
-export interface StartThreadWithoutMessageSchema
-  extends StartThreadFromMessageSchema {
+export interface ThreadCreateOptions extends ThreadFromMessageCreateOptions {
   /**
    * Type of thread to create
    *
@@ -566,20 +565,19 @@ export interface StartThreadWithoutMessageSchema
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-forum-and-media-thread-message-params-object}
  */
-export type StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema =
-  Pick<
-    CreateMessageSchema,
-    | "content"
-    | "embeds"
-    | "allowed_mentions"
-    | "components"
-    | "sticker_ids"
-    | "attachments"
-    | "flags"
-  >;
+export type ForumThreadMessageOptions = Pick<
+  CreateMessageSchema,
+  | "content"
+  | "embeds"
+  | "allowed_mentions"
+  | "components"
+  | "sticker_ids"
+  | "attachments"
+  | "flags"
+>;
 
 /**
- * Interface for starting a thread in a forum or media channel.
+ * Interface for creating a thread in a forum or media channel.
  * Used to create a new thread post in a forum or media channel along with its initial message.
  *
  * @remarks
@@ -589,7 +587,7 @@ export type StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema =
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-jsonform-params}
  */
-export interface StartThreadInForumOrMediaChannelSchema
+export interface ForumThreadCreateOptions
   extends Pick<CreateMessageSchema, "files" | "payload_json"> {
   /**
    * 1-100 character thread name
@@ -625,7 +623,7 @@ export interface StartThreadInForumOrMediaChannelSchema
    * Required for forum and media threads.
    * Can include text content, embeds, components, and other message features.
    */
-  message: StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema;
+  message: ForumThreadMessageOptions;
 
   /**
    * IDs of tags applied to the thread
@@ -639,44 +637,6 @@ export interface StartThreadInForumOrMediaChannelSchema
 }
 
 /**
- * Interface for query parameters when listing thread members.
- * Used to retrieve members of a thread with optional pagination and member details.
- *
- * @remarks
- * When with_member is true, the GUILD_MEMBERS privileged intent is required.
- * Results are paginated when with_member is true.
- *
- * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members-query-string-params}
- */
-export interface ListThreadMembersQuerySchema {
-  /**
-   * Whether to include a guild member object for each thread member
-   *
-   * If true, each thread member returned will include a nested member object
-   * with additional guild member information for that user.
-   * Requires the GUILD_MEMBERS privileged intent.
-   */
-  with_member?: boolean;
-
-  /**
-   * Get thread members after this user ID
-   *
-   * Used for pagination. Retrieve thread members after this user ID.
-   * Should be the user ID of the last thread member from a previous request.
-   */
-  after?: Snowflake;
-
-  /**
-   * Maximum number of members to return (1-100)
-   *
-   * Controls how many thread members to return per request.
-   * Minimum value is 1, maximum value is 100.
-   * Defaults to 100 if not specified.
-   */
-  limit?: number;
-}
-
-/**
  * Interface for query parameters when listing public archived threads.
  * Used to retrieve archived threads with optional filtering and pagination.
  *
@@ -686,7 +646,7 @@ export interface ListThreadMembersQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads-query-string-params}
  */
-export interface ListPublicArchivedThreadsQuerySchema {
+export interface ArchivedThreadsFetchParams {
   /**
    * Returns threads archived before this timestamp
    *
@@ -714,7 +674,7 @@ export interface ListPublicArchivedThreadsQuerySchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#list-public-archived-threads-response-body}
  */
-export interface ListPublicArchivedThreadsResponseEntity {
+export interface ArchivedThreadsResponse {
   /**
    * Array of thread channel objects
    *
@@ -1077,18 +1037,18 @@ export class ChannelRouter {
    * - Threads: Varies based on the operation (e.g., MANAGE_THREADS to change archived or locked status)
    *
    * Not all fields can be updated for all channel types. The options parameter should match the channel type:
-   * - Use UpdateChannelGuildChannelSchema for regular guild channels
-   * - Use UpdateChannelThreadSchema for threads
-   * - Use UpdateChannelGroupDmSchema for group DMs
+   * - Use GuildChannelUpdateOptions for regular guild channels
+   * - Use ThreadUpdateOptions for threads
+   * - Use GroupDmUpdateOptions for group DMs
    *
    * For forum channels, special fields like available_tags and default_reaction_emoji can be updated.
    */
   updateChannel(
     channelId: Snowflake,
     options:
-      | UpdateChannelGuildChannelSchema
-      | UpdateChannelThreadSchema
-      | UpdateChannelGroupDmSchema,
+      | GuildChannelUpdateOptions
+      | ThreadUpdateOptions
+      | GroupDmUpdateOptions,
     reason?: string,
   ): Promise<AnyChannelEntity> {
     return this.#rest.patch(
@@ -1162,7 +1122,7 @@ export class ChannelRouter {
   editChannelPermissions(
     channelId: Snowflake,
     overwriteId: Snowflake,
-    permissions: EditChannelPermissionsSchema,
+    permissions: ChannelPermissionUpdateOptions,
     reason?: string,
   ): Promise<void> {
     return this.#rest.put(
@@ -1226,7 +1186,7 @@ export class ChannelRouter {
    */
   createChannelInvite(
     channelId: Snowflake,
-    options: CreateChannelInviteSchema,
+    options: ChannelInviteCreateOptions,
     reason?: string,
   ): Promise<InviteEntity> {
     return this.#rest.post(
@@ -1324,7 +1284,7 @@ export class ChannelRouter {
    * Generally, bots should use this sparingly and only when there will be a noticeable delay before responding.
    * Fires a Typing Start Gateway event.
    */
-  triggerTypingIndicator(channelId: Snowflake): Promise<void> {
+  startTyping(channelId: Snowflake): Promise<void> {
     return this.#rest.post(
       ChannelRouter.CHANNEL_ROUTES.channelTypingEndpoint(channelId),
     );
@@ -1498,10 +1458,10 @@ export class ChannelRouter {
    *
    * Fires both a Thread Create and a Message Update Gateway event.
    */
-  startThreadFromMessage(
+  createThreadFromMessage(
     channelId: Snowflake,
     messageId: Snowflake,
-    options: StartThreadFromMessageSchema,
+    options: ThreadFromMessageCreateOptions,
     reason?: string,
   ): Promise<AnyThreadChannelEntity> {
     return this.#rest.post(
@@ -1541,9 +1501,9 @@ export class ChannelRouter {
    *
    * Fires a Thread Create Gateway event.
    */
-  startThreadWithoutMessage(
+  createThread(
     channelId: Snowflake,
-    options: StartThreadWithoutMessageSchema,
+    options: ThreadCreateOptions,
     reason?: string,
   ): Promise<AnyThreadChannelEntity> {
     return this.#rest.post(
@@ -1582,11 +1542,9 @@ export class ChannelRouter {
    *
    * Fires both Thread Create and Message Create Gateway events.
    */
-  startThreadInForumOrMediaChannel(
+  createForumThread(
     channelId: Snowflake,
-    options:
-      | StartThreadInForumOrMediaChannelSchema
-      | StartThreadInForumOrMediaChannelForumAndMediaThreadMessageSchema,
+    options: ForumThreadCreateOptions | ForumThreadMessageOptions,
     reason?: string,
   ): Promise<GuildForumChannelEntity | GuildMediaChannelEntity> {
     return this.#rest.post(
@@ -1721,7 +1679,7 @@ export class ChannelRouter {
    *
    * @remarks
    * Returns a 404 response if the user is not a member of the thread.
-   * When `withMember` is true, the response includes guild member information.
+   * When `with_member` is true, the response includes guild member information.
    * Including guild member information requires the GUILD_MEMBERS privileged intent to be enabled.
    */
   fetchThreadMember(
@@ -1765,7 +1723,7 @@ export class ChannelRouter {
    */
   fetchThreadMembers(
     channelId: Snowflake,
-    query?: ListThreadMembersQuerySchema,
+    query?: ThreadMembersFetchParams,
   ): Promise<ThreadMemberEntity[]> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMembersEndpoint(channelId),
@@ -1802,8 +1760,8 @@ export class ChannelRouter {
    */
   fetchPublicArchivedThreads(
     channelId: Snowflake,
-    query?: ListPublicArchivedThreadsQuerySchema,
-  ): Promise<ListPublicArchivedThreadsResponseEntity> {
+    query?: ArchivedThreadsFetchParams,
+  ): Promise<ArchivedThreadsResponse> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelPublicArchivedThreadsEndpoint(
         channelId,
@@ -1840,8 +1798,8 @@ export class ChannelRouter {
    */
   fetchPrivateArchivedThreads(
     channelId: Snowflake,
-    query?: ListPublicArchivedThreadsQuerySchema,
-  ): Promise<ListPublicArchivedThreadsResponseEntity> {
+    query?: ArchivedThreadsFetchParams,
+  ): Promise<ArchivedThreadsResponse> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelPrivateArchivedThreadsEndpoint(
         channelId,
@@ -1879,8 +1837,8 @@ export class ChannelRouter {
    */
   fetchJoinedPrivateArchivedThreads(
     channelId: Snowflake,
-    query?: ListPublicArchivedThreadsQuerySchema,
-  ): Promise<ListPublicArchivedThreadsResponseEntity> {
+    query?: ArchivedThreadsFetchParams,
+  ): Promise<ArchivedThreadsResponse> {
     return this.#rest.get(
       ChannelRouter.CHANNEL_ROUTES.channelJoinedPrivateArchivedThreadsEndpoint(
         channelId,

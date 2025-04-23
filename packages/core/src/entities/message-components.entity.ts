@@ -55,6 +55,48 @@ export enum ComponentType {
    * Dropdown that allows selection of channels from the server.
    */
   ChannelSelect = 8,
+
+  /**
+   * Section component.
+   * Container to display text alongside an accessory component.
+   */
+  Section = 9,
+
+  /**
+   * Text display component.
+   * Markdown text component for displaying formatted text.
+   */
+  TextDisplay = 10,
+
+  /**
+   * Thumbnail component.
+   * Small image that can be used as an accessory.
+   */
+  Thumbnail = 11,
+
+  /**
+   * Media gallery component.
+   * Component for displaying images and other media.
+   */
+  MediaGallery = 12,
+
+  /**
+   * File component.
+   * Component that displays an attached file.
+   */
+  File = 13,
+
+  /**
+   * Separator component.
+   * Component to add vertical padding between other components.
+   */
+  Separator = 14,
+
+  /**
+   * Container component.
+   * Container that visually groups a set of components.
+   */
+  Container = 17,
 }
 
 /**
@@ -178,6 +220,12 @@ export interface TextInputEntity {
    * Shown when the input field is empty.
    */
   placeholder?: string;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
 }
 
 /**
@@ -303,6 +351,12 @@ export interface SelectMenuEntity {
    * Resources that should be pre-selected when the menu is displayed.
    */
   default_values?: SelectMenuDefaultValueEntity[];
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
 }
 
 /**
@@ -388,6 +442,292 @@ export interface ChannelSelectMenuEntity
 }
 
 /**
+ * Unfurled media item structure.
+ * Represents media content in various components like thumbnails and media galleries.
+ * @see {@link https://discord.com/developers/docs/components/reference#unfurled-media-item-structure}
+ */
+export interface UnfurledMediaItemEntity {
+  /**
+   * URL of the media.
+   * Supports arbitrary URLs and attachment references.
+   */
+  url: string;
+
+  /**
+   * The proxied URL of the media item.
+   * This field is ignored in requests and provided by the API in responses.
+   */
+  proxy_url?: string;
+
+  /**
+   * The height of the media item.
+   * This field is ignored in requests and provided by the API in responses.
+   */
+  height?: number | null;
+
+  /**
+   * The width of the media item.
+   * This field is ignored in requests and provided by the API in responses.
+   */
+  width?: number | null;
+
+  /**
+   * The media type of the content.
+   * This field is ignored in requests and provided by the API in responses.
+   */
+  content_type?: string;
+}
+
+/**
+ * Section component.
+ * Container that allows you to join text contextually with an accessory.
+ * @see {@link https://discord.com/developers/docs/components/reference#section}
+ */
+export interface SectionEntity {
+  /**
+   * The type of component - always 9 for a section.
+   * Identifies this component as a section.
+   */
+  type: ComponentType.Section;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
+
+  /**
+   * Components in this section.
+   * One to three text display components.
+   */
+  components: TextDisplayEntity[];
+
+  /**
+   * An accessory component for this section.
+   * Can be a thumbnail or button component.
+   */
+  accessory: ThumbnailEntity | ButtonEntity;
+}
+
+/**
+ * Text display component.
+ * Component for displaying text formatted with markdown.
+ * @see {@link https://discord.com/developers/docs/components/reference#text-display}
+ */
+export interface TextDisplayEntity {
+  /**
+   * The type of component - always 10 for a text display.
+   * Identifies this component as a text display.
+   */
+  type: ComponentType.TextDisplay;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
+
+  /**
+   * Text content to display.
+   * Text that will be displayed similar to a message.
+   */
+  content: string;
+}
+
+/**
+ * Thumbnail component.
+ * Small image that can be used as an accessory in a section.
+ * @see {@link https://discord.com/developers/docs/components/reference#thumbnail}
+ */
+export interface ThumbnailEntity {
+  /**
+   * The type of component - always 11 for a thumbnail.
+   * Identifies this component as a thumbnail.
+   */
+  type: ComponentType.Thumbnail;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
+
+  /**
+   * The media for this thumbnail.
+   * A URL or attachment reference.
+   */
+  media: UnfurledMediaItemEntity;
+
+  /**
+   * Alt text for the media.
+   * Description of the image for accessibility.
+   */
+  description?: string;
+
+  /**
+   * Whether the thumbnail should be a spoiler.
+   * If true, the thumbnail will be blurred out initially.
+   */
+  spoiler?: boolean;
+}
+
+/**
+ * Media gallery item structure.
+ * Represents an individual item in a media gallery.
+ * @see {@link https://discord.com/developers/docs/components/reference#media-gallery-media-gallery-item-structure}
+ */
+export interface MediaGalleryItemEntity {
+  /**
+   * The media for this gallery item.
+   * A URL or attachment reference.
+   */
+  media: UnfurledMediaItemEntity;
+
+  /**
+   * Alt text for the media.
+   * Description of the image for accessibility.
+   */
+  description?: string;
+
+  /**
+   * Whether the media should be a spoiler.
+   * If true, the media will be blurred out initially.
+   */
+  spoiler?: boolean;
+}
+
+/**
+ * Media gallery component.
+ * Component for displaying 1-10 media attachments in an organized gallery.
+ * @see {@link https://discord.com/developers/docs/components/reference#media-gallery}
+ */
+export interface MediaGalleryEntity {
+  /**
+   * The type of component - always 12 for a media gallery.
+   * Identifies this component as a media gallery.
+   */
+  type: ComponentType.MediaGallery;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
+
+  /**
+   * Items in this gallery.
+   * 1 to 10 media gallery items.
+   */
+  items: MediaGalleryItemEntity[];
+}
+
+/**
+ * File component.
+ * Component that displays an attached file.
+ * @see {@link https://discord.com/developers/docs/components/reference#file}
+ */
+export interface FileEntity {
+  /**
+   * The type of component - always 13 for a file.
+   * Identifies this component as a file.
+   */
+  type: ComponentType.File;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
+
+  /**
+   * The file to display.
+   * An attachment reference using the attachment:// syntax.
+   */
+  file: UnfurledMediaItemEntity;
+
+  /**
+   * Whether the file should be a spoiler.
+   * If true, the file will be blurred out initially.
+   */
+  spoiler?: boolean;
+}
+
+/**
+ * Separator component.
+ * Component to add vertical padding between other components.
+ * @see {@link https://discord.com/developers/docs/components/reference#separator}
+ */
+export interface SeparatorEntity {
+  /**
+   * The type of component - always 14 for a separator.
+   * Identifies this component as a separator.
+   */
+  type: ComponentType.Separator;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
+
+  /**
+   * Whether a visual divider should be displayed.
+   * If true, a visual divider will be shown.
+   */
+  divider?: boolean;
+
+  /**
+   * Size of separator padding.
+   * 1 for small padding, 2 for large padding.
+   */
+  spacing?: 1 | 2;
+}
+
+/**
+ * Container component.
+ * Container that visually groups a set of components.
+ * @see {@link https://discord.com/developers/docs/components/reference#container}
+ */
+export interface ContainerEntity {
+  /**
+   * The type of component - always 17 for a container.
+   * Identifies this component as a container.
+   */
+  type: ComponentType.Container;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
+
+  /**
+   * Components in this container.
+   * Up to 10 components of specific supported types.
+   */
+  components: (
+    | ActionRowEntity
+    | TextDisplayEntity
+    | SectionEntity
+    | MediaGalleryEntity
+    | SeparatorEntity
+    | FileEntity
+  )[];
+
+  /**
+   * Color for the accent on the container.
+   * RGB color from 0x000000 to 0xFFFFFF.
+   */
+  accent_color?: number | null;
+
+  /**
+   * Whether the container should be a spoiler.
+   * If true, the container will be blurred out initially.
+   */
+  spoiler?: boolean;
+}
+
+/**
  * Union type representing any select menu component.
  * Can be any of the specialized select menu types.
  */
@@ -451,16 +791,29 @@ export interface ButtonEntity {
    * If true, the button cannot be clicked.
    */
   disabled?: boolean;
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
 }
 
 /**
  * Union type representing any component type.
- * Can be a button, text input, or any select menu.
+ * Can be a button, text input, select menu, or any of the new component types.
  */
 export type AnyComponentEntity =
   | ButtonEntity
   | TextInputEntity
-  | AnySelectMenuEntity;
+  | AnySelectMenuEntity
+  | SectionEntity
+  | TextDisplayEntity
+  | ThumbnailEntity
+  | MediaGalleryEntity
+  | FileEntity
+  | SeparatorEntity
+  | ContainerEntity;
 
 /**
  * Action row component.
@@ -479,4 +832,10 @@ export interface ActionRowEntity {
    * The interactive elements displayed within this container.
    */
   components: AnyComponentEntity[];
+
+  /**
+   * Optional identifier for component.
+   * 32-bit integer used as an optional identifier.
+   */
+  id?: number;
 }

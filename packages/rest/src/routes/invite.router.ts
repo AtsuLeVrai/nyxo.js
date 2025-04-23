@@ -13,7 +13,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/invite#get-invite-query-string-params}
  */
-export interface GetInviteQuerySchema {
+export interface InviteFetchParams {
   /**
    * Whether the invite should contain approximate member counts.
    *
@@ -97,7 +97,7 @@ export class InviteRouter {
    */
   fetchInvite(
     code: string,
-    query?: GetInviteQuerySchema,
+    query?: InviteFetchParams,
   ): Promise<InviteEntity & InviteMetadataEntity> {
     return this.#rest.get(
       InviteRouter.INVITE_ROUTES.inviteByCodeEndpoint(code),

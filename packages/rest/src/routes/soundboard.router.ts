@@ -16,7 +16,7 @@ import { FileHandler, type FileInput } from "../handlers/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard#send-soundboard-sound-json-params}
  */
-export interface SendSoundboardSoundSchema {
+export interface SoundboardSendOptions {
   /**
    * The ID of the soundboard sound to play.
    *
@@ -40,7 +40,7 @@ export interface SendSoundboardSoundSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds-response-structure}
  */
-export interface ListGuildSoundboardSoundsResponseEntity {
+export interface GuildSoundsResponse {
   /**
    * Array of soundboard sound objects.
    *
@@ -62,7 +62,7 @@ export interface ListGuildSoundboardSoundsResponseEntity {
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard#create-guild-soundboard-sound-json-params}
  */
-export interface CreateGuildSoundboardSoundSchema {
+export interface GuildSoundCreateOptions {
   /**
    * Name of the soundboard sound (2-32 characters).
    *
@@ -118,7 +118,7 @@ export interface CreateGuildSoundboardSoundSchema {
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard#modify-guild-soundboard-sound-json-params}
  */
-export interface ModifyGuildSoundboardSoundSchema {
+export interface GuildSoundUpdateOptions {
   /**
    * Name of the soundboard sound (2-32 characters).
    *
@@ -249,9 +249,9 @@ export class SoundboardRouter {
    *
    * Fires a Voice Channel Effect Send Gateway event.
    */
-  playSound(
+  sendSound(
     channelId: Snowflake,
-    options: SendSoundboardSoundSchema,
+    options: SoundboardSendOptions,
   ): Promise<void> {
     return this.#rest.post(
       SoundboardRouter.SOUNDBOARD_ROUTES.playSoundInChannelEndpoint(channelId),
@@ -293,9 +293,7 @@ export class SoundboardRouter {
    * Includes `user` fields if the bot has the `CREATE_GUILD_EXPRESSIONS` or
    * `MANAGE_GUILD_EXPRESSIONS` permission.
    */
-  fetchGuildSounds(
-    guildId: Snowflake,
-  ): Promise<ListGuildSoundboardSoundsResponseEntity> {
+  fetchSounds(guildId: Snowflake): Promise<GuildSoundsResponse> {
     return this.#rest.get(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundsEndpoint(guildId),
     );
@@ -350,9 +348,9 @@ export class SoundboardRouter {
    *
    * Fires a Guild Soundboard Sound Create Gateway event.
    */
-  async createGuildSound(
+  async createSound(
     guildId: Snowflake,
-    options: CreateGuildSoundboardSoundSchema,
+    options: GuildSoundCreateOptions,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
     if (options.sound) {
@@ -390,10 +388,10 @@ export class SoundboardRouter {
    *
    * Fires a Guild Soundboard Sound Update Gateway event.
    */
-  updateGuildSound(
+  updateSound(
     guildId: Snowflake,
     soundId: Snowflake,
-    options: ModifyGuildSoundboardSoundSchema,
+    options: GuildSoundUpdateOptions,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
     return this.#rest.patch(
@@ -428,7 +426,7 @@ export class SoundboardRouter {
    *
    * Fires a Guild Soundboard Sound Delete Gateway event.
    */
-  deleteGuildSound(
+  deleteSound(
     guildId: Snowflake,
     soundId: Snowflake,
     reason?: string,

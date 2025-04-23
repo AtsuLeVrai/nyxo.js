@@ -44,59 +44,43 @@ export abstract class Channel<T extends AnyChannelEntity> extends BaseClass<T> {
     return this.data.type;
   }
 
-  isGuildTextChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is GuildTextChannel {
+  isGuildTextChannel(): this is GuildTextChannel {
     return this.type === ChannelType.GuildText;
   }
 
-  isDmChannel(this: Channel<AnyChannelEntity>): this is DmChannel {
+  isDmChannel(): this is DmChannel {
     return this.type === ChannelType.Dm;
   }
 
-  isGuildVoiceChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is GuildVoiceChannel {
+  isGuildVoiceChannel(): this is GuildVoiceChannel {
     return this.type === ChannelType.GuildVoice;
   }
 
-  isGroupDmChannel(this: Channel<AnyChannelEntity>): this is GroupDmChannel {
+  isGroupDmChannel(): this is GroupDmChannel {
     return this.type === ChannelType.GroupDm;
   }
 
-  isGuildCategoryChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is GuildCategoryChannel {
+  isGuildCategoryChannel(): this is GuildCategoryChannel {
     return this.type === ChannelType.GuildCategory;
   }
 
-  isGuildAnnouncementChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is GuildAnnouncementChannel {
+  isGuildAnnouncementChannel(): this is GuildAnnouncementChannel {
     return this.type === ChannelType.GuildAnnouncement;
   }
 
-  isAnnouncementThreadChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is AnnouncementThreadChannel {
+  isAnnouncementThreadChannel(): this is AnnouncementThreadChannel {
     return this.type === ChannelType.AnnouncementThread;
   }
 
-  isPublicThreadChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is PublicThreadChannel {
+  isPublicThreadChannel(): this is PublicThreadChannel {
     return this.type === ChannelType.PublicThread;
   }
 
-  isPrivateThreadChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is PrivateThreadChannel {
+  isPrivateThreadChannel(): this is PrivateThreadChannel {
     return this.type === ChannelType.PrivateThread;
   }
 
-  isThreadChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is ThreadChannel<AnyThreadChannelEntity> {
+  isThreadChannel(): this is ThreadChannel<AnyThreadChannelEntity> {
     return (
       this.isPublicThreadChannel() ||
       this.isPrivateThreadChannel() ||
@@ -104,25 +88,19 @@ export abstract class Channel<T extends AnyChannelEntity> extends BaseClass<T> {
     );
   }
 
-  isGuildStageVoiceChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is GuildStageVoiceChannel {
+  isGuildStageVoiceChannel(): this is GuildStageVoiceChannel {
     return this.type === ChannelType.GuildStageVoice;
   }
 
-  isGuildForumChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is GuildForumChannel {
+  isGuildForumChannel(): this is GuildForumChannel {
     return this.type === ChannelType.GuildForum;
   }
 
-  isGuildMediaChannel(
-    this: Channel<AnyChannelEntity>,
-  ): this is GuildMediaChannel {
+  isGuildMediaChannel(): this is GuildMediaChannel {
     return this.type === ChannelType.GuildMedia;
   }
 }
-
++
 export class DmChannel extends Channel<DmChannelEntity> {
   // implements Enforce<CamelCasedProperties<DmChannelEntity>>
   override get type(): ChannelType.Dm {
