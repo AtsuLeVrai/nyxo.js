@@ -1,6 +1,5 @@
 packages:
   - apps/*
-  - internals/*
   - packages/*
   - scripts
 
