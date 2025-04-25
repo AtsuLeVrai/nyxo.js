@@ -1120,15 +1120,3 @@ export type AnyChannelEntity =
   | GuildForumChannelEntity
   | GuildMediaChannelEntity
   | AnyThreadChannelEntity;
-
-/**
- * Union type of all guild-based channel types.
- */
-export type AnyGuildBasedChannelEntity =
-  | GuildTextChannelEntity
-  | GuildVoiceChannelEntity
-  | GuildCategoryChannelEntity
-  | GuildAnnouncementChannelEntity
-  | GuildStageVoiceChannelEntity
-  | GuildForumChannelEntity
-  | GuildMediaChannelEntity;

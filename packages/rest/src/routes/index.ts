@@ -11,6 +11,7 @@ export * from "./guild-template.router.js";
 export * from "./guild.router.js";
 export * from "./interaction.router.js";
 export * from "./invite.router.js";
+export * from "./lobby.router.js";
 export * from "./message.router.js";
 export * from "./oauth2.router.js";
 export * from "./poll.router.js";

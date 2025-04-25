@@ -25,6 +25,7 @@ import {
   GuildTemplateRouter,
   InteractionRouter,
   InviteRouter,
+  LobbyRouter,
   MessageRouter,
   OAuth2Router,
   PollRouter,
@@ -523,6 +524,16 @@ export class Rest extends EventEmitter<RestEvents> {
    */
   get subscriptions(): SubscriptionRouter {
     return new SubscriptionRouter(this);
+  }
+
+  /**
+   * Access to lobby-related endpoints.
+   * Provides methods for managing lobbies in voice channels.
+   *
+   * @returns Router for lobby-related endpoints
+   */
+  get lobby(): LobbyRouter {
+    return new LobbyRouter(this);
   }
 
   /**

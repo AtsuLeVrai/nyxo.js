@@ -12,21 +12,7 @@ import type {
 
 /**
  * Router for Discord Interaction-related endpoints.
- *
- * This class provides methods to respond to and manage Discord interactions,
- * which are the foundation of slash commands, buttons, select menus, and
- * other interactive components in Discord.
- *
- * @remarks
- * Interactions in Discord are real-time events triggered when users interact
- * with application components like slash commands or buttons. Applications must
- * respond to these interactions promptly (within 3 seconds), and can then send
- * follow-up messages or edit the original response as needed.
- *
- * This router handles three main types of operations:
- * 1. Creating initial responses to interactions
- * 2. Managing the original interaction responses
- * 3. Creating and managing followup messages
+ * Handles responses to slash commands, buttons, select menus, and other interactions.
  *
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding}
  */
@@ -37,13 +23,8 @@ export class InteractionRouter {
   static readonly INTERACTION_ROUTES = {
     /**
      * Route for creating an initial response to an interaction.
-     *
-     * This endpoint is used to respond within the 3-second window after
-     * receiving an interaction.
-     *
      * @param interactionId - The ID of the interaction
      * @param interactionToken - The token for the interaction
-     * @returns The formatted API route string
      */
     createResponseEndpoint: (
       interactionId: Snowflake,
@@ -52,13 +33,8 @@ export class InteractionRouter {
 
     /**
      * Route for retrieving the original response to an interaction.
-     *
-     * This endpoint allows getting the original message that was sent as
-     * a response to the interaction.
-     *
      * @param applicationId - The ID of the application
      * @param interactionToken - The token for the interaction
-     * @returns The formatted API route string
      */
     getOriginalResponseEndpoint: (
       applicationId: Snowflake,
@@ -68,13 +44,8 @@ export class InteractionRouter {
 
     /**
      * Route for editing the original response to an interaction.
-     *
-     * This endpoint allows updating the message that was sent as the
-     * initial response to the interaction.
-     *
      * @param applicationId - The ID of the application
      * @param interactionToken - The token for the interaction
-     * @returns The formatted API route string
      */
     editOriginalResponseEndpoint: (
       applicationId: Snowflake,
@@ -84,13 +55,8 @@ export class InteractionRouter {
 
     /**
      * Route for deleting the original response to an interaction.
-     *
-     * This endpoint allows removing the message that was sent as the
-     * initial response to the interaction.
-     *
      * @param applicationId - The ID of the application
      * @param interactionToken - The token for the interaction
-     * @returns The formatted API route string
      */
     deleteOriginalResponseEndpoint: (
       applicationId: Snowflake,
@@ -100,13 +66,8 @@ export class InteractionRouter {
 
     /**
      * Route for creating a followup message to an interaction.
-     *
-     * This endpoint allows sending additional messages after the initial
-     * response to the interaction.
-     *
      * @param applicationId - The ID of the application
      * @param interactionToken - The token for the interaction
-     * @returns The formatted API route string
      */
     createFollowupMessageEndpoint: (
       applicationId: Snowflake,
@@ -114,15 +75,10 @@ export class InteractionRouter {
     ) => `/webhooks/${applicationId}/${interactionToken}` as const,
 
     /**
-     * Route for retrieving a followup message for an interaction.
-     *
-     * This endpoint allows getting a specific followup message that was
-     * sent after the initial response.
-     *
+     * Route for retrieving a followup message.
      * @param applicationId - The ID of the application
      * @param interactionToken - The token for the interaction
      * @param messageId - The ID of the followup message
-     * @returns The formatted API route string
      */
     getFollowupMessageEndpoint: (
       applicationId: Snowflake,
@@ -132,15 +88,10 @@ export class InteractionRouter {
       `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
 
     /**
-     * Route for editing a followup message for an interaction.
-     *
-     * This endpoint allows updating a specific followup message that was
-     * sent after the initial response.
-     *
+     * Route for editing a followup message.
      * @param applicationId - The ID of the application
      * @param interactionToken - The token for the interaction
      * @param messageId - The ID of the followup message
-     * @returns The formatted API route string
      */
     editFollowupMessageEndpoint: (
       applicationId: Snowflake,
@@ -150,15 +101,10 @@ export class InteractionRouter {
       `/webhooks/${applicationId}/${interactionToken}/messages/${messageId}` as const,
 
     /**
-     * Route for deleting a followup message for an interaction.
-     *
-     * This endpoint allows removing a specific followup message that was
-     * sent after the initial response.
-     *
+     * Route for deleting a followup message.
      * @param applicationId - The ID of the application
      * @param interactionToken - The token for the interaction
      * @param messageId - The ID of the followup message
-     * @returns The formatted API route string
      */
     deleteFollowupMessageEndpoint: (
       applicationId: Snowflake,
@@ -173,7 +119,6 @@ export class InteractionRouter {
 
   /**
    * Creates a new Interaction Router instance.
-   *
    * @param rest - The REST client to use for making Discord API requests
    */
   constructor(rest: Rest) {
@@ -182,30 +127,14 @@ export class InteractionRouter {
 
   /**
    * Creates an initial response to an interaction.
-   *
-   * This method sends the first response to a Discord interaction, which must be
-   * done within 3 seconds of receiving the interaction to acknowledge it.
+   * Must be sent within 3 seconds of receiving the interaction.
    *
    * @param interactionId - The ID of the interaction
    * @param interactionToken - The token for the interaction
    * @param options - The response options (type and data)
    * @param withResponse - Whether to return the interaction callback response
-   * @returns The interaction callback response (if withResponse is true), otherwise undefined
-   * @throws {Error} Error if validation of options fails or the token is expired
-   *
+   * @returns The interaction callback response (if withResponse is true)
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#create-interaction-response}
-   *
-   * @remarks
-   * Interaction tokens are valid for 15 minutes, but you must respond
-   * to the initial interaction within 3 seconds or the token will be invalidated.
-   *
-   * Common response types:
-   * - 1: PONG (for PING interactions)
-   * - 4: CHANNEL_MESSAGE_WITH_SOURCE (visible message)
-   * - 5: DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE ("thinking" state, then message)
-   * - 6: DEFERRED_UPDATE_MESSAGE ("thinking" state, then update original message)
-   * - 7: UPDATE_MESSAGE (update the message that contains the component)
-   * - 9: MODAL (show a modal popup)
    */
   createResponse(
     interactionId: Snowflake,
@@ -227,15 +156,11 @@ export class InteractionRouter {
 
   /**
    * Fetches the original response to an interaction.
-   *
-   * This method retrieves the message that was sent as the initial response
-   * to an interaction.
+   * Retrieves the message that was sent as the initial response.
    *
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
-   * @returns A promise resolving to the original message response to the interaction
-   * @throws {Error} Will throw an error if the interaction token is invalid or expired
-   *
+   * @returns A promise resolving to the original message response
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#get-original-interaction-response}
    */
   fetchOriginalResponse(
@@ -252,16 +177,12 @@ export class InteractionRouter {
 
   /**
    * Updates the original response to an interaction.
-   *
-   * This method modifies the message that was sent as the initial response
-   * to an interaction, allowing you to update content, embeds, components, etc.
+   * Modifies the message sent as the initial response.
    *
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
    * @param options - The new message content/components/embeds
    * @returns A promise resolving to the updated message
-   * @throws {Error} Error if validation of options fails or the token is expired
-   *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#edit-original-interaction-response}
    */
   updateOriginalResponse(
@@ -282,15 +203,11 @@ export class InteractionRouter {
 
   /**
    * Deletes the original response to an interaction.
-   *
-   * This method removes the message that was sent as the initial response
-   * to an interaction.
+   * Removes the message sent as the initial response.
    *
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
    * @returns A promise that resolves when the deletion is complete
-   * @throws {Error} Will throw an error if the token is expired or invalid
-   *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#delete-original-interaction-response}
    */
   deleteOriginalResponse(
@@ -307,26 +224,13 @@ export class InteractionRouter {
 
   /**
    * Creates a followup message for an interaction.
-   *
-   * This method sends an additional message after the initial response to an
-   * interaction. Followup messages can be sent anytime within the 15-minute
-   * token validity period.
+   * Sends an additional message after the initial response.
    *
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
-   * @param options - The message content/components/embeds/flags for the followup
+   * @param options - The message content/components/embeds for the followup
    * @returns A promise resolving to the created message
-   * @throws {Error} Error if validation of options fails or the token is expired
-   *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#create-followup-message}
-   *
-   * @remarks
-   * User-installed apps that aren't installed in the server are limited
-   * to 5 followup messages per interaction.
-   *
-   * Flags:
-   * - 64: EPHEMERAL (only visible to the user who triggered the interaction)
-   * - 1 << 12: SUPPRESS_NOTIFICATIONS (don't send notifications to users)
    */
   createFollowupMessage(
     applicationId: Snowflake,
@@ -346,16 +250,12 @@ export class InteractionRouter {
 
   /**
    * Fetches a followup message for an interaction.
-   *
-   * This method retrieves a specific followup message that was sent after
-   * the initial response to an interaction.
+   * Retrieves a specific followup message by ID.
    *
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
    * @param messageId - The ID of the followup message
    * @returns A promise resolving to the followup message
-   * @throws {Error} Will throw an error if the message doesn't exist or the token is expired
-   *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#get-followup-message}
    */
   fetchFollowupMessage(
@@ -374,17 +274,13 @@ export class InteractionRouter {
 
   /**
    * Updates a followup message for an interaction.
-   *
-   * This method modifies a specific followup message that was sent after
-   * the initial response to an interaction.
+   * Modifies a specific followup message by ID.
    *
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
    * @param messageId - The ID of the followup message
    * @param options - The new message content/components/embeds
    * @returns A promise resolving to the updated message
-   * @throws {Error} Error if validation of options fails or the token is expired
-   *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#edit-followup-message}
    */
   updateFollowupMessage(
@@ -407,16 +303,12 @@ export class InteractionRouter {
 
   /**
    * Deletes a followup message for an interaction.
-   *
-   * This method removes a specific followup message that was sent after
-   * the initial response to an interaction.
+   * Removes a specific followup message by ID.
    *
    * @param applicationId - The ID of the application
    * @param interactionToken - The token for the interaction
    * @param messageId - The ID of the followup message
    * @returns A promise that resolves when the deletion is complete
-   * @throws {Error} Will throw an error if the message doesn't exist or the token is expired
-   *
    * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#delete-followup-message}
    */
   deleteFollowupMessage(
