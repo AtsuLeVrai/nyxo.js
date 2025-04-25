@@ -1,7 +1,10 @@
 import type { Snowflake, WebhookEntity } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
 import { FileHandler, type FileInput } from "../handlers/index.js";
-import type { CreateMessageSchema } from "./message.router.js";
+import type {
+  MessageCreateV1Options,
+  MessageCreateV2Options,
+} from "./message.router.js";
 
 /**
  * Interface for creating a new webhook in a channel.
@@ -75,20 +78,7 @@ export interface WebhookExecuteParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params}
  */
-export interface WebhookExecuteOptions
-  extends Pick<
-    CreateMessageSchema,
-    | "content"
-    | "tts"
-    | "embeds"
-    | "allowed_mentions"
-    | "components"
-    | "files"
-    | "payload_json"
-    | "attachments"
-    | "flags"
-    | "poll"
-  > {
+export type WebhookExecuteOptions = {
   /**
    * Override the default username of the webhook.
    * Shown as the message author instead of the webhook's default name.
@@ -112,7 +102,31 @@ export interface WebhookExecuteOptions
    * Only applies when creating a thread for a forum or media channel.
    */
   applied_tags?: Snowflake[];
-}
+} & (
+  | Pick<
+      MessageCreateV1Options,
+      | "content"
+      | "tts"
+      | "embeds"
+      | "allowed_mentions"
+      | "components"
+      | "files"
+      | "payload_json"
+      | "attachments"
+      | "flags"
+      | "poll"
+    >
+  | Pick<
+      MessageCreateV2Options,
+      | "tts"
+      | "allowed_mentions"
+      | "components"
+      | "files"
+      | "payload_json"
+      | "attachments"
+      | "flags"
+    >
+);
 
 /**
  * Interface for query parameters when getting a webhook message.
@@ -129,7 +143,7 @@ export type WebhookMessageFetchParams = Pick<WebhookExecuteParams, "thread_id">;
  * @see {@link https://discord.com/developers/docs/resources/webhook#edit-webhook-message-jsonform-params}
  */
 export type WebhookMessageEditOptions = Pick<
-  WebhookExecuteOptions,
+  MessageCreateV1Options,
   | "content"
   | "embeds"
   | "allowed_mentions"
@@ -138,7 +152,11 @@ export type WebhookMessageEditOptions = Pick<
   | "payload_json"
   | "attachments"
   | "poll"
->;
+> &
+  Pick<
+    MessageCreateV2Options,
+    "allowed_mentions" | "components" | "files" | "payload_json" | "attachments"
+  >;
 
 /**
  * Router for Discord Webhook-related endpoints.

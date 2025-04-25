@@ -114,7 +114,7 @@ export class VoiceRouter {
    * @returns A promise resolving to the current user's voice state entity
    * @see {@link https://discord.com/developers/docs/resources/voice#get-current-user-voice-state}
    */
-  fetchOwnVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
+  fetchCurrentVoiceState(guildId: Snowflake): Promise<VoiceStateEntity> {
     return this.#rest.get(
       VoiceRouter.VOICE_ROUTES.currentUserVoiceStateEndpoint(guildId),
     );
@@ -147,7 +147,7 @@ export class VoiceRouter {
    * @returns A promise that resolves when the voice state is modified
    * @see {@link https://discord.com/developers/docs/resources/voice#modify-current-user-voice-state}
    */
-  updateOwnVoiceState(
+  updateCurrentVoiceState(
     guildId: Snowflake,
     options: VoiceStateUpdateOptions,
   ): Promise<void> {

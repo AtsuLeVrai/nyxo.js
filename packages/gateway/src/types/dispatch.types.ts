@@ -29,7 +29,7 @@ import type {
   UserEntity,
   VoiceStateEntity,
 } from "@nyxojs/core";
-import type { ReactionTypeFlag } from "@nyxojs/rest";
+import type { ReactionType } from "@nyxojs/rest";
 import { GatewayOpcodes } from "./gateway.types.js";
 
 /**
@@ -1066,7 +1066,7 @@ export interface MessageReactionRemoveEntity {
    * The type of reaction that was removed.
    * Identifies the reaction's category (standard, super, etc.).
    */
-  type: ReactionTypeFlag;
+  type: ReactionType;
 }
 
 /**
@@ -1139,7 +1139,7 @@ export interface MessageReactionAddEntity {
    * The type of reaction that was added.
    * Identifies the reaction's category (standard, super, etc.).
    */
-  type: ReactionTypeFlag;
+  type: ReactionType;
 }
 
 /**

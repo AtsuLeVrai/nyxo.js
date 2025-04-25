@@ -100,7 +100,7 @@ export abstract class Channel<T extends AnyChannelEntity> extends BaseClass<T> {
     return this.type === ChannelType.GuildMedia;
   }
 }
-+
+
 export class DmChannel extends Channel<DmChannelEntity> {
   // implements Enforce<CamelCasedProperties<DmChannelEntity>>
   override get type(): ChannelType.Dm {

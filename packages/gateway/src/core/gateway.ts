@@ -508,7 +508,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       // These operations are performed in parallel for efficiency
       const [gatewayInfo, guilds] = await Promise.all([
         this.#rest.gateway.fetchBotGatewayInfo(),
-        this.#rest.users.fetchCurrentUserGuilds(),
+        this.#rest.users.fetchCurrentGuilds(),
         this.#encoding.initialize(),
         this.#compression.initialize(),
       ]);

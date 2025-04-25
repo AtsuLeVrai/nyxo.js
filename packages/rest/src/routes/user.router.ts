@@ -236,7 +236,7 @@ export class UserRouter {
    * @returns A promise resolving to an array of partial guild entities
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
-  fetchOwnGuilds(query?: UserGuildsFetchParams): Promise<GuildEntity[]> {
+  fetchCurrentGuilds(query?: UserGuildsFetchParams): Promise<GuildEntity[]> {
     return this.#rest.get(UserRouter.USER_ROUTES.currentUserGuildsEndpoint, {
       query,
     });
@@ -307,7 +307,7 @@ export class UserRouter {
    * @returns A promise resolving to an array of connection entities
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
-  fetchOwnConnections(): Promise<ConnectionEntity[]> {
+  fetchCurrentConnections(): Promise<ConnectionEntity[]> {
     return this.#rest.get(
       UserRouter.USER_ROUTES.currentUserConnectionsEndpoint,
     );

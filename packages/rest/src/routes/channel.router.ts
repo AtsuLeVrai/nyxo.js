@@ -18,7 +18,11 @@ import type {
   ThreadMemberEntity,
 } from "@nyxojs/core";
 import type { Rest } from "../core/index.js";
-import type { CreateMessageSchema } from "./message.router.js";
+import type {
+  CreateMessageSchema,
+  MessageCreateV1Options,
+  MessageCreateV2Options,
+} from "./message.router.js";
 import type { GroupDmCreateOptions } from "./user.router.js";
 
 /**
@@ -353,16 +357,21 @@ export interface ThreadCreateOptions extends ThreadFromMessageCreateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-forum-and-media-thread-message-params-object}
  */
-export type ForumThreadMessageOptions = Pick<
-  CreateMessageSchema,
-  | "content"
-  | "embeds"
-  | "allowed_mentions"
-  | "components"
-  | "sticker_ids"
-  | "attachments"
-  | "flags"
->;
+export type ForumThreadMessageOptions =
+  | Pick<
+      MessageCreateV1Options,
+      | "content"
+      | "embeds"
+      | "allowed_mentions"
+      | "components"
+      | "sticker_ids"
+      | "attachments"
+      | "flags"
+    >
+  | Pick<
+      MessageCreateV2Options,
+      "allowed_mentions" | "components" | "attachments" | "flags"
+    >;
 
 /**
  * Interface for creating a thread in a forum or media channel.
@@ -447,6 +456,32 @@ export interface ArchivedThreadsResponse {
    * Indicates if there are more archived threads available for pagination.
    */
   has_more: boolean;
+}
+
+/**
+ * Interface for query parameters when fetching thread members.
+ * Used to retrieve members of a thread with optional pagination.
+ *
+ * @see {@link https://discord.com/developers/docs/resources/channel#list-thread-members-query-string-params}
+ */
+export interface ThreadMembersFetchParams {
+  /**
+   * Whether to include a guild member object for each thread member
+   * If true, includes guild member objects for each thread member.
+   */
+  with_member?: boolean;
+
+  /**
+   * Get thread members after this user ID
+   * Used for pagination to fetch members after a specific user ID.
+   */
+  after?: Snowflake;
+
+  /**
+   * Max number of thread members to return (1-100)
+   * Controls how many thread members to return per request.
+   */
+  limit?: number;
 }
 
 /**
