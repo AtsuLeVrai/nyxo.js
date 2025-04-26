@@ -284,8 +284,7 @@ export class CompressionService {
    */
   async #initializeZlib(): Promise<void> {
     // Attempt to dynamically import the zlib-sync module
-    const result =
-      await OptionalDeps.safeImport<typeof import("zlib-sync")>("zlib-sync");
+    const result = await OptionalDeps.safeImport<typeof zlibSync>("zlib-sync");
 
     // Check if the import was successful
     if (!result.success) {
@@ -327,8 +326,7 @@ export class CompressionService {
    */
   async #initializeZstd(): Promise<void> {
     // Attempt to dynamically import the fzstd module
-    const result =
-      await OptionalDeps.safeImport<typeof import("fzstd")>("fzstd");
+    const result = await OptionalDeps.safeImport<typeof fzstd>("fzstd");
 
     // Check if the import was successful
     if (!result.success) {

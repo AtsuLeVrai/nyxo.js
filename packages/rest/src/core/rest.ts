@@ -1021,7 +1021,10 @@ export class Rest extends EventEmitter<RestEvents> {
     // Check if this is a JSON API error with specific code
     if (this.#isJsonErrorEntity(response.data)) {
       throw new JsonApiError(
-        response.data as unknown as JsonErrorResponse,
+        {
+          ...(response.data as unknown as JsonErrorResponse),
+          message: response.reason || response.data.message,
+        },
         baseErrorOptions,
       );
     }

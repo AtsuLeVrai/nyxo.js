@@ -1,11 +1,5 @@
 import { config } from "dotenv";
-import {
-  Client,
-  type ClientEvents,
-  Colors,
-  EmbedBuilder,
-  GatewayIntentsBits,
-} from "nyxo.js";
+import { Client, EmbedBuilder, GatewayIntentsBits } from "nyxo.js";
 
 // Load environment variables
 const { parsed } = config({ debug: true });
@@ -42,68 +36,44 @@ const client = new Client({
   ],
 });
 
-const onKeyofEvents: (keyof ClientEvents)[] = [
-  "dispatch",
-  "shardReady",
-  "wsError",
-  "wsClose",
-  "sessionStart",
-  "requestSuccess",
-  "requestStart",
-  "retry",
-  "rateLimitExpire",
-  "rateLimitUpdate",
-  "rateLimitHit",
-];
-
-for (const event of onKeyofEvents) {
-  client.on(event, (...args) => {
-    console.log(`[CLIENT] Event ${event} triggered`, ...args);
-  });
-}
-
 client.on("ready", (ready) => {
   console.log("[CLIENT] Ready", ready.user.id);
 });
 
+client.on("dispatch", (event, data) => {
+  console.log("[CLIENT] Dispatch event", event, data);
+});
+
+client.on("wsClose", (code, reason) => {
+  console.log("[CLIENT] WebSocket closed", code, reason);
+});
+
+client.on("wsError", (error) => {
+  console.error("[CLIENT] WebSocket error", error);
+});
+
+client.on("sessionStart", (data) => {
+  console.log("[CLIENT] Session started", data);
+});
+
+client.on("requestSuccess", (request) => {
+  console.log("[CLIENT] Request successful", request);
+});
+
 client.on("messageCreate", async (message) => {
-  if (message.author.id === client.user.id) {
-    return;
-  }
+  if (message.author.bot) return;
 
-  console.log("[CLIENT] Message created:", message.content);
-
-  if (message.content === "!ping") {
-    const firstEmbed = new EmbedBuilder()
-      .setTitle("Test")
-      .setDescription("test")
-      .setColor(Colors.Green)
+  if (message.content === "ping") {
+    const embed = new EmbedBuilder()
+      .setTitle("Pong!".repeat(1000))
+      .setDescription("This is a test embed")
+      .setColor(0x00ff00)
       .setTimestamp()
       .build();
-
-    const secondEmbed = new EmbedBuilder()
-      .setTitle("Test 2 ")
-      .setDescription("test 2 ")
-      .setColor(Colors.Blue)
-      .setTimestamp()
-      .build();
-
-    const thirdEmbed = new EmbedBuilder()
-      .setTitle("Test 3 ")
-      .setDescription("test 3 ")
-      .setColor(Colors.Red)
-      .setTimestamp()
-      .build();
-
     await message.reply({
-      content: "Pong",
-      embeds: [firstEmbed, secondEmbed, thirdEmbed],
-      files: ["../../public/nyxjs_icon.png", "./src/index.ts"],
+      content: "Pong!",
+      embeds: [embed],
     });
-  }
-
-  if (message.content === "!send") {
-    await message.author.send("Hello, world!");
   }
 });
 

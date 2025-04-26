@@ -1,4 +1,5 @@
 import { OptionalDeps } from "@nyxojs/core";
+import type erlpack from "erlpack";
 import { z } from "zod";
 import type { PayloadEntity } from "../types/index.js";
 
@@ -70,7 +71,7 @@ export class EncodingService {
    * Null if not initialized or using JSON encoding
    * @private
    */
-  #erlpack: typeof import("erlpack") | null = null;
+  #erlpack: typeof erlpack | null = null;
 
   /**
    * The current encoding type being used by this service instance
@@ -141,8 +142,7 @@ export class EncodingService {
 
     try {
       // Attempt to dynamically import the erlpack module
-      const result =
-        await OptionalDeps.safeImport<typeof import("erlpack")>("erlpack");
+      const result = await OptionalDeps.safeImport<typeof erlpack>("erlpack");
 
       // Check if the import was successful
       if (!result.success) {
