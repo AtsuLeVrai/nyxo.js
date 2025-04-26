@@ -25,9 +25,8 @@ import type {
   WelcomeScreenChannelEntity,
   WelcomeScreenEntity,
 } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type { FileInput } from "../handlers/index.js";
-import { FileHandler } from "../handlers/index.js";
 
 /**
  * Interface for creating a new guild.
@@ -745,7 +744,7 @@ export interface GuildOnboardingUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild}
  */
-export class GuildRouter {
+export class GuildRouter extends BaseRouter {
   /**
    * Collection of API route constants for Discord Guild-related endpoints.
    */
@@ -953,17 +952,6 @@ export class GuildRouter {
       `/guilds/${guildId}/onboarding` as const,
   } as const;
 
-  /** The REST client used for making API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new GuildRouter instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Creates a new guild with the provided options
    * Only usable by bots in fewer than 10 guilds.
@@ -973,13 +961,13 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#create-guild}
    */
   async createGuild(options: GuildCreateOptions): Promise<GuildEntity> {
-    if (options.icon) {
-      options.icon = await FileHandler.toDataUri(options.icon);
-    }
+    const fileFields: (keyof GuildCreateOptions)[] = ["icon"];
+    const processedOptions = await this.prepareBodyWithFiles(
+      options,
+      fileFields,
+    );
 
-    return this.#rest.post(GuildRouter.GUILD_ROUTES.guildsEndpoint, {
-      body: JSON.stringify(options),
-    });
+    return this.post(GuildRouter.GUILD_ROUTES.guildsEndpoint, processedOptions);
   }
 
   /**
@@ -992,7 +980,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild}
    */
   fetchGuild(guildId: Snowflake, withCounts = false): Promise<GuildEntity> {
-    return this.#rest.get(GuildRouter.GUILD_ROUTES.guildBaseEndpoint(guildId), {
+    return this.get(GuildRouter.GUILD_ROUTES.guildBaseEndpoint(guildId), {
       query: { with_counts: withCounts },
     });
   }
@@ -1006,9 +994,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-preview}
    */
   fetchPreview(guildId: Snowflake): Promise<GuildEntity> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildPreviewEndpoint(guildId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildPreviewEndpoint(guildId));
   }
 
   /**
@@ -1026,16 +1012,21 @@ export class GuildRouter {
     options: GuildUpdateOptions,
     reason?: string,
   ): Promise<GuildEntity> {
-    if (options.icon) {
-      options.icon = await FileHandler.toDataUri(options.icon);
-    }
+    const fileFields: (keyof GuildUpdateOptions)[] = [
+      "icon",
+      "splash",
+      "discovery_splash",
+      "banner",
+    ];
+    const processedOptions = await this.prepareBodyWithFiles(
+      options,
+      fileFields,
+    );
 
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildBaseEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      processedOptions,
+      { reason },
     );
   }
 
@@ -1048,9 +1039,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#delete-guild}
    */
   deleteGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(
-      GuildRouter.GUILD_ROUTES.guildBaseEndpoint(guildId),
-    );
+    return this.delete(GuildRouter.GUILD_ROUTES.guildBaseEndpoint(guildId));
   }
 
   /**
@@ -1062,9 +1051,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-channels}
    */
   fetchChannels(guildId: Snowflake): Promise<AnyChannelEntity[]> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildChannelsEndpoint(guildId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildChannelsEndpoint(guildId));
   }
 
   /**
@@ -1082,12 +1069,10 @@ export class GuildRouter {
     options: AnyChannelEntity,
     reason?: string,
   ): Promise<AnyChannelEntity> {
-    return this.#rest.post(
+    return this.post(
       GuildRouter.GUILD_ROUTES.guildChannelsEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1104,11 +1089,9 @@ export class GuildRouter {
     guildId: Snowflake,
     options: ChannelPositionsUpdateOptions,
   ): Promise<void> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildChannelsEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-      },
+      options,
     );
   }
 
@@ -1123,7 +1106,7 @@ export class GuildRouter {
   fetchActiveGuildThreads(
     guildId: Snowflake,
   ): Promise<ActiveThreadsResponse[]> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildActiveThreadsEndpoint(guildId),
     );
   }
@@ -1141,7 +1124,7 @@ export class GuildRouter {
     guildId: Snowflake,
     userId: Snowflake,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildMemberEndpoint(guildId, userId),
     );
   }
@@ -1159,12 +1142,9 @@ export class GuildRouter {
     guildId: Snowflake,
     query: GuildMembersFetchParams,
   ): Promise<GuildMemberEntity[]> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildMembersEndpoint(guildId),
-      {
-        query,
-      },
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildMembersEndpoint(guildId), {
+      query,
+    });
   }
 
   /**
@@ -1180,11 +1160,9 @@ export class GuildRouter {
     guildId: Snowflake,
     query: GuildMembersSearchParams,
   ): Promise<GuildMemberEntity[]> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildMembersSearchEndpoint(guildId),
-      {
-        query,
-      },
+      { query },
     );
   }
 
@@ -1203,11 +1181,9 @@ export class GuildRouter {
     userId: Snowflake,
     options: GuildMemberAddOptions,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.put(
+    return this.put(
       GuildRouter.GUILD_ROUTES.guildMemberEndpoint(guildId, userId),
-      {
-        body: JSON.stringify(options),
-      },
+      options,
     );
   }
 
@@ -1228,12 +1204,10 @@ export class GuildRouter {
     options: GuildMemberUpdateOptions,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildMemberEndpoint(guildId, userId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1252,12 +1226,10 @@ export class GuildRouter {
     nickname?: string | null,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildCurrentMemberEndpoint(guildId),
-      {
-        body: JSON.stringify({ nick: nickname }),
-        reason,
-      },
+      { nick: nickname },
+      { reason },
     );
   }
 
@@ -1277,12 +1249,10 @@ export class GuildRouter {
     nickname?: string | null,
     reason?: string,
   ): Promise<GuildMemberEntity> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildCurrentMemberNicknameEndpoint(guildId),
-      {
-        body: JSON.stringify({ nick: nickname }),
-        reason,
-      },
+      { nick: nickname },
+      { reason },
     );
   }
 
@@ -1303,8 +1273,9 @@ export class GuildRouter {
     roleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       GuildRouter.GUILD_ROUTES.guildMemberRoleEndpoint(guildId, userId, roleId),
+      undefined,
       { reason },
     );
   }
@@ -1326,7 +1297,7 @@ export class GuildRouter {
     roleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       GuildRouter.GUILD_ROUTES.guildMemberRoleEndpoint(guildId, userId, roleId),
       { reason },
     );
@@ -1347,11 +1318,9 @@ export class GuildRouter {
     userId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       GuildRouter.GUILD_ROUTES.guildMemberEndpoint(guildId, userId),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 
@@ -1368,7 +1337,7 @@ export class GuildRouter {
     guildId: Snowflake,
     query?: GuildBansFetchParams,
   ): Promise<BanEntity[]> {
-    return this.#rest.get(GuildRouter.GUILD_ROUTES.guildBansEndpoint(guildId), {
+    return this.get(GuildRouter.GUILD_ROUTES.guildBansEndpoint(guildId), {
       query,
     });
   }
@@ -1383,9 +1352,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-ban}
    */
   fetchGuildBan(guildId: Snowflake, userId: Snowflake): Promise<BanEntity> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildBanEndpoint(guildId, userId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildBanEndpoint(guildId, userId));
   }
 
   /**
@@ -1405,12 +1372,10 @@ export class GuildRouter {
     options: GuildBanCreateOptions,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       GuildRouter.GUILD_ROUTES.guildBanEndpoint(guildId, userId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1429,11 +1394,9 @@ export class GuildRouter {
     userId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       GuildRouter.GUILD_ROUTES.guildBanEndpoint(guildId, userId),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 
@@ -1452,12 +1415,10 @@ export class GuildRouter {
     options: GuildBansBulkOptions,
     reason?: string,
   ): Promise<GuildBansBulkResponse> {
-    return this.#rest.put(
+    return this.put(
       GuildRouter.GUILD_ROUTES.guildBulkBanEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1470,7 +1431,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-roles}
    */
   fetchGuildRoles(guildId: Snowflake): Promise<RoleEntity[]> {
-    return this.#rest.get(GuildRouter.GUILD_ROUTES.guildRolesEndpoint(guildId));
+    return this.get(GuildRouter.GUILD_ROUTES.guildRolesEndpoint(guildId));
   }
 
   /**
@@ -1483,7 +1444,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-role}
    */
   fetchGuildRole(guildId: Snowflake, roleId: Snowflake): Promise<RoleEntity> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildRoleEndpoint(guildId, roleId),
     );
   }
@@ -1503,16 +1464,16 @@ export class GuildRouter {
     options: GuildRoleCreateOptions,
     reason?: string,
   ): Promise<RoleEntity> {
-    if (options.icon) {
-      options.icon = await FileHandler.toDataUri(options.icon);
-    }
+    const fileFields: (keyof GuildRoleCreateOptions)[] = ["icon"];
+    const processedOptions = await this.prepareBodyWithFiles(
+      options,
+      fileFields,
+    );
 
-    return this.#rest.post(
+    return this.post(
       GuildRouter.GUILD_ROUTES.guildRolesEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      processedOptions,
+      { reason },
     );
   }
 
@@ -1529,11 +1490,9 @@ export class GuildRouter {
     guildId: Snowflake,
     options: RolePositionsUpdateOptions,
   ): Promise<RoleEntity[]> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildRolesEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-      },
+      options,
     );
   }
 
@@ -1554,12 +1513,10 @@ export class GuildRouter {
     options: GuildRoleUpdateOptions,
     reason?: string,
   ): Promise<RoleEntity> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildRoleEndpoint(guildId, roleId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1578,10 +1535,11 @@ export class GuildRouter {
     level: MfaLevel,
     reason?: string,
   ): Promise<number> {
-    return this.#rest.post(GuildRouter.GUILD_ROUTES.guildMfaEndpoint(guildId), {
-      body: JSON.stringify({ level }),
-      reason,
-    });
+    return this.post(
+      GuildRouter.GUILD_ROUTES.guildMfaEndpoint(guildId),
+      { level },
+      { reason },
+    );
   }
 
   /**
@@ -1599,11 +1557,9 @@ export class GuildRouter {
     roleId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       GuildRouter.GUILD_ROUTES.guildRoleEndpoint(guildId, roleId),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 
@@ -1620,12 +1576,9 @@ export class GuildRouter {
     guildId: Snowflake,
     query?: GetGuildPruneCountQuerySchema,
   ): Promise<{ pruned: number }> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildPruneEndpoint(guildId),
-      {
-        query,
-      },
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildPruneEndpoint(guildId), {
+      query,
+    });
   }
 
   /**
@@ -1643,12 +1596,10 @@ export class GuildRouter {
     options: GuildPruneOptions,
     reason?: string,
   ): Promise<{ pruned: number | null }> {
-    return this.#rest.post(
+    return this.post(
       GuildRouter.GUILD_ROUTES.guildPruneEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1661,9 +1612,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-voice-regions}
    */
   fetchGuildVoiceRegions(guildId: Snowflake): Promise<VoiceRegionEntity[]> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildRegionsEndpoint(guildId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildRegionsEndpoint(guildId));
   }
 
   /**
@@ -1675,9 +1624,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-invites}
    */
   fetchGuildInvites(guildId: Snowflake): Promise<InviteWithMetadataEntity[]> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildInvitesEndpoint(guildId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildInvitesEndpoint(guildId));
   }
 
   /**
@@ -1689,7 +1636,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-integrations}
    */
   fetchGuildIntegrations(guildId: Snowflake): Promise<IntegrationEntity[]> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildIntegrationsEndpoint(guildId),
     );
   }
@@ -1709,7 +1656,7 @@ export class GuildRouter {
     integrationId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       GuildRouter.GUILD_ROUTES.guildIntegrationEndpoint(guildId, integrationId),
       { reason },
     );
@@ -1726,7 +1673,7 @@ export class GuildRouter {
   fetchGuildWidgetSettings(
     guildId: Snowflake,
   ): Promise<GuildWidgetSettingsEntity> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildWidgetSettingsEndpoint(guildId),
     );
   }
@@ -1746,12 +1693,10 @@ export class GuildRouter {
     options: GuildWidgetUpdateOptions,
     reason?: string,
   ): Promise<GuildWidgetSettingsEntity> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildWidgetSettingsEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1764,9 +1709,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-widget}
    */
   fetchGuildWidget(guildId: Snowflake): Promise<GuildWidgetEntity> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildWidgetEndpoint(guildId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildWidgetEndpoint(guildId));
   }
 
   /**
@@ -1780,9 +1723,7 @@ export class GuildRouter {
   fetchGuildVanityUrl(
     guildId: Snowflake,
   ): Promise<Pick<InviteWithMetadataEntity, "code" | "uses">> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildVanityUrlEndpoint(guildId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildVanityUrlEndpoint(guildId));
   }
 
   /**
@@ -1798,11 +1739,9 @@ export class GuildRouter {
     guildId: Snowflake,
     style: WidgetStyle = "shield",
   ): Promise<Buffer> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildWidgetImageEndpoint(guildId),
-      {
-        query: { style },
-      },
+      { query: { style } },
     );
   }
 
@@ -1815,7 +1754,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-welcome-screen}
    */
   fetchGuildWelcomeScreen(guildId: Snowflake): Promise<WelcomeScreenEntity> {
-    return this.#rest.get(
+    return this.get(
       GuildRouter.GUILD_ROUTES.guildWelcomeScreenEndpoint(guildId),
     );
   }
@@ -1835,12 +1774,10 @@ export class GuildRouter {
     options: GuildWelcomeScreenUpdateOptions,
     reason?: string,
   ): Promise<WelcomeScreenEntity> {
-    return this.#rest.patch(
+    return this.patch(
       GuildRouter.GUILD_ROUTES.guildWelcomeScreenEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1853,9 +1790,7 @@ export class GuildRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild#get-guild-onboarding}
    */
   fetchGuildOnboarding(guildId: Snowflake): Promise<GuildOnboardingEntity> {
-    return this.#rest.get(
-      GuildRouter.GUILD_ROUTES.guildOnboardingEndpoint(guildId),
-    );
+    return this.get(GuildRouter.GUILD_ROUTES.guildOnboardingEndpoint(guildId));
   }
 
   /**
@@ -1873,12 +1808,10 @@ export class GuildRouter {
     options: GuildOnboardingUpdateOptions,
     reason?: string,
   ): Promise<GuildOnboardingEntity> {
-    return this.#rest.put(
+    return this.put(
       GuildRouter.GUILD_ROUTES.guildOnboardingEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 }

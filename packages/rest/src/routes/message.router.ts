@@ -16,7 +16,7 @@ import {
   type TextDisplayEntity,
   type UserEntity,
 } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type { FileInput } from "../handlers/index.js";
 
 /**
@@ -386,7 +386,7 @@ export interface MessagesBulkDeleteOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/message}
  */
-export class MessageRouter {
+export class MessageRouter extends BaseRouter {
   /**
    * API route constants for message-related endpoints.
    */
@@ -450,17 +450,6 @@ export class MessageRouter {
       `/channels/${channelId}/messages/bulk-delete` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new Message Router instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches a list of messages from a channel.
    * Supports different pagination strategies through query parameters.
@@ -474,11 +463,9 @@ export class MessageRouter {
     channelId: Snowflake,
     query?: MessagesFetchParams,
   ): Promise<MessageEntity[]> {
-    return this.#rest.get(
+    return this.get(
       MessageRouter.MESSAGE_ROUTES.channelMessagesEndpoint(channelId),
-      {
-        query,
-      },
+      { query },
     );
   }
 
@@ -495,7 +482,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.#rest.get(
+    return this.get(
       MessageRouter.MESSAGE_ROUTES.channelMessageByIdEndpoint(
         channelId,
         messageId,
@@ -560,12 +547,10 @@ export class MessageRouter {
     }
 
     const { files, ...rest } = options;
-    return this.#rest.post(
+    return this.post(
       MessageRouter.MESSAGE_ROUTES.channelMessagesEndpoint(channelId),
-      {
-        body: JSON.stringify(rest),
-        files: files,
-      },
+      rest,
+      { files },
     );
   }
 
@@ -582,7 +567,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<MessageEntity> {
-    return this.#rest.post(
+    return this.post(
       MessageRouter.MESSAGE_ROUTES.messagePublishEndpoint(channelId, messageId),
     );
   }
@@ -602,7 +587,7 @@ export class MessageRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       MessageRouter.MESSAGE_ROUTES.userReactionEndpoint(
         channelId,
         messageId,
@@ -626,7 +611,7 @@ export class MessageRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       MessageRouter.MESSAGE_ROUTES.userReactionEndpoint(
         channelId,
         messageId,
@@ -652,7 +637,7 @@ export class MessageRouter {
     emoji: string,
     userId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       MessageRouter.MESSAGE_ROUTES.userReactionEndpoint(
         channelId,
         messageId,
@@ -679,7 +664,7 @@ export class MessageRouter {
     emoji: string,
     query?: ReactionsFetchParams,
   ): Promise<UserEntity[]> {
-    return this.#rest.get(
+    return this.get(
       MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(
         channelId,
         messageId,
@@ -702,7 +687,7 @@ export class MessageRouter {
     channelId: Snowflake,
     messageId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(
         channelId,
         messageId,
@@ -726,7 +711,7 @@ export class MessageRouter {
     messageId: Snowflake,
     emoji: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       MessageRouter.MESSAGE_ROUTES.messageReactionsEndpoint(
         channelId,
         messageId,
@@ -767,15 +752,13 @@ export class MessageRouter {
     }
 
     const { files, ...rest } = options;
-    return this.#rest.patch(
+    return this.patch(
       MessageRouter.MESSAGE_ROUTES.channelMessageByIdEndpoint(
         channelId,
         messageId,
       ),
-      {
-        body: JSON.stringify(rest),
-        files: files,
-      },
+      rest,
+      { files },
     );
   }
 
@@ -794,7 +777,7 @@ export class MessageRouter {
     messageId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       MessageRouter.MESSAGE_ROUTES.channelMessageByIdEndpoint(
         channelId,
         messageId,
@@ -818,12 +801,10 @@ export class MessageRouter {
     options: MessagesBulkDeleteOptions,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.post(
+    return this.post(
       MessageRouter.MESSAGE_ROUTES.bulkDeleteEndpoint(channelId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 }

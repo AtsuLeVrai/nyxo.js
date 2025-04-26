@@ -178,10 +178,10 @@ export const SnowflakeUtil = {
    * @returns The Unix timestamp in milliseconds
    *
    * @example
-   * const timestamp = SnowflakeUtil.timestampFrom('308994132968210433');
+   * const timestamp = SnowflakeUtil.getTimestamp('308994132968210433');
    * console.log(timestamp); // 1493754304849
    */
-  timestampFrom(snowflake: string): number {
+  getTimestamp(snowflake: string): number {
     return Number(
       (BigInt(snowflake) >> TIMESTAMP_SHIFT) + BigInt(DISCORD_EPOCH),
     );
@@ -194,11 +194,11 @@ export const SnowflakeUtil = {
    * @returns Date object representing when the snowflake was created
    *
    * @example
-   * const date = SnowflakeUtil.dateFrom('308994132968210433');
+   * const date = SnowflakeUtil.getDate('308994132968210433');
    * console.log(date); // 2017-05-02T19:25:04.849Z
    */
-  dateFrom(snowflake: string): Date {
-    return new Date(this.timestampFrom(snowflake));
+  getDate(snowflake: string): Date {
+    return new Date(this.getTimestamp(snowflake));
   },
 
   /**
@@ -252,7 +252,7 @@ export const SnowflakeUtil = {
    * const beforeId = SnowflakeUtil.generateFromReference('799775995915116544', -3600000);
    */
   generateFromReference(referenceId: string, timeOffset: number): string {
-    const timestamp = this.timestampFrom(referenceId) + timeOffset;
+    const timestamp = this.getTimestamp(referenceId) + timeOffset;
     return this.generate(timestamp);
   },
 
@@ -270,8 +270,8 @@ export const SnowflakeUtil = {
    * else console.log('Snowflakes were created at the same time');
    */
   compare(snowflake1: string, snowflake2: string): number {
-    const timestamp1 = this.timestampFrom(snowflake1);
-    const timestamp2 = this.timestampFrom(snowflake2);
+    const timestamp1 = this.getTimestamp(snowflake1);
+    const timestamp2 = this.getTimestamp(snowflake2);
     return timestamp1 - timestamp2;
   },
 
@@ -288,7 +288,7 @@ export const SnowflakeUtil = {
    */
   timeBetween(snowflake1: string, snowflake2: string): number {
     return Math.abs(
-      this.timestampFrom(snowflake1) - this.timestampFrom(snowflake2),
+      this.getTimestamp(snowflake1) - this.getTimestamp(snowflake2),
     );
   },
 
@@ -304,7 +304,7 @@ export const SnowflakeUtil = {
    * console.log(isOld); // true (this snowflake is from 2017)
    */
   isOlderThan(snowflake: string, date: Date): boolean {
-    return this.timestampFrom(snowflake) < date.getTime();
+    return this.getTimestamp(snowflake) < date.getTime();
   },
 
   /**
@@ -319,7 +319,7 @@ export const SnowflakeUtil = {
    * console.log(isRecent); // true
    */
   isNewerThan(snowflake: string, date: Date): boolean {
-    return this.timestampFrom(snowflake) > date.getTime();
+    return this.getTimestamp(snowflake) > date.getTime();
   },
 
   /**
@@ -342,7 +342,7 @@ export const SnowflakeUtil = {
     snowflake: string,
     format: "short" | "long" | "relative" | "iso" = "long",
   ): string {
-    const date = this.dateFrom(snowflake);
+    const date = this.getDate(snowflake);
 
     switch (format) {
       case "short":

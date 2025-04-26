@@ -8,8 +8,8 @@ import type {
   GuildScheduledEventUserEntity,
   Snowflake,
 } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { BaseRouter } from "../bases/index.js";
+import type { FileInput } from "../handlers/index.js";
 
 /**
  * Interface for creating a guild scheduled event.
@@ -131,7 +131,7 @@ export interface EventUsersFetchParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event}
  */
-export class ScheduledEventRouter {
+export class ScheduledEventRouter extends BaseRouter {
   /**
    * API route constants for scheduled event endpoints.
    */
@@ -160,17 +160,6 @@ export class ScheduledEventRouter {
       `/guilds/${guildId}/scheduled-events/${eventId}/users` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new Scheduled Event Router instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches all scheduled events for a guild.
    * Retrieves events with option to include subscriber counts.
@@ -184,7 +173,7 @@ export class ScheduledEventRouter {
     guildId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity[]> {
-    return this.#rest.get(
+    return this.get(
       ScheduledEventRouter.EVENT_ROUTES.guildEventsEndpoint(guildId),
       {
         query: { with_user_count: withUserCount },
@@ -207,16 +196,16 @@ export class ScheduledEventRouter {
     options: EventCreateOptions,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    if (options.image) {
-      options.image = await FileHandler.toDataUri(options.image);
-    }
+    const fileFields: (keyof EventCreateOptions)[] = ["image"];
+    const processedOptions = await this.prepareBodyWithFiles(
+      options,
+      fileFields,
+    );
 
-    return this.#rest.post(
+    return this.post(
       ScheduledEventRouter.EVENT_ROUTES.guildEventsEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      processedOptions,
+      { reason },
     );
   }
 
@@ -235,7 +224,7 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     withUserCount = false,
   ): Promise<GuildScheduledEventEntity> {
-    return this.#rest.get(
+    return this.get(
       ScheduledEventRouter.EVENT_ROUTES.guildEventByIdEndpoint(
         guildId,
         eventId,
@@ -263,19 +252,19 @@ export class ScheduledEventRouter {
     options: EventUpdateOptions,
     reason?: string,
   ): Promise<GuildScheduledEventEntity> {
-    if (options.image) {
-      options.image = await FileHandler.toDataUri(options.image);
-    }
+    const fileFields: (keyof EventUpdateOptions)[] = ["image"];
+    const processedOptions = await this.prepareBodyWithFiles(
+      options,
+      fileFields,
+    );
 
-    return this.#rest.patch(
+    return this.patch(
       ScheduledEventRouter.EVENT_ROUTES.guildEventByIdEndpoint(
         guildId,
         eventId,
       ),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      processedOptions,
+      { reason },
     );
   }
 
@@ -289,7 +278,7 @@ export class ScheduledEventRouter {
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#delete-guild-scheduled-event}
    */
   deleteEvent(guildId: Snowflake, eventId: Snowflake): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       ScheduledEventRouter.EVENT_ROUTES.guildEventByIdEndpoint(
         guildId,
         eventId,
@@ -312,11 +301,9 @@ export class ScheduledEventRouter {
     eventId: Snowflake,
     query?: EventUsersFetchParams,
   ): Promise<GuildScheduledEventUserEntity[]> {
-    return this.#rest.get(
+    return this.get(
       ScheduledEventRouter.EVENT_ROUTES.eventUsersEndpoint(guildId, eventId),
-      {
-        query,
-      },
+      { query },
     );
   }
 }

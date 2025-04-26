@@ -17,7 +17,7 @@ import type {
   Snowflake,
   ThreadMemberEntity,
 } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 import type {
   CreateMessageSchema,
   MessageCreateV1Options,
@@ -490,7 +490,7 @@ export interface ThreadMembersFetchParams {
  *
  * @see {@link https://discord.com/developers/docs/resources/channel}
  */
-export class ChannelRouter {
+export class ChannelRouter extends BaseRouter {
   /**
    * API route constants for Discord Channel-related endpoints.
    */
@@ -617,17 +617,6 @@ export class ChannelRouter {
       `/channels/${channelId}/typing` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new ChannelRouter instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches a channel by its ID.
    * If the channel is a thread, includes thread member object for the current user.
@@ -637,7 +626,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel}
    */
   fetchChannel(channelId: Snowflake): Promise<AnyChannelEntity> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelBaseEndpoint(channelId),
     );
   }
@@ -660,12 +649,10 @@ export class ChannelRouter {
       | GroupDmUpdateOptions,
     reason?: string,
   ): Promise<AnyChannelEntity> {
-    return this.#rest.patch(
+    return this.patch(
       ChannelRouter.CHANNEL_ROUTES.channelBaseEndpoint(channelId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -682,11 +669,9 @@ export class ChannelRouter {
     channelId: Snowflake,
     reason?: string,
   ): Promise<AnyChannelEntity> {
-    return this.#rest.delete(
+    return this.delete(
       ChannelRouter.CHANNEL_ROUTES.channelBaseEndpoint(channelId),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 
@@ -707,15 +692,13 @@ export class ChannelRouter {
     permissions: ChannelPermissionUpdateOptions,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       ChannelRouter.CHANNEL_ROUTES.channelPermissionEndpoint(
         channelId,
         overwriteId,
       ),
-      {
-        body: JSON.stringify(permissions),
-        reason,
-      },
+      permissions,
+      { reason },
     );
   }
 
@@ -728,7 +711,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#get-channel-invites}
    */
   fetchChannelInvites(channelId: Snowflake): Promise<InviteEntity[]> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelInvitesEndpoint(channelId),
     );
   }
@@ -748,12 +731,10 @@ export class ChannelRouter {
     options: ChannelInviteCreateOptions,
     reason?: string,
   ): Promise<InviteEntity> {
-    return this.#rest.post(
+    return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelInvitesEndpoint(channelId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -772,14 +753,12 @@ export class ChannelRouter {
     overwriteId: Snowflake,
     reason?: string,
   ): Promise<AnyChannelEntity> {
-    return this.#rest.delete(
+    return this.delete(
       ChannelRouter.CHANNEL_ROUTES.channelPermissionEndpoint(
         channelId,
         overwriteId,
       ),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 
@@ -798,12 +777,10 @@ export class ChannelRouter {
     webhookChannelId: Snowflake,
     reason?: string,
   ): Promise<FollowedChannelEntity> {
-    return this.#rest.post(
+    return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelFollowersEndpoint(channelId),
-      {
-        body: JSON.stringify({ webhook_channel_id: webhookChannelId }),
-        reason,
-      },
+      { webhook_channel_id: webhookChannelId },
+      { reason },
     );
   }
 
@@ -816,7 +793,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#trigger-typing-indicator}
    */
   startTyping(channelId: Snowflake): Promise<void> {
-    return this.#rest.post(
+    return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelTypingEndpoint(channelId),
     );
   }
@@ -830,7 +807,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#get-pinned-messages}
    */
   fetchPinnedMessages(channelId: Snowflake): Promise<MessageEntity[]> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelPinsEndpoint(channelId),
     );
   }
@@ -850,14 +827,13 @@ export class ChannelRouter {
     messageId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       ChannelRouter.CHANNEL_ROUTES.channelPinnedMessageEndpoint(
         channelId,
         messageId,
       ),
-      {
-        reason,
-      },
+      undefined,
+      { reason },
     );
   }
 
@@ -876,14 +852,12 @@ export class ChannelRouter {
     messageId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       ChannelRouter.CHANNEL_ROUTES.channelPinnedMessageEndpoint(
         channelId,
         messageId,
       ),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 
@@ -902,11 +876,9 @@ export class ChannelRouter {
     userId: Snowflake,
     options: GroupDmCreateOptions,
   ): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       ChannelRouter.CHANNEL_ROUTES.channelRecipientsEndpoint(channelId, userId),
-      {
-        body: JSON.stringify(options),
-      },
+      options,
     );
   }
 
@@ -923,7 +895,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     userId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       ChannelRouter.CHANNEL_ROUTES.channelRecipientsEndpoint(channelId, userId),
     );
   }
@@ -945,15 +917,13 @@ export class ChannelRouter {
     options: ThreadFromMessageCreateOptions,
     reason?: string,
   ): Promise<AnyThreadChannelEntity> {
-    return this.#rest.post(
+    return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelStartThreadFromMessageEndpoint(
         channelId,
         messageId,
       ),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -972,14 +942,12 @@ export class ChannelRouter {
     options: ThreadCreateOptions,
     reason?: string,
   ): Promise<AnyThreadChannelEntity> {
-    return this.#rest.post(
+    return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelStartThreadWithoutMessageEndpoint(
         channelId,
       ),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -998,14 +966,12 @@ export class ChannelRouter {
     options: ForumThreadCreateOptions | ForumThreadMessageOptions,
     reason?: string,
   ): Promise<GuildForumChannelEntity | GuildMediaChannelEntity> {
-    return this.#rest.post(
+    return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelStartThreadInForumOrMediaChannelEndpoint(
         channelId,
       ),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -1018,7 +984,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#join-thread}
    */
   joinThread(channelId: Snowflake): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
         channelId,
         "@me",
@@ -1036,7 +1002,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#add-thread-member}
    */
   addThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
-    return this.#rest.put(
+    return this.put(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
         channelId,
         userId,
@@ -1053,7 +1019,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#leave-thread}
    */
   leaveThread(channelId: Snowflake): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
         channelId,
         "@me",
@@ -1071,7 +1037,7 @@ export class ChannelRouter {
    * @see {@link https://discord.com/developers/docs/resources/channel#remove-thread-member}
    */
   removeThreadMember(channelId: Snowflake, userId: Snowflake): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
         channelId,
         userId,
@@ -1094,7 +1060,7 @@ export class ChannelRouter {
     userId: Snowflake,
     withMember = false,
   ): Promise<ThreadMemberEntity> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMemberEndpoint(
         channelId,
         userId,
@@ -1118,7 +1084,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     query?: ThreadMembersFetchParams,
   ): Promise<ThreadMemberEntity[]> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelThreadMembersEndpoint(channelId),
       {
         query,
@@ -1139,7 +1105,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     query?: ArchivedThreadsFetchParams,
   ): Promise<ArchivedThreadsResponse> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelPublicArchivedThreadsEndpoint(
         channelId,
       ),
@@ -1162,7 +1128,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     query?: ArchivedThreadsFetchParams,
   ): Promise<ArchivedThreadsResponse> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelPrivateArchivedThreadsEndpoint(
         channelId,
       ),
@@ -1185,7 +1151,7 @@ export class ChannelRouter {
     channelId: Snowflake,
     query?: ArchivedThreadsFetchParams,
   ): Promise<ArchivedThreadsResponse> {
-    return this.#rest.get(
+    return this.get(
       ChannelRouter.CHANNEL_ROUTES.channelJoinedPrivateArchivedThreadsEndpoint(
         channelId,
       ),

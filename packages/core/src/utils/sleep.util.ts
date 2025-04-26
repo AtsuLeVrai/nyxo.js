@@ -20,9 +20,7 @@ export async function sleep(duration: number): Promise<void> {
     return;
   }
 
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, duration);
-  });
+  return new Promise<void>((resolve) => setTimeout(resolve, duration));
 }
 
 /**

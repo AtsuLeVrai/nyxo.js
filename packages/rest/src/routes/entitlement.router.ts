@@ -1,5 +1,5 @@
 import type { EntitlementEntity, Snowflake } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 
 /**
  * Interface for query parameters when listing entitlements.
@@ -103,7 +103,7 @@ export interface EntitlementTestCreateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/entitlement}
  */
-export class EntitlementRouter {
+export class EntitlementRouter extends BaseRouter {
   /**
    * API route constants for entitlement-related endpoints.
    */
@@ -138,17 +138,6 @@ export class EntitlementRouter {
       `/applications/${applicationId}/entitlements/${entitlementId}/consume` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new Entitlement Router instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches entitlements for a given application with optional filtering.
    * Allows checking which users or guilds have access to premium offerings.
@@ -162,13 +151,11 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     query?: EntitlementFetchParams,
   ): Promise<EntitlementEntity[]> {
-    return this.#rest.get(
+    return this.get(
       EntitlementRouter.ENTITLEMENT_ROUTES.applicationEntitlementsEndpoint(
         applicationId,
       ),
-      {
-        query,
-      },
+      { query },
     );
   }
 
@@ -185,7 +172,7 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     entitlementId: Snowflake,
   ): Promise<EntitlementEntity> {
-    return this.#rest.get(
+    return this.get(
       EntitlementRouter.ENTITLEMENT_ROUTES.applicationEntitlementByIdEndpoint(
         applicationId,
         entitlementId,
@@ -206,7 +193,7 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     entitlementId: Snowflake,
   ): Promise<void> {
-    return this.#rest.post(
+    return this.post(
       EntitlementRouter.ENTITLEMENT_ROUTES.consumeEntitlementEndpoint(
         applicationId,
         entitlementId,
@@ -227,13 +214,11 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     test: EntitlementTestCreateOptions,
   ): Promise<EntitlementEntity> {
-    return this.#rest.post(
+    return this.post(
       EntitlementRouter.ENTITLEMENT_ROUTES.applicationEntitlementsEndpoint(
         applicationId,
       ),
-      {
-        body: JSON.stringify(test),
-      },
+      test,
     );
   }
 
@@ -250,7 +235,7 @@ export class EntitlementRouter {
     applicationId: Snowflake,
     entitlementId: Snowflake,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       EntitlementRouter.ENTITLEMENT_ROUTES.applicationEntitlementByIdEndpoint(
         applicationId,
         entitlementId,

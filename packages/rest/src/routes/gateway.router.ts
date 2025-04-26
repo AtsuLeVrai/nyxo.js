@@ -1,4 +1,4 @@
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 
 /**
  * Interface for Gateway Session Start Limit object.
@@ -72,7 +72,7 @@ export interface GatewayBotResponse extends GatewayResponse {
  *
  * @see {@link https://discord.com/developers/docs/topics/gateway}
  */
-export class GatewayRouter {
+export class GatewayRouter extends BaseRouter {
   /**
    * API route constants for gateway-related endpoints.
    */
@@ -84,17 +84,6 @@ export class GatewayRouter {
     botGatewayEndpoint: "/gateway/bot",
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new Gateway Router instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches the gateway WebSocket URL.
    * Returns the URL for connecting to Discord's gateway.
@@ -103,7 +92,7 @@ export class GatewayRouter {
    * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway}
    */
   fetchGatewayUrl(): Promise<GatewayResponse> {
-    return this.#rest.get(GatewayRouter.GATEWAY_ROUTES.standardGatewayEndpoint);
+    return this.get(GatewayRouter.GATEWAY_ROUTES.standardGatewayEndpoint);
   }
 
   /**
@@ -114,6 +103,6 @@ export class GatewayRouter {
    * @see {@link https://discord.com/developers/docs/topics/gateway#get-gateway-bot}
    */
   fetchBotGatewayInfo(): Promise<GatewayBotResponse> {
-    return this.#rest.get(GatewayRouter.GATEWAY_ROUTES.botGatewayEndpoint);
+    return this.get(GatewayRouter.GATEWAY_ROUTES.botGatewayEndpoint);
   }
 }

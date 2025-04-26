@@ -6,6 +6,7 @@ import { fileTypeFromBuffer } from "file-type";
 import FormData from "form-data";
 import { lookup } from "mime-types";
 import type SharpType from "sharp";
+import { FileUploadError } from "../errors/index.js";
 import type { HttpRequestOptions } from "../types/index.js";
 
 /**
@@ -155,7 +156,7 @@ function isFileOrBlob(input: unknown): input is File | Blob {
  * Throws an error if the input is not a supported file type.
  *
  * @param input - The value to validate
- * @throws {Error} Error if the input is not a valid file input
+ * @throws {FileUploadError} Error if the input is not a valid file input
  * @private
  */
 function validateInput(input: unknown): asserts input is FileInput {
@@ -167,7 +168,12 @@ function validateInput(input: unknown): asserts input is FileInput {
       isFileOrBlob(input)
     )
   ) {
-    throw new Error("Invalid file input type");
+    throw new FileUploadError("Invalid file input type", {
+      filename:
+        typeof input === "object" && input !== null && "name" in input
+          ? String(input.name)
+          : undefined,
+    });
   }
 
   if (
@@ -175,7 +181,12 @@ function validateInput(input: unknown): asserts input is FileInput {
     !input.match(FILE_CONSTANTS.DATA_URI_PATTERN) &&
     !input.match(FILE_CONSTANTS.FILE_PATH_PATTERN)
   ) {
-    throw new Error("Invalid string input: expected file path or data URI");
+    throw new FileUploadError(
+      "Invalid string input: expected file path or data URI",
+      {
+        filename: basename(input),
+      },
+    );
   }
 }
 
@@ -271,7 +282,7 @@ export const FileHandler = {
    *
    * @param input - The file input to convert (path, URI, buffer, stream, etc.)
    * @returns Promise resolving to a buffer containing the file content
-   * @throws {Error} Error if the input cannot be converted to a buffer
+   * @throws {FileUploadError} Error if the input cannot be converted to a buffer
    */
   async toBuffer(input: FileInput): Promise<Buffer> {
     if (Buffer.isBuffer(input)) {
@@ -279,23 +290,59 @@ export const FileHandler = {
     }
 
     if (input instanceof Readable) {
-      return streamToBuffer(input);
+      try {
+        return await streamToBuffer(input);
+      } catch (error) {
+        throw new FileUploadError(
+          `Failed to read from stream: ${error instanceof Error ? error.message : String(error)}`,
+          { cause: error instanceof Error ? error : undefined },
+        );
+      }
     }
 
     if (typeof input === "string") {
       const dataUriMatch = input.match(FILE_CONSTANTS.DATA_URI_PATTERN);
       if (dataUriMatch?.[2]) {
-        return Buffer.from(dataUriMatch[2], "base64");
+        try {
+          return Buffer.from(dataUriMatch[2], "base64");
+        } catch (error) {
+          throw new FileUploadError("Failed to decode base64 data URI", {
+            cause: error instanceof Error ? error : undefined,
+            contentType: dataUriMatch[1],
+          });
+        }
       }
 
-      return streamToBuffer(createReadStream(input));
+      try {
+        return await streamToBuffer(createReadStream(input));
+      } catch (error) {
+        throw new FileUploadError(
+          `Failed to read file from path: ${error instanceof Error ? error.message : String(error)}`,
+          {
+            cause: error instanceof Error ? error : undefined,
+            filename: basename(input),
+          },
+        );
+      }
     }
 
     if (isFileOrBlob(input)) {
-      return Buffer.from(await input.arrayBuffer());
+      try {
+        return Buffer.from(await input.arrayBuffer());
+      } catch (error) {
+        throw new FileUploadError(
+          `Failed to read File/Blob: ${error instanceof Error ? error.message : String(error)}`,
+          {
+            cause: error instanceof Error ? error : undefined,
+            filename: input instanceof File ? input.name : "blob",
+            contentType: input.type,
+            fileSize: input.size,
+          },
+        );
+      }
     }
 
-    throw new Error("Invalid file input type");
+    throw new FileUploadError("Unsupported file input type");
   },
 
   /**
@@ -304,7 +351,7 @@ export const FileHandler = {
    *
    * @param input - The file input to convert
    * @returns Promise resolving to a data URI containing the encoded file
-   * @throws {Error} Error if the input cannot be converted to a data URI
+   * @throws {FileUploadError} Error if the input cannot be converted to a data URI
    */
   async toDataUri(input: FileInput): Promise<DataUri> {
     // If it's already a data URI, return it
@@ -315,15 +362,33 @@ export const FileHandler = {
       return input as DataUri;
     }
 
-    // Convert input to buffer
-    const buffer = await this.toBuffer(input);
+    try {
+      // Convert input to buffer
+      const buffer = await this.toBuffer(input);
 
-    // Determine the content type
-    const filename = this.getFilename(input);
-    const contentType = await this.detectContentType(buffer, filename);
+      // Determine the content type
+      const filename = this.getFilename(input);
+      const contentType = await this.detectContentType(buffer, filename);
 
-    // Create and return the data URI
-    return createDataUri(buffer, contentType);
+      // Create and return the data URI
+      return createDataUri(buffer, contentType);
+    } catch (error) {
+      if (error instanceof FileUploadError) {
+        throw error;
+      }
+      throw new FileUploadError(
+        `Failed to convert to data URI: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          cause: error instanceof Error ? error : undefined,
+          filename:
+            typeof input === "string"
+              ? basename(input)
+              : isFileOrBlob(input) && input instanceof File
+                ? input.name
+                : undefined,
+        },
+      );
+    }
   },
 
   /**
@@ -497,7 +562,7 @@ export const FileHandler = {
         default:
           return null;
       }
-    } catch {
+    } catch (_error) {
       return null;
     }
   },
@@ -513,6 +578,7 @@ export const FileHandler = {
    * @param contentType - The image MIME type
    * @param options - Configuration options for optimization
    * @returns Promise resolving to the optimized buffer and final content type
+   * @throws {FileUploadError} Error if image optimization fails critically
    */
   async optimizeImage(
     buffer: Buffer,
@@ -588,8 +654,7 @@ export const FileHandler = {
         .toBuffer();
 
       return { processedBuffer: resizedBuffer, finalContentType: contentType };
-    } catch (_error) {
-      // If any processing fails, return original buffer
+    } catch {
       return { processedBuffer: buffer, finalContentType: contentType };
     }
   },
@@ -602,16 +667,16 @@ export const FileHandler = {
    * @param context - The usage context ("attachment" or "asset") which determines size limits
    * @param options - Optional configuration for image processing
    * @returns Promise resolving to a fully processed file ready for upload
-   * @throws {Error} Error if file processing fails
+   * @throws {FileUploadError} Error if file processing fails
    */
   async processFile(
     input: FileInput,
     context: "attachment" | "asset" = "attachment",
     options?: Partial<ImageProcessingOptions>,
   ): Promise<ProcessedFile> {
-    validateInput(input);
-
     try {
+      validateInput(input);
+
       // Convert input to buffer
       const buffer = await this.toBuffer(input);
 
@@ -624,6 +689,18 @@ export const FileHandler = {
         context === "attachment"
           ? FILE_CONSTANTS.ATTACHMENT_MAX_SIZE
           : FILE_CONSTANTS.ASSET_MAX_SIZE;
+
+      // Check file size before processing
+      if (buffer.length > maxSize) {
+        throw new FileUploadError(
+          `File size exceeds maximum allowed size (${buffer.length} > ${maxSize} bytes)`,
+          {
+            filename,
+            contentType,
+            fileSize: buffer.length,
+          },
+        );
+      }
 
       // Configure processing options
       const processingOptions: ImageProcessingOptions = {
@@ -650,8 +727,30 @@ export const FileHandler = {
         dataUri: createDataUri(processedBuffer, finalContentType),
       };
     } catch (error) {
-      throw new Error(
+      // If it's already a FileUploadError, just re-throw it
+      if (error instanceof FileUploadError) {
+        throw error;
+      }
+
+      // Otherwise, convert it to a FileUploadError with relevant details
+      throw new FileUploadError(
         `File processing failed: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          filename:
+            typeof input === "string"
+              ? basename(input)
+              : input instanceof File
+                ? input.name
+                : undefined,
+          fileSize:
+            input instanceof Blob
+              ? input.size
+              : Buffer.isBuffer(input)
+                ? input.length
+                : undefined,
+          contentType: input instanceof Blob ? input.type : undefined,
+          cause: error instanceof Error ? error : undefined,
+        },
       );
     }
   },
@@ -663,20 +762,30 @@ export const FileHandler = {
    * @param form - The FormData object to append to
    * @param body - The body payload to format and append
    * @returns Promise that resolves when the payload has been appended
+   * @throws {FileUploadError} Error if appending payload fails
    */
   async appendPayloadJson(
     form: FormData,
     body: HttpRequestOptions["body"],
   ): Promise<void> {
-    if (typeof body === "string") {
-      form.append("payload_json", body);
-    } else if (Buffer.isBuffer(body)) {
-      form.append("payload_json", Buffer.from(body));
-    } else if (body instanceof Readable) {
-      const buffer = await streamToBuffer(body);
-      form.append("payload_json", buffer);
-    } else {
-      form.append("payload_json", JSON.stringify(body));
+    try {
+      if (typeof body === "string") {
+        form.append("payload_json", body);
+      } else if (Buffer.isBuffer(body)) {
+        form.append("payload_json", Buffer.from(body));
+      } else if (body instanceof Readable) {
+        const buffer = await streamToBuffer(body);
+        form.append("payload_json", buffer);
+      } else {
+        form.append("payload_json", JSON.stringify(body));
+      }
+    } catch (error) {
+      throw new FileUploadError(
+        `Failed to append JSON payload: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
   },
 
@@ -688,7 +797,7 @@ export const FileHandler = {
    * @param body - Optional JSON payload to include
    * @param processingOptions - Optional configuration for image processing
    * @returns Promise resolving to a FormData object ready for API submission
-   * @throws {Error} Error if too many files are provided or processing fails
+   * @throws {FileUploadError} Error if too many files are provided or processing fails
    */
   async createFormData(
     files: FileInput | FileInput[],
@@ -698,36 +807,54 @@ export const FileHandler = {
     const filesArray = Array.isArray(files) ? files : [files];
 
     if (filesArray.length > FILE_CONSTANTS.MAX_FILES) {
-      throw new Error(
+      throw new FileUploadError(
         `Too many files: ${filesArray.length}. Maximum allowed is ${FILE_CONSTANTS.MAX_FILES}`,
+        {
+          fileSize: filesArray.length,
+        },
       );
     }
 
     const form = new FormData();
 
-    // Process files in parallel for better performance
-    const processedFiles = await Promise.all(
-      filesArray.map((file) =>
-        this.processFile(file as FileInput, "attachment", processingOptions),
-      ),
-    );
+    try {
+      // Process files in parallel for better performance
+      const processedFiles = await Promise.all(
+        filesArray.map((file) =>
+          this.processFile(file as FileInput, "attachment", processingOptions),
+        ),
+      );
 
-    // Append each processed file
-    processedFiles.forEach((processedFile, i) => {
-      const fieldName = filesArray.length === 1 ? "file" : `files[${i}]`;
+      // Append each processed file
+      processedFiles.forEach((processedFile, i) => {
+        const fieldName = filesArray.length === 1 ? "file" : `files[${i}]`;
 
-      form.append(fieldName, processedFile.buffer, {
-        filename: processedFile.filename,
-        contentType: processedFile.contentType,
-        knownLength: processedFile.size,
+        form.append(fieldName, processedFile.buffer, {
+          filename: processedFile.filename,
+          contentType: processedFile.contentType,
+          knownLength: processedFile.size,
+        });
       });
-    });
 
-    // Add JSON payload if provided
-    if (body !== undefined) {
-      await this.appendPayloadJson(form, body);
+      // Add JSON payload if provided
+      if (body !== undefined) {
+        await this.appendPayloadJson(form, body);
+      }
+
+      return form;
+    } catch (error) {
+      // If it's already a FileUploadError, just re-throw it
+      if (error instanceof FileUploadError) {
+        throw error;
+      }
+
+      // Otherwise, convert it to a FileUploadError
+      throw new FileUploadError(
+        `Failed to create form data: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          cause: error instanceof Error ? error : undefined,
+        },
+      );
     }
-
-    return form;
   },
 } as const;

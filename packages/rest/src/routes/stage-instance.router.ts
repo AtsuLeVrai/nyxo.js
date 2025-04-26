@@ -3,7 +3,7 @@ import type {
   StageInstanceEntity,
   StageInstancePrivacyLevel,
 } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 
 /**
  * Interface for creating a new Stage instance.
@@ -69,7 +69,7 @@ export interface StageUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/stage-instance}
  */
-export class StageInstanceRouter {
+export class StageInstanceRouter extends BaseRouter {
   /**
    * API route constants for Stage Instance endpoints.
    */
@@ -85,17 +85,6 @@ export class StageInstanceRouter {
       `/stage-instances/${channelId}` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new Stage Instance Router instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Creates a new Stage Instance associated with a Stage channel.
    * Makes a Stage channel "go live" with the specified topic and settings.
@@ -109,12 +98,10 @@ export class StageInstanceRouter {
     options: StageCreateOptions,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    return this.#rest.post(
+    return this.post(
       StageInstanceRouter.STAGE_ROUTES.stageInstancesEndpoint,
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -127,7 +114,7 @@ export class StageInstanceRouter {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#get-stage-instance}
    */
   fetchStage(channelId: Snowflake): Promise<StageInstanceEntity> {
-    return this.#rest.get(
+    return this.get(
       StageInstanceRouter.STAGE_ROUTES.stageInstanceByIdEndpoint(channelId),
     );
   }
@@ -147,12 +134,10 @@ export class StageInstanceRouter {
     options: StageUpdateOptions,
     reason?: string,
   ): Promise<StageInstanceEntity> {
-    return this.#rest.patch(
+    return this.patch(
       StageInstanceRouter.STAGE_ROUTES.stageInstanceByIdEndpoint(channelId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -166,11 +151,9 @@ export class StageInstanceRouter {
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#delete-stage-instance}
    */
   endStage(channelId: Snowflake, reason?: string): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       StageInstanceRouter.STAGE_ROUTES.stageInstanceByIdEndpoint(channelId),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 }

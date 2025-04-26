@@ -1,6 +1,6 @@
 import type { Snowflake, SoundboardSoundEntity } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { BaseRouter } from "../bases/index.js";
+import type { FileInput } from "../handlers/index.js";
 
 /**
  * Interface for sending a soundboard sound to a voice channel.
@@ -112,7 +112,7 @@ export interface GuildSoundUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/soundboard}
  */
-export class SoundboardRouter {
+export class SoundboardRouter extends BaseRouter {
   /**
    * API route constants for soundboard-related endpoints.
    */
@@ -143,17 +143,6 @@ export class SoundboardRouter {
       `/channels/${channelId}/send-soundboard-sound` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new Soundboard Router instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Plays a soundboard sound in a voice channel the user is connected to.
    * Requires SPEAK and USE_SOUNDBOARD permissions.
@@ -167,11 +156,9 @@ export class SoundboardRouter {
     channelId: Snowflake,
     options: SoundboardSendOptions,
   ): Promise<void> {
-    return this.#rest.post(
+    return this.post(
       SoundboardRouter.SOUNDBOARD_ROUTES.playSoundInChannelEndpoint(channelId),
-      {
-        body: JSON.stringify(options),
-      },
+      options,
     );
   }
 
@@ -183,9 +170,7 @@ export class SoundboardRouter {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-default-soundboard-sounds}
    */
   fetchDefaultSounds(): Promise<SoundboardSoundEntity[]> {
-    return this.#rest.get(
-      SoundboardRouter.SOUNDBOARD_ROUTES.defaultSoundsEndpoint,
-    );
+    return this.get(SoundboardRouter.SOUNDBOARD_ROUTES.defaultSoundsEndpoint);
   }
 
   /**
@@ -197,7 +182,7 @@ export class SoundboardRouter {
    * @see {@link https://discord.com/developers/docs/resources/soundboard#list-guild-soundboard-sounds}
    */
   fetchSounds(guildId: Snowflake): Promise<GuildSoundsResponse> {
-    return this.#rest.get(
+    return this.get(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundsEndpoint(guildId),
     );
   }
@@ -215,7 +200,7 @@ export class SoundboardRouter {
     guildId: Snowflake,
     soundId: Snowflake,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.get(
+    return this.get(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundByIdEndpoint(
         guildId,
         soundId,
@@ -238,16 +223,16 @@ export class SoundboardRouter {
     options: GuildSoundCreateOptions,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    if (options.sound) {
-      options.sound = await FileHandler.toDataUri(options.sound);
-    }
+    const fileFields: (keyof GuildSoundCreateOptions)[] = ["sound"];
+    const processedOptions = await this.prepareBodyWithFiles(
+      options,
+      fileFields,
+    );
 
-    return this.#rest.post(
+    return this.post(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundsEndpoint(guildId),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      processedOptions,
+      { reason },
     );
   }
 
@@ -268,15 +253,13 @@ export class SoundboardRouter {
     options: GuildSoundUpdateOptions,
     reason?: string,
   ): Promise<SoundboardSoundEntity> {
-    return this.#rest.patch(
+    return this.patch(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundByIdEndpoint(
         guildId,
         soundId,
       ),
-      {
-        body: JSON.stringify(options),
-        reason,
-      },
+      options,
+      { reason },
     );
   }
 
@@ -295,14 +278,12 @@ export class SoundboardRouter {
     soundId: Snowflake,
     reason?: string,
   ): Promise<void> {
-    return this.#rest.delete(
+    return this.delete(
       SoundboardRouter.SOUNDBOARD_ROUTES.guildSoundByIdEndpoint(
         guildId,
         soundId,
       ),
-      {
-        reason,
-      },
+      { reason },
     );
   }
 }

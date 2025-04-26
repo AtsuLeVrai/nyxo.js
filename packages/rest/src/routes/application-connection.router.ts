@@ -2,7 +2,7 @@ import type {
   ApplicationRoleConnectionMetadataEntity,
   Snowflake,
 } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
+import { BaseRouter } from "../bases/index.js";
 
 /**
  * Router for Discord Application Connection-related API endpoints.
@@ -10,7 +10,7 @@ import type { Rest } from "../core/index.js";
  *
  * @see {@link https://discord.com/developers/docs/resources/application-role-connection-metadata}
  */
-export class ApplicationConnectionRouter {
+export class ApplicationConnectionRouter extends BaseRouter {
   /**
    * API route constants for application connection-related endpoints.
    */
@@ -23,17 +23,6 @@ export class ApplicationConnectionRouter {
       `/applications/${applicationId}/role-connections/metadata` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new Application Connection Router instance.
-   * @param rest - The REST client to use for making Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches the role connection metadata records for an application.
    * Retrieves metadata fields used for role connection verification.
@@ -45,7 +34,7 @@ export class ApplicationConnectionRouter {
   fetchRoleConnectionMetadata(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.#rest.get(
+    return this.get(
       ApplicationConnectionRouter.CONNECTION_ROUTES.roleConnectionsMetadataEndpoint(
         applicationId,
       ),
@@ -65,13 +54,11 @@ export class ApplicationConnectionRouter {
     applicationId: Snowflake,
     metadata: ApplicationRoleConnectionMetadataEntity[],
   ): Promise<ApplicationRoleConnectionMetadataEntity[]> {
-    return this.#rest.put(
+    return this.put(
       ApplicationConnectionRouter.CONNECTION_ROUTES.roleConnectionsMetadataEndpoint(
         applicationId,
       ),
-      {
-        body: JSON.stringify(metadata),
-      },
+      metadata,
     );
   }
 }

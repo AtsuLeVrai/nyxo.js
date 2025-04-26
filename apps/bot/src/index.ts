@@ -48,6 +48,12 @@ const onKeyofEvents: (keyof ClientEvents)[] = [
   "wsError",
   "wsClose",
   "sessionStart",
+  "requestSuccess",
+  "requestStart",
+  "retry",
+  "rateLimitExpire",
+  "rateLimitUpdate",
+  "rateLimitHit",
 ];
 
 for (const event of onKeyofEvents) {
@@ -92,7 +98,7 @@ client.on("messageCreate", async (message) => {
     await message.reply({
       content: "Pong",
       embeds: [firstEmbed, secondEmbed, thirdEmbed],
-      // files: ["../../public/nyxjs_icon.png", "./src/index.ts"],
+      files: ["../../public/nyxjs_icon.png", "./src/index.ts"],
     });
   }
 

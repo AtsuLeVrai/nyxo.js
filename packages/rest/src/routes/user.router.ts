@@ -7,8 +7,8 @@ import type {
   Snowflake,
   UserEntity,
 } from "@nyxojs/core";
-import type { Rest } from "../core/index.js";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import { BaseRouter } from "../bases/index.js";
+import type { FileInput } from "../handlers/index.js";
 
 /**
  * Interface for modifying the current user's account settings.
@@ -123,7 +123,7 @@ export interface UserRoleConnectionUpdateOptions {
  *
  * @see {@link https://discord.com/developers/docs/resources/user}
  */
-export class UserRouter {
+export class UserRouter extends BaseRouter {
   /**
    * API route constants for user-related endpoints.
    * Defines the URL patterns for Discord's user-related API endpoints.
@@ -172,17 +172,6 @@ export class UserRouter {
       `/users/@me/applications/${applicationId}/role-connection` as const,
   } as const;
 
-  /** The REST client used to make API requests */
-  readonly #rest: Rest;
-
-  /**
-   * Creates a new User Router instance.
-   * @param rest - The REST client to use for Discord API requests
-   */
-  constructor(rest: Rest) {
-    this.#rest = rest;
-  }
-
   /**
    * Fetches the user object of the requester's account.
    * Returns detailed information about the currently authenticated user.
@@ -191,7 +180,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user}
    */
   fetchCurrentUser(): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.USER_ROUTES.currentUserEndpoint);
+    return this.get(UserRouter.USER_ROUTES.currentUserEndpoint);
   }
 
   /**
@@ -203,7 +192,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-user}
    */
   fetchUser(userId: Snowflake): Promise<UserEntity> {
-    return this.#rest.get(UserRouter.USER_ROUTES.userByIdEndpoint(userId));
+    return this.get(UserRouter.USER_ROUTES.userByIdEndpoint(userId));
   }
 
   /**
@@ -215,17 +204,16 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#modify-current-user}
    */
   async updateCurrentUser(options: UserUpdateOptions): Promise<UserEntity> {
-    if (options.avatar) {
-      options.avatar = await FileHandler.toDataUri(options.avatar);
-    }
+    const fileFields: (keyof UserUpdateOptions)[] = ["avatar", "banner"];
+    const processedOptions = await this.prepareBodyWithFiles(
+      options,
+      fileFields,
+    );
 
-    if (options.banner) {
-      options.banner = await FileHandler.toDataUri(options.banner);
-    }
-
-    return this.#rest.patch(UserRouter.USER_ROUTES.currentUserEndpoint, {
-      body: JSON.stringify(options),
-    });
+    return this.patch(
+      UserRouter.USER_ROUTES.currentUserEndpoint,
+      processedOptions,
+    );
   }
 
   /**
@@ -237,7 +225,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   fetchCurrentGuilds(query?: UserGuildsFetchParams): Promise<GuildEntity[]> {
-    return this.#rest.get(UserRouter.USER_ROUTES.currentUserGuildsEndpoint, {
+    return this.get(UserRouter.USER_ROUTES.currentUserGuildsEndpoint, {
       query,
     });
   }
@@ -251,7 +239,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guild-member}
    */
   fetchCurrentUserGuildMember(guildId: Snowflake): Promise<GuildMemberEntity> {
-    return this.#rest.get(
+    return this.get(
       UserRouter.USER_ROUTES.currentUserGuildMemberEndpoint(guildId),
     );
   }
@@ -265,9 +253,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#leave-guild}
    */
   leaveGuild(guildId: Snowflake): Promise<void> {
-    return this.#rest.delete(
-      UserRouter.USER_ROUTES.leaveGuildEndpoint(guildId),
-    );
+    return this.delete(UserRouter.USER_ROUTES.leaveGuildEndpoint(guildId));
   }
 
   /**
@@ -279,8 +265,8 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#create-dm}
    */
   createDmChannel(recipientId: Snowflake): Promise<DmChannelEntity> {
-    return this.#rest.post(UserRouter.USER_ROUTES.currentUserChannelsEndpoint, {
-      body: JSON.stringify({ recipient_id: recipientId }),
+    return this.post(UserRouter.USER_ROUTES.currentUserChannelsEndpoint, {
+      recipient_id: recipientId,
     });
   }
 
@@ -295,9 +281,10 @@ export class UserRouter {
   createGroupDmChannel(
     options: GroupDmCreateOptions,
   ): Promise<DmChannelEntity> {
-    return this.#rest.post(UserRouter.USER_ROUTES.currentUserChannelsEndpoint, {
-      body: JSON.stringify(options),
-    });
+    return this.post(
+      UserRouter.USER_ROUTES.currentUserChannelsEndpoint,
+      options,
+    );
   }
 
   /**
@@ -308,9 +295,7 @@ export class UserRouter {
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
   fetchCurrentConnections(): Promise<ConnectionEntity[]> {
-    return this.#rest.get(
-      UserRouter.USER_ROUTES.currentUserConnectionsEndpoint,
-    );
+    return this.get(UserRouter.USER_ROUTES.currentUserConnectionsEndpoint);
   }
 
   /**
@@ -324,7 +309,7 @@ export class UserRouter {
   fetchApplicationRoleConnection(
     applicationId: Snowflake,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.get(
+    return this.get(
       UserRouter.USER_ROUTES.applicationRoleConnectionEndpoint(applicationId),
     );
   }
@@ -342,11 +327,9 @@ export class UserRouter {
     applicationId: Snowflake,
     connection: UserRoleConnectionUpdateOptions,
   ): Promise<ApplicationRoleConnectionEntity> {
-    return this.#rest.put(
+    return this.put(
       UserRouter.USER_ROUTES.applicationRoleConnectionEndpoint(applicationId),
-      {
-        body: JSON.stringify(connection),
-      },
+      connection,
     );
   }
 }

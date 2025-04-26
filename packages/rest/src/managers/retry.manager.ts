@@ -1,6 +1,7 @@
 import { sleep } from "@nyxojs/core";
 import { z } from "zod";
 import type { Rest } from "../core/index.js";
+import { RateLimitError, RetryError } from "../errors/index.js";
 import type { HttpMethod, HttpResponse, RetryEvent } from "../types/index.js";
 import type { RateLimitResult } from "./rate-limit.manager.js";
 
@@ -88,10 +89,19 @@ export class RetryManager {
     // Calculate delay in milliseconds (retryAfter is already in ms now)
     const delay = rateLimitResult.retryAfter || 1000;
 
-    // Create error message with context about the rate limit
-    const error = new Error(
+    // Create a proper RateLimitError
+    const rateLimitError = new RateLimitError(
       rateLimitResult.reason ||
         `Rate limit exceeded for ${rateLimitResult.bucketHash || "unknown"} (${rateLimitResult.scope || "unknown"})`,
+      {
+        method,
+        path,
+        requestId,
+        retryAfter: delay,
+        global: rateLimitResult.limitType === "global",
+        bucketId: rateLimitResult.bucketHash || "unknown",
+        scope: rateLimitResult.scope || "user",
+      },
     );
 
     // Emit retry event for tracking and monitoring
@@ -99,7 +109,7 @@ export class RetryManager {
       requestId,
       method,
       path,
-      error,
+      error: rateLimitError,
       attempt: 1,
       delay,
       reason: "rate_limit",
@@ -128,6 +138,7 @@ export class RetryManager {
   ): Promise<HttpResponse<T>> {
     let attempts = 0;
     let lastResponse: HttpResponse<T> | null = null;
+    const attemptErrors: Error[] = []; // Track all errors for detailed reporting
 
     while (attempts <= this.#options.maxRetries) {
       try {
@@ -148,8 +159,15 @@ export class RetryManager {
         // Increment attempts
         attempts++;
 
+        // Capture the error for later
+        const currentError = new Error(
+          response.reason || `HTTP error ${response.statusCode}`,
+        );
+        attemptErrors.push(currentError);
+
         // If max retries reached, return the last response
         if (attempts > this.#options.maxRetries) {
+          // We'll throw a RetryError later if needed
           return response;
         }
 
@@ -161,9 +179,7 @@ export class RetryManager {
           requestId,
           method,
           path,
-          error: new Error(
-            response.reason || `HTTP error ${response.statusCode}`,
-          ),
+          error: currentError,
           attempt: attempts,
           delay,
           reason: this.#getRetryReason(response.statusCode),
@@ -175,8 +191,22 @@ export class RetryManager {
         // Handle unexpected errors (network issues, etc.)
         attempts++;
 
+        // Capture this error
+        const currentError =
+          error instanceof Error ? error : new Error(String(error));
+        attemptErrors.push(currentError);
+
         if (attempts > this.#options.maxRetries) {
-          throw error; // Re-throw if max retries reached
+          // All retries failed, throw comprehensive error
+          throw new RetryError(`Request failed after ${attempts} attempts`, {
+            attempts,
+            maxAttempts: this.#options.maxRetries,
+            attemptErrors,
+            method,
+            path,
+            requestId,
+            cause: currentError,
+          });
         }
 
         // Calculate exponential backoff delay for network errors
@@ -187,7 +217,7 @@ export class RetryManager {
           requestId,
           method,
           path,
-          error: error instanceof Error ? error : new Error(String(error)),
+          error: currentError,
           attempt: attempts,
           delay,
           reason: "network_error",
@@ -196,6 +226,12 @@ export class RetryManager {
         // Wait before retry
         await sleep(delay);
       }
+    }
+
+    // If we completed all retries but still have an error status code
+    if (lastResponse && lastResponse.statusCode >= 400) {
+      // We don't throw here - the error will be handled by the rest.ts class
+      // that will convert this to an appropriate error type based on status code
     }
 
     // This should never happen due to the returns above

@@ -4,6 +4,15 @@ import { EventEmitter } from "eventemitter3";
 import { Pool } from "undici";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import {
+  AuthenticationError,
+  CloudflareError,
+  DiscordApiError,
+  JsonApiError,
+  NotFoundError,
+  PermissionError,
+  RequestTimeoutError,
+} from "../errors/index.js";
 import { FileHandler } from "../handlers/index.js";
 import {
   RateLimitManager,
@@ -579,9 +588,8 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Check if the request was successful
     if (response.statusCode >= 400) {
-      throw new Error(
-        response.reason || `Request failed with status ${response.statusCode}`,
-      );
+      // Use appropriate error class based on status code
+      this.#throwAppropriateError(response, options, requestId);
     }
 
     // Update rate limit after successful request
@@ -784,6 +792,19 @@ export class Rest extends EventEmitter<RestEvents> {
         statusCode: response.statusCode,
         headers: response.headers as Record<string, string>,
       };
+    } catch (error) {
+      // Check if this was a timeout (abort triggered)
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new RequestTimeoutError({
+          timeoutMs: this.#options.timeout,
+          method: options.method,
+          path: options.path,
+          requestId,
+        });
+      }
+
+      // Re-throw other errors
+      throw error;
     } finally {
       // Always clear the timeout to prevent memory leaks
       clearTimeout(timeout);
@@ -972,5 +993,123 @@ export class Rest extends EventEmitter<RestEvents> {
 
     processErrors(errors);
     return errorParts.length > 0 ? errorParts.join("; ") : undefined;
+  }
+
+  /**
+   * Throws the most appropriate error type based on the API response.
+   * Maps HTTP status codes and response data to specific error classes
+   * for more precise error handling.
+   *
+   * @param response - HTTP response containing status code and data
+   * @param options - Original request options
+   * @param requestId - Unique identifier for the request
+   * @returns Never returns, always throws an error
+   * @private
+   */
+  #throwAppropriateError<T>(
+    response: HttpResponse<T>,
+    options: HttpRequestOptions,
+    requestId: string,
+  ): never {
+    const baseErrorOptions = {
+      status: response.statusCode,
+      method: options.method,
+      path: options.path,
+      requestId,
+    };
+
+    // Check if this is a JSON API error with specific code
+    if (this.#isJsonErrorEntity(response.data)) {
+      throw new JsonApiError(
+        response.data as unknown as JsonErrorResponse,
+        baseErrorOptions,
+      );
+    }
+
+    // Otherwise, determine error type based on status code
+    switch (response.statusCode) {
+      case 401:
+        throw new AuthenticationError(
+          response.reason || "Authentication failed",
+          baseErrorOptions,
+        );
+
+      case 403:
+        throw new PermissionError(
+          response.reason || "You lack permissions to perform this action",
+          baseErrorOptions,
+        );
+
+      case 404:
+        throw new NotFoundError(
+          response.reason || "The requested resource was not found",
+          {
+            ...baseErrorOptions,
+            resourceType: this.#extractResourceType(options.path),
+            resourceId: this.#extractResourceId(options.path),
+          },
+        );
+
+      case 429: {
+        // Check if it's a Cloudflare ban
+        if (response.headers["cf-ray"]) {
+          throw new CloudflareError(
+            response.reason || "Request blocked by Cloudflare",
+            {
+              ...baseErrorOptions,
+              rayId: response.headers["cf-ray"],
+            },
+          );
+        }
+
+        throw new DiscordApiError(
+          response.reason || "Rate limit exceeded",
+          baseErrorOptions,
+        );
+      }
+      default:
+        // Generic API error for other status codes
+        throw new DiscordApiError(
+          response.reason ||
+            `Request failed with status ${response.statusCode}`,
+          baseErrorOptions,
+        );
+    }
+  }
+
+  /**
+   * Extracts the resource type from a Discord API path.
+   * Identifies the entity type being accessed based on URL pattern.
+   *
+   * @param path - API path to analyze
+   * @returns The resource type (e.g., "channels", "guilds", "users") or undefined if not found
+   * @private
+   */
+  #extractResourceType(path?: string): string | undefined {
+    if (!path) {
+      return undefined;
+    }
+
+    // Match common Discord resource types from path
+    const matches = path.match(/\/([a-z-]+)\/\d+/i);
+    return matches?.[1];
+  }
+
+  /**
+   * Extracts the resource ID from a Discord API path.
+   * Identifies the specific entity ID being accessed.
+   *
+   * @param path - API path to analyze
+   * @returns The resource ID (Discord snowflake) or undefined if not found
+   * @private
+   */
+  #extractResourceId(path?: string): string | undefined {
+    if (!path) {
+      return undefined;
+    }
+
+    // Extract the last ID in the path (common Discord pattern)
+    const matches = path.match(/\/([0-9]+)(?:\/[a-z-]+)*\/?$/i);
+    return matches?.[1];
   }
 }
