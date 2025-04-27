@@ -1,43 +1,64 @@
+import dynamic from "next/dynamic";
+import type React from "react";
+
 import Footer from "@/components/layout/Footer";
+// Layout components
 import Header from "@/components/layout/Header";
+
+// Static imports for critical above-the-fold content
 import Hero from "@/components/sections/Hero";
-import React, { lazy, Suspense } from "react";
 
-// Lazy load section components for better performance
-const Features = lazy(() => import("@/components/sections/Features"));
-const Testimonials = lazy(() => import("@/components/sections/Testimonials"));
-const CTA = lazy(() => import("@/components/sections/CTA"));
+// Dynamic imports for better performance
+const Features = dynamic(() => import("@/components/sections/Features"), {
+  loading: () => <SectionLoading />,
+});
 
-// Loading fallback component
-const SectionLoading = () => (
+const Testimonials = dynamic(
+  () => import("@/components/sections/Testimonials"),
+  {
+    loading: () => <SectionLoading />,
+  },
+);
+
+const CTA = dynamic(() => import("@/components/sections/CTA"), {
+  loading: () => <SectionLoading />,
+});
+
+const CodePreview = dynamic(() => import("@/components/sections/CodePreview"), {
+  loading: () => <SectionLoading />,
+});
+
+// Loading component
+const SectionLoading = (): React.ReactElement => (
   <div className="flex items-center justify-center py-24">
     <div className="h-8 w-8 animate-spin rounded-full border-primary-500 border-b-2" />
   </div>
 );
 
-export default function Home() {
+export default function Home(): React.ReactElement {
   return (
     <div className="min-h-screen overflow-hidden bg-dark-700 text-slate-50">
+      {/* Header */}
       <Header />
 
       <main>
-        {/* Hero is loaded immediately */}
+        {/* Hero section - loaded immediately */}
         <Hero />
 
-        {/* Other sections are lazy loaded */}
-        <Suspense fallback={<SectionLoading />}>
-          <Features />
-        </Suspense>
+        {/* Features section - lazyloaded */}
+        <Features />
 
-        <Suspense fallback={<SectionLoading />}>
-          <Testimonials />
-        </Suspense>
+        {/* Code Preview section - shows example code */}
+        <CodePreview />
 
-        <Suspense fallback={<SectionLoading />}>
-          <CTA />
-        </Suspense>
+        {/* Testimonials section - lazyloaded */}
+        <Testimonials />
+
+        {/* Call to Action section - lazyloaded */}
+        <CTA />
       </main>
 
+      {/* Footer */}
       <Footer />
     </div>
   );

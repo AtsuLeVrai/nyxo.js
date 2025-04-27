@@ -1097,6 +1097,50 @@ export interface GuildMediaChannelEntity
 }
 
 /**
+ * Guild Directory Channel - The channel in a hub containing the listed servers.
+ * Used for Discord Student Hubs to list associated servers.
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-types}
+ */
+export interface GuildDirectoryChannelEntity
+  extends Omit<
+    ChannelEntity,
+    | "topic"
+    | "nsfw"
+    | "last_message_id"
+    | "bitrate"
+    | "user_limit"
+    | "rate_limit_per_user"
+    | "recipients"
+    | "icon"
+    | "owner_id"
+    | "application_id"
+    | "managed"
+    | "rtc_region"
+    | "video_quality_mode"
+    | "message_count"
+    | "member_count"
+    | "thread_metadata"
+    | "member"
+    | "default_auto_archive_duration"
+    | "available_tags"
+    | "applied_tags"
+    | "default_reaction_emoji"
+    | "default_thread_rate_limit_per_user"
+    | "default_sort_order"
+    | "default_forum_layout"
+  > {
+  /**
+   * The type of channel - always GuildDirectory (14).
+   */
+  type: ChannelType.GuildDirectory;
+
+  /**
+   * The ID of the guild containing this directory channel.
+   */
+  guild_id: Snowflake;
+}
+
+/**
  * Union type to represent any thread channel entity.
  */
 export type AnyThreadChannelEntity =
@@ -1119,4 +1163,19 @@ export type AnyChannelEntity =
   | GuildStageVoiceChannelEntity
   | GuildForumChannelEntity
   | GuildMediaChannelEntity
+  | GuildDirectoryChannelEntity
   | AnyThreadChannelEntity;
+
+/**
+ * Union type of all guild-based channel types.
+ * Includes all channels that are specific to a guild.
+ */
+export type AnyGuildBasedChannelEntity =
+  | GuildTextChannelEntity
+  | GuildVoiceChannelEntity
+  | GuildCategoryChannelEntity
+  | GuildAnnouncementChannelEntity
+  | GuildStageVoiceChannelEntity
+  | GuildForumChannelEntity
+  | GuildMediaChannelEntity
+  | GuildDirectoryChannelEntity;

@@ -13,23 +13,6 @@ import { COMPONENT_LIMITS } from "../utils/index.js";
  * Buttons are interactive elements that users can click to trigger an interaction.
  * There are different styles of buttons available, including link buttons that
  * navigate to URLs instead of sending interactions.
- *
- * @example
- * ```typescript
- * // Create a primary button
- * const button = new ButtonBuilder()
- *   .setLabel('Click Me')
- *   .setStyle(ButtonStyle.Primary)
- *   .setCustomId('my_button')
- *   .build();
- *
- * // Create a link button
- * const linkButton = new ButtonBuilder()
- *   .setLabel('Visit Website')
- *   .setStyle(ButtonStyle.Link)
- *   .setURL('https://discord.com')
- *   .build();
- * ```
  */
 export class ButtonBuilder {
   /** The internal button data being constructed */
@@ -56,17 +39,6 @@ export class ButtonBuilder {
    *
    * @param data - The button data to use
    * @returns A new ButtonBuilder instance with the provided data
-   *
-   * @example
-   * ```typescript
-   * const buttonData = {
-   *   type: ComponentType.Button,
-   *   label: 'Existing Button',
-   *   style: ButtonStyle.Primary,
-   *   custom_id: 'existing_button'
-   * };
-   * const builder = ButtonBuilder.from(buttonData);
-   * ```
    */
   static from(data: Partial<ButtonEntity>): ButtonBuilder {
     return new ButtonBuilder(data);
@@ -77,11 +49,6 @@ export class ButtonBuilder {
    *
    * @param style - The button style to set
    * @returns The button builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ButtonBuilder().setStyle(ButtonStyle.Success);
-   * ```
    */
   setStyle(style: ButtonStyle): this {
     this.#data.style = style;
@@ -94,11 +61,6 @@ export class ButtonBuilder {
    * @param label - The label to set (max 80 characters)
    * @returns The button builder instance for method chaining
    * @throws Error if label exceeds 80 characters
-   *
-   * @example
-   * ```typescript
-   * new ButtonBuilder().setLabel('Click Me');
-   * ```
    */
   setLabel(label: string): this {
     if (label.length > COMPONENT_LIMITS.BUTTON_LABEL) {
@@ -117,11 +79,6 @@ export class ButtonBuilder {
    * @param customId - The custom ID to set (max 100 characters)
    * @returns The button builder instance for method chaining
    * @throws Error if customId exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new ButtonBuilder().setCustomId('my_button_id');
-   * ```
    */
   setCustomId(customId: string): this {
     if (customId.length > COMPONENT_LIMITS.CUSTOM_ID) {
@@ -139,13 +96,6 @@ export class ButtonBuilder {
    *
    * @param skuId - The SKU ID to set
    * @returns The button builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ButtonBuilder()
-   *   .setStyle(ButtonStyle.Premium)
-   *   .setSkuId('1234567890123456');
-   * ```
    */
   setSkuId(skuId: Snowflake): this {
     this.#data.sku_id = skuId;
@@ -159,13 +109,6 @@ export class ButtonBuilder {
    * @param url - The URL to set
    * @returns The button builder instance for method chaining
    * @throws Error if URL is invalid
-   *
-   * @example
-   * ```typescript
-   * new ButtonBuilder()
-   *   .setStyle(ButtonStyle.Link)
-   *   .setURL('https://discord.com');
-   * ```
    */
   setUrl(url: string): this {
     try {
@@ -183,19 +126,6 @@ export class ButtonBuilder {
    *
    * @param emoji - The emoji to display on the button
    * @returns The button builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Unicode emoji
-   * new ButtonBuilder().setEmoji({ name: '👍' });
-   *
-   * // Custom emoji
-   * new ButtonBuilder().setEmoji({
-   *   id: '123456789012345678',
-   *   name: 'cool_emoji',
-   *   animated: false
-   * });
-   * ```
    */
   setEmoji(emoji: Pick<EmojiEntity, "id" | "name" | "animated">): this {
     this.#data.emoji = emoji;
@@ -207,11 +137,6 @@ export class ButtonBuilder {
    *
    * @param disabled - Whether the button should be disabled
    * @returns The button builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ButtonBuilder().setDisabled(true);
-   * ```
    */
   setDisabled(disabled = true): this {
     this.#data.disabled = disabled;
@@ -223,15 +148,6 @@ export class ButtonBuilder {
    *
    * @returns The complete button entity ready to be used in an action row
    * @throws Error if the button configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const button = new ButtonBuilder()
-   *   .setLabel('Click Me')
-   *   .setStyle(ButtonStyle.Primary)
-   *   .setCustomId('my_button')
-   *   .build();
-   * ```
    */
   build(): ButtonEntity {
     // Style is required for all buttons

@@ -1,32 +1,38 @@
 import {
   type ActionRowEntity,
   type AnyComponentEntity,
+  type AnySelectMenuEntity,
   ComponentType,
 } from "@nyxojs/core";
 import { COMPONENT_LIMITS } from "../utils/index.js";
 
 /**
+ * Type guard for select menu components
+ */
+function isSelectMenuComponent(
+  component: AnyComponentEntity,
+): component is AnySelectMenuEntity {
+  return [
+    ComponentType.StringSelect,
+    ComponentType.UserSelect,
+    ComponentType.RoleSelect,
+    ComponentType.MentionableSelect,
+    ComponentType.ChannelSelect,
+  ].includes(component.type);
+}
+
+/**
  * Builder for action row components.
  *
  * Action rows are containers that hold other components like buttons and select menus.
+ * The generic parameter `T` allows for type safety when adding components:
+ * - ActionRowBuilder<ButtonEntity> for button-only rows
+ * - ActionRowBuilder<SelectMenuComponent> for select menu rows
+ * - ActionRowBuilder<TextInputEntity> for text input rows
  *
- * @example
- * ```typescript
- * const row = new ActionRowBuilder()
- *   .addComponents(
- *     new ButtonBuilder()
- *       .setLabel('Accept')
- *       .setStyle(ButtonStyle.Success)
- *       .setCustomId('accept'),
- *     new ButtonBuilder()
- *       .setLabel('Decline')
- *       .setStyle(ButtonStyle.Danger)
- *       .setCustomId('decline')
- *   )
- *   .build();
- * ```
+ * @template T - The type of components this action row will contain
  */
-export class ActionRowBuilder {
+export class ActionRowBuilder<T extends AnyComponentEntity> {
   /** The internal action row data being constructed */
   readonly #data: Partial<ActionRowEntity> = {
     type: ComponentType.ActionRow,
@@ -54,8 +60,10 @@ export class ActionRowBuilder {
    * @param data - The action row data to use
    * @returns A new ActionRowBuilder instance with the provided data
    */
-  static from(data: Partial<ActionRowEntity>): ActionRowBuilder {
-    return new ActionRowBuilder(data);
+  static from<C extends AnyComponentEntity>(
+    data: Partial<ActionRowEntity>,
+  ): ActionRowBuilder<C> {
+    return new ActionRowBuilder<C>(data);
   }
 
   /**
@@ -64,19 +72,8 @@ export class ActionRowBuilder {
    * @param component - The component to add
    * @returns The action row builder instance for method chaining
    * @throws Error if adding the component would exceed the maximum number of components or if the component type is invalid
-   *
-   * @example
-   * ```typescript
-   * new ActionRowBuilder().addComponent(
-   *   new ButtonBuilder()
-   *     .setLabel('Click Me')
-   *     .setStyle(ButtonStyle.Primary)
-   *     .setCustomId('my_button')
-   *     .build()
-   * );
-   * ```
    */
-  addComponent(component: AnyComponentEntity): this {
+  addComponent(component: T): this {
     if (!this.#data.components) {
       this.#data.components = [];
     }
@@ -91,25 +88,39 @@ export class ActionRowBuilder {
 
     // Validate component type compatibility with existing components
     if (this.#data.components.length > 0) {
-      const existingType = this.#getComponentType(
-        this.#data.components[0] as AnyComponentEntity,
-      );
-      const newType = this.#getComponentType(component);
+      const existingComponent = this.#data.components[0] as AnyComponentEntity;
 
-      // Check for incompatible component types
-      if (existingType === "selectMenu" && newType !== "none") {
+      // Check if we're trying to mix select menus with other components
+      if (
+        isSelectMenuComponent(existingComponent) &&
+        component.type !== existingComponent.type
+      ) {
         throw new Error(
           "Action rows with select menus cannot contain other components",
         );
       }
-      if (existingType !== "none" && newType === "selectMenu") {
+
+      if (
+        isSelectMenuComponent(component) &&
+        existingComponent.type !== component.type
+      ) {
         throw new Error(
           "Action rows with components cannot contain select menus",
         );
       }
+
+      // If it's a text input, it should be the only component
+      if (
+        existingComponent.type === ComponentType.TextInput ||
+        component.type === ComponentType.TextInput
+      ) {
+        throw new Error(
+          "Action rows with text inputs cannot contain other components",
+        );
+      }
     }
 
-    this.#data.components.push(component);
+    this.#data.components.push(component as AnyComponentEntity);
     return this;
   }
 
@@ -119,24 +130,8 @@ export class ActionRowBuilder {
    * @param components - The components to add
    * @returns The action row builder instance for method chaining
    * @throws Error if adding the components would exceed the maximum number of components or if the component types are invalid
-   *
-   * @example
-   * ```typescript
-   * new ActionRowBuilder().addComponents(
-   *   new ButtonBuilder()
-   *     .setLabel('Yes')
-   *     .setStyle(ButtonStyle.Success)
-   *     .setCustomId('yes')
-   *     .build(),
-   *   new ButtonBuilder()
-   *     .setLabel('No')
-   *     .setStyle(ButtonStyle.Danger)
-   *     .setCustomId('no')
-   *     .build()
-   * );
-   * ```
    */
-  addComponents(...components: AnyComponentEntity[]): this {
+  addComponents(...components: T[]): this {
     for (const component of components) {
       this.addComponent(component);
     }
@@ -149,44 +144,34 @@ export class ActionRowBuilder {
    * @param components - The components to set
    * @returns The action row builder instance for method chaining
    * @throws Error if too many components are provided or if the component types are invalid
-   *
-   * @example
-   * ```typescript
-   * new ActionRowBuilder().setComponents([
-   *   new ButtonBuilder()
-   *     .setLabel('Yes')
-   *     .setStyle(ButtonStyle.Success)
-   *     .setCustomId('yes')
-   *     .build(),
-   *   new ButtonBuilder()
-   *     .setLabel('No')
-   *     .setStyle(ButtonStyle.Danger)
-   *     .setCustomId('no')
-   *     .build()
-   * ]);
-   * ```
    */
-  setComponents(components: AnyComponentEntity[]): this {
+  setComponents(components: T[]): this {
     if (components.length > COMPONENT_LIMITS.ACTION_ROW_COMPONENTS) {
       throw new Error(
         `Action rows cannot have more than ${COMPONENT_LIMITS.ACTION_ROW_COMPONENTS} components`,
       );
     }
 
-    // Check for incompatible component types
-    const types = components.map((c) => this.#getComponentType(c));
-    const hasSelectMenu = types.includes("selectMenu");
-    const hasOtherComponents = types.some(
-      (t) => t !== "selectMenu" && t !== "none",
-    );
+    // Empty the components array
+    this.#data.components = [];
 
-    if (hasSelectMenu && hasOtherComponents) {
-      throw new Error(
-        "Action rows cannot contain both select menus and other components",
-      );
+    // Add each component individually to ensure type validation
+    for (const component of components) {
+      this.addComponent(component);
     }
 
-    this.#data.components = [...components];
+    return this;
+  }
+
+  /**
+   * Sets the custom ID for the action row.
+   *
+   * @param id - The custom ID to set
+   *
+   * @returns The action row builder instance for method chaining
+   */
+  setId(id: number): this {
+    this.#data.id = id;
     return this;
   }
 
@@ -195,19 +180,6 @@ export class ActionRowBuilder {
    *
    * @returns The complete action row entity
    * @throws Error if the action row configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const row = new ActionRowBuilder()
-   *   .addComponents(
-   *     new ButtonBuilder()
-   *       .setLabel('Click Me')
-   *       .setStyle(ButtonStyle.Primary)
-   *       .setCustomId('my_button')
-   *       .build()
-   *   )
-   *   .build();
-   * ```
    */
   build(): ActionRowEntity {
     if (!this.#data.components || this.#data.components.length === 0) {
@@ -230,33 +202,5 @@ export class ActionRowBuilder {
    */
   toJson(): Readonly<Partial<ActionRowEntity>> {
     return Object.freeze({ ...this.#data });
-  }
-
-  /**
-   * Helper method to get the component type category.
-   *
-   * @param component - The component to check
-   * @returns The component type category: 'button', 'selectMenu', 'textInput', or 'none'
-   * @private
-   */
-  #getComponentType(
-    component: AnyComponentEntity,
-  ): "button" | "selectMenu" | "textInput" | "none" {
-    if (component.type === ComponentType.Button) {
-      return "button";
-    }
-    if (
-      component.type === ComponentType.StringSelect ||
-      component.type === ComponentType.UserSelect ||
-      component.type === ComponentType.RoleSelect ||
-      component.type === ComponentType.MentionableSelect ||
-      component.type === ComponentType.ChannelSelect
-    ) {
-      return "selectMenu";
-    }
-    if (component.type === ComponentType.TextInput) {
-      return "textInput";
-    }
-    return "none";
   }
 }

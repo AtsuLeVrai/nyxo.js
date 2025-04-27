@@ -169,16 +169,6 @@ export class Client extends EventEmitter<ClientEvents> {
   }
 
   /**
-   * Connects to the Discord Gateway
-   *
-   * @returns Promise that resolves when connected successfully
-   * @throws {Error} If the connection fails
-   */
-  async connect(): Promise<void> {
-    await this.#gateway.connect();
-  }
-
-  /**
    * Disconnects from the Discord Gateway and cleans up resources
    *
    * @returns Promise that resolves when disconnected successfully

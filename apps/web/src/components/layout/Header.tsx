@@ -8,39 +8,84 @@ import {
   GITHUB_REPO,
 } from "@/utils/constants";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { ExternalLink, Github, Menu, X } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import { usePathname } from "next/navigation";
+import type React from "react";
+import { useEffect, useState } from "react";
 
-const navLinks = [
+interface NavLink {
+  title: string;
+  href: string;
+  isExternal?: boolean;
+}
+
+/**
+ * Navigation links configuration
+ */
+const navLinks: NavLink[] = [
   { title: "Docs", href: "/docs" },
+  { title: "Examples", href: "/examples" },
+  { title: "API", href: "/docs/api" },
   {
     title: "License",
     href: GITHUB_LICENSE,
+    isExternal: true,
   },
   {
     title: "Contributors",
     href: GITHUB_CONTRIBUTORS,
+    isExternal: true,
   },
 ];
 
-export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+export default function Header(): React.ReactElement {
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [scrolled, setScrolled] = useState<boolean>(false);
+  const pathname = usePathname();
 
-  const toggleMenu = () => {
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = (): void => {
+      const offset = window.scrollY;
+      setScrolled(offset > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const toggleMenu = (): void => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // Check if a link is active
+  const isActive = (href: string): boolean => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
+
   return (
-    <nav className="fixed z-50 w-full border-dark-500 border-b bg-dark-700/80 backdrop-blur-md">
+    <motion.nav
+      className={`fixed z-50 w-full border-dark-500 border-b backdrop-blur-md transition-all duration-300 ${
+        scrolled ? "bg-dark-700/90 shadow-lg" : "bg-dark-700/70"
+      }`}
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <span className="bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text font-bold text-2xl text-transparent">
+            <Link href="/" className="group flex items-center">
+              <motion.span
+                className="bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text font-bold text-2xl text-transparent"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 Nyxo.js
-              </span>
+              </motion.span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -50,9 +95,38 @@ export default function Header() {
                   <Link
                     key={link.title}
                     href={link.href}
-                    className="px-3 py-2 font-medium text-slate-300 text-sm transition-colors hover:text-primary-400"
+                    className={`group relative px-3 py-2 font-medium text-sm transition-colors ${
+                      isActive(link.href)
+                        ? "text-primary-400"
+                        : "text-slate-300 hover:text-primary-400"
+                    }`}
+                    target={link.isExternal ? "_blank" : undefined}
+                    rel={link.isExternal ? "noopener noreferrer" : undefined}
                   >
-                    {link.title}
+                    <span className="flex items-center">
+                      {link.title}
+                      {link.isExternal && (
+                        <ExternalLink className="ml-1 h-3 w-3" />
+                      )}
+                    </span>
+
+                    {/* Active indicator */}
+                    {isActive(link.href) && !link.isExternal && (
+                      <motion.span
+                        className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-primary-500"
+                        layoutId="navbar-indicator"
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 30,
+                        }}
+                      />
+                    )}
+
+                    {/* Hover indicator */}
+                    {!isActive(link.href) && !link.isExternal && (
+                      <span className="absolute bottom-0 left-0 h-0.5 w-0 rounded-full bg-primary-500/50 transition-all duration-300 group-hover:w-full" />
+                    )}
                   </Link>
                 ))}
               </div>
@@ -62,8 +136,14 @@ export default function Header() {
           {/* Desktop Action Buttons */}
           <div className="hidden md:block">
             <div className="flex items-center space-x-4">
-              <Button href={GITHUB_REPO} variant="outline" size="md" external>
-                View on GitHub
+              <Button
+                href={GITHUB_REPO}
+                variant="outline"
+                size="md"
+                external
+                leadingIcon={<Github className="h-5 w-5" />}
+              >
+                GitHub
               </Button>
 
               <Button href={DISCORD_LINK} variant="primary" size="md" external>
@@ -76,25 +156,11 @@ export default function Header() {
           <div className="flex items-center md:hidden">
             <button
               type="button"
-              className="text-slate-300 hover:text-white"
+              className="rounded-md p-2 text-slate-300 hover:text-white"
               aria-label="Toggle menu"
               onClick={toggleMenu}
             >
-              <svg
-                className="h-6 w-6"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
+              <Menu className="h-6 w-6" />
             </button>
           </div>
         </div>
@@ -108,37 +174,53 @@ export default function Header() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden"
+            className="overflow-hidden md:hidden"
           >
-            <div className="border-dark-500 border-t bg-dark-800 px-2 pt-2 pb-3 shadow-lg">
+            <div className="border-dark-500 border-t bg-dark-800/95 px-2 pt-2 pb-3 shadow-lg backdrop-blur-lg">
               {/* Close button */}
               <div className="flex justify-end px-4 py-2">
                 <button
                   type="button"
-                  className="text-slate-400 hover:text-white"
+                  className="rounded-md p-2 text-slate-400 hover:text-white"
                   onClick={toggleMenu}
+                  aria-label="Close menu"
                 >
                   <X size={24} />
                 </button>
               </div>
 
               {/* Mobile nav links */}
-              <div className="space-y-1 px-3">
+              <div className="space-y-1 px-3 py-2">
                 {navLinks.map((link) => (
                   <Link
                     key={link.title}
                     href={link.href}
-                    className="block rounded-md px-3 py-2 font-medium text-base text-slate-300 hover:bg-dark-700 hover:text-primary-400"
+                    className={`block flex items-center rounded-md px-3 py-2 font-medium text-base ${
+                      isActive(link.href)
+                        ? "bg-primary-500/10 text-primary-400"
+                        : "text-slate-300 hover:bg-dark-700 hover:text-primary-400"
+                    }`}
                     onClick={toggleMenu}
+                    target={link.isExternal ? "_blank" : undefined}
+                    rel={link.isExternal ? "noopener noreferrer" : undefined}
                   >
                     {link.title}
+                    {link.isExternal && (
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    )}
                   </Link>
                 ))}
               </div>
 
               {/* Mobile action buttons */}
               <div className="mt-4 space-y-3 px-3 pb-3">
-                <Button href={GITHUB_REPO} variant="outline" fullWidth external>
+                <Button
+                  href={GITHUB_REPO}
+                  variant="outline"
+                  fullWidth
+                  external
+                  leadingIcon={<Github className="h-5 w-5" />}
+                >
                   View on GitHub
                 </Button>
 
@@ -155,6 +237,6 @@ export default function Header() {
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </motion.nav>
   );
 }

@@ -693,6 +693,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @throws {Error} If destruction fails with detailed error information
    */
   destroy(code = 1000): void {
+    if (this.#state === "disconnected") {
+      return;
+    }
+
     try {
       // Close the WebSocket connection with the provided code
       this.#closeWebSocket(code);

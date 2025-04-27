@@ -1,6 +1,5 @@
 "use client";
 
-import { ParticleBackground } from "@/components/animations/ParticleBackground";
 import { Button } from "@/components/ui/Button";
 import { DISCORD_LINK } from "@/utils/constants";
 import { motion } from "framer-motion";
@@ -13,9 +12,6 @@ export default function CTA() {
       {/* Background elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(138,75,255,0.15),transparent_70%)]" />
       <div className="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-5" />
-
-      {/* Interactive particles - reduced number for better performance */}
-      <ParticleBackground particleCount={60} disableOnMobile={true} />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div

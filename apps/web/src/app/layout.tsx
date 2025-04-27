@@ -9,8 +9,16 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Nyxo.js - TypeScript Discord Framework",
-  description: "A Next-Gen TypeScript Framework for Scalable Discord Bots",
+  title: "Nyxo.js - Type-Safe Discord Bot Framework",
+  description:
+    "Build modern, type-safe Discord bots with Nyxo.js - A next-generation framework for creating scalable and maintainable Discord applications",
+  keywords: [
+    "discord bot",
+    "typescript",
+    "discord.js",
+    "bot framework",
+    "nyxo.js",
+  ],
 };
 
 export default function RootLayout({

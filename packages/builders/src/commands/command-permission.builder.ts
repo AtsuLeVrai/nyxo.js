@@ -9,15 +9,6 @@ import { MAX_PERMISSIONS } from "../utils/index.js";
 /**
  * Builder for application command permission objects.
  * Used to set permissions for who can use a command in a guild.
- *
- * @example
- * ```typescript
- * const permission = new CommandPermissionBuilder()
- *   .setId('123456789012345678') // Role ID
- *   .setType(ApplicationCommandPermissionType.Role)
- *   .setPermission(true) // Allow this role to use the command
- *   .build();
- * ```
  */
 export class CommandPermissionBuilder {
   /** The internal permission data being constructed */
@@ -52,12 +43,6 @@ export class CommandPermissionBuilder {
    * @param roleId - The ID of the role
    * @param permission - true to allow, false to deny
    * @returns A new CommandPermissionBuilder instance
-   *
-   * @example
-   * ```typescript
-   * // Allow a role to use the command
-   * CommandPermissionBuilder.forRole('123456789012345678', true);
-   * ```
    */
   static forRole(
     roleId: Snowflake,
@@ -75,12 +60,6 @@ export class CommandPermissionBuilder {
    * @param userId - The ID of the user
    * @param permission - true to allow, false to deny
    * @returns A new CommandPermissionBuilder instance
-   *
-   * @example
-   * ```typescript
-   * // Allow a user to use the command
-   * CommandPermissionBuilder.forUser('123456789012345678', true);
-   * ```
    */
   static forUser(
     userId: Snowflake,
@@ -98,12 +77,6 @@ export class CommandPermissionBuilder {
    * @param channelId - The ID of the channel
    * @param permission - true to allow, false to deny
    * @returns A new CommandPermissionBuilder instance
-   *
-   * @example
-   * ```typescript
-   * // Allow a command to be used in a specific channel
-   * CommandPermissionBuilder.forChannel('123456789012345678', true);
-   * ```
    */
   static forChannel(
     channelId: Snowflake,
@@ -121,12 +94,6 @@ export class CommandPermissionBuilder {
    * @param guildId - The ID of the guild
    * @param permission - true to allow, false to deny
    * @returns A new CommandPermissionBuilder instance
-   *
-   * @example
-   * ```typescript
-   * // Allow everyone in the guild to use the command
-   * CommandPermissionBuilder.forEveryone('123456789012345678', true);
-   * ```
    */
   static forEveryone(
     guildId: Snowflake,
@@ -144,12 +111,6 @@ export class CommandPermissionBuilder {
    * @param guildId - The ID of the guild
    * @param permission - true to allow, false to deny
    * @returns A new CommandPermissionBuilder instance
-   *
-   * @example
-   * ```typescript
-   * // Allow the command to be used in all channels
-   * CommandPermissionBuilder.forAllChannels('123456789012345678', true);
-   * ```
    */
   static forAllChannels(
     guildId: Snowflake,
@@ -169,15 +130,6 @@ export class CommandPermissionBuilder {
    *
    * @param id - The ID to apply the permission to
    * @returns The permission builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // For a specific role
-   * new CommandPermissionBuilder().setId('123456789012345678');
-   *
-   * // For @everyone in the guild
-   * new CommandPermissionBuilder().setId(guildId);
-   * ```
    */
   setId(id: Snowflake): this {
     this.#data.id = id;
@@ -189,11 +141,6 @@ export class CommandPermissionBuilder {
    *
    * @param type - The permission type
    * @returns The permission builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new CommandPermissionBuilder().setType(ApplicationCommandPermissionType.Role);
-   * ```
    */
   setType(type: ApplicationCommandPermissionType): this {
     this.#data.type = type;
@@ -205,15 +152,6 @@ export class CommandPermissionBuilder {
    *
    * @param permission - true to allow, false to deny
    * @returns The permission builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Allow access
-   * new CommandPermissionBuilder().setPermission(true);
-   *
-   * // Deny access
-   * new CommandPermissionBuilder().setPermission(false);
-   * ```
    */
   setPermission(permission: boolean): this {
     this.#data.permission = permission;
@@ -255,17 +193,6 @@ export class CommandPermissionBuilder {
 /**
  * Builder for guild application command permissions objects.
  * Used to update permissions for commands in a guild.
- *
- * @example
- * ```typescript
- * const permissions = new GuildCommandPermissionsBuilder()
- *   .setApplicationId('123456789012345678')
- *   .setGuildId('987654321098765432')
- *   .setCommandId('456789012345678901')
- *   .addPermission(CommandPermissionBuilder.forRole('234567890123456789', true))
- *   .addPermission(CommandPermissionBuilder.forUser('345678901234567890', false))
- *   .build();
- * ```
  */
 export class GuildCommandPermissionsBuilder {
   /** The internal permissions data being constructed */
@@ -304,11 +231,6 @@ export class GuildCommandPermissionsBuilder {
    *
    * @param commandId - The command ID
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new GuildCommandPermissionsBuilder().setCommandId('123456789012345678');
-   * ```
    */
   setCommandId(commandId: Snowflake): this {
     this.#data.id = commandId;
@@ -320,11 +242,6 @@ export class GuildCommandPermissionsBuilder {
    *
    * @param applicationId - The application ID
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new GuildCommandPermissionsBuilder().setApplicationId('123456789012345678');
-   * ```
    */
   setApplicationId(applicationId: Snowflake): this {
     this.#data.application_id = applicationId;
@@ -336,11 +253,6 @@ export class GuildCommandPermissionsBuilder {
    *
    * @param guildId - The guild ID
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new GuildCommandPermissionsBuilder().setGuildId('123456789012345678');
-   * ```
    */
   setGuildId(guildId: Snowflake): this {
     this.#data.guild_id = guildId;
@@ -353,26 +265,6 @@ export class GuildCommandPermissionsBuilder {
    * @param permission - The permission to add or a function that returns a permission
    * @returns The permissions builder instance for method chaining
    * @throws Error if adding the permission would exceed the maximum number of permissions
-   *
-   * @example
-   * ```typescript
-   * // Adding a pre-built permission
-   * const rolePermission = new CommandPermissionBuilder()
-   *   .setId('123456789012345678')
-   *   .setType(ApplicationCommandPermissionType.Role)
-   *   .setPermission(true)
-   *   .build();
-   *
-   * new GuildCommandPermissionsBuilder().addPermission(rolePermission);
-   *
-   * // Using a builder function
-   * new GuildCommandPermissionsBuilder().addPermission(permission =>
-   *   permission
-   *     .setId('123456789012345678')
-   *     .setType(ApplicationCommandPermissionType.Role)
-   *     .setPermission(true)
-   * );
-   * ```
    */
   addPermission(
     permission:
@@ -408,14 +300,6 @@ export class GuildCommandPermissionsBuilder {
    * @param permissions - Array of permissions to add
    * @returns The permissions builder instance for method chaining
    * @throws Error if adding the permissions would exceed the maximum number
-   *
-   * @example
-   * ```typescript
-   * new GuildCommandPermissionsBuilder().addPermissions([
-   *   CommandPermissionBuilder.forRole('123456789012345678', true).build(),
-   *   CommandPermissionBuilder.forUser('987654321098765432', false).build()
-   * ]);
-   * ```
    */
   addPermissions(permissions: ApplicationCommandPermissionEntity[]): this {
     for (const permission of permissions) {
@@ -430,14 +314,6 @@ export class GuildCommandPermissionsBuilder {
    * @param permissions - Array of permissions to set
    * @returns The permissions builder instance for method chaining
    * @throws Error if too many permissions are provided
-   *
-   * @example
-   * ```typescript
-   * new GuildCommandPermissionsBuilder().setPermissions([
-   *   CommandPermissionBuilder.forRole('123456789012345678', true).build(),
-   *   CommandPermissionBuilder.forUser('987654321098765432', false).build()
-   * ]);
-   * ```
    */
   setPermissions(permissions: ApplicationCommandPermissionEntity[]): this {
     if (permissions.length > MAX_PERMISSIONS) {
@@ -455,16 +331,6 @@ export class GuildCommandPermissionsBuilder {
    *
    * @param allowedChannelIds - Array of channel IDs where the command is allowed
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Only allow the command in specific channels
-   * new GuildCommandPermissionsBuilder()
-   *   .setCommandId('123456789012345678')
-   *   .setApplicationId('234567890123456789')
-   *   .setGuildId('345678901234567890')
-   *   .restrictToChannels(['456789012345678901', '567890123456789012']);
-   * ```
    */
   restrictToChannels(allowedChannelIds: Snowflake[]): this {
     // First clear any existing permissions
@@ -497,16 +363,6 @@ export class GuildCommandPermissionsBuilder {
    *
    * @param allowedRoleIds - Array of role IDs that can use the command
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Only allow specific roles to use the command
-   * new GuildCommandPermissionsBuilder()
-   *   .setCommandId('123456789012345678')
-   *   .setApplicationId('234567890123456789')
-   *   .setGuildId('345678901234567890')
-   *   .restrictToRoles(['456789012345678901', '567890123456789012']);
-   * ```
    */
   restrictToRoles(allowedRoleIds: Snowflake[]): this {
     // First clear any existing permissions
@@ -539,16 +395,6 @@ export class GuildCommandPermissionsBuilder {
    *
    * @param allowedUserIds - Array of user IDs that can use the command
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Only allow specific users to use the command
-   * new GuildCommandPermissionsBuilder()
-   *   .setCommandId('123456789012345678')
-   *   .setApplicationId('234567890123456789')
-   *   .setGuildId('345678901234567890')
-   *   .restrictToUsers(['456789012345678901', '567890123456789012']);
-   * ```
    */
   restrictToUsers(allowedUserIds: Snowflake[]): this {
     // First clear any existing permissions
@@ -580,16 +426,6 @@ export class GuildCommandPermissionsBuilder {
    * Creates a permission payload for allowing a command for everyone (default behavior).
    *
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Allow everyone to use the command
-   * new GuildCommandPermissionsBuilder()
-   *   .setCommandId('123456789012345678')
-   *   .setApplicationId('234567890123456789')
-   *   .setGuildId('345678901234567890')
-   *   .allowForEveryone();
-   * ```
    */
   allowForEveryone(): this {
     // First clear any existing permissions
@@ -611,16 +447,6 @@ export class GuildCommandPermissionsBuilder {
    * Creates a permission payload for denying a command for everyone except administrators.
    *
    * @returns The permissions builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Only allow administrators to use the command
-   * new GuildCommandPermissionsBuilder()
-   *   .setCommandId('123456789012345678')
-   *   .setApplicationId('234567890123456789')
-   *   .setGuildId('345678901234567890')
-   *   .restrictToAdministrators();
-   * ```
    */
   restrictToAdministrators(): this {
     // First clear any existing permissions

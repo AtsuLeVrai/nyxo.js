@@ -14,18 +14,6 @@ import {
  *
  * Containers are top-level layout components that hold up to 10 components
  * and are visually distinct with an optional customizable color bar.
- *
- * @example
- * ```typescript
- * const container = new ContainerBuilder()
- *   .addComponent(
- *     new TextDisplayBuilder()
- *       .setContent('# Hello World')
- *       .build()
- *   )
- *   .setAccentColor(0xFF0000)
- *   .build();
- * ```
  */
 export class ContainerBuilder {
   /** The internal container data being constructed */

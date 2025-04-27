@@ -8,14 +8,6 @@ import {
  * Builder for thumbnail components.
  *
  * Thumbnails are small images that can be used as an accessory in a section.
- *
- * @example
- * ```typescript
- * const thumbnail = new ThumbnailBuilder()
- *   .setMedia({ url: 'https://example.com/image.png' })
- *   .setDescription('An example image')
- *   .build();
- * ```
  */
 export class ThumbnailBuilder {
   /** The internal thumbnail data being constructed */

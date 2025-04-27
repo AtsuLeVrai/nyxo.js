@@ -61,7 +61,7 @@ export enum ApiVersion {
   /**
    * Discord API Version 9.
    *
-   * Use {@link ApiVersion.V10} instead for all implementations.
+   * Use {@link ApiVersion.V10} instead as it is the only supported version in Nyxo.js.
    */
   V9 = 9,
 

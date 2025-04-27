@@ -124,7 +124,7 @@ export const TokenUtil = {
     if (parts.length === 3) {
       try {
         // Try to decode the first part as base64
-        const firstPart = Buffer.from(parts[0], "base64").toString();
+        const firstPart = Buffer.from(parts[0] as string, "base64").toString();
         // If it's all digits, it's likely a Bot token (user/app ID)
         if (/^\d+$/.test(firstPart)) {
           return "Bot";
@@ -236,7 +236,7 @@ export const TokenUtil = {
         // For Bot tokens, the first part is a base64-encoded user ID
         const parts = token.split(".");
         if (parts.length > 0) {
-          const idBuffer = Buffer.from(parts[0], "base64");
+          const idBuffer = Buffer.from(parts[0] as string, "base64");
           const id = idBuffer.toString();
 
           if (/^\d+$/.test(id)) {
@@ -259,7 +259,7 @@ export const TokenUtil = {
         if (parts.length >= 2) {
           try {
             const payload = JSON.parse(
-              Buffer.from(parts[1], "base64").toString(),
+              Buffer.from(parts[1] as string, "base64").toString(),
             );
 
             if (payload.exp) {
@@ -427,7 +427,7 @@ export const TokenUtil = {
         const parts = token.split(".");
         if (parts.length >= 3) {
           // For something like a JWT or Bot token with multiple segments
-          return `${parts[0]}.${parts[1].substring(0, 3)}...${parts[2].substring(0, 3)}...`;
+          return `${parts[0]}.${(parts[1] as string).substring(0, 3)}...${(parts[2] as string).substring(0, 3)}...`;
         }
         // For simple tokens
         return `${token.substring(0, token.length / 3)}...${token.substring(token.length - token.length / 3)}`;

@@ -28,10 +28,13 @@ import {
   type ThreadMetadataEntity,
   type VideoQualityMode,
 } from "@nyxojs/core";
+import type { MessageCreateEntity } from "@nyxojs/gateway";
+import type { CreateMessageSchema } from "@nyxojs/rest";
 import type { CamelCasedProperties } from "type-fest";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
 import { GuildMember } from "./guild.class.js";
+import { Message } from "./message.class.js";
 import { User } from "./user.class.js";
 
 @Cacheable("channels")
@@ -101,8 +104,10 @@ export abstract class Channel<T extends AnyChannelEntity> extends BaseClass<T> {
   }
 }
 
-export class DmChannel extends Channel<DmChannelEntity> {
-  // implements Enforce<CamelCasedProperties<DmChannelEntity>>
+export class DmChannel
+  extends Channel<DmChannelEntity>
+  implements Enforce<CamelCasedProperties<DmChannelEntity>>
+{
   override get type(): ChannelType.Dm {
     return ChannelType.Dm;
   }
@@ -126,10 +131,21 @@ export class DmChannel extends Channel<DmChannelEntity> {
   get flags(): BitField<ChannelFlags> {
     return new BitField(this.data.flags ?? 0n);
   }
+
+  async send(content: string | CreateMessageSchema): Promise<Message> {
+    const options = typeof content === "string" ? { content } : content;
+    const messageData = await this.client.rest.messages.sendMessage(
+      this.id,
+      options,
+    );
+    return new Message(this.client, messageData as MessageCreateEntity);
+  }
 }
 
-export class GroupDmChannel extends Channel<GroupDmChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GroupDmChannelEntity>>
+export class GroupDmChannel
+  extends Channel<GroupDmChannelEntity>
+  implements Enforce<CamelCasedProperties<GroupDmChannelEntity>>
+{
   override get type(): ChannelType.GroupDm {
     return ChannelType.GroupDm;
   }
@@ -163,8 +179,10 @@ export class GroupDmChannel extends Channel<GroupDmChannelEntity> {
   }
 }
 
-export class GuildAnnouncementChannel extends Channel<GuildAnnouncementChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GuildAnnouncementChannelEntity>>
+export class GuildAnnouncementChannel
+  extends Channel<GuildAnnouncementChannelEntity>
+  implements Enforce<CamelCasedProperties<GuildAnnouncementChannelEntity>>
+{
   override get type(): ChannelType.GuildAnnouncement {
     return ChannelType.GuildAnnouncement;
   }
@@ -218,8 +236,10 @@ export class GuildAnnouncementChannel extends Channel<GuildAnnouncementChannelEn
   }
 }
 
-export class GuildCategoryChannel extends Channel<GuildCategoryChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GuildCategoryChannelEntity>>
+export class GuildCategoryChannel
+  extends Channel<GuildCategoryChannelEntity>
+  implements Enforce<CamelCasedProperties<GuildCategoryChannelEntity>>
+{
   override get type(): ChannelType.GuildCategory {
     return ChannelType.GuildCategory;
   }
@@ -253,8 +273,10 @@ export class GuildCategoryChannel extends Channel<GuildCategoryChannelEntity> {
   }
 }
 
-export class GuildForumChannel extends Channel<GuildForumChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GuildForumChannelEntity>>
+export class GuildForumChannel
+  extends Channel<GuildForumChannelEntity>
+  implements Enforce<CamelCasedProperties<GuildForumChannelEntity>>
+{
   override get type(): ChannelType.GuildForum {
     return ChannelType.GuildForum;
   }
@@ -328,8 +350,10 @@ export class GuildForumChannel extends Channel<GuildForumChannelEntity> {
   }
 }
 
-export class GuildMediaChannel extends Channel<GuildMediaChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GuildMediaChannelEntity>>
+export class GuildMediaChannel
+  extends Channel<GuildMediaChannelEntity>
+  implements Enforce<CamelCasedProperties<GuildMediaChannelEntity>>
+{
   override get type(): ChannelType.GuildMedia {
     return ChannelType.GuildMedia;
   }
@@ -399,8 +423,10 @@ export class GuildMediaChannel extends Channel<GuildMediaChannelEntity> {
   }
 }
 
-export class GuildStageVoiceChannel extends Channel<GuildStageVoiceChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GuildStageVoiceChannelEntity>>
+export class GuildStageVoiceChannel
+  extends Channel<GuildStageVoiceChannelEntity>
+  implements Enforce<CamelCasedProperties<GuildStageVoiceChannelEntity>>
+{
   override get type(): ChannelType.GuildStageVoice {
     return ChannelType.GuildStageVoice;
   }
@@ -454,8 +480,10 @@ export class GuildStageVoiceChannel extends Channel<GuildStageVoiceChannelEntity
   }
 }
 
-export class GuildTextChannel extends Channel<GuildTextChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GuildTextChannelEntity>>
+export class GuildTextChannel
+  extends Channel<GuildTextChannelEntity>
+  implements Enforce<CamelCasedProperties<GuildTextChannelEntity>>
+{
   override get type(): ChannelType.GuildText {
     return ChannelType.GuildText;
   }
@@ -513,8 +541,10 @@ export class GuildTextChannel extends Channel<GuildTextChannelEntity> {
   }
 }
 
-export class GuildVoiceChannel extends Channel<GuildVoiceChannelEntity> {
-  // implements Enforce<CamelCasedProperties<GuildVoiceChannelEntity>>
+export class GuildVoiceChannel
+  extends Channel<GuildVoiceChannelEntity>
+  implements Enforce<CamelCasedProperties<GuildVoiceChannelEntity>>
+{
   override get type(): ChannelType.GuildVoice {
     return ChannelType.GuildVoice;
   }
@@ -672,8 +702,10 @@ export abstract class ThreadChannel<
   }
 }
 
-export class AnnouncementThreadChannel extends ThreadChannel<AnnouncementThreadChannelEntity> {
-  // implements Enforce<CamelCasedProperties<AnnouncementThreadChannelEntity>>
+export class AnnouncementThreadChannel
+  extends ThreadChannel<AnnouncementThreadChannelEntity>
+  implements Enforce<CamelCasedProperties<AnnouncementThreadChannelEntity>>
+{
   declare readonly data: AnnouncementThreadChannelEntity;
 
   override get type(): ChannelType.AnnouncementThread {
@@ -681,8 +713,10 @@ export class AnnouncementThreadChannel extends ThreadChannel<AnnouncementThreadC
   }
 }
 
-export class PrivateThreadChannel extends ThreadChannel<PrivateThreadChannelEntity> {
-  // implements Enforce<CamelCasedProperties<PrivateThreadChannelEntity>>
+export class PrivateThreadChannel
+  extends ThreadChannel<PrivateThreadChannelEntity>
+  implements Enforce<CamelCasedProperties<PrivateThreadChannelEntity>>
+{
   declare readonly data: PrivateThreadChannelEntity;
 
   override get type(): ChannelType.PrivateThread {
@@ -694,8 +728,10 @@ export class PrivateThreadChannel extends ThreadChannel<PrivateThreadChannelEnti
   }
 }
 
-export class PublicThreadChannel extends ThreadChannel<PublicThreadChannelEntity> {
-  // implements Enforce<CamelCasedProperties<PublicThreadChannelEntity>>
+export class PublicThreadChannel
+  extends ThreadChannel<PublicThreadChannelEntity>
+  implements Enforce<CamelCasedProperties<PublicThreadChannelEntity>>
+{
   declare readonly data: PublicThreadChannelEntity;
 
   override get type(): ChannelType.PublicThread {

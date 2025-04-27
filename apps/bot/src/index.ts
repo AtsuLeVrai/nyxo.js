@@ -1,5 +1,15 @@
 import { config } from "dotenv";
-import { Client, EmbedBuilder, GatewayIntentsBits } from "nyxo.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  type ButtonEntity,
+  ButtonStyle,
+  Client,
+  Colors,
+  EmbedBuilder,
+  GatewayIntentsBits,
+  type MessageCreateV1Options,
+} from "nyxo.js";
 
 // Load environment variables
 const { parsed } = config({ debug: true });
@@ -63,17 +73,30 @@ client.on("requestSuccess", (request) => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  if (message.content === "ping") {
+  if (message.content === "!ping") {
     const embed = new EmbedBuilder()
-      .setTitle("Pong!".repeat(1000))
+      .setTitle("Pong!")
       .setDescription("This is a test embed")
-      .setColor(0x00ff00)
+      .setColor(Colors.Green)
       .setTimestamp()
       .build();
-    await message.reply({
-      content: "Pong!",
+
+    const button = new ButtonBuilder()
+      .setCustomId("test_button")
+      .setLabel("Test Button")
+      .setStyle(ButtonStyle.Success)
+      .build();
+
+    const actionRow = new ActionRowBuilder<ButtonEntity>()
+      .addComponents(button)
+      .build();
+
+    const options: Omit<MessageCreateV1Options, "message_reference"> = {
       embeds: [embed],
-    });
+      components: [actionRow],
+    };
+
+    await message.reply(options);
   }
 });
 
@@ -99,7 +122,7 @@ process.on("SIGINT", async () => {
 // Start the bot
 async function main(): Promise<void> {
   console.log("[CLIENT] Connecting to Discord...");
-  await client.connect();
+  await client.gateway.connect();
   console.log("[CLIENT] Connected successfully");
 }
 

@@ -27,48 +27,82 @@ export interface CommandPermissionsUpdateOptions {
 
 /**
  * Interface for creating a global application command.
- * Defines properties for registering a command available in all guilds.
+ * Defines the required parameters for registering a command that can be used across Discord.
  *
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#create-global-application-command}
  */
 export interface GlobalCommandCreateOptions {
   /**
-   * Command name (1-32 characters).
+   * Name of the command (1-32 characters).
    * Must match the regex pattern ^[-_\p{L}\p{N}\p{sc=Deva}\p{sc=Thai}]{1,32}$
+   * Used when invoking the command with a slash or in the UI.
    */
   name: string;
 
-  /** Localization dictionary for the name field */
+  /**
+   * Localization dictionary for the name field.
+   * Maps locale to localized command name for international support.
+   */
   name_localizations?: Record<string, string> | null;
 
-  /** Command description (1-100 characters) */
+  /**
+   * Description of the command (1-100 characters).
+   * Shown in the Discord UI when users view available commands.
+   */
   description: string;
 
-  /** Localization dictionary for the description field */
+  /**
+   * Localization dictionary for the description field.
+   * Maps locale to localized description for international support.
+   */
   description_localizations?: Record<string, string> | null;
 
-  /** Command options/parameters (maximum 25) */
+  /**
+   * Array of command options/parameters (maximum 25).
+   * Defines the arguments that can be provided when using the command.
+   */
   options?: AnyApplicationCommandOptionEntity[];
 
-  /** Permissions required to use the command */
+  /**
+   * Permission string required to use the command.
+   * When null, everyone can use the command subject to the default permissions.
+   */
   default_member_permissions?: string | null;
 
-  /** Whether the command is available in DMs */
+  /**
+   * Whether the command is available in Direct Messages.
+   * When false, the command can only be used in guilds.
+   */
   dm_permission?: boolean | null;
 
-  /** Whether the command is enabled by default */
+  /**
+   * Whether the command is enabled by default when added to a guild.
+   * Deprecated in favor of default_member_permissions.
+   */
   default_permission?: boolean | null;
 
-  /** Installation contexts where the command is available */
+  /**
+   * Types of application integrations where this command is available.
+   * Controls where users can access the command.
+   */
   integration_types?: ApplicationIntegrationType[];
 
-  /** Interaction contexts where the command can be used */
+  /**
+   * Interaction contexts where the command can be used.
+   * Defines the UI locations where the command appears.
+   */
   contexts?: number[];
 
-  /** Type of command (defaults to ChatInput/slash command) */
+  /**
+   * Type of command (defaults to ChatInput/slash command).
+   * Determines how users interact with the command.
+   */
   type?: ApplicationCommandType;
 
-  /** Whether the command is age-restricted (18+ only) */
+  /**
+   * Whether the command is age-restricted (18+ only).
+   * Limits access to the command based on user age verification.
+   */
   nsfw?: boolean;
 }
 

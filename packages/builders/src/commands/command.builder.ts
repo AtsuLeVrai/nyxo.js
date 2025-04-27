@@ -59,11 +59,6 @@ export abstract class BaseCommandBuilder<
    * @param name - The name to set (max 32 characters)
    * @returns The command builder instance for method chaining
    * @throws Error if name exceeds 32 characters or doesn't match the allowed pattern
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().setName('ping');
-   * ```
    */
   setName(name: string): this {
     if (name.length > COMMAND_LIMITS.NAME) {
@@ -100,14 +95,6 @@ export abstract class BaseCommandBuilder<
    *
    * @param localizations - Dictionary of locale to localized name
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().setNameLocalizations({
-   *   'fr': 'ping-fr',
-   *   'es-ES': 'ping-es'
-   * });
-   * ```
    */
   setNameLocalizations(localizations: Record<Locale, string> | null): this {
     // Validate each localized name
@@ -139,11 +126,6 @@ export abstract class BaseCommandBuilder<
    *
    * @param nsfw - Whether the command is age-restricted
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().setNSFW(true);
-   * ```
    */
   setNsfw(nsfw = true): this {
     this.data.nsfw = nsfw;
@@ -155,15 +137,6 @@ export abstract class BaseCommandBuilder<
    *
    * @param permissions - The permissions as a bitfield string
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Require ADMINISTRATOR permission
-   * new SlashCommandBuilder().setDefaultMemberPermissions('8');
-   *
-   * // Disable the command for everyone except admins
-   * new SlashCommandBuilder().setDefaultMemberPermissions('0');
-   * ```
    */
   setDefaultMemberPermissions(permissions: string | null): this {
     this.data.default_member_permissions = permissions;
@@ -175,15 +148,6 @@ export abstract class BaseCommandBuilder<
    *
    * @param types - Array of integration types
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Make the command available for both guild and user installations
-   * new SlashCommandBuilder().setIntegrationTypes([
-   *   ApplicationIntegrationType.GuildInstall,
-   *   ApplicationIntegrationType.UserInstall
-   * ]);
-   * ```
    */
   setIntegrationTypes(...types: ApplicationIntegrationType[]): this {
     this.data.integration_types = types;
@@ -195,15 +159,6 @@ export abstract class BaseCommandBuilder<
    *
    * @param contexts - Array of interaction context types
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Make the command usable in guilds and DMs
-   * new SlashCommandBuilder().setContexts([
-   *   InteractionContextType.Guild,
-   *   InteractionContextType.BotDM
-   * ]);
-   * ```
    */
   setContexts(...contexts: InteractionContextType[]): this {
     this.data.contexts = contexts;
@@ -216,11 +171,6 @@ export abstract class BaseCommandBuilder<
    * @param enabled - Whether the command is available in DMs
    * @returns The command builder instance for method chaining
    * @deprecated Use setContexts instead
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().setDMPermission(false);
-   * ```
    */
   setDmPermission(enabled: boolean): this {
     this.data.dm_permission = enabled;
@@ -246,20 +196,6 @@ export abstract class BaseCommandBuilder<
 
 /**
  * Builder for slash commands (CHAT_INPUT type).
- *
- * @example
- * ```typescript
- * const command = new SlashCommandBuilder()
- *   .setName('echo')
- *   .setDescription('Echoes your input')
- *   .addStringOption(option =>
- *     option
- *       .setName('input')
- *       .setDescription('The input to echo back')
- *       .setRequired(true)
- *   )
- *   .build();
- * ```
  */
 export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -298,11 +234,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    * @param description - The description to set (max 100 characters)
    * @returns The command builder instance for method chaining
    * @throws Error if description exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().setDescription('Echoes your input back to you');
-   * ```
    */
   setDescription(description: string): this {
     if (description.length > COMMAND_LIMITS.DESCRIPTION) {
@@ -320,14 +251,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param localizations - Dictionary of locale to localized description
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().setDescriptionLocalizations({
-   *   'fr': 'Renvoie votre saisie',
-   *   'es-ES': 'Devuelve tu entrada'
-   * });
-   * ```
    */
   setDescriptionLocalizations(
     localizations: Record<Locale, string> | null,
@@ -353,26 +276,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    * @param option - The option to add or a function that returns an option
    * @returns The command builder instance for method chaining
    * @throws Error if adding the option would exceed the maximum number of options
-   *
-   * @example
-   * ```typescript
-   * // Adding a pre-built option
-   * const stringOption = new StringOptionBuilder()
-   *   .setName('input')
-   *   .setDescription('The input to echo back')
-   *   .setRequired(true)
-   *   .build();
-   *
-   * new SlashCommandBuilder().addOption(stringOption);
-   *
-   * // Using a builder function
-   * new SlashCommandBuilder().addOption(option =>
-   *   option
-   *     .setName('input')
-   *     .setDescription('The input to echo back')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addOption(
     option:
@@ -407,16 +310,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the string option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addStringOption(option =>
-   *   option
-   *     .setName('input')
-   *     .setDescription('The input to echo back')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addStringOption(
     optionBuilder: (builder: StringOptionBuilder) => StringOptionBuilder,
@@ -443,17 +336,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the integer option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addIntegerOption(option =>
-   *   option
-   *     .setName('count')
-   *     .setDescription('The number of items')
-   *     .setRequired(true)
-   *     .setMinValue(1)
-   * );
-   * ```
    */
   addIntegerOption(
     optionBuilder: (builder: IntegerOptionBuilder) => IntegerOptionBuilder,
@@ -480,17 +362,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the number option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addNumberOption(option =>
-   *   option
-   *     .setName('price')
-   *     .setDescription('The price of the item')
-   *     .setRequired(true)
-   *     .setMinValue(0.01)
-   * );
-   * ```
    */
   addNumberOption(
     optionBuilder: (builder: NumberOptionBuilder) => NumberOptionBuilder,
@@ -517,16 +388,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the boolean option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addBooleanOption(option =>
-   *   option
-   *     .setName('ephemeral')
-   *     .setDescription('Whether the response should be ephemeral')
-   *     .setRequired(false)
-   * );
-   * ```
    */
   addBooleanOption(
     optionBuilder: (builder: BooleanOptionBuilder) => BooleanOptionBuilder,
@@ -553,16 +414,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the user option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addUserOption(option =>
-   *   option
-   *     .setName('target')
-   *     .setDescription('The user to target')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addUserOption(
     optionBuilder: (builder: UserOptionBuilder) => UserOptionBuilder,
@@ -589,17 +440,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the channel option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addChannelOption(option =>
-   *   option
-   *     .setName('channel')
-   *     .setDescription('The channel to use')
-   *     .setRequired(true)
-   *     .addChannelType(ChannelType.GuildText)
-   * );
-   * ```
    */
   addChannelOption(
     optionBuilder: (builder: ChannelOptionBuilder) => ChannelOptionBuilder,
@@ -626,16 +466,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the role option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addRoleOption(option =>
-   *   option
-   *     .setName('role')
-   *     .setDescription('The role to use')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addRoleOption(
     optionBuilder: (builder: RoleOptionBuilder) => RoleOptionBuilder,
@@ -662,16 +492,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the mentionable option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addMentionableOption(option =>
-   *   option
-   *     .setName('mention')
-   *     .setDescription('Mention a user or role')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addMentionableOption(
     optionBuilder: (
@@ -700,16 +520,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param optionBuilder - Function that configures the attachment option
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addAttachmentOption(option =>
-   *   option
-   *     .setName('file')
-   *     .setDescription('The file to upload')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addAttachmentOption(
     optionBuilder: (
@@ -739,21 +549,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    * @param subcommandBuilder - Function that configures the subcommand
    * @returns The command builder instance for method chaining
    * @throws Error if adding the subcommand would exceed the maximum number of options
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addSubcommand(subcommand =>
-   *   subcommand
-   *     .setName('add')
-   *     .setDescription('Add a new item')
-   *     .addStringOption(option =>
-   *       option
-   *         .setName('name')
-   *         .setDescription('The name of the item')
-   *         .setRequired(true)
-   *     )
-   * );
-   * ```
    */
   addSubcommand(
     subcommandBuilder: (builder: SubCommandBuilder) => SubCommandBuilder,
@@ -794,26 +589,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    * @param groupBuilder - Function that configures the subcommand group
    * @returns The command builder instance for method chaining
    * @throws Error if adding the group would exceed the maximum number of options
-   *
-   * @example
-   * ```typescript
-   * new SlashCommandBuilder().addSubcommandGroup(group =>
-   *   group
-   *     .setName('manage')
-   *     .setDescription('Manage items')
-   *     .addSubcommand(subcommand =>
-   *       subcommand
-   *         .setName('add')
-   *         .setDescription('Add a new item')
-   *         .addStringOption(option =>
-   *           option
-   *             .setName('name')
-   *             .setDescription('The name of the item')
-   *             .setRequired(true)
-   *         )
-   *     )
-   * );
-   * ```
    */
   addSubcommandGroup(
     groupBuilder: (builder: SubCommandGroupBuilder) => SubCommandGroupBuilder,
@@ -953,14 +728,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
 
 /**
  * Builder for user context menu commands.
- *
- * @example
- * ```typescript
- * const command = new UserCommandBuilder()
- *   .setName('View Profile')
- *   .setDefaultMemberPermissions('0')
- *   .build();
- * ```
  */
 export class UserCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -1018,14 +785,6 @@ export class UserCommandBuilder extends BaseCommandBuilder<ApplicationCommandEnt
 
 /**
  * Builder for message context menu commands.
- *
- * @example
- * ```typescript
- * const command = new MessageCommandBuilder()
- *   .setName('Translate')
- *   .setDefaultMemberPermissions(null)  // Allow everyone to use it
- *   .build();
- * ```
  */
 export class MessageCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -1072,15 +831,6 @@ export class MessageCommandBuilder extends BaseCommandBuilder<ApplicationCommand
 /**
  * Builder for entry point commands (PRIMARY_ENTRY_POINT type).
  * These commands serve as the primary way to launch an app's Activity from the App Launcher.
- *
- * @example
- * ```typescript
- * const command = new EntryPointCommandBuilder()
- *   .setName('Launch Game')
- *   .setDescription('Start playing our awesome game')
- *   .setHandler(ApplicationCommandEntryPointType.DiscordLaunchActivity)
- *   .build();
- * ```
  */
 export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -1126,11 +876,6 @@ export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationComm
    * @param description - The description to set (max 100 characters)
    * @returns The command builder instance for method chaining
    * @throws Error if description exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new EntryPointCommandBuilder().setDescription('Launch our awesome game');
-   * ```
    */
   setDescription(description: string): this {
     if (description.length > COMMAND_LIMITS.DESCRIPTION) {
@@ -1148,14 +893,6 @@ export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationComm
    *
    * @param localizations - Dictionary of locale to localized description
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new EntryPointCommandBuilder().setDescriptionLocalizations({
-   *   'fr': 'Lancer notre jeu génial',
-   *   'es-ES': 'Inicia nuestro increíble juego'
-   * });
-   * ```
    */
   setDescriptionLocalizations(
     localizations: Record<Locale, string> | null,
@@ -1181,15 +918,6 @@ export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationComm
    *
    * @param handler - The handler type to use
    * @returns The command builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Let Discord handle launching the Activity
-   * new EntryPointCommandBuilder().setHandler(ApplicationCommandEntryPointType.DiscordLaunchActivity);
-   *
-   * // Let the app handle the interaction
-   * new EntryPointCommandBuilder().setHandler(ApplicationCommandEntryPointType.AppHandler);
-   * ```
    */
   setHandler(handler: ApplicationCommandEntryPointType): this {
     this.data.handler = handler;

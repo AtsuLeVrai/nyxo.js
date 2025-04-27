@@ -9,14 +9,6 @@ import {
  * Builder for media gallery item components.
  *
  * Media gallery items represent individual items in a media gallery.
- *
- * @example
- * ```typescript
- * const item = new MediaGalleryItemBuilder()
- *   .setMedia({ url: 'https://example.com/image.png' })
- *   .setDescription('An example image')
- *   .build();
- * ```
  */
 export class MediaGalleryItemBuilder {
   /** The internal media gallery item data being constructed */
@@ -104,22 +96,6 @@ export class MediaGalleryItemBuilder {
  * Builder for media gallery components.
  *
  * Media galleries allow you to display 1-10 media attachments in an organized gallery format.
- *
- * @example
- * ```typescript
- * const gallery = new MediaGalleryBuilder()
- *   .addItem(
- *     new MediaGalleryItemBuilder()
- *       .setMedia({ url: 'https://example.com/image1.png' })
- *       .build()
- *   )
- *   .addItem(
- *     new MediaGalleryItemBuilder()
- *       .setMedia({ url: 'https://example.com/image2.png' })
- *       .build()
- *   )
- *   .build();
- * ```
  */
 export class MediaGalleryBuilder {
   /** The internal media gallery data being constructed */

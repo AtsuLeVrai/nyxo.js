@@ -4,14 +4,6 @@ import { ComponentType, type SeparatorEntity } from "@nyxojs/core";
  * Builder for separator components.
  *
  * Separators add vertical padding and visual division between other components.
- *
- * @example
- * ```typescript
- * const separator = new SeparatorBuilder()
- *   .setDivider(true)
- *   .setSpacing(2)
- *   .build();
- * ```
  */
 export class SeparatorBuilder {
   /** The internal separator data being constructed */

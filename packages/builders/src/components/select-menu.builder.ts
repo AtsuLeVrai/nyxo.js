@@ -18,15 +18,6 @@ import { COMPONENT_LIMITS } from "../utils/index.js";
  * Builder for select menu options used in string select menus.
  *
  * Each option represents a choice that users can select from a dropdown menu.
- *
- * @example
- * ```typescript
- * const option = new SelectMenuOptionBuilder()
- *   .setLabel('Option 1')
- *   .setValue('option_1')
- *   .setDescription('This is the first option')
- *   .build();
- * ```
  */
 export class SelectMenuOptionBuilder {
   /** The internal option data being constructed */
@@ -60,11 +51,6 @@ export class SelectMenuOptionBuilder {
    * @param label - The label to set (max 100 characters)
    * @returns The option builder instance for method chaining
    * @throws Error if label exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new SelectMenuOptionBuilder().setLabel('Option 1');
-   * ```
    */
   setLabel(label: string): this {
     if (label.length > COMPONENT_LIMITS.SELECT_OPTION_LABEL) {
@@ -83,11 +69,6 @@ export class SelectMenuOptionBuilder {
    * @param value - The value to set (max 100 characters)
    * @returns The option builder instance for method chaining
    * @throws Error if value exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new SelectMenuOptionBuilder().setValue('option_1');
-   * ```
    */
   setValue(value: string): this {
     if (value.length > COMPONENT_LIMITS.SELECT_OPTION_VALUE) {
@@ -106,11 +87,6 @@ export class SelectMenuOptionBuilder {
    * @param description - The description to set (max 100 characters)
    * @returns The option builder instance for method chaining
    * @throws Error if description exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new SelectMenuOptionBuilder().setDescription('This is the first option');
-   * ```
    */
   setDescription(description: string): this {
     if (description.length > COMPONENT_LIMITS.SELECT_OPTION_DESCRIPTION) {
@@ -127,19 +103,6 @@ export class SelectMenuOptionBuilder {
    *
    * @param emoji - The emoji object
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Unicode emoji
-   * new SelectMenuOptionBuilder().setEmoji({ name: '👍' });
-   *
-   * // Custom emoji
-   * new SelectMenuOptionBuilder().setEmoji({
-   *   id: '123456789012345678',
-   *   name: 'cool_emoji',
-   *   animated: false
-   * });
-   * ```
    */
   setEmoji(emoji: Pick<EmojiEntity, "id" | "name" | "animated">): this {
     this.#data.emoji = emoji;
@@ -151,11 +114,6 @@ export class SelectMenuOptionBuilder {
    *
    * @param isDefault - Whether this option should be selected by default
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SelectMenuOptionBuilder().setDefault(true);
-   * ```
    */
   setDefault(isDefault = true): this {
     this.#data.default = isDefault;
@@ -167,14 +125,6 @@ export class SelectMenuOptionBuilder {
    *
    * @returns The complete select menu option entity
    * @throws Error if the option configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const option = new SelectMenuOptionBuilder()
-   *   .setLabel('Option 1')
-   *   .setValue('option_1')
-   *   .build();
-   * ```
    */
   build(): SelectMenuOptionEntity {
     if (!this.#data.label) {
@@ -203,14 +153,6 @@ export class SelectMenuOptionBuilder {
  *
  * Default values specify which options should be pre-selected when
  * an auto-populated select menu is displayed.
- *
- * @example
- * ```typescript
- * const defaultValue = new SelectMenuDefaultValueBuilder()
- *   .setId('123456789012345678')
- *   .setType('user')
- *   .build();
- * ```
  */
 export class SelectMenuDefaultValueBuilder {
   /** The internal default value data being constructed */
@@ -245,11 +187,6 @@ export class SelectMenuDefaultValueBuilder {
    *
    * @param id - The ID to set
    * @returns The default value builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SelectMenuDefaultValueBuilder().setId('123456789012345678');
-   * ```
    */
   setId(id: Snowflake): this {
     this.#data.id = id;
@@ -262,11 +199,6 @@ export class SelectMenuDefaultValueBuilder {
    *
    * @param type - The type of value: 'user', 'role', or 'channel'
    * @returns The default value builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SelectMenuDefaultValueBuilder().setType('user');
-   * ```
    */
   setType(type: "user" | "role" | "channel"): this {
     this.#data.type = type;
@@ -278,14 +210,6 @@ export class SelectMenuDefaultValueBuilder {
    *
    * @returns The complete select menu default value entity
    * @throws Error if the default value configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const defaultValue = new SelectMenuDefaultValueBuilder()
-   *   .setId('123456789012345678')
-   *   .setType('user')
-   *   .build();
-   * ```
    */
   build(): SelectMenuDefaultValueEntity {
     if (!this.#data.id) {
@@ -348,11 +272,6 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    * @param customId - The custom ID to set (max 100 characters)
    * @returns The select menu builder instance for method chaining
    * @throws Error if customId exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().setCustomId('my_select_menu');
-   * ```
    */
   setCustomId(customId: string): this {
     if (customId.length > COMPONENT_LIMITS.CUSTOM_ID) {
@@ -371,11 +290,6 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    * @param placeholder - The placeholder text to set (max 150 characters)
    * @returns The select menu builder instance for method chaining
    * @throws Error if placeholder exceeds 150 characters
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().setPlaceholder('Choose an option');
-   * ```
    */
   setPlaceholder(placeholder: string): this {
     if (placeholder.length > COMPONENT_LIMITS.SELECT_PLACEHOLDER) {
@@ -393,11 +307,6 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    * @param minValues - The minimum number of items (0-25)
    * @returns The select menu builder instance for method chaining
    * @throws Error if minValues is out of range
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().setMinValues(1);
-   * ```
    */
   setMinValues(minValues: number): this {
     if (minValues < 0 || minValues > COMPONENT_LIMITS.SELECT_OPTIONS) {
@@ -415,11 +324,6 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    * @param maxValues - The maximum number of items (1-25)
    * @returns The select menu builder instance for method chaining
    * @throws Error if maxValues is out of range
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().setMaxValues(3);
-   * ```
    */
   setMaxValues(maxValues: number): this {
     if (maxValues < 1 || maxValues > COMPONENT_LIMITS.SELECT_OPTIONS) {
@@ -436,11 +340,6 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    *
    * @param disabled - Whether the select menu should be disabled
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().setDisabled(true);
-   * ```
    */
   setDisabled(disabled = true): this {
     this.data.disabled = disabled;
@@ -488,20 +387,6 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
  * Builder for string select menu components.
  *
  * String select menus allow users to select from predefined text options.
- *
- * @example
- * ```typescript
- * const selectMenu = new StringSelectMenuBuilder()
- *   .setCustomId('food_selection')
- *   .setPlaceholder('Select your favorite food')
- *   .addOptions(
- *     { label: 'Pizza', value: 'pizza', description: 'Italian cuisine' },
- *     { label: 'Sushi', value: 'sushi', description: 'Japanese cuisine' }
- *   )
- *   .setMinValues(1)
- *   .setMaxValues(1)
- *   .build();
- * ```
  */
 export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectMenuEntity> {
   /**
@@ -523,16 +408,6 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    *
    * @param data - The select menu data to use
    * @returns A new StringSelectMenuBuilder instance with the provided data
-   *
-   * @example
-   * ```typescript
-   * const menuData = {
-   *   type: ComponentType.StringSelect,
-   *   custom_id: 'existing_menu',
-   *   options: [{ label: 'Option 1', value: 'option_1' }]
-   * };
-   * const builder = StringSelectMenuBuilder.from(menuData);
-   * ```
    */
   static from(data: Partial<StringSelectMenuEntity>): StringSelectMenuBuilder {
     return new StringSelectMenuBuilder(data);
@@ -544,15 +419,6 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    * @param option - The option to add
    * @returns The select menu builder instance for method chaining
    * @throws Error if adding the option would exceed the maximum number of options
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().addOption({
-   *   label: 'Option 1',
-   *   value: 'option_1',
-   *   description: 'This is the first option'
-   * });
-   * ```
    */
   addOption(option: SelectMenuOptionEntity): this {
     if (!this.data.options) {
@@ -575,14 +441,6 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    * @param options - The options to add
    * @returns The select menu builder instance for method chaining
    * @throws Error if adding the options would exceed the maximum number of options
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().addOptions(
-   *   { label: 'Option 1', value: 'option_1' },
-   *   { label: 'Option 2', value: 'option_2' }
-   * );
-   * ```
    */
   addOptions(...options: SelectMenuOptionEntity[]): this {
     for (const option of options) {
@@ -597,14 +455,6 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    * @param options - The options to set
    * @returns The select menu builder instance for method chaining
    * @throws Error if too many options are provided
-   *
-   * @example
-   * ```typescript
-   * new StringSelectMenuBuilder().setOptions([
-   *   { label: 'Option 1', value: 'option_1' },
-   *   { label: 'Option 2', value: 'option_2' }
-   * ]);
-   * ```
    */
   setOptions(options: SelectMenuOptionEntity[]): this {
     if (options.length > COMPONENT_LIMITS.SELECT_OPTIONS) {
@@ -622,18 +472,6 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    *
    * @returns The complete string select menu entity
    * @throws Error if the select menu configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const selectMenu = new StringSelectMenuBuilder()
-   *   .setCustomId('food_selection')
-   *   .setPlaceholder('Select your favorite food')
-   *   .addOptions(
-   *     { label: 'Pizza', value: 'pizza' },
-   *     { label: 'Sushi', value: 'sushi' }
-   *   )
-   *   .build();
-   * ```
    */
   build(): StringSelectMenuEntity {
     this.validate();
@@ -656,14 +494,6 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
  * Builder for user select menu components.
  *
  * User select menus allow users to select one or more members from the server.
- *
- * @example
- * ```typescript
- * const userSelect = new UserSelectMenuBuilder()
- *   .setCustomId('user_selection')
- *   .setPlaceholder('Select a user')
- *   .build();
- * ```
  */
 export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuEntity> {
   /**
@@ -695,11 +525,6 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
    *
    * @param userId - The ID of the user to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new UserSelectMenuBuilder().addDefaultUser('123456789012345678');
-   * ```
    */
   addDefaultUser(userId: Snowflake): this {
     if (!this.data.default_values) {
@@ -719,11 +544,6 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
    *
    * @param userIds - The IDs of the users to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new UserSelectMenuBuilder().setDefaultUsers(['123456789012345678', '987654321098765432']);
-   * ```
    */
   setDefaultUsers(userIds: Snowflake[]): this {
     this.data.default_values = userIds.map((id) => ({
@@ -739,14 +559,6 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
    *
    * @returns The complete user select menu entity
    * @throws Error if the select menu configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const userSelect = new UserSelectMenuBuilder()
-   *   .setCustomId('user_selection')
-   *   .setPlaceholder('Select a user')
-   *   .build();
-   * ```
    */
   build(): UserSelectMenuEntity {
     this.validate();
@@ -785,14 +597,6 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
  * Builder for role select menu components.
  *
  * Role select menus allow users to select one or more roles from the server.
- *
- * @example
- * ```typescript
- * const roleSelect = new RoleSelectMenuBuilder()
- *   .setCustomId('role_selection')
- *   .setPlaceholder('Select a role')
- *   .build();
- * ```
  */
 export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuEntity> {
   /**
@@ -824,11 +628,6 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
    *
    * @param roleId - The ID of the role to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new RoleSelectMenuBuilder().addDefaultRole('123456789012345678');
-   * ```
    */
   addDefaultRole(roleId: Snowflake): this {
     if (!this.data.default_values) {
@@ -848,11 +647,6 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
    *
    * @param roleIds - The IDs of the roles to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new RoleSelectMenuBuilder().setDefaultRoles(['123456789012345678', '987654321098765432']);
-   * ```
    */
   setDefaultRoles(roleIds: Snowflake[]): this {
     this.data.default_values = roleIds.map((id) => ({
@@ -868,14 +662,6 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
    *
    * @returns The complete role select menu entity
    * @throws Error if the select menu configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const roleSelect = new RoleSelectMenuBuilder()
-   *   .setCustomId('role_selection')
-   *   .setPlaceholder('Select a role')
-   *   .build();
-   * ```
    */
   build(): RoleSelectMenuEntity {
     this.validate();
@@ -914,14 +700,6 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
  * Builder for mentionable select menu components.
  *
  * Mentionable select menus allow users to select one or more users or roles from the server.
- *
- * @example
- * ```typescript
- * const mentionableSelect = new MentionableSelectMenuBuilder()
- *   .setCustomId('mentionable_selection')
- *   .setPlaceholder('Select a user or role')
- *   .build();
- * ```
  */
 export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<MentionableSelectMenuEntity> {
   /**
@@ -955,11 +733,6 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
    *
    * @param userId - The ID of the user to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new MentionableSelectMenuBuilder().addDefaultUser('123456789012345678');
-   * ```
    */
   addDefaultUser(userId: Snowflake): this {
     if (!this.data.default_values) {
@@ -979,11 +752,6 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
    *
    * @param roleId - The ID of the role to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new MentionableSelectMenuBuilder().addDefaultRole('123456789012345678');
-   * ```
    */
   addDefaultRole(roleId: Snowflake): this {
     if (!this.data.default_values) {
@@ -1003,14 +771,6 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
    *
    * @param values - The default values to set
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new MentionableSelectMenuBuilder().setDefaultValues([
-   *   { id: '123456789012345678', type: 'user' },
-   *   { id: '987654321098765432', type: 'role' }
-   * ]);
-   * ```
    */
   setDefaultValues(values: SelectMenuDefaultValueEntity[]): this {
     this.data.default_values = values.map((value) => ({
@@ -1026,14 +786,6 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
    *
    * @returns The complete mentionable select menu entity
    * @throws Error if the select menu configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const mentionableSelect = new MentionableSelectMenuBuilder()
-   *   .setCustomId('mentionable_selection')
-   *   .setPlaceholder('Select a user or role')
-   *   .build();
-   * ```
    */
   build(): MentionableSelectMenuEntity {
     this.validate();
@@ -1074,14 +826,6 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
  * Builder for channel select menu components.
  *
  * Channel select menus allow users to select one or more channels from the server.
- *
- * @example
- * ```typescript
- * const channelSelect = new ChannelSelectMenuBuilder()
- *   .setCustomId('channel_selection')
- *   .setPlaceholder('Select a channel')
- *   .build();
- * ```
  */
 export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelectMenuEntity> {
   /**
@@ -1119,11 +863,6 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    *
    * @param channelType - The channel type to add
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ChannelSelectMenuBuilder().addChannelType(ChannelType.GuildText);
-   * ```
    */
   addChannelType(channelType: ChannelType): this {
     if (!this.data.channel_types) {
@@ -1142,14 +881,6 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    *
    * @param channelTypes - The channel types to set
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ChannelSelectMenuBuilder().setChannelTypes([
-   *   ChannelType.GuildText,
-   *   ChannelType.GuildVoice
-   * ]);
-   * ```
    */
   setChannelTypes(...channelTypes: ChannelType[]): this {
     this.data.channel_types = channelTypes;
@@ -1161,11 +892,6 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    *
    * @param channelId - The ID of the channel to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ChannelSelectMenuBuilder().addDefaultChannel('123456789012345678');
-   * ```
    */
   addDefaultChannel(channelId: Snowflake): this {
     if (!this.data.default_values) {
@@ -1185,11 +911,6 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    *
    * @param channelIds - The IDs of the channels to select by default
    * @returns The select menu builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ChannelSelectMenuBuilder().setDefaultChannels(['123456789012345678', '987654321098765432']);
-   * ```
    */
   setDefaultChannels(channelIds: Snowflake[]): this {
     this.data.default_values = channelIds.map((id) => ({
@@ -1205,15 +926,6 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    *
    * @returns The complete channel select menu entity
    * @throws Error if the select menu configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const channelSelect = new ChannelSelectMenuBuilder()
-   *   .setCustomId('channel_selection')
-   *   .setPlaceholder('Select a channel')
-   *   .setChannelTypes([ChannelType.GuildText])
-   *   .build();
-   * ```
    */
   build(): ChannelSelectMenuEntity {
     this.validate();

@@ -18,93 +18,162 @@ export type ActivityLocationType = "gc" | "pc";
 
 /**
  * Represents a location where an application activity is taking place.
+ * Defines the context within Discord where an activity is occurring.
  *
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-location-object}
  */
 export interface ActivityLocationEntity {
-  /** Unique identifier for the activity location */
+  /**
+   * Unique identifier for the activity location.
+   * Used to reference this specific location.
+   */
   id: string;
 
-  /** Type of location (group call or private call) */
+  /**
+   * Type of location (group call or private call).
+   * Indicates the context where the activity is happening.
+   */
   kind: ActivityLocationType;
 
-  /** ID of the channel where the activity is happening */
+  /**
+   * ID of the channel where the activity is happening.
+   * References the specific Discord channel hosting the activity.
+   */
   channel_id: Snowflake;
 
-  /** ID of the guild where the activity is happening */
+  /**
+   * ID of the guild where the activity is happening.
+   * May be null if the activity is not in a guild (e.g., DM).
+   */
   guild_id?: Snowflake | null;
 }
 
 /**
  * Represents an instance of an application activity in Discord.
+ * Contains details about an ongoing activity session including location and participants.
  *
  * @see {@link https://discord.com/developers/docs/resources/application#get-application-activity-instance-activity-instance-object}
  */
 export interface ActivityInstanceEntity {
-  /** ID of the application that owns this activity instance */
+  /**
+   * ID of the application that owns this activity instance.
+   * Identifies which Discord application created the activity.
+   */
   application_id: Snowflake;
 
-  /** Unique identifier for this specific activity instance */
+  /**
+   * Unique identifier for this specific activity instance.
+   * Used to reference this particular session of the activity.
+   */
   instance_id: string;
 
-  /** ID associated with the launch event */
+  /**
+   * ID associated with the launch event.
+   * References the event that initiated this activity instance.
+   */
   launch_id: Snowflake;
 
-  /** Location information about where this activity is occurring */
+  /**
+   * Location information about where this activity is occurring.
+   * Contains details about the channel and guild hosting the activity.
+   */
   location: ActivityLocationEntity;
 
-  /** Array of user IDs representing participants */
+  /**
+   * Array of user IDs representing participants.
+   * Lists the Discord users currently engaged in the activity.
+   */
   users: Snowflake[];
 }
 
 /**
  * Interface defining the editable properties of a Discord application.
+ * Used to update various settings and configurations for an application.
  *
  * @see {@link https://discord.com/developers/docs/resources/application#edit-current-application-json-params}
  */
 export interface ApplicationUpdateOptions {
-  /** Custom URL for the application's authorization link */
+  /**
+   * Custom URL for the application's authorization link.
+   * Used for custom OAuth2 flows when installing the application.
+   */
   custom_install_url?: string;
 
-  /** Description of the application (max 400 characters) */
+  /**
+   * Description of the application (max 400 characters).
+   * Displayed to users in various locations, including the app directory.
+   */
   description?: string;
 
-  /** URL for role connection verification */
+  /**
+   * URL for role connection verification.
+   * Used for validating linked third-party accounts for role assignments.
+   */
   role_connections_verification_url?: string;
 
-  /** Parameters controlling how the application can be installed */
+  /**
+   * Parameters controlling how the application can be installed.
+   * Defines scopes and permissions requested during authorization.
+   */
   install_params?: InstallParamsEntity;
 
-  /** Configuration for different integration types */
+  /**
+   * Configuration for different integration types.
+   * Maps integration types to their specific configuration settings.
+   */
   integration_types_config?: Record<
     ApplicationIntegrationType,
     ApplicationIntegrationTypeConfigurationEntity
   >;
 
-  /** Application flags that can be set */
+  /**
+   * Application flags that can be set.
+   * Controls various behaviors and capabilities of the application.
+   */
   flags?: ApplicationFlags;
 
-  /** Application icon image */
+  /**
+   * Application icon image.
+   * Displayed in Discord UI when referencing the application.
+   */
   icon?: FileInput;
 
-  /** Application cover/splash image */
+  /**
+   * Application cover/splash image.
+   * Displayed as background when viewing application details.
+   */
   cover_image?: FileInput;
 
-  /** URL for the interactions endpoint */
+  /**
+   * URL for the interactions endpoint.
+   * Where Discord sends interaction payloads for this application.
+   */
   interactions_endpoint_url?: string;
 
-  /** Application tags for discovery (max 5, each max 20 chars) */
+  /**
+   * Application tags for discovery (max 5, each max 20 chars).
+   * Used for categorization and search in the app directory.
+   */
   tags?: string[];
 
-  /** URL for event webhook notifications */
+  /**
+   * URL for event webhook notifications.
+   * Where Discord sends event-related webhooks for this application.
+   */
   event_webhooks_url?: string;
 
-  /** Status for event webhooks */
+  /**
+   * Status for event webhooks.
+   * Controls whether the application receives event webhooks.
+   */
   event_webhooks_status?:
     | ApplicationEventWebhookStatus.Disabled
     | ApplicationEventWebhookStatus.Enabled;
 
-  /** Types of events to receive webhooks for */
+  /**
+   * Types of events to receive webhooks for.
+   * Filters which events trigger webhook notifications.
+   */
   event_webhooks_types?: string[];
 }
 

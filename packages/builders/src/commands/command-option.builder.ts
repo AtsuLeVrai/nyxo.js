@@ -54,11 +54,6 @@ export abstract class BaseCommandOptionBuilder<
    * @param name - The name to set (max 32 characters)
    * @returns The option builder instance for method chaining
    * @throws Error if name exceeds 32 characters or doesn't match the allowed pattern
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setName('favorite-color');
-   * ```
    */
   setName(name: string): this {
     if (name.length > COMMAND_LIMITS.OPTION_NAME) {
@@ -82,14 +77,6 @@ export abstract class BaseCommandOptionBuilder<
    *
    * @param localizations - Dictionary of locale to localized name
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setNameLocalizations({
-   *   'fr': 'couleur-préférée',
-   *   'es-ES': 'color-favorito'
-   * });
-   * ```
    */
   setNameLocalizations(localizations: Record<Locale, string> | null): this {
     // Validate each localized name
@@ -119,11 +106,6 @@ export abstract class BaseCommandOptionBuilder<
    * @param description - The description to set (max 100 characters)
    * @returns The option builder instance for method chaining
    * @throws Error if description exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setDescription('Your favorite color');
-   * ```
    */
   setDescription(description: string): this {
     if (description.length > COMMAND_LIMITS.OPTION_DESCRIPTION) {
@@ -141,14 +123,6 @@ export abstract class BaseCommandOptionBuilder<
    *
    * @param localizations - Dictionary of locale to localized description
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setDescriptionLocalizations({
-   *   'fr': 'Votre couleur préférée',
-   *   'es-ES': 'Tu color favorito'
-   * });
-   * ```
    */
   setDescriptionLocalizations(
     localizations: Record<Locale, string> | null,
@@ -186,18 +160,6 @@ export abstract class BaseCommandOptionBuilder<
 
 /**
  * Builder for string command options.
- *
- * @example
- * ```typescript
- * const option = new StringOptionBuilder()
- *   .setName('favorite-color')
- *   .setDescription('Your favorite color')
- *   .setRequired(true)
- *   .addChoice({ name: 'Red', value: 'red' })
- *   .addChoice({ name: 'Blue', value: 'blue' })
- *   .addChoice({ name: 'Green', value: 'green' })
- *   .build();
- * ```
  */
 export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandOptionEntity> {
   /**
@@ -230,15 +192,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    * @param choice - The choice to add
    * @returns The option builder instance for method chaining
    * @throws Error if adding the choice would exceed the maximum number of choices
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().addChoice({
-   *   name: 'Red',
-   *   value: 'red',
-   *   name_localizations: { 'fr': 'Rouge' }
-   * });
-   * ```
    */
   addChoice(choice: ApplicationCommandOptionChoiceEntity): this {
     if (!this.data.choices) {
@@ -286,15 +239,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    *
    * @param choices - Array of choices to add
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().addChoices(
-   *   { name: 'Red', value: 'red' },
-   *   { name: 'Blue', value: 'blue' },
-   *   { name: 'Green', value: 'green' }
-   * );
-   * ```
    */
   addChoices(...choices: ApplicationCommandOptionChoiceEntity[]): this {
     for (const choice of choices) {
@@ -308,11 +252,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -325,11 +264,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    *
    * @param autocomplete - Whether autocomplete is enabled
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setAutocomplete(true);
-   * ```
    */
   setAutocomplete(autocomplete = true): this {
     this.data.autocomplete = autocomplete;
@@ -342,11 +276,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    * @param minLength - The minimum length (minimum of 0, maximum of 6000)
    * @returns The option builder instance for method chaining
    * @throws Error if minLength is out of bounds
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setMinLength(5);
-   * ```
    */
   setMinLength(minLength: number): this {
     if (minLength < 0 || minLength > 6000) {
@@ -363,11 +292,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    * @param maxLength - The maximum length (minimum of 1, maximum of 6000)
    * @returns The option builder instance for method chaining
    * @throws Error if maxLength is out of bounds
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setMaxLength(100);
-   * ```
    */
   setMaxLength(maxLength: number): this {
     if (maxLength < 1 || maxLength > 6000) {
@@ -415,17 +339,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
 
 /**
  * Builder for integer command options.
- *
- * @example
- * ```typescript
- * const option = new IntegerOptionBuilder()
- *   .setName('age')
- *   .setDescription('Your age in years')
- *   .setRequired(true)
- *   .setMinValue(13)
- *   .setMaxValue(120)
- *   .build();
- * ```
  */
 export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerCommandOptionEntity> {
   /**
@@ -458,15 +371,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    * @param choice - The choice to add
    * @returns The option builder instance for method chaining
    * @throws Error if adding the choice would exceed the maximum number of choices
-   *
-   * @example
-   * ```typescript
-   * new IntegerOptionBuilder().addChoice({
-   *   name: 'One',
-   *   value: 1,
-   *   name_localizations: { 'fr': 'Un' }
-   * });
-   * ```
    */
   addChoice(choice: ApplicationCommandOptionChoiceEntity): this {
     if (!Number.isInteger(choice.value)) {
@@ -512,15 +416,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    *
    * @param choices - Array of choices to add
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new IntegerOptionBuilder().addChoices(
-   *   { name: 'One', value: 1 },
-   *   { name: 'Two', value: 2 },
-   *   { name: 'Three', value: 3 }
-   * );
-   * ```
    */
   addChoices(...choices: ApplicationCommandOptionChoiceEntity[]): this {
     for (const choice of choices) {
@@ -534,11 +429,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new IntegerOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -551,11 +441,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    *
    * @param autocomplete - Whether autocomplete is enabled
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new IntegerOptionBuilder().setAutocomplete(true);
-   * ```
    */
   setAutocomplete(autocomplete = true): this {
     this.data.autocomplete = autocomplete;
@@ -567,11 +452,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    *
    * @param minValue - The minimum value (-2^53 to 2^53)
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new IntegerOptionBuilder().setMinValue(0);
-   * ```
    */
   setMinValue(minValue: number): this {
     if (!Number.isInteger(minValue)) {
@@ -587,11 +467,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    *
    * @param maxValue - The maximum value (-2^53 to 2^53)
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new IntegerOptionBuilder().setMaxValue(100);
-   * ```
    */
   setMaxValue(maxValue: number): this {
     if (!Number.isInteger(maxValue)) {
@@ -639,17 +514,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
 
 /**
  * Builder for number command options (floating point values).
- *
- * @example
- * ```typescript
- * const option = new NumberOptionBuilder()
- *   .setName('height')
- *   .setDescription('Your height in meters')
- *   .setRequired(true)
- *   .setMinValue(0.5)
- *   .setMaxValue(2.5)
- *   .build();
- * ```
  */
 export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandOptionEntity> {
   /**
@@ -682,15 +546,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    * @param choice - The choice to add
    * @returns The option builder instance for method chaining
    * @throws Error if adding the choice would exceed the maximum number of choices
-   *
-   * @example
-   * ```typescript
-   * new NumberOptionBuilder().addChoice({
-   *   name: 'Pi',
-   *   value: 3.14159,
-   *   name_localizations: { 'fr': 'Pi' }
-   * });
-   * ```
    */
   addChoice(choice: ApplicationCommandOptionChoiceEntity): this {
     if (!this.data.choices) {
@@ -732,14 +587,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    *
    * @param choices - Array of choices to add
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new NumberOptionBuilder().addChoices(
-   *   { name: 'Pi', value: 3.14159 },
-   *   { name: 'Euler\'s Number', value: 2.71828 }
-   * );
-   * ```
    */
   addChoices(...choices: ApplicationCommandOptionChoiceEntity[]): this {
     for (const choice of choices) {
@@ -753,11 +600,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new NumberOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -770,11 +612,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    *
    * @param autocomplete - Whether autocomplete is enabled
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new NumberOptionBuilder().setAutocomplete(true);
-   * ```
    */
   setAutocomplete(autocomplete = true): this {
     this.data.autocomplete = autocomplete;
@@ -786,11 +623,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    *
    * @param minValue - The minimum value (-2^53 to 2^53)
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new NumberOptionBuilder().setMinValue(0.0);
-   * ```
    */
   setMinValue(minValue: number): this {
     this.data.min_value = minValue;
@@ -802,11 +634,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    *
    * @param maxValue - The maximum value (-2^53 to 2^53)
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new NumberOptionBuilder().setMaxValue(100.0);
-   * ```
    */
   setMaxValue(maxValue: number): this {
     this.data.max_value = maxValue;
@@ -850,15 +677,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
 
 /**
  * Builder for boolean command options.
- *
- * @example
- * ```typescript
- * const option = new BooleanOptionBuilder()
- *   .setName('verified')
- *   .setDescription('Whether you\'re verified')
- *   .setRequired(false)
- *   .build();
- * ```
  */
 export class BooleanOptionBuilder extends BaseCommandOptionBuilder<BooleanCommandOptionEntity> {
   /**
@@ -885,11 +703,6 @@ export class BooleanOptionBuilder extends BaseCommandOptionBuilder<BooleanComman
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new BooleanOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -917,15 +730,6 @@ export class BooleanOptionBuilder extends BaseCommandOptionBuilder<BooleanComman
 
 /**
  * Builder for user command options.
- *
- * @example
- * ```typescript
- * const option = new UserOptionBuilder()
- *   .setName('target')
- *   .setDescription('The user to target')
- *   .setRequired(true)
- *   .build();
- * ```
  */
 export class UserOptionBuilder extends BaseCommandOptionBuilder<UserCommandOptionEntity> {
   /**
@@ -952,11 +756,6 @@ export class UserOptionBuilder extends BaseCommandOptionBuilder<UserCommandOptio
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new StringOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -984,17 +783,6 @@ export class UserOptionBuilder extends BaseCommandOptionBuilder<UserCommandOptio
 
 /**
  * Builder for channel command options.
- *
- * @example
- * ```typescript
- * const option = new ChannelOptionBuilder()
- *   .setName('channel')
- *   .setDescription('Select a channel')
- *   .setRequired(true)
- *   .addChannelType(ChannelType.GuildText)
- *   .addChannelType(ChannelType.GuildVoice)
- *   .build();
- * ```
  */
 export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelCommandOptionEntity> {
   /**
@@ -1026,11 +814,6 @@ export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelComman
    *
    * @param channelType - The channel type to add
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ChannelOptionBuilder().addChannelType(ChannelType.GuildText);
-   * ```
    */
   addChannelType(channelType: ChannelType): this {
     if (!this.data.channel_types) {
@@ -1049,14 +832,6 @@ export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelComman
    *
    * @param channelTypes - The channel types to set
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ChannelOptionBuilder().setChannelTypes([
-   *   ChannelType.GuildText,
-   *   ChannelType.GuildVoice
-   * ]);
-   * ```
    */
   setChannelTypes(channelTypes: ChannelType[]): this {
     this.data.channel_types = [...channelTypes];
@@ -1068,11 +843,6 @@ export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelComman
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new ChannelOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -1100,15 +870,6 @@ export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelComman
 
 /**
  * Builder for role command options.
- *
- * @example
- * ```typescript
- * const option = new RoleOptionBuilder()
- *   .setName('role')
- *   .setDescription('The role to assign')
- *   .setRequired(true)
- *   .build();
- * ```
  */
 export class RoleOptionBuilder extends BaseCommandOptionBuilder<RoleCommandOptionEntity> {
   /**
@@ -1135,11 +896,6 @@ export class RoleOptionBuilder extends BaseCommandOptionBuilder<RoleCommandOptio
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new RoleOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -1167,15 +923,6 @@ export class RoleOptionBuilder extends BaseCommandOptionBuilder<RoleCommandOptio
 
 /**
  * Builder for mentionable command options (users and roles).
- *
- * @example
- * ```typescript
- * const option = new MentionableOptionBuilder()
- *   .setName('mention')
- *   .setDescription('Mention a user or role')
- *   .setRequired(true)
- *   .build();
- * ```
  */
 export class MentionableOptionBuilder extends BaseCommandOptionBuilder<MentionableCommandOptionEntity> {
   /**
@@ -1204,11 +951,6 @@ export class MentionableOptionBuilder extends BaseCommandOptionBuilder<Mentionab
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new MentionableOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -1236,15 +978,6 @@ export class MentionableOptionBuilder extends BaseCommandOptionBuilder<Mentionab
 
 /**
  * Builder for attachment command options.
- *
- * @example
- * ```typescript
- * const option = new AttachmentOptionBuilder()
- *   .setName('file')
- *   .setDescription('Upload a file')
- *   .setRequired(true)
- *   .build();
- * ```
  */
 export class AttachmentOptionBuilder extends BaseCommandOptionBuilder<AttachmentCommandOptionEntity> {
   /**
@@ -1273,11 +1006,6 @@ export class AttachmentOptionBuilder extends BaseCommandOptionBuilder<Attachment
    *
    * @param required - Whether the option is required
    * @returns The option builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new AttachmentOptionBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.data.required = required;
@@ -1305,20 +1033,6 @@ export class AttachmentOptionBuilder extends BaseCommandOptionBuilder<Attachment
 
 /**
  * Builder for subcommand options.
- *
- * @example
- * ```typescript
- * const subcommand = new SubCommandBuilder()
- *   .setName('add')
- *   .setDescription('Add a new item')
- *   .addStringOption(option =>
- *     option
- *       .setName('name')
- *       .setDescription('The name of the item')
- *       .setRequired(true)
- *   )
- *   .build();
- * ```
  */
 export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOptionEntity> {
   /**
@@ -1351,26 +1065,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    * @param option - The option to add or a function that returns an option
    * @returns The subcommand builder instance for method chaining
    * @throws Error if adding the option would exceed the maximum number of options
-   *
-   * @example
-   * ```typescript
-   * // Adding a pre-built option
-   * const stringOption = new StringOptionBuilder()
-   *   .setName('name')
-   *   .setDescription('The name of the item')
-   *   .setRequired(true)
-   *   .build();
-   *
-   * new SubCommandBuilder().addOption(stringOption);
-   *
-   * // Using a builder function
-   * new SubCommandBuilder().addOption(option =>
-   *   option
-   *     .setName('name')
-   *     .setDescription('The name of the item')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addOption(
     option:
@@ -1405,16 +1099,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the string option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addStringOption(option =>
-   *   option
-   *     .setName('name')
-   *     .setDescription('The name of the item')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addStringOption(
     optionBuilder: (builder: StringOptionBuilder) => StringOptionBuilder,
@@ -1441,17 +1125,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the integer option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addIntegerOption(option =>
-   *   option
-   *     .setName('count')
-   *     .setDescription('The number of items')
-   *     .setRequired(true)
-   *     .setMinValue(1)
-   * );
-   * ```
    */
   addIntegerOption(
     optionBuilder: (builder: IntegerOptionBuilder) => IntegerOptionBuilder,
@@ -1478,17 +1151,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the number option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addNumberOption(option =>
-   *   option
-   *     .setName('price')
-   *     .setDescription('The price of the item')
-   *     .setRequired(true)
-   *     .setMinValue(0.01)
-   * );
-   * ```
    */
   addNumberOption(
     optionBuilder: (builder: NumberOptionBuilder) => NumberOptionBuilder,
@@ -1515,16 +1177,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the boolean option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addBooleanOption(option =>
-   *   option
-   *     .setName('confirmed')
-   *     .setDescription('Whether the action is confirmed')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addBooleanOption(
     optionBuilder: (builder: BooleanOptionBuilder) => BooleanOptionBuilder,
@@ -1551,16 +1203,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the user option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addUserOption(option =>
-   *   option
-   *     .setName('target')
-   *     .setDescription('The user to target')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addUserOption(
     optionBuilder: (builder: UserOptionBuilder) => UserOptionBuilder,
@@ -1587,17 +1229,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the channel option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addChannelOption(option =>
-   *   option
-   *     .setName('channel')
-   *     .setDescription('The channel to use')
-   *     .setRequired(true)
-   *     .addChannelType(ChannelType.GuildText)
-   * );
-   * ```
    */
   addChannelOption(
     optionBuilder: (builder: ChannelOptionBuilder) => ChannelOptionBuilder,
@@ -1624,16 +1255,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the role option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addRoleOption(option =>
-   *   option
-   *     .setName('role')
-   *     .setDescription('The role to use')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addRoleOption(
     optionBuilder: (builder: RoleOptionBuilder) => RoleOptionBuilder,
@@ -1660,16 +1281,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the mentionable option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addMentionableOption(option =>
-   *   option
-   *     .setName('mention')
-   *     .setDescription('Mention a user or role')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addMentionableOption(
     optionBuilder: (
@@ -1698,16 +1309,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param optionBuilder - Function that configures the attachment option
    * @returns The subcommand builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new SubCommandBuilder().addAttachmentOption(option =>
-   *   option
-   *     .setName('file')
-   *     .setDescription('The file to upload')
-   *     .setRequired(true)
-   * );
-   * ```
    */
   addAttachmentOption(
     optionBuilder: (
@@ -1763,36 +1364,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
 
 /**
  * Builder for subcommand group options.
- *
- * @example
- * ```typescript
- * const group = new SubCommandGroupBuilder()
- *   .setName('items')
- *   .setDescription('Manage items')
- *   .addSubcommand(subcommand =>
- *     subcommand
- *       .setName('add')
- *       .setDescription('Add a new item')
- *       .addStringOption(option =>
- *         option
- *           .setName('name')
- *           .setDescription('The name of the item')
- *           .setRequired(true)
- *       )
- *   )
- *   .addSubcommand(subcommand =>
- *     subcommand
- *       .setName('remove')
- *       .setDescription('Remove an item')
- *       .addStringOption(option =>
- *         option
- *           .setName('name')
- *           .setDescription('The name of the item')
- *           .setRequired(true)
- *       )
- *   )
- *   .build();
- * ```
  */
 export class SubCommandGroupBuilder extends BaseCommandOptionBuilder<SubCommandGroupOptionEntity> {
   /**
@@ -1829,24 +1400,6 @@ export class SubCommandGroupBuilder extends BaseCommandOptionBuilder<SubCommandG
    * @param subcommand - The subcommand to add or a function that returns a subcommand
    * @returns The subcommand group builder instance for method chaining
    * @throws Error if adding the subcommand would exceed the maximum number of options
-   *
-   * @example
-   * ```typescript
-   * // Adding a pre-built subcommand
-   * const addSubcommand = new SubCommandBuilder()
-   *   .setName('add')
-   *   .setDescription('Add a new item')
-   *   .build();
-   *
-   * new SubCommandGroupBuilder().addSubcommand(addSubcommand);
-   *
-   * // Using a builder function
-   * new SubCommandGroupBuilder().addSubcommand(subcommand =>
-   *   subcommand
-   *     .setName('add')
-   *     .setDescription('Add a new item')
-   * );
-   * ```
    */
   addSubcommand(
     subcommand:

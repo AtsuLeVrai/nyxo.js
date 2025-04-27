@@ -111,35 +111,6 @@ export type ColorResolvable =
  * This class follows the builder pattern to create fully-featured Discord embeds
  * with all features supported by Discord's API, including titles, descriptions,
  * fields, images, thumbnails, footers, authors, and more.
- *
- * @example
- * ```typescript
- * // Create a basic embed
- * const embed = new EmbedBuilder()
- *   .setTitle('Hello World')
- *   .setDescription('This is a description')
- *   .setColor(Colors.BLUE)
- *   .build();
- *
- * // Create a more complex embed
- * const complexEmbed = new EmbedBuilder()
- *   .setTitle('Welcome to our server!')
- *   .setDescription('Thanks for joining our community.')
- *   .setAuthor({
- *     name: 'Server Admin',
- *     iconURL: 'https://example.com/admin-icon.png'
- *   })
- *   .setThumbnail('https://example.com/server-logo.png')
- *   .addField('Rules', 'Please read our rules in the #rules channel', false)
- *   .addField('Support', 'Need help? Ask in #support', false)
- *   .setFooter({
- *     text: 'Powered by Discord',
- *     iconURL: 'https://example.com/discord-logo.png'
- *   })
- *   .setTimestamp()
- *   .setColor('#3498DB')
- *   .build();
- * ```
  */
 export class EmbedBuilder {
   /** The internal embed data being constructed */
@@ -161,16 +132,6 @@ export class EmbedBuilder {
    *
    * @param data - The embed data to use
    * @returns A new EmbedBuilder instance with the provided data
-   *
-   * @example
-   * ```typescript
-   * // Create from existing embed data
-   * const embedData = {
-   *   title: 'Existing Embed',
-   *   description: 'This was created from existing data'
-   * };
-   * const builder = EmbedBuilder.from(embedData);
-   * ```
    */
   static from(data: Partial<EmbedEntity>): EmbedBuilder {
     return new EmbedBuilder(data);
@@ -182,11 +143,6 @@ export class EmbedBuilder {
    * @param title - The title to set (max 256 characters)
    * @returns The embed builder instance for method chaining
    * @throws Error if title exceeds 256 characters
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setTitle('Welcome to our server!');
-   * ```
    */
   setTitle(title: string): this {
     if (title.length > EMBED_LIMITS.TITLE) {
@@ -204,11 +160,6 @@ export class EmbedBuilder {
    * @param description - The description to set (max 4096 characters)
    * @returns The embed builder instance for method chaining
    * @throws Error if description exceeds 4096 characters
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setDescription('This is a detailed description of the embed content.');
-   * ```
    */
   setDescription(description: string): this {
     if (description.length > EMBED_LIMITS.DESCRIPTION) {
@@ -225,11 +176,6 @@ export class EmbedBuilder {
    *
    * @param url - The URL to set
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setURL('https://discord.com');
-   * ```
    */
   setUrl(url: string): this {
     try {
@@ -247,15 +193,6 @@ export class EmbedBuilder {
    *
    * @param timestamp - The timestamp to set, or current time if no argument is provided
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Set timestamp to current time
-   * new EmbedBuilder().setTimestamp();
-   *
-   * // Set timestamp to a specific date
-   * new EmbedBuilder().setTimestamp(new Date('2023-01-01T12:00:00Z'));
-   * ```
    */
   setTimestamp(timestamp: Date | number | string = new Date()): this {
     this.#data.timestamp = new Date(timestamp).toISOString();
@@ -267,24 +204,6 @@ export class EmbedBuilder {
    *
    * @param color - The color to set (number, hex string, RGB array, or named color)
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * // Using a number (decimal)
-   * new EmbedBuilder().setColor(7506394);
-   *
-   * // Using a hex string
-   * new EmbedBuilder().setColor('#3498DB');
-   *
-   * // Using an RGB array
-   * new EmbedBuilder().setColor([52, 152, 219]);
-   *
-   * // Using a named color constant
-   * new EmbedBuilder().setColor(Colors.Blue);
-   *
-   * // Using a named color string
-   * new EmbedBuilder().setColor('Blue');
-   * ```
    */
   setColor(color: ColorResolvable): this {
     this.#data.color = this.#resolveColor(color);
@@ -297,11 +216,6 @@ export class EmbedBuilder {
    *
    * @param type - The embed type to set
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setType(EmbedType.Rich);
-   * ```
    */
   setType(type: EmbedType): this {
     this.#data.type = type;
@@ -314,14 +228,6 @@ export class EmbedBuilder {
    * @param footer - The footer options
    * @returns The embed builder instance for method chaining
    * @throws Error if footer text exceeds 2048 characters
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setFooter({
-   *   text: 'Powered by Discord',
-   *   iconURL: 'https://example.com/discord-logo.png'
-   * });
-   * ```
    */
   setFooter(footer: EmbedFooterEntity): this {
     if (footer.text.length > EMBED_LIMITS.FOOTER_TEXT) {
@@ -339,11 +245,6 @@ export class EmbedBuilder {
    *
    * @param image - The image options
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setImage('https://example.com/banner.png');
-   * ```
    */
   setImage(image: EmbedImageEntity): this {
     this.#data.image = image;
@@ -355,11 +256,6 @@ export class EmbedBuilder {
    *
    * @param thumbnail - The thumbnail options
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setThumbnail('https://example.com/server-logo.png');
-   * ```
    */
   setThumbnail(thumbnail: EmbedThumbnailEntity): this {
     this.#data.thumbnail = thumbnail;
@@ -372,15 +268,6 @@ export class EmbedBuilder {
    * @param author - The author options
    * @returns The embed builder instance for method chaining
    * @throws Error if author name exceeds 256 characters
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setAuthor({
-   *   name: 'Server Admin',
-   *   url: 'https://discord.com/users/123456789',
-   *   iconURL: 'https://example.com/admin-avatar.png'
-   * });
-   * ```
    */
   setAuthor(author: EmbedAuthorEntity): this {
     if (author.name.length > EMBED_LIMITS.AUTHOR_NAME) {
@@ -399,14 +286,6 @@ export class EmbedBuilder {
    *
    * @param provider - The provider options
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setProvider({
-   *   name: 'YouTube',
-   *   url: 'https://youtube.com'
-   * });
-   * ```
    */
   setProvider(provider: EmbedProviderEntity): this {
     this.#data.provider = provider;
@@ -419,15 +298,6 @@ export class EmbedBuilder {
    *
    * @param video - The video options
    * @returns The embed builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setVideo({
-   *   url: 'https://example.com/video.mp4',
-   *   width: 1280,
-   *   height: 720
-   * });
-   * ```
    */
   setVideo(video: EmbedVideoEntity): this {
     this.#data.video = video;
@@ -440,15 +310,6 @@ export class EmbedBuilder {
    * @param field - The field object to add
    * @returns The embed builder instance for method chaining
    * @throws Error if fields limit is exceeded or if name/value exceed length limits
-   *
-   * @example
-   * ```typescript
-   * // Add a regular field
-   * new EmbedBuilder().addField('Rules', 'Please read our rules in the #rules channel');
-   *
-   * // Add an inline field
-   * new EmbedBuilder().addField('Support', 'Need help? Ask in #support', true);
-   * ```
    */
   addField(field: EmbedFieldEntity): this {
     if (!this.#data.fields) {
@@ -483,15 +344,6 @@ export class EmbedBuilder {
    * @param fields - An array of field objects to add
    * @returns The embed builder instance for method chaining
    * @throws Error if fields limit is exceeded or if name/value exceed length limits
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().addFields(
-   *   { name: 'Rules', value: 'Please read our rules in the #rules channel' },
-   *   { name: 'Support', value: 'Need help? Ask in #support', inline: true },
-   *   { name: 'Website', value: 'Visit our website at example.com', inline: true }
-   * );
-   * ```
    */
   addFields(...fields: EmbedFieldEntity[]): this {
     for (const field of fields) {
@@ -506,14 +358,6 @@ export class EmbedBuilder {
    * @param fields - An array of field objects to set
    * @returns The embed builder instance for method chaining
    * @throws Error if fields limit is exceeded or if name/value exceed length limits
-   *
-   * @example
-   * ```typescript
-   * new EmbedBuilder().setFields([
-   *   { name: 'Rules', value: 'Please read our rules in the #rules channel' },
-   *   { name: 'Support', value: 'Need help? Ask in #support', inline: true }
-   * ]);
-   * ```
    */
   setFields(fields: EmbedFieldEntity[]): this {
     this.#data.fields = [];
@@ -528,24 +372,6 @@ export class EmbedBuilder {
    * @param fields - The new fields to insert
    * @returns The embed builder instance for method chaining
    * @throws Error if name/value exceed length limits
-   *
-   * @example
-   * ```typescript
-   * // Remove the first field
-   * new EmbedBuilder().spliceFields(0, 1);
-   *
-   * // Replace the first field with a new one
-   * new EmbedBuilder().spliceFields(0, 1, {
-   *   name: 'New Field',
-   *   value: 'This field replaces the first one'
-   * });
-   *
-   * // Insert a field at index 1 without removing any
-   * new EmbedBuilder().spliceFields(1, 0, {
-   *   name: 'Inserted Field',
-   *   value: 'This field is inserted at position 1'
-   * });
-   * ```
    */
   spliceFields(
     index: number,
@@ -587,18 +413,6 @@ export class EmbedBuilder {
    *
    * @returns The complete embed entity ready to be sent to Discord's API
    * @throws Error if the embed exceeds Discord's limitations
-   *
-   * @example
-   * ```typescript
-   * const embed = new EmbedBuilder()
-   *   .setTitle('Hello World')
-   *   .setDescription('This is a description')
-   *   .setColor(Colors.BLUE)
-   *   .build();
-   *
-   * // The embed can now be sent via Discord.js or another Discord API wrapper
-   * channel.send({ embeds: [embed] });
-   * ```
    */
   build(): EmbedEntity {
     let length = 0;
@@ -642,17 +456,6 @@ export class EmbedBuilder {
    * This is useful for serialization or sending to Discord's API.
    *
    * @returns A read-only copy of the embed data
-   *
-   * @example
-   * ```typescript
-   * const embed = new EmbedBuilder()
-   *  .setTitle('Hello World')
-   *  .setDescription('This is a description')
-   *  .build();
-   *
-   *  const json = embed.toJson();
-   *  // json can now be sent to Discord's API
-   * ```
    */
   toJson(): Readonly<Partial<EmbedEntity>> {
     return Object.freeze({ ...this.#data });

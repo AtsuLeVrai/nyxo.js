@@ -15,14 +15,14 @@ import {
   type ActivityInstanceEntity,
   type ApplicationCoverUrl,
   type ApplicationIconUrl,
+  type ApplicationUpdateOptions,
   Cdn,
-  type EditCurrentApplicationSchema,
   type FileInput,
   type ImageOptions,
 } from "@nyxojs/rest";
 import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
 import type { z } from "zod";
-import { BaseClass } from "../bases/index.js";
+import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
 import {
   toCamelCasedPropertiesDeep,
@@ -48,20 +48,9 @@ import { User } from "./user.class.js";
  * This class transforms snake_case API responses into camelCase properties for
  * a more JavaScript-friendly interface while maintaining type safety.
  *
- * @example
- * ```typescript
- * // Fetching the current application
- * const application = await client.fetchCurrentApplication();
- * console.log(`App Name: ${application.name}`);
- *
- * // Updating application description
- * await application.update({
- *   description: "My awesome Discord bot"
- * });
- * ```
- *
  * @see {@link https://discord.com/developers/docs/resources/application}
  */
+@Cacheable("applications")
 export class Application
   extends BaseClass<ApplicationEntity>
   implements Enforce<CamelCasedProperties<ApplicationEntity>>
@@ -73,12 +62,6 @@ export class Application
    * It can be used for API operations, authorization URLs, and persistent references.
    *
    * @returns The application's ID as a Snowflake string
-   *
-   * @example
-   * ```typescript
-   * const appId = application.id;
-   * console.log(`Application ID: ${appId}`);
-   * ```
    */
   get id(): Snowflake {
     return this.data.id;
@@ -90,11 +73,6 @@ export class Application
    * This is the display name that appears in the Discord UI and bot listings.
    *
    * @returns The application's name
-   *
-   * @example
-   * ```typescript
-   * console.log(`Application name: ${application.name}`);
-   * ```
    */
   get name(): string {
     return this.data.name;
@@ -107,15 +85,6 @@ export class Application
    * Use `getIconUrl()` method to get the full URL.
    *
    * @returns The application's icon hash, or null if no icon is set
-   *
-   * @example
-   * ```typescript
-   * if (application.icon) {
-   *   console.log('Application has an icon');
-   * } else {
-   *   console.log('Application does not have an icon');
-   * }
-   * ```
    */
   get icon(): string | null {
     return this.data.icon;
@@ -127,13 +96,6 @@ export class Application
    * This is an alternative icon hash sometimes used in specific contexts.
    *
    * @returns The alternative icon hash, or null/undefined if not available
-   *
-   * @example
-   * ```typescript
-   * if (application.iconHash) {
-   *   console.log(`Alternative icon hash: ${application.iconHash}`);
-   * }
-   * ```
    */
   get iconHash(): string | null | undefined {
     return this.data.icon_hash;
@@ -146,11 +108,6 @@ export class Application
    * in various Discord interfaces.
    *
    * @returns The application's description
-   *
-   * @example
-   * ```typescript
-   * console.log(`Description: ${application.description}`);
-   * ```
    */
   get description(): string {
     return this.data.description;
@@ -163,15 +120,6 @@ export class Application
    * with this application.
    *
    * @returns An array of authorized RPC origin URLs, or undefined if RPC is not configured
-   *
-   * @example
-   * ```typescript
-   * const origins = application.rpcOrigins;
-   * if (origins && origins.length > 0) {
-   *   console.log('RPC origins:');
-   *   origins.forEach(origin => console.log(`- ${origin}`));
-   * }
-   * ```
    */
   get rpcOrigins(): string[] | undefined {
     return this.data.rpc_origins;
@@ -183,15 +131,6 @@ export class Application
    * When false, only the application owner can add the bot to servers.
    *
    * @returns True if the bot is public, false if restricted to owner installation
-   *
-   * @example
-   * ```typescript
-   * if (application.botPublic) {
-   *   console.log('This bot can be added to servers by anyone');
-   * } else {
-   *   console.log('Only the owner can add this bot to servers');
-   * }
-   * ```
    */
   get botPublic(): boolean {
     return Boolean(this.data.bot_public);
@@ -204,15 +143,6 @@ export class Application
    * adding an extra security step during installation.
    *
    * @returns True if code grant is required, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.botRequireCodeGrant) {
-   *   console.log('This bot requires OAuth2 code grant for installation');
-   * } else {
-   *   console.log('This bot can be installed with a standard OAuth2 flow');
-   * }
-   * ```
    */
   get botRequireCodeGrant(): boolean {
     return Boolean(this.data.bot_require_code_grant);
@@ -225,15 +155,6 @@ export class Application
    * May be undefined if this application doesn't have an associated bot user.
    *
    * @returns The User object for the bot, or undefined if not available
-   *
-   * @example
-   * ```typescript
-   * const bot = application.bot;
-   * if (bot) {
-   *   console.log(`Bot username: ${bot.username}`);
-   *   console.log(`Bot ID: ${bot.id}`);
-   * }
-   * ```
    */
   get bot(): User | undefined {
     if (!this.data.bot) {
@@ -250,14 +171,6 @@ export class Application
    * when using the application.
    *
    * @returns The Terms of Service URL, or undefined if not set
-   *
-   * @example
-   * ```typescript
-   * const tosUrl = application.termsOfServiceUrl;
-   * if (tosUrl) {
-   *   console.log(`Terms of Service: ${tosUrl}`);
-   * }
-   * ```
    */
   get termsOfServiceUrl(): string | undefined {
     return this.data.terms_of_service_url;
@@ -269,14 +182,6 @@ export class Application
    * This link should lead to a document explaining how the application handles user data.
    *
    * @returns The Privacy Policy URL, or undefined if not set
-   *
-   * @example
-   * ```typescript
-   * const privacyUrl = application.privacyPolicyUrl;
-   * if (privacyUrl) {
-   *   console.log(`Privacy Policy: ${privacyUrl}`);
-   * }
-   * ```
    */
   get privacyPolicyUrl(): string | undefined {
     return this.data.privacy_policy_url;
@@ -289,16 +194,6 @@ export class Application
    * For team-owned applications, this may be null or a designated team owner.
    *
    * @returns The User object for the application owner, or undefined if not available
-   *
-   * @example
-   * ```typescript
-   * const owner = application.owner;
-   * if (owner) {
-   *   console.log(`Application owned by: ${owner.username}`);
-   * } else if (application.team) {
-   *   console.log('Application is owned by a team');
-   * }
-   * ```
    */
   get owner(): User | undefined {
     if (!this.data.owner) {
@@ -315,11 +210,6 @@ export class Application
    * It should be kept private and used to verify that requests come from Discord.
    *
    * @returns The hex-encoded verification key
-   *
-   * @example
-   * ```typescript
-   * console.log(`Verification key: ${application.verifyKey}`);
-   * ```
    */
   get verifyKey(): string {
     return this.data.verify_key;
@@ -332,17 +222,6 @@ export class Application
    * This property contains information about the team if team ownership is used.
    *
    * @returns The team information in camelCase format, or null if owned by an individual
-   *
-   * @example
-   * ```typescript
-   * const team = application.team;
-   * if (team) {
-   *   console.log(`Team name: ${team.name}`);
-   *   console.log(`Team members: ${team.members.length}`);
-   * } else {
-   *   console.log('Application is owned by an individual, not a team');
-   * }
-   * ```
    */
   get team(): CamelCasedPropertiesDeep<TeamEntity> | null {
     if (!this.data.team) {
@@ -359,14 +238,6 @@ export class Application
    * or community servers.
    *
    * @returns The guild ID, or undefined if no guild is associated
-   *
-   * @example
-   * ```typescript
-   * const guildId = application.guildId;
-   * if (guildId) {
-   *   console.log(`Associated with guild ID: ${guildId}`);
-   * }
-   * ```
    */
   get guildId(): Snowflake | undefined {
     return this.data.guild_id;
@@ -379,15 +250,6 @@ export class Application
    * icon, and other properties.
    *
    * @returns The Guild object, or undefined if no guild is associated
-   *
-   * @example
-   * ```typescript
-   * const guild = application.guild;
-   * if (guild) {
-   *   console.log(`Associated guild: ${guild.name}`);
-   *   console.log(`Member count: ${guild.memberCount}`);
-   * }
-   * ```
    */
   get guild(): Guild | undefined {
     if (!this.data.guild) {
@@ -404,14 +266,6 @@ export class Application
    * the primary "Game SKU" that is created.
    *
    * @returns The primary SKU ID, or undefined if not applicable
-   *
-   * @example
-   * ```typescript
-   * const skuId = application.primarySkuId;
-   * if (skuId) {
-   *   console.log(`Primary SKU ID: ${skuId}`);
-   * }
-   * ```
    */
   get primarySkuId(): Snowflake | undefined {
     return this.data.primary_sku_id;
@@ -423,15 +277,6 @@ export class Application
    * This is used for applications sold on Discord to create the store page URL.
    *
    * @returns The URL slug, or undefined if not applicable
-   *
-   * @example
-   * ```typescript
-   * const slug = application.slug;
-   * if (slug) {
-   *   console.log(`Store page slug: ${slug}`);
-   *   console.log(`Store URL: https://discord.com/store/applications/${application.id}/${slug}`);
-   * }
-   * ```
    */
   get slug(): string | undefined {
     return this.data.slug;
@@ -444,14 +289,6 @@ export class Application
    * Discord app store if applicable.
    *
    * @returns The cover image hash, or undefined if not set
-   *
-   * @example
-   * ```typescript
-   * const coverImage = application.coverImage;
-   * if (coverImage) {
-   *   console.log(`Has cover image: ${coverImage}`);
-   * }
-   * ```
    */
   get coverImage(): string | undefined {
     return this.data.cover_image;
@@ -464,20 +301,6 @@ export class Application
    * including gateway intents, verification status, and badge eligibility.
    *
    * @returns A BitField of application flags
-   *
-   * @example
-   * ```typescript
-   * import { ApplicationFlags } from '@nyxojs/core';
-   *
-   * if (application.flags.has(ApplicationFlags.ApplicationCommandBadge)) {
-   *   console.log('This application has registered slash commands');
-   * }
-   *
-   * if (application.flags.has(ApplicationFlags.GatewayPresence)) {
-   *   console.log('This application has the presence intent');
-   * }
-   * ```
-   *
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-flags}
    */
   get flags(): BitField<ApplicationFlags> {
@@ -490,14 +313,6 @@ export class Application
    * This provides an estimate of how many Discord servers are using this application.
    *
    * @returns The approximate guild count, or undefined if not available
-   *
-   * @example
-   * ```typescript
-   * const guildCount = application.approximateGuildCount;
-   * if (guildCount !== undefined) {
-   *   console.log(`Bot is in approximately ${guildCount} servers`);
-   * }
-   * ```
    */
   get approximateGuildCount(): number | undefined {
     return this.data.approximate_guild_count;
@@ -509,14 +324,6 @@ export class Application
    * This provides an estimate of the total user reach of this application.
    *
    * @returns The approximate user install count, or undefined if not available
-   *
-   * @example
-   * ```typescript
-   * const userCount = application.approximateUserInstallCount;
-   * if (userCount !== undefined) {
-   *   console.log(`App has approximately ${userCount} user installations`);
-   * }
-   * ```
    */
   get approximateUserInstallCount(): number | undefined {
     return this.data.approximate_user_install_count;
@@ -529,15 +336,6 @@ export class Application
    * authorization process.
    *
    * @returns An array of redirect URIs, or undefined if none are configured
-   *
-   * @example
-   * ```typescript
-   * const redirects = application.redirectUris;
-   * if (redirects && redirects.length > 0) {
-   *   console.log('OAuth2 redirect URIs:');
-   *   redirects.forEach(uri => console.log(`- ${uri}`));
-   * }
-   * ```
    */
   get redirectUris(): string[] | undefined {
     return this.data.redirect_uris;
@@ -550,16 +348,6 @@ export class Application
    * using the HTTP interactions mode instead of the Gateway.
    *
    * @returns The interactions endpoint URL, or null/undefined if not configured
-   *
-   * @example
-   * ```typescript
-   * const endpoint = application.interactionsEndpointUrl;
-   * if (endpoint) {
-   *   console.log(`Interactions endpoint: ${endpoint}`);
-   * } else {
-   *   console.log('No interactions endpoint configured (using Gateway)');
-   * }
-   * ```
    */
   get interactionsEndpointUrl(): string | null | undefined {
     return this.data.interactions_endpoint_url;
@@ -572,14 +360,6 @@ export class Application
    * to verify user information for role assignment.
    *
    * @returns The role connections verification URL, or null/undefined if not configured
-   *
-   * @example
-   * ```typescript
-   * const verificationUrl = application.roleConnectionsVerificationUrl;
-   * if (verificationUrl) {
-   *   console.log(`Role connections verification URL: ${verificationUrl}`);
-   * }
-   * ```
    */
   get roleConnectionsVerificationUrl(): string | null | undefined {
     return this.data.role_connections_verification_url;
@@ -591,14 +371,6 @@ export class Application
    * This is where Discord will send webhook event payloads for subscribed events.
    *
    * @returns The event webhooks URL, or null/undefined if not configured
-   *
-   * @example
-   * ```typescript
-   * const webhooksUrl = application.eventWebhooksUrl;
-   * if (webhooksUrl) {
-   *   console.log(`Event webhooks URL: ${webhooksUrl}`);
-   * }
-   * ```
    */
   get eventWebhooksUrl(): string | null | undefined {
     return this.data.event_webhooks_url;
@@ -611,24 +383,6 @@ export class Application
    * or disabled by Discord due to inactivity.
    *
    * @returns The event webhooks status
-   *
-   * @example
-   * ```typescript
-   * import { ApplicationEventWebhookStatus } from '@nyxojs/core';
-   *
-   * switch (application.eventWebhooksStatus) {
-   *   case ApplicationEventWebhookStatus.Enabled:
-   *     console.log('Event webhooks are enabled');
-   *     break;
-   *   case ApplicationEventWebhookStatus.Disabled:
-   *     console.log('Event webhooks are disabled by the developer');
-   *     break;
-   *   case ApplicationEventWebhookStatus.DisabledByDiscord:
-   *     console.log('Event webhooks are disabled by Discord (inactivity)');
-   *     break;
-   * }
-   * ```
-   *
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-event-webhook-status}
    */
   get eventWebhooksStatus(): ApplicationEventWebhookStatus {
@@ -641,15 +395,6 @@ export class Application
    * These determine which events will trigger notifications to the webhooks URL.
    *
    * @returns An array of event type strings, or undefined if none are configured
-   *
-   * @example
-   * ```typescript
-   * const eventTypes = application.eventWebhooksTypes;
-   * if (eventTypes && eventTypes.length > 0) {
-   *   console.log('Subscribed to these webhook events:');
-   *   eventTypes.forEach(type => console.log(`- ${type}`));
-   * }
-   * ```
    */
   get eventWebhooksTypes(): string[] | undefined {
     return this.data.event_webhooks_types;
@@ -661,15 +406,6 @@ export class Application
    * Tags are used for discovery and categorization in the Discord app directory.
    *
    * @returns An array of tag strings, or undefined if none are set
-   *
-   * @example
-   * ```typescript
-   * const tags = application.tags;
-   * if (tags && tags.length > 0) {
-   *   console.log('Application tags:');
-   *   tags.forEach(tag => console.log(`- ${tag}`));
-   * }
-   * ```
    */
   get tags(): string[] | undefined {
     return this.data.tags;
@@ -682,16 +418,6 @@ export class Application
    * when adding the application.
    *
    * @returns The install parameters in camelCase format, or undefined if not configured
-   *
-   * @example
-   * ```typescript
-   * const params = application.installParams;
-   * if (params) {
-   *   console.log('Default installation parameters:');
-   *   console.log(`Scopes: ${params.scopes.join(', ')}`);
-   *   console.log(`Permissions: ${params.permissions}`);
-   * }
-   * ```
    */
   get installParams():
     | CamelCasedPropertiesDeep<InstallParamsEntity>
@@ -710,19 +436,6 @@ export class Application
    * to its specific configuration.
    *
    * @returns A record mapping integration types to their configurations
-   *
-   * @example
-   * ```typescript
-   * import { ApplicationIntegrationType } from '@nyxojs/core';
-   *
-   * const config = application.integrationTypesConfig;
-   * const guildConfig = config[ApplicationIntegrationType.GuildInstall];
-   * if (guildConfig?.oauth2_install_params) {
-   *   console.log('Guild installation configuration:');
-   *   console.log(`Scopes: ${guildConfig.oauth2_install_params.scopes.join(', ')}`);
-   * }
-   * ```
-   *
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object}
    */
   get integrationTypesConfig(): Record<
@@ -739,16 +452,6 @@ export class Application
    * allowing developers to use their own onboarding process.
    *
    * @returns The custom install URL, or undefined if not configured
-   *
-   * @example
-   * ```typescript
-   * const customUrl = application.customInstallUrl;
-   * if (customUrl) {
-   *   console.log(`Custom installation URL: ${customUrl}`);
-   * } else {
-   *   console.log('Using standard Discord installation flow');
-   * }
-   * ```
    */
   get customInstallUrl(): string | undefined {
     return this.data.custom_install_url;
@@ -758,16 +461,6 @@ export class Application
    * Checks if this application has a custom icon set.
    *
    * @returns True if the application has an icon, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.hasIcon) {
-   *   console.log('Application has a custom icon');
-   *   console.log(`Icon URL: ${application.getIconUrl()}`);
-   * } else {
-   *   console.log('Application does not have a custom icon');
-   * }
-   * ```
    */
   get hasIcon(): boolean {
     return this.icon !== null;
@@ -777,16 +470,6 @@ export class Application
    * Checks if this application has a cover image set.
    *
    * @returns True if the application has a cover image, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.hasCoverImage) {
-   *   console.log('Application has a cover image');
-   *   console.log(`Cover image URL: ${application.getCoverImageUrl()}`);
-   * } else {
-   *   console.log('Application does not have a cover image');
-   * }
-   * ```
    */
   get hasCoverImage(): boolean {
     return this.coverImage !== undefined;
@@ -796,16 +479,6 @@ export class Application
    * Checks if this application is owned by a team rather than an individual.
    *
    * @returns True if the application is team-owned, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.isTeamOwned) {
-   *   console.log(`Application is owned by team: ${application.team?.name}`);
-   *   console.log(`Team has ${application.team?.members.length} members`);
-   * } else {
-   *   console.log('Application is owned by an individual user');
-   * }
-   * ```
    */
   get isTeamOwned(): boolean {
     return this.team !== null;
@@ -815,15 +488,6 @@ export class Application
    * Checks if this application has a bot user associated with it.
    *
    * @returns True if the application has a bot user, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.hasBot) {
-   *   console.log(`Application has a bot named: ${application.bot?.username}`);
-   * } else {
-   *   console.log('Application does not have a bot user');
-   * }
-   * ```
    */
   get hasBot(): boolean {
     return this.bot !== undefined;
@@ -833,15 +497,6 @@ export class Application
    * Checks if this application is public (can be added by anyone).
    *
    * @returns True if the application is public, false if restricted
-   *
-   * @example
-   * ```typescript
-   * if (application.isPublic) {
-   *   console.log('This application can be added by anyone');
-   * } else {
-   *   console.log('Only the owner can add this application');
-   * }
-   * ```
    */
   get isPublic(): boolean {
     return this.botPublic;
@@ -854,15 +509,6 @@ export class Application
    * and receive special benefits like higher rate limits and better discoverability.
    *
    * @returns True if the application is verified, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.isVerified) {
-   *   console.log('This is a verified application');
-   * } else {
-   *   console.log('This application is not verified');
-   * }
-   * ```
    */
   get isVerified(): boolean {
     return !this.flags.has(ApplicationFlags.VerificationPendingGuildLimit);
@@ -872,16 +518,6 @@ export class Application
    * Checks if this application has webhooks for events enabled.
    *
    * @returns True if event webhooks are enabled, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.hasEventWebhooksEnabled) {
-   *   console.log('Event webhooks are enabled');
-   *   console.log(`Webhook URL: ${application.eventWebhooksUrl}`);
-   * } else {
-   *   console.log('Event webhooks are not enabled');
-   * }
-   * ```
    */
   get hasEventWebhooksEnabled(): boolean {
     return this.eventWebhooksStatus === 2; // ApplicationEventWebhookStatus.Enabled
@@ -893,15 +529,6 @@ export class Application
    * This intent is required for bots to access message content in messages.
    *
    * @returns True if the message content intent is enabled, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.hasMessageContentIntent) {
-   *   console.log('This bot can access message content');
-   * } else {
-   *   console.log('This bot cannot access message content');
-   * }
-   * ```
    */
   get hasMessageContentIntent(): boolean {
     return (
@@ -916,15 +543,6 @@ export class Application
    * This intent is required for bots to receive member-related events.
    *
    * @returns True if the guild members intent is enabled, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.hasGuildMembersIntent) {
-   *   console.log('This bot can receive member events');
-   * } else {
-   *   console.log('This bot cannot receive member events');
-   * }
-   * ```
    */
   get hasGuildMembersIntent(): boolean {
     return (
@@ -939,15 +557,6 @@ export class Application
    * This intent is required for bots to receive presence updates.
    *
    * @returns True if the presence intent is enabled, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (application.hasPresenceIntent) {
-   *   console.log('This bot can receive presence updates');
-   * } else {
-   *   console.log('This bot cannot receive presence updates');
-   * }
-   * ```
    */
   get hasPresenceIntent(): boolean {
     return (
@@ -962,12 +571,6 @@ export class Application
    * This is calculated from the application's ID, which contains a timestamp.
    *
    * @returns The Date when this application was created
-   *
-   * @example
-   * ```typescript
-   * const creationDate = application.createdAt;
-   * console.log(`Application created on: ${creationDate.toLocaleDateString()}`);
-   * ```
    */
   get createdAt(): Date {
     return new Date(Number(BigInt(this.id) >> 22n) + 1420070400000);
@@ -978,19 +581,6 @@ export class Application
    *
    * @param options - Options for the icon image (size, format, etc.)
    * @returns The URL for the application's icon, or null if no icon is set
-   *
-   * @example
-   * ```typescript
-   * // Get a standard icon URL
-   * const iconUrl = application.getIconUrl();
-   *
-   * // Get a larger icon in PNG format
-   * const largeIcon = application.getIconUrl({ size: 256, format: 'png' });
-   *
-   * if (iconUrl) {
-   *   console.log(`Icon URL: ${iconUrl}`);
-   * }
-   * ```
    */
   getIconUrl(
     options: z.input<typeof ImageOptions> = {},
@@ -1007,14 +597,6 @@ export class Application
    *
    * @param options - Options for the cover image (size, format, etc.)
    * @returns The URL for the cover image, or null if none is set
-   *
-   * @example
-   * ```typescript
-   * const coverUrl = application.getCoverImageUrl();
-   * if (coverUrl) {
-   *   console.log(`Cover image URL: ${coverUrl}`);
-   * }
-   * ```
    */
   getCoverImageUrl(
     options: z.input<typeof ImageOptions> = {},
@@ -1035,31 +617,9 @@ export class Application
    * @param options - The properties to update
    * @returns A promise resolving to the updated Application
    * @throws Error if the application couldn't be updated
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   // Update application description
-   *   const updated = await application.edit({
-   *     description: "My awesome bot - now with new features!"
-   *   });
-   *
-   *   console.log('Application updated successfully');
-   *   console.log(`New description: ${updated.description}`);
-   *
-   *   // Update application icon
-   *   const withNewIcon = await application.edit({
-   *     icon: await FileHandler.fromFile('path/to/icon.png')
-   *   });
-   *
-   *   console.log('Icon updated successfully');
-   * } catch (error) {
-   *   console.error('Failed to update application:', error);
-   * }
-   * ```
    */
   async edit(
-    options: CamelCasedProperties<EditCurrentApplicationSchema>,
+    options: CamelCasedProperties<ApplicationUpdateOptions>,
   ): Promise<Application> {
     const updatedData =
       await this.client.rest.applications.updateCurrentApplication(
@@ -1076,22 +636,6 @@ export class Application
    * @param icon - The new icon as a FileInput (file path, Buffer, etc.)
    * @returns A promise resolving to the updated Application
    * @throws Error if the icon couldn't be updated
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   // Update with file path
-   *   await application.updateIcon('path/to/new_icon.png');
-   *
-   *   // Or with a buffer
-   *   const buffer = await fs.promises.readFile('path/to/icon.png');
-   *   await application.updateIcon(buffer);
-   *
-   *   console.log('Icon updated successfully');
-   * } catch (error) {
-   *   console.error('Failed to update icon:', error);
-   * }
-   * ```
    */
   updateIcon(icon: FileInput): Promise<Application> {
     return this.edit({ icon });
@@ -1105,16 +649,6 @@ export class Application
    * @param description - The new description text
    * @returns A promise resolving to the updated Application
    * @throws Error if the description couldn't be updated
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   await application.updateDescription('My awesome bot - now with new features!');
-   *   console.log('Description updated successfully');
-   * } catch (error) {
-   *   console.error('Failed to update description:', error);
-   * }
-   * ```
    */
   updateDescription(description: string): Promise<Application> {
     return this.edit({ description });
@@ -1128,16 +662,6 @@ export class Application
    * @param tags - Array of tag strings to set
    * @returns A promise resolving to the updated Application
    * @throws Error if the tags couldn't be updated
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   await application.updateTags(['utility', 'moderation', 'fun']);
-   *   console.log('Tags updated successfully');
-   * } catch (error) {
-   *   console.error('Failed to update tags:', error);
-   * }
-   * ```
    */
   updateTags(tags: string[]): Promise<Application> {
     return this.edit({ tags });
@@ -1151,17 +675,6 @@ export class Application
    *
    * @returns A promise resolving to the refreshed Application
    * @throws Error if the application couldn't be fetched
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   const refreshed = await application.refresh();
-   *   console.log('Application data refreshed');
-   *   console.log(`Current guild count: ${refreshed.approximateGuildCount}`);
-   * } catch (error) {
-   *   console.error('Failed to refresh application data:', error);
-   * }
-   * ```
    */
   async refresh(): Promise<Application> {
     const data = await this.client.rest.applications.fetchCurrentApplication();
@@ -1177,17 +690,6 @@ export class Application
    * @param instanceId - Unique identifier for the specific activity instance
    * @returns A promise resolving to the activity instance information
    * @throws Error if the instance doesn't exist or couldn't be fetched
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   const activityInstance = await application.fetchActivityInstance('abc123');
-   *   console.log(`Activity in channel: ${activityInstance.location.channelId}`);
-   *   console.log(`Participating users: ${activityInstance.users.length}`);
-   * } catch (error) {
-   *   console.error('Failed to fetch activity instance:', error);
-   * }
-   * ```
    */
   async fetchActivityInstance(
     instanceId: string,
@@ -1205,19 +707,6 @@ export class Application
    *
    * @param flag - The flag to check for
    * @returns True if the application has the flag, false otherwise
-   *
-   * @example
-   * ```typescript
-   * import { ApplicationFlags } from '@nyxojs/core';
-   *
-   * if (application.hasFlag(ApplicationFlags.ApplicationCommandBadge)) {
-   *   console.log('This application has slash commands');
-   * }
-   *
-   * if (application.hasFlag(ApplicationFlags.GatewayPresence)) {
-   *   console.log('This application has the presence intent');
-   * }
-   * ```
    */
   hasFlag(flag: ApplicationFlags): boolean {
     return this.flags.has(flag);
@@ -1232,19 +721,6 @@ export class Application
    * @param flags - The flags to apply
    * @returns A promise resolving to the updated Application
    * @throws Error if the flags couldn't be updated
-   *
-   * @example
-   * ```typescript
-   * import { ApplicationFlags } from '@nyxojs/core';
-   *
-   * // Request message content intent
-   * try {
-   *   await application.applyFlags(ApplicationFlags.GatewayMessageContent);
-   *   console.log('Flags updated successfully');
-   * } catch (error) {
-   *   console.error('Failed to update flags:', error);
-   * }
-   * ```
    */
   applyFlags(flags: ApplicationFlags): Promise<Application> {
     const currentFlags = new BitField(this.flags.valueOf());
@@ -1262,19 +738,6 @@ export class Application
    * @param flags - The flags to remove
    * @returns A promise resolving to the updated Application
    * @throws Error if the flags couldn't be updated
-   *
-   * @example
-   * ```typescript
-   * import { ApplicationFlags } from '@nyxojs/core';
-   *
-   * // Remove message content intent
-   * try {
-   *   await application.removeFlags(ApplicationFlags.GatewayMessageContent);
-   *   console.log('Flags updated successfully');
-   * } catch (error) {
-   *   console.error('Failed to update flags:', error);
-   * }
-   * ```
    */
   removeFlags(flags: ApplicationFlags): Promise<Application> {
     const currentFlags = new BitField(this.flags.valueOf());

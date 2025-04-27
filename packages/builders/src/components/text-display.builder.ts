@@ -4,13 +4,6 @@ import { ComponentType, type TextDisplayEntity } from "@nyxojs/core";
  * Builder for text display components.
  *
  * Text displays allow you to add text to your message formatted with markdown.
- *
- * @example
- * ```typescript
- * const textDisplay = new TextDisplayBuilder()
- *   .setContent('# Hello World\nThis is a **markdown** text display')
- *   .build();
- * ```
  */
 export class TextDisplayBuilder {
   /** The internal text display data being constructed */

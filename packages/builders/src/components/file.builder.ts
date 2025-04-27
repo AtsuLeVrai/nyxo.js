@@ -8,13 +8,6 @@ import {
  * Builder for file components.
  *
  * File components allow you to display an uploaded file as an attachment.
- *
- * @example
- * ```typescript
- * const file = new FileBuilder()
- *   .setFile({ url: 'attachment://document.pdf' })
- *   .build();
- * ```
  */
 export class FileBuilder {
   /** The internal file data being constructed */

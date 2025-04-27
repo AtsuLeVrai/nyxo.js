@@ -92,7 +92,6 @@ export enum Locale {
   /**
    * Norwegian language
    * ISO code: no
-   * @note There appears to be a typo in the enum key name (Norwegian), but the ISO code is correct
    */
   Norwegian = "no",
 

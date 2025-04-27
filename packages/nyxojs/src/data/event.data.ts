@@ -16,6 +16,7 @@ import type {
 } from "@nyxojs/gateway";
 import type { RestEvents } from "@nyxojs/rest";
 import type { Store } from "@nyxojs/store";
+import type { CamelCasedPropertiesDeep } from "type-fest";
 import {
   type AnyThreadChannel,
   AutoModerationActionExecution,
@@ -47,28 +48,29 @@ import type { Client } from "../core/index.js";
 import { ChannelFactory, InteractionFactory } from "../factories/index.js";
 import type { CacheManager } from "../managers/index.js";
 import type { ClientEvents, GuildBased } from "../types/index.js";
+import { toCamelCasedPropertiesDeep } from "../utils/index.js";
 
 /**
  * Represents a mapping between a Gateway event and a Client event
  */
-interface EventMapping<
-  T extends keyof GatewayReceiveEvents,
-  U extends keyof ClientEvents,
-> {
+interface EventMapping {
   /**
    * Gateway event name
    */
-  gatewayEvent: T;
+  gatewayEvent: keyof GatewayReceiveEvents;
 
   /**
    * Client event name that this maps to
    */
-  clientEvent: U;
+  clientEvent: keyof ClientEvents;
 
   /**
    * Transform function to convert gateway event data to client event data
    */
-  transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[U];
+  transform: (
+    client: Client,
+    data: GatewayReceiveEvents[keyof GatewayReceiveEvents],
+  ) => ClientEvents[keyof ClientEvents];
 }
 
 /**
@@ -81,8 +83,15 @@ function defineEvent<
   gatewayEvent: T,
   clientEvent: U,
   transform: (client: Client, data: GatewayReceiveEvents[T]) => ClientEvents[U],
-): EventMapping<T, U> {
-  return { gatewayEvent, clientEvent, transform };
+): EventMapping {
+  return {
+    gatewayEvent,
+    clientEvent,
+    transform: transform as unknown as (
+      client: Client,
+      data: GatewayReceiveEvents[keyof GatewayReceiveEvents],
+    ) => ClientEvents[keyof ClientEvents],
+  };
 }
 
 /**
@@ -160,7 +169,7 @@ function handleEmojiUpdate(
   client: Client,
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   data: any,
-): [GuildEmojisUpdateEntity] {
+): [CamelCasedPropertiesDeep<GuildEmojisUpdateEntity>] {
   const { guild_id: guildId, emojis: newEmojis } = data;
 
   // Get cached emojis for this guild
@@ -197,7 +206,7 @@ function handleEmojiUpdate(
     "emojiDelete",
   );
 
-  return [data];
+  return [toCamelCasedPropertiesDeep(data)];
 }
 
 /**
@@ -207,7 +216,7 @@ function handleStickerUpdate(
   client: Client,
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   data: any,
-): [GuildStickersUpdateEntity] {
+): [CamelCasedPropertiesDeep<GuildStickersUpdateEntity>] {
   const { guild_id: guildId, stickers: newStickers } = data;
 
   // Get cached stickers for this guild
@@ -244,7 +253,7 @@ function handleStickerUpdate(
     "stickerDelete",
   );
 
-  return [data];
+  return [toCamelCasedPropertiesDeep(data)];
 }
 
 /**
@@ -303,15 +312,12 @@ function processEntityChanges<T>(
  * Standard mappings of Discord Gateway events to client events.
  * Each mapping defines how raw Gateway events are transformed into client events.
  */
-export const StandardGatewayDispatchEventMappings = [
-  // Ready events
+export const StandardGatewayDispatchEventMappings: EventMapping[] = [
   defineEvent("READY", "ready", (client, data) => [new Ready(client, data)]),
-
-  // Application events
   defineEvent(
     "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
     "applicationCommandPermissionsUpdate",
-    (_client, data) => [data],
+    (_client, data) => [toCamelCasedPropertiesDeep(data)],
   ),
 
   // Auto Moderation events
@@ -353,7 +359,7 @@ export const StandardGatewayDispatchEventMappings = [
     handleDeleteEvent(client, data.id, "channels"),
   ),
   defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (_client, data) => [
-    data,
+    toCamelCasedPropertiesDeep(data),
   ]),
 
   // Thread events
@@ -366,14 +372,16 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("THREAD_DELETE", "threadDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "channels"),
   ),
-  defineEvent("THREAD_LIST_SYNC", "threadListSync", (_client, data) => [data]),
+  defineEvent("THREAD_LIST_SYNC", "threadListSync", (_client, data) => [
+    toCamelCasedPropertiesDeep(data),
+  ]),
   defineEvent("THREAD_MEMBER_UPDATE", "threadMemberUpdate", (client, data) =>
     handleUpdateEvent(client, data, "threadMembers", ThreadMember),
   ),
   defineEvent(
     "THREAD_MEMBERS_UPDATE",
     "threadMembersUpdate",
-    (_client, data) => [data],
+    (_client, data) => [toCamelCasedPropertiesDeep(data)],
   ),
 
   // Entitlement events
@@ -443,7 +451,7 @@ export const StandardGatewayDispatchEventMappings = [
     handleDeleteEvent(client, `${data.guild_id}:${data.user.id}`, "members"),
   ),
   defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (_client, data) => [
-    data,
+    toCamelCasedPropertiesDeep(data),
   ]),
 
   // Role events
@@ -570,8 +578,6 @@ export const StandardGatewayDispatchEventMappings = [
       return message;
     }) as Message[],
   ]),
-
-  // Reaction events
   defineEvent("MESSAGE_REACTION_ADD", "messageReactionAdd", (_client, data) => [
     data,
   ]),
@@ -590,28 +596,22 @@ export const StandardGatewayDispatchEventMappings = [
     "messageReactionRemoveEmoji",
     (_client, data) => [data],
   ),
-
-  // Poll events
   defineEvent(
     "MESSAGE_POLL_VOTE_ADD",
     "messagePollVoteAdd",
-    (_client, data) => [data],
+    (_client, data) => [toCamelCasedPropertiesDeep(data)],
   ),
   defineEvent(
     "MESSAGE_POLL_VOTE_REMOVE",
     "messagePollVoteRemove",
-    (_client, data) => [data],
+    (_client, data) => [toCamelCasedPropertiesDeep(data)],
   ),
-
-  // User events
   defineEvent("TYPING_START", "typingStart", (client, data) => [
     new TypingStart(client, data),
   ]),
   defineEvent("USER_UPDATE", "userUpdate", (client, data) =>
     handleUpdateEvent(client, data, "users", User),
   ),
-
-  // Voice events
   defineEvent(
     "VOICE_CHANNEL_EFFECT_SEND",
     "voiceChannelEffectSend",
@@ -623,18 +623,12 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("VOICE_SERVER_UPDATE", "voiceServerUpdate", (_client, data) => [
     data,
   ]),
-
-  // Webhook events
   defineEvent("WEBHOOKS_UPDATE", "webhooksUpdate", (client, data) =>
     handleUpdateEvent(client, data as WebhookEntity, "webhooks", Webhook),
   ),
-
-  // Interaction events
   defineEvent("INTERACTION_CREATE", "interactionCreate", (client, data) => [
     InteractionFactory.create(client, data),
   ]),
-
-  // Stage events
   defineEvent(
     "STAGE_INSTANCE_CREATE",
     "stageInstanceCreate",
@@ -646,8 +640,6 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("STAGE_INSTANCE_DELETE", "stageInstanceDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "stageInstances"),
   ),
-
-  // Subscription events
   defineEvent("SUBSCRIPTION_CREATE", "subscriptionCreate", (client, data) => [
     new Subscription(client, data),
   ]),
@@ -657,7 +649,7 @@ export const StandardGatewayDispatchEventMappings = [
   defineEvent("SUBSCRIPTION_DELETE", "subscriptionDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "subscriptions"),
   ),
-] as const;
+];
 
 /**
  * Events to forward directly from REST client to main client
@@ -669,7 +661,7 @@ export const RestKeyofEventMappings: (keyof RestEvents)[] = [
   "rateLimitUpdate",
   "rateLimitExpire",
   "retry",
-] as const;
+];
 
 /**
  * Events to forward directly from Gateway client to main client
@@ -688,4 +680,4 @@ export const GatewayKeyofEventMappings: (keyof GatewayEvents)[] = [
   "wsClose",
   "wsError",
   "dispatch",
-] as const;
+];

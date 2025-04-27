@@ -9,17 +9,6 @@ import { COMPONENT_LIMITS } from "../utils/index.js";
  * Builder for text input components.
  *
  * Text inputs are used in modals to collect text data from users.
- *
- * @example
- * ```typescript
- * const textInput = new TextInputBuilder()
- *   .setCustomId('name_input')
- *   .setLabel('Your Name')
- *   .setStyle(TextInputStyle.Short)
- *   .setPlaceholder('Enter your full name')
- *   .setRequired(true)
- *   .build();
- * ```
  */
 export class TextInputBuilder {
   /** The internal text input data being constructed */
@@ -57,11 +46,6 @@ export class TextInputBuilder {
    * @param customId - The custom ID to set (max 100 characters)
    * @returns The text input builder instance for method chaining
    * @throws Error if customId exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setCustomId('name_input');
-   * ```
    */
   setCustomId(customId: string): this {
     if (customId.length > COMPONENT_LIMITS.CUSTOM_ID) {
@@ -78,11 +62,6 @@ export class TextInputBuilder {
    *
    * @param style - The text input style to set
    * @returns The text input builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setStyle(TextInputStyle.Short);
-   * ```
    */
   setStyle(style: TextInputStyle): this {
     this.#data.style = style;
@@ -95,11 +74,6 @@ export class TextInputBuilder {
    * @param label - The label to set (max 45 characters)
    * @returns The text input builder instance for method chaining
    * @throws Error if label exceeds 45 characters
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setLabel('Your Name');
-   * ```
    */
   setLabel(label: string): this {
     if (label.length > COMPONENT_LIMITS.TEXT_INPUT_LABEL) {
@@ -117,11 +91,6 @@ export class TextInputBuilder {
    * @param minLength - The minimum length to set (0-4000)
    * @returns The text input builder instance for method chaining
    * @throws Error if minLength is out of range
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setMinLength(3);
-   * ```
    */
   setMinLength(minLength: number): this {
     if (minLength < 0 || minLength > COMPONENT_LIMITS.TEXT_INPUT_VALUE) {
@@ -139,11 +108,6 @@ export class TextInputBuilder {
    * @param maxLength - The maximum length to set (1-4000)
    * @returns The text input builder instance for method chaining
    * @throws Error if maxLength is out of range
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setMaxLength(100);
-   * ```
    */
   setMaxLength(maxLength: number): this {
     if (maxLength < 1 || maxLength > COMPONENT_LIMITS.TEXT_INPUT_VALUE) {
@@ -160,11 +124,6 @@ export class TextInputBuilder {
    *
    * @param required - Whether the text input should be required
    * @returns The text input builder instance for method chaining
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setRequired(true);
-   * ```
    */
   setRequired(required = true): this {
     this.#data.required = required;
@@ -177,11 +136,6 @@ export class TextInputBuilder {
    * @param value - The value to set (max 4000 characters)
    * @returns The text input builder instance for method chaining
    * @throws Error if value exceeds 4000 characters
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setValue('John Doe');
-   * ```
    */
   setValue(value: string): this {
     if (value.length > COMPONENT_LIMITS.TEXT_INPUT_VALUE) {
@@ -199,11 +153,6 @@ export class TextInputBuilder {
    * @param placeholder - The placeholder to set (max 100 characters)
    * @returns The text input builder instance for method chaining
    * @throws Error if placeholder exceeds 100 characters
-   *
-   * @example
-   * ```typescript
-   * new TextInputBuilder().setPlaceholder('Enter your full name');
-   * ```
    */
   setPlaceholder(placeholder: string): this {
     if (placeholder.length > COMPONENT_LIMITS.TEXT_INPUT_PLACEHOLDER) {
@@ -220,15 +169,6 @@ export class TextInputBuilder {
    *
    * @returns The complete text input entity
    * @throws Error if the text input configuration is invalid
-   *
-   * @example
-   * ```typescript
-   * const textInput = new TextInputBuilder()
-   *   .setCustomId('name_input')
-   *   .setLabel('Your Name')
-   *   .setStyle(TextInputStyle.Short)
-   *   .build();
-   * ```
    */
   build(): TextInputEntity {
     if (!this.#data.custom_id) {

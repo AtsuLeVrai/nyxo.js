@@ -10,22 +10,6 @@ import {
  * Builder for section components.
  *
  * Sections allow you to join text contextually with an accessory component.
- *
- * @example
- * ```typescript
- * const section = new SectionBuilder()
- *   .addComponent(
- *     new TextDisplayBuilder()
- *       .setContent('Hello World')
- *       .build()
- *   )
- *   .setAccessory(
- *     new ThumbnailBuilder()
- *       .setMedia({ url: 'https://example.com/image.png' })
- *       .build()
- *   )
- *   .build();
- * ```
  */
 export class SectionBuilder {
   /** The internal section data being constructed */

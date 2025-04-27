@@ -4,6 +4,7 @@ import { Store, StoreOptions } from "@nyxojs/store";
 import { z } from "zod";
 import type {
   AnyChannel,
+  Application,
   AutoModerationRule,
   Ban,
   Emoji,
@@ -284,6 +285,16 @@ export const ClientCacheOptions = z.object({
    * @default { enabled: true, maxSize: 1000, ttl: 0 }
    */
   bans: ClientCacheEntityOptions.default({}),
+
+  /**
+   * Configuration for the applications cache.
+   *
+   * This cache stores Application objects which represent applications in guilds.
+   * Only relevant for bots that interact with applications.
+   *
+   * @default { enabled: true, maxSize: 1000, ttl: 0 }
+   */
+  applications: ClientCacheEntityOptions.default({}),
 });
 
 export type ClientCacheOptions = z.infer<typeof ClientCacheOptions>;
@@ -439,6 +450,12 @@ export class CacheManager {
   readonly #bans: Store<Snowflake, Ban>;
 
   /**
+   * Store for applications
+   * @private
+   */
+  readonly #applications: Store<Snowflake, Application>;
+
+  /**
    * Creates a new cache manager with the specified options.
    *
    * @param options - Cache configuration options that control caching behavior
@@ -491,6 +508,10 @@ export class CacheManager {
     this.#invites = this.#createStore("invites", this.#options.invites);
     this.#webhooks = this.#createStore("webhooks", this.#options.webhooks);
     this.#bans = this.#createStore("bans", this.#options.bans);
+    this.#applications = this.#createStore(
+      "applications",
+      this.#options.applications,
+    );
 
     // Start sweeping if enabled
     if (this.#options.enabled && this.#options.sweepInterval > 0) {
@@ -656,6 +677,14 @@ export class CacheManager {
    */
   get bans(): Store<Snowflake, Ban> {
     return this.#bans;
+  }
+
+  /**
+   * Access the applications cache store.
+   * Contains Application objects for Discord applications.
+   */
+  get applications(): Store<Snowflake, Application> {
+    return this.#applications;
   }
 
   /**

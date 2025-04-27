@@ -175,6 +175,44 @@ export abstract class BaseClass<T extends object> {
   }
 
   /**
+   * Removes this entity from the cache if it's currently stored.
+   * This method is useful when you want to explicitly remove an entity
+   * from the cache without waiting for automatic eviction.
+   *
+   * @returns true if the entity was removed from the cache, false otherwise
+   */
+  delete(): boolean {
+    // Do nothing if caching is disabled
+    if (!this.client.options.cache.enabled) {
+      return false;
+    }
+
+    // Get cache information for this entity
+    const cacheInfo = this.#getCacheInfo();
+    if (!cacheInfo) {
+      return false;
+    }
+
+    const { storeKey, id } = cacheInfo;
+    if (!(id && storeKey)) {
+      return false;
+    }
+
+    // Get the appropriate cache store
+    const cacheStore = this.client.cache[storeKey] as unknown as Store<
+      Snowflake,
+      this
+    >;
+
+    // Check if the entity exists in the cache before deleting it
+    if (cacheStore.has(id)) {
+      return cacheStore.delete(id);
+    }
+
+    return false;
+  }
+
+  /**
    * Creates a deep clone of this modal.
    *
    * @returns A new instance with the same data
