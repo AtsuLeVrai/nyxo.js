@@ -45,7 +45,7 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^22.15.2",
+    "@types/node": "^22.15.3",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3"
   }

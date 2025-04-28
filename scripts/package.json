@@ -28,7 +28,7 @@
     "chalk": "^5.4.1",
     "figures": "^6.1.0",
     "pretty-bytes": "^6.1.1",
-    "rollup": "^4.40.0",
+    "rollup": "^4.40.1",
     "rollup-plugin-swc3": "^0.12.1",
     "typescript": "^5.8.3"
   }
