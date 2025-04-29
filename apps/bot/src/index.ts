@@ -44,6 +44,8 @@ const client = new Client({
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ],
+  encodingType: "etf",
+  compressionType: "zstd-stream",
 });
 
 client.on("ready", (ready) => {
@@ -98,6 +100,22 @@ client.on("messageCreate", async (message) => {
 
     await message.reply(options);
   }
+});
+
+client.on("rateLimitExpire", (request) => {
+  console.log("[CLIENT] Rate limit expired", request);
+});
+
+client.on("rateLimitHit", (request) => {
+  console.log("[CLIENT] Rate limit hit", request);
+});
+
+client.on("rateLimitUpdate", (request) => {
+  console.log("[CLIENT] Rate limit updated", request);
+});
+
+client.on("retry", (request) => {
+  console.log("[CLIENT] Retrying request", request);
 });
 
 // Error handling

@@ -4,15 +4,6 @@ import { EventEmitter } from "eventemitter3";
 import { Pool } from "undici";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import {
-  AuthenticationError,
-  CloudflareError,
-  DiscordApiError,
-  JsonApiError,
-  NotFoundError,
-  PermissionError,
-  RequestTimeoutError,
-} from "../errors/index.js";
 import { FileHandler } from "../handlers/index.js";
 import {
   RateLimitManager,
@@ -588,7 +579,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
     // Check if the request was successful
     if (response.statusCode >= 400) {
-      // Use appropriate error class based on status code
+      // Use appropriate error based on status code
       this.#throwAppropriateError(response, options, requestId);
     }
 
@@ -795,12 +786,9 @@ export class Rest extends EventEmitter<RestEvents> {
     } catch (error) {
       // Check if this was a timeout (abort triggered)
       if (error instanceof Error && error.name === "AbortError") {
-        throw new RequestTimeoutError({
-          timeoutMs: this.#options.timeout,
-          method: options.method,
-          path: options.path,
-          requestId,
-        });
+        throw new Error(
+          `Request timed out after ${this.#options.timeout}ms [${options.method} ${options.path}]`,
+        );
       }
 
       // Re-throw other errors
@@ -997,8 +985,7 @@ export class Rest extends EventEmitter<RestEvents> {
 
   /**
    * Throws the most appropriate error type based on the API response.
-   * Maps HTTP status codes and response data to specific error classes
-   * for more precise error handling.
+   * Creates standardized error messages with all relevant details.
    *
    * @param response - HTTP response containing status code and data
    * @param options - Original request options
@@ -1011,71 +998,67 @@ export class Rest extends EventEmitter<RestEvents> {
     options: HttpRequestOptions,
     requestId: string,
   ): never {
-    const baseErrorOptions = {
-      status: response.statusCode,
-      method: options.method,
-      path: options.path,
-      requestId,
-    };
+    // Build a consistent error prefix
+    const errorPrefix = `[${options.method} ${options.path}] ${response.statusCode} (requestId: ${requestId})`;
 
     // Check if this is a JSON API error with specific code
     if (this.#isJsonErrorEntity(response.data)) {
-      throw new JsonApiError(
-        {
-          ...(response.data as unknown as JsonErrorResponse),
-          message: response.reason || response.data.message,
-        },
-        baseErrorOptions,
+      const jsonError = response.data as unknown as JsonErrorResponse;
+      const message = response.reason || jsonError.message;
+
+      // Format field errors if present
+      let errorDetails = "";
+      if (jsonError.errors) {
+        const fieldErrors = this.#formatFieldErrors(jsonError.errors);
+        if (fieldErrors) {
+          errorDetails = ` (${fieldErrors})`;
+        }
+      }
+
+      throw new Error(
+        `${errorPrefix}: Discord API Error ${jsonError.code} - ${message}${errorDetails}`,
       );
     }
 
-    // Otherwise, determine error type based on status code
+    // Otherwise, determine error message based on status code
     switch (response.statusCode) {
       case 401:
-        throw new AuthenticationError(
-          response.reason || "Authentication failed",
-          baseErrorOptions,
+        throw new Error(
+          `${errorPrefix}: Authentication failed - ${response.reason || "Invalid credentials"}`,
         );
 
       case 403:
-        throw new PermissionError(
-          response.reason || "You lack permissions to perform this action",
-          baseErrorOptions,
+        throw new Error(
+          `${errorPrefix}: Permission denied - ${response.reason || "You lack permissions to perform this action"}`,
         );
 
-      case 404:
-        throw new NotFoundError(
-          response.reason || "The requested resource was not found",
-          {
-            ...baseErrorOptions,
-            resourceType: this.#extractResourceType(options.path),
-            resourceId: this.#extractResourceId(options.path),
-          },
+      case 404: {
+        const resourceType =
+          this.#extractResourceType(options.path) || "resource";
+        const resourceId = this.#extractResourceId(options.path) || "unknown";
+        throw new Error(
+          `${errorPrefix}: Not found - ${resourceType} (ID: ${resourceId}) ${response.reason || "The requested resource was not found"}`,
         );
+      }
 
       case 429: {
         // Check if it's a Cloudflare ban
         if (response.headers["cf-ray"]) {
-          throw new CloudflareError(
-            response.reason || "Request blocked by Cloudflare",
-            {
-              ...baseErrorOptions,
-              rayId: response.headers["cf-ray"],
-            },
+          const rayId = response.headers["cf-ray"];
+          throw new Error(
+            `${errorPrefix}: Request blocked by Cloudflare (Ray ID: ${rayId}) - ${response.reason || "Too many requests"}`,
           );
         }
 
-        throw new DiscordApiError(
-          response.reason || "Rate limit exceeded",
-          baseErrorOptions,
+        throw new Error(
+          `${errorPrefix}: Rate limit exceeded - ${response.reason || "Too many requests"}`,
         );
       }
+
       default:
         // Generic API error for other status codes
-        throw new DiscordApiError(
-          response.reason ||
-            `Request failed with status ${response.statusCode}`,
-          baseErrorOptions,
+        throw new Error(
+          `${errorPrefix}: Request failed - ${response.reason || `Status ${response.statusCode}`}`,
         );
     }
   }

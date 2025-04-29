@@ -1,0 +1,16 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "files": {
+    "include": ["**/src/**/*.{ts,tsx,js,jsx}", "**/tests/**/*.{ts,tsx,js,jsx}"]
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "useShorthandArrayType": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
+    }
+  }
+}

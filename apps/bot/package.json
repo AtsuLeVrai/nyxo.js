@@ -26,17 +26,13 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "bufferutil": "^4.0.9",
-    "erlpack": "^0.1.4",
-    "fzstd": "^0.1.1",
     "nyxo.js": "workspace:^",
-    "zlib-sync": "^0.1.9",
     "zod": "^3.24.3"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
     "dotenv": "^16.5.0",
-    "tsx": "^4.19.3",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }

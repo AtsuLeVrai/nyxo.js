@@ -7,24 +7,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false,
-    "include": [
-      "packages/*/src/**/*.ts",
-      "packages/*/src/**/*.tsx",
-      "packages/*/src/**/*.js",
-      "packages/*/src/**/*.jsx",
-      "packages/*/tests/**/*.ts",
-      "packages/*/tests/**/*.tsx",
-      "packages/*/tests/**/*.js",
-      "packages/*/tests/**/*.jsx",
-      "apps/*/src/**/*.ts",
-      "apps/*/src/**/*.tsx",
-      "apps/*/src/**/*.js",
-      "apps/*/src/**/*.jsx",
-      "scripts/**/*.js",
-      "scripts/**/*.ts"
-    ],
-    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
+    "ignoreUnknown": true,
+    "ignore": ["**/dist/**", "**/node_modules/**", "**/*.d.ts"]
   },
   "formatter": {
     "enabled": true,
@@ -32,24 +16,7 @@
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
-    "lineWidth": 80,
-    "include": [
-      "packages/*/src/**/*.ts",
-      "packages/*/src/**/*.tsx",
-      "packages/*/src/**/*.js",
-      "packages/*/src/**/*.jsx",
-      "packages/*/tests/**/*.ts",
-      "packages/*/tests/**/*.tsx",
-      "packages/*/tests/**/*.js",
-      "packages/*/tests/**/*.jsx",
-      "apps/*/src/**/*.ts",
-      "apps/*/src/**/*.tsx",
-      "apps/*/src/**/*.js",
-      "apps/*/src/**/*.jsx",
-      "scripts/**/*.js",
-      "scripts/**/*.ts"
-    ],
-    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
+    "lineWidth": 80
   },
   "javascript": {
     "formatter": {
@@ -64,34 +31,12 @@
     }
   },
   "organizeImports": {
-    "enabled": true,
-    "include": [
-      "packages/*/src/**/*.ts",
-      "packages/*/src/**/*.tsx",
-      "packages/*/src/**/*.js",
-      "packages/*/src/**/*.jsx",
-      "packages/*/tests/**/*.ts",
-      "packages/*/tests/**/*.tsx",
-      "packages/*/tests/**/*.js",
-      "packages/*/tests/**/*.jsx",
-      "apps/*/src/**/*.ts",
-      "apps/*/src/**/*.tsx",
-      "apps/*/src/**/*.js",
-      "apps/*/src/**/*.jsx",
-      "scripts/**/*.js",
-      "scripts/**/*.ts"
-    ],
-    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
+    "enabled": true
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "all": true,
-      "nursery": {
-        "all": true,
-        "noEnum": "off",
-        "noSecrets": "off"
-      },
+      "recommended": true,
       "correctness": {
         "noNodejsModules": "off",
         "noUndeclaredDependencies": "off"
@@ -99,80 +44,10 @@
       "performance": {
         "noReExportAll": "off",
         "noBarrelFile": "off"
-      }
-    },
-    "include": [
-      "packages/*/src/**/*.ts",
-      "packages/*/src/**/*.tsx",
-      "packages/*/src/**/*.js",
-      "packages/*/src/**/*.jsx",
-      "packages/*/tests/**/*.ts",
-      "packages/*/tests/**/*.tsx",
-      "packages/*/tests/**/*.js",
-      "packages/*/tests/**/*.jsx",
-      "apps/*/src/**/*.ts",
-      "apps/*/src/**/*.tsx",
-      "apps/*/src/**/*.js",
-      "apps/*/src/**/*.jsx",
-      "scripts/**/*.js",
-      "scripts/**/*.ts"
-    ],
-    "ignore": ["**/dist/**", "**/node_modules/**", "*.d.ts", "**/*.d.ts"]
-  },
-  "overrides": [
-    {
-      "include": [
-        "apps/*/src/**/*.ts",
-        "apps/*/src/**/*.tsx",
-        "apps/*/src/**/*.js",
-        "apps/*/src/**/*.jsx",
-        "packages/*/tests/**/*.ts",
-        "packages/*/tests/**/*.tsx",
-        "packages/*/tests/**/*.js",
-        "packages/*/tests/**/*.jsx",
-        "scripts/**/*.js",
-        "scripts/**/*.ts"
-      ],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noConsole": "off",
-            "noConsoleLog": "off",
-            "noExplicitAny": "off"
-          }
-        }
-      }
-    },
-    {
-      "include": [
-        "apps/*/src/**/*.ts",
-        "apps/*/src/**/*.tsx",
-        "apps/*/src/**/*.js",
-        "apps/*/src/**/*.jsx",
-        "apps/*/tests/**/*.ts",
-        "apps/*/tests/**/*.tsx",
-        "apps/*/tests/**/*.js",
-        "apps/*/tests/**/*.jsx"
-      ],
-      "linter": {
-        "rules": {
-          "all": false,
-          "recommended": true,
-          "nursery": {
-            "all": false,
-            "useSortedClasses": {
-              "level": "warn",
-              "fix": "safe",
-              "options": {
-                "functions": ["clsx", "cva", "cn"]
-              }
-            }
-          },
-          "suspicious": {
-            "noArrayIndexKey": "info"
-          }
-        }
+      },
+      "suspicious": {
+        "noExplicitAny": "warn"
       }
     }
-  ]
+  }
 }

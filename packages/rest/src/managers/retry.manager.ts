@@ -1,7 +1,6 @@
 import { sleep } from "@nyxojs/core";
 import { z } from "zod";
 import type { Rest } from "../core/index.js";
-import { RateLimitError, RetryError } from "../errors/index.js";
 import type { HttpMethod, HttpResponse, RetryEvent } from "../types/index.js";
 import type { RateLimitResult } from "./rate-limit.manager.js";
 
@@ -89,27 +88,25 @@ export class RetryManager {
     // Calculate delay in milliseconds (retryAfter is already in ms now)
     const delay = rateLimitResult.retryAfter || 1000;
 
-    // Create a proper RateLimitError
-    const rateLimitError = new RateLimitError(
-      rateLimitResult.reason ||
-        `Rate limit exceeded for ${rateLimitResult.bucketHash || "unknown"} (${rateLimitResult.scope || "unknown"})`,
-      {
-        method,
-        path,
-        requestId,
-        retryAfter: delay,
-        global: rateLimitResult.limitType === "global",
-        bucketId: rateLimitResult.bucketHash || "unknown",
-        scope: rateLimitResult.scope || "user",
-      },
-    );
+    // Create rate limit information for logging
+    const limitInfo = {
+      bucketId: rateLimitResult.bucketHash || "unknown",
+      scope: rateLimitResult.scope || "user",
+      isGlobal: rateLimitResult.limitType === "global",
+      retryAfter: delay,
+      method,
+      path,
+    };
 
     // Emit retry event for tracking and monitoring
     this.#emitRetryEvent({
       requestId,
       method,
       path,
-      error: rateLimitError,
+      error: new Error(
+        rateLimitResult.reason ||
+          `Rate limit exceeded for ${limitInfo.bucketId} (${limitInfo.scope})`,
+      ),
       attempt: 1,
       delay,
       reason: "rate_limit",
@@ -167,7 +164,7 @@ export class RetryManager {
 
         // If max retries reached, return the last response
         if (attempts > this.#options.maxRetries) {
-          // We'll throw a RetryError later if needed
+          // We'll return the response
           return response;
         }
 
@@ -198,15 +195,9 @@ export class RetryManager {
 
         if (attempts > this.#options.maxRetries) {
           // All retries failed, throw comprehensive error
-          throw new RetryError(`Request failed after ${attempts} attempts`, {
-            attempts,
-            maxAttempts: this.#options.maxRetries,
-            attemptErrors,
-            method,
-            path,
-            requestId,
-            cause: currentError,
-          });
+          throw new Error(
+            `Request failed after ${attempts} attempts. Last error: ${currentError.message} [${method} ${path}]`,
+          );
         }
 
         // Calculate exponential backoff delay for network errors
