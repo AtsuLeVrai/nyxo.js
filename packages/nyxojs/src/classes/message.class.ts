@@ -318,11 +318,9 @@ export class Message
    * @returns The activity object, or undefined if none
    */
   get activity(): CamelCasedProperties<MessageActivityEntity> | undefined {
-    if (!this.data.activity) {
-      return undefined;
-    }
-
-    return toCamelCasedProperties(this.data.activity);
+    return this.data.activity
+      ? toCamelCasedProperties(this.data.activity)
+      : undefined;
   }
 
   /**

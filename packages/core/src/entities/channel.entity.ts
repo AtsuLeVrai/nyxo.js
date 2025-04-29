@@ -1142,29 +1142,12 @@ export interface GuildDirectoryChannelEntity
 
 /**
  * Union type to represent any thread channel entity.
+ * Includes public, private, and announcement threads.
  */
 export type AnyThreadChannelEntity =
   | PublicThreadChannelEntity
   | PrivateThreadChannelEntity
   | AnnouncementThreadChannelEntity;
-
-/**
- * Union type of all channel types with discriminated union pattern.
- * Can be any of the supported Discord channel types.
- * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-structure}
- */
-export type AnyChannelEntity =
-  | GuildTextChannelEntity
-  | DmChannelEntity
-  | GuildVoiceChannelEntity
-  | GroupDmChannelEntity
-  | GuildCategoryChannelEntity
-  | GuildAnnouncementChannelEntity
-  | GuildStageVoiceChannelEntity
-  | GuildForumChannelEntity
-  | GuildMediaChannelEntity
-  | GuildDirectoryChannelEntity
-  | AnyThreadChannelEntity;
 
 /**
  * Union type of all guild-based channel types.
@@ -1179,3 +1162,19 @@ export type AnyGuildBasedChannelEntity =
   | GuildForumChannelEntity
   | GuildMediaChannelEntity
   | GuildDirectoryChannelEntity;
+
+/**
+ * Union type of all DM-based channel types.
+ * Includes both direct messages and group DMs.
+ */
+export type AnyDmBasedChannelEntity = DmChannelEntity | GroupDmChannelEntity;
+
+/**
+ * Union type of all channel types with discriminated union pattern.
+ * Can be any of the supported Discord channel types.
+ * @see {@link https://discord.com/developers/docs/resources/channel#channel-object-channel-structure}
+ */
+export type AnyChannelEntity =
+  | AnyDmBasedChannelEntity
+  | AnyGuildBasedChannelEntity
+  | AnyThreadChannelEntity;

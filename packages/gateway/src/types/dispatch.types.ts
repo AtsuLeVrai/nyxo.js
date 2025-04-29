@@ -1221,7 +1221,7 @@ export interface MessageCreateEntity extends Omit<MessageEntity, "mentions"> {
    * Array of user objects, with an additional partial member field when in a guild.
    * Represents users who were mentioned in the message.
    */
-  mentions?: (UserEntity | Partial<GuildMemberEntity>)[];
+  mentions?: (UserEntity & Partial<GuildMemberEntity>)[];
 
   /**
    * ID of the guild the message was sent in.
