@@ -23,13 +23,10 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.52.5",
-    "@rollup/plugin-commonjs": "^28.0.3",
-    "@rollup/plugin-node-resolve": "^16.0.1",
     "chalk": "^5.4.1",
+    "esbuild": "^0.25.3",
     "figures": "^6.1.0",
     "pretty-bytes": "^6.1.1",
-    "rollup": "^4.40.1",
-    "rollup-plugin-swc3": "^0.12.1",
     "typescript": "^5.8.3"
   }
 }

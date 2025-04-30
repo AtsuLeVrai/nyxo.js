@@ -4,13 +4,7 @@ packages:
   - scripts
 
 onlyBuiltDependencies:
-  - '@biomejs/biome'
-  - '@swc/core'
-  - bufferutil
-  - erlpack
-  - esbuild
-  - sharp
-  - zlib-sync
+  - '*'
 
 publicHoistPattern:
   - '*bufferutil*'

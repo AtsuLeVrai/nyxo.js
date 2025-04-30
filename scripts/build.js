@@ -1,13 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import apiExtractor from "@microsoft/api-extractor";
-import commonjs from "@rollup/plugin-commonjs";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
+import esbuild from "esbuild";
 import figures from "figures";
 import prettyBytes from "pretty-bytes";
-import { rollup } from "rollup";
-import { defineRollupSwcOption, swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 
 // Main paths
@@ -75,131 +72,47 @@ const Logger = {
   },
 };
 
-// Build JavaScript bundles with Rollup + SWC
-async function buildWithRollup(paths, pkg) {
-  Logger.debug("Building bundles with Rollup + SWC");
+// Build JavaScript bundles with ESBuild
+async function buildWithESBuild(paths, pkg) {
+  Logger.debug("Building bundles with ESBuild");
 
-  // External modules (will not be bundled)
+  // Get external dependencies to exclude from the bundle
   const external = [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.optionalDependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
   ];
 
-  // SWC configuration for TypeScript and advanced features
-  const swcOptions = defineRollupSwcOption({
-    // JavaScript Compiler options
-    jsc: {
-      // Parser configuration
-      parser: {
-        syntax: "typescript",
-        tsx: false, // Set to true if your project uses TSX
-        decorators: true, // Enable decorators
-        dynamicImport: true, // Support dynamic imports
-        privateMethod: true, // Support private methods
-        importMeta: true, // Support import.meta
-        preserveAllComments: false, // Don't preserve all comments
-      },
-
-      // Compilation target
-      target: "esnext", // Match your deployment environment
-
-      // Use loose mode for better performance
-      loose: false, // Set to true for better performance but less spec compliance
-
-      // External helpers reduce bundle size when using bundler
-      externalHelpers: false, // TODO: Requires @swc/helpers as dependency but there is a bug with the detection
-
-      // Preserve original class names in output (for better debugging)
-      keepClassNames: true, // Helps with debugging and error messages
-
-      // Transformation options
-      transform: {
-        // Use modern decorators (stage 3) instead of legacy
-        decoratorVersion: "2022-03", // Modern decorators specification
-        decoratorMetadata: true, // Required for reflection metadata in TypeScript
-
-        // Use define semantics for class fields (matches TypeScript)
-        useDefineForClassFields: true,
-
-        // Optimizer configuration
-        optimizer: {
-          simplify: true, // Enable expression simplification
-          globals: {
-            // You can add environment-specific globals here
-            vars: {
-              // Example: "__DEV__": process.env.NODE_ENV === "development" ? "true" : "false"
-            },
-          },
-        },
-      },
-
-      // Output configuration
-      output: {
-        // Use UTF-8 for output files
-        charset: "utf8",
-      },
-    },
-
-    // Module configuration
-    module: {
-      type: "es6", // 'es6' for ESM, 'commonjs' for CJS
-      strict: true, // Use strict mode for modules
-      strictMode: true, // Emit 'use strict'
-      lazy: false, // Don't use lazy loading
-      noInterop: false, // Add interop code for better compatibility
-    },
-
-    // Source map generation
-    sourceMaps: false, // Generate source maps for debugging
-
-    // Don't minify during compilation
-    minify: false,
-
-    // Include source content in source maps for better debugging
-    inlineSourcesContent: true,
-
-    // Automatic module/script detection
-    isModule: true, // Treat input as a module
-  });
-
-  // Common Rollup plugins
-  const plugins = [
-    nodeResolve({
-      extensions: [".ts", ".js", ".mjs", ".cjs"],
-    }),
-    commonjs(),
-    swc(swcOptions),
-  ];
-
-  // Create a rollup bundle
   const startTime = Date.now();
-  const bundle = await rollup({
-    input: path.resolve(paths.src, "index.ts"),
-    plugins,
-    external,
-  });
 
-  // Generate ESM and CJS outputs
+  // Common ESBuild options
+  const commonOptions = {
+    entryPoints: [path.resolve(paths.src, "index.ts")],
+    bundle: true,
+    minify: false,
+    sourcemap: false,
+    external,
+    platform: "node",
+    target: "esnext",
+    logLevel: "error",
+  };
+
+  // Build both ESM and CJS formats in parallel
   await Promise.all([
-    // ESM output
-    bundle.write({
-      file: path.resolve(paths.dist, "index.js"),
-      format: "es",
-      exports: "named",
-      sourcemap: false,
+    // ESM Build
+    esbuild.build({
+      ...commonOptions,
+      format: "esm",
+      outfile: path.resolve(paths.dist, "index.js"),
     }),
-    // CJS output
-    bundle.write({
-      file: path.resolve(paths.dist, "index.cjs"),
+
+    // CJS Build
+    esbuild.build({
+      ...commonOptions,
       format: "cjs",
-      exports: "named",
-      sourcemap: false,
+      outfile: path.resolve(paths.dist, "index.cjs"),
     }),
   ]);
-
-  // Close the bundle
-  await bundle.close();
 
   // Calculate and log stats
   const endTime = Date.now();
@@ -389,9 +302,9 @@ async function build() {
     fs.promises.mkdir(paths.temp, { recursive: true }),
   ]);
 
-  // Step 2: Build bundles with Rollup+SWC and generate types in parallel
+  // Step 2: Build bundles with ESBuild and generate types in parallel
   const [bundlesSuccess, typesSuccess] = await Promise.all([
-    buildWithRollup(paths, pkg),
+    buildWithESBuild(paths, pkg),
     generateTypeDeclarations(paths),
   ]);
 
