@@ -302,9 +302,10 @@ export abstract class BaseClass<T extends object> {
     if (keyExtractor) {
       // Use the custom key extractor
       id = keyExtractor(this.data);
-    } else if ("id" in this.data && typeof this.data.id === "string") {
+    } else if ("id" in this.data) {
       // Default behavior: use the id property if available
-      id = this.data.id;
+      id =
+        typeof this.data.id === "string" ? this.data.id : String(this.data.id);
     }
 
     return id ? { storeKey, id } : null;
@@ -342,7 +343,6 @@ export abstract class BaseClass<T extends object> {
           // Access the getter to trigger initialization
           // Using type assertion with keyof for type safety
           const propertyKey = propName as keyof this;
-          // biome-ignore lint/complexity/noVoid: This is safe because we're accessing a getter
           void this[propertyKey];
         } catch {
           // Ignore errors during getter initialization

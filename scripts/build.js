@@ -3,9 +3,9 @@ import path from "node:path";
 import apiExtractor from "@microsoft/api-extractor";
 import chalk from "chalk";
 import esbuild from "esbuild";
-import figures from "figures";
 import prettyBytes from "pretty-bytes";
 import ts from "typescript";
+import winston from "winston";
 
 // Main paths
 const paths = {
@@ -17,60 +17,64 @@ const paths = {
   package: path.resolve(process.cwd(), "package.json"),
 };
 
-// Colors for logger
-const colors = {
-  debug: chalk.rgb(167, 139, 250),
-  success: chalk.rgb(134, 239, 172),
-  error: chalk.rgb(252, 165, 165),
-  warning: chalk.rgb(253, 230, 138),
-  info: chalk.rgb(186, 230, 253),
-};
+// Define a custom format with symbols and colors
+const customFormat = winston.format.printf(({ level, message, timestamp }) => {
+  let colorizedLevel;
 
-// Enhanced logger
-const Logger = {
-  getTimestamp() {
-    return chalk.gray(`[${new Date().toLocaleTimeString()}]`);
+  // Determine the symbol and color based on the level
+  switch (level) {
+    case "debug":
+      colorizedLevel = chalk.rgb(167, 139, 250)(level.toUpperCase());
+      break;
+    case "info":
+      colorizedLevel = chalk.rgb(186, 230, 253)(level.toUpperCase());
+      break;
+    case "success":
+      colorizedLevel = chalk.rgb(134, 239, 172)(level.toUpperCase());
+      break;
+    case "warn":
+      colorizedLevel = chalk.rgb(253, 230, 138)(level.toUpperCase());
+      break;
+    case "error":
+      colorizedLevel = chalk.rgb(252, 165, 165)(level.toUpperCase());
+      break;
+    default:
+      colorizedLevel = level.toUpperCase();
+  }
+
+  return `${chalk.gray(`[${timestamp}]`)} ${colorizedLevel}: ${message}`;
+});
+
+// Create custom levels including 'success'
+const customLevels = {
+  levels: {
+    error: 0,
+    warn: 1,
+    success: 2,
+    info: 3,
+    debug: 4,
   },
-
-  success(message) {
-    console.log(
-      `${this.getTimestamp()} ${colors.success(figures.tick)} ${colors.success(message)}`,
-    );
-  },
-
-  error(message, error) {
-    console.error(
-      `${this.getTimestamp()} ${colors.error(figures.cross)} ${colors.error(message)}`,
-    );
-    if (error?.stack) {
-      console.error(chalk.gray(error.stack));
-    }
-    return error;
-  },
-
-  warn(message) {
-    console.log(
-      `${this.getTimestamp()} ${colors.warning(figures.warning)} ${colors.warning(message)}`,
-    );
-  },
-
-  debug(message, data) {
-    console.log(
-      `${this.getTimestamp()} ${colors.debug(figures.bullet)} ${colors.debug(message)}`,
-    );
-    if (data) {
-      console.log(
-        typeof data === "string" ? data : JSON.stringify(data, null, 2),
-      );
-    }
-  },
-
-  info(message) {
-    console.log(
-      `${this.getTimestamp()} ${colors.info(figures.info)} ${colors.info(message)}`,
-    );
+  colors: {
+    error: "red",
+    warn: "yellow",
+    success: "green",
+    info: "blue",
+    debug: "magenta",
   },
 };
+
+// Configure Winston with our custom formats and levels
+winston.addColors(customLevels.colors);
+
+const Logger = winston.createLogger({
+  levels: customLevels.levels,
+  level: "debug",
+  format: winston.format.combine(
+    winston.format.timestamp({ format: "HH:mm:ss" }),
+    customFormat,
+  ),
+  transports: [new winston.transports.Console()],
+});
 
 // Build JavaScript bundles with ESBuild
 async function buildWithESBuild(paths, pkg) {
@@ -82,8 +86,6 @@ async function buildWithESBuild(paths, pkg) {
     ...Object.keys(pkg.optionalDependencies || {}),
     ...Object.keys(pkg.peerDependencies || {}),
   ];
-
-  const startTime = Date.now();
 
   // Common ESBuild options
   const commonOptions = {
@@ -114,17 +116,12 @@ async function buildWithESBuild(paths, pkg) {
     }),
   ]);
 
-  // Calculate and log stats
-  const endTime = Date.now();
-  const duration = ((endTime - startTime) / 1000).toFixed(2);
-
   // Get file sizes
   const esmStats = fs.statSync(path.resolve(paths.dist, "index.js"));
   const cjsStats = fs.statSync(path.resolve(paths.dist, "index.cjs"));
 
-  Logger.success(`ESM bundle generated (${prettyBytes(esmStats.size)})`);
-  Logger.success(`CJS bundle generated (${prettyBytes(cjsStats.size)})`);
-  Logger.debug(`Bundle generation completed in ${duration}s`);
+  Logger.info(`ESM bundle generated (${prettyBytes(esmStats.size)})`);
+  Logger.info(`CJS bundle generated (${prettyBytes(cjsStats.size)})`);
 
   return true;
 }
@@ -261,8 +258,8 @@ async function bundleDeclarations(paths) {
   // Run API Extractor
   const extractorResult = apiExtractor.Extractor.invoke(extractorConfig, {
     localBuild: true,
-    showVerboseMessages: true,
-    showDiagnostics: true,
+    showVerboseMessages: false,
+    showDiagnostics: false,
   });
 
   if (extractorResult.succeeded) {
@@ -274,9 +271,7 @@ async function bundleDeclarations(paths) {
   // Verify the output file existence
   const outputDtsPath = path.resolve(paths.dist, "index.d.ts");
   const dtsStats = await fs.promises.stat(outputDtsPath);
-  Logger.success(
-    `Declaration bundle generated (${prettyBytes(dtsStats.size)})`,
-  );
+  Logger.info(`Declaration bundle generated (${prettyBytes(dtsStats.size)})`);
 
   return extractorResult.succeeded;
 }
@@ -321,7 +316,7 @@ async function build() {
 
   // Build summary
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-  Logger.success(`Build completed in ${duration}s`);
+  Logger.debug(`Build completed in ${duration}s`);
 
   return true;
 }

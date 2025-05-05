@@ -1,201 +1,165 @@
+import { sleep } from "@nyxojs/core";
+import { Store } from "@nyxojs/store";
 import { z } from "zod";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, RateLimitHitEvent } from "../types/index.js";
 
 /**
  * Possible rate limit scopes returned by the Discord API.
- * Defines the scope of application for a rate limit.
+ * Defines the scope at which the rate limit applies.
  */
 export type RateLimitScope = "user" | "global" | "shared";
 
 /**
  * Rate limit tracking information for invalid requests.
- * Used to prevent excessive invalid requests that could trigger Cloudflare bans.
+ * Monitors potentially abusive behavior to prevent Cloudflare bans.
  */
 export interface InvalidRequestTracking {
-  /**
-   * Count of invalid requests in the current window.
-   * Resets when the window expires.
-   */
+  /** Count of invalid requests in the current window. */
   count: number;
 
-  /**
-   * Timestamp when the current tracking window started.
-   * Used to determine when the window should expire.
-   */
+  /** Timestamp when the current tracking window started. */
   windowStart: number;
 }
 
 /**
  * Represents a rate limit bucket from Discord.
- * Discord groups API endpoints into buckets which share rate limits.
+ * Each bucket contains rate limit state for specific endpoints.
  */
 export interface RateLimitBucket {
-  /**
-   * Request ID that created/updated this bucket.
-   * Used for tracking and correlation.
-   */
+  /** Request ID that created/updated this bucket. */
   requestId: string;
 
-  /**
-   * Unique hash identifier for this bucket.
-   * Assigned by Discord to identify the specific rate limit bucket.
-   */
+  /** Unique hash identifier for this bucket. */
   hash: string;
 
-  /**
-   * Maximum requests allowed in this window.
-   * The total capacity of the bucket.
-   */
+  /** Maximum requests allowed in this window. */
   limit: number;
 
-  /**
-   * Remaining requests in this window.
-   * Decrements with each request to the bucket.
-   */
+  /** Remaining requests in this window. */
   remaining: number;
 
-  /**
-   * Timestamp when the bucket resets (in ms).
-   * Absolute time when limits will be refreshed.
-   */
+  /** Timestamp when the bucket resets (in ms). */
   reset: number;
 
-  /**
-   * Time until the bucket resets (in ms).
-   * Relative time until limits will be refreshed.
-   */
+  /** Time until the bucket resets (in ms). */
   resetAfter: number;
 
-  /**
-   * Rate limit scope.
-   * Indicates whether limits apply globally, per-user, or are shared.
-   */
+  /** Rate limit scope. */
   scope: RateLimitScope;
 
-  /**
-   * Whether this route needs special handling.
-   * Some routes have custom rate limit behavior.
-   */
-  isSpecialRoute?: boolean;
-
-  /**
-   * Route type for special handling.
-   * Identifies specific APIs that need custom rate limiting.
-   */
-  routeType?: "emoji" | "webhook" | "reaction";
+  /** Whether this route is an emoji route (special handling). */
+  isEmojiRoute?: boolean;
 }
 
 /**
  * Result of a rate limit check.
- * Contains information about whether a request can proceed and, if not, why.
+ * Indicates whether a request can proceed and provides retry information.
  */
 export interface RateLimitResult {
-  /**
-   * Whether the request can proceed.
-   * If false, the request should be delayed.
-   */
+  /** Whether the request can proceed. */
   canProceed: boolean;
 
-  /**
-   * Time in milliseconds to wait before retrying.
-   * Only provided if canProceed is false.
-   */
+  /** Time in milliseconds to wait before retrying. */
   retryAfter?: number;
 
-  /**
-   * Type of rate limit that was hit.
-   * Identifies the source or category of the limit.
-   */
-  limitType?: "global" | "bucket" | "cloudflare" | "special";
+  /** Type of rate limit that was hit. */
+  limitType?: "global" | "bucket" | "cloudflare" | "emoji";
 
-  /**
-   * Reason for the rate limit.
-   * Human-readable explanation of why the limit was hit.
-   */
+  /** Reason for the rate limit. */
   reason?: string;
 
-  /**
-   * Associated bucket hash if applicable.
-   * Identifies which specific bucket triggered the limit.
-   */
+  /** Associated bucket hash if applicable. */
   bucketHash?: string;
 
-  /**
-   * Rate limit scope if applicable.
-   * Indicates the scope of the limit that was hit.
-   */
+  /** Rate limit scope if applicable. */
   scope?: RateLimitScope;
 }
 
 /**
  * Configuration options for the rate limit manager.
- * Controls the behavior of rate limit tracking and enforcement.
+ * Controls how rate limits are tracked and managed.
  */
 export const RateLimitOptions = z.object({
   /**
-   * Cleanup interval in milliseconds (default: 30000).
+   * Cleanup interval in milliseconds.
    * Controls how often expired buckets are removed from memory.
+   * @default 60000 (1 minute)
    */
-  cleanupInterval: z.number().int().min(0).default(30000),
+  cleanupInterval: z.number().int().min(0).default(60000),
 
   /**
-   * Safety margin in milliseconds to apply when approaching reset (default: 500).
-   * Adds a buffer to avoid hitting limits exactly at reset boundaries.
+   * Safety margin in milliseconds to apply when approaching reset.
+   * Adds buffer to prevent accidental rate limit violations.
+   * @default 100 (reduced from 500)
    */
-  safetyMarginMs: z.number().int().min(0).default(500),
+  safetyMarginMs: z.number().int().min(0).default(100),
 
   /**
-   * Maximum invalid requests allowed in a 10-minute window (default: 10000).
-   * Prevents excessive invalid requests which could trigger Cloudflare bans.
+   * Maximum invalid requests allowed in a 10-minute window.
+   * Prevents Cloudflare bans from excessive invalid requests.
+   * @default 10000 (Discord limit)
    */
   maxInvalidRequests: z.number().int().min(0).max(10000).default(10000),
 
   /**
-   * Maximum global requests per second (default: 1000).
-   * Limits total API calls to prevent hitting global rate limits.
+   * Maximum global requests per second.
+   * Controls overall request rate to Discord API.
+   * @default 50 (Discord limit)
    */
-  maxGlobalRequestsPerSecond: z.number().int().min(0).default(1000),
+  maxGlobalRequestsPerSecond: z.number().int().min(0).default(50),
+
+  /**
+   * Maximum number of buckets to keep in memory.
+   * Limits memory usage for long-running applications.
+   * @default 1000
+   */
+  maxBuckets: z.number().int().min(100).default(1000),
+
+  /**
+   * Default TTL for rate limit cache entries in milliseconds.
+   * Controls expiration of cached rate limit results.
+   * @default 100
+   */
+  ratelimitCacheTtl: z.number().int().min(0).default(100),
 });
 
 export type RateLimitOptions = z.infer<typeof RateLimitOptions>;
 
 /**
  * Manages rate limits for Discord API requests.
+ * Tracks and enforces rate limits to prevent 429 errors.
  *
- * Responsibilities:
- * - Tracks rate limit buckets from Discord API responses
- * - Prevents requests that would exceed rate limits
- * - Monitors global and per-route request limits
- * - Provides information about when rate-limited requests can be retried
- * - Emits events for rate limit monitoring and debugging
+ * Features:
+ * - Automatic rate limit tracking from response headers
+ * - Proactive prevention of rate limit violations
+ * - Support for global, route-specific, and shared rate limits
+ * - Special handling for emoji routes (per Discord documentation)
+ * - Cloudflare ban prevention through invalid request tracking
+ * - Efficient memory management with TTL and LRU eviction
  */
 export class RateLimitManager {
   /**
-   * Pattern matching for special routes.
-   * Used to identify routes that need custom rate limit handling.
+   * Emoji route pattern for special handling.
+   * Discord documentation confirms only emoji routes have special rate limit handling.
    */
-  static readonly ROUTE_PATTERNS = {
-    WEBHOOK: /^\/webhooks\/(\d+)\/([A-Za-z0-9-_]+)/,
-    EMOJI: /^\/guilds\/(\d+)\/emojis/,
-    REACTION: /^\/channels\/(\d+)\/messages\/(\d+)\/reactions/,
-  };
+  static readonly EMOJI_ROUTE_PATTERN = /^\/guilds\/(\d+)\/emojis/;
 
   /**
-   * Routes that are exempt from bucket tracking.
-   * These routes have special handling in the Discord API.
+   * Routes not subject to the global rate limit per Discord documentation.
+   * Only interaction endpoints are exempted from global rate limits.
    */
-  static readonly EXEMPT_ROUTES = ["/interactions", "/webhooks"];
+  static readonly GLOBAL_EXEMPT_ROUTES = ["/interactions"];
 
   /**
    * Status codes that indicate invalid requests.
-   * Used to track potentially problematic requests.
+   * Used for Cloudflare ban prevention.
    */
   static readonly INVALID_STATUSES = [401, 403, 429];
 
   /**
    * Header names for rate limit information.
-   * Standard headers provided by Discord API in responses.
+   * Used to extract rate limit data from responses.
    */
   static readonly HEADERS = {
     LIMIT: "x-ratelimit-limit",
@@ -208,71 +172,69 @@ export class RateLimitManager {
     RETRY_AFTER: "retry-after",
   };
 
-  /**
-   * Map of bucket hashes to bucket objects.
-   * Stores active rate limit buckets.
-   */
-  readonly #buckets = new Map<string, RateLimitBucket>();
+  /** Store of bucket hashes to bucket objects with automatic TTL and LRU eviction. */
+  readonly #buckets: Store<string, RateLimitBucket>;
 
-  /**
-   * Map of API routes to their bucket hashes.
-   * Allows quick lookup of which bucket applies to a given route.
-   */
-  readonly #routeBuckets = new Map<string, string>();
+  /** Store of API routes to their bucket hashes with automatic cleanup. */
+  readonly #routeBuckets: Store<string, string>;
 
-  /**
-   * Tracks invalid requests to prevent Cloudflare bans.
-   * Monitors potentially problematic requests in a rolling window.
-   */
+  /** Store for caching rate limit check results to reduce redundant operations. */
+  readonly #rateLimitCache: Store<string, RateLimitResult>;
+
+  /** Tracks invalid requests to prevent Cloudflare bans. */
   readonly #invalidRequests: InvalidRequestTracking = {
     count: 0,
     windowStart: Date.now(),
   };
 
-  /**
-   * Timestamp tracking for global rate limit.
-   * Monitors overall request frequency to prevent global rate limits.
-   */
+  /** Timestamp tracking for global rate limit. */
   readonly #globalRateTracker = {
     requestCount: 0,
     windowStartTime: Date.now(),
   };
 
-  /**
-   * Reference to the Rest instance.
-   * Used to emit events for logging and monitoring.
-   */
+  /** Reference to the Rest instance. */
   readonly #rest: Rest;
 
-  /**
-   * Cleanup interval timer.
-   * Periodically removes expired buckets to prevent memory leaks.
-   */
-  #cleanupTimer: NodeJS.Timeout | null = null;
-
-  /**
-   * Configuration options.
-   * Controls the behavior of the rate limit manager.
-   */
+  /** Configuration options. */
   readonly #options: RateLimitOptions;
 
   /**
    * Creates a new rate limit manager.
+   * Initializes stores and tracking systems.
    *
-   * @param rest - Rest instance to emit events on
-   * @param options - Configuration options for rate limit behavior
+   * @param rest - REST client instance that will use this manager
+   * @param options - Rate limit configuration options
    */
   constructor(rest: Rest, options: RateLimitOptions) {
     this.#rest = rest;
     this.#options = options;
 
-    // Start the cleanup timer
-    this.#startCleanupTimer();
+    // Initialize Stores with appropriate options
+    this.#buckets = new Store<string, RateLimitBucket>(null, {
+      maxSize: this.#options.maxBuckets,
+      evictionStrategy: "lru",
+      cloneValues: false,
+      minCleanupInterval: this.#options.cleanupInterval,
+    });
+
+    this.#routeBuckets = new Store<string, string>(null, {
+      maxSize: this.#options.maxBuckets * 2, // Routes may outnumber buckets
+      evictionStrategy: "lru",
+      minCleanupInterval: this.#options.cleanupInterval,
+    });
+
+    this.#rateLimitCache = new Store<string, RateLimitResult>(null, {
+      maxSize: 1000,
+      ttl: this.#options.ratelimitCacheTtl,
+      evictionStrategy: "lru",
+      cloneValues: false,
+    });
   }
 
   /**
    * Gets the rate limit buckets currently tracked.
-   * Provides access to the internal bucket map for debugging and monitoring.
+   * Provides read-only access to bucket information.
    *
    * @returns Map of bucket hashes to bucket objects
    */
@@ -282,7 +244,7 @@ export class RateLimitManager {
 
   /**
    * Gets the route mappings currently tracked.
-   * Provides access to the internal route-to-bucket mapping for debugging.
+   * Provides read-only access to route-to-bucket mappings.
    *
    * @returns Map of route keys to bucket hashes
    */
@@ -291,34 +253,77 @@ export class RateLimitManager {
   }
 
   /**
-   * Checks if a request would exceed rate limits.
-   * Determines whether a request can proceed immediately or should be delayed.
+   * Checks if a request would exceed rate limits and waits if necessary.
+   * Combines rate limit checking and waiting into a single operation.
    *
-   * @param path - API path being requested
-   * @param method - HTTP method being used
-   * @param requestId - Unique ID for this request for tracking purposes
-   * @returns Result indicating whether the request can proceed and delay information if it can't
+   * @param path - API path to request
+   * @param method - HTTP method used for the request
+   * @param requestId - Unique identifier for this request
+   * @returns Promise resolving to rate limit check result
+   */
+  async checkAndWaitIfNeeded(
+    path: string,
+    method: HttpMethod,
+    requestId: string,
+  ): Promise<RateLimitResult> {
+    // Check if we can proceed
+    const checkResult = this.checkRateLimit(path, method, requestId);
+
+    // If we can proceed, return immediately
+    if (checkResult.canProceed) {
+      return checkResult;
+    }
+
+    // Otherwise, wait for the specified time
+    if (checkResult.retryAfter && checkResult.retryAfter > 0) {
+      await sleep(checkResult.retryAfter);
+
+      // After waiting, check again to be safe
+      return this.checkRateLimit(path, method, requestId);
+    }
+
+    // Fallback in case retryAfter wasn't provided
+    return checkResult;
+  }
+
+  /**
+   * Checks if a request would exceed rate limits.
+   * Does not perform any waiting, just returns the result.
+   *
+   * @param path - API path to request
+   * @param method - HTTP method used for the request
+   * @param requestId - Unique identifier for this request
+   * @returns Rate limit check result
    */
   checkRateLimit(
     path: string,
     method: HttpMethod,
     requestId: string,
   ): RateLimitResult {
-    // Skip exempt routes early
-    if (
-      RateLimitManager.EXEMPT_ROUTES.some((route) => path.startsWith(route))
-    ) {
-      return { canProceed: true };
+    const now = Date.now();
+
+    // Check cache first for performance
+    const cacheKey = `${method}:${path}`;
+    const cached = this.#rateLimitCache.get(cacheKey);
+    if (cached) {
+      return cached;
     }
 
-    // Check global limits first
-    const globalCheck = this.#checkGlobalRateLimit(requestId);
-    if (!globalCheck.canProceed) {
-      return globalCheck;
+    // Skip global exempt routes (only interaction endpoints per Discord docs)
+    const isGlobalExempt = RateLimitManager.GLOBAL_EXEMPT_ROUTES.some((route) =>
+      path.startsWith(route),
+    );
+
+    // Check global limits unless this route is exempt
+    if (!isGlobalExempt) {
+      const globalCheck = this.#checkGlobalRateLimit(requestId, now);
+      if (!globalCheck.canProceed) {
+        return globalCheck;
+      }
     }
 
     // Check for CloudFlare protection
-    const invalidCheck = this.#checkInvalidRequestLimit(requestId);
+    const invalidCheck = this.#checkInvalidRequestLimit(requestId, now);
     if (!invalidCheck.canProceed) {
       return invalidCheck;
     }
@@ -329,45 +334,95 @@ export class RateLimitManager {
 
     // No bucket means no known limit
     if (!bucketHash) {
-      return { canProceed: true };
+      const result = { canProceed: true };
+
+      // Cache positive results briefly to improve performance
+      this.#rateLimitCache.set(cacheKey, result);
+
+      return result;
     }
 
     const bucket = this.#buckets.get(bucketHash);
     if (!bucket) {
-      return { canProceed: true };
+      const result = { canProceed: true };
+
+      // Cache positive results briefly
+      this.#rateLimitCache.set(cacheKey, result);
+
+      return result;
     }
 
-    return this.#checkBucketLimit(bucket, path, method, requestId);
+    // Check bucket limits
+    const result = this.#checkBucketLimit(bucket, path, method, requestId, now);
+
+    // Cache results if they allow proceeding
+    if (result.canProceed) {
+      this.#rateLimitCache.set(cacheKey, result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Updates rate limit information from API response and waits if needed.
+   * Combines rate limit updating and waiting into a single operation.
+   *
+   * @param path - API path that was requested
+   * @param method - HTTP method used for the request
+   * @param headers - Response headers containing rate limit information
+   * @param statusCode - HTTP status code from the response
+   * @param requestId - Unique identifier for this request
+   * @returns Promise resolving to updated rate limit result
+   */
+  async updateRateLimitAndWaitIfNeeded(
+    path: string,
+    method: HttpMethod,
+    headers: Record<string, string>,
+    statusCode: number,
+    requestId: string,
+  ): Promise<RateLimitResult> {
+    // Update rate limit information
+    const updateResult = this.updateRateLimit(
+      path,
+      method,
+      headers,
+      statusCode,
+      requestId,
+    );
+
+    // If we need to wait (e.g., hit a rate limit), wait now
+    if (
+      !updateResult.canProceed &&
+      updateResult.retryAfter &&
+      updateResult.retryAfter > 0
+    ) {
+      await sleep(updateResult.retryAfter);
+
+      // After waiting, return an updated result that indicates we can proceed
+      return {
+        canProceed: true,
+        bucketHash: updateResult.bucketHash,
+        scope: updateResult.scope,
+      };
+    }
+
+    // Otherwise just return the update result
+    return updateResult;
   }
 
   /**
    * Generates a unique key for an API route.
-   * Creates a consistent identifier for routes, handling special cases appropriately.
+   * Used to map routes to their rate limit buckets.
    *
    * @param method - HTTP method used for the request
-   * @param path - API path being requested
-   * @returns Unique string key that identifies this specific route+method combination
+   * @param path - API path for the request
+   * @returns Unique key for this route
    */
   getRouteKey(method: HttpMethod, path: string): string {
-    // Check for special routes
-    const patterns = RateLimitManager.ROUTE_PATTERNS;
-
-    // Webhook routes
-    const webhookMatch = path.match(patterns.WEBHOOK);
-    if (webhookMatch) {
-      return `webhook:${webhookMatch[1]}:${webhookMatch[2]}:${method}`;
-    }
-
-    // Emoji routes
-    const emojiMatch = path.match(patterns.EMOJI);
+    // Check for emoji routes (only special case per Discord docs)
+    const emojiMatch = path.match(RateLimitManager.EMOJI_ROUTE_PATTERN);
     if (emojiMatch) {
       return `emoji:${emojiMatch[1]}:${method}`;
-    }
-
-    // Reaction routes
-    const reactionMatch = path.match(patterns.REACTION);
-    if (reactionMatch) {
-      return `reaction:${reactionMatch[1]}:${reactionMatch[2]}:${method}`;
     }
 
     // Default route format
@@ -376,14 +431,14 @@ export class RateLimitManager {
 
   /**
    * Updates rate limit information from API response.
-   * Processes headers from a response to update internal rate limit tracking.
+   * Processes response headers to update bucket information.
    *
    * @param path - API path that was requested
-   * @param method - HTTP method that was used
+   * @param method - HTTP method used for the request
    * @param headers - Response headers containing rate limit information
    * @param statusCode - HTTP status code from the response
-   * @param requestId - Unique request ID for tracking and correlation
-   * @returns Result indicating whether future requests can proceed
+   * @param requestId - Unique identifier for this request
+   * @returns Updated rate limit result
    */
   updateRateLimit(
     path: string,
@@ -392,28 +447,31 @@ export class RateLimitManager {
     statusCode: number,
     requestId: string,
   ): RateLimitResult {
+    const now = Date.now();
+
     // Update global request tracking
-    this.#updateGlobalRequestCount();
+    this.#updateGlobalRequestCount(now);
 
     // Track invalid responses
     if (RateLimitManager.INVALID_STATUSES.includes(statusCode)) {
-      this.#trackInvalidRequest();
+      this.#trackInvalidRequest(now);
     }
 
-    // Skip processing for exempt routes
-    if (
-      RateLimitManager.EXEMPT_ROUTES.some((route) => path.startsWith(route))
-    ) {
-      return {
-        canProceed: true,
-      };
-    }
+    // Invalidate cache for this route
+    const cacheKey = `${method}:${path}`;
+    this.#rateLimitCache.delete(cacheKey);
 
     const routeKey = this.getRouteKey(method, path);
 
     // Handle rate limit exceeded responses
     if (statusCode === 429) {
-      return this.#handleRateLimitExceeded(path, method, headers, requestId);
+      return this.#handleRateLimitExceeded(
+        path,
+        method,
+        headers,
+        requestId,
+        now,
+      );
     }
 
     // Update bucket info if available
@@ -424,49 +482,35 @@ export class RateLimitManager {
       };
     }
 
-    return this.#updateBucket(bucketHash, headers, routeKey, path, requestId);
+    return this.#updateBucket(
+      bucketHash,
+      headers,
+      routeKey,
+      path,
+      requestId,
+      now,
+    );
   }
 
   /**
    * Cleans up resources used by the manager.
-   * Should be called when the manager is no longer needed to prevent memory leaks.
+   * Should be called when the manager is no longer needed.
    */
   destroy(): void {
-    // Stop the cleanup timer
-    if (this.#cleanupTimer !== null) {
-      clearInterval(this.#cleanupTimer);
-      this.#cleanupTimer = null;
-    }
-
-    // Clear stored data
-    this.#buckets.clear();
-    this.#routeBuckets.clear();
-  }
-
-  /**
-   * Starts the automatic bucket cleanup timer.
-   * Periodically removes expired buckets to prevent memory leaks.
-   * @private
-   */
-  #startCleanupTimer(): void {
-    // Clear any existing timer
-    if (this.#cleanupTimer !== null) {
-      clearInterval(this.#cleanupTimer);
-    }
-
-    // Set new cleanup interval
-    this.#cleanupTimer = setInterval(() => {
-      this.#cleanupExpiredBuckets();
-    }, this.#options.cleanupInterval);
+    // Destroy all stores to release resources
+    this.#buckets.destroy();
+    this.#routeBuckets.destroy();
+    this.#rateLimitCache.destroy();
   }
 
   /**
    * Tracks an invalid request in the rolling window.
-   * Used to prevent excessive invalid requests that could trigger Cloudflare bans.
+   * Used for Cloudflare ban prevention.
+   *
+   * @param now - Current timestamp
    * @private
    */
-  #trackInvalidRequest(): void {
-    const now = Date.now();
+  #trackInvalidRequest(now: number): void {
     const windowDuration = 600_000; // 10 minutes
 
     if (now - this.#invalidRequests.windowStart >= windowDuration) {
@@ -481,11 +525,12 @@ export class RateLimitManager {
 
   /**
    * Updates the global request counter.
-   * Monitors overall request frequency to prevent hitting global rate limits.
+   * Tracks overall request rate to prevent global rate limits.
+   *
+   * @param now - Current timestamp
    * @private
    */
-  #updateGlobalRequestCount(): void {
-    const now = Date.now();
+  #updateGlobalRequestCount(now: number): void {
     const windowDuration = 1000; // 1 second window
 
     if (now - this.#globalRateTracker.windowStartTime >= windowDuration) {
@@ -499,39 +544,15 @@ export class RateLimitManager {
   }
 
   /**
-   * Checks if a path is a special route needing custom handling.
-   * Some routes have specific rate limit requirements or patterns.
-   *
-   * @param path - API path to check
-   * @returns Route type if it matches a special pattern, undefined otherwise
-   * @private
-   */
-  #getRouteType(path: string): "emoji" | "webhook" | "reaction" | undefined {
-    const patterns = RateLimitManager.ROUTE_PATTERNS;
-
-    if (patterns.EMOJI.test(path)) {
-      return "emoji";
-    }
-    if (patterns.WEBHOOK.test(path)) {
-      return "webhook";
-    }
-    if (patterns.REACTION.test(path)) {
-      return "reaction";
-    }
-
-    return undefined;
-  }
-
-  /**
    * Checks if we've hit the invalid request limit.
-   * Prevents excessive invalid requests that could trigger Cloudflare bans.
+   * Prevents Cloudflare bans from too many invalid requests.
    *
-   * @param requestId - Request ID for correlation in events
-   * @returns Result indicating whether request can proceed based on invalid request history
+   * @param requestId - Unique identifier for this request
+   * @param now - Current timestamp
+   * @returns Rate limit check result
    * @private
    */
-  #checkInvalidRequestLimit(requestId: string): RateLimitResult {
-    const now = Date.now();
+  #checkInvalidRequestLimit(requestId: string, now: number): RateLimitResult {
     const windowDuration = 600_000; // 10 minutes
 
     if (
@@ -542,14 +563,17 @@ export class RateLimitManager {
         this.#invalidRequests.windowStart + windowDuration - now;
 
       // Emit rate limit hit event
-      this.#emitRateLimitHit({
-        requestId,
-        bucketId: "invalid",
-        resetAfter: retryAfter,
-        global: false,
-        method: undefined,
-        route: "invalid",
-      });
+      this.#emitRateLimitHit(
+        {
+          requestId,
+          bucketId: "invalid",
+          resetAfter: retryAfter,
+          global: false,
+          method: undefined,
+          route: "invalid",
+        },
+        now,
+      );
 
       return {
         canProceed: false,
@@ -565,14 +589,14 @@ export class RateLimitManager {
 
   /**
    * Checks if we've hit the global rate limit.
-   * Prevents excessive requests that could trigger global rate limits.
+   * Prevents global rate limit violations.
    *
-   * @param requestId - Request ID for correlation in events
-   * @returns Result indicating whether request can proceed based on global request frequency
+   * @param requestId - Unique identifier for this request
+   * @param now - Current timestamp
+   * @returns Rate limit check result
    * @private
    */
-  #checkGlobalRateLimit(requestId: string): RateLimitResult {
-    const now = Date.now();
+  #checkGlobalRateLimit(requestId: string, now: number): RateLimitResult {
     const windowDuration = 1000; // 1 second window
 
     if (
@@ -585,14 +609,17 @@ export class RateLimitManager {
         this.#globalRateTracker.windowStartTime + windowDuration - now;
 
       // Emit rate limit hit event
-      this.#emitRateLimitHit({
-        requestId,
-        bucketId: "global",
-        resetAfter: retryAfter,
-        global: true,
-        method: "GLOBAL",
-        route: "global",
-      });
+      this.#emitRateLimitHit(
+        {
+          requestId,
+          bucketId: "global",
+          resetAfter: retryAfter,
+          global: true,
+          method: "GLOBAL",
+          route: "global",
+        },
+        now,
+      );
 
       return {
         canProceed: false,
@@ -608,13 +635,14 @@ export class RateLimitManager {
 
   /**
    * Checks if a request would exceed a bucket's limit.
-   * Evaluates a specific bucket to determine if a request can proceed.
+   * Enforces bucket-specific rate limits.
    *
    * @param bucket - Rate limit bucket to check
-   * @param path - API path being requested (for event emission)
-   * @param method - HTTP method being used (for event emission)
-   * @param requestId - Request ID for correlation
-   * @returns Result indicating whether request can proceed based on bucket state
+   * @param path - API path for the request
+   * @param method - HTTP method used for the request
+   * @param requestId - Unique identifier for this request
+   * @param now - Current timestamp
+   * @returns Rate limit check result
    * @private
    */
   #checkBucketLimit(
@@ -622,26 +650,29 @@ export class RateLimitManager {
     path: string,
     method: HttpMethod,
     requestId: string,
+    now: number,
   ): RateLimitResult {
-    const now = Date.now();
-
-    // Handle special routes with stricter limits
-    if (bucket.isSpecialRoute) {
-      return this.#checkSpecialRouteLimit(bucket, path, method, requestId);
+    // Handle emoji routes with stricter limits
+    if (bucket.isEmojiRoute) {
+      return this.#checkEmojiRouteLimit(bucket, path, method, requestId, now);
     }
 
     // No remaining requests in this bucket
     if (bucket.remaining <= 0 && bucket.reset > now) {
       const retryAfter = bucket.reset - now;
 
-      this.#emitRateLimitHit({
-        requestId,
-        bucketId: bucket.hash,
-        resetAfter: retryAfter,
-        global: false,
-        method,
-        route: path,
-      });
+      // Emit event
+      this.#emitRateLimitHit(
+        {
+          requestId,
+          bucketId: bucket.hash,
+          resetAfter: retryAfter,
+          global: false,
+          method,
+          route: path,
+        },
+        now,
+      );
 
       return {
         canProceed: false,
@@ -653,22 +684,29 @@ export class RateLimitManager {
       };
     }
 
-    // Safety margin when approaching reset
-    // This prevents hitting the rate limit exactly at the reset boundary
-    if (
-      bucket.remaining === 1 &&
-      bucket.reset - now < this.#options.safetyMarginMs
-    ) {
-      const retryAfter = this.#options.safetyMarginMs;
+    // Adaptive safety margin based on bucket
+    // Use smaller margin for high-capacity buckets
+    const adaptiveSafetyMargin =
+      bucket.limit > 10
+        ? Math.min(50, this.#options.safetyMarginMs)
+        : this.#options.safetyMarginMs;
 
-      this.#emitRateLimitHit({
-        requestId,
-        bucketId: bucket.hash,
-        resetAfter: retryAfter,
-        global: false,
-        method,
-        route: path,
-      });
+    // Safety margin when approaching reset
+    if (bucket.remaining === 1 && bucket.reset - now < adaptiveSafetyMargin) {
+      const retryAfter = adaptiveSafetyMargin;
+
+      // Emit event
+      this.#emitRateLimitHit(
+        {
+          requestId,
+          bucketId: bucket.hash,
+          resetAfter: retryAfter,
+          global: false,
+          method,
+          route: path,
+        },
+        now,
+      );
 
       return {
         canProceed: false,
@@ -684,47 +722,49 @@ export class RateLimitManager {
   }
 
   /**
-   * Special check for routes with custom handling.
-   * Some routes (like emoji, reactions) need more cautious rate limit handling.
+   * Special check for emoji routes per Discord documentation.
+   * Emoji routes have special rate limit handling.
    *
    * @param bucket - Rate limit bucket to check
-   * @param path - API path being requested (for event emission)
-   * @param method - HTTP method being used (for event emission)
-   * @param requestId - Request ID for correlation
-   * @returns Result indicating whether request can proceed based on special route rules
+   * @param path - API path for the request
+   * @param method - HTTP method used for the request
+   * @param requestId - Unique identifier for this request
+   * @param now - Current timestamp
+   * @returns Rate limit check result
    * @private
    */
-  #checkSpecialRouteLimit(
+  #checkEmojiRouteLimit(
     bucket: RateLimitBucket,
     path: string,
     method: HttpMethod,
     requestId: string,
+    now: number,
   ): RateLimitResult {
-    const now = Date.now();
-
-    // Special routes (emoji, reaction) need more cautious handling
-    // We stop at higher remaining values to prevent rate limit issues
-    const minimumRemaining = bucket.routeType === "emoji" ? 1 : 0;
-
-    if (bucket.remaining <= minimumRemaining && bucket.reset > now) {
+    // Emoji routes need more cautious handling per Discord documentation
+    // Stop at 1 remaining request to prevent rate limit issues
+    if (bucket.remaining <= 1 && bucket.reset > now) {
       const retryAfter = bucket.reset - now;
 
-      this.#emitRateLimitHit({
-        requestId,
-        bucketId: bucket.hash,
-        resetAfter: retryAfter,
-        global: false,
-        method,
-        route: path,
-      });
+      // Emit event
+      this.#emitRateLimitHit(
+        {
+          requestId,
+          bucketId: bucket.hash,
+          resetAfter: retryAfter,
+          global: false,
+          method,
+          route: path,
+        },
+        now,
+      );
 
       return {
         canProceed: false,
         retryAfter,
-        limitType: "special",
+        limitType: "emoji",
         scope: bucket.scope,
         bucketHash: bucket.hash,
-        reason: `${bucket.routeType} route rate limit`,
+        reason: "Emoji route rate limit",
       };
     }
 
@@ -733,13 +773,14 @@ export class RateLimitManager {
 
   /**
    * Handles a 429 Too Many Requests response.
-   * Processes headers from a rate limit exceeded response to update tracking.
+   * Processes rate limit exceeded responses.
    *
    * @param path - API path that was requested
-   * @param method - HTTP method that was used
+   * @param method - HTTP method used for the request
    * @param headers - Response headers containing rate limit information
-   * @param requestId - Request ID for correlation
-   * @returns Result indicating delay until the request can be retried
+   * @param requestId - Unique identifier for this request
+   * @param now - Current timestamp
+   * @returns Rate limit result
    * @private
    */
   #handleRateLimitExceeded(
@@ -747,6 +788,7 @@ export class RateLimitManager {
     method: HttpMethod,
     headers: Record<string, string>,
     requestId: string,
+    now: number,
   ): RateLimitResult {
     const { HEADERS } = RateLimitManager;
 
@@ -757,14 +799,17 @@ export class RateLimitManager {
     const bucketId = headers[HEADERS.BUCKET] || "unknown";
 
     // Emit rate limit hit event
-    this.#emitRateLimitHit({
-      requestId,
-      bucketId,
-      resetAfter: retryAfter,
-      global: isGlobal,
-      method,
-      route: path,
-    });
+    this.#emitRateLimitHit(
+      {
+        requestId,
+        bucketId,
+        resetAfter: retryAfter,
+        global: isGlobal,
+        method,
+        route: path,
+      },
+      now,
+    );
 
     return {
       canProceed: false,
@@ -778,14 +823,15 @@ export class RateLimitManager {
 
   /**
    * Updates a rate limit bucket from response headers.
-   * Creates or updates bucket tracking information based on API response.
+   * Processes and stores rate limit information.
    *
-   * @param bucketHash - Bucket hash from the API response headers
+   * @param bucketHash - Unique hash identifier for this bucket
    * @param headers - Response headers containing rate limit information
-   * @param routeKey - Route key for this request
+   * @param routeKey - Unique key for this route
    * @param path - API path that was requested
-   * @param requestId - Request ID for correlation
-   * @returns Result indicating whether future requests to this bucket can proceed
+   * @param requestId - Unique identifier for this request
+   * @param now - Current timestamp
+   * @returns Rate limit result
    * @private
    */
   #updateBucket(
@@ -794,32 +840,37 @@ export class RateLimitManager {
     routeKey: string,
     path: string,
     requestId: string,
+    now: number,
   ): RateLimitResult {
     const { HEADERS } = RateLimitManager;
 
-    // Extract route type for special handling
-    const routeType = this.#getRouteType(path);
+    // Check if it's an emoji route
+    const isEmojiRoute = RateLimitManager.EMOJI_ROUTE_PATTERN.test(path);
+
+    // Parse reset time and calculate TTL for the bucket
+    const resetTimeSeconds = Number(headers[HEADERS.RESET]);
+    const resetTimeMs = resetTimeSeconds * 1000; // Convert from seconds to milliseconds
+    const bucketTtl = Math.max(0, resetTimeMs - now) + 60000; // Add 1 minute buffer
 
     // Extract bucket information from headers
     const bucket: RateLimitBucket = {
       hash: bucketHash,
       limit: Number(headers[HEADERS.LIMIT]),
       remaining: Number(headers[HEADERS.REMAINING]),
-      reset: Number(headers[HEADERS.RESET]) * 1000, // Convert from seconds to milliseconds
+      reset: resetTimeMs,
       resetAfter: Number(headers[HEADERS.RESET_AFTER]) * 1000, // Convert from seconds to milliseconds
       scope: (headers[HEADERS.SCOPE] as RateLimitScope) ?? "user",
-      isSpecialRoute: routeType !== undefined,
-      routeType,
+      isEmojiRoute,
       requestId,
     };
 
-    // Update our stores
-    this.#buckets.set(bucketHash, bucket);
+    // Update stores with TTL based on reset time
+    this.#buckets.setWithTtl(bucketHash, bucket, bucketTtl);
     this.#routeBuckets.set(routeKey, bucketHash);
 
     // Emit update event
     this.#rest.emit("rateLimitUpdate", {
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(now).toISOString(),
       requestId,
       bucketId: bucketHash,
       remaining: bucket.remaining,
@@ -838,54 +889,19 @@ export class RateLimitManager {
   }
 
   /**
-   * Removes expired buckets to prevent memory leaks.
-   * Periodically called to clean up buckets that are no longer needed.
-   * @private
-   */
-  #cleanupExpiredBuckets(): void {
-    const now = Date.now();
-    const expiredBuckets: string[] = [];
-
-    // Identify expired buckets
-    for (const [hash, bucket] of this.#buckets.entries()) {
-      if (bucket.reset < now) {
-        expiredBuckets.push(hash);
-
-        // Emit bucket expire event
-        this.#rest.emit("rateLimitExpire", {
-          timestamp: new Date().toISOString(),
-          requestId: bucket.requestId,
-          bucketId: hash,
-          lifespan: now - (bucket.reset - bucket.resetAfter),
-        });
-      }
-    }
-
-    // Remove expired buckets
-    for (const hash of expiredBuckets) {
-      this.#buckets.delete(hash);
-    }
-
-    // Clean up route mappings in a memory-efficient way
-    if (expiredBuckets.length > 0) {
-      for (const [route, hash] of this.#routeBuckets.entries()) {
-        if (expiredBuckets.includes(hash)) {
-          this.#routeBuckets.delete(route);
-        }
-      }
-    }
-  }
-
-  /**
    * Emits a rate limit hit event.
-   * Used to communicate rate limit information for monitoring and debugging.
+   * Used for tracking and monitoring rate limit hits.
    *
-   * @param params - Event parameters containing rate limit details
+   * @param params - Parameters for the rate limit hit event
+   * @param now - Current timestamp
    * @private
    */
-  #emitRateLimitHit(params: Omit<RateLimitHitEvent, "timestamp">): void {
+  #emitRateLimitHit(
+    params: Omit<RateLimitHitEvent, "timestamp">,
+    now: number,
+  ): void {
     const event: RateLimitHitEvent = {
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(now).toISOString(),
       requestId: params.requestId,
       bucketId: params.bucketId,
       resetAfter: params.resetAfter,

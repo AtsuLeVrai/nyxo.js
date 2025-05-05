@@ -8,7 +8,12 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["**/dist/**", "**/node_modules/**", "**/*.d.ts"]
+    "ignore": [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/*.d.ts",
+      "docs/**"
+    ]
   },
   "formatter": {
     "enabled": true,

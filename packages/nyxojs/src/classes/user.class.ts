@@ -9,6 +9,7 @@ import {
   type Locale,
   type PremiumType,
   type Snowflake,
+  SnowflakeUtil,
   type UserEntity,
   type UserFlags,
   formatUser,
@@ -59,6 +60,18 @@ export class User
   extends BaseClass<UserEntity>
   implements Enforce<CamelCasedProperties<UserEntity>>
 {
+  /**
+   * The flags on the user's account.
+   * @private
+   */
+  #flags: BitField<UserFlags> | null = null;
+
+  /**
+   * The public flags on the user's account.
+   * @private
+   */
+  #publicFlags: BitField<UserFlags> | null = null;
+
   /**
    * Gets the user's unique identifier (Snowflake).
    *
@@ -222,7 +235,11 @@ export class User
    * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
    */
   get flags(): BitField<UserFlags> {
-    return new BitField<UserFlags>(this.data.flags ?? 0n);
+    if (!this.#flags) {
+      this.#flags = new BitField<UserFlags>(this.data.flags ?? 0n);
+    }
+
+    return this.#flags;
   }
 
   /**
@@ -247,7 +264,11 @@ export class User
    * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
    */
   get publicFlags(): BitField<UserFlags> {
-    return new BitField<UserFlags>(this.data.public_flags ?? 0n);
+    if (!this.#publicFlags) {
+      this.#publicFlags = new BitField<UserFlags>(this.data.public_flags ?? 0n);
+    }
+
+    return this.#publicFlags;
   }
 
   /**
@@ -259,11 +280,9 @@ export class User
    * @returns The avatar decoration data in camelCase format, or null if not set
    */
   get avatarDecorationData(): CamelCasedProperties<AvatarDecorationDataEntity> | null {
-    if (!this.data.avatar_decoration_data) {
-      return null;
-    }
-
-    return toCamelCasedProperties(this.data.avatar_decoration_data);
+    return this.data.avatar_decoration_data
+      ? toCamelCasedProperties(this.data.avatar_decoration_data)
+      : null;
   }
 
   /**
@@ -274,7 +293,7 @@ export class User
    *
    * @returns The user's tag in the format `username#discriminator`
    */
-  get tag(): string {
+  get tag(): `${string}#${string}` {
     return `${this.username}#${this.discriminator}`;
   }
 
@@ -298,7 +317,7 @@ export class User
    * @returns The Date when this user was created
    */
   get createdAt(): Date {
-    return new Date(Number(BigInt(this.id) >> 22n) + 1420070400000);
+    return SnowflakeUtil.getDate(this.id);
   }
 
   /**
@@ -321,10 +340,9 @@ export class User
    * @returns The URL for the avatar decoration, or null if the user doesn't have one
    */
   get avatarDecorationUrl(): string | null {
-    if (!this.avatarDecorationData) {
-      return null;
-    }
-    return Cdn.avatarDecoration(this.avatarDecorationData.asset);
+    return this.avatarDecorationData
+      ? Cdn.avatarDecoration(this.avatarDecorationData.asset)
+      : null;
   }
 
   /**
@@ -399,10 +417,7 @@ export class User
   getAvatarUrl(
     options: z.input<typeof AnimatedImageOptions> = {},
   ): UserAvatarUrl | null {
-    if (!this.avatar) {
-      return null;
-    }
-    return Cdn.userAvatar(this.id, this.avatar, options);
+    return this.avatar ? Cdn.userAvatar(this.id, this.avatar, options) : null;
   }
 
   /**
@@ -445,10 +460,7 @@ export class User
   getBannerUrl(
     options: z.input<typeof AnimatedImageOptions> = {},
   ): UserBannerUrl | null {
-    if (!this.banner) {
-      return null;
-    }
-    return Cdn.userBanner(this.id, this.banner, options);
+    return this.banner ? Cdn.userBanner(this.id, this.banner, options) : null;
   }
 
   /**
@@ -574,12 +586,19 @@ export class User
    * @throws Error if this isn't the current authenticated user
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
-  async fetchGuilds(query?: UserGuildsFetchParams): Promise<Guild[]> {
+  async fetchGuilds(
+    query?: CamelCasedProperties<UserGuildsFetchParams>,
+  ): Promise<Guild[]> {
     if (!this.isSelf) {
       throw new Error("You can only fetch guilds for yourself");
     }
 
-    const guilds = await this.client.rest.users.fetchCurrentGuilds(query);
+    const queryTransformed: UserGuildsFetchParams | undefined = query
+      ? toSnakeCaseProperties(query)
+      : undefined;
+
+    const guilds =
+      await this.client.rest.users.fetchCurrentGuilds(queryTransformed);
     return guilds.map(
       (guild) => new Guild(this.client, guild as GuildCreateEntity),
     );

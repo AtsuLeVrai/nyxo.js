@@ -13,22 +13,14 @@
     "build:dev": "turbo run build:dev",
     "build:watch": "turbo run build:watch",
     "build:prod": "turbo run build:prod",
+    "biome:check": "turbo run biome:check",
     "type-check": "turbo run type-check",
-    "check": "biome check --write --unsafe --verbose",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:ui": "vitest --ui",
     "prepare": "husky",
-    "publish": "pnpm run check && pnpm run type-check && pnpm run build:prod && changeset publish"
+    "publish": "pnpm run build:prod && changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@changesets/cli": "^2.29.2",
-    "@vitest/coverage-v8": "^3.1.2",
-    "@vitest/ui": "^3.1.2",
+    "@changesets/cli": "^2.29.3",
     "husky": "^9.1.7",
-    "turbo": "^2.5.2",
-    "vitest": "^3.1.2"
+    "turbo": "^2.5.2"
   }
 }

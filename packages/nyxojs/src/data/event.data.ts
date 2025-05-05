@@ -319,8 +319,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
     "applicationCommandPermissionsUpdate",
     (_client, data) => [toCamelCasedPropertiesDeep(data)],
   ),
-
-  // Auto Moderation events
   defineEvent(
     "AUTO_MODERATION_RULE_CREATE",
     "autoModerationRuleCreate",
@@ -347,8 +345,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
     "autoModerationActionExecution",
     (client, data) => [new AutoModerationActionExecution(client, data)],
   ),
-
-  // Channel events
   defineEvent("CHANNEL_CREATE", "channelCreate", (client, data) => [
     ChannelFactory.create(client, data),
   ]),
@@ -361,8 +357,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
   defineEvent("CHANNEL_PINS_UPDATE", "channelPinsUpdate", (_client, data) => [
     toCamelCasedPropertiesDeep(data),
   ]),
-
-  // Thread events
   defineEvent("THREAD_CREATE", "threadCreate", (client, data) => [
     ChannelFactory.create(client, data) as AnyThreadChannel,
   ]),
@@ -383,8 +377,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
     "threadMembersUpdate",
     (_client, data) => [toCamelCasedPropertiesDeep(data)],
   ),
-
-  // Entitlement events
   defineEvent("ENTITLEMENT_CREATE", "entitlementCreate", (client, data) => [
     new Entitlement(client, data),
   ]),
@@ -394,8 +386,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
   defineEvent("ENTITLEMENT_DELETE", "entitlementDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "entitlements"),
   ),
-
-  // Guild events
   defineEvent("GUILD_CREATE", "guildCreate", (client, data) => [
     new Guild(client, data as GuildCreateEntity),
   ]),
@@ -410,8 +400,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
     "guildAuditLogEntryCreate",
     (client, data) => [new GuildAuditLogEntry(client, data)],
   ),
-
-  // Ban events
   defineEvent("GUILD_BAN_ADD", "guildBanAdd", (client, data) => [
     new Ban(client, {
       guild_id: data.guild_id,
@@ -426,16 +414,12 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
       reason: null,
     } as GuildBased<BanEntity>),
   ]),
-
-  // Emoji and Sticker events (using custom handlers)
   defineEvent("GUILD_EMOJIS_UPDATE", "guildEmojisUpdate", handleEmojiUpdate),
   defineEvent(
     "GUILD_STICKERS_UPDATE",
     "guildStickersUpdate",
     handleStickerUpdate,
   ),
-
-  // Guild Member events
   defineEvent("GUILD_MEMBER_ADD", "guildMemberAdd", (client, data) => [
     new GuildMember(client, data),
   ]),
@@ -453,8 +437,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
   defineEvent("GUILD_MEMBERS_CHUNK", "guildMembersChunk", (_client, data) => [
     toCamelCasedPropertiesDeep(data),
   ]),
-
-  // Role events
   defineEvent("GUILD_ROLE_CREATE", "guildRoleCreate", (client, data) => [
     new Role(client, {
       guild_id: data.guild_id,
@@ -475,8 +457,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
   defineEvent("GUILD_ROLE_DELETE", "guildRoleDelete", (client, data) =>
     handleDeleteEvent(client, data.role_id, "roles"),
   ),
-
-  // Scheduled Event events
   defineEvent(
     "GUILD_SCHEDULED_EVENT_CREATE",
     "guildScheduledEventCreate",
@@ -503,8 +483,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
     "guildScheduledEventUserRemove",
     (client, data) => [new GuildScheduledEventUser(client, data)],
   ),
-
-  // Soundboard events
   defineEvent(
     "GUILD_SOUNDBOARD_SOUND_CREATE",
     "guildSoundboardSoundCreate",
@@ -542,8 +520,6 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
     );
     return [soundboardSounds];
   }),
-
-  // Integration events
   defineEvent("INTEGRATION_CREATE", "integrationCreate", (client, data) => [
     new Integration(client, data),
   ]),
@@ -553,16 +529,12 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
   defineEvent("INTEGRATION_DELETE", "integrationDelete", (client, data) =>
     handleDeleteEvent(client, data.id, "integrations"),
   ),
-
-  // Invite events
   defineEvent("INVITE_CREATE", "inviteCreate", (client, data) => [
     new Invite(client, data as InviteEntity & InviteCreateEntity),
   ]),
   defineEvent("INVITE_DELETE", "inviteDelete", (client, data) => [
     new Invite(client, data as InviteEntity & InviteCreateEntity),
   ]),
-
-  // Message events
   defineEvent("MESSAGE_CREATE", "messageCreate", (client, data) => [
     new Message(client, data),
   ]),
@@ -655,8 +627,7 @@ export const StandardGatewayDispatchEventMappings: EventMapping[] = [
  * Events to forward directly from REST client to main client
  */
 export const RestKeyofEventMappings: (keyof RestEvents)[] = [
-  "requestStart",
-  "requestSuccess",
+  "request",
   "rateLimitHit",
   "rateLimitUpdate",
   "rateLimitExpire",

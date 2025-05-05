@@ -80,12 +80,6 @@ export interface HttpRequestOptions {
   method: HttpMethod;
 
   /**
-   * Base URL for the request.
-   * If not provided, the default API URL will be used.
-   */
-  origin?: string;
-
-  /**
    * Request body data.
    * Can be a string, Buffer, or Readable stream.
    */
@@ -182,19 +176,13 @@ export interface RequestStartEvent extends BaseHttpEvent {
    * One of the supported HTTP methods.
    */
   method: HttpMethod;
-
-  /**
-   * Request headers sent with the request.
-   * Contains all headers as key-value pairs.
-   */
-  headers: Record<string, string>;
 }
 
 /**
  * Emitted when an HTTP request completes successfully.
  * Contains metrics and response information for successful requests.
  */
-export interface RequestSuccessEvent extends BaseHttpEvent {
+export interface RequestEvent extends BaseHttpEvent {
   /**
    * API path for this request.
    * Path component of the URL without the origin.
@@ -212,12 +200,6 @@ export interface RequestSuccessEvent extends BaseHttpEvent {
    * Typically a 2xx code for success events.
    */
   statusCode: number;
-
-  /**
-   * Response headers received from the server.
-   * Contains all headers as key-value pairs.
-   */
-  headers: Record<string, string>;
 
   /**
    * Total request duration in milliseconds.
@@ -383,16 +365,10 @@ export interface RetryEvent extends BaseHttpEvent {
  */
 export interface RestEvents {
   /**
-   * Emitted when an HTTP request is initiated.
-   * Contains request details like path, method, and headers.
-   */
-  requestStart: [event: RequestStartEvent];
-
-  /**
    * Emitted when an HTTP request completes successfully.
    * Contains response data, status code, and timing information.
    */
-  requestSuccess: [event: RequestSuccessEvent];
+  request: [event: RequestEvent];
 
   /**
    * Emitted when a rate limit is encountered.

@@ -2,10 +2,10 @@ packages:
   - apps/*
   - packages/*
   - scripts
-
 onlyBuiltDependencies:
-  - '*'
-
+  - erlpack
+  - sharp
+  - zlib-sync
 publicHoistPattern:
   - '*bufferutil*'
   - '*erlpack*'

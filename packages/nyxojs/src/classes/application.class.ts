@@ -7,6 +7,7 @@ import {
   BitField,
   type InstallParamsEntity,
   type Snowflake,
+  SnowflakeUtil,
   type TeamEntity,
   type UserEntity,
 } from "@nyxojs/core";
@@ -157,11 +158,9 @@ export class Application
    * @returns The User object for the bot, or undefined if not available
    */
   get bot(): User | undefined {
-    if (!this.data.bot) {
-      return undefined;
-    }
-
-    return new User(this.client, this.data.bot as UserEntity);
+    return this.data.bot
+      ? new User(this.client, this.data.bot as UserEntity)
+      : undefined;
   }
 
   /**
@@ -196,11 +195,9 @@ export class Application
    * @returns The User object for the application owner, or undefined if not available
    */
   get owner(): User | undefined {
-    if (!this.data.owner) {
-      return undefined;
-    }
-
-    return new User(this.client, this.data.owner as UserEntity);
+    return this.data.owner
+      ? new User(this.client, this.data.owner as UserEntity)
+      : undefined;
   }
 
   /**
@@ -224,11 +221,7 @@ export class Application
    * @returns The team information in camelCase format, or null if owned by an individual
    */
   get team(): CamelCasedPropertiesDeep<TeamEntity> | null {
-    if (!this.data.team) {
-      return null;
-    }
-
-    return toCamelCasedPropertiesDeep(this.data.team);
+    return this.data.team ? toCamelCasedPropertiesDeep(this.data.team) : null;
   }
 
   /**
@@ -252,11 +245,9 @@ export class Application
    * @returns The Guild object, or undefined if no guild is associated
    */
   get guild(): Guild | undefined {
-    if (!this.data.guild) {
-      return undefined;
-    }
-
-    return new Guild(this.client, this.data.guild as GuildCreateEntity);
+    return this.data.guild
+      ? new Guild(this.client, this.data.guild as GuildCreateEntity)
+      : undefined;
   }
 
   /**
@@ -422,11 +413,9 @@ export class Application
   get installParams():
     | CamelCasedPropertiesDeep<InstallParamsEntity>
     | undefined {
-    if (!this.data.install_params) {
-      return undefined;
-    }
-
-    return toCamelCasedPropertiesDeep(this.data.install_params);
+    return this.data.install_params
+      ? toCamelCasedPropertiesDeep(this.data.install_params)
+      : undefined;
   }
 
   /**
@@ -573,7 +562,7 @@ export class Application
    * @returns The Date when this application was created
    */
   get createdAt(): Date {
-    return new Date(Number(BigInt(this.id) >> 22n) + 1420070400000);
+    return SnowflakeUtil.getDate(this.id);
   }
 
   /**
@@ -585,11 +574,7 @@ export class Application
   getIconUrl(
     options: z.input<typeof ImageOptions> = {},
   ): ApplicationIconUrl | null {
-    if (!this.icon) {
-      return null;
-    }
-
-    return Cdn.applicationIcon(this.id, this.icon, options);
+    return this.icon ? Cdn.applicationIcon(this.id, this.icon, options) : null;
   }
 
   /**
@@ -601,11 +586,9 @@ export class Application
   getCoverImageUrl(
     options: z.input<typeof ImageOptions> = {},
   ): ApplicationCoverUrl | null {
-    if (!this.coverImage) {
-      return null;
-    }
-
-    return Cdn.applicationCover(this.id, this.coverImage, options);
+    return this.coverImage
+      ? Cdn.applicationCover(this.id, this.coverImage, options)
+      : null;
   }
 
   /**
@@ -625,7 +608,8 @@ export class Application
       await this.client.rest.applications.updateCurrentApplication(
         toSnakeCaseProperties(options),
       );
-    return new Application(this.client, updatedData);
+    this.update(updatedData);
+    return this;
   }
 
   /**
@@ -678,7 +662,8 @@ export class Application
    */
   async refresh(): Promise<Application> {
     const data = await this.client.rest.applications.fetchCurrentApplication();
-    return new Application(this.client, data);
+    this.update(data);
+    return this;
   }
 
   /**

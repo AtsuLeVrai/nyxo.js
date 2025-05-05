@@ -25,30 +25,28 @@ import type {
   Webhook,
 } from "../classes/index.js";
 
-export const ClientCacheEntityOptions = z
-  .object({
-    /**
-     * Controls whether the client's cache mechanism is active.
-     * When disabled, all entities will be fetched directly from the API.
-     *
-     * @default true
-     */
-    enabled: z.boolean().default(true),
+export const ClientCacheEntityOptions = z.object({
+  /**
+   * Controls whether the client's cache mechanism is active.
+   * When disabled, all entities will be fetched directly from the API.
+   *
+   * @default true
+   */
+  enabled: z.boolean().default(true),
 
-    /**
-     * Time-to-live (TTL) for cached entities in milliseconds.
-     * This determines how long entities remain in the cache before being considered stale.
-     *
-     * @default true
-     */
-    sweepInterval: z.boolean().default(true),
+  /**
+   * Time-to-live (TTL) for cached entities in milliseconds.
+   * This determines how long entities remain in the cache before being considered stale.
+   *
+   * @default true
+   */
+  sweepInterval: z.boolean().default(true),
 
-    /**
-     * Storage options for the cache.
-     */
-    ...StoreOptions.shape,
-  })
-  .readonly();
+  /**
+   * Storage options for the cache.
+   */
+  ...StoreOptions.shape,
+});
 
 export type ClientCacheEntityOptions = z.infer<typeof ClientCacheEntityOptions>;
 

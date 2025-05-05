@@ -2,7 +2,6 @@ import { sleep } from "@nyxojs/core";
 import { z } from "zod";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, HttpResponse, RetryEvent } from "../types/index.js";
-import type { RateLimitResult } from "./rate-limit.manager.js";
 
 /**
  * Configuration options for the retry mechanism.
@@ -25,21 +24,44 @@ export const RetryOptions = z.object({
 
   /**
    * HTTP status codes that should trigger a retry attempt.
-   * Typically includes rate limits (429) and server errors (5xx).
-   * @default [429, 500, 502, 503, 504]
+   * Typically includes server errors (5xx) and specific retryable client errors.
+   * Rate limits (429) are explicitly excluded as they're handled by RateLimitManager.
+   * @default [500, 502, 503, 504]
    */
-  retryStatusCodes: z.array(z.number()).default([429, 500, 502, 503, 504]),
+  retryStatusCodes: z.array(z.number()).default([500, 502, 503, 504]),
 });
 
 export type RetryOptions = z.infer<typeof RetryOptions>;
 
 /**
+ * Classification of errors to determine retry strategies.
+ * Different types of errors require different backoff algorithms.
+ */
+export enum ErrorCategory {
+  /** Transient server errors like 500, 502, 503, 504 */
+  ServerError = "server_error",
+
+  /** Network-related errors like timeouts, connection resets */
+  NetworkError = "network_error",
+
+  /** Client errors that we know are not worth retrying */
+  ClientError = "client_error",
+
+  /** Unknown errors that we'll attempt to retry conservatively */
+  UnknownError = "unknown_error",
+}
+
+/**
  * Manages retry logic for HTTP requests to the Discord API.
  *
  * Handles automatic retries for failed requests using configurable strategies:
- * - Respects rate limits by honoring retry-after headers
  * - Implements exponential backoff for server errors
+ * - Uses different retry strategies based on error type
  * - Tracks and emits events for retry attempts
+ * - Collects error history for comprehensive failure reports
+ *
+ * Note: Rate limit handling is NOT managed here - it's the responsibility
+ * of the RateLimitManager exclusively.
  */
 export class RetryManager {
   /**
@@ -66,57 +88,6 @@ export class RetryManager {
   }
 
   /**
-   * Handles a rate limit result by waiting if necessary.
-   * If the rate limit indicates the request can't proceed, waits for the specified time.
-   *
-   * @param rateLimitResult - Result from rate limit check containing retry information
-   * @param requestId - Unique request ID for tracking and correlation
-   * @param method - HTTP method of the rate-limited request
-   * @param path - API path of the rate-limited request
-   * @returns Promise that resolves when it's safe to retry the request
-   */
-  async handleRateLimit(
-    rateLimitResult: RateLimitResult,
-    requestId: string,
-    method: HttpMethod,
-    path: string,
-  ): Promise<void> {
-    if (rateLimitResult.canProceed) {
-      return; // Nothing to do if we can proceed
-    }
-
-    // Calculate delay in milliseconds (retryAfter is already in ms now)
-    const delay = rateLimitResult.retryAfter || 1000;
-
-    // Create rate limit information for logging
-    const limitInfo = {
-      bucketId: rateLimitResult.bucketHash || "unknown",
-      scope: rateLimitResult.scope || "user",
-      isGlobal: rateLimitResult.limitType === "global",
-      retryAfter: delay,
-      method,
-      path,
-    };
-
-    // Emit retry event for tracking and monitoring
-    this.#emitRetryEvent({
-      requestId,
-      method,
-      path,
-      error: new Error(
-        rateLimitResult.reason ||
-          `Rate limit exceeded for ${limitInfo.bucketId} (${limitInfo.scope})`,
-      ),
-      attempt: 1,
-      delay,
-      reason: "rate_limit",
-    });
-
-    // Wait for the specified time before allowing the request to proceed
-    await sleep(delay);
-  }
-
-  /**
    * Processes an HTTP response and retries if necessary.
    * Implements the retry strategy based on configuration and response status.
    *
@@ -125,7 +96,7 @@ export class RetryManager {
    * @param method - HTTP method used for the request
    * @param path - API path being requested
    * @returns Promise resolving to the final HTTP response after all retry attempts
-   * @throws {Error} Error if all retry attempts fail with network errors
+   * @throws {Error} Error if all retry attempts fail
    */
   async processResponse<T>(
     makeRequest: () => Promise<HttpResponse<T>>,
@@ -143,14 +114,17 @@ export class RetryManager {
         const response = await makeRequest();
         lastResponse = response;
 
-        // If success, return immediately
-        if (response.statusCode < 400) {
+        // If success or non-retryable status code, return immediately
+        if (
+          response.statusCode < 400 ||
+          !this.#options.retryStatusCodes.includes(response.statusCode)
+        ) {
           return response;
         }
 
-        // Check if we should retry based on status code
-        if (!this.#options.retryStatusCodes.includes(response.statusCode)) {
-          return response; // Don't retry this status code
+        // Explicitly exclude rate limit errors - these are handled by RateLimitManager
+        if (response.statusCode === 429) {
+          return response;
         }
 
         // Increment attempts
@@ -164,12 +138,12 @@ export class RetryManager {
 
         // If max retries reached, return the last response
         if (attempts > this.#options.maxRetries) {
-          // We'll return the response
           return response;
         }
 
-        // Calculate delay with exponential backoff or based on retry-after headers
-        const delay = this.#calculateDelay(attempts, response);
+        // Calculate delay based on error category
+        const errorCategory = this.#categorizeError(response.statusCode);
+        const delay = this.#calculateDelay(attempts, errorCategory);
 
         // Emit retry event for tracking and monitoring
         this.#emitRetryEvent({
@@ -179,7 +153,7 @@ export class RetryManager {
           error: currentError,
           attempt: attempts,
           delay,
-          reason: this.#getRetryReason(response.statusCode),
+          reason: errorCategory,
         });
 
         // Wait before retry
@@ -194,14 +168,16 @@ export class RetryManager {
         attemptErrors.push(currentError);
 
         if (attempts > this.#options.maxRetries) {
-          // All retries failed, throw comprehensive error
+          // All retries failed, throw comprehensive error with error history
+          const errorSummary = this.#summarizeErrors(attemptErrors);
           throw new Error(
-            `Request failed after ${attempts} attempts. Last error: ${currentError.message} [${method} ${path}]`,
+            `Request failed after ${attempts} attempts. [${method} ${path}]\n${errorSummary}`,
           );
         }
 
-        // Calculate exponential backoff delay for network errors
-        const delay = this.#options.baseDelay * 2 ** (attempts - 1);
+        // Categorize network error and calculate appropriate backoff
+        const errorCategory = this.#categorizeNetworkError(currentError);
+        const delay = this.#calculateDelay(attempts, errorCategory);
 
         // Emit retry event for tracking and monitoring
         this.#emitRetryEvent({
@@ -211,7 +187,7 @@ export class RetryManager {
           error: currentError,
           attempt: attempts,
           delay,
-          reason: "network_error",
+          reason: errorCategory,
         });
 
         // Wait before retry
@@ -219,57 +195,125 @@ export class RetryManager {
       }
     }
 
-    // If we completed all retries but still have an error status code
-    if (lastResponse && lastResponse.statusCode >= 400) {
-      // We don't throw here - the error will be handled by the rest.ts class
-      // that will convert this to an appropriate error type based on status code
-    }
-
-    // This should never happen due to the returns above
+    // If we completed all retries but still have a response
     return lastResponse as HttpResponse<T>;
   }
 
   /**
-   * Calculates the appropriate delay for a retry attempt.
-   * Respects retry-after headers if present, otherwise uses exponential backoff.
+   * Categorizes an error based on HTTP status code.
+   * Used to determine the appropriate retry strategy.
    *
-   * @param attempt - Current attempt number (1-based)
-   * @param response - HTTP response if available, containing headers
-   * @returns Delay in milliseconds to wait before the next retry
+   * @param statusCode - HTTP status code from the response
+   * @returns Categorization of the error
    * @private
    */
-  #calculateDelay<T>(attempt: number, response?: HttpResponse<T>): number {
-    // Check for retry-after header for rate limits
-    if (response?.headers?.["retry-after"]) {
-      const retryAfterSec = Number(response.headers["retry-after"]);
-      if (!Number.isNaN(retryAfterSec)) {
-        return retryAfterSec * 1000; // Convert to milliseconds
-      }
+  #categorizeError(statusCode: number): ErrorCategory {
+    if (statusCode >= 500 && statusCode < 600) {
+      return ErrorCategory.ServerError;
     }
 
-    // Otherwise use exponential backoff: baseDelay * 2^(attempt-1)
-    // This gives increasingly longer delays for subsequent retries
-    return this.#options.baseDelay * 2 ** (attempt - 1);
+    if (statusCode >= 400 && statusCode < 500) {
+      return ErrorCategory.ClientError;
+    }
+
+    return ErrorCategory.UnknownError;
   }
 
   /**
-   * Gets a descriptive categorized reason for a retry based on status code.
-   * Used for event tracking and metrics.
+   * Categorizes a network error based on its properties.
+   * Different network errors require different retry strategies.
    *
-   * @param statusCode - HTTP status code from the response
-   * @returns A string describing the reason category for the retry
+   * @param error - Error that occurred during the request
+   * @returns Categorization of the error
    * @private
    */
-  #getRetryReason(statusCode: number): string {
-    if (statusCode === 429) {
-      return "rate_limit";
+  #categorizeNetworkError(error: Error): ErrorCategory {
+    // Check for timeout errors
+    if (error.name === "AbortError" || error.message.includes("timeout")) {
+      return ErrorCategory.NetworkError;
     }
 
-    if (statusCode >= 500 && statusCode < 600) {
-      return "server_error";
+    // Check for common network error messages
+    const networkErrorPatterns = [
+      "ECONNRESET",
+      "ECONNREFUSED",
+      "ENOTFOUND",
+      "ETIMEDOUT",
+      "network",
+      "connection",
+      "socket",
+    ];
+
+    for (const pattern of networkErrorPatterns) {
+      if (error.message.toLowerCase().includes(pattern.toLowerCase())) {
+        return ErrorCategory.NetworkError;
+      }
     }
 
-    return "unknown_error";
+    return ErrorCategory.UnknownError;
+  }
+
+  /**
+   * Calculates the appropriate delay for a retry attempt.
+   * Uses different strategies based on error category.
+   *
+   * @param attempt - Current attempt number (1-based)
+   * @param errorCategory - Classification of the error
+   * @returns Delay in milliseconds to wait before the next retry
+   * @private
+   */
+  #calculateDelay(attempt: number, errorCategory: ErrorCategory): number {
+    // Base exponential backoff formula: baseDelay * 2^(attempt-1)
+    const baseBackoff = this.#options.baseDelay * 2 ** (attempt - 1);
+
+    // Add jitter to prevent retry storms (±25% randomization)
+    const jitter = baseBackoff * 0.5 * (Math.random() - 0.5);
+
+    switch (errorCategory) {
+      case ErrorCategory.ServerError:
+        // Server errors: full exponential backoff with jitter
+        // These are worth retrying aggressively
+        return baseBackoff + jitter;
+
+      case ErrorCategory.NetworkError:
+        // Network errors: more aggressive retries for first attempts
+        // For early attempts, use shorter delays to recover from transient issues quickly
+        if (attempt <= 2) {
+          return Math.min(1000, baseBackoff) + jitter;
+        }
+        return baseBackoff + jitter;
+
+      case ErrorCategory.ClientError:
+        // Client errors: rarely worth retrying, longer delays
+        // Most client errors won't be resolved by retrying, so use longer delays
+        return baseBackoff * 2 + jitter;
+
+      default:
+        // Unknown errors: conservative strategy with increased delays
+        return baseBackoff * 1.5 + jitter;
+    }
+  }
+
+  /**
+   * Creates a summary of errors encountered during retry attempts.
+   * Provides rich context about what went wrong across multiple attempts.
+   *
+   * @param errors - Array of errors from retry attempts
+   * @returns Formatted error summary string
+   * @private
+   */
+  #summarizeErrors(errors: Error[]): string {
+    if (errors.length === 0) {
+      return "No errors recorded";
+    }
+
+    if (errors.length === 1) {
+      return `Error: ${(errors[0] as Error).message}`;
+    }
+
+    return errors
+      .map((error, index) => `Attempt ${index + 1}: ${error.message}`)
+      .join("\n");
   }
 
   /**

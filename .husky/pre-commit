@@ -1,2 +1,2 @@
-pnpm run check
+pnpm run biome:check
 git update-index --again

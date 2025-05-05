@@ -2,13 +2,6 @@
   "$schema": "./node_modules/turbo/schema.json",
   "ui": "tui",
   "globalDependencies": [".env", "tsconfig.json", "biome.json"],
-  "globalEnv": [
-    "NODE_ENV",
-    "CI",
-    "DISCORD_TOKEN",
-    "API_VERSION",
-    "GATEWAY_VERSION"
-  ],
   "tasks": {
     "dev": {
       "cache": false,
@@ -17,25 +10,25 @@
     "start": {
       "dependsOn": ["^start"],
       "outputs": [],
-      "env": ["NODE_ENV"],
       "cache": false
     },
     "build:dev": {
-      "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**", ".next/**"],
-      "env": ["NODE_ENV"],
+      "dependsOn": ["biome:check", "^build:dev"],
+      "outputs": ["dist/**"],
       "cache": true
     },
     "build:watch": {
       "outputs": ["dist/**"],
-      "env": ["NODE_ENV"],
       "cache": false,
       "persistent": true
     },
     "build:prod": {
-      "dependsOn": ["^build:prod"],
+      "dependsOn": ["biome:check", "type-check", "^build:prod"],
       "outputs": ["dist/**"],
-      "env": ["NODE_ENV"],
+      "cache": true
+    },
+    "biome:check": {
+      "outputs": [],
       "cache": true
     },
     "type-check": {

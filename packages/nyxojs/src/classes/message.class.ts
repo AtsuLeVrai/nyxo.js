@@ -9,6 +9,7 @@ import {
   type EmbedEntity,
   type GuildMemberEntity,
   type InteractionResolvedDataEntity,
+  type Link,
   type MessageActivityEntity,
   type MessageCallEntity,
   type MessageComponentInteractionMetadataEntity,
@@ -68,6 +69,12 @@ export class Message
   implements Enforce<CamelCasedProperties<MessageCreateEntity>>
 {
   /**
+   * The flags associated with this message.
+   * @private
+   */
+  #flags: BitField<MessageFlags> | null = null;
+
+  /**
    * Gets the unique identifier (Snowflake) of this message.
    *
    * This ID is permanent and will not change for the lifetime of the message.
@@ -100,14 +107,12 @@ export class Message
    * @returns The GuildMember object, or undefined if not available
    */
   get member(): GuildMember | undefined {
-    if (!this.data.member) {
-      return undefined;
-    }
-
-    return new GuildMember(
-      this.client,
-      this.data.member as GuildBased<GuildMemberEntity>,
-    );
+    return this.data.member
+      ? new GuildMember(
+          this.client,
+          this.data.member as GuildBased<GuildMemberEntity>,
+        )
+      : undefined;
   }
 
   /**
@@ -331,14 +336,9 @@ export class Message
    * @returns The Application object, or undefined if none
    */
   get application(): Application | undefined {
-    if (!this.data.application) {
-      return undefined;
-    }
-
-    return new Application(
-      this.client,
-      this.data.application as ApplicationEntity,
-    );
+    return this.data.application
+      ? new Application(this.client, this.data.application as ApplicationEntity)
+      : undefined;
   }
 
   /**
@@ -360,7 +360,11 @@ export class Message
    * @returns A BitField of message flags
    */
   get flags(): BitField<MessageFlags> {
-    return new BitField<MessageFlags>(this.data.flags ?? 0n);
+    if (!this.#flags) {
+      this.#flags = new BitField<MessageFlags>(this.data.flags ?? 0n);
+    }
+
+    return this.#flags;
   }
 
   /**
@@ -421,11 +425,9 @@ export class Message
   get roleSubscriptionData():
     | CamelCasedProperties<RoleSubscriptionDataEntity>
     | undefined {
-    if (!this.data.role_subscription_data) {
-      return undefined;
-    }
-
-    return toCamelCasedProperties(this.data.role_subscription_data);
+    return this.data.role_subscription_data
+      ? toCamelCasedProperties(this.data.role_subscription_data)
+      : undefined;
   }
 
   /**
@@ -436,11 +438,9 @@ export class Message
    * @returns The poll object, or undefined if none
    */
   get poll(): CamelCasedPropertiesDeep<PollEntity> | undefined {
-    if (!this.data.poll) {
-      return undefined;
-    }
-
-    return toCamelCasedPropertiesDeep(this.data.poll);
+    return this.data.poll
+      ? toCamelCasedPropertiesDeep(this.data.poll)
+      : undefined;
   }
 
   /**
@@ -451,11 +451,7 @@ export class Message
    * @returns The call object, or undefined if not applicable
    */
   get call(): CamelCasedProperties<MessageCallEntity> | undefined {
-    if (!this.data.call) {
-      return undefined;
-    }
-
-    return toCamelCasedProperties(this.data.call);
+    return this.data.call ? toCamelCasedProperties(this.data.call) : undefined;
   }
 
   /**
@@ -468,11 +464,9 @@ export class Message
   get messageReference():
     | CamelCasedProperties<MessageReferenceEntity>
     | undefined {
-    if (!this.data.message_reference) {
-      return undefined;
-    }
-
-    return toCamelCasedProperties(this.data.message_reference);
+    return this.data.message_reference
+      ? toCamelCasedProperties(this.data.message_reference)
+      : undefined;
   }
 
   /**
@@ -483,14 +477,9 @@ export class Message
    * @returns The thread channel object, or undefined if not applicable
    */
   get thread(): AnyThreadChannel | undefined {
-    if (!this.data.thread) {
-      return undefined;
-    }
-
-    return ChannelFactory.createThread(
-      this.client,
-      this.data.thread as AnyThreadChannelEntity,
-    );
+    return this.data.thread
+      ? ChannelFactory.createThread(this.client, this.data.thread)
+      : undefined;
   }
 
   /**
@@ -502,14 +491,12 @@ export class Message
    * @returns The referenced Message object, null if deleted, or undefined if not a reply
    */
   get referencedMessage(): Message | null | undefined {
-    if (!this.data.referenced_message) {
-      return null;
-    }
-
-    return new Message(
-      this.client,
-      this.data.referenced_message as MessageCreateEntity,
-    );
+    return this.data.referenced_message
+      ? new Message(
+          this.client,
+          this.data.referenced_message as MessageCreateEntity,
+        )
+      : undefined;
   }
 
   /**
@@ -522,11 +509,9 @@ export class Message
   get interaction():
     | CamelCasedPropertiesDeep<MessageInteractionEntity>
     | undefined {
-    if (!this.data.interaction) {
-      return undefined;
-    }
-
-    return toCamelCasedPropertiesDeep(this.data.interaction);
+    return this.data.interaction
+      ? toCamelCasedPropertiesDeep(this.data.interaction)
+      : undefined;
   }
 
   /**
@@ -542,11 +527,9 @@ export class Message
     | CamelCasedPropertiesDeep<MessageComponentInteractionMetadataEntity>
     | CamelCasedPropertiesDeep<ModalSubmitInteractionMetadataEntity>
     | undefined {
-    if (!this.data.interaction_metadata) {
-      return undefined;
-    }
-
-    return toCamelCasedPropertiesDeep(this.data.interaction_metadata);
+    return this.data.interaction_metadata
+      ? toCamelCasedPropertiesDeep(this.data.interaction_metadata)
+      : undefined;
   }
 
   /**
@@ -560,11 +543,9 @@ export class Message
   get resolved():
     | CamelCasedProperties<InteractionResolvedDataEntity>
     | undefined {
-    if (!this.data.resolved) {
-      return undefined;
-    }
-
-    return toCamelCasedProperties(this.data.resolved);
+    return this.data.resolved
+      ? toCamelCasedProperties(this.data.resolved)
+      : undefined;
   }
 
   /**
@@ -577,9 +558,7 @@ export class Message
   get messageSnapshots():
     | CamelCasedPropertiesDeep<MessageSnapshotEntity>[]
     | undefined {
-    return this.data.message_snapshots?.map((snapshot) =>
-      toCamelCasedPropertiesDeep(snapshot),
-    );
+    return this.data.message_snapshots?.map(toCamelCasedPropertiesDeep);
   }
 
   /**
@@ -812,12 +791,16 @@ export class Message
    * @returns A promise that resolves when the message is pinned
    * @throws Error if the message could not be pinned
    */
-  async pin(): Promise<void> {
+  async pin(): Promise<this> {
     if (this.pinned) {
-      return;
+      return this;
     }
+
     await this.client.rest.channels.pinMessage(this.channelId, this.id);
-    return;
+    this.update({
+      pinned: true,
+    });
+    return this;
   }
 
   /**
@@ -826,12 +809,16 @@ export class Message
    * @returns A promise that resolves when the message is unpinned
    * @throws Error if the message could not be unpinned
    */
-  async unpin(): Promise<void> {
+  async unpin(): Promise<this> {
     if (!this.pinned) {
-      return;
+      return this;
     }
+
     await this.client.rest.channels.unpinMessage(this.channelId, this.id);
-    return;
+    this.update({
+      pinned: false,
+    });
+    return this;
   }
 
   /**
@@ -971,8 +958,8 @@ export class Message
       this.channelId,
       this.id,
     );
-
-    return new Message(this.client, messageData as MessageCreateEntity);
+    this.update(messageData as MessageCreateEntity);
+    return this;
   }
 
   /**
@@ -988,8 +975,8 @@ export class Message
       this.channelId,
       this.id,
     );
-
-    return new Message(this.client, publishedMessage as MessageCreateEntity);
+    this.update(publishedMessage as MessageCreateEntity);
+    return this;
   }
 
   /**
@@ -1019,7 +1006,7 @@ export class Message
    * @param text - The display text for the link
    * @returns The formatted markdown link
    */
-  createMessageLink(text: string): string {
+  createMessageLink(text: string): Link {
     return link(text, this.url);
   }
 }

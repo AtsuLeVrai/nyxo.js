@@ -1,7 +1,7 @@
 import { clearTimeout } from "node:timers";
 import { ApiVersion } from "@nyxojs/core";
 import { EventEmitter } from "eventemitter3";
-import { Pool } from "undici";
+import { request } from "undici";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { FileHandler } from "../handlers/index.js";
@@ -46,54 +46,6 @@ import type {
   JsonErrorResponse,
   RestEvents,
 } from "../types/index.js";
-
-/**
- * Constants for REST client configuration and behavior.
- * Contains fixed values, patterns, and configurations used throughout the client.
- */
-const REST_CONSTANTS = {
-  /**
-   * Regular expression to clean leading slashes from API paths.
-   * Used to normalize paths before sending requests.
-   */
-  PATH_REGEX: /^\/+/,
-
-  /**
-   * Default HTTP pool configuration for connection management.
-   * Optimized for Discord API interaction patterns.
-   */
-  HTTP_CONFIG: {
-    /** Maximum number of concurrent connections in the pool */
-    connections: 128,
-
-    /** Maximum number of requests to pipeline per connection */
-    pipelining: 10,
-
-    /** Timeout for establishing new connections (ms) */
-    connectTimeout: 30000,
-
-    /** Default timeout for keeping idle connections alive (ms) */
-    keepAliveTimeout: 60000,
-
-    /** Maximum time a connection can remain idle (ms) */
-    keepAliveMaxTimeout: 300000,
-
-    /** Maximum time to wait for headers (ms) */
-    headersTimeout: 30000,
-
-    /** Maximum time to wait for the response body (ms) */
-    bodyTimeout: 300000,
-
-    /** Maximum size of headers in bytes */
-    maxHeaderSize: 16384,
-
-    /** Whether to enable HTTP/2 */
-    allowH2: true,
-
-    /** Whether to enforce strict content length validation */
-    strictContentLength: true,
-  },
-} as const;
 
 /**
  * Regular expression pattern for validating Discord bot user agents.
@@ -198,12 +150,6 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly #options: RestOptions;
 
   /**
-   * HTTP connection pool for making requests.
-   * Manages connection reuse and concurrency.
-   */
-  readonly #pool: Pool;
-
-  /**
    * Rate limit handler.
    * Tracks and respects Discord's rate limits to prevent 429 errors.
    */
@@ -231,7 +177,6 @@ export class Rest extends EventEmitter<RestEvents> {
       throw new Error(fromError(error).message);
     }
 
-    this.#pool = new Pool(this.#options.baseUrl, REST_CONSTANTS.HTTP_CONFIG);
     this.#rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
     this.#retry = new RetryManager(this, this.#options.retry);
   }
@@ -555,21 +500,20 @@ export class Rest extends EventEmitter<RestEvents> {
     const requestId = crypto.randomUUID();
 
     // Check rate limit before making request
-    const check = this.#rateLimiter.checkRateLimit(
+    const rateLimitCheck = await this.#rateLimiter.checkAndWaitIfNeeded(
       options.path,
       options.method,
       requestId,
     );
 
-    // Wait if rate limited instead of throwing
-    await this.#retry.handleRateLimit(
-      check,
-      requestId,
-      options.method,
-      options.path,
-    );
+    // If we can't proceed after waiting, throw an error
+    if (!rateLimitCheck.canProceed) {
+      throw new Error(
+        `[${options.method} ${options.path}] Rate limit exceeded: ${rateLimitCheck.reason}. Try again in ${rateLimitCheck.retryAfter}ms.`,
+      );
+    }
 
-    // Make the HTTP request with retry handling
+    // Make the HTTP request with retry handling for non-rate limit errors
     const response = await this.#retry.processResponse<T>(
       () => this.#makeHttpRequest<T>(options, requestId),
       requestId,
@@ -577,14 +521,8 @@ export class Rest extends EventEmitter<RestEvents> {
       options.path,
     );
 
-    // Check if the request was successful
-    if (response.statusCode >= 400) {
-      // Use appropriate error based on status code
-      this.#throwAppropriateError(response, options, requestId);
-    }
-
-    // Update rate limit after successful request
-    const update = this.#rateLimiter.updateRateLimit(
+    // Update rate limit tracking after every response
+    await this.#rateLimiter.updateRateLimitAndWaitIfNeeded(
       options.path,
       options.method,
       response.headers,
@@ -592,13 +530,10 @@ export class Rest extends EventEmitter<RestEvents> {
       requestId,
     );
 
-    // Wait again if rate limited after update
-    await this.#retry.handleRateLimit(
-      update,
-      requestId,
-      options.method,
-      options.path,
-    );
+    // Check if the response status indicates an error
+    if (response.statusCode >= 400) {
+      throw this.#createErrorFromResponse(response, options, requestId);
+    }
 
     // Return the data if all checks pass
     return response.data;
@@ -692,9 +627,74 @@ export class Rest extends EventEmitter<RestEvents> {
    * and removes all event listeners.
    */
   async destroy(): Promise<void> {
-    await this.#pool.close();
     this.#rateLimiter.destroy();
     this.removeAllListeners();
+  }
+
+  /**
+   * Creates an appropriate error object from a response.
+   * Formats error messages consistently based on status code and response data.
+   *
+   * @param response - HTTP response containing status code and data
+   * @param options - Original request options
+   * @param requestId - Unique identifier for the request
+   * @returns An Error object with formatted message
+   * @private
+   */
+  #createErrorFromResponse<T>(
+    response: HttpResponse<T>,
+    options: HttpRequestOptions,
+    requestId: string,
+  ): Error {
+    // Build a consistent error prefix
+    const errorPrefix = `[${options.method} ${options.path}] ${response.statusCode} (requestId: ${requestId})`;
+
+    // Check if this is a JSON API error with specific code
+    if (this.#isJsonErrorEntity(response.data)) {
+      const jsonError = response.data as unknown as JsonErrorResponse;
+      const message = response.reason || jsonError.message;
+
+      // Format field errors if present
+      let errorDetails = "";
+      if (jsonError.errors) {
+        const fieldErrors = this.#formatFieldErrors(jsonError.errors);
+        if (fieldErrors) {
+          errorDetails = ` (${fieldErrors})`;
+        }
+      }
+
+      return new Error(
+        `${errorPrefix}: Discord API Error ${jsonError.code} - ${message}${errorDetails}`,
+      );
+    }
+
+    // Otherwise, determine error message based on status code
+    switch (response.statusCode) {
+      case 401:
+        return new Error(
+          `${errorPrefix}: Authentication failed - ${response.reason || "Invalid credentials"}`,
+        );
+
+      case 403:
+        return new Error(
+          `${errorPrefix}: Permission denied - ${response.reason || "You lack permissions to perform this action"}`,
+        );
+
+      case 404: {
+        const resourceType =
+          this.#extractResourceType(options.path) || "resource";
+        const resourceId = this.#extractResourceId(options.path) || "unknown";
+        return new Error(
+          `${errorPrefix}: Not found - ${resourceType} (ID: ${resourceId}) ${response.reason || "The requested resource was not found"}`,
+        );
+      }
+
+      default:
+        // Generic API error for other status codes
+        return new Error(
+          `${errorPrefix}: Request failed - ${response.reason || `Status ${response.statusCode}`}`,
+        );
+    }
   }
 
   /**
@@ -711,27 +711,31 @@ export class Rest extends EventEmitter<RestEvents> {
     requestId: string,
   ): Promise<HttpResponse<T>> {
     const requestStart = Date.now();
-    const requestHeaders = this.#buildRequestHeaders(options);
-
-    // Emit the request start event for tracking
-    this.emit("requestStart", {
-      timestamp: new Date().toISOString(),
-      requestId,
-      path: options.path,
-      method: options.method,
-      headers: requestHeaders,
-    });
 
     // Prepare and execute the request
-    const preparedRequest = await this.#prepareRequest(options);
+    const preparedRequest = options.files
+      ? await this.#handleFileUpload(options)
+      : options;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.#options.timeout);
 
     try {
+      // Build the full URL for the request
+      const url = new URL(
+        `/api/v${this.#options.version}/${preparedRequest.path.replace(/^\/+/, "")}`,
+        this.#options.baseUrl,
+      ).toString();
+
+      // Build the request headers
+      const headers = this.#buildRequestHeaders(preparedRequest);
+
       // Send the HTTP request
-      const response = await this.#pool.request({
-        ...preparedRequest,
+      const response = await request(url, {
+        method: preparedRequest.method,
+        body: preparedRequest.body,
+        query: preparedRequest.query,
         signal: controller.signal,
+        headers: headers,
       });
       const responseBody = Buffer.from(await response.body.arrayBuffer());
 
@@ -747,41 +751,36 @@ export class Rest extends EventEmitter<RestEvents> {
       // Parse the response body as JSON
       const result = JSON.parse(responseBody.toString());
 
-      // Check for API errors and enhance error messages
+      // Add error details for API errors
+      let reason: string | undefined;
       if (response.statusCode >= 400 && this.#isJsonErrorEntity(result)) {
-        const formattedFieldErrors = this.#formatFieldErrors(result.errors);
-        const enhancedMessage = formattedFieldErrors
-          ? `${result.message}. Details: ${formattedFieldErrors}`
-          : result.message;
-
-        return {
-          statusCode: response.statusCode,
-          headers: response.headers as Record<string, string>,
-          data: result as T,
-          reason: enhancedMessage,
-        };
+        const jsonError = result as JsonErrorResponse;
+        const formattedFieldErrors = this.#formatFieldErrors(jsonError.errors);
+        reason = formattedFieldErrors
+          ? `${jsonError.message}. Details: ${formattedFieldErrors}`
+          : jsonError.message;
       }
 
       // Calculate request duration for metrics
       const duration = Date.now() - requestStart;
 
       // Emit request success event
-      this.emit("requestSuccess", {
+      this.emit("request", {
         timestamp: new Date().toISOString(),
         requestId,
         path: options.path,
         method: options.method,
-        headers: response.headers as Record<string, string>,
         statusCode: response.statusCode,
         duration,
         responseSize: responseBody.length,
       });
 
-      // Return the successful response
+      // Return the response
       return {
         data: result,
         statusCode: response.statusCode,
         headers: response.headers as Record<string, string>,
+        reason,
       };
     } catch (error) {
       // Check if this was a timeout (abort triggered)
@@ -815,64 +814,6 @@ export class Rest extends EventEmitter<RestEvents> {
       typeof error.code === "number" &&
       "message" in error &&
       typeof error.message === "string"
-    );
-  }
-
-  /**
-   * Prepares a request for sending.
-   * Transforms the high-level options into a format ready for HTTP transmission.
-   * Handles special cases like file uploads and JSON bodies.
-   *
-   * @param options - Request options to prepare
-   * @returns Ready-to-use request options object or Promise resolving to one
-   * @private
-   */
-  #prepareRequest(
-    options: HttpRequestOptions,
-  ): Promise<HttpRequestOptions> | HttpRequestOptions {
-    const url = this.#buildUrl(options.path);
-    const baseOptions = {
-      ...options,
-      origin: url.origin,
-      path: url.pathname + url.search,
-      headers: this.#buildRequestHeaders(options),
-      reset: true,
-    };
-
-    // Special handling for file uploads (multipart/form-data)
-    if (options.files) {
-      return this.#handleFileUpload(options, baseOptions);
-    }
-
-    // Handle regular JSON body (automatic serialization)
-    if (
-      options.body !== undefined &&
-      typeof options.body !== "string" &&
-      !Buffer.isBuffer(options.body)
-    ) {
-      baseOptions.body = JSON.stringify(options.body);
-    }
-
-    return baseOptions;
-  }
-
-  /**
-   * Builds a full URL for an API path.
-   * Combines the base URL with API version and specific endpoint path.
-   *
-   * @param path - API path to build a URL for
-   * @returns Constructed URL object
-   * @private
-   */
-  #buildUrl(path?: string): URL {
-    if (!path) {
-      return new URL(`/api/v${this.#options.version}`, this.#options.baseUrl);
-    }
-
-    const cleanPath = path.replace(REST_CONSTANTS.PATH_REGEX, "");
-    return new URL(
-      `/api/v${this.#options.version}/${cleanPath}`,
-      this.#options.baseUrl,
     );
   }
 
@@ -914,13 +855,11 @@ export class Rest extends EventEmitter<RestEvents> {
    * Integrates with FileHandler to process files and form data.
    *
    * @param options - Request options containing files
-   * @param baseOptions - Base request options to build on
    * @returns Promise resolving to prepared request options
    * @private
    */
   async #handleFileUpload(
     options: HttpRequestOptions,
-    baseOptions: HttpRequestOptions,
   ): Promise<HttpRequestOptions> {
     if (!options.files) {
       throw new Error("Files are required for file upload");
@@ -932,16 +871,10 @@ export class Rest extends EventEmitter<RestEvents> {
       options.body,
     );
 
-    // Prepare URL and options with form data
-    const formUrl = new URL(baseOptions.path || "", baseOptions.origin);
     return {
-      ...baseOptions,
-      path: formUrl.pathname + formUrl.search,
+      ...options,
       body: formData.getBuffer(),
-      headers: {
-        ...baseOptions.headers,
-        ...formData.getHeaders(),
-      },
+      headers: formData.getHeaders(options.headers),
     };
   }
 
@@ -981,86 +914,6 @@ export class Rest extends EventEmitter<RestEvents> {
 
     processErrors(errors);
     return errorParts.length > 0 ? errorParts.join("; ") : undefined;
-  }
-
-  /**
-   * Throws the most appropriate error type based on the API response.
-   * Creates standardized error messages with all relevant details.
-   *
-   * @param response - HTTP response containing status code and data
-   * @param options - Original request options
-   * @param requestId - Unique identifier for the request
-   * @returns Never returns, always throws an error
-   * @private
-   */
-  #throwAppropriateError<T>(
-    response: HttpResponse<T>,
-    options: HttpRequestOptions,
-    requestId: string,
-  ): never {
-    // Build a consistent error prefix
-    const errorPrefix = `[${options.method} ${options.path}] ${response.statusCode} (requestId: ${requestId})`;
-
-    // Check if this is a JSON API error with specific code
-    if (this.#isJsonErrorEntity(response.data)) {
-      const jsonError = response.data as unknown as JsonErrorResponse;
-      const message = response.reason || jsonError.message;
-
-      // Format field errors if present
-      let errorDetails = "";
-      if (jsonError.errors) {
-        const fieldErrors = this.#formatFieldErrors(jsonError.errors);
-        if (fieldErrors) {
-          errorDetails = ` (${fieldErrors})`;
-        }
-      }
-
-      throw new Error(
-        `${errorPrefix}: Discord API Error ${jsonError.code} - ${message}${errorDetails}`,
-      );
-    }
-
-    // Otherwise, determine error message based on status code
-    switch (response.statusCode) {
-      case 401:
-        throw new Error(
-          `${errorPrefix}: Authentication failed - ${response.reason || "Invalid credentials"}`,
-        );
-
-      case 403:
-        throw new Error(
-          `${errorPrefix}: Permission denied - ${response.reason || "You lack permissions to perform this action"}`,
-        );
-
-      case 404: {
-        const resourceType =
-          this.#extractResourceType(options.path) || "resource";
-        const resourceId = this.#extractResourceId(options.path) || "unknown";
-        throw new Error(
-          `${errorPrefix}: Not found - ${resourceType} (ID: ${resourceId}) ${response.reason || "The requested resource was not found"}`,
-        );
-      }
-
-      case 429: {
-        // Check if it's a Cloudflare ban
-        if (response.headers["cf-ray"]) {
-          const rayId = response.headers["cf-ray"];
-          throw new Error(
-            `${errorPrefix}: Request blocked by Cloudflare (Ray ID: ${rayId}) - ${response.reason || "Too many requests"}`,
-          );
-        }
-
-        throw new Error(
-          `${errorPrefix}: Rate limit exceeded - ${response.reason || "Too many requests"}`,
-        );
-      }
-
-      default:
-        // Generic API error for other status codes
-        throw new Error(
-          `${errorPrefix}: Request failed - ${response.reason || `Status ${response.statusCode}`}`,
-        );
-    }
   }
 
   /**

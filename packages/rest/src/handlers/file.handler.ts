@@ -2,7 +2,6 @@ import { createReadStream } from "node:fs";
 import { basename } from "node:path";
 import { Readable } from "node:stream";
 import { OptionalDeps } from "@nyxojs/core";
-import { fileTypeFromBuffer } from "file-type";
 import FormData from "form-data";
 import { lookup } from "mime-types";
 import type SharpType from "sharp";
@@ -354,7 +353,7 @@ export const FileHandler = {
 
       // Determine the content type
       const filename = this.getFilename(input);
-      const contentType = await this.detectContentType(buffer, filename);
+      const contentType = this.detectContentType(filename);
 
       // Create and return the data URI
       return createDataUri(buffer, contentType);
@@ -398,18 +397,11 @@ export const FileHandler = {
    * Detects content type from buffer or filename.
    * First tries content-based detection, then falls back to extension-based.
    *
-   * @param buffer - The file content as a buffer
    * @param filename - The filename with extension
    * @returns Promise resolving to the detected MIME type
    */
-  async detectContentType(buffer: Buffer, filename: string): Promise<string> {
+  detectContentType(filename: string): string {
     try {
-      // Try to detect from buffer content first
-      const fileType = await fileTypeFromBuffer(buffer);
-      if (fileType?.mime) {
-        return fileType.mime;
-      }
-
       // Fall back to extension-based detection
       const mimeType = lookup(filename);
       if (mimeType) {
@@ -471,171 +463,131 @@ export const FileHandler = {
   },
 
   /**
-   * Attempts to convert an image to WebP format.
-   * WebP often provides better compression ratios than other formats.
-   *
-   * @param image - The Sharp image instance to convert
-   * @param quality - The quality level (1-100) for compression
-   * @returns Promise resolving to the WebP buffer or null if conversion failed
-   */
-  async tryConvertToWebP(
-    image: SharpType.Sharp,
-    quality: number,
-  ): Promise<{ buffer: Buffer } | null> {
-    try {
-      const webpBuffer = await image
-        .webp({
-          quality,
-          effort: 4, // Good balance between quality and speed
-        })
-        .toBuffer();
-
-      return { buffer: webpBuffer };
-    } catch {
-      return null;
-    }
-  },
-
-  /**
-   * Compresses an image using format-specific optimizations.
-   * Applies appropriate compression settings based on the image format.
-   *
-   * @param image - The Sharp image instance to compress
-   * @param format - The image format (png, jpeg, webp, etc.)
-   * @param quality - The quality level (1-100) for compression
-   * @returns Promise resolving to the compressed buffer or null if compression failed
-   */
-  async compressImage(
-    image: SharpType.Sharp,
-    format: string | undefined,
-    quality: number,
-  ): Promise<Buffer | null> {
-    try {
-      switch (format) {
-        case "png":
-          return await image
-            .png({
-              quality,
-              compressionLevel: 9, // Maximum compression
-            })
-            .toBuffer();
-        case "jpeg":
-        case "jpg":
-          return await image
-            .jpeg({
-              quality,
-              optimizeScans: true, // Progressive JPEG
-            })
-            .toBuffer();
-        case "webp":
-          return await image
-            .webp({
-              quality,
-              effort: 4,
-            })
-            .toBuffer();
-        case "avif":
-          return await image
-            .avif({
-              quality,
-            })
-            .toBuffer();
-        default:
-          return null;
-      }
-    } catch (_error) {
-      return null;
-    }
-  },
-
-  /**
    * Optimizes an image if it's too large or conversion is beneficial.
-   * Uses a multi-step approach to reduce file size while maintaining quality:
-   * 1. Try format conversion (e.g., to WebP) if allowed
-   * 2. Try compression with original format
-   * 3. Resize the image if necessary
+   * Uses a multi-step approach to reduce file size while maintaining quality.
    *
    * @param buffer - The original image buffer
    * @param contentType - The image MIME type
    * @param options - Configuration options for optimization
    * @returns Promise resolving to the optimized buffer and final content type
-   * @throws {Error} Error if image optimization fails critically
    */
   async optimizeImage(
     buffer: Buffer,
     contentType: string,
     options: ImageProcessingOptions,
   ): Promise<{ processedBuffer: Buffer; finalContentType: string }> {
-    // Skip processing if not an image or already small enough
-    if (
-      !FILE_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(contentType) ||
-      buffer.length <= options.maxSize
-    ) {
+    // 1. Short-circuit for small images that don't need optimization
+    if (buffer.length <= options.maxSize * 0.9) {
       return { processedBuffer: buffer, finalContentType: contentType };
     }
 
-    // Try to load Sharp if not already loaded
-    const sharp = await this.getSharpModule();
+    // 2. Don't use Sharp for formats that don't need it
+    if (!FILE_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(contentType)) {
+      return { processedBuffer: buffer, finalContentType: contentType };
+    }
 
-    // If Sharp isn't available, return original
+    // 3. Load Sharp more efficiently
+    const sharp = await this.getSharpModule();
     if (!sharp) {
       return { processedBuffer: buffer, finalContentType: contentType };
     }
 
     try {
-      // Load image and get metadata
-      const image = sharp(buffer);
+      // 4. Reduce unnecessary metadata
+      const image = sharp(buffer, {
+        // Optimizations for Sharp
+        limitInputPixels: 50000000, // Reasonable limit
+        sequentialRead: true, // Improves performance for GIFs and certain formats
+      });
+
+      // Reduce metadata
+      image.withMetadata({ orientation: undefined });
+
       const metadata = await image.metadata();
 
-      // Step 1: Try format conversion if allowed
+      // 5. Optimize image processing logic
+      // Direct WebP conversion if allowed (fewer steps)
       if (!options.preserveFormat && options.attemptWebpConversion) {
-        const result = await this.tryConvertToWebP(
-          image.clone(),
-          options.quality,
-        );
-        if (result && result.buffer.length <= options.maxSize) {
-          return {
-            processedBuffer: result.buffer,
-            finalContentType: "image/webp",
-          };
+        try {
+          const webpBuffer = await image
+            .webp({
+              quality: options.quality,
+              effort: 3, // Less effort for more speed
+              alphaQuality: 80, // Reduce alpha channel quality
+            })
+            .toBuffer();
+
+          if (webpBuffer.length <= options.maxSize) {
+            return {
+              processedBuffer: webpBuffer,
+              finalContentType: "image/webp",
+            };
+          }
+        } catch {
+          // WebP conversion failed, continue with other methods
         }
       }
 
-      // Step 2: Try compression with original format
-      const compressedBuffer = await this.compressImage(
-        image.clone(),
-        metadata.format,
-        options.quality,
-      );
+      // 6. Faster optimization with original format
+      if (metadata.format) {
+        const compressionOptions: Record<string, any> = {
+          // PNG: less compression but much faster
+          png: { quality: options.quality, compressionLevel: 6 },
+          // JPEG: progressive quality for loading
+          jpeg: {
+            quality: options.quality,
+            optimizeScans: true,
+            progressive: true,
+          },
+          // WebP: balance quality/performance
+          webp: { quality: options.quality, effort: 3 },
+          avif: { quality: options.quality - 10 }, // AVIF is slow, reduce quality
+        };
 
-      if (compressedBuffer && compressedBuffer.length <= options.maxSize) {
+        // Apply format-specific optimization
+        const formatOptions = compressionOptions[metadata.format] || {};
+        try {
+          const compressedBuffer =
+            // @ts-expect-error
+            await image[metadata.format](formatOptions).toBuffer();
+
+          if (compressedBuffer.length <= options.maxSize) {
+            return {
+              processedBuffer: compressedBuffer,
+              finalContentType: contentType,
+            };
+          }
+        } catch {
+          // Format-specific compression failed, continue to resizing
+        }
+      }
+
+      // 7. Smarter resizing
+      if (metadata.width && metadata.height) {
+        // More predictable calculation for resizing
+        const targetRatio = Math.sqrt(options.maxSize / buffer.length) * 0.95;
+        const newWidth = Math.floor(metadata.width * targetRatio);
+        const newHeight = Math.floor(metadata.height * targetRatio);
+
+        // Faster resizing with fewer options
+        const resizedBuffer = await image
+          .resize(newWidth, newHeight, {
+            fit: "inside",
+            withoutEnlargement: true,
+            fastShrinkOnLoad: true, // Faster but less precise
+          })
+          .toBuffer();
+
         return {
-          processedBuffer: compressedBuffer,
+          processedBuffer: resizedBuffer,
           finalContentType: contentType,
         };
       }
 
-      // Step 3: Calculate resize ratio and resize if metadata available
-      if (!(metadata.width && metadata.height)) {
-        return { processedBuffer: buffer, finalContentType: contentType };
-      }
-
-      // Aim for slightly less than max size to account for metadata overhead
-      const sizeRatio = Math.sqrt(options.maxSize / buffer.length) * 0.9;
-
-      const newWidth = Math.floor(metadata.width * sizeRatio);
-      const newHeight = Math.floor(metadata.height * sizeRatio);
-
-      // Resize and use original format
-      const resizedBuffer = await image
-        .resize(newWidth, newHeight, {
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .toBuffer();
-
-      return { processedBuffer: resizedBuffer, finalContentType: contentType };
+      // Fallback
+      return { processedBuffer: buffer, finalContentType: contentType };
     } catch {
+      // Return original if optimization fails
       return { processedBuffer: buffer, finalContentType: contentType };
     }
   },
@@ -663,7 +615,7 @@ export const FileHandler = {
 
       // Determine filename and content type
       const filename = this.getFilename(input);
-      const contentType = await this.detectContentType(buffer, filename);
+      const contentType = this.detectContentType(filename);
 
       // Set appropriate size limit based on context
       const maxSize =
