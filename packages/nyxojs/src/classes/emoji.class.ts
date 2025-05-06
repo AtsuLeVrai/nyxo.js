@@ -14,11 +14,10 @@ import {
   type EmojiUrl,
   type GuildEmojiUpdateOptions,
 } from "@nyxojs/rest";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
-import { toSnakeCaseProperties } from "../utils/index.js";
 import { User } from "./user.class.js";
 
 /**
@@ -43,7 +42,7 @@ import { User } from "./user.class.js";
 @Cacheable("emojis")
 export class Emoji
   extends BaseClass<GuildBased<EmojiEntity>>
-  implements Enforce<CamelCasedProperties<GuildBased<EmojiEntity>>>
+  implements Enforce<ObjectToCamel<GuildBased<EmojiEntity>>>
 {
   /**
    * Gets the unique identifier (Snowflake) of this emoji.
@@ -319,7 +318,7 @@ export class Emoji
    * @throws Error if the emoji couldn't be updated
    */
   async edit(
-    options: CamelCasedProperties<GuildEmojiUpdateOptions>,
+    options: GuildEmojiUpdateOptions,
     reason?: string,
   ): Promise<Emoji> {
     if (!this.guildId) {
@@ -329,7 +328,7 @@ export class Emoji
     const updatedData = await this.client.rest.emojis.updateGuildEmoji(
       this.guildId,
       this.id as Snowflake,
-      toSnakeCaseProperties(options),
+      options,
       reason,
     );
 

@@ -1,6 +1,6 @@
 import type {
   AnyChannelEntity,
-  AnyThreadChannelEntity,
+  AnyThreadBasedChannelEntity,
   BanEntity,
   DefaultMessageNotificationLevel,
   ExplicitContentFilterLevel,
@@ -290,7 +290,7 @@ export interface ActiveThreadsResponse {
    * The active threads
    * An array of thread channel objects for all active (non-archived) threads.
    */
-  threads: AnyThreadChannelEntity[];
+  threads: AnyThreadBasedChannelEntity[];
 
   /**
    * A thread member object for each returned thread the current user has joined

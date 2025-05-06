@@ -1,1 +1,2 @@
-export * from "./object.util.js";
+export * from "./channel.util.js";
+export * from "./event.util.js";

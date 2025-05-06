@@ -7,13 +7,9 @@ import type {
   Snowflake,
 } from "@nyxojs/core";
 import type { GuildAuditLogEntryCreateEntity } from "@nyxojs/gateway";
-import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
+import { type ObjectToCamel, objectToCamel } from "ts-case-convert";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
-import {
-  toCamelCasedProperties,
-  toCamelCasedPropertiesDeep,
-} from "../utils/index.js";
 import type { User } from "./user.class.js";
 
 /**
@@ -36,7 +32,7 @@ import type { User } from "./user.class.js";
  */
 export class GuildAuditLogEntry
   extends BaseClass<GuildAuditLogEntryCreateEntity>
-  implements Enforce<CamelCasedProperties<GuildAuditLogEntryCreateEntity>>
+  implements Enforce<ObjectToCamel<GuildAuditLogEntryCreateEntity>>
 {
   /**
    * Gets the ID of the guild (server) this audit log entry belongs to.
@@ -179,18 +175,18 @@ export class GuildAuditLogEntry
    * @returns An array of changes in camelCase format, or undefined if no changes
    */
   get camelCaseChanges():
-    | CamelCasedPropertiesDeep<AuditLogChangeEntity>[]
-    | CamelCasedPropertiesDeep<AuditLogCommandPermissionChangeEntity>[]
-    | CamelCasedPropertiesDeep<AuditLogRoleChangeEntity>[]
+    | ObjectToCamel<AuditLogChangeEntity>[]
+    | ObjectToCamel<AuditLogCommandPermissionChangeEntity>[]
+    | ObjectToCamel<AuditLogRoleChangeEntity>[]
     | undefined {
     if (!this.changes) {
       return undefined;
     }
 
-    return this.changes.map(toCamelCasedPropertiesDeep) as
-      | CamelCasedPropertiesDeep<AuditLogChangeEntity>[]
-      | CamelCasedPropertiesDeep<AuditLogCommandPermissionChangeEntity>[]
-      | CamelCasedPropertiesDeep<AuditLogRoleChangeEntity>[];
+    return this.changes.map(objectToCamel) as
+      | ObjectToCamel<AuditLogChangeEntity>[]
+      | ObjectToCamel<AuditLogCommandPermissionChangeEntity>[]
+      | ObjectToCamel<AuditLogRoleChangeEntity>[];
   }
 
   /**
@@ -201,14 +197,12 @@ export class GuildAuditLogEntry
    *
    * @returns The options object in camelCase format, or undefined if no options
    */
-  get camelCaseOptions():
-    | CamelCasedProperties<AuditLogEntryInfoEntity>
-    | undefined {
+  get camelCaseOptions(): ObjectToCamel<AuditLogEntryInfoEntity> | undefined {
     if (!this.options) {
       return undefined;
     }
 
-    return toCamelCasedProperties(this.options);
+    return objectToCamel(this.options);
   }
 
   /**

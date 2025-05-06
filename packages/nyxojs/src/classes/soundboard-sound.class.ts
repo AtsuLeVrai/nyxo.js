@@ -3,7 +3,7 @@ import type {
   SoundboardSoundEntity,
   UserEntity,
 } from "@nyxojs/core";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
 import { User } from "./user.class.js";
@@ -11,7 +11,7 @@ import { User } from "./user.class.js";
 @Cacheable("soundboards")
 export class SoundboardSound
   extends BaseClass<SoundboardSoundEntity>
-  implements Enforce<CamelCasedProperties<SoundboardSoundEntity>>
+  implements Enforce<ObjectToCamel<SoundboardSoundEntity>>
 {
   get name(): string {
     return this.data.name;

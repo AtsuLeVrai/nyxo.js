@@ -1,6 +1,6 @@
 import {
   type AnyChannelEntity,
-  type AnyThreadChannelEntity,
+  type AnyThreadBasedChannelEntity,
   type AvatarDecorationDataEntity,
   type BanEntity,
   BitField,
@@ -26,10 +26,10 @@ import {
   type VoiceStateEntity,
 } from "@nyxojs/core";
 import type { GuildCreateEntity, PresenceEntity } from "@nyxojs/gateway";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import { ChannelFactory } from "../factories/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
+import { channelFactory } from "../utils/index.js";
 import type { AnyChannel, AnyThreadChannel } from "./channel.class.js";
 import { Emoji } from "./emoji.class.js";
 import { Role } from "./role.class.js";
@@ -44,7 +44,7 @@ import { User } from "./user.class.js";
 )
 export class Ban
   extends BaseClass<GuildBased<BanEntity>>
-  implements Enforce<CamelCasedProperties<GuildBased<BanEntity>>>
+  implements Enforce<ObjectToCamel<GuildBased<BanEntity>>>
 {
   get reason(): string | null {
     return this.data.reason;
@@ -65,7 +65,7 @@ export class Ban
 )
 export class GuildMember
   extends BaseClass<GuildBased<GuildMemberEntity>>
-  implements Enforce<CamelCasedProperties<GuildBased<GuildMemberEntity>>>
+  implements Enforce<ObjectToCamel<GuildBased<GuildMemberEntity>>>
 {
   get user(): User {
     return new User(this.client, this.data.user);
@@ -131,7 +131,7 @@ export class GuildMember
 @Cacheable("integrations")
 export class Integration
   extends BaseClass<GuildBased<IntegrationEntity>>
-  implements Enforce<CamelCasedProperties<GuildBased<IntegrationEntity>>>
+  implements Enforce<ObjectToCamel<GuildBased<IntegrationEntity>>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -208,7 +208,7 @@ export class Integration
 
 @Cacheable("guilds")
 export class Guild extends BaseClass<GuildCreateEntity> {
-  // implements Enforce<CamelCasedProperties<GuildCreateEntity>>
+  // implements Enforce<ObjectToCamel<GuildCreateEntity>>
   get id(): Snowflake {
     return this.data.id;
   }
@@ -406,16 +406,17 @@ export class Guild extends BaseClass<GuildCreateEntity> {
 
   get channels(): AnyChannel[] {
     return this.data.channels.map((channel) =>
-      ChannelFactory.create(this.client, channel as AnyChannelEntity),
+      channelFactory(this.client, channel as AnyChannelEntity),
     );
   }
 
   get threads(): AnyThreadChannel[] {
-    return this.data.threads.map((thread) =>
-      ChannelFactory.createThread(
-        this.client,
-        thread as AnyThreadChannelEntity,
-      ),
+    return this.data.threads.map(
+      (thread) =>
+        channelFactory(
+          this.client,
+          thread as AnyThreadBasedChannelEntity,
+        ) as AnyThreadChannel,
     );
   }
 

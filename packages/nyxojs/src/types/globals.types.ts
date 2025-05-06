@@ -19,7 +19,7 @@ import type {
   VoiceServerUpdateEntity,
 } from "@nyxojs/gateway";
 import type { RestEvents } from "@nyxojs/rest";
-import type { CamelCasedPropertiesDeep } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import type {
   AnyChannel,
   AnyInteraction,
@@ -107,7 +107,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param permissions The updated application command permissions
    */
   applicationCommandPermissionsUpdate: [
-    permissions: CamelCasedPropertiesDeep<GuildApplicationCommandPermissionEntity>,
+    permissions: ObjectToCamel<GuildApplicationCommandPermissionEntity>,
   ];
 
   /**
@@ -161,9 +161,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is pinned or unpinned in a channel.
    * @param pinUpdate Information about the pin update
    */
-  channelPinsUpdate: [
-    pinUpdate: CamelCasedPropertiesDeep<ChannelPinsUpdateEntity>,
-  ];
+  channelPinsUpdate: [pinUpdate: ObjectToCamel<ChannelPinsUpdateEntity>];
 
   /**
    * Emitted when a new thread is created or when the client is added to a private thread.
@@ -192,7 +190,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This helps synchronize thread state when joining a guild or gaining access to a channel.
    * @param threads Collection of active threads in the channel
    */
-  threadListSync: [threads: CamelCasedPropertiesDeep<ThreadListSyncEntity>];
+  threadListSync: [threads: ObjectToCamel<ThreadListSyncEntity>];
 
   /**
    * Emitted when the thread member object for the current user is updated.
@@ -205,9 +203,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when users are added to or removed from a thread.
    * @param update Information about the members update
    */
-  threadMembersUpdate: [
-    update: CamelCasedPropertiesDeep<ThreadMembersUpdateEntity>,
-  ];
+  threadMembersUpdate: [update: ObjectToCamel<ThreadMembersUpdateEntity>];
 
   /**
    * Emitted when a new entitlement (subscription or one-time purchase) is created.
@@ -277,9 +273,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a guild's emojis are updated (added, removed, or modified).
    * @param emojis Information about the updated emojis
    */
-  guildEmojisUpdate: [
-    emojis: CamelCasedPropertiesDeep<GuildEmojisUpdateEntity>,
-  ];
+  guildEmojisUpdate: [emojis: ObjectToCamel<GuildEmojisUpdateEntity>];
 
   /**
    * Emitted when a new emoji is created in a guild.
@@ -304,9 +298,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a guild's stickers are updated (added, removed, or modified).
    * @param stickers Information about the updated stickers
    */
-  guildStickersUpdate: [
-    stickers: CamelCasedPropertiesDeep<GuildStickersUpdateEntity>,
-  ];
+  guildStickersUpdate: [stickers: ObjectToCamel<GuildStickersUpdateEntity>];
 
   /**
    * Emitted when a sticker is created in a guild.
@@ -356,9 +348,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted in response to a Guild Request Members request.
    * @param members The chunk of requested guild members
    */
-  guildMembersChunk: [
-    members: CamelCasedPropertiesDeep<GuildMembersChunkEntity>,
-  ];
+  guildMembersChunk: [members: ObjectToCamel<GuildMembersChunkEntity>];
 
   /**
    * Emitted when a role is created in a guild.
@@ -632,13 +622,11 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user votes on a message poll.
    * @param vote Information about the poll vote
    */
-  messagePollVoteAdd: [vote: CamelCasedPropertiesDeep<MessagePollVoteEntity>];
+  messagePollVoteAdd: [vote: ObjectToCamel<MessagePollVoteEntity>];
 
   /**
    * Emitted when a user removes their vote from a message poll.
    * @param vote Information about the removed poll vote
    */
-  messagePollVoteRemove: [
-    vote: CamelCasedPropertiesDeep<MessagePollVoteEntity>,
-  ];
+  messagePollVoteRemove: [vote: ObjectToCamel<MessagePollVoteEntity>];
 }

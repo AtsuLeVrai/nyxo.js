@@ -6,21 +6,24 @@ import type {
   Snowflake,
 } from "@nyxojs/core";
 import type { GuildCreateEntity, InviteCreateEntity } from "@nyxojs/gateway";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import { ChannelFactory } from "../factories/index.js";
 import type { Enforce } from "../types/index.js";
+import { channelFactory } from "../utils/index.js";
 import { Application } from "./application.class.js";
 import type { AnyChannel } from "./channel.class.js";
 import { Guild } from "./guild.class.js";
 import { GuildScheduledEvent } from "./scheduled-event.class.js";
 import { User } from "./user.class.js";
 
-@Cacheable("invites")
+@Cacheable<InviteWithMetadataEntity & InviteCreateEntity>(
+  "invites",
+  (invite) => invite.code,
+)
 export class Invite
   extends BaseClass<InviteWithMetadataEntity & InviteCreateEntity>
   implements
-    Enforce<CamelCasedProperties<InviteWithMetadataEntity & InviteCreateEntity>>
+    Enforce<ObjectToCamel<InviteWithMetadataEntity & InviteCreateEntity>>
 {
   get code(): string {
     return this.data.code;
@@ -38,7 +41,7 @@ export class Invite
     if (!this.data.channel) {
       return null;
     }
-    return ChannelFactory.create(this.client, this.data.channel);
+    return channelFactory(this.client, this.data.channel);
   }
 
   get guildId(): Snowflake | undefined {

@@ -1,7 +1,7 @@
 import type { Snowflake } from "../markdown/index.js";
 import type { AnyApplicationCommandEntity } from "./application-commands.entity.js";
 import type { AutoModerationRuleEntity } from "./auto-moderation.entity.js";
-import type { AnyThreadChannelEntity } from "./channel.entity.js";
+import type { AnyThreadBasedChannelEntity } from "./channel.entity.js";
 import type { IntegrationEntity } from "./guild.entity.js";
 import type { GuildScheduledEventEntity } from "./scheduled-event.entity.js";
 import type { UserEntity } from "./user.entity.js";
@@ -670,7 +670,7 @@ export interface AuditLogEntity {
    * Contains any threads that were affected by audit log entries, including
    * archived threads that might not be in memory for clients.
    */
-  threads: AnyThreadChannelEntity[];
+  threads: AnyThreadBasedChannelEntity[];
 
   /**
    * List of users referenced in the audit log.

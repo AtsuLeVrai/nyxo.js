@@ -1,14 +1,9 @@
-import type {
-  AnyChannelEntity,
-  Snowflake,
-  WebhookEntity,
-  WebhookType,
-} from "@nyxojs/core";
+import type { Snowflake, WebhookEntity, WebhookType } from "@nyxojs/core";
 import type { GuildCreateEntity } from "@nyxojs/gateway";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import { ChannelFactory } from "../factories/index.js";
 import type { Enforce } from "../types/index.js";
+import { channelFactory } from "../utils/index.js";
 import type { AnyChannel } from "./channel.class.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
@@ -16,7 +11,7 @@ import { User } from "./user.class.js";
 @Cacheable("webhooks")
 export class Webhook
   extends BaseClass<WebhookEntity>
-  implements Enforce<CamelCasedProperties<WebhookEntity>>
+  implements Enforce<ObjectToCamel<WebhookEntity>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -71,10 +66,7 @@ export class Webhook
       return null;
     }
 
-    return ChannelFactory.create(
-      this.client,
-      this.data.source_channel as AnyChannelEntity,
-    );
+    return channelFactory(this.client, this.data.source_channel);
   }
 
   get url(): string | undefined {

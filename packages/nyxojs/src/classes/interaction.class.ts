@@ -33,8 +33,8 @@ import {
 } from "@nyxojs/core";
 import type { MessageCreateEntity } from "@nyxojs/gateway";
 import { BaseClass } from "../bases/index.js";
-import { ChannelFactory } from "../factories/index.js";
 import type { GuildBased } from "../types/index.js";
+import { channelFactory } from "../utils/index.js";
 import type { AnyChannel } from "./channel.class.js";
 import { GuildMember } from "./guild.class.js";
 import { Message } from "./message.class.js";
@@ -76,10 +76,7 @@ export abstract class Interaction<
       return undefined;
     }
 
-    return ChannelFactory.create(
-      this.client,
-      this.data.channel as AnyChannelEntity,
-    );
+    return channelFactory(this.client, this.data.channel as AnyChannelEntity);
   }
 
   get appPermissions(): string {

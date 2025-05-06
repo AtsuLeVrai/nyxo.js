@@ -21,14 +21,14 @@ import {
   type FileInput,
   type ImageOptions,
 } from "@nyxojs/rest";
-import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
+import {
+  type ObjectToCamel,
+  objectToCamel,
+  objectToSnake,
+} from "ts-case-convert";
 import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
-import {
-  toCamelCasedPropertiesDeep,
-  toSnakeCaseProperties,
-} from "../utils/index.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
 
@@ -54,7 +54,7 @@ import { User } from "./user.class.js";
 @Cacheable("applications")
 export class Application
   extends BaseClass<ApplicationEntity>
-  implements Enforce<CamelCasedProperties<ApplicationEntity>>
+  implements Enforce<ObjectToCamel<ApplicationEntity>>
 {
   /**
    * Gets the unique identifier (Snowflake) of this application.
@@ -220,8 +220,8 @@ export class Application
    *
    * @returns The team information in camelCase format, or null if owned by an individual
    */
-  get team(): CamelCasedPropertiesDeep<TeamEntity> | null {
-    return this.data.team ? toCamelCasedPropertiesDeep(this.data.team) : null;
+  get team(): ObjectToCamel<TeamEntity> | null {
+    return this.data.team ? objectToCamel(this.data.team) : null;
   }
 
   /**
@@ -410,11 +410,9 @@ export class Application
    *
    * @returns The install parameters in camelCase format, or undefined if not configured
    */
-  get installParams():
-    | CamelCasedPropertiesDeep<InstallParamsEntity>
-    | undefined {
+  get installParams(): ObjectToCamel<InstallParamsEntity> | undefined {
     return this.data.install_params
-      ? toCamelCasedPropertiesDeep(this.data.install_params)
+      ? objectToCamel(this.data.install_params)
       : undefined;
   }
 
@@ -602,11 +600,11 @@ export class Application
    * @throws Error if the application couldn't be updated
    */
   async edit(
-    options: CamelCasedProperties<ApplicationUpdateOptions>,
+    options: ObjectToCamel<ApplicationUpdateOptions>,
   ): Promise<Application> {
     const updatedData =
       await this.client.rest.applications.updateCurrentApplication(
-        toSnakeCaseProperties(options),
+        objectToSnake(options) as ApplicationUpdateOptions,
       );
     this.update(updatedData);
     return this;
@@ -678,13 +676,13 @@ export class Application
    */
   async fetchActivityInstance(
     instanceId: string,
-  ): Promise<CamelCasedPropertiesDeep<ActivityInstanceEntity>> {
+  ): Promise<ObjectToCamel<ActivityInstanceEntity>> {
     const activityInstance =
       await this.client.rest.applications.fetchActivityInstance(
         this.id,
         instanceId,
       );
-    return toCamelCasedPropertiesDeep(activityInstance);
+    return objectToCamel(activityInstance);
   }
 
   /**

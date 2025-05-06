@@ -7,7 +7,7 @@ import type {
   StickerType,
   UserEntity,
 } from "@nyxojs/core";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
 import { User } from "./user.class.js";
@@ -15,7 +15,7 @@ import { User } from "./user.class.js";
 @Cacheable("stickers")
 export class Sticker
   extends BaseClass<StickerEntity>
-  implements Enforce<CamelCasedProperties<StickerEntity>>
+  implements Enforce<ObjectToCamel<StickerEntity>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -72,7 +72,7 @@ export class Sticker
 
 export class StickerItem
   extends BaseClass<StickerItemEntity>
-  implements Enforce<CamelCasedProperties<StickerItemEntity>>
+  implements Enforce<ObjectToCamel<StickerItemEntity>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -89,7 +89,7 @@ export class StickerItem
 
 export class StickerPack
   extends BaseClass<StickerPackEntity>
-  implements Enforce<CamelCasedProperties<StickerPackEntity>>
+  implements Enforce<ObjectToCamel<StickerPackEntity>>
 {
   get id(): Snowflake {
     return this.data.id;

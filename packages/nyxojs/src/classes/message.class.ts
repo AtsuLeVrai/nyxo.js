@@ -1,6 +1,6 @@
 import {
   type ActionRowEntity,
-  type AnyThreadChannelEntity,
+  type AnyThreadBasedChannelEntity,
   type ApplicationCommandInteractionMetadataEntity,
   type ApplicationEntity,
   type AttachmentEntity,
@@ -33,15 +33,14 @@ import type {
   ReactionsFetchParams,
   ThreadFromMessageCreateOptions,
 } from "@nyxojs/rest";
-import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
-import { BaseClass, Cacheable } from "../bases/index.js";
-import { ChannelFactory } from "../factories/index.js";
-import type { Enforce, GuildBased } from "../types/index.js";
 import {
-  toCamelCasedProperties,
-  toCamelCasedPropertiesDeep,
-  toSnakeCaseProperties,
-} from "../utils/index.js";
+  type ObjectToCamel,
+  objectToCamel,
+  objectToSnake,
+} from "ts-case-convert";
+import { BaseClass, Cacheable } from "../bases/index.js";
+import type { Enforce, GuildBased } from "../types/index.js";
+import { channelFactory } from "../utils/index.js";
 import { Application } from "./application.class.js";
 import type { AnyChannel, AnyThreadChannel } from "./channel.class.js";
 import { GuildMember } from "./guild.class.js";
@@ -66,7 +65,7 @@ import { User } from "./user.class.js";
 @Cacheable("messages")
 export class Message
   extends BaseClass<MessageCreateEntity>
-  implements Enforce<CamelCasedProperties<MessageCreateEntity>>
+  implements Enforce<ObjectToCamel<MessageCreateEntity>>
 {
   /**
    * The flags associated with this message.
@@ -233,8 +232,8 @@ export class Message
    *
    * @returns An array of attachment objects
    */
-  get attachments(): CamelCasedProperties<AttachmentEntity>[] {
-    return this.data.attachments.map(toCamelCasedProperties);
+  get attachments(): ObjectToCamel<AttachmentEntity>[] {
+    return this.data.attachments.map(objectToCamel);
   }
 
   /**
@@ -245,8 +244,8 @@ export class Message
    *
    * @returns An array of embed objects
    */
-  get embeds(): CamelCasedProperties<EmbedEntity>[] {
-    return this.data.embeds.map(toCamelCasedProperties);
+  get embeds(): ObjectToCamel<EmbedEntity>[] {
+    return this.data.embeds.map(objectToCamel);
   }
 
   /**
@@ -278,10 +277,8 @@ export class Message
    *
    * @returns An array of channel mention objects, or undefined if none
    */
-  get mentionChannels():
-    | CamelCasedProperties<ChannelMentionEntity>[]
-    | undefined {
-    return this.data.mention_channels?.map(toCamelCasedProperties);
+  get mentionChannels(): ObjectToCamel<ChannelMentionEntity>[] | undefined {
+    return this.data.mention_channels?.map(objectToCamel);
   }
 
   /**
@@ -291,8 +288,8 @@ export class Message
    *
    * @returns An array of reaction objects, or undefined if none
    */
-  get reactions(): CamelCasedPropertiesDeep<ReactionEntity>[] | undefined {
-    return this.data.reactions?.map(toCamelCasedPropertiesDeep);
+  get reactions(): ObjectToCamel<ReactionEntity>[] | undefined {
+    return this.data.reactions?.map(objectToCamel);
   }
 
   /**
@@ -322,10 +319,8 @@ export class Message
    *
    * @returns The activity object, or undefined if none
    */
-  get activity(): CamelCasedProperties<MessageActivityEntity> | undefined {
-    return this.data.activity
-      ? toCamelCasedProperties(this.data.activity)
-      : undefined;
+  get activity(): ObjectToCamel<MessageActivityEntity> | undefined {
+    return this.data.activity ? objectToCamel(this.data.activity) : undefined;
   }
 
   /**
@@ -374,8 +369,8 @@ export class Message
    *
    * @returns An array of action row components, or undefined if none
    */
-  get components(): CamelCasedPropertiesDeep<ActionRowEntity>[] | undefined {
-    return this.data.components?.map(toCamelCasedPropertiesDeep);
+  get components(): ObjectToCamel<ActionRowEntity>[] | undefined {
+    return this.data.components?.map(objectToCamel);
   }
 
   /**
@@ -423,10 +418,10 @@ export class Message
    * @returns The role subscription data, or undefined if not applicable
    */
   get roleSubscriptionData():
-    | CamelCasedProperties<RoleSubscriptionDataEntity>
+    | ObjectToCamel<RoleSubscriptionDataEntity>
     | undefined {
     return this.data.role_subscription_data
-      ? toCamelCasedProperties(this.data.role_subscription_data)
+      ? objectToCamel(this.data.role_subscription_data)
       : undefined;
   }
 
@@ -437,10 +432,8 @@ export class Message
    *
    * @returns The poll object, or undefined if none
    */
-  get poll(): CamelCasedPropertiesDeep<PollEntity> | undefined {
-    return this.data.poll
-      ? toCamelCasedPropertiesDeep(this.data.poll)
-      : undefined;
+  get poll(): ObjectToCamel<PollEntity> | undefined {
+    return this.data.poll ? objectToCamel(this.data.poll) : undefined;
   }
 
   /**
@@ -450,8 +443,8 @@ export class Message
    *
    * @returns The call object, or undefined if not applicable
    */
-  get call(): CamelCasedProperties<MessageCallEntity> | undefined {
-    return this.data.call ? toCamelCasedProperties(this.data.call) : undefined;
+  get call(): ObjectToCamel<MessageCallEntity> | undefined {
+    return this.data.call ? objectToCamel(this.data.call) : undefined;
   }
 
   /**
@@ -461,11 +454,9 @@ export class Message
    *
    * @returns The message reference object, or undefined if not applicable
    */
-  get messageReference():
-    | CamelCasedProperties<MessageReferenceEntity>
-    | undefined {
+  get messageReference(): ObjectToCamel<MessageReferenceEntity> | undefined {
     return this.data.message_reference
-      ? toCamelCasedProperties(this.data.message_reference)
+      ? objectToCamel(this.data.message_reference)
       : undefined;
   }
 
@@ -478,7 +469,7 @@ export class Message
    */
   get thread(): AnyThreadChannel | undefined {
     return this.data.thread
-      ? ChannelFactory.createThread(this.client, this.data.thread)
+      ? (channelFactory(this.client, this.data.thread) as AnyThreadChannel)
       : undefined;
   }
 
@@ -506,11 +497,9 @@ export class Message
    *
    * @returns The interaction object, or undefined if none
    */
-  get interaction():
-    | CamelCasedPropertiesDeep<MessageInteractionEntity>
-    | undefined {
+  get interaction(): ObjectToCamel<MessageInteractionEntity> | undefined {
     return this.data.interaction
-      ? toCamelCasedPropertiesDeep(this.data.interaction)
+      ? objectToCamel(this.data.interaction)
       : undefined;
   }
 
@@ -523,12 +512,12 @@ export class Message
    * @returns The interaction metadata, or undefined if none
    */
   get interactionMetadata():
-    | CamelCasedPropertiesDeep<ApplicationCommandInteractionMetadataEntity>
-    | CamelCasedPropertiesDeep<MessageComponentInteractionMetadataEntity>
-    | CamelCasedPropertiesDeep<ModalSubmitInteractionMetadataEntity>
+    | ObjectToCamel<ApplicationCommandInteractionMetadataEntity>
+    | ObjectToCamel<MessageComponentInteractionMetadataEntity>
+    | ObjectToCamel<ModalSubmitInteractionMetadataEntity>
     | undefined {
     return this.data.interaction_metadata
-      ? toCamelCasedPropertiesDeep(this.data.interaction_metadata)
+      ? objectToCamel(this.data.interaction_metadata)
       : undefined;
   }
 
@@ -540,12 +529,8 @@ export class Message
    *
    * @returns The resolved data, or undefined if none
    */
-  get resolved():
-    | CamelCasedProperties<InteractionResolvedDataEntity>
-    | undefined {
-    return this.data.resolved
-      ? toCamelCasedProperties(this.data.resolved)
-      : undefined;
+  get resolved(): ObjectToCamel<InteractionResolvedDataEntity> | undefined {
+    return this.data.resolved ? objectToCamel(this.data.resolved) : undefined;
   }
 
   /**
@@ -555,10 +540,8 @@ export class Message
    *
    * @returns An array of message snapshots, or undefined if none
    */
-  get messageSnapshots():
-    | CamelCasedPropertiesDeep<MessageSnapshotEntity>[]
-    | undefined {
-    return this.data.message_snapshots?.map(toCamelCasedPropertiesDeep);
+  get messageSnapshots(): ObjectToCamel<MessageSnapshotEntity>[] | undefined {
+    return this.data.message_snapshots?.map(objectToCamel);
   }
 
   /**
@@ -759,7 +742,7 @@ export class Message
     const editedMessage = await this.client.rest.messages.updateMessage(
       this.channelId,
       this.id,
-      toSnakeCaseProperties(data),
+      data,
     );
 
     return new Message(this.client, editedMessage as MessageCreateEntity);
@@ -832,20 +815,20 @@ export class Message
    * @throws Error if the thread could not be created
    */
   async startThread(
-    options: CamelCasedProperties<ThreadFromMessageCreateOptions>,
+    options: ObjectToCamel<ThreadFromMessageCreateOptions>,
     reason?: string,
   ): Promise<AnyThreadChannel> {
     const thread = await this.client.rest.channels.createThreadFromMessage(
       this.channelId,
       this.id,
-      toSnakeCaseProperties(options),
+      objectToSnake(options),
       reason,
     );
 
-    return ChannelFactory.createThread(
+    return channelFactory(
       this.client,
-      thread as AnyThreadChannelEntity,
-    );
+      thread as AnyThreadBasedChannelEntity,
+    ) as AnyThreadChannel;
   }
 
   /**

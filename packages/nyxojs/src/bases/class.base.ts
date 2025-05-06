@@ -1,7 +1,7 @@
 import type { Snowflake } from "@nyxojs/core";
 import type { Store } from "@nyxojs/store";
 import type { Client } from "../core/index.js";
-import type { CacheManager } from "../managers/index.js";
+import type { CacheEntityType, CacheManager } from "../managers/index.js";
 
 /**
  * Represents the necessary information for caching an entity in the appropriate store.
@@ -10,7 +10,7 @@ export interface CacheEntityInfo {
   /**
    * The key of the cache store where this entity should be stored.
    */
-  storeKey: keyof CacheManager;
+  storeKey: CacheEntityType;
 
   /**
    * The unique identifier used as the cache key for this entity.
@@ -29,7 +29,7 @@ const METADATA_KEYS = {
 /**
  * Type definition for the key extraction function
  */
-type KeyExtractor<T extends object> = (data: T) => Snowflake | null;
+export type KeyExtractor<T extends object> = (data: T) => Snowflake | null;
 
 /**
  * Decorator that marks a class as cacheable and configures its caching behavior.
@@ -92,42 +92,30 @@ export abstract class BaseClass<T extends object> {
     this.client = client;
     this.data = data;
 
-    // Automatically cache this entity if caching is enabled
-    if (client.options.cache.enabled) {
-      const cacheInfo = this.#getCacheInfo();
-      if (cacheInfo) {
-        const { storeKey, id } = cacheInfo;
-        if (id && storeKey) {
-          const cacheStore = client.cache[storeKey] as unknown as Store<
-            Snowflake,
-            this
-          >;
+    // Automatically cache this entity
+    const cacheInfo = this.getCacheInfo();
+    if (cacheInfo) {
+      const { storeKey, id } = cacheInfo;
+      if (id && storeKey) {
+        const cacheStore = client.cache[storeKey] as unknown as Store<
+          Snowflake,
+          this
+        >;
 
-          // Check if this entity already exists in the cache
-          const existingEntity = cacheStore.get(id);
-          if (existingEntity) {
-            // Update the existing cached entity with new data
-            existingEntity.update(data);
-          } else {
-            // Entity doesn't exist in cache yet, add it
-            cacheStore.set(id, this);
-          }
+        // Check if this entity already exists in the cache
+        const existingEntity = cacheStore.get(id);
+        if (existingEntity) {
+          // Update the existing cached entity with new data
+          existingEntity.update(data);
+        } else {
+          // Entity doesn't exist in cache yet, add it
+          cacheStore.set(id, this);
         }
       }
     }
 
     // Initialize all getters to trigger their creation
     this.#initAllGetters();
-  }
-
-  /**
-   * Returns the raw data for debugging purposes.
-   * This is useful for development and debugging but should be avoided in production code.
-   *
-   * @returns The raw data object
-   */
-  get rawData(): T {
-    return this.data;
   }
 
   /**
@@ -152,21 +140,19 @@ export abstract class BaseClass<T extends object> {
   update(data: Partial<T>): this {
     Object.assign(this.data, data);
 
-    // Update entity in cache if caching is enabled
-    if (this.client.options.cache.enabled) {
-      const cacheInfo = this.#getCacheInfo();
-      if (cacheInfo) {
-        const { storeKey, id } = cacheInfo;
-        if (id && storeKey) {
-          const cacheStore = this.client.cache[storeKey] as unknown as Store<
-            Snowflake,
-            this
-          >;
+    // Update entity in cache
+    const cacheInfo = this.getCacheInfo();
+    if (cacheInfo) {
+      const { storeKey, id } = cacheInfo;
+      if (id && storeKey) {
+        const cacheStore = this.client.cache[storeKey] as unknown as Store<
+          Snowflake,
+          this
+        >;
 
-          // Only update if this entity is already in the cache
-          if (cacheStore.has(id)) {
-            cacheStore.add(id, this);
-          }
+        // Only update if this entity is already in the cache
+        if (cacheStore.has(id)) {
+          cacheStore.add(id, this);
         }
       }
     }
@@ -182,13 +168,8 @@ export abstract class BaseClass<T extends object> {
    * @returns true if the entity was removed from the cache, false otherwise
    */
   delete(): boolean {
-    // Do nothing if caching is disabled
-    if (!this.client.options.cache.enabled) {
-      return false;
-    }
-
     // Get cache information for this entity
-    const cacheInfo = this.#getCacheInfo();
+    const cacheInfo = this.getCacheInfo();
     if (!cacheInfo) {
       return false;
     }
@@ -210,16 +191,6 @@ export abstract class BaseClass<T extends object> {
     }
 
     return false;
-  }
-
-  /**
-   * Creates a deep clone of this modal.
-   *
-   * @returns A new instance with the same data
-   */
-  clone(): this {
-    // @ts-expect-error: This is safe because we're creating the same class type
-    return new this.constructor(this.client, structuredClone(this.data));
   }
 
   /**
@@ -274,16 +245,15 @@ export abstract class BaseClass<T extends object> {
    * This information is set by the @Cacheable decorator.
    *
    * @returns Cache information containing the store key and ID, or null if the entity cannot be cached
-   * @private
    */
-  #getCacheInfo(): CacheEntityInfo | null {
+  getCacheInfo(): CacheEntityInfo | null {
     const entityConstructor = this.constructor as typeof BaseClass;
 
     // Get the store key from metadata
     const storeKey = Reflect.getMetadata(
       METADATA_KEYS.CACHE_STORE_KEY,
       entityConstructor,
-    ) as keyof CacheManager | undefined;
+    ) as CacheEntityType | undefined;
 
     // If no store key found, this class is not cacheable
     if (!storeKey) {

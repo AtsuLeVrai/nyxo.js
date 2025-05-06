@@ -1,6 +1,9 @@
 import type { Snowflake } from "../markdown/index.js";
 import type { ApplicationEntity } from "./application.entity.js";
-import type { AnyThreadChannelEntity, ChannelType } from "./channel.entity.js";
+import type {
+  AnyThreadBasedChannelEntity,
+  ChannelType,
+} from "./channel.entity.js";
 import type { EmojiEntity } from "./emoji.entity.js";
 import type {
   InteractionResolvedDataEntity,
@@ -1404,7 +1407,7 @@ export interface MessageEntity {
    * Thread associated with this message.
    * For messages that created threads, contains the thread information.
    */
-  thread?: AnyThreadChannelEntity;
+  thread?: AnyThreadBasedChannelEntity;
 
   /**
    * Metadata about the interaction that generated this message.

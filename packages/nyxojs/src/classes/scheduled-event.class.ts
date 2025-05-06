@@ -8,7 +8,7 @@ import type {
   Snowflake,
 } from "@nyxojs/core";
 import type { GuildScheduledEventUserAddRemoveEntity } from "@nyxojs/gateway";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
 import { User } from "./user.class.js";
@@ -16,7 +16,7 @@ import { User } from "./user.class.js";
 @Cacheable("scheduledEvents")
 export class GuildScheduledEvent
   extends BaseClass<GuildScheduledEventEntity>
-  implements Enforce<CamelCasedProperties<GuildScheduledEventEntity>>
+  implements Enforce<ObjectToCamel<GuildScheduledEventEntity>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -96,8 +96,7 @@ export class GuildScheduledEvent
 
 export class GuildScheduledEventUser
   extends BaseClass<GuildScheduledEventUserAddRemoveEntity>
-  implements
-    Enforce<CamelCasedProperties<GuildScheduledEventUserAddRemoveEntity>>
+  implements Enforce<ObjectToCamel<GuildScheduledEventUserAddRemoveEntity>>
 {
   get guildScheduledEventId(): Snowflake {
     return this.data.guild_scheduled_event_id;

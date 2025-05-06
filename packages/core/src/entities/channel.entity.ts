@@ -1144,7 +1144,7 @@ export interface GuildDirectoryChannelEntity
  * Union type to represent any thread channel entity.
  * Includes public, private, and announcement threads.
  */
-export type AnyThreadChannelEntity =
+export type AnyThreadBasedChannelEntity =
   | PublicThreadChannelEntity
   | PrivateThreadChannelEntity
   | AnnouncementThreadChannelEntity;
@@ -1177,4 +1177,4 @@ export type AnyDmBasedChannelEntity = DmChannelEntity | GroupDmChannelEntity;
 export type AnyChannelEntity =
   | AnyDmBasedChannelEntity
   | AnyGuildBasedChannelEntity
-  | AnyThreadChannelEntity;
+  | AnyThreadBasedChannelEntity;

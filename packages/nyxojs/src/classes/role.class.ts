@@ -5,15 +5,14 @@ import {
   type RoleTagsEntity,
   type Snowflake,
 } from "@nyxojs/core";
-import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
+import { type ObjectToCamel, objectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
-import { toCamelCasedPropertiesDeep } from "../utils/index.js";
 
 @Cacheable("roles")
 export class Role
   extends BaseClass<GuildBased<RoleEntity>>
-  implements Enforce<CamelCasedProperties<GuildBased<RoleEntity>>>
+  implements Enforce<ObjectToCamel<GuildBased<RoleEntity>>>
 {
   get id(): Snowflake {
     return this.data.id;
@@ -59,12 +58,12 @@ export class Role
     return Boolean(this.data.mentionable);
   }
 
-  get tags(): CamelCasedPropertiesDeep<RoleTagsEntity> | undefined {
+  get tags(): ObjectToCamel<RoleTagsEntity> | undefined {
     if (!this.data.tags) {
       return undefined;
     }
 
-    return toCamelCasedPropertiesDeep(this.data.tags);
+    return objectToCamel(this.data.tags);
   }
 
   get flags(): BitField<RoleFlags> {

@@ -1,7 +1,7 @@
 import type {
   AnyChannelEntity,
   AnyInteractionEntity,
-  AnyThreadChannelEntity,
+  AnyThreadBasedChannelEntity,
   ApiVersion,
   ApplicationEntity,
   AuditLogEntryEntity,
@@ -174,7 +174,7 @@ export interface ThreadListSyncEntity {
    * Array of all active threads in the specified channels that are visible to the current user.
    * Contains complete thread channel objects.
    */
-  threads: AnyThreadChannelEntity[];
+  threads: AnyThreadBasedChannelEntity[];
 
   /**
    * Array of thread member objects for the current user.
@@ -388,7 +388,7 @@ export interface GuildCreateEntity extends GuildEntity {
    * Array of thread channel objects for all active threads in the guild that the current user can access.
    * Supplies initial state of accessible threads without additional API calls.
    */
-  threads: AnyThreadChannelEntity[];
+  threads: AnyThreadBasedChannelEntity[];
 
   /**
    * Array of partial presence updates for members in the guild.
@@ -2103,21 +2103,21 @@ export interface GatewayReceiveEvents {
    * Contains either a newly_created flag or ThreadMember information.
    */
   THREAD_CREATE:
-    | (AnyThreadChannelEntity & { newly_created: boolean })
-    | (AnyThreadChannelEntity & ThreadMemberEntity);
+    | (AnyThreadBasedChannelEntity & { newly_created: boolean })
+    | (AnyThreadBasedChannelEntity & ThreadMemberEntity);
 
   /**
    * Sent when a thread is updated.
    * Contains the updated thread object without the last_message_id field.
    */
-  THREAD_UPDATE: Omit<AnyThreadChannelEntity, "last_message_id">;
+  THREAD_UPDATE: Omit<AnyThreadBasedChannelEntity, "last_message_id">;
 
   /**
    * Sent when a thread is deleted.
    * Contains only essential identifying fields of the deleted thread.
    */
   THREAD_DELETE: Pick<
-    AnyThreadChannelEntity,
+    AnyThreadBasedChannelEntity,
     "id" | "guild_id" | "parent_id" | "type"
   >;
 

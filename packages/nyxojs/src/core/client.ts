@@ -1,21 +1,16 @@
-import type { Snowflake } from "@nyxojs/core";
-import {
-  Gateway,
-  GatewayOptions,
-  type UpdatePresenceEntity,
-} from "@nyxojs/gateway";
+import { Gateway, GatewayOptions } from "@nyxojs/gateway";
 import { Rest, RestOptions } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { User } from "../classes/index.js";
+import type { User } from "../classes/index.js";
+import { CacheManager, CacheOptions } from "../managers/index.js";
+import type { ClientEvents } from "../types/index.js";
 import {
+  GatewayDispatchEventMap,
   GatewayKeyofEventMappings,
   RestKeyofEventMappings,
-  StandardGatewayDispatchEventMappings,
-} from "../data/index.js";
-import { CacheManager, ClientCacheOptions } from "../managers/index.js";
-import type { ClientEvents } from "../types/index.js";
+} from "../utils/index.js";
 
 /**
  * Configuration options for the Nyxo.js Discord client.
@@ -28,9 +23,9 @@ export const ClientOptions = z.object({
    * Settings to control the client's caching behavior.
    * Caching reduces API calls by storing frequently accessed entities.
    *
-   * @see {@link ClientCacheOptions} for detailed cache configuration.
+   * @see {@link CacheOptions} for detailed cache configuration.
    */
-  cache: ClientCacheOptions.default({}),
+  cache: CacheOptions.default({}),
 
   // REST and Gateway options are included from their respective definitions
   ...RestOptions.shape,
@@ -92,7 +87,7 @@ export class Client extends EventEmitter<ClientEvents> {
     try {
       this.#options = ClientOptions.parse(options);
     } catch (error) {
-      throw new Error(`Invalid client options: ${fromError(error).message}`);
+      throw new Error(fromError(error).message);
     }
 
     this.#rest = new Rest(this.#options);
@@ -115,9 +110,7 @@ export class Client extends EventEmitter<ClientEvents> {
 
     // Listen for gateway events
     this.#gateway.on("dispatch", (event, data) => {
-      const mapping = StandardGatewayDispatchEventMappings.find(
-        (m) => m.gatewayEvent === event,
-      );
+      const mapping = GatewayDispatchEventMap.get(event);
       if (!mapping) {
         return;
       }
@@ -181,76 +174,9 @@ export class Client extends EventEmitter<ClientEvents> {
     await this.#rest.destroy();
 
     // Clear caches
-    this.#cache.dispose();
+    this.#cache.destroy();
 
     // Remove event listeners from the client itself
     this.removeAllListeners();
-  }
-
-  /**
-   * Updates the client's presence status on Discord
-   *
-   * @param presence - The presence data to set
-   * @throws {Error} If the client is not connected
-   */
-  updatePresence(presence: UpdatePresenceEntity): void {
-    this.#gateway.updatePresence(presence);
-  }
-
-  /**
-   * Fetches a user from Discord API or cache
-   *
-   * @param userId - The ID of the user to fetch
-   * @param options - Fetch options
-   * @returns Promise resolving to the user object
-   * @throws {Error} If the user could not be fetched
-   */
-  async fetchUser(
-    userId: Snowflake,
-    options: { force?: boolean } = {},
-  ): Promise<User> {
-    if (!userId) {
-      throw new Error("User ID is required");
-    }
-
-    if (!options.force) {
-      const cachedUser = this.#cache.users.get(userId);
-      if (cachedUser) {
-        return cachedUser;
-      }
-    }
-
-    try {
-      const data = await this.rest.users.fetchUser(userId);
-      const user = new User(this, data);
-
-      if (this.#options.cache.enabled) {
-        this.#cache.users.set(userId, user);
-      }
-
-      return user;
-    } catch (error) {
-      throw new Error(`Failed to fetch user ${userId}: ${error}`);
-    }
-  }
-
-  /**
-   * Fetches the current authenticated user (bot user)
-   *
-   * @param options - Fetch options
-   * @returns Promise resolving to the user object
-   */
-  async fetchClientUser(options: { force?: boolean } = {}): Promise<User> {
-    try {
-      if (this.#user && !options.force) {
-        return this.#user;
-      }
-
-      const data = await this.rest.users.fetchCurrentUser();
-      this.#user = new User(this, data);
-      return this.#user;
-    } catch (error) {
-      throw new Error(`Failed to fetch client user: ${error}`);
-    }
   }
 }

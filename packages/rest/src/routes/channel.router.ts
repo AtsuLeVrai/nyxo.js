@@ -1,6 +1,6 @@
 import type {
   AnyChannelEntity,
-  AnyThreadChannelEntity,
+  AnyThreadBasedChannelEntity,
   AutoArchiveDuration,
   BitwisePermissionFlags,
   ChannelFlags,
@@ -443,7 +443,7 @@ export interface ArchivedThreadsResponse {
    * Array of thread channel objects
    * Contains all the archived thread channels that match the query.
    */
-  threads: AnyThreadChannelEntity[];
+  threads: AnyThreadBasedChannelEntity[];
 
   /**
    * Array of thread member objects for threads the current user has joined
@@ -916,7 +916,7 @@ export class ChannelRouter extends BaseRouter {
     messageId: Snowflake,
     options: ThreadFromMessageCreateOptions,
     reason?: string,
-  ): Promise<AnyThreadChannelEntity> {
+  ): Promise<AnyThreadBasedChannelEntity> {
     return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelStartThreadFromMessageEndpoint(
         channelId,
@@ -941,7 +941,7 @@ export class ChannelRouter extends BaseRouter {
     channelId: Snowflake,
     options: ThreadCreateOptions,
     reason?: string,
-  ): Promise<AnyThreadChannelEntity> {
+  ): Promise<AnyThreadBasedChannelEntity> {
     return this.post(
       ChannelRouter.CHANNEL_ROUTES.channelStartThreadWithoutMessageEndpoint(
         channelId,

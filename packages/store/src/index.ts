@@ -110,19 +110,75 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Creates a new Store instance.
    *
-   * @param entries - Initial entries to populate the store with
-   * @param options - Configuration options for the store
+   * @param entriesOrOptions - Initial entries to populate the store with, or configuration options
+   * @param maybeOptions - Configuration options for the store (used only if first parameter is entries)
    * @throws {Error} If the provided options fail validation
+   *
+   * @example
+   * // Create empty store with default options
+   * const store1 = new Store();
+   *
+   * @example
+   * // Create store with initial entries
+   * const store2 = new Store([['key1', 'value1'], ['key2', 'value2']]);
+   *
+   * @example
+   * // Create store with custom options
+   * const store3 = new Store({ maxSize: 500, ttl: 60000 });
+   *
+   * @example
+   * // Create store with both initial entries and custom options
+   * const store4 = new Store([['key1', 'value1']], { maxSize: 500 });
    */
   constructor(
-    entries?: readonly (readonly [K, V])[] | null,
-    options: z.input<typeof StoreOptions> = {},
+    entriesOrOptions?:
+      | readonly (readonly [K, V])[]
+      | z.input<typeof StoreOptions>
+      | null,
+    maybeOptions?: z.input<typeof StoreOptions>,
   ) {
     super();
 
+    // Helper functions for type checks
+    const isEntriesArray = (
+      arr: unknown,
+    ): arr is readonly (readonly [K, V])[] => {
+      return (
+        Array.isArray(arr) &&
+        (arr.length === 0 || (Array.isArray(arr[0]) && arr[0].length === 2))
+      );
+    };
+
+    const isOptions = (obj: unknown): obj is z.input<typeof StoreOptions> => {
+      return obj !== null && typeof obj === "object" && !Array.isArray(obj);
+    };
+
+    // Determine actual parameters
+    let actualEntries: readonly (readonly [K, V])[] | null | undefined = null;
+    let actualOptions: z.input<typeof StoreOptions> = {};
+
+    if (isEntriesArray(entriesOrOptions)) {
+      // First parameter is an entries array
+      actualEntries = entriesOrOptions;
+      actualOptions = maybeOptions ?? {};
+    } else if (isOptions(entriesOrOptions)) {
+      // First parameter is an options object
+      actualEntries = null;
+      actualOptions = entriesOrOptions;
+    } else if (entriesOrOptions === null || entriesOrOptions === undefined) {
+      // First parameter is null or undefined
+      actualEntries = null;
+      actualOptions = maybeOptions ?? {};
+    } else {
+      // First parameter is neither an entries array nor an options object
+      throw new Error(
+        "First argument must be either an array of entries or an options object",
+      );
+    }
+
     // Validate options and merge with defaults
     try {
-      this.#options = StoreOptions.parse(options);
+      this.#options = StoreOptions.parse(actualOptions);
     } catch (error) {
       throw new Error(fromError(error).message);
     }
@@ -133,8 +189,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     }
 
     // Add initial entries if provided
-    if (entries) {
-      this.#bulkSet(entries);
+    if (actualEntries) {
+      this.#bulkSet(actualEntries);
     }
 
     // Set up cleanup interval if TTL is enabled

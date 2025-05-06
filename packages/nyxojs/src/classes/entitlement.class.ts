@@ -4,7 +4,7 @@ import {
   type Snowflake,
 } from "@nyxojs/core";
 import { EntitlementOwnerType } from "@nyxojs/rest";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
 
@@ -26,7 +26,7 @@ import type { Enforce } from "../types/index.js";
 @Cacheable("entitlements")
 export class Entitlement
   extends BaseClass<EntitlementEntity>
-  implements Enforce<CamelCasedProperties<EntitlementEntity>>
+  implements Enforce<ObjectToCamel<EntitlementEntity>>
 {
   /**
    * Gets the unique identifier (Snowflake) of this entitlement.

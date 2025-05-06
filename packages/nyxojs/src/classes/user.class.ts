@@ -27,15 +27,14 @@ import {
   type UserRoleConnectionUpdateOptions,
   type UserUpdateOptions,
 } from "@nyxojs/rest";
-import type { CamelCasedProperties, CamelCasedPropertiesDeep } from "type-fest";
+import {
+  type ObjectToCamel,
+  objectToCamel,
+  objectToSnake,
+} from "ts-case-convert";
 import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased } from "../types/index.js";
-import {
-  toCamelCasedProperties,
-  toCamelCasedPropertiesDeep,
-  toSnakeCaseProperties,
-} from "../utils/index.js";
 import { DmChannel } from "./channel.class.js";
 import { Guild, GuildMember } from "./guild.class.js";
 import type { Message } from "./message.class.js";
@@ -58,7 +57,7 @@ import type { Message } from "./message.class.js";
 @Cacheable("users")
 export class User
   extends BaseClass<UserEntity>
-  implements Enforce<CamelCasedProperties<UserEntity>>
+  implements Enforce<ObjectToCamel<UserEntity>>
 {
   /**
    * The flags on the user's account.
@@ -279,9 +278,9 @@ export class User
    *
    * @returns The avatar decoration data in camelCase format, or null if not set
    */
-  get avatarDecorationData(): CamelCasedProperties<AvatarDecorationDataEntity> | null {
+  get avatarDecorationData(): ObjectToCamel<AvatarDecorationDataEntity> | null {
     return this.data.avatar_decoration_data
-      ? toCamelCasedProperties(this.data.avatar_decoration_data)
+      ? objectToCamel(this.data.avatar_decoration_data)
       : null;
   }
 
@@ -508,17 +507,13 @@ export class User
    * @throws Error if this isn't the current authenticated user
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
-  async fetchConnections(): Promise<
-    CamelCasedPropertiesDeep<ConnectionEntity>[]
-  > {
+  async fetchConnections(): Promise<ObjectToCamel<ConnectionEntity>[]> {
     if (!this.isSelf) {
       throw new Error("You can only fetch connections for yourself");
     }
 
     const connections = await this.client.rest.users.fetchCurrentConnections();
-    return connections.map((connection) =>
-      toCamelCasedPropertiesDeep(connection),
-    );
+    return connections.map((connection) => objectToCamel(connection));
   }
 
   /**
@@ -563,14 +558,14 @@ export class User
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
   async createGroupDmChannel(
-    options: CamelCasedProperties<GroupDmCreateOptions>,
+    options: ObjectToCamel<GroupDmCreateOptions>,
   ): Promise<DmChannel> {
     if (!this.isSelf) {
       throw new Error("You can only create group DMs as yourself");
     }
 
     const channel = await this.client.rest.users.createGroupDmChannel(
-      toSnakeCaseProperties(options),
+      objectToSnake(options),
     );
     return new DmChannel(this.client, channel);
   }
@@ -587,14 +582,14 @@ export class User
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
   async fetchGuilds(
-    query?: CamelCasedProperties<UserGuildsFetchParams>,
+    query?: ObjectToCamel<UserGuildsFetchParams>,
   ): Promise<Guild[]> {
     if (!this.isSelf) {
       throw new Error("You can only fetch guilds for yourself");
     }
 
     const queryTransformed: UserGuildsFetchParams | undefined = query
-      ? toSnakeCaseProperties(query)
+      ? objectToSnake(query)
       : undefined;
 
     const guilds =
@@ -648,7 +643,7 @@ export class User
    */
   async fetchApplicationRoleConnection(
     applicationId: Snowflake,
-  ): Promise<CamelCasedProperties<ApplicationRoleConnectionEntity>> {
+  ): Promise<ObjectToCamel<ApplicationRoleConnectionEntity>> {
     if (!this.isSelf) {
       throw new Error(
         "You can only fetch application role connections for yourself",
@@ -659,7 +654,7 @@ export class User
       await this.client.rest.users.fetchApplicationRoleConnection(
         applicationId,
       );
-    return toCamelCasedProperties(applicationRoleConnection);
+    return objectToCamel(applicationRoleConnection);
   }
 
   /**
@@ -676,8 +671,8 @@ export class User
    */
   async updateApplicationRoleConnection(
     applicationId: Snowflake,
-    connection: CamelCasedProperties<UserRoleConnectionUpdateOptions>,
-  ): Promise<CamelCasedProperties<ApplicationRoleConnectionEntity>> {
+    connection: ObjectToCamel<UserRoleConnectionUpdateOptions>,
+  ): Promise<ObjectToCamel<ApplicationRoleConnectionEntity>> {
     if (!this.isSelf) {
       throw new Error(
         "You can only update application role connections for yourself",
@@ -687,9 +682,9 @@ export class User
     const applicationRoleConnection =
       await this.client.rest.users.updateApplicationRoleConnection(
         applicationId,
-        toSnakeCaseProperties(connection),
+        objectToSnake(connection),
       );
-    return toCamelCasedProperties(applicationRoleConnection);
+    return objectToCamel(applicationRoleConnection);
   }
 
   /**
@@ -852,7 +847,7 @@ export class User
    */
   async getServiceConnections(
     type?: ConnectionService,
-  ): Promise<CamelCasedPropertiesDeep<ConnectionEntity>[]> {
+  ): Promise<ObjectToCamel<ConnectionEntity>[]> {
     const connections = await this.fetchConnections();
 
     if (type) {

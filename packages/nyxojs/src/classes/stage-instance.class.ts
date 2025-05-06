@@ -3,14 +3,14 @@ import type {
   StageInstanceEntity,
   StageInstancePrivacyLevel,
 } from "@nyxojs/core";
-import type { CamelCasedProperties } from "type-fest";
+import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce } from "../types/index.js";
 
 @Cacheable("stageInstances")
 export class StageInstance
   extends BaseClass<StageInstanceEntity>
-  implements Enforce<CamelCasedProperties<StageInstanceEntity>>
+  implements Enforce<ObjectToCamel<StageInstanceEntity>>
 {
   get id(): Snowflake {
     return this.data.id;
