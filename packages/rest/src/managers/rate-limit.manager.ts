@@ -215,13 +215,13 @@ export class RateLimitManager {
       maxSize: this.#options.maxBuckets,
       evictionStrategy: "lru",
       cloneValues: false,
-      minCleanupInterval: this.#options.cleanupInterval,
+      expirationCheckInterval: this.#options.cleanupInterval,
     });
 
     this.#routeBuckets = new Store<string, string>({
       maxSize: this.#options.maxBuckets * 2, // Routes may outnumber buckets
       evictionStrategy: "lru",
-      minCleanupInterval: this.#options.cleanupInterval,
+      expirationCheckInterval: this.#options.cleanupInterval,
     });
 
     this.#rateLimitCache = new Store<string, RateLimitResult>({

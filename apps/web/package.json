@@ -26,7 +26,6 @@
     "dev": "next dev --turbopack",
     "preview": "next build && next start",
     "start": "next start",
-    "biome:check": "biome check --write --unsafe --verbose",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

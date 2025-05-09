@@ -1,4 +1,15 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "extends": ["../../biome.json"]
+  "extends": ["../../biome.json"],
+  "overrides": [
+    {
+      "include": ["**/src/**/*.ts", "**/src/**/*.tsx"],
+      "linter": {
+        "rules": {
+          "all": false,
+          "recommended": true
+        }
+      }
+    }
+  ]
 }

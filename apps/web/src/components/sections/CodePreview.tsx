@@ -1,12 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { CodeBlock, type ProgrammingLanguage } from "@/components/ui/CodeBlock";
 import { Tabs } from "@/components/ui/Tabs";
 import { useInView } from "@/hooks/useInView";
 import { motion } from "framer-motion";
-import { ArrowRight, Code, FileJson, Terminal, Zap } from "lucide-react";
+import { Code, FileJson, Terminal, Zap } from "lucide-react";
 import type { ReactElement } from "react";
 import { useState } from "react";
 
@@ -33,7 +32,7 @@ export default function CodePreview(): ReactElement {
       id: "client",
       label: "Client Setup",
       icon: <FileJson className="h-4 w-4" />,
-      language: "typescript",
+      language: "typesclass
       title: "client.ts",
       code: "// Be patient !",
       highlightedLines: [8, 9, 10, 11, 12, 13, 14, 15, 16, 21, 22, 26],
@@ -42,7 +41,7 @@ export default function CodePreview(): ReactElement {
       id: "command",
       label: "Slash Command",
       icon: <Terminal className="h-4 w-4" />,
-      language: "typescript",
+      language: "typesclass
       title: "slash.command.ts",
       code: "// Be patient !",
       highlightedLines: [
@@ -53,7 +52,7 @@ export default function CodePreview(): ReactElement {
       id: "event",
       label: "Event Handler",
       icon: <Zap className="h-4 w-4" />,
-      language: "typescript",
+      language: "classt",
       title: "welcome.event.ts",
       code: "// Be patient !",
       highlightedLines: [
@@ -69,34 +68,34 @@ export default function CodePreview(): ReactElement {
       animate={{ opacity: isInView ? 1 : 0, y: isInView ? 0 : 30 }}
       transition={{ duration: 0.7 }}
       className="relative bg-dark-800 py-24"
-    >
+    >class
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(138,75,255,0.08),transparent_70%)]" />
-      <div className="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-5" />
-
+      <div class="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-5" />
+class
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-12 text-center">
-          <Badge variant="primary" icon={<Code size={14} />} size="md" animated>
-            Type-Safe Development
+        <diclassme="mb-12 text-center">
+          <Baclassnt="primary" icon={<Code size={14} />} size="md" animated>
+            Type-Safe Development={true}
           </Badge>
           <h2 className="mt-4 font-extrabold text-3xl text-white sm:text-4xl">
-            Build Discord bots{" "}
+            Buclassrd bots{" "}
             <span className="text-primary-400">the right way</span>
-          </h2>
+          </h2>class
           <p className="mx-auto mt-4 max-w-2xl text-slate-300 text-xl">
-            Nyxo.js provides a structured, type-safe framework for building
+            Nclassovides a structured, type-safe framework for building
             robust Discord bots with integrated TypeScript support.
           </p>
         </div>
 
         <div className="overflow-hidden rounded-xl border border-dark-500 bg-dark-700 shadow-xl">
-          <Tabs
+          <Taclass
             items={codeExamples.map((example) => ({
               id: example.id,
               label: example.label,
               icon: example.icon,
               content: (
                 <div className="p-4">
-                  <CodeBlock
+                  <Coclass
                     code={example.code}
                     language={example.language as ProgrammingLanguage}
                     title={example.title}
@@ -110,25 +109,6 @@ export default function CodePreview(): ReactElement {
             onChange={setActiveTab}
             variant="default"
           />
-
-          <div className="flex items-center justify-between border-dark-500 border-t bg-dark-600/50 p-4">
-            <div className="flex items-center text-slate-300 text-sm">
-              <Zap className="mr-2 h-5 w-5 text-primary-400" />
-              <span>
-                <strong>Pro tip:</strong> Nyxo.js automatically infers types
-                from Discord.js
-              </span>
-            </div>
-
-            <Button
-              href="/docs/examples"
-              size="sm"
-              variant="outline"
-              trailingIcon={<ArrowRight className="h-4 w-4" />}
-            >
-              View More Examples
-            </Button>
-          </div>
         </div>
       </div>
     </motion.section>
