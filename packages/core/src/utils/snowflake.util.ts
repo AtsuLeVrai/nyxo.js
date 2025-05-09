@@ -393,3 +393,8 @@ export const SnowflakeUtil = {
     }
   },
 } as const;
+
+console.log(
+  SnowflakeUtil.getTimestamp("730029344193249310"),
+  (730029344193249310n >> 22n) + 1420070400000n,
+);

@@ -1,4 +1,4 @@
-import {config} from "dotenv";
+import { config } from "dotenv";
 import {
   ActionRowBuilder,
   ButtonBuilder,

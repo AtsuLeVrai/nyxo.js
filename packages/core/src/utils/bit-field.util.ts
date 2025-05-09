@@ -50,6 +50,7 @@ export type BitFieldValue = bigint | number | string;
 export type BitFieldResolvable<T = unknown> =
   | BitFieldValue
   | T
+  | BitField<T>
   | BitFieldResolvable<T>[];
 
 /**
