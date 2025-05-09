@@ -1,13 +1,15 @@
-import "../styles/globals.css";
+import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
-import type React from "react";
+import type { ReactNode } from "react";
 
+// Load the Poppins font with specific weight
 const poppins = Poppins({
   weight: "600",
   subsets: ["latin"],
 });
 
+// Define page metadata
 export const metadata: Metadata = {
   title: "Nyxo.js - Type-Safe Discord Bot Framework",
   description:
@@ -21,11 +23,14 @@ export const metadata: Metadata = {
   ],
 };
 
+/**
+ * Root layout component that wraps the entire application
+ */
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: ReactNode;
+}) {
   return (
     <html lang="en">
       <body className={`${poppins.className} antialiased`}>{children}</body>

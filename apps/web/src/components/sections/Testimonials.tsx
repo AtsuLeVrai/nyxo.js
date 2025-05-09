@@ -1,22 +1,33 @@
 "use client";
 
-import { FadeInWhenVisible } from "@/components/animations/MotionEffects";
+import {
+  FadeIn,
+  FadeInStagger,
+  fadeVariants,
+} from "@/components/animations/FadeIn";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { motion } from "framer-motion";
+import { type Variants, motion } from "framer-motion";
 import { Users } from "lucide-react";
-import React from "react";
+import type { ReactElement } from "react";
 
-// Testimonial type definition
 interface TestimonialProps {
+  /** Testimonial author's name */
   name: string;
+  /** Initials for the avatar */
   initials: string;
+  /** Author's role or position */
   role: string;
+  /** Testimonial content */
   content: string;
 }
 
-// Individual testimonial card component
-function TestimonialCard({ testimonial }: { testimonial: TestimonialProps }) {
+/**
+ * Individual testimonial card component
+ */
+function TestimonialCard({
+  testimonial,
+}: { testimonial: TestimonialProps }): ReactElement {
   return (
     <Card variant="testimonial">
       <div className="px-6 py-8">
@@ -27,7 +38,9 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialProps }) {
             </span>
           </div>
           <div className="ml-3">
-            <Card.Title>{testimonial.name}</Card.Title>
+            <h3 className="font-medium text-lg text-white">
+              {testimonial.name}
+            </h3>
             <div className="font-medium text-primary-400 text-sm">
               {testimonial.role}
             </div>
@@ -41,7 +54,10 @@ function TestimonialCard({ testimonial }: { testimonial: TestimonialProps }) {
   );
 }
 
-export default function Testimonials() {
+/**
+ * Testimonials section with user feedback
+ */
+export default function Testimonials(): ReactElement {
   // Testimonials data
   const testimonials: TestimonialProps[] = [
     {
@@ -49,28 +65,28 @@ export default function Testimonials() {
       initials: "M",
       role: "Discord Bot Developer",
       content:
-        "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Blanditiis corporis deleniti enim exercitationem expedita id nesciunt perspiciatis repellendus vel vero!",
+        "Nyxo.js has completely transformed how I build Discord bots. The TypeScript integration is flawless and the framework is intuitive yet powerful.",
     },
     {
       name: "Sarah Chen",
       initials: "S",
       role: "Full Stack Developer",
       content:
-        "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Blanditiis corporis deleniti enim exercitationem expedita id nesciunt perspiciatis repellendus vel vero!",
+        "I've tried many Discord bot frameworks, but Nyxo.js stands out with its modern architecture and excellent developer experience. Highly recommended!",
     },
     {
       name: "David Williams",
       initials: "D",
       role: "Community Server Owner",
       content:
-        "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Blanditiis corporis deleniti enim exercitationem expedita id nesciunt perspiciatis repellendus vel vero!",
+        "As someone managing a large Discord community, Nyxo.js has made it much easier to build reliable custom bots that perfectly fit our server's needs.",
     },
   ];
 
   return (
     <div className="bg-dark-800 py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <FadeInWhenVisible>
+        <FadeIn>
           <div className="mb-16 text-center">
             <Badge icon={<Users size={14} />} variant="primary">
               Testimonials
@@ -83,39 +99,19 @@ export default function Testimonials() {
               build better Discord bots with less hassle.
             </p>
           </div>
-        </FadeInWhenVisible>
+        </FadeIn>
 
-        <motion.div
-          className="grid grid-cols-1 gap-8 md:grid-cols-3"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: { staggerChildren: 0.1 },
-            },
-          }}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          {/* Testimonial cards */}
+        <FadeInStagger className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {testimonials.map((testimonial, index) => (
             <motion.div
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              key={index}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                  transition: { duration: 0.5, delay: index * 0.1 },
-                },
-              }}
+              key={testimonial.name}
+              variants={fadeVariants.hidden as unknown as Variants}
+              custom={index * 0.1}
             >
               <TestimonialCard testimonial={testimonial} />
             </motion.div>
           ))}
-        </motion.div>
+        </FadeInStagger>
       </div>
     </div>
   );

@@ -1,12 +1,15 @@
 "use client";
 
+import { FadeIn } from "@/components/animations/FadeIn";
 import { Button } from "@/components/ui/Button";
-import { DISCORD_LINK } from "@/utils/constants";
-import { motion } from "framer-motion";
+import { DISCORD_LINK, GITHUB_REPO } from "@/utils/constants";
 import { ArrowRight } from "lucide-react";
-import React from "react";
+import type { ReactElement } from "react";
 
-export default function CTA() {
+/**
+ * Call to Action section for user conversion
+ */
+export default function CTA(): ReactElement {
   return (
     <div className="relative overflow-hidden bg-dark-800 py-24">
       {/* Background elements */}
@@ -14,20 +17,7 @@ export default function CTA() {
       <div className="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-5" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          className="text-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: { duration: 0.6 },
-            },
-          }}
-        >
+        <FadeIn className="text-center">
           <h2 className="font-extrabold text-3xl text-white tracking-tight sm:text-4xl">
             <span className="block">
               Ready to transform your Discord bot development?
@@ -41,15 +31,9 @@ export default function CTA() {
             bots with a modern TypeScript framework.
           </p>
 
-          <motion.div
-            className="mt-10 flex flex-col justify-center gap-4 sm:flex-row"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
+          <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
             <Button
-              href="https://github.com/AtsuLeVrai/nyxo.js"
+              href={GITHUB_REPO}
               variant="primary"
               size="lg"
               trailingIcon={<ArrowRight className="h-5 w-5" />}
@@ -61,8 +45,8 @@ export default function CTA() {
             <Button href={DISCORD_LINK} variant="secondary" size="lg" external>
               Join our Discord
             </Button>
-          </motion.div>
-        </motion.div>
+          </div>
+        </FadeIn>
       </div>
     </div>
   );

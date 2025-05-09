@@ -5,32 +5,24 @@ import CodePreview from "@/components/sections/CodePreview";
 import Features from "@/components/sections/Features";
 import Hero from "@/components/sections/Hero";
 import Testimonials from "@/components/sections/Testimonials";
-import type React from "react";
+import type { ReactElement } from "react";
 
-export default function Home(): React.ReactElement {
+/**
+ * Home page component with all the main sections
+ */
+export default function Home(): ReactElement {
   return (
     <div className="min-h-screen overflow-hidden bg-dark-700 text-slate-50">
-      {/* Header */}
       <Header />
 
       <main>
-        {/* Hero section - loaded immediately */}
         <Hero />
-
-        {/* Features section - lazyloaded */}
         <Features />
-
-        {/* Code Preview section - shows example code */}
         <CodePreview />
-
-        {/* Testimonials section - lazyloaded */}
         <Testimonials />
-
-        {/* Call to Action section - lazyloaded */}
         <CTA />
       </main>
 
-      {/* Footer */}
       <Footer />
     </div>
   );

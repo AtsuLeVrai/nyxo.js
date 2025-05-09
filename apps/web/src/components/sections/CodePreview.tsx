@@ -4,59 +4,69 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { CodeBlock, type ProgrammingLanguage } from "@/components/ui/CodeBlock";
 import { Tabs } from "@/components/ui/Tabs";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useInView } from "@/hooks/useInView";
 import { motion } from "framer-motion";
 import { ArrowRight, Code, FileJson, Terminal, Zap } from "lucide-react";
-import type React from "react";
+import type { ReactElement } from "react";
 import { useState } from "react";
 
-// Code examples
-const codeExamples = [
-  {
-    id: "client",
-    label: "Client Setup",
-    icon: <FileJson className="h-4 w-4" />,
-    language: "typescript",
-    title: "client.ts",
-    code: "In Progress...",
-    highlightedLines: [8, 9, 10, 11, 12, 13, 14, 15, 16, 21, 22, 26],
-  },
-  {
-    id: "command",
-    label: "Slash Command",
-    icon: <Terminal className="h-4 w-4" />,
-    language: "typescript",
-    title: "slash-command.ts",
-    code: "In Progress...",
-    highlightedLines: [
-      4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 31, 32, 33,
-    ],
-  },
-  {
-    id: "event",
-    label: "Event Handler",
-    icon: <Zap className="h-4 w-4" />,
-    language: "typescript",
-    title: "welcome-event.ts",
-    code: "In Progress...",
-    highlightedLines: [4, 5, 6, 7, 10, 13, 14, 19, 20, 21, 22, 23, 24, 41, 42],
-  },
-];
+interface CodeExampleItem {
+  id: string;
+  label: string;
+  icon: ReactElement;
+  language: string;
+  title: string;
+  code: string;
+  highlightedLines: number[];
+}
 
-export default function CodePreview(): React.ReactElement {
+/**
+ * CodePreview section showing example code snippets
+ */
+export default function CodePreview(): ReactElement {
   const [activeTab, setActiveTab] = useState<string>("client");
+  const { ref, isInView } = useInView({ threshold: 0.1, rootMargin: "-100px" });
 
-  // Create a ref to track when the section is visible
-  const { ref, isIntersecting } = useIntersectionObserver({
-    threshold: 0.1,
-    rootMargin: "-100px",
-  });
+  // Code examples
+  const codeExamples: CodeExampleItem[] = [
+    {
+      id: "client",
+      label: "Client Setup",
+      icon: <FileJson className="h-4 w-4" />,
+      language: "typescript",
+      title: "client.ts",
+      code: "// Be patient !",
+      highlightedLines: [8, 9, 10, 11, 12, 13, 14, 15, 16, 21, 22, 26],
+    },
+    {
+      id: "command",
+      label: "Slash Command",
+      icon: <Terminal className="h-4 w-4" />,
+      language: "typescript",
+      title: "slash.command.ts",
+      code: "// Be patient !",
+      highlightedLines: [
+        4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 31, 32, 33,
+      ],
+    },
+    {
+      id: "event",
+      label: "Event Handler",
+      icon: <Zap className="h-4 w-4" />,
+      language: "typescript",
+      title: "welcome.event.ts",
+      code: "// Be patient !",
+      highlightedLines: [
+        4, 5, 6, 7, 10, 13, 14, 19, 20, 21, 22, 23, 24, 41, 42,
+      ],
+    },
+  ];
 
   return (
     <motion.section
       ref={ref}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: isIntersecting ? 1 : 0, y: isIntersecting ? 0 : 30 }}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: isInView ? 1 : 0, y: isInView ? 0 : 30 }}
       transition={{ duration: 0.7 }}
       className="relative bg-dark-800 py-24"
     >

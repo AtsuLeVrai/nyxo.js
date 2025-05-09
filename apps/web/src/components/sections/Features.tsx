@@ -1,9 +1,13 @@
 "use client";
 
-import { FadeInWhenVisible } from "@/components/animations/MotionEffects";
+import {
+  FadeIn,
+  FadeInStagger,
+  fadeVariants,
+} from "@/components/animations/FadeIn";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { motion } from "framer-motion";
+import { type Variants, motion } from "framer-motion";
 import {
   Bot,
   Code,
@@ -13,17 +17,21 @@ import {
   Sparkles,
   Type,
 } from "lucide-react";
-import type React from "react";
+import type { ReactElement, ReactNode } from "react";
 
-// Feature type definition
 interface FeatureProps {
-  icon: React.ReactNode;
+  /** Icon to display with the feature */
+  icon: ReactNode;
+  /** Feature title */
   title: string;
+  /** Feature description */
   description: string;
 }
 
-// Individual feature card component
-function FeatureCard({ feature }: { feature: FeatureProps }) {
+/**
+ * Individual feature card component
+ */
+function FeatureCard({ feature }: { feature: FeatureProps }): ReactElement {
   return (
     <Card variant="feature">
       <Card.Body className="flex h-full flex-col">
@@ -63,7 +71,10 @@ function FeatureCard({ feature }: { feature: FeatureProps }) {
   );
 }
 
-export default function Features() {
+/**
+ * Features section component displaying the main features of Nyxo.js
+ */
+export default function Features(): ReactElement {
   // Features data
   const features: FeatureProps[] = [
     {
@@ -107,7 +118,7 @@ export default function Features() {
   return (
     <div className="bg-dark-700 py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <FadeInWhenVisible>
+        <FadeIn>
           <div className="text-center">
             <Badge icon={<Sparkles size={14} />} variant="primary">
               Features
@@ -121,39 +132,19 @@ export default function Features() {
               effort.
             </p>
           </div>
-        </FadeInWhenVisible>
+        </FadeIn>
 
-        <motion.div
-          className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: { staggerChildren: 0.1 },
-            },
-          }}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          {/* Feature cards */}
+        <FadeInStagger className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <motion.div
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              key={index}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: {
-                  opacity: 1,
-                  y: 0,
-                  transition: { duration: 0.5, delay: index * 0.1 },
-                },
-              }}
+              key={feature.title}
+              variants={fadeVariants.hidden as unknown as Variants}
+              custom={index * 0.1}
             >
               <FeatureCard feature={feature} />
             </motion.div>
           ))}
-        </motion.div>
+        </FadeInStagger>
       </div>
     </div>
   );

@@ -1,30 +1,48 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type React from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 export interface TabItem {
+  /** Unique identifier for the tab */
   id: string;
+  /** Display label */
   label: string;
-  icon?: React.ReactNode;
-  content: React.ReactNode;
+  /** Optional icon */
+  icon?: ReactNode;
+  /** Tab content */
+  content: ReactNode;
+  /** Whether the tab is disabled */
   disabled?: boolean;
 }
 
 export interface TabsProps {
+  /** Array of tab items */
   items: TabItem[];
+  /** ID of the default active tab */
   defaultTab?: string;
+  /** Direction of tabs */
   orientation?: "horizontal" | "vertical";
+  /** Size of tabs */
   size?: "sm" | "md" | "lg";
+  /** Visual variant */
   variant?: "default" | "pill" | "underline";
+  /** Additional class for the container */
   className?: string;
+  /** Additional class for tab buttons */
   tabClassName?: string;
+  /** Additional class for content area */
   contentClassName?: string;
+  /** Function called when tab changes */
   onChange?: (tabId: string) => void;
+  /** Whether to animate tab transitions */
   animated?: boolean;
 }
 
+/**
+ * Tabs component for organizing content into selectable tabs
+ */
 export function Tabs({
   items,
   defaultTab,
@@ -36,25 +54,30 @@ export function Tabs({
   contentClassName = "",
   onChange,
   animated = true,
-}: TabsProps): React.ReactElement {
+}: TabsProps): ReactElement {
   // Find default tab ID or use first tab
-  const initialTab = defaultTab || (items.length > 0 ? items[0].id : "");
+  const initialTab =
+    defaultTab || ((items.length > 0 ? items[0]?.id : "") as string);
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Reference to indicator element for animations
   const tabsRef = useRef<HTMLDivElement>(null);
-  const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({});
+  const [indicatorStyle, setIndicatorStyle] = useState<CSSProperties>({});
 
   // Get active tab content
   const activeContent = items.find((item) => item.id === activeTab)?.content;
 
-  // Handle tab change
-  const handleTabChange = (tabId: string): void => {
+  /**
+   * Handle tab change
+   */
+  function handleTabChange(tabId: string): void {
     if (tabId !== activeTab) {
       setActiveTab(tabId);
-      onChange?.(tabId);
+      if (onChange) {
+        onChange(tabId);
+      }
     }
-  };
+  }
 
   // Update indicator position when tab changes
   useEffect(() => {
@@ -158,7 +181,8 @@ export function Tabs({
               ${paddingStyles[orientation][size]}
               ${variantStyles[variant]}
               ${activeTab === item.id ? activeTabStyles[variant] : "text-slate-300"}
-              ${tabClassName}font-medium whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ${item.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+              ${tabClassName}
+              font-medium whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ${item.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
               ${
                 variant === "default" && orientation === "horizontal"
                   ? "border-dark-500 border-r last:border-r-0"
@@ -169,6 +193,8 @@ export function Tabs({
             `}
             onClick={() => !item.disabled && handleTabChange(item.id)}
             disabled={item.disabled}
+            aria-selected={activeTab === item.id}
+            role="tab"
           >
             <div className="flex items-center">
               {item.icon && <span className="mr-2">{item.icon}</span>}
@@ -196,6 +222,7 @@ export function Tabs({
       {/* Tab content */}
       <div
         className={`mt-4 ${orientation === "vertical" ? "flex-1 sm:mt-0 sm:ml-6" : ""} ${contentClassName}`}
+        role="tabpanel"
       >
         {animated ? (
           <motion.div

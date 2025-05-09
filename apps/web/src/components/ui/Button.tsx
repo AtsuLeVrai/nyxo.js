@@ -1,6 +1,9 @@
+"use client";
+
 import { motion } from "framer-motion";
 import Link from "next/link";
-import React from "react";
+import type { ReactElement, ReactNode } from "react";
+import { cloneElement, isValidElement } from "react";
 
 export type ButtonVariant =
   | "primary"
@@ -13,24 +16,42 @@ export type ButtonVariant =
 
 export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 
-export type ButtonProps = {
-  children: React.ReactNode;
+export interface ButtonProps {
+  /** Content to display inside the button */
+  children: ReactNode;
+  /** Optional URL for link buttons */
   href?: string;
+  /** Style variant */
   variant?: ButtonVariant;
+  /** Size of the button */
   size?: ButtonSize;
+  /** Additional class names */
   className?: string;
-  leadingIcon?: React.ReactNode;
-  trailingIcon?: React.ReactNode;
+  /** Optional icon to display before text */
+  leadingIcon?: ReactElement;
+  /** Optional icon to display after text */
+  trailingIcon?: ReactElement;
+  /** Whether to make the button full width */
   fullWidth?: boolean;
+  /** Whether the link should open in a new tab */
   external?: boolean;
+  /** Click handler */
   onClick?: () => void;
+  /** Whether the button is disabled */
   disabled?: boolean;
+  /** HTML button type */
   type?: "button" | "submit" | "reset";
+  /** Whether to show loading state */
   loading?: boolean;
+  /** Border radius style */
   rounded?: "default" | "full" | "none";
+  /** Whether to animate the button */
   animated?: boolean;
-};
+}
 
+/**
+ * Button component that supports multiple variants and can act as a link
+ */
 export function Button({
   children,
   href,
@@ -47,7 +68,7 @@ export function Button({
   loading = false,
   rounded = "default",
   animated = true,
-}: ButtonProps): React.ReactElement {
+}: ButtonProps): ReactElement {
   // Define base styles based on variant
   const variantStyles: Record<ButtonVariant, string> = {
     primary:
@@ -94,7 +115,7 @@ export function Button({
   `;
 
   // Get icon size based on button size
-  const getIconSize = (size: ButtonSize): number => {
+  function getIconSize(size: ButtonSize): number {
     switch (size) {
       case "xs":
         return 14;
@@ -109,35 +130,35 @@ export function Button({
       default:
         return 18;
     }
-  };
+  }
 
-  // Resize and apply margin to icons
+  // Prepare the icons if provided
   const iconSize = getIconSize(size);
 
-  const processedLeadingIcon = leadingIcon
-    ? React.isValidElement(leadingIcon)
-      ? React.cloneElement(leadingIcon as React.ReactElement, {
-          // @ts-expect-error: lucide-react types are not accurate
+  const processedLeadingIcon =
+    leadingIcon && isValidElement(leadingIcon)
+      ? cloneElement(leadingIcon, {
+          // @ts-ignore
           size: iconSize,
           className: "mr-2",
         })
-      : null
-    : null;
+      : null;
 
-  const processedTrailingIcon = trailingIcon
-    ? React.isValidElement(trailingIcon)
-      ? React.cloneElement(trailingIcon as React.ReactElement, {
-          // @ts-expect-error: lucide-react types are not accurate
+  const processedTrailingIcon =
+    trailingIcon && isValidElement(trailingIcon)
+      ? cloneElement(trailingIcon, {
+          // @ts-ignore
           size: iconSize,
           className: "ml-2",
         })
-      : null
-    : null;
+      : null;
 
   // Loading spinner component
-  const LoadingSpinner = (): React.ReactElement => (
-    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-  );
+  function LoadingSpinner(): ReactElement {
+    return (
+      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+    );
+  }
 
   // Animation variants
   const buttonVariants = {
@@ -165,12 +186,12 @@ export function Button({
     </>
   );
 
-  // For external links
+  // Extra props for external links
   const externalProps = external
     ? { target: "_blank", rel: "noopener noreferrer" }
     : {};
 
-  // Render as motion component if animated
+  // Render with motion effects if animated
   if (animated && !disabled && !loading) {
     // Render as link if href is provided
     if (href) {

@@ -1,5 +1,8 @@
+"use client";
+
 import { motion } from "framer-motion";
-import React from "react";
+import type { ReactElement, ReactNode } from "react";
+import { cloneElement, isValidElement } from "react";
 
 export type BadgeVariant =
   | "primary"
@@ -8,20 +11,30 @@ export type BadgeVariant =
   | "danger"
   | "neutral"
   | "info";
-
 export type BadgeSize = "xs" | "sm" | "md" | "lg";
 
-export type BadgeProps = {
-  children: React.ReactNode;
+export interface BadgeProps {
+  /** Content to display inside the badge */
+  children: ReactNode;
+  /** Style variant */
   variant?: BadgeVariant;
+  /** Size of the badge */
   size?: BadgeSize;
-  icon?: React.ReactNode;
+  /** Optional icon to display */
+  icon?: ReactElement;
+  /** Additional class names */
   className?: string;
+  /** Whether to animate the badge entry */
   animated?: boolean;
+  /** Whether to use pill styling (rounded corners) */
   pill?: boolean;
+  /** Click handler */
   onClick?: () => void;
-};
+}
 
+/**
+ * Badge component for displaying status indicators, labels, or counts
+ */
 export function Badge({
   children,
   variant = "primary",
@@ -31,7 +44,7 @@ export function Badge({
   animated = false,
   pill = true,
   onClick,
-}: BadgeProps): React.ReactElement {
+}: BadgeProps): ReactElement {
   // Define variant styles
   const variantStyles: Record<BadgeVariant, string> = {
     primary: "border-primary-500/20 bg-primary-500/10 text-primary-400",
@@ -50,8 +63,8 @@ export function Badge({
     lg: "px-4 py-1.5 text-sm",
   };
 
-  // Get icon size based on badge size
-  const getIconSize = (size: BadgeSize): number => {
+  // Get the appropriate icon size based on badge size
+  function getIconSize(size: BadgeSize): number {
     switch (size) {
       case "xs":
         return 12;
@@ -64,20 +77,19 @@ export function Badge({
       default:
         return 14;
     }
-  };
+  }
 
-  // Clone icon with size if provided
-  const iconElement = icon
-    ? React.isValidElement(icon)
-      ? React.cloneElement(icon as React.ReactElement, {
-          // @ts-expect-error: lucide-react types are not accurate
+  // Prepare the icon element if provided
+  const iconElement =
+    icon && isValidElement(icon)
+      ? cloneElement(icon, {
+          // @ts-ignore
           size: getIconSize(size),
           className: "mr-1",
         })
-      : null
-    : null;
+      : null;
 
-  // Base badge styles
+  // Create the base badge styles
   const baseStyles = `
     inline-flex items-center
     border font-medium
@@ -88,7 +100,7 @@ export function Badge({
     ${className}
   `;
 
-  // Animation variants
+  // Define animation variants for framer-motion
   const animationVariants = {
     initial: { scale: 0.8, opacity: 0 },
     animate: {
@@ -111,7 +123,7 @@ export function Badge({
     tap: { scale: 0.95 },
   };
 
-  // Render with or without animations
+  // Return animated or static badge based on props
   if (animated) {
     return (
       <motion.span
@@ -130,8 +142,22 @@ export function Badge({
   }
 
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
-    <span className={baseStyles} onClick={onClick}>
+    <span
+      className={baseStyles}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+    >
       {iconElement}
       {children}
     </span>

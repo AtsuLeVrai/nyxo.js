@@ -1,69 +1,41 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import {
-  DISCORD_LINK,
-  GITHUB_CONTRIBUTORS,
-  GITHUB_LICENSE,
-  GITHUB_REPO,
-} from "@/utils/constants";
+import { DISCORD_LINK, GITHUB_REPO, NAV_LINKS } from "@/utils/constants";
 import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, Github, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type React from "react";
 import { useEffect, useState } from "react";
 
-interface NavLink {
-  title: string;
-  href: string;
-  isExternal?: boolean;
-}
-
 /**
- * Navigation links configuration
+ * Header component with navigation and responsive mobile menu
  */
-const navLinks: NavLink[] = [
-  { title: "Docs", href: "/docs" },
-  { title: "Examples", href: "/examples" },
-  { title: "API", href: "/docs/api" },
-  {
-    title: "License",
-    href: GITHUB_LICENSE,
-    isExternal: true,
-  },
-  {
-    title: "Contributors",
-    href: GITHUB_CONTRIBUTORS,
-    isExternal: true,
-  },
-];
-
-export default function Header(): React.ReactElement {
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [scrolled, setScrolled] = useState<boolean>(false);
+export default function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
-  // Handle scroll effect
+  // Handle scroll effect to change header appearance
   useEffect(() => {
-    const handleScroll = (): void => {
+    function handleScroll() {
       const offset = window.scrollY;
       setScrolled(offset > 50);
-    };
+    }
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const toggleMenu = (): void => {
+  function toggleMenu() {
     setIsMenuOpen(!isMenuOpen);
-  };
+  }
 
-  // Check if a link is active
-  const isActive = (href: string): boolean => {
+  // Check if a link is active based on the current path
+  function isActive(href: string): boolean {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
-  };
+  }
 
   return (
     <motion.nav
@@ -91,7 +63,7 @@ export default function Header(): React.ReactElement {
             {/* Desktop Navigation */}
             <div className="ml-10 hidden md:block">
               <div className="flex space-x-6">
-                {navLinks.map((link) => (
+                {NAV_LINKS.map((link) => (
                   <Link
                     key={link.title}
                     href={link.href}
@@ -191,7 +163,7 @@ export default function Header(): React.ReactElement {
 
               {/* Mobile nav links */}
               <div className="space-y-1 px-3 py-2">
-                {navLinks.map((link) => (
+                {NAV_LINKS.map((link) => (
                   <Link
                     key={link.title}
                     href={link.href}
