@@ -5,23 +5,24 @@ import { z } from "zod";
 import type {
   AnyChannel,
   Application,
-  AutoModerationRule,
+  AutoModeration,
   Ban,
   Emoji,
   Entitlement,
   Guild,
   GuildMember,
-  GuildScheduledEvent,
   Integration,
   Invite,
   Message,
   Role,
+  ScheduledEvent,
   SoundboardSound,
   StageInstance,
   Sticker,
   Subscription,
   ThreadMember,
   User,
+  VoiceState,
   Webhook,
 } from "../classes/index.js";
 
@@ -160,6 +161,12 @@ export const CacheOptions = z.object({
   applications: z.boolean().default(true),
 
   /**
+   * This cache stores voice state objects which represent the voice status of users in guilds.
+   * Only relevant for bots that interact with voice channels.
+   */
+  voiceStates: z.boolean().default(true),
+
+  /**
    * Storage options for the cache.
    */
   ...StoreOptions.shape,
@@ -191,7 +198,8 @@ export type CacheEntityType =
   | "invites"
   | "webhooks"
   | "bans"
-  | "applications";
+  | "applications"
+  | "voiceStates";
 
 /**
  * Union type of all cacheable entities
@@ -205,8 +213,8 @@ export type CacheableEntity =
   | Message
   | Emoji
   | StageInstance
-  | GuildScheduledEvent
-  | AutoModerationRule
+  | ScheduledEvent
+  | AutoModeration
   | Sticker
   | Entitlement
   | Subscription
@@ -241,7 +249,7 @@ export class CacheManager {
    * Access the auto moderation rules cache store.
    * Contains AutoModerationRule objects for Discord's content filtering.
    */
-  readonly autoModerationRules: Store<Snowflake, AutoModerationRule>;
+  readonly autoModerationRules: Store<Snowflake, AutoModeration>;
 
   /**
    * Access the bans cache store.
@@ -313,7 +321,7 @@ export class CacheManager {
    * Access the scheduled events cache store.
    * Contains GuildScheduledEvent objects for Discord server events.
    */
-  readonly scheduledEvents: Store<Snowflake, GuildScheduledEvent>;
+  readonly scheduledEvents: Store<Snowflake, ScheduledEvent>;
 
   /**
    * Access the soundboards cache store.
@@ -352,6 +360,12 @@ export class CacheManager {
   readonly users: Store<Snowflake, User>;
 
   /**
+   * Access the voice states cache store.
+   * Contains VoiceState objects for users in voice channels.
+   */
+  readonly voiceStates: Store<Snowflake, VoiceState>;
+
+  /**
    * Access the webhooks cache store.
    * Contains Webhook objects for server webhooks.
    */
@@ -382,11 +396,11 @@ export class CacheManager {
       "stageInstances",
       options,
     );
-    this.scheduledEvents = this.#createStore<GuildScheduledEvent>(
+    this.scheduledEvents = this.#createStore<ScheduledEvent>(
       "scheduledEvents",
       options,
     );
-    this.autoModerationRules = this.#createStore<AutoModerationRule>(
+    this.autoModerationRules = this.#createStore<AutoModeration>(
       "autoModerationRules",
       options,
     );
@@ -410,6 +424,7 @@ export class CacheManager {
     this.webhooks = this.#createStore<Webhook>("webhooks", options);
     this.bans = this.#createStore<Ban>("bans", options);
     this.applications = this.#createStore<Application>("applications", options);
+    this.voiceStates = this.#createStore<VoiceState>("voiceStates", options);
   }
 
   /**

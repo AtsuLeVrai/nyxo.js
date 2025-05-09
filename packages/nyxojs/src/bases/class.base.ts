@@ -79,7 +79,7 @@ export abstract class BaseClass<T extends object> {
    * The raw data object received from the Discord API.
    * This should be accessed through getter methods rather than directly.
    */
-  protected data: T;
+  protected rawData: T;
 
   /**
    * Creates a new instance of a model.
@@ -90,7 +90,7 @@ export abstract class BaseClass<T extends object> {
    */
   constructor(client: Client, data: T) {
     this.client = client;
-    this.data = data;
+    this.rawData = data;
 
     // Automatically cache this entity
     const cacheInfo = this.getCacheInfo();
@@ -106,7 +106,7 @@ export abstract class BaseClass<T extends object> {
         const existingEntity = cacheStore.get(id);
         if (existingEntity) {
           // Update the existing cached entity with new data
-          existingEntity.update(data);
+          existingEntity.patch(data);
         } else {
           // Entity doesn't exist in cache yet, add it
           cacheStore.set(id, this);
@@ -125,7 +125,7 @@ export abstract class BaseClass<T extends object> {
    * @returns An immutable copy of the raw data object
    */
   toJson(): Readonly<T> {
-    return Object.freeze({ ...this.data });
+    return Object.freeze({ ...this.rawData });
   }
 
   /**
@@ -137,8 +137,8 @@ export abstract class BaseClass<T extends object> {
    * @returns This instance for method chaining
    * @throws Error if data is not provided
    */
-  update(data: Partial<T>): this {
-    Object.assign(this.data, data);
+  patch(data: Partial<T>): this {
+    Object.assign(this.rawData, data);
 
     // Update entity in cache
     const cacheInfo = this.getCacheInfo();
@@ -167,7 +167,7 @@ export abstract class BaseClass<T extends object> {
    *
    * @returns true if the entity was removed from the cache, false otherwise
    */
-  delete(): boolean {
+  uncache(): boolean {
     // Get cache information for this entity
     const cacheInfo = this.getCacheInfo();
     if (!cacheInfo) {
@@ -202,12 +202,12 @@ export abstract class BaseClass<T extends object> {
    */
   equals(other: BaseClass<T>): boolean {
     // If both objects have an id property, compare by ID
-    if ("id" in this.data && "id" in other.data) {
-      return this.data.id === other.data.id;
+    if ("id" in this.rawData && "id" in other.rawData) {
+      return this.rawData.id === other.rawData.id;
     }
 
     // Otherwise, compare the full data objects
-    return JSON.stringify(this.data) === JSON.stringify(other.data);
+    return JSON.stringify(this.rawData) === JSON.stringify(other.rawData);
   }
 
   /**
@@ -216,28 +216,7 @@ export abstract class BaseClass<T extends object> {
    * @returns Whether the data object has no properties
    */
   isEmpty(): boolean {
-    return Object.keys(this.data).length === 0;
-  }
-
-  /**
-   * Checks if this modal has a specific property in its data.
-   *
-   * @param key - The property name to check for
-   * @returns Whether the property exists and is not null/undefined
-   */
-  has<K extends keyof T>(key: K): boolean {
-    return key in this.data && this.data[key] != null;
-  }
-
-  /**
-   * Safely gets a property value from the data object.
-   *
-   * @param key - The property name to get
-   * @param defaultValue - Optional default value if the property doesn't exist
-   * @returns The property value or the default value
-   */
-  get<K extends keyof T>(key: K, defaultValue?: T[K]): T[K] {
-    return this.has(key) ? this.data[key] : (defaultValue as T[K]);
+    return Object.keys(this.rawData).length === 0;
   }
 
   /**
@@ -271,11 +250,13 @@ export abstract class BaseClass<T extends object> {
 
     if (keyExtractor) {
       // Use the custom key extractor
-      id = keyExtractor(this.data);
-    } else if ("id" in this.data) {
+      id = keyExtractor(this.rawData);
+    } else if ("id" in this.rawData) {
       // Default behavior: use the id property if available
       id =
-        typeof this.data.id === "string" ? this.data.id : String(this.data.id);
+        typeof this.rawData.id === "string"
+          ? this.rawData.id
+          : String(this.rawData.id);
     }
 
     return id ? { storeKey, id } : null;
@@ -313,6 +294,7 @@ export abstract class BaseClass<T extends object> {
           // Access the getter to trigger initialization
           // Using type assertion with keyof for type safety
           const propertyKey = propName as keyof this;
+          // biome-ignore lint/complexity/noVoid: This is a workaround for the linter
           void this[propertyKey];
         } catch {
           // Ignore errors during getter initialization

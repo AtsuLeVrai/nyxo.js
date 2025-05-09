@@ -7,9 +7,8 @@ import type {
   Snowflake,
 } from "@nyxojs/core";
 import type { GuildAuditLogEntryCreateEntity } from "@nyxojs/gateway";
-import { type ObjectToCamel, objectToCamel } from "ts-case-convert";
 import { BaseClass } from "../bases/index.js";
-import type { Enforce } from "../types/index.js";
+import type { Enforce, PropsToCamel } from "../types/index.js";
 import type { User } from "./user.class.js";
 
 /**
@@ -32,7 +31,7 @@ import type { User } from "./user.class.js";
  */
 export class GuildAuditLogEntry
   extends BaseClass<GuildAuditLogEntryCreateEntity>
-  implements Enforce<ObjectToCamel<GuildAuditLogEntryCreateEntity>>
+  implements Enforce<PropsToCamel<GuildAuditLogEntryCreateEntity>>
 {
   /**
    * Gets the ID of the guild (server) this audit log entry belongs to.
@@ -42,7 +41,7 @@ export class GuildAuditLogEntry
    * @returns The guild's ID as a Snowflake string
    */
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.rawData.guild_id;
   }
 
   /**
@@ -58,7 +57,7 @@ export class GuildAuditLogEntry
    * @returns The target entity's ID as a string, or null if no target
    */
   get targetId(): string | null {
-    return this.data.target_id;
+    return this.rawData.target_id;
   }
 
   /**
@@ -78,7 +77,7 @@ export class GuildAuditLogEntry
     | AuditLogCommandPermissionChangeEntity[]
     | AuditLogRoleChangeEntity[]
     | undefined {
-    return this.data.changes;
+    return this.rawData.changes;
   }
 
   /**
@@ -90,7 +89,7 @@ export class GuildAuditLogEntry
    * @returns The user's ID as a Snowflake string, or null if system-generated
    */
   get userId(): Snowflake | null {
-    return this.data.user_id;
+    return this.rawData.user_id;
   }
 
   /**
@@ -102,7 +101,7 @@ export class GuildAuditLogEntry
    * @returns The entry's ID as a Snowflake string
    */
   get id(): Snowflake {
-    return this.data.id;
+    return this.rawData.id;
   }
 
   /**
@@ -116,7 +115,7 @@ export class GuildAuditLogEntry
    * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-audit-log-events}
    */
   get actionType(): AuditLogEvent {
-    return this.data.action_type;
+    return this.rawData.action_type;
   }
 
   /**
@@ -131,7 +130,7 @@ export class GuildAuditLogEntry
    * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
    */
   get options(): AuditLogEntryInfoEntity | undefined {
-    return this.data.options;
+    return this.rawData.options;
   }
 
   /**
@@ -143,7 +142,7 @@ export class GuildAuditLogEntry
    * @returns The reason string, or undefined if no reason was provided
    */
   get reason(): string | undefined {
-    return this.data.reason;
+    return this.rawData.reason;
   }
 
   /**
@@ -164,45 +163,6 @@ export class GuildAuditLogEntry
    */
   get createdTimestamp(): number {
     return this.createdAt.getTime();
-  }
-
-  /**
-   * Gets the changes in a more accessible camelCase format.
-   *
-   * This transforms the array of changes into a more JavaScript-friendly format
-   * with camelCase property names.
-   *
-   * @returns An array of changes in camelCase format, or undefined if no changes
-   */
-  get camelCaseChanges():
-    | ObjectToCamel<AuditLogChangeEntity>[]
-    | ObjectToCamel<AuditLogCommandPermissionChangeEntity>[]
-    | ObjectToCamel<AuditLogRoleChangeEntity>[]
-    | undefined {
-    if (!this.changes) {
-      return undefined;
-    }
-
-    return this.changes.map(objectToCamel) as
-      | ObjectToCamel<AuditLogChangeEntity>[]
-      | ObjectToCamel<AuditLogCommandPermissionChangeEntity>[]
-      | ObjectToCamel<AuditLogRoleChangeEntity>[];
-  }
-
-  /**
-   * Gets the options in a more accessible camelCase format.
-   *
-   * This transforms the options object into a more JavaScript-friendly format
-   * with camelCase property names.
-   *
-   * @returns The options object in camelCase format, or undefined if no options
-   */
-  get camelCaseOptions(): ObjectToCamel<AuditLogEntryInfoEntity> | undefined {
-    if (!this.options) {
-      return undefined;
-    }
-
-    return objectToCamel(this.options);
   }
 
   /**

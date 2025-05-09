@@ -7,12 +7,14 @@ import {
   BitField,
   type ChannelMentionEntity,
   type EmbedEntity,
+  type EmojiEntity,
   type GuildMemberEntity,
   type InteractionResolvedDataEntity,
   type Link,
   type MessageActivityEntity,
   type MessageCallEntity,
   type MessageComponentInteractionMetadataEntity,
+  type MessageEntity,
   MessageFlags,
   type MessageInteractionEntity,
   type MessageReferenceEntity,
@@ -26,26 +28,426 @@ import {
   type Snowflake,
   link,
 } from "@nyxojs/core";
-import type { MessageCreateEntity } from "@nyxojs/gateway";
+import type {
+  MessageCreateEntity,
+  MessageReactionAddEntity,
+  MessageReactionRemoveAllEntity,
+  MessageReactionRemoveEmojiEntity,
+  MessageReactionRemoveEntity,
+} from "@nyxojs/gateway";
 import type {
   CreateMessageSchema,
   EditMessageSchema,
+  ReactionType,
   ReactionsFetchParams,
   ThreadFromMessageCreateOptions,
 } from "@nyxojs/rest";
-import {
-  type ObjectToCamel,
-  objectToCamel,
-  objectToSnake,
-} from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { Enforce, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased, PropsToCamel } from "../types/index.js";
 import { channelFactory } from "../utils/index.js";
 import { Application } from "./application.class.js";
 import type { AnyChannel, AnyThreadChannel } from "./channel.class.js";
+import { Emoji } from "./emoji.class.js";
 import { GuildMember } from "./guild.class.js";
 import { Sticker, StickerItem } from "./sticker.class.js";
 import { User } from "./user.class.js";
+
+/**
+ * Represents a Discord Message Reaction Add/Remove event, providing methods to interact with reaction events.
+ *
+ * The MessageReaction class serves as a wrapper around Discord's Reaction Gateway events,
+ * which track when users add or remove reactions from messages. It provides:
+ * - Access to reaction information (user, emoji, message, etc.)
+ * - Methods to manage reactions (remove, get reactors)
+ * - Utilities for emoji formatting and reaction analysis
+ *
+ * This is used for both message_reaction_add and message_reaction_remove Gateway events.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-add}
+ */
+export class MessageReaction
+  extends BaseClass<MessageReactionAddEntity | MessageReactionRemoveEntity>
+  implements Enforce<PropsToCamel<MessageReactionAddEntity>>
+{
+  /**
+   * Gets the ID of the user who added or removed the reaction.
+   *
+   * This identifies which user performed the reaction action.
+   *
+   * @returns The user's ID as a Snowflake string
+   */
+  get userId(): Snowflake {
+    return this.rawData.user_id;
+  }
+
+  /**
+   * Gets the ID of the channel containing the message.
+   *
+   * This identifies which channel contains the reacted message.
+   *
+   * @returns The channel's ID as a Snowflake string
+   */
+  get channelId(): Snowflake {
+    return this.rawData.channel_id;
+  }
+
+  /**
+   * Gets the ID of the message that received the reaction.
+   *
+   * This identifies which message was reacted to.
+   *
+   * @returns The message's ID as a Snowflake string
+   */
+  get messageId(): Snowflake {
+    return this.rawData.message_id;
+  }
+
+  /**
+   * Gets the ID of the guild containing the message.
+   *
+   * This identifies which guild the message belongs to, if applicable.
+   * May be undefined for reactions in DM channels.
+   *
+   * @returns The guild's ID as a Snowflake string, or undefined for DMs
+   */
+  get guildId(): Snowflake | undefined {
+    return this.rawData.guild_id;
+  }
+
+  /**
+   * Gets the guild member object for the user who added the reaction.
+   *
+   * Only present for reactions in guild channels.
+   *
+   * @returns The GuildMember object, or undefined if not available
+   */
+  get member(): GuildMember | undefined {
+    if (!("member" in this.rawData && this.rawData.member && this.guildId)) {
+      return undefined;
+    }
+
+    // Add the guild_id to the member since it's missing in the raw data
+    const memberWithGuild: GuildBased<GuildMemberEntity> = {
+      ...this.rawData.member,
+      guild_id: this.guildId,
+    };
+
+    return new GuildMember(this.client, memberWithGuild);
+  }
+
+  /**
+   * Gets the emoji information for the reaction.
+   *
+   * Contains the ID, name, and animated status of the emoji.
+   *
+   * @returns The emoji object
+   */
+  get emoji(): Emoji {
+    return new Emoji(this.client, {
+      ...(this.rawData.emoji as EmojiEntity),
+      guild_id: this.guildId as Snowflake,
+    });
+  }
+
+  /**
+   * Indicates whether this is a super-reaction (Nitro burst reaction).
+   *
+   * @returns True if this is a super-reaction, false otherwise
+   */
+  get burst(): boolean {
+    return this.rawData.burst;
+  }
+
+  /**
+   * Gets the type of the reaction.
+   *
+   * Identifies the reaction's category (standard, super, etc.).
+   *
+   * @returns The reaction type
+   */
+  get type(): ReactionType {
+    return this.rawData.type;
+  }
+
+  /**
+   * Gets the array of hexadecimal color codes used for super-reaction animation.
+   *
+   * Each color is in "#rrggbb" format. Only present for super-reactions.
+   *
+   * @returns Array of color strings, or undefined if not a super-reaction
+   */
+  get burstColors(): string[] | undefined {
+    return "burst_colors" in this.rawData
+      ? this.rawData.burst_colors
+      : undefined;
+  }
+
+  /**
+   * Gets the ID of the user who authored the message which was reacted to.
+   *
+   * Useful for tracking reactions to specific users' messages.
+   *
+   * @returns The message author's ID, or undefined if not available
+   */
+  get messageAuthorId(): Snowflake | undefined {
+    return "message_author_id" in this.rawData
+      ? this.rawData.message_author_id
+      : undefined;
+  }
+
+  /**
+   * Fetches the message that was reacted to.
+   *
+   * @returns A promise resolving to the Message object
+   * @throws Error if the message couldn't be fetched
+   */
+  async fetchMessage(): Promise<Message> {
+    const messageData = await this.client.rest.messages.fetchMessage(
+      this.channelId,
+      this.messageId,
+    );
+
+    return new Message(this.client, messageData);
+  }
+
+  /**
+   * Fetches the user who added/removed the reaction.
+   *
+   * @returns A promise resolving to the User object
+   * @throws Error if the user couldn't be fetched
+   */
+  async fetchUser(): Promise<User> {
+    const userData = await this.client.rest.users.fetchUser(this.userId);
+    return new User(this.client, userData);
+  }
+
+  /**
+   * Fetches all users who have reacted with the same emoji.
+   *
+   * @param params - Query parameters for pagination and filtering
+   * @returns A promise resolving to an array of User objects who reacted with this emoji
+   * @throws Error if the users couldn't be fetched
+   */
+  async fetchReactionUsers(params?: ReactionsFetchParams): Promise<User[]> {
+    // Convert the emoji object to a URL-encoded string format
+    const emojiString = this.emoji.id
+      ? `${this.emoji.name}:${this.emoji.id}`
+      : encodeURIComponent(this.emoji.name || "");
+
+    const users = await this.client.rest.messages.fetchReactionUsers(
+      this.channelId,
+      this.messageId,
+      emojiString,
+      params,
+    );
+
+    return users.map((userData) => new User(this.client, userData));
+  }
+
+  /**
+   * Removes this specific reaction from the message.
+   *
+   * If called without parameters, removes the current user's reaction.
+   * If a userId is provided, removes that user's reaction (requires MANAGE_MESSAGES permission).
+   *
+   * @param userId - Optional user ID to remove reaction for
+   * @returns A promise that resolves when the reaction is removed
+   * @throws Error if the reaction couldn't be removed
+   */
+  removeReaction(userId?: Snowflake): Promise<void> {
+    // Convert the emoji object to a URL-encoded string format
+    const emojiString = this.emoji.id
+      ? `${this.emoji.name}:${this.emoji.id}`
+      : encodeURIComponent(this.emoji.name || "");
+
+    if (userId) {
+      return this.client.rest.messages.removeUserReaction(
+        this.channelId,
+        this.messageId,
+        emojiString,
+        userId,
+      );
+    }
+    return this.client.rest.messages.removeOwnReaction(
+      this.channelId,
+      this.messageId,
+      emojiString,
+    );
+  }
+
+  /**
+   * Removes all reactions of this emoji from the message.
+   *
+   * @returns A promise that resolves when the reactions are removed
+   * @throws Error if the reactions couldn't be removed
+   */
+  removeAllReactionsForEmoji(): Promise<void> {
+    // Convert the emoji object to a URL-encoded string format
+    const emojiString = this.emoji.id
+      ? `${this.emoji.name}:${this.emoji.id}`
+      : encodeURIComponent(this.emoji.name || "");
+
+    return this.client.rest.messages.removeEmojiReactions(
+      this.channelId,
+      this.messageId,
+      emojiString,
+    );
+  }
+
+  /**
+   * Adds the current user's reaction with the same emoji.
+   *
+   * This allows the bot to add the same reaction that was observed.
+   *
+   * @returns A promise that resolves when the reaction is added
+   * @throws Error if the reaction couldn't be added
+   */
+  react(): Promise<void> {
+    // Convert the emoji object to a URL-encoded string format
+    const emojiString = this.emoji.id
+      ? `${this.emoji.name}:${this.emoji.id}`
+      : encodeURIComponent(this.emoji.name || "");
+
+    return this.client.rest.messages.addReaction(
+      this.channelId,
+      this.messageId,
+      emojiString,
+    );
+  }
+}
+
+/**
+ * Represents a Discord Message Reaction Remove All event, providing methods for bulk reaction removals.
+ *
+ * This class handles events when all reactions are removed from a message at once.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-all}
+ */
+export class MessageReactionRemoveAll
+  extends BaseClass<MessageReactionRemoveAllEntity>
+  implements Enforce<PropsToCamel<MessageReactionRemoveAllEntity>>
+{
+  /**
+   * Gets the ID of the channel containing the message.
+   *
+   * This identifies which channel contains the message.
+   *
+   * @returns The channel's ID as a Snowflake string
+   */
+  get channelId(): Snowflake {
+    return this.rawData.channel_id;
+  }
+
+  /**
+   * Gets the ID of the message that had all reactions removed.
+   *
+   * This identifies which message had its reactions cleared.
+   *
+   * @returns The message's ID as a Snowflake string
+   */
+  get messageId(): Snowflake {
+    return this.rawData.message_id;
+  }
+
+  /**
+   * Gets the ID of the guild containing the message.
+   *
+   * This identifies which guild the message belongs to, if applicable.
+   * May be undefined for messages in DM channels.
+   *
+   * @returns The guild's ID as a Snowflake string, or undefined for DMs
+   */
+  get guildId(): Snowflake | undefined {
+    return this.rawData.guild_id;
+  }
+
+  /**
+   * Fetches the message that had all reactions removed.
+   *
+   * @returns A promise resolving to the Message object
+   * @throws Error if the message couldn't be fetched
+   */
+  async fetchMessage(): Promise<Message> {
+    const messageData = await this.client.rest.messages.fetchMessage(
+      this.channelId,
+      this.messageId,
+    );
+
+    return new Message(this.client, messageData);
+  }
+}
+
+/**
+ * Represents a Discord Message Reaction Remove Emoji event, handling removal of a specific emoji type.
+ *
+ * This class handles events when all reactions of a specific emoji are removed from a message.
+ *
+ * @see {@link https://discord.com/developers/docs/events/gateway-events#message-reaction-remove-emoji}
+ */
+export class MessageReactionRemoveEmoji
+  extends BaseClass<MessageReactionRemoveEmojiEntity>
+  implements Enforce<PropsToCamel<MessageReactionRemoveEmojiEntity>>
+{
+  /**
+   * Gets the ID of the channel containing the message.
+   *
+   * This identifies which channel contains the message.
+   *
+   * @returns The channel's ID as a Snowflake string
+   */
+  get channelId(): Snowflake {
+    return this.rawData.channel_id;
+  }
+
+  /**
+   * Gets the ID of the guild containing the message.
+   *
+   * This identifies which guild the message belongs to, if applicable.
+   * May be undefined for messages in DM channels.
+   *
+   * @returns The guild's ID as a Snowflake string, or undefined for DMs
+   */
+  get guildId(): Snowflake | undefined {
+    return this.rawData.guild_id;
+  }
+
+  /**
+   * Gets the ID of the message that had reactions removed.
+   *
+   * This identifies which message had its reactions modified.
+   *
+   * @returns The message's ID as a Snowflake string
+   */
+  get messageId(): Snowflake {
+    return this.rawData.message_id;
+  }
+
+  /**
+   * Gets the partial emoji object for the removed emoji.
+   *
+   * Contains only the essential information needed to identify the emoji.
+   *
+   * @returns The partial emoji object
+   */
+  get emoji(): Partial<EmojiEntity> {
+    return this.rawData.emoji;
+  }
+
+  /**
+   * Fetches the message that had reactions removed.
+   *
+   * @returns A promise resolving to the Message object
+   * @throws Error if the message couldn't be fetched
+   */
+  async fetchMessage(): Promise<Message> {
+    const messageData = await this.client.rest.messages.fetchMessage(
+      this.channelId,
+      this.messageId,
+    );
+
+    return new Message(this.client, messageData);
+  }
+}
 
 /**
  * Represents a message in a Discord channel.
@@ -64,8 +466,8 @@ import { User } from "./user.class.js";
  */
 @Cacheable("messages")
 export class Message
-  extends BaseClass<MessageCreateEntity>
-  implements Enforce<ObjectToCamel<MessageCreateEntity>>
+  extends BaseClass<MessageEntity | MessageCreateEntity>
+  implements Enforce<PropsToCamel<MessageCreateEntity>>
 {
   /**
    * The flags associated with this message.
@@ -82,7 +484,7 @@ export class Message
    * @returns The message's ID as a Snowflake string
    */
   get id(): Snowflake {
-    return this.data.id;
+    return this.rawData.id;
   }
 
   /**
@@ -93,7 +495,7 @@ export class Message
    * @returns The guild ID, or undefined if the message was sent in a DM
    */
   get guildId(): Snowflake | undefined {
-    return this.data.guild_id;
+    return (this.rawData as MessageCreateEntity).guild_id;
   }
 
   /**
@@ -106,11 +508,12 @@ export class Message
    * @returns The GuildMember object, or undefined if not available
    */
   get member(): GuildMember | undefined {
-    return this.data.member
-      ? new GuildMember(
-          this.client,
-          this.data.member as GuildBased<GuildMemberEntity>,
-        )
+    return (this.rawData as MessageCreateEntity).member
+      ? new GuildMember(this.client, {
+          ...((this.rawData as MessageCreateEntity)
+            .member as GuildMemberEntity),
+          guild_id: this.guildId as Snowflake,
+        })
       : undefined;
   }
 
@@ -122,7 +525,7 @@ export class Message
    * @returns The channel's ID as a Snowflake string
    */
   get channelId(): Snowflake {
-    return this.data.channel_id;
+    return this.rawData.channel_id;
   }
 
   /**
@@ -134,7 +537,7 @@ export class Message
    * @returns The User object for the message author
    */
   get author(): User {
-    return new User(this.client, this.data.author);
+    return new User(this.client, this.rawData.author);
   }
 
   /**
@@ -146,7 +549,7 @@ export class Message
    * @returns The message content as a string
    */
   get content(): string {
-    return this.data.content;
+    return this.rawData.content;
   }
 
   /**
@@ -157,7 +560,7 @@ export class Message
    * @returns The message creation timestamp as a string
    */
   get timestamp(): string {
-    return this.data.timestamp;
+    return this.rawData.timestamp;
   }
 
   /**
@@ -168,7 +571,7 @@ export class Message
    * @returns The message edit timestamp as a string, or null
    */
   get editedTimestamp(): string | null {
-    return this.data.edited_timestamp;
+    return this.rawData.edited_timestamp;
   }
 
   /**
@@ -179,7 +582,7 @@ export class Message
    * @returns True if the message is TTS, false otherwise
    */
   get tts(): boolean {
-    return Boolean(this.data.tts);
+    return Boolean(this.rawData.tts);
   }
 
   /**
@@ -190,7 +593,7 @@ export class Message
    * @returns True if the message mentions everyone, false otherwise
    */
   get mentionEveryone(): boolean {
-    return Boolean(this.data.mention_everyone);
+    return Boolean(this.rawData.mention_everyone);
   }
 
   /**
@@ -202,15 +605,15 @@ export class Message
    * @returns An array of User or GuildMember objects, or undefined if none
    */
   get mentions(): (User | GuildMember)[] | undefined {
-    return this.data.mentions?.map((mention) => {
+    return this.rawData.mentions?.map((mention) => {
       if ("id" in mention) {
         return new User(this.client, mention);
       }
 
-      return new GuildMember(
-        this.client,
-        mention as GuildBased<GuildMemberEntity>,
-      );
+      return new GuildMember(this.client, {
+        ...(mention as GuildMemberEntity),
+        guild_id: this.guildId as Snowflake,
+      });
     });
   }
 
@@ -222,7 +625,7 @@ export class Message
    * @returns An array of role IDs
    */
   get mentionRoles(): Snowflake[] {
-    return this.data.mention_roles;
+    return this.rawData.mention_roles;
   }
 
   /**
@@ -232,8 +635,8 @@ export class Message
    *
    * @returns An array of attachment objects
    */
-  get attachments(): ObjectToCamel<AttachmentEntity>[] {
-    return this.data.attachments.map(objectToCamel);
+  get attachments(): AttachmentEntity[] {
+    return this.rawData.attachments;
   }
 
   /**
@@ -244,8 +647,8 @@ export class Message
    *
    * @returns An array of embed objects
    */
-  get embeds(): ObjectToCamel<EmbedEntity>[] {
-    return this.data.embeds.map(objectToCamel);
+  get embeds(): EmbedEntity[] {
+    return this.rawData.embeds;
   }
 
   /**
@@ -256,7 +659,7 @@ export class Message
    * @returns True if the message is pinned, false otherwise
    */
   get pinned(): boolean {
-    return Boolean(this.data.pinned);
+    return Boolean(this.rawData.pinned);
   }
 
   /**
@@ -267,7 +670,7 @@ export class Message
    * @returns The message type as a MessageType enum value
    */
   get type(): MessageType {
-    return this.data.type;
+    return this.rawData.type;
   }
 
   /**
@@ -277,8 +680,8 @@ export class Message
    *
    * @returns An array of channel mention objects, or undefined if none
    */
-  get mentionChannels(): ObjectToCamel<ChannelMentionEntity>[] | undefined {
-    return this.data.mention_channels?.map(objectToCamel);
+  get mentionChannels(): ChannelMentionEntity[] | undefined {
+    return this.rawData.mention_channels;
   }
 
   /**
@@ -288,8 +691,8 @@ export class Message
    *
    * @returns An array of reaction objects, or undefined if none
    */
-  get reactions(): ObjectToCamel<ReactionEntity>[] | undefined {
-    return this.data.reactions?.map(objectToCamel);
+  get reactions(): ReactionEntity[] | undefined {
+    return this.rawData.reactions;
   }
 
   /**
@@ -300,7 +703,7 @@ export class Message
    * @returns The nonce as a string or number, or undefined if none
    */
   get nonce(): string | number | undefined {
-    return this.data.nonce;
+    return this.rawData.nonce;
   }
 
   /**
@@ -309,7 +712,7 @@ export class Message
    * @returns The webhook ID, or undefined if not sent by a webhook
    */
   get webhookId(): Snowflake | undefined {
-    return this.data.webhook_id;
+    return this.rawData.webhook_id;
   }
 
   /**
@@ -319,8 +722,8 @@ export class Message
    *
    * @returns The activity object, or undefined if none
    */
-  get activity(): ObjectToCamel<MessageActivityEntity> | undefined {
-    return this.data.activity ? objectToCamel(this.data.activity) : undefined;
+  get activity(): MessageActivityEntity | undefined {
+    return this.rawData.activity;
   }
 
   /**
@@ -331,8 +734,11 @@ export class Message
    * @returns The Application object, or undefined if none
    */
   get application(): Application | undefined {
-    return this.data.application
-      ? new Application(this.client, this.data.application as ApplicationEntity)
+    return this.rawData.application
+      ? new Application(
+          this.client,
+          this.rawData.application as ApplicationEntity,
+        )
       : undefined;
   }
 
@@ -344,7 +750,7 @@ export class Message
    * @returns The application ID, or undefined if none
    */
   get applicationId(): Snowflake | undefined {
-    return this.data.application_id;
+    return this.rawData.application_id;
   }
 
   /**
@@ -356,7 +762,7 @@ export class Message
    */
   get flags(): BitField<MessageFlags> {
     if (!this.#flags) {
-      this.#flags = new BitField<MessageFlags>(this.data.flags ?? 0n);
+      this.#flags = new BitField<MessageFlags>(this.rawData.flags ?? 0n);
     }
 
     return this.#flags;
@@ -369,8 +775,8 @@ export class Message
    *
    * @returns An array of action row components, or undefined if none
    */
-  get components(): ObjectToCamel<ActionRowEntity>[] | undefined {
-    return this.data.components?.map(objectToCamel);
+  get components(): ActionRowEntity[] | undefined {
+    return this.rawData.components;
   }
 
   /**
@@ -381,7 +787,7 @@ export class Message
    * @returns An array of StickerItem objects, or undefined if none
    */
   get stickerItems(): StickerItem[] | undefined {
-    return this.data.sticker_items?.map(
+    return this.rawData.sticker_items?.map(
       (stickerItem) => new StickerItem(this.client, stickerItem),
     );
   }
@@ -394,7 +800,7 @@ export class Message
    * @returns An array of Sticker objects, or undefined if none
    */
   get stickers(): Sticker[] | undefined {
-    return this.data.stickers?.map(
+    return this.rawData.stickers?.map(
       (sticker) => new Sticker(this.client, sticker),
     );
   }
@@ -407,7 +813,7 @@ export class Message
    * @returns The message position as a number, or undefined if not applicable
    */
   get position(): number | undefined {
-    return this.data.position;
+    return this.rawData.position;
   }
 
   /**
@@ -417,12 +823,8 @@ export class Message
    *
    * @returns The role subscription data, or undefined if not applicable
    */
-  get roleSubscriptionData():
-    | ObjectToCamel<RoleSubscriptionDataEntity>
-    | undefined {
-    return this.data.role_subscription_data
-      ? objectToCamel(this.data.role_subscription_data)
-      : undefined;
+  get roleSubscriptionData(): RoleSubscriptionDataEntity | undefined {
+    return this.rawData.role_subscription_data;
   }
 
   /**
@@ -432,8 +834,8 @@ export class Message
    *
    * @returns The poll object, or undefined if none
    */
-  get poll(): ObjectToCamel<PollEntity> | undefined {
-    return this.data.poll ? objectToCamel(this.data.poll) : undefined;
+  get poll(): PollEntity | undefined {
+    return this.rawData.poll;
   }
 
   /**
@@ -443,8 +845,8 @@ export class Message
    *
    * @returns The call object, or undefined if not applicable
    */
-  get call(): ObjectToCamel<MessageCallEntity> | undefined {
-    return this.data.call ? objectToCamel(this.data.call) : undefined;
+  get call(): MessageCallEntity | undefined {
+    return this.rawData.call;
   }
 
   /**
@@ -454,10 +856,8 @@ export class Message
    *
    * @returns The message reference object, or undefined if not applicable
    */
-  get messageReference(): ObjectToCamel<MessageReferenceEntity> | undefined {
-    return this.data.message_reference
-      ? objectToCamel(this.data.message_reference)
-      : undefined;
+  get messageReference(): MessageReferenceEntity | undefined {
+    return this.rawData.message_reference;
   }
 
   /**
@@ -468,8 +868,8 @@ export class Message
    * @returns The thread channel object, or undefined if not applicable
    */
   get thread(): AnyThreadChannel | undefined {
-    return this.data.thread
-      ? (channelFactory(this.client, this.data.thread) as AnyThreadChannel)
+    return this.rawData.thread
+      ? (channelFactory(this.client, this.rawData.thread) as AnyThreadChannel)
       : undefined;
   }
 
@@ -482,10 +882,10 @@ export class Message
    * @returns The referenced Message object, null if deleted, or undefined if not a reply
    */
   get referencedMessage(): Message | null | undefined {
-    return this.data.referenced_message
+    return this.rawData.referenced_message
       ? new Message(
           this.client,
-          this.data.referenced_message as MessageCreateEntity,
+          this.rawData.referenced_message as MessageCreateEntity,
         )
       : undefined;
   }
@@ -497,10 +897,8 @@ export class Message
    *
    * @returns The interaction object, or undefined if none
    */
-  get interaction(): ObjectToCamel<MessageInteractionEntity> | undefined {
-    return this.data.interaction
-      ? objectToCamel(this.data.interaction)
-      : undefined;
+  get interaction(): MessageInteractionEntity | undefined {
+    return this.rawData.interaction;
   }
 
   /**
@@ -512,13 +910,11 @@ export class Message
    * @returns The interaction metadata, or undefined if none
    */
   get interactionMetadata():
-    | ObjectToCamel<ApplicationCommandInteractionMetadataEntity>
-    | ObjectToCamel<MessageComponentInteractionMetadataEntity>
-    | ObjectToCamel<ModalSubmitInteractionMetadataEntity>
+    | ApplicationCommandInteractionMetadataEntity
+    | MessageComponentInteractionMetadataEntity
+    | ModalSubmitInteractionMetadataEntity
     | undefined {
-    return this.data.interaction_metadata
-      ? objectToCamel(this.data.interaction_metadata)
-      : undefined;
+    return this.rawData.interaction_metadata;
   }
 
   /**
@@ -529,8 +925,8 @@ export class Message
    *
    * @returns The resolved data, or undefined if none
    */
-  get resolved(): ObjectToCamel<InteractionResolvedDataEntity> | undefined {
-    return this.data.resolved ? objectToCamel(this.data.resolved) : undefined;
+  get resolved(): InteractionResolvedDataEntity | undefined {
+    return this.rawData.resolved;
   }
 
   /**
@@ -540,8 +936,8 @@ export class Message
    *
    * @returns An array of message snapshots, or undefined if none
    */
-  get messageSnapshots(): ObjectToCamel<MessageSnapshotEntity>[] | undefined {
-    return this.data.message_snapshots?.map(objectToCamel);
+  get messageSnapshots(): MessageSnapshotEntity[] | undefined {
+    return this.rawData.message_snapshots;
   }
 
   /**
@@ -666,7 +1062,8 @@ export class Message
    */
   get isInteraction(): boolean {
     return (
-      Boolean(this.data.interaction) || Boolean(this.data.interaction_metadata)
+      Boolean(this.rawData.interaction) ||
+      Boolean(this.rawData.interaction_metadata)
     );
   }
 
@@ -780,7 +1177,7 @@ export class Message
     }
 
     await this.client.rest.channels.pinMessage(this.channelId, this.id);
-    this.update({
+    this.patch({
       pinned: true,
     });
     return this;
@@ -798,7 +1195,7 @@ export class Message
     }
 
     await this.client.rest.channels.unpinMessage(this.channelId, this.id);
-    this.update({
+    this.patch({
       pinned: false,
     });
     return this;
@@ -815,13 +1212,13 @@ export class Message
    * @throws Error if the thread could not be created
    */
   async startThread(
-    options: ObjectToCamel<ThreadFromMessageCreateOptions>,
+    options: ThreadFromMessageCreateOptions,
     reason?: string,
   ): Promise<AnyThreadChannel> {
     const thread = await this.client.rest.channels.createThreadFromMessage(
       this.channelId,
       this.id,
-      objectToSnake(options),
+      options,
       reason,
     );
 
@@ -941,7 +1338,7 @@ export class Message
       this.channelId,
       this.id,
     );
-    this.update(messageData as MessageCreateEntity);
+    this.patch(messageData as MessageCreateEntity);
     return this;
   }
 
@@ -958,7 +1355,7 @@ export class Message
       this.channelId,
       this.id,
     );
-    this.update(publishedMessage as MessageCreateEntity);
+    this.patch(publishedMessage as MessageCreateEntity);
     return this;
   }
 

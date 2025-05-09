@@ -14,10 +14,9 @@ import {
   type EmojiUrl,
   type GuildEmojiUpdateOptions,
 } from "@nyxojs/rest";
-import type { ObjectToCamel } from "ts-case-convert";
 import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { Enforce, GuildBased } from "../types/index.js";
+import type { Enforce, GuildBased, PropsToCamel } from "../types/index.js";
 import { User } from "./user.class.js";
 
 /**
@@ -42,7 +41,7 @@ import { User } from "./user.class.js";
 @Cacheable("emojis")
 export class Emoji
   extends BaseClass<GuildBased<EmojiEntity>>
-  implements Enforce<ObjectToCamel<GuildBased<EmojiEntity>>>
+  implements Enforce<PropsToCamel<GuildBased<EmojiEntity>>>
 {
   /**
    * Gets the unique identifier (Snowflake) of this emoji.
@@ -53,7 +52,7 @@ export class Emoji
    * @returns The emoji's ID as a Snowflake string, or null for standard emoji
    */
   get id(): Snowflake | null {
-    return this.data.id;
+    return this.rawData.id;
   }
 
   /**
@@ -65,7 +64,7 @@ export class Emoji
    * @returns The guild ID, or undefined if not a guild emoji
    */
   get guildId(): Snowflake {
-    return this.data.guild_id;
+    return this.rawData.guild_id;
   }
 
   /**
@@ -77,7 +76,7 @@ export class Emoji
    * @returns The emoji's name as a string, or null if not available
    */
   get name(): string | null {
-    return this.data.name;
+    return this.rawData.name;
   }
 
   /**
@@ -89,7 +88,7 @@ export class Emoji
    * @returns Array of role IDs, or undefined if no restrictions
    */
   get roles(): Snowflake[] | undefined {
-    return this.data.roles;
+    return this.rawData.roles;
   }
 
   /**
@@ -101,11 +100,11 @@ export class Emoji
    * @returns The User object for the creator, or undefined if not available
    */
   get user(): User | undefined {
-    if (!this.data.user) {
+    if (!this.rawData.user) {
       return undefined;
     }
 
-    return new User(this.client, this.data.user as UserEntity);
+    return new User(this.client, this.rawData.user as UserEntity);
   }
 
   /**
@@ -117,7 +116,7 @@ export class Emoji
    * @returns True if colons are required, false otherwise
    */
   get requireColons(): boolean {
-    return Boolean(this.data.require_colons);
+    return Boolean(this.rawData.require_colons);
   }
 
   /**
@@ -129,7 +128,7 @@ export class Emoji
    * @returns True if the emoji is managed, false otherwise
    */
   get managed(): boolean {
-    return Boolean(this.data.managed);
+    return Boolean(this.rawData.managed);
   }
 
   /**
@@ -141,7 +140,7 @@ export class Emoji
    * @returns True if the emoji is animated, false otherwise
    */
   get animated(): boolean {
-    return Boolean(this.data.animated);
+    return Boolean(this.rawData.animated);
   }
 
   /**
@@ -154,7 +153,7 @@ export class Emoji
    * @returns True if the emoji is available for use, false otherwise
    */
   get available(): boolean {
-    return Boolean(this.data.available);
+    return Boolean(this.rawData.available);
   }
 
   /**
@@ -333,8 +332,7 @@ export class Emoji
     );
 
     // Add guild_id to maintain consistency
-    const guildBasedData = { ...updatedData, guild_id: this.guildId };
-    return new Emoji(this.client, guildBasedData as GuildBased<EmojiEntity>);
+    return new Emoji(this.client, { ...updatedData, guild_id: this.guildId });
   }
 
   /**
@@ -364,7 +362,10 @@ export class Emoji
       reason,
     );
 
-    return new Emoji(this.client, updatedData as GuildBased<EmojiEntity>);
+    return new Emoji(this.client, {
+      ...updatedData,
+      guild_id: this.guildId,
+    });
   }
 
   /**
@@ -433,8 +434,7 @@ export class Emoji
     );
 
     // Add guild_id to maintain consistency
-    const guildBasedData = { ...data, guild_id: this.guildId };
-    return new Emoji(this.client, guildBasedData as GuildBased<EmojiEntity>);
+    return new Emoji(this.client, { ...data, guild_id: this.guildId });
   }
 
   /**
@@ -456,7 +456,10 @@ export class Emoji
       this.id,
     );
 
-    return new Emoji(this.client, data as GuildBased<EmojiEntity>);
+    return new Emoji(this.client, {
+      ...data,
+      guild_id: this.guildId,
+    });
   }
 
   /**

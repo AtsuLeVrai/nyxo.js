@@ -786,6 +786,16 @@ export interface IntegrationAccountEntity {
 }
 
 /**
+ * Represents the type of integration a guild can have.
+ * This includes various external services like Twitch, YouTube, and Discord itself.
+ */
+export type IntegrationType =
+  | "twitch"
+  | "youtube"
+  | "discord"
+  | "guild_subscription";
+
+/**
  * Guild Integration structure.
  * Represents a connection between a guild and an external service.
  * @see {@link https://discord.com/developers/docs/resources/guild#integration-object-integration-structure}
@@ -807,7 +817,7 @@ export interface IntegrationEntity {
    * Integration type (twitch, youtube, discord, guild_subscription).
    * The external service this integration connects to.
    */
-  type: "twitch" | "youtube" | "discord" | "guild_subscription";
+  type: IntegrationType;
 
   /**
    * Is this integration enabled.

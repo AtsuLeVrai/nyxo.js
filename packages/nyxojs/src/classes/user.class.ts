@@ -5,7 +5,6 @@ import {
   type ConnectionEntity,
   type ConnectionService,
   type FormattedUser,
-  type GuildMemberEntity,
   type Locale,
   type PremiumType,
   type Snowflake,
@@ -27,14 +26,9 @@ import {
   type UserRoleConnectionUpdateOptions,
   type UserUpdateOptions,
 } from "@nyxojs/rest";
-import {
-  type ObjectToCamel,
-  objectToCamel,
-  objectToSnake,
-} from "ts-case-convert";
 import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { Enforce, GuildBased } from "../types/index.js";
+import type { Enforce, PropsToCamel } from "../types/index.js";
 import { DmChannel } from "./channel.class.js";
 import { Guild, GuildMember } from "./guild.class.js";
 import type { Message } from "./message.class.js";
@@ -57,7 +51,7 @@ import type { Message } from "./message.class.js";
 @Cacheable("users")
 export class User
   extends BaseClass<UserEntity>
-  implements Enforce<ObjectToCamel<UserEntity>>
+  implements Enforce<PropsToCamel<UserEntity>>
 {
   /**
    * The flags on the user's account.
@@ -80,7 +74,7 @@ export class User
    * @returns The user's ID as a Snowflake string
    */
   get id(): Snowflake {
-    return this.data.id;
+    return this.rawData.id;
   }
 
   /**
@@ -93,7 +87,7 @@ export class User
    * @see {@link https://discord.com/developers/docs/resources/user#usernames-and-nicknames}
    */
   get username(): string {
-    return this.data.username;
+    return this.rawData.username;
   }
 
   /**
@@ -105,7 +99,7 @@ export class User
    * @returns The user's discriminator as a string
    */
   get discriminator(): string {
-    return this.data.discriminator;
+    return this.rawData.discriminator;
   }
 
   /**
@@ -117,7 +111,7 @@ export class User
    * @returns The user's global display name, or null if not set
    */
   get globalName(): string | null {
-    return this.data.global_name;
+    return this.rawData.global_name;
   }
 
   /**
@@ -129,7 +123,7 @@ export class User
    * @returns The user's avatar hash, or null if using the default avatar
    */
   get avatar(): string | null {
-    return this.data.avatar;
+    return this.rawData.avatar;
   }
 
   /**
@@ -141,7 +135,7 @@ export class User
    * @returns True if the user is a bot, false otherwise
    */
   get bot(): boolean {
-    return Boolean(this.data.bot);
+    return Boolean(this.rawData.bot);
   }
 
   /**
@@ -153,7 +147,7 @@ export class User
    * @returns True if the user is a system account, false otherwise
    */
   get system(): boolean {
-    return Boolean(this.data.system);
+    return Boolean(this.rawData.system);
   }
 
   /**
@@ -164,7 +158,7 @@ export class User
    * @returns True if the user has MFA enabled, false otherwise
    */
   get mfaEnabled(): boolean {
-    return Boolean(this.data.mfa_enabled);
+    return Boolean(this.rawData.mfa_enabled);
   }
 
   /**
@@ -176,7 +170,7 @@ export class User
    * @returns The user's banner hash, or null if no banner is set
    */
   get banner(): string | null | undefined {
-    return this.data.banner;
+    return this.rawData.banner;
   }
 
   /**
@@ -188,7 +182,7 @@ export class User
    * @returns The accent color as an integer, or null if not set
    */
   get accentColor(): number | null | undefined {
-    return this.data.accent_color;
+    return this.rawData.accent_color;
   }
 
   /**
@@ -199,7 +193,7 @@ export class User
    * @returns The user's locale, or null if not available
    */
   get locale(): Locale | null | undefined {
-    return this.data.locale;
+    return this.rawData.locale;
   }
 
   /**
@@ -210,7 +204,7 @@ export class User
    * @returns True if the email is verified, false otherwise
    */
   get verified(): boolean {
-    return Boolean(this.data.verified);
+    return Boolean(this.rawData.verified);
   }
 
   /**
@@ -221,7 +215,7 @@ export class User
    * @returns The user's email address, or null if not available
    */
   get email(): string | null | undefined {
-    return this.data.email;
+    return this.rawData.email;
   }
 
   /**
@@ -235,7 +229,7 @@ export class User
    */
   get flags(): BitField<UserFlags> {
     if (!this.#flags) {
-      this.#flags = new BitField<UserFlags>(this.data.flags ?? 0n);
+      this.#flags = new BitField<UserFlags>(this.rawData.flags ?? 0n);
     }
 
     return this.#flags;
@@ -250,7 +244,7 @@ export class User
    * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types}
    */
   get premiumType(): PremiumType | undefined {
-    return this.data.premium_type;
+    return this.rawData.premium_type;
   }
 
   /**
@@ -264,7 +258,9 @@ export class User
    */
   get publicFlags(): BitField<UserFlags> {
     if (!this.#publicFlags) {
-      this.#publicFlags = new BitField<UserFlags>(this.data.public_flags ?? 0n);
+      this.#publicFlags = new BitField<UserFlags>(
+        this.rawData.public_flags ?? 0n,
+      );
     }
 
     return this.#publicFlags;
@@ -278,10 +274,8 @@ export class User
    *
    * @returns The avatar decoration data in camelCase format, or null if not set
    */
-  get avatarDecorationData(): ObjectToCamel<AvatarDecorationDataEntity> | null {
-    return this.data.avatar_decoration_data
-      ? objectToCamel(this.data.avatar_decoration_data)
-      : null;
+  get avatarDecorationData(): AvatarDecorationDataEntity | null | undefined {
+    return this.rawData.avatar_decoration_data;
   }
 
   /**
@@ -507,13 +501,12 @@ export class User
    * @throws Error if this isn't the current authenticated user
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-connections}
    */
-  async fetchConnections(): Promise<ObjectToCamel<ConnectionEntity>[]> {
+  fetchConnections(): Promise<ConnectionEntity[]> {
     if (!this.isSelf) {
       throw new Error("You can only fetch connections for yourself");
     }
 
-    const connections = await this.client.rest.users.fetchCurrentConnections();
-    return connections.map((connection) => objectToCamel(connection));
+    return this.client.rest.users.fetchCurrentConnections();
   }
 
   /**
@@ -558,15 +551,13 @@ export class User
    * @see {@link https://discord.com/developers/docs/resources/user#create-group-dm}
    */
   async createGroupDmChannel(
-    options: ObjectToCamel<GroupDmCreateOptions>,
+    options: GroupDmCreateOptions,
   ): Promise<DmChannel> {
     if (!this.isSelf) {
       throw new Error("You can only create group DMs as yourself");
     }
 
-    const channel = await this.client.rest.users.createGroupDmChannel(
-      objectToSnake(options),
-    );
+    const channel = await this.client.rest.users.createGroupDmChannel(options);
     return new DmChannel(this.client, channel);
   }
 
@@ -581,19 +572,12 @@ export class User
    * @throws Error if this isn't the current authenticated user
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-guilds}
    */
-  async fetchGuilds(
-    query?: ObjectToCamel<UserGuildsFetchParams>,
-  ): Promise<Guild[]> {
+  async fetchGuilds(query?: UserGuildsFetchParams): Promise<Guild[]> {
     if (!this.isSelf) {
       throw new Error("You can only fetch guilds for yourself");
     }
 
-    const queryTransformed: UserGuildsFetchParams | undefined = query
-      ? objectToSnake(query)
-      : undefined;
-
-    const guilds =
-      await this.client.rest.users.fetchCurrentGuilds(queryTransformed);
+    const guilds = await this.client.rest.users.fetchCurrentGuilds(query);
     return guilds.map(
       (guild) => new Guild(this.client, guild as GuildCreateEntity),
     );
@@ -614,20 +598,14 @@ export class User
     if (this.isSelf) {
       const member =
         await this.client.rest.users.fetchCurrentUserGuildMember(guildId);
-      return new GuildMember(
-        this.client,
-        member as GuildBased<GuildMemberEntity>,
-      );
+      return new GuildMember(this.client, { ...member, guild_id: guildId });
     }
 
     const member = await this.client.rest.guilds.fetchGuildMember(
       guildId,
       this.id,
     );
-    return new GuildMember(
-      this.client,
-      member as GuildBased<GuildMemberEntity>,
-    );
+    return new GuildMember(this.client, { ...member, guild_id: guildId });
   }
 
   /**
@@ -641,20 +619,16 @@ export class User
    * @throws Error if this isn't the current authenticated user
    * @see {@link https://discord.com/developers/docs/resources/user#get-current-user-application-role-connection}
    */
-  async fetchApplicationRoleConnection(
+  fetchApplicationRoleConnection(
     applicationId: Snowflake,
-  ): Promise<ObjectToCamel<ApplicationRoleConnectionEntity>> {
+  ): Promise<ApplicationRoleConnectionEntity> {
     if (!this.isSelf) {
       throw new Error(
         "You can only fetch application role connections for yourself",
       );
     }
 
-    const applicationRoleConnection =
-      await this.client.rest.users.fetchApplicationRoleConnection(
-        applicationId,
-      );
-    return objectToCamel(applicationRoleConnection);
+    return this.client.rest.users.fetchApplicationRoleConnection(applicationId);
   }
 
   /**
@@ -669,22 +643,20 @@ export class User
    * @throws Error if this isn't the current authenticated user
    * @see {@link https://discord.com/developers/docs/resources/user#update-current-user-application-role-connection}
    */
-  async updateApplicationRoleConnection(
+  updateApplicationRoleConnection(
     applicationId: Snowflake,
-    connection: ObjectToCamel<UserRoleConnectionUpdateOptions>,
-  ): Promise<ObjectToCamel<ApplicationRoleConnectionEntity>> {
+    connection: UserRoleConnectionUpdateOptions,
+  ): Promise<ApplicationRoleConnectionEntity> {
     if (!this.isSelf) {
       throw new Error(
         "You can only update application role connections for yourself",
       );
     }
 
-    const applicationRoleConnection =
-      await this.client.rest.users.updateApplicationRoleConnection(
-        applicationId,
-        objectToSnake(connection),
-      );
-    return objectToCamel(applicationRoleConnection);
+    return this.client.rest.users.updateApplicationRoleConnection(
+      applicationId,
+      connection,
+    );
   }
 
   /**
@@ -729,7 +701,7 @@ export class User
 
     const updatedUserData =
       await this.client.rest.users.updateCurrentUser(options);
-    this.update(updatedUserData);
+    this.patch(updatedUserData);
     return this;
   }
 
@@ -815,7 +787,7 @@ export class User
    */
   async refresh(): Promise<User> {
     const userData = await this.client.rest.users.fetchUser(this.id);
-    this.update(userData);
+    this.patch(userData);
     return this;
   }
 
@@ -847,7 +819,7 @@ export class User
    */
   async getServiceConnections(
     type?: ConnectionService,
-  ): Promise<ObjectToCamel<ConnectionEntity>[]> {
+  ): Promise<ConnectionEntity[]> {
     const connections = await this.fetchConnections();
 
     if (type) {

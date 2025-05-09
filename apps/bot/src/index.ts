@@ -1,4 +1,4 @@
-import { config } from "dotenv";
+import {config} from "dotenv";
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -54,6 +54,31 @@ client.on("ready", (ready) => {
   console.log("[CLIENT] Ready", ready.user.id);
 });
 
+client.on("guildCreate", (guild) => {
+  console.log("[CLIENT] Joined a new guild", guild.id);
+});
+
+client.on("interactionCreate", async (interaction) => {
+  if (interaction.isCommandInteraction() && interaction.isSlashCommand()) {
+    console.log("[CLIENT] Slash command interaction", interaction.commandName);
+
+    if (interaction.commandName === "ping") {
+      await interaction.reply("Pong!");
+    }
+  }
+
+  if (
+    interaction.isComponentInteraction() &&
+    interaction.isButtonInteraction()
+  ) {
+    console.log("[CLIENT] Button interaction", interaction.customId);
+
+    if (interaction.customId === "test_button") {
+      await interaction.reply("Button clicked!");
+    }
+  }
+});
+
 // client.on("dispatch", (event, data) => {
 //   console.log("[CLIENT] Dispatch event", event, data);
 // });
@@ -75,7 +100,9 @@ client.on("request", (request) => {
 });
 
 client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
+  if (message.author.bot) {
+    return;
+  }
 
   const button = new ButtonBuilder()
     .setCustomId("test_button")
@@ -207,6 +234,7 @@ async function main(): Promise<void> {
 main().catch(console.error);
 
 /* TODO: Spoiler !
+// commands/[subgroup]/[subcommand]/[command].ts
 export const data = new SlashCommandBuilder()
     .setName("ping")
     .setDescription("Ping the bot")
@@ -218,13 +246,22 @@ export const data = new SlashCommandBuilder()
     )
     .build();
 
-export async function execute(...customArgs: any[]): Promise<void> {
-  const args = customArgs[0];
-  const interaction = customArgs[1];
-
+export async function execute(client, interaction, args, ...customArgs): Promise<void> {
   if (args.message) {
     await interaction.reply(`Pong! ${args.message}`);
   } else {
     await interaction.reply("Pong!");
   }
-}*/
+}
+
+// events/[...event].ts
+export const name = "messageCreate";
+export const once = false;
+
+export async function execute(client, message, ...customArgs): Promise<void> {
+  const [message] = args;
+  if (message.content === "!ping") {
+    await message.reply("Pong!");
+  }
+}
+*/

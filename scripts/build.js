@@ -1,9 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import apiExtractor from "@microsoft/api-extractor";
+import commonjs from "@rollup/plugin-commonjs";
+import nodeResolve from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
-import esbuild from "esbuild";
 import prettyBytes from "pretty-bytes";
+import { rollup } from "rollup";
+import { swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 import winston from "winston";
 
@@ -76,9 +79,9 @@ const Logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-// Build JavaScript bundles with ESBuild
-async function buildWithESBuild(paths, pkg) {
-  Logger.debug("Building bundles with ESBuild");
+// Build JavaScript bundles with Rollup + SWC
+async function buildWithRollup(paths, pkg) {
+  Logger.debug("Building bundles with Rollup + SWC3");
 
   // Get external dependencies to exclude from the bundle
   const external = [
@@ -87,34 +90,81 @@ async function buildWithESBuild(paths, pkg) {
     ...Object.keys(pkg.peerDependencies || {}),
   ];
 
-  // Common ESBuild options
-  const commonOptions = {
-    entryPoints: [path.resolve(paths.src, "index.ts")],
-    bundle: true,
-    minify: false,
-    sourcemap: false,
+  // Create Rollup configuration
+  const inputOptions = {
+    input: path.resolve(paths.src, "index.ts"),
     external,
-    platform: "node",
-    target: "esnext",
-    logLevel: "error",
+    plugins: [
+      nodeResolve({
+        extensions: [".ts", ".js", ".json"],
+        preferBuiltins: true,
+      }),
+      commonjs(),
+      swc({
+        jsc: {
+          parser: {
+            syntax: "typescript",
+            tsx: false,
+            decorators: true,
+            dynamicImport: true,
+            privateMethod: true,
+            importMeta: true,
+            preserveAllComments: false,
+          },
+          target: "esnext",
+          loose: false,
+          externalHelpers: false,
+          keepClassNames: true,
+          transform: {
+            decoratorVersion: "2022-03",
+            decoratorMetadata: true,
+            useDefineForClassFields: true,
+            optimizer: {
+              simplify: true,
+            },
+          },
+          output: {
+            charset: "utf8",
+          },
+        },
+        module: {
+          type: "es6",
+          strict: true,
+          strictMode: true,
+          lazy: false,
+          noInterop: false,
+        },
+        sourceMaps: false,
+        minify: false,
+        inlineSourcesContent: true,
+        isModule: true,
+      }),
+    ],
   };
 
-  // Build both ESM and CJS formats in parallel
-  await Promise.all([
-    // ESM Build
-    esbuild.build({
-      ...commonOptions,
-      format: "esm",
-      outfile: path.resolve(paths.dist, "index.js"),
-    }),
+  // Create a bundle
+  const bundle = await rollup(inputOptions);
 
-    // CJS Build
-    esbuild.build({
-      ...commonOptions,
+  // Build both ESM and CJS formats
+  await Promise.all([
+    // Generate ESM output
+    bundle.write({
+      file: path.resolve(paths.dist, "index.js"),
+      format: "esm",
+      exports: "named",
+      sourcemap: false,
+    }),
+    // Generate CJS output
+    bundle.write({
+      file: path.resolve(paths.dist, "index.cjs"),
       format: "cjs",
-      outfile: path.resolve(paths.dist, "index.cjs"),
+      exports: "named",
+      sourcemap: false,
     }),
   ]);
+
+  // Close the bundle to free resources
+  await bundle.close();
 
   // Get file sizes
   const esmStats = fs.statSync(path.resolve(paths.dist, "index.js"));
@@ -297,9 +347,9 @@ async function build() {
     fs.promises.mkdir(paths.temp, { recursive: true }),
   ]);
 
-  // Step 2: Build bundles with ESBuild and generate types in parallel
+  // Step 2: Build bundles with Rollup+SWC and generate types in parallel
   const [bundlesSuccess, typesSuccess] = await Promise.all([
-    buildWithESBuild(paths, pkg),
+    buildWithRollup(paths, pkg),
     generateTypeDeclarations(paths),
   ]);
 

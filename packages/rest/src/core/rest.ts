@@ -626,7 +626,7 @@ export class Rest extends EventEmitter<RestEvents> {
    * Closes the HTTP connection pool, destroys the rate limiter,
    * and removes all event listeners.
    */
-  async destroy(): Promise<void> {
+  destroy(): void {
     this.#rateLimiter.destroy();
     this.removeAllListeners();
   }
@@ -730,7 +730,7 @@ export class Rest extends EventEmitter<RestEvents> {
       const headers = this.#buildRequestHeaders(preparedRequest);
 
       // Send the HTTP request
-      const response = await request(url, {
+      const response = await request<T>(url, {
         method: preparedRequest.method,
         body: preparedRequest.body,
         query: preparedRequest.query,

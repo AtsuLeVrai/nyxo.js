@@ -1,4 +1,4 @@
-import type { Snowflake, WebhookEntity } from "@nyxojs/core";
+import type { MessageEntity, Snowflake, WebhookEntity } from "@nyxojs/core";
 import { BaseRouter } from "../bases/index.js";
 import type { FileInput } from "../handlers/index.js";
 import type {
@@ -433,7 +433,7 @@ export class WebhookRouter extends BaseRouter {
     token: string,
     options: WebhookExecuteOptions,
     query?: WebhookExecuteParams,
-  ): Promise<WebhookEntity | undefined> {
+  ): Promise<MessageEntity | undefined> {
     const { files, ...rest } = options;
     return this.post(
       WebhookRouter.WEBHOOK_ROUTES.webhookWithTokenEndpoint(webhookId, token),
@@ -501,7 +501,7 @@ export class WebhookRouter extends BaseRouter {
     token: string,
     messageId: Snowflake,
     query?: WebhookMessageFetchParams,
-  ): Promise<WebhookEntity> {
+  ): Promise<MessageEntity> {
     return this.get(
       WebhookRouter.WEBHOOK_ROUTES.webhookMessageEndpoint(
         webhookId,
@@ -529,7 +529,7 @@ export class WebhookRouter extends BaseRouter {
     messageId: Snowflake,
     options: WebhookMessageEditOptions,
     query?: WebhookMessageFetchParams,
-  ): Promise<WebhookEntity> {
+  ): Promise<MessageEntity> {
     const { files, ...rest } = options;
     return this.patch(
       WebhookRouter.WEBHOOK_ROUTES.webhookMessageEndpoint(

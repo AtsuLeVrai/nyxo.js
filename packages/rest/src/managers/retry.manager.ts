@@ -275,13 +275,14 @@ export class RetryManager {
         // These are worth retrying aggressively
         return baseBackoff + jitter;
 
-      case ErrorCategory.NetworkError:
+      case ErrorCategory.NetworkError: {
         // Network errors: more aggressive retries for first attempts
         // For early attempts, use shorter delays to recover from transient issues quickly
         if (attempt <= 2) {
           return Math.min(1000, baseBackoff) + jitter;
         }
         return baseBackoff + jitter;
+      }
 
       case ErrorCategory.ClientError:
         // Client errors: rarely worth retrying, longer delays

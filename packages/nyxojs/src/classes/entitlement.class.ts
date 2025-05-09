@@ -4,9 +4,8 @@ import {
   type Snowflake,
 } from "@nyxojs/core";
 import { EntitlementOwnerType } from "@nyxojs/rest";
-import type { ObjectToCamel } from "ts-case-convert";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { Enforce } from "../types/index.js";
+import type { Enforce, PropsToCamel } from "../types/index.js";
 
 /**
  * Represents a Discord entitlement, providing access to premium features.
@@ -26,7 +25,7 @@ import type { Enforce } from "../types/index.js";
 @Cacheable("entitlements")
 export class Entitlement
   extends BaseClass<EntitlementEntity>
-  implements Enforce<ObjectToCamel<EntitlementEntity>>
+  implements Enforce<PropsToCamel<EntitlementEntity>>
 {
   /**
    * Gets the unique identifier (Snowflake) of this entitlement.
@@ -37,7 +36,7 @@ export class Entitlement
    * @returns The entitlement's ID as a Snowflake string
    */
   get id(): Snowflake {
-    return this.data.id;
+    return this.rawData.id;
   }
 
   /**
@@ -49,7 +48,7 @@ export class Entitlement
    * @returns The SKU's ID as a Snowflake string
    */
   get skuId(): Snowflake {
-    return this.data.sku_id;
+    return this.rawData.sku_id;
   }
 
   /**
@@ -60,7 +59,7 @@ export class Entitlement
    * @returns The application's ID as a Snowflake string
    */
   get applicationId(): Snowflake {
-    return this.data.application_id;
+    return this.rawData.application_id;
   }
 
   /**
@@ -72,7 +71,7 @@ export class Entitlement
    * @returns The user's ID as a Snowflake string, or undefined if guild-based
    */
   get userId(): Snowflake | undefined {
-    return this.data.user_id;
+    return this.rawData.user_id;
   }
 
   /**
@@ -84,7 +83,7 @@ export class Entitlement
    * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-types}
    */
   get type(): EntitlementType {
-    return this.data.type;
+    return this.rawData.type;
   }
 
   /**
@@ -95,7 +94,7 @@ export class Entitlement
    * @returns True if the entitlement has been deleted, false otherwise
    */
   get deleted(): boolean {
-    return Boolean(this.data.deleted);
+    return Boolean(this.rawData.deleted);
   }
 
   /**
@@ -107,7 +106,7 @@ export class Entitlement
    * @returns The start date as an ISO string, or null if perpetual
    */
   get startsAt(): string | null {
-    return this.data.starts_at;
+    return this.rawData.starts_at;
   }
 
   /**
@@ -119,7 +118,7 @@ export class Entitlement
    * @returns The end date as an ISO string, or null if perpetual
    */
   get endsAt(): string | null {
-    return this.data.ends_at;
+    return this.rawData.ends_at;
   }
 
   /**
@@ -131,7 +130,7 @@ export class Entitlement
    * @returns The guild's ID as a Snowflake string, or undefined if user-based
    */
   get guildId(): Snowflake | undefined {
-    return this.data.guild_id;
+    return this.rawData.guild_id;
   }
 
   /**
@@ -143,7 +142,7 @@ export class Entitlement
    * @returns True if the entitlement has been consumed, false otherwise
    */
   get consumed(): boolean {
-    return Boolean(this.data.consumed);
+    return Boolean(this.rawData.consumed);
   }
 
   /**
@@ -392,7 +391,7 @@ export class Entitlement
     );
 
     // Update the local data to reflect consumption
-    this.update({ consumed: true });
+    this.patch({ consumed: true });
   }
 
   /**
@@ -411,7 +410,7 @@ export class Entitlement
       );
 
     // Update the existing instance with fresh data
-    this.update(entitlementData);
+    this.patch(entitlementData);
 
     return this;
   }
@@ -436,8 +435,7 @@ export class Entitlement
     );
 
     // Update the local data to reflect deletion
-    this.update({ deleted: true });
-
-    return this.delete();
+    this.patch({ deleted: true });
+    return true;
   }
 }

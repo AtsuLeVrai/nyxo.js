@@ -1,54 +1,81 @@
-import type {
-  GuildApplicationCommandPermissionEntity,
-  VoiceStateEntity,
-} from "@nyxojs/core";
+import type { GuildApplicationCommandPermissionEntity } from "@nyxojs/core";
 import type {
   ChannelPinsUpdateEntity,
   GatewayEvents,
   GuildEmojisUpdateEntity,
   GuildMembersChunkEntity,
+  GuildScheduledEventUserAddRemoveEntity,
   GuildStickersUpdateEntity,
-  MessagePollVoteEntity,
-  MessageReactionAddEntity,
-  MessageReactionRemoveAllEntity,
-  MessageReactionRemoveEmojiEntity,
-  MessageReactionRemoveEntity,
   PresenceEntity,
   ThreadListSyncEntity,
   ThreadMembersUpdateEntity,
+  TypingStartEntity,
   VoiceServerUpdateEntity,
 } from "@nyxojs/gateway";
 import type { RestEvents } from "@nyxojs/rest";
-import type { ObjectToCamel } from "ts-case-convert";
 import type {
   AnyChannel,
   AnyInteraction,
   AnyThreadChannel,
+  AutoModeration,
   AutoModerationActionExecution,
-  AutoModerationRule,
   Ban,
   Emoji,
   Entitlement,
   Guild,
   GuildAuditLogEntry,
   GuildMember,
-  GuildScheduledEvent,
-  GuildScheduledEventUser,
   Integration,
   Invite,
   Message,
+  MessagePollVote,
+  MessageReaction,
+  MessageReactionRemoveAll,
+  MessageReactionRemoveEmoji,
   Ready,
   Role,
+  ScheduledEvent,
   SoundboardSound,
   StageInstance,
   Sticker,
   Subscription,
   ThreadMember,
-  TypingStart,
   User,
-  VoiceChannelEffectSend,
+  VoiceChannelEffect,
+  VoiceState,
   Webhook,
 } from "../classes/index.js";
+
+/**
+ * Utilitaire pour convertir une chaîne de caractères snake_case en camelCase.
+ *
+ * @typeParam S - Chaîne source en snake_case
+ */
+type CamelCase<S extends string> = S extends `${infer P}_${infer Q}`
+  ? `${P}${Capitalize<CamelCase<Q>>}`
+  : S;
+
+/**
+ * Utilitaire pour mettre en majuscule la première lettre d'une chaîne.
+ *
+ * @typeParam S - Chaîne source
+ */
+type Capitalize<S extends string> = S extends `${infer P}${infer Q}`
+  ? `${Uppercase<P>}${Q}`
+  : S;
+
+/**
+ * Convertit récursivement les clés snake_case en camelCase tout en préservant les types originaux.
+ *
+ * @typeParam T - Type source dont les propriétés seront converties
+ */
+export type PropsToCamel<T> = T extends Array<infer U>
+  ? PropsToCamel<U>[]
+  : T extends object
+    ? {
+        [K in keyof T as CamelCase<K & string>]: PropsToCamel<T[K]>;
+      }
+    : T;
 
 /**
  * Enforces property naming with configurable type handling.
@@ -80,6 +107,22 @@ export type Enforce<
 };
 
 /**
+ * Represents a value that can be either the type itself or a Promise resolving to that type.
+ *
+ * This utility type is useful for flexible API designs that accept both synchronous
+ * and asynchronous values, allowing functions to work with either direct values
+ * or promises without additional type declarations.
+ *
+ * @typeParam T - The underlying value type
+
+ * @remarks
+ * When working with Promisable values, you typically want to use `Promise.resolve()`
+ * to normalize the input to a Promise, or `await` the value to ensure you're working
+ * with the resolved type in an async context.
+ */
+export type Promisable<T> = T | Promise<T>;
+
+/**
  * Represents a guild-based entity, which includes a guild ID.
  * This is useful for entities that are specific to a guild context.
  */
@@ -107,14 +150,14 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param permissions The updated application command permissions
    */
   applicationCommandPermissionsUpdate: [
-    permissions: ObjectToCamel<GuildApplicationCommandPermissionEntity>,
+    permissions: GuildApplicationCommandPermissionEntity,
   ];
 
   /**
    * Emitted when a new Auto Moderation rule is created in a guild.
    * @param rule The newly created Auto Moderation rule
    */
-  autoModerationRuleCreate: [rule: AutoModerationRule];
+  autoModerationRuleCreate: [rule: AutoModeration];
 
   /**
    * Emitted when an Auto Moderation rule is updated in a guild.
@@ -122,15 +165,15 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param newRule The rule after the update
    */
   autoModerationRuleUpdate: [
-    oldRule: AutoModerationRule | null,
-    newRule: AutoModerationRule,
+    oldRule: AutoModeration | null,
+    newRule: AutoModeration,
   ];
 
   /**
    * Emitted when an Auto Moderation rule is deleted from a guild.
    * @param rule The deleted Auto Moderation rule
    */
-  autoModerationRuleDelete: [rule: AutoModerationRule | null];
+  autoModerationRuleDelete: [rule: AutoModeration | null];
 
   /**
    * Emitted when an Auto Moderation rule is triggered and an action is executed.
@@ -161,7 +204,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a message is pinned or unpinned in a channel.
    * @param pinUpdate Information about the pin update
    */
-  channelPinsUpdate: [pinUpdate: ObjectToCamel<ChannelPinsUpdateEntity>];
+  channelPinsUpdate: [pinUpdate: ChannelPinsUpdateEntity];
 
   /**
    * Emitted when a new thread is created or when the client is added to a private thread.
@@ -190,7 +233,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * This helps synchronize thread state when joining a guild or gaining access to a channel.
    * @param threads Collection of active threads in the channel
    */
-  threadListSync: [threads: ObjectToCamel<ThreadListSyncEntity>];
+  threadListSync: [threads: ThreadListSyncEntity];
 
   /**
    * Emitted when the thread member object for the current user is updated.
@@ -203,7 +246,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when users are added to or removed from a thread.
    * @param update Information about the members update
    */
-  threadMembersUpdate: [update: ObjectToCamel<ThreadMembersUpdateEntity>];
+  threadMembersUpdate: [update: ThreadMembersUpdateEntity];
 
   /**
    * Emitted when a new entitlement (subscription or one-time purchase) is created.
@@ -273,7 +316,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a guild's emojis are updated (added, removed, or modified).
    * @param emojis Information about the updated emojis
    */
-  guildEmojisUpdate: [emojis: ObjectToCamel<GuildEmojisUpdateEntity>];
+  guildEmojisUpdate: [emojis: GuildEmojisUpdateEntity];
 
   /**
    * Emitted when a new emoji is created in a guild.
@@ -298,7 +341,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a guild's stickers are updated (added, removed, or modified).
    * @param stickers Information about the updated stickers
    */
-  guildStickersUpdate: [stickers: ObjectToCamel<GuildStickersUpdateEntity>];
+  guildStickersUpdate: [stickers: GuildStickersUpdateEntity];
 
   /**
    * Emitted when a sticker is created in a guild.
@@ -348,7 +391,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted in response to a Guild Request Members request.
    * @param members The chunk of requested guild members
    */
-  guildMembersChunk: [members: ObjectToCamel<GuildMembersChunkEntity>];
+  guildMembersChunk: [members: GuildMembersChunkEntity];
 
   /**
    * Emitted when a role is created in a guild.
@@ -373,7 +416,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a scheduled event is created in a guild.
    * @param event The newly created scheduled event
    */
-  guildScheduledEventCreate: [event: GuildScheduledEvent];
+  guildScheduledEventCreate: [event: ScheduledEvent];
 
   /**
    * Emitted when a scheduled event is updated in a guild.
@@ -381,27 +424,31 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * @param newEvent The scheduled event after the update
    */
   guildScheduledEventUpdate: [
-    oldEvent: GuildScheduledEvent | null,
-    newEvent: GuildScheduledEvent,
+    oldEvent: ScheduledEvent | null,
+    newEvent: ScheduledEvent,
   ];
 
   /**
    * Emitted when a scheduled event is deleted from a guild.
    * @param event The deleted scheduled event
    */
-  guildScheduledEventDelete: [event: GuildScheduledEvent | null];
+  guildScheduledEventDelete: [event: ScheduledEvent | null];
 
   /**
    * Emitted when a user subscribes to a guild scheduled event.
    * @param subscription Information about the subscription
    */
-  guildScheduledEventUserAdd: [subscription: GuildScheduledEventUser];
+  guildScheduledEventUserAdd: [
+    subscription: GuildScheduledEventUserAddRemoveEntity,
+  ];
 
   /**
    * Emitted when a user unsubscribes from a guild scheduled event.
    * @param subscription Information about the removed subscription
    */
-  guildScheduledEventUserRemove: [subscription: GuildScheduledEventUser];
+  guildScheduledEventUserRemove: [
+    subscription: GuildScheduledEventUserAddRemoveEntity,
+  ];
 
   /**
    * Emitted when a soundboard sound is created in a guild.
@@ -500,25 +547,25 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user adds a reaction to a message.
    * @param reaction Information about the added reaction
    */
-  messageReactionAdd: [reaction: MessageReactionAddEntity];
+  messageReactionAdd: [reaction: MessageReaction];
 
   /**
    * Emitted when a user removes a reaction from a message.
    * @param reaction Information about the removed reaction
    */
-  messageReactionRemove: [reaction: MessageReactionRemoveEntity];
+  messageReactionRemove: [reaction: MessageReaction];
 
   /**
    * Emitted when all reactions are removed from a message.
    * @param removal Information about the removal
    */
-  messageReactionRemoveAll: [removal: MessageReactionRemoveAllEntity];
+  messageReactionRemoveAll: [removal: MessageReactionRemoveAll];
 
   /**
    * Emitted when all reactions of a specific emoji are removed from a message.
    * @param removal Information about the emoji reaction removal
    */
-  messageReactionRemoveEmoji: [removal: MessageReactionRemoveEmojiEntity];
+  messageReactionRemoveEmoji: [removal: MessageReactionRemoveEmoji];
 
   /**
    * Emitted when a user's presence (status, activity) is updated.
@@ -534,7 +581,7 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user starts typing in a channel.
    * @param typing Information about the typing activity
    */
-  typingStart: [typing: TypingStart];
+  typingStart: [typing: TypingStartEntity];
 
   /**
    * Emitted when properties about the user (username, avatar, etc.) change.
@@ -547,13 +594,14 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when someone sends an effect in a voice channel the client is connected to.
    * @param effect Information about the sent effect
    */
-  voiceChannelEffectSend: [effect: VoiceChannelEffectSend];
+  voiceChannelEffectSend: [effect: VoiceChannelEffect];
 
   /**
    * Emitted when a user joins, leaves, or moves between voice channels.
-   * @param server Information about the voice server
+   * @param oldState The voice state before the update
+   * @param newState The voice state after the update
    */
-  voiceStateUpdate: [state: VoiceStateEntity];
+  voiceStateUpdate: [oldState: VoiceState | null, newState: VoiceState];
 
   /**
    * Emitted when a guild's voice server is updated.
@@ -622,11 +670,11 @@ export interface ClientEvents extends RestEvents, GatewayEvents {
    * Emitted when a user votes on a message poll.
    * @param vote Information about the poll vote
    */
-  messagePollVoteAdd: [vote: ObjectToCamel<MessagePollVoteEntity>];
+  messagePollVoteAdd: [vote: MessagePollVote];
 
   /**
    * Emitted when a user removes their vote from a message poll.
    * @param vote Information about the removed poll vote
    */
-  messagePollVoteRemove: [vote: ObjectToCamel<MessagePollVoteEntity>];
+  messagePollVoteRemove: [vote: MessagePollVote];
 }

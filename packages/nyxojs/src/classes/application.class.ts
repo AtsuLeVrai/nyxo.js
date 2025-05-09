@@ -21,14 +21,9 @@ import {
   type FileInput,
   type ImageOptions,
 } from "@nyxojs/rest";
-import {
-  type ObjectToCamel,
-  objectToCamel,
-  objectToSnake,
-} from "ts-case-convert";
 import type { z } from "zod";
 import { BaseClass, Cacheable } from "../bases/index.js";
-import type { Enforce } from "../types/index.js";
+import type { Enforce, PropsToCamel } from "../types/index.js";
 import { Guild } from "./guild.class.js";
 import { User } from "./user.class.js";
 
@@ -54,7 +49,7 @@ import { User } from "./user.class.js";
 @Cacheable("applications")
 export class Application
   extends BaseClass<ApplicationEntity>
-  implements Enforce<ObjectToCamel<ApplicationEntity>>
+  implements Enforce<PropsToCamel<ApplicationEntity>>
 {
   /**
    * Gets the unique identifier (Snowflake) of this application.
@@ -65,7 +60,7 @@ export class Application
    * @returns The application's ID as a Snowflake string
    */
   get id(): Snowflake {
-    return this.data.id;
+    return this.rawData.id;
   }
 
   /**
@@ -76,7 +71,7 @@ export class Application
    * @returns The application's name
    */
   get name(): string {
-    return this.data.name;
+    return this.rawData.name;
   }
 
   /**
@@ -88,7 +83,7 @@ export class Application
    * @returns The application's icon hash, or null if no icon is set
    */
   get icon(): string | null {
-    return this.data.icon;
+    return this.rawData.icon;
   }
 
   /**
@@ -99,7 +94,7 @@ export class Application
    * @returns The alternative icon hash, or null/undefined if not available
    */
   get iconHash(): string | null | undefined {
-    return this.data.icon_hash;
+    return this.rawData.icon_hash;
   }
 
   /**
@@ -111,7 +106,7 @@ export class Application
    * @returns The application's description
    */
   get description(): string {
-    return this.data.description;
+    return this.rawData.description;
   }
 
   /**
@@ -123,7 +118,7 @@ export class Application
    * @returns An array of authorized RPC origin URLs, or undefined if RPC is not configured
    */
   get rpcOrigins(): string[] | undefined {
-    return this.data.rpc_origins;
+    return this.rawData.rpc_origins;
   }
 
   /**
@@ -134,7 +129,7 @@ export class Application
    * @returns True if the bot is public, false if restricted to owner installation
    */
   get botPublic(): boolean {
-    return Boolean(this.data.bot_public);
+    return Boolean(this.rawData.bot_public);
   }
 
   /**
@@ -146,7 +141,7 @@ export class Application
    * @returns True if code grant is required, false otherwise
    */
   get botRequireCodeGrant(): boolean {
-    return Boolean(this.data.bot_require_code_grant);
+    return Boolean(this.rawData.bot_require_code_grant);
   }
 
   /**
@@ -158,8 +153,8 @@ export class Application
    * @returns The User object for the bot, or undefined if not available
    */
   get bot(): User | undefined {
-    return this.data.bot
-      ? new User(this.client, this.data.bot as UserEntity)
+    return this.rawData.bot
+      ? new User(this.client, this.rawData.bot as UserEntity)
       : undefined;
   }
 
@@ -172,7 +167,7 @@ export class Application
    * @returns The Terms of Service URL, or undefined if not set
    */
   get termsOfServiceUrl(): string | undefined {
-    return this.data.terms_of_service_url;
+    return this.rawData.terms_of_service_url;
   }
 
   /**
@@ -183,7 +178,7 @@ export class Application
    * @returns The Privacy Policy URL, or undefined if not set
    */
   get privacyPolicyUrl(): string | undefined {
-    return this.data.privacy_policy_url;
+    return this.rawData.privacy_policy_url;
   }
 
   /**
@@ -195,8 +190,8 @@ export class Application
    * @returns The User object for the application owner, or undefined if not available
    */
   get owner(): User | undefined {
-    return this.data.owner
-      ? new User(this.client, this.data.owner as UserEntity)
+    return this.rawData.owner
+      ? new User(this.client, this.rawData.owner as UserEntity)
       : undefined;
   }
 
@@ -209,7 +204,7 @@ export class Application
    * @returns The hex-encoded verification key
    */
   get verifyKey(): string {
-    return this.data.verify_key;
+    return this.rawData.verify_key;
   }
 
   /**
@@ -220,8 +215,8 @@ export class Application
    *
    * @returns The team information in camelCase format, or null if owned by an individual
    */
-  get team(): ObjectToCamel<TeamEntity> | null {
-    return this.data.team ? objectToCamel(this.data.team) : null;
+  get team(): TeamEntity | null {
+    return this.rawData.team;
   }
 
   /**
@@ -233,7 +228,7 @@ export class Application
    * @returns The guild ID, or undefined if no guild is associated
    */
   get guildId(): Snowflake | undefined {
-    return this.data.guild_id;
+    return this.rawData.guild_id;
   }
 
   /**
@@ -245,8 +240,8 @@ export class Application
    * @returns The Guild object, or undefined if no guild is associated
    */
   get guild(): Guild | undefined {
-    return this.data.guild
-      ? new Guild(this.client, this.data.guild as GuildCreateEntity)
+    return this.rawData.guild
+      ? new Guild(this.client, this.rawData.guild as GuildCreateEntity)
       : undefined;
   }
 
@@ -259,7 +254,7 @@ export class Application
    * @returns The primary SKU ID, or undefined if not applicable
    */
   get primarySkuId(): Snowflake | undefined {
-    return this.data.primary_sku_id;
+    return this.rawData.primary_sku_id;
   }
 
   /**
@@ -270,7 +265,7 @@ export class Application
    * @returns The URL slug, or undefined if not applicable
    */
   get slug(): string | undefined {
-    return this.data.slug;
+    return this.rawData.slug;
   }
 
   /**
@@ -282,7 +277,7 @@ export class Application
    * @returns The cover image hash, or undefined if not set
    */
   get coverImage(): string | undefined {
-    return this.data.cover_image;
+    return this.rawData.cover_image;
   }
 
   /**
@@ -295,7 +290,7 @@ export class Application
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-flags}
    */
   get flags(): BitField<ApplicationFlags> {
-    return new BitField<ApplicationFlags>(this.data.flags ?? 0n);
+    return new BitField<ApplicationFlags>(this.rawData.flags ?? 0n);
   }
 
   /**
@@ -306,7 +301,7 @@ export class Application
    * @returns The approximate guild count, or undefined if not available
    */
   get approximateGuildCount(): number | undefined {
-    return this.data.approximate_guild_count;
+    return this.rawData.approximate_guild_count;
   }
 
   /**
@@ -317,7 +312,7 @@ export class Application
    * @returns The approximate user install count, or undefined if not available
    */
   get approximateUserInstallCount(): number | undefined {
-    return this.data.approximate_user_install_count;
+    return this.rawData.approximate_user_install_count;
   }
 
   /**
@@ -329,7 +324,7 @@ export class Application
    * @returns An array of redirect URIs, or undefined if none are configured
    */
   get redirectUris(): string[] | undefined {
-    return this.data.redirect_uris;
+    return this.rawData.redirect_uris;
   }
 
   /**
@@ -341,7 +336,7 @@ export class Application
    * @returns The interactions endpoint URL, or null/undefined if not configured
    */
   get interactionsEndpointUrl(): string | null | undefined {
-    return this.data.interactions_endpoint_url;
+    return this.rawData.interactions_endpoint_url;
   }
 
   /**
@@ -353,7 +348,7 @@ export class Application
    * @returns The role connections verification URL, or null/undefined if not configured
    */
   get roleConnectionsVerificationUrl(): string | null | undefined {
-    return this.data.role_connections_verification_url;
+    return this.rawData.role_connections_verification_url;
   }
 
   /**
@@ -364,7 +359,7 @@ export class Application
    * @returns The event webhooks URL, or null/undefined if not configured
    */
   get eventWebhooksUrl(): string | null | undefined {
-    return this.data.event_webhooks_url;
+    return this.rawData.event_webhooks_url;
   }
 
   /**
@@ -377,7 +372,7 @@ export class Application
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-event-webhook-status}
    */
   get eventWebhooksStatus(): ApplicationEventWebhookStatus {
-    return this.data.event_webhooks_status;
+    return this.rawData.event_webhooks_status;
   }
 
   /**
@@ -388,7 +383,7 @@ export class Application
    * @returns An array of event type strings, or undefined if none are configured
    */
   get eventWebhooksTypes(): string[] | undefined {
-    return this.data.event_webhooks_types;
+    return this.rawData.event_webhooks_types;
   }
 
   /**
@@ -399,7 +394,7 @@ export class Application
    * @returns An array of tag strings, or undefined if none are set
    */
   get tags(): string[] | undefined {
-    return this.data.tags;
+    return this.rawData.tags;
   }
 
   /**
@@ -410,10 +405,8 @@ export class Application
    *
    * @returns The install parameters in camelCase format, or undefined if not configured
    */
-  get installParams(): ObjectToCamel<InstallParamsEntity> | undefined {
-    return this.data.install_params
-      ? objectToCamel(this.data.install_params)
-      : undefined;
+  get installParams(): InstallParamsEntity | undefined {
+    return this.rawData.install_params;
   }
 
   /**
@@ -429,7 +422,7 @@ export class Application
     ApplicationIntegrationType,
     ApplicationIntegrationTypeConfigurationEntity
   > {
-    return this.data.integration_types_config;
+    return this.rawData.integration_types_config;
   }
 
   /**
@@ -441,7 +434,7 @@ export class Application
    * @returns The custom install URL, or undefined if not configured
    */
   get customInstallUrl(): string | undefined {
-    return this.data.custom_install_url;
+    return this.rawData.custom_install_url;
   }
 
   /**
@@ -599,14 +592,10 @@ export class Application
    * @returns A promise resolving to the updated Application
    * @throws Error if the application couldn't be updated
    */
-  async edit(
-    options: ObjectToCamel<ApplicationUpdateOptions>,
-  ): Promise<Application> {
+  async edit(options: ApplicationUpdateOptions): Promise<Application> {
     const updatedData =
-      await this.client.rest.applications.updateCurrentApplication(
-        objectToSnake(options) as ApplicationUpdateOptions,
-      );
-    this.update(updatedData);
+      await this.client.rest.applications.updateCurrentApplication(options);
+    this.patch(updatedData);
     return this;
   }
 
@@ -660,7 +649,7 @@ export class Application
    */
   async refresh(): Promise<Application> {
     const data = await this.client.rest.applications.fetchCurrentApplication();
-    this.update(data);
+    this.patch(data);
     return this;
   }
 
@@ -674,15 +663,11 @@ export class Application
    * @returns A promise resolving to the activity instance information
    * @throws Error if the instance doesn't exist or couldn't be fetched
    */
-  async fetchActivityInstance(
-    instanceId: string,
-  ): Promise<ObjectToCamel<ActivityInstanceEntity>> {
-    const activityInstance =
-      await this.client.rest.applications.fetchActivityInstance(
-        this.id,
-        instanceId,
-      );
-    return objectToCamel(activityInstance);
+  fetchActivityInstance(instanceId: string): Promise<ActivityInstanceEntity> {
+    return this.client.rest.applications.fetchActivityInstance(
+      this.id,
+      instanceId,
+    );
   }
 
   /**

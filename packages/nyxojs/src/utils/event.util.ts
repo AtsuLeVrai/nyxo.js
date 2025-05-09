@@ -1,7 +1,5 @@
 import type {
-  BanEntity,
   EmojiEntity,
-  GuildMemberEntity,
   InviteEntity,
   Snowflake,
   StickerEntity,
@@ -17,40 +15,42 @@ import type {
 } from "@nyxojs/gateway";
 import type { RestEvents } from "@nyxojs/rest";
 import type { Store } from "@nyxojs/store";
-import { objectToCamel } from "ts-case-convert";
 import { BaseClass } from "../bases/index.js";
 import {
-  type AnyInteraction,
   type AnyThreadChannel,
+  AutoModeration,
   AutoModerationActionExecution,
-  AutoModerationRule,
   Ban,
   Emoji,
   Entitlement,
   Guild,
   GuildAuditLogEntry,
   GuildMember,
-  GuildScheduledEvent,
-  GuildScheduledEventUser,
   Integration,
   Invite,
   Message,
+  MessagePollVote,
+  MessageReaction,
+  MessageReactionRemoveAll,
+  MessageReactionRemoveEmoji,
   Ready,
   Role,
+  ScheduledEvent,
   SoundboardSound,
   StageInstance,
   Sticker,
   Subscription,
   ThreadMember,
-  TypingStart,
   User,
-  VoiceChannelEffectSend,
+  VoiceChannelEffect,
+  VoiceState,
   Webhook,
 } from "../classes/index.js";
 import type { Client } from "../core/index.js";
 import type { CacheEntityType } from "../managers/index.js";
-import type { ClientEvents, GuildBased } from "../types/index.js";
+import type { ClientEvents } from "../types/index.js";
 import { channelFactory } from "./channel.util.js";
+import { interactionFactory } from "./interaction.util.js";
 
 /**
  * Represents a mapping between a Gateway event and a Client event
@@ -238,7 +238,7 @@ function handleBulkUpdate<T extends BaseClass<any>>(
     }
   }
 
-  return [objectToCamel(data)];
+  return [data];
 }
 
 /**
@@ -260,15 +260,13 @@ export const GatewayDispatchEventMap = new Map<
     defineEvent<
       "APPLICATION_COMMAND_PERMISSIONS_UPDATE",
       "applicationCommandPermissionsUpdate"
-    >("applicationCommandPermissionsUpdate", (_, data) => [
-      objectToCamel(data),
-    ]),
+    >("applicationCommandPermissionsUpdate", (_, data) => [data]),
   ],
   [
     "AUTO_MODERATION_RULE_CREATE",
     defineEvent<"AUTO_MODERATION_RULE_CREATE", "autoModerationRuleCreate">(
       "autoModerationRuleCreate",
-      (client, data) => [new AutoModerationRule(client, data)],
+      (client, data) => [new AutoModeration(client, data)],
     ),
   ],
   [
@@ -276,12 +274,7 @@ export const GatewayDispatchEventMap = new Map<
     defineEvent<"AUTO_MODERATION_RULE_UPDATE", "autoModerationRuleUpdate">(
       "autoModerationRuleUpdate",
       (client, data) =>
-        handleUpdateEvent(
-          client,
-          data,
-          "autoModerationRules",
-          AutoModerationRule,
-        ),
+        handleUpdateEvent(client, data, "autoModerationRules", AutoModeration),
     ),
   ],
   [
@@ -327,7 +320,7 @@ export const GatewayDispatchEventMap = new Map<
     "CHANNEL_PINS_UPDATE",
     defineEvent<"CHANNEL_PINS_UPDATE", "channelPinsUpdate">(
       "channelPinsUpdate",
-      (_, data) => [objectToCamel(data)],
+      (_, data) => [data],
     ),
   ],
   [
@@ -359,7 +352,7 @@ export const GatewayDispatchEventMap = new Map<
     "THREAD_LIST_SYNC",
     defineEvent<"THREAD_LIST_SYNC", "threadListSync">(
       "threadListSync",
-      (_, data) => [objectToCamel(data)],
+      (_, data) => [data],
     ),
   ],
   [
@@ -374,7 +367,7 @@ export const GatewayDispatchEventMap = new Map<
     "THREAD_MEMBERS_UPDATE",
     defineEvent<"THREAD_MEMBERS_UPDATE", "threadMembersUpdate">(
       "threadMembersUpdate",
-      (_, data) => [objectToCamel(data)],
+      (_, data) => [data],
     ),
   ],
   [
@@ -434,7 +427,7 @@ export const GatewayDispatchEventMap = new Map<
           guild_id: data.guild_id,
           user: data.user,
           reason: null,
-        } as GuildBased<BanEntity>),
+        }),
       ],
     ),
   ],
@@ -447,7 +440,7 @@ export const GatewayDispatchEventMap = new Map<
           guild_id: data.guild_id,
           user: data.user,
           reason: null,
-        } as GuildBased<BanEntity>),
+        }),
       ],
     ),
   ],
@@ -486,13 +479,7 @@ export const GatewayDispatchEventMap = new Map<
     "GUILD_MEMBER_UPDATE",
     defineEvent<"GUILD_MEMBER_UPDATE", "guildMemberUpdate">(
       "guildMemberUpdate",
-      (client, data) =>
-        handleUpdateEvent(
-          client,
-          data as GuildBased<GuildMemberEntity>,
-          "members",
-          GuildMember,
-        ),
+      (client, data) => handleUpdateEvent(client, data, "members", GuildMember),
     ),
   ],
   [
@@ -511,7 +498,7 @@ export const GatewayDispatchEventMap = new Map<
     "GUILD_MEMBERS_CHUNK",
     defineEvent<"GUILD_MEMBERS_CHUNK", "guildMembersChunk">(
       "guildMembersChunk",
-      (_, data) => [objectToCamel(data)],
+      (_, data) => [data],
     ),
   ],
   [
@@ -553,7 +540,7 @@ export const GatewayDispatchEventMap = new Map<
     "GUILD_SCHEDULED_EVENT_CREATE",
     defineEvent<"GUILD_SCHEDULED_EVENT_CREATE", "guildScheduledEventCreate">(
       "guildScheduledEventCreate",
-      (client, data) => [new GuildScheduledEvent(client, data)],
+      (client, data) => [new ScheduledEvent(client, data)],
     ),
   ],
   [
@@ -561,7 +548,7 @@ export const GatewayDispatchEventMap = new Map<
     defineEvent<"GUILD_SCHEDULED_EVENT_UPDATE", "guildScheduledEventUpdate">(
       "guildScheduledEventUpdate",
       (client, data) =>
-        handleUpdateEvent(client, data, "scheduledEvents", GuildScheduledEvent),
+        handleUpdateEvent(client, data, "scheduledEvents", ScheduledEvent),
     ),
   ],
   [
@@ -575,7 +562,7 @@ export const GatewayDispatchEventMap = new Map<
     "GUILD_SCHEDULED_EVENT_USER_ADD",
     defineEvent<"GUILD_SCHEDULED_EVENT_USER_ADD", "guildScheduledEventUserAdd">(
       "guildScheduledEventUserAdd",
-      (client, data) => [new GuildScheduledEventUser(client, data)],
+      (_, data) => [data],
     ),
   ],
   [
@@ -583,9 +570,7 @@ export const GatewayDispatchEventMap = new Map<
     defineEvent<
       "GUILD_SCHEDULED_EVENT_USER_REMOVE",
       "guildScheduledEventUserRemove"
-    >("guildScheduledEventUserRemove", (client, data) => [
-      new GuildScheduledEventUser(client, data),
-    ]),
+    >("guildScheduledEventUserRemove", (_, data) => [data]),
   ],
   [
     "GUILD_SOUNDBOARD_SOUND_CREATE",
@@ -713,50 +698,49 @@ export const GatewayDispatchEventMap = new Map<
     "MESSAGE_REACTION_ADD",
     defineEvent<"MESSAGE_REACTION_ADD", "messageReactionAdd">(
       "messageReactionAdd",
-      (_, data) => [data],
+      (client, data) => [new MessageReaction(client, data)],
     ),
   ],
   [
     "MESSAGE_REACTION_REMOVE",
     defineEvent<"MESSAGE_REACTION_REMOVE", "messageReactionRemove">(
       "messageReactionRemove",
-      (_, data) => [data],
+      (client, data) => [new MessageReaction(client, data)],
     ),
   ],
   [
     "MESSAGE_REACTION_REMOVE_ALL",
     defineEvent<"MESSAGE_REACTION_REMOVE_ALL", "messageReactionRemoveAll">(
       "messageReactionRemoveAll",
-      (_, data) => [data],
+      (client, data) => [new MessageReactionRemoveAll(client, data)],
     ),
   ],
   [
     "MESSAGE_REACTION_REMOVE_EMOJI",
     defineEvent<"MESSAGE_REACTION_REMOVE_EMOJI", "messageReactionRemoveEmoji">(
       "messageReactionRemoveEmoji",
-      (_, data) => [data],
+      (client, data) => [new MessageReactionRemoveEmoji(client, data)],
     ),
   ],
   [
     "MESSAGE_POLL_VOTE_ADD",
     defineEvent<"MESSAGE_POLL_VOTE_ADD", "messagePollVoteAdd">(
       "messagePollVoteAdd",
-      (_, data) => [objectToCamel(data)],
+      (client, data) => [new MessagePollVote(client, data)],
     ),
   ],
   [
     "MESSAGE_POLL_VOTE_REMOVE",
     defineEvent<"MESSAGE_POLL_VOTE_REMOVE", "messagePollVoteRemove">(
       "messagePollVoteRemove",
-      (_, data) => [objectToCamel(data)],
+      (client, data) => [new MessagePollVote(client, data)],
     ),
   ],
   [
     "TYPING_START",
-    defineEvent<"TYPING_START", "typingStart">(
-      "typingStart",
-      (client, data) => [new TypingStart(client, data)],
-    ),
+    defineEvent<"TYPING_START", "typingStart">("typingStart", (_, data) => [
+      data,
+    ]),
   ],
   [
     "USER_UPDATE",
@@ -768,14 +752,15 @@ export const GatewayDispatchEventMap = new Map<
     "VOICE_CHANNEL_EFFECT_SEND",
     defineEvent<"VOICE_CHANNEL_EFFECT_SEND", "voiceChannelEffectSend">(
       "voiceChannelEffectSend",
-      (client, data) => [new VoiceChannelEffectSend(client, data)],
+      (client, data) => [new VoiceChannelEffect(client, data)],
     ),
   ],
   [
     "VOICE_STATE_UPDATE",
     defineEvent<"VOICE_STATE_UPDATE", "voiceStateUpdate">(
       "voiceStateUpdate",
-      (_, data) => [data],
+      (client, data) =>
+        handleUpdateEvent(client, data, "voiceStates", VoiceState),
     ),
   ],
   [
@@ -797,7 +782,7 @@ export const GatewayDispatchEventMap = new Map<
     "INTERACTION_CREATE",
     defineEvent<"INTERACTION_CREATE", "interactionCreate">(
       "interactionCreate",
-      (_, data) => [data as unknown as AnyInteraction],
+      (client, data) => [interactionFactory(client, data)],
     ),
   ],
   [
