@@ -804,7 +804,6 @@ export interface GuildAnnouncementChannelEntity
     ChannelEntity,
     | "bitrate"
     | "user_limit"
-    | "rate_limit_per_user"
     | "recipients"
     | "icon"
     | "owner_id"

@@ -513,14 +513,21 @@ export type AnySimpleApplicationCommandOptionEntity =
   | AttachmentCommandOptionEntity;
 
 /**
+ * Complex command options (subcommands and groups).
+ * Union type for all options that can contain other options.
+ */
+export type AnyComplexApplicationCommandOptionEntity =
+  | SubCommandOptionEntity
+  | SubCommandGroupOptionEntity;
+
+/**
  * Union of all possible command options with discriminated union pattern.
  * Can be used to represent any type of command option.
  * @see {@link https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure}
  */
 export type AnyApplicationCommandOptionEntity =
-  | SubCommandOptionEntity
-  | SubCommandGroupOptionEntity
-  | AnySimpleApplicationCommandOptionEntity;
+  | AnySimpleApplicationCommandOptionEntity
+  | AnyComplexApplicationCommandOptionEntity;
 
 /**
  * Permission structure for application commands.

@@ -383,22 +383,6 @@ export interface AttachmentInteractionCommandOptionEntity
 }
 
 /**
- * Union of all simple interaction command options.
- * A type that can be any of the non-container option types.
- * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
- */
-export type AnySimpleInteractionCommandOptionEntity =
-  | StringInteractionCommandOptionEntity
-  | IntegerInteractionCommandOptionEntity
-  | NumberInteractionCommandOptionEntity
-  | BooleanInteractionCommandOptionEntity
-  | UserInteractionCommandOptionEntity
-  | ChannelInteractionCommandOptionEntity
-  | RoleInteractionCommandOptionEntity
-  | MentionableInteractionCommandOptionEntity
-  | AttachmentInteractionCommandOptionEntity;
-
-/**
  * SubCommand option structure.
  * Represents a subcommand within an application command.
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
@@ -439,14 +423,38 @@ export interface SubCommandGroupInteractionOptionEntity
 }
 
 /**
+ * Union of all simple interaction command options.
+ * A type that can be any of the non-container option types.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export type AnySimpleInteractionCommandOptionEntity =
+  | StringInteractionCommandOptionEntity
+  | IntegerInteractionCommandOptionEntity
+  | NumberInteractionCommandOptionEntity
+  | BooleanInteractionCommandOptionEntity
+  | UserInteractionCommandOptionEntity
+  | ChannelInteractionCommandOptionEntity
+  | RoleInteractionCommandOptionEntity
+  | MentionableInteractionCommandOptionEntity
+  | AttachmentInteractionCommandOptionEntity;
+
+/**
+ * Union of all complex interaction command options.
+ * A type that can be any of the container option types.
+ * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
+ */
+export type AnyComplexInteractionCommandOptionEntity =
+  | SubCommandInteractionOptionEntity
+  | SubCommandGroupInteractionOptionEntity;
+
+/**
  * Union of all interaction command options.
  * A type that can be any of the possible command option types.
  * @see {@link https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-application-command-interaction-data-option-structure}
  */
 export type AnyInteractionCommandOptionEntity =
   | AnySimpleInteractionCommandOptionEntity
-  | SubCommandInteractionOptionEntity
-  | SubCommandGroupInteractionOptionEntity;
+  | AnyComplexInteractionCommandOptionEntity;
 
 /**
  * Resolved data structure containing detailed Discord objects from an interaction.
