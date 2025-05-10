@@ -181,8 +181,7 @@ export function Tabs({
               ${paddingStyles[orientation][size]}
               ${variantStyles[variant]}
               ${activeTab === item.id ? activeTabStyles[variant] : "text-slate-300"}
-              ${tabClassName}
-              font-medium whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ${item.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+              ${tabClassName}font-medium whitespace-nowrap transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/30 ${item.disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
               ${
                 variant === "default" && orientation === "horizontal"
                   ? "border-dark-500 border-r last:border-r-0"
