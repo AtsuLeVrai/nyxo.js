@@ -2,13 +2,10 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/web",
   "private": true,
+  "type": "module",
   "description": "Web documentation for Nyxo.js",
   "readme": "README.md",
   "license": "AGPL-3.0-only",
-  "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/AtsuLeVrai/nyxo.js",
@@ -24,8 +21,9 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbopack",
+    "start": "next start",
     "preview": "next build && next start",
-    "start": "next start"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "framer-motion": "^12.10.5",
@@ -37,7 +35,6 @@
     "sharp": "^0.34.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
     "@tailwindcss/postcss": "^4.1.6",
     "@types/node": "^20.17.46",
     "@types/react": "^19.1.3",

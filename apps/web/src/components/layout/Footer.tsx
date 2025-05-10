@@ -1,7 +1,7 @@
-import { DISCORD_LINK, GITHUB_REPO } from "@/utils/constants";
 import { Github } from "lucide-react";
 import Link from "next/link";
 import type { ReactElement, ReactNode } from "react";
+import { DISCORD_LINK, GITHUB_REPO } from "~/utils/constants";
 
 interface SocialLink {
   /** Name of the social platform */

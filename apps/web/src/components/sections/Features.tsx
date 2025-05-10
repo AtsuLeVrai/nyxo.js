@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  FadeIn,
-  FadeInStagger,
-  fadeVariants,
-} from "@/components/animations/FadeIn";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
 import { type Variants, motion } from "framer-motion";
 import {
   Bot,
@@ -18,6 +11,13 @@ import {
   Type,
 } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
+import {
+  FadeIn,
+  FadeInStagger,
+  fadeVariants,
+} from "~/components/animations/FadeIn";
+import { Badge } from "~/components/ui/Badge";
+import { Card } from "~/components/ui/Card";
 
 interface FeatureProps {
   /** Icon to display with the feature */
@@ -34,25 +34,25 @@ interface FeatureProps {
 function FeatureCard({ feature }: { feature: FeatureProps }): ReactElement {
   return (
     <Card variant="feature">
-      <Card.Body class="flex h-full flex-col">
-        <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-md bg-primary-500/10">
+      <Card.Body className="flex h-full flex-col">
+        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-md bg-primary-500/10">
           {feature.icon}
         </div>
-        <Card.Title class="mb-2">{feature.title}</Card.Title>
-        <Card.Description class="flex-grow">
+        <Card.Title className="mb-2">{feature.title}</Card.Title>
+        <Card.Description className="flex-grow">
           {feature.description}
         </Card.Description>
 
-        <div class="mt-4">
+        <div className="mt-4">
           <a
             href="https://github.com/AtsuLeVrai/nyxo.js"
-            class="inline-flex items-center text-primary-400 text-sm hover:text-primary-300"
+            className="inline-flex items-center text-primary-400 text-sm hover:text-primary-300"
             target="_blank"
             rel="noopener noreferrer"
           >
             Learn more
             <svg
-              class="ml-1 h-4 w-4"
+              className="ml-1 h-4 w-4"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -78,37 +78,37 @@ export default function Features(): ReactElement {
   // Features data
   const features: FeatureProps[] = [
     {
-      icon: <Type class="h-6 w-6 text-primary-400" />,
+      icon: <Type className="h-6 w-6 text-primary-400" />,
       title: "100% Type Safety",
       description:
         "Full TypeScript support with robust type definitions for a safer development experience and better DX.",
     },
     {
-      icon: <Package2 class="h-6 w-6 text-primary-400" />,
+      icon: <Package2 className="h-6 w-6 text-primary-400" />,
       title: "Modern Architecture",
       description:
         "Built with current best practices in mind, using TypeScript capabilities.",
     },
     {
-      icon: <Bot class="h-6 w-6 text-primary-400" />,
+      icon: <Bot className="h-6 w-6 text-primary-400" />,
       title: "Discord API Integration",
       description:
         "Designed specifically for Discord bot development with full access to Discord's rich features.",
     },
     {
-      icon: <Rocket class="h-6 w-6 text-primary-400" />,
+      icon: <Rocket className="h-6 w-6 text-primary-400" />,
       title: "Fast Development",
       description:
         "Simplify your workflow with intuitive APIs and comprehensive documentation to build bots quickly.",
     },
     {
-      icon: <Shield class="h-6 w-6 text-primary-400" />,
+      icon: <Shield className="h-6 w-6 text-primary-400" />,
       title: "Error Handling",
       description:
         "Robust error handling and debugging capabilities to keep your bot running smoothly.",
     },
     {
-      icon: <Code class="h-6 w-6 text-primary-400" />,
+      icon: <Code className="h-6 w-6 text-primary-400" />,
       title: "Extensible System",
       description:
         "Easily extend functionality with a plugin system that keeps your codebase organized and maintainable.",
@@ -116,24 +116,24 @@ export default function Features(): ReactElement {
   ];
 
   return (
-    <div class="bg-dark-700 py-24">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="bg-dark-700 py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <div class="text-center">
+          <div className="text-center">
             <Badge icon={<Sparkles size={14} />} variant="primary">
               Features
             </Badge>
-            <h2 class="mt-4 font-extrabold text-3xl text-slate-50 sm:text-4xl">
+            <h2 className="mt-4 font-extrabold text-3xl text-slate-50 sm:text-4xl">
               Built for modern Discord bot development
             </h2>
-            <p class="mx-auto mt-4 max-w-2xl text-slate-300 text-xl">
+            <p className="mx-auto mt-4 max-w-2xl text-slate-300 text-xl">
               Nyxo.js integrates the latest TypeScript capabilities to help you
               build powerful, scalable bots with less effort.
             </p>
           </div>
         </FadeIn>
 
-        <FadeInStagger class="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <FadeInStagger className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}

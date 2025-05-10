@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/Badge";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -10,8 +9,9 @@ import {
   Terminal,
 } from "lucide-react";
 import { JetBrains_Mono } from "next/font/google";
-import type { ReactElement, ReactNode } from "react";
+import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
+import { Badge } from "~/components/ui/Badge";
 
 export type ProgrammingLanguage =
   | "typescript"
@@ -484,6 +484,7 @@ const LANGUAGE_PATTERNS: Record<
     punctuation: ["(", ")", "{", "}", "[", "]", ";", "`"],
     comments: { single: "#" },
     strings: { single: true, double: true },
+    // @ts-expect-error
     variables: /\$\w+|\$\{[^}]+\}/g,
   },
   // Simplified patterns for the remaining languages
@@ -1109,8 +1110,8 @@ function tokenizeCode(code: string, language: ProgrammingLanguage): Token[][] {
       // Check for punctuation
       if (patterns.punctuation) {
         const char = remaining[0];
-        if (patterns.punctuation.includes(char)) {
-          lineTokens.push({ type: "punctuation", content: char });
+        if (patterns.punctuation.includes(char as string)) {
+          lineTokens.push({ type: "punctuation", content: char as string });
           currentIndex++;
           matched = true;
           continue;
@@ -1119,7 +1120,7 @@ function tokenizeCode(code: string, language: ProgrammingLanguage): Token[][] {
 
       // Default: plain text
       if (!matched) {
-        lineTokens.push({ type: "plain", content: remaining[0] });
+        lineTokens.push({ type: "plain", content: remaining[0] as string });
         currentIndex++;
       }
     }
@@ -1177,7 +1178,7 @@ function CodeLine({
       }`}
     >
       {showLineNumbers && (
-        <div className="select-none pr-4 text-right text-slate-500 w-12">
+        <div className="w-12 select-none pr-4 text-right text-slate-500">
           {lineNumber}
         </div>
       )}
@@ -1208,8 +1209,10 @@ export function CodeBlock({
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
   // Get active code and language based on tabs or props
-  const activeCode = tabs ? tabs[activeTab].code : code;
-  const activeLanguage = tabs ? tabs[activeTab].language : language;
+  const activeCode = (tabs ? tabs[activeTab]?.code : code) as string;
+  const activeLanguage = (
+    tabs ? tabs[activeTab]?.language : language
+  ) as ProgrammingLanguage;
 
   // Tokenize the code for highlighting
   const tokenizedCode = useMemo(

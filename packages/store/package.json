@@ -40,7 +40,6 @@
     "build:dev": "rimraf dist && tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json --preserveWatchOutput",
     "build:prod": "node ../../scripts/build.js",
-    "biome:check": "biome check --write --unsafe --verbose",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -50,7 +49,6 @@
     "zod-validation-error": "^3.4.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.15.17",
     "rimraf": "^6.0.1",

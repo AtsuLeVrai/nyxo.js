@@ -1,15 +1,15 @@
 "use client";
 
+import { type Variants, motion } from "framer-motion";
+import { Users } from "lucide-react";
+import type { ReactElement } from "react";
 import {
   FadeIn,
   FadeInStagger,
   fadeVariants,
-} from "@/components/animations/FadeIn";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
-import { type Variants, motion } from "framer-motion";
-import { Users } from "lucide-react";
-import type { ReactElement } from "react";
+} from "~/components/animations/FadeIn";
+import { Badge } from "~/components/ui/Badge";
+import { Card } from "~/components/ui/Card";
 
 interface TestimonialProps {
   /** Testimonial author's name */

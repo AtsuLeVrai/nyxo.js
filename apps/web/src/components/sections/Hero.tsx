@@ -1,11 +1,11 @@
 "use client";
 
-import { FadeIn } from "@/components/animations/FadeIn";
-import { AnimatedText } from "@/components/animations/TextAnimation";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { FadeIn } from "~/components/animations/FadeIn";
+import { AnimatedText } from "~/components/animations/TextAnimation";
+import { Badge } from "~/components/ui/Badge";
+import { Button } from "~/components/ui/Button";
 
 /**
  * Hero section component for the landing page
@@ -19,7 +19,7 @@ export default function Hero() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(138,75,255,0.18),transparent_70%)]" />
         <div className="absolute inset-0 overflow-hidden">
           <div
-            className="absolute -bottom-[20%] -left-[10%] h-[80%] w-[80%] opacity-30"
+            className="-bottom-[20%] -left-[10%] absolute h-[80%] w-[80%] opacity-30"
             style={{
               background:
                 "radial-gradient(circle, rgba(138,75,255,0.3) 0%, rgba(138,75,255,0.15) 30%, rgba(138,75,255,0.05) 60%, transparent 70%)",

@@ -1,10 +1,10 @@
 "use client";
 
-import { FadeIn } from "@/components/animations/FadeIn";
-import { Button } from "@/components/ui/Button";
-import { DISCORD_LINK, GITHUB_REPO } from "@/utils/constants";
 import { ArrowRight } from "lucide-react";
 import type { ReactElement } from "react";
+import { FadeIn } from "~/components/animations/FadeIn";
+import { Button } from "~/components/ui/Button";
+import { DISCORD_LINK, GITHUB_REPO } from "~/utils/constants";
 
 /**
  * Call to Action section for user conversion

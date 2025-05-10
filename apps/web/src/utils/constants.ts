@@ -6,16 +6,6 @@ export const GITHUB_LICENSE =
 export const GITHUB_CONTRIBUTORS =
   "https://github.com/AtsuLeVrai/nyxo.js/graphs/contributors";
 
-// Code examples for the documentation
-export interface CodeExample {
-  title: string;
-  description?: string;
-  code: string;
-  language: string;
-  highlightedLines?: number[];
-  fileName?: string;
-}
-
 // Navigation links for header/footer
 export interface NavLink {
   title: string;

@@ -45,15 +45,3 @@
     background-size: 40px 40px;
   }
 }
-
-/* Utility classes */
-@utility glow-primary-md {
-  box-shadow: 0 0 15px 2px var(--color-primary-500);
-}
-
-@utility clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}

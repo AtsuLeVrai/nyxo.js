@@ -8,12 +8,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": [
-      "**/dist/**",
-      "**/node_modules/**",
-      "**/*.d.ts",
-      "docs/**"
-    ]
+    "ignore": ["**/dist/**", "**/node_modules/**", "**/*.d.ts", "docs/**"]
   },
   "formatter": {
     "enabled": true,
@@ -54,5 +49,36 @@
         "noExplicitAny": "warn"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "include": ["apps/bot/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off",
+            "noConsoleLog": "off"
+          }
+        }
+      }
+    },
+    {
+      "include": ["apps/web/**"],
+      "linter": {
+        "rules": {
+          "all": false,
+          "nursery": {
+            "useSortedClasses": {
+              "level": "warn",
+              "fix": "safe",
+              "options": {
+                "functions": ["clsx", "cva", "cn"]
+              }
+            }
+          },
+          "recommended": true
+        }
+      }
+    }
+  ]
 }

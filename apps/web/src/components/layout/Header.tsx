@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { DISCORD_LINK, GITHUB_REPO, NAV_LINKS } from "@/utils/constants";
 import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, Github, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button } from "~/components/ui/Button";
+import { DISCORD_LINK, GITHUB_REPO, NAV_LINKS } from "~/utils/constants";
 
 /**
  * Header component with navigation and responsive mobile menu

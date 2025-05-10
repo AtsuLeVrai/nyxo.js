@@ -1,8 +1,8 @@
 "use client";
 
-import { useInView } from "@/hooks/useInView";
 import { motion } from "framer-motion";
 import type { ReactNode, RefObject } from "react";
+import { useInView } from "~/hooks/useInView";
 
 export interface FadeInProps {
   /** Child elements to render with the fade effect */

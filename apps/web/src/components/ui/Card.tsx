@@ -81,7 +81,7 @@ export function Card({
     if (isHighlighted) {
       return (
         <div className="group relative">
-          <div className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 opacity-75 blur-sm" />
+          <div className="-inset-0.5 absolute rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 opacity-75 blur-sm" />
           <div className={combinedStyles}>{children}</div>
         </div>
       );

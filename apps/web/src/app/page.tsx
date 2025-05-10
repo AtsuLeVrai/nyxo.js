@@ -1,11 +1,11 @@
-import Footer from "@/components/layout/Footer";
-import Header from "@/components/layout/Header";
-import CTA from "@/components/sections/CTA";
-import CodePreview from "@/components/sections/CodePreview";
-import Features from "@/components/sections/Features";
-import Hero from "@/components/sections/Hero";
-import Testimonials from "@/components/sections/Testimonials";
 import type { ReactElement } from "react";
+import Footer from "~/components/layout/Footer";
+import Header from "~/components/layout/Header";
+import CTA from "~/components/sections/CTA";
+import CodePreview from "~/components/sections/CodePreview";
+import Features from "~/components/sections/Features";
+import Hero from "~/components/sections/Hero";
+import Testimonials from "~/components/sections/Testimonials";
 
 /**
  * Home page component with all the main sections

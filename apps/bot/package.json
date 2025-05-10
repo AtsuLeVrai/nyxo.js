@@ -23,7 +23,6 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "biome:check": "biome check --write --unsafe --verbose",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -31,7 +30,6 @@
     "zod": "^3.24.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.15.17",
     "dotenv": "^16.5.0",
     "tsx": "^4.19.4",

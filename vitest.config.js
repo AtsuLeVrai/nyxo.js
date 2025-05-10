@@ -1,5 +1,5 @@
-import {cpus} from "node:os";
-import {configDefaults, defineConfig} from "vitest/config";
+import { cpus } from "node:os";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {

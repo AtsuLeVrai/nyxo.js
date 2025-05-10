@@ -21,11 +21,7 @@
     "name": "AtsuLeVrai",
     "url": "https://github.com/AtsuLeVrai"
   },
-  "scripts": {
-    "biome:check": "biome check --write --unsafe --verbose"
-  },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
     "@microsoft/api-extractor": "^7.52.7",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
