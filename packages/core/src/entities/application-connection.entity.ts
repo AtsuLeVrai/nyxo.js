@@ -1,4 +1,4 @@
-import type { Locale } from "../enums/index.js";
+import type { LocaleValues } from "../enums/index.js";
 
 /**
  * Types of application role connection metadata for verification.
@@ -94,7 +94,7 @@ export interface ApplicationRoleConnectionMetadataEntity {
    * Allows for localization of the metadata field name in different languages.
    * Keys must be valid locale identifiers.
    */
-  name_localizations?: Record<Locale, string>;
+  name_localizations?: Partial<Record<LocaleValues, string>>;
 
   /**
    * Description of the metadata field.
@@ -107,5 +107,5 @@ export interface ApplicationRoleConnectionMetadataEntity {
    * Allows for localization of the metadata field description in different languages.
    * Keys must be valid locale identifiers.
    */
-  description_localizations?: Record<Locale, string>;
+  description_localizations?: Partial<Record<LocaleValues, string>>;
 }

@@ -19,9 +19,6 @@ interface CodeExampleItem {
   highlightedLines: number[];
 }
 
-/**
- * CodePreview section showing example code snippets
- */
 export default function CodePreview() {
   const [activeTab, setActiveTab] = useState<string>("client");
   const { ref, isInView } = useInView({ threshold: 0.1, rootMargin: "-100px" });

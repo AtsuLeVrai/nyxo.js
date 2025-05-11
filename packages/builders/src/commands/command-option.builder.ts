@@ -9,7 +9,7 @@ import {
   type ChannelCommandOptionEntity,
   type ChannelType,
   type IntegerCommandOptionEntity,
-  type Locale,
+  type LocaleValues,
   type MentionableCommandOptionEntity,
   type NumberCommandOptionEntity,
   type RoleCommandOptionEntity,
@@ -78,7 +78,9 @@ export abstract class BaseCommandOptionBuilder<
    * @param localizations - Dictionary of locale to localized name
    * @returns The option builder instance for method chaining
    */
-  setNameLocalizations(localizations: Record<Locale, string> | null): this {
+  setNameLocalizations(
+    localizations: Partial<Record<LocaleValues, string>> | null,
+  ): this {
     // Validate each localized name
     if (localizations) {
       for (const [locale, name] of Object.entries(localizations)) {
@@ -125,7 +127,7 @@ export abstract class BaseCommandOptionBuilder<
    * @returns The option builder instance for method chaining
    */
   setDescriptionLocalizations(
-    localizations: Record<Locale, string> | null,
+    localizations: Partial<Record<LocaleValues, string>> | null,
   ): this {
     // Validate each localized description
     if (localizations) {

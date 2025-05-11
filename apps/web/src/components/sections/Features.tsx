@@ -28,10 +28,7 @@ interface FeatureProps {
   description: string;
 }
 
-/**
- * Individual feature card component
- */
-function FeatureCard({ feature }: { feature: FeatureProps }): ReactElement {
+function FeatureCard({ feature }: { feature: FeatureProps }) {
   return (
     <Card variant="feature">
       <Card.Body className="flex h-full flex-col">

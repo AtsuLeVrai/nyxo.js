@@ -574,7 +574,7 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
 
       // Ensure the number of default values is within min_values and max_values
       const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 1;
+      const maxValues = this.data.max_values ?? 25;
 
       if (this.data.default_values.length < minValues) {
         throw new Error(
@@ -677,7 +677,7 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
 
       // Ensure the number of default values is within min_values and max_values
       const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 1;
+      const maxValues = this.data.max_values ?? 25;
 
       if (this.data.default_values.length < minValues) {
         throw new Error(
@@ -803,7 +803,7 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
 
       // Ensure the number of default values is within min_values and max_values
       const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 1;
+      const maxValues = this.data.max_values ?? 25;
 
       if (this.data.default_values.length < minValues) {
         throw new Error(
@@ -943,7 +943,7 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
 
       // Ensure the number of default values is within min_values and max_values
       const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 1;
+      const maxValues = this.data.max_values ?? 25;
 
       if (this.data.default_values.length < minValues) {
         throw new Error(

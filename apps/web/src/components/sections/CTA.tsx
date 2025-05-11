@@ -1,15 +1,11 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import type { ReactElement } from "react";
 import { FadeIn } from "~/components/animations/FadeIn";
 import { Button } from "~/components/ui/Button";
 import { DISCORD_LINK, GITHUB_REPO } from "~/utils/constants";
 
-/**
- * Call to Action section for user conversion
- */
-export default function CTA(): ReactElement {
+export default function CTA() {
   return (
     <div className="relative overflow-hidden bg-dark-800 py-24">
       {/* Background elements */}

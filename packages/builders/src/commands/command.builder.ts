@@ -8,7 +8,7 @@ import {
   ApplicationCommandType,
   type ApplicationIntegrationType,
   type InteractionContextType,
-  type Locale,
+  type LocaleValues,
 } from "@nyxojs/core";
 import { COMMAND_LIMITS } from "../utils/index.js";
 import {
@@ -96,7 +96,9 @@ export abstract class BaseCommandBuilder<
    * @param localizations - Dictionary of locale to localized name
    * @returns The command builder instance for method chaining
    */
-  setNameLocalizations(localizations: Record<Locale, string> | null): this {
+  setNameLocalizations(
+    localizations: Partial<Record<LocaleValues, string>> | null,
+  ): this {
     // Validate each localized name
     if (localizations) {
       for (const [locale, name] of Object.entries(localizations)) {
@@ -253,7 +255,7 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    * @returns The command builder instance for method chaining
    */
   setDescriptionLocalizations(
-    localizations: Record<Locale, string> | null,
+    localizations: Partial<Record<LocaleValues, string>> | null,
   ): this {
     // Validate each localized description
     if (localizations) {
@@ -895,7 +897,7 @@ export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationComm
    * @returns The command builder instance for method chaining
    */
   setDescriptionLocalizations(
-    localizations: Record<Locale, string> | null,
+    localizations: Partial<Record<LocaleValues, string>> | null,
   ): this {
     // Validate each localized description
     if (localizations) {

@@ -2,7 +2,6 @@
 
 import { type Variants, motion } from "framer-motion";
 import { Users } from "lucide-react";
-import type { ReactElement } from "react";
 import {
   FadeIn,
   FadeInStagger,
@@ -22,12 +21,7 @@ interface TestimonialProps {
   content: string;
 }
 
-/**
- * Individual testimonial card component
- */
-function TestimonialCard({
-  testimonial,
-}: { testimonial: TestimonialProps }): ReactElement {
+function TestimonialCard({ testimonial }: { testimonial: TestimonialProps }) {
   return (
     <Card variant="testimonial">
       <div className="px-6 py-8">
@@ -54,10 +48,7 @@ function TestimonialCard({
   );
 }
 
-/**
- * Testimonials section with user feedback
- */
-export default function Testimonials(): ReactElement {
+export default function Testimonials() {
   // Testimonials data
   const testimonials: TestimonialProps[] = [
     {

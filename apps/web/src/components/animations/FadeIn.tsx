@@ -19,9 +19,6 @@ export interface FadeInProps {
   className?: string;
 }
 
-/**
- * Component that smoothly fades in when it becomes visible in the viewport
- */
 export function FadeIn({
   children,
   delay = 0,
@@ -70,9 +67,6 @@ export function FadeIn({
   );
 }
 
-/**
- * Variant for staggered animations of multiple children
- */
 export function FadeInStagger({
   children,
   delay = 0,
@@ -108,9 +102,6 @@ export function FadeInStagger({
   );
 }
 
-/**
- * Animation variants that can be used with motion components
- */
 export const fadeVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: (delay = 0) => ({

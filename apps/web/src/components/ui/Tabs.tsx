@@ -54,7 +54,7 @@ export function Tabs({
   contentClassName = "",
   onChange,
   animated = true,
-}: TabsProps): ReactElement {
+}: TabsProps) {
   // Find default tab ID or use first tab
   const initialTab =
     defaultTab || ((items.length > 0 ? items[0]?.id : "") as string);

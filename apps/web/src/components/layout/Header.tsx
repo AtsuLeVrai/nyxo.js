@@ -8,9 +8,6 @@ import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/Button";
 import { DISCORD_LINK, GITHUB_REPO, NAV_LINKS } from "~/utils/constants";
 
-/**
- * Header component with navigation and responsive mobile menu
- */
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

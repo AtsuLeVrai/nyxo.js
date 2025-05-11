@@ -32,9 +32,6 @@ export interface BadgeProps {
   onClick?: () => void;
 }
 
-/**
- * Badge component for displaying status indicators, labels, or counts
- */
 export function Badge({
   children,
   variant = "primary",
@@ -44,7 +41,7 @@ export function Badge({
   animated = false,
   pill = true,
   onClick,
-}: BadgeProps): ReactElement {
+}: BadgeProps) {
   // Define variant styles
   const variantStyles: Record<BadgeVariant, string> = {
     primary: "border-primary-500/20 bg-primary-500/10 text-primary-400",

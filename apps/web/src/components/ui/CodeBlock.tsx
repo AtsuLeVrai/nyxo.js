@@ -1134,7 +1134,7 @@ function tokenizeCode(code: string, language: ProgrammingLanguage): Token[][] {
 /**
  * Render a token with appropriate styling
  */
-function renderToken(token: Token, key: string): ReactElement {
+function renderToken(token: Token, key: string) {
   const tokenStyles: Record<TokenType, string> = {
     keyword: "text-primary-400", // Keywords in primary color
     string: "text-green-400", // Strings in green
@@ -1203,7 +1203,7 @@ export function CodeBlock({
   fileName,
   highlightedLines = [],
   tabs,
-}: CodeBlockProps): ReactElement {
+}: CodeBlockProps) {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);

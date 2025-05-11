@@ -1,4 +1,4 @@
-import type { Locale } from "../enums/index.js";
+import type { LocaleValues } from "../enums/index.js";
 import type { Snowflake } from "../markdown/index.js";
 import type { ApplicationIntegrationType } from "./application.entity.js";
 import type { ChannelType } from "./channel.entity.js";
@@ -175,7 +175,7 @@ export interface ApplicationCommandOptionChoiceEntity {
    * Localization dictionary for the name field.
    * Values follow the same restrictions as name.
    */
-  name_localizations?: Record<Locale, string> | null;
+  name_localizations?: Partial<Record<LocaleValues, string>> | null;
 
   /**
    * Value for the choice.
@@ -208,7 +208,7 @@ export interface ApplicationCommandOptionEntity {
    * Localization dictionary for the name field.
    * Values follow the same restrictions as name.
    */
-  name_localizations?: Record<Locale, string> | null;
+  name_localizations?: Partial<Record<LocaleValues, string>> | null;
 
   /**
    * 1-100 character description.
@@ -220,7 +220,7 @@ export interface ApplicationCommandOptionEntity {
    * Localization dictionary for the description field.
    * Values follow the same restrictions as description.
    */
-  description_localizations?: Record<Locale, string> | null;
+  description_localizations?: Partial<Record<LocaleValues, string>> | null;
 
   /**
    * Whether this option is required.
@@ -624,7 +624,7 @@ export interface ApplicationCommandEntity {
    * Localization dictionary for the name field.
    * Values follow the same restrictions as name.
    */
-  name_localizations?: Record<Locale, string> | null;
+  name_localizations?: Partial<Record<LocaleValues, string>> | null;
 
   /**
    * Description for CHAT_INPUT commands, 1-100 characters.
@@ -636,7 +636,7 @@ export interface ApplicationCommandEntity {
    * Localization dictionary for the description field.
    * Values follow the same restrictions as description.
    */
-  description_localizations?: Record<Locale, string> | null;
+  description_localizations?: Partial<Record<LocaleValues, string>> | null;
 
   /**
    * Set of permissions represented as a bit set.

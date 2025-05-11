@@ -25,9 +25,6 @@ interface CardProps {
   onClick?: () => void;
 }
 
-/**
- * Card component for displaying content in a styled container
- */
 export function Card({
   children,
   variant = "default",
@@ -35,7 +32,7 @@ export function Card({
   animate = true,
   className = "",
   onClick,
-}: CardProps): ReactElement {
+}: CardProps) {
   // Base styles for all cards
   const baseStyles = "rounded-lg overflow-hidden";
 

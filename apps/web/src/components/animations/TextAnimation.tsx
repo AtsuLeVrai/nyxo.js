@@ -12,9 +12,6 @@ export interface AnimatedTextProps {
   delay?: number;
 }
 
-/**
- * Animates text letter by letter with a staggered effect
- */
 export function AnimatedText({
   text,
   className = "",
@@ -91,9 +88,6 @@ export interface HighlightTextProps {
   highlightClassName?: string;
 }
 
-/**
- * Highlights specific words in text
- */
 export function HighlightText({
   children,
   highlights,

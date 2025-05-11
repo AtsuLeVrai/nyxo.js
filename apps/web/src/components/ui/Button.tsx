@@ -49,9 +49,6 @@ export interface ButtonProps {
   animated?: boolean;
 }
 
-/**
- * Button component that supports multiple variants and can act as a link
- */
 export function Button({
   children,
   href,
@@ -68,7 +65,7 @@ export function Button({
   loading = false,
   rounded = "default",
   animated = true,
-}: ButtonProps): ReactElement {
+}: ButtonProps) {
   // Define base styles based on variant
   const variantStyles: Record<ButtonVariant, string> = {
     primary:

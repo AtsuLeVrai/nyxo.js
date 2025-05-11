@@ -7,9 +7,6 @@ import { AnimatedText } from "~/components/animations/TextAnimation";
 import { Badge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
 
-/**
- * Hero section component for the landing page
- */
 export default function Hero() {
   return (
     <div className="relative overflow-hidden pt-16">

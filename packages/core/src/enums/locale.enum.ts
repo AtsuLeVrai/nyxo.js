@@ -203,3 +203,15 @@ export enum Locale {
    */
   Korean = "ko",
 }
+
+/**
+ * Represents the string literal values of the Locale enum.
+ *
+ * This type extracts the right-hand side values (e.g., 'fr', 'en', 'es') from the Locale enum,
+ * allowing them to be used directly as keys in localization mappings and other objects.
+ *
+ * @remarks
+ * When working with localization systems, it's often preferable to use the actual locale codes
+ * (like 'fr' or 'en-US') as object keys rather than the enum member names (Locale.French).
+ */
+export type LocaleValues = (typeof Locale)[keyof typeof Locale];
