@@ -148,6 +148,10 @@ client.on("messageCreate", async (message) => {
 
     await message.reply(options);
   }
+
+  if (message.content === "!test") {
+    console.log(client.gateway.isReady, client.gateway.readyState);
+  }
 });
 
 client.on("rateLimitExpire", (request) => {
