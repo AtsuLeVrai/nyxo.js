@@ -12,6 +12,7 @@ export default defineConfig({
       "**/seeds/**",
       "**/dist/**",
       "**/.turbo/**",
+      "**/.next/**",
     ],
     testTimeout: 10000,
     hookTimeout: 15000,
@@ -28,6 +29,7 @@ export default defineConfig({
         "**/node_modules/**",
         "**/dist/**",
         "**/.turbo/**",
+        "**/.next/**",
       ],
       all: true,
       thresholds: {
