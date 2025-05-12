@@ -52,7 +52,7 @@
   },
   "overrides": [
     {
-      "include": ["apps/bot/**"],
+      "include": ["apps/bot"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -63,7 +63,7 @@
       }
     },
     {
-      "include": ["apps/web/**"],
+      "include": ["apps/web"],
       "linter": {
         "rules": {
           "all": false,
