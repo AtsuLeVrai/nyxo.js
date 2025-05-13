@@ -4,7 +4,7 @@
   "version": "0.0.2",
   "description": "Type-Safe Discord REST API Client with Advanced Rate Limiting",
   "readme": "README.md",
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.cjs",

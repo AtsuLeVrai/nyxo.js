@@ -4,7 +4,7 @@
   "private": true,
   "description": "Bot made with Nyxo.js",
   "readme": "README.md",
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22"

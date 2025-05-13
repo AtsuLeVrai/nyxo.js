@@ -59,10 +59,10 @@ importers:
         version: 3.1.0(acorn@8.14.1)
       '@mdx-js/react':
         specifier: ^3.1.0
-        version: 3.1.0(@types/react@19.1.3)(react@19.1.0)
+        version: 3.1.0(@types/react@19.1.4)(react@19.1.0)
       '@next/mdx':
         specifier: ^15.3.2
-        version: 15.3.2(@mdx-js/loader@3.1.0(acorn@8.14.1))(@mdx-js/react@3.1.0(@types/react@19.1.3)(react@19.1.0))
+        version: 15.3.2(@mdx-js/loader@3.1.0(acorn@8.14.1))(@mdx-js/react@3.1.0(@types/react@19.1.4)(react@19.1.0))
       framer-motion:
         specifier: ^12.11.0
         version: 12.11.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -95,11 +95,11 @@ importers:
         specifier: ^20.17.46
         version: 20.17.46
       '@types/react':
-        specifier: ^19.1.3
-        version: 19.1.3
-      '@types/react-dom':
         specifier: ^19.1.4
-        version: 19.1.4(@types/react@19.1.3)
+        version: 19.1.4
+      '@types/react-dom':
+        specifier: ^19.1.5
+        version: 19.1.5(@types/react@19.1.4)
       postcss:
         specifier: ^8.5.3
         version: 8.5.3
@@ -347,8 +347,8 @@ importers:
   scripts:
     devDependencies:
       '@microsoft/api-extractor':
-        specifier: ^7.52.7
-        version: 7.52.7(@types/node@22.15.17)
+        specifier: ^7.52.8
+        version: 7.52.8(@types/node@22.15.17)
       '@rollup/plugin-commonjs':
         specifier: ^28.0.3
         version: 28.0.3(rollup@4.40.2)
@@ -863,8 +863,8 @@ packages:
   '@microsoft/api-extractor-model@7.30.6':
     resolution: {integrity: sha512-znmFn69wf/AIrwHya3fxX6uB5etSIn6vg4Q4RB/tb5VDDs1rqREc+AvMC/p19MUN13CZ7+V/8pkYPTj7q8tftg==}
 
-  '@microsoft/api-extractor@7.52.7':
-    resolution: {integrity: sha512-YLdPS644MfbLJt4hArP1WcldcaEUBh9wnFjcLEcQnVG0AMznbLh2sdE0F5Wr+w6+Lyp5/XUPvRAg3sYGSP3GCw==}
+  '@microsoft/api-extractor@7.52.8':
+    resolution: {integrity: sha512-cszYIcjiNscDoMB1CIKZ3My61+JOhpERGlGr54i6bocvGLrcL/wo9o+RNXMBrb7XgLtKaizZWUpqRduQuHQLdg==}
     hasBin: true
 
   '@microsoft/tsdoc-config@0.17.1':
@@ -1434,13 +1434,13 @@ packages:
   '@types/node@22.15.17':
     resolution: {integrity: sha512-wIX2aSZL5FE+MR0JlvF87BNVrtFWf6AE6rxSE9X7OwnVvoyCQjpzSRJ+M87se/4QCkCiebQAqrJ0y6fwIyi7nw==}
 
-  '@types/react-dom@19.1.4':
-    resolution: {integrity: sha512-WxYAszDYgsMV31OVyoG4jbAgJI1Gw0Xq9V19zwhy6+hUUJlJIdZ3r/cbdmTqFv++SktQkZ/X+46yGFxp5XJBEg==}
+  '@types/react-dom@19.1.5':
+    resolution: {integrity: sha512-CMCjrWucUBZvohgZxkjd6S9h0nZxXjzus6yDfUb+xLxYM7VvjKNH1tQrE9GWLql1XoOP4/Ds3bwFqShHUYraGg==}
     peerDependencies:
       '@types/react': ^19.0.0
 
-  '@types/react@19.1.3':
-    resolution: {integrity: sha512-dLWQ+Z0CkIvK1J8+wrDPwGxEYFA4RAyHoZPxHVGspYmFVnwGSNT24cGIhFJrtfRnWVuW8X7NO52gCXmhkVUWGQ==}
+  '@types/react@19.1.4':
+    resolution: {integrity: sha512-EB1yiiYdvySuIITtD5lhW4yPyJ31RkJkkDw794LaQYrxCSaQV/47y5o1FMC4zF9ZyjUjzJMZwbovEnT5yHTW6g==}
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -1630,8 +1630,8 @@ packages:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
     engines: {node: '>= 0.4'}
 
-  caniuse-lite@1.0.30001717:
-    resolution: {integrity: sha512-auPpttCq6BDEG8ZAuHJIplGw6GODhjw+/11e7IjpnYCxZcW/ONgPs0KVBJ0d1bY3e2+7PRe5RCLyP+PfwVgkYw==}
+  caniuse-lite@1.0.30001718:
+    resolution: {integrity: sha512-AflseV1ahcSunK53NfEs9gFWgOEmzr0f+kaMFA4xiLZlr9Hzt7HxcSpIFcnNCUkz6R6dWKa54rUz3HUmI3nVcw==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -2843,8 +2843,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  semver@7.7.1:
-    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
+  semver@7.7.2:
+    resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -3379,7 +3379,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/assemble-release-plan@6.0.8':
     dependencies:
@@ -3388,7 +3388,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.2
       '@changesets/types': 6.1.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/changelog-git@0.2.1':
     dependencies:
@@ -3421,7 +3421,7 @@ snapshots:
       package-manager-detector: 0.2.11
       picocolors: 1.1.1
       resolve-from: 5.0.0
-      semver: 7.7.1
+      semver: 7.7.2
       spawndamnit: 3.0.1
       term-size: 2.2.1
 
@@ -3444,7 +3444,7 @@ snapshots:
       '@changesets/types': 6.1.0
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.1
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/get-release-plan@4.0.12':
     dependencies:
@@ -3524,7 +3524,7 @@ snapshots:
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
-      semver: 7.7.1
+      semver: 7.7.2
       tar: 6.2.1
     transitivePeerDependencies:
       - encoding
@@ -3797,10 +3797,10 @@ snapshots:
       - acorn
       - supports-color
 
-  '@mdx-js/react@3.1.0(@types/react@19.1.3)(react@19.1.0)':
+  '@mdx-js/react@3.1.0(@types/react@19.1.4)(react@19.1.0)':
     dependencies:
       '@types/mdx': 2.0.13
-      '@types/react': 19.1.3
+      '@types/react': 19.1.4
       react: 19.1.0
 
   '@microsoft/api-extractor-model@7.30.6(@types/node@22.15.17)':
@@ -3811,7 +3811,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.7(@types/node@22.15.17)':
+  '@microsoft/api-extractor@7.52.8(@types/node@22.15.17)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.6(@types/node@22.15.17)
       '@microsoft/tsdoc': 0.15.1
@@ -3847,12 +3847,12 @@ snapshots:
 
   '@next/env@15.3.2': {}
 
-  '@next/mdx@15.3.2(@mdx-js/loader@3.1.0(acorn@8.14.1))(@mdx-js/react@3.1.0(@types/react@19.1.3)(react@19.1.0))':
+  '@next/mdx@15.3.2(@mdx-js/loader@3.1.0(acorn@8.14.1))(@mdx-js/react@3.1.0(@types/react@19.1.4)(react@19.1.0))':
     dependencies:
       source-map: 0.7.4
     optionalDependencies:
       '@mdx-js/loader': 3.1.0(acorn@8.14.1)
-      '@mdx-js/react': 3.1.0(@types/react@19.1.3)(react@19.1.0)
+      '@mdx-js/react': 3.1.0(@types/react@19.1.4)(react@19.1.0)
 
   '@next/swc-darwin-arm64@15.3.2':
     optional: true
@@ -4300,11 +4300,11 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/react-dom@19.1.4(@types/react@19.1.3)':
+  '@types/react-dom@19.1.5(@types/react@19.1.4)':
     dependencies:
-      '@types/react': 19.1.3
+      '@types/react': 19.1.4
 
-  '@types/react@19.1.3':
+  '@types/react@19.1.4':
     dependencies:
       csstype: 3.1.3
 
@@ -4502,7 +4502,7 @@ snapshots:
       es-errors: 1.3.0
       function-bind: 1.1.2
 
-  caniuse-lite@1.0.30001717: {}
+  caniuse-lite@1.0.30001718: {}
 
   ccount@2.0.1: {}
 
@@ -5219,7 +5219,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   markdown-extensions@2.0.0: {}
 
@@ -5609,7 +5609,7 @@ snapshots:
       '@swc/counter': 0.1.3
       '@swc/helpers': 0.5.15
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001717
+      caniuse-lite: 1.0.30001718
       postcss: 8.4.31
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
@@ -5926,7 +5926,7 @@ snapshots:
     dependencies:
       lru-cache: 6.0.0
 
-  semver@7.7.1: {}
+  semver@7.7.2: {}
 
   set-blocking@2.0.0: {}
 
@@ -5934,7 +5934,7 @@ snapshots:
     dependencies:
       color: 4.2.3
       detect-libc: 2.0.4
-      semver: 7.7.1
+      semver: 7.7.2
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.34.1
       '@img/sharp-darwin-x64': 0.34.1

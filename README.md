@@ -49,4 +49,4 @@ today’s developers.
 
 ## 📜 License
 
-Nyxo.js is [AGPL-3.0 licensed](LICENSE). Commercial licensing available upon request.
+Nyxo.js is [Apache 2.0 licensed](LICENSE).

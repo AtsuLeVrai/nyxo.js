@@ -35,4 +35,4 @@ complex data structures.
 
 ## 📜 License
 
-This package is [AGPL-3.0 licensed](LICENSE).
+This package is [Apache 2.0 licensed](LICENSE).

@@ -34,4 +34,4 @@ This package includes type-safe, fluent API builders for creating embeds, button
 
 ## 📜 License
 
-This package is [AGPL-3.0 licensed](LICENSE).
+This package is [Apache 2.0 licensed](LICENSE).

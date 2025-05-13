@@ -4,7 +4,7 @@
   "version": "0.0.2",
   "description": "High-performance in-memory data store for Discord bots using enhanced Map functionality.",
   "readme": "README.md",
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.cjs",
