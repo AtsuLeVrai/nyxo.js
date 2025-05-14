@@ -46,7 +46,7 @@
     "@nyxojs/core": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^22.15.17",
+    "@types/node": "^22.15.18",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3"
   }

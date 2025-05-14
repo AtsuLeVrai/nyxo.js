@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nyxojs/bot",
   "private": true,
-  "description": "Bot made with Nyxo.js",
+  "description": "Discord bot template built with Nyxo.js framework.",
   "readme": "README.md",
   "license": "Apache-2.0",
   "type": "module",
@@ -22,16 +22,17 @@
     "url": "https://github.com/AtsuLeVrai"
   },
   "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.json",
     "dev": "tsx watch src/index.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "nyxo.js": "workspace:^",
-    "zod": "^3.24.4"
+    "nyxo.js": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^22.15.17",
+    "@types/node": "^22.15.18",
     "dotenv": "^16.5.0",
+    "rimraf": "^6.0.1",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
