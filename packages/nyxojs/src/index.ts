@@ -6,7 +6,6 @@ export * from "@nyxojs/core";
 export * from "@nyxojs/gateway";
 export * from "@nyxojs/rest";
 export * from "@nyxojs/store";
-export * from "@nyxojs/voice";
 
 export * from "./bases/index.js";
 export * from "./classes/index.js";

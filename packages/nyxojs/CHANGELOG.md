@@ -1,5 +1,11 @@
 # nyxo.js
 
+## 0.1.1
+
+### Patch Changes
+
+- Patch @nyxojs/voice import (not prepared)
+
 ## 0.1.0
 
 ### Minor Changes
