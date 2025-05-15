@@ -10,7 +10,7 @@ import {
   Sparkles,
   Type,
 } from "lucide-react";
-import type { ReactElement, ReactNode } from "react";
+import React, { type ReactElement, type ReactNode } from "react";
 import {
   FadeIn,
   FadeInStagger,
@@ -113,8 +113,32 @@ export default function Features(): ReactElement {
   ];
 
   return (
-    <div className="bg-dark-700 py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="relative bg-dark-800 py-24">
+      {/* Unified backgrounds */}
+      <div className="absolute inset-0">
+        {/* Common grid pattern */}
+        <div className="absolute inset-0 bg-[center_top_-1px] bg-grid-pattern opacity-5" />
+
+        {/* Subtle gradients */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(138,75,255,0.05),transparent_70%)]" />
+
+        {/* Luminous orb - positioned differently from Hero */}
+        <motion.div
+          className="absolute right-0 bottom-0 h-[40vh] w-[40vh] rounded-full bg-primary-500/10"
+          style={{ filter: "blur(80px)" }}
+          animate={{
+            x: ["25%", "-5%", "25%"],
+            y: ["25%", "-10%", "25%"],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <div className="text-center">
             <Badge icon={<Sparkles size={14} />} variant="primary">

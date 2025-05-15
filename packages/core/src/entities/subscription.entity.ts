@@ -1,4 +1,4 @@
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 
 /**
  * Represents the possible statuses of a subscription in Discord.

@@ -1,4 +1,4 @@
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 import type { ApplicationEntity } from "./application.entity.js";
 import type {
   AnyThreadBasedChannelEntity,

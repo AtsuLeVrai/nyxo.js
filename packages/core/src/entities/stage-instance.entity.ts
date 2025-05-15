@@ -1,4 +1,4 @@
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 
 /**
  * Represents the privacy level options for a Stage instance.

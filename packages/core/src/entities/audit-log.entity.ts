@@ -1,4 +1,4 @@
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 import type { AnyApplicationCommandEntity } from "./application-commands.entity.js";
 import type { AutoModerationRuleEntity } from "./auto-moderation.entity.js";
 import type { AnyThreadBasedChannelEntity } from "./channel.entity.js";

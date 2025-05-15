@@ -1,4 +1,30 @@
 /**
+ * Represents a validated Discord Snowflake ID.
+ *
+ * A Snowflake is a unique 64-bit identifier used by Discord,
+ * encoded as a string of numeric characters.
+ * Structure: `(timestamp_ms - DISCORD_EPOCH) << 22 | worker_id << 17 | process_id << 12 | increment`
+ *
+ * Validation rules:
+ * - Must contain only digits
+ * - Must be at least 17 digits long
+ * - The extracted timestamp must be valid (after Discord epoch, before now + 1h)
+ *
+ * @remarks
+ * The internal structure allows for extracting information such as creation timestamp,
+ * worker ID, process ID, and increment.
+ *
+ * @example
+ * ```typescript
+ * // Example of a valid Discord Snowflake
+ * const messageId: Snowflake = "175928847299117063";
+ * ```
+ *
+ * @see {@link https://discord.com/developers/docs/reference#snowflakes}
+ */
+export type Snowflake = string;
+
+/**
  * Represents a deconstructed Discord Snowflake ID with its component parts.
  *
  * Discord utilizes Twitter's snowflake format for uniquely identifiable descriptors (IDs).

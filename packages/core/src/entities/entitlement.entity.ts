@@ -1,4 +1,4 @@
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 
 /**
  * Entitlement types representing how a user or guild acquired access to a premium offering.

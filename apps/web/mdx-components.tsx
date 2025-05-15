@@ -14,7 +14,7 @@ import {
 import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
 import type React from "react";
-import { cloneElement, createElement, isValidElement } from "react";
+import { createElement, isValidElement } from "react";
 import { FadeIn } from "~/components/animations/FadeIn";
 import { Badge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";

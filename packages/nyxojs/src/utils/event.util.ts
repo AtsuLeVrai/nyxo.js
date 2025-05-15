@@ -247,7 +247,7 @@ function handleBulkUpdate<T extends BaseClass<any>>(
  */
 export const GatewayDispatchEventMap = new Map<
   keyof GatewayReceiveEvents,
-  Omit<EventMapping, "gatewayEvent">
+  EventMapping
 >([
   [
     "READY",

@@ -1,5 +1,5 @@
 import type { OAuth2Scope } from "../enums/index.js";
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 import type { GuildEntity } from "./guild.entity.js";
 import type { TeamEntity } from "./team.entity.js";
 import type { UserEntity } from "./user.entity.js";

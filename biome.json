@@ -8,7 +8,12 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["**/dist/**", "**/node_modules/**", "**/*.d.ts", "docs/**"]
+    "ignore": [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/*.d.ts",
+      "./docs/discord-api-docs/**"
+    ]
   },
   "formatter": {
     "enabled": true,

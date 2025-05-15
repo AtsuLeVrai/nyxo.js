@@ -1,5 +1,5 @@
 import type { LocaleValues } from "../enums/index.js";
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 import type { ApplicationIntegrationType } from "./application.entity.js";
 import type { ChannelType } from "./channel.entity.js";
 import type { InteractionContextType } from "./interaction.entity.js";

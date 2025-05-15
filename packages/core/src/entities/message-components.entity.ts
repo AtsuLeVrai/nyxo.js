@@ -1,4 +1,4 @@
-import type { Snowflake } from "../markdown/index.js";
+import type { Snowflake } from "../utils/index.js";
 import type { ChannelType } from "./channel.entity.js";
 import type { EmojiEntity } from "./emoji.entity.js";
 

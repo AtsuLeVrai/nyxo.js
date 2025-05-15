@@ -1,3 +1,4 @@
+import { sleep } from "nyxo.js";
 import { defineEvent } from "../../types/index.js";
 
 /**
@@ -13,7 +14,7 @@ import { defineEvent } from "../../types/index.js";
 export default defineEvent({
   name: "ready",
   once: true, // This event should only be handled once per connection
-  execute: (client, ready) => {
+  execute: async (client, ready) => {
     // Log successful connection with bot user tag
     console.log(`[CLIENT] Ready! Logged in as ${client.user.tag}`);
 
@@ -24,11 +25,6 @@ export default defineEvent({
     const heapTotal =
       Math.round((memoryUsage.heapTotal / mbDivisor) * 100) / 100;
     const heapUsed = Math.round((memoryUsage.heapUsed / mbDivisor) * 100) / 100;
-
-    console.log(
-      `[MEMORY] RSS: ${rss} MB | Heap Total: ${heapTotal} MB | Heap Used: ${heapUsed} MB`,
-    );
-
     // Log additional connection information if available
     if (ready.totalShards > 1) {
       console.log(
@@ -38,5 +34,13 @@ export default defineEvent({
 
     // Log the number of guilds the bot is in
     console.log(`[GUILDS] Connected to ${client.cache.guilds.size} guilds`);
+
+    // Wait for 10 seconds before logging memory usage statistics
+    await sleep(10000);
+
+    // Log memory usage statistics
+    console.log(
+      `[MEMORY] RSS: ${rss} MB | Heap Total: ${heapTotal} MB | Heap Used: ${heapUsed} MB`,
+    );
   },
 });

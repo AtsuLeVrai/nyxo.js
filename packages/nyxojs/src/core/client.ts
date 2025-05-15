@@ -164,14 +164,14 @@ export class Client extends EventEmitter<ClientEvents> {
   /**
    * Disconnects from the Discord Gateway and cleans up resources
    *
-   * @returns Promise that resolves when disconnected successfully
+   * @returns Resolves when the client is fully destroyed
    */
-  async destroy(): Promise<void> {
+  destroy(): void {
     // Destroy gateway connection
     this.#gateway.destroy();
 
     // Clean up REST resources
-    await this.#rest.destroy();
+    this.#rest.destroy();
 
     // Clear caches
     this.#cache.destroy();

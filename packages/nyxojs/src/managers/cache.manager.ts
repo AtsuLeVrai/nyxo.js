@@ -35,141 +35,267 @@ import type {
  */
 export const CacheOptions = z.object({
   /**
-   * This cache stores User objects retrieved from the API.
-   * Users are referenced by many other entities and are frequently accessed.
+   * This cache stores Application objects for Discord applications.
    */
-  users: z.boolean().default(true),
-
-  /**
-   * This cache stores all types of channel objects (text, voice, category, etc.).
-   * Channels are frequently accessed for permission checks and message operations.
-   */
-  channels: z.boolean().default(true),
-
-  /**
-   * This cache stores Guild objects which contain core information about Discord servers.
-   * Guilds are central entities referenced by many operations.
-   */
-  guilds: z.boolean().default(true),
-
-  /**
-   * This cache stores custom emoji objects from guilds.
-   * Consider setting a lower limit if emoji usage is minimal in your bot.
-   */
-  emojis: z.boolean().default(true),
-
-  /**
-   * This cache stores entitlement objects for premium features and subscriptions.
-   * Only relevant for bots that interact with Discord's monetization features.
-   */
-  entitlements: z.boolean().default(true),
-
-  /**
-   * This cache stores subscription objects for premium features.
-   * Only relevant for bots that interact with Discord's subscription systems.
-   */
-  subscriptions: z.boolean().default(true),
-
-  /**
-   * This cache stores Message objects which are often needed for context
-   * in commands, reactions, and other user interactions.
-   */
-  messages: z.boolean().default(true),
+  applications: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Application objects.
+     * If set to false, the cache will not store Application objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
 
   /**
    * This cache stores AutoModerationRule objects which define automated content filtering.
    * Only relevant for bots that interact with or manage Discord's auto moderation system.
    */
-  autoModerationRules: z.boolean().default(true),
-
-  /**
-   * This cache stores StageInstance objects for Discord's Stage channels.
-   * Only relevant for bots that interact with Stage channels.
-   */
-  stageInstances: z.boolean().default(true),
-
-  /**
-   * This cache stores ThreadMember objects for threads in guilds.
-   * Only relevant for bots that interact with threads.
-   */
-  members: z.boolean().default(true),
-
-  /**
-   * This cache stores Role objects which define permissions and settings for users in guilds.
-   * Only relevant for bots that interact with roles or permissions.
-   */
-  roles: z.boolean().default(true),
-
-  /**
-   * This cache stores GuildScheduledEvent objects which define events in guilds.
-   * Only relevant for bots that interact with scheduled events.
-   */
-  scheduledEvents: z.boolean().default(true),
-
-  /**
-   * This cache stores Sticker objects which are custom stickers used in messages.
-   * Only relevant for bots that interact with stickers.
-   */
-  stickers: z.boolean().default(true),
-
-  /**
-   * This cache stores Presence objects which represent the online status and activity of users.
-   * Only relevant for bots that interact with user presence updates.
-   */
-  presences: z.boolean().default(true),
-
-  /**
-   * This cache stores Integration objects which represent third-party integrations in guilds.
-   * Only relevant for bots that interact with integrations.
-   */
-  integrations: z.boolean().default(true),
-
-  /**
-   * This cache stores Soundboard objects which represent soundboard sounds in guilds.
-   * Only relevant for bots that interact with soundboards.
-   */
-  soundboards: z.boolean().default(true),
-
-  /**
-   * This cache stores ThreadMember objects which represent members of threads in guilds.
-   * Only relevant for bots that interact with threads.
-   */
-  threadMembers: z.boolean().default(true),
-
-  /**
-   * This cache stores Invite objects which represent server invites.
-   * Only relevant for bots that interact with invites.
-   */
-  invites: z.boolean().default(true),
-
-  /**
-   * This cache stores Webhook objects which represent webhooks in guilds.
-   * Only relevant for bots that interact with webhooks.
-   */
-  webhooks: z.boolean().default(true),
+  autoModerationRules: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for AutoModeration objects.
+     * If set to false, the cache will not store AutoModeration objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
 
   /**
    * This cache stores Ban objects which represent user bans in guilds.
    * Only relevant for bots that interact with bans.
    */
-  bans: z.boolean().default(true),
+  bans: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Ban objects.
+     * If set to false, the cache will not store Ban objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
 
   /**
-   * This cache stores Application objects which represent applications in guilds.
-   * Only relevant for bots that interact with applications.
+   * This cache stores all types of channel objects (text, voice, category, etc.).
+   * Channels are frequently accessed for permission checks and message operations.
    */
-  applications: z.boolean().default(true),
+  channels: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Channel objects.
+     * If set to false, the cache will not store Channel objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores custom emoji objects from guilds.
+   * Consider setting a lower limit if emoji usage is minimal in your bot.
+   */
+  emojis: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Emoji objects.
+     * If set to false, the cache will not store Emoji objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores entitlement objects for premium features and subscriptions.
+   * Only relevant for bots that interact with Discord's monetization features.
+   */
+  entitlements: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Entitlement objects.
+     * If set to false, the cache will not store Entitlement objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Guild objects which contain core information about Discord servers.
+   * Guilds are central entities referenced by many operations.
+   */
+  guilds: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Guild objects.
+     * If set to false, the cache will not store Guild objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Integration objects which represent third-party integrations in guilds.
+   * Only relevant for bots that interact with integrations.
+   */
+  integrations: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Integration objects.
+     * If set to false, the cache will not store Integration objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Invite objects which represent server invites.
+   * Only relevant for bots that interact with invites.
+   */
+  invites: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Invite objects.
+     * If set to false, the cache will not store Invite objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores ThreadMember objects for threads in guilds.
+   * Only relevant for bots that interact with threads.
+   */
+  members: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for GuildMember objects.
+     * If set to false, the cache will not store GuildMember objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Message objects which are often needed for context
+   * in commands, reactions, and other user interactions.
+   */
+  messages: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Message objects.
+     * If set to false, the cache will not store Message objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Presence objects which represent the online status and activity of users.
+   * Only relevant for bots that interact with user presence updates.
+   */
+  presences: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Presence objects.
+     * If set to false, the cache will not store Presence objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Role objects which define permissions and settings for users in guilds.
+   * Only relevant for bots that interact with roles or permissions.
+   */
+  roles: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Role objects.
+     * If set to false, the cache will not store Role objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores GuildScheduledEvent objects which define events in guilds.
+   * Only relevant for bots that interact with scheduled events.
+   */
+  scheduledEvents: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for ScheduledEvent objects.
+     * If set to false, the cache will not store ScheduledEvent objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Soundboard objects which represent soundboard sounds in guilds.
+   * Only relevant for bots that interact with soundboards.
+   */
+  soundboards: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for SoundboardSound objects.
+     * If set to false, the cache will not store SoundboardSound objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores StageInstance objects for Discord's Stage channels.
+   * Only relevant for bots that interact with Stage channels.
+   */
+  stageInstances: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for StageInstance objects.
+     * If set to false, the cache will not store StageInstance objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores Sticker objects which are custom stickers used in messages.
+   * Only relevant for bots that interact with stickers.
+   */
+  stickers: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Sticker objects.
+     * If set to false, the cache will not store Sticker objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores subscription objects for premium features.
+   * Only relevant for bots that interact with Discord's subscription systems.
+   */
+  subscriptions: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Subscription objects.
+     * If set to false, the cache will not store Subscription objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores ThreadMember objects which represent members of threads in guilds.
+   * Only relevant for bots that interact with threads.
+   */
+  threadMembers: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for ThreadMember objects.
+     * If set to false, the cache will not store ThreadMember objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
+
+  /**
+   * This cache stores User objects retrieved from the API.
+   * Users are referenced by many other entities and are frequently accessed.
+   */
+  users: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for User objects.
+     * If set to false, the cache will not store User objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
 
   /**
    * This cache stores voice state objects which represent the voice status of users in guilds.
    * Only relevant for bots that interact with voice channels.
    */
-  voiceStates: z.boolean().default(true),
+  voiceStates: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for VoiceState objects.
+     * If set to false, the cache will not store VoiceState objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
 
   /**
-   * Storage options for the cache.
+   * This cache stores Webhook objects which represent webhooks in guilds.
+   * Only relevant for bots that interact with webhooks.
    */
-  ...StoreOptions.shape,
+  webhooks: StoreOptions.extend({
+    /**
+     * Whether to enable the cache for Webhook objects.
+     * If set to false, the cache will not store Webhook objects.
+     */
+    enable: z.boolean().default(true),
+  }).default({}),
 });
 
 export type CacheOptions = z.infer<typeof CacheOptions>;
@@ -178,54 +304,55 @@ export type CacheOptions = z.infer<typeof CacheOptions>;
  * Type representing all possible entity types in the cache
  */
 export type CacheEntityType =
-  | "users"
-  | "guilds"
-  | "channels"
-  | "members"
-  | "roles"
-  | "messages"
-  | "emojis"
-  | "stageInstances"
-  | "scheduledEvents"
-  | "autoModerationRules"
-  | "stickers"
-  | "entitlements"
-  | "subscriptions"
-  | "presences"
-  | "integrations"
-  | "soundboards"
-  | "threadMembers"
-  | "invites"
-  | "webhooks"
-  | "bans"
   | "applications"
-  | "voiceStates";
+  | "autoModerationRules"
+  | "bans"
+  | "channels"
+  | "emojis"
+  | "entitlements"
+  | "guilds"
+  | "integrations"
+  | "invites"
+  | "members"
+  | "messages"
+  | "presences"
+  | "roles"
+  | "scheduledEvents"
+  | "soundboards"
+  | "stageInstances"
+  | "stickers"
+  | "subscriptions"
+  | "threadMembers"
+  | "users"
+  | "voiceStates"
+  | "webhooks";
 
 /**
  * Union type of all cacheable entities
  */
 export type CacheableEntity =
-  | User
-  | Guild
-  | AnyChannel
-  | GuildMember
-  | Role
-  | Message
-  | Emoji
-  | StageInstance
-  | ScheduledEvent
+  | Application
   | AutoModeration
-  | Sticker
-  | Entitlement
-  | Subscription
-  | PresenceEntity
-  | Integration
-  | SoundboardSound
-  | ThreadMember
-  | Invite
-  | Webhook
+  | AnyChannel
   | Ban
-  | Application;
+  | Emoji
+  | Entitlement
+  | Guild
+  | GuildMember
+  | Integration
+  | Invite
+  | Message
+  | PresenceEntity
+  | Role
+  | ScheduledEvent
+  | SoundboardSound
+  | StageInstance
+  | Sticker
+  | Subscription
+  | ThreadMember
+  | User
+  | VoiceState
+  | Webhook;
 
 /**
  * A comprehensive cache management system for Discord entities.
@@ -385,46 +512,46 @@ export class CacheManager {
    */
   constructor(options: CacheOptions) {
     // Initialize all stores, but only enable them based on options
-    this.users = this.#createStore<User>("users", options);
-    this.guilds = this.#createStore<Guild>("guilds", options);
-    this.channels = this.#createStore<AnyChannel>("channels", options);
-    this.members = this.#createStore<GuildMember>("members", options);
-    this.roles = this.#createStore<Role>("roles", options);
-    this.messages = this.#createStore<Message>("messages", options);
-    this.emojis = this.#createStore<Emoji>("emojis", options);
-    this.stageInstances = this.#createStore<StageInstance>(
-      "stageInstances",
-      options,
-    );
-    this.scheduledEvents = this.#createStore<ScheduledEvent>(
-      "scheduledEvents",
-      options,
-    );
+    this.applications = this.#createStore<Application>("applications", options);
     this.autoModerationRules = this.#createStore<AutoModeration>(
       "autoModerationRules",
       options,
     );
-    this.stickers = this.#createStore<Sticker>("stickers", options);
+    this.bans = this.#createStore<Ban>("bans", options);
+    this.channels = this.#createStore<AnyChannel>("channels", options);
+    this.emojis = this.#createStore<Emoji>("emojis", options);
     this.entitlements = this.#createStore<Entitlement>("entitlements", options);
-    this.subscriptions = this.#createStore<Subscription>(
-      "subscriptions",
+    this.guilds = this.#createStore<Guild>("guilds", options);
+    this.integrations = this.#createStore<Integration>("integrations", options);
+    this.invites = this.#createStore<Invite>("invites", options);
+    this.members = this.#createStore<GuildMember>("members", options);
+    this.messages = this.#createStore<Message>("messages", options);
+    this.presences = this.#createStore<PresenceEntity>("presences", options);
+    this.roles = this.#createStore<Role>("roles", options);
+    this.scheduledEvents = this.#createStore<ScheduledEvent>(
+      "scheduledEvents",
       options,
     );
-    this.presences = this.#createStore<PresenceEntity>("presences", options);
-    this.integrations = this.#createStore<Integration>("integrations", options);
     this.soundboards = this.#createStore<SoundboardSound>(
       "soundboards",
+      options,
+    );
+    this.stageInstances = this.#createStore<StageInstance>(
+      "stageInstances",
+      options,
+    );
+    this.stickers = this.#createStore<Sticker>("stickers", options);
+    this.subscriptions = this.#createStore<Subscription>(
+      "subscriptions",
       options,
     );
     this.threadMembers = this.#createStore<ThreadMember>(
       "threadMembers",
       options,
     );
-    this.invites = this.#createStore<Invite>("invites", options);
-    this.webhooks = this.#createStore<Webhook>("webhooks", options);
-    this.bans = this.#createStore<Ban>("bans", options);
-    this.applications = this.#createStore<Application>("applications", options);
+    this.users = this.#createStore<User>("users", options);
     this.voiceStates = this.#createStore<VoiceState>("voiceStates", options);
+    this.webhooks = this.#createStore<Webhook>("webhooks", options);
   }
 
   /**
@@ -489,12 +616,15 @@ export class CacheManager {
     type: CacheEntityType,
     options: CacheOptions,
   ): Store<Snowflake, T> {
-    // Create store with default options if not enabled
-    const isEnabled = options[type];
+    // Check if the cache is enabled for this entity type
+    const isEnabled = options[type]?.enable ?? false;
 
+    // Create store options by extracting the configuration for this specific type
+    // and applying default values where appropriate
+    const typeOptions = options[type] || {};
     const storeOptions: StoreOptions = {
-      ...options,
-      maxSize: isEnabled ? options.maxSize : 0, // Set maxSize to 0 to effectively disable the cache
+      ...typeOptions,
+      maxSize: isEnabled ? typeOptions.maxSize : 0, // Set maxSize to 0 to effectively disable the cache
     };
 
     const store = new Store<Snowflake, T>(storeOptions);
