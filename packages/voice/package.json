@@ -27,7 +27,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/AtsuLeVrai/nyxo.js",
-    "directory": "packages/store"
+    "directory": "packages/voice"
   },
   "bugs": {
     "url": "https://github.com/AtsuLeVrai/nyxo.js/issues"
@@ -46,8 +46,8 @@
     "@discordjs/opus": "^0.10.0",
     "@nyxojs/core": "workspace:^",
     "@nyxojs/gateway": "workspace:^",
-    "@snazzah/davey": "^0.1.2",
     "@stablelib/xchacha20poly1305": "^2.0.1",
+    "eventemitter3": "^5.0.1",
     "prism-media": "^1.3.5",
     "ws": "^8.18.2",
     "zod": "^3.24.4",

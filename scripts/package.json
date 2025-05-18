@@ -27,7 +27,7 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "chalk": "^5.4.1",
     "pretty-bytes": "^6.1.1",
-    "rollup": "^4.40.2",
+    "rollup": "^4.41.0",
     "rollup-plugin-swc3": "^0.12.1",
     "typescript": "^5.8.3",
     "winston": "^3.17.0"
