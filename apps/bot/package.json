@@ -27,11 +27,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nyxojs/voice": "workspace:^",
     "nyxo.js": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^22.15.18",
+    "@types/node": "^22.15.19",
     "dotenv": "^16.5.0",
     "rimraf": "^6.0.1",
     "tsx": "^4.19.4",

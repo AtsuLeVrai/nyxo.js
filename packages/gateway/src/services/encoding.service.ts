@@ -1,6 +1,6 @@
 import { OptionalDeps } from "@nyxojs/core";
 import type erlpack from "erlpack";
-import { z } from "zod";
+import { z } from "zod/v4";
 import type { PayloadEntity } from "../types/index.js";
 
 /**

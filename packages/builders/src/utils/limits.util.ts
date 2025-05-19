@@ -68,6 +68,18 @@ export const COMPONENT_LIMITS = {
 
   /** Maximum length for text input placeholders */
   TEXT_INPUT_PLACEHOLDER: 100,
+
+  /** Maximum length for text display content */
+  TEXT_DISPLAY_LENGTH: 4000,
+
+  /** Maximum number of text components in a section */
+  SECTION_TEXT_COMPONENTS: 3,
+
+  /** Maximum number of items allowed in a media gallery */
+  GALLERY_ITEMS: 10,
+
+  /** Maximum number of components allowed in a container. */
+  CONTAINER_COMPONENTS: 10,
 } as const;
 
 /**

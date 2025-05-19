@@ -7,8 +7,7 @@ import {
 import type { Rest } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";
 import WebSocket from "ws";
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { z } from "zod/v4";
 import {
   HeartbeatManager,
   HeartbeatOptions,
@@ -65,7 +64,7 @@ export const GatewayOptions = z.object({
    */
   intents: z.union([
     z
-      .array(z.nativeEnum(GatewayIntentsBits))
+      .array(z.enum(GatewayIntentsBits))
       .transform((value) => Number(BitField.combine(value).valueOf())),
     z.number().int().positive(),
   ]),
@@ -139,14 +138,14 @@ export const GatewayOptions = z.object({
    *
    * @default {}
    */
-  heartbeat: HeartbeatOptions.default({}),
+  heartbeat: HeartbeatOptions.prefault({}),
 
   /**
    * Sharding configuration options
    *
    * @default {}
    */
-  shard: ShardOptions.default({}),
+  shard: ShardOptions.prefault({}),
 });
 
 export type GatewayOptions = z.infer<typeof GatewayOptions>;
@@ -291,8 +290,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       // Parse and validate the options using Zod schema
       this.#options = GatewayOptions.parse(options);
     } catch (error) {
-      // Convert Zod validation errors to more readable format
-      throw new Error(fromError(error).message);
+      if (error instanceof z.ZodError) {
+        // Convert Zod validation errors to more readable format
+        throw new Error(z.prettifyError(error));
+      }
+
+      // If validation fails, rethrow the error with additional context
+      throw error;
     }
 
     // Initialize dependencies
@@ -1426,6 +1430,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     const index = Math.min(this.#reconnectCount - 1, schedule.length - 1);
 
     // Use the last value in the schedule if we've exceeded the schedule length
-    return schedule[index] ?? schedule.at(-1) ?? 1000;
+    return Math.min(
+      (schedule[index] ?? schedule.at(-1) ?? 1000) *
+        (0.8 + Math.random() * 0.4),
+      30000,
+    );
   }
 }

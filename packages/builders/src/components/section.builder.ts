@@ -1,21 +1,28 @@
 import {
-  type ButtonEntity,
   ComponentType,
   type SectionEntity,
   type TextDisplayEntity,
-  type ThumbnailEntity,
 } from "@nyxojs/core";
+import { z } from "zod/v4";
+import {
+  type ButtonSchema,
+  SectionAccessorySchema,
+  SectionSchema,
+  TextDisplaySchema,
+  type ThumbnailSchema,
+} from "../schemas/index.js";
 
 /**
- * Builder for section components.
+ * A builder for creating Discord section components.
  *
  * Sections allow you to join text contextually with an accessory component.
+ * This class follows the builder pattern with validation through Zod schemas
+ * to ensure all elements meet Discord's requirements.
  */
 export class SectionBuilder {
   /** The internal section data being constructed */
-  readonly #data: Partial<SectionEntity> = {
+  readonly #data: Partial<z.input<typeof SectionSchema>> = {
     type: ComponentType.Section,
-    components: [],
   };
 
   /**
@@ -23,13 +30,15 @@ export class SectionBuilder {
    *
    * @param data - Optional initial data to populate the section with
    */
-  constructor(data?: Partial<SectionEntity>) {
+  constructor(data?: z.input<typeof SectionSchema>) {
     if (data) {
-      this.#data = {
-        ...data,
-        type: ComponentType.Section, // Ensure type is set correctly
-        components: data.components ? [...data.components] : [],
-      };
+      // Validate the initial data
+      const result = SectionSchema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.#data = result.data;
     }
   }
 
@@ -39,7 +48,7 @@ export class SectionBuilder {
    * @param data - The section data to use
    * @returns A new SectionBuilder instance with the provided data
    */
-  static from(data: Partial<SectionEntity>): SectionBuilder {
+  static from(data: z.input<typeof SectionSchema>): SectionBuilder {
     return new SectionBuilder(data);
   }
 
@@ -48,9 +57,9 @@ export class SectionBuilder {
    *
    * @param component - The text display component to add
    * @returns The section builder instance for method chaining
-   * @throws Error if adding the component would exceed the maximum of three text components
+   * @throws Error if adding the component would exceed the maximum allowed text components
    */
-  addComponent(component: TextDisplayEntity): this {
+  addComponent(component: z.input<typeof TextDisplaySchema>): this {
     if (!this.#data.components) {
       this.#data.components = [];
     }
@@ -63,8 +72,70 @@ export class SectionBuilder {
       throw new Error("Section components must be TextDisplay components");
     }
 
+    const result = TextDisplaySchema.safeParse(component);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
     this.#data.components.push(component);
     return this;
+  }
+
+  /**
+   * Adds multiple text display components to the section.
+   *
+   * @param components - The text display components to add
+   * @returns The section builder instance for method chaining
+   * @throws Error if adding the components would exceed the maximum allowed text components
+   */
+  addComponents(...components: z.input<typeof TextDisplaySchema>[]): this {
+    for (const component of components) {
+      this.addComponent(component);
+    }
+    return this;
+  }
+
+  /**
+   * Sets all text display components for the section, replacing any existing components.
+   *
+   * @param components - The text display components to set
+   * @returns The section builder instance for method chaining
+   * @throws Error if too many components are provided
+   */
+  setComponents(components: z.input<typeof TextDisplaySchema>[]): this {
+    if (components.length > 3) {
+      throw new Error("Sections cannot have more than three text components");
+    }
+
+    if (components.length === 0) {
+      throw new Error("Sections must have at least one text component");
+    }
+
+    // Empty the components array
+    this.#data.components = [];
+
+    // Add each component individually to ensure validation
+    for (const component of components) {
+      this.addComponent(component);
+    }
+
+    return this;
+  }
+
+  /**
+   * Adds a text component with the given content.
+   * This is a convenience method that creates a TextDisplay component internally.
+   *
+   * @param content - The text content to add
+   * @returns The section builder instance for method chaining
+   */
+  addText(content: string): this {
+    const textComponent = {
+      type: ComponentType.TextDisplay,
+      content,
+    } as TextDisplayEntity;
+
+    return this.addComponent(textComponent);
   }
 
   /**
@@ -73,7 +144,9 @@ export class SectionBuilder {
    * @param accessory - The accessory component (thumbnail or button)
    * @returns The section builder instance for method chaining
    */
-  setAccessory(accessory: ThumbnailEntity | ButtonEntity): this {
+  setAccessory(
+    accessory: z.input<typeof ThumbnailSchema> | z.input<typeof ButtonSchema>,
+  ): this {
     if (
       accessory.type !== ComponentType.Thumbnail &&
       accessory.type !== ComponentType.Button
@@ -83,7 +156,28 @@ export class SectionBuilder {
       );
     }
 
+    const result = SectionAccessorySchema.safeParse(accessory);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
     this.#data.accessory = accessory;
+    return this;
+  }
+
+  /**
+   * Sets the optional identifier for the component.
+   *
+   * @param id - The identifier to set
+   * @returns The section builder instance for method chaining
+   */
+  setId(id: number): this {
+    const result = SectionSchema.shape.id.safeParse(id);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.id = result.data;
     return this;
   }
 
@@ -94,15 +188,13 @@ export class SectionBuilder {
    * @throws Error if the section configuration is invalid
    */
   build(): SectionEntity {
-    if (!this.#data.components || this.#data.components.length === 0) {
-      throw new Error("Section must have at least one text component");
+    // Validate the entire section
+    const result = SectionSchema.safeParse(this.#data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (!this.#data.accessory) {
-      throw new Error("Section must have an accessory component");
-    }
-
-    return this.#data as SectionEntity;
+    return result.data;
   }
 
   /**
@@ -110,7 +202,7 @@ export class SectionBuilder {
    *
    * @returns A read-only copy of the section data
    */
-  toJson(): Readonly<Partial<SectionEntity>> {
+  toJson(): Readonly<Partial<z.input<typeof SectionSchema>>> {
     return Object.freeze({ ...this.#data });
   }
 }

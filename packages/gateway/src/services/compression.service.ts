@@ -1,7 +1,7 @@
 import { OptionalDeps } from "@nyxojs/core";
 import type fzstd from "fzstd";
 import type zlibSync from "zlib-sync";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 /**
  * Marker buffer used to identify the end of a zlib compressed stream.

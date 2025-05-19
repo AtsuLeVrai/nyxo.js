@@ -60,7 +60,7 @@ import type {
   WidgetStyle,
 } from "@nyxojs/rest";
 import { type AnimatedImageOptions, Cdn } from "@nyxojs/rest";
-import type { z } from "zod";
+import type { z } from "zod/v4";
 import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased, PropsToCamel } from "../types/index.js";
 import { channelFactory } from "../utils/index.js";

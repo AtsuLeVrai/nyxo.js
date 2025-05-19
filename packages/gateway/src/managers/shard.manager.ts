@@ -1,5 +1,5 @@
 import { type Snowflake, sleep } from "@nyxojs/core";
-import { z } from "zod";
+import { z } from "zod/v4";
 import type { Gateway } from "../core/index.js";
 
 /**

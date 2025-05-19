@@ -1,5 +1,5 @@
 import { sleep } from "@nyxojs/core";
-import { z } from "zod";
+import { z } from "zod/v4";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, HttpResponse, RetryEvent } from "../types/index.js";
 

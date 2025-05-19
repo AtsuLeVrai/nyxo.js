@@ -45,8 +45,10 @@ export default defineEvent({
       await command.execute(client, interaction);
     } catch (error) {
       // Log error and inform user if command execution fails
-      console.error(`[ERROR] Error executing ${interaction.commandName}`);
-      console.error(error);
+      console.error(
+        `[ERROR] Error executing ${interaction.commandName}`,
+        error,
+      );
 
       const replyOptions = {
         content: "There was an error while executing this command!",

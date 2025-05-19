@@ -1,6 +1,5 @@
 import type { Snowflake } from "@nyxojs/core";
-import { z } from "zod";
-import { fromZodError } from "zod-validation-error";
+import { z } from "zod/v4";
 
 /**
  * Type representing a complete URL to the Discord CDN.
@@ -559,7 +558,7 @@ function validateWithZod<T extends z.ZodType>(
 ): z.infer<T> {
   const result = schema.safeParse(input);
   if (!result.success) {
-    throw new Error(fromZodError(result.error).message);
+    throw new Error(z.prettifyError(result.error));
   }
 
   return result.data;

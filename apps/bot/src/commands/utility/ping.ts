@@ -1,4 +1,12 @@
-import { Colors, EmbedBuilder } from "nyxo.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  type ButtonEntity,
+  ButtonStyle,
+  Colors,
+  EmbedBuilder,
+  SlashCommandBuilder,
+} from "nyxo.js";
 import { defineSlashCommand } from "../../types/index.js";
 
 /**
@@ -13,10 +21,10 @@ import { defineSlashCommand } from "../../types/index.js";
  * potential connection issues.
  */
 export default defineSlashCommand({
-  data: {
-    name: "ping",
-    description: "Displays bot and API latency information",
-  },
+  data: new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Check the bot's latency and API response time")
+    .build(),
   execute: async (client, interaction) => {
     // Record timestamp when command is received
     const start = Date.now();
@@ -27,7 +35,7 @@ export default defineSlashCommand({
     // Calculate various latency metrics
     const end = Date.now();
     const roundtripLatency = end - start;
-    const wsHeartbeat = client.gateway.latency ?? 0; // Websocket heartbeat latency
+    const wsHeartbeat = client.gateway.latency; // Websocket heartbeat latency
 
     // Create an aesthetic embed with the latency information
     const embed = new EmbedBuilder()
@@ -52,14 +60,28 @@ export default defineSlashCommand({
         },
       )
       .setFooter({
-        text: `Nyxo.js | Shard ${client.gateway.shard.totalShards ?? 0}`,
+        text: `Nyxo.js | Shard ${client.gateway.shard.totalShards}`,
       })
       .setTimestamp()
+      .build();
+
+    // Create a button to refresh the latency information
+    const button = new ButtonBuilder()
+      .setCustomId("ping_refresh")
+      .setLabel("Refresh")
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji("🔄")
+      .build();
+
+    // Create an action row with the button
+    const actionRow = new ActionRowBuilder<ButtonEntity>()
+      .addComponents(button)
       .build();
 
     // Edit the original response with the embed and button
     await interaction.createFollowup({
       embeds: [embed],
+      components: [actionRow],
     });
   },
 });

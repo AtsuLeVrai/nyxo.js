@@ -1,7 +1,6 @@
 import { deepmerge } from "deepmerge-ts";
 import { cloneDeep, get, unset } from "lodash-es";
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { z } from "zod/v4";
 import { LruTracker } from "./lru-tracker.js";
 
 /**
@@ -226,7 +225,13 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     try {
       this.#options = StoreOptions.parse(actualOptions);
     } catch (error) {
-      throw new Error(fromError(error).message);
+      if (error instanceof z.ZodError) {
+        // Convert Zod validation errors to more readable format
+        throw new Error(z.prettifyError(error));
+      }
+
+      // If validation fails, rethrow the error with additional context
+      throw error;
     }
 
     // Set up LRU tracker if using LRU eviction strategy

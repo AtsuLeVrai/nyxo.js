@@ -1,8 +1,7 @@
 import { Gateway, GatewayOptions } from "@nyxojs/gateway";
 import { Rest, RestOptions } from "@nyxojs/rest";
 import { EventEmitter } from "eventemitter3";
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { z } from "zod/v4";
 import type { User } from "../classes/index.js";
 import { CacheManager, CacheOptions } from "../managers/index.js";
 import type { ClientEvents } from "../types/index.js";
@@ -25,7 +24,7 @@ export const ClientOptions = z.object({
    *
    * @see {@link CacheOptions} for detailed cache configuration.
    */
-  cache: CacheOptions.default({}),
+  cache: CacheOptions.prefault({}),
 
   // REST and Gateway options are included from their respective definitions
   ...RestOptions.shape,
@@ -87,7 +86,13 @@ export class Client extends EventEmitter<ClientEvents> {
     try {
       this.#options = ClientOptions.parse(options);
     } catch (error) {
-      throw new Error(fromError(error).message);
+      if (error instanceof z.ZodError) {
+        // Convert Zod validation errors to more readable format
+        throw new Error(z.prettifyError(error));
+      }
+
+      // If validation fails, rethrow the error with additional context
+      throw error;
     }
 
     this.#rest = new Rest(this.#options);
@@ -166,12 +171,12 @@ export class Client extends EventEmitter<ClientEvents> {
    *
    * @returns Resolves when the client is fully destroyed
    */
-  destroy(): void {
+  async destroy(): Promise<void> {
     // Destroy gateway connection
     this.#gateway.destroy();
 
     // Clean up REST resources
-    this.#rest.destroy();
+    await this.#rest.destroy();
 
     // Clear caches
     this.#cache.destroy();

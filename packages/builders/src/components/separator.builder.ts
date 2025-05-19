@@ -1,13 +1,19 @@
 import { ComponentType, type SeparatorEntity } from "@nyxojs/core";
+import { z } from "zod/v4";
+import { SeparatorSchema } from "../schemas/index.js";
 
 /**
- * Builder for separator components.
+ * A builder for creating Discord separator components.
  *
  * Separators add vertical padding and visual division between other components.
+ * They help structure content by creating visual breaks in the layout.
+ *
+ * This class follows the builder pattern with validation through Zod schemas
+ * to ensure all elements meet Discord's requirements.
  */
 export class SeparatorBuilder {
   /** The internal separator data being constructed */
-  readonly #data: Partial<SeparatorEntity> = {
+  readonly #data: z.input<typeof SeparatorSchema> = {
     type: ComponentType.Separator,
   };
 
@@ -16,12 +22,15 @@ export class SeparatorBuilder {
    *
    * @param data - Optional initial data to populate the separator with
    */
-  constructor(data?: Partial<SeparatorEntity>) {
+  constructor(data?: z.input<typeof SeparatorSchema>) {
     if (data) {
-      this.#data = {
-        ...data,
-        type: ComponentType.Separator, // Ensure type is set correctly
-      };
+      // Validate the initial data
+      const result = SeparatorSchema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.#data = result.data;
     }
   }
 
@@ -31,7 +40,7 @@ export class SeparatorBuilder {
    * @param data - The separator data to use
    * @returns A new SeparatorBuilder instance with the provided data
    */
-  static from(data: Partial<SeparatorEntity>): SeparatorBuilder {
+  static from(data: z.input<typeof SeparatorSchema>): SeparatorBuilder {
     return new SeparatorBuilder(data);
   }
 
@@ -54,11 +63,12 @@ export class SeparatorBuilder {
    * @throws Error if spacing is not 1 or 2
    */
   setSpacing(spacing: 1 | 2): this {
-    if (spacing !== 1 && spacing !== 2) {
-      throw new Error("Separator spacing must be 1 or 2");
+    const result = SeparatorSchema.shape.spacing.safeParse(spacing);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    this.#data.spacing = spacing;
+    this.#data.spacing = result.data;
     return this;
   }
 
@@ -69,7 +79,12 @@ export class SeparatorBuilder {
    * @returns The separator builder instance for method chaining
    */
   setId(id: number): this {
-    this.#data.id = id;
+    const result = SeparatorSchema.shape.id.safeParse(id);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.id = result.data;
     return this;
   }
 
@@ -77,9 +92,16 @@ export class SeparatorBuilder {
    * Builds the final separator entity object.
    *
    * @returns The complete separator entity
+   * @throws Error if the separator configuration is invalid
    */
   build(): SeparatorEntity {
-    return this.#data as SeparatorEntity;
+    // Validate the entire separator
+    const result = SeparatorSchema.safeParse(this.#data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    return result.data;
   }
 
   /**
@@ -87,7 +109,7 @@ export class SeparatorBuilder {
    *
    * @returns A read-only copy of the separator data
    */
-  toJson(): Readonly<Partial<SeparatorEntity>> {
+  toJson(): Readonly<z.input<typeof SeparatorSchema>> {
     return Object.freeze({ ...this.#data });
   }
 }

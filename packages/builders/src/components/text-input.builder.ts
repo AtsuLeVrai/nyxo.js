@@ -3,16 +3,19 @@ import {
   type TextInputEntity,
   type TextInputStyle,
 } from "@nyxojs/core";
-import { COMPONENT_LIMITS } from "../utils/index.js";
+import { z } from "zod/v4";
+import { TextInputSchema } from "../schemas/index.js";
 
 /**
- * Builder for text input components.
+ * A builder for creating Discord text input components.
  *
  * Text inputs are used in modals to collect text data from users.
+ * This class follows the builder pattern to create text input components with
+ * validation through Zod schemas to ensure all elements meet Discord's requirements.
  */
 export class TextInputBuilder {
   /** The internal text input data being constructed */
-  readonly #data: Partial<TextInputEntity> = {
+  readonly #data: Partial<z.input<typeof TextInputSchema>> = {
     type: ComponentType.TextInput,
   };
 
@@ -21,12 +24,15 @@ export class TextInputBuilder {
    *
    * @param data - Optional initial data to populate the text input with
    */
-  constructor(data?: Partial<TextInputEntity>) {
+  constructor(data?: z.input<typeof TextInputSchema>) {
     if (data) {
-      this.#data = {
-        ...data,
-        type: ComponentType.TextInput, // Ensure type is set correctly
-      };
+      // Validate the initial data
+      const result = TextInputSchema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.#data = result.data;
     }
   }
 
@@ -36,7 +42,7 @@ export class TextInputBuilder {
    * @param data - The text input data to use
    * @returns A new TextInputBuilder instance with the provided data
    */
-  static from(data: Partial<TextInputEntity>): TextInputBuilder {
+  static from(data: z.input<typeof TextInputSchema>): TextInputBuilder {
     return new TextInputBuilder(data);
   }
 
@@ -45,15 +51,14 @@ export class TextInputBuilder {
    *
    * @param customId - The custom ID to set (max 100 characters)
    * @returns The text input builder instance for method chaining
-   * @throws Error if customId exceeds 100 characters
    */
   setCustomId(customId: string): this {
-    if (customId.length > COMPONENT_LIMITS.CUSTOM_ID) {
-      throw new Error(
-        `Text input custom ID cannot exceed ${COMPONENT_LIMITS.CUSTOM_ID} characters`,
-      );
+    const result = TextInputSchema.shape.custom_id.safeParse(customId);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.custom_id = customId;
+
+    this.#data.custom_id = result.data;
     return this;
   }
 
@@ -64,7 +69,12 @@ export class TextInputBuilder {
    * @returns The text input builder instance for method chaining
    */
   setStyle(style: TextInputStyle): this {
-    this.#data.style = style;
+    const result = TextInputSchema.shape.style.safeParse(style);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.style = result.data;
     return this;
   }
 
@@ -73,15 +83,14 @@ export class TextInputBuilder {
    *
    * @param label - The label to set (max 45 characters)
    * @returns The text input builder instance for method chaining
-   * @throws Error if label exceeds 45 characters
    */
   setLabel(label: string): this {
-    if (label.length > COMPONENT_LIMITS.TEXT_INPUT_LABEL) {
-      throw new Error(
-        `Text input label cannot exceed ${COMPONENT_LIMITS.TEXT_INPUT_LABEL} characters`,
-      );
+    const result = TextInputSchema.shape.label.safeParse(label);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.label = label;
+
+    this.#data.label = result.data;
     return this;
   }
 
@@ -90,15 +99,22 @@ export class TextInputBuilder {
    *
    * @param minLength - The minimum length to set (0-4000)
    * @returns The text input builder instance for method chaining
-   * @throws Error if minLength is out of range
    */
   setMinLength(minLength: number): this {
-    if (minLength < 0 || minLength > COMPONENT_LIMITS.TEXT_INPUT_VALUE) {
-      throw new Error(
-        `Minimum length must be between 0 and ${COMPONENT_LIMITS.TEXT_INPUT_VALUE}`,
-      );
+    const result = TextInputSchema.shape.min_length.safeParse(minLength);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.min_length = minLength;
+
+    // Check if min_length would be greater than max_length
+    if (
+      this.#data.max_length !== undefined &&
+      minLength > this.#data.max_length
+    ) {
+      throw new Error("Minimum length cannot be greater than maximum length");
+    }
+
+    this.#data.min_length = result.data;
     return this;
   }
 
@@ -107,15 +123,22 @@ export class TextInputBuilder {
    *
    * @param maxLength - The maximum length to set (1-4000)
    * @returns The text input builder instance for method chaining
-   * @throws Error if maxLength is out of range
    */
   setMaxLength(maxLength: number): this {
-    if (maxLength < 1 || maxLength > COMPONENT_LIMITS.TEXT_INPUT_VALUE) {
-      throw new Error(
-        `Maximum length must be between 1 and ${COMPONENT_LIMITS.TEXT_INPUT_VALUE}`,
-      );
+    const result = TextInputSchema.shape.max_length.safeParse(maxLength);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.max_length = maxLength;
+
+    // Check if max_length would be less than min_length
+    if (
+      this.#data.min_length !== undefined &&
+      maxLength < this.#data.min_length
+    ) {
+      throw new Error("Maximum length cannot be less than minimum length");
+    }
+
+    this.#data.max_length = result.data;
     return this;
   }
 
@@ -135,15 +158,34 @@ export class TextInputBuilder {
    *
    * @param value - The value to set (max 4000 characters)
    * @returns The text input builder instance for method chaining
-   * @throws Error if value exceeds 4000 characters
    */
   setValue(value: string): this {
-    if (value.length > COMPONENT_LIMITS.TEXT_INPUT_VALUE) {
+    const result = TextInputSchema.shape.value.safeParse(value);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    // Check if value meets min_length requirement
+    if (
+      this.#data.min_length !== undefined &&
+      value.length < this.#data.min_length
+    ) {
       throw new Error(
-        `Text input value cannot exceed ${COMPONENT_LIMITS.TEXT_INPUT_VALUE} characters`,
+        `Value length (${value.length}) is less than minimum length (${this.#data.min_length})`,
       );
     }
-    this.#data.value = value;
+
+    // Check if value meets max_length requirement
+    if (
+      this.#data.max_length !== undefined &&
+      value.length > this.#data.max_length
+    ) {
+      throw new Error(
+        `Value length (${value.length}) exceeds maximum length (${this.#data.max_length})`,
+      );
+    }
+
+    this.#data.value = result.data;
     return this;
   }
 
@@ -152,15 +194,30 @@ export class TextInputBuilder {
    *
    * @param placeholder - The placeholder to set (max 100 characters)
    * @returns The text input builder instance for method chaining
-   * @throws Error if placeholder exceeds 100 characters
    */
   setPlaceholder(placeholder: string): this {
-    if (placeholder.length > COMPONENT_LIMITS.TEXT_INPUT_PLACEHOLDER) {
-      throw new Error(
-        `Text input placeholder cannot exceed ${COMPONENT_LIMITS.TEXT_INPUT_PLACEHOLDER} characters`,
-      );
+    const result = TextInputSchema.shape.placeholder.safeParse(placeholder);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.placeholder = placeholder;
+
+    this.#data.placeholder = result.data;
+    return this;
+  }
+
+  /**
+   * Sets the optional identifier for the component.
+   *
+   * @param id - The identifier to set
+   * @returns The text input builder instance for method chaining
+   */
+  setId(id: number): this {
+    const result = TextInputSchema.shape.id.safeParse(id);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.id = result.data;
     return this;
   }
 
@@ -171,27 +228,13 @@ export class TextInputBuilder {
    * @throws Error if the text input configuration is invalid
    */
   build(): TextInputEntity {
-    if (!this.#data.custom_id) {
-      throw new Error("Text input must have a custom ID");
+    // Validate the entire text input
+    const result = TextInputSchema.safeParse(this.#data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (!this.#data.style) {
-      throw new Error("Text input must have a style");
-    }
-
-    if (!this.#data.label) {
-      throw new Error("Text input must have a label");
-    }
-
-    if (
-      this.#data.min_length !== undefined &&
-      this.#data.max_length !== undefined &&
-      this.#data.min_length > this.#data.max_length
-    ) {
-      throw new Error("Minimum length cannot be greater than maximum length");
-    }
-
-    return this.#data as TextInputEntity;
+    return result.data as TextInputEntity;
   }
 
   /**
@@ -199,7 +242,7 @@ export class TextInputBuilder {
    *
    * @returns A read-only copy of the text input data
    */
-  toJson(): Readonly<Partial<TextInputEntity>> {
+  toJson(): Readonly<Partial<z.input<typeof TextInputSchema>>> {
     return Object.freeze({ ...this.#data });
   }
 }

@@ -1,9 +1,8 @@
 import { clearTimeout } from "node:timers";
 import { ApiVersion } from "@nyxojs/core";
 import { EventEmitter } from "eventemitter3";
-import { request } from "undici";
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import { Pool } from "undici";
+import { z } from "zod/v4";
 import { FileHandler } from "../handlers/index.js";
 import {
   RateLimitManager,
@@ -59,6 +58,110 @@ import type {
 export const DISCORD_USER_AGENT_REGEX = /^DiscordBot \((.+), ([0-9.]+)\)$/;
 
 /**
+ * Configuration options for the Undici connection pool.
+ * Controls HTTP connection behavior and performance characteristics.
+ */
+export const PoolOptions = z.object({
+  /**
+   * Maximum number of connections per origin in the pool.
+   * Higher values allow more concurrent requests but consume more resources.
+   * @default 10
+   */
+  connections: z.number().int().positive().default(10),
+
+  /**
+   * Maximum number of requests to pipeline per connection.
+   * Set to 1 to disable pipelining (recommended for compatibility).
+   * @default 1
+   */
+  pipelining: z.number().int().min(0).default(1),
+
+  /**
+   * Timeout for idle connections in milliseconds.
+   * Controls how long a connection stays open when inactive.
+   * @default 30000
+   */
+  keepAliveTimeout: z.number().int().min(1).default(30000),
+
+  /**
+   * Maximum timeout for idle connections in milliseconds.
+   * A ceiling value for keep-alive timeout negotiation.
+   * @default 600000
+   */
+  keepAliveMaxTimeout: z.number().int().min(1).default(600000),
+
+  /**
+   * Maximum size allowed for response headers in bytes.
+   * Helps prevent memory issues with abnormally large headers.
+   * @default 16384 (16KB)
+   */
+  maxHeaderSize: z.number().int().min(1).default(16384),
+
+  /**
+   * Maximum number of redirections to follow.
+   * Set to 0 to disable automatic redirections.
+   * @default 0
+   */
+  maxRedirections: z.number().int().min(0).default(0),
+
+  /**
+   * Maximum number of requests per client.
+   * Controls concurrency to prevent overwhelming the server.
+   * @default 10
+   */
+  maxRequestsPerClient: z.number().int().positive().default(10),
+
+  /**
+   * Maximum size allowed for response body in bytes.
+   * Helps prevent memory issues with extremely large responses.
+   * @default 0 (unlimited)
+   */
+  maxResponseSize: z.number().int().default(-1),
+
+  /**
+   * Time in milliseconds to wait for connection establishment.
+   * Separate from the overall request timeout.
+   * @default 30000 (30 seconds)
+   */
+  connectTimeout: z.number().int().positive().default(30000),
+
+  /**
+   * Time in milliseconds to wait for response headers to arrive.
+   * Helps identify slow servers or network issues.
+   * @default 30000 (30 seconds)
+   */
+  headersTimeout: z.number().int().positive().default(30000),
+
+  /**
+   * Time in milliseconds to wait for the response body to complete.
+   * Controls how long to wait for response data after headers arrive.
+   * @default 30000 (30 seconds)
+   */
+  bodyTimeout: z.number().int().positive().default(30000),
+
+  /**
+   * Automatically select between IPv4 and IPv6 address families.
+   * Improves connection reliability across different networks.
+   * @default false
+   */
+  autoSelectFamily: z.boolean().default(false),
+
+  /**
+   * Whether to strictly enforce Content-Length consistency.
+   * Improves security by validating response bodies match their declared size.
+   * @default true
+   */
+  strictContentLength: z.boolean().default(true),
+
+  /**
+   * Whether to allow HTTP/2 connections.
+   * HTTP/2 can improve performance for multiple concurrent requests.
+   * @default false
+   */
+  allowH2: z.boolean().default(false),
+});
+
+/**
  * Configuration options for the REST client.
  *
  * Controls authentication, API version, endpoints, and behavior
@@ -101,7 +204,7 @@ export const RestOptions = z.object({
    * Only change this if you're using a proxy or custom endpoint.
    * @default "https://discord.com"
    */
-  baseUrl: z.string().url().default("https://discord.com"),
+  baseUrl: z.url().default("https://discord.com"),
 
   /**
    * Timeout for API requests in milliseconds.
@@ -111,18 +214,25 @@ export const RestOptions = z.object({
   timeout: z.number().int().min(0).default(30000),
 
   /**
+   * HTTP connection pool configuration.
+   * Controls how HTTP connections are managed for performance.
+   * @default {}
+   */
+  pool: PoolOptions.prefault({}),
+
+  /**
    * Request retry configuration.
    * Controls how failed requests are retried.
    * @default {}
    */
-  retry: RetryOptions.default({}),
+  retry: RetryOptions.prefault({}),
 
   /**
    * Rate limit configuration.
    * Controls how rate limits are tracked and respected.
    * @default {}
    */
-  rateLimit: RateLimitOptions.default({}),
+  rateLimit: RateLimitOptions.prefault({}),
 });
 
 export type RestOptions = z.infer<typeof RestOptions>;
@@ -150,6 +260,13 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly #options: RestOptions;
 
   /**
+   * HTTP connection pool for making requests.
+   * Manages connections to Discord API for optimal performance.
+   * @private
+   */
+  readonly #pool: Pool;
+
+  /**
    * Rate limit handler.
    * Tracks and respects Discord's rate limits to prevent 429 errors.
    */
@@ -174,9 +291,19 @@ export class Rest extends EventEmitter<RestEvents> {
     try {
       this.#options = RestOptions.parse(options);
     } catch (error) {
-      throw new Error(fromError(error).message);
+      if (error instanceof z.ZodError) {
+        // Convert Zod validation errors to more readable format
+        throw new Error(z.prettifyError(error));
+      }
+
+      // If validation fails, rethrow the error with additional context
+      throw error;
     }
 
+    // Initialize the HTTP connection pool
+    this.#pool = new Pool(this.#options.baseUrl, this.#options.pool);
+
+    // Initialize managers for rate limiting and retries
     this.#rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
     this.#retry = new RetryManager(this, this.#options.retry);
   }
@@ -199,6 +326,16 @@ export class Rest extends EventEmitter<RestEvents> {
    */
   get options(): RestOptions {
     return this.#options;
+  }
+
+  /**
+   * Access to the underlying HTTP connection pool.
+   * Provides direct access to the Undici Pool for advanced usage.
+   *
+   * @returns The configured Undici Pool instance
+   */
+  get pool(): Pool {
+    return this.#pool;
   }
 
   /**
@@ -626,7 +763,8 @@ export class Rest extends EventEmitter<RestEvents> {
    * Closes the HTTP connection pool, destroys the rate limiter,
    * and removes all event listeners.
    */
-  destroy(): void {
+  async destroy(): Promise<void> {
+    await this.#pool.close();
     this.#rateLimiter.destroy();
     this.removeAllListeners();
   }
@@ -720,17 +858,15 @@ export class Rest extends EventEmitter<RestEvents> {
     const timeout = setTimeout(() => controller.abort(), this.#options.timeout);
 
     try {
-      // Build the full URL for the request
-      const url = new URL(
-        `/api/v${this.#options.version}/${preparedRequest.path.replace(/^\/+/, "")}`,
-        this.#options.baseUrl,
-      ).toString();
+      // Build the path for the request
+      const path = `/api/v${this.#options.version}/${preparedRequest.path.replace(/^\/+/, "")}`;
 
       // Build the request headers
       const headers = this.#buildRequestHeaders(preparedRequest);
 
-      // Send the HTTP request
-      const response = await request<T>(url, {
+      // Send the HTTP request using the pool
+      const response = await this.#pool.request<T>({
+        path,
         method: preparedRequest.method,
         body: preparedRequest.body,
         query: preparedRequest.query,

@@ -1,25 +1,25 @@
 import {
-  type ActionRowEntity,
   ComponentType,
   type ContainerEntity,
-  type FileEntity,
-  type MediaGalleryEntity,
-  type SectionEntity,
-  type SeparatorEntity,
   type TextDisplayEntity,
 } from "@nyxojs/core";
+import { z } from "zod/v4";
+import { ContainerComponentSchema, ContainerSchema } from "../schemas/index.js";
+import { type ColorResolvable, resolveColor } from "../utils/index.js";
 
 /**
- * Builder for container components.
+ * A builder for creating Discord container components.
  *
- * Containers are top-level layout components that hold up to 10 components
- * and are visually distinct with an optional customizable color bar.
+ * Containers are top-level layout components that hold up to 10 components and
+ * are visually distinct with an optional customizable color bar.
+ *
+ * This class follows the builder pattern with validation through Zod schemas
+ * to ensure all elements meet Discord's requirements.
  */
 export class ContainerBuilder {
   /** The internal container data being constructed */
-  readonly #data: Partial<ContainerEntity> = {
+  readonly #data: Partial<z.input<typeof ContainerSchema>> = {
     type: ComponentType.Container,
-    components: [],
   };
 
   /**
@@ -27,13 +27,15 @@ export class ContainerBuilder {
    *
    * @param data - Optional initial data to populate the container with
    */
-  constructor(data?: Partial<ContainerEntity>) {
+  constructor(data?: z.input<typeof ContainerSchema>) {
     if (data) {
-      this.#data = {
-        ...data,
-        type: ComponentType.Container, // Ensure type is set correctly
-        components: data.components ? [...data.components] : [],
-      };
+      // Validate the initial data
+      const result = ContainerSchema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.#data = result.data;
     }
   }
 
@@ -43,7 +45,7 @@ export class ContainerBuilder {
    * @param data - The container data to use
    * @returns A new ContainerBuilder instance with the provided data
    */
-  static from(data: Partial<ContainerEntity>): ContainerBuilder {
+  static from(data: z.input<typeof ContainerSchema>): ContainerBuilder {
     return new ContainerBuilder(data);
   }
 
@@ -55,15 +57,7 @@ export class ContainerBuilder {
    * @throws Error if adding the component would exceed the maximum of 10 components
    * or if the component type is not supported
    */
-  addComponent(
-    component:
-      | ActionRowEntity
-      | TextDisplayEntity
-      | SectionEntity
-      | MediaGalleryEntity
-      | SeparatorEntity
-      | FileEntity,
-  ): this {
+  addComponent(component: z.input<typeof ContainerComponentSchema>): this {
     if (!this.#data.components) {
       this.#data.components = [];
     }
@@ -86,6 +80,11 @@ export class ContainerBuilder {
       );
     }
 
+    const result = ContainerComponentSchema.safeParse(component);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
     this.#data.components.push(component);
     return this;
   }
@@ -98,14 +97,7 @@ export class ContainerBuilder {
    * @throws Error if adding the components would exceed the maximum of 10 components
    */
   addComponents(
-    ...components: (
-      | ActionRowEntity
-      | TextDisplayEntity
-      | SectionEntity
-      | MediaGalleryEntity
-      | SeparatorEntity
-      | FileEntity
-    )[]
+    ...components: z.input<typeof ContainerComponentSchema>[]
   ): this {
     for (const component of components) {
       this.addComponent(component);
@@ -120,18 +112,13 @@ export class ContainerBuilder {
    * @returns The container builder instance for method chaining
    * @throws Error if too many components are provided
    */
-  setComponents(
-    components: (
-      | ActionRowEntity
-      | TextDisplayEntity
-      | SectionEntity
-      | MediaGalleryEntity
-      | SeparatorEntity
-      | FileEntity
-    )[],
-  ): this {
+  setComponents(components: z.input<typeof ContainerComponentSchema>[]): this {
     if (components.length > 10) {
       throw new Error("Containers cannot have more than 10 components");
+    }
+
+    if (components.length === 0) {
+      throw new Error("Containers must have at least one component");
     }
 
     // Check if all component types are supported
@@ -150,23 +137,44 @@ export class ContainerBuilder {
       }
     }
 
+    // Validate all components in one go
+    const validationResult = z
+      .array(ContainerComponentSchema)
+      .safeParse(components);
+    if (!validationResult.success) {
+      throw new Error(z.prettifyError(validationResult.error));
+    }
+
     this.#data.components = [...components];
     return this;
   }
 
   /**
+   * Adds a text component with the given content.
+   * This is a convenience method that creates a TextDisplay component internally.
+   *
+   * @param content - The text content to add
+   * @returns The container builder instance for method chaining
+   */
+  addText(content: string): this {
+    const textComponent = {
+      type: ComponentType.TextDisplay,
+      content,
+    } as TextDisplayEntity;
+
+    return this.addComponent(textComponent);
+  }
+
+  /**
    * Sets the accent color for the container.
    *
-   * @param color - RGB color from 0x000000 to 0xFFFFFF
+   * @param color - RGB color from 0x000000 to 0xFFFFFF, hex string, or RGB array
    * @returns The container builder instance for method chaining
-   * @throws Error if color is out of range
+   * @throws Error if color is invalid
    */
-  setAccentColor(color: number): this {
-    if (color < 0 || color > 0xffffff) {
-      throw new Error("Accent color must be between 0x000000 and 0xFFFFFF");
-    }
-
-    this.#data.accent_color = color;
+  setAccentColor(color: ColorResolvable): this {
+    // Validate the color
+    this.#data.accent_color = resolveColor(color);
     return this;
   }
 
@@ -188,7 +196,12 @@ export class ContainerBuilder {
    * @returns The container builder instance for method chaining
    */
   setId(id: number): this {
-    this.#data.id = id;
+    const result = ContainerSchema.shape.id.safeParse(id);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.id = result.data;
     return this;
   }
 
@@ -199,15 +212,13 @@ export class ContainerBuilder {
    * @throws Error if the container configuration is invalid
    */
   build(): ContainerEntity {
-    if (!this.#data.components || this.#data.components.length === 0) {
-      throw new Error("Container must have at least one component");
+    // Validate the entire container
+    const result = ContainerSchema.safeParse(this.#data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (this.#data.components.length > 10) {
-      throw new Error("Containers cannot have more than 10 components");
-    }
-
-    return this.#data as ContainerEntity;
+    return result.data;
   }
 
   /**
@@ -215,7 +226,7 @@ export class ContainerBuilder {
    *
    * @returns A read-only copy of the container data
    */
-  toJson(): Readonly<Partial<ContainerEntity>> {
+  toJson(): Readonly<Partial<z.input<typeof ContainerSchema>>> {
     return Object.freeze({ ...this.#data });
   }
 }

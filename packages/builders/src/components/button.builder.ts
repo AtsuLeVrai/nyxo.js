@@ -2,22 +2,27 @@ import {
   type ButtonEntity,
   ButtonStyle,
   ComponentType,
-  type EmojiEntity,
+  type EmojiResolvable,
   type Snowflake,
+  resolveEmoji,
 } from "@nyxojs/core";
-import { COMPONENT_LIMITS } from "../utils/index.js";
+import { z } from "zod/v4";
+import { ButtonEmojiSchema, ButtonSchema } from "../schemas/index.js";
 
 /**
- * Builder for button components.
+ * A builder for creating Discord button components.
  *
- * Buttons are interactive elements that users can click to trigger an interaction.
- * There are different styles of buttons available, including link buttons that
- * navigate to URLs instead of sending interactions.
+ * This class follows the builder pattern to create fully-featured button components
+ * with validation through Zod schemas to ensure all elements meet Discord's requirements.
+ *
+ * Buttons can be used in messages to create interactive elements that users can click
+ * to trigger actions or navigate to URLs.
  */
 export class ButtonBuilder {
   /** The internal button data being constructed */
-  readonly #data: Partial<ButtonEntity> = {
+  readonly #data: z.input<typeof ButtonSchema> = {
     type: ComponentType.Button,
+    style: ButtonStyle.Primary,
   };
 
   /**
@@ -25,12 +30,15 @@ export class ButtonBuilder {
    *
    * @param data - Optional initial data to populate the button with
    */
-  constructor(data?: Partial<ButtonEntity>) {
+  constructor(data?: z.input<typeof ButtonSchema>) {
     if (data) {
-      this.#data = {
-        ...data,
-        type: ComponentType.Button, // Ensure type is set correctly
-      };
+      // Validate the initial data
+      const result = ButtonSchema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.#data = result.data;
     }
   }
 
@@ -40,18 +48,23 @@ export class ButtonBuilder {
    * @param data - The button data to use
    * @returns A new ButtonBuilder instance with the provided data
    */
-  static from(data: Partial<ButtonEntity>): ButtonBuilder {
+  static from(data: z.input<typeof ButtonSchema>): ButtonBuilder {
     return new ButtonBuilder(data);
   }
 
   /**
    * Sets the style of the button.
    *
-   * @param style - The button style to set
+   * @param style - The style of the button
    * @returns The button builder instance for method chaining
    */
   setStyle(style: ButtonStyle): this {
-    this.#data.style = style;
+    const result = ButtonSchema.shape.style.safeParse(style);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.style = result.data;
     return this;
   }
 
@@ -60,64 +73,14 @@ export class ButtonBuilder {
    *
    * @param label - The label to set (max 80 characters)
    * @returns The button builder instance for method chaining
-   * @throws Error if label exceeds 80 characters
    */
   setLabel(label: string): this {
-    if (label.length > COMPONENT_LIMITS.BUTTON_LABEL) {
-      throw new Error(
-        `Button label cannot exceed ${COMPONENT_LIMITS.BUTTON_LABEL} characters`,
-      );
-    }
-    this.#data.label = label;
-    return this;
-  }
-
-  /**
-   * Sets the custom ID of the button.
-   * Required for all button styles except Link.
-   *
-   * @param customId - The custom ID to set (max 100 characters)
-   * @returns The button builder instance for method chaining
-   * @throws Error if customId exceeds 100 characters
-   */
-  setCustomId(customId: string): this {
-    if (customId.length > COMPONENT_LIMITS.CUSTOM_ID) {
-      throw new Error(
-        `Button custom ID cannot exceed ${COMPONENT_LIMITS.CUSTOM_ID} characters`,
-      );
-    }
-    this.#data.custom_id = customId;
-    return this;
-  }
-
-  /**
-   * Sets the SKU ID for a premium button.
-   * Required for ButtonStyle.Premium buttons.
-   *
-   * @param skuId - The SKU ID to set
-   * @returns The button builder instance for method chaining
-   */
-  setSkuId(skuId: Snowflake): this {
-    this.#data.sku_id = skuId;
-    return this;
-  }
-
-  /**
-   * Sets the URL of the button.
-   * Required for Link style buttons.
-   *
-   * @param url - The URL to set
-   * @returns The button builder instance for method chaining
-   * @throws Error if URL is invalid
-   */
-  setUrl(url: string): this {
-    try {
-      new URL(url);
-    } catch {
-      throw new Error("Invalid URL format");
+    const result = ButtonSchema.shape.label.safeParse(label);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    this.#data.url = url;
+    this.#data.label = result.data;
     return this;
   }
 
@@ -127,8 +90,64 @@ export class ButtonBuilder {
    * @param emoji - The emoji to display on the button
    * @returns The button builder instance for method chaining
    */
-  setEmoji(emoji: Pick<EmojiEntity, "id" | "name" | "animated">): this {
-    this.#data.emoji = emoji;
+  setEmoji(emoji: EmojiResolvable): this {
+    const result = ButtonEmojiSchema.safeParse(resolveEmoji(emoji));
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.emoji = result.data;
+    return this;
+  }
+
+  /**
+   * Sets the custom ID of the button.
+   * Required for all button styles except Link and Premium.
+   *
+   * @param customId - The custom ID to set (max 100 characters)
+   * @returns The button builder instance for method chaining
+   */
+  setCustomId(customId: string): this {
+    const result = ButtonSchema.shape.custom_id.safeParse(customId);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.custom_id = result.data;
+    return this;
+  }
+
+  /**
+   * Sets the URL of the button.
+   * Required for Link style buttons.
+   *
+   * @param url - The URL to set
+   * @returns The button builder instance for method chaining
+   */
+  setUrl(url: string): this {
+    const result = ButtonSchema.shape.url.safeParse(url);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.url = result.data;
+    return this;
+  }
+
+  /**
+   * Sets the SKU ID for a premium button.
+   * Required for Premium style buttons.
+   *
+   * @param skuId - The SKU ID to set
+   * @returns The button builder instance for method chaining
+   */
+  setSkuId(skuId: Snowflake): this {
+    const result = ButtonSchema.shape.sku_id.safeParse(skuId);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.sku_id = result.data;
     return this;
   }
 
@@ -144,71 +163,35 @@ export class ButtonBuilder {
   }
 
   /**
+   * Sets the optional identifier for the component.
+   *
+   * @param id - The identifier to set
+   * @returns The button builder instance for method chaining
+   */
+  setId(id: number): this {
+    const result = ButtonSchema.shape.id.safeParse(id);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.id = result.data;
+    return this;
+  }
+
+  /**
    * Builds the final button entity object.
    *
    * @returns The complete button entity ready to be used in an action row
    * @throws Error if the button configuration is invalid
    */
   build(): ButtonEntity {
-    // Style is required for all buttons
-    if (this.#data.style === undefined) {
-      throw new Error("Button style is required");
+    // Validate the entire button
+    const result = ButtonSchema.safeParse(this.#data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    // Link buttons require URL and shouldn't have custom_id
-    if (this.#data.style === ButtonStyle.Link) {
-      if (!this.#data.url) {
-        throw new Error("Link buttons must have a URL");
-      }
-      if (this.#data.custom_id) {
-        throw new Error("Link buttons cannot have a custom ID");
-      }
-      if (this.#data.sku_id) {
-        throw new Error("Link buttons cannot have a SKU ID");
-      }
-    }
-    // Premium buttons require sku_id and shouldn't have custom_id
-    else if (this.#data.style === ButtonStyle.Premium) {
-      if (!this.#data.sku_id) {
-        throw new Error("Premium buttons must have a SKU ID");
-      }
-      if (this.#data.custom_id) {
-        throw new Error("Premium buttons cannot have a custom ID");
-      }
-      if (this.#data.url) {
-        throw new Error("Premium buttons cannot have a URL");
-      }
-      // Premium buttons shouldn't have label or emoji
-      if (this.#data.label) {
-        throw new Error("Premium buttons cannot have a label");
-      }
-      if (this.#data.emoji) {
-        throw new Error("Premium buttons cannot have an emoji");
-      }
-    }
-    // All other button styles require custom_id and shouldn't have url
-    else {
-      if (!this.#data.custom_id) {
-        throw new Error("Interaction buttons must have a custom ID");
-      }
-      if (this.#data.url) {
-        throw new Error("Interaction buttons cannot have a URL");
-      }
-      if (this.#data.sku_id) {
-        throw new Error("Only Premium buttons can have a SKU ID");
-      }
-    }
-
-    // Buttons should have either a label or an emoji or both (except Premium)
-    if (
-      this.#data.style !== ButtonStyle.Premium &&
-      !this.#data.label &&
-      !this.#data.emoji
-    ) {
-      throw new Error("Buttons must have either a label or an emoji or both");
-    }
-
-    return this.#data as ButtonEntity;
+    return result.data;
   }
 
   /**
@@ -216,7 +199,7 @@ export class ButtonBuilder {
    *
    * @returns A read-only copy of the button data
    */
-  toJson(): Readonly<Partial<ButtonEntity>> {
+  toJson(): Readonly<z.input<typeof ButtonSchema>> {
     return Object.freeze({ ...this.#data });
   }
 }

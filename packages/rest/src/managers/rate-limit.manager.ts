@@ -1,6 +1,6 @@
 import { sleep } from "@nyxojs/core";
 import { Store } from "@nyxojs/store";
-import { z } from "zod";
+import { z } from "zod/v4";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, RateLimitHitEvent } from "../types/index.js";
 

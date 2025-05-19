@@ -1,7 +1,7 @@
 import type { Snowflake } from "@nyxojs/core";
 import type { PresenceEntity } from "@nyxojs/gateway";
 import { Store, StoreOptions } from "@nyxojs/store";
-import { z } from "zod";
+import { z } from "zod/v4";
 import type {
   AnyChannel,
   Application,
@@ -43,7 +43,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Application objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores AutoModerationRule objects which define automated content filtering.
@@ -55,7 +55,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store AutoModeration objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Ban objects which represent user bans in guilds.
@@ -67,7 +67,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Ban objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores all types of channel objects (text, voice, category, etc.).
@@ -79,7 +79,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Channel objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores custom emoji objects from guilds.
@@ -91,7 +91,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Emoji objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores entitlement objects for premium features and subscriptions.
@@ -103,7 +103,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Entitlement objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Guild objects which contain core information about Discord servers.
@@ -115,7 +115,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Guild objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Integration objects which represent third-party integrations in guilds.
@@ -127,7 +127,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Integration objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Invite objects which represent server invites.
@@ -139,7 +139,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Invite objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores ThreadMember objects for threads in guilds.
@@ -151,7 +151,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store GuildMember objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Message objects which are often needed for context
@@ -163,7 +163,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Message objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Presence objects which represent the online status and activity of users.
@@ -175,7 +175,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Presence objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Role objects which define permissions and settings for users in guilds.
@@ -187,7 +187,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Role objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores GuildScheduledEvent objects which define events in guilds.
@@ -199,7 +199,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store ScheduledEvent objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Soundboard objects which represent soundboard sounds in guilds.
@@ -211,7 +211,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store SoundboardSound objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores StageInstance objects for Discord's Stage channels.
@@ -223,7 +223,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store StageInstance objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Sticker objects which are custom stickers used in messages.
@@ -235,7 +235,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Sticker objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores subscription objects for premium features.
@@ -247,7 +247,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Subscription objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores ThreadMember objects which represent members of threads in guilds.
@@ -259,7 +259,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store ThreadMember objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores User objects retrieved from the API.
@@ -271,7 +271,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store User objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores voice state objects which represent the voice status of users in guilds.
@@ -283,7 +283,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store VoiceState objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 
   /**
    * This cache stores Webhook objects which represent webhooks in guilds.
@@ -295,7 +295,7 @@ export const CacheOptions = z.object({
      * If set to false, the cache will not store Webhook objects.
      */
     enable: z.boolean().default(true),
-  }).default({}),
+  }).prefault({}),
 });
 
 export type CacheOptions = z.infer<typeof CacheOptions>;

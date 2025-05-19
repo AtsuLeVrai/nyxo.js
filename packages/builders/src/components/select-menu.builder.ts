@@ -1,9 +1,9 @@
 import {
   type AnySelectMenuEntity,
   type ChannelSelectMenuEntity,
-  type ChannelType,
+  ChannelType,
   ComponentType,
-  type EmojiEntity,
+  type EmojiResolvable,
   type MentionableSelectMenuEntity,
   type RoleSelectMenuEntity,
   type SelectMenuDefaultValueEntity,
@@ -11,7 +11,20 @@ import {
   type Snowflake,
   type StringSelectMenuEntity,
   type UserSelectMenuEntity,
+  resolveEmoji,
 } from "@nyxojs/core";
+import { z } from "zod/v4";
+import {
+  BaseSelectMenuSchema,
+  ChannelSelectMenuSchema,
+  MentionableSelectMenuSchema,
+  RoleSelectMenuSchema,
+  SelectMenuDefaultValueSchema,
+  SelectMenuEmojiSchema,
+  SelectMenuOptionSchema,
+  StringSelectMenuSchema,
+  UserSelectMenuSchema,
+} from "../schemas/index.js";
 import { COMPONENT_LIMITS } from "../utils/index.js";
 
 /**
@@ -21,16 +34,22 @@ import { COMPONENT_LIMITS } from "../utils/index.js";
  */
 export class SelectMenuOptionBuilder {
   /** The internal option data being constructed */
-  readonly #data: Partial<SelectMenuOptionEntity> = {};
+  readonly #data: Partial<z.input<typeof SelectMenuOptionSchema>> = {};
 
   /**
    * Creates a new SelectMenuOptionBuilder instance.
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<SelectMenuOptionEntity>) {
+  constructor(data?: z.input<typeof SelectMenuOptionSchema>) {
     if (data) {
-      this.#data = { ...data };
+      // Validate the initial data
+      const result = SelectMenuOptionSchema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.#data = result.data;
     }
   }
 
@@ -40,7 +59,9 @@ export class SelectMenuOptionBuilder {
    * @param data - The option data to use
    * @returns A new SelectMenuOptionBuilder instance with the provided data
    */
-  static from(data: Partial<SelectMenuOptionEntity>): SelectMenuOptionBuilder {
+  static from(
+    data: z.input<typeof SelectMenuOptionSchema>,
+  ): SelectMenuOptionBuilder {
     return new SelectMenuOptionBuilder(data);
   }
 
@@ -50,15 +71,14 @@ export class SelectMenuOptionBuilder {
    *
    * @param label - The label to set (max 100 characters)
    * @returns The option builder instance for method chaining
-   * @throws Error if label exceeds 100 characters
    */
   setLabel(label: string): this {
-    if (label.length > COMPONENT_LIMITS.SELECT_OPTION_LABEL) {
-      throw new Error(
-        `Select option label cannot exceed ${COMPONENT_LIMITS.SELECT_OPTION_LABEL} characters`,
-      );
+    const result = SelectMenuOptionSchema.shape.label.safeParse(label);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.label = label;
+
+    this.#data.label = result.data;
     return this;
   }
 
@@ -68,15 +88,14 @@ export class SelectMenuOptionBuilder {
    *
    * @param value - The value to set (max 100 characters)
    * @returns The option builder instance for method chaining
-   * @throws Error if value exceeds 100 characters
    */
   setValue(value: string): this {
-    if (value.length > COMPONENT_LIMITS.SELECT_OPTION_VALUE) {
-      throw new Error(
-        `Select option value cannot exceed ${COMPONENT_LIMITS.SELECT_OPTION_VALUE} characters`,
-      );
+    const result = SelectMenuOptionSchema.shape.value.safeParse(value);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.value = value;
+
+    this.#data.value = result.data;
     return this;
   }
 
@@ -86,26 +105,31 @@ export class SelectMenuOptionBuilder {
    *
    * @param description - The description to set (max 100 characters)
    * @returns The option builder instance for method chaining
-   * @throws Error if description exceeds 100 characters
    */
   setDescription(description: string): this {
-    if (description.length > COMPONENT_LIMITS.SELECT_OPTION_DESCRIPTION) {
-      throw new Error(
-        `Select option description cannot exceed ${COMPONENT_LIMITS.SELECT_OPTION_DESCRIPTION} characters`,
-      );
+    const result =
+      SelectMenuOptionSchema.shape.description.safeParse(description);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
-    this.#data.description = description;
+
+    this.#data.description = result.data;
     return this;
   }
 
   /**
    * Sets the emoji to display with this option.
    *
-   * @param emoji - The emoji object
+   * @param emoji - The emoji to use
    * @returns The option builder instance for method chaining
    */
-  setEmoji(emoji: Pick<EmojiEntity, "id" | "name" | "animated">): this {
-    this.#data.emoji = emoji;
+  setEmoji(emoji: EmojiResolvable): this {
+    const result = SelectMenuEmojiSchema.safeParse(resolveEmoji(emoji));
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.emoji = result.data;
     return this;
   }
 
@@ -121,21 +145,19 @@ export class SelectMenuOptionBuilder {
   }
 
   /**
-   * Builds the final select menu option entity object.
+   * Builds the final select menu option object.
    *
-   * @returns The complete select menu option entity
+   * @returns The complete select menu option
    * @throws Error if the option configuration is invalid
    */
   build(): SelectMenuOptionEntity {
-    if (!this.#data.label) {
-      throw new Error("Select menu option must have a label");
+    // Validate the entire option
+    const result = SelectMenuOptionSchema.safeParse(this.#data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (!this.#data.value) {
-      throw new Error("Select menu option must have a value");
-    }
-
-    return this.#data as SelectMenuOptionEntity;
+    return result.data;
   }
 
   /**
@@ -143,7 +165,7 @@ export class SelectMenuOptionBuilder {
    *
    * @returns A read-only copy of the option data
    */
-  toJson(): Readonly<Partial<SelectMenuOptionEntity>> {
+  toJson(): Readonly<Partial<z.input<typeof SelectMenuOptionSchema>>> {
     return Object.freeze({ ...this.#data });
   }
 }
@@ -156,16 +178,22 @@ export class SelectMenuOptionBuilder {
  */
 export class SelectMenuDefaultValueBuilder {
   /** The internal default value data being constructed */
-  readonly #data: Partial<SelectMenuDefaultValueEntity> = {};
+  readonly #data: Partial<z.input<typeof SelectMenuDefaultValueSchema>> = {};
 
   /**
    * Creates a new SelectMenuDefaultValueBuilder instance.
    *
    * @param data - Optional initial data to populate the default value with
    */
-  constructor(data?: Partial<SelectMenuDefaultValueEntity>) {
+  constructor(data?: z.input<typeof SelectMenuDefaultValueSchema>) {
     if (data) {
-      this.#data = { ...data };
+      // Validate the initial data
+      const result = SelectMenuDefaultValueSchema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.#data = { ...result.data };
     }
   }
 
@@ -176,7 +204,7 @@ export class SelectMenuDefaultValueBuilder {
    * @returns A new SelectMenuDefaultValueBuilder instance with the provided data
    */
   static from(
-    data: Partial<SelectMenuDefaultValueEntity>,
+    data: z.input<typeof SelectMenuDefaultValueSchema>,
   ): SelectMenuDefaultValueBuilder {
     return new SelectMenuDefaultValueBuilder(data);
   }
@@ -189,7 +217,12 @@ export class SelectMenuDefaultValueBuilder {
    * @returns The default value builder instance for method chaining
    */
   setId(id: Snowflake): this {
-    this.#data.id = id;
+    const result = SelectMenuDefaultValueSchema.shape.id.safeParse(id);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.id = result.data;
     return this;
   }
 
@@ -201,32 +234,29 @@ export class SelectMenuDefaultValueBuilder {
    * @returns The default value builder instance for method chaining
    */
   setType(type: "user" | "role" | "channel"): this {
-    this.#data.type = type;
+    const result = SelectMenuDefaultValueSchema.shape.type.safeParse(type);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.#data.type = result.data;
     return this;
   }
 
   /**
-   * Builds the final select menu default value entity object.
+   * Builds the final select menu default value object.
    *
-   * @returns The complete select menu default value entity
+   * @returns The complete select menu default value
    * @throws Error if the default value configuration is invalid
    */
   build(): SelectMenuDefaultValueEntity {
-    if (!this.#data.id) {
-      throw new Error("Default value must have an ID");
+    // Validate the entire default value
+    const result = SelectMenuDefaultValueSchema.safeParse(this.#data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (!this.#data.type) {
-      throw new Error("Default value must have a type");
-    }
-
-    if (!["user", "role", "channel"].includes(this.#data.type)) {
-      throw new Error(
-        "Default value type must be 'user', 'role', or 'channel'",
-      );
-    }
-
-    return this.#data as SelectMenuDefaultValueEntity;
+    return result.data;
   }
 
   /**
@@ -234,7 +264,7 @@ export class SelectMenuDefaultValueBuilder {
    *
    * @returns A read-only copy of the default value data
    */
-  toJson(): Readonly<Partial<SelectMenuDefaultValueEntity>> {
+  toJson(): Readonly<Partial<z.input<typeof SelectMenuDefaultValueSchema>>> {
     return Object.freeze({ ...this.#data });
   }
 }
@@ -249,21 +279,34 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
   /** The internal select menu data being constructed */
   protected readonly data: Partial<T>;
 
-  /** The component type for this select menu */
-  protected readonly componentType: ComponentType;
-
   /**
    * Creates a new BaseSelectMenuBuilder instance.
    *
    * @param componentType - The component type for this select menu
+   * @param schema - The schema to use for validation
    * @param data - Optional initial data to populate the select menu with
    */
-  protected constructor(componentType: ComponentType, data?: Partial<T>) {
-    this.componentType = componentType;
-    this.data = {
-      type: componentType,
-      ...(data || {}),
-    } as Partial<T>;
+  protected constructor(
+    componentType: ComponentType,
+    schema: z.ZodObject,
+    data?: Partial<T>,
+  ) {
+    if (data) {
+      // Validate the initial data
+      const result = schema.partial().safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.data = {
+        ...result.data,
+        type: componentType, // Ensure type is set correctly
+      } as Partial<T>;
+    } else {
+      this.data = {
+        type: componentType,
+      } as Partial<T>;
+    }
   }
 
   /**
@@ -271,14 +314,13 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    *
    * @param customId - The custom ID to set (max 100 characters)
    * @returns The select menu builder instance for method chaining
-   * @throws Error if customId exceeds 100 characters
    */
   setCustomId(customId: string): this {
-    if (customId.length > COMPONENT_LIMITS.CUSTOM_ID) {
-      throw new Error(
-        `Select menu custom ID cannot exceed ${COMPONENT_LIMITS.CUSTOM_ID} characters`,
-      );
+    const result = BaseSelectMenuSchema.shape.custom_id.safeParse(customId);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
+
     this.data.custom_id = customId;
     return this;
   }
@@ -289,14 +331,14 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    *
    * @param placeholder - The placeholder text to set (max 150 characters)
    * @returns The select menu builder instance for method chaining
-   * @throws Error if placeholder exceeds 150 characters
    */
   setPlaceholder(placeholder: string): this {
-    if (placeholder.length > COMPONENT_LIMITS.SELECT_PLACEHOLDER) {
-      throw new Error(
-        `Select menu placeholder cannot exceed ${COMPONENT_LIMITS.SELECT_PLACEHOLDER} characters`,
-      );
+    const result =
+      BaseSelectMenuSchema.shape.placeholder.safeParse(placeholder);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
+
     this.data.placeholder = placeholder;
     return this;
   }
@@ -306,14 +348,21 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    *
    * @param minValues - The minimum number of items (0-25)
    * @returns The select menu builder instance for method chaining
-   * @throws Error if minValues is out of range
    */
   setMinValues(minValues: number): this {
-    if (minValues < 0 || minValues > COMPONENT_LIMITS.SELECT_OPTIONS) {
-      throw new Error(
-        `Minimum values must be between 0 and ${COMPONENT_LIMITS.SELECT_OPTIONS}`,
-      );
+    const result = BaseSelectMenuSchema.shape.min_values.safeParse(minValues);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
+
+    // Check if min_values would be greater than max_values
+    if (
+      this.data.max_values !== undefined &&
+      minValues > this.data.max_values
+    ) {
+      throw new Error("Minimum values cannot be greater than maximum values");
+    }
+
     this.data.min_values = minValues;
     return this;
   }
@@ -323,14 +372,21 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
    *
    * @param maxValues - The maximum number of items (1-25)
    * @returns The select menu builder instance for method chaining
-   * @throws Error if maxValues is out of range
    */
   setMaxValues(maxValues: number): this {
-    if (maxValues < 1 || maxValues > COMPONENT_LIMITS.SELECT_OPTIONS) {
-      throw new Error(
-        `Maximum values must be between 1 and ${COMPONENT_LIMITS.SELECT_OPTIONS}`,
-      );
+    const result = BaseSelectMenuSchema.shape.min_values.safeParse(maxValues);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
+
+    // Check if max_values would be less than min_values
+    if (
+      this.data.min_values !== undefined &&
+      maxValues < this.data.min_values
+    ) {
+      throw new Error("Maximum values cannot be less than minimum values");
+    }
+
     this.data.max_values = maxValues;
     return this;
   }
@@ -347,10 +403,20 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
   }
 
   /**
-   * Abstract build method that must be implemented by subclasses.
-   * Should return the complete select menu entity.
+   * Sets the optional identifier for the component.
+   *
+   * @param id - The identifier to set
+   * @returns The select menu builder instance for method chaining
    */
-  abstract build(): T;
+  setId(id: number): this {
+    const result = BaseSelectMenuSchema.shape.id.safeParse(id);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.data.id = id;
+    return this;
+  }
 
   /**
    * Returns a JSON representation of the select menu.
@@ -362,25 +428,13 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
   }
 
   /**
-   * Validates the select menu configuration.
-   * Ensures the select menu has the required properties.
+   * Builds the final select menu entity object.
+   * Must be implemented by derived classes.
    *
+   * @returns The complete select menu entity
    * @throws Error if the select menu configuration is invalid
-   * @protected
    */
-  protected validate(): void {
-    if (!this.data.custom_id) {
-      throw new Error("Select menu must have a custom ID");
-    }
-
-    if (
-      this.data.min_values !== undefined &&
-      this.data.max_values !== undefined &&
-      this.data.min_values > this.data.max_values
-    ) {
-      throw new Error("Minimum values cannot be greater than maximum values");
-    }
-  }
+  abstract build(): T;
 }
 
 /**
@@ -388,14 +442,16 @@ export abstract class BaseSelectMenuBuilder<T extends AnySelectMenuEntity> {
  *
  * String select menus allow users to select from predefined text options.
  */
-export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectMenuEntity> {
+export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<
+  z.input<typeof StringSelectMenuSchema>
+> {
   /**
    * Creates a new StringSelectMenuBuilder instance.
    *
    * @param data - Optional initial data to populate the select menu with
    */
-  constructor(data?: Partial<StringSelectMenuEntity>) {
-    super(ComponentType.StringSelect, data);
+  constructor(data?: z.input<typeof StringSelectMenuSchema>) {
+    super(ComponentType.StringSelect, StringSelectMenuSchema, data);
 
     // Initialize options array if not present
     if (!this.data.options) {
@@ -409,7 +465,9 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    * @param data - The select menu data to use
    * @returns A new StringSelectMenuBuilder instance with the provided data
    */
-  static from(data: Partial<StringSelectMenuEntity>): StringSelectMenuBuilder {
+  static from(
+    data: z.input<typeof StringSelectMenuSchema>,
+  ): StringSelectMenuBuilder {
     return new StringSelectMenuBuilder(data);
   }
 
@@ -418,9 +476,8 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    *
    * @param option - The option to add
    * @returns The select menu builder instance for method chaining
-   * @throws Error if adding the option would exceed the maximum number of options
    */
-  addOption(option: SelectMenuOptionEntity): this {
+  addOption(option: z.input<typeof StringSelectMenuSchema>): this {
     if (!this.data.options) {
       this.data.options = [];
     }
@@ -431,7 +488,12 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
       );
     }
 
-    this.data.options.push(option);
+    const result = SelectMenuOptionSchema.safeParse(option);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
+    }
+
+    this.data.options.push(result.data);
     return this;
   }
 
@@ -440,9 +502,8 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    *
    * @param options - The options to add
    * @returns The select menu builder instance for method chaining
-   * @throws Error if adding the options would exceed the maximum number of options
    */
-  addOptions(...options: SelectMenuOptionEntity[]): this {
+  addOptions(...options: z.input<typeof StringSelectMenuSchema>[]): this {
     for (const option of options) {
       this.addOption(option);
     }
@@ -454,16 +515,25 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    *
    * @param options - The options to set
    * @returns The select menu builder instance for method chaining
-   * @throws Error if too many options are provided
    */
-  setOptions(options: SelectMenuOptionEntity[]): this {
+  setOptions(options: z.input<typeof SelectMenuOptionSchema>[]): this {
     if (options.length > COMPONENT_LIMITS.SELECT_OPTIONS) {
       throw new Error(
         `Select menus cannot have more than ${COMPONENT_LIMITS.SELECT_OPTIONS} options`,
       );
     }
 
-    this.data.options = [...options];
+    // Validate each option
+    const validOptions: z.input<typeof SelectMenuOptionSchema>[] = [];
+    for (const option of options) {
+      const result = SelectMenuOptionSchema.safeParse(option);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+      validOptions.push(result.data);
+    }
+
+    this.data.options = validOptions;
     return this;
   }
 
@@ -474,19 +544,13 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
    * @throws Error if the select menu configuration is invalid
    */
   build(): StringSelectMenuEntity {
-    this.validate();
-
-    if (!this.data.options || this.data.options.length === 0) {
-      throw new Error("String select menu must have at least one option");
+    // Validate the entire string select menu
+    const result = StringSelectMenuSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (this.data.options.length > COMPONENT_LIMITS.SELECT_OPTIONS) {
-      throw new Error(
-        `Select menus cannot have more than ${COMPONENT_LIMITS.SELECT_OPTIONS} options`,
-      );
-    }
-
-    return this.data as StringSelectMenuEntity;
+    return result.data;
   }
 }
 
@@ -495,14 +559,16 @@ export class StringSelectMenuBuilder extends BaseSelectMenuBuilder<StringSelectM
  *
  * User select menus allow users to select one or more members from the server.
  */
-export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuEntity> {
+export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<
+  z.input<typeof UserSelectMenuSchema>
+> {
   /**
    * Creates a new UserSelectMenuBuilder instance.
    *
    * @param data - Optional initial data to populate the select menu with
    */
-  constructor(data?: Partial<UserSelectMenuEntity>) {
-    super(ComponentType.UserSelect, data);
+  constructor(data?: z.input<typeof UserSelectMenuSchema>) {
+    super(ComponentType.UserSelect, UserSelectMenuSchema, data);
 
     // Initialize default_values array if needed
     if (data?.default_values && !this.data.default_values) {
@@ -516,7 +582,9 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
    * @param data - The select menu data to use
    * @returns A new UserSelectMenuBuilder instance with the provided data
    */
-  static from(data: Partial<UserSelectMenuEntity>): UserSelectMenuBuilder {
+  static from(
+    data: z.input<typeof UserSelectMenuSchema>,
+  ): UserSelectMenuBuilder {
     return new UserSelectMenuBuilder(data);
   }
 
@@ -531,11 +599,12 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
       this.data.default_values = [];
     }
 
-    this.data.default_values.push({
-      id: userId,
-      type: "user",
-    });
+    const defaultValue = new SelectMenuDefaultValueBuilder()
+      .setId(userId)
+      .setType("user")
+      .build();
 
+    this.data.default_values.push(defaultValue);
     return this;
   }
 
@@ -546,10 +615,9 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
    * @returns The select menu builder instance for method chaining
    */
   setDefaultUsers(userIds: Snowflake[]): this {
-    this.data.default_values = userIds.map((id) => ({
-      id,
-      type: "user",
-    }));
+    this.data.default_values = userIds.map((id) =>
+      new SelectMenuDefaultValueBuilder().setId(id).setType("user").build(),
+    );
 
     return this;
   }
@@ -561,35 +629,13 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
    * @throws Error if the select menu configuration is invalid
    */
   build(): UserSelectMenuEntity {
-    this.validate();
-
-    // Validate default values if present
-    if (this.data.default_values) {
-      // Ensure all default values are of type 'user'
-      for (const defaultValue of this.data.default_values) {
-        if (defaultValue.type !== "user") {
-          throw new Error("User select menu can only have user default values");
-        }
-      }
-
-      // Ensure the number of default values is within min_values and max_values
-      const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 25;
-
-      if (this.data.default_values.length < minValues) {
-        throw new Error(
-          `User select menu must have at least ${minValues} default values`,
-        );
-      }
-
-      if (this.data.default_values.length > maxValues) {
-        throw new Error(
-          `User select menu cannot have more than ${maxValues} default values`,
-        );
-      }
+    // Validate the entire user select menu
+    const result = UserSelectMenuSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    return this.data as UserSelectMenuEntity;
+    return result.data;
   }
 }
 
@@ -598,14 +644,16 @@ export class UserSelectMenuBuilder extends BaseSelectMenuBuilder<UserSelectMenuE
  *
  * Role select menus allow users to select one or more roles from the server.
  */
-export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuEntity> {
+export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<
+  z.input<typeof RoleSelectMenuSchema>
+> {
   /**
    * Creates a new RoleSelectMenuBuilder instance.
    *
    * @param data - Optional initial data to populate the select menu with
    */
-  constructor(data?: Partial<RoleSelectMenuEntity>) {
-    super(ComponentType.RoleSelect, data);
+  constructor(data?: z.input<typeof RoleSelectMenuSchema>) {
+    super(ComponentType.RoleSelect, RoleSelectMenuSchema, data);
 
     // Initialize default_values array if needed
     if (data?.default_values && !this.data.default_values) {
@@ -619,7 +667,9 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
    * @param data - The select menu data to use
    * @returns A new RoleSelectMenuBuilder instance with the provided data
    */
-  static from(data: Partial<RoleSelectMenuEntity>): RoleSelectMenuBuilder {
+  static from(
+    data: z.input<typeof RoleSelectMenuSchema>,
+  ): RoleSelectMenuBuilder {
     return new RoleSelectMenuBuilder(data);
   }
 
@@ -634,11 +684,12 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
       this.data.default_values = [];
     }
 
-    this.data.default_values.push({
-      id: roleId,
-      type: "role",
-    });
+    const defaultValue = new SelectMenuDefaultValueBuilder()
+      .setId(roleId)
+      .setType("role")
+      .build();
 
+    this.data.default_values.push(defaultValue);
     return this;
   }
 
@@ -649,10 +700,9 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
    * @returns The select menu builder instance for method chaining
    */
   setDefaultRoles(roleIds: Snowflake[]): this {
-    this.data.default_values = roleIds.map((id) => ({
-      id,
-      type: "role",
-    }));
+    this.data.default_values = roleIds.map((id) =>
+      new SelectMenuDefaultValueBuilder().setId(id).setType("role").build(),
+    );
 
     return this;
   }
@@ -664,51 +714,31 @@ export class RoleSelectMenuBuilder extends BaseSelectMenuBuilder<RoleSelectMenuE
    * @throws Error if the select menu configuration is invalid
    */
   build(): RoleSelectMenuEntity {
-    this.validate();
-
-    // Validate default values if present
-    if (this.data.default_values) {
-      // Ensure all default values are of type 'role'
-      for (const defaultValue of this.data.default_values) {
-        if (defaultValue.type !== "role") {
-          throw new Error("Role select menu can only have role default values");
-        }
-      }
-
-      // Ensure the number of default values is within min_values and max_values
-      const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 25;
-
-      if (this.data.default_values.length < minValues) {
-        throw new Error(
-          `Role select menu must have at least ${minValues} default values`,
-        );
-      }
-
-      if (this.data.default_values.length > maxValues) {
-        throw new Error(
-          `Role select menu cannot have more than ${maxValues} default values`,
-        );
-      }
+    // Validate the entire role select menu
+    const result = RoleSelectMenuSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    return this.data as RoleSelectMenuEntity;
+    return result.data;
   }
 }
 
 /**
  * Builder for mentionable select menu components.
  *
- * Mentionable select menus allow users to select one or more users or roles from the server.
+ * Mentionable select menus allow users to select users or roles from the server.
  */
-export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<MentionableSelectMenuEntity> {
+export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<
+  z.input<typeof MentionableSelectMenuSchema>
+> {
   /**
    * Creates a new MentionableSelectMenuBuilder instance.
    *
    * @param data - Optional initial data to populate the select menu with
    */
-  constructor(data?: Partial<MentionableSelectMenuEntity>) {
-    super(ComponentType.MentionableSelect, data);
+  constructor(data?: z.input<typeof MentionableSelectMenuSchema>) {
+    super(ComponentType.MentionableSelect, MentionableSelectMenuSchema, data);
 
     // Initialize default_values array if needed
     if (data?.default_values && !this.data.default_values) {
@@ -723,7 +753,7 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
    * @returns A new MentionableSelectMenuBuilder instance with the provided data
    */
   static from(
-    data: Partial<MentionableSelectMenuEntity>,
+    data: z.input<typeof MentionableSelectMenuSchema>,
   ): MentionableSelectMenuBuilder {
     return new MentionableSelectMenuBuilder(data);
   }
@@ -739,11 +769,12 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
       this.data.default_values = [];
     }
 
-    this.data.default_values.push({
-      id: userId,
-      type: "user",
-    });
+    const defaultValue = new SelectMenuDefaultValueBuilder()
+      .setId(userId)
+      .setType("user")
+      .build();
 
+    this.data.default_values.push(defaultValue);
     return this;
   }
 
@@ -758,11 +789,12 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
       this.data.default_values = [];
     }
 
-    this.data.default_values.push({
-      id: roleId,
-      type: "role",
-    });
+    const defaultValue = new SelectMenuDefaultValueBuilder()
+      .setId(roleId)
+      .setType("role")
+      .build();
 
+    this.data.default_values.push(defaultValue);
     return this;
   }
 
@@ -772,12 +804,28 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
    * @param values - The default values to set
    * @returns The select menu builder instance for method chaining
    */
-  setDefaultValues(values: SelectMenuDefaultValueEntity[]): this {
-    this.data.default_values = values.map((value) => ({
-      id: value.id,
-      type: value.type,
-    }));
+  setDefaultValues(
+    values: z.input<typeof SelectMenuDefaultValueSchema>[],
+  ): this {
+    // Validate each value
+    const validValues: z.input<typeof SelectMenuDefaultValueSchema>[] = [];
+    for (const value of values) {
+      // Ensure they're user or role only
+      if (value.type !== "user" && value.type !== "role") {
+        throw new Error(
+          "Mentionable select menu can only have user or role default values",
+        );
+      }
 
+      const result = SelectMenuDefaultValueSchema.safeParse(value);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      validValues.push(result.data);
+    }
+
+    this.data.default_values = validValues;
     return this;
   }
 
@@ -788,37 +836,12 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
    * @throws Error if the select menu configuration is invalid
    */
   build(): MentionableSelectMenuEntity {
-    this.validate();
-
-    // Validate default values if present
-    if (this.data.default_values) {
-      // Ensure all default values are of type 'user' or 'role'
-      for (const defaultValue of this.data.default_values) {
-        if (defaultValue.type !== "user" && defaultValue.type !== "role") {
-          throw new Error(
-            "Mentionable select menu can only have user or role default values",
-          );
-        }
-      }
-
-      // Ensure the number of default values is within min_values and max_values
-      const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 25;
-
-      if (this.data.default_values.length < minValues) {
-        throw new Error(
-          `Mentionable select menu must have at least ${minValues} default values`,
-        );
-      }
-
-      if (this.data.default_values.length > maxValues) {
-        throw new Error(
-          `Mentionable select menu cannot have more than ${maxValues} default values`,
-        );
-      }
+    const result = MentionableSelectMenuSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    return this.data as MentionableSelectMenuEntity;
+    return result.data;
   }
 }
 
@@ -827,14 +850,16 @@ export class MentionableSelectMenuBuilder extends BaseSelectMenuBuilder<Mentiona
  *
  * Channel select menus allow users to select one or more channels from the server.
  */
-export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelectMenuEntity> {
+export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<
+  z.input<typeof ChannelSelectMenuSchema>
+> {
   /**
    * Creates a new ChannelSelectMenuBuilder instance.
    *
    * @param data - Optional initial data to populate the select menu with
    */
-  constructor(data?: Partial<ChannelSelectMenuEntity>) {
-    super(ComponentType.ChannelSelect, data);
+  constructor(data?: z.input<typeof ChannelSelectMenuSchema>) {
+    super(ComponentType.ChannelSelect, ChannelSelectMenuSchema, data);
 
     // Initialize arrays if needed
     if (data?.default_values && !this.data.default_values) {
@@ -853,7 +878,7 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    * @returns A new ChannelSelectMenuBuilder instance with the provided data
    */
   static from(
-    data: Partial<ChannelSelectMenuEntity>,
+    data: z.input<typeof ChannelSelectMenuSchema>,
   ): ChannelSelectMenuBuilder {
     return new ChannelSelectMenuBuilder(data);
   }
@@ -867,6 +892,12 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
   addChannelType(channelType: ChannelType): this {
     if (!this.data.channel_types) {
       this.data.channel_types = [];
+    }
+
+    const result =
+      ChannelSelectMenuSchema.shape.channel_types.safeParse(channelType);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
     if (!this.data.channel_types.includes(channelType)) {
@@ -883,7 +914,18 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    * @returns The select menu builder instance for method chaining
    */
   setChannelTypes(...channelTypes: ChannelType[]): this {
-    this.data.channel_types = channelTypes;
+    // Validate each channel type
+    const validChannelTypes: ChannelType[] = [];
+    for (const type of channelTypes) {
+      const result =
+        ChannelSelectMenuSchema.shape.channel_types.safeParse(type);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+      validChannelTypes.push(result.data as unknown as ChannelType);
+    }
+
+    this.data.channel_types = validChannelTypes;
     return this;
   }
 
@@ -898,11 +940,12 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
       this.data.default_values = [];
     }
 
-    this.data.default_values.push({
-      id: channelId,
-      type: "channel",
-    });
+    const defaultValue = new SelectMenuDefaultValueBuilder()
+      .setId(channelId)
+      .setType("channel")
+      .build();
 
+    this.data.default_values.push(defaultValue);
     return this;
   }
 
@@ -913,12 +956,47 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    * @returns The select menu builder instance for method chaining
    */
   setDefaultChannels(channelIds: Snowflake[]): this {
-    this.data.default_values = channelIds.map((id) => ({
-      id,
-      type: "channel",
-    }));
+    this.data.default_values = channelIds.map((id) =>
+      new SelectMenuDefaultValueBuilder().setId(id).setType("channel").build(),
+    );
 
     return this;
+  }
+
+  /**
+   * Creates a filter for text channels only.
+   *
+   * @returns The select menu builder instance for method chaining
+   */
+  textChannelsOnly(): this {
+    return this.setChannelTypes(
+      ChannelType.GuildText,
+      ChannelType.GuildAnnouncement,
+      ChannelType.PublicThread,
+      ChannelType.PrivateThread,
+      ChannelType.AnnouncementThread,
+    );
+  }
+
+  /**
+   * Creates a filter for voice channels only.
+   *
+   * @returns The select menu builder instance for method chaining
+   */
+  voiceChannelsOnly(): this {
+    return this.setChannelTypes(
+      ChannelType.GuildVoice,
+      ChannelType.GuildStageVoice,
+    );
+  }
+
+  /**
+   * Creates a filter for category channels only.
+   *
+   * @returns The select menu builder instance for method chaining
+   */
+  categoriesOnly(): this {
+    return this.setChannelTypes(ChannelType.GuildCategory);
   }
 
   /**
@@ -928,36 +1006,12 @@ export class ChannelSelectMenuBuilder extends BaseSelectMenuBuilder<ChannelSelec
    * @throws Error if the select menu configuration is invalid
    */
   build(): ChannelSelectMenuEntity {
-    this.validate();
-
-    // Validate default values if present
-    if (this.data.default_values) {
-      // Ensure all default values are of type 'channel'
-      for (const defaultValue of this.data.default_values) {
-        if (defaultValue.type !== "channel") {
-          throw new Error(
-            "Channel select menu can only have channel default values",
-          );
-        }
-      }
-
-      // Ensure the number of default values is within min_values and max_values
-      const minValues = this.data.min_values ?? 1;
-      const maxValues = this.data.max_values ?? 25;
-
-      if (this.data.default_values.length < minValues) {
-        throw new Error(
-          `Channel select menu must have at least ${minValues} default values`,
-        );
-      }
-
-      if (this.data.default_values.length > maxValues) {
-        throw new Error(
-          `Channel select menu cannot have more than ${maxValues} default values`,
-        );
-      }
+    // Validate the entire channel select menu
+    const result = ChannelSelectMenuSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    return this.data as ChannelSelectMenuEntity;
+    return result.data;
   }
 }
