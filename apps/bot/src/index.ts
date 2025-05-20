@@ -65,6 +65,19 @@ const registeredCommands = true;
  */
 async function main(): Promise<void> {
   try {
+    // Calculate and log memory usage in MB for monitoring
+    const memoryUsage = process.memoryUsage();
+    const mbDivisor = 1024 * 1024;
+    const rss = Math.round((memoryUsage.rss / mbDivisor) * 100) / 100;
+    const heapTotal =
+      Math.round((memoryUsage.heapTotal / mbDivisor) * 100) / 100;
+    const heapUsed = Math.round((memoryUsage.heapUsed / mbDivisor) * 100) / 100;
+
+    // Log memory usage statistics
+    console.log(
+      `[MEMORY] RSS: ${rss} MB | Heap Total: ${heapTotal} MB | Heap Used: ${heapUsed} MB`,
+    );
+
     // Load events and commands
     await loadEvents(client);
     await loadCommands();

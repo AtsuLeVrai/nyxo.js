@@ -254,29 +254,237 @@ export type RestOptions = z.infer<typeof RestOptions>;
  */
 export class Rest extends EventEmitter<RestEvents> {
   /**
-   * Validated configuration options.
-   * All options are guaranteed to be valid through Zod validation.
+   * Access to application endpoints.
+   * Provides methods for interacting with application resources.
+   *
+   * @returns Router for application-related endpoints
    */
-  readonly #options: RestOptions;
+  readonly applications = new ApplicationRouter(this);
+
+  /**
+   * Access to audit log endpoints.
+   * Provides methods for retrieving guild audit logs.
+   *
+   * @returns Router for audit log endpoints
+   */
+  readonly auditLogs = new AuditLogRouter(this);
+
+  /**
+   * Access to auto-moderation endpoints.
+   * Provides methods for configuring automatic content moderation.
+   *
+   * @returns Router for auto-moderation endpoints
+   */
+  readonly autoModeration = new AutoModerationRouter(this);
+
+  /**
+   * Access to channel-related endpoints.
+   * Provides methods for managing channels of all types.
+   *
+   * @returns Router for channel-related endpoints
+   */
+  readonly channels = new ChannelRouter(this);
+
+  /**
+   * Access to application command endpoints.
+   * Provides methods for managing slash commands and interactions.
+   *
+   * @returns Router for application command endpoints
+   */
+  readonly commands = new ApplicationCommandRouter(this);
+
+  /**
+   * Access to application connection endpoints.
+   * Provides methods for managing application connections.
+   *
+   * @returns Router for application connection endpoints
+   */
+  readonly connections = new ApplicationConnectionRouter(this);
+
+  /**
+   * Access to emoji-related endpoints.
+   * Provides methods for managing custom emojis.
+   *
+   * @returns Router for emoji-related endpoints
+   */
+  readonly emojis = new EmojiRouter(this);
+
+  /**
+   * Access to entitlement-related endpoints.
+   * Provides methods for managing application entitlements.
+   *
+   * @returns Router for entitlement-related endpoints
+   */
+  readonly entitlements = new EntitlementRouter(this);
+
+  /**
+   * Access to gateway-related endpoints.
+   * Provides methods for retrieving gateway URLs and bot info.
+   *
+   * @returns Router for gateway-related endpoints
+   */
+  readonly gateway = new GatewayRouter(this);
+
+  /**
+   * Access to guild-related endpoints.
+   * Provides methods for managing guilds, members, and roles.
+   *
+   * @returns Router for guild-related endpoints
+   */
+  readonly guilds = new GuildRouter(this);
+
+  /**
+   * Access to interaction-related endpoints.
+   * Provides methods for responding to interactions.
+   *
+   * @returns Router for interaction-related endpoints
+   */
+  readonly interactions = new InteractionRouter(this);
+
+  /**
+   * Access to invite-related endpoints.
+   * Provides methods for creating and managing invites.
+   *
+   * @returns Router for invite-related endpoints
+   */
+  readonly invites = new InviteRouter(this);
+
+  /**
+   * Access to lobby-related endpoints.
+   * Provides methods for managing lobbies in voice channels.
+   *
+   * @returns Router for lobby-related endpoints
+   */
+  readonly lobby = new LobbyRouter(this);
+
+  /**
+   * Access to message-related endpoints.
+   * Provides methods for sending and managing messages.
+   *
+   * @returns Router for message-related endpoints
+   */
+  readonly messages = new MessageRouter(this);
+
+  /**
+   * Access to OAuth2-related endpoints.
+   * Provides methods for OAuth2 flows and token management.
+   *
+   * @returns Router for OAuth2-related endpoints
+   */
+  readonly oauth2 = new OAuth2Router(this);
+
+  /**
+   * Access to poll-related endpoints.
+   * Provides methods for creating and managing polls in messages.
+   *
+   * @returns Router for poll-related endpoints
+   */
+  readonly polls = new PollRouter(this);
+
+  /**
+   * Access to scheduled event endpoints.
+   * Provides methods for creating and managing guild events.
+   *
+   * @returns Router for scheduled event endpoints
+   */
+  readonly scheduledEvents = new ScheduledEventRouter(this);
+
+  /**
+   * Access to SKU-related endpoints.
+   * Provides methods for managing application SKUs.
+   *
+   * @returns Router for SKU-related endpoints
+   */
+  readonly skus = new SkuRouter(this);
+
+  /**
+   * Access to soundboard-related endpoints.
+   * Provides methods for managing soundboard sounds.
+   *
+   * @returns Router for soundboard-related endpoints
+   */
+  readonly soundboards = new SoundboardRouter(this);
+
+  /**
+   * Access to stage instance endpoints.
+   * Provides methods for managing stage channels.
+   *
+   * @returns Router for stage instance endpoints
+   */
+  readonly stages = new StageInstanceRouter(this);
+
+  /**
+   * Access to sticker-related endpoints.
+   * Provides methods for managing custom stickers.
+   *
+   * @returns Router for sticker-related endpoints
+   */
+  readonly stickers = new StickerRouter(this);
+
+  /**
+   * Access to subscription-related endpoints.
+   * Provides methods for managing premium subscriptions.
+   *
+   * @returns Router for subscription-related endpoints
+   */
+  readonly subscriptions = new SubscriptionRouter(this);
+
+  /**
+   * Access to guild template endpoints.
+   * Provides methods for managing guild templates.
+   *
+   * @returns Router for guild template endpoints
+   */
+  readonly templates = new GuildTemplateRouter(this);
+
+  /**
+   * Access to user-related endpoints.
+   * Provides methods for managing user data and connections.
+   *
+   * @returns Router for user-related endpoints
+   */
+  readonly users = new UserRouter(this);
+
+  /**
+   * Access to voice-related endpoints.
+   * Provides methods for voice channel management.
+   *
+   * @returns Router for voice-related endpoints
+   */
+  readonly voice = new VoiceRouter(this);
+
+  /**
+   * Access to webhook-related endpoints.
+   * Provides methods for creating and managing webhooks.
+   *
+   * @returns Router for webhook-related endpoints
+   */
+  readonly webhooks = new WebhookRouter(this);
 
   /**
    * HTTP connection pool for making requests.
    * Manages connections to Discord API for optimal performance.
    * @private
    */
-  readonly #pool: Pool;
+  readonly pool: Pool;
 
   /**
    * Rate limit handler.
    * Tracks and respects Discord's rate limits to prevent 429 errors.
    */
-  readonly #rateLimiter: RateLimitManager;
+  readonly rateLimiter: RateLimitManager;
 
   /**
    * Retry handler.
    * Manages automatic retries of failed requests.
    */
-  readonly #retry: RetryManager;
+  readonly retry: RetryManager;
+
+  /**
+   * Validated configuration options.
+   * All options are guaranteed to be valid through Zod validation.
+   */
+  readonly #options: RestOptions;
 
   /**
    * Creates a new REST client.
@@ -301,321 +509,11 @@ export class Rest extends EventEmitter<RestEvents> {
     }
 
     // Initialize the HTTP connection pool
-    this.#pool = new Pool(this.#options.baseUrl, this.#options.pool);
+    this.pool = new Pool(this.#options.baseUrl, this.#options.pool);
 
     // Initialize managers for rate limiting and retries
-    this.#rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
-    this.#retry = new RetryManager(this, this.#options.retry);
-  }
-
-  /**
-   * Access to the Discord API token.
-   * Used for authentication in API requests.
-   *
-   * @returns The configured Discord API token
-   */
-  get token(): string {
-    return this.#options.token;
-  }
-
-  /**
-   * Access to all client configuration options.
-   * Provides read-only access to the validated configuration.
-   *
-   * @returns The complete configuration object
-   */
-  get options(): RestOptions {
-    return this.#options;
-  }
-
-  /**
-   * Access to the underlying HTTP connection pool.
-   * Provides direct access to the Undici Pool for advanced usage.
-   *
-   * @returns The configured Undici Pool instance
-   */
-  get pool(): Pool {
-    return this.#pool;
-  }
-
-  /**
-   * Access to the retry manager.
-   * Allows direct interaction with retry functionality.
-   *
-   * @returns The configured retry manager
-   */
-  get retry(): RetryManager {
-    return this.#retry;
-  }
-
-  /**
-   * Access to the rate limiter.
-   * Allows direct interaction with rate limit tracking.
-   *
-   * @returns The configured rate limit manager
-   */
-  get rateLimiter(): RateLimitManager {
-    return this.#rateLimiter;
-  }
-
-  /**
-   * Access to application endpoints.
-   * Provides methods for interacting with application resources.
-   *
-   * @returns Router for application-related endpoints
-   */
-  get applications(): ApplicationRouter {
-    return new ApplicationRouter(this);
-  }
-
-  /**
-   * Access to application command endpoints.
-   * Provides methods for managing slash commands and interactions.
-   *
-   * @returns Router for application command endpoints
-   */
-  get commands(): ApplicationCommandRouter {
-    return new ApplicationCommandRouter(this);
-  }
-
-  /**
-   * Access to application connection endpoints.
-   * Provides methods for managing application connections.
-   *
-   * @returns Router for application connection endpoints
-   */
-  get connections(): ApplicationConnectionRouter {
-    return new ApplicationConnectionRouter(this);
-  }
-
-  /**
-   * Access to guild-related endpoints.
-   * Provides methods for managing guilds, members, and roles.
-   *
-   * @returns Router for guild-related endpoints
-   */
-  get guilds(): GuildRouter {
-    return new GuildRouter(this);
-  }
-
-  /**
-   * Access to channel-related endpoints.
-   * Provides methods for managing channels of all types.
-   *
-   * @returns Router for channel-related endpoints
-   */
-  get channels(): ChannelRouter {
-    return new ChannelRouter(this);
-  }
-
-  /**
-   * Access to invite-related endpoints.
-   * Provides methods for creating and managing invites.
-   *
-   * @returns Router for invite-related endpoints
-   */
-  get invites(): InviteRouter {
-    return new InviteRouter(this);
-  }
-
-  /**
-   * Access to guild template endpoints.
-   * Provides methods for managing guild templates.
-   *
-   * @returns Router for guild template endpoints
-   */
-  get templates(): GuildTemplateRouter {
-    return new GuildTemplateRouter(this);
-  }
-
-  /**
-   * Access to user-related endpoints.
-   * Provides methods for managing user data and connections.
-   *
-   * @returns Router for user-related endpoints
-   */
-  get users(): UserRouter {
-    return new UserRouter(this);
-  }
-
-  /**
-   * Access to audit log endpoints.
-   * Provides methods for retrieving guild audit logs.
-   *
-   * @returns Router for audit log endpoints
-   */
-  get auditLogs(): AuditLogRouter {
-    return new AuditLogRouter(this);
-  }
-
-  /**
-   * Access to message-related endpoints.
-   * Provides methods for sending and managing messages.
-   *
-   * @returns Router for message-related endpoints
-   */
-  get messages(): MessageRouter {
-    return new MessageRouter(this);
-  }
-
-  /**
-   * Access to interaction-related endpoints.
-   * Provides methods for responding to interactions.
-   *
-   * @returns Router for interaction-related endpoints
-   */
-  get interactions(): InteractionRouter {
-    return new InteractionRouter(this);
-  }
-
-  /**
-   * Access to emoji-related endpoints.
-   * Provides methods for managing custom emojis.
-   *
-   * @returns Router for emoji-related endpoints
-   */
-  get emojis(): EmojiRouter {
-    return new EmojiRouter(this);
-  }
-
-  /**
-   * Access to sticker-related endpoints.
-   * Provides methods for managing custom stickers.
-   *
-   * @returns Router for sticker-related endpoints
-   */
-  get stickers(): StickerRouter {
-    return new StickerRouter(this);
-  }
-
-  /**
-   * Access to voice-related endpoints.
-   * Provides methods for voice channel management.
-   *
-   * @returns Router for voice-related endpoints
-   */
-  get voice(): VoiceRouter {
-    return new VoiceRouter(this);
-  }
-
-  /**
-   * Access to soundboard-related endpoints.
-   * Provides methods for managing soundboard sounds.
-   *
-   * @returns Router for soundboard-related endpoints
-   */
-  get soundboards(): SoundboardRouter {
-    return new SoundboardRouter(this);
-  }
-
-  /**
-   * Access to stage instance endpoints.
-   * Provides methods for managing stage channels.
-   *
-   * @returns Router for stage instance endpoints
-   */
-  get stages(): StageInstanceRouter {
-    return new StageInstanceRouter(this);
-  }
-
-  /**
-   * Access to scheduled event endpoints.
-   * Provides methods for creating and managing guild events.
-   *
-   * @returns Router for scheduled event endpoints
-   */
-  get scheduledEvents(): ScheduledEventRouter {
-    return new ScheduledEventRouter(this);
-  }
-
-  /**
-   * Access to poll-related endpoints.
-   * Provides methods for creating and managing polls in messages.
-   *
-   * @returns Router for poll-related endpoints
-   */
-  get polls(): PollRouter {
-    return new PollRouter(this);
-  }
-
-  /**
-   * Access to auto-moderation endpoints.
-   * Provides methods for configuring automatic content moderation.
-   *
-   * @returns Router for auto-moderation endpoints
-   */
-  get autoModeration(): AutoModerationRouter {
-    return new AutoModerationRouter(this);
-  }
-
-  /**
-   * Access to webhook-related endpoints.
-   * Provides methods for creating and managing webhooks.
-   *
-   * @returns Router for webhook-related endpoints
-   */
-  get webhooks(): WebhookRouter {
-    return new WebhookRouter(this);
-  }
-
-  /**
-   * Access to OAuth2-related endpoints.
-   * Provides methods for OAuth2 flows and token management.
-   *
-   * @returns Router for OAuth2-related endpoints
-   */
-  get oauth2(): OAuth2Router {
-    return new OAuth2Router(this);
-  }
-
-  /**
-   * Access to gateway-related endpoints.
-   * Provides methods for retrieving gateway URLs and bot info.
-   *
-   * @returns Router for gateway-related endpoints
-   */
-  get gateway(): GatewayRouter {
-    return new GatewayRouter(this);
-  }
-
-  /**
-   * Access to SKU-related endpoints.
-   * Provides methods for managing application SKUs.
-   *
-   * @returns Router for SKU-related endpoints
-   */
-  get skus(): SkuRouter {
-    return new SkuRouter(this);
-  }
-
-  /**
-   * Access to entitlement-related endpoints.
-   * Provides methods for managing application entitlements.
-   *
-   * @returns Router for entitlement-related endpoints
-   */
-  get entitlements(): EntitlementRouter {
-    return new EntitlementRouter(this);
-  }
-
-  /**
-   * Access to subscription-related endpoints.
-   * Provides methods for managing premium subscriptions.
-   *
-   * @returns Router for subscription-related endpoints
-   */
-  get subscriptions(): SubscriptionRouter {
-    return new SubscriptionRouter(this);
-  }
-
-  /**
-   * Access to lobby-related endpoints.
-   * Provides methods for managing lobbies in voice channels.
-   *
-   * @returns Router for lobby-related endpoints
-   */
-  get lobby(): LobbyRouter {
-    return new LobbyRouter(this);
+    this.rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
+    this.retry = new RetryManager(this, this.#options.retry);
   }
 
   /**
@@ -637,7 +535,7 @@ export class Rest extends EventEmitter<RestEvents> {
     const requestId = crypto.randomUUID();
 
     // Check rate limit before making request
-    const rateLimitCheck = await this.#rateLimiter.checkAndWaitIfNeeded(
+    const rateLimitCheck = await this.rateLimiter.checkAndWaitIfNeeded(
       options.path,
       options.method,
       requestId,
@@ -651,7 +549,7 @@ export class Rest extends EventEmitter<RestEvents> {
     }
 
     // Make the HTTP request with retry handling for non-rate limit errors
-    const response = await this.#retry.processResponse<T>(
+    const response = await this.retry.processResponse<T>(
       () => this.#makeHttpRequest<T>(options, requestId),
       requestId,
       options.method,
@@ -659,7 +557,7 @@ export class Rest extends EventEmitter<RestEvents> {
     );
 
     // Update rate limit tracking after every response
-    await this.#rateLimiter.updateRateLimitAndWaitIfNeeded(
+    await this.rateLimiter.updateRateLimitAndWaitIfNeeded(
       options.path,
       options.method,
       response.headers,
@@ -764,8 +662,8 @@ export class Rest extends EventEmitter<RestEvents> {
    * and removes all event listeners.
    */
   async destroy(): Promise<void> {
-    await this.#pool.close();
-    this.#rateLimiter.destroy();
+    await this.pool.close();
+    this.rateLimiter.destroy();
     this.removeAllListeners();
   }
 
@@ -865,7 +763,7 @@ export class Rest extends EventEmitter<RestEvents> {
       const headers = this.#buildRequestHeaders(preparedRequest);
 
       // Send the HTTP request using the pool
-      const response = await this.#pool.request<T>({
+      const response = await this.pool.request<T>({
         path,
         method: preparedRequest.method,
         body: preparedRequest.body,
@@ -873,7 +771,21 @@ export class Rest extends EventEmitter<RestEvents> {
         signal: controller.signal,
         headers: headers,
       });
-      const responseBody = Buffer.from(await response.body.arrayBuffer());
+
+      // Process response body with optimized buffer handling
+      let responseBody: Buffer;
+      const arrayBuffer = await response.body.arrayBuffer();
+
+      // Use the ArrayBuffer directly without intermediate copy
+      responseBody = Buffer.from(arrayBuffer);
+
+      // Apply additional optimizations for small responses
+      if (arrayBuffer.byteLength < 4096) {
+        // Threshold for small responses
+        responseBody = Buffer.allocUnsafe(arrayBuffer.byteLength);
+        const view = new Uint8Array(arrayBuffer); // Create a view of the ArrayBuffer
+        responseBody.set(view);
+      }
 
       // Handle empty responses (204 No Content or empty body)
       if (response.statusCode === 204 || responseBody.length === 0) {

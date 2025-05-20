@@ -242,19 +242,22 @@ export type ShardOptions = z.infer<typeof ShardOptions>;
  */
 export class ShardManager {
   /**
+   * Gets Discord's max_concurrency value for identify operations
+   *
+   * This determines how many shards can be started concurrently
+   * within a rate limit window. Higher values allow faster startup
+   * but require careful rate limit management.
+   *
+   * @returns The maximum number of concurrent identify operations allowed
+   */
+  maxConcurrency = 1;
+
+  /**
    * Internal map storing all shard instances by their shard ID
    * Keys are shard IDs (0-based indices) and values are ShardData objects.
    * @private
    */
   #shards = new Map<number, ShardData>();
-
-  /**
-   * Maximum number of concurrent identify operations allowed by Discord
-   * This value is provided by Discord's Gateway Bot endpoint and determines
-   * how many shards can connect simultaneously within a rate limit window.
-   * @private
-   */
-  #maxConcurrency = 1;
 
   /**
    * Timer reference for periodic shard health checks
@@ -305,25 +308,12 @@ export class ShardManager {
   }
 
   /**
-   * Gets Discord's max_concurrency value for identify operations
-   *
-   * This determines how many shards can be started concurrently
-   * within a rate limit window. Higher values allow faster startup
-   * but require careful rate limit management.
-   *
-   * @returns The maximum number of concurrent identify operations allowed
-   */
-  get maxConcurrency(): number {
-    return this.#maxConcurrency;
-  }
-
-  /**
    * Gets all active shards as a read-only array
    * This is useful for iterating over all shards and accessing their data.
    *
    * @returns An array of all shard data objects
    */
-  get shards(): readonly ShardData[] {
+  get shards(): ShardData[] {
     return Array.from(this.#shards.values());
   }
 
@@ -372,7 +362,7 @@ export class ShardManager {
       guildCount,
       recommendedShards,
     );
-    this.#maxConcurrency = maxConcurrency;
+    this.maxConcurrency = maxConcurrency;
 
     // Validate shard list if provided
     if (this.#options.shardList) {
@@ -699,7 +689,7 @@ export class ShardManager {
    * @returns The rate limit bucket ID
    */
   getRateLimitKey(shardId: number): number {
-    return shardId % this.#maxConcurrency;
+    return shardId % this.maxConcurrency;
   }
 
   /**

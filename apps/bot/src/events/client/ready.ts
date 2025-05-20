@@ -38,9 +38,12 @@ export default defineEvent({
     // Wait for 10 seconds before logging memory usage statistics
     await sleep(10000);
 
-    // Log memory usage statistics
-    console.log(
-      `[MEMORY] RSS: ${rss} MB | Heap Total: ${heapTotal} MB | Heap Used: ${heapUsed} MB`,
-    );
+    // Set an interval to log memory usage statistics every 10 seconds
+    setInterval(() => {
+      // Log memory usage statistics
+      console.log(
+        `[MEMORY] RSS: ${rss} MB | Heap Total: ${heapTotal} MB | Heap Used: ${heapUsed} MB`,
+      );
+    }, 10000); // Log every 10 seconds
   },
 });

@@ -17,6 +17,28 @@ import { z } from "zod/v4";
 const ZLIB_FLUSH = Buffer.from([0x00, 0x00, 0xff, 0xff]);
 
 /**
+ * Maximum number of buffers to maintain in the pool.
+ * Value is chosen to balance memory usage and allocation reduction.
+ *
+ * Setting this too high consumes more memory but reduces allocations.
+ * Setting this too low increases allocations but uses less memory.
+ * 5 provides a good balance for typical Gateway message patterns.
+ * @private
+ */
+const BUFFER_POOL_SIZE = 5;
+
+/**
+ * Standard size for each buffer in the pool in bytes.
+ * Selected to efficiently handle typical Discord Gateway message sizes
+ * while minimizing wasted space for smaller messages.
+ *
+ * This size (128KB) matches the chunk size used in Zlib decompression
+ * for consistency and handles most Gateway messages without resizing.
+ * @private
+ */
+const BUFFER_CHUNK_SIZE = 128 * 1024; // 128KB
+
+/**
  * Supported Gateway payload compression types.
  *
  * - zlib-stream: Zlib compression with streaming support, widely compatible
@@ -58,6 +80,16 @@ export type CompressionType = z.infer<typeof CompressionType>;
  */
 export class CompressionService {
   /**
+   * Gets the compression type currently used by this service.
+   *
+   * This property is useful for checking the current compression type
+   * without needing to compare against string literals.
+   *
+   * @returns The current compression type, or null if no compression is used
+   */
+  readonly type: CompressionType | null;
+
+  /**
    * The Zstandard decompression stream instance if using zstd-stream
    * Maintains state between successive calls to decompress()
    * @private
@@ -81,11 +113,25 @@ export class CompressionService {
   #chunks: Uint8Array[] = [];
 
   /**
-   * The compression type being used by this service instance, or null for no compression
-   * When null, the service will pass through data unmodified
+   * Pre-allocated buffer pool for decompression operations.
+   * Maintains a fixed set of reusable buffers to reduce memory allocations
+   * and garbage collection overhead during frequent decompressions.
+   *
+   * The pool operates on a round-robin basis, cycling through available
+   * buffers for each decompression operation.
    * @private
    */
-  readonly #type: CompressionType | null;
+  readonly #bufferPool: Buffer[] = [];
+
+  /**
+   * Index of the next buffer to use in the pool rotation.
+   * Tracks the position in the buffer pool to implement round-robin reuse
+   * strategy for buffer allocation.
+   *
+   * Incremented after each buffer use and wraps around when reaching the pool size.
+   * @private
+   */
+  #poolIndex = 0;
 
   /**
    * Creates a new CompressionService instance.
@@ -97,19 +143,7 @@ export class CompressionService {
    * @param type - The compression type to use, or null to disable compression
    */
   constructor(type: CompressionType | null = null) {
-    this.#type = type;
-  }
-
-  /**
-   * Gets the compression type currently used by this service.
-   *
-   * This property is useful for checking the current compression type
-   * without needing to compare against string literals.
-   *
-   * @returns The current compression type, or null if no compression is used
-   */
-  get type(): CompressionType | null {
-    return this.#type;
+    this.type = type;
   }
 
   /**
@@ -121,7 +155,7 @@ export class CompressionService {
    * @returns `true` if using Zlib compression, `false` otherwise
    */
   get isZlib(): boolean {
-    return this.#type === "zlib-stream";
+    return this.type === "zlib-stream";
   }
 
   /**
@@ -133,7 +167,7 @@ export class CompressionService {
    * @returns `true` if using Zstandard compression, `false` otherwise
    */
   get isZstd(): boolean {
-    return this.#type === "zstd-stream";
+    return this.type === "zstd-stream";
   }
 
   /**
@@ -175,7 +209,7 @@ export class CompressionService {
     // Ensure clean state before initialization
     this.destroy();
 
-    if (!this.#type) {
+    if (!this.type) {
       // No compression requested, nothing to initialize
       return;
     }
@@ -188,12 +222,9 @@ export class CompressionService {
         await this.#initializeZstd();
       }
     } catch (error) {
-      throw new Error(
-        `Failed to initialize ${this.#type} compression service`,
-        {
-          cause: error,
-        },
-      );
+      throw new Error(`Failed to initialize ${this.type} compression service`, {
+        cause: error,
+      });
     }
   }
 
@@ -225,22 +256,33 @@ export class CompressionService {
     }
 
     try {
-      // Convert input to Buffer for consistent handling
-      // This ensures we have a proper Buffer regardless of input type
-      const buffer = Buffer.from(data.buffer, data.byteOffset, data.length);
+      // Skip buffer conversion if already a Buffer
+      if (Buffer.isBuffer(data)) {
+        // Route directly to the appropriate decompression method
+        if (this.#zlibInflate) {
+          return this.#decompressZlib(data);
+        }
 
-      // Route to the appropriate decompression method
-      if (this.#zlibInflate) {
-        return this.#decompressZlib(buffer);
-      }
+        if (this.#zstdStream) {
+          return this.#decompressZstd(data);
+        }
+      } else {
+        // Only convert to Buffer when needed (avoid copying if possible)
+        const buffer = Buffer.from(data.buffer, data.byteOffset, data.length);
 
-      if (this.#zstdStream) {
-        return this.#decompressZstd(buffer);
+        // Route to the appropriate decompression method
+        if (this.#zlibInflate) {
+          return this.#decompressZlib(buffer);
+        }
+
+        if (this.#zstdStream) {
+          return this.#decompressZstd(buffer);
+        }
       }
 
       throw new Error("No compression handler available");
     } catch (error) {
-      throw new Error(`Decompression failed using ${this.#type}`, {
+      throw new Error(`Decompression failed using ${this.type}`, {
         cause: error,
       });
     }
@@ -396,13 +438,6 @@ export class CompressionService {
    * This method processes compressed data through the Zstandard decompression stream
    * and combines all output chunks into a single buffer.
    *
-   * The Zstandard streaming implementation:
-   * 1. Resets the chunk collection array
-   * 2. Pushes compressed data into the decompression stream
-   * 3. Collects output chunks via the callback provided during initialization
-   * 4. Calculates the total size of all chunks
-   * 5. Combines chunks into a single contiguous buffer
-   *
    * @param data - The compressed data buffer
    * @returns The decompressed data, or an empty buffer if no output was produced
    * @private
@@ -413,11 +448,9 @@ export class CompressionService {
     }
 
     // Reset chunks array for new decompression
-    // This ensures we're only working with chunks from this call
     this.#chunks = [];
 
     // Process the data through the Zstandard decompression stream
-    // This will trigger our callback for each output chunk produced
     this.#zstdStream.push(new Uint8Array(data));
 
     // Check if we received any output chunks
@@ -425,14 +458,22 @@ export class CompressionService {
       return Buffer.alloc(0);
     }
 
-    // Calculate total length of all chunks to allocate exact buffer size
+    // Fast path for single chunk (avoid extra copy)
+    if (this.#chunks.length === 1) {
+      return Buffer.from(this.#chunks[0] as Uint8Array);
+    }
+
+    // Calculate total length of all chunks
     const totalLength = this.#chunks.reduce(
       (sum, chunk) => sum + chunk.length,
       0,
     );
 
-    // Create a single buffer to hold all chunks
-    const combined = new Uint8Array(totalLength);
+    // Use buffer from pool for frequent operations
+    const combined =
+      totalLength < BUFFER_CHUNK_SIZE
+        ? this.#getBufferFromPool(totalLength)
+        : Buffer.allocUnsafe(totalLength);
 
     // Copy each chunk into the combined buffer at the appropriate offset
     let offset = 0;
@@ -441,7 +482,36 @@ export class CompressionService {
       offset += chunk.length;
     }
 
-    // Convert to Node.js Buffer and return
-    return Buffer.from(combined);
+    // Return the combined buffer (slice if from pool to get correct length)
+    return totalLength < BUFFER_CHUNK_SIZE
+      ? combined.subarray(0, totalLength)
+      : combined;
+  }
+
+  /**
+   * Gets a buffer from the pool or creates a new one if needed.
+   * This reduces allocations for frequent decompressions.
+   *
+   * @param minSize - Minimum size needed for the buffer
+   * @returns A buffer of at least the requested size
+   * @private
+   */
+  #getBufferFromPool(minSize: number): Buffer {
+    // Initialize pool if first use
+    if (this.#bufferPool.length === 0) {
+      for (let i = 0; i < BUFFER_POOL_SIZE; i++) {
+        this.#bufferPool.push(Buffer.allocUnsafe(BUFFER_CHUNK_SIZE));
+      }
+    }
+
+    // For larger sizes, allocate a new buffer
+    if (minSize > BUFFER_CHUNK_SIZE) {
+      return Buffer.allocUnsafe(minSize);
+    }
+
+    // Use the next buffer in the pool
+    const buffer = this.#bufferPool[this.#poolIndex] as Buffer;
+    this.#poolIndex = (this.#poolIndex + 1) % BUFFER_POOL_SIZE;
+    return buffer;
   }
 }

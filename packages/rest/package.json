@@ -48,11 +48,11 @@
     "eventemitter3": "^5.0.1",
     "form-data": "^4.0.2",
     "mime-types": "^3.0.1",
-    "undici": "^7.9.0",
-    "zod": "^3.25.3"
+    "undici": "^7.10.0",
+    "zod": "^3.25.7"
   },
   "optionalDependencies": {
-    "sharp": "^0.34.1"
+    "sharp": "^0.34.2"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.4",

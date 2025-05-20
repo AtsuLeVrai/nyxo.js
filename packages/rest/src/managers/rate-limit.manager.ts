@@ -4,6 +4,41 @@ import { z } from "zod/v4";
 import type { Rest } from "../core/index.js";
 import type { HttpMethod, RateLimitHitEvent } from "../types/index.js";
 
+const RATE_LIMIT_CONSTANTS = {
+  /**
+   * Emoji route pattern for special handling.
+   * Discord documentation confirms only emoji routes have special rate limit handling.
+   */
+  EMOJI_ROUTE_PATTERN: /^\/guilds\/(\d+)\/emojis/,
+
+  /**
+   * Routes not subject to the global rate limit per Discord documentation.
+   * Only interaction endpoints are exempted from global rate limits.
+   */
+  GLOBAL_EXEMPT_ROUTES: ["/interactions"],
+
+  /**
+   * Status codes that indicate invalid requests.
+   * Used for Cloudflare ban prevention.
+   */
+  INVALID_STATUSES: [401, 403, 429],
+
+  /**
+   * Header names for rate limit information.
+   * Used to extract rate limit data from responses.
+   */
+  HEADERS: {
+    LIMIT: "x-ratelimit-limit",
+    REMAINING: "x-ratelimit-remaining",
+    RESET: "x-ratelimit-reset",
+    RESET_AFTER: "x-ratelimit-reset-after",
+    BUCKET: "x-ratelimit-bucket",
+    SCOPE: "x-ratelimit-scope",
+    GLOBAL: "x-ratelimit-global",
+    RETRY_AFTER: "retry-after",
+  },
+};
+
 /**
  * Possible rate limit scopes returned by the Discord API.
  * Defines the scope at which the rate limit applies.
@@ -140,43 +175,20 @@ export type RateLimitOptions = z.infer<typeof RateLimitOptions>;
  */
 export class RateLimitManager {
   /**
-   * Emoji route pattern for special handling.
-   * Discord documentation confirms only emoji routes have special rate limit handling.
+   * Gets the rate limit buckets currently tracked.
+   * Provides read-only access to bucket information.
+   *
+   * @returns Map of bucket hashes to bucket objects
    */
-  static readonly EMOJI_ROUTE_PATTERN = /^\/guilds\/(\d+)\/emojis/;
+  readonly buckets: Store<string, RateLimitBucket>;
 
   /**
-   * Routes not subject to the global rate limit per Discord documentation.
-   * Only interaction endpoints are exempted from global rate limits.
+   * Gets the route mappings currently tracked.
+   * Provides read-only access to route-to-bucket mappings.
+   *
+   * @returns Map of route keys to bucket hashes
    */
-  static readonly GLOBAL_EXEMPT_ROUTES = ["/interactions"];
-
-  /**
-   * Status codes that indicate invalid requests.
-   * Used for Cloudflare ban prevention.
-   */
-  static readonly INVALID_STATUSES = [401, 403, 429];
-
-  /**
-   * Header names for rate limit information.
-   * Used to extract rate limit data from responses.
-   */
-  static readonly HEADERS = {
-    LIMIT: "x-ratelimit-limit",
-    REMAINING: "x-ratelimit-remaining",
-    RESET: "x-ratelimit-reset",
-    RESET_AFTER: "x-ratelimit-reset-after",
-    BUCKET: "x-ratelimit-bucket",
-    SCOPE: "x-ratelimit-scope",
-    GLOBAL: "x-ratelimit-global",
-    RETRY_AFTER: "retry-after",
-  };
-
-  /** Store of bucket hashes to bucket objects with automatic TTL and LRU eviction. */
-  readonly #buckets: Store<string, RateLimitBucket>;
-
-  /** Store of API routes to their bucket hashes with automatic cleanup. */
-  readonly #routeBuckets: Store<string, string>;
+  readonly routeBuckets: Store<string, string>;
 
   /** Store for caching rate limit check results to reduce redundant operations. */
   readonly #rateLimitCache: Store<string, RateLimitResult>;
@@ -211,14 +223,14 @@ export class RateLimitManager {
     this.#options = options;
 
     // Initialize Stores with appropriate options
-    this.#buckets = new Store<string, RateLimitBucket>({
+    this.buckets = new Store<string, RateLimitBucket>({
       maxSize: this.#options.maxBuckets,
       evictionStrategy: "lru",
       cloneValues: false,
       expirationCheckInterval: this.#options.cleanupInterval,
     });
 
-    this.#routeBuckets = new Store<string, string>({
+    this.routeBuckets = new Store<string, string>({
       maxSize: this.#options.maxBuckets * 2, // Routes may outnumber buckets
       evictionStrategy: "lru",
       expirationCheckInterval: this.#options.cleanupInterval,
@@ -230,26 +242,6 @@ export class RateLimitManager {
       evictionStrategy: "lru",
       cloneValues: false,
     });
-  }
-
-  /**
-   * Gets the rate limit buckets currently tracked.
-   * Provides read-only access to bucket information.
-   *
-   * @returns Map of bucket hashes to bucket objects
-   */
-  get buckets(): Map<string, RateLimitBucket> {
-    return this.#buckets;
-  }
-
-  /**
-   * Gets the route mappings currently tracked.
-   * Provides read-only access to route-to-bucket mappings.
-   *
-   * @returns Map of route keys to bucket hashes
-   */
-  get routeBuckets(): Map<string, string> {
-    return this.#routeBuckets;
   }
 
   /**
@@ -310,8 +302,8 @@ export class RateLimitManager {
     }
 
     // Skip global exempt routes (only interaction endpoints per Discord docs)
-    const isGlobalExempt = RateLimitManager.GLOBAL_EXEMPT_ROUTES.some((route) =>
-      path.startsWith(route),
+    const isGlobalExempt = RATE_LIMIT_CONSTANTS.GLOBAL_EXEMPT_ROUTES.some(
+      (route) => path.startsWith(route),
     );
 
     // Check global limits unless this route is exempt
@@ -330,7 +322,7 @@ export class RateLimitManager {
 
     // Get bucket for this route
     const routeKey = this.getRouteKey(method, path);
-    const bucketHash = this.#routeBuckets.get(routeKey);
+    const bucketHash = this.routeBuckets.get(routeKey);
 
     // No bucket means no known limit
     if (!bucketHash) {
@@ -342,7 +334,7 @@ export class RateLimitManager {
       return result;
     }
 
-    const bucket = this.#buckets.get(bucketHash);
+    const bucket = this.buckets.get(bucketHash);
     if (!bucket) {
       const result = { canProceed: true };
 
@@ -420,7 +412,7 @@ export class RateLimitManager {
    */
   getRouteKey(method: HttpMethod, path: string): string {
     // Check for emoji routes (only special case per Discord docs)
-    const emojiMatch = path.match(RateLimitManager.EMOJI_ROUTE_PATTERN);
+    const emojiMatch = path.match(RATE_LIMIT_CONSTANTS.EMOJI_ROUTE_PATTERN);
     if (emojiMatch) {
       return `emoji:${emojiMatch[1]}:${method}`;
     }
@@ -453,7 +445,7 @@ export class RateLimitManager {
     this.#updateGlobalRequestCount(now);
 
     // Track invalid responses
-    if (RateLimitManager.INVALID_STATUSES.includes(statusCode)) {
+    if (RATE_LIMIT_CONSTANTS.INVALID_STATUSES.includes(statusCode)) {
       this.#trackInvalidRequest(now);
     }
 
@@ -475,7 +467,7 @@ export class RateLimitManager {
     }
 
     // Update bucket info if available
-    const bucketHash = headers[RateLimitManager.HEADERS.BUCKET];
+    const bucketHash = headers[RATE_LIMIT_CONSTANTS.HEADERS.BUCKET];
     if (!bucketHash) {
       return {
         canProceed: true,
@@ -498,8 +490,8 @@ export class RateLimitManager {
    */
   destroy(): void {
     // Destroy all stores to release resources
-    this.#buckets.destroy();
-    this.#routeBuckets.destroy();
+    this.buckets.destroy();
+    this.routeBuckets.destroy();
     this.#rateLimitCache.destroy();
   }
 
@@ -790,7 +782,7 @@ export class RateLimitManager {
     requestId: string,
     now: number,
   ): RateLimitResult {
-    const { HEADERS } = RateLimitManager;
+    const { HEADERS } = RATE_LIMIT_CONSTANTS;
 
     const retryAfterSec = Number(headers[HEADERS.RETRY_AFTER]);
     const retryAfter = retryAfterSec * 1000; // Convert to milliseconds
@@ -842,10 +834,10 @@ export class RateLimitManager {
     requestId: string,
     now: number,
   ): RateLimitResult {
-    const { HEADERS } = RateLimitManager;
+    const { HEADERS } = RATE_LIMIT_CONSTANTS;
 
     // Check if it's an emoji route
-    const isEmojiRoute = RateLimitManager.EMOJI_ROUTE_PATTERN.test(path);
+    const isEmojiRoute = RATE_LIMIT_CONSTANTS.EMOJI_ROUTE_PATTERN.test(path);
 
     // Parse reset time and calculate TTL for the bucket
     const resetTimeSeconds = Number(headers[HEADERS.RESET]);
@@ -865,8 +857,8 @@ export class RateLimitManager {
     };
 
     // Update stores with TTL based on reset time
-    this.#buckets.setWithTtl(bucketHash, bucket, bucketTtl);
-    this.#routeBuckets.set(routeKey, bucketHash);
+    this.buckets.setWithTtl(bucketHash, bucket, bucketTtl);
+    this.routeBuckets.set(routeKey, bucketHash);
 
     // Emit update event
     this.#rest.emit("rateLimitUpdate", {

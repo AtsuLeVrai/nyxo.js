@@ -308,29 +308,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   }
 
   /**
-   * Gets the bot token used for authentication
-   *
-   * This token is used to authenticate the bot with Discord's Gateway.
-   *
-   * @returns The bot token as a string
-   */
-  get token(): string {
-    return this.#options.token;
-  }
-
-  /**
-   * Gets the validated Gateway options
-   *
-   * Returns the complete, validated configuration options for the Gateway.
-   * These options have been processed through the Zod schema and have all defaults applied.
-   *
-   * @returns The complete Gateway configuration options
-   */
-  get options(): GatewayOptions {
-    return this.#options;
-  }
-
-  /**
    * Gets the current WebSocket ready state
    *
    * Provides the WebSocket connection state according to the WebSocket specification:

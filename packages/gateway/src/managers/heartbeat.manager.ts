@@ -83,39 +83,69 @@ export type HeartbeatOptions = z.infer<typeof HeartbeatOptions>;
  */
 export class HeartbeatManager {
   /**
-   * Tracks the round-trip time in milliseconds between sending a heartbeat and receiving an ACK
-   * Used to monitor connection health and report network performance metrics
-   * @private
+   * Gets the current latency in milliseconds
+   *
+   * This is the round-trip time between sending the most recent
+   * heartbeat and receiving an acknowledgement from Discord.
+   *
+   * A high or increasing latency may indicate network issues that
+   * could eventually lead to connection problems.
+   *
+   * @returns The current latency in milliseconds
    */
-  #latency = 0;
+  latency = 0;
 
   /**
-   * Tracks how many consecutive heartbeats have been sent without receiving an ACK
-   * Critical for determining when to consider a connection as failed/zombied
-   * @private
+   * Gets the number of consecutive missed heartbeats
+   *
+   * This counter increases when heartbeats are sent but
+   * not acknowledged, and resets when an acknowledgement
+   * is received.
+   *
+   * This value is crucial for connection health monitoring as
+   * consecutive missed heartbeats indicate potential connection issues.
+   *
+   * @returns The number of consecutive missed heartbeats
    */
-  #missedHeartbeats = 0;
+  missedHeartbeats = 0;
 
   /**
-   * Timestamp when the most recent heartbeat was sent
-   * Used for calculating latency and tracking heartbeat state
-   * @private
+   * Gets the current heartbeat interval in milliseconds
+   *
+   * This is the interval provided by Discord in the Hello packet,
+   * typically around 41.25 seconds (41250ms).
+   *
+   * This value is determined by Discord and should be respected to
+   * maintain proper connection health.
+   *
+   * @returns The current heartbeat interval in milliseconds
    */
-  #lastSend = 0;
+  intervalMs = 0;
 
   /**
-   * The interval in milliseconds between heartbeats as specified by Discord
-   * Typically around 41.25 seconds (41250ms) but can vary
-   * @private
+   * Gets the timestamp of the last heartbeat send
+   *
+   * This is the timestamp (in milliseconds since epoch) when
+   * the most recent heartbeat was sent to Discord.
+   *
+   * Useful for debugging and monitoring heartbeat timing issues.
+   *
+   * @returns The timestamp of the last heartbeat send
    */
-  #intervalMs = 0;
+  lastSend = 0;
 
   /**
-   * Flag indicating whether the last sent heartbeat has been acknowledged
-   * Used to track heartbeat state and detect missed heartbeats
-   * @private
+   * Checks if the last heartbeat was acknowledged by Discord
+   *
+   * Returns true if the most recent heartbeat was acknowledged,
+   * or if no heartbeats have been sent yet.
+   *
+   * Critical for monitoring connection health - an unacknowledged
+   * heartbeat may indicate connection issues with Discord's Gateway.
+   *
+   * @returns True if the last heartbeat was acknowledged
    */
-  #isAcked = true;
+  isAcked = true;
 
   /**
    * NodeJS interval reference for the recurring heartbeat timer
@@ -154,81 +184,6 @@ export class HeartbeatManager {
   constructor(gateway: Gateway, options: HeartbeatOptions) {
     this.#gateway = gateway;
     this.#options = options;
-  }
-
-  /**
-   * Gets the current latency in milliseconds
-   *
-   * This is the round-trip time between sending the most recent
-   * heartbeat and receiving an acknowledgement from Discord.
-   *
-   * A high or increasing latency may indicate network issues that
-   * could eventually lead to connection problems.
-   *
-   * @returns The current latency in milliseconds
-   */
-  get latency(): number {
-    return this.#latency;
-  }
-
-  /**
-   * Gets the number of consecutive missed heartbeats
-   *
-   * This counter increases when heartbeats are sent but
-   * not acknowledged, and resets when an acknowledgement
-   * is received.
-   *
-   * This value is crucial for connection health monitoring as
-   * consecutive missed heartbeats indicate potential connection issues.
-   *
-   * @returns The number of consecutive missed heartbeats
-   */
-  get missedHeartbeats(): number {
-    return this.#missedHeartbeats;
-  }
-
-  /**
-   * Gets the current heartbeat interval in milliseconds
-   *
-   * This is the interval provided by Discord in the Hello packet,
-   * typically around 41.25 seconds (41250ms).
-   *
-   * This value is determined by Discord and should be respected to
-   * maintain proper connection health.
-   *
-   * @returns The current heartbeat interval in milliseconds
-   */
-  get intervalMs(): number {
-    return this.#intervalMs;
-  }
-
-  /**
-   * Gets the timestamp of the last heartbeat send
-   *
-   * This is the timestamp (in milliseconds since epoch) when
-   * the most recent heartbeat was sent to Discord.
-   *
-   * Useful for debugging and monitoring heartbeat timing issues.
-   *
-   * @returns The timestamp of the last heartbeat send
-   */
-  get lastSend(): number {
-    return this.#lastSend;
-  }
-
-  /**
-   * Checks if the last heartbeat was acknowledged by Discord
-   *
-   * Returns true if the most recent heartbeat was acknowledged,
-   * or if no heartbeats have been sent yet.
-   *
-   * Critical for monitoring connection health - an unacknowledged
-   * heartbeat may indicate connection issues with Discord's Gateway.
-   *
-   * @returns True if the last heartbeat was acknowledged
-   */
-  get isAcked(): boolean {
-    return this.#isAcked;
   }
 
   /**
@@ -300,11 +255,11 @@ export class HeartbeatManager {
    */
   destroy(): void {
     // Reset all internal state metrics
-    this.#latency = 0;
-    this.#missedHeartbeats = 0;
-    this.#lastSend = 0;
-    this.#intervalMs = 0;
-    this.#isAcked = true;
+    this.latency = 0;
+    this.missedHeartbeats = 0;
+    this.lastSend = 0;
+    this.intervalMs = 0;
+    this.isAcked = true;
 
     // Clear the heartbeat interval if it exists
     if (this.#interval) {
@@ -333,13 +288,13 @@ export class HeartbeatManager {
     const now = Date.now();
     this.#handleAck();
     // Calculate the round-trip time as the difference between now and when the heartbeat was sent
-    this.#latency = now - this.#lastSend;
+    this.latency = now - this.lastSend;
 
     // Emit an event with detailed information about this acknowledgement
     this.#gateway.emit("heartbeatAcknowledge", {
       timestamp: new Date().toISOString(),
       sequence: this.#gateway.sequence,
-      latency: this.#latency,
+      latency: this.latency,
     });
   }
 
@@ -358,17 +313,17 @@ export class HeartbeatManager {
    */
   sendHeartbeat(): void {
     // Record the time this heartbeat was sent for latency calculation
-    this.#lastSend = Date.now();
+    this.lastSend = Date.now();
 
     // Check if the previous heartbeat was acknowledged
-    if (!this.#isAcked) {
+    if (!this.isAcked) {
       // Previous heartbeat wasn't acknowledged - handle as a missed heartbeat
       this.#handleMissedHeartbeat();
       return;
     }
 
     // Mark as unacknowledged until we receive an ACK
-    this.#isAcked = false;
+    this.isAcked = false;
 
     // Emit event for logging/monitoring
     this.#gateway.emit("heartbeatSent", {
@@ -396,7 +351,7 @@ export class HeartbeatManager {
     this.destroy();
 
     // Store the heartbeat interval for future reference
-    this.#intervalMs = interval;
+    this.intervalMs = interval;
 
     // Use jitter to prevent thundering herd problem
     // Discord documentation recommends adding random jitter to the first heartbeat
@@ -409,10 +364,7 @@ export class HeartbeatManager {
       this.sendHeartbeat();
 
       // Set up regular heartbeat interval
-      this.#interval = setInterval(
-        () => this.sendHeartbeat(),
-        this.#intervalMs,
-      );
+      this.#interval = setInterval(() => this.sendHeartbeat(), this.intervalMs);
     }, initialDelay);
   }
 
@@ -427,10 +379,10 @@ export class HeartbeatManager {
    */
   #handleAck(): void {
     // Mark the heartbeat as acknowledged
-    this.#isAcked = true;
+    this.isAcked = true;
 
     // Reset missed heartbeat counter since we've received an ACK
-    this.#missedHeartbeats = 0;
+    this.missedHeartbeats = 0;
   }
 
   /**
@@ -447,20 +399,20 @@ export class HeartbeatManager {
    */
   #handleMissedHeartbeat(): void {
     // Increment missed heartbeat counter
-    this.#missedHeartbeats++;
+    this.missedHeartbeats++;
 
     // Emit event with detailed information about the missed heartbeat
     this.#gateway.emit("heartbeatTimeout", {
       timestamp: new Date().toISOString(),
-      missedCount: this.#missedHeartbeats,
+      missedCount: this.missedHeartbeats,
       maxRetries: this.#options.maxRetries,
       willReconnect:
-        this.#missedHeartbeats >= this.#options.maxRetries &&
+        this.missedHeartbeats >= this.#options.maxRetries &&
         this.#options.autoReconnect,
     });
 
     // If we've reached the max retries, destroy the heartbeat and reconnect if configured
-    if (this.#missedHeartbeats >= this.#options.maxRetries) {
+    if (this.missedHeartbeats >= this.#options.maxRetries) {
       // Connection is considered zombied, destroy heartbeat service
       this.destroy();
 
@@ -489,8 +441,8 @@ export class HeartbeatManager {
     // Schedule reconnection after the configured delay
     this.#reconnectTimeout = setTimeout(() => {
       // Only attempt to restart heartbeat if we have a valid interval
-      if (this.#intervalMs > 0) {
-        this.start(this.#intervalMs);
+      if (this.intervalMs > 0) {
+        this.start(this.intervalMs);
       }
     }, this.#options.reconnectDelay);
   }

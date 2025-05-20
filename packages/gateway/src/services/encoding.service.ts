@@ -66,19 +66,22 @@ export type EncodingType = z.infer<typeof EncodingType>;
  */
 export class EncodingService {
   /**
+   * Gets the encoding type currently used by this service.
+   *
+   * This property is useful for checking the encoding type
+   * without needing to compare with string literals.
+   *
+   * @returns The current encoding type ("json" or "etf")
+   */
+  readonly type: EncodingType;
+
+  /**
    * The erlpack module reference if available
    * Used for ETF encoding/decoding operations
    * Null if not initialized or using JSON encoding
    * @private
    */
   #erlpack: typeof erlpack | null = null;
-
-  /**
-   * The current encoding type being used by this service instance
-   * Determines which encoding/decoding algorithms are used
-   * @private
-   */
-  readonly #type: EncodingType;
 
   /**
    * Creates a new EncodingService instance.
@@ -90,19 +93,7 @@ export class EncodingService {
    * @param type - The encoding type to use ("json" or "etf")
    */
   constructor(type: EncodingType) {
-    this.#type = type;
-  }
-
-  /**
-   * Gets the encoding type currently used by this service.
-   *
-   * This property is useful for checking the encoding type
-   * without needing to compare with string literals.
-   *
-   * @returns The current encoding type ("json" or "etf")
-   */
-  get type(): EncodingType {
-    return this.#type;
+    this.type = type;
   }
 
   /**
@@ -114,7 +105,7 @@ export class EncodingService {
    * @returns `true` if using ETF encoding, `false` if using JSON
    */
   get isEtf(): boolean {
-    return this.#type === "etf";
+    return this.type === "etf";
   }
 
   /**
@@ -156,7 +147,7 @@ export class EncodingService {
       this.#erlpack = result.data;
     } catch (error) {
       // Wrap and rethrow errors with additional context
-      throw new Error(`Failed to initialize ${this.#type} encoding service`, {
+      throw new Error(`Failed to initialize ${this.type} encoding service`, {
         cause: error,
       });
     }
@@ -205,7 +196,7 @@ export class EncodingService {
       return result;
     } catch (error) {
       // Wrap and rethrow errors with additional context
-      throw new Error(`Failed to encode ${this.#type} payload`, {
+      throw new Error(`Failed to encode ${this.type} payload`, {
         cause: error,
       });
     }
@@ -256,7 +247,7 @@ export class EncodingService {
       );
     } catch (error) {
       // Wrap and rethrow errors with additional context
-      throw new Error(`Failed to decode ${this.#type} payload`, {
+      throw new Error(`Failed to decode ${this.type} payload`, {
         cause: error,
       });
     }
