@@ -26,7 +26,7 @@
       "persistent": true
     },
     "build:prod": {
-      "dependsOn": ["//#biome:check", "type-check", "^build:prod"],
+      "dependsOn": ["//#biome:check", "^type-check", "^build:prod"],
       "outputs": ["dist/**"],
       "cache": true
     },

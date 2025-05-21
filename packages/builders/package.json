@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@nyxojs/core": "workspace:^",
-    "zod": "^3.25.13"
+    "zod": "^3.25.16"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
