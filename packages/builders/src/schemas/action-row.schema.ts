@@ -103,4 +103,4 @@ export const ActionRowSchema = z
         "1) Up to 5 Buttons, 2) A single Select Menu, or 3) A single Text Input",
       path: ["components"],
     },
-  ) as z.ZodType<ActionRowEntity, ActionRowEntity>;
+  ) satisfies z.ZodType<ActionRowEntity, ActionRowEntity>;

@@ -1,7 +1,6 @@
 import {
   APPLICATION_COMMAND_NAME_REGEX,
   type AnyApplicationCommandEntity,
-  type AnyApplicationCommandOptionEntity,
   type ApplicationCommandEntity,
   ApplicationCommandEntryPointType,
   ApplicationCommandOptionType,
@@ -10,6 +9,13 @@ import {
   type InteractionContextType,
   type LocaleValues,
 } from "@nyxojs/core";
+import { z } from "zod/v4";
+import {
+  ChatInputCommandSchema,
+  EntryPointCommandSchema,
+  MessageCommandSchema,
+  UserCommandSchema,
+} from "../schemas/index.js";
 import { COMMAND_LIMITS } from "../utils/index.js";
 import {
   AttachmentOptionBuilder,
@@ -26,31 +32,54 @@ import {
 } from "./command-option.builder.js";
 
 /**
- * Base class for all application command builders.
+ * Base builder class for application commands.
+ * Provides common functionality for all command types.
  *
- * @template T - The type of command entity this builder creates
+ * @template T - The specific command entity type this builder creates
  */
 export abstract class BaseCommandBuilder<
   T extends AnyApplicationCommandEntity,
 > {
-  /** The internal command data being constructed */
+  /** Internal command data being constructed */
   protected readonly data: Partial<T>;
 
-  /** The command type for this builder */
+  /** Command type for this builder */
   protected readonly type: ApplicationCommandType;
+
+  /** Schema used for validation */
+  protected readonly schema: z.ZodType;
 
   /**
    * Creates a new BaseCommandBuilder instance.
    *
-   * @param type - The type of this command
+   * @param type - The type of command to build
+   * @param schema - The Zod schema to use for validation
    * @param data - Optional initial data to populate the command with
    */
-  protected constructor(type: ApplicationCommandType, data?: Partial<T>) {
+  protected constructor(
+    type: ApplicationCommandType,
+    schema: z.ZodObject,
+    data?: Partial<T>,
+  ) {
     this.type = type;
-    this.data = {
-      type: type,
-      ...(data || {}),
-    } as Partial<T>;
+    this.schema = schema;
+
+    if (data) {
+      // Validate the initial data
+      const result = schema.safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.data = {
+        type,
+        ...result.data,
+      } as Partial<T>;
+    } else {
+      this.data = {
+        type,
+      } as Partial<T>;
+    }
   }
 
   /**
@@ -67,31 +96,28 @@ export abstract class BaseCommandBuilder<
       );
     }
 
-    if (this.type === ApplicationCommandType.ChatInput) {
-      // Slash commands must use lowercase names
-      const lowercaseName = name.toLowerCase();
+    // Slash commands must use lowercase names
+    const nameToSet =
+      this.type === ApplicationCommandType.ChatInput
+        ? name.toLowerCase()
+        : name;
 
-      if (!APPLICATION_COMMAND_NAME_REGEX.test(lowercaseName)) {
+    if (this.type === ApplicationCommandType.ChatInput) {
+      if (!APPLICATION_COMMAND_NAME_REGEX.test(nameToSet)) {
         throw new Error(
           "Slash command name must match the regex pattern ^[-_'\\p{L}\\p{N}\\p{sc=Deva}\\p{sc=Thai}]{1,32}$",
         );
       }
-
-      this.data.name = lowercaseName;
-    } else {
-      // User and Message commands can use mixed case
-      if (name.length === 0) {
-        throw new Error("Command name cannot be empty");
-      }
-
-      this.data.name = name;
+    } else if (name.length === 0) {
+      throw new Error("Command name cannot be empty");
     }
 
+    this.data.name = nameToSet;
     return this;
   }
 
   /**
-   * Sets localizations for the command name.
+   * Sets localization for the command name in different languages.
    *
    * @param localizations - Dictionary of locale to localized name
    * @returns The command builder instance for method chaining
@@ -168,7 +194,7 @@ export abstract class BaseCommandBuilder<
   }
 
   /**
-   * Sets whether the command is available in DMs (deprecated - use setContexts instead).
+   * Sets whether the command is available in DMs (deprecated).
    *
    * @param enabled - Whether the command is available in DMs
    * @returns The command builder instance for method chaining
@@ -180,24 +206,24 @@ export abstract class BaseCommandBuilder<
   }
 
   /**
-   * Abstract build method that must be implemented by subclasses.
-   * Should return the complete command entity.
-   */
-  abstract build(): T;
-
-  /**
    * Returns a JSON representation of the command.
-   * Can be used directly with the Discord API for command registration.
    *
    * @returns A read-only copy of the command data
    */
   toJson(): Readonly<Partial<T>> {
     return Object.freeze({ ...this.data });
   }
+
+  /**
+   * Abstract build method to be implemented by subclasses.
+   * Should return the complete command entity.
+   */
+  abstract build(): T;
 }
 
 /**
  * Builder for slash commands (CHAT_INPUT type).
+ * These are text-based commands invoked with a / prefix.
  */
 export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -206,7 +232,7 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    * @param data - Optional initial data to populate the command with
    */
   constructor(data?: Partial<ApplicationCommandEntity>) {
-    super(ApplicationCommandType.ChatInput, data);
+    super(ApplicationCommandType.ChatInput, ChatInputCommandSchema, data);
 
     // Initialize description and options if provided
     if (data?.description) {
@@ -235,7 +261,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param description - The description to set (max 100 characters)
    * @returns The command builder instance for method chaining
-   * @throws Error if description exceeds 100 characters
    */
   setDescription(description: string): this {
     if (description.length > COMMAND_LIMITS.DESCRIPTION) {
@@ -269,41 +294,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
     }
 
     this.data.description_localizations = localizations;
-    return this;
-  }
-
-  /**
-   * Adds an option to the command.
-   *
-   * @param option - The option to add or a function that returns an option
-   * @returns The command builder instance for method chaining
-   * @throws Error if adding the option would exceed the maximum number of options
-   */
-  addOption(
-    option:
-      | AnyApplicationCommandOptionEntity
-      | ((builder: StringOptionBuilder) => StringOptionBuilder),
-  ): this {
-    if (!this.data.options) {
-      this.data.options = [];
-    }
-
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a command`,
-      );
-    }
-
-    if (typeof option === "function") {
-      // Create a new option using the builder function
-      const builder = new StringOptionBuilder();
-      const result = option(builder);
-      this.data.options.push(result.build());
-    } else {
-      // Add the existing option
-      this.data.options.push(option);
-    }
-
     return this;
   }
 
@@ -550,7 +540,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param subcommandBuilder - Function that configures the subcommand
    * @returns The command builder instance for method chaining
-   * @throws Error if adding the subcommand would exceed the maximum number of options
    */
   addSubcommand(
     subcommandBuilder: (builder: SubCommandBuilder) => SubCommandBuilder,
@@ -590,7 +579,6 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    *
    * @param groupBuilder - Function that configures the subcommand group
    * @returns The command builder instance for method chaining
-   * @throws Error if adding the group would exceed the maximum number of options
    */
   addSubcommandGroup(
     groupBuilder: (builder: SubCommandGroupBuilder) => SubCommandGroupBuilder,
@@ -632,104 +620,19 @@ export class SlashCommandBuilder extends BaseCommandBuilder<ApplicationCommandEn
    * @throws Error if the command configuration is invalid
    */
   build(): ApplicationCommandEntity {
-    if (!this.data.name) {
-      throw new Error("Command name is required");
+    // Validate the entire command
+    const result = ChatInputCommandSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (!this.data.description) {
-      throw new Error("Command description is required");
-    }
-
-    // Check total character count
-    let charCount = this.data.name.length + this.data.description.length;
-
-    // Count characters in options
-    if (this.data.options) {
-      for (const option of this.data.options) {
-        charCount += option.name.length + option.description.length;
-
-        // Count characters in choices
-        if ("choices" in option && option.choices) {
-          for (const choice of option.choices) {
-            charCount += choice.name.length;
-            if (typeof choice.value === "string") {
-              charCount += choice.value.length;
-            }
-          }
-        }
-
-        // Count characters in subcommand options
-        if (
-          option.type === ApplicationCommandOptionType.SubCommand &&
-          option.options
-        ) {
-          for (const subOption of option.options) {
-            charCount += subOption.name.length + subOption.description.length;
-
-            // Count characters in choices
-            if ("choices" in subOption && subOption.choices) {
-              for (const choice of subOption.choices) {
-                charCount += choice.name.length;
-                if (typeof choice.value === "string") {
-                  charCount += choice.value.length;
-                }
-              }
-            }
-          }
-        }
-
-        // Count characters in subcommand group options
-        if (
-          option.type === ApplicationCommandOptionType.SubCommandGroup &&
-          option.options
-        ) {
-          for (const subCommand of option.options) {
-            charCount += subCommand.name.length + subCommand.description.length;
-
-            if (subCommand.options) {
-              for (const subOption of subCommand.options) {
-                charCount +=
-                  subOption.name.length + subOption.description.length;
-
-                // Count characters in choices
-                if ("choices" in subOption && subOption.choices) {
-                  for (const choice of subOption.choices) {
-                    charCount += choice.name.length;
-                    if (typeof choice.value === "string") {
-                      charCount += choice.value.length;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (charCount > COMMAND_LIMITS.TOTAL_LENGTH) {
-      throw new Error(
-        `Command exceeds maximum total character limit (${charCount}/${COMMAND_LIMITS.TOTAL_LENGTH})`,
-      );
-    }
-
-    // Check if any options have the same name
-    if (this.data.options && this.data.options.length > 0) {
-      const names = new Set<string>();
-      for (const option of this.data.options) {
-        if (names.has(option.name)) {
-          throw new Error(`Duplicate option name: ${option.name}`);
-        }
-        names.add(option.name);
-      }
-    }
-
-    return this.data as ApplicationCommandEntity;
+    return result.data as ApplicationCommandEntity;
   }
 }
 
 /**
  * Builder for user context menu commands.
+ * These appear when right-clicking on a user.
  */
 export class UserCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -738,7 +641,7 @@ export class UserCommandBuilder extends BaseCommandBuilder<ApplicationCommandEnt
    * @param data - Optional initial data to populate the command with
    */
   constructor(data?: Partial<ApplicationCommandEntity>) {
-    super(ApplicationCommandType.User, data);
+    super(ApplicationCommandType.User, UserCommandSchema, data);
 
     // User commands always have an empty description
     this.data.description = "";
@@ -761,32 +664,19 @@ export class UserCommandBuilder extends BaseCommandBuilder<ApplicationCommandEnt
    * @throws Error if the command configuration is invalid
    */
   build(): ApplicationCommandEntity {
-    this.#validate();
-    return this.data as ApplicationCommandEntity;
-  }
-
-  /**
-   * Validates the user command configuration.
-   *
-   * @returns True if the command is valid
-   * @throws Error if the command configuration is invalid
-   * @private
-   */
-  #validate(): boolean {
-    if (!this.data.name) {
-      throw new Error("Command name is required");
+    // Validate the entire command
+    const result = UserCommandSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (this.data.options) {
-      throw new Error("User commands cannot have options");
-    }
-
-    return true;
+    return result.data as ApplicationCommandEntity;
   }
 }
 
 /**
  * Builder for message context menu commands.
+ * These appear when right-clicking on a message.
  */
 export class MessageCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -795,7 +685,7 @@ export class MessageCommandBuilder extends BaseCommandBuilder<ApplicationCommand
    * @param data - Optional initial data to populate the command with
    */
   constructor(data?: Partial<ApplicationCommandEntity>) {
-    super(ApplicationCommandType.Message, data);
+    super(ApplicationCommandType.Message, MessageCommandSchema, data);
 
     // Message commands always have an empty description
     this.data.description = "";
@@ -818,21 +708,19 @@ export class MessageCommandBuilder extends BaseCommandBuilder<ApplicationCommand
    * @throws Error if the command configuration is invalid
    */
   build(): ApplicationCommandEntity {
-    if (!this.data.name) {
-      throw new Error("Command name is required");
+    // Validate the entire command
+    const result = MessageCommandSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (this.data.options) {
-      throw new Error("Message commands cannot have options");
-    }
-
-    return this.data as ApplicationCommandEntity;
+    return result.data as ApplicationCommandEntity;
   }
 }
 
 /**
  * Builder for entry point commands (PRIMARY_ENTRY_POINT type).
- * These commands serve as the primary way to launch an app's Activity from the App Launcher.
+ * These serve as the primary way to launch an app's Activity from the App Launcher.
  */
 export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationCommandEntity> {
   /**
@@ -841,7 +729,11 @@ export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationComm
    * @param data - Optional initial data to populate the command with
    */
   constructor(data?: Partial<ApplicationCommandEntity>) {
-    super(ApplicationCommandType.PrimaryEntryPoint, data);
+    super(
+      ApplicationCommandType.PrimaryEntryPoint,
+      EntryPointCommandSchema,
+      data,
+    );
 
     // Initialize description if provided
     if (data?.description) {
@@ -877,7 +769,6 @@ export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationComm
    *
    * @param description - The description to set (max 100 characters)
    * @returns The command builder instance for method chaining
-   * @throws Error if description exceeds 100 characters
    */
   setDescription(description: string): this {
     if (description.length > COMMAND_LIMITS.DESCRIPTION) {
@@ -933,22 +824,12 @@ export class EntryPointCommandBuilder extends BaseCommandBuilder<ApplicationComm
    * @throws Error if the command configuration is invalid
    */
   build(): ApplicationCommandEntity {
-    if (!this.data.name) {
-      throw new Error("Command name is required");
+    // Validate the entire command
+    const result = EntryPointCommandSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (!this.data.description) {
-      throw new Error("Command description is required");
-    }
-
-    if (this.data.options) {
-      throw new Error("Entry point commands cannot have options");
-    }
-
-    if (!this.data.handler) {
-      throw new Error("Entry point commands must have a handler specified");
-    }
-
-    return this.data as ApplicationCommandEntity;
+    return result.data as ApplicationCommandEntity;
   }
 }

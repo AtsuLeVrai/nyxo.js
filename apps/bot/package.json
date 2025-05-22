@@ -27,7 +27,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "nyxo.js": "workspace:^"
+    "nyxo.js": "workspace:^",
+    "zod": "^3.25.20"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",

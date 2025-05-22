@@ -4,15 +4,20 @@ import {
   type GuildApplicationCommandPermissionEntity,
   type Snowflake,
 } from "@nyxojs/core";
+import { z } from "zod/v4";
+import {
+  CommandPermissionSchema,
+  GuildCommandPermissionSchema,
+} from "../schemas/index.js";
 import { MAX_PERMISSIONS } from "../utils/index.js";
 
 /**
- * Builder for application command permission objects.
- * Used to set permissions for who can use a command in a guild.
+ * Builder for creating command permission objects.
+ * Used to specify which users, roles, or channels can use a command in a guild.
  */
 export class CommandPermissionBuilder {
-  /** The internal permission data being constructed */
-  readonly #data: Partial<ApplicationCommandPermissionEntity> = {};
+  /** Internal permission data being constructed */
+  private readonly data: Partial<ApplicationCommandPermissionEntity> = {};
 
   /**
    * Creates a new CommandPermissionBuilder instance.
@@ -21,7 +26,12 @@ export class CommandPermissionBuilder {
    */
   constructor(data?: Partial<ApplicationCommandPermissionEntity>) {
     if (data) {
-      this.#data = { ...data };
+      const result = CommandPermissionSchema.partial().safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.data = { ...result.data };
     }
   }
 
@@ -132,7 +142,7 @@ export class CommandPermissionBuilder {
    * @returns The permission builder instance for method chaining
    */
   setId(id: Snowflake): this {
-    this.#data.id = id;
+    this.data.id = id;
     return this;
   }
 
@@ -143,7 +153,7 @@ export class CommandPermissionBuilder {
    * @returns The permission builder instance for method chaining
    */
   setType(type: ApplicationCommandPermissionType): this {
-    this.#data.type = type;
+    this.data.type = type;
     return this;
   }
 
@@ -154,7 +164,7 @@ export class CommandPermissionBuilder {
    * @returns The permission builder instance for method chaining
    */
   setPermission(permission: boolean): this {
-    this.#data.permission = permission;
+    this.data.permission = permission;
     return this;
   }
 
@@ -165,19 +175,12 @@ export class CommandPermissionBuilder {
    * @throws Error if the permission configuration is invalid
    */
   build(): ApplicationCommandPermissionEntity {
-    if (!this.#data.id) {
-      throw new Error("Permission ID is required");
+    const result = CommandPermissionSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (this.#data.type === undefined) {
-      throw new Error("Permission type is required");
-    }
-
-    if (this.#data.permission === undefined) {
-      throw new Error("Permission value is required");
-    }
-
-    return this.#data as ApplicationCommandPermissionEntity;
+    return result.data;
   }
 
   /**
@@ -186,7 +189,7 @@ export class CommandPermissionBuilder {
    * @returns A read-only copy of the permission data
    */
   toJson(): Readonly<Partial<ApplicationCommandPermissionEntity>> {
-    return Object.freeze({ ...this.#data });
+    return Object.freeze({ ...this.data });
   }
 }
 
@@ -195,8 +198,8 @@ export class CommandPermissionBuilder {
  * Used to update permissions for commands in a guild.
  */
 export class GuildCommandPermissionsBuilder {
-  /** The internal permissions data being constructed */
-  readonly #data: Partial<GuildApplicationCommandPermissionEntity> = {
+  /** Internal permissions data being constructed */
+  private readonly data: Partial<GuildApplicationCommandPermissionEntity> = {
     permissions: [],
   };
 
@@ -207,8 +210,13 @@ export class GuildCommandPermissionsBuilder {
    */
   constructor(data?: Partial<GuildApplicationCommandPermissionEntity>) {
     if (data) {
-      this.#data = {
-        ...data,
+      const result = GuildCommandPermissionSchema.partial().safeParse(data);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.data = {
+        ...result.data,
         permissions: data.permissions ? [...data.permissions] : [],
       };
     }
@@ -233,7 +241,7 @@ export class GuildCommandPermissionsBuilder {
    * @returns The permissions builder instance for method chaining
    */
   setCommandId(commandId: Snowflake): this {
-    this.#data.id = commandId;
+    this.data.id = commandId;
     return this;
   }
 
@@ -244,7 +252,7 @@ export class GuildCommandPermissionsBuilder {
    * @returns The permissions builder instance for method chaining
    */
   setApplicationId(applicationId: Snowflake): this {
-    this.#data.application_id = applicationId;
+    this.data.application_id = applicationId;
     return this;
   }
 
@@ -255,7 +263,7 @@ export class GuildCommandPermissionsBuilder {
    * @returns The permissions builder instance for method chaining
    */
   setGuildId(guildId: Snowflake): this {
-    this.#data.guild_id = guildId;
+    this.data.guild_id = guildId;
     return this;
   }
 
@@ -271,11 +279,11 @@ export class GuildCommandPermissionsBuilder {
       | ApplicationCommandPermissionEntity
       | ((builder: CommandPermissionBuilder) => CommandPermissionBuilder),
   ): this {
-    if (!this.#data.permissions) {
-      this.#data.permissions = [];
+    if (!this.data.permissions) {
+      this.data.permissions = [];
     }
 
-    if (this.#data.permissions.length >= MAX_PERMISSIONS) {
+    if (this.data.permissions.length >= MAX_PERMISSIONS) {
       throw new Error(
         `Cannot add more than ${MAX_PERMISSIONS} permissions to a command`,
       );
@@ -285,10 +293,15 @@ export class GuildCommandPermissionsBuilder {
       // Create a new permission using the builder function
       const builder = new CommandPermissionBuilder();
       const result = permission(builder);
-      this.#data.permissions.push(result.build());
+      this.data.permissions.push(result.build());
     } else {
-      // Add the existing permission
-      this.#data.permissions.push(permission);
+      // Validate the permission
+      const result = CommandPermissionSchema.safeParse(permission);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+
+      this.data.permissions.push(result.data);
     }
 
     return this;
@@ -322,7 +335,17 @@ export class GuildCommandPermissionsBuilder {
       );
     }
 
-    this.#data.permissions = [...permissions];
+    // Validate each permission
+    const validPermissions: ApplicationCommandPermissionEntity[] = [];
+    for (const permission of permissions) {
+      const result = CommandPermissionSchema.safeParse(permission);
+      if (!result.success) {
+        throw new Error(z.prettifyError(result.error));
+      }
+      validPermissions.push(result.data);
+    }
+
+    this.data.permissions = validPermissions;
     return this;
   }
 
@@ -333,8 +356,12 @@ export class GuildCommandPermissionsBuilder {
    * @returns The permissions builder instance for method chaining
    */
   restrictToChannels(allowedChannelIds: Snowflake[]): this {
+    if (!this.data.guild_id) {
+      throw new Error("Guild ID must be set before using restrictToChannels");
+    }
+
     // First clear any existing permissions
-    this.#data.permissions = [];
+    this.data.permissions = [];
 
     // Add permissions for each allowed channel
     for (const channelId of allowedChannelIds) {
@@ -344,16 +371,12 @@ export class GuildCommandPermissionsBuilder {
     }
 
     // Add permission to deny in all other channels
-    if (this.#data.guild_id) {
-      this.addPermission(
-        CommandPermissionBuilder.forAllChannels(
-          this.#data.guild_id,
-          false,
-        ).build(),
-      );
-    } else {
-      throw new Error("Guild ID must be set before using restrictToChannels");
-    }
+    this.addPermission(
+      CommandPermissionBuilder.forAllChannels(
+        this.data.guild_id,
+        false,
+      ).build(),
+    );
 
     return this;
   }
@@ -365,8 +388,12 @@ export class GuildCommandPermissionsBuilder {
    * @returns The permissions builder instance for method chaining
    */
   restrictToRoles(allowedRoleIds: Snowflake[]): this {
+    if (!this.data.guild_id) {
+      throw new Error("Guild ID must be set before using restrictToRoles");
+    }
+
     // First clear any existing permissions
-    this.#data.permissions = [];
+    this.data.permissions = [];
 
     // Add permissions for each allowed role
     for (const roleId of allowedRoleIds) {
@@ -376,16 +403,9 @@ export class GuildCommandPermissionsBuilder {
     }
 
     // Add permission to deny for everyone else
-    if (this.#data.guild_id) {
-      this.addPermission(
-        CommandPermissionBuilder.forEveryone(
-          this.#data.guild_id,
-          false,
-        ).build(),
-      );
-    } else {
-      throw new Error("Guild ID must be set before using restrictToRoles");
-    }
+    this.addPermission(
+      CommandPermissionBuilder.forEveryone(this.data.guild_id, false).build(),
+    );
 
     return this;
   }
@@ -397,8 +417,12 @@ export class GuildCommandPermissionsBuilder {
    * @returns The permissions builder instance for method chaining
    */
   restrictToUsers(allowedUserIds: Snowflake[]): this {
+    if (!this.data.guild_id) {
+      throw new Error("Guild ID must be set before using restrictToUsers");
+    }
+
     // First clear any existing permissions
-    this.#data.permissions = [];
+    this.data.permissions = [];
 
     // Add permissions for each allowed user
     for (const userId of allowedUserIds) {
@@ -408,37 +432,30 @@ export class GuildCommandPermissionsBuilder {
     }
 
     // Add permission to deny for everyone else
-    if (this.#data.guild_id) {
-      this.addPermission(
-        CommandPermissionBuilder.forEveryone(
-          this.#data.guild_id,
-          false,
-        ).build(),
-      );
-    } else {
-      throw new Error("Guild ID must be set before using restrictToUsers");
-    }
+    this.addPermission(
+      CommandPermissionBuilder.forEveryone(this.data.guild_id, false).build(),
+    );
 
     return this;
   }
 
   /**
-   * Creates a permission payload for allowing a command for everyone (default behavior).
+   * Creates a permission payload for allowing a command for everyone.
    *
    * @returns The permissions builder instance for method chaining
    */
   allowForEveryone(): this {
-    // First clear any existing permissions
-    this.#data.permissions = [];
-
-    // Add permission for everyone
-    if (this.#data.guild_id) {
-      this.addPermission(
-        CommandPermissionBuilder.forEveryone(this.#data.guild_id, true).build(),
-      );
-    } else {
+    if (!this.data.guild_id) {
       throw new Error("Guild ID must be set before using allowForEveryone");
     }
+
+    // First clear any existing permissions
+    this.data.permissions = [];
+
+    // Add permission for everyone
+    this.addPermission(
+      CommandPermissionBuilder.forEveryone(this.data.guild_id, true).build(),
+    );
 
     return this;
   }
@@ -449,25 +466,19 @@ export class GuildCommandPermissionsBuilder {
    * @returns The permissions builder instance for method chaining
    */
   restrictToAdministrators(): this {
-    // First clear any existing permissions
-    this.#data.permissions = [];
-
-    // Add permission to deny for everyone
-    if (this.#data.guild_id) {
-      this.addPermission(
-        CommandPermissionBuilder.forEveryone(
-          this.#data.guild_id,
-          false,
-        ).build(),
-      );
-    } else {
+    if (!this.data.guild_id) {
       throw new Error(
         "Guild ID must be set before using restrictToAdministrators",
       );
     }
 
-    // Note: We don't need to explicitly allow administrators because they can always use commands
-    // regardless of permission settings
+    // First clear any existing permissions
+    this.data.permissions = [];
+
+    // Add permission to deny for everyone
+    this.addPermission(
+      CommandPermissionBuilder.forEveryone(this.data.guild_id, false).build(),
+    );
 
     return this;
   }
@@ -479,32 +490,20 @@ export class GuildCommandPermissionsBuilder {
    * @throws Error if the permissions configuration is invalid
    */
   build(): GuildApplicationCommandPermissionEntity {
-    if (!this.#data.id) {
-      throw new Error("Command ID is required");
+    const result = GuildCommandPermissionSchema.safeParse(this.data);
+    if (!result.success) {
+      throw new Error(z.prettifyError(result.error));
     }
 
-    if (!this.#data.application_id) {
-      throw new Error("Application ID is required");
-    }
-
-    if (!this.#data.guild_id) {
-      throw new Error("Guild ID is required");
-    }
-
-    if (!this.#data.permissions || this.#data.permissions.length === 0) {
-      throw new Error("At least one permission is required");
-    }
-
-    return this.#data as GuildApplicationCommandPermissionEntity;
+    return result.data;
   }
 
   /**
    * Returns a JSON representation of the permissions.
-   * Can be used directly with the Discord API for permission updates.
    *
    * @returns A read-only copy of the permissions data
    */
   toJson(): Readonly<Partial<GuildApplicationCommandPermissionEntity>> {
-    return Object.freeze({ ...this.#data });
+    return Object.freeze({ ...this.data });
   }
 }

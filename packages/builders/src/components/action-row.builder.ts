@@ -110,7 +110,7 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
       throw new Error(z.prettifyError(result.error));
     }
 
-    this.#data.components.push(component);
+    this.#data.components.push(result.data);
     return this;
   }
 
@@ -160,7 +160,7 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
    * @returns The action row builder instance for method chaining
    */
   setId(id: number): this {
-    const result = z.number().int().safeParse(id);
+    const result = ActionRowSchema.shape.id.safeParse(id);
     if (!result.success) {
       throw new Error(z.prettifyError(result.error));
     }
@@ -182,7 +182,7 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
       throw new Error(z.prettifyError(result.error));
     }
 
-    return result.data as ActionRowEntity;
+    return result.data;
   }
 
   /**
