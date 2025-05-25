@@ -748,14 +748,16 @@ export class Rest extends EventEmitter<RestEvents> {
   ): Promise<HttpResponse<T>> {
     const requestStart = Date.now();
 
-    // Prepare and execute the request
-    const preparedRequest = options.files
-      ? await this.#handleFileUpload(options)
-      : options;
+    // Create an AbortController to handle request timeouts
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.#options.timeout);
 
     try {
+      // Prepare and execute the request
+      const preparedRequest = options.files
+        ? await this.#handleFileUpload(options)
+        : options;
+
       // Build the path for the request
       const path = `/api/v${this.#options.version}/${preparedRequest.path.replace(/^\/+/, "")}`;
 

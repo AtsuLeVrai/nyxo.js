@@ -1,10 +1,11 @@
 import { config } from "dotenv";
-import { Client, GatewayIntentsBits } from "nyxo.js";
+import { Client, GatewayIntentsBits, Store } from "nyxo.js";
 import {
   loadCommands,
   loadEvents,
   registerCommands,
 } from "./handlers/index.js";
+import type { SlashCommand } from "./types/index.js";
 
 /**
  * Load environment variables from .env file
@@ -26,6 +27,7 @@ if (!parsed?.DISCORD_TOKEN) {
  */
 const client = new Client({
   token: parsed.DISCORD_TOKEN,
+  // @ts-ignore
   intents: [
     GatewayIntentsBits.Guilds,
     GatewayIntentsBits.GuildMembers,
@@ -48,8 +50,17 @@ const client = new Client({
     GatewayIntentsBits.AutoModerationExecution,
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
-  ],
+  ] /* TODO: Temporary bypass with build:prod */ as number[],
 });
+
+/**
+ * Store containing all loaded commands
+ * Uses a key-value structure where the key is the command name
+ */
+export const commands: Store<string, SlashCommand> = new Store<
+  string,
+  SlashCommand
+>();
 
 /**
  * Toggle for registering commands with Discord API

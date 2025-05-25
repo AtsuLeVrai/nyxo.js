@@ -1,22 +1,13 @@
 import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { type Client, Store } from "nyxo.js";
-import { parsed } from "../index.js";
+import type { Client } from "nyxo.js";
+import { commands, parsed } from "../index.js";
 import type { SlashCommand } from "../types/index.js";
 
 // Get current directory path (ESM compatible)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-/**
- * Store containing all loaded commands
- * Uses a key-value structure where the key is the command name
- */
-export const commands: Store<string, SlashCommand> = new Store<
-  string,
-  SlashCommand
->();
 
 /**
  * Loads all commands from the commands directory

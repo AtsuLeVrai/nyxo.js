@@ -1,9 +1,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import apiExtractor from "@microsoft/api-extractor";
+import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
+import { nodeResolve } from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
-import esbuild from "esbuild";
 import prettyBytes from "pretty-bytes";
+import { rollup } from "rollup";
+import swc from "rollup-plugin-swc3";
 import ts from "typescript";
 import winston from "winston";
 
@@ -76,9 +80,9 @@ const Logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
-// Build JavaScript bundles with esbuild
-async function buildWithEsbuild(paths, pkg) {
-  Logger.debug("Building bundles with esbuild");
+// Build JavaScript bundles with Rollup and SWC3
+async function buildWithRollup(paths, pkg) {
+  Logger.debug("Building bundles with Rollup + SWC3");
 
   // Get external dependencies to exclude from the bundle
   const external = [
@@ -87,42 +91,116 @@ async function buildWithEsbuild(paths, pkg) {
     ...Object.keys(pkg.peerDependencies || {}),
   ];
 
-  // Common esbuild options
-  const commonOptions = {
-    entryPoints: [path.resolve(paths.src, "index.ts")],
-    bundle: true,
-    platform: "node",
-    target: "esnext",
+  // Common Rollup input options
+  const inputOptions = {
+    input: path.resolve(paths.src, "index.ts"),
     external,
-    minify: false,
-    sourcemap: false,
-    packages: "external",
-    logLevel: "silent",
-    tsconfig: paths.tsconfig,
+    plugins: [
+      nodeResolve({
+        preferBuiltins: true,
+        exportConditions: ["node"],
+      }),
+      commonjs(),
+      json(),
+      swc({
+        jsc: {
+          parser: {
+            syntax: "typescript",
+            tsx: false,
+            decorators: true,
+            dynamicImport: true,
+            privateMethod: true,
+            importMeta: true,
+            preserveAllComments: false,
+          },
+          target: "esnext",
+          loose: false,
+          externalHelpers: false,
+          keepClassNames: true,
+          transform: {
+            decoratorVersion: "2022-03",
+            decoratorMetadata: true,
+            useDefineForClassFields: true,
+            optimizer: {
+              simplify: false,
+            },
+          },
+          output: {
+            charset: "utf8",
+          },
+        },
+        module: {
+          type: "es6",
+          strict: true,
+          strictMode: true,
+          lazy: false,
+          noInterop: false,
+        },
+        sourceMaps: false,
+        minify: false,
+        inlineSourcesContent: true,
+        isModule: true,
+      }),
+    ],
+    onwarn: (warning, warn) => {
+      // Suppress certain warnings
+      if (warning.code === "THIS_IS_UNDEFINED") {
+        return;
+      }
+      if (warning.code === "MISSING_EXPORT") {
+        return;
+      }
+      if (warning.code === "CIRCULAR_DEPENDENCY") {
+        return;
+      }
+      if (warning.code === "INVALID_ANNOTATION") {
+        return;
+      }
+      warn(warning);
+    },
   };
 
-  // Build the bundles in parallel
-  await Promise.all([
-    // Build ESM output
-    esbuild.build({
-      ...commonOptions,
-      outfile: path.resolve(paths.dist, "index.js"),
-      format: "esm",
-    }),
-    // Build CJS output
-    esbuild.build({
-      ...commonOptions,
-      outfile: path.resolve(paths.dist, "index.cjs"),
-      format: "cjs",
-    }),
-  ]);
+  // Build configurations
+  const builds = [
+    {
+      ...inputOptions,
+      output: {
+        file: path.resolve(paths.dist, "index.js"),
+        format: "esm",
+        sourcemap: false,
+        exports: "auto",
+      },
+    },
+    {
+      ...inputOptions,
+      output: {
+        file: path.resolve(paths.dist, "index.cjs"),
+        format: "cjs",
+        sourcemap: false,
+        exports: "auto",
+      },
+    },
+  ];
 
-  // Get file sizes
-  const esmStats = fs.statSync(path.resolve(paths.dist, "index.js"));
-  const cjsStats = fs.statSync(path.resolve(paths.dist, "index.cjs"));
+  // Build all configurations
+  const results = await Promise.all(
+    builds.map(async (config) => {
+      const bundle = await rollup(config);
+      try {
+        await bundle.write(config.output);
+        return config.output.file;
+      } finally {
+        await bundle.close();
+      }
+    }),
+  );
 
-  Logger.info(`ESM bundle generated (${prettyBytes(esmStats.size)})`);
-  Logger.info(`CJS bundle generated (${prettyBytes(cjsStats.size)})`);
+  // Get file sizes and log results
+  for (const filePath of results) {
+    const stats = fs.statSync(filePath);
+    const format = path.extname(filePath) === ".cjs" ? "CJS" : "ESM";
+    Logger.info(`${format} bundle generated (${prettyBytes(stats.size)})`);
+  }
 
   return true;
 }
@@ -164,6 +242,8 @@ async function generateTypeDeclarations(paths) {
     outDir: paths.temp,
     noEmit: false,
     sourceMap: false,
+    module: ts.ModuleKind.NodeNext,
+    target: ts.ScriptTarget.ESNext,
   });
 
   // Emit declaration files
@@ -298,9 +378,9 @@ async function build() {
     fs.promises.mkdir(paths.temp, { recursive: true }),
   ]);
 
-  // Step 2: Build bundles with esbuild and generate types in parallel
+  // Step 2: Build bundles with Rollup and generate types in parallel
   const [bundlesSuccess, typesSuccess] = await Promise.all([
-    buildWithEsbuild(paths, pkg),
+    buildWithRollup(paths, pkg),
     generateTypeDeclarations(paths),
   ]);
 
@@ -317,7 +397,7 @@ async function build() {
 
   // Build summary
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-  Logger.debug(`Build completed in ${duration}s`);
+  Logger.success(`Build completed successfully in ${duration}s`);
 
   return true;
 }

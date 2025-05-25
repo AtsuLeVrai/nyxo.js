@@ -66,7 +66,7 @@ export const GatewayOptions = z.object({
     z
       .array(z.enum(GatewayIntentsBits))
       .transform((value) => Number(BitField.combine(value).valueOf())),
-    z.number().int().positive(),
+    z.number().int().min(0),
   ]),
 
   /**

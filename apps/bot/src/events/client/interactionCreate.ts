@@ -1,4 +1,4 @@
-import { commands } from "../../handlers/index.js";
+import { commands } from "../../index.js";
 import { defineEvent } from "../../types/index.js";
 
 /**
