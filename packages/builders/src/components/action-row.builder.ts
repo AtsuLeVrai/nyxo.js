@@ -3,20 +3,13 @@ import {
   type AnyComponentEntity,
   ComponentType,
 } from "@nyxojs/core";
-import { z } from "zod/v4";
-import {
-  ActionRowComponentSchema,
-  ActionRowSchema,
-  isSelectMenuComponent,
-} from "../schemas/index.js";
-import { COMPONENT_LIMITS } from "../utils/index.js";
 
 /**
  * A builder for creating Discord action row components.
  *
  * Action rows are containers that hold other interactive components like buttons,
- * select menus, or text inputs. This class follows the builder pattern with
- * validation through Zod schemas to ensure all elements meet Discord's requirements.
+ * select menus, or text inputs. This class follows the builder pattern to create
+ * action row components.
  *
  * The generic parameter `T` allows for type safety when adding components:
  * - ActionRowBuilder<ButtonEntity> for button-only rows
@@ -27,7 +20,7 @@ import { COMPONENT_LIMITS } from "../utils/index.js";
  */
 export class ActionRowBuilder<T extends AnyComponentEntity> {
   /** The internal action row data being constructed */
-  readonly #data: Partial<z.input<typeof ActionRowSchema>> = {
+  readonly #data: Partial<ActionRowEntity> = {
     type: ComponentType.ActionRow,
     components: [],
   };
@@ -37,15 +30,9 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
    *
    * @param data - Optional initial data to populate the action row with
    */
-  constructor(data?: z.input<typeof ActionRowSchema>) {
+  constructor(data?: ActionRowEntity) {
     if (data) {
-      // Validate the initial data
-      const result = ActionRowSchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -56,7 +43,7 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
    * @returns A new ActionRowBuilder instance with the provided data
    */
   static from<C extends AnyComponentEntity>(
-    data: z.input<typeof ActionRowSchema>,
+    data: ActionRowEntity,
   ): ActionRowBuilder<C> {
     return new ActionRowBuilder<C>(data);
   }
@@ -66,51 +53,13 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
    *
    * @param component - The component to add
    * @returns The action row builder instance for method chaining
-   * @throws Error if adding the component would exceed the maximum number of components or if the component type is invalid
    */
   addComponent(component: T): this {
     if (!this.#data.components) {
       this.#data.components = [];
     }
 
-    // Check for max components
-    if (
-      this.#data.components.length >= COMPONENT_LIMITS.ACTION_ROW_COMPONENTS
-    ) {
-      throw new Error(
-        `Action rows cannot have more than ${COMPONENT_LIMITS.ACTION_ROW_COMPONENTS} components`,
-      );
-    }
-
-    // Check for component type compatibility
-    if (this.#data.components.length > 0) {
-      const existingComponent = this.#data.components[0] as AnyComponentEntity;
-
-      // Text inputs must be the only component
-      if (
-        existingComponent.type === ComponentType.TextInput ||
-        component.type === ComponentType.TextInput
-      ) {
-        throw new Error(
-          "Action rows with text inputs cannot contain other components",
-        );
-      }
-
-      // Select menus must be the only component
-      if (isSelectMenuComponent(existingComponent.type)) {
-        throw new Error(
-          "Action rows with select menus cannot contain other components",
-        );
-      }
-    }
-
-    // Validate the component with the schema
-    const result = ActionRowComponentSchema.safeParse(component);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.components.push(result.data);
+    this.#data.components.push(component);
     return this;
   }
 
@@ -119,7 +68,6 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
    *
    * @param components - The components to add
    * @returns The action row builder instance for method chaining
-   * @throws Error if adding the components would exceed the maximum number of components or if the component types are invalid
    */
   addComponents(...components: T[]): this {
     for (const component of components) {
@@ -133,23 +81,9 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
    *
    * @param components - The components to set
    * @returns The action row builder instance for method chaining
-   * @throws Error if too many components are provided or if the component types are invalid
    */
   setComponents(components: T[]): this {
-    if (components.length > COMPONENT_LIMITS.ACTION_ROW_COMPONENTS) {
-      throw new Error(
-        `Action rows cannot have more than ${COMPONENT_LIMITS.ACTION_ROW_COMPONENTS} components`,
-      );
-    }
-
-    // Reset components
-    this.#data.components = [];
-
-    // Add each component individually to ensure validation
-    for (const component of components) {
-      this.addComponent(component);
-    }
-
+    this.#data.components = [...components];
     return this;
   }
 
@@ -160,37 +94,23 @@ export class ActionRowBuilder<T extends AnyComponentEntity> {
    * @returns The action row builder instance for method chaining
    */
   setId(id: number): this {
-    const result = ActionRowSchema.shape.id.safeParse(id);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.id = result.data;
+    this.#data.id = id;
     return this;
   }
 
   /**
    * Builds the final action row entity object.
-   *
    * @returns The complete action row entity
-   * @throws Error if the action row configuration is invalid
    */
   build(): ActionRowEntity {
-    // Validate the entire action row
-    const result = ActionRowSchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
+    return this.#data as ActionRowEntity;
   }
 
   /**
-   * Returns a JSON representation of the action row.
-   *
+   * Converts the action row data to an immutable object.
    * @returns A read-only copy of the action row data
    */
-  toJson(): Readonly<Partial<z.input<typeof ActionRowSchema>>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<ActionRowEntity> {
+    return Object.freeze({ ...this.#data }) as ActionRowEntity;
   }
 }

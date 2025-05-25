@@ -1,5 +1,3 @@
-import { z } from "zod/v4";
-
 /**
  * Type representing valid color formats accepted by the EmbedBuilder.
  * Colors can be provided as numbers, hex strings, RGB arrays, or named colors.
@@ -95,21 +93,6 @@ export enum Colors {
 }
 
 /**
- * Zod validator for a color value.
- * Accepts various color formats and converts them to a numeric representation.
- */
-export const ColorSchema = z.union([
-  z.number().int().nonnegative().max(0xffffff),
-  z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  z.tuple([
-    z.number().int().min(0).max(255),
-    z.number().int().min(0).max(255),
-    z.number().int().min(0).max(255),
-  ]),
-  z.enum(Colors),
-]) satisfies z.ZodType<ColorResolvable, ColorResolvable>;
-
-/**
  * Resolves a color to a numerical value.
  *
  * @param color The color to resolve. Can be a number, a hex string, an RGB array, or a predefined color name.
@@ -118,19 +101,6 @@ export const ColorSchema = z.union([
  * @throws {Error} If a Zod error occurs during validation, a formatted error is thrown.
  */
 export function resolveColor(color: ColorResolvable): number {
-  // Use colorSchema to validate but handle the conversions manually
-  try {
-    ColorSchema.parse(color);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      // Re-throw a more readable error if Zod validation fails
-      throw new Error(z.prettifyError(error));
-    }
-
-    // Re-throw any other error
-    throw error;
-  }
-
   // If the color is already a number, return it directly
   if (typeof color === "number") {
     return color;

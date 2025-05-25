@@ -3,6 +3,7 @@ packages:
   - packages/*
   - scripts
 onlyBuiltDependencies:
+  - bufferutil
   - erlpack
   - sharp
   - zlib-sync

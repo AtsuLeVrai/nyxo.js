@@ -60,10 +60,10 @@ const FILE_CONSTANTS = {
 export type DataUri = `data:${string};base64,${string}`;
 
 /**
- * Represents any valid file input type.
- * Can be a file path, buffer, stream, File/Blob object (in browser environments), or data URI.
+ * Represents any valid file input type for Node.js environments.
+ * Can be a file path, buffer, stream, or data URI.
  */
-export type FileInput = string | Buffer | Readable | File | Blob | DataUri;
+export type FileInput = string | Buffer | Readable | DataUri;
 
 /**
  * Options for image processing and optimization.
@@ -135,21 +135,6 @@ export interface ProcessedFile {
 let sharpModule: typeof SharpType | null = null;
 
 /**
- * Checks if input is a File or Blob (browser API).
- * Used to identify browser-specific file objects.
- *
- * @param input - The value to check
- * @returns True if the input is a File or Blob object
- * @private
- */
-function isFileOrBlob(input: unknown): input is File | Blob {
-  return (
-    (typeof File !== "undefined" && input instanceof File) ||
-    (typeof Blob !== "undefined" && input instanceof Blob)
-  );
-}
-
-/**
  * Validates that input is a valid FileInput type.
  * Throws an error if the input is not a supported file type.
  *
@@ -162,17 +147,10 @@ function validateInput(input: unknown): asserts input is FileInput {
     !(
       Buffer.isBuffer(input) ||
       input instanceof Readable ||
-      typeof input === "string" ||
-      isFileOrBlob(input)
+      typeof input === "string"
     )
   ) {
-    const filename =
-      typeof input === "object" && input !== null && "name" in input
-        ? String(input.name)
-        : undefined;
-    throw new Error(
-      `Invalid file input type${filename ? `: ${filename}` : ""}`,
-    );
+    throw new Error("Invalid file input type");
   }
 
   if (
@@ -218,7 +196,7 @@ function createDataUri(buffer: Buffer, contentType: string): DataUri {
 }
 
 /**
- * File handling utility for processing and optimizing files.
+ * File handling utility for processing and optimizing files in Node.js environments.
  * Provides methods to convert, detect, optimize, and prepare files for API submission.
  */
 export const FileHandler = {
@@ -235,8 +213,7 @@ export const FileHandler = {
       !(
         Buffer.isBuffer(input) ||
         input instanceof Readable ||
-        typeof input === "string" ||
-        isFileOrBlob(input)
+        typeof input === "string"
       )
     ) {
       return false;
@@ -276,7 +253,7 @@ export const FileHandler = {
    * Converts any valid file input to a buffer.
    * Handles various input types and extracts their binary content.
    *
-   * @param input - The file input to convert (path, URI, buffer, stream, etc.)
+   * @param input - The file input to convert (path, URI, buffer, stream)
    * @returns Promise resolving to a buffer containing the file content
    * @throws {Error} Error if the input cannot be converted to a buffer
    */
@@ -316,17 +293,6 @@ export const FileHandler = {
       }
     }
 
-    if (isFileOrBlob(input)) {
-      try {
-        return Buffer.from(await input.arrayBuffer());
-      } catch (error) {
-        const filename = input instanceof File ? input.name : "blob";
-        throw new Error(
-          `Failed to read File/Blob "${filename}": ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-    }
-
     throw new Error("Unsupported file input type");
   },
 
@@ -358,12 +324,7 @@ export const FileHandler = {
       // Create and return the data URI
       return createDataUri(buffer, contentType);
     } catch (error) {
-      const filename =
-        typeof input === "string"
-          ? basename(input)
-          : isFileOrBlob(input) && input instanceof File
-            ? input.name
-            : "unknown";
+      const filename = typeof input === "string" ? basename(input) : "unknown";
 
       throw new Error(
         `Failed to convert to data URI: ${error instanceof Error ? error.message : String(error)} (file: ${filename})`,
@@ -373,7 +334,7 @@ export const FileHandler = {
 
   /**
    * Gets filename from input or returns a default.
-   * Extracts filename from paths, File objects, or uses a default.
+   * Extracts filename from paths or uses a default.
    *
    * @param input - The file input to get a filename for
    * @returns The extracted or default filename
@@ -386,23 +347,19 @@ export const FileHandler = {
       return basename(input);
     }
 
-    if (typeof File !== "undefined" && input instanceof File) {
-      return input.name;
-    }
-
     return FILE_CONSTANTS.DEFAULT_FILENAME;
   },
 
   /**
-   * Detects content type from buffer or filename.
-   * First tries content-based detection, then falls back to extension-based.
+   * Detects content type from filename.
+   * Uses extension-based detection to determine MIME type.
    *
    * @param filename - The filename with extension
-   * @returns Promise resolving to the detected MIME type
+   * @returns The detected MIME type
    */
   detectContentType(filename: string): string {
     try {
-      // Fall back to extension-based detection
+      // Use extension-based detection
       const mimeType = lookup(filename);
       if (mimeType) {
         return mimeType;
@@ -657,26 +614,14 @@ export const FileHandler = {
     } catch (error) {
       // Get filename information if available
       const filenameInfo =
-        typeof input === "string"
-          ? basename(input)
-          : input instanceof File
-            ? input.name
-            : undefined;
+        typeof input === "string" ? basename(input) : undefined;
 
-      const sizeInfo =
-        input instanceof Blob
-          ? input.size
-          : Buffer.isBuffer(input)
-            ? input.length
-            : undefined;
-
-      const typeInfo = input instanceof Blob ? input.type : undefined;
+      const sizeInfo = Buffer.isBuffer(input) ? input.length : undefined;
 
       // Add context to the error message
       const details = [
         filenameInfo && `filename: ${filenameInfo}`,
         sizeInfo && `size: ${sizeInfo} bytes`,
-        typeInfo && `type: ${typeInfo}`,
       ]
         .filter(Boolean)
         .join(", ");

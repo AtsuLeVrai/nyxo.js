@@ -1,27 +1,20 @@
 import {
+  type ButtonEntity,
   ComponentType,
   type SectionEntity,
   type TextDisplayEntity,
+  type ThumbnailEntity,
 } from "@nyxojs/core";
-import { z } from "zod/v4";
-import {
-  type ButtonSchema,
-  SectionAccessorySchema,
-  SectionSchema,
-  TextDisplaySchema,
-  type ThumbnailSchema,
-} from "../schemas/index.js";
 
 /**
  * A builder for creating Discord section components.
  *
  * Sections allow you to join text contextually with an accessory component.
- * This class follows the builder pattern with validation through Zod schemas
- * to ensure all elements meet Discord's requirements.
+ * This class follows the builder pattern to create section components.
  */
 export class SectionBuilder {
   /** The internal section data being constructed */
-  readonly #data: Partial<z.input<typeof SectionSchema>> = {
+  readonly #data: Partial<SectionEntity> = {
     type: ComponentType.Section,
   };
 
@@ -30,15 +23,9 @@ export class SectionBuilder {
    *
    * @param data - Optional initial data to populate the section with
    */
-  constructor(data?: z.input<typeof SectionSchema>) {
+  constructor(data?: SectionEntity) {
     if (data) {
-      // Validate the initial data
-      const result = SectionSchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -48,7 +35,7 @@ export class SectionBuilder {
    * @param data - The section data to use
    * @returns A new SectionBuilder instance with the provided data
    */
-  static from(data: z.input<typeof SectionSchema>): SectionBuilder {
+  static from(data: SectionEntity): SectionBuilder {
     return new SectionBuilder(data);
   }
 
@@ -57,24 +44,10 @@ export class SectionBuilder {
    *
    * @param component - The text display component to add
    * @returns The section builder instance for method chaining
-   * @throws Error if adding the component would exceed the maximum allowed text components
    */
-  addComponent(component: z.input<typeof TextDisplaySchema>): this {
+  addComponent(component: TextDisplayEntity): this {
     if (!this.#data.components) {
       this.#data.components = [];
-    }
-
-    if (this.#data.components.length >= 3) {
-      throw new Error("Sections cannot have more than three text components");
-    }
-
-    if (component.type !== ComponentType.TextDisplay) {
-      throw new Error("Section components must be TextDisplay components");
-    }
-
-    const result = TextDisplaySchema.safeParse(component);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
     }
 
     this.#data.components.push(component);
@@ -86,9 +59,8 @@ export class SectionBuilder {
    *
    * @param components - The text display components to add
    * @returns The section builder instance for method chaining
-   * @throws Error if adding the components would exceed the maximum allowed text components
    */
-  addComponents(...components: z.input<typeof TextDisplaySchema>[]): this {
+  addComponents(...components: TextDisplayEntity[]): this {
     for (const component of components) {
       this.addComponent(component);
     }
@@ -100,25 +72,9 @@ export class SectionBuilder {
    *
    * @param components - The text display components to set
    * @returns The section builder instance for method chaining
-   * @throws Error if too many components are provided
    */
-  setComponents(components: z.input<typeof TextDisplaySchema>[]): this {
-    if (components.length > 3) {
-      throw new Error("Sections cannot have more than three text components");
-    }
-
-    if (components.length === 0) {
-      throw new Error("Sections must have at least one text component");
-    }
-
-    // Empty the components array
-    this.#data.components = [];
-
-    // Add each component individually to ensure validation
-    for (const component of components) {
-      this.addComponent(component);
-    }
-
+  setComponents(components: TextDisplayEntity[]): this {
+    this.#data.components = [...components];
     return this;
   }
 
@@ -144,23 +100,7 @@ export class SectionBuilder {
    * @param accessory - The accessory component (thumbnail or button)
    * @returns The section builder instance for method chaining
    */
-  setAccessory(
-    accessory: z.input<typeof ThumbnailSchema> | z.input<typeof ButtonSchema>,
-  ): this {
-    if (
-      accessory.type !== ComponentType.Thumbnail &&
-      accessory.type !== ComponentType.Button
-    ) {
-      throw new Error(
-        "Section accessory must be a Thumbnail or Button component",
-      );
-    }
-
-    const result = SectionAccessorySchema.safeParse(accessory);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
+  setAccessory(accessory: ThumbnailEntity | ButtonEntity): this {
     this.#data.accessory = accessory;
     return this;
   }
@@ -172,37 +112,23 @@ export class SectionBuilder {
    * @returns The section builder instance for method chaining
    */
   setId(id: number): this {
-    const result = SectionSchema.shape.id.safeParse(id);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.id = result.data;
+    this.#data.id = id;
     return this;
   }
 
   /**
    * Builds the final section entity object.
-   *
    * @returns The complete section entity
-   * @throws Error if the section configuration is invalid
    */
   build(): SectionEntity {
-    // Validate the entire section
-    const result = SectionSchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
+    return this.#data as SectionEntity;
   }
 
   /**
-   * Returns a JSON representation of the section.
-   *
+   * Converts the section data to an immutable object.
    * @returns A read-only copy of the section data
    */
-  toJson(): Readonly<Partial<z.input<typeof SectionSchema>>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<SectionEntity> {
+    return Object.freeze({ ...this.#data }) as SectionEntity;
   }
 }

@@ -1,6 +1,8 @@
-import { ComponentType, type FileEntity } from "@nyxojs/core";
-import { z } from "zod/v4";
-import { FileSchema, UnfurledMediaItemSchema } from "../schemas/index.js";
+import {
+  ComponentType,
+  type FileEntity,
+  type UnfurledMediaItemEntity,
+} from "@nyxojs/core";
 
 /**
  * A builder for creating Discord file components.
@@ -8,13 +10,10 @@ import { FileSchema, UnfurledMediaItemSchema } from "../schemas/index.js";
  * File components allow you to display an uploaded file as an attachment.
  * This component only supports the attachment:// syntax for referencing files
  * that have been uploaded as part of the same message.
- *
- * This class follows the builder pattern with validation through Zod schemas
- * to ensure all elements meet Discord's requirements.
  */
 export class FileBuilder {
   /** The internal file data being constructed */
-  readonly #data: Partial<z.input<typeof FileSchema>> = {
+  readonly #data: Partial<FileEntity> = {
     type: ComponentType.File,
   };
 
@@ -23,15 +22,9 @@ export class FileBuilder {
    *
    * @param data - Optional initial data to populate the file with
    */
-  constructor(data?: z.input<typeof FileSchema>) {
+  constructor(data?: FileEntity) {
     if (data) {
-      // Validate the initial data
-      const result = FileSchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -41,7 +34,7 @@ export class FileBuilder {
    * @param data - The file data to use
    * @returns A new FileBuilder instance with the provided data
    */
-  static from(data: z.input<typeof FileSchema>): FileBuilder {
+  static from(data: FileEntity): FileBuilder {
     return new FileBuilder(data);
   }
 
@@ -52,25 +45,8 @@ export class FileBuilder {
    * @param file - The file reference with attachment URL
    * @returns The file builder instance for method chaining
    */
-  setFile(file: z.input<typeof UnfurledMediaItemSchema>): this {
-    const mediaItem = typeof file === "string" ? { url: file } : file;
-
-    // Pre-validate that the URL uses the attachment:// syntax
-    if (!mediaItem.url.startsWith("attachment://")) {
-      throw new Error("File URL must use the attachment:// syntax");
-    }
-
-    // Ensure there's a filename after the prefix
-    if (mediaItem.url.length <= "attachment://".length) {
-      throw new Error("File URL must include a filename after attachment://");
-    }
-
-    const result = UnfurledMediaItemSchema.safeParse(mediaItem);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.file = result.data;
+  setFile(file: UnfurledMediaItemEntity): this {
+    this.#data.file = file;
     return this;
   }
 
@@ -82,10 +58,6 @@ export class FileBuilder {
    * @returns The file builder instance for method chaining
    */
   setFilename(filename: string): this {
-    if (!filename || filename.trim() === "") {
-      throw new Error("Filename cannot be empty");
-    }
-
     return this.setFile({ url: `attachment://${filename}` });
   }
 
@@ -107,12 +79,7 @@ export class FileBuilder {
    * @returns The file builder instance for method chaining
    */
   setId(id: number): this {
-    const result = FileSchema.shape.id.safeParse(id);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.id = result.data;
+    this.#data.id = id;
     return this;
   }
 
@@ -132,26 +99,17 @@ export class FileBuilder {
 
   /**
    * Builds the final file entity object.
-   *
    * @returns The complete file entity
-   * @throws Error if the file configuration is invalid
    */
   build(): FileEntity {
-    // Validate the entire file component
-    const result = FileSchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
+    return this.#data as FileEntity;
   }
 
   /**
-   * Returns a JSON representation of the file.
-   *
+   * Converts the file data to an immutable object.
    * @returns A read-only copy of the file data
    */
-  toJson(): Readonly<Partial<z.input<typeof FileSchema>>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<FileEntity> {
+    return Object.freeze({ ...this.#data }) as FileEntity;
   }
 }

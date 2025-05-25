@@ -1,5 +1,4 @@
 import {
-  APPLICATION_COMMAND_NAME_REGEX,
   type AnyApplicationCommandOptionEntity,
   type ApplicationCommandOptionChoiceEntity,
   ApplicationCommandOptionType,
@@ -17,22 +16,6 @@ import {
   type SubCommandOptionEntity,
   type UserCommandOptionEntity,
 } from "@nyxojs/core";
-import { z } from "zod/v4";
-import {
-  AttachmentOptionSchema,
-  BooleanOptionSchema,
-  ChannelOptionSchema,
-  CommandOptionChoiceSchema,
-  IntegerOptionSchema,
-  MentionableOptionSchema,
-  NumberOptionSchema,
-  RoleOptionSchema,
-  StringOptionSchema,
-  SubCommandGroupOptionSchema,
-  SubCommandOptionSchema,
-  UserOptionSchema,
-} from "../schemas/index.js";
-import { COMMAND_LIMITS } from "../utils/index.js";
 
 /**
  * Base class for all application command option builders.
@@ -49,34 +32,19 @@ export abstract class BaseCommandOptionBuilder<
   /** Option type for this builder */
   protected readonly type: ApplicationCommandOptionType;
 
-  /** Schema used for validation */
-  protected readonly schema: z.ZodType;
-
   /**
    * Creates a new BaseCommandOptionBuilder instance.
    *
    * @param type - The type of option to build
-   * @param schema - The Zod schema to use for validation
    * @param data - Optional initial data to populate the option with
    */
-  protected constructor(
-    type: ApplicationCommandOptionType,
-    schema: z.ZodObject,
-    data?: Partial<T>,
-  ) {
+  protected constructor(type: ApplicationCommandOptionType, data?: T) {
     this.type = type;
-    this.schema = schema;
 
     if (data) {
-      // Validate the initial data
-      const result = schema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
       this.data = {
+        ...data,
         type,
-        ...result.data,
       } as Partial<T>;
     } else {
       this.data = {
@@ -88,22 +56,10 @@ export abstract class BaseCommandOptionBuilder<
   /**
    * Sets the name of the option.
    *
-   * @param name - The name to set (max 32 characters)
+   * @param name - The name to set (1-32 characters)
    * @returns The option builder instance for method chaining
    */
   setName(name: string): this {
-    if (name.length > COMMAND_LIMITS.OPTION_NAME) {
-      throw new Error(
-        `Option name cannot exceed ${COMMAND_LIMITS.OPTION_NAME} characters`,
-      );
-    }
-
-    if (!APPLICATION_COMMAND_NAME_REGEX.test(name)) {
-      throw new Error(
-        "Option name must match the regex pattern ^[-_'\\p{L}\\p{N}\\p{sc=Deva}\\p{sc=Thai}]{1,32}$",
-      );
-    }
-
     this.data.name = name.toLowerCase();
     return this;
   }
@@ -117,23 +73,6 @@ export abstract class BaseCommandOptionBuilder<
   setNameLocalizations(
     localizations: Partial<Record<LocaleValues, string>> | null,
   ): this {
-    // Validate each localized name
-    if (localizations) {
-      for (const [locale, name] of Object.entries(localizations)) {
-        if (name.length > COMMAND_LIMITS.OPTION_NAME) {
-          throw new Error(
-            `Localized option name for ${locale} cannot exceed ${COMMAND_LIMITS.OPTION_NAME} characters`,
-          );
-        }
-
-        if (!APPLICATION_COMMAND_NAME_REGEX.test(name)) {
-          throw new Error(
-            `Localized option name for ${locale} must match the regex pattern ^[-_'\\p{L}\\p{N}\\p{sc=Deva}\\p{sc=Thai}]{1,32}$`,
-          );
-        }
-      }
-    }
-
     this.data.name_localizations = localizations;
     return this;
   }
@@ -141,16 +80,10 @@ export abstract class BaseCommandOptionBuilder<
   /**
    * Sets the description of the option.
    *
-   * @param description - The description to set (max 100 characters)
+   * @param description - The description to set (1-100 characters)
    * @returns The option builder instance for method chaining
    */
   setDescription(description: string): this {
-    if (description.length > COMMAND_LIMITS.OPTION_DESCRIPTION) {
-      throw new Error(
-        `Option description cannot exceed ${COMMAND_LIMITS.OPTION_DESCRIPTION} characters`,
-      );
-    }
-
     this.data.description = description;
     return this;
   }
@@ -164,35 +97,28 @@ export abstract class BaseCommandOptionBuilder<
   setDescriptionLocalizations(
     localizations: Partial<Record<LocaleValues, string>> | null,
   ): this {
-    // Validate each localized description
-    if (localizations) {
-      for (const [locale, description] of Object.entries(localizations)) {
-        if (description.length > COMMAND_LIMITS.OPTION_DESCRIPTION) {
-          throw new Error(
-            `Localized option description for ${locale} cannot exceed ${COMMAND_LIMITS.OPTION_DESCRIPTION} characters`,
-          );
-        }
-      }
-    }
-
     this.data.description_localizations = localizations;
     return this;
   }
 
   /**
-   * Returns a JSON representation of the option.
+   * Builds the final command option entity.
    *
-   * @returns A read-only copy of the option data
+   * @returns The complete command option entity ready to be sent to Discord's API
    */
-  toJson(): Readonly<Partial<T>> {
-    return Object.freeze({ ...this.data });
+  build(): T {
+    return this.data as T;
   }
 
   /**
-   * Abstract build method to be implemented by subclasses.
-   * Should return the complete option entity.
+   * Converts the command option data to an immutable object.
+   * This is useful for serialization or sending to Discord's API.
+   *
+   * @returns A read-only copy of the command option data
    */
-  abstract build(): T;
+  toJson(): Readonly<T> {
+    return Object.freeze({ ...this.data }) as T;
+  }
 }
 
 /**
@@ -201,21 +127,16 @@ export abstract class BaseCommandOptionBuilder<
  */
 export class CommandOptionChoiceBuilder {
   /** Internal choice data being constructed */
-  private readonly data: Partial<ApplicationCommandOptionChoiceEntity> = {};
+  readonly #data: Partial<ApplicationCommandOptionChoiceEntity> = {};
 
   /**
    * Creates a new CommandOptionChoiceBuilder instance.
    *
    * @param data - Optional initial data to populate the choice with
    */
-  constructor(data?: Partial<ApplicationCommandOptionChoiceEntity>) {
+  constructor(data?: ApplicationCommandOptionChoiceEntity) {
     if (data) {
-      const result = CommandOptionChoiceSchema.partial().safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -226,7 +147,7 @@ export class CommandOptionChoiceBuilder {
    * @returns A new CommandOptionChoiceBuilder instance with the provided data
    */
   static from(
-    data: Partial<ApplicationCommandOptionChoiceEntity>,
+    data: ApplicationCommandOptionChoiceEntity,
   ): CommandOptionChoiceBuilder {
     return new CommandOptionChoiceBuilder(data);
   }
@@ -234,17 +155,11 @@ export class CommandOptionChoiceBuilder {
   /**
    * Sets the name of the choice as displayed to users.
    *
-   * @param name - The name to set (max 100 characters)
+   * @param name - The name to set (1-100 characters)
    * @returns The choice builder instance for method chaining
    */
   setName(name: string): this {
-    if (name.length > COMMAND_LIMITS.CHOICE_NAME) {
-      throw new Error(
-        `Choice name cannot exceed ${COMMAND_LIMITS.CHOICE_NAME} characters`,
-      );
-    }
-
-    this.data.name = name;
+    this.#data.name = name;
     return this;
   }
 
@@ -257,16 +172,7 @@ export class CommandOptionChoiceBuilder {
   setNameLocalizations(
     localizations: Partial<Record<LocaleValues, string>>,
   ): this {
-    // Validate each localized name
-    for (const [locale, name] of Object.entries(localizations)) {
-      if (name.length > COMMAND_LIMITS.CHOICE_NAME) {
-        throw new Error(
-          `Localized choice name for ${locale} cannot exceed ${COMMAND_LIMITS.CHOICE_NAME} characters`,
-        );
-      }
-    }
-
-    this.data.name_localizations = localizations;
+    this.#data.name_localizations = localizations;
     return this;
   }
 
@@ -278,16 +184,7 @@ export class CommandOptionChoiceBuilder {
    * @returns The choice builder instance for method chaining
    */
   setValue(value: string | number): this {
-    if (
-      typeof value === "string" &&
-      value.length > COMMAND_LIMITS.CHOICE_STRING_VALUE
-    ) {
-      throw new Error(
-        `Choice string value cannot exceed ${COMMAND_LIMITS.CHOICE_STRING_VALUE} characters`,
-      );
-    }
-
-    this.data.value = value;
+    this.#data.value = value;
     return this;
   }
 
@@ -295,15 +192,21 @@ export class CommandOptionChoiceBuilder {
    * Builds the final choice entity.
    *
    * @returns The complete choice entity
-   * @throws Error if the choice configuration is invalid
    */
   build(): ApplicationCommandOptionChoiceEntity {
-    const result = CommandOptionChoiceSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
+    return this.#data as ApplicationCommandOptionChoiceEntity;
+  }
 
-    return result.data;
+  /**
+   * Converts the choice data to an immutable object.
+   * This is useful for serialization or sending to Discord's API.
+   *
+   * @returns A read-only copy of the choice data
+   */
+  toJson(): Readonly<ApplicationCommandOptionChoiceEntity> {
+    return Object.freeze({
+      ...this.#data,
+    }) as ApplicationCommandOptionChoiceEntity;
   }
 }
 
@@ -317,11 +220,11 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<StringCommandOptionEntity>) {
-    super(ApplicationCommandOptionType.String, StringOptionSchema, data);
+  constructor(data?: StringCommandOptionEntity) {
+    super(ApplicationCommandOptionType.String, data);
 
     // Initialize choices array if needed
-    if (data?.choices && !this.data.choices) {
+    if (data?.choices) {
       this.data.choices = [...data.choices];
     }
   }
@@ -332,7 +235,7 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    * @param data - The option data to use
    * @returns A new StringOptionBuilder instance with the provided data
    */
-  static from(data: Partial<StringCommandOptionEntity>): StringOptionBuilder {
+  static from(data: StringCommandOptionEntity): StringOptionBuilder {
     return new StringOptionBuilder(data);
   }
 
@@ -351,25 +254,13 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
       this.data.choices = [];
     }
 
-    if (this.data.choices.length >= COMMAND_LIMITS.OPTION_CHOICES) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTION_CHOICES} choices to an option`,
-      );
-    }
-
     if (typeof choice === "function") {
       // Create a new choice using the builder function
       const builder = new CommandOptionChoiceBuilder();
       const result = choice(builder);
       this.data.choices.push(result.build());
     } else {
-      // Validate the choice
-      const result = CommandOptionChoiceSchema.safeParse(choice);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.data.choices.push(result.data);
+      this.data.choices.push(choice);
     }
 
     return this;
@@ -418,10 +309,6 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    * @returns The option builder instance for method chaining
    */
   setMinLength(minLength: number): this {
-    if (minLength < 0 || minLength > 6000) {
-      throw new Error("Minimum length must be between 0 and 6000");
-    }
-
     this.data.min_length = minLength;
     return this;
   }
@@ -433,27 +320,8 @@ export class StringOptionBuilder extends BaseCommandOptionBuilder<StringCommandO
    * @returns The option builder instance for method chaining
    */
   setMaxLength(maxLength: number): this {
-    if (maxLength < 1 || maxLength > 6000) {
-      throw new Error("Maximum length must be between 1 and 6000");
-    }
-
     this.data.max_length = maxLength;
     return this;
-  }
-
-  /**
-   * Builds the final string option entity.
-   *
-   * @returns The complete string option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): StringCommandOptionEntity {
-    const result = StringOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
   }
 }
 
@@ -467,11 +335,11 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<IntegerCommandOptionEntity>) {
-    super(ApplicationCommandOptionType.Integer, IntegerOptionSchema, data);
+  constructor(data?: IntegerCommandOptionEntity) {
+    super(ApplicationCommandOptionType.Integer, data);
 
     // Initialize choices array if needed
-    if (data?.choices && !this.data.choices) {
+    if (data?.choices) {
       this.data.choices = [...data.choices];
     }
   }
@@ -482,7 +350,7 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    * @param data - The option data to use
    * @returns A new IntegerOptionBuilder instance with the provided data
    */
-  static from(data: Partial<IntegerCommandOptionEntity>): IntegerOptionBuilder {
+  static from(data: IntegerCommandOptionEntity): IntegerOptionBuilder {
     return new IntegerOptionBuilder(data);
   }
 
@@ -501,37 +369,14 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
       this.data.choices = [];
     }
 
-    if (this.data.choices.length >= COMMAND_LIMITS.OPTION_CHOICES) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTION_CHOICES} choices to an option`,
-      );
-    }
-
-    let finalChoice: ApplicationCommandOptionChoiceEntity;
-
     if (typeof choice === "function") {
       // Create a new choice using the builder function
       const builder = new CommandOptionChoiceBuilder();
       const result = choice(builder);
-      finalChoice = result.build();
+      this.data.choices.push(result.build());
     } else {
-      // Use the provided choice directly
-      const result = CommandOptionChoiceSchema.safeParse(choice);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-      finalChoice = result.data;
+      this.data.choices.push(choice);
     }
-
-    // Validate that the value is an integer
-    if (
-      typeof finalChoice.value === "number" &&
-      !Number.isInteger(finalChoice.value)
-    ) {
-      throw new Error("Choice value must be an integer");
-    }
-
-    this.data.choices.push(finalChoice);
 
     return this;
   }
@@ -579,10 +424,6 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    * @returns The option builder instance for method chaining
    */
   setMinValue(minValue: number): this {
-    if (!Number.isInteger(minValue)) {
-      throw new Error("Minimum value must be an integer");
-    }
-
     this.data.min_value = minValue;
     return this;
   }
@@ -594,27 +435,8 @@ export class IntegerOptionBuilder extends BaseCommandOptionBuilder<IntegerComman
    * @returns The option builder instance for method chaining
    */
   setMaxValue(maxValue: number): this {
-    if (!Number.isInteger(maxValue)) {
-      throw new Error("Maximum value must be an integer");
-    }
-
     this.data.max_value = maxValue;
     return this;
-  }
-
-  /**
-   * Builds the final integer option entity.
-   *
-   * @returns The complete integer option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): IntegerCommandOptionEntity {
-    const result = IntegerOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
   }
 }
 
@@ -628,11 +450,11 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<NumberCommandOptionEntity>) {
-    super(ApplicationCommandOptionType.Number, NumberOptionSchema, data);
+  constructor(data?: NumberCommandOptionEntity) {
+    super(ApplicationCommandOptionType.Number, data);
 
     // Initialize choices array if needed
-    if (data?.choices && !this.data.choices) {
+    if (data?.choices) {
       this.data.choices = [...data.choices];
     }
   }
@@ -643,7 +465,7 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
    * @param data - The option data to use
    * @returns A new NumberOptionBuilder instance with the provided data
    */
-  static from(data: Partial<NumberCommandOptionEntity>): NumberOptionBuilder {
+  static from(data: NumberCommandOptionEntity): NumberOptionBuilder {
     return new NumberOptionBuilder(data);
   }
 
@@ -662,25 +484,13 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
       this.data.choices = [];
     }
 
-    if (this.data.choices.length >= COMMAND_LIMITS.OPTION_CHOICES) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTION_CHOICES} choices to an option`,
-      );
-    }
-
     if (typeof choice === "function") {
       // Create a new choice using the builder function
       const builder = new CommandOptionChoiceBuilder();
       const result = choice(builder);
       this.data.choices.push(result.build());
     } else {
-      // Validate the choice
-      const result = CommandOptionChoiceSchema.safeParse(choice);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.data.choices.push(result.data);
+      this.data.choices.push(choice);
     }
 
     return this;
@@ -743,21 +553,6 @@ export class NumberOptionBuilder extends BaseCommandOptionBuilder<NumberCommandO
     this.data.max_value = maxValue;
     return this;
   }
-
-  /**
-   * Builds the final number option entity.
-   *
-   * @returns The complete number option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): NumberCommandOptionEntity {
-    const result = NumberOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
-  }
 }
 
 /**
@@ -770,8 +565,8 @@ export class BooleanOptionBuilder extends BaseCommandOptionBuilder<BooleanComman
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<BooleanCommandOptionEntity>) {
-    super(ApplicationCommandOptionType.Boolean, BooleanOptionSchema, data);
+  constructor(data?: BooleanCommandOptionEntity) {
+    super(ApplicationCommandOptionType.Boolean, data);
   }
 
   /**
@@ -780,7 +575,7 @@ export class BooleanOptionBuilder extends BaseCommandOptionBuilder<BooleanComman
    * @param data - The option data to use
    * @returns A new BooleanOptionBuilder instance with the provided data
    */
-  static from(data: Partial<BooleanCommandOptionEntity>): BooleanOptionBuilder {
+  static from(data: BooleanCommandOptionEntity): BooleanOptionBuilder {
     return new BooleanOptionBuilder(data);
   }
 
@@ -794,21 +589,6 @@ export class BooleanOptionBuilder extends BaseCommandOptionBuilder<BooleanComman
     this.data.required = required;
     return this;
   }
-
-  /**
-   * Builds the final boolean option entity.
-   *
-   * @returns The complete boolean option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): BooleanCommandOptionEntity {
-    const result = BooleanOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
-  }
 }
 
 /**
@@ -821,8 +601,8 @@ export class UserOptionBuilder extends BaseCommandOptionBuilder<UserCommandOptio
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<UserCommandOptionEntity>) {
-    super(ApplicationCommandOptionType.User, UserOptionSchema, data);
+  constructor(data?: UserCommandOptionEntity) {
+    super(ApplicationCommandOptionType.User, data);
   }
 
   /**
@@ -831,7 +611,7 @@ export class UserOptionBuilder extends BaseCommandOptionBuilder<UserCommandOptio
    * @param data - The option data to use
    * @returns A new UserOptionBuilder instance with the provided data
    */
-  static from(data: Partial<UserCommandOptionEntity>): UserOptionBuilder {
+  static from(data: UserCommandOptionEntity): UserOptionBuilder {
     return new UserOptionBuilder(data);
   }
 
@@ -845,21 +625,6 @@ export class UserOptionBuilder extends BaseCommandOptionBuilder<UserCommandOptio
     this.data.required = required;
     return this;
   }
-
-  /**
-   * Builds the final user option entity.
-   *
-   * @returns The complete user option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): UserCommandOptionEntity {
-    const result = UserOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
-  }
 }
 
 /**
@@ -872,11 +637,11 @@ export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelComman
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<ChannelCommandOptionEntity>) {
-    super(ApplicationCommandOptionType.Channel, ChannelOptionSchema, data);
+  constructor(data?: ChannelCommandOptionEntity) {
+    super(ApplicationCommandOptionType.Channel, data);
 
     // Initialize channel_types array if needed
-    if (data?.channel_types && !this.data.channel_types) {
+    if (data?.channel_types) {
       this.data.channel_types = [...data.channel_types];
     }
   }
@@ -887,7 +652,7 @@ export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelComman
    * @param data - The option data to use
    * @returns A new ChannelOptionBuilder instance with the provided data
    */
-  static from(data: Partial<ChannelCommandOptionEntity>): ChannelOptionBuilder {
+  static from(data: ChannelCommandOptionEntity): ChannelOptionBuilder {
     return new ChannelOptionBuilder(data);
   }
 
@@ -930,21 +695,6 @@ export class ChannelOptionBuilder extends BaseCommandOptionBuilder<ChannelComman
     this.data.required = required;
     return this;
   }
-
-  /**
-   * Builds the final channel option entity.
-   *
-   * @returns The complete channel option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): ChannelCommandOptionEntity {
-    const result = ChannelOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
-  }
 }
 
 /**
@@ -957,8 +707,8 @@ export class RoleOptionBuilder extends BaseCommandOptionBuilder<RoleCommandOptio
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<RoleCommandOptionEntity>) {
-    super(ApplicationCommandOptionType.Role, RoleOptionSchema, data);
+  constructor(data?: RoleCommandOptionEntity) {
+    super(ApplicationCommandOptionType.Role, data);
   }
 
   /**
@@ -967,7 +717,7 @@ export class RoleOptionBuilder extends BaseCommandOptionBuilder<RoleCommandOptio
    * @param data - The option data to use
    * @returns A new RoleOptionBuilder instance with the provided data
    */
-  static from(data: Partial<RoleCommandOptionEntity>): RoleOptionBuilder {
+  static from(data: RoleCommandOptionEntity): RoleOptionBuilder {
     return new RoleOptionBuilder(data);
   }
 
@@ -981,21 +731,6 @@ export class RoleOptionBuilder extends BaseCommandOptionBuilder<RoleCommandOptio
     this.data.required = required;
     return this;
   }
-
-  /**
-   * Builds the final role option entity.
-   *
-   * @returns The complete role option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): RoleCommandOptionEntity {
-    const result = RoleOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
-  }
 }
 
 /**
@@ -1008,12 +743,8 @@ export class MentionableOptionBuilder extends BaseCommandOptionBuilder<Mentionab
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<MentionableCommandOptionEntity>) {
-    super(
-      ApplicationCommandOptionType.Mentionable,
-      MentionableOptionSchema,
-      data,
-    );
+  constructor(data?: MentionableCommandOptionEntity) {
+    super(ApplicationCommandOptionType.Mentionable, data);
   }
 
   /**
@@ -1022,9 +753,7 @@ export class MentionableOptionBuilder extends BaseCommandOptionBuilder<Mentionab
    * @param data - The option data to use
    * @returns A new MentionableOptionBuilder instance with the provided data
    */
-  static from(
-    data: Partial<MentionableCommandOptionEntity>,
-  ): MentionableOptionBuilder {
+  static from(data: MentionableCommandOptionEntity): MentionableOptionBuilder {
     return new MentionableOptionBuilder(data);
   }
 
@@ -1038,21 +767,6 @@ export class MentionableOptionBuilder extends BaseCommandOptionBuilder<Mentionab
     this.data.required = required;
     return this;
   }
-
-  /**
-   * Builds the final mentionable option entity.
-   *
-   * @returns The complete mentionable option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): MentionableCommandOptionEntity {
-    const result = MentionableOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
-  }
 }
 
 /**
@@ -1065,12 +779,8 @@ export class AttachmentOptionBuilder extends BaseCommandOptionBuilder<Attachment
    *
    * @param data - Optional initial data to populate the option with
    */
-  constructor(data?: Partial<AttachmentCommandOptionEntity>) {
-    super(
-      ApplicationCommandOptionType.Attachment,
-      AttachmentOptionSchema,
-      data,
-    );
+  constructor(data?: AttachmentCommandOptionEntity) {
+    super(ApplicationCommandOptionType.Attachment, data);
   }
 
   /**
@@ -1079,9 +789,7 @@ export class AttachmentOptionBuilder extends BaseCommandOptionBuilder<Attachment
    * @param data - The option data to use
    * @returns A new AttachmentOptionBuilder instance with the provided data
    */
-  static from(
-    data: Partial<AttachmentCommandOptionEntity>,
-  ): AttachmentOptionBuilder {
+  static from(data: AttachmentCommandOptionEntity): AttachmentOptionBuilder {
     return new AttachmentOptionBuilder(data);
   }
 
@@ -1095,21 +803,6 @@ export class AttachmentOptionBuilder extends BaseCommandOptionBuilder<Attachment
     this.data.required = required;
     return this;
   }
-
-  /**
-   * Builds the final attachment option entity.
-   *
-   * @returns The complete attachment option entity
-   * @throws Error if the option configuration is invalid
-   */
-  build(): AttachmentCommandOptionEntity {
-    const result = AttachmentOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
-  }
 }
 
 /**
@@ -1122,15 +815,11 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    *
    * @param data - Optional initial data to populate the subcommand with
    */
-  constructor(data?: Partial<SubCommandOptionEntity>) {
-    super(
-      ApplicationCommandOptionType.SubCommand,
-      SubCommandOptionSchema,
-      data,
-    );
+  constructor(data?: SubCommandOptionEntity) {
+    super(ApplicationCommandOptionType.SubCommand, data);
 
     // Initialize options array if needed
-    if (data?.options && !this.data.options) {
+    if (data?.options) {
       this.data.options = [...data.options];
     }
   }
@@ -1141,7 +830,7 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
    * @param data - The subcommand data to use
    * @returns A new SubCommandBuilder instance with the provided data
    */
-  static from(data: Partial<SubCommandOptionEntity>): SubCommandBuilder {
+  static from(data: SubCommandOptionEntity): SubCommandBuilder {
     return new SubCommandBuilder(data);
   }
 
@@ -1156,12 +845,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
   ): this {
     if (!this.data.options) {
       this.data.options = [];
-    }
-
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
     }
 
     const builder = new StringOptionBuilder();
@@ -1184,12 +867,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
       this.data.options = [];
     }
 
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
-    }
-
     const builder = new IntegerOptionBuilder();
     const result = optionBuilder(builder);
     this.data.options.push(result.build());
@@ -1208,12 +885,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
   ): this {
     if (!this.data.options) {
       this.data.options = [];
-    }
-
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
     }
 
     const builder = new NumberOptionBuilder();
@@ -1236,12 +907,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
       this.data.options = [];
     }
 
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
-    }
-
     const builder = new BooleanOptionBuilder();
     const result = optionBuilder(builder);
     this.data.options.push(result.build());
@@ -1260,12 +925,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
   ): this {
     if (!this.data.options) {
       this.data.options = [];
-    }
-
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
     }
 
     const builder = new UserOptionBuilder();
@@ -1288,12 +947,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
       this.data.options = [];
     }
 
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
-    }
-
     const builder = new ChannelOptionBuilder();
     const result = optionBuilder(builder);
     this.data.options.push(result.build());
@@ -1312,12 +965,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
   ): this {
     if (!this.data.options) {
       this.data.options = [];
-    }
-
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
     }
 
     const builder = new RoleOptionBuilder();
@@ -1342,12 +989,6 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
       this.data.options = [];
     }
 
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
-    }
-
     const builder = new MentionableOptionBuilder();
     const result = optionBuilder(builder);
     this.data.options.push(result.build());
@@ -1370,32 +1011,11 @@ export class SubCommandBuilder extends BaseCommandOptionBuilder<SubCommandOption
       this.data.options = [];
     }
 
-    if (this.data.options.length >= COMMAND_LIMITS.OPTIONS) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} options to a subcommand`,
-      );
-    }
-
     const builder = new AttachmentOptionBuilder();
     const result = optionBuilder(builder);
     this.data.options.push(result.build());
 
     return this;
-  }
-
-  /**
-   * Builds the final subcommand option entity.
-   *
-   * @returns The complete subcommand option entity
-   * @throws Error if the subcommand configuration is invalid
-   */
-  build(): SubCommandOptionEntity {
-    const result = SubCommandOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
   }
 }
 
@@ -1409,17 +1029,13 @@ export class SubCommandGroupBuilder extends BaseCommandOptionBuilder<SubCommandG
    *
    * @param data - Optional initial data to populate the subcommand group with
    */
-  constructor(data?: Partial<SubCommandGroupOptionEntity>) {
-    super(
-      ApplicationCommandOptionType.SubCommandGroup,
-      SubCommandGroupOptionSchema,
-      data,
-    );
+  constructor(data?: SubCommandGroupOptionEntity) {
+    super(ApplicationCommandOptionType.SubCommandGroup, data);
 
     // Initialize options array if needed
-    if (data?.options && !this.data.options) {
+    if (data?.options) {
       this.data.options = [...data.options];
-    } else if (!this.data.options) {
+    } else {
       this.data.options = [];
     }
   }
@@ -1430,9 +1046,7 @@ export class SubCommandGroupBuilder extends BaseCommandOptionBuilder<SubCommandG
    * @param data - The subcommand group data to use
    * @returns A new SubCommandGroupBuilder instance with the provided data
    */
-  static from(
-    data: Partial<SubCommandGroupOptionEntity>,
-  ): SubCommandGroupBuilder {
+  static from(data: SubCommandGroupOptionEntity): SubCommandGroupBuilder {
     return new SubCommandGroupBuilder(data);
   }
 
@@ -1447,45 +1061,19 @@ export class SubCommandGroupBuilder extends BaseCommandOptionBuilder<SubCommandG
       | SubCommandOptionEntity
       | ((builder: SubCommandBuilder) => SubCommandBuilder),
   ): this {
-    if (
-      this.data.options &&
-      this.data.options.length >= COMMAND_LIMITS.OPTIONS
-    ) {
-      throw new Error(
-        `Cannot add more than ${COMMAND_LIMITS.OPTIONS} subcommands to a group`,
-      );
+    if (!this.data.options) {
+      this.data.options = [];
     }
 
     if (typeof subcommand === "function") {
       // Create a new subcommand using the builder function
       const builder = new SubCommandBuilder();
       const result = subcommand(builder);
-      this.data.options?.push(result.build());
+      this.data.options.push(result.build());
     } else {
-      // Validate the subcommand
-      const result = SubCommandOptionSchema.safeParse(subcommand);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.data.options?.push(result.data);
+      this.data.options.push(subcommand);
     }
 
     return this;
-  }
-
-  /**
-   * Builds the final subcommand group option entity.
-   *
-   * @returns The complete subcommand group option entity
-   * @throws Error if the subcommand group configuration is invalid
-   */
-  build(): SubCommandGroupOptionEntity {
-    const result = SubCommandGroupOptionSchema.safeParse(this.data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
   }
 }

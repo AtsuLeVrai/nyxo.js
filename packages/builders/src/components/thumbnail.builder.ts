@@ -1,17 +1,18 @@
-import { ComponentType, type ThumbnailEntity } from "@nyxojs/core";
-import { z } from "zod/v4";
-import { ThumbnailSchema, UnfurledMediaItemSchema } from "../schemas/index.js";
+import {
+  ComponentType,
+  type ThumbnailEntity,
+  type UnfurledMediaItemEntity,
+} from "@nyxojs/core";
 
 /**
  * A builder for creating Discord thumbnail components.
  *
  * Thumbnails are small images that can be used as an accessory in a section.
- * This class follows the builder pattern to create thumbnail components with
- * validation through Zod schemas to ensure all elements meet Discord's requirements.
+ * This class follows the builder pattern to create thumbnail components.
  */
 export class ThumbnailBuilder {
   /** The internal thumbnail data being constructed */
-  readonly #data: Partial<z.input<typeof ThumbnailSchema>> = {
+  readonly #data: Partial<ThumbnailEntity> = {
     type: ComponentType.Thumbnail,
   };
 
@@ -20,15 +21,9 @@ export class ThumbnailBuilder {
    *
    * @param data - Optional initial data to populate the thumbnail with
    */
-  constructor(data?: z.input<typeof ThumbnailSchema>) {
+  constructor(data?: ThumbnailEntity) {
     if (data) {
-      // Validate the initial data
-      const result = ThumbnailSchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -38,7 +33,7 @@ export class ThumbnailBuilder {
    * @param data - The thumbnail data to use
    * @returns A new ThumbnailBuilder instance with the provided data
    */
-  static from(data: z.input<typeof ThumbnailSchema>): ThumbnailBuilder {
+  static from(data: ThumbnailEntity): ThumbnailBuilder {
     return new ThumbnailBuilder(data);
   }
 
@@ -48,13 +43,8 @@ export class ThumbnailBuilder {
    * @param media - The media object with URL
    * @returns The thumbnail builder instance for method chaining
    */
-  setMedia(media: z.input<typeof UnfurledMediaItemSchema>): this {
-    const result = UnfurledMediaItemSchema.safeParse(media);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.media = result.data;
+  setMedia(media: UnfurledMediaItemEntity): this {
+    this.#data.media = media;
     return this;
   }
 
@@ -66,17 +56,11 @@ export class ThumbnailBuilder {
    * @returns The thumbnail builder instance for method chaining
    */
   setMediaUrl(url: string): this {
-    const result = UnfurledMediaItemSchema.shape.url.safeParse(url);
-    if (!result.success) {
-      throw new Error("Invalid URL format");
-    }
-
     if (this.#data.media) {
-      this.#data.media.url = result.data;
+      this.#data.media.url = url;
     } else {
-      this.#data.media = { url: result.data };
+      this.#data.media = { url };
     }
-
     return this;
   }
 
@@ -88,12 +72,7 @@ export class ThumbnailBuilder {
    * @returns The thumbnail builder instance for method chaining
    */
   setDescription(description: string): this {
-    const result = ThumbnailSchema.shape.description.safeParse(description);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.description = result.data;
+    this.#data.description = description;
     return this;
   }
 
@@ -115,12 +94,7 @@ export class ThumbnailBuilder {
    * @returns The thumbnail builder instance for method chaining
    */
   setId(id: number): this {
-    const result = ThumbnailSchema.shape.id.safeParse(id);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.id = result.data;
+    this.#data.id = id;
     return this;
   }
 
@@ -128,24 +102,17 @@ export class ThumbnailBuilder {
    * Builds the final thumbnail entity object.
    *
    * @returns The complete thumbnail entity
-   * @throws Error if the thumbnail configuration is invalid
    */
   build(): ThumbnailEntity {
-    // Validate the entire thumbnail
-    const result = ThumbnailSchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
+    return this.#data as ThumbnailEntity;
   }
 
   /**
-   * Returns a JSON representation of the thumbnail.
+   * Converts the thumbnail data to an immutable object.
    *
    * @returns A read-only copy of the thumbnail data
    */
-  toJson(): Readonly<Partial<z.input<typeof ThumbnailSchema>>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<ThumbnailEntity> {
+    return Object.freeze({ ...this.#data }) as ThumbnailEntity;
   }
 }

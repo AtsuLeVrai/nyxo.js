@@ -93,9 +93,15 @@ async function main(): Promise<void> {
     await loadEvents(client);
     await loadCommands();
 
+    // Date.now() is used to measure connection time
+    const start = Date.now();
+
     // Connect to Discord Gateway
     console.log("[CLIENT] Connecting to Discord...");
     await client.gateway.connect();
+
+    // Log connection time
+    console.log(`[CLIENT] Connected to Discord in ${Date.now() - start}ms`);
 
     // Register commands after connection if enabled
     if (registeredCommands) {

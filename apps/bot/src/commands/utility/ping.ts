@@ -5,9 +5,32 @@ import {
   ButtonStyle,
   Colors,
   EmbedBuilder,
-  SlashCommandBuilder,
+  GuildCommandBuilder,
 } from "nyxo.js";
 import { defineSlashCommand } from "../../types/index.js";
+
+/**
+ * Returns an appropriate color based on latency value
+ * Green: Excellent connection (< 100ms)
+ * Yellow: Good connection (< 200ms)
+ * Orange: Fair connection (< 400ms)
+ * Red: Poor connection (≥ 400ms)
+ *
+ * @param latency - The websocket latency in milliseconds
+ * @returns A color code appropriate for the latency value
+ */
+function getLatencyColor(latency: number): number {
+  if (latency < 100) {
+    return Colors.Green;
+  }
+  if (latency < 200) {
+    return Colors.Yellow;
+  }
+  if (latency < 400) {
+    return Colors.Orange;
+  }
+  return Colors.Red;
+}
 
 /**
  * Ping command - tests the bot's response time and API latency
@@ -21,9 +44,15 @@ import { defineSlashCommand } from "../../types/index.js";
  * potential connection issues.
  */
 export default defineSlashCommand({
-  data: new SlashCommandBuilder()
+  data: new GuildCommandBuilder()
     .setName("ping")
     .setDescription("Check the bot's latency and API response time")
+    .addUserOption((option) =>
+      option
+        .setName("user")
+        .setDescription("The user to ping")
+        .setRequired(false),
+    )
     .build(),
   execute: async (client, interaction) => {
     // Record timestamp when command is received
@@ -36,6 +65,8 @@ export default defineSlashCommand({
     const end = Date.now();
     const roundtripLatency = end - start;
     const wsHeartbeat = client.gateway.latency; // Websocket heartbeat latency
+
+    const user = await interaction.getUser("user");
 
     // Create an aesthetic embed with the latency information
     const embed = new EmbedBuilder()
@@ -53,9 +84,12 @@ export default defineSlashCommand({
           value: `${roundtripLatency}ms`,
           inline: true,
         },
+        // If user is specified, show their ping
         {
-          name: "API Latency",
-          value: `${Date.now() - start}ms`,
+          name: "User Ping",
+          value: user
+            ? `${user.toString()} - ${roundtripLatency}ms`
+            : "No user specified",
           inline: true,
         },
       )
@@ -85,26 +119,3 @@ export default defineSlashCommand({
     });
   },
 });
-
-/**
- * Returns an appropriate color based on latency value
- * Green: Excellent connection (< 100ms)
- * Yellow: Good connection (< 200ms)
- * Orange: Fair connection (< 400ms)
- * Red: Poor connection (≥ 400ms)
- *
- * @param latency - The websocket latency in milliseconds
- * @returns A color code appropriate for the latency value
- */
-function getLatencyColor(latency: number): number {
-  if (latency < 100) {
-    return Colors.Green;
-  }
-  if (latency < 200) {
-    return Colors.Yellow;
-  }
-  if (latency < 400) {
-    return Colors.Orange;
-  }
-  return Colors.Red;
-}

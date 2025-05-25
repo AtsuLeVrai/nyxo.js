@@ -6,21 +6,17 @@ import {
   type Snowflake,
   resolveEmoji,
 } from "@nyxojs/core";
-import { z } from "zod/v4";
-import { ButtonEmojiSchema, ButtonSchema } from "../schemas/index.js";
 
 /**
  * A builder for creating Discord button components.
  *
  * This class follows the builder pattern to create fully-featured button components
- * with validation through Zod schemas to ensure all elements meet Discord's requirements.
- *
- * Buttons can be used in messages to create interactive elements that users can click
- * to trigger actions or navigate to URLs.
+ * for Discord messages. Buttons can be used to create interactive elements that users
+ * can click to trigger actions or navigate to URLs.
  */
 export class ButtonBuilder {
   /** The internal button data being constructed */
-  readonly #data: z.input<typeof ButtonSchema> = {
+  readonly #data: Partial<ButtonEntity> = {
     type: ComponentType.Button,
     style: ButtonStyle.Primary,
   };
@@ -30,15 +26,9 @@ export class ButtonBuilder {
    *
    * @param data - Optional initial data to populate the button with
    */
-  constructor(data?: z.input<typeof ButtonSchema>) {
+  constructor(data?: ButtonEntity) {
     if (data) {
-      // Validate the initial data
-      const result = ButtonSchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -48,7 +38,7 @@ export class ButtonBuilder {
    * @param data - The button data to use
    * @returns A new ButtonBuilder instance with the provided data
    */
-  static from(data: z.input<typeof ButtonSchema>): ButtonBuilder {
+  static from(data: ButtonEntity): ButtonBuilder {
     return new ButtonBuilder(data);
   }
 
@@ -59,12 +49,7 @@ export class ButtonBuilder {
    * @returns The button builder instance for method chaining
    */
   setStyle(style: ButtonStyle): this {
-    const result = ButtonSchema.shape.style.safeParse(style);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.style = result.data;
+    this.#data.style = style;
     return this;
   }
 
@@ -75,12 +60,7 @@ export class ButtonBuilder {
    * @returns The button builder instance for method chaining
    */
   setLabel(label: string): this {
-    const result = ButtonSchema.shape.label.safeParse(label);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.label = result.data;
+    this.#data.label = label;
     return this;
   }
 
@@ -91,12 +71,7 @@ export class ButtonBuilder {
    * @returns The button builder instance for method chaining
    */
   setEmoji(emoji: EmojiResolvable): this {
-    const result = ButtonEmojiSchema.safeParse(resolveEmoji(emoji));
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.emoji = result.data;
+    this.#data.emoji = resolveEmoji(emoji);
     return this;
   }
 
@@ -108,12 +83,7 @@ export class ButtonBuilder {
    * @returns The button builder instance for method chaining
    */
   setCustomId(customId: string): this {
-    const result = ButtonSchema.shape.custom_id.safeParse(customId);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.custom_id = result.data;
+    this.#data.custom_id = customId;
     return this;
   }
 
@@ -125,12 +95,7 @@ export class ButtonBuilder {
    * @returns The button builder instance for method chaining
    */
   setUrl(url: string): this {
-    const result = ButtonSchema.shape.url.safeParse(url);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.url = result.data;
+    this.#data.url = url;
     return this;
   }
 
@@ -142,12 +107,7 @@ export class ButtonBuilder {
    * @returns The button builder instance for method chaining
    */
   setSkuId(skuId: Snowflake): this {
-    const result = ButtonSchema.shape.sku_id.safeParse(skuId);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.sku_id = result.data;
+    this.#data.sku_id = skuId;
     return this;
   }
 
@@ -169,12 +129,7 @@ export class ButtonBuilder {
    * @returns The button builder instance for method chaining
    */
   setId(id: number): this {
-    const result = ButtonSchema.shape.id.safeParse(id);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.id = result.data;
+    this.#data.id = id;
     return this;
   }
 
@@ -182,24 +137,17 @@ export class ButtonBuilder {
    * Builds the final button entity object.
    *
    * @returns The complete button entity ready to be used in an action row
-   * @throws Error if the button configuration is invalid
    */
   build(): ButtonEntity {
-    // Validate the entire button
-    const result = ButtonSchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
+    return this.#data as ButtonEntity;
   }
 
   /**
-   * Returns a JSON representation of the button.
+   * Converts the button data to an immutable object.
    *
    * @returns A read-only copy of the button data
    */
-  toJson(): Readonly<z.input<typeof ButtonSchema>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<ButtonEntity> {
+    return Object.freeze({ ...this.#data }) as ButtonEntity;
   }
 }

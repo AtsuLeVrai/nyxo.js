@@ -1,6 +1,7 @@
 import type {
   Client,
   ClientEvents,
+  GlobalCommandCreateOptions,
   GuildCommandCreateOptions,
   SlashCommandInteraction,
 } from "nyxo.js";
@@ -13,7 +14,7 @@ export interface SlashCommand {
   /**
    * Command configuration (name, description, options, etc.)
    */
-  data: GuildCommandCreateOptions;
+  data: GlobalCommandCreateOptions | GuildCommandCreateOptions;
 
   /**
    * Function executed when the command is invoked

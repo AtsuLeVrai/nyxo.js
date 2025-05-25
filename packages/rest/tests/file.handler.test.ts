@@ -118,20 +118,6 @@ describe("FileHandler", () => {
       ).toBe(true);
     });
 
-    it("should return true for File object", () => {
-      const file = new File([Buffer.from("test content")], "test.txt", {
-        type: "text/plain",
-      });
-      expect(FileHandler.isValidSingleInput(file)).toBe(true);
-    });
-
-    it("should return true for Blob object", () => {
-      const blob = new Blob(["test content"], {
-        type: "text/plain",
-      });
-      expect(FileHandler.isValidSingleInput(blob)).toBe(true);
-    });
-
     it("should return false for invalid string (not path or data URI)", () => {
       expect(
         FileHandler.isValidSingleInput("not a file path or data URI"),
@@ -162,9 +148,6 @@ describe("FileHandler", () => {
         Buffer.from("test1"),
         "/path/to/file.jpg",
         "data:image/png;base64,iVBORw0KGg==",
-        new File([Buffer.from("test content")], "test.txt", {
-          type: "text/plain",
-        }),
       ];
       expect(FileHandler.isValidInput(inputs)).toBe(true);
     });
@@ -251,43 +234,6 @@ describe("FileHandler", () => {
         "Failed to read file from path",
       );
     });
-
-    it("should convert File object to buffer", async () => {
-      const file = new File([Buffer.from("file content")], "test.txt", {
-        type: "text/plain",
-      });
-      const result = await FileHandler.toBuffer(file);
-      expect(Buffer.isBuffer(result)).toBe(true);
-      expect(result.toString()).toBe("file content");
-    });
-
-    it("should convert Blob object to buffer", async () => {
-      const blob = new Blob(["blob content"], {
-        type: "text/plain",
-      });
-      const result = await FileHandler.toBuffer(blob);
-      expect(Buffer.isBuffer(result)).toBe(true);
-      expect(result.toString()).toBe("blob content");
-    });
-
-    it("should throw error if File/Blob read fails", async () => {
-      const file = new File([Buffer.from("test")], "test.txt", {
-        type: "text/plain",
-      });
-
-      // Mock the arrayBuffer method to reject
-      const originalArrayBuffer = file.arrayBuffer;
-      file.arrayBuffer = vi
-        .fn()
-        .mockRejectedValue(new Error("ArrayBuffer read error"));
-
-      await expect(FileHandler.toBuffer(file)).rejects.toThrow(
-        "Failed to read File/Blob",
-      );
-
-      // Restore original method
-      file.arrayBuffer = originalArrayBuffer;
-    });
   });
 
   describe("toDataUri", () => {
@@ -312,31 +258,14 @@ describe("FileHandler", () => {
       expect(result).toBe("data:image/jpeg;base64,aW1hZ2UgZGF0YQ==");
     });
 
-    it("should convert File object to data URI with correct content type", async () => {
-      const file = new File([Buffer.from("image data")], "photo.png", {
-        type: "image/png",
-      });
-      const result = await FileHandler.toDataUri(file);
-      expect(result).toBe("data:image/png;base64,aW1hZ2UgZGF0YQ==");
-    });
-
     it("should handle error case gracefully", async () => {
-      const file = new File([Buffer.from("test")], "test.txt", {
-        type: "text/plain",
-      });
+      const filePath = "/non/existent/file.txt";
+      const mockStream = createMockErrorStream();
+      (createReadStream as any).mockReturnValue(mockStream);
 
-      // Mock the arrayBuffer method to reject
-      const originalArrayBuffer = file.arrayBuffer;
-      file.arrayBuffer = vi
-        .fn()
-        .mockRejectedValue(new Error("ArrayBuffer read error"));
-
-      await expect(FileHandler.toDataUri(file)).rejects.toThrow(
+      await expect(FileHandler.toDataUri(filePath)).rejects.toThrow(
         "Failed to convert to data URI",
       );
-
-      // Restore original method
-      file.arrayBuffer = originalArrayBuffer;
     });
   });
 
@@ -353,21 +282,9 @@ describe("FileHandler", () => {
       ).toBe("file");
     });
 
-    it("should return name from File object", () => {
-      const file = new File([Buffer.from("test")], "document.pdf", {
-        type: "application/pdf",
-      });
-      expect(FileHandler.getFilename(file)).toBe("document.pdf");
-    });
-
     it("should return default filename for Buffer", () => {
       const buffer = Buffer.from("test");
       expect(FileHandler.getFilename(buffer)).toBe("file");
-    });
-
-    it("should return default filename for Blob", () => {
-      const blob = new Blob(["test"], { type: "image/png" });
-      expect(FileHandler.getFilename(blob)).toBe("file");
     });
 
     it("should return default filename for Readable stream", () => {
@@ -762,20 +679,20 @@ describe("FileHandler", () => {
       );
     });
 
-    it("should process a valid File object", async () => {
-      const file = new File([Buffer.from("file content")], "document.pdf", {
-        type: "application/pdf",
-      });
+    it("should process a valid stream input", async () => {
+      const stream = createMockStream("stream content");
 
-      const result = await FileHandler.processFile(file);
+      const result = await FileHandler.processFile(stream);
 
       expect(result).toEqual(
         expect.objectContaining({
           buffer: expect.any(Buffer),
-          filename: "document.pdf",
-          contentType: "application/pdf",
+          filename: "file",
+          contentType: "application/octet-stream",
           size: expect.any(Number),
-          dataUri: expect.stringContaining("data:application/pdf;base64,"),
+          dataUri: expect.stringContaining(
+            "data:application/octet-stream;base64,",
+          ),
         }),
       );
     });
@@ -783,9 +700,6 @@ describe("FileHandler", () => {
     it("should optimize an image if needed based on context", async () => {
       // Create a buffer smaller than the asset size limit
       const imageBuffer = Buffer.alloc(100 * 1024); // 100KB (smaller than ASSET_MAX_SIZE)
-      const file = new File([imageBuffer], "image.png", {
-        type: "image/png",
-      });
 
       // Mock the optimizeImage to return an optimized buffer
       const optimizedBuffer = Buffer.from("optimized image");
@@ -794,7 +708,7 @@ describe("FileHandler", () => {
         finalContentType: "image/webp", // Simulating WebP conversion
       });
 
-      const result = await FileHandler.processFile(file, "asset");
+      const result = await FileHandler.processFile(imageBuffer, "asset");
 
       expect(result.buffer).toEqual(optimizedBuffer);
       expect(result.contentType).toBe("image/webp");
@@ -819,22 +733,13 @@ describe("FileHandler", () => {
     });
 
     it("should throw error with detailed context if processing fails", async () => {
-      const file = new File([Buffer.from("test")], "failing.jpg", {
-        type: "image/jpeg",
-      });
+      const filePath = "/path/to/failing.jpg";
+      const mockStream = createMockErrorStream();
+      (createReadStream as any).mockReturnValue(mockStream);
 
-      // Make the arrayBuffer method throw
-      const originalArrayBuffer = file.arrayBuffer;
-      file.arrayBuffer = vi
-        .fn()
-        .mockRejectedValue(new Error("Processing error"));
-
-      await expect(FileHandler.processFile(file)).rejects.toThrow(
+      await expect(FileHandler.processFile(filePath)).rejects.toThrow(
         /File processing failed.*failing\.jpg/,
       );
-
-      // Restore original method
-      file.arrayBuffer = originalArrayBuffer;
     });
   });
 
@@ -940,41 +845,6 @@ describe("FileHandler", () => {
         expect.objectContaining({
           filename: expect.any(String),
           contentType: expect.any(String),
-        }),
-      );
-    });
-
-    it("should create form data with multiple files", async () => {
-      const files = [
-        new File([Buffer.from("file1")], "doc1.pdf", {
-          type: "application/pdf",
-        }),
-        new File([Buffer.from("file2")], "image.jpg", { type: "image/jpeg" }),
-      ];
-
-      await FileHandler.createFormData(files);
-
-      // FormData constructor should have been called
-      expect(FormData).toHaveBeenCalled();
-
-      // FormData append should have been called for each file
-      const mockFormData = (FormData as any).mock.results[0].value;
-      expect(mockFormData.append).toHaveBeenCalledTimes(2);
-      expect(mockFormData.append).toHaveBeenCalledWith(
-        "files[0]",
-        expect.any(Buffer),
-        expect.objectContaining({
-          filename: "doc1.pdf",
-          contentType: "application/pdf",
-        }),
-      );
-
-      expect(mockFormData.append).toHaveBeenCalledWith(
-        "files[1]",
-        expect.any(Buffer),
-        expect.objectContaining({
-          filename: "image.jpg",
-          contentType: "image/jpeg",
         }),
       );
     });

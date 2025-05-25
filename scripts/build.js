@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { builtinModules } from "node:module";
 import path from "node:path";
 import apiExtractor from "@microsoft/api-extractor";
 import commonjs from "@rollup/plugin-commonjs";
@@ -80,16 +81,77 @@ const Logger = winston.createLogger({
   transports: [new winston.transports.Console()],
 });
 
+// Creates a smart external function for Rollup that automatically determines which modules should be treated as external dependencies.
+function createSmartExternalFunction(pkg) {
+  // Collect all project dependencies
+  const projectDependencies = new Set([
+    ...Object.keys(pkg.dependencies || {}),
+    ...Object.keys(pkg.optionalDependencies || {}),
+    ...Object.keys(pkg.peerDependencies || {}),
+  ]);
+
+  // Node.js built-in modules (with and without node: prefix)
+  const nodeBuiltins = new Set([
+    ...builtinModules,
+    ...builtinModules.map((builtin) => `node:${builtin}`),
+  ]);
+
+  // Extracts the package name from an import ID, handling scoped packages
+  function getPackageName(importId) {
+    if (importId.startsWith("@")) {
+      // Scoped package: @scope/package-name/sub-path -> @scope/package-name
+      const parts = importId.split("/");
+      return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : importId;
+    }
+    // Regular package: package-name/sub-path -> package-name
+    return importId.split("/")[0];
+  }
+
+  // The external function that Rollup will call for each import
+  return function isExternal(id, _parentId, isResolved) {
+    // 1. Node.js built-in modules are always external
+    if (nodeBuiltins.has(id)) {
+      return true;
+    }
+
+    // 2. Direct dependency match
+    if (projectDependencies.has(id)) {
+      return true;
+    }
+
+    // 3. Sub-import of a dependency (e.g., lodash/get, @aws-sdk/client-s3/commands)
+    const packageName = getPackageName(id);
+    if (packageName !== id && projectDependencies.has(packageName)) {
+      return true;
+    }
+
+    // 4. If resolved and in node_modules, treat as external
+    if (isResolved && id.includes("node_modules")) {
+      return true;
+    }
+
+    // 5. External absolute paths (outside project directory)
+    if (isResolved && path.isAbsolute(id) && !id.startsWith(process.cwd())) {
+      return true;
+    }
+
+    // 6. Relative imports and local files are internal
+    if (id.startsWith(".") || id.startsWith("/")) {
+      return false;
+    }
+
+    // 7. Default: assume external for unknown packages
+    // This is safer for most cases as it prevents bundling unknown dependencies
+    return false;
+  };
+}
+
 // Build JavaScript bundles with Rollup and SWC3
 async function buildWithRollup(paths, pkg) {
   Logger.debug("Building bundles with Rollup + SWC3");
 
   // Get external dependencies to exclude from the bundle
-  const external = [
-    ...Object.keys(pkg.dependencies || {}),
-    ...Object.keys(pkg.optionalDependencies || {}),
-    ...Object.keys(pkg.peerDependencies || {}),
-  ];
+  const external = createSmartExternalFunction(pkg);
 
   // Common Rollup input options
   const inputOptions = {

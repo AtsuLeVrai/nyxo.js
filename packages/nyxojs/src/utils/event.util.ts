@@ -233,7 +233,7 @@ function handleBulkUpdate<T extends BaseClass<any>>(
   // Process deleted elements
   for (const [id] of cachedMap.entries()) {
     if (!newMap.has(id)) {
-      const [deletedEntity] = handleDeleteEvent(client, id, cacheKey);
+      const [deletedEntity] = handleDeleteEvent(client, cacheKey, id);
       client.emit(eventNames.delete, deletedEntity as any);
     }
   }

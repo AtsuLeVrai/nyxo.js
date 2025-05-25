@@ -2,39 +2,27 @@ import {
   ComponentType,
   type MediaGalleryEntity,
   type MediaGalleryItemEntity,
+  type UnfurledMediaItemEntity,
 } from "@nyxojs/core";
-import { z } from "zod/v4";
-import {
-  MediaGalleryItemSchema,
-  MediaGallerySchema,
-  UnfurledMediaItemSchema,
-} from "../schemas/index.js";
 
 /**
  * A builder for creating Discord media gallery item components.
  *
  * Media gallery items represent individual items in a media gallery.
- * This class follows the builder pattern with validation through Zod schemas
- * to ensure all elements meet Discord's requirements.
+ * This class follows the builder pattern to create media gallery item components.
  */
 export class MediaGalleryItemBuilder {
   /** The internal media gallery item data being constructed */
-  readonly #data: Partial<z.infer<typeof MediaGalleryItemSchema>> = {};
+  readonly #data: Partial<MediaGalleryItemEntity> = {};
 
   /**
    * Creates a new MediaGalleryItemBuilder instance.
    *
    * @param data - Optional initial data to populate the media gallery item with
    */
-  constructor(data?: z.infer<typeof MediaGalleryItemSchema>) {
+  constructor(data?: MediaGalleryItemEntity) {
     if (data) {
-      // Validate the initial data
-      const result = MediaGalleryItemSchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -44,9 +32,7 @@ export class MediaGalleryItemBuilder {
    * @param data - The media gallery item data to use
    * @returns A new MediaGalleryItemBuilder instance with the provided data
    */
-  static from(
-    data: z.infer<typeof MediaGalleryItemSchema>,
-  ): MediaGalleryItemBuilder {
+  static from(data: MediaGalleryItemEntity): MediaGalleryItemBuilder {
     return new MediaGalleryItemBuilder(data);
   }
 
@@ -56,13 +42,8 @@ export class MediaGalleryItemBuilder {
    * @param media - The media object with URL
    * @returns The media gallery item builder instance for method chaining
    */
-  setMedia(media: z.input<typeof UnfurledMediaItemSchema>): this {
-    const result = UnfurledMediaItemSchema.safeParse(media);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.media = result.data;
+  setMedia(media: UnfurledMediaItemEntity): this {
+    this.#data.media = media;
     return this;
   }
 
@@ -74,13 +55,7 @@ export class MediaGalleryItemBuilder {
    * @returns The media gallery item builder instance for method chaining
    */
   setDescription(description: string): this {
-    const result =
-      MediaGalleryItemSchema.shape.description.safeParse(description);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.description = result.data;
+    this.#data.description = description;
     return this;
   }
 
@@ -97,27 +72,18 @@ export class MediaGalleryItemBuilder {
 
   /**
    * Builds the final media gallery item entity object.
-   *
    * @returns The complete media gallery item entity
-   * @throws Error if the gallery item configuration is invalid
    */
   build(): MediaGalleryItemEntity {
-    // Validate the entire media gallery item
-    const result = MediaGalleryItemSchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
+    return this.#data as MediaGalleryItemEntity;
   }
 
   /**
-   * Returns a JSON representation of the media gallery item.
-   *
+   * Converts the media gallery item data to an immutable object.
    * @returns A read-only copy of the media gallery item data
    */
-  toJson(): Readonly<Partial<z.input<typeof MediaGalleryItemSchema>>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<MediaGalleryItemEntity> {
+    return Object.freeze({ ...this.#data }) as MediaGalleryItemEntity;
   }
 }
 
@@ -125,12 +91,11 @@ export class MediaGalleryItemBuilder {
  * A builder for creating Discord media gallery components.
  *
  * Media galleries allow you to display 1-10 media attachments in an organized gallery format.
- * This class follows the builder pattern with validation through Zod schemas
- * to ensure all elements meet Discord's requirements.
+ * This class follows the builder pattern to create media gallery components.
  */
 export class MediaGalleryBuilder {
   /** The internal media gallery data being constructed */
-  readonly #data: Partial<z.infer<typeof MediaGallerySchema>> = {
+  readonly #data: Partial<MediaGalleryEntity> = {
     type: ComponentType.MediaGallery,
   };
 
@@ -139,15 +104,9 @@ export class MediaGalleryBuilder {
    *
    * @param data - Optional initial data to populate the media gallery with
    */
-  constructor(data?: z.infer<typeof MediaGallerySchema>) {
+  constructor(data?: MediaGalleryEntity) {
     if (data) {
-      // Validate the initial data
-      const result = MediaGallerySchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -157,7 +116,7 @@ export class MediaGalleryBuilder {
    * @param data - The media gallery data to use
    * @returns A new MediaGalleryBuilder instance with the provided data
    */
-  static from(data: z.infer<typeof MediaGallerySchema>): MediaGalleryBuilder {
+  static from(data: MediaGalleryEntity): MediaGalleryBuilder {
     return new MediaGalleryBuilder(data);
   }
 
@@ -166,23 +125,13 @@ export class MediaGalleryBuilder {
    *
    * @param item - The media gallery item to add
    * @returns The media gallery builder instance for method chaining
-   * @throws Error if adding the item would exceed the maximum of 10 items
    */
-  addItem(item: z.input<typeof MediaGalleryItemSchema>): this {
+  addItem(item: MediaGalleryItemEntity): this {
     if (!this.#data.items) {
       this.#data.items = [];
     }
 
-    if (this.#data.items.length >= 10) {
-      throw new Error("Media galleries cannot have more than 10 items");
-    }
-
-    const result = MediaGalleryItemSchema.safeParse(item);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.items.push(result.data);
+    this.#data.items.push(item);
     return this;
   }
 
@@ -229,9 +178,8 @@ export class MediaGalleryBuilder {
    *
    * @param items - The media gallery items to add
    * @returns The media gallery builder instance for method chaining
-   * @throws Error if adding the items would exceed the maximum of 10 items
    */
-  addItems(...items: z.input<typeof MediaGalleryItemSchema>[]): this {
+  addItems(...items: MediaGalleryItemEntity[]): this {
     for (const item of items) {
       this.addItem(item);
     }
@@ -243,19 +191,10 @@ export class MediaGalleryBuilder {
    *
    * @param items - The media gallery items to set
    * @returns The media gallery builder instance for method chaining
-   * @throws Error if too many items are provided
    */
-  setItems(items: z.input<typeof MediaGalleryItemSchema>[]): this {
-    if (items.length > 10) {
-      throw new Error("Media galleries cannot have more than 10 items");
-    }
-
-    if (items.length === 0) {
-      throw new Error("Media galleries must have at least one item");
-    }
-
-    this.#data.items = [];
-    return this.addItems(...items);
+  setItems(items: MediaGalleryItemEntity[]): this {
+    this.#data.items = [...items];
+    return this;
   }
 
   /**
@@ -265,37 +204,23 @@ export class MediaGalleryBuilder {
    * @returns The media gallery builder instance for method chaining
    */
   setId(id: number): this {
-    const result = MediaGallerySchema.shape.id.safeParse(id);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.id = result.data;
+    this.#data.id = id;
     return this;
   }
 
   /**
    * Builds the final media gallery entity object.
-   *
    * @returns The complete media gallery entity
-   * @throws Error if the media gallery configuration is invalid
    */
   build(): MediaGalleryEntity {
-    // Validate the entire media gallery
-    const result = MediaGallerySchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    return result.data;
+    return this.#data as MediaGalleryEntity;
   }
 
   /**
-   * Returns a JSON representation of the media gallery.
-   *
+   * Converts the media gallery data to an immutable object.
    * @returns A read-only copy of the media gallery data
    */
-  toJson(): Readonly<Partial<z.input<typeof MediaGallerySchema>>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<MediaGalleryEntity> {
+    return Object.freeze({ ...this.#data }) as MediaGalleryEntity;
   }
 }

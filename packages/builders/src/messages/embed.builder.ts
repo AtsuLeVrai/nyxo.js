@@ -1,15 +1,14 @@
-import type { EmbedEntity, EmbedType } from "@nyxojs/core";
-import { z } from "zod/v4";
-import {
-  EmbedAuthorSchema,
-  EmbedFieldSchema,
-  EmbedFooterSchema,
-  EmbedImageSchema,
-  EmbedProviderSchema,
-  EmbedSchema,
-  EmbedThumbnailSchema,
-  EmbedVideoSchema,
-} from "../schemas/index.js";
+import type {
+  EmbedAuthorEntity,
+  EmbedEntity,
+  EmbedFieldEntity,
+  EmbedFooterEntity,
+  EmbedImageEntity,
+  EmbedProviderEntity,
+  EmbedThumbnailEntity,
+  EmbedType,
+  EmbedVideoEntity,
+} from "@nyxojs/core";
 import { type ColorResolvable, resolveColor } from "../utils/index.js";
 
 /**
@@ -18,27 +17,19 @@ import { type ColorResolvable, resolveColor } from "../utils/index.js";
  * This class follows the builder pattern to create fully-featured Discord embeds
  * with all features supported by Discord's API, including titles, descriptions,
  * fields, images, thumbnails, footers, authors, and more.
- *
- * It uses Zod schemas for validation to ensure all elements meet Discord's requirements.
  */
 export class EmbedBuilder {
   /** The internal embed data being constructed */
-  readonly #data: z.input<typeof EmbedSchema> = {};
+  readonly #data: Partial<EmbedEntity> = {};
 
   /**
    * Creates a new EmbedBuilder instance.
    *
    * @param data - Optional initial data to populate the embed with
    */
-  constructor(data?: z.input<typeof EmbedSchema>) {
+  constructor(data?: EmbedEntity) {
     if (data) {
-      // Validate the initial data
-      const result = EmbedSchema.safeParse(data);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-
-      this.#data = result.data;
+      this.#data = { ...data };
     }
   }
 
@@ -48,7 +39,7 @@ export class EmbedBuilder {
    * @param data - The embed data to use
    * @returns A new EmbedBuilder instance with the provided data
    */
-  static from(data: z.input<typeof EmbedSchema>): EmbedBuilder {
+  static from(data: EmbedEntity): EmbedBuilder {
     return new EmbedBuilder(data);
   }
 
@@ -59,12 +50,7 @@ export class EmbedBuilder {
    * @returns The embed builder instance for method chaining
    */
   setTitle(title: string): this {
-    const result = EmbedSchema.shape.title.safeParse(title);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.title = result.data;
+    this.#data.title = title;
     return this;
   }
 
@@ -75,12 +61,7 @@ export class EmbedBuilder {
    * @returns The embed builder instance for method chaining
    */
   setDescription(description: string): this {
-    const result = EmbedSchema.shape.description.safeParse(description);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.description = result.data;
+    this.#data.description = description;
     return this;
   }
 
@@ -91,12 +72,7 @@ export class EmbedBuilder {
    * @returns The embed builder instance for method chaining
    */
   setUrl(url: string): this {
-    const result = z.url().safeParse(url);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.url = result.data;
+    this.#data.url = url;
     return this;
   }
 
@@ -130,12 +106,7 @@ export class EmbedBuilder {
    * @returns The embed builder instance for method chaining
    */
   setType(type: EmbedType): this {
-    const result = EmbedSchema.shape.type.safeParse(type);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.type = result.data;
+    this.#data.type = type;
     return this;
   }
 
@@ -145,13 +116,8 @@ export class EmbedBuilder {
    * @param footer - The footer options
    * @returns The embed builder instance for method chaining
    */
-  setFooter(footer: z.input<typeof EmbedFooterSchema>): this {
-    const result = EmbedFooterSchema.safeParse(footer);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.footer = result.data;
+  setFooter(footer: EmbedFooterEntity): this {
+    this.#data.footer = footer;
     return this;
   }
 
@@ -161,13 +127,8 @@ export class EmbedBuilder {
    * @param image - The image options
    * @returns The embed builder instance for method chaining
    */
-  setImage(image: z.input<typeof EmbedImageSchema>): this {
-    const result = EmbedImageSchema.safeParse(image);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.image = result.data;
+  setImage(image: EmbedImageEntity): this {
+    this.#data.image = image;
     return this;
   }
 
@@ -177,13 +138,8 @@ export class EmbedBuilder {
    * @param thumbnail - The thumbnail options
    * @returns The embed builder instance for method chaining
    */
-  setThumbnail(thumbnail: z.input<typeof EmbedThumbnailSchema>): this {
-    const result = EmbedThumbnailSchema.safeParse(thumbnail);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.thumbnail = result.data;
+  setThumbnail(thumbnail: EmbedThumbnailEntity): this {
+    this.#data.thumbnail = thumbnail;
     return this;
   }
 
@@ -193,13 +149,8 @@ export class EmbedBuilder {
    * @param author - The author options
    * @returns The embed builder instance for method chaining
    */
-  setAuthor(author: z.input<typeof EmbedAuthorSchema>): this {
-    const result = EmbedAuthorSchema.safeParse(author);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.author = result.data;
+  setAuthor(author: EmbedAuthorEntity): this {
+    this.#data.author = author;
     return this;
   }
 
@@ -210,13 +161,8 @@ export class EmbedBuilder {
    * @param provider - The provider options
    * @returns The embed builder instance for method chaining
    */
-  setProvider(provider: z.input<typeof EmbedProviderSchema>): this {
-    const result = EmbedProviderSchema.safeParse(provider);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.provider = result.data;
+  setProvider(provider: EmbedProviderEntity): this {
+    this.#data.provider = provider;
     return this;
   }
 
@@ -227,13 +173,8 @@ export class EmbedBuilder {
    * @param video - The video options
    * @returns The embed builder instance for method chaining
    */
-  setVideo(video: z.input<typeof EmbedVideoSchema>): this {
-    const result = EmbedVideoSchema.safeParse(video);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.video = result.data;
+  setVideo(video: EmbedVideoEntity): this {
+    this.#data.video = video;
     return this;
   }
 
@@ -243,17 +184,12 @@ export class EmbedBuilder {
    * @param field - The field object to add
    * @returns The embed builder instance for method chaining
    */
-  addField(field: z.input<typeof EmbedFieldSchema>): this {
+  addField(field: EmbedFieldEntity): this {
     if (!this.#data.fields) {
       this.#data.fields = [];
     }
 
-    const result = EmbedFieldSchema.safeParse(field);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    this.#data.fields.push(result.data);
+    this.#data.fields.push(field);
     return this;
   }
 
@@ -263,7 +199,7 @@ export class EmbedBuilder {
    * @param fields - An array of field objects to add
    * @returns The embed builder instance for method chaining
    */
-  addFields(...fields: z.input<typeof EmbedFieldSchema>[]): this {
+  addFields(...fields: EmbedFieldEntity[]): this {
     for (const field of fields) {
       this.addField(field);
     }
@@ -276,7 +212,7 @@ export class EmbedBuilder {
    * @param fields - An array of field objects to set
    * @returns The embed builder instance for method chaining
    */
-  setFields(fields: z.input<typeof EmbedFieldSchema>[]): this {
+  setFields(fields: EmbedFieldEntity[]): this {
     this.#data.fields = [];
     return this.addFields(...fields);
   }
@@ -292,29 +228,13 @@ export class EmbedBuilder {
   spliceFields(
     index: number,
     deleteCount: number,
-    ...fields: z.input<typeof EmbedFieldSchema>[]
+    ...fields: EmbedFieldEntity[]
   ): this {
     if (!this.#data.fields) {
       this.#data.fields = [];
     }
 
-    const result = fields.map((field) => EmbedFieldSchema.safeParse(field));
-    for (const field of result) {
-      if (!field.success) {
-        throw new Error(z.prettifyError(field.error));
-      }
-    }
-
-    const validOptions: z.input<typeof EmbedFieldSchema>[] = [];
-    for (const field of fields) {
-      const result = EmbedFieldSchema.safeParse(field);
-      if (!result.success) {
-        throw new Error(z.prettifyError(result.error));
-      }
-      validOptions.push(result.data);
-    }
-
-    this.#data.fields.splice(index, deleteCount, ...validOptions);
+    this.#data.fields.splice(index, deleteCount, ...fields);
     return this;
   }
 
@@ -324,23 +244,16 @@ export class EmbedBuilder {
    * @returns The complete embed entity ready to be sent to Discord's API
    */
   build(): EmbedEntity {
-    // Use Zod to validate the entire embed structure
-    const result = EmbedSchema.safeParse(this.#data);
-    if (!result.success) {
-      throw new Error(z.prettifyError(result.error));
-    }
-
-    // Return the validated data
-    return result.data;
+    return this.#data as EmbedEntity;
   }
 
   /**
-   * Converts the embed data to a JSON object.
+   * Converts the embed data to an immutable object.
    * This is useful for serialization or sending to Discord's API.
    *
    * @returns A read-only copy of the embed data
    */
-  toJson(): Readonly<z.input<typeof EmbedSchema>> {
-    return Object.freeze({ ...this.#data });
+  toJson(): Readonly<EmbedEntity> {
+    return Object.freeze({ ...this.#data }) as EmbedEntity;
   }
 }
