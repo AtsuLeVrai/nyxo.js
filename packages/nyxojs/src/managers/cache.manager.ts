@@ -42,7 +42,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Application objects.
      * If set to false, the cache will not store Application objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -54,7 +54,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for AutoModeration objects.
      * If set to false, the cache will not store AutoModeration objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -66,7 +66,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Ban objects.
      * If set to false, the cache will not store Ban objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -78,7 +78,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Channel objects.
      * If set to false, the cache will not store Channel objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -90,7 +90,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Emoji objects.
      * If set to false, the cache will not store Emoji objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -102,7 +102,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Entitlement objects.
      * If set to false, the cache will not store Entitlement objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -114,7 +114,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Guild objects.
      * If set to false, the cache will not store Guild objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -126,7 +126,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Integration objects.
      * If set to false, the cache will not store Integration objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -138,7 +138,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Invite objects.
      * If set to false, the cache will not store Invite objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -150,7 +150,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for GuildMember objects.
      * If set to false, the cache will not store GuildMember objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -162,7 +162,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Message objects.
      * If set to false, the cache will not store Message objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -174,7 +174,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Presence objects.
      * If set to false, the cache will not store Presence objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -186,7 +186,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Role objects.
      * If set to false, the cache will not store Role objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -198,7 +198,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for ScheduledEvent objects.
      * If set to false, the cache will not store ScheduledEvent objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -210,7 +210,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for SoundboardSound objects.
      * If set to false, the cache will not store SoundboardSound objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -222,7 +222,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for StageInstance objects.
      * If set to false, the cache will not store StageInstance objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -234,7 +234,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Sticker objects.
      * If set to false, the cache will not store Sticker objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -246,7 +246,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Subscription objects.
      * If set to false, the cache will not store Subscription objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -258,7 +258,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for ThreadMember objects.
      * If set to false, the cache will not store ThreadMember objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -270,7 +270,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for User objects.
      * If set to false, the cache will not store User objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -282,7 +282,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for VoiceState objects.
      * If set to false, the cache will not store VoiceState objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 
   /**
@@ -294,7 +294,7 @@ export const CacheOptions = z.object({
      * Whether to enable the cache for Webhook objects.
      * If set to false, the cache will not store Webhook objects.
      */
-    enable: z.boolean().default(true),
+    enabled: z.boolean().default(true),
   }).prefault({}),
 });
 
@@ -617,7 +617,7 @@ export class CacheManager {
     options: CacheOptions,
   ): Store<Snowflake, T> {
     // Check if the cache is enabled for this entity type
-    const isEnabled = options[type]?.enable ?? false;
+    const isEnabled = options[type]?.enabled ?? false;
 
     // Create store options by extracting the configuration for this specific type
     // and applying default values where appropriate

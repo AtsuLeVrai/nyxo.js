@@ -184,7 +184,7 @@ async function buildWithRollup(paths, pkg) {
             decoratorMetadata: true,
             useDefineForClassFields: true,
             optimizer: {
-              simplify: false,
+              simplify: true,
             },
           },
           output: {
@@ -199,7 +199,7 @@ async function buildWithRollup(paths, pkg) {
           noInterop: false,
         },
         sourceMaps: false,
-        minify: false,
+        minify: true,
         inlineSourcesContent: true,
         isModule: true,
       }),
