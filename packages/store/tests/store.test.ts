@@ -36,7 +36,6 @@ describe("Store", () => {
         maxSize: 5,
         ttl: 1000,
         evictionStrategy: "lru",
-        cloneValues: true,
         expirationCheckInterval: 5000,
       };
       const store = new Store<string, number>(options);
@@ -407,48 +406,6 @@ describe("Store", () => {
       }
 
       expect(store.size).toBe(100);
-    });
-  });
-
-  describe("Value cloning", () => {
-    it("should clone values when cloneValues option is true", () => {
-      const store = new Store<string, { count: number }>(null, {
-        cloneValues: true,
-      });
-
-      const original = { count: 5 };
-      store.set("obj", original);
-
-      // Get the value and modify it
-      const retrieved = store.get("obj");
-      if (retrieved) {
-        retrieved.count = 10;
-      }
-
-      // The stored value should remain unchanged
-      expect(store.get("obj")?.count).toBe(5);
-
-      // Original object should be unchanged
-      expect(original.count).toBe(5);
-    });
-
-    it("should not clone values when cloneValues option is false", () => {
-      const store = new Store<string, { count: number }>();
-
-      const original = { count: 5 };
-      store.set("obj", original);
-
-      // Get the value and modify it
-      const retrieved = store.get("obj");
-      if (retrieved) {
-        retrieved.count = 10;
-      }
-
-      // The stored value should be changed
-      expect(store.get("obj")?.count).toBe(10);
-
-      // Original object should also be changed
-      expect(original.count).toBe(10);
     });
   });
 

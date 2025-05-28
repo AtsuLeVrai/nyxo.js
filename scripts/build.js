@@ -8,7 +8,8 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 import chalk from "chalk";
 import prettyBytes from "pretty-bytes";
 import { rollup } from "rollup";
-import swc from "rollup-plugin-swc3";
+import cleanup from "rollup-plugin-cleanup";
+import { swc } from "rollup-plugin-swc3";
 import ts from "typescript";
 import winston from "winston";
 
@@ -199,9 +200,13 @@ async function buildWithRollup(paths, pkg) {
           noInterop: false,
         },
         sourceMaps: false,
-        minify: true,
+        minify: false,
         inlineSourcesContent: true,
         isModule: true,
+      }),
+      cleanup({
+        comments: "none",
+        extensions: ["js", "ts", "tsx"],
       }),
     ],
     onwarn: (warning, warn) => {

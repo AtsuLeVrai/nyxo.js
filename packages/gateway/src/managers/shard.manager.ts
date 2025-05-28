@@ -1004,6 +1004,11 @@ export class ShardManager {
       await sleep(delay);
     }
 
+    // Check if manager was destroyed while waiting
+    if (this.#shards.size === 0) {
+      return; // Manager was destroyed
+    }
+
     // Reset expired rate limits after waiting
     this.#resetExpiredRateLimits();
   }

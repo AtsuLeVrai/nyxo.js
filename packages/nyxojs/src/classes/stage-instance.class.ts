@@ -1,5 +1,4 @@
 import type {
-  Snowflake,
   StageInstanceEntity,
   StageInstancePrivacyLevel,
 } from "@nyxojs/core";
@@ -32,9 +31,7 @@ export class StageInstance
    *
    * @returns The Stage instance's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the guild ID associated with this Stage instance.
@@ -43,9 +40,7 @@ export class StageInstance
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the channel ID associated with this Stage instance.
@@ -54,9 +49,7 @@ export class StageInstance
    *
    * @returns The channel's ID as a Snowflake string
    */
-  get channelId(): Snowflake {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the topic of this Stage instance.
@@ -65,9 +58,7 @@ export class StageInstance
    *
    * @returns The Stage topic as a string
    */
-  get topic(): string {
-    return this.rawData.topic;
-  }
+  readonly topic = this.rawData.topic;
 
   /**
    * Gets the privacy level of this Stage instance.
@@ -78,9 +69,7 @@ export class StageInstance
    * @returns The privacy level enum value
    * @see {@link https://discord.com/developers/docs/resources/stage-instance#stage-instance-object-privacy-level}
    */
-  get privacyLevel(): StageInstancePrivacyLevel {
-    return this.rawData.privacy_level;
-  }
+  readonly privacyLevel = this.rawData.privacy_level;
 
   /**
    * Indicates whether Stage Discovery is disabled for this Stage instance.
@@ -89,9 +78,7 @@ export class StageInstance
    *
    * @returns True if discovery is disabled, false otherwise
    */
-  get discoverableDisabled(): boolean {
-    return this.rawData.discoverable_disabled;
-  }
+  readonly discoverableDisabled = this.rawData.discoverable_disabled;
 
   /**
    * Gets the ID of the guild scheduled event associated with this Stage instance.
@@ -101,9 +88,7 @@ export class StageInstance
    *
    * @returns The scheduled event's ID, or null if there is no associated event
    */
-  get guildScheduledEventId(): Snowflake | null {
-    return this.rawData.guild_scheduled_event_id;
-  }
+  readonly guildScheduledEventId = this.rawData.guild_scheduled_event_id;
 
   /**
    * Updates this Stage instance with new information.
@@ -186,14 +171,5 @@ export class StageInstance
     reason?: string,
   ): Promise<StageInstance> {
     return this.update({ privacy_level: privacyLevel }, reason);
-  }
-
-  /**
-   * Checks if this Stage instance is associated with a scheduled event.
-   *
-   * @returns True if there is an associated scheduled event, false otherwise
-   */
-  hasScheduledEvent(): boolean {
-    return this.guildScheduledEventId !== null;
   }
 }

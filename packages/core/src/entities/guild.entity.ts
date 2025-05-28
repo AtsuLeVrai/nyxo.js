@@ -1,4 +1,4 @@
-import type { Locale, OAuth2Scope } from "../enums/index.js";
+import type { LocaleValues, OAuth2Scope } from "../enums/index.js";
 import type { Snowflake } from "../utils/index.js";
 import type {
   GuildStageVoiceChannelEntity,
@@ -1376,7 +1376,7 @@ export interface GuildEntity {
    * The preferred locale of a Community guild; used in server discovery and notices from Discord, and sent in interactions.
    * Language code for server-wide communications from Discord.
    */
-  preferred_locale: Locale;
+  preferred_locale: LocaleValues;
 
   /**
    * The ID of the channel where admins and moderators of Community guilds receive notices from Discord.

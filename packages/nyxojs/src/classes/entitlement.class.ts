@@ -35,9 +35,7 @@ export class Entitlement
    *
    * @returns The entitlement's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the SKU ID that this entitlement grants access to.
@@ -47,9 +45,7 @@ export class Entitlement
    *
    * @returns The SKU's ID as a Snowflake string
    */
-  get skuId(): Snowflake {
-    return this.rawData.sku_id;
-  }
+  readonly skuId = this.rawData.sku_id;
 
   /**
    * Gets the ID of the application this entitlement belongs to.
@@ -58,9 +54,7 @@ export class Entitlement
    *
    * @returns The application's ID as a Snowflake string
    */
-  get applicationId(): Snowflake {
-    return this.rawData.application_id;
-  }
+  readonly applicationId = this.rawData.application_id;
 
   /**
    * Gets the ID of the user that is granted access to the entitlement's SKU.
@@ -70,9 +64,7 @@ export class Entitlement
    *
    * @returns The user's ID as a Snowflake string, or undefined if guild-based
    */
-  get userId(): Snowflake | undefined {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the type of this entitlement.
@@ -82,9 +74,7 @@ export class Entitlement
    * @returns The entitlement type as an EntitlementType enum value
    * @see {@link https://discord.com/developers/docs/resources/entitlement#entitlement-object-entitlement-types}
    */
-  get type(): EntitlementType {
-    return this.rawData.type;
-  }
+  readonly type = this.rawData.type;
 
   /**
    * Checks if this entitlement has been deleted.
@@ -93,9 +83,7 @@ export class Entitlement
    *
    * @returns True if the entitlement has been deleted, false otherwise
    */
-  get deleted(): boolean {
-    return Boolean(this.rawData.deleted);
-  }
+  readonly deleted = Boolean(this.rawData.deleted);
 
   /**
    * Gets the start date of this entitlement's validity period.
@@ -105,9 +93,7 @@ export class Entitlement
    *
    * @returns The start date as an ISO string, or null if perpetual
    */
-  get startsAt(): string | null {
-    return this.rawData.starts_at;
-  }
+  readonly startsAt = this.rawData.starts_at;
 
   /**
    * Gets the end date of this entitlement's validity period.

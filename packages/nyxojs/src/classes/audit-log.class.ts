@@ -1,15 +1,7 @@
-import type {
-  AuditLogChangeEntity,
-  AuditLogCommandPermissionChangeEntity,
-  AuditLogEntryInfoEntity,
-  AuditLogEvent,
-  AuditLogRoleChangeEntity,
-  Snowflake,
-} from "@nyxojs/core";
+import type {} from "@nyxojs/core";
 import type { GuildAuditLogEntryCreateEntity } from "@nyxojs/gateway";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";
-import type { User } from "./user.class.js";
 
 /**
  * Represents an entry in a guild's audit log.
@@ -40,9 +32,7 @@ export class GuildAuditLogEntry
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the affected entity (webhook, user, role, etc.).
@@ -56,9 +46,7 @@ export class GuildAuditLogEntry
    *
    * @returns The target entity's ID as a string, or null if no target
    */
-  get targetId(): string | null {
-    return this.rawData.target_id;
-  }
+  readonly targetId = this.rawData.target_id;
 
   /**
    * Gets the array of changes made to the target entity.
@@ -72,13 +60,7 @@ export class GuildAuditLogEntry
    *
    * @returns An array of changes, or undefined if the action does not record changes
    */
-  get changes():
-    | AuditLogChangeEntity[]
-    | AuditLogCommandPermissionChangeEntity[]
-    | AuditLogRoleChangeEntity[]
-    | undefined {
-    return this.rawData.changes;
-  }
+  readonly changes = this.rawData.changes;
 
   /**
    * Gets the ID of the user or application that performed the action.
@@ -88,9 +70,7 @@ export class GuildAuditLogEntry
    *
    * @returns The user's ID as a Snowflake string, or null if system-generated
    */
-  get userId(): Snowflake | null {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the unique identifier (Snowflake) of this audit log entry.
@@ -100,9 +80,7 @@ export class GuildAuditLogEntry
    *
    * @returns The entry's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the type of action that occurred.
@@ -114,9 +92,7 @@ export class GuildAuditLogEntry
    *
    * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-audit-log-events}
    */
-  get actionType(): AuditLogEvent {
-    return this.rawData.action_type;
-  }
+  readonly actionType = this.rawData.action_type;
 
   /**
    * Gets additional context-specific information about the action.
@@ -129,9 +105,7 @@ export class GuildAuditLogEntry
    *
    * @see {@link https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-optional-audit-entry-info}
    */
-  get options(): AuditLogEntryInfoEntity | undefined {
-    return this.rawData.options;
-  }
+  readonly options = this.rawData.options;
 
   /**
    * Gets the reason provided for the action, if any.
@@ -141,9 +115,7 @@ export class GuildAuditLogEntry
    *
    * @returns The reason string, or undefined if no reason was provided
    */
-  get reason(): string | undefined {
-    return this.rawData.reason;
-  }
+  readonly reason = this.rawData.reason;
 
   /**
    * Gets the Date object representing when this audit log entry was created.
@@ -163,21 +135,5 @@ export class GuildAuditLogEntry
    */
   get createdTimestamp(): number {
     return this.createdAt.getTime();
-  }
-
-  /**
-   * Gets the executor (user who performed the action) if available in the cache.
-   *
-   * Unlike fetchExecutor(), this does not make an API request if the user is not
-   * already in the client's cache.
-   *
-   * @returns The User object from cache, or null if not found or system-generated
-   */
-  get executor(): User | null {
-    if (!this.userId) {
-      return null;
-    }
-
-    return this.client.cache.users.get(this.userId) || null;
   }
 }

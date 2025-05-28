@@ -1,5 +1,5 @@
 import type { Rest } from "../core/index.js";
-import { FileHandler, type FileInput } from "../handlers/index.js";
+import type { FileInput } from "../handlers/index.js";
 import type { HttpRequestOptions } from "../types/index.js";
 
 /**
@@ -26,7 +26,7 @@ export abstract class BaseRouter {
    * @returns A promise resolving to the data URI representation of the file
    */
   protected async toDataUri(file: FileInput): Promise<string> {
-    return await FileHandler.toDataUri(file);
+    return await this.rest.file.toDataUri(file);
   }
 
   /**
@@ -37,7 +37,9 @@ export abstract class BaseRouter {
    * @returns A promise resolving to an array of data URIs
    */
   protected async toDataUris(files: FileInput[]): Promise<string[]> {
-    return await Promise.all(files.map((file) => FileHandler.toDataUri(file)));
+    return await Promise.all(
+      files.map((file) => this.rest.file.toDataUri(file)),
+    );
   }
 
   /**

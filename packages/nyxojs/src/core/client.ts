@@ -47,32 +47,32 @@ export class Client extends EventEmitter<ClientEvents> {
    * REST API client for making direct API requests
    * @private
    */
-  readonly #rest: Rest;
+  readonly rest: Rest;
 
   /**
    * Gateway client for real-time communication with Discord
    * @private
    */
-  readonly #gateway: Gateway;
-
-  /**
-   * Client configuration options
-   * @private
-   */
-  readonly #options: ClientOptions;
+  readonly gateway: Gateway;
 
   /**
    * Cache store for better performance
    * @private
    */
-  readonly #cache: CacheManager;
+  readonly cache: CacheManager;
 
   /**
    * The current authenticated user (bot user)
    * @private
    */
   // @ts-expect-error: The user property is initialized in the constructor
-  #user: User;
+  user: User;
+
+  /**
+   * Client configuration options
+   * @private
+   */
+  readonly #options: ClientOptions;
 
   /**
    * Creates a new Discord client instance.
@@ -95,26 +95,26 @@ export class Client extends EventEmitter<ClientEvents> {
       throw error;
     }
 
-    this.#rest = new Rest(this.#options);
-    this.#gateway = new Gateway(this.#rest, this.#options);
-    this.#cache = new CacheManager(this.#options.cache);
+    this.rest = new Rest(this.#options);
+    this.gateway = new Gateway(this.rest, this.#options);
+    this.cache = new CacheManager(this.#options.cache);
 
     // Listen for REST events
     for (const eventName of RestKeyofEventMappings) {
-      this.#rest.on(eventName, (...args) => {
+      this.rest.on(eventName, (...args) => {
         this.emit(eventName, ...args);
       });
     }
 
     // Listen for gateway events
     for (const eventName of GatewayKeyofEventMappings) {
-      this.#gateway.on(eventName, (...args) => {
+      this.gateway.on(eventName, (...args) => {
         this.emit(eventName, ...args);
       });
     }
 
     // Listen for gateway events
-    this.#gateway.on("dispatch", (event, data) => {
+    this.gateway.on("dispatch", (event, data) => {
       const mapping = GatewayDispatchEventMap.get(event);
       if (!mapping) {
         return;
@@ -127,43 +127,8 @@ export class Client extends EventEmitter<ClientEvents> {
 
     // Listen for ready event to set the user
     this.once("ready", (ready) => {
-      this.#user = ready.user;
+      this.user = ready.user;
     });
-  }
-
-  /**
-   * REST API client for making direct API requests
-   */
-  get rest(): Rest {
-    return this.#rest;
-  }
-
-  /**
-   * Gateway client for real-time communication with Discord
-   */
-  get gateway(): Gateway {
-    return this.#gateway;
-  }
-
-  /**
-   * Client configuration options
-   */
-  get options(): ClientOptions {
-    return this.#options;
-  }
-
-  /**
-   * Cache store for better performance
-   */
-  get cache(): CacheManager {
-    return this.#cache;
-  }
-
-  /**
-   * The current authenticated user (bot user)
-   */
-  get user(): User {
-    return this.#user;
   }
 
   /**
@@ -173,13 +138,13 @@ export class Client extends EventEmitter<ClientEvents> {
    */
   async destroy(): Promise<void> {
     // Destroy gateway connection
-    this.#gateway.destroy();
+    this.gateway.destroy();
 
     // Clean up REST resources
-    await this.#rest.destroy();
+    await this.rest.destroy();
 
     // Clear caches
-    this.#cache.destroy();
+    this.cache.destroy();
 
     // Remove event listeners from the client itself
     this.removeAllListeners();

@@ -57,7 +57,7 @@
   },
   "overrides": [
     {
-      "include": ["apps/bot"],
+      "include": ["apps/bot", "scripts"],
       "linter": {
         "rules": {
           "suspicious": {

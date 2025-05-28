@@ -1,7 +1,7 @@
 import type { Snowflake, VoiceStateEntity } from "@nyxojs/core";
-import type {
+import {
   VoiceChannelEffectSendAnimationType,
-  VoiceChannelEffectSendEntity,
+  type VoiceChannelEffectSendEntity,
 } from "@nyxojs/gateway";
 import type {
   OtherVoiceStateUpdateOptions,
@@ -38,33 +38,13 @@ export class VoiceState
   implements Enforce<PropsToCamel<VoiceStateEntity>>
 {
   /**
-   * The cached user object for this voice state.
-   * @private
-   */
-  #user: User | null = null;
-
-  /**
-   * The cached guild member object for this voice state.
-   * @private
-   */
-  #member: GuildMember | null = null;
-
-  /**
-   * The cached voice channel object for this voice state.
-   * @private
-   */
-  #channel: GuildVoiceChannel | GuildStageVoiceChannel | null = null;
-
-  /**
    * Gets the ID of the guild this voice state is for.
    *
    * This may be undefined for direct message voice channels which exist outside of guilds.
    *
    * @returns The guild ID as a Snowflake string, or undefined if in a DM voice channel
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the channel this user is connected to.
@@ -73,9 +53,7 @@ export class VoiceState
    *
    * @returns The channel ID as a Snowflake string, or null if not connected
    */
-  get channelId(): Snowflake | null {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of the user this voice state belongs to.
@@ -84,9 +62,7 @@ export class VoiceState
    *
    * @returns The user's ID as a Snowflake string
    */
-  get userId(): Snowflake {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the guild member object for this voice state, if available.
@@ -96,14 +72,12 @@ export class VoiceState
    *
    * @returns The guild member object in camelCase format, or undefined if not in a guild
    */
-  get member(): GuildMember | undefined {
-    return this.rawData.member
-      ? new GuildMember(this.client, {
-          ...this.rawData.member,
-          guild_id: this.guildId as Snowflake,
-        })
-      : undefined;
-  }
+  readonly member = this.rawData.member
+    ? new GuildMember(this.client, {
+        ...this.rawData.member,
+        guild_id: this.guildId as Snowflake,
+      })
+    : undefined;
 
   /**
    * Gets the session ID for this voice state.
@@ -113,9 +87,7 @@ export class VoiceState
    *
    * @returns The session ID string
    */
-  get sessionId(): string {
-    return this.rawData.session_id;
-  }
+  readonly sessionId = this.rawData.session_id;
 
   /**
    * Indicates whether this user is deafened by the server.
@@ -125,9 +97,7 @@ export class VoiceState
    *
    * @returns True if server-deafened, false otherwise
    */
-  get deaf(): boolean {
-    return this.rawData.deaf;
-  }
+  readonly deaf = this.rawData.deaf;
 
   /**
    * Indicates whether this user is muted by the server.
@@ -137,9 +107,7 @@ export class VoiceState
    *
    * @returns True if server-muted, false otherwise
    */
-  get mute(): boolean {
-    return this.rawData.mute;
-  }
+  readonly mute = this.rawData.mute;
 
   /**
    * Indicates whether this user has chosen to deafen themselves locally.
@@ -149,9 +117,7 @@ export class VoiceState
    *
    * @returns True if self-deafened, false otherwise
    */
-  get selfDeaf(): boolean {
-    return this.rawData.self_deaf;
-  }
+  readonly selfDeaf = this.rawData.self_deaf;
 
   /**
    * Indicates whether this user has chosen to mute themselves locally.
@@ -161,9 +127,7 @@ export class VoiceState
    *
    * @returns True if self-muted, false otherwise
    */
-  get selfMute(): boolean {
-    return this.rawData.self_mute;
-  }
+  readonly selfMute = this.rawData.self_mute;
 
   /**
    * Indicates whether this user is streaming using Discord's "Go Live" feature.
@@ -172,9 +136,7 @@ export class VoiceState
    *
    * @returns True if streaming, false otherwise
    */
-  get selfStream(): boolean {
-    return Boolean(this.rawData.self_stream);
-  }
+  readonly selfStream = Boolean(this.rawData.self_stream);
 
   /**
    * Indicates whether this user has their camera enabled.
@@ -183,9 +145,7 @@ export class VoiceState
    *
    * @returns True if camera is enabled, false otherwise
    */
-  get selfVideo(): boolean {
-    return this.rawData.self_video;
-  }
+  readonly selfVideo = this.rawData.self_video;
 
   /**
    * Indicates whether this user's permission to speak is denied.
@@ -195,9 +155,7 @@ export class VoiceState
    *
    * @returns True if suppressed (cannot speak), false otherwise
    */
-  get suppress(): boolean {
-    return this.rawData.suppress;
-  }
+  readonly suppress = this.rawData.suppress;
 
   /**
    * Gets the timestamp when the user requested to speak in a stage channel.
@@ -207,9 +165,7 @@ export class VoiceState
    *
    * @returns ISO8601 timestamp string, or null if not requesting to speak
    */
-  get requestToSpeakTimestamp(): string | null {
-    return this.rawData.request_to_speak_timestamp;
-  }
+  readonly requestToSpeakTimestamp = this.rawData.request_to_speak_timestamp;
 
   /**
    * Gets the date object representing when the user requested to speak.
@@ -320,10 +276,6 @@ export class VoiceState
    * @throws Error if the user could not be fetched
    */
   async fetchUser(): Promise<User> {
-    if (this.#user) {
-      return this.#user;
-    }
-
     try {
       const user = await this.client.rest.users.fetchUser(this.userId);
       return new User(this.client, user);
@@ -345,14 +297,9 @@ export class VoiceState
       throw new Error("Voice state is not in a guild");
     }
 
-    if (this.#member) {
-      return this.#member;
-    }
-
     try {
       const user = await this.fetchUser();
-      this.#member = await user.fetchGuildMember(this.guildId as Snowflake);
-      return this.#member;
+      return user.fetchGuildMember(this.guildId as Snowflake);
     } catch (error) {
       throw new Error(`Failed to fetch guild member for voice state: ${error}`);
     }
@@ -371,10 +318,6 @@ export class VoiceState
       throw new Error("User is not connected to a voice channel");
     }
 
-    if (this.#channel) {
-      return this.#channel;
-    }
-
     try {
       const data = await this.client.rest.channels.fetchChannel(
         this.channelId as Snowflake,
@@ -385,8 +328,7 @@ export class VoiceState
         channel instanceof GuildVoiceChannel ||
         channel instanceof GuildStageVoiceChannel
       ) {
-        this.#channel = channel;
-        return this.#channel;
+        return channel;
       }
 
       throw new Error("Channel is not a voice or stage channel");
@@ -677,18 +619,6 @@ export class VoiceChannelEffect
   implements Enforce<PropsToCamel<VoiceChannelEffectSendEntity>>
 {
   /**
-   * Cached user instance that sent this effect.
-   * @private
-   */
-  #user: User | null = null;
-
-  /**
-   * Cached emoji instance used in this effect.
-   * @private
-   */
-  #emoji: Emoji | null = null;
-
-  /**
    * Gets the ID of the channel where the effect was sent.
    *
    * This identifies which voice channel received the effect and
@@ -696,9 +626,7 @@ export class VoiceChannelEffect
    *
    * @returns The channel ID as a Snowflake string
    */
-  get channelId(): Snowflake {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of the guild where the effect was sent.
@@ -707,9 +635,7 @@ export class VoiceChannelEffect
    *
    * @returns The guild ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the user who sent the effect.
@@ -718,9 +644,7 @@ export class VoiceChannelEffect
    *
    * @returns The user ID as a Snowflake string
    */
-  get userId(): Snowflake {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the emoji object for the effect, if applicable.
@@ -730,14 +654,12 @@ export class VoiceChannelEffect
    *
    * @returns The emoji object in camelCase format, or undefined if not an emoji effect
    */
-  get emoji(): Emoji | null | undefined {
-    return this.rawData.emoji
-      ? new Emoji(this.client, {
-          ...this.rawData.emoji,
-          guild_id: this.guildId,
-        })
-      : null;
-  }
+  readonly emoji = this.rawData.emoji
+    ? new Emoji(this.client, {
+        ...this.rawData.emoji,
+        guild_id: this.guildId,
+      })
+    : undefined;
 
   /**
    * Gets the animation type used for the effect.
@@ -747,9 +669,7 @@ export class VoiceChannelEffect
    *
    * @returns The animation type enum value, or undefined if not applicable
    */
-  get animationType(): VoiceChannelEffectSendAnimationType | undefined {
-    return this.rawData.animation_type;
-  }
+  readonly animationType = this.rawData.animation_type;
 
   /**
    * Gets the specific animation ID used for the effect.
@@ -758,9 +678,7 @@ export class VoiceChannelEffect
    *
    * @returns The animation ID number, or undefined if not applicable
    */
-  get animationId(): number | undefined {
-    return this.rawData.animation_id;
-  }
+  readonly animationId = this.rawData.animation_id;
 
   /**
    * Gets the ID of the soundboard sound, for soundboard effects.
@@ -770,9 +688,7 @@ export class VoiceChannelEffect
    *
    * @returns The sound ID as a Snowflake or number, or undefined if not a sound effect
    */
-  get soundId(): Snowflake | number | undefined {
-    return this.rawData.sound_id;
-  }
+  readonly soundId = this.rawData.sound_id;
 
   /**
    * Gets the volume of the soundboard sound.
@@ -782,9 +698,7 @@ export class VoiceChannelEffect
    *
    * @returns The sound volume as a number between 0 and 1, or undefined if not applicable
    */
-  get soundVolume(): number | undefined {
-    return this.rawData.sound_volume;
-  }
+  readonly soundVolume = this.rawData.sound_volume;
 
   /**
    * Indicates whether this effect is an emoji reaction.
@@ -817,7 +731,7 @@ export class VoiceChannelEffect
    * @returns True if this is a premium animation, false if basic or undefined
    */
   get isPremiumAnimation(): boolean {
-    return this.animationType === 0; // VoiceChannelEffectSendAnimationType.Premium
+    return this.animationType === VoiceChannelEffectSendAnimationType.Premium;
   }
 
   /**
@@ -828,7 +742,7 @@ export class VoiceChannelEffect
    * @returns True if this is a basic animation, false if premium or undefined
    */
   get isBasicAnimation(): boolean {
-    return this.animationType === 1; // VoiceChannelEffectSendAnimationType.Basic
+    return this.animationType === VoiceChannelEffectSendAnimationType.Basic;
   }
 
   /**
@@ -840,10 +754,6 @@ export class VoiceChannelEffect
    * @throws Error if the user could not be fetched
    */
   async fetchUser(): Promise<User> {
-    if (this.#user) {
-      return this.#user;
-    }
-
     try {
       const user = await this.client.rest.users.fetchUser(this.userId);
       return new User(this.client, user);
@@ -865,9 +775,6 @@ export class VoiceChannelEffect
   async fetchEmoji(): Promise<Emoji | null> {
     if (!this.isEmojiEffect) {
       return null;
-    }
-    if (this.#emoji) {
-      return this.#emoji;
     }
 
     try {

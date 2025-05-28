@@ -1,5 +1,5 @@
 import { deepmerge } from "deepmerge-ts";
-import { cloneDeep, get, unset } from "lodash-es";
+import { get, unset } from "lodash-es";
 import { z } from "zod/v4";
 import { LruTracker } from "./lru-tracker.js";
 
@@ -66,25 +66,6 @@ export const StoreOptions = z.object({
   evictionStrategy: z.enum(["fifo", "lru"]).default("lru"),
 
   /**
-   * Whether to create deep clones of values when retrieved from the store.
-   *
-   * When enabled:
-   * - Prevents unintentional modifications to stored data (creates immutable-like behavior)
-   * - Ensures data consistency but with a significant performance cost (~6x slower)
-   * - Each get() call returns a completely independent copy of the data
-   *
-   * When disabled:
-   * - Better performance but requires careful handling to avoid accidental mutations
-   * - Changes to retrieved objects will affect the stored version
-   *
-   * Consider enabling this in scenarios where data integrity is critical and
-   * performance is less important.
-   *
-   * @default false
-   */
-  cloneValues: z.boolean().default(false),
-
-  /**
    * Interval in milliseconds at which the store automatically checks for and removes expired items.
    *
    * This background cleanup process ensures expired items are removed even if they're
@@ -111,6 +92,12 @@ export type StoreOptions = z.infer<typeof StoreOptions>;
  * An enhanced Map implementation with additional features like TTL, eviction strategies,
  * and object manipulation capabilities.
  *
+ * **Memory Management**: This implementation includes comprehensive memory leak prevention:
+ * - Automatic cleanup of internal references
+ * - Proper disposal of LRU tracker nodes
+ * - WeakRef-based interval management to prevent strong reference cycles
+ * - Comprehensive cleanup methods with Symbol.dispose support
+ *
  * @template K - The type of keys in the store, must be string, number, or symbol
  * @template V - The type of values in the store
  * @extends {Map<K, V>}
@@ -126,6 +113,11 @@ export type StoreOptions = z.infer<typeof StoreOptions>;
  *   ttl: 60 * 1000, // 1 minute
  *   evictionStrategy: "lru"
  * });
+ *
+ * @example
+ * // Proper cleanup when done
+ * using store = new Store<string, any>({ maxSize: 100 });
+ * // Store will be automatically disposed when it goes out of scope
  */
 export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
@@ -151,6 +143,18 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @private
    */
   #cleanupInterval: NodeJS.Timeout | null = null;
+
+  /**
+   * Flag to track if the store has been disposed
+   * @private
+   */
+  #disposed = false;
+
+  /**
+   * WeakRef to this instance for use in interval callbacks
+   * @private
+   */
+  readonly #selfRef: WeakRef<Store<K, V>>;
 
   /**
    * Creates a new Store instance.
@@ -183,6 +187,9 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     maybeOptions?: z.input<typeof StoreOptions>,
   ) {
     super();
+
+    // Create WeakRef to self to prevent strong reference cycles in intervals
+    this.#selfRef = new WeakRef(this);
 
     // Helper functions for type checks
     const isEntriesArray = (
@@ -251,6 +258,22 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
+   * Returns the current configuration options for this store.
+   * @returns A copy of the store options
+   */
+  get options(): StoreOptions {
+    return { ...this.#options };
+  }
+
+  /**
+   * Returns whether the store has been disposed.
+   * @returns true if the store has been disposed, false otherwise
+   */
+  get isDisposed(): boolean {
+    return this.#disposed;
+  }
+
+  /**
    * Adds or updates a value in the store.
    * If the key already exists and both the existing and new values are objects,
    * performs a deep merge. Otherwise, replaces the existing value.
@@ -258,6 +281,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @param key - The key to add or update
    * @param value - The value to add or merge with existing value
    * @returns The Store instance for chaining
+   * @throws {Error} If the store has been disposed
    *
    * @example
    * // Add a new item
@@ -269,6 +293,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * // Now 'user1' contains { name: 'John', age: 30, email: 'john@example.com' }
    */
   add(key: K, value: V | Partial<V>): this {
+    this.#checkDisposed();
+
     if (this.has(key)) {
       const existingValue = this.get(key) as V;
       if (
@@ -294,7 +320,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @param key - The key of the item to modify
    * @param paths - The property path(s) to remove
    * @returns The Store instance for chaining
-   * @throws {Error} If the key doesn't exist or the value is not an object
+   * @throws {Error} If the key doesn't exist, the value is not an object, or the store has been disposed
    *
    * @example
    * // Remove a single property
@@ -305,6 +331,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * store.remove('user1', ['age', 'address.street']);
    */
   remove(key: K, paths: (keyof V | string)[] | string | keyof V): this {
+    this.#checkDisposed();
+
     if (!this.has(key)) {
       throw new Error(`Key not found: ${String(key)}`);
     }
@@ -332,6 +360,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param predicate - A function or pattern object to match against
    * @returns The first matching value, or undefined if no match is found
+   * @throws {Error} If the store has been disposed
    *
    * @example
    * // Find using a function predicate
@@ -342,11 +371,13 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * const user = store.find({ role: 'admin' });
    */
   find(predicate: StorePredicate<K, V>): V | undefined {
+    this.#checkDisposed();
+
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
         if (predicate(value, key, this)) {
           this.#updateAccessTime(key);
-          return this.#maybeCloneValue(value);
+          return value;
         }
       }
       return undefined;
@@ -356,7 +387,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     for (const [key, value] of this) {
       if (this.#matchesPattern(value, entries)) {
         this.#updateAccessTime(key);
-        return this.#maybeCloneValue(value);
+        return value;
       }
     }
     return undefined;
@@ -367,12 +398,15 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param predicate - A function or pattern object to match against
    * @returns Array of matching values
+   * @throws {Error} If the store has been disposed
    *
    * @example
    * // Find all users over 30
    * const olderUsers = store.findAll(user => user.age > 30);
    */
   findAll(predicate: StorePredicate<K, V>): V[] {
+    this.#checkDisposed();
+
     const results: V[] = [];
 
     // Collect all matching values
@@ -380,7 +414,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       for (const [key, value] of this) {
         if (predicate(value, key, this)) {
           this.#updateAccessTime(key);
-          results.push(this.#maybeCloneValue(value));
+          results.push(value);
         }
       }
     } else {
@@ -388,7 +422,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       for (const [key, value] of this) {
         if (this.#matchesPattern(value, entries)) {
           this.#updateAccessTime(key);
-          results.push(this.#maybeCloneValue(value));
+          results.push(value);
         }
       }
     }
@@ -401,6 +435,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param predicate - A function or pattern object to match against
    * @returns A new Store instance containing the matching entries
+   * @throws {Error} If the store has been disposed
    *
    * @example
    * // Filter using a function predicate
@@ -411,12 +446,14 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * const activeUsers = store.filter({ status: 'active' });
    */
   filter(predicate: StorePredicate<K, V>): Store<K, V> {
+    this.#checkDisposed();
+
     const newStore = new Store<K, V>(null, this.#options);
 
     if (typeof predicate === "function") {
       for (const [key, value] of this) {
         if (predicate(value, key, this)) {
-          newStore.set(key, this.#cloneIfObject(value));
+          newStore.set(key, value);
         }
       }
       return newStore;
@@ -425,7 +462,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     const entries = Object.entries(predicate);
     for (const [key, value] of this) {
       if (this.#matchesPattern(value, entries)) {
-        newStore.set(key, this.#cloneIfObject(value));
+        newStore.set(key, value);
       }
     }
     return newStore;
@@ -436,6 +473,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param key - The key to look up
    * @returns The value associated with the key, or undefined if not found or expired
+   * @throws {Error} If the store has been disposed
    *
    * @remarks
    * - Automatically removes the item if it has expired
@@ -444,6 +482,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @override Overrides Map.get
    */
   override get(key: K): V | undefined {
+    this.#checkDisposed();
+
     if (this.isExpired(key)) {
       this.delete(key);
       return undefined;
@@ -452,7 +492,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     const value = super.get(key);
     if (value !== undefined) {
       this.#updateAccessTime(key);
-      return this.#maybeCloneValue(value);
+      return value;
     }
     return undefined;
   }
@@ -462,6 +502,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param key - The key to check
    * @returns true if the key exists and is not expired, false otherwise
+   * @throws {Error} If the store has been disposed
    *
    * @remarks
    * - Automatically removes the item if it has expired
@@ -470,6 +511,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @override Overrides Map.has
    */
   override has(key: K): boolean {
+    this.#checkDisposed();
+
     // First check if the item has expired
     if (this.isExpired(key)) {
       // If expired, delete it and return false
@@ -488,13 +531,15 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @param value - The value to store
    * @param ttl - Time to live in milliseconds
    * @returns The Store instance for chaining
-   * @throws {Error} If TTL is negative
+   * @throws {Error} If TTL is negative or the store has been disposed
    *
    * @example
    * // Set a value that expires after 5 minutes
    * store.setWithTtl('session', { token: 'abc123' }, 5 * 60 * 1000);
    */
   setWithTtl(key: K, value: V, ttl: number): this {
+    this.#checkDisposed();
+
     if (ttl < 0) {
       throw new Error(`TTL cannot be negative: ${ttl}`);
     }
@@ -509,8 +554,11 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param key - The key to check
    * @returns true if the item has expired, false otherwise
+   * @throws {Error} If the store has been disposed
    */
   isExpired(key: K): boolean {
+    this.#checkDisposed();
+
     const expiry = this.#ttlMap.get(key);
     if (expiry === undefined) {
       // If no TTL is set and the global TTL is greater than 0,
@@ -531,6 +579,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @param key - The key to set
    * @param value - The value to store
    * @returns The Store instance for chaining
+   * @throws {Error} If the store has been disposed
    *
    * @remarks
    * - May trigger item eviction if the store size exceeds maxSize
@@ -539,6 +588,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @override Overrides Map.set
    */
   override set(key: K, value: V): this {
+    this.#checkDisposed();
+
     // Ensure there's room for the new item
     if (
       this.#options.maxSize > 0 &&
@@ -563,6 +614,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param key - The key to delete
    * @returns true if an element was removed, false otherwise
+   * @throws {Error} If the store has been disposed
    *
    * @remarks
    * Also removes the key from internal TTL and LRU trackers
@@ -570,6 +622,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @override Overrides Map.delete
    */
   override delete(key: K): boolean {
+    this.#checkDisposed();
+
     this.#ttlMap.delete(key);
     this.#lruTracker?.delete(key);
     return super.delete(key);
@@ -578,12 +632,16 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   /**
    * Removes all items from the store.
    *
+   * @throws {Error} If the store has been disposed
+   *
    * @remarks
    * Also clears the internal TTL and LRU trackers
    *
    * @override Overrides Map.clear
    */
   override clear(): void {
+    this.#checkDisposed();
+
     super.clear();
     this.#ttlMap.clear();
     this.#lruTracker?.clear();
@@ -597,15 +655,16 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @param callback.key - The key of the current value being processed
    * @param callback.store - The store instance
    * @returns Array containing the results of the callback function
+   * @throws {Error} If the store has been disposed
    *
    * @example
    * // Get an array of all user names
    * const userNames = store.map(user => user.name);
    */
   map<R>(callback: (value: V, key: K, store: this) => R): R[] {
-    return Array.from(this, ([key, value]) =>
-      callback(this.#maybeCloneValue(value), key, this),
-    );
+    this.#checkDisposed();
+
+    return Array.from(this, ([key, value]) => callback(value, key, this));
   }
 
   /**
@@ -613,12 +672,15 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    *
    * @param compareFn - Function to determine the sort order
    * @returns A new Store instance with sorted entries
+   * @throws {Error} If the store has been disposed
    *
    * @example
    * // Sort users by age
    * const sortedUsers = store.sort((a, b) => a.age - b.age);
    */
   sort(compareFn?: (a: V, b: V) => number): Store<K, V> {
+    this.#checkDisposed();
+
     const sorted = [...this.entries()].sort(
       ([, a], [, b]) => compareFn?.(a, b) ?? String(a).localeCompare(String(b)),
     );
@@ -631,6 +693,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @param page - The page number (0-based)
    * @param pageSize - The number of items per page
    * @returns Array of values for the requested page
+   * @throws {Error} If page is negative, pageSize is not positive, or the store has been disposed
    *
    * @example
    * // Get the first page with 10 items per page
@@ -640,6 +703,8 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * const secondPage = store.slice(1, 10);
    */
   slice(page = 0, pageSize = 10): V[] {
+    this.#checkDisposed();
+
     if (page < 0) {
       throw new Error(`Page number cannot be negative: ${page}`);
     }
@@ -647,26 +712,28 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       throw new Error(`Page size must be positive: ${pageSize}`);
     }
 
-    return [...this.values()]
-      .slice(page * pageSize, (page + 1) * pageSize)
-      .map((value) => this.#maybeCloneValue(value));
+    return [...this.values()].slice(page * pageSize, (page + 1) * pageSize);
   }
 
   /**
    * Returns all values in the store as an array.
    *
    * @returns Array of all values in the store
+   * @throws {Error} If the store has been disposed
    */
   toArray(): V[] {
-    return [...this.values()].map((value) => this.#maybeCloneValue(value));
+    this.#checkDisposed();
+    return [...this.values()];
   }
 
   /**
    * Returns all keys in the store as an array.
    *
    * @returns Array of all keys in the store
+   * @throws {Error} If the store has been disposed
    */
   keysArray(): K[] {
+    this.#checkDisposed();
     return [...this.keys()];
   }
 
@@ -674,22 +741,62 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * Returns all entries in the store as an array of [key, value] pairs.
    *
    * @returns Array of all entries in the store
+   * @throws {Error} If the store has been disposed
    */
   entriesArray(): [K, V][] {
-    return [...this.entries()].map(([key, value]) => [
-      key,
-      this.#maybeCloneValue(value),
-    ]);
+    this.#checkDisposed();
+    return [...this.entries()];
   }
 
   /**
-   * Stop cleanup interval when instance is no longer needed
+   * Cleans up all resources used by the store and prevents further operations.
+   * This method should be called when the store is no longer needed to prevent memory leaks.
+   *
+   * @remarks
+   * - Stops the cleanup interval timer
+   * - Clears all internal data structures
+   * - Properly disposes of LRU tracker resources
+   * - Marks the store as disposed to prevent further use
+   *
+   * @example
+   * // Manual cleanup
+   * const store = new Store({ maxSize: 100, ttl: 60000 });
+   * // ... use store ...
+   * store.destroy();
+   *
+   * @example
+   * // Automatic cleanup with using declaration
+   * using store = new Store({ maxSize: 100 });
+   * // Store will be automatically destroyed when it goes out of scope
    */
   destroy(): void {
+    if (this.#disposed) {
+      return;
+    }
+
+    // Stop cleanup interval
     if (this.#cleanupInterval) {
       clearInterval(this.#cleanupInterval);
       this.#cleanupInterval = null;
     }
+
+    // Clear all data and properly dispose of LRU tracker
+    this.clear();
+
+    // Mark as disposed
+    this.#disposed = true;
+  }
+
+  /**
+   * Symbol.dispose implementation for automatic cleanup in `using` declarations.
+   * This is part of the explicit resource management proposal.
+   *
+   * @example
+   * using store = new Store({ maxSize: 100 });
+   * // Store will be automatically disposed when it goes out of scope
+   */
+  [Symbol.dispose](): void {
+    this.destroy();
   }
 
   /**
@@ -706,6 +813,7 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
 
   /**
    * Starts an interval to periodically clean up expired items.
+   * Uses WeakRef to prevent the interval from holding a strong reference to the store.
    *
    * @private
    */
@@ -715,7 +823,19 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
       this.#options.expirationCheckInterval,
     );
 
-    this.#cleanupInterval = setInterval(() => this.#cleanup(), cleanupInterval);
+    // Use WeakRef to prevent strong reference cycle
+    const storeRef = this.#selfRef;
+
+    this.#cleanupInterval = setInterval(() => {
+      const store = storeRef.deref();
+      if (store && !store.#disposed) {
+        store.#cleanup();
+      } else if (this.#cleanupInterval) {
+        // Store has been garbage collected or disposed, clear the interval
+        clearInterval(this.#cleanupInterval);
+      }
+    }, cleanupInterval);
+
     // Force an immediate cleanup run
     this.#cleanup();
   }
@@ -726,6 +846,10 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
    * @private
    */
   #cleanup(): void {
+    if (this.#disposed) {
+      return;
+    }
+
     const now = Date.now();
     const expiredKeys: K[] = [];
 
@@ -840,27 +964,14 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
   }
 
   /**
-   * Clones an object if cloneValues option is enabled
+   * Checks if the store has been disposed and throws an error if it has.
    *
-   * @param value - The value to potentially clone
-   * @returns The cloned value or the original value
+   * @throws {Error} If the store has been disposed
    * @private
    */
-  #maybeCloneValue(value: V): V {
-    return this.#options.cloneValues ? this.#cloneIfObject(value) : value;
-  }
-
-  /**
-   * Clones a value if it's an object, otherwise returns the value as is
-   *
-   * @param value - The value to potentially clone
-   * @returns The cloned value or the original value
-   * @private
-   */
-  #cloneIfObject(value: V): V {
-    if (typeof value === "object" && value !== null) {
-      return cloneDeep(value);
+  #checkDisposed(): void {
+    if (this.#disposed) {
+      throw new Error("Store has been disposed and cannot be used");
     }
-    return value;
   }
 }

@@ -1,4 +1,4 @@
-import type { ApiVersion, ApplicationEntity, GuildEntity } from "@nyxojs/core";
+import type { ApplicationEntity, GuildEntity } from "@nyxojs/core";
 import type { ReadyEntity } from "@nyxojs/gateway";
 import { BaseClass } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";
@@ -34,9 +34,7 @@ export class Ready
    *
    * @returns The API version
    */
-  get v(): ApiVersion {
-    return this.rawData.v;
-  }
+  readonly v = this.rawData.v;
 
   /**
    * Gets information about the authenticated user.
@@ -46,9 +44,7 @@ export class Ready
    *
    * @returns The User object representing the authenticated client
    */
-  get user(): User {
-    return new User(this.client, this.rawData.user);
-  }
+  readonly user = new User(this.client, this.rawData.user);
 
   /**
    * Gets an array of unavailable guilds that the authenticated user is a member of.
@@ -58,11 +54,9 @@ export class Ready
    *
    * @returns Array of unavailable guild objects
    */
-  get guilds(): Guild[] {
-    return this.rawData.guilds.map(
-      (guild) => new Guild(this.client, guild as unknown as GuildEntity),
-    );
-  }
+  readonly guilds = this.rawData.guilds.map(
+    (guild) => new Guild(this.client, guild as unknown as GuildEntity),
+  );
 
   /**
    * Gets the session ID for this connection.
@@ -72,9 +66,7 @@ export class Ready
    *
    * @returns The session ID as a string
    */
-  get sessionId(): string {
-    return this.rawData.session_id;
-  }
+  readonly sessionId = this.rawData.session_id;
 
   /**
    * Gets the gateway URL to use for resuming connections.
@@ -84,9 +76,7 @@ export class Ready
    *
    * @returns The resume gateway URL as a string
    */
-  get resumeGatewayUrl(): string {
-    return this.rawData.resume_gateway_url;
-  }
+  readonly resumeGatewayUrl = this.rawData.resume_gateway_url;
 
   /**
    * Gets shard information for this session, if applicable.
@@ -96,9 +86,7 @@ export class Ready
    *
    * @returns The shard information array, or undefined if not sharded
    */
-  get shard(): [number, number] | undefined {
-    return this.rawData.shard;
-  }
+  readonly shard = this.rawData.shard;
 
   /**
    * Gets information about the application associated with this client.
@@ -107,12 +95,10 @@ export class Ready
    *
    * @returns The Application object
    */
-  get application(): Application {
-    return new Application(
-      this.client,
-      this.rawData.application as ApplicationEntity,
-    );
-  }
+  readonly application = new Application(
+    this.client,
+    this.rawData.application as ApplicationEntity,
+  );
 
   /**
    * The number of guilds the client is connected to.
@@ -122,18 +108,7 @@ export class Ready
    *
    * @returns The guild count
    */
-  get guildCount(): number {
-    return this.guilds.length;
-  }
-
-  /**
-   * Indicates whether this client is using sharding.
-   *
-   * @returns True if this client is part of a sharded setup, false otherwise
-   */
-  get isSharded(): boolean {
-    return this.shard !== undefined;
-  }
+  readonly guildCount = this.guilds.length;
 
   /**
    * Gets the shard ID if the client is sharded.

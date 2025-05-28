@@ -1,12 +1,9 @@
 import {
   type ApplicationRoleConnectionEntity,
-  type AvatarDecorationDataEntity,
   BitField,
   type ConnectionEntity,
   type ConnectionService,
   type FormattedUser,
-  type Locale,
-  type PremiumType,
   type Snowflake,
   SnowflakeUtil,
   type UserEntity,
@@ -17,6 +14,7 @@ import {
 import type { GuildCreateEntity } from "@nyxojs/gateway";
 import {
   type AnimatedImageOptions,
+  type AvatarDecorationUrl,
   Cdn,
   type DefaultUserAvatarUrl,
   type GroupDmCreateOptions,
@@ -54,18 +52,6 @@ export class User
   implements Enforce<PropsToCamel<UserEntity>>
 {
   /**
-   * The flags on the user's account.
-   * @private
-   */
-  #flags: BitField<UserFlags> | null = null;
-
-  /**
-   * The public flags on the user's account.
-   * @private
-   */
-  #publicFlags: BitField<UserFlags> | null = null;
-
-  /**
    * Gets the user's unique identifier (Snowflake).
    *
    * This ID is permanent and will not change for the lifetime of the user account.
@@ -73,9 +59,7 @@ export class User
    *
    * @returns The user's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the user's username.
@@ -86,9 +70,7 @@ export class User
    * @returns The user's username
    * @see {@link https://discord.com/developers/docs/resources/user#usernames-and-nicknames}
    */
-  get username(): string {
-    return this.rawData.username;
-  }
+  readonly username = this.rawData.username;
 
   /**
    * Gets the user's discriminator (the four digits after the #).
@@ -98,9 +80,7 @@ export class User
    *
    * @returns The user's discriminator as a string
    */
-  get discriminator(): string {
-    return this.rawData.discriminator;
-  }
+  readonly discriminator = this.rawData.discriminator;
 
   /**
    * Gets the user's global display name.
@@ -110,9 +90,7 @@ export class User
    *
    * @returns The user's global display name, or null if not set
    */
-  get globalName(): string | null {
-    return this.rawData.global_name;
-  }
+  readonly globalName = this.rawData.global_name;
 
   /**
    * Gets the user's avatar hash.
@@ -122,9 +100,7 @@ export class User
    *
    * @returns The user's avatar hash, or null if using the default avatar
    */
-  get avatar(): string | null {
-    return this.rawData.avatar;
-  }
+  readonly avatar = this.rawData.avatar;
 
   /**
    * Indicates whether the user is a bot account.
@@ -134,9 +110,7 @@ export class User
    *
    * @returns True if the user is a bot, false otherwise
    */
-  get bot(): boolean {
-    return Boolean(this.rawData.bot);
-  }
+  readonly bot = Boolean(this.rawData.bot);
 
   /**
    * Indicates whether the user is an Official Discord System user.
@@ -146,9 +120,7 @@ export class User
    *
    * @returns True if the user is a system account, false otherwise
    */
-  get system(): boolean {
-    return Boolean(this.rawData.system);
-  }
+  readonly system = Boolean(this.rawData.system);
 
   /**
    * Indicates whether the user has two-factor authentication enabled.
@@ -157,9 +129,7 @@ export class User
    *
    * @returns True if the user has MFA enabled, false otherwise
    */
-  get mfaEnabled(): boolean {
-    return Boolean(this.rawData.mfa_enabled);
-  }
+  readonly mfaEnabled = Boolean(this.rawData.mfa_enabled);
 
   /**
    * Gets the user's banner hash.
@@ -169,9 +139,7 @@ export class User
    *
    * @returns The user's banner hash, or null if no banner is set
    */
-  get banner(): string | null | undefined {
-    return this.rawData.banner;
-  }
+  readonly banner = this.rawData.banner;
 
   /**
    * Gets the user's accent color as an integer.
@@ -181,9 +149,7 @@ export class User
    *
    * @returns The accent color as an integer, or null if not set
    */
-  get accentColor(): number | null | undefined {
-    return this.rawData.accent_color;
-  }
+  readonly accentColor = this.rawData.accent_color;
 
   /**
    * Gets the user's chosen locale (language setting).
@@ -192,9 +158,7 @@ export class User
    *
    * @returns The user's locale, or null if not available
    */
-  get locale(): Locale | null | undefined {
-    return this.rawData.locale;
-  }
+  readonly locale = this.rawData.locale;
 
   /**
    * Indicates whether the user's email has been verified.
@@ -203,9 +167,7 @@ export class User
    *
    * @returns True if the email is verified, false otherwise
    */
-  get verified(): boolean {
-    return Boolean(this.rawData.verified);
-  }
+  readonly verified = Boolean(this.rawData.verified);
 
   /**
    * Gets the user's email address.
@@ -214,9 +176,7 @@ export class User
    *
    * @returns The user's email address, or null if not available
    */
-  get email(): string | null | undefined {
-    return this.rawData.email;
-  }
+  readonly email = this.rawData.email;
 
   /**
    * Gets the flags on the user's account as a BitField.
@@ -227,13 +187,7 @@ export class User
    * @returns A BitField of user flags
    * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
    */
-  get flags(): BitField<UserFlags> {
-    if (!this.#flags) {
-      this.#flags = new BitField<UserFlags>(this.rawData.flags ?? 0n);
-    }
-
-    return this.#flags;
-  }
+  readonly flags = new BitField<UserFlags>(this.rawData.flags ?? 0n);
 
   /**
    * Gets the user's Nitro subscription level.
@@ -243,9 +197,7 @@ export class User
    * @returns The premium type, or null if the user doesn't have Nitro
    * @see {@link https://discord.com/developers/docs/resources/user#user-object-premium-types}
    */
-  get premiumType(): PremiumType | undefined {
-    return this.rawData.premium_type;
-  }
+  readonly premiumType = this.rawData.premium_type;
 
   /**
    * Gets the public flags on the user's account as a BitField.
@@ -256,15 +208,9 @@ export class User
    * @returns A BitField of public user flags
    * @see {@link https://discord.com/developers/docs/resources/user#user-object-user-flags}
    */
-  get publicFlags(): BitField<UserFlags> {
-    if (!this.#publicFlags) {
-      this.#publicFlags = new BitField<UserFlags>(
-        this.rawData.public_flags ?? 0n,
-      );
-    }
-
-    return this.#publicFlags;
-  }
+  readonly publicFlags = new BitField<UserFlags>(
+    this.rawData.public_flags ?? 0n,
+  );
 
   /**
    * Gets the user's avatar decoration data.
@@ -274,9 +220,7 @@ export class User
    *
    * @returns The avatar decoration data in camelCase format, or null if not set
    */
-  get avatarDecorationData(): AvatarDecorationDataEntity | null | undefined {
-    return this.rawData.avatar_decoration_data;
-  }
+  readonly avatarDecorationData = this.rawData.avatar_decoration_data;
 
   /**
    * Gets the user's tag, which is a combination of username and discriminator.
@@ -332,37 +276,10 @@ export class User
    *
    * @returns The URL for the avatar decoration, or null if the user doesn't have one
    */
-  get avatarDecorationUrl(): string | null {
+  get avatarDecorationUrl(): AvatarDecorationUrl | null {
     return this.avatarDecorationData
       ? Cdn.avatarDecoration(this.avatarDecorationData.asset)
       : null;
-  }
-
-  /**
-   * Shorthand for checking if this user is a bot account.
-   *
-   * @returns True if the user is a bot, false otherwise
-   */
-  get isBot(): boolean {
-    return this.bot;
-  }
-
-  /**
-   * Shorthand for checking if this user is a system account.
-   *
-   * @returns True if the user is a system account, false otherwise
-   */
-  get isSystem(): boolean {
-    return this.system;
-  }
-
-  /**
-   * Shorthand for checking if this user's email is verified.
-   *
-   * @returns True if the email is verified, false otherwise
-   */
-  get isVerified(): boolean {
-    return this.verified;
   }
 
   /**
@@ -715,15 +632,6 @@ export class User
    */
   override toString(): FormattedUser {
     return formatUser(this.id);
-  }
-
-  /**
-   * Checks if this user has two-factor authentication enabled.
-   *
-   * @returns True if the user has MFA enabled, false otherwise
-   */
-  hasMfaEnabled(): boolean {
-    return this.mfaEnabled;
   }
 
   /**

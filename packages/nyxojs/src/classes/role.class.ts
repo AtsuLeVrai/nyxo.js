@@ -1,9 +1,9 @@
 import {
   BitField,
+  type BitwisePermissionFlags,
   type FormattedRole,
   type RoleEntity,
   RoleFlags,
-  type RoleTagsEntity,
   type Snowflake,
   SnowflakeUtil,
   formatRole,
@@ -40,12 +40,6 @@ export class Role
   implements Enforce<PropsToCamel<GuildBased<RoleEntity>>>
 {
   /**
-   * The flags on the role.
-   * @private
-   */
-  #flags: BitField<RoleFlags> | null = null;
-
-  /**
    * Gets the role's unique identifier (Snowflake).
    *
    * This ID is permanent and will not change for the lifetime of the role.
@@ -53,18 +47,14 @@ export class Role
    *
    * @returns The role's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the guild this role belongs to.
    *
    * @returns The guild ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the role's name.
@@ -73,9 +63,7 @@ export class Role
    *
    * @returns The role's name
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the role's color as an integer.
@@ -85,9 +73,7 @@ export class Role
    *
    * @returns The color as an integer
    */
-  get color(): number {
-    return this.rawData.color;
-  }
+  readonly color = this.rawData.color;
 
   /**
    * Indicates whether the role is displayed separately in the member list.
@@ -97,9 +83,7 @@ export class Role
    *
    * @returns True if the role is hoisted, false otherwise
    */
-  get hoist(): boolean {
-    return this.rawData.hoist;
-  }
+  readonly hoist = this.rawData.hoist;
 
   /**
    * Gets the role's icon hash.
@@ -109,9 +93,7 @@ export class Role
    *
    * @returns The role's icon hash, or null if no icon is set
    */
-  get icon(): string | null | undefined {
-    return this.rawData.icon;
-  }
+  readonly icon = this.rawData.icon;
 
   /**
    * Gets the role's unicode emoji.
@@ -120,9 +102,7 @@ export class Role
    *
    * @returns The unicode emoji string, or null if not set
    */
-  get unicodeEmoji(): string | null | undefined {
-    return this.rawData.unicode_emoji;
-  }
+  readonly unicodeEmoji = this.rawData.unicode_emoji;
 
   /**
    * Gets the role's position in the guild's role hierarchy.
@@ -132,9 +112,7 @@ export class Role
    *
    * @returns The role's position
    */
-  get position(): number {
-    return this.rawData.position;
-  }
+  readonly position = this.rawData.position;
 
   /**
    * Gets the role's permissions as a string representation of a bitfield.
@@ -143,9 +121,9 @@ export class Role
    *
    * @returns The permissions as a string
    */
-  get permissions(): string {
-    return this.rawData.permissions;
-  }
+  readonly permissions = new BitField<BitwisePermissionFlags>(
+    this.rawData.permissions,
+  );
 
   /**
    * Indicates whether this role is managed by an integration.
@@ -155,9 +133,7 @@ export class Role
    *
    * @returns True if the role is managed, false otherwise
    */
-  get managed(): boolean {
-    return this.rawData.managed;
-  }
+  readonly managed = this.rawData.managed;
 
   /**
    * Indicates whether this role can be mentioned by users.
@@ -166,9 +142,7 @@ export class Role
    *
    * @returns True if the role is mentionable, false otherwise
    */
-  get mentionable(): boolean {
-    return this.rawData.mentionable;
-  }
+  readonly mentionable = this.rawData.mentionable;
 
   /**
    * Gets the role's tags.
@@ -178,9 +152,7 @@ export class Role
    *
    * @returns The role's tags in camelCase format, or null if no tags are set
    */
-  get tags(): RoleTagsEntity | undefined {
-    return this.rawData.tags;
-  }
+  readonly tags = this.rawData.tags;
 
   /**
    * Gets the flags on the role as a BitField.
@@ -191,13 +163,7 @@ export class Role
    * @returns A BitField of role flags
    * @see {@link https://discord.com/developers/docs/topics/permissions#role-object-role-flags}
    */
-  get flags(): BitField<RoleFlags> {
-    if (!this.#flags) {
-      this.#flags = new BitField<RoleFlags>(this.rawData.flags ?? 0);
-    }
-
-    return this.#flags;
-  }
+  readonly flags = new BitField<RoleFlags>(this.rawData.flags);
 
   /**
    * Gets the Date object representing when this role was created.

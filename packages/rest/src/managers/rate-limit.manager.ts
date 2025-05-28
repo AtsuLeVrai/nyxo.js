@@ -226,7 +226,6 @@ export class RateLimitManager {
     this.buckets = new Store<string, RateLimitBucket>({
       maxSize: this.#options.maxBuckets,
       evictionStrategy: "lru",
-      cloneValues: false,
       expirationCheckInterval: this.#options.cleanupInterval,
     });
 
@@ -240,7 +239,6 @@ export class RateLimitManager {
       maxSize: 1000,
       ttl: this.#options.ratelimitCacheTtl,
       evictionStrategy: "lru",
-      cloneValues: false,
     });
   }
 

@@ -51,9 +51,7 @@ export class Emoji
    *
    * @returns The emoji's ID as a Snowflake string, or null for standard emoji
    */
-  get id(): Snowflake | null {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the guild where this emoji belongs.
@@ -63,9 +61,7 @@ export class Emoji
    *
    * @returns The guild ID, or undefined if not a guild emoji
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the name of the emoji.
@@ -75,9 +71,7 @@ export class Emoji
    *
    * @returns The emoji's name as a string, or null if not available
    */
-  get name(): string | null {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the array of role IDs that are allowed to use this emoji.
@@ -87,9 +81,7 @@ export class Emoji
    *
    * @returns Array of role IDs, or undefined if no restrictions
    */
-  get roles(): Snowflake[] | undefined {
-    return this.rawData.roles;
-  }
+  readonly roles = this.rawData.roles;
 
   /**
    * Gets the User object for the user that created this emoji.
@@ -99,13 +91,9 @@ export class Emoji
    *
    * @returns The User object for the creator, or undefined if not available
    */
-  get user(): User | undefined {
-    if (!this.rawData.user) {
-      return undefined;
-    }
-
-    return new User(this.client, this.rawData.user as UserEntity);
-  }
+  readonly user = this.rawData.user
+    ? new User(this.client, this.rawData.user as UserEntity)
+    : undefined;
 
   /**
    * Indicates whether this emoji must be wrapped in colons to be used in chat.
@@ -115,9 +103,7 @@ export class Emoji
    *
    * @returns True if colons are required, false otherwise
    */
-  get requireColons(): boolean {
-    return Boolean(this.rawData.require_colons);
-  }
+  readonly requireColons = Boolean(this.rawData.require_colons);
 
   /**
    * Indicates whether this emoji is managed by an integration.
@@ -127,9 +113,7 @@ export class Emoji
    *
    * @returns True if the emoji is managed, false otherwise
    */
-  get managed(): boolean {
-    return Boolean(this.rawData.managed);
-  }
+  readonly managed = Boolean(this.rawData.managed);
 
   /**
    * Indicates whether this emoji is animated.
@@ -139,9 +123,7 @@ export class Emoji
    *
    * @returns True if the emoji is animated, false otherwise
    */
-  get animated(): boolean {
-    return Boolean(this.rawData.animated);
-  }
+  readonly animated = Boolean(this.rawData.animated);
 
   /**
    * Indicates whether this emoji can be used.
@@ -152,9 +134,7 @@ export class Emoji
    *
    * @returns True if the emoji is available for use, false otherwise
    */
-  get available(): boolean {
-    return Boolean(this.rawData.available);
-  }
+  readonly available = Boolean(this.rawData.available);
 
   /**
    * Gets the Date object representing when this emoji was created.
@@ -168,6 +148,7 @@ export class Emoji
     if (!this.id) {
       return null;
     }
+
     return new Date(Number(BigInt(this.id) >> 22n) + 1420070400000);
   }
 
@@ -205,39 +186,6 @@ export class Emoji
    */
   get isCustom(): boolean {
     return this.id !== null;
-  }
-
-  /**
-   * Checks if this emoji is animated.
-   *
-   * Animated emoji have a .gif format and play their animation when used.
-   *
-   * @returns True if the emoji is animated, false otherwise
-   */
-  get isAnimated(): boolean {
-    return this.animated;
-  }
-
-  /**
-   * Checks if this emoji is managed by an integration.
-   *
-   * Managed emoji cannot be modified or deleted by regular users.
-   *
-   * @returns True if the emoji is managed, false otherwise
-   */
-  get isManaged(): boolean {
-    return this.managed;
-  }
-
-  /**
-   * Checks if this emoji is available for use.
-   *
-   * Emoji can become unavailable if a guild loses server boosts.
-   *
-   * @returns True if the emoji is available, false otherwise
-   */
-  get isAvailable(): boolean {
-    return this.available;
   }
 
   /**

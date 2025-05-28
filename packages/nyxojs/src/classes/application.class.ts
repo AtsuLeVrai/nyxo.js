@@ -1,14 +1,8 @@
 import {
   type ApplicationEntity,
-  type ApplicationEventWebhookStatus,
   ApplicationFlags,
-  type ApplicationIntegrationType,
-  type ApplicationIntegrationTypeConfigurationEntity,
   BitField,
-  type InstallParamsEntity,
-  type Snowflake,
   SnowflakeUtil,
-  type TeamEntity,
   type UserEntity,
 } from "@nyxojs/core";
 import type { GuildCreateEntity } from "@nyxojs/gateway";
@@ -59,9 +53,7 @@ export class Application
    *
    * @returns The application's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the name of the application.
@@ -70,9 +62,7 @@ export class Application
    *
    * @returns The application's name
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the application's icon hash.
@@ -82,9 +72,7 @@ export class Application
    *
    * @returns The application's icon hash, or null if no icon is set
    */
-  get icon(): string | null {
-    return this.rawData.icon;
-  }
+  readonly icon = this.rawData.icon;
 
   /**
    * Gets the application's icon hash returned when in the template object.
@@ -93,9 +81,7 @@ export class Application
    *
    * @returns The alternative icon hash, or null/undefined if not available
    */
-  get iconHash(): string | null | undefined {
-    return this.rawData.icon_hash;
-  }
+  readonly iconHash = this.rawData.icon_hash;
 
   /**
    * Gets the description of the application.
@@ -105,9 +91,7 @@ export class Application
    *
    * @returns The application's description
    */
-  get description(): string {
-    return this.rawData.description;
-  }
+  readonly description = this.rawData.description;
 
   /**
    * Gets the list of RPC origin URLs, if RPC is enabled for this application.
@@ -117,9 +101,7 @@ export class Application
    *
    * @returns An array of authorized RPC origin URLs, or undefined if RPC is not configured
    */
-  get rpcOrigins(): string[] | undefined {
-    return this.rawData.rpc_origins;
-  }
+  readonly rpcOrigins = this.rawData.rpc_origins;
 
   /**
    * Indicates whether the app can be added to servers by users other than the owner.
@@ -128,9 +110,7 @@ export class Application
    *
    * @returns True if the bot is public, false if restricted to owner installation
    */
-  get botPublic(): boolean {
-    return Boolean(this.rawData.bot_public);
-  }
+  readonly botPublic = Boolean(this.rawData.bot_public);
 
   /**
    * Indicates whether the bot requires code grant for installation.
@@ -140,9 +120,7 @@ export class Application
    *
    * @returns True if code grant is required, false otherwise
    */
-  get botRequireCodeGrant(): boolean {
-    return Boolean(this.rawData.bot_require_code_grant);
-  }
+  readonly botRequireCodeGrant = Boolean(this.rawData.bot_require_code_grant);
 
   /**
    * Gets the User object for the bot user associated with this application.
@@ -152,11 +130,9 @@ export class Application
    *
    * @returns The User object for the bot, or undefined if not available
    */
-  get bot(): User | undefined {
-    return this.rawData.bot
-      ? new User(this.client, this.rawData.bot as UserEntity)
-      : undefined;
-  }
+  readonly bot = this.rawData.bot
+    ? new User(this.client, this.rawData.bot as UserEntity)
+    : undefined;
 
   /**
    * Gets the URL to the application's Terms of Service.
@@ -166,9 +142,7 @@ export class Application
    *
    * @returns The Terms of Service URL, or undefined if not set
    */
-  get termsOfServiceUrl(): string | undefined {
-    return this.rawData.terms_of_service_url;
-  }
+  readonly termsOfServiceUrl = this.rawData.terms_of_service_url;
 
   /**
    * Gets the URL to the application's Privacy Policy.
@@ -177,9 +151,7 @@ export class Application
    *
    * @returns The Privacy Policy URL, or undefined if not set
    */
-  get privacyPolicyUrl(): string | undefined {
-    return this.rawData.privacy_policy_url;
-  }
+  readonly privacyPolicyUrl = this.rawData.privacy_policy_url;
 
   /**
    * Gets the User object for the owner of this application.
@@ -189,11 +161,9 @@ export class Application
    *
    * @returns The User object for the application owner, or undefined if not available
    */
-  get owner(): User | undefined {
-    return this.rawData.owner
-      ? new User(this.client, this.rawData.owner as UserEntity)
-      : undefined;
-  }
+  readonly owner = this.rawData.owner
+    ? new User(this.client, this.rawData.owner as UserEntity)
+    : undefined;
 
   /**
    * Gets the verification key used for interactions and the GameSDK's GetTicket.
@@ -203,9 +173,7 @@ export class Application
    *
    * @returns The hex-encoded verification key
    */
-  get verifyKey(): string {
-    return this.rawData.verify_key;
-  }
+  readonly verifyKey = this.rawData.verify_key;
 
   /**
    * Gets the team that owns this application, if applicable.
@@ -215,9 +183,7 @@ export class Application
    *
    * @returns The team information in camelCase format, or null if owned by an individual
    */
-  get team(): TeamEntity | null {
-    return this.rawData.team;
-  }
+  readonly team = this.rawData.team;
 
   /**
    * Gets the ID of the guild associated with this application.
@@ -227,9 +193,7 @@ export class Application
    *
    * @returns The guild ID, or undefined if no guild is associated
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the Guild object for the guild associated with this application.
@@ -239,11 +203,9 @@ export class Application
    *
    * @returns The Guild object, or undefined if no guild is associated
    */
-  get guild(): Guild | undefined {
-    return this.rawData.guild
-      ? new Guild(this.client, this.rawData.guild as GuildCreateEntity)
-      : undefined;
-  }
+  readonly guild = this.rawData.guild
+    ? new Guild(this.client, this.rawData.guild as GuildCreateEntity)
+    : undefined;
 
   /**
    * Gets the primary SKU ID for this application.
@@ -253,9 +215,7 @@ export class Application
    *
    * @returns The primary SKU ID, or undefined if not applicable
    */
-  get primarySkuId(): Snowflake | undefined {
-    return this.rawData.primary_sku_id;
-  }
+  readonly primarySkuId = this.rawData.primary_sku_id;
 
   /**
    * Gets the URL slug for this application's store page.
@@ -264,9 +224,7 @@ export class Application
    *
    * @returns The URL slug, or undefined if not applicable
    */
-  get slug(): string | undefined {
-    return this.rawData.slug;
-  }
+  readonly slug = this.rawData.slug;
 
   /**
    * Gets the cover image hash for this application.
@@ -276,9 +234,7 @@ export class Application
    *
    * @returns The cover image hash, or undefined if not set
    */
-  get coverImage(): string | undefined {
-    return this.rawData.cover_image;
-  }
+  readonly coverImage = this.rawData.cover_image;
 
   /**
    * Gets the application's flags as a BitField.
@@ -289,9 +245,7 @@ export class Application
    * @returns A BitField of application flags
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-flags}
    */
-  get flags(): BitField<ApplicationFlags> {
-    return new BitField<ApplicationFlags>(this.rawData.flags ?? 0n);
-  }
+  readonly flags = new BitField<ApplicationFlags>(this.rawData.flags ?? 0n);
 
   /**
    * Gets the approximate count of guilds this application has been added to.
@@ -300,9 +254,7 @@ export class Application
    *
    * @returns The approximate guild count, or undefined if not available
    */
-  get approximateGuildCount(): number | undefined {
-    return this.rawData.approximate_guild_count;
-  }
+  readonly approximateGuildCount = this.rawData.approximate_guild_count;
 
   /**
    * Gets the approximate count of users that have installed this application.
@@ -311,9 +263,8 @@ export class Application
    *
    * @returns The approximate user install count, or undefined if not available
    */
-  get approximateUserInstallCount(): number | undefined {
-    return this.rawData.approximate_user_install_count;
-  }
+  readonly approximateUserInstallCount =
+    this.rawData.approximate_user_install_count;
 
   /**
    * Gets the array of redirect URIs for this application's OAuth2 flow.
@@ -323,9 +274,7 @@ export class Application
    *
    * @returns An array of redirect URIs, or undefined if none are configured
    */
-  get redirectUris(): string[] | undefined {
-    return this.rawData.redirect_uris;
-  }
+  readonly redirectUris = this.rawData.redirect_uris;
 
   /**
    * Gets the interactions endpoint URL for this application.
@@ -335,9 +284,7 @@ export class Application
    *
    * @returns The interactions endpoint URL, or null/undefined if not configured
    */
-  get interactionsEndpointUrl(): string | null | undefined {
-    return this.rawData.interactions_endpoint_url;
-  }
+  readonly interactionsEndpointUrl = this.rawData.interactions_endpoint_url;
 
   /**
    * Gets the role connections verification URL for this application.
@@ -347,9 +294,8 @@ export class Application
    *
    * @returns The role connections verification URL, or null/undefined if not configured
    */
-  get roleConnectionsVerificationUrl(): string | null | undefined {
-    return this.rawData.role_connections_verification_url;
-  }
+  readonly roleConnectionsVerificationUrl =
+    this.rawData.role_connections_verification_url;
 
   /**
    * Gets the event webhooks URL for this application.
@@ -358,9 +304,7 @@ export class Application
    *
    * @returns The event webhooks URL, or null/undefined if not configured
    */
-  get eventWebhooksUrl(): string | null | undefined {
-    return this.rawData.event_webhooks_url;
-  }
+  readonly eventWebhooksUrl = this.rawData.event_webhooks_url;
 
   /**
    * Gets the status of event webhooks for this application.
@@ -371,9 +315,7 @@ export class Application
    * @returns The event webhooks status
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-event-webhook-status}
    */
-  get eventWebhooksStatus(): ApplicationEventWebhookStatus {
-    return this.rawData.event_webhooks_status;
-  }
+  readonly eventWebhooksStatus = this.rawData.event_webhooks_status;
 
   /**
    * Gets the list of event types this application subscribes to for webhooks.
@@ -382,9 +324,7 @@ export class Application
    *
    * @returns An array of event type strings, or undefined if none are configured
    */
-  get eventWebhooksTypes(): string[] | undefined {
-    return this.rawData.event_webhooks_types;
-  }
+  readonly eventWebhooksTypes = this.rawData.event_webhooks_types;
 
   /**
    * Gets the tags associated with this application.
@@ -393,9 +333,7 @@ export class Application
    *
    * @returns An array of tag strings, or undefined if none are set
    */
-  get tags(): string[] | undefined {
-    return this.rawData.tags;
-  }
+  readonly tags = this.rawData.tags;
 
   /**
    * Gets the install parameters for this application's default in-app authorization link.
@@ -405,9 +343,7 @@ export class Application
    *
    * @returns The install parameters in camelCase format, or undefined if not configured
    */
-  get installParams(): InstallParamsEntity | undefined {
-    return this.rawData.install_params;
-  }
+  readonly installParams = this.rawData.install_params;
 
   /**
    * Gets the integration types configuration for this application.
@@ -418,12 +354,7 @@ export class Application
    * @returns A record mapping integration types to their configurations
    * @see {@link https://discord.com/developers/docs/resources/application#application-object-application-integration-type-configuration-object}
    */
-  get integrationTypesConfig(): Record<
-    ApplicationIntegrationType,
-    ApplicationIntegrationTypeConfigurationEntity
-  > {
-    return this.rawData.integration_types_config;
-  }
+  readonly integrationTypesConfig = this.rawData.integration_types_config;
 
   /**
    * Gets the custom installation URL for this application.
@@ -433,54 +364,7 @@ export class Application
    *
    * @returns The custom install URL, or undefined if not configured
    */
-  get customInstallUrl(): string | undefined {
-    return this.rawData.custom_install_url;
-  }
-
-  /**
-   * Checks if this application has a custom icon set.
-   *
-   * @returns True if the application has an icon, false otherwise
-   */
-  get hasIcon(): boolean {
-    return this.icon !== null;
-  }
-
-  /**
-   * Checks if this application has a cover image set.
-   *
-   * @returns True if the application has a cover image, false otherwise
-   */
-  get hasCoverImage(): boolean {
-    return this.coverImage !== undefined;
-  }
-
-  /**
-   * Checks if this application is owned by a team rather than an individual.
-   *
-   * @returns True if the application is team-owned, false otherwise
-   */
-  get isTeamOwned(): boolean {
-    return this.team !== null;
-  }
-
-  /**
-   * Checks if this application has a bot user associated with it.
-   *
-   * @returns True if the application has a bot user, false otherwise
-   */
-  get hasBot(): boolean {
-    return this.bot !== undefined;
-  }
-
-  /**
-   * Checks if this application is public (can be added by anyone).
-   *
-   * @returns True if the application is public, false if restricted
-   */
-  get isPublic(): boolean {
-    return this.botPublic;
-  }
+  readonly customInstallUrl = this.rawData.custom_install_url;
 
   /**
    * Checks if this application is verified by Discord.

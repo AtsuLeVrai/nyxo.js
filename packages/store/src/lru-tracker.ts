@@ -12,6 +12,15 @@ export class LruNode<K> {
   constructor(key: K) {
     this.key = key;
   }
+
+  /**
+   * Clears all references from this node to help with garbage collection.
+   * This method should be called when the node is being removed from the list.
+   */
+  dispose(): void {
+    this.prev = null;
+    this.next = null;
+  }
 }
 
 /**
@@ -19,6 +28,9 @@ export class LruNode<K> {
  * This class maintains a fixed-size cache of keys, automatically evicting the least recently used
  * item when the capacity is exceeded. It uses a combination of Map and doubly linked list to achieve
  * O(1) time complexity for all operations.
+ *
+ * **Memory Management**: This implementation includes proper cleanup of node references to prevent
+ * memory leaks and circular references.
  *
  * @template K - The type of keys to be stored in the cache, must extend StoreKey
  */
@@ -45,13 +57,21 @@ export class LruTracker<K extends StoreKey> {
   }
 
   /**
+   * Returns the maximum capacity of the tracker.
+   */
+  get capacity(): number {
+    return this.#capacity;
+  }
+
+  /**
    * Updates the access time for a key, moving it to the front of the LRU list.
    * If the key doesn't exist, it will be added to the cache.
    * If adding the key exceeds capacity, the least recently used item will be evicted.
    *
    * @param key - The key to update or add to the cache
+   * @returns The key that was evicted (if any), or null if no eviction occurred
    */
-  touch(key: K): void {
+  touch(key: K): K | null {
     const node = this.#cache.get(key);
 
     if (node) {
@@ -59,17 +79,19 @@ export class LruTracker<K extends StoreKey> {
       this.#removeNode(node);
       // Add to front (most recently used)
       this.#addToFront(node);
-    } else {
-      // Create new node and add to front
-      const newNode = new LruNode<K>(key);
-      this.#addToFront(newNode);
-      this.#cache.set(key, newNode);
-
-      // Evict if over capacity
-      if (this.#cache.size > this.#capacity) {
-        this.#evictLru();
-      }
+      return null;
     }
+
+    // Create new node and add to front
+    const newNode = new LruNode<K>(key);
+    this.#addToFront(newNode);
+    this.#cache.set(key, newNode);
+
+    // Evict if over capacity
+    if (this.#cache.size > this.#capacity) {
+      return this.#evictLru();
+    }
+    return null;
   }
 
   /**
@@ -78,6 +100,23 @@ export class LruTracker<K extends StoreKey> {
    */
   getLru(): K | null {
     return this.#tail ? this.#tail.key : null;
+  }
+
+  /**
+   * Retrieves the most recently used key from the cache.
+   * @returns The most recently used key, or null if the cache is empty
+   */
+  getMru(): K | null {
+    return this.#head ? this.#head.key : null;
+  }
+
+  /**
+   * Checks if a key exists in the tracker.
+   * @param key - The key to check
+   * @returns true if the key exists, false otherwise
+   */
+  has(key: K): boolean {
+    return this.#cache.has(key);
   }
 
   /**
@@ -90,6 +129,10 @@ export class LruTracker<K extends StoreKey> {
     if (node) {
       this.#removeNode(node);
       this.#cache.delete(key);
+
+      // Clean up node references to prevent memory leaks
+      node.dispose();
+
       return true;
     }
     return false;
@@ -97,8 +140,14 @@ export class LruTracker<K extends StoreKey> {
 
   /**
    * Removes all items from the cache, resetting it to its initial state.
+   * Properly cleans up all node references to prevent memory leaks.
    */
   clear(): void {
+    // Clean up all node references before clearing
+    for (const node of this.#cache.values()) {
+      node.dispose();
+    }
+
     this.#cache.clear();
     this.#head = null;
     this.#tail = null;
@@ -121,7 +170,24 @@ export class LruTracker<K extends StoreKey> {
   }
 
   /**
+   * Returns all keys in the cache, ordered from least recently used to most recently used.
+   * @returns An array of keys in reverse order of their last access time
+   */
+  keysReverse(): K[] {
+    const result: K[] = [];
+    let current = this.#tail;
+
+    while (current) {
+      result.push(current.key);
+      current = current.prev;
+    }
+
+    return result;
+  }
+
+  /**
    * Returns all entries in the cache as key-node pairs.
+   * **Note**: The returned nodes should not be modified directly as this can break the internal structure.
    * @returns An array of [key, LRUNode] pairs
    */
   entries(): [K, LruNode<K>][] {
@@ -131,12 +197,18 @@ export class LruTracker<K extends StoreKey> {
   /**
    * Removes the least recently used item from the cache.
    * @returns The key of the evicted item, or null if the cache was empty
+   * @private
    */
   #evictLru(): K | null {
     if (this.#tail) {
       const key = this.#tail.key;
-      this.#removeNode(this.#tail);
+      const node = this.#tail;
+      this.#removeNode(node);
       this.#cache.delete(key);
+
+      // Clean up node references to prevent memory leaks
+      node.dispose();
+
       return key;
     }
     return null;
@@ -145,9 +217,10 @@ export class LruTracker<K extends StoreKey> {
   /**
    * Adds a node to the front of the doubly linked list, making it the most recently used item.
    * @param node - The node to add to the front of the list
+   * @private
    */
   #addToFront(node: LruNode<K>): void {
-    // Reset node connections
+    // Reset node connections to ensure clean state
     node.prev = null;
     node.next = this.#head;
 
@@ -165,7 +238,9 @@ export class LruTracker<K extends StoreKey> {
 
   /**
    * Removes a node from the doubly linked list, maintaining the list's integrity.
+   * Properly cleans up node references to prevent memory leaks.
    * @param node - The node to remove from the list
+   * @private
    */
   #removeNode(node: LruNode<K>): void {
     // Update previous node
@@ -183,5 +258,10 @@ export class LruTracker<K extends StoreKey> {
       // This was the tail
       this.#tail = node.prev;
     }
+
+    // Clean up the removed node's references to prevent memory leaks
+    // This is crucial to avoid circular references and lingering pointers
+    node.prev = null;
+    node.next = null;
   }
 }

@@ -162,6 +162,13 @@ export class HeartbeatManager {
   #reconnectTimeout: NodeJS.Timeout | null = null;
 
   /**
+   * Initial timeout reference for the first heartbeat send
+   * Used to implement jitter on the first heartbeat
+   * @private
+   */
+  #initialTimeout: NodeJS.Timeout | null = null;
+
+  /**
    * Reference to the parent Gateway instance
    * Used to send heartbeats and emit events
    * @private
@@ -272,6 +279,12 @@ export class HeartbeatManager {
       clearTimeout(this.#reconnectTimeout);
       this.#reconnectTimeout = null;
     }
+
+    // Clear the initial heartbeat timeout if it exists
+    if (this.#initialTimeout) {
+      clearTimeout(this.#initialTimeout);
+      this.#initialTimeout = null;
+    }
   }
 
   /**
@@ -359,7 +372,7 @@ export class HeartbeatManager {
     const initialDelay = interval * Math.random();
 
     // Send first heartbeat after the jittered delay, then set up regular interval
-    setTimeout(() => {
+    this.#initialTimeout = setTimeout(() => {
       // Send initial heartbeat
       this.sendHeartbeat();
 
@@ -440,6 +453,9 @@ export class HeartbeatManager {
 
     // Schedule reconnection after the configured delay
     this.#reconnectTimeout = setTimeout(() => {
+      // Reset the reconnect timeout reference
+      this.#reconnectTimeout = null;
+
       // Only attempt to restart heartbeat if we have a valid interval
       if (this.intervalMs > 0) {
         this.start(this.intervalMs);

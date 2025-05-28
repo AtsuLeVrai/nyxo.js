@@ -1,30 +1,14 @@
 import {
-  type ActionRowEntity,
   type AnyThreadBasedChannelEntity,
-  type ApplicationCommandInteractionMetadataEntity,
   type ApplicationEntity,
-  type AttachmentEntity,
   BitField,
-  type ChannelMentionEntity,
-  type EmbedEntity,
   type EmojiEntity,
   type GuildMemberEntity,
-  type InteractionResolvedDataEntity,
   type Link,
-  type MessageActivityEntity,
-  type MessageCallEntity,
-  type MessageComponentInteractionMetadataEntity,
   type MessageEntity,
   MessageFlags,
-  type MessageInteractionEntity,
-  type MessageReferenceEntity,
   MessageReferenceType,
-  type MessageSnapshotEntity,
   MessageType,
-  type ModalSubmitInteractionMetadataEntity,
-  type PollEntity,
-  type ReactionEntity,
-  type RoleSubscriptionDataEntity,
   type Snowflake,
   link,
 } from "@nyxojs/core";
@@ -38,7 +22,6 @@ import type {
 import type {
   CreateMessageSchema,
   EditMessageSchema,
-  ReactionType,
   ReactionsFetchParams,
   ThreadFromMessageCreateOptions,
 } from "@nyxojs/rest";
@@ -46,7 +29,7 @@ import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, GuildBased, PropsToCamel } from "../types/index.js";
 import { channelFactory } from "../utils/index.js";
 import { Application } from "./application.class.js";
-import type { AnyChannel, AnyThreadChannel } from "./channel.class.js";
+import type { AnyThreadChannel } from "./channel.class.js";
 import { Emoji } from "./emoji.class.js";
 import { GuildMember } from "./guild.class.js";
 import { Sticker, StickerItem } from "./sticker.class.js";
@@ -76,9 +59,7 @@ export class MessageReaction
    *
    * @returns The user's ID as a Snowflake string
    */
-  get userId(): Snowflake {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the ID of the channel containing the message.
@@ -87,9 +68,7 @@ export class MessageReaction
    *
    * @returns The channel's ID as a Snowflake string
    */
-  get channelId(): Snowflake {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of the message that received the reaction.
@@ -98,9 +77,7 @@ export class MessageReaction
    *
    * @returns The message's ID as a Snowflake string
    */
-  get messageId(): Snowflake {
-    return this.rawData.message_id;
-  }
+  readonly messageId = this.rawData.message_id;
 
   /**
    * Gets the ID of the guild containing the message.
@@ -110,9 +87,57 @@ export class MessageReaction
    *
    * @returns The guild's ID as a Snowflake string, or undefined for DMs
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
+
+  /**
+   * Gets the emoji information for the reaction.
+   *
+   * Contains the ID, name, and animated status of the emoji.
+   *
+   * @returns The emoji object
+   */
+  readonly emoji = new Emoji(this.client, {
+    ...(this.rawData.emoji as EmojiEntity),
+    guild_id: this.guildId as Snowflake,
+  });
+
+  /**
+   * Indicates whether this is a super-reaction (Nitro burst reaction).
+   *
+   * @returns True if this is a super-reaction, false otherwise
+   */
+  readonly burst = this.rawData.burst;
+
+  /**
+   * Gets the type of the reaction.
+   *
+   * Identifies the reaction's category (standard, super, etc.).
+   *
+   * @returns The reaction type
+   */
+  readonly type = this.rawData.type;
+
+  /**
+   * Gets the array of hexadecimal color codes used for super-reaction animation.
+   *
+   * Each color is in "#rrggbb" format. Only present for super-reactions.
+   *
+   * @returns Array of color strings, or undefined if not a super-reaction
+   */
+  readonly burstColors =
+    "burst_colors" in this.rawData ? this.rawData.burst_colors : undefined;
+
+  /**
+   * Gets the ID of the user who authored the message which was reacted to.
+   *
+   * Useful for tracking reactions to specific users' messages.
+   *
+   * @returns The message author's ID, or undefined if not available
+   */
+  readonly messageAuthorId =
+    "message_author_id" in this.rawData
+      ? this.rawData.message_author_id
+      : undefined;
 
   /**
    * Gets the guild member object for the user who added the reaction.
@@ -133,66 +158,6 @@ export class MessageReaction
     };
 
     return new GuildMember(this.client, memberWithGuild);
-  }
-
-  /**
-   * Gets the emoji information for the reaction.
-   *
-   * Contains the ID, name, and animated status of the emoji.
-   *
-   * @returns The emoji object
-   */
-  get emoji(): Emoji {
-    return new Emoji(this.client, {
-      ...(this.rawData.emoji as EmojiEntity),
-      guild_id: this.guildId as Snowflake,
-    });
-  }
-
-  /**
-   * Indicates whether this is a super-reaction (Nitro burst reaction).
-   *
-   * @returns True if this is a super-reaction, false otherwise
-   */
-  get burst(): boolean {
-    return this.rawData.burst;
-  }
-
-  /**
-   * Gets the type of the reaction.
-   *
-   * Identifies the reaction's category (standard, super, etc.).
-   *
-   * @returns The reaction type
-   */
-  get type(): ReactionType {
-    return this.rawData.type;
-  }
-
-  /**
-   * Gets the array of hexadecimal color codes used for super-reaction animation.
-   *
-   * Each color is in "#rrggbb" format. Only present for super-reactions.
-   *
-   * @returns Array of color strings, or undefined if not a super-reaction
-   */
-  get burstColors(): string[] | undefined {
-    return "burst_colors" in this.rawData
-      ? this.rawData.burst_colors
-      : undefined;
-  }
-
-  /**
-   * Gets the ID of the user who authored the message which was reacted to.
-   *
-   * Useful for tracking reactions to specific users' messages.
-   *
-   * @returns The message author's ID, or undefined if not available
-   */
-  get messageAuthorId(): Snowflake | undefined {
-    return "message_author_id" in this.rawData
-      ? this.rawData.message_author_id
-      : undefined;
   }
 
   /**
@@ -334,9 +299,7 @@ export class MessageReactionRemoveAll
    *
    * @returns The channel's ID as a Snowflake string
    */
-  get channelId(): Snowflake {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of the message that had all reactions removed.
@@ -345,9 +308,7 @@ export class MessageReactionRemoveAll
    *
    * @returns The message's ID as a Snowflake string
    */
-  get messageId(): Snowflake {
-    return this.rawData.message_id;
-  }
+  readonly messageId = this.rawData.message_id;
 
   /**
    * Gets the ID of the guild containing the message.
@@ -357,9 +318,7 @@ export class MessageReactionRemoveAll
    *
    * @returns The guild's ID as a Snowflake string, or undefined for DMs
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Fetches the message that had all reactions removed.
@@ -395,9 +354,7 @@ export class MessageReactionRemoveEmoji
    *
    * @returns The channel's ID as a Snowflake string
    */
-  get channelId(): Snowflake {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of the guild containing the message.
@@ -407,9 +364,7 @@ export class MessageReactionRemoveEmoji
    *
    * @returns The guild's ID as a Snowflake string, or undefined for DMs
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the message that had reactions removed.
@@ -418,9 +373,7 @@ export class MessageReactionRemoveEmoji
    *
    * @returns The message's ID as a Snowflake string
    */
-  get messageId(): Snowflake {
-    return this.rawData.message_id;
-  }
+  readonly messageId = this.rawData.message_id;
 
   /**
    * Gets the partial emoji object for the removed emoji.
@@ -429,9 +382,10 @@ export class MessageReactionRemoveEmoji
    *
    * @returns The partial emoji object
    */
-  get emoji(): Partial<EmojiEntity> {
-    return this.rawData.emoji;
-  }
+  readonly emoji = new Emoji(this.client, {
+    ...(this.rawData.emoji as EmojiEntity),
+    guild_id: this.guildId as Snowflake,
+  });
 
   /**
    * Fetches the message that had reactions removed.
@@ -470,12 +424,6 @@ export class Message
   implements Enforce<PropsToCamel<MessageCreateEntity>>
 {
   /**
-   * The flags associated with this message.
-   * @private
-   */
-  #flags: BitField<MessageFlags> | null = null;
-
-  /**
    * Gets the unique identifier (Snowflake) of this message.
    *
    * This ID is permanent and will not change for the lifetime of the message.
@@ -483,9 +431,7 @@ export class Message
    *
    * @returns The message's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the guild (server) where this message was sent.
@@ -494,9 +440,8 @@ export class Message
    *
    * @returns The guild ID, or undefined if the message was sent in a DM
    */
-  get guildId(): Snowflake | undefined {
-    return (this.rawData as MessageCreateEntity).guild_id;
-  }
+  readonly guildId =
+    "guild_id" in this.rawData ? this.rawData.guild_id : undefined;
 
   /**
    * Gets the GuildMember object for the author of this message in the context of the guild.
@@ -507,15 +452,13 @@ export class Message
    *
    * @returns The GuildMember object, or undefined if not available
    */
-  get member(): GuildMember | undefined {
-    return (this.rawData as MessageCreateEntity).member
+  readonly member =
+    "member" in this.rawData
       ? new GuildMember(this.client, {
-          ...((this.rawData as MessageCreateEntity)
-            .member as GuildMemberEntity),
+          ...(this.rawData.member as GuildMemberEntity),
           guild_id: this.guildId as Snowflake,
         })
       : undefined;
-  }
 
   /**
    * Gets the ID of the channel where this message was sent.
@@ -524,9 +467,7 @@ export class Message
    *
    * @returns The channel's ID as a Snowflake string
    */
-  get channelId(): Snowflake {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the User object for the author of this message.
@@ -536,9 +477,7 @@ export class Message
    *
    * @returns The User object for the message author
    */
-  get author(): User {
-    return new User(this.client, this.rawData.author);
-  }
+  readonly author = new User(this.client, this.rawData.author);
 
   /**
    * Gets the text content of the message.
@@ -548,9 +487,7 @@ export class Message
    *
    * @returns The message content as a string
    */
-  get content(): string {
-    return this.rawData.content;
-  }
+  readonly content = this.rawData.content;
 
   /**
    * Gets the timestamp when this message was sent.
@@ -559,9 +496,7 @@ export class Message
    *
    * @returns The message creation timestamp as a string
    */
-  get timestamp(): string {
-    return this.rawData.timestamp;
-  }
+  readonly timestamp = this.rawData.timestamp;
 
   /**
    * Gets the timestamp when this message was last edited, or null if it was never edited.
@@ -570,9 +505,7 @@ export class Message
    *
    * @returns The message edit timestamp as a string, or null
    */
-  get editedTimestamp(): string | null {
-    return this.rawData.edited_timestamp;
-  }
+  readonly editedTimestamp = this.rawData.edited_timestamp;
 
   /**
    * Checks if this message was sent as a text-to-speech message.
@@ -581,9 +514,7 @@ export class Message
    *
    * @returns True if the message is TTS, false otherwise
    */
-  get tts(): boolean {
-    return Boolean(this.rawData.tts);
-  }
+  readonly tts = Boolean(this.rawData.tts);
 
   /**
    * Checks if this message mentions everyone in the channel.
@@ -592,9 +523,7 @@ export class Message
    *
    * @returns True if the message mentions everyone, false otherwise
    */
-  get mentionEveryone(): boolean {
-    return Boolean(this.rawData.mention_everyone);
-  }
+  readonly mentionEveryone = Boolean(this.rawData.mention_everyone);
 
   /**
    * Gets an array of users or guild members mentioned in this message.
@@ -604,18 +533,16 @@ export class Message
    *
    * @returns An array of User or GuildMember objects, or undefined if none
    */
-  get mentions(): (User | GuildMember)[] | undefined {
-    return this.rawData.mentions?.map((mention) => {
-      if ("id" in mention) {
-        return new User(this.client, mention);
-      }
+  readonly mentions = this.rawData.mentions?.map((mention) => {
+    if ("id" in mention) {
+      return new User(this.client, mention);
+    }
 
-      return new GuildMember(this.client, {
-        ...(mention as GuildMemberEntity),
-        guild_id: this.guildId as Snowflake,
-      });
+    return new GuildMember(this.client, {
+      ...(mention as GuildMemberEntity),
+      guild_id: this.guildId as Snowflake,
     });
-  }
+  });
 
   /**
    * Gets an array of role IDs that were mentioned in this message.
@@ -624,9 +551,7 @@ export class Message
    *
    * @returns An array of role IDs
    */
-  get mentionRoles(): Snowflake[] {
-    return this.rawData.mention_roles;
-  }
+  readonly mentionRoles = this.rawData.mention_roles;
 
   /**
    * Gets an array of attachments included with this message.
@@ -635,9 +560,7 @@ export class Message
    *
    * @returns An array of attachment objects
    */
-  get attachments(): AttachmentEntity[] {
-    return this.rawData.attachments;
-  }
+  readonly attachments = this.rawData.attachments;
 
   /**
    * Gets an array of embeds included with this message.
@@ -647,9 +570,7 @@ export class Message
    *
    * @returns An array of embed objects
    */
-  get embeds(): EmbedEntity[] {
-    return this.rawData.embeds;
-  }
+  readonly embeds = this.rawData.embeds;
 
   /**
    * Checks if this message is pinned in its channel.
@@ -658,9 +579,7 @@ export class Message
    *
    * @returns True if the message is pinned, false otherwise
    */
-  get pinned(): boolean {
-    return Boolean(this.rawData.pinned);
-  }
+  readonly pinned = Boolean(this.rawData.pinned);
 
   /**
    * Gets the type of this message.
@@ -669,9 +588,7 @@ export class Message
    *
    * @returns The message type as a MessageType enum value
    */
-  get type(): MessageType {
-    return this.rawData.type;
-  }
+  readonly type = this.rawData.type;
 
   /**
    * Gets an array of channels that were mentioned in this message.
@@ -680,9 +597,7 @@ export class Message
    *
    * @returns An array of channel mention objects, or undefined if none
    */
-  get mentionChannels(): ChannelMentionEntity[] | undefined {
-    return this.rawData.mention_channels;
-  }
+  readonly mentionChannels = this.rawData.mention_channels;
 
   /**
    * Gets an array of reactions to this message.
@@ -691,9 +606,7 @@ export class Message
    *
    * @returns An array of reaction objects, or undefined if none
    */
-  get reactions(): ReactionEntity[] | undefined {
-    return this.rawData.reactions;
-  }
+  readonly reactions = this.rawData.reactions;
 
   /**
    * Gets the nonce of this message, which is a custom identifier used for validation.
@@ -702,18 +615,14 @@ export class Message
    *
    * @returns The nonce as a string or number, or undefined if none
    */
-  get nonce(): string | number | undefined {
-    return this.rawData.nonce;
-  }
+  readonly nonce = this.rawData.nonce;
 
   /**
    * Gets the webhook ID that sent this message, if it was sent by a webhook.
    *
    * @returns The webhook ID, or undefined if not sent by a webhook
    */
-  get webhookId(): Snowflake | undefined {
-    return this.rawData.webhook_id;
-  }
+  readonly webhookId = this.rawData.webhook_id;
 
   /**
    * Gets the activity associated with this message, if any.
@@ -722,9 +631,7 @@ export class Message
    *
    * @returns The activity object, or undefined if none
    */
-  get activity(): MessageActivityEntity | undefined {
-    return this.rawData.activity;
-  }
+  readonly activity = this.rawData.activity;
 
   /**
    * Gets the application associated with this message, if any.
@@ -733,14 +640,12 @@ export class Message
    *
    * @returns The Application object, or undefined if none
    */
-  get application(): Application | undefined {
-    return this.rawData.application
-      ? new Application(
-          this.client,
-          this.rawData.application as ApplicationEntity,
-        )
-      : undefined;
-  }
+  readonly application = this.rawData.application
+    ? new Application(
+        this.client,
+        this.rawData.application as ApplicationEntity,
+      )
+    : undefined;
 
   /**
    * Gets the application ID associated with this message, if any.
@@ -749,9 +654,7 @@ export class Message
    *
    * @returns The application ID, or undefined if none
    */
-  get applicationId(): Snowflake | undefined {
-    return this.rawData.application_id;
-  }
+  readonly applicationId = this.rawData.application_id;
 
   /**
    * Gets the flags associated with this message as a BitField.
@@ -760,13 +663,7 @@ export class Message
    *
    * @returns A BitField of message flags
    */
-  get flags(): BitField<MessageFlags> {
-    if (!this.#flags) {
-      this.#flags = new BitField<MessageFlags>(this.rawData.flags ?? 0n);
-    }
-
-    return this.#flags;
-  }
+  readonly flags = new BitField<MessageFlags>(this.rawData.flags ?? 0n);
 
   /**
    * Gets the components (buttons, select menus, etc.) attached to this message.
@@ -775,9 +672,7 @@ export class Message
    *
    * @returns An array of action row components, or undefined if none
    */
-  get components(): ActionRowEntity[] | undefined {
-    return this.rawData.components;
-  }
+  readonly components = this.rawData.components;
 
   /**
    * Gets the sticker items attached to this message.
@@ -786,11 +681,9 @@ export class Message
    *
    * @returns An array of StickerItem objects, or undefined if none
    */
-  get stickerItems(): StickerItem[] | undefined {
-    return this.rawData.sticker_items?.map(
-      (stickerItem) => new StickerItem(this.client, stickerItem),
-    );
-  }
+  readonly stickerItems = this.rawData.sticker_items?.map(
+    (stickerItem) => new StickerItem(this.client, stickerItem),
+  );
 
   /**
    * Gets the stickers attached to this message.
@@ -799,11 +692,9 @@ export class Message
    *
    * @returns An array of Sticker objects, or undefined if none
    */
-  get stickers(): Sticker[] | undefined {
-    return this.rawData.stickers?.map(
-      (sticker) => new Sticker(this.client, sticker),
-    );
-  }
+  readonly stickers = this.rawData.stickers?.map(
+    (sticker) => new Sticker(this.client, sticker),
+  );
 
   /**
    * Gets the approximate position of this message in a thread.
@@ -812,9 +703,7 @@ export class Message
    *
    * @returns The message position as a number, or undefined if not applicable
    */
-  get position(): number | undefined {
-    return this.rawData.position;
-  }
+  readonly position = this.rawData.position;
 
   /**
    * Gets the role subscription data for this message, if it's a role subscription purchase event.
@@ -823,9 +712,7 @@ export class Message
    *
    * @returns The role subscription data, or undefined if not applicable
    */
-  get roleSubscriptionData(): RoleSubscriptionDataEntity | undefined {
-    return this.rawData.role_subscription_data;
-  }
+  readonly roleSubscriptionData = this.rawData.role_subscription_data;
 
   /**
    * Gets the poll attached to this message, if any.
@@ -834,9 +721,7 @@ export class Message
    *
    * @returns The poll object, or undefined if none
    */
-  get poll(): PollEntity | undefined {
-    return this.rawData.poll;
-  }
+  readonly poll = this.rawData.poll;
 
   /**
    * Gets the call information associated with this message, if it's a call message.
@@ -845,9 +730,7 @@ export class Message
    *
    * @returns The call object, or undefined if not applicable
    */
-  get call(): MessageCallEntity | undefined {
-    return this.rawData.call;
-  }
+  readonly call = this.rawData.call;
 
   /**
    * Gets the message reference for this message, if it's a reply or crosspost.
@@ -856,9 +739,7 @@ export class Message
    *
    * @returns The message reference object, or undefined if not applicable
    */
-  get messageReference(): MessageReferenceEntity | undefined {
-    return this.rawData.message_reference;
-  }
+  readonly messageReference = this.rawData.message_reference;
 
   /**
    * Gets the thread associated with this message, if it created a thread.
@@ -867,11 +748,56 @@ export class Message
    *
    * @returns The thread channel object, or undefined if not applicable
    */
-  get thread(): AnyThreadChannel | undefined {
-    return this.rawData.thread
-      ? (channelFactory(this.client, this.rawData.thread) as AnyThreadChannel)
-      : undefined;
-  }
+  readonly thread = this.rawData.thread
+    ? (channelFactory(this.client, this.rawData.thread) as AnyThreadChannel)
+    : undefined;
+
+  /**
+   * Gets the interaction that generated this message.
+   *
+   * @deprecated Use interactionMetadata instead.
+   *
+   * @returns The interaction object, or undefined if none
+   */
+  readonly interaction = this.rawData.interaction;
+
+  /**
+   * Gets the metadata about the interaction that generated this message.
+   *
+   * This property provides detailed information about application commands,
+   * component interactions, or modal submissions that created this message.
+   *
+   * @returns The interaction metadata, or undefined if none
+   */
+  readonly interactionMetadata = this.rawData.interaction_metadata;
+
+  /**
+   * Gets the resolved data from the interaction that generated this message.
+   *
+   * Resolved data contains expanded objects like users, members, roles, and channels
+   * that were referenced in the interaction.
+   *
+   * @returns The resolved data, or undefined if none
+   */
+  readonly resolved = this.rawData.resolved;
+
+  /**
+   * Gets the message snapshots associated with this message, if it's a forwarded message.
+   *
+   * Message snapshots contain copies of messages at the time they were forwarded.
+   *
+   * @returns An array of message snapshots, or undefined if none
+   */
+  readonly messageSnapshots = this.rawData.message_snapshots;
+
+  /**
+   * Gets the channel where this message was sent.
+   *
+   * This property lazily fetches the channel from the client cache or API.
+   *
+   * @returns A promise resolving to the channel object
+   */
+  readonly channel = this.client.cache.channels.get(this.channelId);
 
   /**
    * Gets the referenced message for this message, if it's a reply.
@@ -888,67 +814,6 @@ export class Message
           this.rawData.referenced_message as MessageCreateEntity,
         )
       : undefined;
-  }
-
-  /**
-   * Gets the interaction that generated this message.
-   *
-   * @deprecated Use interactionMetadata instead.
-   *
-   * @returns The interaction object, or undefined if none
-   */
-  get interaction(): MessageInteractionEntity | undefined {
-    return this.rawData.interaction;
-  }
-
-  /**
-   * Gets the metadata about the interaction that generated this message.
-   *
-   * This property provides detailed information about application commands,
-   * component interactions, or modal submissions that created this message.
-   *
-   * @returns The interaction metadata, or undefined if none
-   */
-  get interactionMetadata():
-    | ApplicationCommandInteractionMetadataEntity
-    | MessageComponentInteractionMetadataEntity
-    | ModalSubmitInteractionMetadataEntity
-    | undefined {
-    return this.rawData.interaction_metadata;
-  }
-
-  /**
-   * Gets the resolved data from the interaction that generated this message.
-   *
-   * Resolved data contains expanded objects like users, members, roles, and channels
-   * that were referenced in the interaction.
-   *
-   * @returns The resolved data, or undefined if none
-   */
-  get resolved(): InteractionResolvedDataEntity | undefined {
-    return this.rawData.resolved;
-  }
-
-  /**
-   * Gets the message snapshots associated with this message, if it's a forwarded message.
-   *
-   * Message snapshots contain copies of messages at the time they were forwarded.
-   *
-   * @returns An array of message snapshots, or undefined if none
-   */
-  get messageSnapshots(): MessageSnapshotEntity[] | undefined {
-    return this.rawData.message_snapshots;
-  }
-
-  /**
-   * Gets the channel where this message was sent.
-   *
-   * This property lazily fetches the channel from the client cache or API.
-   *
-   * @returns A promise resolving to the channel object
-   */
-  get channel(): AnyChannel | undefined {
-    return this.client.cache.channels.get(this.channelId);
   }
 
   /**
@@ -1015,17 +880,6 @@ export class Message
    */
   get isReply(): boolean {
     return this.type === MessageType.Reply || Boolean(this.messageReference);
-  }
-
-  /**
-   * Checks if this message is a partial message.
-   *
-   * Partial messages may not have all properties available.
-   *
-   * @returns True if the message is partial, false otherwise
-   */
-  get isPartial(): boolean {
-    return !this.content;
   }
 
   /**

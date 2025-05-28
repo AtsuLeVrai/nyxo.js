@@ -53,9 +53,7 @@ export class Webhook
    *
    * @returns The webhook's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the type of the webhook.
@@ -68,9 +66,7 @@ export class Webhook
    * @returns The webhook's type value
    * @see {@link https://discord.com/developers/docs/resources/webhook#webhook-object-webhook-types}
    */
-  get type(): WebhookType {
-    return this.rawData.type;
-  }
+  readonly type = this.rawData.type;
 
   /**
    * Gets the ID of the guild this webhook is for.
@@ -79,9 +75,7 @@ export class Webhook
    *
    * @returns The guild ID as a Snowflake string, null, or undefined
    */
-  get guildId(): Snowflake | null | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the channel this webhook is for.
@@ -91,9 +85,7 @@ export class Webhook
    *
    * @returns The channel ID as a Snowflake string or null
    */
-  get channelId(): Snowflake | null {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the user object for the user who created this webhook.
@@ -103,12 +95,9 @@ export class Webhook
    *
    * @returns The User object, null, or undefined
    */
-  get user(): User | null | undefined {
-    if (!this.rawData.user) {
-      return this.rawData.user;
-    }
-    return new User(this.client, this.rawData.user);
-  }
+  readonly user = this.rawData.user
+    ? new User(this.client, this.rawData.user)
+    : undefined;
 
   /**
    * Gets the default name of the webhook.
@@ -118,9 +107,7 @@ export class Webhook
    *
    * @returns The webhook name, null, or undefined
    */
-  get name(): string | null | undefined {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the default avatar hash of the webhook.
@@ -130,9 +117,7 @@ export class Webhook
    *
    * @returns The avatar hash, null, or undefined
    */
-  get avatar(): string | null | undefined {
-    return this.rawData.avatar;
-  }
+  readonly avatar = this.rawData.avatar;
 
   /**
    * Gets the secure token of the webhook.
@@ -142,9 +127,7 @@ export class Webhook
    *
    * @returns The webhook token or undefined
    */
-  get token(): string | undefined {
-    return this.rawData.token;
-  }
+  readonly token = this.rawData.token;
 
   /**
    * Gets the ID of the application that created this webhook.
@@ -154,9 +137,7 @@ export class Webhook
    *
    * @returns The application ID or null
    */
-  get applicationId(): Snowflake | null {
-    return this.rawData.application_id;
-  }
+  readonly applicationId = this.rawData.application_id;
 
   /**
    * Gets the guild of the channel that this webhook is following.
@@ -167,12 +148,9 @@ export class Webhook
    *
    * @returns The partial Guild object, null, or undefined
    */
-  get sourceGuild(): Guild | null | undefined {
-    if (!this.rawData.source_guild) {
-      return this.rawData.source_guild;
-    }
-    return new Guild(this.client, this.rawData.source_guild as GuildEntity);
-  }
+  readonly sourceGuild = this.rawData.source_guild
+    ? new Guild(this.client, this.rawData.source_guild as GuildEntity)
+    : undefined;
 
   /**
    * Gets the channel that this webhook is following.
@@ -183,12 +161,9 @@ export class Webhook
    *
    * @returns The Channel object, null, or undefined
    */
-  get sourceChannel(): AnyChannel | null | undefined {
-    if (!this.rawData.source_channel) {
-      return this.rawData.source_channel;
-    }
-    return channelFactory(this.client, this.rawData.source_channel);
-  }
+  readonly sourceChannel = this.rawData.source_channel
+    ? channelFactory(this.client, this.rawData.source_channel)
+    : undefined;
 
   /**
    * Gets the URL used for executing the webhook.
@@ -198,9 +173,7 @@ export class Webhook
    *
    * @returns The webhook URL or undefined
    */
-  get url(): string | undefined {
-    return this.rawData.url;
-  }
+  readonly url = this.rawData.url;
 
   /**
    * Checks if this webhook is an Incoming webhook.

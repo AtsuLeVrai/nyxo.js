@@ -307,6 +307,9 @@ export class CompressionService {
 
     // Clear accumulated chunks
     this.#chunks = [];
+
+    // Clear buffer pool
+    this.#bufferPool.length = 0;
   }
 
   /**

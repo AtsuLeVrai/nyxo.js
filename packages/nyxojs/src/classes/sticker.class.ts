@@ -45,9 +45,7 @@ export class Sticker
    *
    * @returns The sticker's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the sticker pack this sticker is from, if applicable.
@@ -56,9 +54,7 @@ export class Sticker
    *
    * @returns The pack's ID as a Snowflake string, or undefined if not from a pack
    */
-  get packId(): Snowflake | undefined {
-    return this.rawData.pack_id;
-  }
+  readonly packId = this.rawData.pack_id;
 
   /**
    * Gets the name of this sticker.
@@ -67,9 +63,7 @@ export class Sticker
    *
    * @returns The sticker name as a string
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the description of this sticker.
@@ -78,9 +72,7 @@ export class Sticker
    *
    * @returns The sticker description as a string, or null if not set
    */
-  get description(): string | null {
-    return this.rawData.description;
-  }
+  readonly description = this.rawData.description;
 
   /**
    * Gets the autocomplete/suggestion tags for this sticker.
@@ -89,9 +81,7 @@ export class Sticker
    *
    * @returns The tags as a string
    */
-  get tags(): string {
-    return this.rawData.tags;
-  }
+  readonly tags = this.rawData.tags;
 
   /**
    * Gets the sticker asset hash.
@@ -102,9 +92,7 @@ export class Sticker
    * @returns The asset value as a string, or undefined if not available
    * @deprecated This property is no longer used by Discord
    */
-  get asset(): string | undefined {
-    return this.rawData.asset;
-  }
+  readonly asset = this.rawData.asset;
 
   /**
    * Gets the type of this sticker.
@@ -114,9 +102,7 @@ export class Sticker
    * @returns The sticker type enum value
    * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-types}
    */
-  get type(): StickerType {
-    return this.rawData.type;
-  }
+  readonly type = this.rawData.type;
 
   /**
    * Gets the format type of this sticker.
@@ -126,9 +112,7 @@ export class Sticker
    * @returns The format type enum value
    * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-format-types}
    */
-  get formatType(): StickerFormatType {
-    return this.rawData.format_type;
-  }
+  readonly formatType = this.rawData.format_type;
 
   /**
    * Indicates whether this guild sticker can be used by Nitro users in other guilds.
@@ -137,9 +121,7 @@ export class Sticker
    *
    * @returns True if the sticker is available for use by Nitro users across guilds, undefined if not applicable
    */
-  get available(): boolean | undefined {
-    return this.rawData.available;
-  }
+  readonly available = this.rawData.available;
 
   /**
    * Gets the ID of the guild that owns this sticker.
@@ -148,9 +130,7 @@ export class Sticker
    *
    * @returns The guild's ID as a Snowflake string, or undefined if not a guild sticker
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the user that uploaded the guild sticker.
@@ -160,12 +140,9 @@ export class Sticker
    *
    * @returns The User object, or undefined if not available
    */
-  get user(): User | undefined {
-    if (!this.rawData.user) {
-      return undefined;
-    }
-    return new User(this.client, this.rawData.user);
-  }
+  readonly user = this.rawData.user
+    ? new User(this.client, this.rawData.user)
+    : undefined;
 
   /**
    * Gets the sort order within the sticker pack.
@@ -174,9 +151,7 @@ export class Sticker
    *
    * @returns The sort value as a number, or undefined if not applicable
    */
-  get sortValue(): number | undefined {
-    return this.rawData.sort_value;
-  }
+  readonly sortValue = this.rawData.sort_value;
 
   /**
    * Checks if this is a standard sticker from an official pack.
@@ -349,9 +324,7 @@ export class StickerItem
    *
    * @returns The sticker's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the name of this sticker.
@@ -360,9 +333,7 @@ export class StickerItem
    *
    * @returns The sticker name as a string
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the format type of this sticker.
@@ -372,9 +343,7 @@ export class StickerItem
    * @returns The format type enum value
    * @see {@link https://discord.com/developers/docs/resources/sticker#sticker-object-sticker-format-types}
    */
-  get formatType(): StickerFormatType {
-    return this.rawData.format_type;
-  }
+  readonly formatType = this.rawData.format_type;
 
   /**
    * Fetches the complete sticker information.
@@ -460,9 +429,7 @@ export class StickerPack
    *
    * @returns The sticker pack's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the stickers contained in this pack.
@@ -471,11 +438,9 @@ export class StickerPack
    *
    * @returns An array of Sticker objects
    */
-  get stickers(): Sticker[] {
-    return this.rawData.stickers.map(
-      (sticker) => new Sticker(this.client, sticker),
-    );
-  }
+  readonly stickers = this.rawData.stickers.map(
+    (sticker) => new Sticker(this.client, sticker),
+  );
 
   /**
    * Gets the name of this sticker pack.
@@ -484,9 +449,7 @@ export class StickerPack
    *
    * @returns The sticker pack name as a string
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the ID of this pack's SKU.
@@ -495,9 +458,7 @@ export class StickerPack
    *
    * @returns The SKU ID as a Snowflake string
    */
-  get skuId(): Snowflake {
-    return this.rawData.sku_id;
-  }
+  readonly skuId = this.rawData.sku_id;
 
   /**
    * Gets the ID of a sticker in the pack which is shown as the pack's icon.
@@ -506,9 +467,7 @@ export class StickerPack
    *
    * @returns The cover sticker's ID as a Snowflake string, or undefined if not set
    */
-  get coverStickerId(): Snowflake | undefined {
-    return this.rawData.cover_sticker_id;
-  }
+  readonly coverStickerId = this.rawData.cover_sticker_id;
 
   /**
    * Gets the description of this sticker pack.
@@ -517,9 +476,7 @@ export class StickerPack
    *
    * @returns The description as a string
    */
-  get description(): string {
-    return this.rawData.description;
-  }
+  readonly description = this.rawData.description;
 
   /**
    * Gets the ID of this pack's banner image.
@@ -528,18 +485,14 @@ export class StickerPack
    *
    * @returns The banner asset ID as a Snowflake string, or undefined if not set
    */
-  get bannerAssetId(): Snowflake | undefined {
-    return this.rawData.banner_asset_id;
-  }
+  readonly bannerAssetId = this.rawData.banner_asset_id;
 
   /**
    * Gets the number of stickers in this pack.
    *
    * @returns The count of stickers in the pack
    */
-  get stickerCount(): number {
-    return this.stickers.length;
-  }
+  readonly stickerCount = this.stickers.length;
 
   /**
    * Gets the cover sticker for this pack.
@@ -548,12 +501,9 @@ export class StickerPack
    *
    * @returns The cover Sticker object, or undefined if not set
    */
-  get coverSticker(): Sticker | undefined {
-    if (!this.coverStickerId) {
-      return undefined;
-    }
-    return this.stickers.find((sticker) => sticker.id === this.coverStickerId);
-  }
+  readonly coverSticker = this.stickers.find(
+    (sticker) => sticker.id === this.coverStickerId,
+  );
 
   /**
    * Gets the URL to this sticker pack's banner image, if available.

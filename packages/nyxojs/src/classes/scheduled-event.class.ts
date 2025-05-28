@@ -1,11 +1,7 @@
 import {
   type GuildScheduledEventEntity,
-  type GuildScheduledEventEntityMetadata,
-  type GuildScheduledEventPrivacyLevel,
-  type GuildScheduledEventRecurrenceRuleEntity,
   GuildScheduledEventStatus,
   GuildScheduledEventType,
-  type Snowflake,
 } from "@nyxojs/core";
 import type { EventUpdateOptions, EventUsersFetchParams } from "@nyxojs/rest";
 import { BaseClass, Cacheable } from "../bases/index.js";
@@ -39,9 +35,7 @@ export class ScheduledEvent
    *
    * @returns The event's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the guild this scheduled event belongs to.
@@ -50,9 +44,7 @@ export class ScheduledEvent
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the channel this scheduled event will be hosted in, if applicable.
@@ -62,18 +54,14 @@ export class ScheduledEvent
    *
    * @returns The channel's ID as a Snowflake string, or null for external events
    */
-  get channelId(): Snowflake | null {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of the user that created this scheduled event.
    *
    * @returns The creator's user ID, or null if not available
    */
-  get creatorId(): Snowflake | null | undefined {
-    return this.rawData.creator_id;
-  }
+  readonly creatorId = this.rawData.creator_id;
 
   /**
    * Gets the name of this scheduled event.
@@ -82,9 +70,7 @@ export class ScheduledEvent
    *
    * @returns The event name as a string
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the description of this scheduled event.
@@ -93,18 +79,14 @@ export class ScheduledEvent
    *
    * @returns The event description, or null if not set
    */
-  get description(): string | null | undefined {
-    return this.rawData.description;
-  }
+  readonly description = this.rawData.description;
 
   /**
    * Gets the scheduled start time of this event.
    *
    * @returns The start time as an ISO8601 timestamp string
    */
-  get scheduledStartTime(): string {
-    return this.rawData.scheduled_start_time;
-  }
+  readonly scheduledStartTime = this.rawData.scheduled_start_time;
 
   /**
    * Gets the scheduled end time of this event.
@@ -113,9 +95,7 @@ export class ScheduledEvent
    *
    * @returns The end time as an ISO8601 timestamp string, or null if not set
    */
-  get scheduledEndTime(): string | null {
-    return this.rawData.scheduled_end_time;
-  }
+  readonly scheduledEndTime = this.rawData.scheduled_end_time;
 
   /**
    * Gets the privacy level of this scheduled event.
@@ -126,9 +106,7 @@ export class ScheduledEvent
    * @returns The privacy level enum value
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-privacy-level}
    */
-  get privacyLevel(): GuildScheduledEventPrivacyLevel {
-    return this.rawData.privacy_level;
-  }
+  readonly privacyLevel = this.rawData.privacy_level;
 
   /**
    * Gets the current status of this scheduled event.
@@ -138,9 +116,7 @@ export class ScheduledEvent
    * @returns The status enum value
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-status}
    */
-  get status(): GuildScheduledEventStatus {
-    return this.rawData.status;
-  }
+  readonly status = this.rawData.status;
 
   /**
    * Gets the entity type of this scheduled event.
@@ -153,9 +129,7 @@ export class ScheduledEvent
    * @returns The entity type enum value
    * @see {@link https://discord.com/developers/docs/resources/guild-scheduled-event#guild-scheduled-event-object-guild-scheduled-event-entity-types}
    */
-  get entityType(): GuildScheduledEventType {
-    return this.rawData.entity_type;
-  }
+  readonly entityType = this.rawData.entity_type;
 
   /**
    * Gets the ID of an entity associated with the event.
@@ -164,9 +138,7 @@ export class ScheduledEvent
    *
    * @returns The entity ID, or null
    */
-  get entityId(): Snowflake | null {
-    return this.rawData.entity_id;
-  }
+  readonly entityId = this.rawData.entity_id;
 
   /**
    * Gets additional metadata for the scheduled event.
@@ -176,9 +148,7 @@ export class ScheduledEvent
    *
    * @returns The entity metadata, or null if not applicable
    */
-  get entityMetadata(): GuildScheduledEventEntityMetadata | null {
-    return this.rawData.entity_metadata;
-  }
+  readonly entityMetadata = this.rawData.entity_metadata;
 
   /**
    * Gets the user that created this scheduled event.
@@ -187,12 +157,9 @@ export class ScheduledEvent
    *
    * @returns The creator's User object, or undefined if not available
    */
-  get creator(): User | undefined {
-    if (!this.rawData.creator) {
-      return undefined;
-    }
-    return new User(this.client, this.rawData.creator);
-  }
+  readonly creator = this.rawData.creator
+    ? new User(this.client, this.rawData.creator)
+    : undefined;
 
   /**
    * Gets the number of users subscribed to this scheduled event.
@@ -201,9 +168,7 @@ export class ScheduledEvent
    *
    * @returns The user count, or undefined if not available
    */
-  get userCount(): number | undefined {
-    return this.rawData.user_count;
-  }
+  readonly userCount = this.rawData.user_count;
 
   /**
    * Gets the cover image hash of this scheduled event.
@@ -212,9 +177,7 @@ export class ScheduledEvent
    *
    * @returns The image hash, or null if not set
    */
-  get image(): string | null | undefined {
-    return this.rawData.image;
-  }
+  readonly image = this.rawData.image;
 
   /**
    * Gets the recurrence rule for this scheduled event.
@@ -224,12 +187,7 @@ export class ScheduledEvent
    *
    * @returns The recurrence rule, or null if the event doesn't repeat
    */
-  get recurrenceRule():
-    | GuildScheduledEventRecurrenceRuleEntity
-    | null
-    | undefined {
-    return this.rawData.recurrence_rule;
-  }
+  readonly recurrenceRule = this.rawData.recurrence_rule;
 
   /**
    * Gets the Date object representing the scheduled start time.

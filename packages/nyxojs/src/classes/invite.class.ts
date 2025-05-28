@@ -13,7 +13,6 @@ import { BaseClass, Cacheable } from "../bases/index.js";
 import type { Enforce, PropsToCamel } from "../types/index.js";
 import { channelFactory } from "../utils/index.js";
 import { Application } from "./application.class.js";
-import type { AnyChannel } from "./channel.class.js";
 import { Guild } from "./guild.class.js";
 import { ScheduledEvent } from "./scheduled-event.class.js";
 import { User } from "./user.class.js";
@@ -41,9 +40,40 @@ export class Invite
   implements
     Enforce<PropsToCamel<InviteWithMetadataEntity & InviteCreateEntity>>
 {
-  stageInstance: any;
-  channelId: any;
-  guildId: any;
+  /**
+   * Gets the stage instance associated with this invite.
+   *
+   * This is only available if the invite is for a stage channel.
+   *
+   * @returns The stage instance data, or undefined if not applicable
+   * @deprecated This field is deprecated according to Discord documentation
+   * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-stage-instance}
+   */
+  readonly stageInstance =
+    "stage_instance" in this.rawData ? this.rawData.stage_instance : undefined;
+
+  /**
+   * Gets the channel ID this invite is for.
+   *
+   * This is the ID of the channel where this invite was created.
+   *
+   * @returns The channel ID as a string, or undefined if not applicable
+   * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-channel-id}
+   */
+  readonly channelId =
+    "channel_id" in this.rawData ? this.rawData.channel_id : undefined;
+
+  /**
+   * Gets the guild ID this invite is for.
+   *
+   * This is the ID of the guild (server) where this invite was created.
+   *
+   * @returns The guild ID as a string, or undefined if not applicable
+   * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-guild-id}
+   */
+  readonly guildId =
+    "guild_id" in this.rawData ? this.rawData.guild_id : undefined;
+
   /**
    * Gets the type of this invite.
    *
@@ -52,9 +82,7 @@ export class Invite
    * @returns The invite type enum value
    * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-types}
    */
-  get type(): InviteType {
-    return (this.rawData as InviteWithMetadataEntity).type;
-  }
+  readonly type = "type" in this.rawData ? this.rawData.type : InviteType.Guild;
 
   /**
    * Gets the unique invite code for this invite.
@@ -63,9 +91,7 @@ export class Invite
    *
    * @returns The invite code as a string
    */
-  get code(): string {
-    return this.rawData.code;
-  }
+  readonly code = this.rawData.code;
 
   /**
    * Gets the guild this invite is for.
@@ -74,15 +100,10 @@ export class Invite
    *
    * @returns The Guild object, or undefined if this is a non-guild invite
    */
-  get guild(): Guild | undefined {
-    if (!(this.rawData as InviteWithMetadataEntity).guild) {
-      return undefined;
-    }
-    return new Guild(
-      this.client,
-      (this.rawData as InviteWithMetadataEntity).guild as GuildEntity,
-    );
-  }
+  readonly guild =
+    "guild" in this.rawData
+      ? new Guild(this.client, this.rawData.guild as GuildEntity)
+      : undefined;
 
   /**
    * Gets the channel this invite is for.
@@ -91,15 +112,10 @@ export class Invite
    *
    * @returns The Channel object, or null if the channel is no longer available
    */
-  get channel(): AnyChannel | null {
-    if (!(this.rawData as InviteWithMetadataEntity).channel) {
-      return null;
-    }
-    return channelFactory(
-      this.client,
-      (this.rawData as InviteWithMetadataEntity).channel as AnyChannelEntity,
-    );
-  }
+  readonly channel =
+    "channel" in this.rawData
+      ? channelFactory(this.client, this.rawData.channel as AnyChannelEntity)
+      : undefined;
 
   /**
    * Gets the user who created the invite.
@@ -108,12 +124,9 @@ export class Invite
    *
    * @returns The User object, or undefined if the creator is not available
    */
-  get inviter(): User | undefined {
-    if (!this.rawData.inviter) {
-      return undefined;
-    }
-    return new User(this.client, this.rawData.inviter as UserEntity);
-  }
+  readonly inviter = this.rawData.inviter
+    ? new User(this.client, this.rawData.inviter as UserEntity)
+    : undefined;
 
   /**
    * Gets the type of target for this voice channel invite.
@@ -123,9 +136,7 @@ export class Invite
    * @returns The target type enum value, or undefined if not applicable
    * @see {@link https://discord.com/developers/docs/resources/invite#invite-object-invite-target-types}
    */
-  get targetType(): InviteTargetType | undefined {
-    return this.rawData.target_type;
-  }
+  readonly targetType = this.rawData.target_type;
 
   /**
    * Gets the user whose stream to display for this voice channel stream invite.
@@ -134,12 +145,9 @@ export class Invite
    *
    * @returns The User object, or undefined if not applicable
    */
-  get targetUser(): User | undefined {
-    if (!this.rawData.target_user) {
-      return undefined;
-    }
-    return new User(this.client, this.rawData.target_user as UserEntity);
-  }
+  readonly targetUser = this.rawData.target_user
+    ? new User(this.client, this.rawData.target_user as UserEntity)
+    : undefined;
 
   /**
    * Gets the embedded application for this invite.
@@ -148,43 +156,40 @@ export class Invite
    *
    * @returns The Application object, or undefined if not applicable
    */
-  get targetApplication(): Application | undefined {
-    if (!this.rawData.target_application) {
-      return undefined;
-    }
-    return new Application(
-      this.client,
-      this.rawData.target_application as ApplicationEntity,
-    );
-  }
+  readonly targetApplication = this.rawData.target_application
+    ? new Application(
+        this.client,
+        this.rawData.target_application as ApplicationEntity,
+      )
+    : undefined;
 
   /**
    * Gets the approximate count of online members in the guild.
    *
    * @returns The online member count, or undefined if not available
    */
-  get approximatePresenceCount(): number | undefined {
-    return (this.rawData as InviteWithMetadataEntity)
-      .approximate_presence_count;
-  }
+  readonly approximatePresenceCount =
+    "approximate_presence_count" in this.rawData
+      ? this.rawData.approximate_presence_count
+      : undefined;
 
   /**
    * Gets the approximate total member count of the guild.
    *
    * @returns The total member count, or undefined if not available
    */
-  get approximateMemberCount(): number | undefined {
-    return (this.rawData as InviteWithMetadataEntity).approximate_member_count;
-  }
+  readonly approximateMemberCount =
+    "approximate_member_count" in this.rawData
+      ? this.rawData.approximate_member_count
+      : undefined;
 
   /**
    * Gets the expiration date of this invite.
    *
    * @returns The expiration date as a string, or null/undefined if not available
    */
-  get expiresAt(): string | null | undefined {
-    return (this.rawData as InviteWithMetadataEntity).expires_at;
-  }
+  readonly expiresAt =
+    "expires_at" in this.rawData ? this.rawData.expires_at : undefined;
 
   /**
    * Gets the guild scheduled event data for this invite.
@@ -193,16 +198,13 @@ export class Invite
    *
    * @returns The GuildScheduledEvent object, or undefined if not applicable
    */
-  get guildScheduledEvent(): ScheduledEvent | undefined {
-    if (!(this.rawData as InviteWithMetadataEntity).guild_scheduled_event) {
-      return undefined;
-    }
-    return new ScheduledEvent(
-      this.client,
-      (this.rawData as InviteWithMetadataEntity)
-        .guild_scheduled_event as GuildScheduledEventEntity,
-    );
-  }
+  readonly guildScheduledEvent =
+    "guild_scheduled_event" in this.rawData
+      ? new ScheduledEvent(
+          this.client,
+          this.rawData.guild_scheduled_event as GuildScheduledEventEntity,
+        )
+      : undefined;
 
   /**
    * Gets the number of times this invite has been used.
@@ -211,9 +213,7 @@ export class Invite
    *
    * @returns The usage count, or undefined if not available
    */
-  get uses(): number | undefined {
-    return (this.rawData as InviteWithMetadataEntity).uses;
-  }
+  readonly uses = "uses" in this.rawData ? this.rawData.uses : undefined;
 
   /**
    * Gets the maximum number of times this invite can be used.
@@ -222,9 +222,8 @@ export class Invite
    *
    * @returns The maximum usage limit, or undefined if not available
    */
-  get maxUses(): number | undefined {
-    return (this.rawData as InviteWithMetadataEntity).max_uses;
-  }
+  readonly maxUses =
+    "max_uses" in this.rawData ? this.rawData.max_uses : undefined;
 
   /**
    * Gets the duration (in seconds) after which the invite expires.
@@ -233,9 +232,8 @@ export class Invite
    *
    * @returns The max age in seconds, or undefined if not available
    */
-  get maxAge(): number | undefined {
-    return (this.rawData as InviteWithMetadataEntity).max_age;
-  }
+  readonly maxAge =
+    "max_age" in this.rawData ? this.rawData.max_age : undefined;
 
   /**
    * Indicates whether this invite only grants temporary membership.
@@ -245,9 +243,8 @@ export class Invite
    *
    * @returns True if the invite grants temporary membership, undefined if not available
    */
-  get temporary(): boolean | undefined {
-    return (this.rawData as InviteWithMetadataEntity).temporary;
-  }
+  readonly temporary =
+    "temporary" in this.rawData ? this.rawData.temporary : undefined;
 
   /**
    * Gets the timestamp when this invite was created.
@@ -256,20 +253,8 @@ export class Invite
    *
    * @returns The creation timestamp as a string, or undefined if not available
    */
-  get createdAt(): string | undefined {
-    return (this.rawData as InviteWithMetadataEntity).created_at;
-  }
-
-  /**
-   * Checks if this invite has metadata.
-   *
-   * Invites retrieved with sufficient permissions will include metadata.
-   *
-   * @returns True if this invite includes metadata, false otherwise
-   */
-  get hasMetadata(): boolean {
-    return "uses" in this.rawData;
-  }
+  readonly createdAt =
+    "created_at" in this.rawData ? this.rawData.created_at : undefined;
 
   /**
    * Gets the Date object representing when this invite was created.
@@ -296,7 +281,7 @@ export class Invite
    *
    * @returns The full invite URL as a string
    */
-  get url(): string {
+  get url(): `https://discord.gg/${string}` {
     return `https://discord.gg/${this.code}`;
   }
 
@@ -414,7 +399,7 @@ export class Invite
    * @returns The number of uses remaining, or Infinity if unlimited or not available
    */
   getUsesRemaining(): number {
-    if (!(this.hasMetadata && this.maxUses)) {
+    if (!this.maxUses) {
       return Number.POSITIVE_INFINITY;
     }
 

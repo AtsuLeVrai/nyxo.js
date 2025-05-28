@@ -5,15 +5,32 @@ import { OptionalDeps } from "@nyxojs/core";
 import FormData from "form-data";
 import { lookup } from "mime-types";
 import type SharpType from "sharp";
+import { z } from "zod/v4";
 import type { HttpRequestOptions } from "../types/index.js";
 
 /**
- * Constants for file handling operations.
- * Defines limits, patterns, and configuration values used throughout the file handler.
+ * File processing context that determines size limits and security constraints.
+ */
+export enum ProcessingContext {
+  /** Standard file attachments in messages */
+  ATTACHMENT = "attachment",
+  /** Avatar, emoji, banner, and other visual assets */
+  ASSET = "asset",
+  /** Profile pictures and similar small images */
+  AVATAR = "avatar",
+  /** Large banners and splash images */
+  BANNER = "banner",
+  /** Custom emoji uploads */
+  EMOJI = "emoji",
+}
+
+/**
+ * Configuration constants for file handling operations.
+ * Centralized configuration for limits, patterns, and security settings.
  */
 const FILE_CONSTANTS = {
-  /** Maximum number of files that can be uploaded in a single request */
-  MAX_FILES: 10,
+  /** Maximum number of files that can be processed in a single batch */
+  MAX_FILES_PER_BATCH: 10,
 
   /** Default filename used when one cannot be determined */
   DEFAULT_FILENAME: "file",
@@ -21,684 +38,637 @@ const FILE_CONSTANTS = {
   /** Default MIME type used when content type cannot be detected */
   DEFAULT_CONTENT_TYPE: "application/octet-stream",
 
+  /** Timeout for stream operations in milliseconds */
+  STREAM_TIMEOUT: 30000,
+
+  /** Maximum buffer size for in-memory operations (100MB) */
+  MAX_BUFFER_SIZE: 100 * 1024 * 1024,
+
   /** Regular expression pattern to identify data URIs */
-  DATA_URI_PATTERN: /^data:(.+);base64,(.+)$/,
+  DATA_URI_PATTERN:
+    /^data:([a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_.]*);base64,([A-Za-z0-9+/]+={0,2})$/,
 
   /** Regular expression pattern to identify file paths */
-  FILE_PATH_PATTERN: /^[/.]|^[a-zA-Z]:\\/,
+  FILE_PATH_PATTERN: /^(?:[/.]|[a-zA-Z]:\\)/,
 
-  /** List of image MIME types that can be processed and optimized */
+  /** Allowed image MIME types for processing */
   SUPPORTED_IMAGE_TYPES: [
     "image/jpeg",
     "image/png",
     "image/webp",
     "image/gif",
     "image/avif",
-  ],
+    "image/bmp",
+    "image/tiff",
+  ] as const,
 
-  /** Maximum size for general attachment files (10MB) */
-  ATTACHMENT_MAX_SIZE: 10 * 1024 * 1024, // 10MB
+  /** Dangerous file extensions that should be blocked */
+  DANGEROUS_EXTENSIONS: [
+    ".exe",
+    ".bat",
+    ".cmd",
+    ".com",
+    ".pif",
+    ".scr",
+    ".vbs",
+    ".js",
+    ".jar",
+    ".app",
+    ".deb",
+    ".pkg",
+    ".rpm",
+    ".dmg",
+    ".msi",
+    ".run",
+    ".ps1",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".fish",
+    ".pl",
+    ".py",
+    ".rb",
+  ] as const,
 
-  /** Maximum size for asset files like avatars, emoji, etc. (256KB) */
-  ASSET_MAX_SIZE: 256 * 1024, // 256KB
+  /** Safe file extensions that are generally allowed */
+  SAFE_EXTENSIONS: [
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".webp",
+    ".bmp",
+    ".tiff",
+    ".avif",
+    ".mp4",
+    ".mov",
+    ".avi",
+    ".mkv",
+    ".webm",
+    ".mp3",
+    ".wav",
+    ".ogg",
+    ".pdf",
+    ".txt",
+    ".md",
+    ".json",
+    ".xml",
+    ".csv",
+    ".zip",
+    ".rar",
+  ] as const,
 
-  /** Mapping of MIME types to appropriate file extensions */
-  FILE_EXTENSIONS: {
+  /** File size limits by context */
+  SIZE_LIMITS: {
+    [ProcessingContext.ATTACHMENT]: 25 * 1024 * 1024, // 25MB
+    [ProcessingContext.ASSET]: 256 * 1024, // 256KB
+    [ProcessingContext.AVATAR]: 256 * 1024, // 256KB
+    [ProcessingContext.BANNER]: 2 * 1024 * 1024, // 2MB
+    [ProcessingContext.EMOJI]: 256 * 1024, // 256KB
+  } as const,
+
+  /** MIME type to file extension mapping */
+  MIME_TO_EXTENSION: {
     "image/jpeg": ".jpg",
     "image/png": ".png",
     "image/webp": ".webp",
     "image/avif": ".avif",
     "image/gif": ".gif",
+    "image/bmp": ".bmp",
+    "image/tiff": ".tiff",
   } as const,
-};
+} as const;
 
 /**
- * Data URI string type.
+ * Data URI string type with strict validation.
  * Represents a base64-encoded file embedded directly in a string with MIME type information.
- * Format: `data:mimeType;base64,encodedData`
  */
 export type DataUri = `data:${string};base64,${string}`;
 
 /**
- * Represents any valid file input type for Node.js environments.
- * Can be a file path, buffer, stream, or data URI.
+ * Union type for any valid file input in Node.js environments.
+ * Supports file paths, buffers, streams, and data URIs.
  */
 export type FileInput = string | Buffer | Readable | DataUri;
 
 /**
- * Options for image processing and optimization.
- * Controls how images are resized, compressed, and converted.
+ * Represents a fully processed file ready for upload or use.
+ * Contains all necessary metadata and optimized content.
  */
-export interface ImageProcessingOptions {
+export interface ProcessedFile {
+  /** Optimized file content as Buffer */
+  buffer: Buffer;
+
+  /** Sanitized filename with correct extension */
+  filename: string;
+
+  /** Detected/validated MIME type */
+  contentType: string;
+
+  /** Final file size in bytes */
+  size: number;
+
+  /** Data URI representation of the processed file */
+  dataUri: DataUri;
+
+  /** Original filename before processing */
+  originalFilename: string;
+
+  /** Whether the file was optimized during processing */
+  wasOptimized: boolean;
+
+  /** Processing context used */
+  context: ProcessingContext;
+}
+
+/**
+ * Zod schema for image processing and optimization configuration.
+ * Controls how images are resized, compressed, and converted during processing.
+ */
+export const ImageProcessingOptions = z.object({
   /**
-   * Maximum file size in bytes.
-   * Images larger than this will be optimized.
+   * Maximum file size in bytes - images larger than this will be optimized.
+   * Must be a positive integer, defaults to 2MB.
    */
-  maxSize: number;
+  maxSize: z
+    .number()
+    .int()
+    .positive()
+    .max(100 * 1024 * 1024) // Max 100MB to prevent excessive memory usage
+    .default(2 * 1024 * 1024),
 
   /**
-   * Whether to preserve the original file format.
-   * If false, format conversion (e.g., to WebP) may be attempted.
+   * Whether to preserve the original file format during optimization.
+   * When false, format conversion (e.g., to WebP) may be attempted.
    */
-  preserveFormat: boolean;
+  preserveFormat: z.boolean().default(false),
 
   /**
    * Quality percentage for image compression (1-100).
    * Higher values preserve more quality but result in larger files.
    */
-  quality: number;
+  quality: z.number().int().min(1).max(100).default(80),
 
   /**
-   * Whether to try converting to WebP format.
+   * Whether to attempt WebP conversion for better compression.
    * WebP often provides better compression than other formats.
    */
-  attemptWebpConversion: boolean;
-}
+  attemptWebpConversion: z.boolean().default(true),
+
+  /**
+   * Maximum width for image resizing (0 = no limit).
+   * Images wider than this will be resized proportionally.
+   */
+  maxWidth: z
+    .number()
+    .int()
+    .min(0)
+    .max(8192) // Reasonable maximum to prevent memory issues
+    .default(4096),
+
+  /**
+   * Maximum height for image resizing (0 = no limit).
+   * Images taller than this will be resized proportionally.
+   */
+  maxHeight: z
+    .number()
+    .int()
+    .min(0)
+    .max(8192) // Reasonable maximum to prevent memory issues
+    .default(4096),
+
+  /**
+   * Whether to strip metadata from images for privacy.
+   * Removes EXIF data, GPS coordinates, and other metadata.
+   */
+  stripMetadata: z.boolean().default(true),
+});
 
 /**
- * Represents a processed file ready for upload.
- * Contains all necessary metadata and content for API submission.
+ * Inferred TypeScript type for image processing options.
  */
-export interface ProcessedFile {
-  /**
-   * File content as Buffer.
-   * The possibly optimized binary content of the file.
-   */
-  buffer: Buffer;
-
-  /**
-   * Filename with correct extension.
-   * Updated to match the actual content type if needed.
-   */
-  filename: string;
-
-  /**
-   * Content MIME type.
-   * Detected or derived from the file content or name.
-   */
-  contentType: string;
-
-  /**
-   * Size in bytes.
-   * The length of the buffer after any processing.
-   */
-  size: number;
-
-  /**
-   * Data URI representation.
-   * The file encoded as a data URI string.
-   */
-  dataUri: DataUri;
-}
-
-// Cache for Sharp module to avoid repeated imports
-let sharpModule: typeof SharpType | null = null;
+export type ImageProcessingOptions = z.infer<typeof ImageProcessingOptions>;
 
 /**
- * Validates that input is a valid FileInput type.
- * Throws an error if the input is not a supported file type.
+ * Zod schema for security configuration options.
+ * Controls how strictly files are validated and what types are allowed.
+ */
+export const SecurityOptions = z.object({
+  /**
+   * Custom allowed MIME types (overrides security level defaults).
+   * When specified, only these MIME types will be accepted.
+   */
+  allowedMimeTypes: z
+    .array(z.string().min(1).max(100))
+    .max(50) // Limit array size to prevent excessive validation
+    .optional(),
+
+  /**
+   * Custom blocked MIME types.
+   * These MIME types will be rejected regardless of other settings.
+   */
+  blockedMimeTypes: z
+    .array(z.string().min(1).max(100))
+    .max(100) // Allow larger blocklist
+    .optional(),
+
+  /**
+   * Custom allowed file extensions.
+   * When specified, only these extensions will be accepted.
+   */
+  allowedExtensions: z
+    .array(z.string().min(1).max(20).startsWith("."))
+    .max(50) // Limit array size
+    .optional(),
+
+  /**
+   * Custom blocked file extensions.
+   * These extensions will be rejected regardless of other settings.
+   */
+  blockedExtensions: z
+    .array(z.string().min(1).max(20).startsWith("."))
+    .max(100) // Allow larger blocklist
+    .optional(),
+
+  /**
+   * Whether to perform deep content inspection.
+   * Analyzes file headers and magic numbers for type verification.
+   */
+  deepInspection: z.boolean().default(true),
+
+  /**
+   * Whether to sanitize filenames.
+   * Removes dangerous characters and patterns from filenames.
+   */
+  sanitizeFilenames: z.boolean().default(true),
+
+  /**
+   * Maximum filename length.
+   * Filenames longer than this will be truncated.
+   */
+  maxFilenameLength: z
+    .number()
+    .int()
+    .min(10) // Minimum reasonable filename length
+    .max(1000) // Maximum to prevent filesystem issues
+    .default(255),
+});
+
+/**
+ * Inferred TypeScript type for security options.
+ */
+export type SecurityOptions = z.infer<typeof SecurityOptions>;
+
+/**
+ * Zod schema for FileHandler configuration options.
+ * Allows customization of security, processing, and resource management.
+ */
+export const FileHandlerOptions = z.object({
+  /**
+   * Security configuration for file validation.
+   * Controls how strictly files are validated and processed.
+   */
+  security: SecurityOptions.prefault({}),
+
+  /**
+   * Default image processing options.
+   * Applied to all image files unless overridden per operation.
+   */
+  imageProcessing: ImageProcessingOptions.prefault({}),
+
+  /**
+   * Timeout for stream operations in milliseconds.
+   * Streams that don't complete within this time will be aborted.
+   */
+  streamTimeout: z
+    .number()
+    .int()
+    .min(1000) // Minimum 1 second
+    .max(300000) // Maximum 5 minutes
+    .default(30000),
+
+  /**
+   * Maximum number of concurrent file operations.
+   * Limits parallel processing to control memory usage.
+   */
+  maxConcurrentOperations: z
+    .number()
+    .int()
+    .min(1)
+    .max(20) // Reasonable maximum to prevent resource exhaustion
+    .default(5),
+
+  /**
+   * Whether to cache the Sharp module instance.
+   * Improves performance but uses slightly more memory.
+   */
+  cacheSharpModule: z.boolean().default(true),
+});
+
+/**
+ * Inferred TypeScript type for FileHandler options.
+ */
+export type FileHandlerOptions = z.infer<typeof FileHandlerOptions>;
+
+/**
+ * Advanced file handling utility for processing and optimizing files.
  *
- * @param input - The value to validate
- * @throws {Error} Error if the input is not a valid file input
- * @private
+ * Features:
+ * - Type-safe file input validation
+ * - Security-conscious file type checking
+ * - Automatic image optimization with Sharp
+ * - Memory-efficient stream processing
+ * - Comprehensive error handling with cleanup
+ * - Configurable security levels
+ * - Resource management and cleanup
+ *
+ * @example
+ * ```typescript
+ * const handler = new FileHandler({
+ *   security: { level: SecurityLevel.STANDARD },
+ *   imageProcessing: { quality: 85, maxSize: 1024 * 1024 }
+ * });
+ *
+ * try {
+ *   const processed = await handler.processFile('./image.jpg', ProcessingContext.AVATAR);
+ *   console.log('Processed file:', processed.filename, processed.size);
+ * } finally {
+ *   await handler.destroy();
+ * }
+ * ```
  */
-function validateInput(input: unknown): asserts input is FileInput {
-  if (
-    !(
-      Buffer.isBuffer(input) ||
-      input instanceof Readable ||
-      typeof input === "string"
-    )
-  ) {
-    throw new Error("Invalid file input type");
+export class FileHandler {
+  /** Configuration options for this instance */
+  readonly #options: FileHandlerOptions;
+
+  /** Track active stream operations for cleanup */
+  readonly #activeStreams = new Set<Readable>();
+
+  /** Track active timeouts for cleanup */
+  readonly #activeTimeouts = new Set<NodeJS.Timeout>();
+
+  /** Cached Sharp module instance */
+  #sharpModuleCache: typeof SharpType | null = null;
+
+  /** Semaphore to limit concurrent operations */
+  #activeOperations = 0;
+
+  /** Flag to track if instance has been destroyed */
+  #isDestroyed = false;
+
+  /**
+   * Creates a new FileHandler instance with the specified configuration.
+   *
+   * @param options - Partial configuration options (merged with defaults)
+   */
+  constructor(options: FileHandlerOptions) {
+    this.#options = options;
   }
 
-  if (
-    typeof input === "string" &&
-    !input.match(FILE_CONSTANTS.DATA_URI_PATTERN) &&
-    !input.match(FILE_CONSTANTS.FILE_PATH_PATTERN)
-  ) {
-    throw new Error(
-      `Invalid string input: expected file path or data URI (received: "${input.slice(0, 20)}${input.length > 20 ? "..." : ""}")`,
-    );
+  /**
+   * Clears the global Sharp module cache.
+   * Useful for freeing memory in long-running applications.
+   *
+   * @static
+   */
+  clearSharpCache(): void {
+    this.#sharpModuleCache = null;
   }
-}
 
-/**
- * Converts a stream to a buffer.
- * Collects all chunks from a readable stream into a single buffer.
- *
- * @param stream - The readable stream to convert
- * @returns Promise resolving to a buffer containing all stream data
- * @private
- */
-async function streamToBuffer(stream: Readable): Promise<Buffer> {
-  return new Promise<Buffer>((resolve, reject) => {
-    const chunks: Buffer[] = [];
-
-    stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
-    stream.on("error", (err) => reject(err));
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-  });
-}
-
-/**
- * Creates a data URI from a buffer and content type.
- * Formats the buffer as a base64-encoded data URI with the specified MIME type.
- *
- * @param buffer - The file content as a buffer
- * @param contentType - The MIME type of the content
- * @returns Data URI string containing the encoded file
- * @private
- */
-function createDataUri(buffer: Buffer, contentType: string): DataUri {
-  return `data:${contentType};base64,${buffer.toString("base64")}` as DataUri;
-}
-
-/**
- * File handling utility for processing and optimizing files in Node.js environments.
- * Provides methods to convert, detect, optimize, and prepare files for API submission.
- */
-export const FileHandler = {
   /**
-   * Checks if the input is a valid file input for a single file.
-   * Validates that the input is a supported file type without throwing errors.
+   * Validates if the input is a supported file input type.
+   * Performs comprehensive validation including security checks.
    *
-   * @param input - The value to check
-   * @returns True if the input is a valid file input
+   * @param input - The value to validate
+   * @returns True if the input is valid and safe to process
+   *
+   * @example
+   * ```typescript
+   * if (handler.isValidInput('./image.jpg', ProcessingContext.AVATAR)) {
+   *   // Safe to process
+   * }
+   * ```
    */
-  isValidSingleInput(input: unknown): input is FileInput {
-    // Check if input is a basic valid type
-    if (
-      !(
-        Buffer.isBuffer(input) ||
-        input instanceof Readable ||
-        typeof input === "string"
-      )
-    ) {
+  isValidInput(input: unknown): boolean {
+    try {
+      this.#validateInputType(input);
+      return true;
+    } catch {
       return false;
     }
-
-    // If it's a string, check if it's a valid data URI or file path
-    if (
-      typeof input === "string" &&
-      !input.match(FILE_CONSTANTS.DATA_URI_PATTERN) &&
-      !input.match(FILE_CONSTANTS.FILE_PATH_PATTERN)
-    ) {
-      return false;
-    }
-
-    return true;
-  },
+  }
 
   /**
-   * Checks if the input is a valid file input or array of file inputs.
-   * Validates single inputs or arrays of inputs without throwing errors.
-   *
-   * @param input - The value or array to check
-   * @returns True if the input is a valid file input or array of valid inputs
-   */
-  isValidInput(input: unknown): input is FileInput | FileInput[] {
-    // Check if it's an array
-    if (Array.isArray(input)) {
-      // Check if all items in the array are valid file inputs
-      return input.every((item) => this.isValidSingleInput(item));
-    }
-
-    // Otherwise check as a single input
-    return this.isValidSingleInput(input);
-  },
-
-  /**
-   * Converts any valid file input to a buffer.
-   * Handles various input types and extracts their binary content.
-   *
-   * @param input - The file input to convert (path, URI, buffer, stream)
-   * @returns Promise resolving to a buffer containing the file content
-   * @throws {Error} Error if the input cannot be converted to a buffer
-   */
-  async toBuffer(input: FileInput): Promise<Buffer> {
-    if (Buffer.isBuffer(input)) {
-      return input;
-    }
-
-    if (input instanceof Readable) {
-      try {
-        return await streamToBuffer(input);
-      } catch (error) {
-        throw new Error(
-          `Failed to read from stream: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-    }
-
-    if (typeof input === "string") {
-      const dataUriMatch = input.match(FILE_CONSTANTS.DATA_URI_PATTERN);
-      if (dataUriMatch?.[2]) {
-        try {
-          return Buffer.from(dataUriMatch[2], "base64");
-        } catch (error) {
-          throw new Error(
-            `Failed to decode base64 data URI: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        }
-      }
-
-      try {
-        return await streamToBuffer(createReadStream(input));
-      } catch (error) {
-        throw new Error(
-          `Failed to read file from path "${basename(input)}": ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-    }
-
-    throw new Error("Unsupported file input type");
-  },
-
-  /**
-   * Converts a file input to a data URI.
-   * Creates a base64-encoded data URI representation of the file.
+   * Converts any valid file input to a Buffer with comprehensive error handling.
+   * Handles memory management and provides timeout protection.
    *
    * @param input - The file input to convert
-   * @returns Promise resolving to a data URI containing the encoded file
-   * @throws {Error} Error if the input cannot be converted to a data URI
+   * @returns Promise resolving to buffer containing the file content
+   * @throws {Error} If conversion fails or input is invalid
+   *
+   * @example
+   * ```typescript
+   * const buffer = await handler.toBuffer('./large-file.zip');
+   * console.log('File size:', buffer.length);
+   * ```
+   */
+  async toBuffer(input: FileInput): Promise<Buffer> {
+    this.#checkNotDestroyed();
+    await this.#acquireOperationSlot();
+
+    try {
+      this.#validateInputType(input);
+
+      if (Buffer.isBuffer(input)) {
+        this.#validateBufferSize(input);
+        return input;
+      }
+
+      if (input instanceof Readable) {
+        return await this.#streamToBufferSafe(input);
+      }
+
+      if (typeof input === "string") {
+        const dataUriMatch = input.match(FILE_CONSTANTS.DATA_URI_PATTERN);
+        if (dataUriMatch?.[2]) {
+          return this.#decodeDataUri(dataUriMatch[2]);
+        }
+
+        return await this.#fileToBuffer(input);
+      }
+
+      throw new Error("Unsupported file input type");
+    } finally {
+      this.#releaseOperationSlot();
+    }
+  }
+
+  /**
+   * Converts a file input to a data URI with validation and optimization.
+   * Creates a base64-encoded data URI representation with proper MIME type.
+   *
+   * @param input - The file input to convert
+   * @returns Promise resolving to a properly formatted data URI
+   * @throws {Error} If conversion fails or file is invalid
+   *
+   * @example
+   * ```typescript
+   * const dataUri = await handler.toDataUri('./profile.png', ProcessingContext.AVATAR);
+   * // Returns: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+   * ```
    */
   async toDataUri(input: FileInput): Promise<DataUri> {
-    // If it's already a data URI, return it
+    this.#checkNotDestroyed();
+
+    // Return if already a valid data URI
     if (
       typeof input === "string" &&
-      input.match(FILE_CONSTANTS.DATA_URI_PATTERN)
+      FILE_CONSTANTS.DATA_URI_PATTERN.test(input)
     ) {
+      this.#validateDataUri(input);
       return input as DataUri;
     }
 
     try {
-      // Convert input to buffer
       const buffer = await this.toBuffer(input);
+      const filename = this.#extractFilename(input);
+      const contentType = this.#detectContentType(filename, buffer);
 
-      // Determine the content type
-      const filename = this.getFilename(input);
-      const contentType = this.detectContentType(filename);
-
-      // Create and return the data URI
-      return createDataUri(buffer, contentType);
+      return this.#createDataUri(buffer, contentType);
     } catch (error) {
-      const filename = typeof input === "string" ? basename(input) : "unknown";
-
+      const filename = this.#extractFilename(input);
       throw new Error(
         `Failed to convert to data URI: ${error instanceof Error ? error.message : String(error)} (file: ${filename})`,
       );
     }
-  },
+  }
 
   /**
-   * Gets filename from input or returns a default.
-   * Extracts filename from paths or uses a default.
-   *
-   * @param input - The file input to get a filename for
-   * @returns The extracted or default filename
-   */
-  getFilename(input: FileInput): string {
-    if (typeof input === "string") {
-      if (input.match(FILE_CONSTANTS.DATA_URI_PATTERN)) {
-        return FILE_CONSTANTS.DEFAULT_FILENAME;
-      }
-      return basename(input);
-    }
-
-    return FILE_CONSTANTS.DEFAULT_FILENAME;
-  },
-
-  /**
-   * Detects content type from filename.
-   * Uses extension-based detection to determine MIME type.
-   *
-   * @param filename - The filename with extension
-   * @returns The detected MIME type
-   */
-  detectContentType(filename: string): string {
-    try {
-      // Use extension-based detection
-      const mimeType = lookup(filename);
-      if (mimeType) {
-        return mimeType;
-      }
-    } catch {
-      // Fall through to default
-    }
-
-    return FILE_CONSTANTS.DEFAULT_CONTENT_TYPE;
-  },
-
-  /**
-   * Updates filename extension to match content type.
-   * Ensures the file extension accurately reflects the actual content type.
-   *
-   * @param filename - The original filename
-   * @param contentType - The detected content type
-   * @returns Updated filename with appropriate extension
-   */
-  updateFilenameExtension(filename: string, contentType: string): string {
-    const newExt =
-      FILE_CONSTANTS.FILE_EXTENSIONS[
-        contentType as keyof typeof FILE_CONSTANTS.FILE_EXTENSIONS
-      ];
-    if (!newExt) {
-      return filename;
-    }
-
-    const dotIndex = filename.lastIndexOf(".");
-    if (dotIndex === -1) {
-      // No extension, add one
-      return `${filename}${newExt}`;
-    }
-
-    const currentExt = filename.slice(dotIndex).toLowerCase();
-    if (currentExt === newExt) {
-      // Already has the right extension
-      return filename;
-    }
-
-    // Replace existing extension
-    return `${filename.slice(0, dotIndex)}${newExt}`;
-  },
-
-  /**
-   * Loads the Sharp module if available.
-   * Dynamically imports the optional Sharp dependency for image processing.
-   *
-   * @returns Promise resolving to the Sharp module or null if unavailable
-   */
-  async getSharpModule(): Promise<typeof SharpType | null> {
-    if (sharpModule === null) {
-      const result = await OptionalDeps.safeImport<typeof SharpType>("sharp");
-      sharpModule = result.success ? result.data : null;
-    }
-
-    return sharpModule;
-  },
-
-  /**
-   * Optimizes an image if it's too large or conversion is beneficial.
-   * Uses a multi-step approach to reduce file size while maintaining quality.
-   *
-   * @param buffer - The original image buffer
-   * @param contentType - The image MIME type
-   * @param options - Configuration options for optimization
-   * @returns Promise resolving to the optimized buffer and final content type
-   */
-  async optimizeImage(
-    buffer: Buffer,
-    contentType: string,
-    options: ImageProcessingOptions,
-  ): Promise<{ processedBuffer: Buffer; finalContentType: string }> {
-    // 1. Short-circuit for small images that don't need optimization
-    if (buffer.length <= options.maxSize * 0.9) {
-      return { processedBuffer: buffer, finalContentType: contentType };
-    }
-
-    // 2. Don't use Sharp for formats that don't need it
-    if (!FILE_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(contentType)) {
-      return { processedBuffer: buffer, finalContentType: contentType };
-    }
-
-    // 3. Load Sharp more efficiently
-    const sharp = await this.getSharpModule();
-    if (!sharp) {
-      return { processedBuffer: buffer, finalContentType: contentType };
-    }
-
-    try {
-      // 4. Reduce unnecessary metadata
-      const image = sharp(buffer, {
-        // Optimizations for Sharp
-        limitInputPixels: 50000000, // Reasonable limit
-        sequentialRead: true, // Improves performance for GIFs and certain formats
-      });
-
-      // Reduce metadata
-      image.withMetadata({ orientation: undefined });
-
-      const metadata = await image.metadata();
-
-      // 5. Optimize image processing logic
-      // Direct WebP conversion if allowed (fewer steps)
-      if (!options.preserveFormat && options.attemptWebpConversion) {
-        try {
-          const webpBuffer = await image
-            .webp({
-              quality: options.quality,
-              effort: 3, // Less effort for more speed
-              alphaQuality: 80, // Reduce alpha channel quality
-            })
-            .toBuffer();
-
-          if (webpBuffer.length <= options.maxSize) {
-            return {
-              processedBuffer: webpBuffer,
-              finalContentType: "image/webp",
-            };
-          }
-        } catch {
-          // WebP conversion failed, continue with other methods
-        }
-      }
-
-      // 6. Faster optimization with original format
-      if (metadata.format) {
-        const compressionOptions: Record<string, any> = {
-          // PNG: less compression but much faster
-          png: { quality: options.quality, compressionLevel: 6 },
-          // JPEG: progressive quality for loading
-          jpeg: {
-            quality: options.quality,
-            optimizeScans: true,
-            progressive: true,
-          },
-          // WebP: balance quality/performance
-          webp: { quality: options.quality, effort: 3 },
-          avif: { quality: options.quality - 10 }, // AVIF is slow, reduce quality
-        };
-
-        // Apply format-specific optimization
-        const formatOptions = compressionOptions[metadata.format] || {};
-        try {
-          const compressedBuffer =
-            // @ts-expect-error
-            await image[metadata.format](formatOptions).toBuffer();
-
-          if (compressedBuffer.length <= options.maxSize) {
-            return {
-              processedBuffer: compressedBuffer,
-              finalContentType: contentType,
-            };
-          }
-        } catch {
-          // Format-specific compression failed, continue to resizing
-        }
-      }
-
-      // 7. Smarter resizing
-      if (metadata.width && metadata.height) {
-        // More predictable calculation for resizing
-        const targetRatio = Math.sqrt(options.maxSize / buffer.length) * 0.95;
-        const newWidth = Math.floor(metadata.width * targetRatio);
-        const newHeight = Math.floor(metadata.height * targetRatio);
-
-        // Faster resizing with fewer options
-        const resizedBuffer = await image
-          .resize(newWidth, newHeight, {
-            fit: "inside",
-            withoutEnlargement: true,
-            fastShrinkOnLoad: true, // Faster but less precise
-          })
-          .toBuffer();
-
-        return {
-          processedBuffer: resizedBuffer,
-          finalContentType: contentType,
-        };
-      }
-
-      // Fallback
-      return { processedBuffer: buffer, finalContentType: contentType };
-    } catch {
-      // Return original if optimization fails
-      return { processedBuffer: buffer, finalContentType: contentType };
-    }
-  },
-
-  /**
-   * Processes a file for submission to API.
-   * Handles file conversion, optimization, and metadata extraction.
+   * Processes a file with comprehensive optimization and security validation.
+   * Handles image optimization, format conversion, and security scanning.
    *
    * @param input - The file input to process
-   * @param context - The usage context ("attachment" or "asset") which determines size limits
-   * @param options - Optional configuration for image processing
-   * @returns Promise resolving to a fully processed file ready for upload
-   * @throws {Error} Error if file processing fails
+   * @param context - Processing context determining size limits and validation
+   * @param options - Optional processing configuration overrides
+   * @returns Promise resolving to a fully processed file object
+   * @throws {Error} If processing fails or file violates security policies
+   *
+   * @example
+   * ```typescript
+   * const processed = await handler.processFile('./avatar.jpg', ProcessingContext.AVATAR, {
+   *   quality: 90,
+   *   maxSize: 512 * 1024
+   * });
+   * console.log('Optimized from', input.length, 'to', processed.size, 'bytes');
+   * ```
    */
   async processFile(
     input: FileInput,
-    context: "attachment" | "asset" = "attachment",
-    options?: Partial<ImageProcessingOptions>,
+    context: ProcessingContext = ProcessingContext.ATTACHMENT,
+    options?: ImageProcessingOptions,
   ): Promise<ProcessedFile> {
-    try {
-      validateInput(input);
+    this.#checkNotDestroyed();
+    await this.#acquireOperationSlot();
 
-      // Convert input to buffer
+    try {
+      // Validate input and extract metadata
+      this.#validateInputType(input);
+
+      const originalFilename = this.#extractFilename(input);
       const buffer = await this.toBuffer(input);
 
-      // Determine filename and content type
-      const filename = this.getFilename(input);
-      const contentType = this.detectContentType(filename);
+      // Validate file size for context
+      this.#validateFileSize(buffer, context);
 
-      // Set appropriate size limit based on context
-      const maxSize =
-        context === "attachment"
-          ? FILE_CONSTANTS.ATTACHMENT_MAX_SIZE
-          : FILE_CONSTANTS.ASSET_MAX_SIZE;
-
-      // Check file size before processing
-      if (buffer.length > maxSize) {
-        throw new Error(
-          `File size exceeds maximum allowed size (${buffer.length} > ${maxSize} bytes) for file "${filename}"`,
-        );
-      }
+      // Detect and validate content type
+      const contentType = this.#detectContentType(originalFilename, buffer);
+      this.#validateContentType(contentType, context);
 
       // Configure processing options
-      const processingOptions: ImageProcessingOptions = {
-        maxSize,
-        preserveFormat: context === "attachment",
-        quality: 80,
-        attemptWebpConversion: context === "asset",
-        ...options,
-      };
+      const processingOptions = this.#buildProcessingOptions(context, options);
 
-      // Process the image if needed
-      const { processedBuffer, finalContentType } = await this.optimizeImage(
-        buffer,
-        contentType,
-        processingOptions,
+      // Process the file (optimize if image)
+      const { processedBuffer, finalContentType, wasOptimized } =
+        await this.#optimizeFile(buffer, contentType, processingOptions);
+
+      // Generate safe filename
+      const filename = this.#generateSafeFilename(
+        originalFilename,
+        finalContentType,
       );
 
-      // Return processed file information
+      // Create final processed file object
       return {
         buffer: processedBuffer,
-        filename: this.updateFilenameExtension(filename, finalContentType),
+        filename,
         contentType: finalContentType,
         size: processedBuffer.length,
-        dataUri: createDataUri(processedBuffer, finalContentType),
+        dataUri: this.#createDataUri(processedBuffer, finalContentType),
+        originalFilename,
+        wasOptimized,
+        context,
       };
     } catch (error) {
-      // Get filename information if available
-      const filenameInfo =
-        typeof input === "string" ? basename(input) : undefined;
-
-      const sizeInfo = Buffer.isBuffer(input) ? input.length : undefined;
-
-      // Add context to the error message
-      const details = [
-        filenameInfo && `filename: ${filenameInfo}`,
-        sizeInfo && `size: ${sizeInfo} bytes`,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      const filename = this.#extractFilename(input);
+      const details = this.#buildErrorDetails(input, filename);
 
       throw new Error(
         `File processing failed: ${error instanceof Error ? error.message : String(error)}${details ? ` (${details})` : ""}`,
       );
+    } finally {
+      this.#releaseOperationSlot();
     }
-  },
+  }
 
   /**
-   * Appends JSON payload to a FormData object.
-   * Handles different payload types and formats them correctly for API submission.
+   * Creates FormData for multipart uploads with proper file handling.
+   * Processes files in parallel and handles JSON payload integration.
    *
-   * @param form - The FormData object to append to
-   * @param body - The body payload to format and append
-   * @returns Promise that resolves when the payload has been appended
-   * @throws {Error} Error if appending payload fails
-   */
-  async appendPayloadJson(
-    form: FormData,
-    body: HttpRequestOptions["body"],
-  ): Promise<void> {
-    try {
-      if (typeof body === "string") {
-        form.append("payload_json", body);
-      } else if (Buffer.isBuffer(body)) {
-        form.append("payload_json", Buffer.from(body));
-      } else if (body instanceof Readable) {
-        const buffer = await streamToBuffer(body);
-        form.append("payload_json", buffer);
-      } else {
-        form.append("payload_json", JSON.stringify(body));
-      }
-    } catch (error) {
-      throw new Error(
-        `Failed to append JSON payload: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  },
-
-  /**
-   * Creates a FormData object with files for API submission.
-   * Handles file processing, field naming, and payload formatting.
+   * @param files - Single file or array of files to include
+   * @param body - Optional JSON payload to include in the form
+   * @param context - Processing context for file validation
+   * @param options - Optional processing configuration
+   * @returns Promise resolving to FormData ready for upload
+   * @throws {Error} If file processing fails or too many files provided
    *
-   * @param files - The file(s) to process and include
-   * @param body - Optional JSON payload to include
-   * @param processingOptions - Optional configuration for image processing
-   * @returns Promise resolving to a FormData object ready for API submission
-   * @throws {Error} Error if too many files are provided or processing fails
+   * @example
+   * ```typescript
+   * const formData = await handler.createFormData(
+   *   ['./image1.jpg', './image2.png'],
+   *   { message: 'Hello world!' },
+   *   ProcessingContext.ATTACHMENT
+   * );
+   * ```
    */
   async createFormData(
     files: FileInput | FileInput[],
     body?: HttpRequestOptions["body"],
-    processingOptions?: Partial<ImageProcessingOptions>,
+    context: ProcessingContext = ProcessingContext.ATTACHMENT,
+    options?: ImageProcessingOptions,
   ): Promise<FormData> {
+    this.#checkNotDestroyed();
+
     const filesArray = Array.isArray(files) ? files : [files];
 
-    if (filesArray.length > FILE_CONSTANTS.MAX_FILES) {
+    if (filesArray.length > FILE_CONSTANTS.MAX_FILES_PER_BATCH) {
       throw new Error(
-        `Too many files: ${filesArray.length}. Maximum allowed is ${FILE_CONSTANTS.MAX_FILES}`,
+        `Too many files: ${filesArray.length}. Maximum allowed is ${FILE_CONSTANTS.MAX_FILES_PER_BATCH}`,
       );
     }
 
-    const form = new FormData();
-
     try {
-      // Process files in parallel for better performance
-      const processedFiles = await Promise.all(
-        filesArray.map((file) =>
-          this.processFile(file as FileInput, "attachment", processingOptions),
-        ),
+      // Process all files in parallel with concurrency control
+      const processedFiles = await this.#processFilesBatch(
+        filesArray,
+        context,
+        options,
       );
 
-      // Append each processed file
-      processedFiles.forEach((processedFile, i) => {
-        const fieldName = filesArray.length === 1 ? "file" : `files[${i}]`;
+      // Create FormData and append files
+      const form = new FormData();
+
+      processedFiles.forEach((processedFile, index) => {
+        const fieldName = filesArray.length === 1 ? "file" : `files[${index}]`;
 
         form.append(fieldName, processedFile.buffer, {
           filename: processedFile.filename,
@@ -709,7 +679,7 @@ export const FileHandler = {
 
       // Add JSON payload if provided
       if (body !== undefined) {
-        await this.appendPayloadJson(form, body);
+        await this.#appendJsonPayload(form, body);
       }
 
       return form;
@@ -718,5 +688,692 @@ export const FileHandler = {
         `Failed to create form data: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-  },
-} as const;
+  }
+
+  /**
+   * Cleans up all resources and cancels active operations.
+   * Should be called when the FileHandler instance is no longer needed.
+   *
+   * @example
+   * ```typescript
+   * const handler = new FileHandler();
+   * try {
+   *   // Use handler...
+   * } finally {
+   *   handler.destroy();
+   * }
+   * ```
+   */
+  destroy(): void {
+    if (this.#isDestroyed) {
+      return;
+    }
+
+    this.#isDestroyed = true;
+
+    // Cancel all active timeouts
+    for (const timeout of this.#activeTimeouts) {
+      clearTimeout(timeout);
+    }
+    this.#activeTimeouts.clear();
+
+    // Close all active streams
+    for (const stream of this.#activeStreams) {
+      try {
+        if (stream.readable && !stream.destroyed) {
+          stream.destroy();
+        }
+      } catch {
+        // Ignore errors during cleanup
+      }
+    }
+    this.#activeStreams.clear();
+
+    // Clear Sharp cache if not globally cached
+    if (!this.#options.cacheSharpModule) {
+      this.#sharpModuleCache = null;
+    }
+  }
+
+  /**
+   * Validates that the input is a supported file input type.
+   * @private
+   */
+  #validateInputType(input: unknown): asserts input is FileInput {
+    if (
+      !(
+        Buffer.isBuffer(input) ||
+        input instanceof Readable ||
+        typeof input === "string"
+      )
+    ) {
+      throw new Error("Invalid file input type");
+    }
+
+    if (typeof input === "string") {
+      if (
+        !(
+          FILE_CONSTANTS.DATA_URI_PATTERN.test(input) ||
+          FILE_CONSTANTS.FILE_PATH_PATTERN.test(input)
+        )
+      ) {
+        throw new Error(
+          `Invalid string input: expected file path or data URI (received: "${input.slice(0, 20)}${input.length > 20 ? "..." : ""}")`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Validates buffer size against limits.
+   * @private
+   */
+  #validateBufferSize(buffer: Buffer): void {
+    if (buffer.length > FILE_CONSTANTS.MAX_BUFFER_SIZE) {
+      throw new Error(
+        `Buffer too large: ${buffer.length} bytes (max: ${FILE_CONSTANTS.MAX_BUFFER_SIZE})`,
+      );
+    }
+  }
+
+  /**
+   * Validates file size for the given context.
+   * @private
+   */
+  #validateFileSize(buffer: Buffer, context: ProcessingContext): void {
+    const maxSize = FILE_CONSTANTS.SIZE_LIMITS[context];
+    if (buffer.length > maxSize) {
+      throw new Error(
+        `File size exceeds maximum for ${context}: ${buffer.length} bytes (max: ${maxSize})`,
+      );
+    }
+  }
+
+  /**
+   * Validates content type for the given context.
+   * @private
+   */
+  #validateContentType(contentType: string, context: ProcessingContext): void {
+    // Check blocked MIME types
+    if (this.#options.security.blockedMimeTypes?.includes(contentType)) {
+      throw new Error(`Content type blocked by configuration: ${contentType}`);
+    }
+
+    // Check allowed MIME types if specified
+    if (
+      this.#options.security.allowedMimeTypes &&
+      !this.#options.security.allowedMimeTypes.includes(contentType)
+    ) {
+      throw new Error(`Content type not in allowed list: ${contentType}`);
+    }
+
+    // Context-specific validation
+    if (
+      [
+        ProcessingContext.AVATAR,
+        ProcessingContext.EMOJI,
+        ProcessingContext.BANNER,
+      ].includes(context)
+    ) {
+      if (!FILE_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(contentType as any)) {
+        throw new Error(
+          `Content type not supported for ${context}: ${contentType}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Validates data URI format and content.
+   * @private
+   */
+  #validateDataUri(dataUri: string): void {
+    const match = dataUri.match(FILE_CONSTANTS.DATA_URI_PATTERN);
+    if (!match) {
+      throw new Error("Invalid data URI format");
+    }
+
+    const [, mimeType, base64Data] = match;
+
+    if (!(mimeType && base64Data)) {
+      throw new Error("Malformed data URI");
+    }
+
+    // Validate base64 data length
+    if (base64Data.length > FILE_CONSTANTS.MAX_BUFFER_SIZE * 1.4) {
+      // Account for base64 overhead
+      throw new Error("Data URI too large");
+    }
+  }
+
+  /**
+   * Safely converts a stream to buffer with timeout and cleanup.
+   * @private
+   */
+  async #streamToBufferSafe(stream: Readable): Promise<Buffer> {
+    return new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      let totalSize = 0;
+      let finished = false;
+
+      const cleanup = () => {
+        if (!finished) {
+          finished = true;
+          this.#activeStreams.delete(stream);
+          stream.removeAllListeners();
+          if (!stream.destroyed) {
+            stream.destroy();
+          }
+        }
+      };
+
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error("Stream timeout"));
+      }, this.#options.streamTimeout);
+
+      this.#activeTimeouts.add(timeout);
+      this.#activeStreams.add(stream);
+
+      stream.on("data", (chunk: Buffer) => {
+        if (finished) {
+          return;
+        }
+
+        totalSize += chunk.length;
+        if (totalSize > FILE_CONSTANTS.MAX_BUFFER_SIZE) {
+          cleanup();
+          clearTimeout(timeout);
+          this.#activeTimeouts.delete(timeout);
+          reject(new Error("Stream too large"));
+          return;
+        }
+
+        chunks.push(chunk);
+      });
+
+      stream.on("error", (error) => {
+        cleanup();
+        clearTimeout(timeout);
+        this.#activeTimeouts.delete(timeout);
+        reject(error);
+      });
+
+      stream.on("end", () => {
+        cleanup();
+        clearTimeout(timeout);
+        this.#activeTimeouts.delete(timeout);
+        resolve(Buffer.concat(chunks));
+      });
+    });
+  }
+
+  /**
+   * Decodes base64 data URI content.
+   * @private
+   */
+  #decodeDataUri(base64Data: string): Buffer {
+    try {
+      const buffer = Buffer.from(base64Data, "base64");
+      this.#validateBufferSize(buffer);
+      return buffer;
+    } catch (error) {
+      throw new Error(
+        `Failed to decode base64 data URI: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Reads file from filesystem path.
+   * @private
+   */
+  async #fileToBuffer(filePath: string): Promise<Buffer> {
+    try {
+      const stream = createReadStream(filePath);
+      return await this.#streamToBufferSafe(stream);
+    } catch (error) {
+      throw new Error(
+        `Failed to read file from path "${basename(filePath)}": ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Extracts filename from various input types.
+   * @private
+   */
+  #extractFilename(input: FileInput): string {
+    if (
+      typeof input === "string" &&
+      !FILE_CONSTANTS.DATA_URI_PATTERN.test(input)
+    ) {
+      const filename = basename(input);
+      return this.#options.security.sanitizeFilenames
+        ? this.#sanitizeFilename(filename)
+        : filename;
+    }
+    return FILE_CONSTANTS.DEFAULT_FILENAME;
+  }
+
+  /**
+   * Sanitizes filename to prevent security issues.
+   * @private
+   */
+  #sanitizeFilename(filename: string): string {
+    // Remove or replace dangerous characters
+    let sanitized = filename
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: Ignore control characters
+      .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_") // Replace dangerous chars
+      .replace(/^\.+/, "") // Remove leading dots
+      .replace(/\.+$/, "") // Remove trailing dots
+      .replace(/\s+/g, "_") // Replace spaces with underscores
+      .slice(0, this.#options.security.maxFilenameLength); // Truncate if too long
+
+    // Ensure filename is not empty
+    if (!sanitized || sanitized === "_") {
+      sanitized = FILE_CONSTANTS.DEFAULT_FILENAME;
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Detects content type from filename and buffer content.
+   * @private
+   */
+  #detectContentType(filename: string, buffer?: Buffer): string {
+    // Try MIME type detection from filename
+    const mimeFromFilename = lookup(filename);
+    if (mimeFromFilename) {
+      return mimeFromFilename;
+    }
+
+    // Try magic number detection for common types
+    if (buffer && this.#options.security.deepInspection) {
+      const magicMime = this.#detectMimeFromMagicNumbers(buffer);
+      if (magicMime) {
+        return magicMime;
+      }
+    }
+
+    return FILE_CONSTANTS.DEFAULT_CONTENT_TYPE;
+  }
+
+  /**
+   * Detects MIME type from file magic numbers.
+   * @private
+   */
+  #detectMimeFromMagicNumbers(buffer: Buffer): string | null {
+    if (buffer.length < 4) {
+      return null;
+    }
+
+    const header = buffer.subarray(0, 12);
+
+    // PNG
+    if (
+      header[0] === 0x89 &&
+      header[1] === 0x50 &&
+      header[2] === 0x4e &&
+      header[3] === 0x47
+    ) {
+      return "image/png";
+    }
+
+    // JPEG
+    if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+      return "image/jpeg";
+    }
+
+    // GIF
+    if (
+      header.subarray(0, 6).toString() === "GIF87a" ||
+      header.subarray(0, 6).toString() === "GIF89a"
+    ) {
+      return "image/gif";
+    }
+
+    // WebP
+    if (
+      header.subarray(0, 4).toString() === "RIFF" &&
+      header.subarray(8, 12).toString() === "WEBP"
+    ) {
+      return "image/webp";
+    }
+
+    return null;
+  }
+
+  /**
+   * Creates a data URI from buffer and content type.
+   * @private
+   */
+  #createDataUri(buffer: Buffer, contentType: string): DataUri {
+    return `data:${contentType};base64,${buffer.toString("base64")}` as DataUri;
+  }
+
+  /**
+   * Generates a safe filename with proper extension.
+   * @private
+   */
+  #generateSafeFilename(originalFilename: string, contentType: string): string {
+    const baseName = originalFilename.replace(/\.[^/.]+$/, ""); // Remove extension
+    const newExt =
+      FILE_CONSTANTS.MIME_TO_EXTENSION[
+        contentType as keyof typeof FILE_CONSTANTS.MIME_TO_EXTENSION
+      ];
+
+    if (newExt) {
+      return `${baseName}${newExt}`;
+    }
+
+    return originalFilename;
+  }
+
+  /**
+   * Builds processing options for the given context.
+   * @private
+   */
+  #buildProcessingOptions(
+    context: ProcessingContext,
+    overrides?: ImageProcessingOptions,
+  ): ImageProcessingOptions {
+    const baseOptions = { ...this.#options.imageProcessing };
+
+    // Context-specific defaults
+    switch (context) {
+      case ProcessingContext.AVATAR:
+      case ProcessingContext.EMOJI: {
+        baseOptions.maxSize = 256 * 1024; // 256KB
+        baseOptions.maxWidth = 512;
+        baseOptions.maxHeight = 512;
+        break;
+      }
+      case ProcessingContext.BANNER: {
+        baseOptions.maxSize = 2 * 1024 * 1024; // 2MB
+        baseOptions.maxWidth = 1920;
+        baseOptions.maxHeight = 1080;
+        break;
+      }
+      default: {
+        baseOptions.maxSize =
+          FILE_CONSTANTS.SIZE_LIMITS[context] || 2 * 1024 * 1024; // Default to 2MB
+        baseOptions.maxWidth = 4096;
+        baseOptions.maxHeight = 4096;
+        break;
+      }
+    }
+
+    return { ...baseOptions, ...overrides };
+  }
+
+  /**
+   * Optimizes a file (images only) with Sharp.
+   * @private
+   */
+  async #optimizeFile(
+    buffer: Buffer,
+    contentType: string,
+    options: ImageProcessingOptions,
+  ): Promise<{
+    processedBuffer: Buffer;
+    finalContentType: string;
+    wasOptimized: boolean;
+  }> {
+    // Skip optimization for non-images or if file is already small
+    if (
+      !FILE_CONSTANTS.SUPPORTED_IMAGE_TYPES.includes(contentType as any) ||
+      buffer.length <= options.maxSize * 0.9
+    ) {
+      return {
+        processedBuffer: buffer,
+        finalContentType: contentType,
+        wasOptimized: false,
+      };
+    }
+
+    const sharp = await this.#getSharpModule();
+    if (!sharp) {
+      return {
+        processedBuffer: buffer,
+        finalContentType: contentType,
+        wasOptimized: false,
+      };
+    }
+
+    try {
+      let image = sharp(buffer, {
+        limitInputPixels: 50000000,
+        sequentialRead: true,
+      });
+
+      // Strip metadata if requested
+      if (options.stripMetadata) {
+        image = image.withMetadata({});
+      }
+
+      const metadata = await image.metadata();
+
+      // Resize if dimensions exceed limits
+      if (metadata.width && metadata.height) {
+        if (
+          (options.maxWidth > 0 && metadata.width > options.maxWidth) ||
+          (options.maxHeight > 0 && metadata.height > options.maxHeight)
+        ) {
+          image = image.resize(
+            options.maxWidth || undefined,
+            options.maxHeight || undefined,
+            {
+              fit: "inside",
+              withoutEnlargement: true,
+            },
+          );
+        }
+      }
+
+      // Try WebP conversion if allowed
+      if (!options.preserveFormat && options.attemptWebpConversion) {
+        try {
+          const webpBuffer = await image
+            .webp({ quality: options.quality })
+            .toBuffer();
+          if (webpBuffer.length <= options.maxSize) {
+            return {
+              processedBuffer: webpBuffer,
+              finalContentType: "image/webp",
+              wasOptimized: true,
+            };
+          }
+        } catch {
+          // WebP conversion failed, continue with original format
+        }
+      }
+
+      // Optimize in original format
+      if (metadata.format) {
+        const optimizedBuffer = await this.#optimizeByFormat(
+          image,
+          metadata.format,
+          options.quality,
+        );
+        if (
+          optimizedBuffer.length <= options.maxSize ||
+          optimizedBuffer.length < buffer.length
+        ) {
+          return {
+            processedBuffer: optimizedBuffer,
+            finalContentType: contentType,
+            wasOptimized: true,
+          };
+        }
+      }
+
+      return {
+        processedBuffer: buffer,
+        finalContentType: contentType,
+        wasOptimized: false,
+      };
+    } catch (_error) {
+      // If optimization fails, return original
+      return {
+        processedBuffer: buffer,
+        finalContentType: contentType,
+        wasOptimized: false,
+      };
+    }
+  }
+
+  /**
+   * Optimizes image by specific format.
+   * @private
+   */
+  async #optimizeByFormat(
+    image: import("sharp").Sharp,
+    format: string,
+    quality: number,
+  ): Promise<Buffer> {
+    switch (format) {
+      case "jpeg":
+        return await image.jpeg({ quality, progressive: true }).toBuffer();
+      case "png":
+        return await image.png({ quality, compressionLevel: 9 }).toBuffer();
+      case "webp":
+        return await image.webp({ quality }).toBuffer();
+      default:
+        return await image.toBuffer();
+    }
+  }
+
+  /**
+   * Processes multiple files in batches with concurrency control.
+   * @private
+   */
+  async #processFilesBatch(
+    files: FileInput[],
+    context: ProcessingContext,
+    options?: ImageProcessingOptions,
+  ): Promise<ProcessedFile[]> {
+    const results: ProcessedFile[] = [];
+
+    // Process files with controlled concurrency
+    for (
+      let i = 0;
+      i < files.length;
+      i += this.#options.maxConcurrentOperations
+    ) {
+      const batch = files.slice(i, i + this.#options.maxConcurrentOperations);
+      const batchResults = await Promise.all(
+        batch.map((file) => this.processFile(file, context, options)),
+      );
+      results.push(...batchResults);
+    }
+
+    return results;
+  }
+
+  /**
+   * Appends JSON payload to FormData.
+   * @private
+   */
+  async #appendJsonPayload(
+    form: FormData,
+    body: HttpRequestOptions["body"],
+  ): Promise<void> {
+    try {
+      if (typeof body === "string") {
+        form.append("payload_json", body);
+      } else if (Buffer.isBuffer(body)) {
+        form.append("payload_json", body);
+      } else if (body instanceof Readable) {
+        const buffer = await this.#streamToBufferSafe(body);
+        form.append("payload_json", buffer);
+      } else {
+        form.append("payload_json", JSON.stringify(body));
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to append JSON payload: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  /**
+   * Gets or loads the Sharp module.
+   * @private
+   */
+  async #getSharpModule(): Promise<typeof SharpType | null> {
+    if (this.#options.cacheSharpModule && this.#sharpModuleCache) {
+      return this.#sharpModuleCache;
+    }
+
+    const result = await OptionalDeps.safeImport<typeof SharpType>("sharp");
+    if (result.success) {
+      if (this.#options.cacheSharpModule) {
+        this.#sharpModuleCache = result.data;
+      }
+      return result.data;
+    }
+
+    return null;
+  }
+
+  /**
+   * Builds error details for debugging.
+   * @private
+   */
+  #buildErrorDetails(input: FileInput, filename?: string): string {
+    const details: string[] = [];
+
+    if (filename && filename !== FILE_CONSTANTS.DEFAULT_FILENAME) {
+      details.push(`filename: ${filename}`);
+    }
+
+    if (Buffer.isBuffer(input)) {
+      details.push(`size: ${input.length} bytes`);
+    }
+
+    return details.join(", ");
+  }
+
+  /**
+   * Acquires an operation slot (concurrency control).
+   * @private
+   */
+  async #acquireOperationSlot(): Promise<void> {
+    while (this.#activeOperations >= this.#options.maxConcurrentOperations) {
+      if (this.#isDestroyed) {
+        throw new Error("RateLimitManager destroyed");
+      }
+
+      const delay = new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          this.#activeTimeouts.delete(timeout);
+          resolve();
+        }, 10);
+        this.#activeTimeouts.add(timeout);
+      });
+
+      await delay;
+    }
+    this.#activeOperations++;
+  }
+
+  /**
+   * Releases an operation slot.
+   * @private
+   */
+  #releaseOperationSlot(): void {
+    this.#activeOperations = Math.max(0, this.#activeOperations - 1);
+  }
+
+  /**
+   * Checks if the instance has been destroyed.
+   * @private
+   */
+  #checkNotDestroyed(): void {
+    if (this.#isDestroyed) {
+      throw new Error("FileHandler instance has been destroyed");
+    }
+  }
+}

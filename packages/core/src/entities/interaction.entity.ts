@@ -1,4 +1,4 @@
-import type { Locale } from "../enums/index.js";
+import type { LocaleValues } from "../enums/index.js";
 import type { Snowflake } from "../utils/index.js";
 import type {
   ApplicationCommandOptionChoiceEntity,
@@ -945,13 +945,13 @@ export interface InteractionEntity {
    * Selected language of the invoking user.
    * The locale/language setting of the user who triggered the interaction.
    */
-  locale?: Locale;
+  locale?: LocaleValues;
 
   /**
    * Guild's preferred locale, if invoked in a guild.
    * The locale/language setting of the server where the interaction occurred.
    */
-  guild_locale?: Locale;
+  guild_locale?: LocaleValues;
 
   /**
    * For monetized apps, any entitlements for the invoking user.
@@ -1012,7 +1012,7 @@ export interface GuildInteractionEntity
    * Guild's preferred locale, if invoked in a guild.
    * The locale/language setting of the server where the interaction occurred.
    */
-  guild_locale?: Locale;
+  guild_locale?: LocaleValues;
 }
 
 /**

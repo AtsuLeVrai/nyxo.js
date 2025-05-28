@@ -1,4 +1,4 @@
-import type { Locale } from "../enums/index.js";
+import type { LocaleValues } from "../enums/index.js";
 import type { Snowflake } from "../utils/index.js";
 import type { IntegrationEntity } from "./guild.entity.js";
 
@@ -463,7 +463,7 @@ export interface UserEntity {
    * The user's chosen language option
    * Controls the language of Discord's user interface for this user
    */
-  locale?: Locale;
+  locale?: LocaleValues;
 
   /**
    * Whether the email on this account has been verified

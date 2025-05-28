@@ -42,9 +42,7 @@ export class AutoModerationActionExecution
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the action which was executed on the triggering content.
@@ -54,9 +52,7 @@ export class AutoModerationActionExecution
    * @returns The action object
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-action-object}
    */
-  get action(): AutoModerationActionEntity {
-    return this.rawData.action;
-  }
+  readonly action = this.rawData.action;
 
   /**
    * Gets the ID of the rule which the action belongs to.
@@ -65,9 +61,7 @@ export class AutoModerationActionExecution
    *
    * @returns The rule's ID as a Snowflake string
    */
-  get ruleId(): Snowflake {
-    return this.rawData.rule_id;
-  }
+  readonly ruleId = this.rawData.rule_id;
 
   /**
    * Gets the trigger type of the rule which was triggered.
@@ -77,9 +71,7 @@ export class AutoModerationActionExecution
    * @returns The trigger type enum value
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
    */
-  get ruleTriggerType(): AutoModerationRuleTriggerType {
-    return this.rawData.rule_trigger_type;
-  }
+  readonly ruleTriggerType = this.rawData.rule_trigger_type;
 
   /**
    * Gets the ID of the user who generated the content which triggered the rule.
@@ -88,9 +80,7 @@ export class AutoModerationActionExecution
    *
    * @returns The user's ID as a Snowflake string
    */
-  get userId(): Snowflake {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the ID of the channel in which the user content was posted.
@@ -99,9 +89,7 @@ export class AutoModerationActionExecution
    *
    * @returns The channel's ID as a Snowflake string, or undefined if not applicable
    */
-  get channelId(): Snowflake | undefined {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of any user message which content belongs to.
@@ -110,9 +98,7 @@ export class AutoModerationActionExecution
    *
    * @returns The message's ID as a Snowflake string, or undefined if not applicable
    */
-  get messageId(): Snowflake | undefined {
-    return this.rawData.message_id;
-  }
+  readonly messageId = this.rawData.message_id;
 
   /**
    * Gets the ID of any system auto moderation messages posted as a result of this action.
@@ -121,9 +107,7 @@ export class AutoModerationActionExecution
    *
    * @returns The alert message's ID as a Snowflake string, or undefined if not applicable
    */
-  get alertSystemMessageId(): Snowflake | undefined {
-    return this.rawData.alert_system_message_id;
-  }
+  readonly alertSystemMessageId = this.rawData.alert_system_message_id;
 
   /**
    * Gets the user-generated text content that triggered the rule.
@@ -132,9 +116,7 @@ export class AutoModerationActionExecution
    *
    * @returns The triggering content as a string, or undefined if not available
    */
-  get content(): string | undefined {
-    return this.rawData.content;
-  }
+  readonly content = this.rawData.content;
 
   /**
    * Gets the specific word or phrase configured in the rule that triggered the rule.
@@ -143,9 +125,7 @@ export class AutoModerationActionExecution
    *
    * @returns The matched keyword as a string, or null if not applicable
    */
-  get matchedKeyword(): string | null {
-    return this.rawData.matched_keyword;
-  }
+  readonly matchedKeyword = this.rawData.matched_keyword;
 
   /**
    * Gets the substring in the content that triggered the rule.
@@ -154,9 +134,7 @@ export class AutoModerationActionExecution
    *
    * @returns The matched content substring, or null if not available
    */
-  get matchedContent(): string | null {
-    return this.rawData.matched_content;
-  }
+  readonly matchedContent = this.rawData.matched_content;
 
   /**
    * Fetches the user who generated the content that triggered the rule.
@@ -249,7 +227,7 @@ export class AutoModerationActionExecution
    * @returns True if the action included blocking a message, false otherwise
    */
   hasBlockMessageAction(): boolean {
-    return this.action.type === 1; // BlockMessage type
+    return this.action.type === AutoModerationActionType.BlockMessage;
   }
 
   /**
@@ -258,7 +236,7 @@ export class AutoModerationActionExecution
    * @returns True if the action included sending an alert, false otherwise
    */
   hasSendAlertAction(): boolean {
-    return this.action.type === 2; // SendAlertMessage type
+    return this.action.type === AutoModerationActionType.SendAlertMessage;
   }
 
   /**
@@ -267,7 +245,7 @@ export class AutoModerationActionExecution
    * @returns True if the action included timing out a user, false otherwise
    */
   hasTimeoutAction(): boolean {
-    return this.action.type === 3; // Timeout type
+    return this.action.type === AutoModerationActionType.Timeout;
   }
 }
 
@@ -297,9 +275,7 @@ export class AutoModeration
    *
    * @returns The rule's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the guild this auto moderation rule belongs to.
@@ -308,9 +284,7 @@ export class AutoModeration
    *
    * @returns The guild's ID as a Snowflake string
    */
-  get guildId(): Snowflake {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the name of this auto moderation rule.
@@ -319,9 +293,7 @@ export class AutoModeration
    *
    * @returns The rule name as a string
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * Gets the ID of the user who created this auto moderation rule.
@@ -330,9 +302,7 @@ export class AutoModeration
    *
    * @returns The creator's user ID as a Snowflake string
    */
-  get creatorId(): Snowflake {
-    return this.rawData.creator_id;
-  }
+  readonly creatorId = this.rawData.creator_id;
 
   /**
    * Gets the event type that triggers this rule.
@@ -342,9 +312,7 @@ export class AutoModeration
    * @returns The event type enum value
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types}
    */
-  get eventType(): AutoModerationEventType {
-    return this.rawData.event_type;
-  }
+  readonly eventType = this.rawData.event_type;
 
   /**
    * Gets the trigger type of this rule.
@@ -355,9 +323,7 @@ export class AutoModeration
    * @returns The trigger type enum value
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-types}
    */
-  get triggerType(): AutoModerationRuleTriggerType {
-    return this.rawData.trigger_type;
-  }
+  readonly triggerType = this.rawData.trigger_type;
 
   /**
    * Gets the trigger metadata for this rule.
@@ -368,9 +334,7 @@ export class AutoModeration
    * @returns The trigger metadata object
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-trigger-metadata}
    */
-  get triggerMetadata(): AutoModerationRuleTriggerMetadataEntity {
-    return this.rawData.trigger_metadata;
-  }
+  readonly triggerMetadata = this.rawData.trigger_metadata;
 
   /**
    * Gets the actions to execute when the rule is triggered.
@@ -381,9 +345,7 @@ export class AutoModeration
    * @returns Array of action objects
    * @see {@link https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-auto-moderation-action-object}
    */
-  get actions(): AutoModerationActionEntity[] {
-    return this.rawData.actions;
-  }
+  readonly actions = this.rawData.actions;
 
   /**
    * Indicates whether this rule is enabled.
@@ -393,9 +355,7 @@ export class AutoModeration
    *
    * @returns True if the rule is enabled, false otherwise
    */
-  get enabled(): boolean {
-    return this.rawData.enabled;
-  }
+  readonly enabled = this.rawData.enabled;
 
   /**
    * Gets the role IDs that are exempt from this rule.
@@ -404,9 +364,7 @@ export class AutoModeration
    *
    * @returns Array of exempt role IDs
    */
-  get exemptRoles(): Snowflake[] {
-    return this.rawData.exempt_roles;
-  }
+  readonly exemptRoles = this.rawData.exempt_roles;
 
   /**
    * Gets the channel IDs that are exempt from this rule.
@@ -415,9 +373,7 @@ export class AutoModeration
    *
    * @returns Array of exempt channel IDs
    */
-  get exemptChannels(): Snowflake[] {
-    return this.rawData.exempt_channels;
-  }
+  readonly exemptChannels = this.rawData.exempt_channels;
 
   /**
    * Gets the keywords that trigger this rule, if the rule is a keyword rule.
@@ -426,9 +382,7 @@ export class AutoModeration
    *
    * @returns Array of keyword strings, or undefined if not applicable
    */
-  get keywords(): string[] | undefined {
-    return this.triggerMetadata?.keyword_filter;
-  }
+  readonly keywords = this.triggerMetadata?.keyword_filter;
 
   /**
    * Gets the regex patterns used by this rule, if applicable.
@@ -437,9 +391,7 @@ export class AutoModeration
    *
    * @returns Array of regex pattern strings, or undefined if not applicable
    */
-  get regexPatterns(): string[] | undefined {
-    return this.triggerMetadata?.regex_patterns;
-  }
+  readonly regexPatterns = this.triggerMetadata?.regex_patterns;
 
   /**
    * Gets the keyword presets used by this rule, if applicable.
@@ -448,9 +400,7 @@ export class AutoModeration
    *
    * @returns Array of preset enum values, or undefined if not applicable
    */
-  get presets(): AutoModerationKeywordPresetType[] | undefined {
-    return this.triggerMetadata?.presets;
-  }
+  readonly presets = this.triggerMetadata?.presets;
 
   /**
    * Gets the keywords that are allowed and won't trigger this rule.
@@ -459,9 +409,7 @@ export class AutoModeration
    *
    * @returns Array of allowed strings, or undefined if not applicable
    */
-  get allowList(): string[] | undefined {
-    return this.triggerMetadata?.allow_list;
-  }
+  readonly allowList = this.triggerMetadata?.allow_list;
 
   /**
    * Gets the mention limit for this rule, if applicable.
@@ -470,9 +418,7 @@ export class AutoModeration
    *
    * @returns The mention limit as a number, or undefined if not applicable
    */
-  get mentionLimit(): number | undefined {
-    return this.triggerMetadata?.mention_total_limit;
-  }
+  readonly mentionLimit = this.triggerMetadata?.mention_total_limit;
 
   /**
    * Indicates whether mention raid protection is enabled for this rule.
@@ -481,9 +427,8 @@ export class AutoModeration
    *
    * @returns True if mention raid protection is enabled, undefined if not applicable
    */
-  get mentionRaidProtection(): boolean | undefined {
-    return this.triggerMetadata?.mention_raid_protection_enabled;
-  }
+  readonly mentionRaidProtection =
+    this.triggerMetadata?.mention_raid_protection_enabled;
 
   /**
    * Gets the keyword match strategy for this rule, if applicable.
@@ -492,9 +437,7 @@ export class AutoModeration
    *
    * @returns Array of match type enum values, or undefined if not applicable
    */
-  get keywordMatchTypes(): AutoModerationKeywordMatchType[] | undefined {
-    return this.triggerMetadata?.keyword_match_type;
-  }
+  readonly keywordMatchTypes = this.triggerMetadata?.keyword_match_type;
 
   /**
    * Checks if this rule has a block message action.

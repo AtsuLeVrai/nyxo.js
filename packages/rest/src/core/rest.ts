@@ -3,7 +3,7 @@ import { ApiVersion } from "@nyxojs/core";
 import { EventEmitter } from "eventemitter3";
 import { Pool } from "undici";
 import { z } from "zod/v4";
-import { FileHandler } from "../handlers/index.js";
+import { FileHandler, FileHandlerOptions } from "../handlers/index.js";
 import {
   RateLimitManager,
   RateLimitOptions,
@@ -114,9 +114,12 @@ export const PoolOptions = z.object({
   /**
    * Maximum size allowed for response body in bytes.
    * Helps prevent memory issues with extremely large responses.
-   * @default 0 (unlimited)
+   * @default 50 * 1024 * 1024 (50MB)
    */
-  maxResponseSize: z.number().int().default(-1),
+  maxResponseSize: z
+    .number()
+    .int()
+    .default(50 * 1024 * 1024),
 
   /**
    * Time in milliseconds to wait for connection establishment.
@@ -233,6 +236,13 @@ export const RestOptions = z.object({
    * @default {}
    */
   rateLimit: RateLimitOptions.prefault({}),
+
+  /**
+   * File handler options for file uploads.
+   * Controls how files are processed and uploaded.
+   * @default {}
+   */
+  file: FileHandlerOptions.prefault({}),
 });
 
 export type RestOptions = z.infer<typeof RestOptions>;
@@ -481,6 +491,12 @@ export class Rest extends EventEmitter<RestEvents> {
   readonly retry: RetryManager;
 
   /**
+   * File handler for processing file uploads.
+   * Handles multipart/form-data requests for file uploads.
+   */
+  readonly file: FileHandler;
+
+  /**
    * Validated configuration options.
    * All options are guaranteed to be valid through Zod validation.
    */
@@ -514,6 +530,9 @@ export class Rest extends EventEmitter<RestEvents> {
     // Initialize managers for rate limiting and retries
     this.rateLimiter = new RateLimitManager(this, this.#options.rateLimit);
     this.retry = new RetryManager(this, this.#options.retry);
+
+    // Initialize file handler for file uploads
+    this.file = new FileHandler(this.#options.file);
   }
 
   /**
@@ -664,6 +683,7 @@ export class Rest extends EventEmitter<RestEvents> {
   async destroy(): Promise<void> {
     await this.pool.close();
     this.rateLimiter.destroy();
+    this.file.destroy();
     this.removeAllListeners();
   }
 
@@ -778,15 +798,15 @@ export class Rest extends EventEmitter<RestEvents> {
       let responseBody: Buffer;
       const arrayBuffer = await response.body.arrayBuffer();
 
-      // Use the ArrayBuffer directly without intermediate copy
-      responseBody = Buffer.from(arrayBuffer);
-
       // Apply additional optimizations for small responses
       if (arrayBuffer.byteLength < 4096) {
         // Threshold for small responses
         responseBody = Buffer.allocUnsafe(arrayBuffer.byteLength);
         const view = new Uint8Array(arrayBuffer); // Create a view of the ArrayBuffer
         responseBody.set(view);
+      } else {
+        // Use the ArrayBuffer directly without intermediate copy
+        responseBody = Buffer.from(arrayBuffer);
       }
 
       // Handle empty responses (204 No Content or empty body)
@@ -916,7 +936,7 @@ export class Rest extends EventEmitter<RestEvents> {
     }
 
     // Create multipart form data with files and payload
-    const formData = await FileHandler.createFormData(
+    const formData = await this.file.createFormData(
       options.files,
       options.body,
     );

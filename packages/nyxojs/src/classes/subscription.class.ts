@@ -1,6 +1,5 @@
 import {
   ISO3166_ALPHA2_REGEX,
-  type Snowflake,
   type SubscriptionEntity,
   SubscriptionStatus,
 } from "@nyxojs/core";
@@ -36,9 +35,7 @@ export class Subscription
    *
    * @returns The subscription's ID as a Snowflake string
    */
-  get id(): Snowflake {
-    return this.rawData.id;
-  }
+  readonly id = this.rawData.id;
 
   /**
    * Gets the ID of the user who is subscribed.
@@ -48,9 +45,7 @@ export class Subscription
    *
    * @returns The user ID as a Snowflake string
    */
-  get userId(): Snowflake {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the list of SKU IDs subscribed to.
@@ -60,9 +55,7 @@ export class Subscription
    *
    * @returns Array of SKU IDs as Snowflake strings
    */
-  get skuIds(): Snowflake[] {
-    return this.rawData.sku_ids;
-  }
+  readonly skuIds = this.rawData.sku_ids;
 
   /**
    * Gets the list of entitlement IDs granted for this subscription.
@@ -72,9 +65,7 @@ export class Subscription
    *
    * @returns Array of entitlement IDs as Snowflake strings
    */
-  get entitlementIds(): Snowflake[] {
-    return this.rawData.entitlement_ids;
-  }
+  readonly entitlementIds = this.rawData.entitlement_ids;
 
   /**
    * Gets the list of SKUs that this user will be subscribed to at renewal.
@@ -84,9 +75,7 @@ export class Subscription
    *
    * @returns Array of renewal SKU IDs as Snowflake strings, or null
    */
-  get renewalSkuIds(): Snowflake[] | null {
-    return this.rawData.renewal_sku_ids;
-  }
+  readonly renewalSkuIds = this.rawData.renewal_sku_ids;
 
   /**
    * Gets the start date of the current subscription period.
@@ -95,9 +84,7 @@ export class Subscription
    *
    * @returns The period start date as a string
    */
-  get currentPeriodStart(): string {
-    return this.rawData.current_period_start;
-  }
+  readonly currentPeriodStart = this.rawData.current_period_start;
 
   /**
    * Gets the end date of the current subscription period.
@@ -107,9 +94,7 @@ export class Subscription
    *
    * @returns The period end date as a string
    */
-  get currentPeriodEnd(): string {
-    return this.rawData.current_period_end;
-  }
+  readonly currentPeriodEnd = this.rawData.current_period_end;
 
   /**
    * Gets the current status of the subscription.
@@ -120,9 +105,7 @@ export class Subscription
    * @returns The subscription status
    * @see {@link https://discord.com/developers/docs/resources/subscription#subscription-object-subscription-statuses}
    */
-  get status(): SubscriptionStatus {
-    return this.rawData.status;
-  }
+  readonly status = this.rawData.status;
 
   /**
    * Gets the timestamp when the subscription was canceled.
@@ -132,9 +115,7 @@ export class Subscription
    *
    * @returns The cancellation timestamp, or null if not canceled
    */
-  get canceledAt(): string | null {
-    return this.rawData.canceled_at;
-  }
+  readonly canceledAt = this.rawData.canceled_at;
 
   /**
    * Gets the country code of the payment source used to purchase the subscription.
@@ -144,9 +125,7 @@ export class Subscription
    *
    * @returns The country code as a string, or undefined if not available
    */
-  get country(): string | undefined {
-    return this.rawData.country;
-  }
+  readonly country = this.rawData.country;
 
   /**
    * Gets the Date object representing when the current period started.

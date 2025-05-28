@@ -1,4 +1,3 @@
-import type { Snowflake } from "@nyxojs/core";
 import type { MessagePollVoteEntity } from "@nyxojs/gateway";
 import type { PollVotersFetchParams } from "@nyxojs/rest";
 import { BaseClass } from "../bases/index.js";
@@ -30,9 +29,7 @@ export class MessagePollVote
    *
    * @returns The user's ID as a Snowflake string
    */
-  get userId(): Snowflake {
-    return this.rawData.user_id;
-  }
+  readonly userId = this.rawData.user_id;
 
   /**
    * Gets the ID of the channel containing the poll message.
@@ -41,9 +38,7 @@ export class MessagePollVote
    *
    * @returns The channel's ID as a Snowflake string
    */
-  get channelId(): Snowflake {
-    return this.rawData.channel_id;
-  }
+  readonly channelId = this.rawData.channel_id;
 
   /**
    * Gets the ID of the message containing the poll.
@@ -52,9 +47,7 @@ export class MessagePollVote
    *
    * @returns The message's ID as a Snowflake string
    */
-  get messageId(): Snowflake {
-    return this.rawData.message_id;
-  }
+  readonly messageId = this.rawData.message_id;
 
   /**
    * Gets the ID of the guild containing the message.
@@ -64,9 +57,7 @@ export class MessagePollVote
    *
    * @returns The guild's ID as a Snowflake string, or undefined for DMs
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Gets the ID of the poll answer that was selected or deselected.
@@ -75,9 +66,7 @@ export class MessagePollVote
    *
    * @returns The answer ID as a number
    */
-  get answerId(): number {
-    return this.rawData.answer_id;
-  }
+  readonly answerId = this.rawData.answer_id;
 
   /**
    * Fetches the message containing the poll.

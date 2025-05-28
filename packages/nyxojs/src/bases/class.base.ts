@@ -113,9 +113,6 @@ export abstract class BaseClass<T extends object> {
         }
       }
     }
-
-    // Initialize all getters to trigger their creation
-    this.#initAllGetters();
   }
 
   /**
@@ -260,46 +257,5 @@ export abstract class BaseClass<T extends object> {
     }
 
     return id ? { storeKey, id } : null;
-  }
-
-  /**
-   * Initializes all getter properties defined in the derived class.
-   *
-   * This private method triggers the execution of all getters to ensure they are
-   * properly initialized during object construction, which can be important for
-   * caching and other initialization side effects.
-   *
-   * @private
-   */
-  #initAllGetters(): void {
-    // Get all property descriptors from the prototype chain
-    const proto = Object.getPrototypeOf(this);
-    const propertyDescriptors = Object.getOwnPropertyDescriptors(proto);
-    const baseClassDescriptors = Object.getOwnPropertyDescriptors(
-      BaseClass.prototype,
-    );
-
-    // Only process true getter properties (properties with a get function but no set function)
-    for (const [propName, descriptor] of Object.entries(propertyDescriptors)) {
-      const isGetter = typeof descriptor.get === "function";
-      const isNotFromBaseClass = !Object.hasOwn(baseClassDescriptors, propName);
-      const isNotSpecialProperty = ![
-        "constructor",
-        "prototype",
-        "__proto__",
-      ].includes(propName);
-
-      if (isGetter && isNotFromBaseClass && isNotSpecialProperty) {
-        try {
-          // Access the getter to trigger initialization
-          // Using type assertion with keyof for type safety
-          const propertyKey = propName as keyof this;
-          // biome-ignore lint/complexity/noVoid: This is a workaround for the linter
-          void this[propertyKey];
-        } catch {
-          // Ignore errors during getter initialization
-        }
-      }
-    }
   }
 }

@@ -512,6 +512,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       // Connection successful - reset reconnect counter
       this.#reconnectCount = 0;
     } catch (error) {
+      // If any step fails, clean up the WebSocket connection
+      this.#closeWebSocket();
+
       // Connection failed - update state and rethrow error
       this.#state = "disconnected";
       throw error;

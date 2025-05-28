@@ -34,9 +34,7 @@ export class SoundboardSound
    *
    * @returns The sound's ID as a Snowflake string
    */
-  get soundId(): Snowflake {
-    return this.rawData.sound_id;
-  }
+  readonly soundId = this.rawData.sound_id;
 
   /**
    * The name of this sound.
@@ -45,9 +43,7 @@ export class SoundboardSound
    *
    * @returns The sound's name as a string
    */
-  get name(): string {
-    return this.rawData.name;
-  }
+  readonly name = this.rawData.name;
 
   /**
    * The volume of this sound.
@@ -56,9 +52,7 @@ export class SoundboardSound
    *
    * @returns The sound's volume as a number between 0 and 1
    */
-  get volume(): number {
-    return this.rawData.volume;
-  }
+  readonly volume = this.rawData.volume;
 
   /**
    * The ID of this sound's custom emoji, if any.
@@ -68,9 +62,7 @@ export class SoundboardSound
    *
    * @returns The emoji ID as a Snowflake string, or null if not using a custom emoji
    */
-  get emojiId(): Snowflake | null {
-    return this.rawData.emoji_id;
-  }
+  readonly emojiId = this.rawData.emoji_id;
 
   /**
    * The unicode character of this sound's standard emoji, if any.
@@ -80,9 +72,7 @@ export class SoundboardSound
    *
    * @returns The emoji name as a string, or null if not using a standard emoji
    */
-  get emojiName(): string | null {
-    return this.rawData.emoji_name;
-  }
+  readonly emojiName = this.rawData.emoji_name;
 
   /**
    * The ID of the guild this sound is in, if applicable.
@@ -92,9 +82,7 @@ export class SoundboardSound
    *
    * @returns The guild's ID as a Snowflake string, or undefined for default sounds
    */
-  get guildId(): Snowflake | undefined {
-    return this.rawData.guild_id;
-  }
+  readonly guildId = this.rawData.guild_id;
 
   /**
    * Whether this sound can be used.
@@ -104,9 +92,7 @@ export class SoundboardSound
    *
    * @returns True if the sound is available for use, false otherwise
    */
-  get available(): boolean {
-    return this.rawData.available;
-  }
+  readonly available = this.rawData.available;
 
   /**
    * The user who created this sound.
@@ -117,12 +103,9 @@ export class SoundboardSound
    *
    * @returns The User object who created the sound, or undefined if not available
    */
-  get user(): User | undefined {
-    if (!this.rawData.user) {
-      return undefined;
-    }
-    return new User(this.client, this.rawData.user);
-  }
+  readonly user = this.rawData.user
+    ? new User(this.client, this.rawData.user)
+    : undefined;
 
   /**
    * Indicates whether this sound has a custom emoji.
