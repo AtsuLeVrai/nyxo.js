@@ -71,7 +71,7 @@ export async function loadCommands(): Promise<void> {
  */
 export async function registerCommands(client: Client): Promise<void> {
   // Convert commands to API format
-  const commandsArray = Array.from(commands.values()).map((cmd) => cmd.data);
+  const commandsArray = commands.map((cmd) => cmd.data);
 
   try {
     console.log(

@@ -45,25 +45,21 @@ export type ClientOptions = z.infer<typeof ClientOptions>;
 export class Client extends EventEmitter<ClientEvents> {
   /**
    * REST API client for making direct API requests
-   * @private
    */
   readonly rest: Rest;
 
   /**
    * Gateway client for real-time communication with Discord
-   * @private
    */
   readonly gateway: Gateway;
 
   /**
    * Cache store for better performance
-   * @private
    */
   readonly cache: CacheManager;
 
   /**
    * The current authenticated user (bot user)
-   * @private
    */
   // @ts-expect-error: The user property is initialized in the constructor
   user: User;

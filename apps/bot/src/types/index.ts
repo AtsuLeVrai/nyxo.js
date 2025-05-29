@@ -3,6 +3,7 @@ import type {
   ClientEvents,
   GlobalCommandCreateOptions,
   GuildCommandCreateOptions,
+  Promisable,
   SlashCommandInteraction,
 } from "nyxo.js";
 
@@ -25,7 +26,7 @@ export interface SlashCommand {
   execute: (
     client: Client,
     interaction: SlashCommandInteraction,
-  ) => Promise<void> | void;
+  ) => Promisable<void>;
 }
 
 /**
@@ -77,7 +78,7 @@ export interface Event<K extends keyof ClientEvents> {
    * @param args - Event-specific arguments (automatically typed according to K)
    * @returns A resolved promise or void
    */
-  execute: (client: Client, ...args: ClientEvents[K]) => Promise<void> | void;
+  execute: (client: Client, ...args: ClientEvents[K]) => Promisable<void>;
 }
 
 /**

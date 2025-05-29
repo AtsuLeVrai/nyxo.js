@@ -175,6 +175,7 @@ async function buildWithRollup(paths, pkg) {
             privateMethod: true,
             importMeta: true,
             preserveAllComments: false,
+            topLevelAwait: true,
           },
           target: "esnext",
           loose: false,
@@ -183,7 +184,6 @@ async function buildWithRollup(paths, pkg) {
           transform: {
             decoratorVersion: "2022-03",
             decoratorMetadata: true,
-            useDefineForClassFields: true,
             optimizer: {
               simplify: true,
             },
@@ -197,9 +197,10 @@ async function buildWithRollup(paths, pkg) {
           strict: true,
           strictMode: true,
           lazy: false,
-          noInterop: false,
+          noInterop: true,
+          preserveImportMeta: true,
+          ignoreDynamic: false,
         },
-        sourceMaps: false,
         minify: false,
         inlineSourcesContent: true,
         isModule: true,
