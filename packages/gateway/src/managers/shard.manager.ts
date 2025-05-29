@@ -83,30 +83,6 @@ export interface ShardData {
   lastUpdated: number;
 
   /**
-   * Heartbeat and connection health metrics
-   */
-  health: {
-    /**
-     * WebSocket round-trip latency in milliseconds
-     *
-     * Measured between heartbeat send and acknowledgement receipt.
-     */
-    latency: number;
-
-    /**
-     * Timestamp of the last successful heartbeat acknowledgement
-     */
-    lastHeartbeat: number;
-
-    /**
-     * Number of consecutive failed heartbeats
-     *
-     * Reset to 0 when a successful heartbeat is received.
-     */
-    failedHeartbeats: number;
-  };
-
-  /**
    * Rate limit tracking for identify operations
    */
   rateLimit: {
@@ -195,18 +171,6 @@ export const ShardOptions = z
     force: z.boolean().default(false),
 
     /**
-     * Interval between health checks in milliseconds
-     */
-    interval: z.number().int().positive().default(30000),
-
-    /**
-     * Maximum time without heartbeat before reconnection (in milliseconds)
-     *
-     * Should be at least 2-3 times the expected heartbeat interval (typically 41.25s).
-     */
-    heartbeatTimeout: z.number().int().positive().default(45000),
-
-    /**
      * Whether to automatically reconnect failed shards
      */
     autoReconnect: z.boolean().default(true),
@@ -258,12 +222,6 @@ export class ShardManager {
    * @private
    */
   #shards = new Map<number, ShardData>();
-
-  /**
-   * Timer reference for periodic shard health checks
-   * @private
-   */
-  #healthCheckInterval: NodeJS.Timeout | null = null;
 
   /**
    * Mapping between shard IDs and their most recent session IDs
@@ -334,9 +292,7 @@ export class ShardManager {
     const totalGuildCount = this.#calculateTotalGuildCount();
 
     return (
-      Boolean(this.#options.totalShards) ||
-      totalGuildCount >= this.#options.largeThreshold ||
-      this.#options.force
+      totalGuildCount >= this.#options.largeThreshold || this.#options.force
     );
   }
 
@@ -379,9 +335,6 @@ export class ShardManager {
 
     // Spawn shards by bucket
     await this.#spawnShardBuckets(buckets, totalShards);
-
-    // Start health checks after initial spawn
-    this.startHealthChecks();
   }
 
   /**
@@ -415,7 +368,6 @@ export class ShardManager {
    * a complete reconnection of all shards is required.
    *
    * This method:
-   * - Stops the health check interval
    * - Marks all shards as disconnected
    * - Clears internal state and mapping data
    *
@@ -423,12 +375,6 @@ export class ShardManager {
    * that should be handled by the Gateway.
    */
   destroy(): void {
-    // Stop health check interval
-    if (this.#healthCheckInterval) {
-      clearInterval(this.#healthCheckInterval);
-      this.#healthCheckInterval = null;
-    }
-
     // Mark all shards as disconnected
     for (const [shardId] of this.#shards.entries()) {
       this.setShardStatus(shardId, "disconnected");
@@ -621,33 +567,6 @@ export class ShardManager {
   }
 
   /**
-   * Starts periodic health checks for shard connections
-   *
-   * Monitors heartbeat responses and reconnects failed shards if configured.
-   * The frequency of health checks is controlled by the interval option.
-   *
-   * Health checks evaluate:
-   * - Time since last heartbeat acknowledgement
-   * - Number of consecutive failed heartbeats
-   * - Connection latency
-   *
-   * Automatically reconnects shards after 3 consecutive failed heartbeats
-   * if autoReconnect is enabled in options.
-   */
-  startHealthChecks(): void {
-    // Stop existing interval if running
-    if (this.#healthCheckInterval) {
-      clearInterval(this.#healthCheckInterval);
-    }
-
-    // Start new health check interval
-    this.#healthCheckInterval = setInterval(
-      () => this.#runHealthChecks(),
-      this.#options.interval,
-    );
-  }
-
-  /**
    * Attempts to reconnect a disconnected shard
    *
    * Prefers session resumption if available, otherwise performs a new identify.
@@ -803,11 +722,6 @@ export class ShardManager {
           status: "disconnected",
           bucket: bucketId,
           lastUpdated: Date.now(),
-          health: {
-            latency: 0,
-            lastHeartbeat: Date.now(),
-            failedHeartbeats: 0,
-          },
           rateLimit: {
             remaining: DEFAULT_RATE_LIMIT.MAX_IDENTIFIES_PER_MINUTE,
             reset: Date.now() + DEFAULT_RATE_LIMIT.WINDOW_DURATION_MS,
@@ -860,10 +774,6 @@ export class ShardManager {
 
       case "ready": {
         if (oldStatus !== "ready") {
-          // Update health information
-          shard.health.lastHeartbeat = Date.now();
-          shard.health.failedHeartbeats = 0;
-
           // Store session ID for potential resumption later
           const sessionId = this.#gateway.sessionId;
           if (sessionId) {
@@ -903,42 +813,6 @@ export class ShardManager {
       // Other states like "connecting" don't need special handling
       default:
         break;
-    }
-  }
-
-  /**
-   * Performs periodic health assessment for all active shards
-   *
-   * Called by the health check interval to monitor all shards and
-   * trigger reconnection for unhealthy shards.
-   *
-   * @private
-   */
-  #runHealthChecks(): void {
-    const now = Date.now();
-
-    for (const [shardId, shard] of this.#shards.entries()) {
-      // Skip health checks for disconnected shards
-      if (shard.status === "disconnected") {
-        continue;
-      }
-
-      // Check for heartbeat timeouts
-      const timeSinceHeartbeat = now - shard.health.lastHeartbeat;
-      if (timeSinceHeartbeat > this.#options.heartbeatTimeout) {
-        // Increment failed heartbeats counter
-        shard.health.failedHeartbeats++;
-
-        // If too many failed heartbeats and auto-reconnect enabled, reconnect
-        if (shard.health.failedHeartbeats >= 3 && this.#options.autoReconnect) {
-          this.reconnectShard(shardId);
-        }
-      }
-
-      // Update latency for ready shards
-      if (shard.status === "ready") {
-        shard.health.latency = this.#gateway.heartbeat.latency;
-      }
     }
   }
 

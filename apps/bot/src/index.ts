@@ -51,6 +51,11 @@ const client = new Client({
     GatewayIntentsBits.GuildMessagePolls,
     GatewayIntentsBits.DirectMessagePolls,
   ] /* TODO: Temporary bypass with build:prod */ as number[],
+  compressionType: "zstd-stream",
+  encodingType: "etf",
+  shard: {
+    totalShards: "auto",
+  },
 });
 
 /**

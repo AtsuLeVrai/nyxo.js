@@ -21,6 +21,9 @@
     "name": "AtsuLeVrai",
     "url": "https://github.com/AtsuLeVrai"
   },
+  "scripts": {
+    "bench": "node --expose-gc benchmark.js"
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.52.8",
     "@rollup/plugin-commonjs": "^28.0.3",
@@ -34,8 +37,8 @@
     "oceanic.js": "^1.12.0",
     "pretty-bytes": "^6.1.1",
     "rollup": "^4.41.1",
-    "rollup-plugin-swc3": "^0.12.1",
     "rollup-plugin-cleanup": "^3.2.1",
+    "rollup-plugin-swc3": "^0.12.1",
     "typescript": "^5.8.3",
     "winston": "^3.17.0"
   }

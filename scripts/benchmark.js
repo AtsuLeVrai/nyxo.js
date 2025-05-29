@@ -1,80 +1,25 @@
 import { performance } from "node:perf_hooks";
 import { config } from "dotenv";
+import prettyBytes from "pretty-bytes";
 
-// Load environment variables from .env file
-const { parsed } = config({ debug: true });
+const { parsed } = config({ debug: false });
 
-/**
- * @typedef {Object} MemorySnapshot
- * @property {number} rss - Resident Set Size (total memory allocated)
- * @property {number} heapTotal - Total heap memory
- * @property {number} heapUsed - Used heap memory
- * @property {number} external - External memory usage
- * @property {number} arrayBuffers - ArrayBuffer memory usage
- * @property {number} timestamp - Timestamp when snapshot was taken
- */
-
-/**
- * @typedef {Object} BenchmarkResult
- * @property {string} library - Library name
- * @property {MemorySnapshot} initial - Initial memory snapshot
- * @property {MemorySnapshot} afterInit - Memory after initialization
- * @property {MemorySnapshot} afterReady - Memory after ready event
- * @property {MemorySnapshot} afterOperations - Memory after operations
- * @property {MemorySnapshot} final - Final memory snapshot
- * @property {number} initTime - Time taken for initialization (ms)
- * @property {number} readyTime - Time taken to reach ready state (ms)
- * @property {number} totalTime - Total benchmark time (ms)
- * @property {boolean} success - Whether benchmark completed successfully
- * @property {string|null} error - Error message if benchmark failed
- */
-
-/**
- * @typedef {Object} BenchmarkConfig
- * @property {string} token - Discord bot token
- * @property {number} timeout - Timeout for operations (ms)
- * @property {number} operationCount - Number of operations to perform
- * @property {boolean} enableGc - Whether to force garbage collection
- * @property {number} warmupTime - Time to wait before measurements (ms)
- */
-
-/**
- * Discord Libraries RAM Benchmark
- *
- * This class provides comprehensive benchmarking capabilities for various Discord.js libraries,
- * measuring memory usage patterns during initialization, connection, and common operations.
- */
 class DiscordBenchmark {
-  /**
-   * @private
-   * @type {BenchmarkConfig}
-   */
   #config;
-
-  /**
-   * @private
-   * @type {Map<string, Function>}
-   */
   #libraryInitializers = new Map();
-
-  /**
-   * @private
-   * @type {BenchmarkResult[]}
-   */
   #results = [];
 
-  /**
-   * Creates a new Discord benchmark instance
-   *
-   * @param {Partial<BenchmarkConfig>} config - Configuration options
-   */
   constructor(config = {}) {
     this.#config = {
       token: parsed?.DISCORD_TOKEN || "",
-      timeout: 30000,
+      timeout: 120000,
       operationCount: 100,
       enableGc: true,
-      warmupTime: 1000,
+      warmupTime: 5000,
+      cooldownTime: 10000,
+      gcCycles: 5,
+      memoryStabilizationTime: 3000,
+      rateLimitDelay: { min: 5000, max: 10000 },
       ...config,
     };
 
@@ -87,29 +32,15 @@ class DiscordBenchmark {
     this.#setupLibraryInitializers();
   }
 
-  /**
-   * Sets up initializer functions for each Discord library
-   *
-   * @private
-   */
   #setupLibraryInitializers() {
-    // Nyxo.js initializer
     this.#libraryInitializers.set("nyxo.js", async () => {
       const { Client } = await import("nyxo.js");
-      const client = new Client({
+      return new Client({
         token: this.#config.token,
         intents: 513,
       });
-
-      console.log("  ✅ Nyxo.js client created successfully");
-      console.log("  🔍 Client properties:", Object.keys(client));
-      console.log("  🔍 Gateway available:", Boolean(client.gateway));
-      console.log("  🔍 Rest available:", Boolean(client.rest));
-
-      return client;
     });
 
-    // Discord.js initializer
     this.#libraryInitializers.set("discord.js", async () => {
       const { Client } = await import("discord.js");
       return new Client({
@@ -117,7 +48,6 @@ class DiscordBenchmark {
       });
     });
 
-    // Eris initializer
     this.#libraryInitializers.set("eris", async () => {
       const Eris = await import("eris");
       const Client = Eris.default || Eris;
@@ -126,29 +56,31 @@ class DiscordBenchmark {
       });
     });
 
-    // Oceanic.js initializer
     this.#libraryInitializers.set("oceanic.js", async () => {
       const { Client } = await import("oceanic.js");
       return new Client({
         auth: `Bot ${this.#config.token}`,
-        gateway: {
-          intents: 513,
-        },
+        gateway: { intents: 513 },
       });
     });
   }
 
-  /**
-   * Takes a memory snapshot with additional metadata
-   *
-   * @private
-   * @returns {MemorySnapshot} Current memory usage snapshot
-   */
-  #takeMemorySnapshot() {
-    if (this.#config.enableGc && global.gc) {
-      global.gc();
+  async #forceGarbageCollection() {
+    if (!(this.#config.enableGc && global.gc)) {
+      return;
     }
 
+    for (let i = 0; i < this.#config.gcCycles; i++) {
+      global.gc();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, this.#config.memoryStabilizationTime),
+    );
+  }
+
+  #takeMemorySnapshot() {
     const memUsage = process.memoryUsage();
     return {
       ...memUsage,
@@ -156,324 +88,366 @@ class DiscordBenchmark {
     };
   }
 
-  /**
-   * Formats memory usage in MB for display
-   *
-   * @private
-   * @param {number} bytes - Memory usage in bytes
-   * @returns {string} Formatted memory usage
-   */
-  #formatMemory(bytes) {
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  #getRandomDelay() {
+    const { min, max } = this.#config.rateLimitDelay;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  /**
-   * Waits for a client to emit the ready event
-   *
-   * @private
-   * @param {Object} client - Discord client instance
-   * @param {string} library - Library name for event handling
-   * @returns {Promise<void>} Resolves when client is ready
-   */
   async #waitForReady(client, library) {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error(`Ready timeout for ${library}`));
       }, this.#config.timeout);
 
-      const readyHandler = (ready) => {
+      const readyHandler = () => {
         clearTimeout(timeout);
-        console.log(`  ✅ ${library} ready event received`);
-        if (ready?.user?.username) {
-          console.log(`  👤 User: ${ready.user.username}`);
-        }
         resolve();
       };
 
-      // Different libraries use different ready events
-      switch (library) {
-        case "discord.js":
-          client.once("ready", readyHandler);
-          break;
-        case "eris":
-          client.once("ready", readyHandler);
-          break;
-        case "nyxo.js":
-          client.once("ready", readyHandler);
-          break;
-        case "oceanic.js":
-          client.once("ready", readyHandler);
-          break;
-        default:
-          client.once("ready", readyHandler);
-      }
-    });
-  }
-
-  /**
-   * Connects nyxo.js client and waits for ready event
-   *
-   * @private
-   * @param {Object} client - Nyxo.js client instance
-   * @returns {Promise<void>} Resolves when client is ready
-   */
-  async #connectNyxo(client) {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error("Ready timeout for nyxo.js"));
-      }, this.#config.timeout);
-
-      const readyHandler = (ready) => {
-        clearTimeout(timeout);
-        console.log("  ✅ nyxo.js ready event received");
-        if (ready?.user?.username) {
-          console.log(`  👤 User: ${ready.user.username}`);
-        }
-        resolve();
-      };
-
-      // Listen for ready event BEFORE connecting
       client.once("ready", readyHandler);
-
-      // Connect to gateway
-      client.gateway.connect().catch(reject);
     });
   }
 
-  /**
-   * Performs common operations to stress test memory usage
-   *
-   * @private
-   * @param {Object} client - Discord client instance
-   * @param {string} library - Library name
-   * @returns {Promise<void>} Resolves when operations complete
-   */
-  async #performOperations(client, library) {
-    // Simulate cache operations and API calls
-    for (let i = 0; i < this.#config.operationCount; i++) {
-      try {
-        // Create mock data structures
-        const mockData = {
-          id: `${i}`,
-          name: `test-${i}`,
-          data: new Array(100)
-            .fill(i)
-            .map((n) => ({ value: n, timestamp: Date.now() })),
-        };
+  async #connectClient(client, library) {
+    const delay = this.#getRandomDelay();
+    await new Promise((resolve) => setTimeout(resolve, delay));
 
-        // Simulate different operations based on library capabilities
-        await this.#simulateLibraryOperations(client, library, mockData);
+    switch (library) {
+      case "discord.js":
+        await client.login(this.#config.token);
+        break;
+      case "nyxo.js":
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error("Ready timeout for nyxo.js"));
+          }, this.#config.timeout);
 
-        // Small delay to prevent overwhelming
-        if (i % 10 === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 10));
-        }
-      } catch (error) {
-        // Continue with other operations even if some fail
-        console.warn(`Operation ${i} failed for ${library}:`, error.message);
-      }
+          const readyHandler = () => {
+            clearTimeout(timeout);
+            resolve();
+          };
+
+          client.once("ready", readyHandler);
+          client.gateway.connect().catch(reject);
+        });
+      case "eris":
+      case "oceanic.js":
+        client.connect();
+        break;
+      default:
+        client.connect();
+    }
+
+    if (library !== "nyxo.js") {
+      await this.#waitForReady(client, library);
     }
   }
 
-  /**
-   * Simulates library-specific operations
-   *
-   * @private
-   * @param {Object} client - Discord client instance
-   * @param {string} library - Library name
-   * @param {Object} mockData - Mock data for operations
-   * @returns {Promise<void>} Resolves when simulation completes
-   */
-  async #simulateLibraryOperations(client, library, mockData) {
-    switch (library) {
-      case "discord.js":
-        // Simulate discord.js specific operations
-        if (client.guilds?.cache) {
-          const guilds = Array.from(client.guilds.cache.values());
-          for (const guild of guilds) {
-            const { name, id } = guild;
+  async #performRealisticOperations(client, library) {
+    const operations = [];
+
+    for (let i = 0; i < this.#config.operationCount; i++) {
+      try {
+        const mockData = this.#generateMockData(i);
+
+        await this.#simulateLibraryOperations(client, library, mockData);
+
+        const memoryPressure = this.#createMemoryPressure();
+        operations.push(memoryPressure);
+
+        if (i % 20 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          if (operations.length > 50) {
+            operations.splice(0, 25);
           }
         }
-        break;
+      } catch (_error) {}
+    }
 
-      case "eris":
-        // Simulate Eris specific operations
-        if (client.guilds) {
-          for (const guild of Object.values(client.guilds)) {
-            if (guild?.name && guild.id) {
-              const { name, id } = guild;
+    operations.length = 0;
+  }
+
+  #generateMockData(index) {
+    return {
+      id: `${index}`,
+      name: `test-object-${index}`,
+      timestamp: Date.now(),
+      data: new Array(200).fill(0).map((_, i) => ({
+        value: index + i,
+        nested: {
+          property: `nested-${i}`,
+          array: new Array(10).fill(index),
+          timestamp: Date.now(),
+        },
+      })),
+      largeString: "x".repeat(1000),
+      buffer: Buffer.alloc(500, index % 256),
+    };
+  }
+
+  #createMemoryPressure() {
+    return {
+      arrays: new Array(100)
+        .fill(0)
+        .map(() => new Array(50).fill(Math.random())),
+      objects: new Array(50).fill(0).map((_, i) => ({
+        id: i,
+        data: new Array(20).fill(0).map(() => ({ value: Math.random() })),
+      })),
+      strings: new Array(20)
+        .fill(0)
+        .map(() => Math.random().toString(36).repeat(100)),
+    };
+  }
+
+  async #simulateLibraryOperations(client, library, mockData) {
+    const operations = {
+      "discord.js": () => {
+        if (client.guilds?.cache) {
+          const guilds = Array.from(client.guilds.cache.values());
+          const _processed = guilds.map((guild) => ({
+            name: guild.name,
+            id: guild.id,
+            memberCount: guild.memberCount,
+            channels: guild.channels?.cache?.size || 0,
+          }));
+
+          if (client.channels?.cache) {
+            const channels = Array.from(client.channels.cache.values());
+            for (const channel of channels) {
+              if (channel.name && channel.id) {
+                ({ name: channel.name, id: channel.id, type: channel.type });
+              }
             }
           }
         }
-        break;
-
-      case "nyxo.js": {
-        // Simulate nyxo.js specific operations
-        if (client.cache?.guilds) {
-          for (const guild of client.cache.guilds.values()) {
-            const { name, id } = guild;
-          }
-        }
-        break;
-      }
-
-      case "oceanic.js":
-        // Simulate Oceanic.js specific operations
+      },
+      eris: () => {
         if (client.guilds) {
-          for (const guild of client.guilds) {
-            const { name, id } = guild;
-          }
+          const _processed = Object.values(client.guilds).map((guild) => ({
+            name: guild?.name,
+            id: guild?.id,
+            memberCount: guild?.memberCount,
+            channels: Object.keys(guild?.channels || {}).length,
+          }));
         }
-        break;
+      },
+      "nyxo.js": () => {
+        if (client.cache?.guilds) {
+          const _processed = client.cache.guilds.map((guild) => ({
+            name: guild.name,
+            id: guild.id,
+            memberCount: guild.memberCount,
+          }));
+        }
+      },
+      "oceanic.js": () => {
+        if (client.guilds) {
+          const _processed = Array.from(client.guilds.values()).map(
+            (guild) => ({
+              name: guild.name,
+              id: guild.id,
+              memberCount: guild.memberCount,
+            }),
+          );
+        }
+      },
+    };
 
-      default:
-      // No specific operations for unknown libraries
+    operations[library]?.();
+
+    const tempArrays = [
+      new Array(500).fill(mockData),
+      new Array(300).fill(0).map((_, i) => ({ ...mockData, index: i })),
+      new Array(200).fill(0).map(() => JSON.parse(JSON.stringify(mockData))),
+    ];
+
+    for (const arr of tempArrays) {
+      arr.forEach((item, index) => {
+        const _processed = {
+          ...item,
+          processed: true,
+          index,
+          timestamp: Date.now(),
+          hash: this.#simpleHash(JSON.stringify(item)),
+        };
+      });
     }
 
-    // Common operations for all libraries
-    // Create temporary objects to simulate memory usage
-    const tempArray = new Array(1000).fill(mockData);
-    tempArray.forEach((item, index) => {
-      const _processed = { ...item, processed: true, index };
-    });
+    tempArrays.length = 0;
   }
 
-  /**
-   * Benchmarks a specific Discord library
-   *
-   * @private
-   * @param {string} library - Library name to benchmark
-   * @returns {Promise<BenchmarkResult>} Benchmark results
-   */
+  #simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash &= hash;
+    }
+    return hash;
+  }
+
+  async #forceCleanupClient(client, library) {
+    try {
+      const cleanupMethods = {
+        "nyxo.js": async () => {
+          if (client.destroy) {
+            await client.destroy();
+          }
+          if (client.gateway?.disconnect) {
+            await client.gateway.disconnect();
+          }
+        },
+        "discord.js": async () => {
+          if (client.destroy) {
+            await client.destroy();
+          }
+          if (client.ws?.destroy) {
+            client.ws.destroy();
+          }
+        },
+        eris: async () => {
+          if (client.disconnect) {
+            client.disconnect({ reconnect: false });
+          }
+          if (client.shards) {
+            for (const shard of client.shards) {
+              if (shard.disconnect) {
+                shard.disconnect({ reconnect: false });
+              }
+            }
+          }
+        },
+        "oceanic.js": async () => {
+          if (client.disconnect) {
+            await client.disconnect();
+          }
+          if (client.rest?.destroy) {
+            client.rest.destroy();
+          }
+        },
+      };
+
+      const cleanup = cleanupMethods[library];
+      if (cleanup) {
+        await cleanup();
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      if (client.removeAllListeners) {
+        client.removeAllListeners();
+      }
+
+      for (const key of Object.keys(client)) {
+        try {
+          if (client[key] && typeof client[key] === "object") {
+            client[key] = null;
+          }
+        } catch (_e) {}
+      }
+    } catch (error) {
+      console.warn(`Cleanup warning for ${library}: ${error.message}`);
+    }
+  }
+
   async #benchmarkLibrary(library) {
-    console.log(`\n🔍 Benchmarking ${library}...`);
+    console.log(`\nBenchmarking ${library}...`);
 
     const result = {
       library,
-      initial: null,
+      baseline: null,
       afterInit: null,
       afterReady: null,
       afterOperations: null,
-      final: null,
+      afterCleanup: null,
       initTime: 0,
       readyTime: 0,
+      operationsTime: 0,
+      cleanupTime: 0,
       totalTime: 0,
+      peakMemory: 0,
+      memoryLeak: 0,
       success: false,
       error: null,
     };
 
     const startTime = performance.now();
+    let client = null;
 
     try {
-      // Take initial memory snapshot
-      result.initial = this.#takeMemorySnapshot();
-      console.log(
-        `  📊 Initial memory: ${this.#formatMemory(result.initial.heapUsed)}`,
-      );
+      await this.#forceGarbageCollection();
+      result.baseline = this.#takeMemorySnapshot();
 
-      // Initialize client
       const initStart = performance.now();
       const initializer = this.#libraryInitializers.get(library);
-
       if (!initializer) {
         throw new Error(`No initializer found for ${library}`);
       }
 
-      const client = await initializer();
+      client = await initializer();
       result.initTime = performance.now() - initStart;
-
-      // Memory after initialization
       result.afterInit = this.#takeMemorySnapshot();
-      console.log(
-        `  🚀 After init: ${this.#formatMemory(result.afterInit.heapUsed)} (+${this.#formatMemory(result.afterInit.heapUsed - result.initial.heapUsed)})`,
-      );
 
-      // Connect and wait for ready
       const readyStart = performance.now();
-
-      if (library === "discord.js") {
-        await client.login(this.#config.token);
-      } else if (library === "nyxo.js") {
-        // Special handling for nyxo.js - listen for ready BEFORE connecting
-        await this.#connectNyxo(client);
-      } else if (library === "eris" || library === "oceanic.js") {
-        client.connect();
-      }
-
-      // Wait for ready event for non-nyxo libraries
-      if (library !== "nyxo.js") {
-        await this.#waitForReady(client, library);
-      }
-
+      await this.#connectClient(client, library);
       result.readyTime = performance.now() - readyStart;
-
-      // Memory after ready
       result.afterReady = this.#takeMemorySnapshot();
-      console.log(
-        `  ✅ After ready: ${this.#formatMemory(result.afterReady.heapUsed)} (+${this.#formatMemory(result.afterReady.heapUsed - result.afterInit.heapUsed)})`,
-      );
 
-      // Wait for warmup
       await new Promise((resolve) =>
         setTimeout(resolve, this.#config.warmupTime),
       );
 
-      // Perform operations
-      console.log(
-        `  ⚙️  Performing ${this.#config.operationCount} operations...`,
-      );
-      await this.#performOperations(client, library);
-
-      // Memory after operations
+      const operationsStart = performance.now();
+      await this.#performRealisticOperations(client, library);
+      result.operationsTime = performance.now() - operationsStart;
       result.afterOperations = this.#takeMemorySnapshot();
-      console.log(
-        `  🏋️  After operations: ${this.#formatMemory(result.afterOperations.heapUsed)} (+${this.#formatMemory(result.afterOperations.heapUsed - result.afterReady.heapUsed)})`,
-      );
 
-      // Cleanup
-      if (library === "nyxo.js" && client.destroy) {
-        await client.destroy();
-      } else if (client.destroy) {
-        await client.destroy();
-      } else if (client.disconnect) {
-        client.disconnect();
-      }
+      const cleanupStart = performance.now();
+      await this.#forceCleanupClient(client, library);
+      result.cleanupTime = performance.now() - cleanupStart;
 
-      // Final memory snapshot
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for cleanup
-      result.final = this.#takeMemorySnapshot();
+      client = null;
+
+      await this.#forceGarbageCollection();
+      result.afterCleanup = this.#takeMemorySnapshot();
 
       result.totalTime = performance.now() - startTime;
+      result.peakMemory = Math.max(
+        result.afterInit?.heapUsed || 0,
+        result.afterReady?.heapUsed || 0,
+        result.afterOperations?.heapUsed || 0,
+      );
+      result.memoryLeak =
+        (result.afterCleanup?.heapUsed || 0) - (result.baseline?.heapUsed || 0);
       result.success = true;
 
       console.log(
-        `  🏁 Final memory: ${this.#formatMemory(result.final.heapUsed)}`,
+        `${library} completed: ${result.totalTime.toFixed(2)}ms, Peak: ${prettyBytes(result.peakMemory)}, Leak: ${prettyBytes(result.memoryLeak)}`,
       );
-      console.log(`  ⏱️  Total time: ${result.totalTime.toFixed(2)}ms`);
     } catch (error) {
       result.error = error.message;
       result.totalTime = performance.now() - startTime;
-      console.error(`  ❌ Error: ${error.message}`);
+      console.error(`${library} failed: ${error.message}`);
 
-      // Take final snapshot even on error
-      result.final = this.#takeMemorySnapshot();
+      if (client) {
+        try {
+          await this.#forceCleanupClient(client, library);
+        } catch (_cleanupError) {}
+      }
+
+      await this.#forceGarbageCollection();
+      result.afterCleanup = this.#takeMemorySnapshot();
     }
 
     return result;
   }
 
-  /**
-   * Runs benchmarks for all configured libraries
-   *
-   * @returns {Promise<BenchmarkResult[]>} Array of benchmark results
-   */
   async runBenchmarks() {
-    console.log("🚀 Starting Discord Libraries RAM Benchmark");
-    console.log("📝 Configuration:");
-    console.log(`   - Timeout: ${this.#config.timeout}ms`);
-    console.log(`   - Operations: ${this.#config.operationCount}`);
-    console.log(`   - GC Enabled: ${this.#config.enableGc}`);
-    console.log(`   - Warmup Time: ${this.#config.warmupTime}ms`);
+    console.log("Starting Discord Libraries Benchmark");
+    console.log(
+      `Configuration: ${this.#config.operationCount} operations, ${this.#config.timeout}ms timeout`,
+    );
 
     this.#results = [];
 
@@ -482,20 +456,26 @@ class DiscordBenchmark {
         const result = await this.#benchmarkLibrary(library);
         this.#results.push(result);
 
-        // Wait between benchmarks to allow cleanup
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        console.log(`Cooling down for ${this.#config.cooldownTime / 1000}s...`);
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.#config.cooldownTime),
+        );
       } catch (error) {
-        console.error(`Failed to benchmark ${library}:`, error);
+        console.error(`Critical failure for ${library}: ${error.message}`);
         this.#results.push({
           library,
-          initial: null,
+          baseline: null,
           afterInit: null,
           afterReady: null,
           afterOperations: null,
-          final: null,
+          afterCleanup: null,
           initTime: 0,
           readyTime: 0,
+          operationsTime: 0,
+          cleanupTime: 0,
           totalTime: 0,
+          peakMemory: 0,
+          memoryLeak: 0,
           success: false,
           error: error.message,
         });
@@ -505,86 +485,62 @@ class DiscordBenchmark {
     return this.#results;
   }
 
-  /**
-   * Generates a comprehensive report of benchmark results
-   *
-   * @returns {string} Formatted benchmark report
-   */
   generateReport() {
     if (this.#results.length === 0) {
-      return "No benchmark results available. Run benchmarks first.";
+      return "No benchmark results available.";
     }
 
-    let report = "\n📊 DISCORD LIBRARIES RAM BENCHMARK REPORT\n";
-    report += `${"=".repeat(50)}\n\n`;
-
-    // Summary table
-    report += "📋 SUMMARY\n";
-    report += `${"-".repeat(20)}\n`;
+    let report = "\nDISCORD LIBRARIES BENCHMARK REPORT\n";
+    report += `${"=".repeat(60)}\n\n`;
 
     const successfulResults = this.#results.filter((r) => r.success);
 
     if (successfulResults.length === 0) {
-      report += "❌ No successful benchmarks to report.\n\n";
-
-      // Show errors
-      report += "🚨 ERRORS\n";
-      report += `${"-".repeat(20)}\n`;
+      report += "No successful benchmarks.\n\n";
+      report += "ERRORS:\n";
       for (const result of this.#results) {
         if (!result.success) {
           report += `${result.library}: ${result.error}\n`;
         }
       }
-
       return report;
     }
 
-    // Memory usage comparison table
+    report += "MEMORY USAGE SUMMARY\n";
+    report += `${"-".repeat(30)}\n`;
+
     const headers = [
       "Library",
-      "Initial",
+      "Baseline",
       "After Init",
       "After Ready",
       "After Ops",
-      "Final",
-      "Peak Usage",
+      "After Cleanup",
+      "Peak",
+      "Leak",
     ];
     const maxLengths = headers.map((h) => h.length);
 
-    const tableData = successfulResults.map((result) => {
-      const peak = Math.max(
-        result.initial?.heapUsed || 0,
-        result.afterInit?.heapUsed || 0,
-        result.afterReady?.heapUsed || 0,
-        result.afterOperations?.heapUsed || 0,
-        result.final?.heapUsed || 0,
-      );
+    const tableData = successfulResults.map((result) => [
+      result.library,
+      prettyBytes(result.baseline?.heapUsed || 0),
+      prettyBytes(result.afterInit?.heapUsed || 0),
+      prettyBytes(result.afterReady?.heapUsed || 0),
+      prettyBytes(result.afterOperations?.heapUsed || 0),
+      prettyBytes(result.afterCleanup?.heapUsed || 0),
+      prettyBytes(result.peakMemory),
+      prettyBytes(result.memoryLeak),
+    ]);
 
-      return [
-        result.library,
-        this.#formatMemory(result.initial?.heapUsed || 0),
-        this.#formatMemory(result.afterInit?.heapUsed || 0),
-        this.#formatMemory(result.afterReady?.heapUsed || 0),
-        this.#formatMemory(result.afterOperations?.heapUsed || 0),
-        this.#formatMemory(result.final?.heapUsed || 0),
-        this.#formatMemory(peak),
-      ];
-    });
-
-    // Calculate column widths
     for (const row of tableData) {
       row.forEach((cell, i) => {
         maxLengths[i] = Math.max(maxLengths[i], cell.length);
       });
     }
 
-    // Build table
     const separator = `+${maxLengths.map((len) => "-".repeat(len + 2)).join("+")}+\n`;
-
     report += separator;
-    report += `|${headers
-      .map((header, i) => ` ${header.padEnd(maxLengths[i])} `)
-      .join("|")}|\n`;
+    report += `|${headers.map((header, i) => ` ${header.padEnd(maxLengths[i])} `).join("|")}|\n`;
     report += separator;
 
     for (const row of tableData) {
@@ -592,57 +548,38 @@ class DiscordBenchmark {
     }
     report += separator;
 
-    // Performance metrics
-    report += "\n⏱️  PERFORMANCE METRICS\n";
+    report += "\nPERFORMANCE METRICS\n";
     report += `${"-".repeat(25)}\n`;
 
     for (const result of successfulResults) {
       report += `${result.library}:\n`;
-      report += `  • Initialization: ${result.initTime.toFixed(2)}ms\n`;
-      report += `  • Ready Time: ${result.readyTime.toFixed(2)}ms\n`;
-      report += `  • Total Time: ${result.totalTime.toFixed(2)}ms\n`;
-
-      const memoryIncrease =
-        (result.afterOperations?.heapUsed || 0) -
-        (result.initial?.heapUsed || 0);
-      report += `  • Memory Increase: ${this.#formatMemory(memoryIncrease)}\n\n`;
+      report += `  Initialization: ${result.initTime.toFixed(2)}ms\n`;
+      report += `  Ready Time: ${result.readyTime.toFixed(2)}ms\n`;
+      report += `  Operations: ${result.operationsTime.toFixed(2)}ms\n`;
+      report += `  Cleanup: ${result.cleanupTime.toFixed(2)}ms\n`;
+      report += `  Total: ${result.totalTime.toFixed(2)}ms\n`;
+      report += `  Memory Efficiency: ${(result.peakMemory / (1024 * 1024)).toFixed(2)}MB peak\n\n`;
     }
 
-    // Rankings
-    report += "🏆 RANKINGS\n";
-    report += `${"-".repeat(15)}\n`;
-
-    // Memory efficiency ranking (lowest peak usage wins)
-    const memoryRanking = [...successfulResults].sort((a, b) => {
-      const peakA = Math.max(
-        a.afterInit?.heapUsed || 0,
-        a.afterReady?.heapUsed || 0,
-        a.afterOperations?.heapUsed || 0,
-      );
-      const peakB = Math.max(
-        b.afterInit?.heapUsed || 0,
-        b.afterReady?.heapUsed || 0,
-        b.afterOperations?.heapUsed || 0,
-      );
-      return peakA - peakB;
-    });
-
-    report += "Memory Efficiency (lowest peak usage):\n";
-    memoryRanking.forEach((result, index) => {
-      const peak = Math.max(
-        result.afterInit?.heapUsed || 0,
-        result.afterReady?.heapUsed || 0,
-        result.afterOperations?.heapUsed || 0,
-      );
-      const medal =
-        index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "  ";
-      report += `${medal} ${index + 1}. ${result.library}: ${this.#formatMemory(peak)}\n`;
-    });
-
-    // Speed ranking (fastest total time wins)
+    const memoryRanking = [...successfulResults].sort(
+      (a, b) => a.peakMemory - b.peakMemory,
+    );
     const speedRanking = [...successfulResults].sort(
       (a, b) => a.totalTime - b.totalTime,
     );
+    const leakRanking = [...successfulResults].sort(
+      (a, b) => a.memoryLeak - b.memoryLeak,
+    );
+
+    report += "RANKINGS\n";
+    report += `${"-".repeat(15)}\n`;
+
+    report += "Memory Efficiency (lowest peak usage):\n";
+    memoryRanking.forEach((result, index) => {
+      const medal =
+        index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "  ";
+      report += `${medal} ${index + 1}. ${result.library}: ${prettyBytes(result.peakMemory)}\n`;
+    });
 
     report += "\nSpeed (fastest total time):\n";
     speedRanking.forEach((result, index) => {
@@ -651,28 +588,28 @@ class DiscordBenchmark {
       report += `${medal} ${index + 1}. ${result.library}: ${result.totalTime.toFixed(2)}ms\n`;
     });
 
-    // Failed benchmarks
+    report += "\nMemory Leak Resistance (smallest leak):\n";
+    leakRanking.forEach((result, index) => {
+      const medal =
+        index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "  ";
+      report += `${medal} ${index + 1}. ${result.library}: ${prettyBytes(result.memoryLeak)}\n`;
+    });
+
     const failedResults = this.#results.filter((r) => !r.success);
     if (failedResults.length > 0) {
-      report += "\n❌ FAILED BENCHMARKS\n";
+      report += "\nFAILED BENCHMARKS\n";
       report += `${"-".repeat(20)}\n`;
-
       for (const result of failedResults) {
         report += `${result.library}: ${result.error}\n`;
       }
     }
 
-    report += `\n${"=".repeat(50)}\n`;
-    report += `📊 Benchmark completed at ${new Date().toISOString()}\n`;
+    report += `\n${"=".repeat(60)}\n`;
+    report += `Benchmark completed: ${new Date().toISOString()}\n`;
 
     return report;
   }
 
-  /**
-   * Exports benchmark results to JSON format
-   *
-   * @returns {Object} JSON-serializable benchmark data
-   */
   exportResults() {
     return {
       timestamp: new Date().toISOString(),
@@ -682,54 +619,50 @@ class DiscordBenchmark {
         totalLibraries: this.#results.length,
         successfulBenchmarks: this.#results.filter((r) => r.success).length,
         failedBenchmarks: this.#results.filter((r) => !r.success).length,
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
       },
     };
   }
 }
 
-/**
- * Main execution function
- *
- * @returns {Promise<void>} Resolves when benchmark completes
- */
 async function main() {
   try {
-    // Enable garbage collection for more accurate memory measurements
-    if (global.gc) {
-      console.log("✅ Garbage collection enabled");
-    } else {
+    if (!global.gc) {
       console.log(
-        "⚠️  Garbage collection not available. Run with --expose-gc for better accuracy.",
+        "WARNING: Garbage collection not available. Run with --expose-gc for accurate results.",
       );
     }
 
-    // Create benchmark instance
     const benchmark = new DiscordBenchmark({
-      timeout: 60000, // Increased timeout for nyxo.js
-      operationCount: 50,
+      timeout: 180000,
+      operationCount: 150,
       enableGc: true,
-      warmupTime: 2000,
+      warmupTime: 5000,
+      cooldownTime: 15000,
+      gcCycles: 7,
+      memoryStabilizationTime: 5000,
+      rateLimitDelay: { min: 3000, max: 8000 },
     });
 
-    // Run benchmarks
     const _results = await benchmark.runBenchmarks();
-
-    // Generate and display report
     const report = benchmark.generateReport();
     console.log(report);
 
-    // Export results to JSON file
     const exportData = benchmark.exportResults();
     const fs = await import("node:fs/promises");
     const filename = `discord-benchmark-${Date.now()}.json`;
 
     await fs.writeFile(filename, JSON.stringify(exportData, null, 2));
-    console.log(`📄 Results exported to ${filename}`);
+    console.log(`Results exported to ${filename}`);
   } catch (error) {
-    console.error("💥 Benchmark failed:", error);
+    console.error(`Benchmark failed: ${error.message}`);
     process.exit(1);
   }
 }
 
-// Run if called directly
-main().catch(console.error);
+main().catch((error) => {
+  console.error(`Unexpected error: ${error.message}`);
+  process.exit(1);
+});

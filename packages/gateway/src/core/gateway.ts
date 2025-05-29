@@ -70,6 +70,16 @@ export const GatewayOptions = z.object({
   ]),
 
   /**
+   * Wait for the connection to be ready before processing commands
+   *
+   * If true, the client will wait for the READY event
+   * before allowing commands to be processed.
+   *
+   * @default true
+   */
+  waitForReady: z.boolean().default(true),
+
+  /**
    * Discord API version to use
    *
    * @default ApiVersion.V10
@@ -196,6 +206,38 @@ interface SessionInfo {
  */
 export class Gateway extends EventEmitter<GatewayEvents> {
   /**
+   * Heartbeat manager for maintaining the Gateway connection
+   *
+   * Provides access to heartbeat functionality including latency tracking,
+   * manual heartbeat sending, and connection health monitoring.
+   */
+  readonly heartbeat: HeartbeatManager;
+
+  /**
+   * Shard manager for multi-shard bot operations
+   *
+   * Handles shard allocation, guild distribution, and shard status tracking.
+   * Provides methods for managing individual shards and monitoring their health.
+   */
+  readonly shard: ShardManager;
+
+  /**
+   * Compression service for payload optimization
+   *
+   * Handles compression and decompression of Gateway payloads to reduce
+   * bandwidth usage. Supports zlib-stream and zstd-stream compression.
+   */
+  readonly compression: CompressionService;
+
+  /**
+   * Encoding service for payload serialization
+   *
+   * Handles encoding and decoding of Gateway payloads between raw data
+   * and structured objects. Supports JSON and ETF encoding formats.
+   */
+  readonly encoding: EncodingService;
+
+  /**
    * Current WebSocket connection to Discord Gateway
    * Handles the underlying WebSocket communication protocol
    * Set to null when disconnected
@@ -239,34 +281,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   readonly #rest: Rest;
 
   /**
-   * Manages heartbeat lifecycle for maintaining the connection
-   * Handles sending heartbeats and tracking acknowledgements
-   * @private
-   */
-  readonly #heartbeat: HeartbeatManager;
-
-  /**
-   * Manages sharding for multi-shard bots
-   * Handles shard allocation, guild distribution, and shard status tracking
-   * @private
-   */
-  readonly #shard: ShardManager;
-
-  /**
-   * Handles payload compression/decompression
-   * Reduces bandwidth usage when communicating with Discord
-   * @private
-   */
-  readonly #compression: CompressionService;
-
-  /**
-   * Handles payload encoding/decoding (JSON, ETF)
-   * Transforms payloads between raw and structured formats
-   * @private
-   */
-  readonly #encoding: EncodingService;
-
-  /**
    * Gateway configuration options
    * Controls gateway behavior, timeouts, retry logic, etc.
    * @private
@@ -301,10 +315,10 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
     // Initialize dependencies
     this.#rest = rest;
-    this.#heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
-    this.#shard = new ShardManager(this, this.#options.shard);
-    this.#compression = new CompressionService(this.#options.compressionType);
-    this.#encoding = new EncodingService(this.#options.encodingType);
+    this.heartbeat = new HeartbeatManager(this, this.#options.heartbeat);
+    this.shard = new ShardManager(this, this.#options.shard);
+    this.compression = new CompressionService(this.#options.compressionType);
+    this.encoding = new EncodingService(this.#options.encodingType);
   }
 
   /**
@@ -362,7 +376,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    * @returns Latency in milliseconds
    */
   get latency(): number {
-    return this.#heartbeat.latency;
+    return this.heartbeat.latency;
   }
 
   /**
@@ -409,32 +423,6 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   get resumeUrl(): string | null {
     return this.#session.resumeUrl;
-  }
-
-  /**
-   * Gets the HeartbeatManager instance
-   *
-   * Provides access to the heartbeat manager for monitoring heartbeat status
-   * and metrics. The heartbeat manager handles the periodic heartbeats required
-   * by Discord to maintain the connection.
-   *
-   * @returns The HeartbeatManager instance
-   */
-  get heartbeat(): HeartbeatManager {
-    return this.#heartbeat;
-  }
-
-  /**
-   * Gets the ShardManager instance
-   *
-   * Provides access to the shard manager for multi-shard bot implementations.
-   * The shard manager handles shard allocation, guild distribution, and
-   * tracking shard status.
-   *
-   * @returns The ShardManager instance
-   */
-  get shard(): ShardManager {
-    return this.#shard;
   }
 
   /**
@@ -490,13 +478,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       const [gatewayInfo, guilds] = await Promise.all([
         this.#rest.gateway.fetchBotGatewayInfo(),
         this.#rest.users.fetchCurrentGuilds(),
-        this.#encoding.initialize(),
-        this.#compression.initialize(),
+        this.encoding.initialize(),
+        this.compression.initialize(),
       ]);
 
       // Initialize sharding if enabled
-      if (this.#shard.isEnabled) {
-        await this.#shard.spawn(
+      if (this.shard.isEnabled) {
+        await this.shard.spawn(
           guilds.length,
           gatewayInfo.session_start_limit.max_concurrency,
           gatewayInfo.shards,
@@ -507,7 +495,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       await this.#connectToGateway(gatewayInfo.url);
 
       // Wait for the READY or RESUMED event to consider connection complete
-      await this.#waitForReady();
+      if (this.#options.waitForReady) {
+        await this.#waitForReady();
+      }
 
       // Connection successful - reset reconnect counter
       this.#reconnectCount = 0;
@@ -627,7 +617,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     };
 
     // Encode the payload using the configured encoding format
-    const encoded = this.#encoding.encode(payload);
+    const encoded = this.encoding.encode(payload);
 
     // Send the encoded payload through the WebSocket
     this.#ws.send(encoded);
@@ -690,13 +680,13 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       this.#clearSession();
 
       // Destroy all services to release resources
-      this.#encoding.destroy();
-      this.#compression.destroy();
-      this.#heartbeat.destroy();
+      this.encoding.destroy();
+      this.compression.destroy();
+      this.heartbeat.destroy();
 
       // Destroy shard manager if enabled
-      if (this.#shard.isEnabled) {
-        this.#shard.destroy();
+      if (this.shard.isEnabled) {
+        this.shard.destroy();
       }
 
       // Clear all event listeners to prevent memory leaks
@@ -817,12 +807,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
   async #handleMessage(data: Buffer): Promise<void> {
     // Decompress the data if compression is enabled
     let processedData = data;
-    if (this.#compression.isInitialized) {
-      processedData = this.#compression.decompress(data);
+    if (this.compression.isInitialized) {
+      processedData = this.compression.decompress(data);
     }
 
     // Decode the payload using the configured encoding format
-    const payload = this.#encoding.decode(processedData);
+    const payload = this.encoding.decode(processedData);
 
     // Update sequence number if provided for resumability
     if (payload.s !== null) {
@@ -857,12 +847,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
 
       case GatewayOpcodes.Heartbeat:
         // Discord requested an immediate heartbeat
-        this.#heartbeat.sendHeartbeat();
+        this.heartbeat.sendHeartbeat();
         break;
 
       case GatewayOpcodes.HeartbeatAck:
         // Discord acknowledged our heartbeat
-        this.#heartbeat.ackHeartbeat();
+        this.heartbeat.ackHeartbeat();
         break;
 
       case GatewayOpcodes.InvalidSession:
@@ -892,7 +882,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   async #handleHello(hello: HelloEntity): Promise<void> {
     // Start heartbeats with the interval provided by Discord
-    this.#heartbeat.start(hello.heartbeat_interval);
+    this.heartbeat.start(hello.heartbeat_interval);
 
     // Either resume the existing session or identify as a new session
     if (this.#canResume()) {
@@ -923,15 +913,15 @@ export class Gateway extends EventEmitter<GatewayEvents> {
         browser: "nyxo.js",
         device: "nyxo.js",
       },
-      compress: this.#compression.isInitialized,
+      compress: this.compression.isInitialized,
       large_threshold: this.#options.largeThreshold,
       intents: this.#options.intents,
     };
 
     // Add shard info if sharding is enabled and configured
-    if (this.#shard.isEnabled && this.#shard.totalShards > 0) {
+    if (this.shard.isEnabled && this.shard.totalShards > 0) {
       // Get the next available shard to connect
-      payload.shard = await this.#shard.getAvailableShard();
+      payload.shard = await this.shard.getAvailableShard();
     }
 
     // Add presence information if provided in options
@@ -1048,7 +1038,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.emit("wsClose", code, reason);
 
     // Stop heartbeats immediately to prevent zombied connection
-    this.#heartbeat.destroy();
+    this.heartbeat.destroy();
 
     // For clean closures or non-resumable codes, clear session
     if (
@@ -1060,11 +1050,11 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     }
 
     // Handle shard disconnection events if sharding is enabled
-    if (this.#shard.isEnabled) {
-      for (const shard of this.#shard.shards) {
+    if (this.shard.isEnabled) {
+      for (const shard of this.shard.shards) {
         if (shard.status !== "disconnected") {
           // Update shard status
-          this.#shard.setShardStatus(shard.shardId, "disconnected");
+          this.shard.setShardStatus(shard.shardId, "disconnected");
 
           // Emit event for shard disconnection
           this.emit("shardDisconnect", {
@@ -1175,16 +1165,16 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     this.#state = "ready";
 
     // Handle sharding information if enabled
-    if (this.#shard.isEnabled) {
+    if (this.shard.isEnabled) {
       // Get current shard ID from the READY payload or default to 0
       const shardId = data.shard?.[0] ?? 0;
 
       // Update shard status to ready
-      this.#shard.setShardStatus(shardId, "ready");
+      this.shard.setShardStatus(shardId, "ready");
 
       // Add guild IDs to shard for tracking and guild-to-shard mapping
       const guildIds = data.guilds.map((guild) => guild.id);
-      this.#shard.addGuildsToShard(shardId, guildIds);
+      this.shard.addGuildsToShard(shardId, guildIds);
     }
 
     // Emit session start event with detailed connection information
@@ -1194,9 +1184,9 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       resumeUrl: data.resume_gateway_url,
       userId: data.user.id,
       guildCount: data.guilds.length,
-      encoding: this.#encoding.type,
-      compression: this.#compression.type,
-      shardCount: this.#shard.totalShards,
+      encoding: this.encoding.type,
+      compression: this.compression.type,
+      shardCount: this.shard.totalShards,
     });
   }
 
@@ -1222,7 +1212,7 @@ export class Gateway extends EventEmitter<GatewayEvents> {
       timestamp: new Date().toISOString(),
       sessionId: this.#session.id ?? "",
       sequence: this.#session.sequence,
-      latency: this.#heartbeat.latency,
+      latency: this.heartbeat.latency,
     });
   }
 
@@ -1237,8 +1227,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   #handleGuildCreate(data: GuildCreateEntity): void {
     // Update shard guild mappings if sharding is enabled and guild is available
-    if (this.#shard.isEnabled && "id" in data && !("unavailable" in data)) {
-      this.#shard.addGuildToShard(data.id);
+    if (this.shard.isEnabled && "id" in data && !("unavailable" in data)) {
+      this.shard.addGuildToShard(data.id);
     }
   }
 
@@ -1253,8 +1243,8 @@ export class Gateway extends EventEmitter<GatewayEvents> {
    */
   #handleGuildDelete(data: UnavailableGuildEntity): void {
     // Update shard guild mappings if sharding is enabled
-    if (this.#shard.isEnabled && "id" in data) {
-      this.#shard.removeGuildFromShard(data.id);
+    if (this.shard.isEnabled && "id" in data) {
+      this.shard.removeGuildFromShard(data.id);
     }
   }
 
@@ -1334,12 +1324,12 @@ export class Gateway extends EventEmitter<GatewayEvents> {
     // Add required query parameters
     const params = new URLSearchParams({
       v: String(this.#options.version), // API version
-      encoding: this.#encoding.type, // Payload encoding (json, etf)
+      encoding: this.encoding.type, // Payload encoding (json, etf)
     });
 
     // Add compression parameter if configured
-    if (this.#compression.type) {
-      params.append("compress", this.#compression.type);
+    if (this.compression.type) {
+      params.append("compress", this.compression.type);
     }
 
     // Combine base URL with query parameters

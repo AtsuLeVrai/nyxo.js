@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "nyxo.js": "workspace:^",
-    "zod": "^3.25.32"
+    "zod": "^3.25.36"
   },
   "devDependencies": {
     "@types/node": "^22.15.24",
