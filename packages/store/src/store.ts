@@ -539,7 +539,6 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     // Clear the TTL map to remove all expiration tracking
     if (this.#ttlMap) {
       this.#ttlMap.clear();
-      this.#ttlMap = null as any;
     }
 
     // Clear all data
@@ -664,12 +663,12 @@ export class Store<K extends StoreKey, V> extends Map<K, V> {
     super.clear();
 
     // Clear all metadata maps
-    if (this.#ttlMap && typeof this.#ttlMap.clear === "function") {
+    if (this.#ttlMap) {
       this.#ttlMap.clear();
     }
 
     // Clear the LRU tracker if it exists
-    if (this.#lruTracker && typeof this.#lruTracker.clear === "function") {
+    if (this.#lruTracker) {
       this.#lruTracker.clear();
     }
   }
